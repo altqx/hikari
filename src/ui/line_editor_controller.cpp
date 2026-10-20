@@ -270,30 +270,54 @@ bool LineEditorController::translationMode() const
     return s && s->document().scriptInfo(u8"TLMode") == u8"Yes";
 }
 
-std::optional<core::LineRecord> LineEditorController::videoRecord() const
+std::pair<const core::LineRecord *, const application::DraftChange *> LineEditorController::videoLine() const
 {
-    // The session's (the draft applied, as Application::showVideoSubtitles
-    // renders it; without live editing the committed Line), not E5's split,
-    // which is shown only until an edit makes it the draft.
-    return options().liveEditing ? sessionRecord() : committedRecord();
+    // The active Line as Application::showVideoSubtitles renders it: the
+    // committed Line, with the pending draft's changes when live editing is
+    // on (not E5's split, which is shown only until an edit makes it the
+    // draft). Both in place, so a Line of megabytes is never copied for FS1.
+    auto *s = session();
+    if (!s || !s->selection().active)
+        return {};
+    for (const auto *line : s->document().lines())
+        if (line->id == *s->selection().active)
+            return {line, options().liveEditing && s->draftLine() == line->id ? s->draftChangeView() : nullptr};
+    return {};
 }
 
 QString LineEditorController::videoTimes() const
 {
-    const auto r = videoRecord();
-    if (!r)
+    const auto [line, change] = videoLine();
+    if (!line)
         return {};
-    const auto times = application::editorTimeTexts(*r, session()->document().format(), frameTimebase());
+    core::LineRecord r; // the times only
+    r.start = line->start;
+    r.end = line->end;
+    r.startFrame = line->startFrame;
+    r.endFrame = line->endFrame;
+    if (change) {
+        if (change->start)
+            r.start.value = *change->start;
+        if (change->end)
+            r.end.value = *change->end;
+        if (change->startFrame)
+            r.startFrame = *change->startFrame;
+        if (change->endFrame)
+            r.endFrame = *change->endFrame;
+    }
+    const auto times = application::editorTimeTexts(r, session()->document().format(), frameTimebase());
     return times.end.empty() ? qs(times.start) : qs(times.start) + QStringLiteral(" – ") + qs(times.end);
 }
 
 QString LineEditorController::videoText() const
 {
-    const auto r = videoRecord();
-    if (!r)
+    const auto [line, change] = videoLine();
+    if (!line)
         return {};
+    const std::u8string &original = change && change->text ? *change->text : line->text;
+    const std::u8string &translation = change && change->translation ? *change->translation : line->translation;
+    const std::u8string &text = translationMode() && !translation.empty() ? translation : original;
     // Only the part FS1's label reads, cut before the conversion.
-    const std::u8string &text = translationMode() && !r->translation.empty() ? r->translation : r->text;
     const std::string_view cut =
         application::fullscreenLineInput(std::string_view(reinterpret_cast<const char *>(text.data()), text.size()));
     return QString::fromUtf8(cut.data(), qsizetype(cut.size()));

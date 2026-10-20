@@ -30,6 +30,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace hikari::ui {
@@ -434,7 +435,9 @@ private:
     application::EditSession *session() const;
     std::optional<core::LineRecord> record() const; // the active Line, draft applied (and E5's split shown)
     std::optional<core::LineRecord> sessionRecord() const; // the active Line, draft applied
-    std::optional<core::LineRecord> videoRecord() const; // FS1: the active Line as the video shows it
+    // FS1: the active Line as the video shows it: the committed Line and the
+    // draft's changes over it (null without), both in place.
+    std::pair<const core::LineRecord *, const application::DraftChange *> videoLine() const;
     // E5: the split Moving tags shows, for the Line it was made for.
     struct Split {
         core::LineId line;
