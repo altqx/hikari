@@ -86,6 +86,9 @@ signals:
     // O1: a changed program font destroyed the Select dialog (DestroyDialogs).
     void selectLinesDestroyed();
     void quitApprovedChanged();
+    // WS5: a quit review ended without the quit (cancelled, a save failed,
+    // or another review took its place).
+    void quitCancelled();
     void saveWithVideoNameChanged();
     void askForBadResolutionChanged();
     // Y4: the open video's size differs from the editing target's PlayRes
@@ -240,6 +243,22 @@ public:
     // first subtitles go into the editing target and it has unsaved work
     // (then finishClose() or cancelClose() carries the rest out).
     Q_INVOKABLE QVariantMap openDropped(const QList<QUrl> &urls);
+    // WS5: the files a later start of the program handed over (SingleInstance),
+    // in new tabs: subtitles as File > Open opens them into a new tab, a
+    // video in a new tab, several as dropped ones but each in a new tab; an
+    // untouched empty tab (P6) takes the first. Nothing is reviewed, so a
+    // tab's work is never replaced. Returns {kind: "video", path} when a
+    // video waits for the shell's openSingleVideo in its tab, else as
+    // openDropped. Call it only while forwardedOpenWaits() is false.
+    QVariantMap openForwarded(const QStringList &files);
+    // True while a review or a startup session question has the next word:
+    // forwarded files wait (legacy hikarisubApp::OnOpen waited while IsBusy).
+    bool forwardedOpenWaits() const;
+    // WS5: the quit is being reviewed or has gone ahead.
+    bool quitting() const { return m_quitApproved || m_closeThen == QLatin1String("quit"); }
+    // WS5: the quit reviews so far, the one going on (or that went ahead)
+    // last: what came during a quit belongs to that one only.
+    int quitReviews() const { return m_quitReviews; }
     // P9: opening a video (legacy OpenFile on a video): subtitles named as
     // the video beside it (FindFile) are offered first, {subtitles} ("" when
     // none, or when the tab already has them). Then openVideo(path), or, on
@@ -817,6 +836,9 @@ public:
     // At startup (legacy hikarisubApp::OnInit): "load", "ask" or "crash" (the
     // last session did not end with "[Close session]"), or "".
     Q_INVOKABLE QString startupSession() const;
+    // The shell has carried out what startupSession() asked (loaded the
+    // session, or the prompts were answered).
+    Q_INVOKABLE void startupSessionDecided() { m_startupSessionPending = false; }
     // SH2: what Load last session would open, for the Home page: {names (each
     // Document's file name, or its video's for a tab without subtitles)}; no
     // names when the last session has no Document with a file.
@@ -991,6 +1013,8 @@ private:
     std::optional<PendingFiles> m_pendingFiles;
     void applyFiles(PendingFiles files, bool skipFirst);
     bool openInNewTab(application::StagedOpen staged, const QString &path);
+    PendingFiles stageFiles(const QStringList &files);
+    bool targetUntouched() const;
     application::GridSelection gridSelection() const;
     bool applySelection(application::Selection next);
 
@@ -1191,6 +1215,7 @@ private:
     };
     QString m_closeThen;
     std::vector<Closing> m_closing;
+    int m_quitReviews = 0; // WS5
     bool m_quitApproved = false;
     // P2: the subtitles waiting for the review to replace the editing target.
     std::optional<application::StagedOpen> m_pendingOpen;
@@ -1313,6 +1338,7 @@ private:
     bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
     bool m_startedWithPaths = false;
+    mutable bool m_startupSessionPending = false; // WS5: startupSession() asked, not yet carried out
     int m_tabTextMax = 40; // legacy maxCharPerTab, read once at start
     void leaveTabMedia(std::optional<application::DocumentId> document);
     void enterTabMedia(std::optional<application::DocumentId> previous, std::optional<application::DocumentId> document);

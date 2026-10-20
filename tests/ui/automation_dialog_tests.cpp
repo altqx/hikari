@@ -3,6 +3,7 @@
 // the controls, the test edits them and presses a button, and the script
 // sees typed values (false kept, the label's nil absent).
 #include "automation_dialog_controller.h"
+#include "colour_picker_controller.h"
 #include "hikari/backends/lua_script_host.h"
 
 #include <QFile>
@@ -29,6 +30,7 @@ using hikari::application::DialogRequest;
 using hikari::application::DialogResult;
 using hikari::backends::LuaScriptHost;
 using hikari::ui::AutomationDialogController;
+using hikari::ui::ColourPickerController;
 
 namespace {
 
@@ -50,6 +52,7 @@ class AutomationDialogTests : public QObject {
     Q_OBJECT
 
     AutomationDialogController *controller = nullptr;
+    ColourPickerController *colourPicker = nullptr;
     QQmlApplicationEngine *engine = nullptr;
     QQuickWindow *window = nullptr;
 
@@ -117,8 +120,10 @@ private slots:
     void init()
     {
         controller = new AutomationDialogController;
+        colourPicker = new ColourPickerController;
         engine = new QQmlApplicationEngine;
-        engine->setInitialProperties({{QStringLiteral("controller"), QVariant::fromValue(controller)}});
+        engine->setInitialProperties({{QStringLiteral("controller"), QVariant::fromValue(controller)},
+                                      {QStringLiteral("colourPicker"), QVariant::fromValue(colourPicker)}});
         engine->loadFromModule("Hikari.Ui", "AutomationDialog");
         QVERIFY(!engine->rootObjects().isEmpty());
         window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
@@ -128,8 +133,10 @@ private slots:
     {
         delete engine;
         delete controller;
+        delete colourPicker;
         engine = nullptr;
         controller = nullptr;
+        colourPicker = nullptr;
     }
 
     void fixedControlsReturnTypedValues()
@@ -196,6 +203,84 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[0]), std::string("#7F0000FF"));
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("#FF0000"));
         QCOMPARE(std::get<double>(result->values[2]), 2.5);
+    }
+
+    // SY2: a colour control's button opens the colour popover at the colour,
+    // with Alpha (the ASS transparency) only for coloralpha; each change
+    // sets the value at once, Esc puts it back, Enter keeps it, and the
+    // dialog reads the kept colour as legacy hex.
+    void colourControlsOpenThePopover()
+    {
+        DialogRequest request;
+        request.controls = {DialogControl{.kind = "coloralpha", .name = "c", .text = "#800000FF"},
+                            DialogControl{.kind = "color", .name = "d", .x = 1, .text = "#00FF00"}};
+        request.buttons = {"OK"};
+        std::optional<DialogResult> result;
+        showDialog(request, result);
+        auto *popover = window->findChild<QObject *>(QStringLiteral("automationColourPopover"));
+        QVERIFY(popover);
+        auto *content = popover->property("contentItem").value<QQuickItem *>();
+        auto *alphaField = qobject_cast<QQuickItem *>(findNamed(content, QStringLiteral("alpha")));
+        QVERIFY(alphaField);
+
+        auto *pick = findNamed(controlItem(0), QStringLiteral("colorPick"));
+        QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        // A dialog this small cannot hold the popover with More… open: it
+        // opens in a window of its own (Popup.Window), the keys go there.
+        QCOMPARE(popover->property("popupType").toInt(), 1);
+        QQuickWindow *own = content->window();
+        QVERIFY(own && own != window);
+        QTRY_VERIFY(own->isVisible());
+        QCOMPARE(popover->property("blue").toInt(), 255);
+        QCOMPARE(popover->property("red").toInt(), 0);
+        QCOMPARE(popover->property("alpha").toInt(), 0x80);
+        QVERIFY(alphaField->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
+        QTRY_COMPARE(control(0)->property("value").value<QColor>(), QColor(255, 0, 0, 255 - 0x80));
+        QTest::keyClick(content->window(), Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QVERIFY(window->isVisible()); // Esc was the popover's, not the dialog's
+        QCOMPARE(control(0)->property("value").value<QColor>(), QColor(0, 0, 255, 255 - 0x80));
+
+        pick = findNamed(controlItem(1), QStringLiteral("colorPick"));
+        QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(!alphaField->isVisible());
+        QCOMPARE(popover->property("green").toInt(), 255);
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
+        QTest::keyClick(content->window(), Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QVERIFY(window->isVisible());
+        QTRY_COMPARE(control(1)->property("value").value<QColor>(), QColor(0, 0, 255));
+        // A press on the anchor back in the dialog keeps the colour and
+        // closes the popover, without the button opening it again.
+        auto *anchor = qobject_cast<QQuickItem *>(pick);
+        QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 128), Q_ARG(QVariant, 0)));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                          anchor->mapToScene(QPointF(anchor->width() / 2, anchor->height() / 2)).toPoint());
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTest::qWait(100);
+        QVERIFY(!popover->property("visible").toBool());
+        QTRY_COMPARE(control(1)->property("value").value<QColor>(), QColor(0, 128, 0));
+        // A press elsewhere closes it too; a click on the anchor straight
+        // after opens it again.
+        QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(2, 2));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                          anchor->mapToScene(QPointF(anchor->width() / 2, anchor->height() / 2)).toPoint());
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 0), Q_ARG(QVariant, 0), Q_ARG(QVariant, 255)));
+        QTest::keyClick(content->window(), Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        press(0);
+        QVERIFY(result);
+        QCOMPARE(std::get<std::string>(result->values[0]), std::string("#800000FF"));
+        QCOMPARE(std::get<std::string>(result->values[1]), std::string("#0000FF"));
     }
 
     // Legacy HikariDialog::Show focuses the enter button (LuaDialog::

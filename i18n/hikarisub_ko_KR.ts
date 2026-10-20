@@ -481,31 +481,119 @@
     <name>HikariSub.Colours</name>
     <message>
         <source>Choose color</source>
-        <translation>색상 선택</translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">색상 선택</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation>첫 번째 색상</translation>
+        <translation type="vanished">첫 번째 색상</translation>
     </message>
     <message>
         <source>Secondary color</source>
-        <translation>두 번째 색상</translation>
+        <translation type="vanished">두 번째 색상</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation>테두리 색상</translation>
+        <translation type="vanished">테두리 색상</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation>그림자 색상</translation>
+        <translation type="vanished">그림자 색상</translation>
     </message>
     <message>
         <source>Spectrum color</source>
-        <translation>스펙트럼 색상</translation>
+        <translation type="vanished">스펙트럼 색상</translation>
+    </message>
+    <message>
+        <source>Previous colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>White</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yellow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cyan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magenta</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spring green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Azure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Violet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 is opaque, 255 fully transparent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer colour options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More colour options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saturation and value</source>
@@ -513,6 +601,34 @@
     </message>
     <message>
         <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HTML</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -529,15 +645,15 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Selected color:</source>
-        <translation>선택 색상:</translation>
+        <translation type="vanished">선택 색상:</translation>
     </message>
     <message>
         <source>RGB color</source>
-        <translation>RGB</translation>
+        <translation type="vanished">RGB</translation>
     </message>
     <message>
         <source>Red:</source>
-        <translation>빨간색:</translation>
+        <translation type="vanished">빨간색:</translation>
     </message>
     <message>
         <source>Red</source>
@@ -545,7 +661,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Green:</source>
-        <translation>녹색:</translation>
+        <translation type="vanished">녹색:</translation>
     </message>
     <message>
         <source>Green</source>
@@ -553,14 +669,10 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Blue:</source>
-        <translation>파란색:</translation>
+        <translation type="vanished">파란색:</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Alpha:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -568,15 +680,7 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>ASS:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>ASS colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HTML:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -585,11 +689,11 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSL color</source>
-        <translation>HSL</translation>
+        <translation type="vanished">HSL</translation>
     </message>
     <message>
         <source>Hue:</source>
-        <translation>색조:</translation>
+        <translation type="vanished">색조:</translation>
     </message>
     <message>
         <source>HSL hue</source>
@@ -597,7 +701,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Saturation:</source>
-        <translation>채도:</translation>
+        <translation type="vanished">채도:</translation>
     </message>
     <message>
         <source>HSL saturation</source>
@@ -605,7 +709,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Lightness:</source>
-        <translation>명도:</translation>
+        <translation type="vanished">명도:</translation>
     </message>
     <message>
         <source>Lightness</source>
@@ -613,7 +717,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSV color</source>
-        <translation>HSV</translation>
+        <translation type="vanished">HSV</translation>
     </message>
     <message>
         <source>HSV hue</source>
@@ -625,7 +729,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation>명도:</translation>
+        <translation type="vanished">명도:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -636,30 +740,22 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Recent colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Screen pixels around the pointer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Color picker</source>
-        <translation>색상 선택기</translation>
+        <translation type="vanished">색상 선택기</translation>
     </message>
     <message>
         <source>Move the window
 to the color selection location</source>
-        <translation>색상 선택기에서
+        <translation type="vanished">색상 선택기에서
 창을 이동합니다</translation>
     </message>
     <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
-        <translation>취소</translation>
+        <translation type="vanished">취소</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
@@ -7663,6 +7759,10 @@ Foreign language text will be deleted.</source>
     <message>
         <source>Color:</source>
         <translation>색상:</translation>
+    </message>
+    <message>
+        <source>Choose the colour</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>

@@ -115,6 +115,7 @@ RowLayout {
                                 required property int index
                                 required property string modelData
                                 readonly property bool isAction: choice.listEnds && index === choice.model.length - 1 && index > 0
+                                iconRole: isAction ? "edit" : ""
                                 objectName: choice.objectName + "_" + index
                                 text: modelData
                                 checkable: !isAction

@@ -95,6 +95,9 @@ public:
     Q_INVOKABLE QStringList fontList(int selection, const QString &value, bool filterOn, const QString &filterText);
     // GetFontsTable(save = true): the Filter toggle saves STYLE_EDIT_FILTER_TEXT_ON.
     Q_INVOKABLE void setFilterOn(bool on);
+    // SY3: the Style editor's sample line edited (StylePreview's
+    // Options.SetString(STYLE_PREVIEW_TEXT)).
+    Q_INVOKABLE void setPreviewText(const QString &text);
     // "Save filter": STYLE_EDIT_FILTER_TEXT.
     Q_INVOKABLE void saveFilterText(const QString &text);
     // Every installed font, sorted (FontEnum.GetFonts).

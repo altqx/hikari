@@ -12,11 +12,13 @@ import Hikari.Ui
 // for the default and never updated. OK hands the values to
 // App.openDummyVideo, which logs "Invalid FPS value." for a rate it refuses.
 // The colour is legacy's ButtonColorPicker value as ASS text (&HBBGGRR&),
-// shown beside a swatch (V3-dummy-colour-text).
+// shown beside a swatch (V3-dummy-colour-text); SY2: the swatch opens the
+// colour popover, whose changes write the text.
 Dialog {
     id: dialog
     objectName: "dummyVideoDialog"
     required property var app
+    required property ColourPickerController colourPicker
     title: qsTr("Dummy video options")
     // K1: the title with its icon, as the other dialogs show theirs.
     header: IconDialogHeader { objectName: "dummyVideoDialogTitle"; iconRole: "open-video"; text: dialog.title }
@@ -98,13 +100,36 @@ Dialog {
         }
         Label { text: qsTr("Color:") }
         RowLayout {
-            Rectangle {
+            Button {
+                id: swatch
                 objectName: "dummyColourSwatch"
-                implicitWidth: 24
+                implicitWidth: 32
                 implicitHeight: 24
                 readonly property var c: dialog.rgb(colour.text)
-                color: c ? Qt.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
-                border.color: Theme.line
+                readonly property color color: c ? Qt.rgba(c.red / 255, c.green / 255, c.blue / 255, 1) : "transparent"
+                text: qsTr("Choose the colour")
+                Accessible.name: text
+                ToolTip.visible: hovered
+                ToolTip.text: text
+                ToolTip.delay: 500
+                background: Rectangle {
+                    color: swatch.color
+                    radius: 2
+                    border.color: swatch.visualFocus ? Theme.focus : Theme.control
+                }
+                contentItem: Item {}
+                onClicked: {
+                    let before = colour.text
+                    colourPopover.openFor(swatch, {
+                        changeColour: v => colour.text = dialog.colourPicker.assText(v, false),
+                        endDialog: accepted => { if (!accepted) colour.text = before }
+                    }, () => {
+                        before = colour.text
+                        const c = dialog.rgb(before) || dialog.rgb(dialog.defaults.colour) || { red: 0, green: 0, blue: 0 }
+                        dialog.colourPicker.opened("dummyVideo")
+                        return { r: c.red, g: c.green, b: c.blue, a: 0 }
+                    }, { title: qsTr("Color:"), alpha: false, focus: swatch })
+                }
             }
             TextField {
                 id: colour
@@ -145,5 +170,10 @@ Dialog {
         const problem = dialog.app.openDummyVideo(dialog.values())
         if (problem.length > 0)
             dialog.refused(problem)
+    }
+    ColourPopover {
+        id: colourPopover
+        objectName: "dummyColourPopover"
+        picker: dialog.colourPicker
     }
 }

@@ -481,31 +481,119 @@
     <name>HikariSub.Colours</name>
     <message>
         <source>Choose color</source>
-        <translation>เลือกสี</translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">เลือกสี</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation>สีหลัก</translation>
+        <translation type="vanished">สีหลัก</translation>
     </message>
     <message>
         <source>Secondary color</source>
-        <translation>สีรอง</translation>
+        <translation type="vanished">สีรอง</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation>สีเส้นขอบ</translation>
+        <translation type="vanished">สีเส้นขอบ</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation>สีเงา</translation>
+        <translation type="vanished">สีเงา</translation>
     </message>
     <message>
         <source>Spectrum color</source>
-        <translation>สีสเปกตรัม</translation>
+        <translation type="vanished">สีสเปกตรัม</translation>
+    </message>
+    <message>
+        <source>Previous colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>White</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yellow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cyan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magenta</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spring green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Azure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Violet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 is opaque, 255 fully transparent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer colour options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More colour options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saturation and value</source>
@@ -513,6 +601,34 @@
     </message>
     <message>
         <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HTML</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -529,15 +645,15 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Selected color:</source>
-        <translation>สีที่เลือก:</translation>
+        <translation type="vanished">สีที่เลือก:</translation>
     </message>
     <message>
         <source>RGB color</source>
-        <translation>สี RGB</translation>
+        <translation type="vanished">สี RGB</translation>
     </message>
     <message>
         <source>Red:</source>
-        <translation>แดง:</translation>
+        <translation type="vanished">แดง:</translation>
     </message>
     <message>
         <source>Red</source>
@@ -545,7 +661,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Green:</source>
-        <translation>เขียว:</translation>
+        <translation type="vanished">เขียว:</translation>
     </message>
     <message>
         <source>Green</source>
@@ -553,14 +669,10 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Blue:</source>
-        <translation>น้ำเงิน:</translation>
+        <translation type="vanished">น้ำเงิน:</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Alpha:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -568,15 +680,7 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>ASS:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>ASS colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HTML:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -585,11 +689,11 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSL color</source>
-        <translation>สี HSL</translation>
+        <translation type="vanished">สี HSL</translation>
     </message>
     <message>
         <source>Hue:</source>
-        <translation>เฉดสี:</translation>
+        <translation type="vanished">เฉดสี:</translation>
     </message>
     <message>
         <source>HSL hue</source>
@@ -597,7 +701,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Saturation:</source>
-        <translation>ความอิ่มตัว:</translation>
+        <translation type="vanished">ความอิ่มตัว:</translation>
     </message>
     <message>
         <source>HSL saturation</source>
@@ -605,7 +709,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Lightness:</source>
-        <translation>ความสว่าง:</translation>
+        <translation type="vanished">ความสว่าง:</translation>
     </message>
     <message>
         <source>Lightness</source>
@@ -613,7 +717,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSV color</source>
-        <translation>สี HSV</translation>
+        <translation type="vanished">สี HSV</translation>
     </message>
     <message>
         <source>HSV hue</source>
@@ -625,7 +729,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation>ค่า:</translation>
+        <translation type="vanished">ค่า:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -636,30 +740,22 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Recent colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Screen pixels around the pointer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Color picker</source>
-        <translation>ตัวเลือกสี</translation>
+        <translation type="vanished">ตัวเลือกสี</translation>
     </message>
     <message>
         <source>Move the window
 to the color selection location</source>
-        <translation>ย้ายหน้าต่าง
+        <translation type="vanished">ย้ายหน้าต่าง
 ไปยังตำแหน่งที่เลือกสี</translation>
     </message>
     <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
-        <translation>ยกเลิก</translation>
+        <translation type="vanished">ยกเลิก</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
@@ -7669,6 +7765,10 @@ Foreign language text will be deleted.</source>
     <message>
         <source>Color:</source>
         <translation>สี:</translation>
+    </message>
+    <message>
+        <source>Choose the colour</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>

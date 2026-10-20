@@ -412,21 +412,33 @@ QVariantMap Application::reviewOpenWithVideo(const QString &subtitles, const QSt
     return result;
 }
 
-QVariantMap Application::openDropped(const QList<QUrl> &urls)
+namespace {
+
+// Legacy OpenFiles sorts by the locale's collation.
+QStringList sortedFiles(QStringList files)
 {
-    QStringList files;
-    for (const QUrl &url : urls)
-        if (url.isLocalFile())
-            files << url.toLocalFile();
-    // Legacy sorts by the locale's collation.
     QCollator collator;
     std::sort(files.begin(), files.end(), [&](const QString &a, const QString &b) { return collator.compare(a, b) < 0; });
-    auto result = [](const QString &kind, const QString &path = {}, const QVariantList &rows = {}) {
-        return QVariantMap{{QStringLiteral("kind"), kind}, {QStringLiteral("path"), path}, {QStringLiteral("rows"), rows}};
-    };
+    return files;
+}
+
+QVariantMap openResult(const QString &kind, const QString &path = {}, const QVariantList &rows = {})
+{
+    return QVariantMap{{QStringLiteral("kind"), kind}, {QStringLiteral("path"), path}, {QStringLiteral("rows"), rows}};
+}
+
+} // namespace
+
+QVariantMap Application::openDropped(const QList<QUrl> &urls)
+{
+    QStringList dropped;
+    for (const QUrl &url : urls)
+        if (url.isLocalFile())
+            dropped << url.toLocalFile();
+    const QStringList files = sortedFiles(dropped);
     if (files.isEmpty()) {
         trimAudioCache(); // OpenFiles over nothing still ends with DeleteAudioCache
-        return result(QString());
+        return openResult(QString());
     }
     if (files.size() == 1) {
         // OpenFiles with one file: OpenFile(files[0]) and return, without
@@ -438,8 +450,8 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
         // keyframes or a refused file return before it (1327-1341).
         const QString &file = files.front();
         switch (application::openKindOf(file.toStdString(), true)) {
-        case application::OpenKind::Subtitles: return result(QStringLiteral("subtitles"), file);
-        case application::OpenKind::Video: return result(QStringLiteral("video"), file);
+        case application::OpenKind::Subtitles: return openResult(QStringLiteral("subtitles"), file);
+        case application::OpenKind::Video: return openResult(QStringLiteral("video"), file);
         case application::OpenKind::Script: m_automation->loadScript(QUrl::fromLocalFile(file)); break;
         case application::OpenKind::Keyframes:
             // KeyframesPath = filename; OpenKeyframes; SetRecent(3).
@@ -448,8 +460,28 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
             break;
         case application::OpenKind::Refused: break;
         }
-        return result(QString());
+        return openResult(QString());
     }
+    PendingFiles pending = stageFiles(files);
+    // The first goes into the editing target when it has neither subtitles
+    // of a file nor a video (1872-1875); the others into new tabs after the
+    // last one.
+    const auto target = m_workspace.editingTarget();
+    pending.reuseFirst = target && targetUntitled() && tabVideo(*target).isEmpty();
+    auto *targetSession = target ? m_files->session(*target) : nullptr;
+    if (pending.count > 0 && pending.reuseFirst && targetSession && targetSession->isDirty()) {
+        // The target's unsaved work is reviewed first, as OpenFile's
+        // SavePrompt(2) did for subtitles alone.
+        const QVariantList rows = reviewClose(QStringLiteral("files"));
+        m_pendingFiles = std::move(pending);
+        return openResult(QStringLiteral("files"), QString(), rows);
+    }
+    applyFiles(std::move(pending), false);
+    return openResult(QStringLiteral("files"));
+}
+
+Application::PendingFiles Application::stageFiles(const QStringList &files)
+{
     // Several (OpenFiles, 1835-1852): subtitles, scripts (loaded at once) and
     // everything else but archives and programs as videos.
     PendingFiles pending;
@@ -477,21 +509,69 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
     }
     if (pending.count < 0)
         pending.count = static_cast<int>(std::max(pending.subtitlePaths.size(), pending.videos.size()));
-    // The first goes into the editing target when it has neither subtitles
-    // of a file nor a video (1872-1875); the others into new tabs after the
-    // last one.
+    return pending;
+}
+
+bool Application::targetUntouched() const
+{
+    // P6's untouched empty tab (openFile), without media of its own (a
+    // video, audio, keyframes) and not a restored tab whose files are
+    // missing: its Retry / Relink entry would go with it (forgetTab).
     const auto target = m_workspace.editingTarget();
-    pending.reuseFirst = target && targetUntitled() && tabVideo(*target).isEmpty();
-    auto *targetSession = target ? m_files->session(*target) : nullptr;
-    if (pending.count > 0 && pending.reuseFirst && targetSession && targetSession->isDirty()) {
-        // The target's unsaved work is reviewed first, as OpenFile's
-        // SavePrompt(2) did for subtitles alone.
-        const QVariantList rows = reviewClose(QStringLiteral("files"));
-        m_pendingFiles = std::move(pending);
-        return result(QStringLiteral("files"), QString(), rows);
+    auto *session = target ? m_files->session(*target) : nullptr;
+    if (!session || !targetUntitled() || session->isDirty() || session->historySize() != 1 || m_audio->hasAudio())
+        return false;
+    if (const auto it = m_tabMedia.find(target->value); it != m_tabMedia.end() &&
+        (!it->second.video.isEmpty() || !it->second.audio.isEmpty() || !it->second.keyframes.isEmpty()))
+        return false;
+    return std::none_of(m_unresolved.begin(), m_unresolved.end(),
+                        [&](const UnresolvedRestore &u) { return u.document == *target; });
+}
+
+QVariantMap Application::openForwarded(const QStringList &paths)
+{
+    // WS5: what a later start hands over opens as legacy OpenFiles opened
+    // it (hikarisubApp::OnOpen), except that nothing goes into a tab with
+    // work in it: subtitles open as File > Open opens them with "Open
+    // subtitles in a new tab" (OPEN_SUBS_IN_NEW_TAB), a video in a new tab,
+    // and several files in new tabs. An untouched empty tab takes the first.
+    const QStringList files = sortedFiles(paths);
+    if (files.isEmpty())
+        return openResult(QString());
+    const bool untouched = targetUntouched();
+    if (files.size() == 1) {
+        const QString &file = files.front();
+        switch (application::openKindOf(file.toStdString(), true)) {
+        case application::OpenKind::Subtitles:
+            if (untouched) {
+                openFile(file); // the empty tab takes it, as at a start
+            } else if (auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()})) {
+                openInNewTab(std::move(*staged), file);
+            } else {
+                m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
+                               .arg(QFileInfo(file).fileName()));
+            }
+            return openResult(QString());
+        case application::OpenKind::Video:
+            // Opened by the shell as OpenFile opens one video (openSingleVideo).
+            if (!untouched)
+                addPage();
+            return openResult(QStringLiteral("video"), file);
+        case application::OpenKind::Keyframes:
+            // The tab's own, as a video is: a tab's keyframes stay.
+            if (!untouched)
+                addPage();
+            if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
+                m_log->log(problem);
+            return openResult(QString());
+        default: // a script (the Automation manager's, no tab's) or a refused file: as when dropped
+            return openDropped({QUrl::fromLocalFile(file)});
+        }
     }
+    PendingFiles pending = stageFiles(files);
+    pending.reuseFirst = untouched;
     applyFiles(std::move(pending), false);
-    return result(QStringLiteral("files"));
+    return openResult(QStringLiteral("files"));
 }
 
 void Application::applyFiles(PendingFiles files, bool skipFirst)
