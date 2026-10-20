@@ -8448,6 +8448,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy video position</source>
+        <translation type="unfinished">Kopiuj pozycję na wideo</translation>
+    </message>
+    <message>
         <source>Free drawing</source>
         <translation type="unfinished"></translation>
     </message>
