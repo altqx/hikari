@@ -174,9 +174,16 @@ Window {
         editing = false
         styles.endEdit()
     }
+    // SY3: the sample line follows every field at once; while the font list
+    // is open it shows the family under the keyboard or the pointer.
     function updatePreview() {
-        if (editing)
-            styles.renderPreview(editor.values(), Math.max(1, preview.width), Math.max(1, preview.height), previewText.text)
+        if (!editing)
+            return
+        const v = editor.values()
+        const browsed = fontField.browsedFont()
+        if (browsed.length)
+            v.fontname = browsed
+        styles.renderPreview(v, Math.max(1, preview.width), Math.max(1, preview.height), previewText.text)
     }
     // CommitChange: the multi-edit question, then ChangeStyle and the rename question.
     function commit(close) {
@@ -598,6 +605,33 @@ Window {
                                     Layout.fillWidth: true
                                     Accessible.name: qsTr("Font")
                                     onEditTextChanged: manager.updatePreview()
+                                    onHighlightedIndexChanged: if (popup.visible) manager.updatePreview()
+                                    // The family highlighted in the open list, or "".
+                                    function browsedFont() {
+                                        return popup.visible && highlightedIndex >= 0 && model && highlightedIndex < model.length
+                                               ? model[highlightedIndex] : ""
+                                    }
+                                    Connections {
+                                        target: fontField.popup
+                                        function onVisibleChanged() { manager.updatePreview() }
+                                    }
+                                    // A refresh of the fonts: each row's face asked again.
+                                    Connections {
+                                        target: manager.catalogs
+                                        function onFontsChanged() { FontFaces.forget() }
+                                    }
+                                    // SY3: each family in its own face. The list makes
+                                    // rows only for what it shows, so a large font set
+                                    // costs no more than a screenful of faces.
+                                    delegate: FontFamilyRow {
+                                        required property string modelData
+                                        required property int index
+                                        objectName: "styleFontRow"
+                                        family: modelData
+                                        width: ListView.view ? ListView.view.width : implicitWidth
+                                        highlighted: fontField.highlightedIndex === index
+                                        hoverEnabled: fontField.hoverEnabled
+                                    }
                                 }
                                 TextField { id: sizeField; objectName: "styleSize"; Layout.preferredWidth: 66; Accessible.name: qsTr("Size"); onTextEdited: manager.updatePreview() }
                             }
@@ -639,19 +673,16 @@ Window {
                                     required property string modelData
                                     required property int index
                                     property var colour: ({ r: 0, g: 0, b: 0, a: 0 })
-                                    // The alpha the button was last given (its background
-                                    // wxColour's, UpdateValues and UpdateColor); a typed
-                                    // transparency does not change it.
-                                    property int buttonAlpha: 0
+                                    property Item swatch: swatchButton
                                     function setColour(c) {
                                         colour = c
-                                        buttonAlpha = c.a
                                     }
                                     Layout.preferredWidth: geometry.columnWidth(index)
                                     // The colour's name above its swatch (a label drawn on the
                                     // swatch was unreadable on light or dark colours).
                                     Label { text: modelData }
                                     Button {
+                                        id: swatchButton
                                         objectName: "styleColour" + (index + 1)
                                         Accessible.name: modelData
                                         Layout.fillWidth: true
@@ -759,9 +790,9 @@ Window {
                             Label { Layout.row: 4; Layout.column: 0; Layout.topMargin: 6; text: qsTr("Left margin:") }
                             Label { Layout.row: 4; Layout.column: 1; Layout.topMargin: 6; text: qsTr("Right:") }
                             Label { Layout.row: 4; Layout.column: 2; Layout.topMargin: 6; text: qsTr("Vertical:") }
-                            StyleField { id: marginLeft; objectName: "styleMarginLeft"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 0; Accessible.name: qsTr("Left margin:") }
-                            StyleField { id: marginRight; objectName: "styleMarginRight"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 1; Accessible.name: qsTr("Right:") }
-                            StyleField { id: marginVertical; objectName: "styleMarginVertical"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 2; Accessible.name: qsTr("Vertical:") }
+                            StyleField { id: marginLeft; objectName: "styleMarginLeft"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 0; Accessible.name: qsTr("Left margin:"); onTextEdited: manager.updatePreview() }
+                            StyleField { id: marginRight; objectName: "styleMarginRight"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 1; Accessible.name: qsTr("Right:"); onTextEdited: manager.updatePreview() }
+                            StyleField { id: marginVertical; objectName: "styleMarginVertical"; Layout.preferredWidth: geometry.cellWidth; Layout.row: 5; Layout.column: 2; Accessible.name: qsTr("Vertical:"); onTextEdited: manager.updatePreview() }
                         }
                     }
                     GroupBox {
@@ -769,7 +800,10 @@ Window {
                         Layout.fillWidth: true
                         ComboBox {
                             id: encodings
+                            objectName: "styleEncoding"
                             width: parent.width
+                            Accessible.name: qsTr("Text encoding:")
+                            onActivated: manager.updatePreview()
                             model: [qsTr("0 - ANSI"), qsTr("1 - Default"), qsTr("2 - Symbol"), qsTr("77 - Mac"), qsTr("128 - Japanese"),
                                     qsTr("129 - Hangul"), qsTr("130 - Johab"), qsTr("134 - Chinese GB2312"), qsTr("135 - Chinese BIG5"),
                                     qsTr("161 - Greek"), qsTr("162 - Turkish"), qsTr("163 - Vietnamese"), qsTr("177 - Hebrew"),
@@ -792,7 +826,17 @@ Window {
                                 onWidthChanged: manager.updatePreview()
                             }
                             // Legacy STYLE_PREVIEW_TEXT, edited by clicking the preview.
-                            TextField { id: previewText; text: manager.catalogs.previewText; Accessible.name: qsTr("Preview text"); Layout.fillWidth: true; onTextEdited: manager.updatePreview() }
+                            // SY3: kept when edited, as legacy's StylePreview kept it
+                            // (StylePreview.cpp:136-141).
+                            TextField {
+                                id: previewText
+                                objectName: "stylePreviewText"
+                                text: manager.catalogs.previewText
+                                Accessible.name: qsTr("Preview text")
+                                Layout.fillWidth: true
+                                onTextEdited: manager.updatePreview()
+                                onEditingFinished: manager.catalogs.setPreviewText(text)
+                            }
                         }
                     }
                 }
@@ -848,24 +892,24 @@ Window {
         }
     }
 
-    // Y7: StyleChange::OnAllCols (StyleChange.cpp:335-399). A left click
-    // opens "Choose color" at the button's colour and transparency, a right
-    // click the simple "Color picker"; COLORPICKER_SWITCH_CLICKS swaps them.
+    // Y7: StyleChange::OnAllCols (StyleChange.cpp:335-399). SY2: a left
+    // click opens the colour popover at the button's colour and
+    // transparency, a right click opens it with the eyedropper started;
+    // COLORPICKER_SWITCH_CLICKS swaps them.
     function colourClick(number, leftClick) {
         if (colourPicker.switchClicks)
             leftClick = !leftClick
-        if (leftClick) {
+        const column = colours.itemAt(number - 1)
+        stylePopover.openFor(column.swatch, styleColours, () => {
             colourPicker.opened("styleEditor") // DialogColorPicker::Get(this, ...)
-            styleColourDialog.openFor(styleColours, number, styleColours.begin(number))
-        } else {
-            styleSimplePicker.openFor(styleColours, number, styleColours.beginSimple(number))
-        }
+            return styleColours.begin(number)
+        }, { title: column.modelData, dropper: !leftClick, focus: column.swatch })
     }
-    // The pickers' target: the four colours of the edited Style.
+    // The popover's target: one of the four colours of the edited Style.
     QtObject {
         id: styleColours
         property int number: 1
-        // lastColor: what Cancel puts back, the colour of the type shown.
+        // lastColor: what Cancel puts back.
         property var lastColour: ({ r: 0, g: 0, b: 0, a: 0 })
         function begin(n) {
             number = n
@@ -873,17 +917,6 @@ Window {
             lastColour = { r: c.r, g: c.g, b: c.b, a: c.a }
             return lastColour
         }
-        // SimpleColorPicker(this, actualColor, ...) (374): the button's
-        // colour with the alpha it was last given.
-        function beginSimple(n) {
-            const c = begin(n)
-            return { r: c.r, g: c.g, b: c.b, a: colours.itemAt(n - 1).buttonAlpha }
-        }
-        // COLOR_TYPE_CHANGED (351-357, 385-391): that colour with its
-        // transparency becomes lastColor; the colour shown before keeps
-        // its changes.
-        function switchColour(n) { return begin(n) }
-        function simplePickerColour(n) { return begin(n) }
         // COLOR_CHANGED: UpdateColor (737-746) sets the button, the
         // transparency and the preview.
         function changeColour(c) {
@@ -897,15 +930,9 @@ Window {
                 changeColour(lastColour)
         }
     }
-    ColourPickerDialog {
-        id: styleColourDialog
-        objectName: "styleColourDialog"
-        picker: manager.colourPicker
-        anchors.centerIn: parent
-    }
-    SimpleColourPicker {
-        id: styleSimplePicker
-        objectName: "styleSimpleColourPicker"
+    ColourPopover {
+        id: stylePopover
+        objectName: "styleColourPopover"
         picker: manager.colourPicker
     }
     Dialog {

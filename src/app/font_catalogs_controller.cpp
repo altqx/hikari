@@ -182,6 +182,12 @@ void FontCatalogsController::setFilterOn(bool on)
     m_settings.set("styles.editFilterTextOn", on);
 }
 
+void FontCatalogsController::setPreviewText(const QString &text)
+{
+    if (text != previewText())
+        m_settings.set("styles.previewText", text);
+}
+
 void FontCatalogsController::saveFilterText(const QString &text)
 {
     m_settings.set("styles.editFilterText", text);

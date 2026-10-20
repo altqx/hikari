@@ -302,6 +302,13 @@ foreach(mode offscreen xvfb native)
         set_tests_properties(hikari_ui_tab_menu_tests.${mode} PROPERTIES TIMEOUT 300)
     endif()
 endforeach()
+# WS5: one instance per user session: the hand-over, a crashed or silent
+# holder, the session's own socket; and what is handed over, on the holder.
+hikari_add_qttest(hikari_ui_single_instance_tests SOURCES single_instance_tests.cpp LIBRARIES hikari_composition)
+hikari_add_qttest(hikari_ui_forwarded_launches_tests SOURCES forwarded_launches_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_forwarded_launches_tests PRIVATE
+    HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
+add_dependencies(hikari_ui_forwarded_launches_tests hikari_media_fixtures hikari_media_helper)
 # 38e: no test reaches the desktop's programs (tests/support/desktop): the
 # recording handlers, the refusal that fails a run, the shell's hand-offs.
 hikari_add_qttest(hikari_ui_desktop_handoff_tests SOURCES desktop_handoff_tests.cpp LIBRARIES hikari_composition)
@@ -378,6 +385,11 @@ hikari_add_spix_test(hikari_ui_video_timing_workflow SOURCES video_timing_workfl
 add_dependencies(hikari_ui_video_timing_workflow hikari_media_helper hikari_media_fixtures)
 # Y7: the colour picker's option, simple-picker recent colour and screen sampler.
 hikari_add_qttest(hikari_ui_colour_picker_tests SOURCES colour_picker_tests.cpp LIBRARIES hikari_ui)
+# SY3: font lists drawing each family in its own face.
+hikari_add_qttest(hikari_ui_font_faces_tests SOURCES font_faces_tests.cpp LIBRARIES hikari_ui)
+target_compile_definitions(hikari_ui_font_faces_tests PRIVATE
+    HIKARI_SYMBOL_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-symf020.ttf"
+    HIKARI_NO_LETTERS_FONT="${PROJECT_SOURCE_DIR}/tests/fixtures/libass-fork/forktest-arabic.ttf")
 # O5: the interface language over the embedded catalogs (live switching,
 # aegisub.gettext through the application, pseudolocalized and right-to-left
 # layouts, the program font).

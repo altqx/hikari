@@ -5,10 +5,12 @@
 // - LE3 (#228, LE3-tags-shown): the Line editor shows tags by default; hiding
 //   them is editor.hideTags and GLOBAL_EDITOR_HIDE_TAGS;
 // - LE5 (#230): the custom tag buttons' "+" popover, context menu and
-//   Settings > Editor list;
+//   Settings > Editor list, and (#263) its menu's Move left and Move right in
+//   either layout direction;
 // - LE6 (#231): Edit style opens the Style editor on the Line's Style.
 
 #include "hikari/app/application.h"
+#include "hikari/app/localisation.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/application/hotkeys.h"
 
@@ -26,6 +28,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <algorithm>
 #include <memory>
 
 using namespace hikari;
@@ -230,6 +233,37 @@ class LineEditorOptionsTest : public QObject {
             return !add || !add->isVisible() || last->mapToScene({}).x() + last->width() <= add->mapToScene({}).x();
         }());
     }
+    // The strip's `count` buttons, shown: the one named `name`.
+    QQuickItem *showing(const QString &name, int count) const
+    {
+        for (int i = 0; i < count; ++i) {
+            auto *b = item(qPrintable(QStringLiteral("tagButton%1").arg(i)));
+            if (b && b->isVisible() && b->property("text").toString() == name)
+                return b;
+        }
+        return nullptr;
+    }
+    // The strip's `count` buttons' names as they read from the left on
+    // screen, one letter each; empty until all of them are laid out.
+    QString stripFromLeft(int count) const
+    {
+        QList<QQuickItem *> shown;
+        for (int i = 0; i < count; ++i) {
+            auto *b = item(qPrintable(QStringLiteral("tagButton%1").arg(i)));
+            if (!b || !b->isVisible())
+                return {};
+            shown.append(b);
+        }
+        std::sort(shown.begin(), shown.end(),
+                  [](QQuickItem *a, QQuickItem *b) { return a->mapToScene({}).x() < b->mapToScene({}).x(); });
+        QString names;
+        for (int i = 0; i < count; ++i) {
+            if (i > 0 && shown[i]->mapToScene({}).x() < shown[i - 1]->mapToScene({}).x() + shown[i - 1]->width())
+                return {}; // still overlapping
+            names += shown[i]->property("text").toString();
+        }
+        return names;
+    }
     QQuickWindow *styleWindow() const { return root()->findChild<QQuickWindow *>(QStringLiteral("styleManager")); }
 
 private slots:
@@ -417,6 +451,52 @@ private slots:
         auto *iconOnly = QAccessible::queryAccessibleInterface(item("tagButton1"));
         QVERIFY(iconOnly);
         QCOMPARE(iconOnly->text(QAccessible::Name), QStringLiteral("\\i1"));
+    }
+
+    // #263: the context menu's Move left and Move right go the way they say
+    // in either layout direction. Right to left, the strip starts at the
+    // right, so Move left takes a button toward the strip's end.
+    void tagButtonMovesFollowTheLayoutDirection_data()
+    {
+        QTest::addColumn<bool>("rightToLeft");
+        QTest::newRow("left to right") << false;
+        QTest::newRow("right to left") << true;
+    }
+    void tagButtonMovesFollowTheLayoutDirection()
+    {
+        QFETCH(bool, rightToLeft);
+        if (rightToLeft)
+            application->localisation().setPseudo(app::Localisation::Pseudo::RightToLeft);
+        QCOMPARE(QGuiApplication::layoutDirection(), rightToLeft ? Qt::RightToLeft : Qt::LeftToRight);
+        QVERIFY(showLine(tagged));
+        auto &buttons = application->tagButtons();
+        QVERIFY(buttons.add(QStringLiteral("A"), QStringLiteral("\\b1"), 0));
+        QVERIFY(buttons.add(QStringLiteral("B"), QStringLiteral("\\i1"), 0));
+        QVERIFY(buttons.add(QStringLiteral("C"), QStringLiteral("\\u1"), 0));
+        QTRY_COMPARE(stripFromLeft(3), rightToLeft ? QStringLiteral("CBA") : QStringLiteral("ABC"));
+        auto *menu = named("tagButtonMenu");
+        QVERIFY(menu);
+        const auto openOn = [&](const QString &name) {
+            QTRY_VERIFY(showing(name, 3));
+            click(showing(name, 3), Qt::RightButton);
+            QTRY_VERIFY(menu->property("opened").toBool());
+        };
+        // The middle button, one step left on screen.
+        openOn(QStringLiteral("B"));
+        choose(menu, "tagButtonMoveLeft");
+        QTRY_COMPARE(stripFromLeft(3), rightToLeft ? QStringLiteral("BCA") : QStringLiteral("BAC"));
+        QCOMPARE(buttons.button(rightToLeft ? 2 : 0).name, QStringLiteral("B"));
+        // At the strip's left end: Move left is off, Move right on.
+        openOn(QStringLiteral("B"));
+        QVERIFY(!named("tagButtonMoveLeft")->property("enabled").toBool());
+        QVERIFY(named("tagButtonMoveRight")->property("enabled").toBool());
+        choose(menu, "tagButtonMoveRight");
+        QTRY_COMPARE(stripFromLeft(3), rightToLeft ? QStringLiteral("CBA") : QStringLiteral("ABC"));
+        // At the strip's right end: Move right is off, Move left on.
+        openOn(rightToLeft ? QStringLiteral("A") : QStringLiteral("C"));
+        QVERIFY(named("tagButtonMoveLeft")->property("enabled").toBool());
+        QVERIFY(!named("tagButtonMoveRight")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
     }
 
     // LE5: Settings > Editor lists the buttons; its changes stay staged until

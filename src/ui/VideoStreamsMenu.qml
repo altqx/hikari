@@ -13,6 +13,7 @@ ShellMenu {
     id: menu
     required property VideoController video
     property var rows: []
+    iconRole: "video-streams"
     title: qsTr("Streams")
     enabled: video.hasVideo && video.streamCount > 0
     onAboutToShow: rows = video.streams()

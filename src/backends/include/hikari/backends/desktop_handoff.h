@@ -11,7 +11,8 @@
 //  - startDetached: a program started without waiting (the Lua script
 //    editor; Explorer for Font Collector's folder on Windows).
 // The application's own relaunches and installer runs (update_installer.cpp,
-// update_apply.cpp) are not hand-offs and do not come here.
+// update_apply.cpp, and composition.cpp's start for the files a quit left)
+// are not hand-offs and do not come here.
 //
 // Tests replace the routes (tests/support/desktop/desktop_guard.cpp), so no
 // test reaches a real browser, file manager or editor. The application never

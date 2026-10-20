@@ -641,31 +641,119 @@
     <name>HikariSub.Colours</name>
     <message>
         <source>Choose color</source>
-        <translation>เลือกสี</translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">เลือกสี</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation>สีหลัก</translation>
+        <translation type="vanished">สีหลัก</translation>
     </message>
     <message>
         <source>Secondary color</source>
-        <translation>สีรอง</translation>
+        <translation type="vanished">สีรอง</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation>สีเส้นขอบ</translation>
+        <translation type="vanished">สีเส้นขอบ</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation>สีเงา</translation>
+        <translation type="vanished">สีเงา</translation>
     </message>
     <message>
         <source>Spectrum color</source>
-        <translation>สีสเปกตรัม</translation>
+        <translation type="vanished">สีสเปกตรัม</translation>
+    </message>
+    <message>
+        <source>Previous colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>White</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yellow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cyan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magenta</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spring green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Azure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Violet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 is opaque, 255 fully transparent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer colour options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More colour options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saturation and value</source>
@@ -673,6 +761,34 @@
     </message>
     <message>
         <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HTML</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -689,15 +805,15 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Selected color:</source>
-        <translation>สีที่เลือก:</translation>
+        <translation type="vanished">สีที่เลือก:</translation>
     </message>
     <message>
         <source>RGB color</source>
-        <translation>สี RGB</translation>
+        <translation type="vanished">สี RGB</translation>
     </message>
     <message>
         <source>Red:</source>
-        <translation>แดง:</translation>
+        <translation type="vanished">แดง:</translation>
     </message>
     <message>
         <source>Red</source>
@@ -705,7 +821,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Green:</source>
-        <translation>เขียว:</translation>
+        <translation type="vanished">เขียว:</translation>
     </message>
     <message>
         <source>Green</source>
@@ -713,14 +829,10 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Blue:</source>
-        <translation>น้ำเงิน:</translation>
+        <translation type="vanished">น้ำเงิน:</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Alpha:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -728,15 +840,7 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>ASS:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>ASS colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HTML:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -745,11 +849,11 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSL color</source>
-        <translation>สี HSL</translation>
+        <translation type="vanished">สี HSL</translation>
     </message>
     <message>
         <source>Hue:</source>
-        <translation>เฉดสี:</translation>
+        <translation type="vanished">เฉดสี:</translation>
     </message>
     <message>
         <source>HSL hue</source>
@@ -757,7 +861,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Saturation:</source>
-        <translation>ความอิ่มตัว:</translation>
+        <translation type="vanished">ความอิ่มตัว:</translation>
     </message>
     <message>
         <source>HSL saturation</source>
@@ -765,7 +869,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Lightness:</source>
-        <translation>ความสว่าง:</translation>
+        <translation type="vanished">ความสว่าง:</translation>
     </message>
     <message>
         <source>Lightness</source>
@@ -773,7 +877,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>HSV color</source>
-        <translation>สี HSV</translation>
+        <translation type="vanished">สี HSV</translation>
     </message>
     <message>
         <source>HSV hue</source>
@@ -785,7 +889,7 @@ and the color selection window on right-click.</source>
     </message>
     <message>
         <source>Value:</source>
-        <translation>ค่า:</translation>
+        <translation type="vanished">ค่า:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -796,30 +900,22 @@ and the color selection window on right-click.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Recent colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Screen pixels around the pointer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Color picker</source>
-        <translation>ตัวเลือกสี</translation>
+        <translation type="vanished">ตัวเลือกสี</translation>
     </message>
     <message>
         <source>Move the window
 to the color selection location</source>
-        <translation>ย้ายหน้าต่าง
+        <translation type="vanished">ย้ายหน้าต่าง
 ไปยังตำแหน่งที่เลือกสี</translation>
     </message>
     <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
-        <translation>ยกเลิก</translation>
+        <translation type="vanished">ยกเลิก</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
@@ -2675,6 +2771,10 @@ Failed to copy %2 fonts.</source>
         <translation>ซ่อนคอลัมน์</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>ซ่อนชั้น</translation>
     </message>
@@ -2870,6 +2970,10 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>uncommitted</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation type="unfinished">
@@ -2928,6 +3032,119 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Line wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Home</name>
+    <message>
+        <source>Today %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yesterday %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">ใหม่</translation>
+    </message>
+    <message>
+        <source>New subtitles in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation type="unfinished">เซสชันสุดท้าย</translation>
+    </message>
+    <message>
+        <source>1 document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n documents</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">ตัวกรอง</translation>
+    </message>
+    <message>
+        <source>Filter recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">ชื่อ</translation>
+    </message>
+    <message>
+        <source>Last opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>last opened %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">เปิด</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove missing files</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4489,6 +4706,10 @@ after switching from full screen</source>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
         <translation>ไม่จัดบรรทัดปัจจุบันให้อยู่กึ่งกลางในช่องคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>
@@ -7712,6 +7933,10 @@ Foreign language text will be deleted.</source>
     <message>
         <source>Color:</source>
         <translation>สี:</translation>
+    </message>
+    <message>
+        <source>Choose the colour</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>

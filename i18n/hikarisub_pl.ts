@@ -641,31 +641,119 @@
     <name>HikariSub.Colours</name>
     <message>
         <source>Choose color</source>
-        <translation>Wybierz kolor</translation>
-    </message>
-    <message>
-        <source>Colour</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Wybierz kolor</translation>
     </message>
     <message>
         <source>Primary color</source>
-        <translation>Kolor podstawowy</translation>
+        <translation type="vanished">Kolor podstawowy</translation>
     </message>
     <message>
         <source>Secondary color</source>
-        <translation>Kolor zastępczy</translation>
+        <translation type="vanished">Kolor zastępczy</translation>
     </message>
     <message>
         <source>Border color</source>
-        <translation>Kolor obwódki</translation>
+        <translation type="vanished">Kolor obwódki</translation>
     </message>
     <message>
         <source>Shadow color</source>
-        <translation>Kolor cienia</translation>
+        <translation type="vanished">Kolor cienia</translation>
     </message>
     <message>
         <source>Spectrum color</source>
-        <translation>Kolor spektrum</translation>
+        <translation type="vanished">Kolor spektrum</translation>
+    </message>
+    <message>
+        <source>Previous colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New colour %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Palette</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>White</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Light grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dark grey</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Black</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yellow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cyan</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Magenta</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Orange</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spring green</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Azure</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Violet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hex</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 is opaque, 255 fully transparent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fewer colour options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More colour options</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Saturation and value</source>
@@ -673,6 +761,34 @@
     </message>
     <message>
         <source>Hue</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Colour values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>RGB</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSL</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HSV</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saturation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HTML</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -689,15 +805,15 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Selected color:</source>
-        <translation>Wybrany kolor:</translation>
+        <translation type="vanished">Wybrany kolor:</translation>
     </message>
     <message>
         <source>RGB color</source>
-        <translation>Kolor RGB</translation>
+        <translation type="vanished">Kolor RGB</translation>
     </message>
     <message>
         <source>Red:</source>
-        <translation>Czerwony:</translation>
+        <translation type="vanished">Czerwony:</translation>
     </message>
     <message>
         <source>Red</source>
@@ -705,7 +821,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Green:</source>
-        <translation>Zielony:</translation>
+        <translation type="vanished">Zielony:</translation>
     </message>
     <message>
         <source>Green</source>
@@ -713,14 +829,10 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Blue:</source>
-        <translation>Niebieski:</translation>
+        <translation type="vanished">Niebieski:</translation>
     </message>
     <message>
         <source>Blue</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Alpha:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -728,15 +840,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>ASS:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>ASS colour</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HTML:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -745,11 +849,11 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>HSL color</source>
-        <translation>Kolor HSL</translation>
+        <translation type="vanished">Kolor HSL</translation>
     </message>
     <message>
         <source>Hue:</source>
-        <translation>Odcień:</translation>
+        <translation type="vanished">Odcień:</translation>
     </message>
     <message>
         <source>HSL hue</source>
@@ -757,7 +861,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Saturation:</source>
-        <translation>Nasycenie:</translation>
+        <translation type="vanished">Nasycenie:</translation>
     </message>
     <message>
         <source>HSL saturation</source>
@@ -765,7 +869,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Lightness:</source>
-        <translation>Jaskrawość:</translation>
+        <translation type="vanished">Jaskrawość:</translation>
     </message>
     <message>
         <source>Lightness</source>
@@ -773,7 +877,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>HSV color</source>
-        <translation>Kolor HSV</translation>
+        <translation type="vanished">Kolor HSV</translation>
     </message>
     <message>
         <source>HSV hue</source>
@@ -785,7 +889,7 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
     </message>
     <message>
         <source>Value:</source>
-        <translation>Wartość:</translation>
+        <translation type="vanished">Wartość:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -796,30 +900,22 @@ a okno wyboru koloru po kliknięciu prawym przyciskiem.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Recent colors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Screen pixels around the pointer</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Color picker</source>
-        <translation>Próbnik koloru</translation>
+        <translation type="vanished">Próbnik koloru</translation>
     </message>
     <message>
         <source>Move the window
 to the color selection location</source>
-        <translation>Przenoś okno
+        <translation type="vanished">Przenoś okno
 w miejsce wyboru koloru</translation>
     </message>
     <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
-        <translation>Anuluj</translation>
+        <translation type="vanished">Anuluj</translation>
     </message>
     <message>
         <source>Picking a colour from the screen is not available: this Wayland session offers no screenshot portal (xdg-desktop-portal with PickColor).</source>
@@ -2694,6 +2790,10 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation>Ukryj kolumny</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>Ukryj warstwę</translation>
     </message>
@@ -2889,6 +2989,10 @@ Nie udało się skopiować %2 czcionek.</translation>
         <source>bookmarked</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>uncommitted</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation type="unfinished">
@@ -2951,6 +3055,121 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Line wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Home</name>
+    <message>
+        <source>Today %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yesterday %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">Nowy</translation>
+    </message>
+    <message>
+        <source>New subtitles in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation type="unfinished">Ostatnia sesja</translation>
+    </message>
+    <message>
+        <source>1 document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n documents</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">Filtruj</translation>
+    </message>
+    <message>
+        <source>Filter recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">Nazwa</translation>
+    </message>
+    <message>
+        <source>Last opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>last opened %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Otwórz</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove missing files</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4512,6 +4731,10 @@ po wyjściu z pełnego ekranu</translation>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
         <translation>Nie wypośrodkowuj aktywnej linii w polu napisów</translation>
+    </message>
+    <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>
@@ -7735,6 +7958,10 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     <message>
         <source>Color:</source>
         <translation>Kolor:</translation>
+    </message>
+    <message>
+        <source>Choose the colour</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Checkerboard pattern</source>
