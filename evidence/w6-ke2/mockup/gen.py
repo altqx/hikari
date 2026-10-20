@@ -201,7 +201,7 @@ def editor_block(t, *, text=MAIN_TEXT, effect="template syl noblank", caret_afte
     return (f'<div class="sec"><div class="sh">Line 3<span class="dimx">template syl noblank</span></div>{row}'
             f'<div class="code">{body}</div>{prob}'
             f'<div class="hint2">{kc("$")} inserts a variable, {kc("!")} starts a Lua expression. '
-            f'Ctrl+Space lists what fits here.</div></div>')
+            f'Both open a list of what fits.</div></div>')
 
 
 def gen_rows(t, *, stale=False, n=6):
@@ -481,8 +481,8 @@ def sheet(key, t):
     # 6 Apply menu and the applied state.
     body = te_body(t, draft=(), full=True, editor=editor_block(t), preview=preview_block(t),
                    foot=footer(t, state="applied"))
-    rows = [mrow(None, "Apply to every karaoke Line", "Ctrl+Enter"),
-            mrow(None, "Apply to the selected Lines", "Ctrl+Shift+Enter", hover=True,
+    rows = [mrow(None, "Apply to every karaoke Line", ""),
+            mrow(None, "Apply to the selected Lines", "", hover=True,
                  sub="KE1's regenerate-selected: the other Lines' output stays as it is.")]
     m = menu(rows, left=PW - 404, bottom=46, width=400)
     cells.append(cell(6, "Apply: one undo step for every Line the templates make.",
