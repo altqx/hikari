@@ -1098,7 +1098,7 @@ end
 
 -- A dialogue line as it reads back once saved: the helper keeps numbers as
 -- integers, cut towards zero, and the file loader trims spaces around the
--- actor, effect, text and a TLMode translation.
+-- actor, effect, text and a TLMode Line's other text.
 local function whole(x)
 	x = tonumber(x) or 0
 	return x >= 0 and math.floor(x) or math.ceil(x)

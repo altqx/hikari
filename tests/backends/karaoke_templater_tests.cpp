@@ -658,45 +658,51 @@ TEST_F(KaraokeTemplater, RegenerateSelectedTellsIdenticalOutputsApartByOrder)
     EXPECT_EQ(saved(session), templatedBytes(bytesOf(input + edited), bundledScript()));
 }
 
-// A TLMode translation is part of a generated line as saved: when a karaoke
-// Line's translation changed, its old generated lines are not what the
-// templates give it now, and a run for another Line is refused.
-TEST_F(KaraokeTemplater, RegenerateSelectedComparesTheTranslationToo)
+// TLMode: a translated karaoke Line is templated from its translation, and
+// its generated lines carry its original text as theirs. When a karaoke
+// Line's original changed, its old generated lines are not what the
+// templates give it now, so a run for another Line is refused.
+TEST_F(KaraokeTemplater, RegenerateSelectedComparesTheOriginalToo)
 {
-    const auto translate = [](hikari::application::EditSession &session, hikari::core::LineId line,
-                              std::u8string translation) {
+    const auto edit = [](hikari::application::EditSession &session, hikari::core::LineId line,
+                         std::u8string original, std::u8string translation) {
         select(session, {line});
         hikari::application::DraftChange change;
+        change.text = std::move(original);
         change.translation = std::move(translation);
         return session.editDraft(line, change) && session.commitDraft();
     };
-    const auto outcome = [&](std::u8string sourceTranslation) {
+    const auto outcome = [&](std::u8string sourceOriginal) {
         hikari::application::EditSession session(
             hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass"))).document);
         const auto *source = lineWithText(session.document(), kFirstT1a, u8"karaoke");
         EXPECT_TRUE(source);
         if (!source)
             return std::optional<LuaScriptHost::RunOutcome>();
-        // The karaoke Line and its generated lines, translated alike
-        std::vector<hikari::core::LineId> generated;
+        // As a TLMode run leaves them: the karaoke Line translated with its
+        // karaoke, each generated line's translation the generated text and
+        // its original the karaoke Line's.
+        std::vector<std::pair<hikari::core::LineId, std::u8string>> generated;
         std::optional<hikari::core::LineId> t2c;
         for (const auto *l : session.document().lines()) {
             if (l->style == source->style && l->effect == u8"fx" && l->start.value == source->start.value)
-                generated.push_back(l->id);
+                generated.emplace_back(l->id, l->text);
             if (l->style == u8"T2c" && l->effect == u8"karaoke")
                 t2c = l->id;
         }
         EXPECT_FALSE(generated.empty());
         EXPECT_TRUE(t2c);
         const auto sourceId = source->id;
-        for (const auto id : generated)
-            EXPECT_TRUE(translate(session, id, u8"Old"));
-        EXPECT_TRUE(translate(session, sourceId, std::move(sourceTranslation)));
+        for (const auto &[id, text] : generated)
+            EXPECT_TRUE(edit(session, id, kFirstT1a, text));
+        EXPECT_TRUE(edit(session, sourceId, std::move(sourceOriginal), kFirstT1a));
         select(session, {*t2c});
         return outcomeOf(session, bundledScript(), kSelected);
     };
-    EXPECT_EQ(outcome(u8"Old"), LuaScriptHost::RunOutcome::Ok);
-    EXPECT_EQ(outcome(u8"New"), LuaScriptHost::RunOutcome::Cancelled);
+    EXPECT_EQ(outcome(kFirstT1a), LuaScriptHost::RunOutcome::Ok) << run.log.join(QString()).toStdString();
+    std::u8string changed(kFirstT1a);
+    changed.replace(0, 8, u8"{\\k32}HA");
+    EXPECT_EQ(outcome(changed), LuaScriptHost::RunOutcome::Cancelled);
     EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Cannot tell which generated lines")));
 }
 
