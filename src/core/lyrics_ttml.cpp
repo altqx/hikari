@@ -6,7 +6,8 @@
 // Lyrics TTML (Apple Music, AMLL TTML Tool) times every <p> and <span> on
 // the media timeline, although TTML's own rule makes a child's times
 // relative to its parent's begin; the files agree with themselves only when
-// read as absolute times, so they are read that way.
+// read as absolute times, so they are read that way. A <p> without times
+// of its own takes its nearest timed ancestor's (a <div>, the <body>).
 
 #include "hikari/core/lyrics_import.h"
 
@@ -71,6 +72,33 @@ bool xmlChar(std::uint32_t cp)
 {
     return cp == 0x9 || cp == 0xA || cp == 0xD || (cp >= 0x20 && cp <= 0xD7FF) || (cp >= 0xE000 && cp <= 0xFFFD) ||
            (cp >= 0x10000 && cp <= 0x10FFFF);
+}
+
+// The code point at `i` of valid UTF-8 and its length in bytes.
+std::pair<std::uint32_t, std::size_t> codePointAt(u8sv s, std::size_t i)
+{
+    const auto lead = static_cast<unsigned char>(s[i]);
+    const std::size_t length = lead < 0x80 ? 1 : lead < 0xE0 ? 2 : lead < 0xF0 ? 3 : 4;
+    std::uint32_t cp = length == 1 ? lead : lead & (0x7F >> length);
+    for (std::size_t k = 1; k < length && i + k < s.size(); ++k)
+        cp = (cp << 6) | (static_cast<unsigned char>(s[i + k]) & 0x3F);
+    return {cp, length};
+}
+
+// XML's NameStartChar and NameChar.
+bool nameStartChar(std::uint32_t cp)
+{
+    return cp == u8':' || cp == u8'_' || (cp >= u8'A' && cp <= u8'Z') || (cp >= u8'a' && cp <= u8'z') ||
+           (cp >= 0xC0 && cp <= 0xD6) || (cp >= 0xD8 && cp <= 0xF6) || (cp >= 0xF8 && cp <= 0x2FF) ||
+           (cp >= 0x370 && cp <= 0x37D) || (cp >= 0x37F && cp <= 0x1FFF) || (cp >= 0x200C && cp <= 0x200D) ||
+           (cp >= 0x2070 && cp <= 0x218F) || (cp >= 0x2C00 && cp <= 0x2FEF) || (cp >= 0x3001 && cp <= 0xD7FF) ||
+           (cp >= 0xF900 && cp <= 0xFDCF) || (cp >= 0xFDF0 && cp <= 0xFFFD) || (cp >= 0x10000 && cp <= 0xEFFFF);
+}
+
+bool nameChar(std::uint32_t cp)
+{
+    return nameStartChar(cp) || cp == u8'-' || cp == u8'.' || (cp >= u8'0' && cp <= u8'9') || cp == 0xB7 ||
+           (cp >= 0x300 && cp <= 0x36F) || (cp >= 0x203F && cp <= 0x2040);
 }
 
 // "U+0001": a character XML forbids, named for the message.
@@ -198,14 +226,17 @@ private:
         }
     }
 
-    // A name; it may not start with a digit, '-' or '.'.
+    // A name, by XML's grammar: a NameStartChar, then NameChars. What
+    // follows it is the caller's to check ("<a$>" is broken there).
     std::optional<std::u8string> name()
     {
         const std::size_t from = m_pos;
-        if (done() || isDigit(m_s[m_pos]) || m_s[m_pos] == u8'-' || m_s[m_pos] == u8'.')
-            return std::nullopt;
-        while (!done() && !isSpace(m_s[m_pos]) && u8sv(u8"/>=<\"'").find(m_s[m_pos]) == u8sv::npos)
-            advance(1);
+        while (!done()) {
+            const auto [cp, length] = codePointAt(m_s, m_pos);
+            if (!(m_pos == from ? nameStartChar(cp) : nameChar(cp)))
+                break;
+            advance(length);
+        }
         if (m_pos == from)
             return std::nullopt;
         return std::u8string(m_s.substr(from, m_pos - from));
@@ -513,7 +544,7 @@ public:
         readHead(root);
         for (const XmlNode &child : root.children)
             if (localName(child.name) == u8"body")
-                if (auto ok = paragraphs(child); !ok)
+                if (auto ok = paragraphs(child, std::nullopt, std::nullopt); !ok)
                     return std::unexpected(ok.error());
         if (m_sheet.lines.empty())
             return std::unexpected(LyricsProblem{Kind::NoLyrics, 0, {}});
@@ -694,6 +725,9 @@ private:
         return {};
     }
 
+    // A <p>, or an x-bg span, as Lines. `begin` and `end` are its nearest
+    // timed ancestor's: they time a plain paragraph without times of its own
+    // and end its last word, but a word-timed Line still spans its words.
     std::expected<void, LyricsProblem> line(const XmlNode &node, std::optional<std::int64_t> begin,
                                             std::optional<std::int64_t> end, const std::u8string &actor)
     {
@@ -702,6 +736,9 @@ private:
             return std::unexpected(own.error());
         begin = own->first ? own->first : begin;
         end = own->second ? own->second : end;
+        if (begin && end && *end < *begin) // its own begin after the end it inherits
+            return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, node.line,
+                                                 std::u8string(attribute(node, u8"begin").value_or(u8""))});
         Words words;
         std::vector<const XmlNode *> backgrounds;
         if (auto ok = collect(node, words, backgrounds); !ok)
@@ -729,14 +766,14 @@ private:
             const u8sv leading = detail::trim(words.leading);
             if (!leading.empty())
                 words.words.front().text.insert(0, std::u8string(leading) + u8" ");
-            out.start = std::min(begin.value_or(words.words.front().begin), words.words.front().begin);
-            out.end = std::max(end.value_or(words.words.back().end), words.words.back().end);
+            out.start = std::min(own->first.value_or(words.words.front().begin), words.words.front().begin);
+            out.end = std::max(own->second.value_or(words.words.back().end), words.words.back().end);
             out.words = std::move(words.words);
             if (auto ok = add(std::move(out), node.line); !ok)
                 return ok;
         }
         for (const XmlNode *background : backgrounds)
-            if (auto ok = line(*background, std::nullopt, std::nullopt, actor); !ok)
+            if (auto ok = line(*background, begin, end, actor); !ok)
                 return ok;
         return {};
     }
@@ -753,8 +790,16 @@ private:
         return {};
     }
 
-    std::expected<void, LyricsProblem> paragraphs(const XmlNode &node)
+    // The <p>s under the body and its divs. A <p> without its own begin or
+    // end takes its nearest ancestor's (read as absolute, as its own are).
+    std::expected<void, LyricsProblem> paragraphs(const XmlNode &node, std::optional<std::int64_t> begin,
+                                                  std::optional<std::int64_t> end)
     {
+        const auto own = times(node);
+        if (!own)
+            return std::unexpected(own.error());
+        begin = own->first ? own->first : begin;
+        end = own->second ? own->second : end;
         for (const XmlNode &child : node.children) {
             if (child.isText())
                 continue;
@@ -764,9 +809,9 @@ private:
                 const std::u8string actor = name != m_agents.end() && !name->second.empty() ? name->second
                                             : agent                                         ? std::u8string(*agent)
                                                                                             : std::u8string();
-                if (auto ok = line(child, std::nullopt, std::nullopt, actor); !ok)
+                if (auto ok = line(child, begin, end, actor); !ok)
                     return ok;
-            } else if (auto ok = paragraphs(child); !ok) {
+            } else if (auto ok = paragraphs(child, begin, end); !ok) {
                 return ok;
             }
         }
