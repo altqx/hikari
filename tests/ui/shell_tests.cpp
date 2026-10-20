@@ -529,6 +529,19 @@ class ShellTest : public QObject {
             QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Audio"), 0, 0, 0, deficit));
         QTRY_VERIFY(std::abs(audio->property("bodyHeight").toReal() - 170) <= 1);
     }
+    // The Line editor's dock 20 px over its minimum (the tag buttons and a
+    // line of each text field), so the Line's fields are past its fold
+    // whatever room the fonts and the title bar leave the Editing layout.
+    // Its top edge moves down by no more than it has to give: a move past
+    // that goes on to the next separator out and gives the room back.
+    void foldTheLineEditor()
+    {
+        auto *panel = item("editorPanel");
+        const int target = int(std::ceil(panel->property("minimumSize").toSizeF().height())) + 20;
+        if (panel->height() > target)
+            QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), 0, target - int(panel->height()), 0, 0));
+        QTRY_VERIFY(panel->height() <= target + 1);
+    }
     // Repeater delegates are not QObject children of the window: walk the items.
     static QQuickItem *findItem(QQuickItem *from, const QString &name)
     {
@@ -9976,6 +9989,7 @@ private slots:
         QTRY_VERIFY(application->editor().translationMode());
         QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
         closeTheOriginalTextPanel();
+        foldTheLineEditor();
         auto *panel = item("editorPanel");
         auto *view = item("editorScroll");
         auto *content = item("editorContent");
@@ -10078,6 +10092,7 @@ private slots:
         // preset the file's tab starts with).
         QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
         closeTheOriginalTextPanel(); // the two fields in the Line editor (translation_preset_tests: across panels)
+        foldTheLineEditor();
         auto *original = item("lineText");
         auto *translated = item("translationText");
         auto *layer = item("layerField");
