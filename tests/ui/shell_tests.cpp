@@ -15214,10 +15214,11 @@ private slots:
 
         // The readout's places stay without a position (Codex on #293): the
         // first one shown moves nothing in the bar.
-        // (Looked up each time: the bar's items are made again as it fills.)
+        // (Looked up each time: the bar's items are made again with the tool.)
         const auto readoutY = [&] { return visualItem("visualValue_y"); };
         QTRY_VERIFY(readoutY() && readoutY()->isVisible() && readoutY()->property("text").toString().isEmpty());
         QTest::qWait(50);
+        const QPointer<QQuickItem> emptyReadout = readoutY();
         const QPointF emptyAt = readoutY()->mapToScene(QPointF(0, 0));
         const qreal emptyWidth = readoutY()->width();
         QVERIFY(emptyWidth > 0);
@@ -15228,9 +15229,12 @@ private slots:
         QTest::mouseMove(window, p);
         QTRY_VERIFY(!tools.overlay().isEmpty());
         QTRY_VERIFY(readoutY() && !readoutY()->property("text").toString().isEmpty());
-        // (Once laid out: a field made again is placed at the next polish.)
-        QTRY_COMPARE(readoutY()->mapToScene(QPointF(0, 0)), emptyAt);
-        QTRY_COMPARE(readoutY()->width(), emptyWidth);
+        // The same field (Copy video position enabled with the position
+        // makes no item again; Windows CI on 3912e5aca read a new, unplaced
+        // one), in the same place.
+        QCOMPARE(readoutY(), emptyReadout.data());
+        QCOMPARE(readoutY()->mapToScene(QPointF(0, 0)), emptyAt);
+        QCOMPARE(readoutY()->width(), emptyWidth);
         QVERIFY(tools.hideCursor());
         const QVariantList shapes = tools.overlay();
         QCOMPARE(shapes.size(), 5); // two black lines, two white, the label
