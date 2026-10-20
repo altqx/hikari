@@ -26,6 +26,7 @@
 
 #include <cstring>
 #include <functional>
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
@@ -161,19 +162,37 @@ protected:
             return false;
         }
         if (*run.outcome != LuaScriptHost::RunOutcome::Ok || !host->lastResult()) {
-            ADD_FAILURE() << run.message.toStdString();
+            ADD_FAILURE() << "outcome " << static_cast<int>(*run.outcome) << ": " << run.message.toStdString()
+                          << run.log.join(QString()).toStdString();
             return false;
         }
         return hikari::application::applyMacroResult(session, *snapshot, *host->lastResult(), macroName).has_value();
     }
 
-    std::string templated(const QString &document, const QString &script)
+    // Runs `macroName` without applying its result.
+    std::optional<LuaScriptHost::RunOutcome> outcomeOf(hikari::application::EditSession &session,
+                                                       const QString &script, const std::string &macroName)
     {
-        auto loaded = hikari::core::loadAss(readBytes(document));
-        hikari::application::EditSession session(std::move(loaded.document));
+        auto host = load(script);
+        const auto snapshot = hikari::application::snapshotForMacro(session);
+        run = {};
+        if (!snapshot || !host->run(macro(*host, macroName), *snapshot) ||
+            !waitFor([&] { return run.outcome.has_value(); }))
+            return std::nullopt;
+        return run.outcome;
+    }
+
+    std::string templatedBytes(const std::vector<std::byte> &bytes, const QString &script)
+    {
+        hikari::application::EditSession session(hikari::core::loadAss(bytes).document);
         if (!apply(session, script, "Apply karaoke template"))
             return {};
         return textOf(hikari::core::encodeAss(session.document()));
+    }
+
+    std::string templated(const QString &document, const QString &script)
+    {
+        return templatedBytes(readBytes(document), script);
     }
 
     Outcome run;
@@ -192,6 +211,56 @@ QString goldenOf(const QString &document)
 {
     return corpusDir() + QLatin1Char('/') + QFileInfo(document).completeBaseName() + QStringLiteral(".out.ass");
 }
+
+std::vector<std::byte> bytesOf(const std::string &text)
+{
+    std::vector<std::byte> out(text.size());
+    std::memcpy(out.data(), text.data(), text.size());
+    return out;
+}
+
+// A corpus file with each `from` replaced by its `to`, once each.
+std::vector<std::byte> editedCorpus(const QString &name, const std::vector<std::pair<std::string, std::string>> &edits)
+{
+    std::string text = textOf(readBytes(corpusDir() + QLatin1Char('/') + name));
+    for (const auto &[from, to] : edits) {
+        const auto at = text.find(from);
+        EXPECT_NE(at, std::string::npos) << from;
+        if (at != std::string::npos)
+            text.replace(at, from.size(), to);
+    }
+    return bytesOf(text);
+}
+
+std::string saved(const hikari::application::EditSession &session)
+{
+    return textOf(hikari::core::encodeAss(session.document()));
+}
+
+const hikari::core::LineRecord *lineWithText(const hikari::core::Document &document, std::u8string_view text,
+                                             std::u8string_view effect)
+{
+    for (const auto *l : document.lines())
+        if (l->text == text && l->effect == effect)
+            return l;
+    return nullptr;
+}
+
+void select(hikari::application::EditSession &session, const std::vector<hikari::core::LineId> &lines)
+{
+    session.setSelection(hikari::application::Selection{lines.front(), {lines.begin(), lines.end()}});
+}
+
+// Commits new text for a Line, as the Line editor does.
+bool editText(hikari::application::EditSession &session, hikari::core::LineId line, std::u8string text)
+{
+    select(session, {line});
+    return session.editDraftText(line, std::move(text)) && session.commitDraft();
+}
+
+constexpr char kSelected[] = "Apply karaoke template to selected lines";
+constexpr char8_t kFirstT1a[] =
+    u8"{\\k32}ha{\\k28}ru{\\k0} {\\k41}no{\\k0} {\\k25}ka{\\k30}ze{\\k0} {\\k45}ga{\\k0} {\\k22}fu{\\k60}ku";
 
 TEST_F(KaraokeTemplater, CorpusCoversEveryKind)
 {
@@ -315,6 +384,259 @@ TEST_F(KaraokeTemplater, CleanRunKeepsTheSelection)
     EXPECT_EQ(session.selection().active, last);
     EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{last}));
     EXPECT_TRUE(run.log.isEmpty()) << run.log.join(QString()).toStdString();
+}
+
+// KE1-regenerate-selected: a whole run marks each generated Line with the
+// karaoke Line it came from (in memory only; the saved bytes stay 3.2.2's).
+TEST_F(KaraokeTemplater, WholeRunMarksGeneratedLinesWithTheirKaraokeLine)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass"))).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    std::map<hikari::core::LineId, const hikari::core::LineRecord *> byId;
+    for (const auto *l : session.document().lines())
+        byId[l->id] = l;
+    std::map<hikari::core::LineId, int> generated;
+    for (const auto *l : session.document().lines()) {
+        if (l->effect != u8"fx") {
+            EXPECT_FALSE(l->generatedFrom.value);
+            continue;
+        }
+        ASSERT_TRUE(byId.contains(l->generatedFrom));
+        const auto *source = byId[l->generatedFrom];
+        EXPECT_EQ(source->effect, u8"karaoke");
+        EXPECT_EQ(source->style, l->style);
+        ++generated[l->generatedFrom];
+    }
+    EXPECT_EQ(generated.size(), 6u) << "every karaoke Line has output";
+}
+
+// With every Line selected, the selected-Lines macro gives the whole run's
+// Document (km-minimal's stale generated Line is replaced where it was
+// rather than at the end, so only its order differs).
+TEST_F(KaraokeTemplater, SelectingEveryLineGivesTheWholeRun)
+{
+    for (const QString &name : corpus()) {
+        SCOPED_TRACE(name.toStdString());
+        hikari::application::EditSession session(
+            hikari::core::loadAss(readBytes(corpusDir() + QLatin1Char('/') + name)).document);
+        std::vector<hikari::core::LineId> all;
+        for (const auto *l : session.document().lines())
+            all.push_back(l->id);
+        select(session, all);
+        ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+        const std::string golden = textOf(readBytes(goldenOf(name)));
+        if (name != QLatin1String("km-minimal.ass")) {
+            EXPECT_EQ(saved(session), golden);
+            continue;
+        }
+        const auto sortedLines = [](const std::string &text) {
+            QStringList lines = QString::fromStdString(text).split(QLatin1Char('\n'));
+            lines.sort();
+            return lines;
+        };
+        EXPECT_NE(saved(session), golden);
+        EXPECT_EQ(sortedLines(saved(session)), sortedLines(golden));
+    }
+}
+
+// Regenerating one edited karaoke Line replaces only its generated Lines, in
+// their place, as one undo step: the Document is the one a whole run on the
+// edited file gives, and every other Line keeps its identity.
+TEST_F(KaraokeTemplater, RegenerateSelectedReplacesOnlyItsOutputAsOneUndoStep)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass"))).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto *source = lineWithText(session.document(), kFirstT1a, u8"karaoke");
+    ASSERT_NE(source, nullptr);
+    const auto sourceId = source->id;
+    std::set<hikari::core::LineId> others;
+    for (const auto *l : session.document().lines())
+        if (l->generatedFrom != sourceId)
+            others.insert(l->id);
+    std::u8string text(kFirstT1a);
+    text.replace(0, 8, u8"{\\k32}HA");
+    ASSERT_TRUE(editText(session, sourceId, text));
+    const std::string before = saved(session);
+    const std::size_t steps = session.historySize();
+
+    select(session, {sourceId});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    EXPECT_EQ(saved(session), templatedBytes(editedCorpus(QStringLiteral("stock-tutorials.ass"),
+                                                          {{"T1a,,0,0,0,,{\\k32}ha", "T1a,,0,0,0,,{\\k32}HA"}}),
+                                             bundledScript()));
+    std::set<hikari::core::LineId> now;
+    for (const auto *l : session.document().lines())
+        now.insert(l->id);
+    for (const auto id : others)
+        EXPECT_TRUE(now.contains(id));
+    EXPECT_TRUE(run.log.isEmpty()) << run.log.join(QString()).toStdString();
+    EXPECT_EQ(session.historySize(), steps + 1);
+
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(saved(session), before);
+}
+
+// Selecting one of a karaoke Line's generated Lines regenerates that Line.
+TEST_F(KaraokeTemplater, SelectingAGeneratedLineRegeneratesItsKaraokeLine)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass"))).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto sourceId = lineWithText(session.document(), kFirstT1a, u8"karaoke")->id;
+    std::u8string text(kFirstT1a);
+    text.replace(0, 8, u8"{\\k32}HA");
+    ASSERT_TRUE(editText(session, sourceId, text));
+    std::optional<hikari::core::LineId> output;
+    for (const auto *l : session.document().lines())
+        if (l->generatedFrom == sourceId)
+            output = l->id;
+    ASSERT_TRUE(output);
+    select(session, {*output});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    EXPECT_EQ(saved(session), templatedBytes(editedCorpus(QStringLiteral("stock-tutorials.ass"),
+                                                          {{"T1a,,0,0,0,,{\\k32}ha", "T1a,,0,0,0,,{\\k32}HA"}}),
+                                             bundledScript()));
+}
+
+// Templates can carry state from one karaoke Line to the next (here a code
+// line counter): a selected Line's output is what a whole run gives it, as
+// the run goes through the Lines before it in order.
+TEST_F(KaraokeTemplater, RegenerateSelectedKeepsStateCarriedAcrossLines)
+{
+    const std::string head = "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n\n[V4+ Styles]\n"
+                             "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                             "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+                             "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                             "Style: K,Arial,30,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,"
+                             "2,0,8,10,10,10,1\n\n[Events]\n"
+                             "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                             "Comment: 0,0:00:00.00,0:00:00.00,K,,0,0,0,code once,n = 0\n"
+                             "Comment: 0,0:00:00.00,0:00:00.00,K,,0,0,0,code line,n = n + 1\n"
+                             "Comment: 0,0:00:00.00,0:00:00.00,K,,0,0,0,template line,{\\pos(320,!n*40!)}\n";
+    const auto document = [&](const char *third) {
+        return bytesOf(head + "Dialogue: 0,0:00:01.00,0:00:02.00,K,,0,0,0,,{\\k50}a{\\k50}b\n"
+                              "Dialogue: 0,0:00:03.00,0:00:04.00,K,,0,0,0,,{\\k50}c{\\k50}d\n"
+                              "Dialogue: 0,0:00:05.00,0:00:06.00,K,,0,0,0,," +
+                       third + "\n");
+    };
+    hikari::application::EditSession session(hikari::core::loadAss(document("{\\k50}e{\\k50}f")).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto third = lineWithText(session.document(), u8"{\\k50}e{\\k50}f", u8"karaoke")->id;
+    ASSERT_TRUE(editText(session, third, u8"{\\k50}E{\\k50}F"));
+    select(session, {third});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    const std::string whole = templatedBytes(document("{\\k50}E{\\k50}F"), bundledScript());
+    EXPECT_EQ(saved(session), whole);
+    EXPECT_NE(whole.find("{\\pos(320,120)}E{\\pos(320,120)}F"), std::string::npos) << whole;
+}
+
+// A Document opened from a file has no marks: the generated Lines the other
+// karaoke Lines' current output accounts for stay, the rest are replaced.
+// A second run then mixes marked and unmarked Lines.
+TEST_F(KaraokeTemplater, RegenerateSelectedWorksOnAnOpenedFile)
+{
+    const std::pair<std::string, std::string> first{"T1a,,0,0,0,karaoke,{\\k32}ha", "T1a,,0,0,0,karaoke,{\\k32}HA"};
+    const std::pair<std::string, std::string> second{"T2c,,0,0,0,karaoke,{\\k32}ha{\\k28}ru",
+                                                     "T2c,,0,0,0,karaoke,{\\k32}ha{\\k14}r{\\k14}u"};
+    hikari::application::EditSession session(
+        hikari::core::loadAss(editedCorpus(QStringLiteral("stock-tutorials.out.ass"), {first})).document);
+    std::u8string text(kFirstT1a);
+    text.replace(0, 8, u8"{\\k32}HA");
+    select(session, {lineWithText(session.document(), text, u8"karaoke")->id});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    const auto input = [](std::pair<std::string, std::string> edit) {
+        edit.first.replace(edit.first.find("karaoke"), 7, "");
+        edit.second.replace(edit.second.find("karaoke"), 7, "");
+        return edit;
+    };
+    EXPECT_EQ(saved(session),
+              templatedBytes(editedCorpus(QStringLiteral("stock-tutorials.ass"), {input(first)}), bundledScript()));
+
+    // T2c's syl template gives one Line per syllable: one more now
+    std::optional<hikari::core::LineId> t2cId;
+    for (const auto *l : session.document().lines())
+        if (l->style == u8"T2c" && l->effect == u8"karaoke")
+            t2cId = l->id;
+    ASSERT_TRUE(t2cId);
+    std::u8string edited(kFirstT1a);
+    edited.replace(edited.find(u8"{\\k28}ru"), 8, u8"{\\k14}r{\\k14}u");
+    ASSERT_TRUE(editText(session, *t2cId, edited));
+    select(session, {*t2cId});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    EXPECT_EQ(saved(session), templatedBytes(editedCorpus(QStringLiteral("stock-tutorials.ass"),
+                                                          {input(first), input(second)}),
+                                             bundledScript()));
+}
+
+// When the other karaoke Lines' generated Lines are not what the templates
+// give now (here a template changed), the unmarked ones cannot be told
+// apart: the run is cancelled with an explanation and changes nothing.
+TEST_F(KaraokeTemplater, RegenerateSelectedRefusesWhenTheRestCannotBeMatched)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(editedCorpus(QStringLiteral("stock-tutorials.out.ass"),
+                                           {{"T1a,,0,0,0,template line,{\\r\\t($start,$mid,\\fscy120)",
+                                             "T1a,,0,0,0,template line,{\\r\\t($start,$mid,\\fscy130)"}}))
+            .document);
+    std::optional<hikari::core::LineId> t2c;
+    for (const auto *l : session.document().lines())
+        if (l->style == u8"T2c" && l->effect == u8"karaoke")
+            t2c = l->id;
+    ASSERT_TRUE(t2c);
+    select(session, {*t2c});
+    EXPECT_EQ(outcomeOf(session, bundledScript(), kSelected), LuaScriptHost::RunOutcome::Cancelled);
+    EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Cannot tell which generated lines")));
+}
+
+// The selected-Lines macro is offered when a karaoke Line or a generated
+// Line is selected, not for a selection of template Lines alone.
+TEST_F(KaraokeTemplater, SelectedLinesMacroNeedsAKaraokeOrGeneratedLine)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass"))).document);
+    const auto validates = [&](hikari::core::LineId line) {
+        select(session, {line});
+        auto host = load(bundledScript());
+        const auto snapshot = hikari::application::snapshotForMacro(session);
+        run = {};
+        EXPECT_TRUE(host->validate(macro(*host, kSelected), *snapshot));
+        EXPECT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+        return run.outcome == LuaScriptHost::RunOutcome::Ok;
+    };
+    const auto &lines = session.document().lines();
+    EXPECT_FALSE(validates(lines.front()->id)) << "a template Line";
+    EXPECT_TRUE(validates(lineWithText(session.document(), kFirstT1a, u8"karaoke")->id));
+    EXPECT_TRUE(validates(lines.back()->id)) << "a generated Line";
+}
+
+// Problems found in a selected-Lines run name the Lines by the numbers they
+// have once the generated Lines are replaced, and select them.
+TEST_F(KaraokeTemplater, SelectedRunNamesProblemLinesByTheirNumbersAfterTheRun)
+{
+    std::string text = textOf(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass")));
+    text += "Comment: 0,0:00:00.00,0:00:05.00,T2c,,0,0,0,template syl,{\\pos(!nosuch.field!,$y)}\n";
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    std::optional<hikari::core::LineId> t2c;
+    for (const auto *l : session.document().lines())
+        if (l->style == u8"T2c" && l->effect == u8"karaoke")
+            t2c = l->id;
+    ASSERT_TRUE(t2c);
+    const auto broken = session.document().lines().back()->id;
+    const std::size_t count = session.document().lines().size();
+    select(session, {*t2c});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    const auto &lines = session.document().lines();
+    ASSERT_GT(lines.size(), count) << "the new template adds a Line per syllable";
+    std::size_t number = 0;
+    for (std::size_t i = 0; i < lines.size(); ++i)
+        if (lines[i]->id == broken)
+            number = i + 1;
+    ASSERT_EQ(number, lines.size());
+    EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Template Line: %1\n\n").arg(number)))
+        << run.log.join(QString()).toStdString();
+    EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{broken}));
 }
 
 } // namespace
