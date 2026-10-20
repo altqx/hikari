@@ -2340,9 +2340,24 @@ ApplicationWindow {
                 objectName: "videoPanel"
                 dockName: "Video"
                 // The controls below the video at their narrowest (the
-                // follow choices wrap), above two rail buttons' height.
+                // follow choices wrap), above two rail buttons' height. The
+                // inspector bar counts with its tool's own lines; what it
+                // holds for a taller tool comes out of the height above that
+                // (VT1), so the minimum does not grow with it.
                 minimumBodySize: Qt.size(Math.max(videoTransport.implicitWidth, videoFollow.minimumWidth),
-                                         videoControls.implicitHeight + 72)
+                                         controlsOwnHeight + 72)
+                // Measured when the column lays out (its implicit height then
+                // counts the bar's held height of that pass), not bound: the
+                // held height follows the room this leaves.
+                property real controlsOwnHeight: 0
+                function measureControls() {
+                    controlsOwnHeight = videoControls.implicitHeight - videoToolBar.held
+                }
+                Connections {
+                    target: videoControls
+                    function onImplicitHeightChanged() { videoPanel.measureControls() }
+                }
+                Component.onCompleted: measureControls()
                 title: qsTranslate("HikariSub.Video", "Video")
                 // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
                 // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
@@ -2487,7 +2502,9 @@ ApplicationWindow {
                         onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
                 VisualToolBar { // VT1: the tool, its options and values, the batch picker
+                    id: videoToolBar
                     Layout.fillWidth: true
+                    room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
                     // push Next frame out of the panel.

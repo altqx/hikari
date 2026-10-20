@@ -124,6 +124,13 @@ Control {
                                      group: v.group, unit: v.unit, step: v.step }))
     }))
     readonly property var measuredLayouts: JSON.parse(layoutShape)
+    // The height the panel can spare above its minimum (which counts only
+    // the tool's own lines): the bar holds the tallest family's height as
+    // far as that goes, so in a small window the panel's minimum still fits
+    // the screen and only then does a tool switch resize the video.
+    property real room: Infinity
+    // What the bar holds below its own lines.
+    readonly property real held: Math.max(0, Math.min(reservedHeight - flow.implicitHeight, room))
     // The tallest family's groups at the width each would have.
     readonly property real reservedHeight: {
         let h = 0
@@ -213,7 +220,7 @@ Control {
             Layout.fillWidth: true
             Layout.minimumWidth: 0
             Layout.preferredWidth: 0
-            Layout.preferredHeight: Math.max(implicitHeight, bar.reservedHeight)
+            Layout.preferredHeight: implicitHeight + bar.held
             Layout.alignment: Qt.AlignTop
             spacing: 6
             ToolName {
