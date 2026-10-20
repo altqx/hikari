@@ -9,6 +9,7 @@
 #include <QTimer>
 
 #include <algorithm>
+#include <cmath>
 #include <map>
 
 #include <utility>
@@ -611,6 +612,20 @@ void AudioController::setLinked(bool linked)
     emit boxControlsChanged();
 }
 
+// The view's samples per column go with the cube of the stretch
+// (AudioView::updateSamples), so the readout is (50 / position)^3.
+double AudioController::magnification() const
+{
+    const double position = std::clamp(m_horizontalZoom, 1, 100);
+    return std::pow(50.0 / position, 3);
+}
+
+void AudioController::resetZoom()
+{
+    setHorizontalZoom(50);
+    applyVerticalZoom(50, false);
+}
+
 void AudioController::setAutoScroll(bool on)
 {
     m_autoScroll = on;
@@ -1021,6 +1036,17 @@ void AudioController::previousLine()
 }
 
 // AudioBox::OnGoto: MakeDialogueVisible(true).
+int AudioController::lineOutOfView() const
+{
+    if (!m_view.hasSource() || m_view.width() <= 0 || m_active < 0 || m_active >= static_cast<int>(m_lines.size()))
+        return 0;
+    if (m_view.xAtMs(m_endMs) < 0)
+        return -1;
+    if (m_view.xAtMs(m_startMs) > m_view.width())
+        return 1;
+    return 0;
+}
+
 void AudioController::goToSelection()
 {
     emit focusRequested();

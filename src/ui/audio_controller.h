@@ -62,6 +62,9 @@ class AudioController : public QObject {
     Q_PROPERTY(bool autoScroll READ autoScroll NOTIFY boxControlsChanged)
     Q_PROPERTY(bool spectrumOn READ spectrumOn NOTIFY boxControlsChanged)
     Q_PROPERTY(bool spectrumNonLinear READ spectrumNonLinear NOTIFY boxControlsChanged)
+    // AU1 (#267): the zoom button's readout, the horizontal stretch against
+    // the default stretch (1 at AUDIO_HORIZONTAL_ZOOM's default, 50).
+    Q_PROPERTY(double magnification READ magnification NOTIFY boxControlsChanged)
     // A4: the player is playing (legacy player->IsPlaying()).
     Q_PROPERTY(bool playing READ playing NOTIFY playingChanged)
     // A5: legacy AudioBox's KaraSwitch (hasKara, AUDIO_KARAOKE) and KaraMode
@@ -166,6 +169,10 @@ public:
     Q_INVOKABLE void setVerticalZoom(int position);
     Q_INVOKABLE void setVolume(int position);
     Q_INVOKABLE void setLinked(bool linked);
+    double magnification() const;
+    // AU1: the zoom popover's Reset: both stretches back to their defaults
+    // (the volume follows the vertical one while linked).
+    Q_INVOKABLE void resetZoom();
     // Legacy OnAutoGoto, OnSpectrumMode and OnSpectrumNonLinear.
     Q_INVOKABLE void setAutoScroll(bool on);
     Q_INVOKABLE void setSpectrumOn(bool on);
@@ -262,6 +269,10 @@ public:
     Q_PROPERTY(bool modified READ modified NOTIFY displayChanged) // legacy NeedCommit
     Q_PROPERTY(int selectionStart READ selectionStart NOTIFY displayChanged)
     Q_PROPERTY(int selectionEnd READ selectionEnd NOTIFY displayChanged)
+    // AU1 (#267): where the current Line's selection lies while none of it
+    // is in view: -1 before the view, 1 after it, 0 in view or no Line (the
+    // Back to line chip).
+    Q_PROPERTY(int lineOutOfView READ lineOutOfView NOTIFY displayChanged)
 public:
     struct TimingHooks {
         // CommitChanges' edit-box part: the times into the editor's fields,
@@ -290,6 +301,7 @@ public:
     bool modified() const { return m_needCommit; }
     int selectionStart() const { return m_startMs; }
     int selectionEnd() const { return m_endMs; }
+    int lineOutOfView() const;
     const application::AudioTiming &timing() const { return m_timing; }
     // AUDIO_COMMIT and AUDIO_COMMIT_ALT (AudioBox::OnCommit: CommitChanges(true)).
     Q_INVOKABLE void commit();
