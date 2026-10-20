@@ -1715,6 +1715,16 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
+            // KA7: the Karaoke check window, after Check spelling.
+            ShellMenuItem {
+                help: qsTr("Checks the karaoke syllables of every Line")
+                id: checkKaraokeItem
+                iconRole: "karaoke"
+                objectName: "checkKaraokeMenuItem"
+                text: qsTr("Check karaoke")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) karaokeCheckDialog.openDialog()
+            }
             // E6: legacy SubsMenu's last item, "Hides tags in ASS and MDVD"
             // (HikariSubFrame.cpp:344-345): the Grid's switch.
             ShellMenuItem {
@@ -5427,6 +5437,12 @@ ApplicationWindow {
         app: root.app
         anchors.centerIn: parent
     }
+    // KA7: the Karaoke check window.
+    KaraokeCheckDialog {
+        id: karaokeCheckDialog
+        app: root.app
+        anchors.centerIn: parent
+    }
     Dialog {
         id: spellingNotice
         objectName: "spellingNotice"
@@ -5936,6 +5952,7 @@ ApplicationWindow {
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
+        GLOBAL_CHECK_KARAOKE: checkKaraokeItem, // KA7
     }
     }
     // The menu bar's items show their Global binding at the right (legacy

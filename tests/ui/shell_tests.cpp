@@ -7575,6 +7575,107 @@ private:
     }
 
 private slots:
+    // KA7: Subtitles > Check karaoke and GLOBAL_CHECK_KARAOKE open the
+    // Karaoke check window; each check's row selects its Line, Re-check reads
+    // the Document again, and a clean Document says so.
+    void karaokeCheckWindowSelectsEachProblemsLine()
+    {
+        const QString path = writeFile(dir, "karaoke.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k50}fi{\\k50}ne\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\k100}un{\\k0closed\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\k50}too {\\k20}short\n"
+                                       "Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,{\\k0}zero {\\k100}length\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,{\\k-10}out{\\k110}side\n"
+                                       "Dialogue: 0,0:00:06.00,0:00:07.00,Default,,0,0,0,,plain\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("karaokeCheckDialog"));
+        QVERIFY(dialog);
+        // Subtitles > Check karaoke, right after Check spelling.
+        auto *item = root->findChild<QObject *>(QStringLiteral("checkKaraokeMenuItem"));
+        const auto entries = menuItems(item->property("menu").value<QObject *>());
+        const auto at = [&](const char *name) {
+            for (qsizetype i = 0; i < entries.size(); ++i)
+                if (entries[i] && entries[i]->objectName() == QLatin1String(name))
+                    return i;
+            return qsizetype(-1);
+        };
+        QCOMPARE(at("checkKaraokeMenuItem"), at("checkSpellingMenuItem") + 1);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *list = dialogItem("karaokeCheckDialog", "karaokeProblems");
+        QVERIFY(list);
+        QTRY_COMPARE(list->property("count").toInt(), 4);
+        QVERIFY(!dialogItem("karaokeCheckDialog", "karaokeCheckEmpty")->isVisible());
+
+        struct Expected {
+            int number;
+            const char *check;
+            const char *detail;
+        };
+        const Expected expected[] = {
+                {2, "Unclosed syllable", "A karaoke tag has no duration, or its override block is never closed"},
+                {3, "Syllables don't match the Line", "The syllables last 0.70 s; the Line lasts 1.00 s"},
+                {4, "Zero-length syllable", "Syllable 1"},
+                {5, "Syllable outside the Line", "Syllables 1, 2"},
+        };
+        const QVariantList problems = dialog->property("problems").toList();
+        QCOMPARE(problems.size(), qsizetype(std::size(expected)));
+        // The rows in order; a click on each selects its Line.
+        auto rowItem = [&](int index) -> QQuickItem * {
+            QMetaObject::invokeMethod(list, "positionViewAtIndex", Q_ARG(int, index), Q_ARG(int, 0));
+            for (QQuickItem *child : list->property("contentItem").value<QQuickItem *>()->childItems())
+                if (child->property("index").isValid() && child->property("index").toInt() == index)
+                    return child;
+            return nullptr;
+        };
+        for (int i = 0; i < int(std::size(expected)); ++i) {
+            const QVariantMap row = problems[i].toMap();
+            QCOMPARE(row.value(QStringLiteral("number")).toInt(), expected[i].number);
+            QCOMPARE(row.value(QStringLiteral("check")).toString(), QString::fromUtf8(expected[i].check));
+            QCOMPARE(row.value(QStringLiteral("detail")).toString(), QString::fromUtf8(expected[i].detail));
+            auto *item = rowItem(i);
+            QVERIFY(item);
+            QVERIFY(QMetaObject::invokeMethod(item, "click"));
+            const auto line = lines[std::size_t(expected[i].number - 1)]->id;
+            QTRY_COMPARE(session->selection().active, std::optional(line));
+            QCOMPARE(session->selection().selected, std::set<core::LineId>{line});
+            QCOMPARE(row.value(QStringLiteral("line")).toULongLong(), line.value);
+        }
+        // A Line the target no longer has is not selected.
+        QVERIFY(!application->showKaraokeLine(987654321));
+
+        // Fixed Lines leave the list at Re-check; the command opens the window too.
+        for (std::size_t row = 1; row <= 4; ++row) {
+            const auto id = lines[row]->id;
+            QVERIFY(session->run(application::Command{"Set text", session->revision(), {id},
+                                                      [&](core::Document &d) { return d.setLineText(id, u8"{\\k100}fixed"); }}));
+        }
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_CHECK_KARAOKE"))));
+        QVERIFY(ran.toBool());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QTRY_COMPARE(list->property("count").toInt(), 0);
+        QVERIFY(dialogItem("karaokeCheckDialog", "karaokeCheckEmpty")->isVisible());
+        QCOMPARE(dialogItem("karaokeCheckDialog", "karaokeCheckEmpty")->property("text").toString(),
+                 QStringLiteral("No karaoke problems found"));
+        // Re-check picks up a new problem.
+        const auto first = lines[0]->id;
+        QVERIFY(session->run(application::Command{"Set text", session->revision(), {first},
+                                                  [&](core::Document &d) { return d.setLineText(first, u8"{\\k0}x{\\k100}y"); }}));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeRecheck"), "click"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        QCOMPARE(dialog->property("problems").toList().front().toMap().value(QStringLiteral("number")).toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     // F3: the Grid's and the editor's marks, Subtitles > Check spelling
     // (Replace as one step, then the next word on another Line, then "No
     // spelling errors were found"), a suggestion from the editor and Add word.
@@ -12095,8 +12196,8 @@ private slots:
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" retired, never listed; WS3: the five View
         // arrangements and "Enable / Disable editor" too; LE3's "Hide tags in
-        // the line editor" listed.
-        QCOMPARE(hotkeyRows().size(), 220);
+        // the line editor" and KA7's "Check karaoke" listed.
+        QCOMPARE(hotkeyRows().size(), 221);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.

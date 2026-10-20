@@ -568,6 +568,13 @@ public:
     // "Remove from dictionary": the user dictionary's lines, and removing the chosen ones.
     Q_INVOKABLE QStringList addedDictionaryWords() const;
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
+    // KA7: the Karaoke check window (Subtitles > Check karaoke,
+    // GLOBAL_CHECK_KARAOKE). The editing target's karaoke problems
+    // (core::checkKaraoke), one row each: {line (id), number (the Grid's
+    // 1-based row), check, detail}. showKaraokeLine selects a problem's Line;
+    // false when the editing target no longer has it.
+    Q_INVOKABLE QVariantList checkKaraoke() const;
+    Q_INVOKABLE bool showKaraokeLine(qulonglong id);
     // F1: GLOBAL_SEARCH, GLOBAL_FIND_REPLACE and GLOBAL_FIND_NEXT. A tab of
     // the dialog as {tab (0 Find, 1 Find and replace, 2 Find in subtitles),
     // find, replace, styles, filters, folder, field, lines, matchCase, regex,
