@@ -245,9 +245,15 @@ hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_tab_layouts_tests hikari_media_fixtures hikari_media_helper)
-# WS2: the tab's arrangement in an ASS file's [Hikari] section.
+# WS2: the tab's arrangement in an ASS file's [Hikari] section. Four parts,
+# each its own process under the default 60 s (decision 38g): a refusal row
+# starts the application as the other functions do, and in one process the
+# suite took 55 s here and timed out in CI on both platforms.
 hikari_add_qttest(hikari_ui_file_layouts_tests SOURCES file_layouts_tests.cpp
-    LIBRARIES hikari_composition KDAB::kddockwidgets)
+    LIBRARIES hikari_composition KDAB::kddockwidgets
+    PARTS arrangements refusals=anUnusableFileArrangementFollowsTheNewTabRule
+          bounds=aLayoutLargerThanThePanelsIsRefused tree=aLayoutTheEngineCannotReadIsRefused)
+target_include_directories(hikari_ui_file_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # D2: the View menu's arrangements and the editor switch through the composition.
 # Two parts, each its own process under the default 60 s (decision 38g,
 # 2026-10-14). Every function starts the application and its QML (13 starts,
