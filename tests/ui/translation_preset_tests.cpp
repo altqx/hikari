@@ -11,8 +11,10 @@
 
 #include "docking.h"
 #include "line_editor_controller.h"
+#include "theme.h"
 #include "workspace_layout.h"
 
+#include <QDir>
 #include <QFile>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
@@ -365,6 +367,67 @@ private slots:
         QVERIFY(!item("originalTextButtons")->isVisible());
         auto *menu = item<QObject>("originalTextMoreMenu");
         QCOMPARE(menu->property("count").toInt(), 6); // five items and the separator
+        stop();
+    }
+
+    // The Translation preset with the Original text panel, the Editing preset
+    // with the mode on, a narrow panel's folded header and the one-time
+    // question, in the four themes, for review: written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (translation-<state>-<theme>.png).
+    void translationModeScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        start();
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = window()->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const auto shot = [&](QQuickWindow *w, const QString &state) {
+                QTest::qWait(300);
+                QVERIFY(w->grabWindow().save(out + QStringLiteral("/translation-") + state + QLatin1Char('-') + theme
+                                             + QStringLiteral(".png")));
+            };
+            applyPreset("Translation");
+            QTRY_VERIFY(isOpen("originalDock"));
+            item("translationText")->forceActiveFocus();
+            shot(window(), QStringLiteral("preset"));
+            applyPreset("Editing");
+            QTRY_VERIFY(isOpen("originalDock"));
+            shot(window(), QStringLiteral("editing"));
+            QVERIFY(dock("originalDock")->setProperty("isFloating", true));
+            QTRY_VERIFY(isFloating("originalDock"));
+            QQuickWindow *floating = item("originalPanel")->window();
+            floating->resize(260, 140);
+            QTRY_VERIFY(item("originalTextMore")->isVisible());
+            shot(floating, QStringLiteral("folded"));
+            QVERIFY(dock("originalDock")->setProperty("isFloating", false));
+            QTRY_VERIFY(!isFloating("originalDock"));
+        }
+        // The question, over a file without TLMode (one per theme: Not now is
+        // remembered for the Document).
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = window()->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            application->addPage();
+            openFile(qPrintable(QStringLiteral("plain-%1.ass").arg(theme)), false);
+            applyPreset("Editing");
+            applyPreset("Translation");
+            QTRY_VERIFY(asked());
+            QTest::qWait(300);
+            QVERIFY(window()->grabWindow().save(out + QStringLiteral("/translation-question-") + theme + QStringLiteral(".png")));
+            answer(false);
+        }
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
         stop();
     }
 };
