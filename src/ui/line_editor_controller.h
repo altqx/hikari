@@ -128,6 +128,8 @@ class LineEditorController : public QObject {
     Q_PROPERTY(bool moveTags READ moveTags NOTIFY changed)
     // TM1: the Original text's runs while tags are carried (tagRuns()).
     Q_PROPERTY(QVariantList tagRuns READ tagRuns NOTIFY changed)
+    // TM1: the active Line is karaoke (\k): only its leading tags are carried.
+    Q_PROPERTY(bool karaokeCarried READ karaokeCarried NOTIFY changed)
     // E4: the edited text field's state (core::syntax::TextState: 0 dialogue,
     // 1 comment, 2 template, 3 code), as legacy TextEditor::SetState gets it
     // from EditBox::SetLine and from a Comment box toggle (OnCommit), not
@@ -415,6 +417,11 @@ public:
     // text the translation has once, as a whole word (core::suggestPlacements),
     // until dismissed.
     QVariantList tagRuns() const;
+    bool karaokeCarried() const
+    {
+        const auto tags = runTags();
+        return tags && tags->karaoke;
+    }
     // Places run `number` (0: the lowest-numbered one not placed) on the
     // Translated field's [selectionStart, selectionEnd), as a draft change:
     // core::placeRun moves an earlier placement there, or takes it off the

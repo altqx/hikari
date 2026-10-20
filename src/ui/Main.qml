@@ -3637,6 +3637,16 @@ ApplicationWindow {
                             translated: translationText
                             Layout.fillWidth: true
                         }
+                        // A karaoke Line carries its leading tags without the
+                        // timing, which differs with the translation's syllables.
+                        Label {
+                            objectName: "karaokeCarryNotice"
+                            visible: root.editor.translationMode && root.editor.karaokeCarried
+                            text: qsTranslate("HikariSub.Translation", "Karaoke line: the tags before its text are carried, the karaoke timing is not.")
+                            color: Theme.muted
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
                         // Legacy translation-mode buttons (EDITBOX_PASTE_*,
                         // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
                         // They wrap: a narrow editor, a larger font or longer

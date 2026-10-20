@@ -10142,6 +10142,28 @@ private slots:
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
     }
 
+    // TM1: a karaoke Line carries its leading tags without its \k timing,
+    // and says so under the Translated text.
+    void tagsFromOriginalOnAKaraokeLine()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-karaoke.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        auto *notice = visualItem("karaokeCarryNotice");
+        QVERIFY(notice);
+        QVERIFY(!notice->isVisible());
+        application->editor().textEdited(QStringLiteral("{\\an8\\k20}Wall {\\k30}high"), 0);
+        QTRY_VERIFY(application->editor().karaokeCarried());
+        QTRY_VERIFY(notice->isVisible());
+        QVERIFY(application->editor().tagRuns().isEmpty());
+        application->editor().translationEdited(QStringLiteral("Mur"), 3);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Mur"));
+    }
+
     // TM1: Paste all puts the Original's text in the Translated field with
     // its runs; a translation whose own tags differ from the Original's is
     // shown whole and left alone.
