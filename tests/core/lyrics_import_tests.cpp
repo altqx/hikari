@@ -207,6 +207,12 @@ TEST(LyricsImport, MalformedLrcNamesTheLineAtFault)
     EXPECT_EQ(problemOf("[6000:00.01]x", u8"lrc"), (LyricsProblem{Kind::UnreadableTime, 1, u8"[6000:00.01]"}));
     EXPECT_EQ(problemOf("[00:01.00]<999999999:00.00>x", u8"lrc"),
               (LyricsProblem{Kind::UnreadableTime, 1, u8"<999999999:00.00>"}));
+    // An offset is whole signed milliseconds, up to 100 hours.
+    EXPECT_EQ(problemOf("[offset:100oops]\n[00:01.00]x", u8"lrc"), (LyricsProblem{Kind::UnreadableTime, 1, u8"[offset:100oops]"}));
+    EXPECT_EQ(problemOf("[offset:1234567890]\n[00:01.00]x", u8"lrc"),
+              (LyricsProblem{Kind::UnreadableTime, 1, u8"[offset:1234567890]"}));
+    EXPECT_EQ(problemOf("[offset:-360000001]\n[00:01.00]x", u8"lrc"),
+              (LyricsProblem{Kind::UnreadableTime, 1, u8"[offset:-360000001]"}));
     EXPECT_EQ(problemOf("[ti:Only tags]\n[ar:Nobody]\n", u8"lrc"), (LyricsProblem{Kind::NoLyrics, 0, u8""}));
     EXPECT_EQ(problemOf("", u8"lrc"), (LyricsProblem{Kind::NoLyrics, 0, u8""}));
 }
@@ -251,6 +257,14 @@ TEST(LyricsImport, TtmlMustBeWellFormedXml)
               (LyricsProblem{Kind::NotWellFormed, 3, u8"]]>"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><1x/>" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"<1x/>"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" -end=\"2\">x" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"-end=\"2\">"}));
+    // A comment may not hold "--" or end with "-".
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">a<!-- bad -- comment -->b" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"<!-- bad -- comment -->"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">a<!-- x --->b" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"<!-- x --->"}));
+    EXPECT_EQ(problemOf("<!-- a -- b -->\n" + head + "<p begin=\"1\" end=\"2\">a" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 1, u8"<!-- a -- b -->"}));
+    EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" end=\"2\">a<!-- fine - here -->b" + tail)).has_value());
 }
 
 TEST(LyricsImport, TtmlNestedTooDeepIsRefused)
@@ -270,6 +284,42 @@ TEST(LyricsImport, TtmlNestedTooDeepIsRefused)
     EXPECT_EQ(problemOf(nested(100000), u8"ttml"), (LyricsProblem{Kind::TooDeep, 3, u8"<div>"}));
 }
 
+TEST(LyricsImport, TtmlWhitespaceAndBreaksAcrossElements)
+{
+    // Whitespace collapses across nested elements, as over the whole paragraph.
+    const auto plain = importTtml(bytes("<tt><body><p begin=\"1\" end=\"2\">a <span> b </span> c</p></body></tt>"));
+    ASSERT_TRUE(plain.has_value());
+    EXPECT_EQ(rows(*plain), (std::vector<Row>{{1000, 2000, "", "a b c"}}));
+    // A <br/> inside a timed span breaks the Line there too.
+    const auto words = importTtml(bytes("<tt><body><p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\">a<br/>b</span> "
+                                        "<span begin=\"2\" end=\"3\">c <span>d</span></span></p></body></tt>"));
+    ASSERT_TRUE(words.has_value());
+    EXPECT_EQ(rows(*words), (std::vector<Row>{{1000, 3000, "", "{\\k100}a\\Nb {\\k100}c d"}}));
+}
+
+TEST(LyricsImport, RepeatedTextCannotOutgrowTheFile)
+{
+    // One long lyric under thousands of line times.
+    std::string lrc;
+    for (int i = 0; i < 3000; ++i)
+        lrc += "[00:01.00]";
+    lrc += std::string(2000, 'x') + "\n";
+    EXPECT_EQ(problemOf(lrc, u8"lrc"), (LyricsProblem{Kind::TooLarge, 1, u8""}));
+    // An agent's long name on thousands of Lines.
+    std::string ttml = "<tt><head><ttm:agent xml:id=\"a\"><ttm:name>" + std::string(100000, 'n') +
+                       "</ttm:name></ttm:agent></head><body>\n";
+    for (int i = 0; i < 2000; ++i)
+        ttml += "<p agent=\"a\" begin=\"1\" end=\"2\">x</p>\n";
+    ttml += "</body></tt>";
+    EXPECT_EQ(problemOf(ttml, u8"ttml").kind, Kind::TooLarge);
+    // A voice marker is at most nine digits; a longer one is lyrics text.
+    const auto voices = importLrc(bytes("[00:01.00]v123456789:a\n[00:02.00]v1234567890:b\n"));
+    ASSERT_TRUE(voices.has_value());
+    EXPECT_EQ(rows(*voices), (std::vector<Row>{{1000, 2000, "v123456789", "a"}, {2000, 7000, "v123456789", "v1234567890:b"}}));
+    // A chorus under a few line times is fine.
+    EXPECT_TRUE(importLrc(bytes("[00:01.00][00:05.00][00:09.00]chorus\n[00:03.00]verse\n")).has_value());
+}
+
 TEST(LyricsImport, TtmlTimesPast100HoursAreRefused)
 {
     const std::string head = "<tt><body>\n";
@@ -278,6 +328,13 @@ TEST(LyricsImport, TtmlTimesPast100HoursAreRefused)
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"999999999999999\">x</p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::UnreadableTime, 2, u8"999999999999999"}));
     EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"99h\" end=\"100h\">x</p></body></tt>")).has_value());
+    // A begin and a dur adding up past 100 hours too.
+    EXPECT_EQ(problemOf(head + "<p begin=\"99h\" dur=\"2h\">x</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::UnreadableTime, 2, u8"2h"}));
+    // An LRC offset cannot move a time past 100 hours either.
+    const auto shifted = importLrc(bytes("[offset:-99999999]\n[99:00:00.00]x\n"));
+    ASSERT_TRUE(shifted.has_value());
+    EXPECT_EQ(rows(*shifted).front().start, 360'000'000);
 }
 
 TEST(LyricsImport, LyricsTextStaysLiteral)
@@ -315,6 +372,17 @@ TEST(LyricsImport, TtmlTimesAndWordEnds)
                                          "</p></body></tt>"));
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(rows(*result), (std::vector<Row>{{1500, 3500, "", "{\\k90}a {\\k50}b{\\k60}"}}));
+}
+
+TEST(LyricsImport, LrcOffsets)
+{
+    // An empty offset is none; one with spaces and a sign reads.
+    const auto none = importLrc(bytes("[offset:]\n[00:01.00]x\n"));
+    ASSERT_TRUE(none.has_value());
+    EXPECT_EQ(rows(*none).front().start, 1000);
+    const auto sooner = importLrc(bytes("[offset: +250 ]\n[00:01.00]x\n"));
+    ASSERT_TRUE(sooner.has_value());
+    EXPECT_EQ(rows(*sooner).front().start, 750);
 }
 
 TEST(LyricsImport, LrcTimeForms)

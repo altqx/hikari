@@ -1500,6 +1500,11 @@ QString Application::openProblem(const QString &path, const application::StageFa
         what = QCoreApplication::translate("HikariSub.Documents", "the elements are nested more than %1 deep at \"%2\"")
                    .arg(QString::number(core::kMaxTtmlDepth), excerpt);
         break;
+    case Kind::TooLarge:
+        what = QCoreApplication::translate("HikariSub.Documents",
+                                           "its lines would make a Document over %1 times the size of the file")
+                   .arg(QString::number(core::kMaxLyricsGrowth));
+        break;
     case Kind::NoLyrics: what = QCoreApplication::translate("HikariSub.Documents", "it has no timed lyrics"); break;
     }
     return problem.line > 0

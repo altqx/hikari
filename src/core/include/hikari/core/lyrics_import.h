@@ -31,6 +31,7 @@ struct LyricsProblem {
         NotWellFormed,    // TTML: the XML is broken here
         NotTtml,          // TTML: the root element is not <tt>
         TooDeep,          // TTML: elements nested past kMaxTtmlDepth
+        TooLarge,         // the Lines would outgrow kMaxLyricsGrowth times the file
         NoLyrics,         // nothing timed in the whole file
     };
     Kind kind = Kind::NoLyrics;
@@ -42,6 +43,11 @@ struct LyricsProblem {
 // TTML lyrics nest a handful of elements; deeper files are refused, so no
 // walk over the tree can run out of stack.
 inline constexpr std::size_t kMaxTtmlDepth = 64;
+// Text a file repeats (a lyric under many line times, a voice or agent name
+// on every Line) is copied into each Line; a file whose Lines would outgrow
+// this many times its own size (plus 1 MiB) is refused, so a small file
+// cannot make a huge Document.
+inline constexpr std::size_t kMaxLyricsGrowth = 16;
 
 // "lrc" or "ttml" (lower-case, without the dot).
 bool isLyricsExtension(std::u8string_view extension);

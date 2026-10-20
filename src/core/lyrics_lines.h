@@ -30,7 +30,24 @@ struct LyricLine {
 struct LyricSheet {
     std::optional<std::u8string> title;
     std::vector<LyricLine> lines;
+    std::size_t budget = 0; // the bytes the Lines may take (kMaxLyricsGrowth)
+    std::size_t spent = 0;
 };
+
+// The budget of a sheet read from a file of `fileSize` bytes.
+inline std::size_t lyricsBudget(std::size_t fileSize)
+{
+    return kMaxLyricsGrowth * fileSize + (std::size_t(1) << 20);
+}
+
+// Takes a Line's share of the budget, before the Line is made: its text,
+// actor and words, each word's \k tag and the Dialogue's fields. False when
+// the budget is gone.
+inline bool spend(LyricSheet &sheet, std::size_t textBytes, std::size_t actorBytes, std::size_t words)
+{
+    sheet.spent += textBytes + actorBytes + 16 * words + 64;
+    return sheet.spent <= sheet.budget;
+}
 
 // The latest time either format may give (100 hours), so no arithmetic on
 // a time can overflow.

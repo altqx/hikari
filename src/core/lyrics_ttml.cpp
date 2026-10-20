@@ -127,6 +127,19 @@ private:
         return LyricsProblem{Kind::NotWellFormed, m_line, std::u8string(detail::trimRight(rest.substr(0, n)))};
     }
 
+    // A comment, from its "<!--": it may not hold "--" or end with "-".
+    bool skipComment()
+    {
+        const std::size_t end = m_s.find(u8"-->", m_pos + 4);
+        if (end == u8sv::npos)
+            return false;
+        const u8sv body = m_s.substr(m_pos + 4, end - m_pos - 4);
+        if (body.find(u8"--") != u8sv::npos || body.ends_with(u8'-'))
+            return false;
+        advance(end + 3 - m_pos);
+        return true;
+    }
+
     bool skipPast(u8sv terminator)
     {
         const std::size_t end = m_s.find(terminator, m_pos);
@@ -147,7 +160,7 @@ private:
             if (at(u8"<?"))
                 ok = skipPast(u8"?>");
             else if (at(u8"<!--"))
-                ok = skipPast(u8"-->");
+                ok = skipComment();
             else if (at(u8"<!DOCTYPE")) {
                 int depth = 0;
                 for (ok = false; !done(); advance(1)) {
@@ -262,7 +275,7 @@ private:
                 open.back().children.push_back(std::move(node));
             } else if (at(u8"<!--") || at(u8"<?")) {
                 const auto start = std::pair{m_pos, m_line};
-                if (!skipPast(at(u8"<?") ? u8"?>" : u8"-->")) {
+                if (!(at(u8"<?") ? skipPast(u8"?>") : skipComment())) {
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
@@ -457,6 +470,8 @@ std::u8string collapsed(u8sv text)
 
 class TtmlReader {
 public:
+    explicit TtmlReader(std::size_t budget) { m_sheet.budget = budget; }
+
     std::expected<detail::LyricSheet, LyricsProblem> read(const XmlNode &root)
     {
         if (localName(root.name) != u8"tt")
@@ -481,14 +496,41 @@ private:
         std::u8string plain;                      // all the text, for a Line without words
     };
 
+    // The text of a head element (a title, an agent's name); a <br/> is a space.
     static std::u8string allText(const XmlNode &node)
     {
         std::u8string out;
         for (const XmlNode &child : node.children)
             if (child.isText())
                 out += child.text;
+            else if (localName(child.name) == u8"br")
+                out += u8' ';
             else if (!attribute(child, u8"role"))
                 out += allText(child);
+        return out;
+    }
+
+    // Text appended with whitespace collapsed across the join too: TTML's
+    // default whitespace handling is over the whole paragraph, not each node.
+    static void append(std::u8string &to, u8sv text)
+    {
+        for (char8_t c : text)
+            if (c != u8' ' || !to.ends_with(u8' '))
+                to += c;
+    }
+
+    // A timed span's word: its text, literal, with a <br/> inside it a line
+    // break as under the paragraph.
+    static std::u8string spanText(const XmlNode &node)
+    {
+        std::u8string out;
+        for (const XmlNode &child : node.children)
+            if (child.isText())
+                append(out, detail::literalText(collapsed(child.text)));
+            else if (localName(child.name) == u8"br")
+                out += u8"\\N";
+            else if (!attribute(child, u8"role"))
+                append(out, spanText(child));
         return out;
     }
 
@@ -543,8 +585,12 @@ private:
             const auto dur = time(node, u8"dur");
             if (!dur)
                 return std::unexpected(dur.error());
-            if (*dur)
+            if (*dur) {
                 *end = **begin + **dur;
+                if (**end > detail::kLatestLyricsTime)
+                    return std::unexpected(LyricsProblem{Kind::UnreadableTime, node.line,
+                                                         std::u8string(*attribute(node, u8"dur"))});
+            }
         }
         if (*begin && *end && **end < **begin)
             return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, node.line,
@@ -562,16 +608,11 @@ private:
 
     static void addText(Words &into, u8sv text)
     {
-        into.plain += text;
-        if (into.words.empty()) {
-            into.leading += text;
-            return;
-        }
-        // Spaces after a word stay with it, one at most.
-        std::u8string &word = into.words.back().text;
-        for (char8_t c : text)
-            if (c != u8' ' || !word.ends_with(u8' '))
-                word += c;
+        append(into.plain, text);
+        if (into.words.empty())
+            append(into.leading, text);
+        else
+            append(into.words.back().text, text); // spaces after a word stay with it
     }
 
     // The words of a <p> (or of a background span), and the background
@@ -603,11 +644,11 @@ private:
                 if (!into.words.empty() && begin < into.words.back().begin)
                     return std::unexpected(LyricsProblem{Kind::TimeGoesBack, child.line,
                                                          std::u8string(*attribute(child, u8"begin"))});
-                const std::u8string text = detail::literalText(collapsed(allText(child)));
+                const std::u8string text = spanText(child);
                 const u8sv word = detail::trimLeft(text);
                 if (word.size() < text.size())
                     addText(into, u8" ");
-                into.plain += word;
+                append(into.plain, word);
                 into.words.push_back(LyricWord{begin, 0, std::u8string(word)});
                 into.ends.push_back(t->second);
                 into.lines.push_back(child.line);
@@ -640,7 +681,8 @@ private:
                     return std::unexpected(LyricsProblem{Kind::MissingTime, node.line, out.text});
                 out.start = *begin;
                 out.end = *end;
-                m_sheet.lines.push_back(std::move(out));
+                if (auto ok = add(std::move(out), node.line); !ok)
+                    return ok;
             }
         } else {
             for (std::size_t i = 0; i < words.words.size(); ++i) {
@@ -656,11 +698,24 @@ private:
             out.start = std::min(begin.value_or(words.words.front().begin), words.words.front().begin);
             out.end = std::max(end.value_or(words.words.back().end), words.words.back().end);
             out.words = std::move(words.words);
-            m_sheet.lines.push_back(std::move(out));
+            if (auto ok = add(std::move(out), node.line); !ok)
+                return ok;
         }
         for (const XmlNode *background : backgrounds)
             if (auto ok = line(*background, std::nullopt, std::nullopt, actor); !ok)
                 return ok;
+        return {};
+    }
+
+    // A Line, if the budget has room for it.
+    std::expected<void, LyricsProblem> add(LyricLine line, std::size_t at)
+    {
+        std::size_t wordBytes = 0;
+        for (const LyricWord &word : line.words)
+            wordBytes += word.text.size();
+        if (!detail::spend(m_sheet, line.text.size() + wordBytes, line.actor.size(), line.words.size()))
+            return std::unexpected(LyricsProblem{Kind::TooLarge, at, {}});
+        m_sheet.lines.push_back(std::move(line));
         return {};
     }
 
@@ -703,7 +758,7 @@ std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> b
     const auto root = XmlReader(text).document();
     if (!root)
         return std::unexpected(root.error());
-    auto sheet = TtmlReader().read(*root);
+    auto sheet = TtmlReader(detail::lyricsBudget(bytes.size())).read(*root);
     if (!sheet)
         return std::unexpected(sheet.error());
     return detail::lyricsDocument(std::move(*sheet));

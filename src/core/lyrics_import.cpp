@@ -203,14 +203,15 @@ struct LrcEntry {
 };
 
 // A voice marker before the lyrics: Walaoke's "M:", "F:" and "D:", or the
-// "v1:" agents some converters write. It stays until another one appears.
+// "v1:" agents some converters write (up to 9 digits; the marker is copied
+// into every Line after it). It stays until another one appears.
 std::optional<std::u8string> voiceMarker(u8sv &rest)
 {
     std::size_t n = 0;
     if (!rest.empty() && (rest[0] == u8'M' || rest[0] == u8'F' || rest[0] == u8'D'))
         n = 1;
     else if (rest.size() > 1 && rest[0] == u8'v' && isDigit(rest[1]))
-        for (n = 1; n < rest.size() && isDigit(rest[n]); ++n) {
+        for (n = 1; n < rest.size() && n <= 9 && isDigit(rest[n]); ++n) {
         }
     if (n == 0 || n >= rest.size() || rest[n] != u8':')
         return std::nullopt;
@@ -234,6 +235,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         all.remove_prefix(3);
 
     detail::LyricSheet sheet;
+    sheet.budget = detail::lyricsBudget(bytes.size());
     std::int64_t offset = 0;
     std::u8string voice;
     std::vector<LrcEntry> entries;
@@ -271,17 +273,20 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                 if (entry.times.empty() && key == u8"ti")
                     sheet.title = std::u8string(value);
                 if (entry.times.empty() && key == u8"offset") {
-                    // Positive values show the lyrics sooner.
+                    // Milliseconds, signed; positive values show the lyrics
+                    // sooner. Anything else, or more than 100 hours, is not
+                    // a time (it would move every lyric).
                     u8sv digits = value;
                     const bool negative = !digits.empty() && digits.front() == u8'-';
                     if (!digits.empty() && (digits.front() == u8'-' || digits.front() == u8'+'))
                         digits.remove_prefix(1);
                     std::int64_t n = 0;
-                    for (char8_t c : digits.substr(0, 9)) {
-                        if (!isDigit(c))
-                            break;
+                    const bool number = digits.size() <= 9 && std::ranges::all_of(digits, isDigit); // "": none
+                    for (char8_t c : number ? digits : u8sv())
                         n = n * 10 + (c - u8'0');
-                    }
+                    if (!number || n > detail::kLatestLyricsTime)
+                        return std::unexpected(LyricsProblem{Kind::UnreadableTime, lineNumber,
+                                                             std::u8string(rest.substr(0, close + 1))});
                     offset = negative ? -n : n;
                 }
             }
@@ -355,7 +360,9 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         std::int64_t start = 0;
         const LrcEntry *entry = nullptr;
     };
-    auto shifted = [offset](std::int64_t t) { return std::max<std::int64_t>(0, t - offset); };
+    auto shifted = [offset](std::int64_t t) {
+        return std::clamp<std::int64_t>(t - offset, 0, detail::kLatestLyricsTime);
+    };
     std::vector<Placed> placed;
     for (const LrcEntry &entry : entries)
         for (std::int64_t t : entry.times)
@@ -374,6 +381,11 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         if (entry.words.empty() && entry.text.empty())
             continue;
         const std::optional<std::int64_t> next = nextTimes[i];
+        std::size_t wordBytes = 0;
+        for (const LyricWord &word : entry.words)
+            wordBytes += word.text.size();
+        if (!detail::spend(sheet, entry.text.size() + wordBytes, entry.actor.size(), entry.words.size()))
+            return std::unexpected(LyricsProblem{Kind::TooLarge, entry.lineNumber, {}});
         LyricLine line;
         line.start = placed[i].start;
         line.actor = entry.actor;
