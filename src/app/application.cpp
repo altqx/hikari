@@ -35,6 +35,7 @@
 #include "hikari/core/ass_attachments.h"
 #include "automation_services_qt.h"
 #include "theme.h"
+#include "window_frame.h"
 
 #include <QClipboard>
 #include <QFile>
@@ -5308,9 +5309,11 @@ std::vector<std::string_view> appearanceSettings()
 }
 
 // A staged value the setting accepts: a theme's code, an accent preset's
-// key, a colour ("#RRGGBB" or "#RRGGBBAA").
+// key, a colour ("#RRGGBB" or "#RRGGBBAA"), the title bar's choice (SH1).
 bool validAppearance(std::string_view id, const QVariant &value)
 {
+    if (id == ui::windowframe::kTitleBarSetting)
+        return QStringList{QStringLiteral("auto"), QStringLiteral("system"), QStringLiteral("custom")}.contains(value.toString());
     if (id == ui::theme::kThemeSetting)
         return ui::theme::codeFromName(value.toString()).has_value();
     if (id == ui::theme::kFollowSystemSetting)

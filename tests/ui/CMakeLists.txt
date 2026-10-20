@@ -373,6 +373,10 @@ if(WIN32)
     set_tests_properties(hikari_ui_title_bar_tests.windows PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=windows" LABELS "qttest;windows" TIMEOUT 120)
 endif()
+# SH1: the main window's frame: the title bar's default by desktop, the
+# frameless window's hints, its parts as the window system is told of them
+# and Alt alone (window_frame.h).
+hikari_add_qttest(hikari_ui_window_frame_tests SOURCES window_frame_tests.cpp LIBRARIES hikari_ui)
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")

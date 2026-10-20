@@ -30,6 +30,14 @@ namespace hikari::ui::windowdecorations {
 // shown yet) without a frame of its own, for as long as it lives; on
 // Wayland whenever it is shown. Elsewhere this does nothing.
 void requestNone(QWindow *window);
+// Stops asking for `window` (SH1: the main window back on the system's
+// title bar): its decoration object goes, and the next time it is shown
+// Qt's own asks again.
+void release(QWindow *window);
+
+// The names of the globals the Wayland compositor advertises (empty off
+// Wayland): SH1 knows a tiling compositor by them (window_frame.h).
+QStringList compositorGlobalNames();
 
 // What the window system draws round `window` itself.
 enum class SystemFrame {

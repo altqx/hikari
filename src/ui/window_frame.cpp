@@ -1,0 +1,531 @@
+#include "window_frame.h"
+
+#include "docking.h"
+#include "window_decorations.h"
+#include "window_frame_native.h"
+
+#include <QGuiApplication>
+#include <QKeyEvent>
+#include <QPointer>
+#include <QQuickItem>
+#include <QWindow>
+#include <qpa/qplatformnativeinterface.h>
+#include <QtGui/private/qhighdpiscaling_p.h>
+
+#include <algorithm>
+#include <cstdlib>
+#include <vector>
+
+#ifdef HIKARI_WAYLAND_DECORATIONS
+#include <QtWaylandClient/private/qwaylanddisplay_p.h>
+#include <QtWaylandClient/private/qwaylandshellsurface_p.h>
+#include <QtWaylandClient/private/qwaylandwindow_p.h>
+#endif
+
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+#include <dlfcn.h>
+#endif
+
+namespace hikari::ui {
+
+namespace windowframe {
+
+namespace {
+std::optional<Desktop> g_desktop; // tests
+
+QStringList tokens(const QString &list)
+{
+    QStringList out;
+    for (const QString &token : list.split(QLatin1Char(':'), Qt::SkipEmptyParts))
+        out.append(token.trimmed().toLower());
+    return out;
+}
+
+// The tiling window managers by the names their sessions give
+// XDG_CURRENT_DESKTOP or XDG_SESSION_DESKTOP.
+const QStringList &tilingNames()
+{
+    static const QStringList names{
+        QStringLiteral("sway"),     QStringLiteral("hyprland"),  QStringLiteral("niri"),
+        QStringLiteral("river"),    QStringLiteral("i3"),        QStringLiteral("bspwm"),
+        QStringLiteral("dwm"),      QStringLiteral("dwl"),       QStringLiteral("awesome"),
+        QStringLiteral("qtile"),    QStringLiteral("xmonad"),    QStringLiteral("herbstluftwm"),
+        QStringLiteral("leftwm"),   QStringLiteral("spectrwm"),  QStringLiteral("wmii"),
+        QStringLiteral("ratpoison"), QStringLiteral("stumpwm"),  QStringLiteral("notion"),
+    };
+    return names;
+}
+
+// Variables a tiling compositor or window manager sets for its clients;
+// they name it even inside a desktop's session (KDE Plasma with i3).
+const QStringList &tilingMarkers()
+{
+    static const QStringList markers{QStringLiteral("SWAYSOCK"), QStringLiteral("I3SOCK"),
+                                     QStringLiteral("HYPRLAND_INSTANCE_SIGNATURE"), QStringLiteral("NIRI_SOCKET")};
+    return markers;
+}
+} // namespace
+
+Desktop classify(const Environment &environment)
+{
+    const QString &platform = environment.platform;
+    if (platform == QLatin1String("windows"))
+        return Desktop::Windows;
+    if (!platform.startsWith(QLatin1String("wayland")) && platform != QLatin1String("xcb"))
+        return Desktop::Unsupported;
+    const QStringList names = tokens(environment.currentDesktop) + tokens(environment.sessionDesktop);
+    const bool tilingName = std::any_of(names.begin(), names.end(),
+                                        [](const QString &name) { return tilingNames().contains(name); });
+    const bool tilingMarker = std::any_of(environment.markers.begin(), environment.markers.end(),
+                                          [](const QString &name) { return tilingMarkers().contains(name); });
+    // Hyprland's own globals (window_decorations.h) and river's.
+    const bool tilingGlobals =
+        std::any_of(environment.waylandGlobals.begin(), environment.waylandGlobals.end(), [](const QString &name) {
+            return name.startsWith(QLatin1String("hyprland_")) || name.startsWith(QLatin1String("zriver_"))
+                   || name.startsWith(QLatin1String("river_"));
+        });
+    if (tilingName || tilingMarker || tilingGlobals)
+        return Desktop::Tiling;
+    if (names.contains(QLatin1String("kde")))
+        return Desktop::Kde;
+    if (names.contains(QLatin1String("gnome")) || names.contains(QLatin1String("gnome-classic")))
+        return Desktop::Gnome;
+    return Desktop::Other;
+}
+
+Environment currentEnvironment()
+{
+    Environment environment;
+    environment.platform = QGuiApplication::platformName();
+    environment.currentDesktop = qEnvironmentVariable("XDG_CURRENT_DESKTOP");
+    environment.sessionDesktop = qEnvironmentVariable("XDG_SESSION_DESKTOP");
+    if (environment.sessionDesktop.isEmpty())
+        environment.sessionDesktop = qEnvironmentVariable("DESKTOP_SESSION");
+    for (const QString &marker : tilingMarkers())
+        if (!qEnvironmentVariableIsEmpty(marker.toLatin1().constData()))
+            environment.markers.append(marker);
+    environment.waylandGlobals = windowdecorations::compositorGlobalNames();
+    return environment;
+}
+
+Desktop currentDesktop()
+{
+    if (g_desktop)
+        return *g_desktop;
+    static const Desktop desktop = classify(currentEnvironment());
+    return desktop;
+}
+
+bool systemTitleBarByDefault(Desktop desktop)
+{
+    return desktop != Desktop::Windows && desktop != Desktop::Kde && desktop != Desktop::Gnome;
+}
+
+bool usesSystemTitleBar(const QString &setting, Desktop desktop)
+{
+    if (desktop == Desktop::Unsupported || setting == QLatin1String("system"))
+        return true;
+    if (setting == QLatin1String("custom"))
+        return false;
+    return systemTitleBarByDefault(desktop);
+}
+
+void overrideDesktop(std::optional<Desktop> desktop)
+{
+    g_desktop = desktop;
+    WindowFrame::notifyDesktopChanged();
+}
+
+#ifndef Q_OS_WIN
+std::unique_ptr<NativeFrame> createNativeFrame(MainWindowFrame *, QQuickWindow *)
+{
+    return nullptr;
+}
+#endif
+
+} // namespace windowframe
+
+namespace {
+std::vector<QPointer<WindowFrame>> &singletons()
+{
+    static std::vector<QPointer<WindowFrame>> list;
+    return list;
+}
+
+bool isWayland()
+{
+    return QGuiApplication::platformName().startsWith(QLatin1String("wayland"));
+}
+
+// The window manager's window menu on X11 (_GTK_SHOW_WINDOW_MENU, which
+// KWin, mutter and xfwm4 answer), sent through the xcb connection Qt's xcb
+// platform already holds. Its functions are looked up in the process
+// rather than linked: the build needs no xcb headers, and on any other
+// platform libxcb is not loaded and nothing is sent.
+bool showX11WindowMenu(QWindow *window, QPointF position)
+{
+#if defined(Q_OS_UNIX) && !defined(Q_OS_MACOS)
+    if (QGuiApplication::platformName() != QLatin1String("xcb"))
+        return false;
+    auto *x11 = qGuiApp->nativeInterface<QNativeInterface::QX11Application>();
+    QPlatformNativeInterface *native = QGuiApplication::platformNativeInterface();
+    if (!x11 || !native || !window->screen())
+        return false;
+    xcb_connection_t *connection = x11->connection();
+    const auto root = quint32(quintptr(native->nativeResourceForScreen("rootwindow", window->screen())));
+    struct Cookie {
+        unsigned int sequence;
+    };
+    struct AtomReply {
+        quint8 responseType, pad0;
+        quint16 sequence;
+        quint32 length;
+        quint32 atom;
+    };
+    using InternAtom = Cookie (*)(xcb_connection_t *, quint8, quint16, const char *);
+    using InternAtomReply = AtomReply *(*)(xcb_connection_t *, Cookie, void **);
+    using UngrabPointer = Cookie (*)(xcb_connection_t *, quint32);
+    using SendEvent = Cookie (*)(xcb_connection_t *, quint8, quint32, quint32, const char *);
+    using Flush = int (*)(xcb_connection_t *);
+    const auto internAtom = reinterpret_cast<InternAtom>(dlsym(RTLD_DEFAULT, "xcb_intern_atom"));
+    const auto internAtomReply = reinterpret_cast<InternAtomReply>(dlsym(RTLD_DEFAULT, "xcb_intern_atom_reply"));
+    const auto ungrabPointer = reinterpret_cast<UngrabPointer>(dlsym(RTLD_DEFAULT, "xcb_ungrab_pointer"));
+    const auto sendEvent = reinterpret_cast<SendEvent>(dlsym(RTLD_DEFAULT, "xcb_send_event"));
+    const auto flush = reinterpret_cast<Flush>(dlsym(RTLD_DEFAULT, "xcb_flush"));
+    if (!connection || !root || !internAtom || !internAtomReply || !ungrabPointer || !sendEvent || !flush)
+        return false;
+    static const char name[] = "_GTK_SHOW_WINDOW_MENU";
+    AtomReply *reply = internAtomReply(connection, internAtom(connection, 0, sizeof(name) - 1, name), nullptr);
+    if (!reply)
+        return false;
+    const quint32 atom = reply->atom;
+    free(reply);
+    // The pointer is Qt's while a button is down; the window manager takes it.
+    ungrabPointer(connection, 0 /* XCB_CURRENT_TIME */);
+    const QPoint at = QHighDpi::toNativeGlobalPosition(window->mapToGlobal(position), window).toPoint();
+    // A 32-bit ClientMessage: the input device (0, the core pointer) and the
+    // root position (GTK's gdk_window_show_window_menu).
+    struct ClientMessage {
+        quint8 responseType, format;
+        quint16 sequence;
+        quint32 window, type;
+        qint32 data[5];
+    } message{33 /* XCB_CLIENT_MESSAGE */, 32, 0, quint32(window->winId()), atom, {0, at.x(), at.y(), 0, 0}};
+    static_assert(sizeof(ClientMessage) == 32);
+    sendEvent(connection, 0, root, 0x00180000 /* SubstructureNotify | SubstructureRedirect */,
+              reinterpret_cast<const char *>(&message));
+    flush(connection);
+    return true;
+#else
+    Q_UNUSED(window);
+    Q_UNUSED(position);
+    return false;
+#endif
+}
+
+// The compositor's window menu on Wayland (xdg_toplevel.show_window_menu,
+// through Qt's shell surface, at the pointer of the seat's last press).
+bool showWaylandWindowMenu(QWindow *window)
+{
+#ifdef HIKARI_WAYLAND_DECORATIONS
+    auto *platform = dynamic_cast<QtWaylandClient::QWaylandWindow *>(window->handle());
+    if (!platform || !platform->shellSurface())
+        return false;
+    QtWaylandClient::QWaylandInputDevice *seat = platform->display()->lastInputDevice();
+    if (!seat)
+        seat = platform->display()->defaultInputDevice();
+    return seat && platform->shellSurface()->showWindowMenu(seat);
+#else
+    Q_UNUSED(window);
+    return false;
+#endif
+}
+
+// Whether `item` or one of its descendants under `scenePos` takes mouse
+// buttons (a control), the frame's move area aside.
+bool controlAt(const QQuickItem *item, QPointF scenePos, const QQuickItem *moveArea)
+{
+    QList<QQuickItem *> children = item->childItems();
+    std::stable_sort(children.begin(), children.end(),
+                     [](const QQuickItem *a, const QQuickItem *b) { return a->z() > b->z(); });
+    for (const QQuickItem *child : children) {
+        if (child == moveArea || !child->isVisible() || !child->isEnabled())
+            continue;
+        if (!child->contains(child->mapFromScene(scenePos)))
+            continue;
+        // Text takes the left button for its links and passes every other
+        // press on: the title is a free part.
+        const bool takesPresses = child->acceptedMouseButtons() != Qt::NoButton && !child->inherits("QQuickText");
+        if (takesPresses || controlAt(child, scenePos, moveArea))
+            return true;
+    }
+    return false;
+}
+
+bool under(const QQuickItem *item, QPointF scenePos)
+{
+    return item && item->isVisible() && item->contains(item->mapFromScene(scenePos));
+}
+} // namespace
+
+WindowFrame::WindowFrame(QObject *parent)
+    : QObject(parent)
+{
+    singletons().emplace_back(this);
+}
+
+bool WindowFrame::systemTitleBarByDefault() const
+{
+    return windowframe::systemTitleBarByDefault(windowframe::currentDesktop());
+}
+
+bool WindowFrame::customAvailable() const
+{
+    return windowframe::currentDesktop() != windowframe::Desktop::Unsupported;
+}
+
+bool WindowFrame::nativeResize()
+{
+#ifdef Q_OS_WIN
+    return true;
+#else
+    return false;
+#endif
+}
+
+int WindowFrame::resizeBand()
+{
+    return dockchrome::kResizeGrip;
+}
+
+bool WindowFrame::usesSystemTitleBar(const QString &setting) const
+{
+    return windowframe::usesSystemTitleBar(setting, windowframe::currentDesktop());
+}
+
+void WindowFrame::notifyDesktopChanged()
+{
+    auto &list = singletons();
+    list.erase(std::remove(list.begin(), list.end(), nullptr), list.end());
+    for (const auto &frame : list)
+        emit frame->desktopChanged();
+}
+
+MainWindowFrame::MainWindowFrame(QObject *parent)
+    : QObject(parent)
+{
+}
+
+MainWindowFrame::~MainWindowFrame() = default;
+
+void MainWindowFrame::setWindow(QQuickWindow *window)
+{
+    if (m_window == window)
+        return;
+    m_native.reset();
+    // The application's events, not only the window's: a key a shortcut
+    // takes reaches the focus item as its ShortcutOverride and never the
+    // window as a press (eventFilter).
+    if (m_window && !window)
+        QCoreApplication::instance()->removeEventFilter(this);
+    else if (!m_window && window)
+        QCoreApplication::instance()->installEventFilter(this);
+    m_window = window;
+    m_applied = false;
+    if (m_window)
+        m_native = windowframe::createNativeFrame(this, m_window);
+    apply();
+    emit windowChanged();
+}
+
+void MainWindowFrame::setCustom(bool custom)
+{
+    if (m_custom == custom)
+        return;
+    m_custom = custom;
+    apply();
+    emit customChanged();
+}
+
+void MainWindowFrame::setTitleBar(QQuickItem *item)
+{
+    if (m_titleBar == item)
+        return;
+    m_titleBar = item;
+    emit itemsChanged();
+}
+
+void MainWindowFrame::setMoveArea(QQuickItem *item)
+{
+    if (m_moveArea == item)
+        return;
+    m_moveArea = item;
+    emit itemsChanged();
+}
+
+void MainWindowFrame::setMaximizeButton(QQuickItem *item)
+{
+    if (m_maximizeButton == item)
+        return;
+    m_maximizeButton = item;
+    emit itemsChanged();
+}
+
+void MainWindowFrame::setWindowMenuButton(QQuickItem *item)
+{
+    if (m_windowMenuButton == item)
+        return;
+    m_windowMenuButton = item;
+    emit itemsChanged();
+}
+
+void MainWindowFrame::setMaximizeState(bool hovered, bool pressed)
+{
+    if (m_maximizeHovered == hovered && m_maximizePressed == pressed)
+        return;
+    m_maximizeHovered = hovered;
+    m_maximizePressed = pressed;
+    emit maximizeStateChanged();
+}
+
+bool MainWindowFrame::eventFilter(QObject *watched, QEvent *event)
+{
+    if (watched != m_window) {
+        // Alt with a key a shortcut took (Alt+N) is no tap either.
+        if (event->type() == QEvent::ShortcutOverride && static_cast<QKeyEvent *>(event)->key() != Qt::Key_Alt) {
+            const auto *item = qobject_cast<QQuickItem *>(watched);
+            if (item && item->window() == m_window)
+                m_altAlone = false;
+        }
+        return QObject::eventFilter(watched, event);
+    }
+    switch (event->type()) {
+    case QEvent::KeyPress: {
+        const auto *key = static_cast<QKeyEvent *>(event);
+        if (key->key() == Qt::Key_Alt) {
+            if (!key->isAutoRepeat()) {
+                // Whether Alt's own bit is set on its press and release
+                // differs between the window systems.
+                m_altAlone = (key->modifiers() & ~Qt::AltModifier) == Qt::NoModifier;
+                setAltHeld(true);
+            }
+        } else {
+            m_altAlone = false;
+        }
+        break;
+    }
+    case QEvent::KeyRelease: {
+        const auto *key = static_cast<QKeyEvent *>(event);
+        if (key->key() != Qt::Key_Alt || key->isAutoRepeat())
+            break;
+        setAltHeld(false);
+        if (m_altAlone && (key->modifiers() & ~Qt::AltModifier) == Qt::NoModifier) {
+            m_altAlone = false;
+            emit altTapped();
+            return true;
+        }
+        m_altAlone = false;
+        break;
+    }
+    case QEvent::ShortcutOverride: // the window has no focus item
+        if (static_cast<QKeyEvent *>(event)->key() != Qt::Key_Alt)
+            m_altAlone = false;
+        break;
+    case QEvent::MouseButtonPress:
+    case QEvent::Wheel:
+    case QEvent::TouchBegin:
+        m_altAlone = false;
+        break;
+    case QEvent::FocusOut:
+    case QEvent::Hide:
+        m_altAlone = false;
+        setAltHeld(false);
+        break;
+    default:
+        break;
+    }
+    return QObject::eventFilter(watched, event);
+}
+
+void MainWindowFrame::setAltHeld(bool held)
+{
+    if (m_altHeld == held)
+        return;
+    m_altHeld = held;
+    emit altHeldChanged();
+}
+
+void MainWindowFrame::apply()
+{
+    if (!m_window)
+        return;
+    const bool frameless = m_window->flags().testFlag(Qt::FramelessWindowHint);
+    if (frameless != m_custom || !m_applied) {
+        m_applied = true;
+        // Wayland: the compositor is asked for no frame of its own (KWin
+        // would draw one round a frameless window otherwise), or no longer.
+        if (isWayland()) {
+            if (m_custom)
+                windowdecorations::requestNone(m_window);
+            else
+                windowdecorations::release(m_window);
+        }
+        // The hints beside the frameless one keep the system menu's items
+        // (Alt+Space on Windows, which Qt enables from them) and the
+        // minimise and maximise the window system offers.
+        const Qt::WindowFlags custom = Qt::FramelessWindowHint | Qt::WindowTitleHint | Qt::WindowSystemMenuHint
+                                       | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint;
+        const Qt::WindowFlags flags = m_custom ? m_window->flags() | custom
+                                               : m_window->flags() & ~Qt::FramelessWindowHint;
+        if (flags != m_window->flags()) {
+            // A Wayland toplevel takes its decoration when it is made: the
+            // window is shown again, in the state it had.
+            const QWindow::Visibility shown = m_window->visibility();
+            const bool remake = isWayland() && m_window->isVisible();
+            if (remake)
+                m_window->hide();
+            m_window->setFlags(flags);
+            if (remake)
+                m_window->setVisibility(shown);
+        }
+    }
+    if (m_native)
+        m_native->apply(m_custom);
+}
+
+MainWindowFrame::Hit MainWindowFrame::hitAt(QPointF position) const
+{
+    if (!m_custom || !m_titleBar || !m_titleBar->isVisible() || m_titleBar->window() != m_window)
+        return Client;
+    if (!under(m_titleBar, position))
+        return Client;
+    if (under(m_maximizeButton, position))
+        return MaximizeButton;
+    if (under(m_windowMenuButton, position))
+        return WindowMenuButton;
+    return controlAt(m_titleBar, position, m_moveArea) ? Client : Caption;
+}
+
+bool MainWindowFrame::showWindowMenu(QPointF position)
+{
+    emit windowMenuRequested(position);
+    if (!m_window)
+        return false;
+    if (m_native)
+        return m_native->showWindowMenu(position);
+    if (isWayland())
+        return showWaylandWindowMenu(m_window);
+    return showX11WindowMenu(m_window, position);
+}
+
+void MainWindowFrame::toggleMaximized()
+{
+    if (!m_window)
+        return;
+    if (m_window->visibility() == QWindow::Maximized)
+        m_window->showNormal();
+    else
+        m_window->showMaximized();
+}
+
+} // namespace hikari::ui

@@ -9,8 +9,9 @@ import Hikari.Ui
 // research, musescore-shell.md section 7, the SH1 row): the layout icon, the
 // current Document tab's layout (a saved layout's name, else its preset's)
 // and the drop-down mark, opening the LayoutMenu. It is self-contained: the
-// status bar holds it until SH1 (#220) moves it into the title bar, and the
-// shell answers its signals as it answers View > Layout's.
+// title bar holds it after the menus (SH1, #220; MainTitleBar.qml), framed
+// so it reads as a control beside the window's title, and the shell answers
+// its signals as it answers View > Layout's.
 ToolButton {
     id: switcher
     objectName: "layoutSwitcher"
@@ -20,10 +21,12 @@ ToolButton {
     signal saveRequested()
     signal resetRequested()
     signal manageRequested()
-    // The text size beside it (the status bar's status text role).
+    // The text size beside it.
     property font labelFont: font
-    // The menu opens above the button (the status bar), or below it.
-    property bool opensUpward: true
+    // The menu opens below the button (the title bar), or above it.
+    property bool opensUpward: false
+    // The title bar's keyboard is on it (MainTitleBar's Alt and F10).
+    property bool keyboardCurrent: false
     // The menu's height is known only once its items are laid out, so its
     // place is a binding rather than popup()'s one-off position.
     function openMenu() {
@@ -34,13 +37,21 @@ ToolButton {
     }
 
     text: layouts.layoutLabel
-    // The status bar takes no focus (legacy's AcceptsFocus false, P10): the
-    // keyboard reaches the same menu as View > Layout.
+    // It takes no focus: the keyboard reaches it through the title bar's
+    // Alt and F10, and the same menu through View > Layout.
     focusPolicy: Qt.NoFocus
     checked: layoutMenu.visible
     padding: 2
     leftPadding: 6
     rightPadding: 4
+    implicitHeight: Math.max(24, implicitContentHeight + topPadding + bottomPadding)
+    background: Rectangle {
+        radius: 1
+        readonly property bool lit: switcher.checked || switcher.down || switcher.hovered
+        color: lit ? Theme.select : Theme.raised
+        border.width: 1
+        border.color: switcher.keyboardCurrent ? Theme.focus : lit ? Theme.accent : Theme.line
+    }
     contentItem: RowLayout {
         spacing: 4
         Icon {
