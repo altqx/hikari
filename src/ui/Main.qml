@@ -4592,12 +4592,15 @@ ApplicationWindow {
         width: 520
         height: 340
         flags: Qt.Dialog
-        // Shown while a macro runs; it stays after a failure so its log can be read.
+        // Shown while a macro runs; it stays after a failure, or a karaoke
+        // template run that named template problems (KE1), so its log can be read.
         property bool keep: false
         visible: root.automation.running || keep
         Connections {
             target: root.automation
-            function onRunCompleted(ok, message) { automationProgress.keep = !ok && message.length > 0 }
+            function onRunCompleted(ok, message) {
+                automationProgress.keep = (!ok && message.length > 0) || root.automation.keepLog
+            }
         }
         ColumnLayout {
             anchors.fill: parent

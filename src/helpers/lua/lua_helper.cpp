@@ -43,6 +43,7 @@ extern "C" {
 #include <regex>
 #include <system_error>
 #include <type_traits>
+#include <chrono>
 #include <unordered_map>
 #include <variant>
 #include <fstream>
@@ -1395,6 +1396,9 @@ void pushSubtitles(lua_State *L)
 //                         be a Line of the Document
 //   report(text)          attaches text to the run's result, replacing any
 //                         earlier report
+//   clock()               seconds on a steady clock, for timing (os.clock
+//                         counts this process's CPU time only, not the
+//                         waits for the host's answers)
 
 int dialogueSlot(lua_State *L, int arg)
 {
@@ -1448,15 +1452,24 @@ int hikariReport(lua_State *L)
     return 0;
 }
 
+int hikariClock(lua_State *L)
+{
+    const auto since = std::chrono::steady_clock::now().time_since_epoch();
+    lua_pushnumber(L, std::chrono::duration<double>(since).count());
+    return 1;
+}
+
 void installHikari(lua_State *L)
 {
-    lua_createtable(L, 0, 3);
+    lua_createtable(L, 0, 4);
     lua_pushcfunction(L, hikariSources);
     lua_setfield(L, -2, "sources");
     lua_pushcfunction(L, hikariSetSource);
     lua_setfield(L, -2, "set_source");
     lua_pushcfunction(L, hikariReport);
     lua_setfield(L, -2, "report");
+    lua_pushcfunction(L, hikariClock);
+    lua_setfield(L, -2, "clock");
     lua_setfield(L, -2, "hikari");
 }
 

@@ -22,6 +22,9 @@
 #include <QElapsedTimer>
 #include <QFile>
 #include <QFileInfo>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <gtest/gtest.h>
 
 #include <cstring>
@@ -166,6 +169,7 @@ protected:
                           << run.log.join(QString()).toStdString();
             return false;
         }
+        report = QJsonDocument::fromJson(QByteArray::fromStdString(host->lastResult()->report)).object();
         return hikari::application::applyMacroResult(session, *snapshot, *host->lastResult(), macroName).has_value();
     }
 
@@ -196,6 +200,7 @@ protected:
     }
 
     Outcome run;
+    QJsonObject report; // the last applied run's
 };
 
 QStringList corpus()
@@ -637,6 +642,89 @@ TEST_F(KaraokeTemplater, SelectedRunNamesProblemLinesByTheirNumbersAfterTheRun)
     EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Template Line: %1\n\n").arg(number)))
         << run.log.join(QString()).toStdString();
     EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{broken}));
+}
+
+// KE1-template-timing: a run attaches a report: what it did, and per
+// template Line its time and the Lines it generated.
+TEST_F(KaraokeTemplater, WholeRunReportsWhatEachTemplateCost)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass"))).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    int generated = 0;
+    for (const auto *l : session.document().lines())
+        generated += l->effect == u8"fx";
+    EXPECT_EQ(report[QStringLiteral("report")].toString(), QStringLiteral("karaoke-templater"));
+    EXPECT_EQ(report[QStringLiteral("version")].toInt(), 1);
+    EXPECT_EQ(report[QStringLiteral("mode")].toString(), QStringLiteral("all"));
+    EXPECT_EQ(report[QStringLiteral("karaoke_lines")].toInt(), 6);
+    EXPECT_EQ(report[QStringLiteral("generated")].toInt(), generated);
+    EXPECT_EQ(report[QStringLiteral("problems")].toInt(), 0);
+    EXPECT_GE(report[QStringLiteral("seconds")].toDouble(), report[QStringLiteral("prepare_seconds")].toDouble());
+    const QJsonArray templates = report[QStringLiteral("templates")].toArray();
+    ASSERT_EQ(templates.size(), 5);
+    int sum = 0;
+    for (int k = 0; k < templates.size(); ++k) {
+        const QJsonObject t = templates[k].toObject();
+        EXPECT_EQ(t[QStringLiteral("line")].toInt(), k + 1);
+        EXPECT_GE(t[QStringLiteral("seconds")].toDouble(), 0.0);
+        sum += t[QStringLiteral("generated")].toInt();
+    }
+    EXPECT_EQ(sum, generated);
+    EXPECT_EQ(templates[0].toObject()[QStringLiteral("effect")].toString(), QStringLiteral("template line"));
+    EXPECT_EQ(templates[0].toObject()[QStringLiteral("style")].toString(), QStringLiteral("T1a"));
+    EXPECT_EQ(templates[4].toObject()[QStringLiteral("effect")].toString(), QStringLiteral("template syl"));
+    EXPECT_EQ(templates[4].toObject()[QStringLiteral("generated")].toInt(), 13) << "one Line per syllable";
+}
+
+// The report counts the problems the run named.
+TEST_F(KaraokeTemplater, ReportCountsTheProblems)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/errors.ass"))).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    EXPECT_EQ(report[QStringLiteral("problems")].toInt(), run.log.join(QString()).count(QStringLiteral(" Line: ")));
+    EXPECT_GT(report[QStringLiteral("problems")].toInt(), 9);
+}
+
+// A selected-Lines run reports the selected Lines' work only, its template
+// Lines numbered as they are after the run.
+TEST_F(KaraokeTemplater, SelectedRunReportsTheSelectedLinesWork)
+{
+    std::string text = textOf(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass")));
+    text += "Comment: 0,0:00:00.00,0:00:05.00,T2c,,0,0,0,template syl,{\\an5\\pos($scenter,!$smiddle+40!)}\n";
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    std::optional<hikari::core::LineId> t2c;
+    for (const auto *l : session.document().lines())
+        if (l->style == u8"T2c" && l->effect == u8"karaoke")
+            t2c = l->id;
+    ASSERT_TRUE(t2c);
+    const auto added = session.document().lines().back()->id;
+    select(session, {*t2c});
+    ASSERT_TRUE(apply(session, bundledScript(), kSelected));
+    int generated = 0;
+    for (const auto *l : session.document().lines())
+        generated += l->generatedFrom == *t2c;
+    EXPECT_EQ(report[QStringLiteral("mode")].toString(), QStringLiteral("selected"));
+    EXPECT_EQ(report[QStringLiteral("karaoke_lines")].toInt(), 1);
+    EXPECT_EQ(report[QStringLiteral("generated")].toInt(), generated);
+    EXPECT_EQ(generated, 26) << "two syl templates, 13 syllables";
+    const QJsonArray templates = report[QStringLiteral("templates")].toArray();
+    ASSERT_EQ(templates.size(), 6);
+    const auto &lines = session.document().lines();
+    const QJsonObject last = templates.last().toObject();
+    EXPECT_EQ(lines[static_cast<std::size_t>(last[QStringLiteral("line")].toInt() - 1)]->id, added);
+    EXPECT_EQ(last[QStringLiteral("generated")].toInt(), 13);
+    EXPECT_EQ(templates[0].toObject()[QStringLiteral("generated")].toInt(), 0) << "T1a's Lines were not run";
+}
+
+// The stock script attaches nothing.
+TEST_F(KaraokeTemplater, StockTemplaterAttachesNoReport)
+{
+    hikari::application::EditSession session(
+        hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass"))).document);
+    ASSERT_TRUE(apply(session, pristineScript(), "Apply karaoke template"));
+    EXPECT_TRUE(report.isEmpty());
 }
 
 } // namespace

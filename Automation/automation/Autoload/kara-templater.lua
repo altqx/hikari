@@ -40,6 +40,7 @@
 -- * each generated Line is marked with the karaoke Line it came from (aegisub.hikari),
 --   and "Apply karaoke template to selected lines" replaces only the selected karaoke
 --   Lines' generated Lines
+-- * a run reports how long each template took and how many Lines it generated
 
 local tr = aegisub.gettext
 
@@ -58,6 +59,8 @@ local problem_lines = {}
 -- them here and reports them at the end; while it works out the other Lines'
 -- output nothing is reported at all.
 local deferred_problems, quiet = nil, false
+-- What the run did, for its report (report_run)
+local stats
 
 local function report_problem(level, where, message, number)
 	if where then
@@ -77,10 +80,29 @@ local function problem(level, where, fmt, ...)
 	if where then
 		problem_lines[where.index] = true
 	end
+	if stats then
+		stats.problems = stats.problems + 1
+	end
 	if deferred_problems then
 		table.insert(deferred_problems, { level = level, where = where, message = message })
 	else
 		report_problem(level, where, message, where and where.number)
+	end
+end
+
+-- What the run spent, for its report: the time preparing karaoke Lines
+-- (karaskel), and per template (the template's own table) its time and the
+-- lines it generated. Lines a selected-Lines run only goes through are not
+-- counted.
+local function clock()
+	local hikari = aegisub.hikari
+	return hikari and hikari.clock() or os.clock()
+end
+
+local function spend(template, since, generated)
+	if stats and not quiet then
+		template.seconds = (template.seconds or 0) + clock() - since
+		template.generated = (template.generated or 0) + (generated or 0)
 	end
 end
 
@@ -111,7 +133,7 @@ function parse_templates(meta, styles, subs, keep_fx)
 			fx = fx:lower()
 			-- earlier fx lines are deleted already and nothing is inserted before
 			-- this Line later in a whole run, so i-1 is where it stays
-			local where = { index = i-1, number = number, kind = fx }
+			local where = { index = i-1, number = number, kind = fx, effect = l.effect, style = l.style }
 			if fx == "code" then
 				parse_code(meta, styles, l, templates, mods, where)
 			elseif fx == "template" then
@@ -509,7 +531,9 @@ function apply_templates(meta, styles, subs, templates, sources, chosen)
 	-- run all run-once code snippets
 	for k, t in pairs(templates.once) do
 		assert(t.code, "WTF, a 'once' template without code?")
+		local since = clock()
 		run_code_template(t, tenv)
+		spend(t, since)
 	end
 	
 	-- start processing lines
@@ -523,7 +547,12 @@ function apply_templates(meta, styles, subs, templates, sources, chosen)
 			quiet = chosen ~= nil and not chosen[i]
 			l.i = i
 			l.comment = false
+			local since = clock()
 			karaskel.preproc_line(subs, meta, styles, l)
+			if stats and not quiet then
+				stats.prepare = stats.prepare + clock() - since
+				stats.lines = stats.lines + 1
+			end
 			if apply_line(meta, styles, subs, l, templates, tenv) then
 				-- Some templates were applied to this line, make a karaoke timing line of it
 				l.comment = true
@@ -649,6 +678,7 @@ function apply_line(meta, styles, subs, line, templates, tenv)
 		varctx.x = varctx.lx
 		varctx.y = varctx.ly
 		
+		local since, generated = clock(), 0
 		for j, maxj in template_loop(tenv, t.loops) do
 			if t.code then
 				aegisub.debug.out(5, "Code template, %s\n", t.code)
@@ -694,8 +724,10 @@ function apply_line(meta, styles, subs, line, templates, tenv)
 				end
 				newline.effect = "fx"
 				emit_line(subs, newline)
+				generated = generated + 1
 			end
 		end
+		spend(t, since, generated)
 	end
 	aegisub.debug.out(5, "Done running line templates\n\n")
 	
@@ -799,7 +831,10 @@ function apply_syllable_templates(syl, line, templates, tenv, varctx, subs)
 		tenv.basesyl = syl
 		set_ctx_syl(varctx, line, syl)
 		
-		applied = applied + apply_one_syllable_template(syl, line, t, tenv, varctx, subs, false, false)
+		local since = clock()
+		local generated = apply_one_syllable_template(syl, line, t, tenv, varctx, subs, false, false)
+		spend(t, since, generated)
+		applied = applied + generated
 	end
 	
 	return applied > 0
@@ -921,6 +956,7 @@ function filter_apply_templates(subs, config)
 	
 	aegisub.progress.task("Applying templates...")
 	apply_templates(meta, styles, subs, templates)
+	return templates
 end
 
 -- The template and code Lines that had problems, in order, as a new selection
@@ -942,11 +978,60 @@ local function start_run()
 	problem_lines = {}
 	deferred_problems, quiet = nil, false
 	emit_line = append_generated
+	stats = { started = clock(), prepare = 0, lines = 0, problems = 0 }
+end
+
+local function json_string(s)
+	return '"' .. (tostring(s):gsub('[%c"\\]', function(c)
+		local named = { ['"'] = '\\"', ['\\'] = '\\\\', ['\n'] = '\\n', ['\r'] = '\\r', ['\t'] = '\\t' }
+		return named[c] or string.format("\\u%04x", c:byte())
+	end)) .. '"'
+end
+
+local function json_number(x)
+	return (string.format("%.6f", x):gsub("0+$", ""):gsub("%.$", ""))
+end
+
+-- Attaches the run's report (docs/qt/karaoke-templater.md): what it did and
+-- what each template cost, the template Lines numbered as they are after the
+-- run (`number_of` maps a template's `where`).
+local function report_run(mode, templates, generated, number_of)
+	local hikari = aegisub.hikari
+	if not hikari or not stats then
+		return
+	end
+	local seen, list = {}, {}
+	for _, class in ipairs({ "once", "line", "syl", "char", "furi" }) do
+		for _, t in pairs(templates[class]) do
+			if t.where and not seen[t] then
+				seen[t] = true
+				table.insert(list, t)
+			end
+		end
+	end
+	table.sort(list, function(a, b) return a.where.index < b.where.index end)
+	local entries = {}
+	for _, t in ipairs(list) do
+		table.insert(entries, string.format('{"line":%d,"effect":%s,"style":%s,"seconds":%s,"generated":%d}',
+			number_of(t.where), json_string(t.where.effect), json_string(t.where.style),
+			json_number(t.seconds or 0), t.generated or 0))
+	end
+	hikari.report(string.format('{"report":"karaoke-templater","version":1,"mode":%s,"seconds":%s,' ..
+		'"prepare_seconds":%s,"karaoke_lines":%d,"generated":%d,"problems":%d,"templates":[%s]}',
+		json_string(mode), json_number(clock() - stats.started), json_number(stats.prepare), stats.lines,
+		generated, stats.problems, table.concat(entries, ",")))
 end
 
 function macro_apply_templates(subs, sel)
 	start_run()
-	filter_apply_templates(subs, {ismacro=true, sel=sel})
+	local templates = filter_apply_templates(subs, {ismacro=true, sel=sel})
+	local generated = 0
+	for i = 1, #subs do
+		if is_generated_line(subs[i]) then
+			generated = generated + 1
+		end
+	end
+	report_run("all", templates, generated, function(where) return where.number end)
 	aegisub.set_undo_point("apply karaoke template")
 	return problem_selection()
 end
@@ -1194,6 +1279,13 @@ function macro_apply_templates_to_selection(subs, sel)
 		moved[now(index)] = true
 	end
 	problem_lines = moved
+	local generated = 0
+	for _, source in ipairs(sources) do
+		generated = generated + #(outputs[source] or {})
+	end
+	report_run("selected", templates, generated, function(where)
+		return now(where.index) - (where.index - where.number)
+	end)
 	aegisub.set_undo_point("apply karaoke template")
 	return problem_selection()
 end
