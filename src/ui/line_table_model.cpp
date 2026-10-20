@@ -6,6 +6,9 @@
 #include "hikari/core/legacy_regex.h"
 #include "hikari/core/line_formats.h"
 #include "hikari/core/srt.h"
+#include "hikari/core/style.h"
+#include "hikari/core/tag_transfer.h"
+#include "hikari/core/text_projection.h"
 #include "line_measures.h"
 
 #include <QCoreApplication>
@@ -219,6 +222,35 @@ void LineTableModel::setSpelling(Spelling spelling)
                                                   int) { return spelling(text, format, spell); };
 }
 
+void LineTableModel::setRunMarks(bool on)
+{
+    if (on == m_runMarks)
+        return;
+    m_runMarks = on;
+    for (const Row &row : m_rows)
+        row.unplacedRuns.reset();
+    if (m_draft)
+        m_draft->unplacedRuns.reset();
+    if (!m_rows.empty())
+        emit dataChanged(index(0, 0), index(rowCount() - 1, ColumnCount - 1), {UnplacedRunsRole});
+}
+
+bool LineTableModel::unplacedRunsOf(const Row &row) const
+{
+    if (row.unplacedRuns)
+        return *row.unplacedRuns;
+    const core::LineRecord &line = row.line;
+    bool unplaced = false;
+    if (m_runMarks && m_translationMode && !line.comment && !line.translation.empty()) {
+        // Legacy GetStyle(0, name): the first Style of that name.
+        const auto style = std::ranges::find(m_styles, line.style, &core::StyleValues::name);
+        const auto tags = core::readOriginalTags(core::toUtf16(line.text), style != m_styles.end() ? &*style : nullptr);
+        unplaced = core::hasUnplacedRuns(tags, core::toUtf16(line.translation));
+    }
+    row.unplacedRuns = unplaced;
+    return unplaced;
+}
+
 void LineTableModel::setHideTags(bool hide, const QString &swap)
 {
     if (hide == m_hideTags && swap == m_tagSwap)
@@ -322,6 +354,7 @@ void LineTableModel::setDocument(const core::Document &document,
     m_format = document.format();
     // Legacy measures the translation when translation mode shows one.
     m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
+    m_styles = core::decodeStyles(document);
     const auto lines = document.lines();
     m_empty = kAutoHideBits;
     for (const core::LineRecord *line : lines) {
@@ -541,6 +574,8 @@ QVariant LineTableModel::data(const QModelIndex &index, int role) const
         return r.state;
     case DraftRole:
         return index.row() == m_draftRow;
+    case UnplacedRunsRole:
+        return unplacedRunsOf(r);
     default:
         return {};
     }
@@ -623,7 +658,8 @@ QHash<int, QByteArray> LineTableModel::roleNames() const
                   {ComparisonRole, "comparison"},
                   {ComparisonMarksRole, "comparisonMarks"},
                   {LineStateRole, "lineState"},
-                  {DraftRole, "draft"}});
+                  {DraftRole, "draft"},
+                  {UnplacedRunsRole, "unplacedRuns"}});
     return roles;
 }
 

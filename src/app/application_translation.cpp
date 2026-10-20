@@ -26,6 +26,7 @@ void Application::setUpTranslationControls()
     m_editor->setVisualToolActive([this] { return m_visualTools && m_visualTools->activeFamily() != 0; });
     const auto apply = [this] {
         m_editor->setMoveTags(m_settings->boolean(kMoveTags));
+        m_shell->setRunMarks(m_settings->boolean(kMoveTags));
         // SaveFile reads the option at every save and autosave.
         m_files->setSaveOptions(core::AssSaveOptions{.hideOriginalOnVideo = m_settings->boolean(kHideOriginal)});
     };

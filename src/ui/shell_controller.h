@@ -149,6 +149,13 @@ public:
         if (changed)
             emit hideTagsChanged();
     }
+    // TM1: the Grids' "runs not placed" marks while tags from the original
+    // are carried (translation.autoMoveTagsFromOriginal).
+    void setRunMarks(bool on)
+    {
+        m_lines.setRunMarks(on);
+        m_referenceLines.setRunMarks(on);
+    }
     // E6: the changed-Line mark of each Grid's Lines, read at each refresh.
     void setChangeStates(const LineTableModel::ChangeState &target, const LineTableModel::ChangeState &reference)
     {
