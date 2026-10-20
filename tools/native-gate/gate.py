@@ -3496,8 +3496,8 @@ def step_gtk_bridge():
     time, ahead of Qt's and without HikariSub's windows; it holds GTK's own
     dialogs (the theme's file chooser). The bridge stays: turning it off
     leaves that chooser silent to screen readers. What must hold: the
-    lookup by name finds Qt's application, with the main window and its
-    panels, and Orca reads both the theme's file dialog and HikariSub."""
+    lookup by name finds Qt's application, with the main window and every
+    core panel, and Orca reads both the theme's file dialog and HikariSub."""
     env = {"kwin": {"XDG_CURRENT_DESKTOP": "KDE", "XDG_SESSION_DESKTOP": "KDE"},
            "mutter": {"XDG_CURRENT_DESKTOP": "GNOME", "XDG_SESSION_DESKTOP": "gnome"}}.get(B.name)
     desktop = (env or {}).get("XDG_CURRENT_DESKTOP", "unset")
@@ -3520,7 +3520,7 @@ def step_gtk_bridge():
     st = atspi()
     panels = sorted(core_panels(st))
     main = "HikariSub" in frames(st)
-    verdict("gtkbridge-lookup", "observed" if main and panels else "failed",
+    verdict("gtkbridge-lookup", "observed" if main and set(panels) == set(CORE) else "failed",
             f"{B.name} (XDG_CURRENT_DESKTOP={desktop}): platform theme {theme}, GTK started {gtk}; the "
             f"process's applications on the bus, in order: {listed}; the lookup by name finds the main window "
             f"{main} and the core panels {panels}", ["gtkbridge-apps.json", "gtkbridge-tree.txt"])
@@ -3541,7 +3541,7 @@ def step_gtk_bridge():
     back = "HikariSub" in (said[said.index("Cancel") + 1:] if "Cancel" in said else [])
     verdict("gtkbridge-orca", "observed" if dialog and back else "failed",
             f"Orca with File > Open under theme {theme}: the dialog read {dialog}, HikariSub read after it "
-            f"{back}; spoken: {said}", [ev, "gtkbridge-orca-speech.txt"])
+            f"{back}; spoken: {said}", ev + ["gtkbridge-orca-speech.txt"])
     app("kill")
 
 
