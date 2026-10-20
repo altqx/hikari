@@ -74,6 +74,21 @@ Pane {
     function fileName(path) {
         return path.replace(/^.*[\\/]/, "")
     }
+    // The field is the Document's, of any length: the offer names the first
+    // few and counts the rest, its tooltip the first paths.
+    readonly property int offerNamed: 8
+    readonly property int offerTipPaths: 30
+    function offerText() {
+        const extra = offeredScripts.length - offerNamed
+        const names = offeredScripts.slice(0, offerNamed).map(fileName).join(", ")
+        return extra > 0 ? qsTr("This file names scripts: %1 and %n more", "", extra).arg(names)
+                         : qsTr("This file names scripts: %1").arg(names)
+    }
+    function offerTip() {
+        const extra = offeredScripts.length - offerTipPaths
+        const paths = offeredScripts.slice(0, offerTipPaths).join("\n")
+        return extra > 0 ? paths + "\n" + qsTr("and %n more", "", extra) : paths
+    }
     // After the change: the tab and its name change before the target does.
     onVisibleChanged: Qt.callLater(readDocumentScripts)
     onDocumentNameChanged: Qt.callLater(readDocumentScripts)
@@ -398,13 +413,13 @@ Pane {
                         // written: as rich text, markup in one (an image) could
                         // reach a server before Load is clicked.
                         textFormat: Text.PlainText
-                        text: qsTr("This file names scripts: %1").arg(root.offeredScripts.map(root.fileName).join(", "))
+                        text: root.offerText()
                         HoverHandler { id: offerHover }
                         ToolTip {
                             id: offerTip
                             objectName: "documentScriptsOfferToolTip"
                             visible: offerHover.hovered
-                            text: root.offeredScripts.join("\n")
+                            text: root.offerTip()
                             contentItem: Label {
                                 text: offerTip.text
                                 textFormat: Text.PlainText

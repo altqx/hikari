@@ -381,6 +381,20 @@
         <source>This file names scripts: %1</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>This file names scripts: %1 and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>Loading a script runs its code.</source>
         <translation type="unfinished"></translation>

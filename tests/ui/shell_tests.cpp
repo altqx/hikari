@@ -13014,6 +13014,28 @@ private slots:
         QVERIFY(tipText);
         QCOMPARE(tipText->property("textFormat").toInt(), int(Qt::PlainText));
         QCOMPARE(tipText->property("text").toString(), QString::fromUtf8(markup));
+        // A field of thousands of paths is offered with the first named and
+        // the rest counted, a path given twice offered once.
+        QByteArray many;
+        for (int i = 0; i < 20000; ++i)
+            many += '|' + QByteArray::number(i).rightJustified(5, '0').prepend("p") + ".lua";
+        many += "|p00000.lua";
+        const QString fourth = scripts.filePath(QStringLiteral("Fourth.ass"));
+        QFile g(fourth);
+        QVERIFY(g.open(QIODevice::WriteOnly));
+        g.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: " + many +
+                "\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        g.close();
+        QVERIFY(application->openFile(fourth));
+        application->selectTab(3);
+        QTRY_COMPARE(text->property("text").toString(),
+                     QStringLiteral("This file names scripts: p00000.lua, p00001.lua, p00002.lua, p00003.lua, "
+                                    "p00004.lua, p00005.lua, p00006.lua, p00007.lua and 19992 more"));
+        const QStringList tipLines = tipText->property("text").toString().split(QLatin1Char('\n'));
+        QCOMPARE(tipLines.size(), 31);
+        QCOMPARE(tipLines.at(29), QStringLiteral("p00029.lua"));
+        QCOMPARE(tipLines.last(), QStringLiteral("and 19970 more"));
     }
 
     // AM1: two loaded scripts with the same file name share their macros'

@@ -11,6 +11,8 @@
 
 #include <algorithm>
 #include <numeric>
+#include <string_view>
+#include <unordered_set>
 
 namespace hikari::app {
 
@@ -445,10 +447,12 @@ QStringList AutomationShell::documentScriptsToLoad()
     if (!value || m_readScriptInfo.contains(narrow(*value)))
         return out;
     // No file check before consent: one would open a UNC path's server.
+    // Sets keep a long value (thousands of paths) linear on the GUI thread.
     const auto &listed = m_documentScripts.scripts();
-    for (const std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
-        if (!path.empty() && std::ranges::find(listed, path) == listed.end() &&
-            !out.contains(QString::fromStdString(path)))
+    const std::unordered_set<std::string_view> loaded(listed.begin(), listed.end());
+    std::unordered_set<std::string> offered;
+    for (std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
+        if (!path.empty() && !loaded.contains(path) && offered.insert(path).second)
             out << QString::fromStdString(path);
     return out;
 }
