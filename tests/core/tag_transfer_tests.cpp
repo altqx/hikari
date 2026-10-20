@@ -323,3 +323,61 @@ TEST(TagTransfer, ARunOnTheSecondRowOfALine)
     EXPECT_TRUE(tags.trailing.empty());
     expectRoundTrip(tags, draft(u"Uno\\Ndos", {{5, 8, 1}}));
 }
+
+TEST(TagTransfer, ANamedResetTakesThatStylesValues)
+{
+    StyleValues plain, alt;
+    plain.name = u8"Default";
+    alt.name = u8"Alt";
+    alt.bold = true;
+    const std::vector<StyleValues> styles{plain, alt};
+    // In Alt, \b1 changes nothing: b and c are one run.
+    const auto tags = readOriginalTags(u"a{\\rAlt}b{\\b1}c{\\r}d", &plain, styles);
+    ASSERT_EQ(tags.runs.size(), 1u);
+    EXPECT_EQ(u8(tags.runs[0].text), "bc");
+    expectRoundTrip(tags, draft(u"x y", {{0, 1, 1}}));
+    // Without the Document's Styles, Alt is unknown: two runs, as before.
+    EXPECT_EQ(readOriginalTags(u"a{\\rAlt}b{\\b1}c{\\r}d", &plain).runs.size(), 2u);
+}
+
+TEST(TagTransfer, ManyTransformsStayCheapAndTooManyTagsCarryNothing)
+{
+    std::u16string many = u"{\\an8}a";
+    for (int i = 0; i < 400; ++i)
+        many += u"{\\t(0,10,\\fs20)}b";
+    const auto tags = readOriginalTags(many);
+    ASSERT_FALSE(tags.malformed);
+    for (const auto &run : tags.runs)
+        for (const auto &[component, value] : run.differs)
+            EXPECT_LT(value.size(), 64u) << u8(component);
+    for (int i = 0; i < 700; ++i)
+        many += u"{\\i1}d";
+    EXPECT_TRUE(readOriginalTags(many).malformed); // past kMaxTagTransferTags
+    EXPECT_TRUE(readOriginalTags(std::u16string(kMaxTagTransferUnits + 1, u'x')).malformed);
+}
+
+TEST(TagTransfer, SuggestionsKeepToWholeWordsInEveryScript)
+{
+    const auto tags = readOriginalTags(u"I {\\i1}a{\\i0} b");
+    EXPECT_TRUE(suggestPlacements(tags, draft(u"éa b")).empty());   // inside a Latin word
+    EXPECT_TRUE(suggestPlacements(tags, draft(u"жa b")).empty());   // next to a Cyrillic letter
+    EXPECT_EQ(suggestPlacements(tags, draft(u"«a» b")).size(), 1u); // between quotation marks
+    EXPECT_EQ(suggestPlacements(tags, draft(u"x、a")).size(), 1u);  // after CJK punctuation
+}
+
+TEST(TagTransfer, EqualRunsKeepTheNumberTheTranslatorChose)
+{
+    const auto tags = readOriginalTags(u"Say {\\i1}one{\\i0} and {\\i1}two{\\i0}");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    // Run 2 placed: the saved text reads back as run 1, the first unused.
+    const auto saved = composeTranslation(tags, draft(u"Di uno y dos", {{9, 12, 2}}));
+    auto read = readTranslation(tags, saved);
+    ASSERT_EQ(read.placements.size(), 1u);
+    EXPECT_EQ(read.placements[0].run, 1);
+    relabelRuns(tags, read, runOrder(std::vector<RunPlacement>{{9, 12, 2}}));
+    EXPECT_EQ(read.placements[0].run, 2);
+    // An order that no longer fits is ignored.
+    auto other = readTranslation(tags, saved);
+    relabelRuns(tags, other, std::vector<int>{2, 1});
+    EXPECT_EQ(other.placements[0].run, 1);
+}

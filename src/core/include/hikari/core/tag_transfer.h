@@ -58,12 +58,23 @@ struct OriginalTags {
     std::vector<TagRun> runs;
     TagState defaults; // the Style's values, and the renderer's where it has none
     TagState base;     // the state at the first visible character
+    // The values a named reset (\rName) gives, for the Styles the text names.
+    std::map<std::u16string, TagState> named;
     bool karaoke = false;   // \k tags were left out
     bool drawing = false;   // nothing carried
-    bool malformed = false; // nothing carried
+    // Nothing carried: unbalanced braces, or a text longer or with more tags
+    // than kMaxTagTransferUnits / kMaxTagTransferTags.
+    bool malformed = false;
 };
 
-OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *style = nullptr);
+// A text past either is read as having no runs (an Original: malformed).
+inline constexpr std::size_t kMaxTagTransferUnits = 16384; // UTF-16 code units
+inline constexpr std::size_t kMaxTagTransferTags = 1024;
+
+// `style` is the Line's Style; `styles` the Document's, for named resets
+// (legacy GetStyle: the first of a name).
+OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *style = nullptr,
+                              std::span<const StyleValues> styles = {});
 
 struct RunPlacement {
     std::size_t start = 0, end = 0; // UTF-16 offsets in the draft's body
@@ -112,5 +123,13 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
 // Grid's "runs not placed" mark). An empty translation has none, and so has
 // one whose own leading or trailing tags differ (the translator's, shown whole).
 bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation);
+// The run numbers of `placements` in text order, as composeTranslation wrote them.
+std::vector<int> runOrder(std::span<const RunPlacement> placements);
+// Runs with the same formatting read back as the first unused of them, so a
+// draft read from saved text can name the wrong one of two equal runs.
+// `order` (runOrder of the placements last composed) puts back the numbers
+// the translator chose, where each still names a run of the same formatting;
+// otherwise the draft is left as read.
+void relabelRuns(const OriginalTags &tags, TranslationDraft &draft, std::span<const int> order);
 
 } // namespace hikari::core

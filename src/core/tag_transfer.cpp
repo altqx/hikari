@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cstdint>
 #include <cstdio>
 #include <set>
 
@@ -49,6 +50,24 @@ bool isAsciiLetter(char16_t c)
 bool isAsciiAlnum(char16_t c)
 {
     return isAsciiLetter(c) || (c >= u'0' && c <= u'9');
+}
+
+// Part of a word for a suggestion's whole-word test: ASCII letters and
+// digits, and any other character outside the spaces and punctuation, so a
+// run never matches inside a longer word in any script (a CJK text, without
+// spaces, gets no suggestion).
+bool isWordUnit(char16_t c)
+{
+    if (c < 0x80)
+        return isAsciiAlnum(c);
+    if (c == 0x00A0 || (c >= 0x00A1 && c <= 0x00BF) || c == 0x00D7 || c == 0x00F7)
+        return false; // Latin-1 punctuation and signs
+    if ((c >= 0x2000 && c <= 0x206F) || (c >= 0x2E00 && c <= 0x2E7F) || (c >= 0x3000 && c <= 0x303F))
+        return false; // general, supplemental and CJK punctuation, the spaces
+    if ((c >= 0xFF01 && c <= 0xFF0F) || (c >= 0xFF1A && c <= 0xFF20) || (c >= 0xFF3B && c <= 0xFF40) ||
+        (c >= 0xFF5B && c <= 0xFF65))
+        return false; // fullwidth punctuation
+    return true;
 }
 
 std::u16string tagName(std::u16string_view s)
@@ -317,7 +336,8 @@ struct Assignment {
 };
 
 // Applies `tag`, appending what it set to `history` when given.
-void apply(TagState &state, const Tag &tag, const TagState &defaults, std::vector<Assignment> *history)
+void apply(TagState &state, const Tag &tag, const TagState &defaults, const std::map<std::u16string, TagState> &named,
+           std::vector<Assignment> *history)
 {
     const auto effect = effectOf(tag.name);
     std::vector<std::u16string> touched = effect.components;
@@ -327,16 +347,30 @@ void apply(TagState &state, const Tag &tag, const TagState &defaults, std::vecto
     case Kind::Reset: {
         for (const auto &[component, value] : state)
             touched.push_back(component);
-        state = defaults;
-        if (const auto style = trimmed(tag.args); !style.empty())
+        const auto style = std::u16string(trimmed(tag.args));
+        const auto it = style.empty() ? named.end() : named.find(style);
+        state = it != named.end() ? it->second : defaults;
+        if (!style.empty())
             state[u"r"] = style;
         for (const auto &[component, value] : state)
             touched.push_back(component);
         break;
     }
-    case Kind::Transform:
-        state[u"t"] += tag.text;
+    case Kind::Transform: {
+        // The transforms so far as a count and a hash of their spellings: a
+        // fixed size however many there are (each history entry copies it).
+        auto &t = state[u"t"];
+        const std::string previous(t.begin(), t.end()); // "count|hash", ASCII
+        std::uint64_t count = 0, hash = 1469598103934665603ull;
+        if (const auto bar = previous.find('|'); bar != std::string::npos) {
+            std::from_chars(previous.data(), previous.data() + bar, count);
+            std::from_chars(previous.data() + bar + 1, previous.data() + previous.size(), hash);
+        }
+        for (const char16_t unit : tag.text)
+            hash = (hash ^ unit) * 1099511628211ull;
+        t = ascii(std::to_string(count + 1) + "|" + std::to_string(hash));
         break;
+    }
     default:
         for (const auto &component : effect.components) {
             if (trimmed(tag.args).empty()) {
@@ -473,17 +507,32 @@ TagSetter lastSetter(const std::vector<Assignment> &history, const std::u16strin
 
 } // namespace
 
-OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *style)
+OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *style,
+                              std::span<const StyleValues> styles)
 {
     OriginalTags out;
     out.defaults = defaultsFor(style);
+    if (original.size() > kMaxTagTransferUnits) {
+        out.malformed = true;
+        return out;
+    }
     const auto tokens = tokenize(original);
-    if (tokens.malformed) {
+    std::size_t tagCount = 0;
+    for (const auto &piece : tokens.pieces)
+        tagCount += piece.tags.size();
+    if (tokens.malformed || tagCount > kMaxTagTransferTags) {
         out.malformed = true;
         return out;
     }
     for (const auto &piece : tokens.pieces) {
         for (const auto &tag : piece.tags) {
+            if (effectOf(tag.name).kind == Kind::Reset) {
+                const auto name = std::u16string(trimmed(tag.args));
+                const auto u8name = toUtf8(name);
+                const auto named = std::ranges::find_if(styles, [&](const StyleValues &s) { return s.name == u8name; });
+                if (!name.empty() && named != styles.end() && !out.named.contains(name))
+                    out.named[name] = defaultsFor(&*named);
+            }
             if (tag.name == u"p" && normalised(Kind::Number, tag.args) != u"0" && !trimmed(tag.args).empty()) {
                 out.drawing = true;
                 return out;
@@ -536,7 +585,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                 if (std::ranges::any_of(effect.components, [&](const auto &c) { return leadingSetters.contains(c); }))
                     trailing += tag.text;
             }
-            apply(state, tag, out.defaults, &history);
+            apply(state, tag, out.defaults, out.named, &history);
         }
     }
     if (!baseSet)
@@ -660,10 +709,13 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
         inner = translation.substr(tags.leading.size(), translation.size() - tags.leading.size() - tags.trailing.size());
     }
     plain.body = inner;
-    if (tags.runs.empty())
+    if (tags.runs.empty() || inner.size() > kMaxTagTransferUnits)
         return plain;
     const auto tokens = tokenize(inner);
-    if (tokens.malformed)
+    std::size_t tagCount = 0;
+    for (const auto &piece : tokens.pieces)
+        tagCount += piece.tags.size();
+    if (tokens.malformed || tagCount > kMaxTagTransferTags)
         return plain;
 
     // The translation's own formatting, matched to the runs.
@@ -672,7 +724,7 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     for (const auto &piece : tokens.pieces) {
         if (piece.block)
             for (const auto &tag : piece.tags)
-                apply(state, tag, tags.defaults, nullptr);
+                apply(state, tag, tags.defaults, tags.named, nullptr);
         else
             segments.push_back({piece.rawStart, piece.rawEnd, 0, differences(state, tags.base), true});
     }
@@ -821,10 +873,10 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
     const std::u16string_view text = projection.text;
     auto isWord = [&](std::size_t at, std::size_t length) {
         const auto &needle = text.substr(at, length);
-        if (at > 0 && isAsciiAlnum(text[at - 1]) && isAsciiAlnum(needle.front()))
+        if (at > 0 && isWordUnit(text[at - 1]) && isWordUnit(needle.front()))
             return false;
         const auto after = at + length;
-        return !(after < text.size() && isAsciiAlnum(text[after]) && isAsciiAlnum(needle.back()));
+        return !(after < text.size() && isWordUnit(text[after]) && isWordUnit(needle.back()));
     };
     auto overlaps = [](std::span<const RunPlacement> list, const RunPlacement &p) {
         return std::ranges::any_of(list, [&](const RunPlacement &q) { return p.start < q.end && q.start < p.end; });
@@ -848,6 +900,33 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
     }
     std::ranges::sort(out, {}, &RunPlacement::start);
     return out;
+}
+
+std::vector<int> runOrder(std::span<const RunPlacement> placements)
+{
+    std::vector<RunPlacement> sorted(placements.begin(), placements.end());
+    std::ranges::sort(sorted, {}, &RunPlacement::start);
+    std::vector<int> out;
+    for (const auto &p : sorted)
+        out.push_back(p.run);
+    return out;
+}
+
+void relabelRuns(const OriginalTags &tags, TranslationDraft &draft, std::span<const int> order)
+{
+    auto sorted = draft.placements;
+    std::ranges::sort(sorted, {}, &RunPlacement::start);
+    if (order.size() != sorted.size())
+        return;
+    std::set<int> seen;
+    for (std::size_t i = 0; i < sorted.size(); ++i) {
+        const TagRun *read = runAt(tags, sorted[i].run), *chosen = runAt(tags, order[i]);
+        if (!read || !chosen || read->differs != chosen->differs || !seen.insert(order[i]).second)
+            return;
+    }
+    for (std::size_t i = 0; i < sorted.size(); ++i)
+        sorted[i].run = order[i];
+    draft.placements = std::move(sorted);
 }
 
 bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation)
