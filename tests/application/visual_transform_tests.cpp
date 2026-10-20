@@ -1706,6 +1706,38 @@ TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
     }
 }
 
+// VT1 (Codex on #293): with "Change all scale tags" a scale is the tags'
+// multiple of the press's, so a value is refused on an axis at zero (no
+// ratio from it) rather than writing nan; a zero itself is written.
+TEST(VisualTransformValues, ChangeAllFromAZeroScaleIsRefused)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    ScaleTool tool;
+    tool.setToggled(6 | 32);
+    tool.selected(host);
+    tool.reset(host);
+    const auto textOf = [&] {
+        const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+        return std::string(t.begin(), t.end());
+    };
+    const std::size_t steps = host.s->historySize();
+    EXPECT_TRUE(tool.setValue("fscx", u"0", host));
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_NE(textOf().find("\\fscx0"), std::string::npos) << textOf();
+    tool.reset(host);
+    tool.reset(host);
+    EXPECT_FALSE(tool.setValue("fscx", u"150", host));
+    EXPECT_FALSE(tool.setValue("fscx", u"150", host, ValueEdit::Sample));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
+    // Y, at its own scale, is still edited.
+    EXPECT_TRUE(tool.setValue("fscy", u"120", host));
+    EXPECT_EQ(host.s->historySize(), steps + 2);
+    EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
+}
+
 // VT1 (Codex on #293): with "two points" on and its points not both placed,
 // a typed origin still writes \org (only the angle waits for the points).
 TEST(VisualTransformValues, TheOriginIsTypedWithTwoPointsOn)

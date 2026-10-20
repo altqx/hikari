@@ -901,11 +901,18 @@ bool ScaleTool::setValue(const std::string &name, const std::u16string &text, Vi
         return false;
     takeView(host.view());
     const bool first = !host.gesture();
+    const bool x = name == "fscx";
+    // "Change all scale tags" multiplies each tag by the new scale over the
+    // press's: from a zero scale there is no ratio (legacy's would write
+    // nan), so an axis written from zero is refused while it is on.
+    const PointF baseline = first ? m_scale : m_lastScale;
+    if (m_changeAllTags && (((m_preserveProportions || x) && baseline.x == 0) ||
+                            ((m_preserveProportions || !x) && baseline.y == 0)))
+        return false;
     if (!beginEdit(host))
         return false;
     if (first)
         m_lastScale = m_scale;
-    const bool x = name == "fscx";
     const float scale = static_cast<float>(value / 100);
     if (m_preserveProportions) {
         const float was = x ? m_scale.x : m_scale.y;
