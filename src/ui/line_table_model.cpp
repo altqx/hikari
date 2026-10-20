@@ -244,7 +244,8 @@ bool LineTableModel::unplacedRunsOf(const Row &row) const
     if (m_runMarks && m_translationMode && !line.comment && !line.translation.empty()) {
         // Legacy GetStyle(0, name): the first Style of that name.
         const auto style = std::ranges::find(m_styles, line.style, &core::StyleValues::name);
-        const auto tags = core::readOriginalTags(core::toUtf16(line.text), style != m_styles.end() ? &*style : nullptr);
+        const auto tags =
+            core::readOriginalTags(core::toUtf16(line.text), style != m_styles.end() ? &*style : nullptr, m_styles);
         unplaced = core::hasUnplacedRuns(tags, core::toUtf16(line.translation));
     }
     row.unplacedRuns = unplaced;

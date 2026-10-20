@@ -10142,6 +10142,52 @@ private slots:
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
     }
 
+    // TM1: the placed runs follow the edits. With tags hidden, deleting a
+    // run's text takes its tags along; a run of the Original whose formatting
+    // changes writes its new tags; several Lines' alignment goes to each
+    // Original, and each translation follows.
+    void tagsFromOriginalFollowEdits()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-edits.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        application->editor().translationEdited(QStringLiteral("Mur wysoki"), 10);
+        QVERIFY(application->editor().placeRun(1, 4, 10));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wysoki"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("Mur wysoki"));
+        // Typing inside the run keeps it; deleting its text takes its tags.
+        application->editor().translationEdited(QStringLiteral("Mur wyysoki"), 7);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wyysoki"));
+        application->editor().translationEdited(QStringLiteral("Mur "), 4);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur "));
+        QVERIFY(!application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        // The Original's run turns underlined: the placed run follows.
+        application->editor().translationEdited(QStringLiteral("Mur wysoki"), 10);
+        QVERIFY(application->editor().placeRun(1, 4, 10));
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        application->editor().textEdited(QStringLiteral("{\\i1}Wall {\\u1}high"), 13);
+        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("{\\i1}Wall {\\u1}high"));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\u1}wysoki"));
+        QVERIFY(application->editor().commit());
+        // Two Lines' alignment: each Original takes \an8, each translation follows.
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[1]->id, {lines[1]->id, lines[2]->id}, lines[1]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Tower"));
+        QVERIFY(application->editor().chooseAlignment(7));
+        const auto after = session->document().lines();
+        QCOMPARE(q8(after[1]->text), QStringLiteral("{\\an8}Tower"));
+        QCOMPARE(q8(after[1]->translation), QStringLiteral("{\\an8}Wieza"));
+        QCOMPARE(q8(after[2]->text), QStringLiteral("{\\an8\\i1}Wall {\\u1}high")); // first in the block (putTagInLine)
+        QCOMPARE(q8(after[2]->translation), QStringLiteral("{\\an8\\i1}Mur {\\u1}wysoki"));
+    }
+
     // TM1: a karaoke Line carries its leading tags without its \k timing,
     // and says so under the Translated text.
     void tagsFromOriginalOnAKaraokeLine()

@@ -99,7 +99,11 @@ std::optional<LineEditorController::Carry> LineEditorController::carry(const cor
 {
     if (!m_moveTags || !translationMode())
         return std::nullopt;
-    Carry c{core::readOriginalTags(core::toUtf16(line.text)), {}, {}};
+    // The runs are read against the Line's Style (legacy GetStyle(0, name):
+    // the first of that name), and named resets against the Document's.
+    const auto styles = session() ? core::decodeStyles(session()->document()) : std::vector<core::StyleValues>{};
+    const auto style = std::ranges::find(styles, line.style, &core::StyleValues::name);
+    Carry c{core::readOriginalTags(core::toUtf16(line.text), style != styles.end() ? &*style : nullptr, styles), {}, {}};
     if (c.tags.drawing || c.tags.malformed)
         return std::nullopt;
     c.leading = core::toUtf8(c.tags.leading);
@@ -126,10 +130,59 @@ std::size_t LineEditorController::carriedLead() const
 std::optional<core::OriginalTags> LineEditorController::runTags() const
 {
     const auto r = sessionRecord();
-    if (!r || !carry(*r))
-        return std::nullopt;
-    const auto style = lineStyle();
-    return core::readOriginalTags(core::toUtf16(r->text), style ? &*style : nullptr);
+    auto c = r ? carry(*r) : std::nullopt;
+    return c ? std::optional(std::move(c->tags)) : std::nullopt;
+}
+
+core::TranslationDraft LineEditorController::translationDraft(const core::OriginalTags &tags,
+                                                              const core::LineRecord &line) const
+{
+    auto draft = core::readTranslation(tags, core::toUtf16(line.translation));
+    if (const auto it = m_runOrders.find(line.id.value); it != m_runOrders.end())
+        core::relabelRuns(tags, draft, it->second);
+    return draft;
+}
+
+std::u8string LineEditorController::composedBody(const core::OriginalTags &tags, core::TranslationDraft draft,
+                                                 core::LineId line)
+{
+    draft.carried = false; // carried() adds the carried tags
+    std::vector<core::RunPlacement> placed;
+    const auto body = core::toUtf8(core::composeTranslation(tags, draft, &placed));
+    m_runOrders[line.value] = core::runOrder(placed);
+    return body;
+}
+
+bool LineEditorController::saveTranslationDraft(const core::OriginalTags &tags, core::TranslationDraft draft)
+{
+    const auto real = sessionRecord();
+    if (!real)
+        return false;
+    // The numbers the translator chose are kept before setRaw refreshes the
+    // fields, which read them back.
+    const auto previous = m_runOrders.find(real->id.value) != m_runOrders.end()
+                              ? std::optional(m_runOrders[real->id.value])
+                              : std::nullopt;
+    if (setRaw(1, composedBody(tags, std::move(draft), real->id)))
+        return true;
+    if (previous)
+        m_runOrders[real->id.value] = *previous;
+    else
+        m_runOrders.erase(real->id.value);
+    return false;
+}
+
+std::u8string LineEditorController::recarried(const core::LineRecord &before, const Carry &now)
+{
+    // The placements read with the old runs, composed with the new ones, so
+    // a run whose formatting changed takes its new tags.
+    const auto old = carry(before);
+    if (!old)
+        return carried(now, before.translation);
+    auto draft = translationDraft(old->tags, before);
+    std::erase_if(draft.placements,
+                  [&](const core::RunPlacement &p) { return p.run > static_cast<int>(now.tags.runs.size()); });
+    return carried(now, composedBody(now.tags, std::move(draft), before.id));
 }
 
 namespace {
@@ -212,7 +265,7 @@ QVariantList LineEditorController::tagRuns() const
     std::vector<core::RunPlacement> landed;
     const auto full = core::toUtf16(real->translation);
     if (!full.empty())
-        core::composeTranslation(*tags, core::readTranslation(*tags, full), &landed);
+        core::composeTranslation(*tags, translationDraft(*tags, *real), &landed);
     const auto lead = tags->leading.size();
     const auto inner = core::project(core::toUtf16(record()->translation));
     const auto original = core::project(core::toUtf16(real->text));
@@ -220,7 +273,7 @@ QVariantList LineEditorController::tagRuns() const
     std::vector<core::RunPlacement> suggested;
     core::Projection body;
     if (!full.empty()) {
-        const auto draft = core::readTranslation(*tags, full);
+        const auto draft = translationDraft(*tags, *real);
         suggested = suggestedRuns(*tags, draft);
         body = core::project(draft.body);
     }
@@ -281,7 +334,7 @@ bool LineEditorController::placeRun(int number, int selectionStart, int selectio
     const auto to = displayed(std::max(selectionStart, selectionEnd));
     if (from >= to)
         return false;
-    auto draft = core::readTranslation(*tags, core::toUtf16(real->translation));
+    auto draft = translationDraft(*tags, *real);
     if (number == 0)
         number = core::nextUnplacedRun(*tags, draft.placements);
     if (number < 1 || number > static_cast<int>(tags->runs.size()))
@@ -289,8 +342,7 @@ bool LineEditorController::placeRun(int number, int selectionStart, int selectio
     const auto body = core::project(draft.body);
     if (!core::placeRun(draft.placements, core::rawOffset(body, from, true), core::rawOffset(body, to, false), number))
         return false;
-    draft.carried = false; // setRaw adds the carried tags
-    if (!setRaw(1, core::toUtf8(core::composeTranslation(*tags, draft))))
+    if (!saveTranslationDraft(*tags, std::move(draft)))
         return false;
     const auto after = core::project(core::toUtf16(record()->translation));
     m_selectionStart = static_cast<int>(m_showTags ? core::rawOffset(after, from, true) : from);
@@ -316,14 +368,13 @@ bool LineEditorController::acceptSuggestedRuns()
     const auto real = sessionRecord();
     if (!editable() || !tags || !real || real->translation.empty())
         return false;
-    auto draft = core::readTranslation(*tags, core::toUtf16(real->translation));
+    auto draft = translationDraft(*tags, *real);
     const auto suggested = suggestedRuns(*tags, draft);
     if (suggested.empty())
         return false;
     for (const auto &p : suggested)
         core::placeRun(draft.placements, p.start, p.end, p.run);
-    draft.carried = false; // setRaw adds the carried tags
-    return setRaw(1, core::toUtf8(core::composeTranslation(*tags, draft)));
+    return saveTranslationDraft(*tags, std::move(draft));
 }
 
 bool LineEditorController::dismissSuggestedRuns()
@@ -332,7 +383,7 @@ bool LineEditorController::dismissSuggestedRuns()
     const auto real = sessionRecord();
     if (!tags || !real || real->translation.empty())
         return false;
-    const auto suggested = suggestedRuns(*tags, core::readTranslation(*tags, core::toUtf16(real->translation)));
+    const auto suggested = suggestedRuns(*tags, translationDraft(*tags, *real));
     if (suggested.empty())
         return false;
     if (m_dismissedFor != real->id) {
@@ -597,7 +648,7 @@ bool LineEditorController::setRaw(int role, std::u8string raw)
         after.text = raw;
         after.translation.clear();
         if (const auto next = c && !r->translation.empty() ? carry(after) : std::nullopt)
-            change.translation = carried(*next, r->translation);
+            change.translation = recarried(*real, *next);
         change.text = std::move(raw);
     }
     if (!s->editDraft(r->id, change))
@@ -651,6 +702,25 @@ void LineEditorController::edit(int role, const QString &newText, int cursor)
     QTextBoundaryFinder finder(QTextBoundaryFinder::Grapheme, old);
     for (qsizetype b; (b = finder.toNextBoundary()) >= 0;)
         bounds.push_back(static_cast<std::size_t>(b));
+    // TM1: with the Original's runs placed, the edit goes to the draft's body
+    // (the field's text without the runs' tags) and the placements move with
+    // it, so a run whose text is deleted takes its tags along.
+    if (const auto tags = role == 1 ? runTags() : std::nullopt; tags && !tags->runs.empty()) {
+        auto draft = translationDraft(*tags, *sessionRecord());
+        const auto result = core::mappedReplace(draft.body, start, end, u16(inserted), bounds);
+        if (!result) {
+            refresh();
+            fail(refusalText(result.error()), newText);
+            return;
+        }
+        const auto body = core::project(draft.body);
+        const auto rawStart = core::rawOffset(body, start, true);
+        const auto rawEnd = std::max(rawStart, core::rawOffset(body, end, false));
+        core::shiftPlacements(draft.placements, rawStart, rawEnd, result->size() + (rawEnd - rawStart) - draft.body.size());
+        draft.body = *result;
+        saveTranslationDraft(*tags, std::move(draft));
+        return;
+    }
     const auto raw = core::toUtf16(roleText(*record(), role));
     const auto result = core::mappedReplace(raw, start, end, u16(inserted), bounds);
     if (!result) {
@@ -1064,7 +1134,7 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
     // that style is placed, as a word processor's Ctrl+I would.
     if (role == 1 && selectionStart != selectionEnd) {
         if (const auto tags = runTags()) {
-            const auto draft = core::readTranslation(*tags, core::toUtf16(sessionRecord()->translation));
+            const auto draft = translationDraft(*tags, *sessionRecord());
             if (const int run = core::runWithProperty(*tags, draft.placements, u16(tag)))
                 return placeRun(run, selectionStart, selectionEnd);
         }
@@ -1172,7 +1242,13 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
             for (const auto id : lines)
                 if (!d.editLine(id, [&](core::LineRecord &l) {
                         auto &field = l.translation.empty() ? l.text : l.translation;
-                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(core::toUtf16(field), from, text));
+                        // TM1: the caret is in the Translated field's text, after
+                        // each Line's own carried leading block.
+                        long at = from;
+                        if (!l.translation.empty())
+                            if (const auto c = carry(l))
+                                at += static_cast<long>(c->tags.leading.size());
+                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(core::toUtf16(field), at, text));
                     }))
                     return false;
             return true;
@@ -1601,11 +1677,8 @@ bool LineEditorController::pasteAllToTranslation()
         return false;
     // TM1: with tags carried, the Translated field takes the Original's text
     // with its runs placed; the carried tags are added as for typing.
-    if (const auto c = carry(*sessionRecord())) {
-        auto draft = core::draftOfOriginal(core::toUtf16(r->text), c->tags);
-        draft.carried = false;
-        return setRaw(1, core::toUtf8(core::composeTranslation(c->tags, draft)));
-    }
+    if (const auto c = carry(*sessionRecord()))
+        return saveTranslationDraft(c->tags, core::draftOfOriginal(core::toUtf16(r->text), c->tags));
     return setRaw(1, r->text);
 }
 
@@ -2483,6 +2556,19 @@ bool LineEditorController::chooseAlignment(int index)
         "Editing multiple lines", s->revision(), {lines.begin(), lines.end()}, [&](core::Document &d) {
             for (const auto id : lines)
                 if (!d.editLine(id, [&](core::LineRecord &l) {
+                        // TM1: with tags carried, \an is the Original's and the
+                        // translation follows, as for one Line.
+                        if (carry(l)) {
+                            auto after = l;
+                            after.text = core::toUtf8(core::legacy::putTagInLine(core::toUtf16(l.text), u"an([0-9])", tag));
+                            after.translation.clear();
+                            if (const auto next = carry(after)) {
+                                if (!l.translation.empty())
+                                    l.translation = recarried(l, *next);
+                                l.text = std::move(after.text);
+                                return;
+                            }
+                        }
                         auto &field = l.translation.empty() ? l.text : l.translation;
                         field = core::toUtf8(core::legacy::putTagInLine(core::toUtf16(field), u"an([0-9])", tag));
                     }))

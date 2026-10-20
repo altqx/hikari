@@ -28,6 +28,7 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <functional>
+#include <map>
 #include <optional>
 #include <set>
 #include <string>
@@ -471,6 +472,16 @@ private:
     // The active Line's Original tags read with its Style, for its runs;
     // nullopt when nothing is carried.
     std::optional<core::OriginalTags> runTags() const;
+    // The Line's translation as a draft of `tags`, its equal runs named as
+    // the translator last placed them (m_runOrders).
+    core::TranslationDraft translationDraft(const core::OriginalTags &tags, const core::LineRecord &line) const;
+    // The draft composed without the carried tags; notes its run order.
+    std::u8string composedBody(const core::OriginalTags &tags, core::TranslationDraft draft, core::LineId line);
+    // composedBody through setRaw(1) for the active Line.
+    bool saveTranslationDraft(const core::OriginalTags &tags, core::TranslationDraft draft);
+    // `before`'s translation for its Original's new carry `now`: the placed
+    // runs read with the old runs and written with the new ones.
+    std::u8string recarried(const core::LineRecord &before, const Carry &now);
     // core::suggestPlacements for the active Line, less the dismissed ones.
     std::vector<core::RunPlacement> suggestedRuns(const core::OriginalTags &tags,
                                                   const core::TranslationDraft &draft) const;
@@ -484,6 +495,8 @@ private:
     bool m_carryFocus = false; // an untranslated Line asks for the Translated field's focus
     std::optional<core::LineId> m_dismissedFor; // the Line whose suggestions were dismissed
     std::set<int> m_dismissedRuns;
+    // TM1: each Line's placed run numbers in text order (core::relabelRuns).
+    std::map<std::uint64_t, std::vector<int>> m_runOrders;
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw);
