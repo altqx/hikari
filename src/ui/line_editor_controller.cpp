@@ -77,6 +77,8 @@ void LineEditorController::setDocument(std::optional<application::DocumentId> do
     m_draftRedo.clear();
     m_problem.clear();
     m_attempted.clear();
+    m_dismissedFor.reset(); // a Line id of the Document before
+    m_dismissedRuns.clear();
     rebuildLists(); // EditBox::SetGrid
     m_shownLine.reset();
     m_carryEvaluated.reset();
@@ -138,7 +140,7 @@ core::TranslationDraft LineEditorController::translationDraft(const core::Origin
                                                               const core::LineRecord &line) const
 {
     auto draft = core::readTranslation(tags, core::toUtf16(line.translation));
-    if (const auto it = m_runOrders.find(line.id.value); it != m_runOrders.end())
+    if (const auto it = m_runOrders.find(runOrderKey(line.id)); it != m_runOrders.end())
         core::relabelRuns(tags, draft, it->second);
     return draft;
 }
@@ -149,7 +151,7 @@ std::u8string LineEditorController::composedBody(const core::OriginalTags &tags,
     draft.carried = false; // carried() adds the carried tags
     std::vector<core::RunPlacement> placed;
     const auto body = core::toUtf8(core::composeTranslation(tags, draft, &placed));
-    m_runOrders[line.value] = core::runOrder(placed);
+    m_runOrders[runOrderKey(line)] = core::runOrder(placed);
     return body;
 }
 
@@ -160,28 +162,30 @@ bool LineEditorController::saveTranslationDraft(const core::OriginalTags &tags, 
         return false;
     // The numbers the translator chose are kept before setRaw refreshes the
     // fields, which read them back.
-    const auto previous = m_runOrders.find(real->id.value) != m_runOrders.end()
-                              ? std::optional(m_runOrders[real->id.value])
-                              : std::nullopt;
+    const auto key = runOrderKey(real->id);
+    const auto previous = m_runOrders.contains(key) ? std::optional(m_runOrders[key]) : std::nullopt;
     if (setRaw(1, composedBody(tags, std::move(draft), real->id)))
         return true;
     if (previous)
-        m_runOrders[real->id.value] = *previous;
+        m_runOrders[key] = *previous;
     else
-        m_runOrders.erase(real->id.value);
+        m_runOrders.erase(key);
     return false;
 }
 
 std::u8string LineEditorController::recarried(const core::LineRecord &before, const Carry &now)
 {
-    // The placements read with the old runs, composed with the new ones, so
-    // a run whose formatting changed takes its new tags.
+    // The placements read with the old runs, each given to the run it became
+    // (a run put in before it renumbers it; one gone is dropped), composed
+    // with the new ones, so a run whose formatting changed takes its new tags.
     const auto old = carry(before);
     if (!old)
         return carried(now, before.translation);
     auto draft = translationDraft(old->tags, before);
-    std::erase_if(draft.placements,
-                  [&](const core::RunPlacement &p) { return p.run > static_cast<int>(now.tags.runs.size()); });
+    const auto became = core::matchRuns(old->tags, now.tags);
+    for (auto &p : draft.placements)
+        p.run = p.run >= 1 && p.run <= static_cast<int>(became.size()) ? became[p.run - 1] : 0;
+    std::erase_if(draft.placements, [](const core::RunPlacement &p) { return p.run == 0; });
     return carried(now, composedBody(now.tags, std::move(draft), before.id));
 }
 
@@ -1243,12 +1247,15 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
                 if (!d.editLine(id, [&](core::LineRecord &l) {
                         auto &field = l.translation.empty() ? l.text : l.translation;
                         // TM1: the caret is in the Translated field's text, after
-                        // each Line's own carried leading block.
+                        // each Line's own carried leading block and before its
+                        // trailing one.
                         long at = from;
+                        auto units = core::toUtf16(field);
                         if (!l.translation.empty())
                             if (const auto c = carry(l))
-                                at += static_cast<long>(c->tags.leading.size());
-                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(core::toUtf16(field), at, text));
+                                at = std::min(at + static_cast<long>(c->tags.leading.size()),
+                                              static_cast<long>(units.size() - c->tags.trailing.size()));
+                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(std::move(units), at, text));
                     }))
                     return false;
             return true;
@@ -1354,7 +1361,18 @@ bool LineEditorController::applyDialogChange(
             for (const auto id : lines)
                 if (!doc.editLine(id, [&](core::LineRecord &l) {
                         std::u16string text = core::toUtf16(l.text), translation = core::toUtf16(l.translation);
-                        several(text, translation);
+                        // TM1: a translation with tags carried changes between
+                        // them, as the Translated field shows it.
+                        const auto c = translation.empty() ? std::nullopt : carry(l);
+                        const std::size_t lead = c ? c->tags.leading.size() : 0;
+                        const std::size_t trail = c ? c->tags.trailing.size() : 0;
+                        if (c && translation.size() > lead + trail) {
+                            auto body = translation.substr(lead, translation.size() - lead - trail);
+                            several(text, body);
+                            translation = c->tags.leading + body + c->tags.trailing;
+                        } else {
+                            several(text, translation);
+                        }
                         const auto t8 = core::toUtf8(text), tr8 = core::toUtf8(translation);
                         changedAny = changedAny || t8 != l.text || tr8 != l.translation;
                         l.text = t8;

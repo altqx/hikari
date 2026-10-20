@@ -29,6 +29,7 @@
 
 #include <functional>
 #include <map>
+#include <utility>
 #include <optional>
 #include <set>
 #include <string>
@@ -495,8 +496,11 @@ private:
     bool m_carryFocus = false; // an untranslated Line asks for the Translated field's focus
     std::optional<core::LineId> m_dismissedFor; // the Line whose suggestions were dismissed
     std::set<int> m_dismissedRuns;
-    // TM1: each Line's placed run numbers in text order (core::relabelRuns).
-    std::map<std::uint64_t, std::vector<int>> m_runOrders;
+    // TM1: each Line's placed run numbers in text order (core::relabelRuns),
+    // by Document and Line (each Document numbers its own Lines).
+    using RunOrderKey = std::pair<std::uint64_t, std::uint64_t>;
+    RunOrderKey runOrderKey(core::LineId line) const { return {m_document ? m_document->value : 0, line.value}; }
+    std::map<RunOrderKey, std::vector<int>> m_runOrders;
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     bool setRaw(int role, std::u8string raw);
