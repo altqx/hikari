@@ -327,7 +327,8 @@ Window {
                     }
                 }
                 // The toolbar row (legacy vToolbar): the visual tool families
-                // and the active family's options.
+                // and the inspector bar (VT1: the options, the values and the
+                // batch picker).
                 RowLayout {
                     objectName: "fullscreenToolbar"
                     Layout.fillWidth: true
@@ -349,16 +350,17 @@ Window {
                             onClicked: fs.shell.visualTools.selectFamily(index)
                         }
                     }
-                    ToolSeparator { visible: toolOptions.visible }
-                    VisualToolOptions {
-                        id: toolOptions
-                        objectName: "fullscreenToolOptions"
+                    ToolSeparator {}
+                    // VT1: the Video panel's inspector bar, the families'
+                    // buttons naming the tool before it.
+                    VisualToolBar {
+                        objectName: "fullscreenToolBar"
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        clip: true
                         tools: fs.shell.visualTools
+                        showsName: false
+                        background: null
                     }
-                    Item { Layout.fillWidth: !toolOptions.visible }
                 }
             }
         }

@@ -2630,7 +2630,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "video-context-menu"
+    "video-context-menu",
+    "visual-tools"
    ]
   },
   {

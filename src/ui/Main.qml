@@ -2626,7 +2626,7 @@ ApplicationWindow {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
-                VisualToolValues { // T1-T4: the family's options, values and batch picker
+                VisualToolBar { // VT1: the tool, its options and values, the batch picker
                     shownInLayout: root.app.editorOn // D2: part of legacy's video toolbar
                     Layout.fillWidth: true
                     // It wraps rather than widen the column: wider text (a
@@ -2678,7 +2678,6 @@ ApplicationWindow {
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
                     }
-                    VisualToolReadout { tools: root.visualTools } // T1: the tool's read-only values
                 }
                 VideoFollowChoices { id: videoFollow; Layout.fillWidth: true; settings: root.app.settings } // V6
                 RowLayout {
