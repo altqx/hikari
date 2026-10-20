@@ -109,6 +109,10 @@ struct LineRecord {
     // a version unique to that copy (0: never changed since loading), so the
     // session can mark exactly the saved copies, wherever history keeps them.
     std::uint64_t changeVersion = 0;
+    // KE1: the karaoke Line a templater run generated this Line from (part
+    // of that Line's generated output); none when 0. In memory only: never
+    // saved, so a Document opened from a file starts without it.
+    LineId generatedFrom;
 };
 
 // E6: how a Document mutation treats a Line's changed-Line mark: Changed
