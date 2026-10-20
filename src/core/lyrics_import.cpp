@@ -181,7 +181,7 @@ std::optional<std::int64_t> lrcTime(u8sv text)
     }
     ms *= 1000;
     if (!fraction.empty()) {
-        if (!digits(fraction))
+        if (!digits(fraction) || fraction.size() > 3) // tenths to milliseconds; more would be cut
             return std::nullopt;
         const u8sv first = fraction.substr(0, 3);
         std::int64_t f = value(first);
@@ -200,8 +200,9 @@ bool isDigit(char8_t c)
 }
 
 // Whether text (after a "[" or "<") has a time stamp's shape: digits, then
-// digits, colons and dots holding a colon ("00:12.34"), as far as they go.
-// "<3 you" and "[1st verse]" are lyrics; "<00:0x.00>" is a broken stamp.
+// digits, colons and dots holding a colon with a digit after it ("00:12.34"),
+// as far as they go. "<3 you", "<12: tonight>" and "[1st verse]" are
+// lyrics; "<00:0x.00>" is a broken stamp.
 bool stampShaped(u8sv text)
 {
     text = detail::trimLeft(text);
@@ -210,7 +211,10 @@ bool stampShaped(u8sv text)
     std::size_t n = 0;
     while (n < text.size() && (isDigit(text[n]) || text[n] == u8':' || text[n] == u8'.'))
         ++n;
-    return text.substr(0, n).find(u8':') != u8sv::npos;
+    for (std::size_t i = 0; i + 1 < n; ++i)
+        if (text[i] == u8':' && isDigit(text[i + 1]))
+            return true;
+    return false;
 }
 
 // One lyrics line of the file, before the times are resolved.
