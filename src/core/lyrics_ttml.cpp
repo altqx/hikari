@@ -843,7 +843,7 @@ std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> b
             if (byte == 0xEF && i + 2 < newline && static_cast<unsigned char>(text[i + 1]) == 0xBF &&
                 (static_cast<unsigned char>(text[i + 2]) & 0xFE) == 0xBE)
                 return std::unexpected(LyricsProblem{Kind::NotWellFormed, line,
-                                                     codePointName(text[i + 2] == u8'\xBE' ? 0xFFFE : 0xFFFF)});
+                                                     codePointName(static_cast<unsigned char>(text[i + 2]) == 0xBE ? 0xFFFE : 0xFFFF)});
         }
         from = newline + 1;
     }
