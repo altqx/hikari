@@ -1,10 +1,14 @@
 #include "hikari/backends/audio_box_player.h"
 
 #include <algorithm>
+#include <array>
 #include <chrono>
+#include <utility>
 
 #include <QMetaObject>
 #include <QTimer>
+
+#include <soundtouch/SoundTouch.h>
 
 namespace hikari::backends {
 
@@ -161,11 +165,28 @@ AudioBoxPlayer::openDevice(application::OutputFormat want)
 // an empty range loops on silence.
 void AudioBoxPlayer::play(std::int64_t start, std::int64_t count)
 {
+    playAudio(nullptr, start, count);
+}
+
+bool AudioBoxPlayer::playClip(std::shared_ptr<const application::DisplayAudio> clip)
+{
+    if (!clip)
+        return false;
+    const std::int64_t count = clip->sampleCount();
+    playAudio(std::move(clip), 0, count);
+    return playing();
+}
+
+void AudioBoxPlayer::playAudio(std::shared_ptr<const application::DisplayAudio> clip, std::int64_t start,
+                               std::int64_t count)
+{
     {
         const std::scoped_lock lock(m_lock);
-        auto audio = m_audio ? m_audio() : nullptr;
+        const bool clipping = clip != nullptr;
+        auto audio = clipping ? std::move(clip) : m_audio ? m_audio() : nullptr;
         if (!audio || !openOutput(*audio))
             return;
+        m_clipping = clipping;
         output().stop();
         m_playingAudio = std::move(audio);
         m_start = m_base = m_next = start;
@@ -180,7 +201,9 @@ void AudioBoxPlayer::play(std::int64_t start, std::int64_t count)
         const std::int64_t bytesPerFrame = std::int64_t{m_srcFormat.channels} * 2;
         const std::int64_t wantedBytes = kWantedLatencyMs * (m_srcFormat.sampleRate * bytesPerFrame) / 1000;
         m_oneShot = count > 0 && count * bytesPerFrame < wantedBytes;
-        m_rangeFrames = count * m_outFormat.sampleRate / std::max(1, m_srcFormat.sampleRate);
+        m_rangeFrames = static_cast<std::int64_t>(
+            double(count * m_outFormat.sampleRate / std::max(1, m_srcFormat.sampleRate)) / playSpeed());
+        resetStretch();
         m_playing = true;
         m_started = false;
         fill();
@@ -272,8 +295,98 @@ void AudioBoxPlayer::resumeLocked(std::int64_t frame)
     m_outFormat = *opened;
     m_waiting = false;
     m_baseConsumed = output().status().framesConsumed;
-    m_rangeFrames = std::max<std::int64_t>(0, m_end - frame) * m_outFormat.sampleRate / std::max(1, m_srcFormat.sampleRate);
+    m_rangeFrames = static_cast<std::int64_t>(
+        double(std::max<std::int64_t>(0, m_end - frame) * m_outFormat.sampleRate / std::max(1, m_srcFormat.sampleRate))
+        / playSpeed());
+    resetStretch();
     fill();
+}
+
+// KA2-slowed-playback: the output stays open and the range goes on from
+// source frame `frame` at the new speed.
+void AudioBoxPlayer::restartLocked(std::int64_t frame)
+{
+    output().stop();
+    m_base = m_next = frame;
+    m_written = 0;
+    m_pending.clear();
+    m_primed = false;
+    m_phase = 0;
+    m_started = false;
+    m_baseConsumed = output().status().framesConsumed;
+    m_rangeFrames = static_cast<std::int64_t>(
+        double(std::max<std::int64_t>(0, m_end - frame) * m_outFormat.sampleRate / std::max(1, m_srcFormat.sampleRate))
+        / playSpeed());
+    resetStretch();
+    fill();
+}
+
+void AudioBoxPlayer::resetStretch()
+{
+    if (playSpeed() >= 1.0 || m_srcFormat.sampleRate <= 0 || m_outFormat.channels <= 0) {
+        m_stretch.reset();
+        return;
+    }
+    if (!m_stretch)
+        m_stretch = std::make_unique<soundtouch::SoundTouch>();
+    m_stretch->clear();
+    m_stretch->setSampleRate(static_cast<unsigned>(m_srcFormat.sampleRate));
+    m_stretch->setChannels(static_cast<unsigned>(m_outFormat.channels));
+    m_stretch->setTempo(playSpeed());
+    m_stretch->setSetting(SETTING_SEQUENCE_MS, kStretchSequenceMs);
+    m_stretch->setSetting(SETTING_SEEKWINDOW_MS, kStretchSeekWindowMs);
+    m_stretch->setSetting(SETTING_OVERLAP_MS, kStretchOverlapMs);
+}
+
+// SoundTouch takes the chunk and hands back what it has ready (nothing at
+// first, while it fills its window).
+void AudioBoxPlayer::stretch(std::vector<float> &frames, int channels)
+{
+    m_stretch->putSamples(frames.data(), static_cast<unsigned>(frames.size() / static_cast<std::size_t>(channels)));
+    frames.resize(std::size_t{m_stretch->numSamples()} * static_cast<std::size_t>(channels));
+    const unsigned got = frames.empty() ? 0 : m_stretch->receiveSamples(frames.data(), m_stretch->numSamples());
+    frames.resize(std::size_t{got} * static_cast<std::size_t>(channels));
+}
+
+void AudioBoxPlayer::setSpeed(double speed)
+{
+    const std::scoped_lock lock(m_lock);
+    speed = std::clamp(speed, 0.25, 1.0);
+    if (speed == m_speed)
+        return;
+    if (!m_playing || m_waiting || !m_started || m_clipping) {
+        const bool restart = m_playing && !m_waiting && !m_clipping;
+        m_speed = speed;
+        if (restart)
+            restartLocked(m_base);
+        return;
+    }
+    const std::int64_t frame = heardLocked();
+    m_speed = speed;
+    restartLocked(frame);
+}
+
+double AudioBoxPlayer::speed() const
+{
+    const std::scoped_lock lock(m_lock);
+    return m_speed;
+}
+
+// Measured with kStretchSequenceMs 40, kStretchSeekWindowMs 15 and
+// kStretchOverlapMs 8 at 48 kHz: the mean of 20 onsets per speed, each within
+// 4 ms of it.
+double AudioBoxPlayer::stretchLeadMs(double speed)
+{
+    static constexpr std::array<std::pair<double, double>, 5> kLead{
+        {{0.25, 27.9}, {1.0 / 3.0, 22.7}, {0.5, 15.1}, {0.75, 6.8}, {1.0, 0.0}}};
+    speed = std::clamp(speed, kLead.front().first, 1.0);
+    for (std::size_t i = 1; i < kLead.size(); i++) {
+        const auto [s0, l0] = kLead[i - 1];
+        const auto [s1, l1] = kLead[i];
+        if (speed <= s1)
+            return l0 + (l1 - l0) * (speed - s0) / (s1 - s0);
+    }
+    return 0;
 }
 
 // The stream ended without a stop (WASAPI's unplug; a start that failed):
@@ -433,17 +546,22 @@ void AudioBoxPlayer::fill()
         m_next += n;
         // to float, each output channel from the same source channel (the
         // last one past the source's)
+        auto &source = m_source;
+        source.clear();
+        source.reserve(static_cast<std::size_t>(n * outChannels));
+        for (std::int64_t i = 0; i < n; i++)
+            for (int c = 0; c < outChannels; c++)
+                source.push_back(m_frames[static_cast<std::size_t>(i * srcChannels + std::min(c, srcChannels - 1))]
+                                 / 32768.0f);
+        if (m_stretch)
+            stretch(source, outChannels);
+        const auto frames = static_cast<std::int64_t>(source.size()) / outChannels;
+        auto frameAt = [&](std::int64_t i, int c) { return source[static_cast<std::size_t>(i * outChannels + c)]; };
         converted.clear();
-        auto frameAt = [&](std::int64_t i, int c) {
-            return m_frames[static_cast<std::size_t>(i * srcChannels + std::min(c, srcChannels - 1))] / 32768.0f;
-        };
         if (!resample) {
-            converted.reserve(static_cast<std::size_t>(n * outChannels));
-            for (std::int64_t i = 0; i < n; i++)
-                for (int c = 0; c < outChannels; c++)
-                    converted.push_back(frameAt(i, c));
+            std::swap(converted, source);
         } else {
-            for (std::int64_t i = 0; i < n; i++) {
+            for (std::int64_t i = 0; i < frames; i++) {
                 if (!m_primed) {
                     m_previous.resize(static_cast<std::size_t>(outChannels));
                     for (int c = 0; c < outChannels; c++)
@@ -503,7 +621,19 @@ std::int64_t AudioBoxPlayer::position() const
     const auto clock = m_output->clock();
     if (!clock.valid)
         return m_base;
-    return m_base + clockFrames(clock) * m_srcFormat.sampleRate / m_outFormat.sampleRate;
+    return m_base + sourceFrames(clockFrames(clock));
+}
+
+// Output frames heard as frames of the audio: at its rate, and below speed 1
+// `speed` of them each, moved on by SoundTouch's lead once that much has
+// played (so the position starts at the start and never goes back).
+std::int64_t AudioBoxPlayer::sourceFrames(std::int64_t outputFrames) const
+{
+    if (!m_stretch)
+        return outputFrames * m_srcFormat.sampleRate / m_outFormat.sampleRate;
+    const double heard = double(outputFrames) * m_srcFormat.sampleRate / m_outFormat.sampleRate * m_speed;
+    const double lead = stretchLeadMs(m_speed) * m_srcFormat.sampleRate / 1000.0;
+    return static_cast<std::int64_t>(heard + std::min(heard, lead));
 }
 
 // H2: where a reopen goes on: the frame being heard, or without a clock
@@ -514,7 +644,7 @@ std::int64_t AudioBoxPlayer::heardLocked() const
         return m_base;
     const auto clock = m_output->clock();
     const std::int64_t frames = clock.valid ? clockFrames(clock) : std::max<std::int64_t>(0, consumed());
-    return m_base + frames * m_srcFormat.sampleRate / m_outFormat.sampleRate;
+    return m_base + sourceFrames(frames);
 }
 
 } // namespace hikari::backends

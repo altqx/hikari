@@ -564,3 +564,164 @@ TEST_F(BoxPlayer, TheFillThreadRecoversALostDevice)
     threaded.stop();
     EXPECT_TRUE(threadedFailures.isEmpty());
 }
+
+// KA2-slowed-playback (#277): below speed 1 the frames go through SoundTouch.
+namespace {
+
+// Mono 16-bit frames of `samples`.
+DisplayAudio monoAudio(int rate, const std::vector<std::int16_t> &samples)
+{
+    DisplayAudio audio(rate, static_cast<std::int64_t>(samples.size()));
+    EXPECT_TRUE(audio.appendFrames(samples.data(), static_cast<std::int64_t>(samples.size()), 1));
+    audio.finish();
+    return audio;
+}
+
+// Decaying 700 Hz bursts, 25 ms long, at `onsets`.
+std::vector<std::int16_t> bursts(std::int64_t frames, const std::vector<std::int64_t> &onsets)
+{
+    std::vector<std::int16_t> s(static_cast<std::size_t>(frames), 0);
+    for (const auto x : onsets)
+        for (std::int64_t i = x; i < std::min(frames, x + 1200); i++)
+            s[static_cast<std::size_t>(i)] = static_cast<std::int16_t>(
+                16000 * std::sin(2 * 3.14159265358979 * 700 * double(i) / 48000) * std::exp(-double(i - x) / 600));
+    return s;
+}
+
+// The first rendered frame from `from` louder than 0.05.
+std::int64_t firstLoud(const std::vector<float> &rendered, std::int64_t from)
+{
+    for (auto i = static_cast<std::size_t>(std::max<std::int64_t>(0, from)); i < rendered.size(); i++)
+        if (std::fabs(rendered[i]) > 0.05f)
+            return static_cast<std::int64_t>(i);
+    return -1;
+}
+
+// The frequency of the rendered mono frames [from, from + count) by their
+// upward zero crossings.
+double crossingHz(const std::vector<float> &rendered, std::size_t from, std::size_t count, int rate)
+{
+    std::vector<double> ups;
+    for (std::size_t i = from + 1; i < from + count && i < rendered.size(); i++)
+        if (rendered[i - 1] < 0 && rendered[i] >= 0)
+            ups.push_back(double(i - 1) + rendered[i - 1] / (rendered[i - 1] - rendered[i]));
+    if (ups.size() < 2)
+        return 0;
+    return double(ups.size() - 1) * rate / (ups.back() - ups.front());
+}
+
+} // namespace
+
+TEST_F(BoxPlayer, SpeedIsClampedAndOneLeavesTheFramesAlone)
+{
+    EXPECT_EQ(player.speed(), 1.0);
+    player.setSpeed(0.1);
+    EXPECT_EQ(player.speed(), 0.25);
+    player.setSpeed(2);
+    EXPECT_EQ(player.speed(), 1.0);
+    player.play(1000, 4800);
+    run(4);
+    for (int i = 0; i < 1024; i++)
+        ASSERT_FLOAT_EQ(device.rendered[2 * i], (1000 + i) / 32768.0f) << i;
+}
+
+// The range lasts 1 / speed as long and a tone keeps its pitch.
+TEST_F(BoxPlayer, SlowedPlaybackKeepsThePitch)
+{
+    std::vector<std::int16_t> tone(48000 * 2);
+    for (std::size_t i = 0; i < tone.size(); i++)
+        tone[i] = static_cast<std::int16_t>(12000 * std::sin(2 * 3.14159265358979 * 440 * double(i) / 48000));
+    for (const double speed : {0.25, 1.0 / 3.0, 0.5, 0.75}) {
+        SCOPED_TRACE(speed);
+        audio = monoAudio(48000, tone);
+        device.rendered.clear();
+        player.setSpeed(speed);
+        player.play(0, 48000);
+        run(static_cast<int>(48000 / speed / 256) + 60);
+        // the second of audio sounds for 1 / speed seconds, then silence
+        const auto loud = static_cast<double>(std::ranges::count_if(device.rendered, [](float v) {
+            return std::fabs(v) > 0.01f;
+        }));
+        EXPECT_NEAR(loud / 48000, 1 / speed, 0.06 / speed);
+        EXPECT_NEAR(crossingHz(device.rendered, 9600, 24000, 48000), 440, 4.4);
+        player.stop();
+    }
+}
+
+// The position at the frame where a sound is first heard is that sound's
+// frame in the audio, within 5 ms, at every speed the panel offers.
+TEST_F(BoxPlayer, SlowedPositionFindsTheSoundsInTheAudio)
+{
+    std::vector<std::int64_t> onsets;
+    for (int k = 0; k < 8; k++)
+        onsets.push_back(24000 + k * 23000 + (k * 7919) % 5000);
+    const auto samples = bursts(48000 * 5, onsets);
+    for (const double speed : {0.25, 1.0 / 3.0, 0.5, 0.75}) {
+        SCOPED_TRACE(speed);
+        audio = monoAudio(48000, samples);
+        player.setSpeed(speed);
+        // where each burst is first heard
+        device.rendered.clear();
+        player.play(0, 48000 * 5);
+        run(static_cast<int>(onsets.back() / speed / 256) + 40);
+        player.stop();
+        std::vector<std::int64_t> heard;
+        for (const auto x : onsets)
+            heard.push_back(firstLoud(device.rendered, static_cast<std::int64_t>((x - 4800) / speed)));
+        // the same playback again, stopping the clock at each of them
+        device.rendered.clear();
+        const double start = device.stream;
+        player.play(0, 48000 * 5);
+        std::size_t k = 0;
+        while (k < onsets.size()) {
+            device.render();
+            player.pump();
+            const auto taken = static_cast<std::int64_t>(std::llround((device.stream - start) * 48000));
+            // nowOffset 0 hears the frame 50 ms (2400 frames) before the taken ones
+            while (k < onsets.size() && taken - 2400 >= heard[k]) {
+                device.nowOffset = double(heard[k] - (taken - 2400)) / 48000;
+                EXPECT_NEAR(player.position(), onsets[k], 240) << "burst " << k;
+                device.nowOffset = 0;
+                k++;
+            }
+        }
+        player.stop();
+    }
+}
+
+// A change while playing goes on from the frame being heard.
+TEST_F(BoxPlayer, ASpeedChangeGoesOnFromTheFrameBeingHeard)
+{
+    player.play(0, 48000 * 5);
+    run(40); // 10240 frames taken, 7840 heard
+    EXPECT_NEAR(player.position(), 7840, 1);
+    player.setSpeed(0.5);
+    EXPECT_TRUE(player.playing());
+    EXPECT_NEAR(player.position(), 7840, 1); // the start again until the output reports
+    run(80); // 20480 taken: 18080 output frames heard, half as many of the audio, plus the lead
+    EXPECT_NEAR(player.position(), 7840 + 9040 + AudioBoxPlayer::stretchLeadMs(0.5) * 48, 2);
+    player.setSpeed(1);
+    run(40);
+    EXPECT_GT(player.position(), 7840 + 9040);
+}
+
+// The calibration's beeps play instead of the box's audio, at speed 1 while
+// the box's plays slowed; the next play is the box's again.
+TEST_F(BoxPlayer, AClipPlaysAtSpeedOne)
+{
+    player.setSpeed(0.5);
+    auto clip = std::make_shared<DisplayAudio>(stereoRamp(48000, 4800));
+    ASSERT_TRUE(player.playClip(clip));
+    run(4);
+    for (int i = 0; i < 1024; i++)
+        ASSERT_FLOAT_EQ(device.rendered[2 * i], i / 32768.0f) << i;
+    EXPECT_EQ(player.endPosition(), 4800);
+    EXPECT_FALSE(player.playClip(nullptr));
+    device.rendered.clear();
+    player.play(1000, 48000);
+    run(40);
+    EXPECT_EQ(player.speed(), 0.5);
+    EXPECT_GT(std::ranges::count_if(device.rendered, [](float v) { return v != 0; }), 0);
+    // stretched: not the ramp's frames one for one
+    EXPECT_NE(device.rendered[2 * 5000], (1000 + 5000) / 32768.0f);
+}
