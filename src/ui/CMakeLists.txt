@@ -182,3 +182,16 @@ if(UNIX AND NOT APPLE)
     target_link_libraries(hikari_ui PRIVATE Qt6::WaylandClient Wayland::Client)
     target_compile_definitions(hikari_ui PRIVATE HIKARI_WAYLAND_DECORATIONS)
 endif()
+# SH1: the main window's own title bar (window_frame.h, MainTitleBar.qml):
+# the frameless window, the window menu (Qt's Wayland shell surface; on X11
+# the xcb connection Qt holds, looked up at run time) and on Windows the
+# native frame (window_frame_win.cpp).
+target_sources(hikari_ui PRIVATE window_frame.cpp window_frame.h window_frame_native.h)
+if(WIN32)
+    target_sources(hikari_ui PRIVATE window_frame_win.cpp)
+    target_link_libraries(hikari_ui PRIVATE dwmapi shell32)
+endif()
+if(UNIX AND NOT APPLE)
+    find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS WaylandClientPrivate)
+    target_link_libraries(hikari_ui PRIVATE Qt6::WaylandClientPrivate ${CMAKE_DL_LIBS})
+endif()
