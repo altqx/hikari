@@ -251,6 +251,8 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
     EXPECT_EQ(settings.text("appearance.highContrastWhite.accent"), "#0037B3");
     EXPECT_EQ(settings.text("appearance.highContrastBlack.accent"), "#FFFF00");
     EXPECT_EQ(settings.text("appearance.highContrastBlack.text"), "#FFFFFF");
+    // SH1: the title bar by the desktop's default (auto, system or custom).
+    EXPECT_EQ(settings.text("appearance.titleBar"), "auto");
     std::size_t count = 0;
     for (const auto &s : settingDefinitions())
         if (s.id.starts_with("appearance.")) {
@@ -258,7 +260,7 @@ TEST(SettingsRegistry, AppearanceSettingsAndDefaults)
             EXPECT_TRUE(s.legacyKey.empty()) << s.id;
             EXPECT_EQ(s.scope, SettingScope::Profile) << s.id;
         }
-    EXPECT_EQ(count, 10u);
+    EXPECT_EQ(count, 11u);
 }
 
 TEST(SettingsRegistry, ThemesAreExcludedAndUnresolvedOnesKept)

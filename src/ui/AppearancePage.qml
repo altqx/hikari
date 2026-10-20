@@ -6,7 +6,8 @@
 // swatches in Light and Dark, and in high contrast the accent, text-and-icons
 // and border colour pickers with their reset. Every choice is staged in the
 // dialog's values and previewed live (Theme.preview); OK or Apply saves it,
-// Cancel takes the preview back.
+// Cancel takes the preview back. SH1 (#220): "Use system title bar", which
+// OK or Apply applies.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Options"
 import QtQuick
@@ -150,6 +151,41 @@ ScrollView {
                         }
                         contentItem: Item {}
                     }
+                }
+            }
+        }
+
+        // SH1 (#220): the window's title bar, HikariSub's own or the
+        // system's. Choosing the desktop's default stores "auto", so the
+        // choice follows the desktop again.
+        GroupBox {
+            objectName: "appearanceWindow"
+            title: qsTr("Window")
+            Layout.fillWidth: true
+            ColumnLayout {
+                anchors.left: parent.left
+                anchors.right: parent.right
+                CheckBox {
+                    objectName: "appearanceSystemTitleBar"
+                    text: qsTr("Use system title bar")
+                    // Where the window cannot draw its own (WindowFrame.customAvailable), it is the system's.
+                    enabled: WindowFrame.customAvailable
+                    checked: !WindowFrame.customAvailable
+                             || WindowFrame.usesSystemTitleBar(page.staged("appearance.titleBar") ?? "auto")
+                    onToggled: page.dialog.put("appearance.titleBar",
+                                               checked === WindowFrame.systemTitleBarByDefault ? "auto"
+                                                   : checked ? "system" : "custom")
+                    Accessible.name: text
+                    Accessible.description: systemTitleBarHint.text
+                }
+                Label {
+                    id: systemTitleBarHint
+                    text: qsTr("Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.")
+                    color: Theme.muted
+                    wrapMode: Text.WordWrap
+                    leftPadding: 24
+                    Layout.fillWidth: true
+                    Accessible.ignored: true
                 }
             }
         }
