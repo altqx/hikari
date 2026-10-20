@@ -2589,14 +2589,31 @@ def title_bar_controls(st=None):
     layout switcher as "switcher" (its "Layout: NAME")."""
     st = st or uia()
     out = {}
-    for e in st.get("elements") or []:
+    els = st.get("elements") or []
+    for e in els:
         if e["off"] or frame_id(e["win"]) != MAIN:
+            continue
+        # Windows' own caption buttons (the system's title bar) are under its TitleBar "TitleBar".
+        if any(a["t"] == "TitleBar" and a["id"] == "TitleBar" for a in ancestors(els, e)):
             continue
         if e["n"] in TITLE_CONTROLS and e["n"] not in out:
             out[e["n"]] = e
         if (e["n"] or "").startswith("Layout: ") and "switcher" not in out:
             out["switcher"] = e
     return out
+
+
+def place_on_primary():
+    """The main window on the left 960 pixels of the primary's work area:
+    a fresh window (1280x800) reaches past the 1024-pixel primary, where
+    the tablet does not reach."""
+    return fullscreen("left", width=960)
+
+
+def covers(r, m):
+    """Window rectangle R maximised over monitor M: Windows puts a maximised
+    window's frame outside the monitor, so R covers M's width."""
+    return r is not None and r[0] <= m["x"] and r[0] + r[2] >= m["x"] + m["w"]
 
 
 def free_point(ctl):
@@ -2641,10 +2658,10 @@ def step_title_bar():
     a double click and Maximise maximise and Restore restores; the snap
     layouts over Maximise; Aero Snap by dragging to the top edge and by
     Win+Left; resized from the edge; the system menu on a right click and on
-    Alt+Space; Alt and F10 to the menus (the system's menu mode never takes
-    them); Minimise and Close; the system's title bar chosen; the four
-    themes, Close's hover with no red; the window on a second monitor at
-    150 %."""
+    the icon, Escape closing it and nothing else (Alt+Space recorded); Alt
+    and F10 to the menus (the system's menu mode never takes them);
+    Minimise and Close; the system's title bar chosen; the four themes,
+    Close's hover with no red; the window on a second monitor at 150 %."""
     mons = monitors()
     prim = next(m for m in mons if m["primary"])
 
@@ -2672,24 +2689,28 @@ def step_title_bar():
             f"UI Automation names in the title bar: {named}; controls with no name {unnamed}", ev0)
 
     # Move by the free part.
+    log("placed on the primary:", place_on_primary())
+    time.sleep(1.0)
     focus_main_compositor()
-    r0 = main_rect()
+    st = uia()
+    ctl = title_bar_controls(st)
+    r0 = main_rect(st)
     fp = free_point(ctl)
     if r0 and fp:
         sx, sy = fp
         try:
             pointer([(sx, sy)], hold=True)
             time.sleep(0.25)
-            pointer([(sx, sy), (sx - 150, sy + 60)], button="none", steps=20, delayMs=30)
+            pointer([(sx, sy), (sx + 40, sy + 30)], button="none", steps=20, delayMs=30)
             time.sleep(0.4)
         finally:
             release()
             time.sleep(1.0)
         r1 = main_rect()
         ev, _ = snap("titlebar-1-moved")
-        moved = r1 and abs(r1[0] - r0[0] + 150) <= 8 and abs(r1[1] - r0[1] - 60) <= 8 and r1[2:] == r0[2:]
+        moved = r1 and abs(r1[0] - r0[0] - 40) <= 8 and abs(r1[1] - r0[1] - 30) <= 8 and r1[2:] == r0[2:]
         verdict("titlebar-move", "observed" if moved else "failed",
-                f"free part {fp} dragged by (-150,+60): window {r0} -> {r1}", ev)
+                f"free part {fp} dragged by (+40,+30): window {r0} -> {r1}", ev)
     else:
         verdict("titlebar-move", "failed", f"no main window or free part ({r0}, {fp})")
 
@@ -2701,15 +2722,14 @@ def step_title_bar():
     st, how, gaps = double_click_until(*fp, done=lambda s: "Restore" in title_bar_controls(s))
     rmax = main_rect(st)
     ev, _ = snap("titlebar-2-double-click-maximised")
-    work_ok = rmax is not None and rmax[0] >= prim["x"] - 1 and rmax[1] >= prim["y"] - 1 \
-        and rmax[2] <= prim["w"] + 2 and rmax[2] >= prim["w"] - 2
+    work_ok = covers(rmax, prim)
     ctl = title_bar_controls(st)
     fp2 = free_point(ctl)
     st2, how2, _ = double_click_until(*fp2, done=lambda s: "Maximise" in title_bar_controls(s)) if fp2 else (uia(), None, [])
     rback = main_rect(st2)
     verdict("titlebar-double-click", "observed" if how and how2 and work_ok and rback == r0 else "failed",
             f"double click on the free part ({how}, gaps {gaps}): window {r0} -> {rmax} (the primary's width "
-            f"{prim['w']}, within its work area: {work_ok}); again ({how2}): {rback}", ev)
+            f"{prim['w']}, covered: {work_ok}); again ({how2}): {rback}", ev)
 
     # Maximise and Restore buttons (HTMAXBUTTON: Windows' own press, handed to the QML button).
     ctl = title_bar_controls(st2)
@@ -2724,7 +2744,7 @@ def step_title_bar():
             pointer([centre(rb)])
         st = wait_for(lambda s: "Maximise" in title_bar_controls(s), timeout=4)
         rback = main_rect(st)
-        verdict("titlebar-maximise-button", "observed" if rb and rmax and rmax[2] >= prim["w"] - 2 and rback == r0
+        verdict("titlebar-maximise-button", "observed" if rb and covers(rmax, prim) and rback == r0
                 else "failed", f"Maximise clicked: {r0} -> {rmax}, Restore shown {bool(rb)}; Restore clicked: {rback}", ev)
     else:
         verdict("titlebar-maximise-button", "failed", f"no Maximise ({sorted(ctl)})")
@@ -2787,28 +2807,31 @@ def step_title_bar():
     time.sleep(1.2)
     keys("escape", 0.5)
 
-    # Resize: the restored window's bottom-right corner.
+    # Resize: the placed window's bottom-right corner, inwards (the window
+    # fills the primary's work area's height: no room to grow).
     title_bar_start("custom")
+    log("placed on the primary:", place_on_primary())
+    time.sleep(1.0)
     st = uia()
     r0 = main_rect(st)
-    if r0 and r0[0] + r0[2] < prim["x"] + prim["w"] - 130 and r0[1] + r0[3] < prim["y"] + prim["h"] - 90:
+    if r0:
         cx, cy = r0[0] + r0[2] - 3, r0[1] + r0[3] - 3
         try:
             pointer([(cx, cy)], hold=True)
             time.sleep(0.25)
-            pointer([(cx, cy), (cx + 120, cy + 80)], button="none", steps=20, delayMs=30)
+            pointer([(cx, cy), (cx - 120, cy - 80)], button="none", steps=20, delayMs=30)
             time.sleep(0.4)
         finally:
             release()
             time.sleep(1.0)
         r1 = main_rect()
         ev, _ = snap("titlebar-6-resized")
-        grown = r1 is not None and r1[2] >= r0[2] + 100 and r1[3] >= r0[3] + 60 and r1[:2] == r0[:2]
-        verdict("titlebar-resize", "observed" if grown else "failed",
-                f"bottom-right corner dragged by (+120,+80): {r0} -> {r1}", ev)
+        resized = r1 is not None and abs(r1[2] - (r0[2] - 120)) <= 8 and abs(r1[3] - (r0[3] - 80)) <= 8 \
+            and r1[:2] == r0[:2]
+        verdict("titlebar-resize", "observed" if resized else "failed",
+                f"bottom-right corner dragged by (-120,-80): {r0} -> {r1}", ev)
     else:
-        # Too big for the monitor to grow: shrink it from the corner instead.
-        verdict("titlebar-resize", "not-observable", f"the window {r0} leaves no room on {prim['w']}x{prim['h']}")
+        verdict("titlebar-resize", "failed", "no main window")
 
     # The system menu: a right click on the free part, a click on the icon, Alt+Space.
     def system_menu(open_it, tag):
@@ -2830,10 +2853,13 @@ def step_title_bar():
         shown[tag] = items
         shots += ev
     want = {"Move", "Size", "Minimize", "Close"}
-    ok = all(want <= {i.replace("&", "") for i in v} for v in shown.values())
-    verdict("titlebar-window-menu", "observed" if ok else "failed",
-            f"Windows' system menu (Move, Size, Minimize, Close expected) from a right click on the free part, a click "
-            f"on the icon and Alt+Space: {shown}", shots)
+    ok = all(want <= {i.replace("&", "") for i in shown[k]} for k in ("right-click", "icon"))
+    kept = bool(main_window())
+    verdict("titlebar-window-menu", "observed" if ok and kept else "failed",
+            f"Windows' system menu (Move, Size, Minimize, Close expected) from a right click on the free part and a "
+            f"click on the icon, each closed with Escape: {shown}; the window still open after the Escapes: {kept}. "
+            f"Alt+Space is HikariSub's own (legacy's Play binding), so it opens the menu only where unbound "
+            f"({shown['alt-space']})", shots)
 
     # Alt alone and F10 to the menus; Windows' menu mode does not take the keys.
     focus_main_compositor()
