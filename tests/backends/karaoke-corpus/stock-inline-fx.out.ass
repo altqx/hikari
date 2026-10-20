@@ -1,0 +1,53 @@
+[Script Info]
+; Aegisub karaoke inline-fx page (aegisub.org/docs/latest/karaoke_inline-fx): fx and fxgroup templates; karaoke text authored
+Title: KE1 corpus stock-inline-fx
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Fx-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style:  Fx,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Fx,,0,0,0,template syl,{\an5\pos($x,$y)\t($start,$end,\fscx120)}
+Comment: 0,0:00:00.00,0:00:05.00,Fx,,0,0,0,template syl fx paint,{\an5\pos($x,$y)\1c&H0000FF&\t($start,$end,\1c&HFFFFFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,Fx,,0,0,0,template syl fx cloud,{\an5\move($x,$y,$x,!$y-20!,$start,$end)\blur2}
+Comment: 0,0:00:00.00,0:00:05.00,Fx,,0,0,0,code syl,fxgroup.blankfx = (syl.inline_fx == "")
+Comment: 0,0:00:00.00,0:00:05.00,Fx,,0,0,0,template syl fxgroup blankfx,{\an5\pos($x,!$y+40!)\alpha&H80&}
+Comment: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,karaoke,{\k40}ha{\k20}na{\k42}bi {\k32\-paint}a{\k17}ga{\k45}ru {\k24\-cloud}yo{\k55}ru
+Comment: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,karaoke,{\-cloud\k30}ku{\k30}mo {\k20}no {\k50\-paint}i{\k40}ro
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(453,20)\t(0,0,\fscx120)}
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(453,60)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(475,20)\t(0,400,\fscx120)}ha
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(475,60)\alpha&H80&}ha
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(519,20)\t(400,600,\fscx120)}na
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(519,60)\alpha&H80&}na
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(563,20)\t(600,1020,\fscx120)}bi 
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(563,60)\alpha&H80&}bi 
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(618,20)\t(1020,1340,\fscx120)}a
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(618,20)\1c&H0000FF&\t(1020,1340,\1c&HFFFFFF&)}a
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(651,20)\t(1340,1510,\fscx120)}ga
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(651,20)\1c&H0000FF&\t(1340,1510,\1c&HFFFFFF&)}ga
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(695,20)\t(1510,1960,\fscx120)}ru 
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(695,20)\1c&H0000FF&\t(1510,1960,\1c&HFFFFFF&)}ru 
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(761,20)\t(1960,2200,\fscx120)}yo
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\move(761,20,761,0,1960,2200)\blur2}yo
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\pos(805,20)\t(2200,2750,\fscx120)}ru
+Dialogue: 0,0:00:01.00,0:00:05.00,Fx,,0,0,0,fx,{\an5\move(805,20,805,0,2200,2750)\blur2}ru
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(519,20)\t(0,0,\fscx120)}
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(519,60)\alpha&H80&}
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(541,20)\t(0,300,\fscx120)}ku
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\move(541,20,541,0,0,300)\blur2}ku
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(585,20)\t(300,600,\fscx120)}mo 
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\move(585,20,585,0,300,600)\blur2}mo 
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(651,20)\t(600,800,\fscx120)}no 
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\move(651,20,651,0,600,800)\blur2}no 
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(706,20)\t(800,1300,\fscx120)}i
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(706,20)\1c&H0000FF&\t(800,1300,\1c&HFFFFFF&)}i
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(739,20)\t(1300,1700,\fscx120)}ro
+Dialogue: 0,0:00:06.00,0:00:09.00,Fx,,0,0,0,fx,{\an5\pos(739,20)\1c&H0000FF&\t(1300,1700,\1c&HFFFFFF&)}ro

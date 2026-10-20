@@ -12668,8 +12668,8 @@ private slots:
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" retired, never listed; WS3: the five View
         // arrangements and "Enable / Disable editor" too; LE3's "Hide tags in
-        // the line editor" listed.
-        QCOMPARE(hotkeyRows().size(), 220);
+        // the line editor" and KE1's "Show / hide render cost" listed.
+        QCOMPARE(hotkeyRows().size(), 221);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -22261,6 +22261,20 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QCoreApplication::processEvents();
     }
+    QStringList renderCostLines()
+    {
+        // The Repeater's lines are the Column's child items, not QObject children.
+        QStringList lines;
+        const std::function<void(QQuickItem *)> walk = [&](QQuickItem *at) {
+            for (auto *child : at->childItems()) {
+                if (child->objectName() == QLatin1String("videoRenderCostLine"))
+                    lines << child->property("text").toString();
+                walk(child);
+            }
+        };
+        walk(item("videoRenderCost"));
+        return lines;
+    }
 
 private slots:
 
@@ -22463,6 +22477,44 @@ private slots:
         settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
         check(true);
         ui::theme::forceSystemScheme(std::nullopt);
+    }
+
+    // KE1-render-cost-overlay: "Show / hide render cost" (Video menu,
+    // GLOBAL_VIDEO_RENDER_COST) draws over the picture what the shown frame's
+    // subtitles cost libass, and hides it again; video.renderCost keeps it.
+    void videoRenderCostOverlayShowsTheFramesCost()
+    {
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(folder.isValid());
+        QVERIFY(v4Open(folder));
+        auto *overlay = item("videoRenderCost");
+        QVERIFY(overlay);
+        QVERIFY(!overlay->isVisible()); // off by default
+        auto *menuItem = qobject_cast<QQuickItem *>(named("renderCostMenuItem"));
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Show / hide render cost"));
+        QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("render-cost"));
+        QVERIFY(menuItem->isEnabled());
+        triggerAction("renderCostMenuItem");
+        QVERIFY(application->settingsStore()->boolean("video.renderCost"));
+        QTRY_VERIFY(overlay->isVisible());
+        // The frame shows a Line: its time, then libass's counts.
+        QTRY_COMPARE(renderCostLines().size(), 2);
+        const QStringList lines = renderCostLines();
+        QVERIFY2(QRegularExpression(QStringLiteral("^Subtitles drawn in [0-9.]+ ms$")).match(lines[0]).hasMatch(),
+                 qPrintable(lines[0]));
+        QVERIFY2(QRegularExpression(QStringLiteral("^[1-9][0-9]* event\\(s\\), [1-9][0-9]* bitmap\\(s\\), [0-9.]+ Mpx$"))
+                     .match(lines[1])
+                     .hasMatch(),
+                 qPrintable(lines[1]));
+        // Over the picture's top left corner, in the presenter.
+        auto *presenter = item("videoPresenter");
+        const QPointF corner = overlay->mapToItem(presenter, QPointF(0, 0));
+        QCOMPARE(corner, QPointF(0, 0));
+        QCOMPARE(overlay->size(), presenter->size());
+        triggerAction("renderCostMenuItem");
+        QVERIFY(!application->settingsStore()->boolean("video.renderCost"));
+        QTRY_VERIFY(!overlay->isVisible());
     }
 
     // W1: the video context menu's Filters submenu (legacy VideoBox.cpp:

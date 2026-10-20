@@ -1,0 +1,274 @@
+[Script Info]
+; Aegisub template modifiers reference (aegisub.org/docs/latest/automation/karaoke_templater/template_modifiers); karaoke text authored except the page's own examples
+Title: KE1 corpus stock-modifiers
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Loop-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Sword-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Multi-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Keep-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Drop-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Chars-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Group-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: Mod,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Group,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Chars,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Drop,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Keep,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Multi,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Sword,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Loop,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  Mod-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,code once,function setlayer(newlayer) line.layer = newlayer; return ""; end
+Comment: 0,0:00:00.00,0:00:05.00,Group,,0,0,0,code line,fxgroup.funky = line.actor == "funky"
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template line,{\r\t($start,$end,\bord0)}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template line jumper,{\r\t($start,$mid,\frz-0.1)\t($mid,$end,\frz0}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template pre-line,{\be1}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template pre-line jumper,{\org(-10000,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template syl,{\pos($x,$y)}!setlayer(2)!
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template furi,{\pos($x,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Group,,0,0,0,template syl fxgroup funky,{\an5\pos($x,$y)\frz!syl.i*3!}
+Comment: 0,0:00:00.00,0:00:05.00,Chars,,0,0,0,template syl char,{\pos($x,$y)}
+Comment: 1,0:00:00.00,0:00:05.00,Chars,,0,0,0,template syl char,{\pos($x,$y)\bord0}
+Comment: 0,0:00:00.00,0:00:05.00,Drop,,0,0,0,template syl fx drop,{\move($x,$y,$x,!$y+30!,$start,$end)}
+Comment: 0,0:00:00.00,0:00:05.00,Keep,,0,0,0,template line keeptags,{\r\t($start,!$start+1!,\frx40)\t(!$start+1!,$end,\frx0)}
+Comment: 0,0:00:00.00,0:00:05.00,Multi,,0,0,0,template syl multi,{\an5\pos($scenter,$smiddle)\1a&HFF&\t($start,$end,\bord5\3a&HFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,Sword,,0,0,0,code once,sword_shape = "m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 "
+Comment: 0,0:00:00.00,0:00:05.00,Sword,,0,0,0,template syl notext noblank,{\an5\move($scenter,!$smiddle-30!,$scenter,$smiddle,!$start-20!,$start)\p2}!sword_shape!
+Comment: 0,0:00:00.00,0:00:05.00,Loop,,0,0,0,template syl loop 4,{\move($x,$y,!$x+math.random(-30,30)!,!$y+math.random(-30,30)!,$start,$end)\alpha&Hc0&\t($start,$end,\alpha&HFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,Mod,,0,0,0,template syl all,{\an5\pos($x,!$y+40!)\alpha&H80&}
+Comment: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,karaoke,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Comment: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,karaoke,{\k20}空|そ{\k20}#|ら{\k30}を{\k25}見|み{\k40}る
+Comment: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,karaoke,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Comment: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,karaoke,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Comment: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,karaoke,{\k50}ab{\k40}cd
+Comment: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,karaoke,{\k40}zu{\k20}t{\k42}to {\k32\-drop}e{\k17}ga{\k45}i {\k24\-drop}yu{\k55}me
+Comment: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,karaoke,{\k21}hi{\k10}gu{\k23}ra{\k22}shi {\k38}ga {\k37\1c&H0000FF&}na{\k37}ku
+Comment: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,karaoke,{\k33}風{\k36}#{\k89}の{\k46}花{\k28}#{\k57}よ
+Comment: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,karaoke,{\k12}ki{\k14}mi{\k0} {\k20}to{\k0}  {\k33}so{\k21}ra{\k0} {\k45}wo{\k0} {\k38}mi{\k57}ta
+Comment: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,karaoke,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\r\t(0,320,\bord0)}ha{\r\t(320,600,\bord0)}ru{\r\t(600,600,\bord0)} {\r\t(600,1010,\bord0)}no{\r\t(1010,1010,\bord0)} {\r\t(1010,1260,\bord0)}ka{\r\t(1260,1560,\bord0)}ze{\r\t(1560,1560,\bord0)} {\r\t(1560,2010,\bord0)}ga{\r\t(2010,2010,\bord0)} {\r\t(2010,2230,\bord0)}fu{\r\t(2230,2830,\bord0)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\be1}haru no kaze ga fuku
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\org(-10000,20)}{\r\t(0,160,\frz-0.1)\t(160,320,\frz0}ha{\r\t(320,460,\frz-0.1)\t(460,600,\frz0}ru{\r\t(600,600,\frz-0.1)\t(600,600,\frz0} {\r\t(600,805,\frz-0.1)\t(805,1010,\frz0}no{\r\t(1010,1010,\frz-0.1)\t(1010,1010,\frz0} {\r\t(1010,1135,\frz-0.1)\t(1135,1260,\frz0}ka{\r\t(1260,1410,\frz-0.1)\t(1410,1560,\frz0}ze{\r\t(1560,1560,\frz-0.1)\t(1560,1560,\frz0} {\r\t(1560,1785,\frz-0.1)\t(1785,2010,\frz0}ga{\r\t(2010,2010,\frz-0.1)\t(2010,2010,\frz0} {\r\t(2010,2120,\frz-0.1)\t(2120,2230,\frz0}fu{\r\t(2230,2530,\frz-0.1)\t(2530,2830,\frz0}ku
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(420,20)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(420,60)\alpha&H80&}
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(442,20)}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(442,60)\alpha&H80&}ha
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(486,20)}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(486,60)\alpha&H80&}ru
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(530,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(530,60)\alpha&H80&} 
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(552,20)}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(552,60)\alpha&H80&}no
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(596,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(596,60)\alpha&H80&} 
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(618,20)}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(618,60)\alpha&H80&}ka
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(662,20)}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(662,60)\alpha&H80&}ze
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(706,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(706,60)\alpha&H80&} 
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(728,20)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(728,60)\alpha&H80&}ga
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(772,20)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(772,60)\alpha&H80&} 
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(794,20)}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(794,60)\alpha&H80&}fu
+Dialogue: 2,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\pos(838,20)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Mod,,0,0,0,fx,{\an5\pos(838,60)\alpha&H80&}ku
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\r\t(0,400,\bord0)}空{\r\t(400,700,\bord0)}を{\r\t(700,950,\bord0)}見{\r\t(950,1350,\bord0)}る
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\be1}空を見る
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\org(-10000,20)}{\r\t(0,200,\frz-0.1)\t(200,400,\frz0}空{\r\t(400,550,\frz-0.1)\t(550,700,\frz0}を{\r\t(700,825,\frz-0.1)\t(825,950,\frz0}見{\r\t(950,1150,\frz-0.1)\t(1150,1350,\frz0}る
+Dialogue: 2,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\pos(560,20)}
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\an5\pos(560,60)\alpha&H80&}
+Dialogue: 2,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\pos(580,20)}空
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\an5\pos(580,60)\alpha&H80&}空
+Dialogue: 2,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\pos(620,20)}を
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\an5\pos(620,60)\alpha&H80&}を
+Dialogue: 2,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\pos(660,20)}見
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\an5\pos(660,60)\alpha&H80&}見
+Dialogue: 2,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\pos(700,20)}る
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod,,0,0,0,fx,{\an5\pos(700,60)\alpha&H80&}る
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod-furigana,,0,0,0,fx,{\pos(570,0)}そ
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod-furigana,,0,0,0,fx,{\pos(590,0)}ら
+Dialogue: 0,0:00:05.00,0:00:08.00,Mod-furigana,,0,0,0,fx,{\pos(660,0)}み
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(431,20)\frz0}
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(431,60)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(453,20)\frz3}to
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(453,60)\alpha&H80&}to
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(486,20)\frz6}o
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(486,60)\alpha&H80&}o
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(519,20)\frz9}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(519,60)\alpha&H80&}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(563,20)\frz12} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(563,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(585,20)\frz15}ma
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(585,60)\alpha&H80&}ma
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(629,20)\frz18}de
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(629,60)\alpha&H80&}de
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(673,20)\frz21} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(673,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(684,20)\frz24}a
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(684,60)\alpha&H80&}a
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(717,20)\frz27}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(717,60)\alpha&H80&}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(750,20)\frz30}i
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(750,60)\alpha&H80&}i
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(783,20)\frz33}te
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(783,60)\alpha&H80&}te
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(827,20)\frz36}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Group,funky,0,0,0,fx,{\an5\pos(827,60)\alpha&H80&}ku
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(431,60)\alpha&H80&}
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(453,60)\alpha&H80&}to
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(486,60)\alpha&H80&}o
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(519,60)\alpha&H80&}ku
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(563,60)\alpha&H80&} 
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(585,60)\alpha&H80&}ma
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(629,60)\alpha&H80&}de
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(673,60)\alpha&H80&} 
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(684,60)\alpha&H80&}a
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(717,60)\alpha&H80&}ru
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(750,60)\alpha&H80&}i
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(783,60)\alpha&H80&}te
+Dialogue: 0,0:00:05.00,0:00:08.00,Group,plain,0,0,0,fx,{\an5\pos(827,60)\alpha&H80&}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\an5\pos(596,60)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\pos(607,20)}a
+Dialogue: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\pos(629,20)}b
+Dialogue: 1,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\pos(607,20)\bord0}a
+Dialogue: 1,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\pos(629,20)\bord0}b
+Dialogue: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\an5\pos(618,60)\alpha&H80&}ab
+Dialogue: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\pos(651,20)}c
+Dialogue: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\pos(673,20)}d
+Dialogue: 1,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\pos(651,20)\bord0}c
+Dialogue: 1,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\pos(673,20)\bord0}d
+Dialogue: 0,0:00:01.00,0:00:04.00,Chars,,0,0,0,fx,{\an5\pos(662,60)\alpha&H80&}cd
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(475,60)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(497,60)\alpha&H80&}zu
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(530,60)\alpha&H80&}t
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(563,60)\alpha&H80&}to 
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\move(618,20,618,50,1020,1340)}e
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(618,60)\alpha&H80&}e
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\move(651,20,651,50,1340,1510)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(651,60)\alpha&H80&}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\move(684,20,684,50,1510,1960)}i 
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(684,60)\alpha&H80&}i 
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\move(739,20,739,50,1960,2200)}yu
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(739,60)\alpha&H80&}yu
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\move(783,20,783,50,2200,2750)}me
+Dialogue: 0,0:00:01.00,0:00:04.00,Drop,,0,0,0,fx,{\an5\pos(783,60)\alpha&H80&}me
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\r\t(0,1,\frx40)\t(1,210,\frx0)}hi{\r\t(210,211,\frx40)\t(211,310,\frx0)}gu{\r\t(310,311,\frx40)\t(311,540,\frx0)}ra{\r\t(540,541,\frx40)\t(541,760,\frx0)}shi {\r\t(760,761,\frx40)\t(761,1140,\frx0)}ga {\r\t(1140,1141,\frx40)\t(1141,1510,\frx0)}{\1c&H0000FF&}na{\r\t(1510,1511,\frx40)\t(1511,1880,\frx0)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\an5\pos(453,60)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\an5\pos(475,60)\alpha&H80&}hi
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\an5\pos(519,60)\alpha&H80&}gu
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\an5\pos(563,60)\alpha&H80&}ra
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\an5\pos(618,60)\alpha&H80&}shi 
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\an5\pos(695,60)\alpha&H80&}ga 
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\an5\pos(761,60)\alpha&H80&}na
+Dialogue: 0,0:00:01.00,0:00:04.00,Keep,,0,0,0,fx,{\an5\pos(805,60)\alpha&H80&}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(560,40)\1a&HFF&\t(0,0,\bord5\3a&HFF&)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(560,60)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(580,40)\1a&HFF&\t(0,330,\bord5\3a&HFF&)}風
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(580,40)\1a&HFF&\t(330,690,\bord5\3a&HFF&)}風
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(580,60)\alpha&H80&}風
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(620,40)\1a&HFF&\t(690,1580,\bord5\3a&HFF&)}の
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(620,60)\alpha&H80&}の
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(660,40)\1a&HFF&\t(1580,2040,\bord5\3a&HFF&)}花
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(660,40)\1a&HFF&\t(2040,2320,\bord5\3a&HFF&)}花
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(660,60)\alpha&H80&}花
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(700,40)\1a&HFF&\t(2320,2890,\bord5\3a&HFF&)}よ
+Dialogue: 0,0:00:01.00,0:00:04.00,Multi,,0,0,0,fx,{\an5\pos(700,60)\alpha&H80&}よ
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(409,60)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\move(431,10,431,40,-20,0)\p2}m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(431,60)\alpha&H80&}ki
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\move(475,10,475,40,100,120)\p2}m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(475,60)\alpha&H80&}mi
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(519,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\move(541,10,541,40,240,260)\p2}m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(541,60)\alpha&H80&}to
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(607,60)\alpha&H80&}  
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\move(629,10,629,40,440,460)\p2}m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(629,60)\alpha&H80&}so
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\move(673,10,673,40,770,790)\p2}m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(673,60)\alpha&H80&}ra
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(717,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\move(739,10,739,40,980,1000)\p2}m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(739,60)\alpha&H80&}wo
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(783,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\move(805,10,805,40,1430,1450)\p2}m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(805,60)\alpha&H80&}mi
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\move(849,10,849,40,1810,1830)\p2}m 0 0 l 5 -5 l 5 -30 l 10 -30 l 10 -32 l 2 -32 l 2 -40 l -2 -40 l -2 -32 l -10 -32 l -10 -30 l -5 -30 l -5 -5 
+Dialogue: 0,0:00:01.00,0:00:04.00,Sword,,0,0,0,fx,{\an5\pos(849,60)\alpha&H80&}ta
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(420,20,438,32,0,0)\alpha&Hc0&\t(0,0,\alpha&HFF&)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(420,20,425,35,0,0)\alpha&Hc0&\t(0,0,\alpha&HFF&)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(420,20,394,30,0,0)\alpha&Hc0&\t(0,0,\alpha&HFF&)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(420,20,410,34,0,0)\alpha&Hc0&\t(0,0,\alpha&HFF&)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(420,60)\alpha&H80&}
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(442,20,438,24,0,320)\alpha&Hc0&\t(0,320,\alpha&HFF&)}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(442,20,418,-7,0,320)\alpha&Hc0&\t(0,320,\alpha&HFF&)}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(442,20,471,33,0,320)\alpha&Hc0&\t(0,320,\alpha&HFF&)}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(442,20,422,49,0,320)\alpha&Hc0&\t(0,320,\alpha&HFF&)}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(442,60)\alpha&H80&}ha
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(486,20,472,11,320,600)\alpha&Hc0&\t(320,600,\alpha&HFF&)}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(486,20,484,31,320,600)\alpha&Hc0&\t(320,600,\alpha&HFF&)}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(486,20,491,38,320,600)\alpha&Hc0&\t(320,600,\alpha&HFF&)}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(486,20,483,1,320,600)\alpha&Hc0&\t(320,600,\alpha&HFF&)}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(486,60)\alpha&H80&}ru
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(530,20,540,2,600,600)\alpha&Hc0&\t(600,600,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(530,20,536,-2,600,600)\alpha&Hc0&\t(600,600,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(530,20,550,25,600,600)\alpha&Hc0&\t(600,600,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(530,20,501,41,600,600)\alpha&Hc0&\t(600,600,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(530,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(552,20,525,40,600,1010)\alpha&Hc0&\t(600,1010,\alpha&HFF&)}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(552,20,560,40,600,1010)\alpha&Hc0&\t(600,1010,\alpha&HFF&)}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(552,20,533,5,600,1010)\alpha&Hc0&\t(600,1010,\alpha&HFF&)}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(552,20,578,9,600,1010)\alpha&Hc0&\t(600,1010,\alpha&HFF&)}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(552,60)\alpha&H80&}no
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(596,20,570,11,1010,1010)\alpha&Hc0&\t(1010,1010,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(596,20,622,-9,1010,1010)\alpha&Hc0&\t(1010,1010,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(596,20,607,35,1010,1010)\alpha&Hc0&\t(1010,1010,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(596,20,599,-3,1010,1010)\alpha&Hc0&\t(1010,1010,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(596,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(618,20,596,-8,1010,1260)\alpha&Hc0&\t(1010,1260,\alpha&HFF&)}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(618,20,618,32,1010,1260)\alpha&Hc0&\t(1010,1260,\alpha&HFF&)}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(618,20,618,42,1010,1260)\alpha&Hc0&\t(1010,1260,\alpha&HFF&)}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(618,20,596,7,1010,1260)\alpha&Hc0&\t(1010,1260,\alpha&HFF&)}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(618,60)\alpha&H80&}ka
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(662,20,685,36,1260,1560)\alpha&Hc0&\t(1260,1560,\alpha&HFF&)}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(662,20,674,29,1260,1560)\alpha&Hc0&\t(1260,1560,\alpha&HFF&)}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(662,20,683,-10,1260,1560)\alpha&Hc0&\t(1260,1560,\alpha&HFF&)}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(662,20,635,36,1260,1560)\alpha&Hc0&\t(1260,1560,\alpha&HFF&)}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(662,60)\alpha&H80&}ze
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(706,20,700,48,1560,1560)\alpha&Hc0&\t(1560,1560,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(706,20,736,13,1560,1560)\alpha&Hc0&\t(1560,1560,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(706,20,693,6,1560,1560)\alpha&Hc0&\t(1560,1560,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(706,20,729,48,1560,1560)\alpha&Hc0&\t(1560,1560,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(706,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(728,20,734,36,1560,2010)\alpha&Hc0&\t(1560,2010,\alpha&HFF&)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(728,20,701,12,1560,2010)\alpha&Hc0&\t(1560,2010,\alpha&HFF&)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(728,20,737,47,1560,2010)\alpha&Hc0&\t(1560,2010,\alpha&HFF&)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(728,20,743,-4,1560,2010)\alpha&Hc0&\t(1560,2010,\alpha&HFF&)}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(728,60)\alpha&H80&}ga
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(772,20,752,-7,2010,2010)\alpha&Hc0&\t(2010,2010,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(772,20,755,-1,2010,2010)\alpha&Hc0&\t(2010,2010,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(772,20,768,26,2010,2010)\alpha&Hc0&\t(2010,2010,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(772,20,758,40,2010,2010)\alpha&Hc0&\t(2010,2010,\alpha&HFF&)} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(772,60)\alpha&H80&} 
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(794,20,781,2,2010,2230)\alpha&Hc0&\t(2010,2230,\alpha&HFF&)}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(794,20,773,36,2010,2230)\alpha&Hc0&\t(2010,2230,\alpha&HFF&)}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(794,20,767,38,2010,2230)\alpha&Hc0&\t(2010,2230,\alpha&HFF&)}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(794,20,806,-2,2010,2230)\alpha&Hc0&\t(2010,2230,\alpha&HFF&)}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(794,60)\alpha&H80&}fu
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(838,20,865,39,2230,2830)\alpha&Hc0&\t(2230,2830,\alpha&HFF&)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(838,20,831,38,2230,2830)\alpha&Hc0&\t(2230,2830,\alpha&HFF&)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(838,20,812,31,2230,2830)\alpha&Hc0&\t(2230,2830,\alpha&HFF&)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\move(838,20,840,38,2230,2830)\alpha&Hc0&\t(2230,2830,\alpha&HFF&)}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Loop,,0,0,0,fx,{\an5\pos(838,60)\alpha&H80&}ku
