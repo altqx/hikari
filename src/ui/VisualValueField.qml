@@ -32,6 +32,12 @@ RowLayout {
         font: Qt.application.font
         text: "-00000.00"
     }
+    // A read-only value is the crosshair's whole pixels.
+    TextMetrics {
+        id: readoutWidth
+        font: Qt.application.font
+        text: "-00000"
+    }
 
     Label {
         id: label
@@ -162,15 +168,15 @@ RowLayout {
             color: Theme.muted
         }
     }
-    // A read-only value keeps a coordinate's width, right-aligned, so the
-    // groups after it do not move as the pointer crosses the video.
+    // A read-only value keeps a whole coordinate's width, right-aligned, so
+    // the groups after it do not move as the pointer crosses the video.
     Label {
         objectName: field.editable ? "" : "visualValue_" + field.name
         visible: !field.editable
         text: field.value.text
         font.features: { "tnum": 1 }
         horizontalAlignment: Text.AlignRight
-        Layout.preferredWidth: Math.max(implicitWidth, Math.ceil(numberWidth.width))
+        Layout.preferredWidth: Math.max(implicitWidth, Math.ceil(readoutWidth.width))
         Layout.rightMargin: 4
         Accessible.name: field.accessibleName
     }
