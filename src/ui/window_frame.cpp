@@ -316,7 +316,18 @@ MainWindowFrame::MainWindowFrame(QObject *parent)
 {
 }
 
+MainWindowFrame::MainWindowFrame(DialogKind, QObject *parent)
+    : QObject(parent)
+    , m_dialog(true)
+{
+}
+
 MainWindowFrame::~MainWindowFrame() = default;
+
+DialogFrame::DialogFrame(QObject *parent)
+    : MainWindowFrame(DialogKind{}, parent)
+{
+}
 
 void MainWindowFrame::setWindow(QQuickWindow *window)
 {
@@ -326,10 +337,13 @@ void MainWindowFrame::setWindow(QQuickWindow *window)
     // The application's events, not only the window's: a key a shortcut
     // takes reaches the focus item as its ShortcutOverride and never the
     // window as a press (eventFilter).
-    if (m_window && !window)
+    if (m_dialog) {
+        // A dialog has no menus for Alt.
+    } else if (m_window && !window) {
         QCoreApplication::instance()->removeEventFilter(this);
-    else if (!m_window && window)
+    } else if (!m_window && window) {
         QCoreApplication::instance()->installEventFilter(this);
+    }
     m_window = window;
     m_applied = false;
     if (m_window)
@@ -345,6 +359,16 @@ void MainWindowFrame::setCustom(bool custom)
     m_custom = custom;
     apply();
     emit customChanged();
+}
+
+void MainWindowFrame::setResizable(bool resizable)
+{
+    if (m_resizable == resizable)
+        return;
+    m_resizable = resizable;
+    m_applied = false;
+    apply();
+    emit resizableChanged();
 }
 
 void MainWindowFrame::setTitleBar(QQuickItem *item)
@@ -473,9 +497,15 @@ void MainWindowFrame::apply()
         // The hints beside the frameless one keep the system menu's items
         // (Alt+Space on Windows, which Qt enables from them) and the
         // minimise and maximise the window system offers.
+        // A dialog (DialogFrame) offers no minimise, and maximise only
+        // while it can be resized.
+        const Qt::WindowFlags buttons = !m_dialog ? Qt::WindowMinMaxButtonsHint
+                                        : m_resizable ? Qt::WindowMaximizeButtonHint
+                                                      : Qt::WindowFlags();
         const Qt::WindowFlags custom = Qt::FramelessWindowHint | Qt::WindowTitleHint | Qt::WindowSystemMenuHint
-                                       | Qt::WindowMinMaxButtonsHint | Qt::WindowCloseButtonHint;
-        const Qt::WindowFlags flags = m_custom ? m_window->flags() | custom
+                                       | buttons | Qt::WindowCloseButtonHint;
+        const Qt::WindowFlags dropped = m_dialog ? Qt::WindowMinMaxButtonsHint & ~buttons : Qt::WindowFlags();
+        const Qt::WindowFlags flags = m_custom ? (m_window->flags() & ~dropped) | custom
                                                : m_window->flags() & ~Qt::FramelessWindowHint;
         if (flags != m_window->flags()) {
             // A Wayland toplevel takes its decoration when it is made: the

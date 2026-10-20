@@ -155,11 +155,23 @@ private:
     static constexpr LONG_PTR kCaptionStyles =
         WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME;
 
+    // DG1: a dialog has no minimise box, and no sizing frame or maximise
+    // box while it cannot be resized (so Aero Snap and the system menu's
+    // Size and Maximise leave it as it is).
+    LONG_PTR captionStyles() const
+    {
+        if (!m_frame->dialog())
+            return kCaptionStyles;
+        return WS_CAPTION | WS_SYSMENU | (m_frame->resizable() ? WS_MAXIMIZEBOX | WS_THICKFRAME : 0);
+    }
+
     void applyCustomFrame()
     {
         const LONG_PTR style = GetWindowLongPtrW(hwnd(), GWL_STYLE);
-        if ((style & kCaptionStyles) != kCaptionStyles)
-            SetWindowLongPtrW(hwnd(), GWL_STYLE, style | kCaptionStyles);
+        const LONG_PTR wanted = captionStyles();
+        const LONG_PTR styled = (style & ~(kCaptionStyles & ~wanted)) | wanted;
+        if (styled != style)
+            SetWindowLongPtrW(hwnd(), GWL_STYLE, styled);
         // A one-pixel frame extended into the client area: DWM draws the
         // window's shadow and its rounded corners (Windows 11). The bottom
         // edge's alone: a frame extended at the top takes the caption
@@ -220,7 +232,7 @@ private:
     {
         RECT window{};
         GetWindowRect(hwnd(), &window);
-        if (!IsZoomed(hwnd()) && m_window->visibility() != QWindow::FullScreen) {
+        if (m_frame->resizable() && !IsZoomed(hwnd()) && m_window->visibility() != QWindow::FullScreen) {
             const UINT dpi = GetDpiForWindow(hwnd());
             const int band = GetSystemMetricsForDpi(SM_CXSIZEFRAME, dpi) + GetSystemMetricsForDpi(SM_CXPADDEDBORDER, dpi);
             const int topBand = GetSystemMetricsForDpi(SM_CYSIZEFRAME, dpi);
@@ -276,14 +288,15 @@ private:
         if (!menu)
             return false;
         const bool maximized = IsZoomed(hwnd());
+        const bool sizes = m_frame->resizable();
         const auto enable = [menu](UINT item, bool on) {
             EnableMenuItem(menu, item, MF_BYCOMMAND | (on ? MF_ENABLED : MF_GRAYED));
         };
         enable(SC_RESTORE, maximized);
         enable(SC_MOVE, !maximized);
-        enable(SC_SIZE, !maximized);
-        enable(SC_MINIMIZE, true);
-        enable(SC_MAXIMIZE, !maximized);
+        enable(SC_SIZE, sizes && !maximized);
+        enable(SC_MINIMIZE, !m_frame->dialog());
+        enable(SC_MAXIMIZE, sizes && !maximized);
         enable(SC_CLOSE, true);
         SetMenuDefaultItem(menu, SC_CLOSE, FALSE);
         const UINT flags = TPM_RETURNCMD | TPM_RIGHTBUTTON
