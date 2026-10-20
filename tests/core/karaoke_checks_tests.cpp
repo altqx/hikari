@@ -129,11 +129,13 @@ TEST(KaraokeChecks, SignedAndOversizedValuesRead)
     // A huge value counts as 10^9 centiseconds, so the sum cannot overflow.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k99999999999999999999999}a{\\k99999999999999999999999}b")),
               (std::vector<Found>{{0, Kind::TotalNotDuration, 20'000'000'000, 1000, {}}, {0, Kind::OutsideLine, 0, 0, {2}}}));
-    // Parentheses and fractions, as the tag parser reads them.
+    // Parentheses as the tag parser reads them; a fraction is dropped, as the
+    // karaoke the application plays drops it (50.5 + 49.5 is 99 cs).
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k(50)}a{\\kf(+50)}b")).empty());
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k50.5}a{\\K49.5}b")).empty());
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k50.5}a{\\K49.5}b")),
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 990, 1000, {}}}));
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k12.34}a")),
-              (std::vector<Found>{{0, Kind::TotalNotDuration, 123, 1000, {}}}));
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 120, 1000, {}}}));
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k(}a{\\k100}b")),
               (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
     // Other tags that start with k are not karaoke; a bare "\\k" or "\\ko" is

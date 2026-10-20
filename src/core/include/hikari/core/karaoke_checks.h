@@ -7,7 +7,8 @@
 // syllable that runs until the next tag, its value in centiseconds, and an
 // unclosed "{" makes the rest of the text literal. A value may be signed,
 // have a fraction and sit in parentheses ("\k(50)", "\k+12.5"), as the tag
-// parser reads it (lua_helper's karaoke tags). A translated Line is
+// parser reads it (lua_helper's karaoke tags); the fraction is dropped, as
+// the karaoke the application plays drops it. A translated Line is
 // checked on its translation, the text karaoke plays.
 
 #include "hikari/core/document.h"

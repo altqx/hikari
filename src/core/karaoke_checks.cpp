@@ -67,7 +67,7 @@ bool hasKaraokeTag(u8sv block)
 constexpr std::int64_t kLongestSyllable = 10'000'000'000;
 
 struct Syllables {
-    std::vector<std::int64_t> values; // milliseconds (the tags count centiseconds)
+    std::vector<std::int64_t> values; // milliseconds (whole centiseconds)
     bool unclosed = false;
 };
 
@@ -100,15 +100,12 @@ Syllables syllablesOf(u8sv text)
             bool digits = false;
             for (; j < block.size() && isDigit(block[j]); ++j, digits = true)
                 ms = std::min<std::int64_t>(ms * 10 + (block[j] - u8'0') * 10, kLongestSyllable);
-            if (j < block.size() && block[j] == u8'.') {
-                // Tenths of a centisecond are milliseconds; the next digit rounds.
-                std::size_t place = 0;
-                for (++j; j < block.size() && isDigit(block[j]); ++j, ++place, digits = true)
-                    if (place == 0)
-                        ms = std::min<std::int64_t>(ms + (block[j] - u8'0'), kLongestSyllable);
-                    else if (place == 1 && block[j] >= u8'5')
-                        ms = std::min<std::int64_t>(ms + 1, kLongestSyllable);
-            }
+            // A fraction is read and dropped: the karaoke the application
+            // plays (AudioKaraoke's legacyAtoi, lua_helper's atoi) counts
+            // whole centiseconds.
+            if (j < block.size() && block[j] == u8'.')
+                for (++j; j < block.size() && isDigit(block[j]); ++j)
+                    digits = true;
             if (!digits) {
                 out.unclosed = true; // "\k" with no number
                 continue;
