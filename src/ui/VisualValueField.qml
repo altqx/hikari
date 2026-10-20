@@ -11,7 +11,8 @@ import Hikari.Ui
 // with Shift), the video showing each sample. Enter, and each drag's
 // release, is one history step; Esc during a drag drops it (the tool's
 // handles go back), Esc while typing puts the value back. A read-only value
-// (the crosshair's position) is its number, shown while it has one.
+// (the crosshair's position) is its number, shown while it has one; its
+// place stays in the bar without one, so the bar does not re-wrap.
 RowLayout {
     id: field
     required property VisualToolsController tools
@@ -23,8 +24,8 @@ RowLayout {
     property string accessibleName: value.label
     readonly property bool editable: value.editable
     readonly property bool scrubbing: scrub.active
+    readonly property bool shown: editable || value.text.length > 0
     spacing: 3
-    visible: editable || value.text.length > 0
 
     // The fields fit a coordinate ("-00000.00") and the unit, not the panel.
     TextMetrics {
@@ -43,6 +44,8 @@ RowLayout {
         id: label
         objectName: "visualValueLabel_" + field.name
         text: field.value.label
+        opacity: field.shown ? 1 : 0
+        Accessible.ignored: !field.shown
         color: scrub.active ? Theme.accent : Theme.muted
         Layout.alignment: Qt.AlignVCenter
         // The drag handle: a dotted underline says it can be dragged.
@@ -179,6 +182,7 @@ RowLayout {
         Layout.preferredWidth: Math.max(implicitWidth, Math.ceil(readoutWidth.width))
         Layout.rightMargin: 4
         Accessible.name: field.accessibleName
+        Accessible.ignored: !field.shown
     }
 
     // The scrub's text: up to three decimals, as the tags hold them.

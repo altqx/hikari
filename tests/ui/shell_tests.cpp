@@ -15202,11 +15202,24 @@ private slots:
         QVERIFY(r.left == 0 || r.top == 0); // fitted: bars on one axis at most
         QCOMPARE(view.scriptWidth(), 320);
 
+        // The readout's places stay without a position (Codex on #293): the
+        // first one shown moves nothing in the bar.
+        // (Looked up each time: the bar's items are made again as it fills.)
+        const auto readoutY = [&] { return visualItem("visualValue_y"); };
+        QTRY_VERIFY(readoutY() && readoutY()->isVisible() && readoutY()->property("text").toString().isEmpty());
+        QTest::qWait(50);
+        const QPointF emptyAt = readoutY()->mapToScene(QPointF(0, 0));
+        const qreal emptyWidth = readoutY()->width();
+        QVERIFY(emptyWidth > 0);
+
         // The crosshair follows the pointer over the video.
         const QPointF centre = tools.videoRect().center();
         const QPoint p = videoPoint(centre);
         QTest::mouseMove(window, p);
         QTRY_VERIFY(!tools.overlay().isEmpty());
+        QTRY_VERIFY(readoutY() && !readoutY()->property("text").toString().isEmpty());
+        QCOMPARE(readoutY()->mapToScene(QPointF(0, 0)), emptyAt);
+        QCOMPARE(readoutY()->width(), emptyWidth);
         QVERIFY(tools.hideCursor());
         const QVariantList shapes = tools.overlay();
         QCOMPARE(shapes.size(), 5); // two black lines, two white, the label
