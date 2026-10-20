@@ -65,6 +65,9 @@ public:
     // what an unclosed "{" kept from the last split stays in the last syllable.
     void split(const Line &line, bool autoSplit, bool everyN, const KaraokeCharClass &classes = KaraokeCharClass::ascii());
     void clear();
+    // KA2-tap-to-time: the syllables a tap made (texts, tags and each one's
+    // end in ms); the first one is current.
+    void assign(std::vector<std::u16string> syllables, std::vector<std::u16string> tags, std::vector<int> times);
     // Legacy GetText: each syllable with its \k tag (the time from the
     // previous syllable's end, or from `curStartMs`, in centiseconds).
     std::u16string text(int curStartMs) const;
