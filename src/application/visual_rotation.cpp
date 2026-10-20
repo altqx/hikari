@@ -22,6 +22,14 @@ std::u8string u8(const std::u16string &text)
 
 // The legacy tools' In and Out conversions with the coefficients and zoom of
 // their last SizeChanged / SetZoom (Visuals.h:139-154).
+// VT1: a typed angle as the tools hold one, in 0-360 for any number of
+// turns (legacy's +360 then fmod covers one negative turn).
+float turn(double degrees)
+{
+    const double t = std::fmod(degrees, 360.);
+    return static_cast<float>(t < 0 ? t + 360. : t);
+}
+
 PointF inPos(PointF p, float coeffW, float coeffH, PointF zm, PointF zs)
 {
     return {((p.x / coeffW) - zm.x) * zs.x, ((p.y / coeffH) - zm.y) * zs.y};
@@ -624,7 +632,7 @@ bool RotationZTool::setValue(const std::string &name, const std::u16string &text
                 m_lastAngle = m_lastmove.y;
         }
         m_isfirst = true;
-        m_typedAngle = static_cast<float>(value);
+        m_typedAngle = turn(value);
     } else {
         if (first) {
             m_isOrg = true;
@@ -644,6 +652,13 @@ bool RotationZTool::setValue(const std::string &name, const std::u16string &text
     m_typedAngle.reset();
     m_to = m_org;
     m_isOrg = false;
+    // Several Lines: the batch's first target set the angle the tool holds;
+    // the fields and the next edit start from the active Line's as written.
+    if (host.batchTargets().size() > 1) {
+        const auto points = m_visibility;
+        reset(host);
+        m_visibility = points;
+    }
     host.toolChanged();
     return host.session() && host.session()->revision() != before;
 }
@@ -1060,12 +1075,13 @@ bool RotationXYTool::setValue(const std::string &name, const std::u16string &tex
             m_isOrg = false;
             m_firstmove = m_to;
         }
+        const float angle = turn(value);
         if (name == "fry") {
             m_type = 0;
-            m_to.x = m_firstmove.x + (v - m_oldAngle.x);
+            m_to.x = m_firstmove.x + (angle - m_oldAngle.x);
         } else {
             m_type = 1;
-            m_to.y = m_firstmove.y + (m_oldAngle.y - v);
+            m_to.y = m_firstmove.y + (m_oldAngle.y - angle);
         }
     } else {
         if (first) {
@@ -1085,6 +1101,10 @@ bool RotationXYTool::setValue(const std::string &name, const std::u16string &tex
     setVisual(false, host);
     m_oldAngle = m_angle;
     m_isOrg = false;
+    // Several Lines: m_angle is the last target's; the fields and the next
+    // edit start from the active Line's as written.
+    if (host.batchTargets().size() > 1)
+        reset(host);
     host.toolChanged();
     return host.session() && host.session()->revision() != before;
 }
