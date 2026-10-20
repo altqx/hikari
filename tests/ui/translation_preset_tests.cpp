@@ -563,6 +563,29 @@ private slots:
         stop();
     }
 
+    // Translation mode turned off from a floating Original text panel (its
+    // hotkey there) asks in the main window, which it activates.
+    void theOffQuestionActivatesTheMainWindow()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(dock("originalDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(isFloating("originalDock"));
+        QQuickWindow *floating = item("originalPanel")->window();
+        QVERIFY(floating && floating != window());
+        floating->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), floating);
+        auto *confirm = item<QObject>("translatorModeOffConfirm");
+        QVERIFY(QMetaObject::invokeMethod(modeAction(), "trigger"));
+        QTRY_VERIFY(confirm->property("visible").toBool());
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window());
+        QTest::keyClick(window(), Qt::Key_Escape);
+        QTRY_VERIFY(!confirm->property("visible").toBool());
+        QVERIFY(translationMode());
+        stop();
+    }
+
     // Outside translation mode nothing opens the Original text panel: not
     // View > Panels, not Move panel (its Move button is disabled for it).
     void theOriginalPanelOpensInTranslationModeOnly()

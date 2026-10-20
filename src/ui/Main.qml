@@ -383,7 +383,7 @@ ApplicationWindow {
         // and leaves it on when another arrangement is chosen.
         function onPresetModeChosen(mode) {
             if (mode === "Translation" && root.app.translationQuestionDue())
-                translationModeQuestion.open()
+                root.openInMainWindow(translationModeQuestion)
         }
     }
 
@@ -662,6 +662,18 @@ ApplicationWindow {
 
     // The panel waiting for its window's activation (focusPanel).
     property var pendingFocus: null
+
+    // TM1: a question of the main window's (a dialog in its overlay) asked
+    // from a floating panel's window, the Translation mode hotkey's say: the
+    // main window comes up and is activated first, so the question shows
+    // above that window and takes the keys.
+    function openInMainWindow(dialog) {
+        if (root.workspaceLayout.focusWindow !== root) {
+            root.raise()
+            root.requestActivate()
+        }
+        dialog.open()
+    }
 
     // TM1: the text field the Line editor's commands act on. With the
     // Original text panel in a window of its own each window keeps its own
@@ -1885,7 +1897,7 @@ ApplicationWindow {
                             if (checked)
                                 root.app.turnOnTranslationMode()
                             else
-                                translationModeOffConfirm.open()
+                                root.openInMainWindow(translationModeOffConfirm)
                         }
                         checked = Qt.binding(() => root.editor.translationMode)
                     }
