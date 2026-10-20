@@ -3,6 +3,7 @@
 
 #include "text_util.h"
 
+#include <algorithm>
 #include <cstdio>
 #include <functional>
 
@@ -146,8 +147,12 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         if (!editorOnly && (section.headerSpan || !section.header.empty()))
             inEvents = section.kind == SectionKind::Events;
         // The renderers read events only under [Events]: Lines held from
-        // other sections go into the next one, after its Format line.
+        // other sections go into the next one, after its Format line, or
+        // before its first Line when it has none.
         const bool takesHeld = options.renderer && !editorOnly && section.kind == SectionKind::Events;
+        const bool formatted = takesHeld && std::ranges::any_of(section.records, [](const auto &record) {
+                                   return std::holds_alternative<FormatRecord>(record);
+                               });
         // E5-tlmode-needs-script-info: a Script Info section the Document
         // added at the top has no bytes; it is written as legacy's header is
         // (SubsGridBase.cpp:1490-1503): the header, its properties and a
@@ -180,7 +185,7 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             if (editorOnly && !line)
                 continue;
             const bool format = std::holds_alternative<FormatRecord>(record);
-            if (takesHeld && !format)
+            if (takesHeld && !formatted && line)
                 flushHeld();
             // A renderer Line outside [Events] goes to `held`, ending with a
             // line end; the output's own open end is kept for what follows.
