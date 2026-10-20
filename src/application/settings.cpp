@@ -251,6 +251,9 @@ const std::vector<SettingDefinition> &definitions()
         {"appearance.highContrastBlack.accent", "", String, Profile, Mapped, false, std::string("#FFFF00")},
         {"appearance.highContrastBlack.text", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
         {"appearance.highContrastBlack.border", "", String, Profile, Mapped, false, std::string("#FFFFFF")},
+        // SH1 (#220): "Use system title bar" ("system" or "custom"; "auto"
+        // is the desktop's default, the system's on tiling window managers).
+        {"appearance.titleBar", "", String, Profile, Mapped, false, std::string("auto")},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).
