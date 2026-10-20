@@ -153,6 +153,9 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
         const bool formatted = takesHeld && std::ranges::any_of(section.records, [](const auto &record) {
                                    return std::holds_alternative<FormatRecord>(record);
                                });
+        // Its own Lines before the Format line wait with the held ones, so
+        // the renderers have every Line in the Document's order.
+        bool holdsOwn = formatted && !held.empty();
         // E5-tlmode-needs-script-info: a Script Info section the Document
         // added at the top has no bytes; it is written as legacy's header is
         // (SubsGridBase.cpp:1490-1503): the header, its properties and a
@@ -185,11 +188,13 @@ std::vector<std::byte> encodeAss(const Document &document, const AssSaveOptions 
             if (editorOnly && !line)
                 continue;
             const bool format = std::holds_alternative<FormatRecord>(record);
+            if (format)
+                holdsOwn = false;
             if (takesHeld && !formatted && line)
                 flushHeld();
             // A renderer Line outside [Events] goes to `held`, ending with a
             // line end; the output's own open end is kept for what follows.
-            const bool hold = options.renderer && line && !inEvents;
+            const bool hold = options.renderer && line && (!inEvents || holdsOwn);
             const bool openBefore = newlines.openEnd;
             if (hold) {
                 sink = &held;
