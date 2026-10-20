@@ -42,7 +42,10 @@ QVariantList Application::checkKaraoke() const
     if (!session)
         return rows;
     using Kind = core::KaraokeProblem::Kind;
-    for (const core::KaraokeProblem &problem : core::checkKaraoke(session->document())) {
+    // The editor's pending draft counts, as it shows on the video: the
+    // Document with the draft applied (a draft is not committed for this).
+    const auto draft = m_editorDocument == target ? m_editor->draftDocument() : std::nullopt;
+    for (const core::KaraokeProblem &problem : core::checkKaraoke(draft ? *draft : session->document())) {
         QString check, detail;
         switch (problem.kind) {
         case Kind::Unclosed:

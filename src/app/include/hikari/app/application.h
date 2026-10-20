@@ -570,7 +570,8 @@ public:
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
     // KA7: the Karaoke check window (Subtitles > Check karaoke,
     // GLOBAL_CHECK_KARAOKE). The editing target's karaoke problems
-    // (core::checkKaraoke), one row each: {document and line (ids), number
+    // (core::checkKaraoke, with the editor's pending draft applied), one
+    // row each: {document and line (ids), number
     // (the Grid's 1-based row), check, detail}. showKaraokeLine selects a
     // row's Line; false when the editing target is another Document now or
     // no longer has the Line (Line ids are only unique within a Document).

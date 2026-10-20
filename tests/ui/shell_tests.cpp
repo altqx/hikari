@@ -7680,6 +7680,14 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeRecheck"), "click"));
         QTRY_COMPARE(list->property("count").toInt(), 1);
         QCOMPARE(dialog->property("problems").toList().front().toMap().value(QStringLiteral("number")).toInt(), 1);
+        // The editor's pending draft is checked as it stands, and stays a draft.
+        QCOMPARE(session->selection().active, std::optional(session->document().lines()[4]->id));
+        application->editor().textEdited(QStringLiteral("{\\k50}draft"), 0);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeRecheck"), "click"));
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        QCOMPARE(dialog->property("problems").toList().at(1).toMap().value(QStringLiteral("number")).toInt(), 5);
+        QVERIFY(session->document().lines()[4]->text == u8"{\\k100}fixed");
+        application->editor().discard();
         QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
