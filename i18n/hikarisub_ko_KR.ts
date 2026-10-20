@@ -8513,6 +8513,10 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>it puts a panel in a window that does not exist</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>the docking engine could not restore it</source>
         <translation type="unfinished"></translation>
     </message>
