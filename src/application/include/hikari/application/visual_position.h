@@ -35,7 +35,8 @@ public:
     std::optional<LineWarning> warning(const VisualHost &host) const override;
     void blocked(VisualHost &host) override;
     std::vector<ToolValue> values(const VisualHost &host) const override;
-    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host) override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                  ValueEdit edit = ValueEdit::Commit) override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
 
@@ -109,6 +110,7 @@ private:
     bool m_cancelled = false;
     bool m_keyNudge = false;
     bool m_dataFromStaged = false; // m_data read from the gesture's staged texts
+    bool m_valueEdit = false;      // the open gesture is a scrubbed value's (VT1)
     // The rectangle's re-placing commit (dummy): no SetVisual after it.
     bool m_dummyCommit = false;
     bool m_skipReset = false;
@@ -124,7 +126,8 @@ public:
     bool key(const Key &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolValue> values(const VisualHost &host) const override;
-    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host) override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                  ValueEdit edit = ValueEdit::Commit) override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
 
@@ -146,6 +149,7 @@ private:
                                      const ScriptState &state, const core::LineRecord &editLine,
                                      const VisualHost &host) const;
     bool cancelledByHost(VisualHost &host);
+    int activeStart(const VisualHost &host) const; // the active Line's start (ms), for the \move times
 
     PointF m_from, m_to, m_lastFrom, m_lastTo, m_firstmove, m_lastmove, m_moveDistance;
     int m_moveStart = 0, m_moveEnd = 0;
@@ -171,6 +175,7 @@ private:
     bool m_inGesture = false;
     bool m_cancelled = false;
     bool m_keyNudge = false;
+    bool m_valueEdit = false; // the open gesture is a scrubbed value's (VT1)
 };
 
 } // namespace hikari::application::visual

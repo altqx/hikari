@@ -64,27 +64,6 @@ bool altAlone(const Key &key)
     return key.alt && !key.control && !key.shift;
 }
 
-bool parseNumber(const std::u16string &text, double &out)
-{
-    std::string s;
-    for (const char16_t c : text) {
-        if (c > 0x7F)
-            return false;
-        s += static_cast<char>(c);
-    }
-    std::size_t a = 0, b = s.size();
-    while (a < b && s[a] == ' ')
-        ++a;
-    while (b > a && s[b - 1] == ' ')
-        --b;
-    if (a < b && s[a] == '+')
-        ++a;
-    if (a >= b)
-        return false;
-    const auto [end, ec] = std::from_chars(s.data() + a, s.data() + b, out);
-    return ec == std::errc() && end == s.data() + b && std::isfinite(out);
-}
-
 // The record a target has for the gesture: its text as the gesture began, or
 // as staged (legacy committed each step and read the Line back).
 core::LineRecord stagedRecord(const Gesture &gesture, core::LineId id)
@@ -835,13 +814,16 @@ std::vector<ToolValue> PositionTool::values(const VisualHost &host) const
     return {};
 }
 
-bool PositionTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host)
+bool PositionTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
     // The active Line's \pos at the typed point, the other Lines moved with
-    // it, as a right click there would (VisualPosition.cpp:330-352).
+    // it, as a right click there would (VisualPosition.cpp:330-352). VT1: a
+    // scrub's samples are staged on one gesture, committed by its release.
     double value = 0;
     const auto active = host.activeLine();
-    if ((name != "x" && name != "y") || !active || !parseNumber(text, value) || host.gesture())
+    if (!host.gesture())
+        m_valueEdit = false;
+    if ((name != "x" && name != "y") || !active || !parseValue(text, value) || (host.gesture() && !m_valueEdit))
         return false;
     for (const Data &d : m_data) {
         if (d.line != *active)
@@ -849,6 +831,9 @@ bool PositionTool::setValue(const std::string &name, const std::u16string &text,
         PointF script = host.view().viewToScript(d.pos);
         (name == "x" ? script.x : script.y) = static_cast<float>(value);
         setPointFor(*active, host.view().scriptToView(script));
+        if (edit == ValueEdit::Sample)
+            return m_valueEdit = stageAll(host);
+        m_valueEdit = false;
         return commitAll(host);
     }
     return false;
@@ -865,6 +850,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     rect.tooltip = u"Set position by rectangle.\nAfter drawing a rectangle, the line will be\npositioned on one or "
                    u"both axes\nfor the selected alignment.";
     rect.checked = m_toggled[0];
+    rect.group = u"Rectangle"; // VT1: the bar's group
     out.push_back(rect);
     ToolOption x;
     x.name = "x";
@@ -872,6 +858,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     x.tooltip = u"Positioning in X axis";
     x.checked = m_toggled[1];
     x.enabled = m_toggled[0];
+    x.group = u"Rectangle";
     out.push_back(x);
     ToolOption y;
     y.name = "y";
@@ -879,6 +866,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     y.tooltip = u"Positioning in Y axis";
     y.checked = m_toggled[2];
     y.enabled = m_toggled[0];
+    y.group = u"Rectangle";
     out.push_back(y);
     ToolOption an;
     an.name = "alignment";
@@ -887,6 +875,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     for (const auto a : positionAlignments())
         an.choices.emplace_back(a);
     an.index = m_an;
+    an.group = u"Rectangle";
     out.push_back(an);
     return out;
 }
@@ -1420,34 +1409,53 @@ Overlay MoveTool::overlay(const VisualHost &host) const
 std::vector<ToolValue> MoveTool::values(const VisualHost &host) const
 {
     // The numeric alternative: the \move's points in script coordinates and
-    // its times from the Line's start, as the tool writes them.
+    // its times from the Line's start, as the tool writes them; VT1: the
+    // times are editable too (whole milliseconds, as the tag takes them).
     const PointF from = host.view().viewToScript(m_from);
     const PointF to = host.view().viewToScript(m_to);
+    const int startTime = activeStart(host);
+    return {{"x1", u"X", ft(from.x), true, u"Start"},
+            {"y1", u"Y", ft(from.y), true, u"Start"},
+            {"t1", u"T", ft(static_cast<float>(m_moveValues[4] - startTime)), true, u"Start", u"ms", 10},
+            {"x2", u"X", ft(to.x), true, u"End"},
+            {"y2", u"Y", ft(to.y), true, u"End"},
+            {"t2", u"T", ft(static_cast<float>(m_moveValues[5] - startTime)), true, u"End", u"ms", 10}};
+}
+
+int MoveTool::activeStart(const VisualHost &host) const
+{
     const auto *session = host.session();
-    int startTime = 0;
     if (session && host.activeLine())
         for (const auto *l : session->document().lines())
             if (l->id == *host.activeLine())
-                startTime = zeroit(startMs(*l));
-    return {{"x1", u"X1", ft(from.x), true},
-            {"y1", u"Y1", ft(from.y), true},
-            {"x2", u"X2", ft(to.x), true},
-            {"y2", u"Y2", ft(to.y), true},
-            {"t1", u"T1", ft(static_cast<float>(m_moveValues[4] - startTime)), false},
-            {"t2", u"T2", ft(static_cast<float>(m_moveValues[5] - startTime)), false}};
+                return zeroit(startMs(*l));
+    return 0;
 }
 
-bool MoveTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host)
+bool MoveTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
-    // A typed point written as a key's nudge writes it (SetVisual).
+    // A typed point written as a key's nudge writes it (SetVisual). VT1: the
+    // times are set from the Line's start as the tag holds them, and a
+    // scrub's samples are staged on one gesture its release commits.
     double value = 0;
-    if ((name != "x1" && name != "y1" && name != "x2" && name != "y2") || !parseNumber(text, value) ||
-        host.gesture() || !host.activeLine())
+    if (!host.gesture())
+        m_valueEdit = false;
+    if (name.size() != 2 || (name[0] != 'x' && name[0] != 'y' && name[0] != 't') || (name[1] != '1' && name[1] != '2') ||
+        !parseValue(text, value) || (host.gesture() && !m_valueEdit) || !host.activeLine())
         return false;
     const bool start = name[1] == '1';
-    PointF script = host.view().viewToScript(start ? m_from : m_to);
-    (name[0] == 'x' ? script.x : script.y) = static_cast<float>(value);
-    (start ? m_from : m_to) = host.view().scriptToView(script);
+    if (name[0] == 't') {
+        m_moveValues[start ? 4 : 5] = activeStart(host) + std::round(value);
+    } else {
+        PointF script = host.view().viewToScript(start ? m_from : m_to);
+        (name[0] == 'x' ? script.x : script.y) = static_cast<float>(value);
+        (start ? m_from : m_to) = host.view().scriptToView(script);
+    }
+    if (edit == ValueEdit::Sample) {
+        setVisual(true, host);
+        return m_valueEdit = host.gesture() != nullptr;
+    }
+    m_valueEdit = false;
     const std::uint64_t before = host.session() ? host.session()->revision() : 0;
     setVisual(true, host);
     setVisual(false, host);

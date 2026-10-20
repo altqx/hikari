@@ -1188,13 +1188,15 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
         mode.tooltip = modes[i].label;
         mode.checked = m_shapeSelection == 0 && m_editor.mode == i;
         mode.enabled = m_shapeSelection == 0;
+        mode.group = u"Points"; // VT1: the bar's groups
         out.push_back(std::move(mode));
     }
     ToolOption shapes;
     shapes.name = "shape";
     shapes.kind = ToolOption::Kind::Choice;
-    shapes.iconRole = "shape-presets"; // the row shows the list as an icon with its menu
+    shapes.iconRole = "shape-presets";
     shapes.listEnds = true;
+    shapes.group = u"Shape"; // VT1: the bar shows the chosen entry as text
     shapes.tooltip = u"List of ASS drawings with edit option.\nAfter choose drawing from list just set cursor i n "
                      u"place\nof start of drawing and click left mouse button and drag.";
     static const std::vector<ShapePreset> none;

@@ -89,6 +89,7 @@ std::vector<ToolOption> ScaleTool::options(const VisualHost &host) const
         o.tooltip = info.tooltip;
         o.checked = t[static_cast<std::size_t>(elem)];
         o.enabled = !grayed;
+        o.group = elem < 5 ? u"Rectangle" : u"Tags"; // VT1: the bar's groups
         out.push_back(std::move(o));
     }
     return out;
@@ -880,9 +881,50 @@ Overlay ScaleTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> ScaleTool::values(const VisualHost &host) const
 {
+    // VT1: editable, in percent as the tags hold them.
     (void)host;
-    return {{"fscx", u"Scale X", getfloat(m_scale.x * 100), false},
-            {"fscy", u"Scale Y", getfloat(m_scale.y * 100), false}};
+    return {{"fscx", u"X", getfloat(m_scale.x * 100), true, {}, u"%"},
+            {"fscy", u"Y", getfloat(m_scale.y * 100), true, {}, u"%"}};
+}
+
+bool ScaleTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
+{
+    // VT1: a typed or scrubbed scale, written as a drag of that axis' arrow
+    // writes it (its end follows): both axes in proportion with "Preserve
+    // proportions", as its drags. The first sample is the press (the scale
+    // the tags are changed from).
+    double value = 0;
+    if (!host.gesture())
+        m_valueEdit = false;
+    if ((name != "fscx" && name != "fscy") || !parseValue(text, value) || value < 0 ||
+        (host.gesture() && !m_valueEdit))
+        return false;
+    takeView(host.view());
+    const bool first = !host.gesture();
+    if (!beginEdit(host))
+        return false;
+    if (first)
+        m_lastScale = m_scale;
+    const bool x = name == "fscx";
+    const float scale = static_cast<float>(value / 100);
+    if (m_preserveProportions) {
+        const float was = x ? m_scale.x : m_scale.y;
+        const float ratio = was != 0 ? scale / was : 1.f;
+        m_type = 2;
+        m_scale = x ? PointF{scale, m_scale.y * ratio} : PointF{m_scale.x * ratio, scale};
+    } else {
+        m_type = x ? 0 : 1;
+        (x ? m_scale.x : m_scale.y) = scale;
+    }
+    m_to.x = m_from.x + (m_scale.x * m_arrowLengths.x);
+    m_to.y = m_from.y + (m_scale.y * m_arrowLengths.y);
+    setVisual(true, host);
+    if (edit == ValueEdit::Sample)
+        return m_valueEdit = host.gesture() != nullptr;
+    m_valueEdit = false;
+    const std::uint64_t before = host.session() ? host.session()->revision() : 0;
+    setVisual(false, host);
+    return host.session() && host.session()->revision() != before;
 }
 
 } // namespace hikari::application::visual

@@ -1054,7 +1054,7 @@ TEST(VisualMoveTimes, MoveKeepsAnUntimedMoveUntimedOverRepeatedReads)
     EXPECT_EQ(tool.moveEnd(), 3000);
     auto values = tool.values(host);
     ASSERT_EQ(values.size(), 6u);
-    EXPECT_EQ(values[4].text, u"0");
+    EXPECT_EQ(values[2].text, u"0");
     EXPECT_EQ(values[5].text, u"0");
     // Drag the start (view 10,20) twice.
     tool.pointer(at(Pointer::Kind::Press, 10, 20, Pointer::Button::Left, true), host);
@@ -1121,12 +1121,61 @@ TEST(VisualMoveValues, TypedPointsWriteTheMove)
     const auto values = tool.values(host);
     ASSERT_EQ(values.size(), 6u);
     EXPECT_EQ(values[0].text, u"30");
-    EXPECT_EQ(values[2].text, u"90");
-    EXPECT_EQ(values[4].text, u"0");
+    EXPECT_EQ(values[3].text, u"90");
+    EXPECT_EQ(values[2].text, u"0");
     EXPECT_EQ(values[5].text, u"2000");
-    EXPECT_FALSE(values[4].editable);
+    // VT1: the times are editable too, from the Line's start in ms.
+    EXPECT_TRUE(values[2].editable);
+    EXPECT_EQ(values[2].unit, u"ms");
+    EXPECT_EQ(values[0].group, u"Start");
+    EXPECT_EQ(values[5].group, u"End");
     EXPECT_TRUE(tool.setValue("x2", u"600", host));
     EXPECT_EQ(text(host, 1), u8"{\\move(30,60,600,120,0,2000)}y");
+    EXPECT_TRUE(tool.setValue("t1", u"100", host));
+    EXPECT_EQ(text(host, 1), u8"{\\move(30,60,600,120,100,2000)}y");
+    EXPECT_TRUE(tool.setValue("t2", u"1500", host));
+    EXPECT_EQ(text(host, 1), u8"{\\move(30,60,600,120,100,1500)}y");
+    EXPECT_EQ(tool.values(host)[5].text, u"1500");
+}
+
+// VT1: a scrub's samples stage on one gesture (the Document waits), its
+// release commits them as one step; Esc drops them.
+TEST(VisualPositionValues, AScrubIsOneStepAndEscDropsIt)
+{
+    TestHost host;
+    standard(host);
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    const auto before = host.s->history().size();
+    EXPECT_TRUE(tool.setValue("x", u"310", host, ValueEdit::Sample));
+    ASSERT_TRUE(host.g);
+    EXPECT_TRUE(tool.setValue("x", u"320", host, ValueEdit::Sample));
+    EXPECT_EQ(text(host, 0), u8"{\\pos(300,300)}x");
+    EXPECT_EQ(*host.g->staged(ids(*host.s)[0]), u8"{\\pos(320,300)}x");
+    EXPECT_EQ(host.s->history().size(), before);
+    EXPECT_TRUE(tool.setValue("x", u"320", host, ValueEdit::Commit));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(text(host, 0), u8"{\\pos(320,300)}x");
+    ASSERT_EQ(host.s->history().size(), before + 1);
+    EXPECT_EQ(host.s->history().back().name, "Visual positioning tool");
+    // Esc mid-scrub: nothing written; the next typed value works.
+    EXPECT_TRUE(tool.setValue("y", u"280", host, ValueEdit::Sample));
+    ASSERT_TRUE(host.g);
+    host.escape();
+    EXPECT_EQ(text(host, 0), u8"{\\pos(320,300)}x");
+    EXPECT_EQ(host.s->history().size(), before + 1);
+    EXPECT_EQ(tool.values(host)[1].text, u"300");
+    EXPECT_TRUE(tool.setValue("y", u"290", host));
+    EXPECT_EQ(text(host, 0), u8"{\\pos(320,290)}x");
+    EXPECT_EQ(host.s->history().size(), before + 2);
+    // A pointer's gesture is not a value's: a sample is refused during it.
+    tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, 110, 105, Pointer::Button::None, true), host);
+    ASSERT_TRUE(host.g);
+    EXPECT_FALSE(tool.setValue("x", u"10", host, ValueEdit::Sample));
+    host.escape();
 }
 
 TEST(VisualPositionWarning, OnlyWhileNoneOfItsLinesIsVisible)

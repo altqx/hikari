@@ -925,6 +925,7 @@ std::vector<ToolOption> VectorClipTool::options(const VisualHost &host) const
         mode.iconRole = modes[i].icon;
         mode.tooltip = modes[i].label;
         mode.checked = m_editor.mode == i;
+        mode.group = u"Points"; // VT1: the bar's group
         out.push_back(std::move(mode));
     }
     ToolOption invert;

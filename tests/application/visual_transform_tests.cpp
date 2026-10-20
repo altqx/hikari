@@ -1579,3 +1579,123 @@ TEST(VisualTransformPointer, RotationXYDragsShowTheTurnedAxis)
     send(tool, host, "release 330 180 left");
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
 }
+
+// VT1: the inspector bar's values for Scale and the rotations. A typed value
+// is one step; a scrub's samples stage on one gesture its release commits as
+// one step; Esc (the host cancelling the gesture and resetting the tool)
+// drops them, and the values read the text again.
+TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
+{
+    const auto cases = readCases();
+    const auto caseNamed = [&](const char *name) {
+        return *std::find_if(cases.begin(), cases.end(), [&](const Case &k) { return k.name == name; });
+    };
+    const auto textOf = [](const TestHost &host) {
+        const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+        return std::string(t.begin(), t.end());
+    };
+    const auto valueOf = [](const VisualTool &tool, const VisualHost &host, const std::string &name) {
+        for (const auto &v : tool.values(host))
+            if (v.name == name)
+                return v;
+        return ToolValue{};
+    };
+    const auto escape = [](TestHost &host, VisualTool &tool) {
+        host.cancelGesture();
+        tool.reset(host);
+    };
+    {
+        SCOPED_TRACE("scale");
+        TestHost host;
+        setUp(host, caseNamed("scale-width-left-drag"));
+        ScaleTool tool;
+        tool.setToggled(6);
+        tool.selected(host);
+        tool.reset(host);
+        const std::size_t steps = host.s->historySize();
+        const ToolValue x = valueOf(tool, host, "fscx");
+        EXPECT_TRUE(x.editable);
+        EXPECT_EQ(x.label, u"X");
+        EXPECT_EQ(x.unit, u"%");
+        EXPECT_EQ(x.text, u"100");
+        EXPECT_FALSE(tool.setValue("fscx", u"abc", host));
+        EXPECT_TRUE(tool.setValue("fscx", u"150", host));
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\fscx150"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueOf(tool, host, "fscx").text, u"150");
+        // A scrub of Y.
+        EXPECT_TRUE(tool.setValue("fscy", u"110", host, ValueEdit::Sample));
+        ASSERT_TRUE(host.g);
+        EXPECT_TRUE(tool.setValue("fscy", u"120", host, ValueEdit::Sample));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_EQ(textOf(host).find("\\fscy"), std::string::npos) << textOf(host);
+        EXPECT_TRUE(tool.setValue("fscy", u"120", host, ValueEdit::Commit));
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        EXPECT_NE(textOf(host).find("\\fscy120"), std::string::npos) << textOf(host);
+        EXPECT_NE(textOf(host).find("\\fscx150"), std::string::npos) << textOf(host);
+        // Esc mid-scrub.
+        const std::string before = textOf(host);
+        EXPECT_TRUE(tool.setValue("fscx", u"10", host, ValueEdit::Sample));
+        ASSERT_TRUE(host.g);
+        escape(host, tool);
+        EXPECT_EQ(textOf(host), before);
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        EXPECT_EQ(valueOf(tool, host, "fscx").text, u"150");
+    }
+    {
+        SCOPED_TRACE("rotz");
+        TestHost host;
+        setUp(host, caseNamed("rotz-drag"));
+        RotationZTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        const std::size_t steps = host.s->historySize();
+        EXPECT_EQ(valueOf(tool, host, "frz").unit, u"°");
+        EXPECT_EQ(valueOf(tool, host, "orgx").group, u"Origin");
+        EXPECT_TRUE(tool.setValue("frz", u"30", host));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\frz30"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueOf(tool, host, "frz").text, u"30");
+        // A scrub of the angle, dropped: the angle the text has again.
+        const std::string before = textOf(host);
+        EXPECT_TRUE(tool.setValue("frz", u"45", host, ValueEdit::Sample));
+        ASSERT_TRUE(host.g);
+        escape(host, tool);
+        EXPECT_EQ(textOf(host), before);
+        EXPECT_EQ(valueOf(tool, host, "frz").text, u"30");
+        // The origin, in script coordinates.
+        EXPECT_TRUE(tool.setValue("orgx", u"100", host));
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        EXPECT_NE(textOf(host).find("\\org(100,540)"), std::string::npos) << textOf(host);
+        EXPECT_NE(textOf(host).find("\\frz30"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueOf(tool, host, "orgx").text, u"100");
+        EXPECT_EQ(valueOf(tool, host, "orgy").text, u"540");
+    }
+    {
+        SCOPED_TRACE("rotxy");
+        TestHost host;
+        setUp(host, caseNamed("rotxy-left-right-middle"));
+        RotationXYTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        const std::size_t steps = host.s->historySize();
+        EXPECT_EQ(valueOf(tool, host, "frx").text, u"10");
+        EXPECT_TRUE(tool.setValue("fry", u"20", host));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\fry20"), std::string::npos) << textOf(host);
+        EXPECT_NE(textOf(host).find("\\frx10"), std::string::npos) << textOf(host);
+        EXPECT_TRUE(tool.setValue("frx", u"-15", host, ValueEdit::Sample));
+        ASSERT_TRUE(host.g);
+        EXPECT_TRUE(tool.setValue("frx", u"-15", host, ValueEdit::Commit));
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        // The tool keeps the angle in 0-360 as its drags do (-15 is 345).
+        EXPECT_NE(textOf(host).find("\\frx345"), std::string::npos) << textOf(host);
+        EXPECT_NE(textOf(host).find("\\fry20"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueOf(tool, host, "frx").text, u"345");
+        EXPECT_EQ(valueOf(tool, host, "fry").text, u"20");
+    }
+}
