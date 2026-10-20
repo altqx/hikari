@@ -269,7 +269,8 @@ public:
     Q_PROPERTY(bool modified READ modified NOTIFY displayChanged) // legacy NeedCommit
     Q_PROPERTY(int selectionStart READ selectionStart NOTIFY displayChanged)
     Q_PROPERTY(int selectionEnd READ selectionEnd NOTIFY displayChanged)
-    // AU1 (#267): where the current Line's selection lies while none of it
+    // AU1 (#267): where the current Line's selection (in Karaoke, the
+    // current syllable's, as Go to selection shows it) lies while none of it
     // is in view: -1 before the view, 1 after it, 0 in view or no Line (the
     // Back to line chip).
     Q_PROPERTY(int lineOutOfView READ lineOutOfView NOTIFY displayChanged)

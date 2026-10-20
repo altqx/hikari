@@ -14128,6 +14128,37 @@ private slots:
     // auto-commit unless DISABLE_LIVE_VIDEO_EDITING (the video's preview of
     // the edit). The rewrite's video shows the committed Document, and the
     // box's commit is one: the video takes the new times either way.
+    // AU1: in Karaoke, Back to line shows while the current syllable is out
+    // of view, though another part of the Line is in it: Go to selection
+    // brings that syllable back.
+    void audioBackToLineFollowsTheSyllable()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.20,Default,,0,0,0,,{\\k20}ka{\\k30}ra{\\k50}oke\n");
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        audio.toggleKaraoke();
+        QVERIFY(audio.karaoke());
+        audio.setHorizontalZoom(10);
+        audio.setScrollPosition(0);
+        const auto &view = audio.view();
+        // the view from 0.80 s: "oke" (0.70-1.20) in it, "ka" (0.20-0.40) before it
+        audio.setScrollPosition(static_cast<int>(view.xAtMs(800) / 12));
+        QVERIFY(view.xAtMs(1200) > 0 && view.xAtMs(700) < view.width());
+        QVERIFY(view.xAtMs(400) < 0);
+        QCOMPARE(audio.karaokeModel().current, 0);
+        QCOMPARE(audio.lineOutOfView(), -1);
+        auto *chip = item("audioBackToLine");
+        QVERIFY(chip->isVisible());
+        audio.goToSelection();
+        QVERIFY(view.xAtMs(400) >= 0);
+        QCOMPARE(audio.lineOutOfView(), 0);
+        QVERIFY(!chip->isVisible());
+    }
+
     // A5: karaoke mode in the audio box with the real mouse and keys: the
     // Karaoke button (zoom in by 20, into AUDIO_HORIZONTAL_ZOOM), the
     // syllables' plays through the player (the output without a device),

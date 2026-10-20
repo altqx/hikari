@@ -1035,17 +1035,24 @@ void AudioController::previousLine()
     }
 }
 
-// AudioBox::OnGoto: MakeDialogueVisible(true).
+// AU1: the range goToSelection brings into view, as timesSelection(true)
+// gives it: in Karaoke the current syllable's, else the Line's.
 int AudioController::lineOutOfView() const
 {
     if (!m_view.hasSource() || m_view.width() <= 0 || m_active < 0 || m_active >= static_cast<int>(m_lines.size()))
         return 0;
-    if (m_view.xAtMs(m_endMs) < 0)
+    auto [start, end] = std::pair(m_startMs, m_endMs);
+    if (m_hasKara && m_karaoke.count())
+        std::tie(start, end) =
+            m_karaoke.visibleTimes(std::clamp(m_karaoke.current, 0, m_karaoke.count() - 1), m_startMs, m_endMs);
+    if (m_view.xAtMs(end) < 0)
         return -1;
-    if (m_view.xAtMs(m_startMs) > m_view.width())
+    if (m_view.xAtMs(start) > m_view.width())
         return 1;
     return 0;
 }
+
+// AudioBox::OnGoto: MakeDialogueVisible(true).
 
 void AudioController::goToSelection()
 {
