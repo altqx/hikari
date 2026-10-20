@@ -784,6 +784,14 @@ icon("audio-waveform", "Waveform mode", [], [AUDIOBOX],
 icon("volume-quiet", "Volume", [], [AUDIOBOX], stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z"))
 icon("volume-low", "Volume", [], [AUDIOBOX],
      stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z") + accent(stroke("M10 5.5a3.5 3.5 0 0 1 0 5")))
+# KA2 (#277): tap-to-time and slowed playback. Tap is a key pressed down,
+# the latency calibration a metronome, the playback speed a gauge.
+icon("karaoke-tap", "Tap to time", [], [AUDIOBOX],
+     rect(2.5, 9.5, 11, 4, 1) + accent(stroke("M8 1.5v5.5M5.5 4.5L8 7l2.5-2.5")))
+icon("tap-calibrate", "Calibrate tap latency", [], [AUDIOBOX],
+     stroke("M5.5 2.5h5l2.5 11h-10z") + stroke("M4 10.5h8") + accent(stroke("M8 10.5l3.5-6.5")))
+icon("playback-speed", "Playback speed", [], [AUDIOBOX],
+     stroke("M2.5 12a5.5 5.5 0 1 1 11 0") + accent(stroke("M8 12L5.5 8")) + dot(8, 12, 1.25))
 
 # IC1 (#226): every menu and context-menu item that runs a command has an
 # icon (docs/qt/ux/menu-icon-gaps.md lists the items and the ones left

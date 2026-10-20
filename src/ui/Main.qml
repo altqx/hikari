@@ -278,8 +278,9 @@ ApplicationWindow {
         fallbackTarget: videoPanel
         fallbackAccepts: (key, modifiers) => root.hotkeys.actionFor(3, key, modifiers) === "VIDEO_PLAY_PAUSE"
         // AUDIO_AUTO_FOCUS folded in: legacy's audio took the focus under
-        // the pointer; now no panel does, and the hotkeys follow it.
-        followsPointer: () => root.app.settings.value("audio.autoFocus")
+        // the pointer; now no panel does, and the hotkeys follow it. KA2:
+        // not while tap mode is on, so its taps stay the audio panel's.
+        followsPointer: () => root.app.settings.value("audio.autoFocus") && !root.audio.tapOn
         Component.onCompleted: {
             for (const panel of root.panels)
                 keyRouter.addPanel(panel, panel.keyTarget)
@@ -2640,6 +2641,15 @@ ApplicationWindow {
                 // across the bottom (ButtonSizer). AU1 (#267): the sliders
                 // beside them (TopSizer) moved into the zoom and speaker
                 // popovers, so the display takes the full width.
+                // KA2 (#277, KA2-tap-to-time): the tap bar above the display
+                // while tap mode is on.
+                AudioTapBar {
+                    id: audioTapBar
+                    audio: root.audio
+                    visible: root.audio.loaded && root.audio.tapOn
+                    height: visible ? implicitHeight : 0
+                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                }
                 // A1: the waveform with its time ruler and marks (legacy AudioDisplay).
                 AudioDisplay {
                     id: audioDisplay
@@ -2648,10 +2658,78 @@ ApplicationWindow {
                     visible: root.audio.loaded
                     focus: true
                     clip: true
-                    anchors { left: parent.left; right: parent.right; top: parent.top; bottom: audioScroll.top }
+                    anchors { left: parent.left; right: parent.right; top: audioTapBar.bottom; bottom: audioScroll.top }
                     Accessible.role: Accessible.Graphic
                     Accessible.name: qsTranslate("HikariSub.Audio", "Audio display")
                     Accessible.description: root.audio.status
+                }
+                // KA2-tap-to-time: the tapped syllables in a lane near the top
+                // of the waveform, under the karaoke letters' row, the held
+                // one growing at the playhead; a release before the next
+                // press leaves a hatched gap.
+                Item {
+                    id: audioTapLane
+                    objectName: "audioTapLane"
+                    readonly property var spans: root.audio.tapSpans
+                    visible: audioTapBar.visible
+                    clip: true
+                    x: audioDisplay.x
+                    y: audioDisplay.y + 22
+                    width: audioDisplay.width
+                    height: 22
+                    Repeater {
+                        model: audioTapLane.spans
+                        delegate: Item {
+                            id: span
+                            required property var modelData
+                            required property int index
+                            readonly property real gapStart: index > 0 ? audioTapLane.spans[index - 1].x2 : x
+                            objectName: "audioTapSpan" + index
+                            x: modelData.x1
+                            width: Math.max(1, modelData.x2 - modelData.x1)
+                            height: parent.height
+                            // the gap before this syllable, hatched
+                            Canvas {
+                                objectName: "audioTapGap"
+                                readonly property color ink: Theme.highContrast ? Theme.text : Theme.muted
+                                visible: span.x - span.gapStart > 2
+                                x: span.gapStart - span.x
+                                width: Math.max(0, span.x - span.gapStart)
+                                height: parent.height
+                                onInkChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onPaint: {
+                                    const ctx = getContext("2d")
+                                    ctx.reset()
+                                    ctx.strokeStyle = ink
+                                    ctx.lineWidth = 1.5
+                                    ctx.beginPath()
+                                    for (let d = -height; d < width; d += 6) {
+                                        ctx.moveTo(d, height)
+                                        ctx.lineTo(d + height, 0)
+                                    }
+                                    ctx.stroke()
+                                }
+                            }
+                            Rectangle {
+                                anchors.fill: parent
+                                // high contrast: outlined on the field, the held one filled
+                                color: Theme.highContrast && !span.modelData.held ? Theme.field
+                                     : Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, span.modelData.held || Theme.highContrast ? 0.9 : 0.5)
+                                border.width: Theme.highContrast ? 1 : 0
+                                border.color: Theme.accent
+                            }
+                            Label {
+                                anchors.centerIn: parent
+                                width: Math.min(implicitWidth, parent.width - 2)
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                text: span.modelData.text
+                                font.bold: true
+                                color: span.modelData.held ? Theme.onAccent : Theme.text
+                            }
+                        }
+                    }
                 }
                 ScrollBar {
                     id: audioScroll
@@ -2825,9 +2903,16 @@ ApplicationWindow {
                     // legacy MainSizer: a 2-pixel spacer under the buttons
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
                     // From the fixed sizes, not the right-hand items' own,
-                    // which change as the row folds.
-                    readonly property bool folded: width < audioTransport.implicitWidth + audioSwitches.fullWidth
+                    // which change as the row folds. KA2 (#277): Karaoke
+                    // mode's row, with Tap, folds the toggles into ⋯ first
+                    // (the default 640 px panel does), the switches when
+                    // even that does not fit; Line mode folds them together.
+                    readonly property bool folded: width < audioTransport.implicitWidth
+                                                           + (root.audio.karaoke ? audioSwitches.modesWidth + 26 + spacing
+                                                                                 : audioSwitches.fullWidth)
                                                            + audioTail.unfoldedWidth + 3 * spacing
+                    readonly property bool togglesFolded: folded
+                        || width < audioTransport.implicitWidth + audioSwitches.fullWidth + audioTail.unfoldedWidth + 3 * spacing
                     // the row with the switches in ⋯: the panel's least width
                     readonly property real foldedWidth: audioTransport.implicitWidth + audioTail.unfoldedWidth + 26
                                                         + 3 * spacing
@@ -2931,12 +3016,15 @@ ApplicationWindow {
                         property string tip
                         property string menuTip
                         property Menu menu
+                        // KA2: a face that shows a mode on (Tap)
+                        property bool checked: false
                         default property alias marks: splitFace.data
                         signal run()
                         AudioButton {
                             id: splitFace
                             objectName: split.name
                             text: split.tip
+                            checked: split.checked
                             iconRole: split.iconRole
                             symbol: split.symbol
                             altSymbol: split.altSymbol
@@ -2986,6 +3074,43 @@ ApplicationWindow {
                         Layout.leftMargin: 2
                         Layout.rightMargin: 2
                         color: Theme.line
+                    }
+                    // KA2: a choice of several in a menu, with a radio mark
+                    // (its circle, filled when chosen); it closes the menu.
+                    component AudioRadioItem: ShellMenuItem {
+                        id: radioItem
+                        checkable: true
+                        keepsMenuOpen: false
+                        Accessible.role: Accessible.RadioButton
+                        indicator: Rectangle {
+                            readonly property color ink: radioItem.enabled && (radioItem.down || radioItem.highlighted)
+                                                         ? radioItem.palette.highlightedText : radioItem.palette.text
+                            x: radioItem.mirrored ? radioItem.width - width - radioItem.rightPadding : radioItem.leftPadding
+                            y: radioItem.topPadding + (radioItem.availableHeight - height) / 2
+                            implicitWidth: 14
+                            implicitHeight: 14
+                            radius: 7
+                            color: "transparent"
+                            border.color: ink
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 6
+                                height: 6
+                                radius: 3
+                                color: parent.ink
+                                visible: radioItem.checked
+                            }
+                        }
+                    }
+                    // KA2: a muted heading over a menu's group of items.
+                    component AudioMenuHeading: Label {
+                        leftPadding: 12
+                        rightPadding: 12
+                        topPadding: 4
+                        bottomPadding: 2
+                        color: Theme.muted
+                        font.bold: true
+                        font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
                     }
                     // A play of Play around's menu, its hotkey beside it; a
                     // Shift+click maps the hotkey (AU1: as the old button did).
@@ -3172,9 +3297,10 @@ ApplicationWindow {
                         objectName: "audioSwitches"
                         visible: !audioButtons.folded
                         spacing: 2
-                        // two switches, a separator and three toggles, and
-                        // Auto split in Karaoke mode
-                        readonly property real fullWidth: 2 * 54 + 5 + 3 * 26 + (root.audio.karaoke ? 26 + 7 * spacing : 6 * spacing)
+                        // two switches, and Auto split and Tap in Karaoke
+                        // mode; a separator and three toggles
+                        readonly property real modesWidth: 2 * 54 + 2 * spacing + (root.audio.karaoke ? 26 + 39 + 2 * spacing : 0)
+                        readonly property real fullWidth: modesWidth + 5 + 3 * 26 + 4 * spacing
                         // A5: legacy AudioBox's KaraSwitch, as a switch
                         AudioSwitch {
                             AudioSegment {
@@ -3209,6 +3335,87 @@ ApplicationWindow {
                                 checked = Qt.binding(() => root.audio.karaokeSplitMode)
                             }
                         }
+                        // KA2-tap-to-time: Tap, in Karaoke mode only. The face
+                        // turns tap mode on and off (AUDIO_TAP), the arrow
+                        // holds how a key makes a syllable, the speed and
+                        // the latency.
+                        AudioSplitButton {
+                            name: "audioTap"
+                            visible: root.audio.karaoke
+                            iconRole: "karaoke-tap"
+                            symbol: "AUDIO_TAP"
+                            tip: qsTranslate("HikariSub.Audio", "Tap to time")
+                            menuTip: qsTranslate("HikariSub.Audio", "Tap options")
+                            menu: audioTapMenu
+                            checked: root.audio.tapOn
+                            onRun: root.audio.toggleTap()
+                        }
+                        ShellMenu {
+                            id: audioTapMenu
+                            objectName: "audioTapMenu"
+                            ShellMenuItem {
+                                objectName: "audioTapStart"
+                                iconRole: "karaoke-tap"
+                                text: (root.audio.tapOn ? qsTranslate("HikariSub.Audio", "Stop tapping")
+                                                        : qsTranslate("HikariSub.Audio", "Start tapping"))
+                                      + "\t" + root.boundKeys("AUDIO_TAP", 4)
+                                onTriggered: if (!root.hotkeyGesture("AUDIO_TAP", 4, true, false)) root.audio.toggleTap()
+                            }
+                            MenuSeparator {}
+                            AudioMenuHeading {
+                                text: qsTranslate("HikariSub.Audio", "Each syllable")
+                            }
+                            AudioRadioItem {
+                                objectName: "audioTapHold"
+                                text: qsTranslate("HikariSub.Audio", "Hold the key: releasing it leaves a gap")
+                                checked: root.audio.tapHold
+                                onTriggered: {
+                                    root.audio.setTapHold(true)
+                                    checked = Qt.binding(() => root.audio.tapHold)
+                                }
+                            }
+                            AudioRadioItem {
+                                objectName: "audioTapPress"
+                                text: qsTranslate("HikariSub.Audio", "Press the key: no gaps")
+                                checked: !root.audio.tapHold
+                                onTriggered: {
+                                    root.audio.setTapHold(false)
+                                    checked = Qt.binding(() => !root.audio.tapHold)
+                                }
+                            }
+                            MenuSeparator {}
+                            ShellMenu {
+                                id: audioTapSpeedMenu
+                                objectName: "audioTapSpeedMenu"
+                                iconRole: "playback-speed"
+                                //: The Tap menu's Speed submenu; %1 is the speed in percent
+                                title: qsTranslate("HikariSub.Audio", "Speed") + "\t"
+                                       + qsTranslate("HikariSub.Audio", "%1%").arg(root.audio.speedPercent)
+                                Instantiator {
+                                    model: [25, 33, 50, 75, 100]
+                                    delegate: AudioRadioItem {
+                                        required property int modelData
+                                        objectName: "audioTapSpeed" + modelData
+                                        text: qsTranslate("HikariSub.Audio", "%1%").arg(modelData)
+                                        checked: root.audio.speedPercent === modelData
+                                        onTriggered: {
+                                            root.audio.setSpeedPercent(modelData)
+                                            checked = Qt.binding(() => root.audio.speedPercent === modelData)
+                                        }
+                                    }
+                                    onObjectAdded: (index, object) => audioTapSpeedMenu.insertItem(index, object)
+                                    onObjectRemoved: (index, object) => audioTapSpeedMenu.removeItem(object)
+                                }
+                            }
+                            ShellMenuItem {
+                                objectName: "audioTapCalibrate"
+                                iconRole: "tap-calibrate"
+                                //: The Tap menu's item; %1 is the tap latency in milliseconds
+                                text: qsTranslate("HikariSub.Audio", "Calibrate latency…") + "\t"
+                                      + qsTranslate("HikariSub.Audio", "%1 ms").arg(root.audio.tapLatency)
+                                onTriggered: tapCalibrationWindow.openWindow()
+                            }
+                        }
                         // A2: SpectrumMode, as a switch
                         AudioSwitch {
                             AudioSegment {
@@ -3229,13 +3436,16 @@ ApplicationWindow {
                                 onRun: { root.audio.setSpectrumOn(true); audioDisplay.forceActiveFocus() }
                             }
                         }
-                        AudioSeparator {}
+                        AudioSeparator {
+                            visible: !audioButtons.togglesFolded
+                        }
                         // A2: legacy AudioBox's AutoScroll and SpectrumNonLinear
                         // switches (each focuses the display, as legacy's
                         // handlers do); AV2 (#239): the video and audio
                         // cursors follow each other while playing.
                         AudioButton {
                             objectName: "audioAutoScroll"
+                            visible: !audioButtons.togglesFolded
                             iconRole: "auto-scroll"
                             text: qsTranslate("HikariSub.Audio", "Auto-scroll")
                             checkable: true
@@ -3245,6 +3455,7 @@ ApplicationWindow {
                         }
                         AudioButton {
                             objectName: "audioSyncVideo"
+                            visible: !audioButtons.togglesFolded
                             iconRole: "audio-video-sync"
                             text: qsTranslate("HikariSub.Audio", "Sync with video")
                             checkable: true
@@ -3254,6 +3465,7 @@ ApplicationWindow {
                         }
                         AudioButton {
                             objectName: "audioSpectrumNonLinear"
+                            visible: !audioButtons.togglesFolded
                             iconRole: "spectrum-nonlinear"
                             text: qsTranslate("HikariSub.Audio", "Speech")
                             checkable: true
@@ -3268,11 +3480,12 @@ ApplicationWindow {
                         // the separator, zoom and the speaker
                         readonly property real unfoldedWidth: 5 + audioZoomButton.implicitWidth + 26 + 2 * spacing
                         AudioSeparator {}
-                        // AU1: the switches and toggles of a narrow panel.
+                        // AU1: the switches and toggles of a narrow panel;
+                        // KA2: in Karaoke mode the toggles alone first.
                         AudioButton {
                             id: audioMoreButton
                             objectName: "audioMore"
-                            visible: audioButtons.folded
+                            visible: audioButtons.togglesFolded
                             iconRole: "panel-menu"
                             text: qsTranslate("HikariSub.Audio", "More audio options")
                             tip: text
@@ -3281,7 +3494,17 @@ ApplicationWindow {
                             ShellMenu {
                                 id: audioMoreMenu
                                 objectName: "audioMoreMenu"
-                                ShellMenuItem {
+                                // the switches' check items, while they are folded too
+                                component FoldedItem: ShellMenuItem {
+                                    checkable: true
+                                    visible: audioButtons.folded
+                                    height: visible ? implicitHeight : 0
+                                }
+                                component FoldedSeparator: MenuSeparator {
+                                    visible: audioButtons.folded
+                                    height: visible ? implicitHeight : 0
+                                }
+                                FoldedItem {
                                     iconRole: "audio-line-mode"
                                     text: qsTranslate("HikariSub.Audio", "Line timing")
                                     checkable: true
@@ -3292,7 +3515,7 @@ ApplicationWindow {
                                         if (root.audio.karaoke) root.audio.toggleKaraoke()
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedItem {
                                     objectName: "audioMoreKaraoke"
                                     iconRole: "karaoke"
                                     text: qsTranslate("HikariSub.Audio", "Karaoke")
@@ -3304,9 +3527,8 @@ ApplicationWindow {
                                         if (!root.audio.karaoke) root.audio.toggleKaraoke()
                                     }
                                 }
-                                ShellMenuItem {
-                                    visible: root.audio.karaoke
-                                    height: visible ? implicitHeight : 0
+                                FoldedItem {
+                                    visible: audioButtons.folded && root.audio.karaoke
                                     iconRole: "karaoke-split"
                                     text: qsTranslate("HikariSub.Audio", "Auto split")
                                     checkable: true
@@ -3316,8 +3538,21 @@ ApplicationWindow {
                                         root.audio.toggleKaraokeSplitMode()
                                     }
                                 }
-                                MenuSeparator {}
-                                ShellMenuItem {
+                                FoldedItem {
+                                    objectName: "audioMoreTap"
+                                    visible: audioButtons.folded && root.audio.karaoke
+                                    iconRole: "karaoke-tap"
+                                    text: qsTranslate("HikariSub.Audio", "Tap to time") + "\t" + root.boundKeys("AUDIO_TAP", 4)
+                                    checkable: true
+                                    keepsMenuOpen: false
+                                    checked: root.audio.tapOn
+                                    onTriggered: {
+                                        checked = Qt.binding(() => root.audio.tapOn)
+                                        root.audio.toggleTap()
+                                    }
+                                }
+                                FoldedSeparator {}
+                                FoldedItem {
                                     iconRole: "audio-waveform"
                                     text: qsTranslate("HikariSub.Audio", "Waveform")
                                     checkable: true
@@ -3328,7 +3563,7 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(false)
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedItem {
                                     objectName: "audioMoreSpectrum"
                                     iconRole: "spectrum"
                                     text: qsTranslate("HikariSub.Audio", "Spectrum")
@@ -3340,8 +3575,9 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                MenuSeparator {}
+                                FoldedSeparator {}
                                 ShellMenuItem {
+                                    objectName: "audioMoreAutoScroll"
                                     iconRole: "auto-scroll"
                                     text: qsTranslate("HikariSub.Audio", "Auto-scroll")
                                     checkable: true
@@ -3465,11 +3701,21 @@ ApplicationWindow {
                             iconRole: root.audio.volume > 66 ? "volume" : root.audio.volume > 20 ? "volume-low" : "volume-quiet"
                             text: qsTranslate("HikariSub.Audio", "Volume and output device")
                             //: The audio panel's speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now
-                            tip: root.app.audioOutputName.length
-                                 ? qsTranslate("HikariSub.Audio", "Volume: %1\nOutput device: %2").arg(root.audio.volume).arg(root.app.audioOutputName)
-                                 : qsTranslate("HikariSub.Audio", "Volume: %1").arg(root.audio.volume)
+                            tip: (root.app.audioOutputName.length
+                                  ? qsTranslate("HikariSub.Audio", "Volume: %1\nOutput device: %2").arg(root.audio.volume).arg(root.app.audioOutputName)
+                                  : qsTranslate("HikariSub.Audio", "Volume: %1").arg(root.audio.volume))
+                                 //: The speaker button's tooltip, while the audio plays slowed; %1 is the speed in percent
+                                 + (root.audio.speedPercent !== 100
+                                    ? "\n" + qsTranslate("HikariSub.Audio", "Speed: %1%").arg(root.audio.speedPercent) : "")
                             down: audioOutputMenu.visible
                             onRun: audioOutputMenu.popup(audioOutputButton, 0, audioOutputButton.height)
+                            // KA2-slowed-playback: the speed, while not 100%
+                            CommitMark {
+                                objectName: "audioSpeedMark"
+                                anchors { right: parent.right; bottom: parent.bottom; rightMargin: 1; bottomMargin: 1 }
+                                glyph: root.audio.speedPercent
+                                visible: root.audio.speedPercent !== 100
+                            }
                             // 5 a notch of 120. A touchpad or high-resolution
                             // wheel sends parts of a notch (or only pixels, 15
                             // a notch): they add up until a whole notch, and a
@@ -3499,6 +3745,8 @@ ApplicationWindow {
                                 objectName: "audioOutputMenu"
                                 app: root.app
                                 audio: root.audio
+                                slowerKey: root.boundKeys("AUDIO_SPEED_DOWN", 4)
+                                fasterKey: root.boundKeys("AUDIO_SPEED_UP", 4)
                                 onSettingsRequested: settingsDialog.openDialog(4) // the Audio page
                             }
                         }
@@ -3509,11 +3757,26 @@ ApplicationWindow {
                 // while the focus is in the box; the registry routes the key
                 // (HotkeysController::actionFor), so a remapped key acts and
                 // the old one no longer does.
+                // KA2-tap-to-time: while tap mode is on, Space, Backspace and
+                // Esc are its keys (before VIDEO_PLAY_PAUSE's Space), their
+                // presses and releases.
+                function tapKey(event, pressed) {
+                    if (root.audio.tapOn && root.audio.tapKey(event.key, pressed, event.isAutoRepeat,
+                                                              (event.modifiers & Qt.ShiftModifier) !== 0))
+                        event.accepted = true
+                    return event.accepted
+                }
                 Keys.onShortcutOverride: event => {
+                    if (root.audio.tapOn && [Qt.Key_Space, Qt.Key_Backspace, Qt.Key_Escape].includes(event.key)) {
+                        event.accepted = true
+                        return
+                    }
                     event.accepted = root.audio.loaded && root.hotkeys.actionFor(4, event.key, event.modifiers) !== ""
                 }
+                Keys.onReleased: event => audioPanel.tapKey(event, false)
+                onActiveFocusChanged: if (!activeFocus) root.audio.tapFocusLost()
                 Keys.onPressed: event => {
-                    if (!root.audio.loaded)
+                    if (!root.audio.loaded || audioPanel.tapKey(event, true))
                         return
                     const action = root.hotkeys.actionFor(4, event.key, event.modifiers)
                     if (action === "")
@@ -4566,6 +4829,12 @@ ApplicationWindow {
         layouts: root.workspaceLayout
     }
 
+    // KA2 (#277): Calibrate latency…, from the audio panel's Tap menu.
+    TapCalibrationWindow {
+        id: tapCalibrationWindow
+        audio: root.audio
+    }
+
     // Legacy HistoryDialog: every step, the current one selected; Set and a
     // double-click jump there and stay open, OK jumps and closes.
     Window {
@@ -5595,6 +5864,8 @@ ApplicationWindow {
                   "FFMPEGSource2 - Copyright © Fredrik Mellbin.\n" +
                   "FFmpeg - Copyright © the FFmpeg developers.\n" +
                   "LuaJIT - Copyright © Mike Pall.\n" +
+                  // KA2-slowed-playback: the slowed audio box keeps its pitch through SoundTouch.
+                  "SoundTouch - Copyright © Olli Parviainen (GNU LGPL 2.1 or later).\n" +
                   "ICU - Copyright © 1995-2016 International Business Machines Corporation and others.\n" +
                   "Boost - Copyright © Joe Coder 2004 - 2006.\n" +
                   "FreeType2 - Copyright © 2006-2019 David Turner, Robert Wilhelm, and Werner Lemberg.\n" +
