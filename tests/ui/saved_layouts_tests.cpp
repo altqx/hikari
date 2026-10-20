@@ -177,8 +177,10 @@ private slots:
         engine.reset();
         application.reset();
         for (const char *name : {"layout.json", "layout.json.bak", "layout.json.unrestored", "layout.json.tab.unrestored",
-                                 "layouts.json", "layouts.json.unrestored", "LastSession.txt", "hikari.ini"})
+                                 "layouts.json", "layouts.json.unrestored", "LastSession.txt", "hikari.ini"}) {
             QFile::remove(dir.filePath(QLatin1String(name)));
+            QDir().rmdir(dir.filePath(QLatin1String(name))); // a test's folder in a file's place
+        }
     }
 
     // The View menu has no arrangements and the Subtitles menu no editor
@@ -508,6 +510,27 @@ private slots:
         QVERIFY(layouts().restoreBackup());
         QTRY_COMPARE(switcherText(), QStringLiteral("Editing"));
         QVERIFY(layoutEnvelope().value(QStringLiteral("layout")).toString().isEmpty());
+        stop();
+    }
+
+    // The panel layout's file not written (here its name is a folder's) after
+    // a saved layout is chosen: the notice says so, and the next save writes
+    // the layout and its origin once it can.
+    void aPanelLayoutNotWrittenIsSaid()
+    {
+        start();
+        auto &l = layouts();
+        const QString layoutFile = dir.filePath(QStringLiteral("layout.json"));
+        QFile::remove(layoutFile); // none yet, or the first frame's
+        QVERIFY(QDir().mkdir(layoutFile));
+        close("audioDock");
+        saveAs(QStringLiteral("Quiet"));
+        QVERIFY2(l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
+        QCOMPARE(namesInFile(layoutsFile()), QStringList{QStringLiteral("Quiet")});
+        QVERIFY(QDir().rmdir(layoutFile));
+        QVERIFY(l.save());
+        QVERIFY2(!l.notice().contains(QStringLiteral("panel layout could not be written")), qPrintable(l.notice()));
+        QCOMPARE(layoutEnvelope().value(QStringLiteral("layout")).toString(), QStringLiteral("Quiet"));
         stop();
     }
 

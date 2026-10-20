@@ -366,8 +366,17 @@ bool WorkspaceLayoutController::save()
     // The previous valid file becomes the backup.
     if (const auto old = readFile(m_file); old && payloadOf(*old, nullptr))
         writeAtomically(backupFile(), *old);
-    if (!writeAtomically(m_file, envelope(current, m_preset, m_layout)))
+    // WS3: a write that fails says so (the saved layout the arrangement
+    // started from is in it too); m_lastSaved stays, so the next save, at the
+    // latest on quit, writes it again.
+    const QString failure = QCoreApplication::translate("HikariSub.Workspace", "The panel layout could not be written to %1.")
+                                .arg(QDir::toNativeSeparators(m_file));
+    if (!writeAtomically(m_file, envelope(current, m_preset, m_layout))) {
+        addPanelNotice(failure);
+        emit changed();
         return false;
+    }
+    m_panelNotices.removeAll(failure);
     m_lastSaved = current;
     emit changed();
     return true;

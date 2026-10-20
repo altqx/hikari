@@ -8576,6 +8576,10 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The panel layout could not be written to %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The panel layout of this tab was not restored because %1. The tab shows the Editing layout.</source>
         <translation type="unfinished"></translation>
     </message>
