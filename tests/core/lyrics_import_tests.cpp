@@ -410,6 +410,57 @@ TEST(LyricsImport, TtmlTimesAndWordEnds)
     EXPECT_EQ(rows(*result), (std::vector<Row>{{1500, 3500, "", "{\\k90}a {\\k50}b{\\k60}"}}));
 }
 
+TEST(LyricsImport, ClockMinutesAndSecondsStayUnder60)
+{
+    // The first part may run past 59; a clock's minutes and seconds may not.
+    EXPECT_EQ(problemOf("[00:99.00]x", u8"lrc").kind, Kind::UnreadableTime);
+    EXPECT_EQ(problemOf("[1:60:00.00]x", u8"lrc").kind, Kind::UnreadableTime);
+    EXPECT_EQ(problemOf("[00:01.00]<00:61.00>x", u8"lrc").kind, Kind::UnreadableTime);
+    EXPECT_TRUE(importLrc(bytes("[75:02.00]x\n[1:02:03.50]y")).has_value());
+    const std::string ttml = "<tt><body><p begin=\"";
+    EXPECT_EQ(problemOf(ttml + "0:99\" end=\"1:40\">x</p></body></tt>", u8"ttml").kind, Kind::UnreadableTime);
+    EXPECT_EQ(problemOf(ttml + "1:60:00\" end=\"2:00:00\">x</p></body></tt>", u8"ttml").kind, Kind::UnreadableTime);
+    EXPECT_TRUE(importTtml(bytes(ttml + "1:59.5\" end=\"1:02:03.5\">x</p></body></tt>")).has_value());
+}
+
+TEST(LyricsImport, LinesEndAtLfCrlfOrALoneCr)
+{
+    // Old Mac LRC files end their lines with CR alone.
+    const auto lrc = importLrc(bytes("[00:01.00]a\r[00:02.00]b\r\n[00:03.00]c\n"));
+    ASSERT_TRUE(lrc.has_value());
+    EXPECT_EQ(rows(*lrc).size(), 3u);
+    EXPECT_EQ(problemOf("[00:01.00]a\r[00:0x.00]b", u8"lrc").line, 2u);
+    // XML's line ends: a fault after CR-only and CRLF lines is on its own line.
+    EXPECT_EQ(problemOf("<tt>\r<body>\r<p begin=\"x\" end=\"2\">a</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::UnreadableTime, 3, u8"x"}));
+    EXPECT_EQ(problemOf("<tt>\r\n<body>\r\n<p begin=\"1\" end=\"2\"><$>a</p></body></tt>", u8"ttml").line, 3u);
+    EXPECT_EQ(problemOf("<tt>\r<body>\r<p begin=\"1\" end=\"2\">\x01</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"U+0001"}));
+}
+
+TEST(LyricsImport, TtmlPrologIsChecked)
+{
+    const std::string root = "<tt><body><p begin=\"1\" end=\"2\">x</p></body></tt>";
+    const auto imports = [&](const std::string &prolog) { return importTtml(bytes(prolog + root)).has_value(); };
+    EXPECT_TRUE(imports("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tt>\n"));
+    EXPECT_TRUE(imports("\xEF\xBB\xBF<?xml version=\"1.0\"?><!-- c --><?app data?><!DOCTYPE tt [<!ENTITY a \"]>\"><!-- ]> -->]>"));
+    EXPECT_EQ(problemOf("<!DOCTYPE tt [<!ENTITY a \"]>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    // A DOCTYPE needs the root's name, comes once and only before the root.
+    EXPECT_EQ(problemOf("<!DOCTYPE>" + root, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 1, u8"<!DOCTYPE>"}));
+    EXPECT_EQ(problemOf("<!DOCTYPEtt>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<!DOCTYPE tt>\n<!DOCTYPE tt>\n" + root, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 2, u8"<!DOCTYPE tt>"}));
+    EXPECT_EQ(problemOf(root + "\n<!DOCTYPE tt>", u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 2, u8"<!DOCTYPE tt>"}));
+    // The XML declaration only at the very start, in lower case; a
+    // processing instruction needs a target.
+    EXPECT_EQ(problemOf("<!-- c -->\n<?xml version=\"1.0\"?>" + root, u8"ttml").line, 2u);
+    EXPECT_EQ(problemOf(" <?xml version=\"1.0\"?>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<?XML version=\"1.0\"?>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<? x?>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<tt><body><p begin=\"1\" end=\"2\">x<?xml a?></p></body></tt>", u8"ttml").kind,
+              Kind::NotWellFormed);
+}
+
 TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
 {
     const auto timed = [](std::string_view body) {
@@ -428,6 +479,41 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     EXPECT_EQ(problemOf("<tt><body>\n<div begin=\"1\" end=\"3\">\n<p begin=\"5\">x</p></div></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::EndBeforeBegin, 3, u8"5"}));
     EXPECT_EQ(problemOf("<tt><body><div><p>x</p></div></body></tt>", u8"ttml").kind, Kind::MissingTime);
+}
+
+TEST(LyricsImport, TtmlTextBeforeTheFirstWordJoinsItAsWritten)
+{
+    const auto text = [](std::string_view p) {
+        const auto result = importTtml(bytes("<tt><body>" + std::string(p) + "</body></tt>"));
+        return result && !rows(*result).empty() ? rows(*result).front().text : std::string("(none)");
+    };
+    EXPECT_EQ(text("<p begin=\"2\" end=\"3\">hello<span begin=\"2\" end=\"3\">world</span></p>"),
+              "{\\k100}helloworld");
+    EXPECT_EQ(text("<p begin=\"2\" end=\"3\">hello <span begin=\"2\" end=\"3\">world</span></p>"),
+              "{\\k100}hello world");
+    EXPECT_EQ(text("<p begin=\"2\" end=\"3\">hello<span begin=\"2\" end=\"3\"> world</span></p>"),
+              "{\\k100}hello world");
+}
+
+TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)
+{
+    const std::string head = "<tt><head><metadata>"
+                             "<ttm:agent xml:id=\"v1\"><ttm:name>Lead</ttm:name></ttm:agent>"
+                             "<ttm:agent xml:id=\"v2\"><ttm:name>Choir</ttm:name></ttm:agent>"
+                             "</metadata></head><body>";
+    const auto actors = [&](std::string_view background) {
+        const auto result = importTtml(bytes(head + "<p begin=\"1\" end=\"3\" ttm:agent=\"v1\">"
+                                             "<span begin=\"1\" end=\"2\">a</span><span ttm:role=\"x-bg\"" +
+                                             std::string(background) + "><span begin=\"2\" end=\"3\">b</span></span>"
+                                             "</p></body></tt>"));
+        std::vector<std::string> out;
+        if (result)
+            for (const Row &row : rows(*result))
+                out.push_back(row.actor);
+        return out;
+    };
+    EXPECT_EQ(actors(" ttm:agent=\"v2\""), (std::vector<std::string>{"Lead", "Choir"}));
+    EXPECT_EQ(actors(""), (std::vector<std::string>{"Lead", "Lead"}));
 }
 
 TEST(LyricsImport, LrcAngleAndSquareBracketsThatAreNotStamps)
