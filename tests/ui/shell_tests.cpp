@@ -12095,8 +12095,8 @@ private slots:
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" retired, never listed; WS3: the five View
         // arrangements and "Enable / Disable editor" too; LE3's "Hide tags in
-        // the line editor" listed.
-        QCOMPARE(hotkeyRows().size(), 220);
+        // the line editor" and KE1's "Show / hide render cost" listed.
+        QCOMPARE(hotkeyRows().size(), 221);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
