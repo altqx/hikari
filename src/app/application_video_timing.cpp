@@ -313,11 +313,6 @@ bool Application::openEditorFromFullScreen()
         return false;
     if (m_video->playing())
         m_video->pause();
-    // Legacy set EDITOR_ON only, leaving a player layout (tab->editor off)
-    // until the next start; the rewrite's switch is that setting (D2), so
-    // the editor comes back now.
-    if (!editorOn())
-        toggleEditor();
     if (!targetUntitled())
         selectLineFromVideo(); // tab->grid->SelVideoLine()
     return m_videoFullscreen->leave();

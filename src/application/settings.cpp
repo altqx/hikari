@@ -101,7 +101,6 @@ const std::vector<SettingDefinition> &definitions()
         {"video.dontAskForBadResolution", "DONT_ASK_FOR_BAD_RESOLUTION", Bool, Profile, Mapped, false, false},
         {"editor.suggestionsOnDoubleClick", "EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK", Bool, Profile, Mapped, false, false},
         {"editor.timesToFramesSwitch", "EDITBOX_TIMES_TO_FRAMES_SWITCH", Bool, Profile, Mapped, false, false},
-        {"workspace.editorOn", "EDITOR_ON", Bool, Workspace, Mapped, false, true},
         {"findInSubs.recentFilters", "FIND_IN_SUBS_FILTERS_RECENT", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"findInSubs.recentPaths", "FIND_IN_SUBS_PATHS_RECENT", StringList, Profile, Mapped, false, std::vector<std::string>()},
         {"find.styles", "FIND_REPLACE_STYLES", String, Profile, Mapped, false, std::string()},
@@ -346,13 +345,14 @@ std::optional<std::uint32_t> parseSettingColour(std::string_view text)
 
 std::span<const std::string_view> retiredSettings()
 {
-    // A2's spectrum colours and K1's icon colours, withdrawn by K2.
+    // A2's spectrum colours and K1's icon colours, withdrawn by K2; the
+    // editor switch (legacy EDITOR_ON), retired by WS3.
     static const std::string_view ids[] = {
         "audio.spectrumBackground", "audio.spectrumEcho", "audio.spectrumInner",
         "icons.light.normal", "icons.light.accent", "icons.light.active", "icons.light.disabled",
         "icons.dark.normal", "icons.dark.accent", "icons.dark.active", "icons.dark.disabled",
         "icons.highContrast.normal", "icons.highContrast.accent", "icons.highContrast.active",
-        "icons.highContrast.disabled"};
+        "icons.highContrast.disabled", "workspace.editorOn"};
     return ids;
 }
 
