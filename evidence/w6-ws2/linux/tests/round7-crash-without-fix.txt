@@ -1,0 +1,39 @@
+=== far floating window (opened by the unfixed program, then Audio docked)
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(far floating window) Invalid floating window position to restore. index={} 2147483647
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(far floating window) PROBE opened, Audio floating: 1
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(far floating window) PROBE Audio floating: 0
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(far floating window) PROBE docked again
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(far floating window) 'application->log().history().contains(QStringLiteral("position.ass"))' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(899)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 1 failed, 0 skipped, 0 blacklisted, 4532ms
+rc=1
+=== tab below (opened by the unfixed program, then Audio docked)
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(tab below) PROBE opened, Audio floating: 1
+Received signal 11 (SIGSEGV), code SEGV_MAPERR, at instruction address 0x0000563330d2b590, accessing address 0x0000000000000022
+#4  <signal handler called>
+rc=139
+=== tab past an int (opened by the unfixed program, then Audio docked)
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(tab past an int) PROBE opened, Audio floating: 1
+Received signal 11 (SIGSEGV), code SEGV_MAPERR, at instruction address 0x00007fde8b97638d, accessing address 0x00005587e5a281d0
+#4  <signal handler called>
+rc=139
+=== place past an int (opened by the unfixed program, then Audio docked)
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(place past an int) Couldn't find item index {} -2147483648
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(place past an int) PROBE opened, Audio floating: 1
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(place past an int) PROBE Audio floating: 0
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(place past an int) PROBE docked again
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(place past an int) 'application->log().history().contains(QStringLiteral("position.ass"))' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(899)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 1 failed, 0 skipped, 0 blacklisted, 4513ms
+rc=1
+=== no floating window (opened by the unfixed program, then Audio docked)
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(no floating window) PROBE opened, Audio floating: 1
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(no floating window) PROBE Audio floating: 0
+QWARN  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(no floating window) PROBE docked again
+FAIL!  : FileLayoutsTest::aPanelPositionTheEngineCannotReadIsRefused(no floating window) 'application->log().history().contains(QStringLiteral("position.ass"))' returned FALSE. ()
+   Loc: [/home/altq/.t3/worktrees/hikari/w6-ws2/tests/ui/file_layouts_tests.cpp(899)]
+PASS   : FileLayoutsTest::cleanupTestCase()
+Totals: 2 passed, 1 failed, 0 skipped, 0 blacklisted, 4496ms
+rc=1
