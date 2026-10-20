@@ -1278,14 +1278,17 @@ private slots:
 
         // The pointer: a right click on the free part asks for the window
         // menu, as the icon does; a double click maximises, the maximise
-        // button (then Restore) restores. The edges resize only an unmaximised window.
+        // button (then Restore) restores. The drawn edges resize only an
+        // unmaximised window, and none on Windows, whose frame resizes.
         QSignalSpy windowMenu(frame, &MainWindowFrame::windowMenuRequested);
         QTest::mouseClick(window, Qt::RightButton, {}, centre(title).toPoint());
         QCOMPARE(windowMenu.count(), 1);
         QTest::mouseClick(window, Qt::LeftButton, {}, centre(icon).toPoint());
         QCOMPARE(windowMenu.count(), 2);
+        const bool drawnEdges = !ui::WindowFrame::nativeResize();
         QQuickItem *edges = visualItem("mainWindowEdges");
-        QVERIFY(edges && edges->isVisible());
+        QVERIFY(edges);
+        QCOMPARE(edges->isVisible(), drawnEdges);
         QCOMPARE(edges->size(), QSizeF(window->size()));
         QTest::mouseDClick(window, Qt::LeftButton, {}, centre(title).toPoint());
         QTRY_COMPARE(window->visibility(), QWindow::Maximized);
@@ -1295,7 +1298,7 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, {}, centre(maximize).toPoint());
         QTRY_COMPARE(window->visibility(), QWindow::Windowed);
         QTRY_COMPARE(maximize->property("text").toString(), QStringLiteral("Maximise"));
-        QVERIFY(edges->isVisible());
+        QCOMPARE(edges->isVisible(), drawnEdges);
 
         // The keyboard (MS1): F10 rings File and underlines the letters; the
         // arrows walk the menus and the switcher, round; Esc gives the
