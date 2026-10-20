@@ -1,6 +1,7 @@
 // WS2 (#216): the [Hikari] section, where an ASS file keeps its Document
-// tab's panel arrangement. Read as "key=value" lines; written in place, or as
-// a new section at the end of the file (before embedded data that ends it);
+// tab's panel arrangement. Read as "key=value" lines; written in place outside
+// embedded data, or as a new section at the end of the file (before embedded
+// data that ends it);
 // unknown keys and malformed lines round-trip byte for byte (ADR 0013).
 
 #include "hikari/core/ass_load.h"
@@ -112,6 +113,35 @@ TEST(HikariSection, ANewSectionGoesBeforeEmbeddedDataEndingTheFile)
     // The loader reads the continuation as an attachment's ('[' plus encoding characters).
     const auto saved = loadAss(bytesOf(setLayout(input)));
     EXPECT_EQ(saved.document.hikariProperty(u8"Layout"), std::optional<std::u8string>(u8"QUJD"));
+}
+
+TEST(HikariSection, AValueInsideEmbeddedDataMovesBeforeIt)
+{
+    // libass reads every line after [Fonts] or [Graphics] as embedded data
+    // until a header it knows, so a [Hikari] section there is part of the
+    // data: the value leaves it, with the section when nothing else is in it,
+    // and goes where a new section would.
+    const std::string fonts = "[Fonts]\nfontname: a_0.ttf\n!!!!\n[!!!\n\n[Graphics]\nfilename: b.png\n!!!!\n";
+    const std::string layout = "\n[Hikari]\nLayout=QUJD\n\n";
+    EXPECT_EQ(setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\n"), kHead + layout + fonts + "\n");
+    // Its other lines stay where they are.
+    EXPECT_EQ(setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\nOther=1\n"),
+              kHead + layout + fonts + "\n[Hikari]\nOther=1\n");
+    // Data a known header ends: the new section goes at the end.
+    const std::string events = "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+    EXPECT_EQ(setLayout(kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\n" + events),
+              kHead + "\n" + fonts + events + "\n[Hikari]\nLayout=QUJD\n");
+    // A section before the data takes the value; the one inside loses its line.
+    EXPECT_EQ(setLayout(kHead + "\n[Hikari]\nLayout=a\n\n" + fonts + "\n[Hikari]\nLayout=b\nOther=1\n"),
+              kHead + layout + fonts + "\n[Hikari]\nOther=1\n");
+    // A section libass does not know continues the data: a new section goes
+    // before the [Fonts] it continues.
+    const std::string garbage = "\n[Aegisub Project Garbage]\nLast Style Storage: Default\n";
+    EXPECT_EQ(setLayout(kHead + "\n" + fonts + garbage), kHead + layout + fonts + garbage);
+    for (const std::string &input : {kHead + "\n" + fonts + "\n[Hikari]\nLayout=old\nOther=1\n", kHead + "\n" + fonts + garbage}) {
+        const auto saved = loadAss(bytesOf(setLayout(input)));
+        EXPECT_EQ(saved.document.hikariProperty(u8"Layout"), std::optional<std::u8string>(u8"QUJD"));
+    }
 }
 
 TEST(HikariSection, MalformedContentRoundTrips)
