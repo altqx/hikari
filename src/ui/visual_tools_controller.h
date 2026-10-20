@@ -246,6 +246,9 @@ private:
     void resetTool();
     // Visuals::Draw with nothing to show: blockevents, and the arrow back.
     void block(application::visual::VisualTool &tool);
+    // VT1: setValue and scrubValue's tool call; a refused step resets the tool.
+    bool editValue(application::visual::VisualTool &t, const QString &name, const QString &text,
+                   application::visual::ValueEdit edit);
     application::visual::LineWarning currentWarning() const;
     void updatePreview();
     void refreshOptions();

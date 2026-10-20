@@ -836,26 +836,32 @@ QString VisualToolsController::copyCoordinatesAtCursor(QQuickItem *area)
     return copyCoordinates(at.x(), at.y());
 }
 
+bool VisualToolsController::editValue(VisualTool &t, const QString &name, const QString &text, ValueEdit edit)
+{
+    // VT1: a value step the session refuses (a blocked draft, a read-only
+    // Document), at the first sample or the release, leaves no gesture: the
+    // tool reads its Lines again, its handles and fields back at the text's.
+    const auto refusedBefore = std::exchange(m_lastRefusal, std::nullopt);
+    const bool done = t.setValue(name.toStdString(), text.toStdU16String(), *this, edit);
+    if (!done && m_lastRefusal && !m_gesture && t.family() != Family::Crosshair)
+        resetTool();
+    if (!m_lastRefusal)
+        m_lastRefusal = refusedBefore;
+    return done;
+}
+
 bool VisualToolsController::setValue(const QString &name, const QString &text)
 {
     // VT1: a typed value (Enter) or a scrub's release: one history step.
     auto *t = tool();
     if (!t || !m_railEnabled)
         return false;
-    const auto refusedBefore = std::exchange(m_lastRefusal, std::nullopt);
-    const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this, ValueEdit::Commit);
+    const bool done = editValue(*t, name, text, ValueEdit::Commit);
+    // A scrub's release the tool refuses (a value out of its range) leaves
+    // nothing staged behind: its gesture is dropped, as by Esc.
     const bool scrubbed = std::exchange(m_valueScrub, false);
-    if (!done && scrubbed && m_gesture) {
-        // A scrub's release the tool refuses (a value out of its range)
-        // leaves nothing staged behind: its gesture is dropped, as by Esc.
+    if (!done && scrubbed && m_gesture)
         escape();
-    } else if (!done && m_lastRefusal && !m_gesture && t->family() != Family::Crosshair) {
-        // The session refused the step (a blocked draft): the tool reads
-        // its Lines again, its handles and fields back where the text is.
-        resetTool();
-    }
-    if (!m_lastRefusal)
-        m_lastRefusal = refusedBefore;
     emit changed();
     emit overlayChanged();
     return done;
@@ -868,7 +874,7 @@ bool VisualToolsController::scrubValue(const QString &name, const QString &text)
     auto *t = tool();
     if (!t || !m_railEnabled)
         return false;
-    const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this, ValueEdit::Sample);
+    const bool done = editValue(*t, name, text, ValueEdit::Sample);
     m_valueScrub = m_valueScrub || (done && m_gesture);
     emit changed();
     emit overlayChanged();
