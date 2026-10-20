@@ -76,6 +76,7 @@ ShellMenu {
         onTriggered: tabMenu.saveAllRequested()
     }
     ShellMenuItem {
+        iconRole: "tab-close-all"
         objectName: "tabMenuCloseAll"
         text: qsTr("Close all tabs")
         onTriggered: tabMenu.closeAllRequested()

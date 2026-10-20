@@ -73,6 +73,7 @@ ShellMenu {
     }
 
     ShellMenuItem {
+        iconRole: "copy-position"
         objectName: videoMenu.itemPrefix + "CopyCoords"
         // `if (!m_IsFullscreen && editor)`
         visible: !videoMenu.fullscreen
@@ -111,6 +112,7 @@ ShellMenu {
         model: Math.max(0, videoMenu.monitors - 1)
         delegate: ShellMenuItem {
             required property int index
+            iconRole: "monitor"
             objectName: videoMenu.itemPrefix + "Monitor" + (index + 1)
             text: videoMenu.fullscreen ? qsTr("Switch full screen to monitor %1").arg(index + 2)
                                   : qsTr("Open in full screen on monitor %1").arg(index + 2)
@@ -121,6 +123,7 @@ ShellMenu {
         onObjectRemoved: (index, object) => videoMenu.removeItem(object)
     }
     ShellMenuItem {
+        iconRole: "editor"
         objectName: videoMenu.itemPrefix + "OpenEditor"
         // menu->SetWindow(GLOBAL_HOTKEY): the Global binding.
         text: qsTr("Open editor") + (videoMenu.shell.boundKeys("GLOBAL_EDITOR", 0).length
@@ -179,12 +182,14 @@ ShellMenu {
         onTriggered: videoMenu.openSubtitlesRequested()
     }
     ShellMenuItem {
+        iconRole: "progress-bar"
         objectName: videoMenu.itemPrefix + "ProgressBar"
         text: qsTr("Show / hide progress bar") + videoMenu.keys("VIDEO_HIDE_PROGRESS_BAR")
         enabled: videoMenu.fullscreen
         onTriggered: if (!videoMenu.gesture("VIDEO_HIDE_PROGRESS_BAR")) videoMenu.shell.videoView.toggleProgressBar()
     }
     ShellMenuItem {
+        iconRole: "aspect-ratio"
         objectName: videoMenu.itemPrefix + "AspectRatio"
         text: qsTr("Change aspect ratio") + videoMenu.keys("VIDEO_ASPECT_RATIO")
         onTriggered: if (!videoMenu.gesture("VIDEO_ASPECT_RATIO")) videoMenu.aspectRatioRequested()
@@ -235,6 +240,7 @@ ShellMenu {
         model: videoMenu.filters.length > 0 ? 1 : 0
         delegate: ShellMenu {
             id: filtersMenu
+            iconRole: "video-filters"
             objectName: "videoMenuFilters"
             title: qsTr("Filters")
             Instantiator {
