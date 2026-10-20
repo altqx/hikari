@@ -1491,6 +1491,50 @@
    ]
   },
   {
+   "role": "window-minimize",
+   "file": "window-minimize.svg",
+   "label": "Minimise",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "title-bar"
+   ]
+  },
+  {
+   "role": "window-maximize",
+   "file": "window-maximize.svg",
+   "label": "Maximise",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "title-bar"
+   ]
+  },
+  {
+   "role": "window-restore",
+   "file": "window-restore.svg",
+   "label": "Restore",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "title-bar"
+   ]
+  },
+  {
+   "role": "window-close",
+   "file": "window-close.svg",
+   "label": "Close",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "title-bar"
+   ]
+  },
+  {
    "role": "tool-crosshair",
    "file": "tool-crosshair.svg",
    "label": "Position pointer",
