@@ -384,6 +384,96 @@ private slots:
         stop();
     }
 
+    // With the Original text panel tabbed with the Line editor, Tab brings
+    // the Line editor's tab to the front and gives the Translated text the
+    // focus; Shift+Tab brings the Original text back.
+    void tabRaisesTheOtherTabOfTheGroup()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVariant placed;
+        QVERIFY(QMetaObject::invokeMethod(window(), "placePanel", Q_RETURN_ARG(QVariant, placed),
+                                          Q_ARG(QVariant, QVariant::fromValue(dock("originalDock"))), Q_ARG(QVariant, 0),
+                                          Q_ARG(QVariant, QVariant::fromValue(dock("editorDock")))));
+        QVERIFY(placed.toBool());
+        QVERIFY(originalInPanel());
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_VERIFY(original->isVisible());
+        QTRY_VERIFY(!translated->isVisible());
+        original->forceActiveFocus();
+        QTRY_VERIFY(original->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Tab);
+        QTRY_VERIFY(translated->isVisible());
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QVERIFY(!original->isVisible());
+        QTest::keyClick(window(), Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(original->isVisible());
+        QTRY_VERIFY(original->hasActiveFocus());
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("linia 1"));
+        stop();
+    }
+
+    // A tag button acts on the text field focused last. With the Original
+    // text panel floating, the main window's activation by the button's
+    // click gives the Translated text its window's focus back; the Original
+    // text, focused last, still takes the tag.
+    void tagButtonsActOnTheFieldFocusedLast()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        auto *bold = findItem(window()->contentItem(), "tag_b");
+        QVERIFY(bold);
+        QTRY_VERIFY(translated->isVisible() && bold->isVisible());
+        translated->forceActiveFocus(Qt::MouseFocusReason);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QVERIFY(dock("originalDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(isFloating("originalDock"));
+        QQuickWindow *floating = original->window();
+        QVERIFY(floating && floating != window());
+        floating->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), floating);
+        original->forceActiveFocus(Qt::MouseFocusReason);
+        QTRY_VERIFY(original->hasActiveFocus());
+        window()->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window());
+        QTRY_VERIFY(translated->hasActiveFocus()); // its window's focus item
+        QTest::mouseClick(window(), Qt::LeftButton, {}, bold->mapToScene(bold->boundingRect().center()).toPoint());
+        QTRY_VERIFY(original->property("text").toString() != QStringLiteral("line 1"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("linia 1"));
+        stop();
+    }
+
+    // Only the user's command asks before turning the mode off: showing a
+    // tab without the mode, or undoing the step that turned it on, changes
+    // the menu item's check without the question.
+    void onlyTheCommandAsksBeforeOff()
+    {
+        start();
+        openFile("a.ass", false);
+        application->addPage();
+        openFile("tl.ass", true);
+        QVERIFY(translationMode());
+        auto *confirm = item<QObject>("translatorModeOffConfirm");
+        application->selectTab(0);
+        QTRY_VERIFY(!modeAction()->property("checked").toBool());
+        QTest::qWait(100);
+        QVERIFY(!confirm->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(modeAction(), "trigger"));
+        QTRY_VERIFY(translationMode());
+        QVERIFY(modeAction()->property("checked").toBool());
+        QVERIFY(application->editor().undo());
+        QTRY_VERIFY(!translationMode());
+        QTRY_VERIFY(!modeAction()->property("checked").toBool());
+        QTest::qWait(100);
+        QVERIFY(!confirm->property("visible").toBool());
+        stop();
+    }
+
     // Moving tags turned on from a floating Original text panel gives the
     // Translated field the focus in the main window, which it activates.
     void movingTagsFocusReachesTheMainWindow()

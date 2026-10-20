@@ -93,7 +93,7 @@ ApplicationWindow {
         const b = root.tagButtons.pressed(index)
         if (b.tag === undefined || b.tag.length === 0)
             return false
-        let field = translationText.activeFocus ? translationText : lineText
+        let field = root.editedField()
         if (b.type === 2)
             field = root.editor.translationMode && translationText.text.length > 0 ? translationText : lineText
         return root.editor.applyTagButton(field.role, b.tag, b.type, field.selectionStart, field.selectionEnd)
@@ -662,6 +662,18 @@ ApplicationWindow {
 
     // The panel waiting for its window's activation (focusPanel).
     property var pendingFocus: null
+
+    // TM1: the text field the Line editor's commands act on. With the
+    // Original text panel in a window of its own each window keeps its own
+    // focus item, so the Translated text gets its active focus back whenever
+    // the main window is activated, by a click on a tag button too (an
+    // activation or a popup's closing, as the platform reports it); the
+    // field last focused for any other reason is the one being edited.
+    property Item lastTextField: null
+    function editedField() {
+        return translationText.visible && root.lastTextField === translationText
+               && (lineText.activeFocus || translationText.activeFocus) ? translationText : lineText
+    }
     Connections {
         target: root.workspaceLayout
         function onFocusWindowChanged() {
@@ -2275,7 +2287,12 @@ ApplicationWindow {
         readonly property int compositionKeyWindow: 200
         property double compositionEndedAt: -1
         onInputMethodComposingChanged: compositionEndedAt = inputMethodComposing ? -1 : Date.now()
-        onActiveFocusChanged: if (!activeFocus) compositionEndedAt = -1
+        onActiveFocusChanged: {
+            if (!activeFocus)
+                compositionEndedAt = -1
+            else if (focusReason !== Qt.ActiveWindowFocusReason && focusReason !== Qt.PopupFocusReason)
+                root.lastTextField = field
+        }
         onPressed: compositionEndedAt = -1
         function compositionKey(event) {
             const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
@@ -2325,11 +2342,14 @@ ApplicationWindow {
         // ignores it, so Ctrl+Tab and Ctrl+Shift+Tab move the same way.
         // TM1: from the Original text panel, Tab goes on to the Translated
         // text, and Shift+Tab comes back, as in legacy's one EditBox. The
-        // other panel may float in its own window, which focusPanel activates.
+        // other panel may float in its own window, which focusPanel activates,
+        // or be the hidden tab of the same group, which comes to the front.
         function tabOut(forward) {
             const reason = forward ? Qt.TabFocusReason : Qt.BacktabFocusReason
             const linked = forward ? field.tabNext : field.tabPrevious
-            if (linked && linked.visible) {
+            const dock = linked === translationText ? editorDock : linked === lineText ? originalDock : null
+            if (dock && dock.isOpen) {
+                dock.raise()
                 root.focusPanel(linked, reason)
                 return
             }
@@ -3848,7 +3868,7 @@ ApplicationWindow {
                     const action = panelAction(event)
                     if (action === "")
                         return
-                    root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+                    root.runEditorHotkey(action, root.editedField())
                     event.accepted = true
                 }
                 // A dock shorter than the Line editor's rows (translation mode
@@ -3985,7 +4005,7 @@ ApplicationWindow {
                                     onClicked: {
                                         if (root.hotkeyGesture(modelData.symbol, 2, true))
                                             return
-                                        const field = translationText.activeFocus ? translationText : lineText
+                                        const field = root.editedField()
                                         root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
                                     }
                                 }
@@ -4002,7 +4022,7 @@ ApplicationWindow {
                                 onClicked: {
                                     if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                         return
-                                    const field = translationText.activeFocus ? translationText : lineText
+                                    const field = root.editedField()
                                     fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
                                 }
                             }
@@ -4025,13 +4045,13 @@ ApplicationWindow {
                                     onClicked: {
                                         if (root.hotkeyGesture(modelData.symbol, 2, true))
                                             return
-                                        root.colourClick(modelData.number, true, translationText.activeFocus ? translationText : lineText)
+                                        root.colourClick(modelData.number, true, root.editedField())
                                     }
                                     // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
                                     TapHandler {
                                         acceptedButtons: Qt.RightButton
                                         onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
-                                                                                    translationText.activeFocus ? translationText : lineText)
+                                                                                    root.editedField())
                                     }
                                 }
                             }
@@ -6814,7 +6834,7 @@ ApplicationWindow {
     // HikariSubFrame.cpp:1802-1814). A Global action the rewrite does not
     // have yet still takes its key, as legacy's accelerator does.
     function globalHotkey(symbol) {
-        const field = translationText.activeFocus ? translationText : lineText
+        const field = root.editedField()
         if (symbol.startsWith("AUDIO_"))
             return root.audio.loaded && root.runAudioHotkey(symbol) // only with an audio box
         if (symbol.startsWith("VIDEO_"))
@@ -6989,7 +7009,7 @@ ApplicationWindow {
             return true
         }
         if (action.startsWith("EDITBOX_"))
-            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+            return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
     // SubsGrid::OnAccelerator; Editor and Video actions bound for the Grid
@@ -7070,7 +7090,7 @@ ApplicationWindow {
         case "GRID_TRANSLATION_DIALOG": if (root.app.canShiftTranslation()) translationShiftWindow.show(); return true
         }
         if (action.startsWith("EDITBOX_"))
-            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+            return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("VIDEO_") && root.runVideoHotkey(action)
     }
     // AudioBox::OnAccelerator; Video, Editor and Grid actions bound for the
@@ -7083,7 +7103,7 @@ ApplicationWindow {
         if (action.startsWith("VIDEO_"))
             return root.runVideoHotkey(action)
         if (action.startsWith("EDITBOX_"))
-            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+            return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
     HotkeyMapping {
