@@ -17645,6 +17645,7 @@ private slots:
         // With a video they are enabled: the icon colour with its accent.
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
+        closeMismatchQuestion(); // its modal dim and box would cover the row
         application->video().stepFrames(1); // Previous frame enabled too
         QTRY_COMPARE(colours(), all(QStringLiteral("#202832")));
         QCOMPARE(icon("previousFrame")->property("accentColor").value<QColor>().name(),
