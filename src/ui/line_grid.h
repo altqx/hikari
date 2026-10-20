@@ -6,6 +6,7 @@
 // Row commands, shell integration and accessibility are separate cards.
 
 #include "hikari/core/document.h"
+#include "theme.h"
 
 #include <QAbstractItemModel>
 #include <QColor>
@@ -41,6 +42,12 @@ struct GridGeometry {
 // alpha: K2 makes it the theme's accent (a selection-type mark).
 std::optional<QColor> comparisonBackground(int state, bool comment, bool selected, const QVariantList &colours,
                                            const QColor &selection);
+// GR4 and R1: `selection` (GRID_SELECTION with its alpha) over a row's
+// colour, as legacy's GetColorWithAlpha blends it.
+QColor selectionOver(const QColor &colour, const QColor &selection);
+// GR4: a Comment's text: secondary where it reads on the row at 4.5:1,
+// otherwise the primary text (a selection blended over the comment colour).
+QColor commentInk(const theme::Roles &roles, const QColor &background);
 
 class LineGrid : public QQuickPaintedItem {
     Q_OBJECT
@@ -90,7 +97,8 @@ public:
     int hiddenSelectedCount() const;
     QString cellText(int row, int column) const;
     // E6: the row's legacy State in words for assistive technology ("changed",
-    // "changed, saved", "unconfirmed", "bookmarked"), empty for none.
+    // "changed, saved", "unconfirmed", "bookmarked"; GR2: "uncommitted" while
+    // it shows the Line editor's draft), empty for none.
     QString rowStateText(int row) const;
     QString columnTitle(int column) const;
     int columnCount() const;
@@ -161,7 +169,7 @@ private:
     void updateRowHeight();
     std::vector<double> columnWidths(double total) const;
     void drawBlockMark(QPainter *painter, double borderY, int mark, double width) const;
-    void drawLabel(QPainter *painter, const QRectF &cell, int state, const QVariantList &colours) const;
+    void drawLabel(QPainter *painter, const QRectF &cell, int state, bool draft, const QVariantList &colours) const;
     void drawSpellMarks(QPainter *painter, const QRectF &cell, QString text, const QVariantList &marks) const;
     void drawComparisonMarks(QPainter *painter, const QRectF &cell, const QString &text, const QVariantList &marks,
                              const QColor &outline) const;

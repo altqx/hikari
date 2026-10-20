@@ -27,7 +27,8 @@
    ],
    "surfaces": [
     "menu:file",
-    "tab-menu"
+    "tab-menu",
+    "shift-times-panel"
    ]
   },
   {
@@ -1169,7 +1170,8 @@
    ],
    "surfaces": [
     "menu:subtitles",
-    "settings-dialog"
+    "settings-dialog",
+    "video-context-menu"
    ]
   },
   {
@@ -1201,7 +1203,9 @@
     "style-manager",
     "search-tool",
     "select-lines",
-    "misspell-replacer"
+    "misspell-replacer",
+    "grid-menu",
+    "tab-menu"
    ]
   },
   {
@@ -1948,7 +1952,8 @@
    "legacy": [],
    "surfaces": [
     "document-tabs",
-    "menu:file"
+    "menu:file",
+    "dock-headers"
    ]
   },
   {
@@ -2022,6 +2027,28 @@
    ]
   },
   {
+   "role": "move-left",
+   "file": "move-left.svg",
+   "label": "Move left",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
+   "role": "move-right",
+   "file": "move-right.svg",
+   "label": "Move right",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "line-editor"
+   ]
+  },
+  {
    "role": "copy-to-storage",
    "file": "copy-to-storage.svg",
    "label": "Copy style from ASS to storage",
@@ -2075,7 +2102,8 @@
    "surfaces": [
     "shift-times-panel",
     "style-manager",
-    "font-catalog"
+    "font-catalog",
+    "grid-menu"
    ]
   },
   {
@@ -2086,7 +2114,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "shift-times-panel"
+    "shift-times-panel",
+    "line-editor"
    ]
   },
   {
@@ -2098,7 +2127,9 @@
    "legacy": [],
    "surfaces": [
     "line-editor",
-    "style-manager"
+    "style-manager",
+    "grid-menu",
+    "visual-tools"
    ]
   },
   {
@@ -2133,7 +2164,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "style-manager"
+    "style-manager",
+    "menu:file"
    ]
   },
   {
@@ -2145,7 +2177,8 @@
    "legacy": [],
    "surfaces": [
     "style-manager",
-    "visual-tools"
+    "visual-tools",
+    "grid-menu"
    ]
   },
   {
@@ -2251,7 +2284,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "tab-menu"
+    "tab-menu",
+    "dock-headers"
    ]
   },
   {
@@ -2453,6 +2487,776 @@
    "surfaces": [
     "settings-dialog"
    ]
+  },
+  {
+   "role": "autosave",
+   "file": "autosave.svg",
+   "label": "Open auto save",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "remove-temporary",
+   "file": "remove-temporary.svg",
+   "label": "Remove temporary files",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "log",
+   "file": "log.svg",
+   "label": "Show / Hide log window",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "session-open",
+   "file": "session-open.svg",
+   "label": "Load session from file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "session-save",
+   "file": "session-save.svg",
+   "label": "Save session to file",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:file"
+   ]
+  },
+  {
+   "role": "rerun-macro",
+   "file": "rerun-macro.svg",
+   "label": "Rerun last macro",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation"
+   ]
+  },
+  {
+   "role": "automation-manager",
+   "file": "automation-manager.svg",
+   "label": "Automation manager",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation"
+   ]
+  },
+  {
+   "role": "dummy-video",
+   "file": "dummy-video.svg",
+   "label": "Open dummy video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video"
+   ]
+  },
+  {
+   "role": "video-streams",
+   "file": "video-streams.svg",
+   "label": "Streams",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "chapters",
+   "file": "chapters.svg",
+   "label": "Chapters",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video",
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "copy-position",
+   "file": "copy-position.svg",
+   "label": "Copy video position",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu"
+   ]
+  },
+  {
+   "role": "monitor",
+   "file": "monitor.svg",
+   "label": "Open in full screen on another monitor",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "progress-bar",
+   "file": "progress-bar.svg",
+   "label": "Show / hide progress bar",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "aspect-ratio",
+   "file": "aspect-ratio.svg",
+   "label": "Change aspect ratio",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "video-filters",
+   "file": "video-filters.svg",
+   "label": "Filters",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "panels",
+   "file": "panels.svg",
+   "label": "Panels",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "show",
+   "file": "show.svg",
+   "label": "Show",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "hide",
+   "file": "hide.svg",
+   "label": "Hide",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "panel-float",
+   "file": "panel-float.svg",
+   "label": "Float",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "panel-dock",
+   "file": "panel-dock.svg",
+   "label": "Dock",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "panel-move",
+   "file": "panel-move.svg",
+   "label": "Move panel",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view",
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "tab-move-left",
+   "file": "tab-move-left.svg",
+   "label": "Move tab left",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "tab-move-right",
+   "file": "tab-move-right.svg",
+   "label": "Move tab right",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dock-headers"
+   ]
+  },
+  {
+   "role": "layout-preset",
+   "file": "layout-preset.svg",
+   "label": "Layout preset",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "layout-reset",
+   "file": "layout-reset.svg",
+   "label": "Reset layout",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "layout-restore",
+   "file": "layout-restore.svg",
+   "label": "Restore the previous layout",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "menu:view"
+   ]
+  },
+  {
+   "role": "tab-close-all",
+   "file": "tab-close-all.svg",
+   "label": "Close all tabs",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "fonts-from-subtitles",
+   "file": "fonts-from-subtitles.svg",
+   "label": "Add fonts from subtitles",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "font-catalog"
+   ]
+  },
+  {
+   "role": "dictionary",
+   "file": "dictionary.svg",
+   "label": "Installed languages",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "text-field-menu",
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "dictionary-add",
+   "file": "dictionary-add.svg",
+   "label": "Add word to dictionary",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "text-field-menu"
+   ]
+  },
+  {
+   "role": "make-tree",
+   "file": "make-tree.svg",
+   "label": "Make tree",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "tree-add-lines",
+   "file": "tree-add-lines.svg",
+   "label": "Add lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "tree-select",
+   "file": "tree-select.svg",
+   "label": "Select tree lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "insert-before",
+   "file": "insert-before.svg",
+   "label": "Insert before",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "insert-after",
+   "file": "insert-after.svg",
+   "label": "Insert after",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "swap-lines",
+   "file": "swap-lines.svg",
+   "label": "Swap",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "join-lines",
+   "file": "join-lines.svg",
+   "label": "Join lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "join-keep-first",
+   "file": "join-keep-first.svg",
+   "label": "Join lines and keep first",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "join-keep-last",
+   "file": "join-keep-last.svg",
+   "label": "Join lines and keep last",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "continuous-previous",
+   "file": "continuous-previous.svg",
+   "label": "Set times as a continuous (previous line)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "continuous-next",
+   "file": "continuous-next.svg",
+   "label": "Set times as a continuous (next line)",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-lines",
+   "file": "split-lines.svg",
+   "label": "Split lines",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-at-video",
+   "file": "split-at-video.svg",
+   "label": "Split line at video time",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-frames",
+   "file": "split-frames.svg",
+   "label": "Split lines into frames",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-characters",
+   "file": "split-characters.svg",
+   "label": "Split lines into characters",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-words",
+   "file": "split-words.svg",
+   "label": "Split lines into words",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "split-wraps",
+   "file": "split-wraps.svg",
+   "label": "Split lines by wraps",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "select-visible",
+   "file": "select-visible.svg",
+   "label": "Select all lines visible on video",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "paste-translation",
+   "file": "paste-translation.svg",
+   "label": "Paste translation text",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "translation-shift",
+   "file": "translation-shift.svg",
+   "label": "Dialogue shifting window",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "filter-off",
+   "file": "filter-off.svg",
+   "label": "Turn off filtering",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "columns",
+   "file": "columns.svg",
+   "label": "Hide columns",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "columns-copy",
+   "file": "columns-copy.svg",
+   "label": "Copy columns",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "columns-paste",
+   "file": "columns-paste.svg",
+   "label": "Paste columns",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "fps",
+   "file": "fps.svg",
+   "label": "Set new FPS",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu",
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "fps-from-video",
+   "file": "fps-from-video.svg",
+   "label": "Set FPS from video",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "grid-menu"
+   ]
+  },
+  {
+   "role": "compare-off",
+   "file": "compare-off.svg",
+   "label": "Turn off comparison",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "tab-menu"
+   ]
+  },
+  {
+   "role": "shift-times-run",
+   "file": "shift-times-run.svg",
+   "label": "Shift times / run time post processor",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:subtitles"
+   ]
+  },
+  {
+   "role": "language",
+   "file": "language.svg",
+   "label": "Language",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "ui-font",
+   "file": "ui-font.svg",
+   "label": "Program font",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "renderer",
+   "file": "renderer.svg",
+   "label": "Subtitle display filter",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "video-seek",
+   "file": "video-seek.svg",
+   "label": "Video seeking method",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "audio-device",
+   "file": "audio-device.svg",
+   "label": "Audio output",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "audio-delay",
+   "file": "audio-delay.svg",
+   "label": "Audio delay",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "theme",
+   "file": "theme.svg",
+   "label": "Theme",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "accent-colour",
+   "file": "accent-colour.svg",
+   "label": "Accent color",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "ui-colours",
+   "file": "ui-colours.svg",
+   "label": "UI colors",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
+  },
+  {
+   "role": "restore-default",
+   "file": "restore-default.svg",
+   "label": "Restore default",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ],
+   "pending": "PF1 #225"
   }
  ],
  "notReplaced": {

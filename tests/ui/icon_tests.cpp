@@ -288,7 +288,7 @@ private slots:
                                  // T6's position shifter and all-tags roles
                                  "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
-        static const QRegularExpression card(QStringLiteral(R"(^[A-Z]\d+ #\d+(, [A-Z]\d+ #\d+)*$)"));
+        static const QRegularExpression card(QStringLiteral(R"(^[A-Z]+\d+ #\d+(, [A-Z]+\d+ #\d+)*$)"));
         int pending = 0;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();
@@ -301,8 +301,9 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        // Every card that placed roles has landed.
-        QCOMPARE(pending, 0);
+        // Every card that placed roles has landed but PF1 (#225), whose
+        // Settings pages take the Options icons IC1 drew.
+        QCOMPARE(pending, 10);
     }
 
     // The glyphs that stood in for icons, alone or as a prefix before words.
@@ -932,7 +933,14 @@ Rectangle {
             QStringLiteral("editor"), QStringLiteral("script-properties"), QStringLiteral("spellchecker"),
             QStringLiteral("view-only-subs"),
             // the session and search arrows
-            QStringLiteral("last-session"), QStringLiteral("find-replace")};
+            QStringLiteral("last-session"), QStringLiteral("find-replace"),
+            // IC1's list and text-line icons, and its undo-like arrows
+            QStringLiteral("log"), QStringLiteral("make-tree"), QStringLiteral("tree-add-lines"),
+            QStringLiteral("tree-select"), QStringLiteral("insert-before"), QStringLiteral("insert-after"),
+            QStringLiteral("swap-lines"), QStringLiteral("join-lines"), QStringLiteral("join-keep-first"),
+            QStringLiteral("join-keep-last"), QStringLiteral("split-words"), QStringLiteral("split-wraps"),
+            QStringLiteral("select-visible"), QStringLiteral("translation-shift"), QStringLiteral("ui-colours"),
+            QStringLiteral("layout-restore"), QStringLiteral("restore-default")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();

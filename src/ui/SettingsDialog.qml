@@ -406,6 +406,8 @@ Dialog {
                     SettingCheck { setting: "translation.hideOriginalOnVideo"; text: qsTr("Hide original on video in translator mode") }
                     SettingCheck { setting: "grid.duplicationDontChangeSelection"; text: qsTr("Do not change selections when duplicating dialogue lines") }
                     SettingCheck { setting: "grid.dontCenterActiveLine"; text: qsTr("Do not vertically center the active line in the subtitle grid") }
+                    // GR3: the Grid's Hide columns > Hide empty columns, one setting.
+                    SettingCheck { setting: "grid.autoHideColumns"; text: qsTr("Hide empty columns in the subtitle grid") }
                     SettingCheck { setting: "editor.allowNumpadHotkeys"; text: qsTr("Use numpad shortcuts in text fields") }
                     SettingCheck { setting: "video.visualWarningsOff"; text: qsTr("Turn off visual tools warning") }
                     SettingCheck { setting: "video.dontAskForBadResolution"; text: qsTr("Do not warn about resolution mismatch") }

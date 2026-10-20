@@ -2621,6 +2621,10 @@ Failed to copy %2 fonts.</source>
         <translation>நெடுவரிசைகளை மறைக்கவும்</translation>
     </message>
     <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide layer</source>
         <translation>அடுக்கு மறைக்க</translation>
     </message>
@@ -2816,6 +2820,10 @@ Failed to copy %2 fonts.</source>
         <source>bookmarked</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>uncommitted</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message numerus="yes">
         <source>%n selected, %1 hidden</source>
         <translation type="unfinished">
@@ -2876,6 +2884,120 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Line wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
+    <name>HikariSub.Home</name>
+    <message>
+        <source>Today %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yesterday %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Home</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New</source>
+        <translation type="unfinished">புதிய</translation>
+    </message>
+    <message>
+        <source>New subtitles in a new tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last session</source>
+        <translation type="unfinished">கடைசி அமர்வு</translation>
+    </message>
+    <message>
+        <source>1 document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n documents</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">வடிப்பி</translation>
+    </message>
+    <message>
+        <source>Filter recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">பெயர்</translation>
+    </message>
+    <message>
+        <source>Last opened</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No recent files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>last opened %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Missing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show in folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">திற</translation>
+    </message>
+    <message>
+        <source>Copy path</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove from list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove missing files</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4425,6 +4547,10 @@ after switching from full screen</source>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
         <translation>வசன வரிகள் கட்டத்தில் செங்குத்தாக செயலில் உள்ள வரியை மையப்படுத்த வேண்டாம்</translation>
+    </message>
+    <message>
+        <source>Hide empty columns in the subtitle grid</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>
@@ -7143,6 +7269,40 @@ Styles deleted:
         <translation>எந்த கோடுகள்</translation>
     </message>
     <message>
+        <source>Amount</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time shifts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift times by time / frames</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delays subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speeds up subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shifts %1, %2, and %3 tag times
+so their positions on video do not change
+(slows down time shifting)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">வரிகள்</translation>
+    </message>
+    <message>
+        <source>The choice of lines to move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>All lines</source>
         <translation>அனைத்து வரிகளும்</translation>
     </message>
@@ -7167,12 +7327,24 @@ Styles deleted:
         <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளின்படி</translation>
     </message>
     <message>
+        <source>Select a style from the list</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Styles, separated by commas</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move according to the following styles (separated by a coma)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>A method of time shift</source>
         <translation>நேர மாற்றத்தின் முறை</translation>
+    </message>
+    <message>
+        <source>The choice of times to move</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Both times</source>
@@ -7181,6 +7353,10 @@ Styles deleted:
     <message>
         <source>Correction end times</source>
         <translation>திருத்தம் இறுதி நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Correction end times, when they are improper or overlap each other</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Leave unchanged</source>
@@ -7193,6 +7369,66 @@ Styles deleted:
     <message>
         <source>New times</source>
         <translation>புதிய நேரங்கள்</translation>
+    </message>
+    <message>
+        <source>Move the start time to the time video / audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Moves the end time to the video/audio time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in/lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the start time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Introduction time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inserts introduction to the end time (good when using fad)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End time extension threshold</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the start time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+before the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum shift to a keyframe 
+after the end time in milliseconds</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Run post processor</source>

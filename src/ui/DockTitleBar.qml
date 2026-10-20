@@ -69,11 +69,13 @@ KDDWViews.TitleBarBase {
         id: windowMenu
         objectName: "dockWindowMenu"
         ShellMenuItem {
+            iconRole: "panel-dock"
             objectName: "dockWindowDock"
             text: qsTr("Dock")
             onTriggered: root.floatButtonClicked()
         }
         ShellMenuItem {
+            iconRole: "tab-close"
             objectName: "dockWindowClose"
             text: qsTr("Close")
             enabled: root.closeButtonEnabled

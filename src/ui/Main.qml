@@ -474,7 +474,7 @@ ApplicationWindow {
             shiftConfirm.open()
             return
         }
-        shiftMessage.text = root.app.shiftTimes()
+        shiftTimesPanel.message = root.app.shiftTimes()
     }
 
     // The dock of the panel with the focus (the Grid's otherwise).
@@ -570,7 +570,7 @@ ApplicationWindow {
                       run: () => root.editor.showFrames = true }]
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
-                      enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference() }]
+                      enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference(), iconRole: "compare" }]
         return []
     }
     function closePanel(dock) {
@@ -616,6 +616,7 @@ ApplicationWindow {
             delegate: ShellMenuItem {
                 required property var modelData
                 objectName: "panelOptions_" + modelData.name
+                iconRole: modelData.iconRole ?? ""
                 text: modelData.text
                 checkable: modelData.checkable === true
                 checked: typeof modelData.checked === "function" ? modelData.checked() : modelData.checked === true
@@ -638,6 +639,7 @@ ApplicationWindow {
             height: visible ? implicitHeight : 0
         }
         ShellMenuItem {
+            iconRole: "panel-move"
             objectName: "panelOptionsMove"
             text: qsTranslate("HikariSub.Workspace", "Move panel…")
             // D2: not in the player layout, as View > Move panel….
@@ -648,6 +650,7 @@ ApplicationWindow {
         // current and focused; only in a group of tabs, off at its end.
         ShellMenuItem {
             id: panelOptionsTabLeft
+            iconRole: "tab-move-left"
             objectName: "panelOptionsTabLeft"
             text: qsTranslate("HikariSub.Workspace", "Move tab left")
             visible: panelOptionsMenu.tabCount > 1
@@ -657,6 +660,7 @@ ApplicationWindow {
             onTriggered: root.moveTab(panelOptionsMenu.dock, panelOptionsMenu.leftStep)
         }
         ShellMenuItem {
+            iconRole: "tab-move-right"
             objectName: "panelOptionsTabRight"
             text: qsTranslate("HikariSub.Workspace", "Move tab right")
             visible: panelOptionsTabLeft.visible
@@ -666,12 +670,14 @@ ApplicationWindow {
             onTriggered: root.moveTab(panelOptionsMenu.dock, -panelOptionsMenu.leftStep)
         }
         ShellMenuItem {
+            iconRole: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? "panel-dock" : "panel-float"
             objectName: "panelOptionsFloat"
             text: panelOptionsMenu.dock && panelOptionsMenu.dock.isFloating ? qsTranslate("HikariSub.Workspace", "Dock") : qsTranslate("HikariSub.Workspace", "Undock")
             enabled: panelOptionsMenu.dock !== null && (!panelOptionsMenu.dock.isFloating || panelOptionsMenu.dockable)
             onTriggered: root.setPanelFloating(panelOptionsMenu.dock, !panelOptionsMenu.dock.isFloating)
         }
         ShellMenuItem {
+            iconRole: "tab-close"
             objectName: "panelOptionsClose"
             text: panelOptionsMenu.dock === referenceDock ? qsTranslate("HikariSub.Workspace", "Close reference") : qsTranslate("HikariSub.Workspace", "Close")
             enabled: panelOptionsMenu.closable
@@ -680,6 +686,8 @@ ApplicationWindow {
     }
 
     function cyclePanels(step) {
+        if (homePage.visible) // SH2: the Home page is the one region
+            return homePage.takeFocus()
         const shown = panels.filter(p => p.visible)
         // The panel with focus in the focus window: the main one or a
         // floating panel group (D1). Window.active cannot tell them apart:
@@ -1045,6 +1053,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     help: qsTr("Opens the selected autosave from the list") // HikariSubFrame.cpp:196
+                    iconRole: "autosave"
                     objectName: "openAutoSaveMenuItem"
                     action: Action {
                         id: openAutoSaveAction
@@ -1054,6 +1063,7 @@ ApplicationWindow {
                 }
                 ShellMenuItem {
                     help: qsTr("Opens the temporary file removal window") // HikariSubFrame.cpp:197
+                    iconRole: "remove-temporary"
                     objectName: "removeTemporaryMenuItem"
                     action: Action {
                         id: removeTemporaryAction
@@ -1062,6 +1072,7 @@ ApplicationWindow {
                     }
                 }
                 ShellMenuItem {
+                    iconRole: "log"
                     objectName: "logMenuItem"
                     action: Action {
                         text: qsTr("Show / Hide log window")
@@ -1085,6 +1096,7 @@ ApplicationWindow {
                     ShellMenuItem {
                         help: qsTr("Loads session from saved session file") // HikariSubFrame.cpp:163
                         id: loadSessionFileItem
+                        iconRole: "session-open"
                         objectName: "loadSessionFileMenuItem"
                         text: qsTr("Load session from file")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_LOAD_EXTERNAL_SESSION")) sessionWindows.chooseSessionToLoad()
@@ -1092,6 +1104,7 @@ ApplicationWindow {
                     ShellMenuItem {
                         help: qsTr("Saves session to file") // HikariSubFrame.cpp:165
                         id: saveSessionFileItem
+                        iconRole: "session-save"
                         objectName: "saveSessionFileMenuItem"
                         text: qsTr("Save session to file")
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_SAVE_EXTERNAL_SESSION")) sessionWindows.chooseSessionToSave()
@@ -1128,6 +1141,7 @@ ApplicationWindow {
                 }
                 // O3: the one-shot legacy settings importer (no legacy item).
                 ShellMenuItem {
+                    iconRole: "import"
                     objectName: "importSettingsMenuItem"
                     text: qsTr("Import legacy settings...")
                     enabled: root.settingsImport.available
@@ -1340,6 +1354,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "rerun-macro"
                 objectName: "rerunMenuItem"
                 action: Action {
                     text: qsTr("Rerun last macro")
@@ -1348,6 +1363,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "automation-manager"
                 objectName: "automationManagerMenuItem"
                 action: Action {
                     text: qsTr("Automation &manager")
@@ -1426,6 +1442,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "dummy-video"
                 objectName: "dummyVideoMenuItem"
                 action: Action {
                     id: dummyVideoAction
@@ -1695,6 +1712,7 @@ ApplicationWindow {
             // Enable(editor)).
             ShellMenu {
                 id: panelsMenu
+                iconRole: "panels"
                 objectName: "panelsMenu"
                 enabled: root.app.editorOn
                 title: qsTr("&Panels")
@@ -1705,23 +1723,27 @@ ApplicationWindow {
                         objectName: "panelMenu" + modelData.uniqueName
                         title: modelData.title
                         ShellMenuItem {
+                            iconRole: "show"
                             objectName: "panelShow" + modelData.uniqueName
                             text: qsTr("Show")
                             onTriggered: root.showPanel(modelData)
                         }
                         ShellMenuItem {
+                            iconRole: "hide"
                             objectName: "panelHide" + modelData.uniqueName
                             text: qsTr("Hide")
                             enabled: modelData.isOpen
                             onTriggered: modelData.close()
                         }
                         ShellMenuItem {
+                            iconRole: "panel-float"
                             objectName: "panelFloat" + modelData.uniqueName
                             text: qsTr("Float")
                             enabled: modelData.isOpen && !modelData.isFloating
                             onTriggered: root.setPanelFloating(modelData, true)
                         }
                         ShellMenuItem {
+                            iconRole: "panel-dock"
                             objectName: "panelDock" + modelData.uniqueName
                             text: qsTr("Dock")
                             enabled: modelData.isOpen && modelData.isFloating
@@ -1733,6 +1755,7 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "panel-move"
                 objectName: "movePanel"
                 enabled: root.app.editorOn
                 text: qsTr("&Move panel…")
@@ -1742,6 +1765,7 @@ ApplicationWindow {
             // tools they open come with the tool cards.
             ShellMenu {
                 id: presetMenu
+                iconRole: "layout-preset"
                 objectName: "layoutPresetMenu"
                 enabled: root.app.editorOn
                 title: qsTr("Layout &preset")
@@ -1766,12 +1790,14 @@ ApplicationWindow {
                 }
             }
             ShellMenuItem {
+                iconRole: "layout-reset"
                 objectName: "resetLayout"
                 enabled: root.app.editorOn
                 text: qsTr("&Reset layout")
                 onTriggered: root.applyPreset(root.workspaceLayout.preset)
             }
             ShellMenuItem {
+                iconRole: "layout-restore"
                 objectName: "restoreLayoutBackup"
                 text: qsTr("Restore the previous layout")
                 enabled: root.app.editorOn && root.workspaceLayout.hasBackup
@@ -1805,6 +1831,7 @@ ApplicationWindow {
             }
             ShellMenuItem {
                 id: runShiftTimesItem
+                iconRole: "shift-times-run"
                 objectName: "runShiftTimes"
                 text: qsTr("Shift times / run time post processor")
                 enabled: root.app.editorOn && root.shell.hasEditingTarget
@@ -2090,6 +2117,7 @@ ApplicationWindow {
                 model: field.spelled ? 1 : 0
                 delegate: ShellMenu {
                     id: languagesMenu
+                    iconRole: "dictionary"
                     objectName: field.objectName + "Languages"
                     title: qsTranslate("HikariSub.Editor", "Installed languages")
                     property var languages: []
@@ -2122,6 +2150,7 @@ ApplicationWindow {
                 onObjectRemoved: (index, object) => editMenu.removeMenu(object)
             }
             ShellMenuItem {
+                iconRole: "dictionary-add"
                 objectName: field.objectName + "AddWord"
                 text: qsTranslate("HikariSub.Editor", "&Add word \"%1\" to dictionary").arg(field.misspell.word || "")
                 visible: !!field.misspell.word
@@ -2374,6 +2403,39 @@ ApplicationWindow {
         Component.onCompleted: Qt.callLater(() => dropAreaCpp = Docking.mainDropArea(dockingArea.uniqueName))
     }
 
+    // SH2: the Home page over the docked panels while no Document is open,
+    // under the file drop area (z), so files dropped on it open. The panels
+    // under it stay laid out (their layout is saved as it is) but take no
+    // input.
+    HomePage {
+        id: homePage
+        objectName: "homePage"
+        app: root.app
+        anchors.fill: dockingArea
+        z: 1.5
+        visible: root.app.home
+        spaceAbove: documentTabBar.height
+        onNewRequested: root.app.addPage()
+        onOpenRequested: openAction.trigger()
+        onOpenVideoRequested: openVideoAction.trigger()
+        onRestoreRequested: sessionWindows.load()
+        // P9: Ctrl+click shows the file in its folder, as in File > Recent.
+        onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
+        onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
+        Component.onCompleted: if (visible) Qt.callLater(takeFocus)
+    }
+    // The first Document opened from Home: the focus, left nowhere when the
+    // page went, goes to the Grid (else the first shown panel), unless the
+    // opening put it somewhere.
+    function focusAfterHome() {
+        if (homePage.visible || (root.activeFocusItem && root.activeFocusItem !== root.contentItem))
+            return
+        const shown = root.panels.filter(p => p.visible)
+        const next = shown.includes(gridPanel) ? gridPanel : shown[0]
+        if (next)
+            root.focusPanel(next, Qt.OtherFocusReason)
+    }
+
     // D1: the Classic panels dock, float, tab and close (KDDockWidgets behind
     // ui/docking.h; docs/qt/docking.md). Closing a panel hides its view; its
     // controller and any draft stay.
@@ -2382,6 +2444,7 @@ ApplicationWindow {
         objectName: "dockingArea"
         anchors.fill: parent
         uniqueName: "Classic"
+        enabled: !homePage.visible // SH2
 
         KDDW.DockWidget {
             id: videoDock
@@ -3408,11 +3471,16 @@ ApplicationWindow {
                                 objectName: "tagButtonMenu"
                                 property Item button: null
                                 property int index: -1
+                                // Left is toward the first button, unless the layout is mirrored.
+                                readonly property int leftStep: Qt.application.layoutDirection === Qt.RightToLeft ? 1 : -1
                                 // At the click, inside the button it is for.
                                 function openFor(b, i, at) {
                                     button = b
                                     index = i
                                     popup(b, at)
+                                }
+                                function canMove(step) {
+                                    return index >= 0 && index + step >= 0 && index + step < root.tagButtons.count
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonEdit"
@@ -3423,15 +3491,17 @@ ApplicationWindow {
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveLeft"
+                                    iconRole: "move-left"
                                     text: qsTranslate("HikariSub.Editor", "Move left")
-                                    enabled: tagButtonMenu.index > 0
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -1)
+                                    enabled: tagButtonMenu.canMove(tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, tagButtonMenu.leftStep)
                                 }
                                 ShellMenuItem {
                                     objectName: "tagButtonMoveRight"
+                                    iconRole: "move-right"
                                     text: qsTranslate("HikariSub.Editor", "Move right")
-                                    enabled: tagButtonMenu.index >= 0 && tagButtonMenu.index < root.tagButtons.count - 1
-                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, 1)
+                                    enabled: tagButtonMenu.canMove(-tagButtonMenu.leftStep)
+                                    onTriggered: root.tagButtons.move(tagButtonMenu.index, -tagButtonMenu.leftStep)
                                 }
                                 MenuSeparator {}
                                 ShellMenuItem {
@@ -3593,14 +3663,15 @@ ApplicationWindow {
                         id: groupMenu
                         objectName: "groupMenu"
                         property var description: 0
-                        ShellMenuItem { objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
-                        ShellMenuItem { objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "tree-add-lines"; objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "edit-copy"; objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
                         ShellMenuItem {
+                            iconRole: "edit"
                             objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description")
                             onTriggered: groupDescriptionDialog.edit(groupMenu.description)
                         }
-                        ShellMenuItem { objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
-                        ShellMenuItem { objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
+                        ShellMenuItem { iconRole: "delete"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
                     }
                     // The Grid's accelerators (TabPanel::SetAccels): the fixed
                     // clipboard keys (GRID_COPY Ctrl+C, GRID_CUT Ctrl+X,
@@ -3642,22 +3713,27 @@ ApplicationWindow {
                             canShiftTranslation = root.app.canShiftTranslation()
                         }
                         ShellMenu {
+                            iconRole: "add"
                             title: qsTranslate("HikariSub.Grid", "&Insert")
-                            ShellMenuItem { objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
-                            ShellMenuItem { objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
+                            ShellMenuItem { iconRole: "insert-before"; objectName: "insertBefore"; text: qsTranslate("HikariSub.Grid", "Insert &before"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE")) root.app.insertLine(true) }
+                            ShellMenuItem { iconRole: "insert-after"; objectName: "insertAfter"; text: qsTranslate("HikariSub.Grid", "Insert &after"); onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER")) root.app.insertLine(false) }
                             ShellMenuItem {
+                                iconRole: "insert-before"
                                 objectName: "insertBeforeVideo"; text: qsTranslate("HikariSub.Grid", "Insert before with &video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_VIDEO")) root.app.insertLine(true, "video")
                             }
                             ShellMenuItem {
+                                iconRole: "insert-after"
                                 objectName: "insertAfterVideo"; text: qsTranslate("HikariSub.Grid", "Insert after with video time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_VIDEO")) root.app.insertLine(false, "video")
                             }
                             ShellMenuItem {
+                                iconRole: "insert-before"
                                 objectName: "insertBeforeFrame"; text: qsTranslate("HikariSub.Grid", "Insert before with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_BEFORE_WITH_VIDEO_FRAME")) root.app.insertLine(true, "frame")
                             }
                             ShellMenuItem {
+                                iconRole: "insert-after"
                                 objectName: "insertAfterFrame"; text: qsTranslate("HikariSub.Grid", "Insert after with video frame time")
                                 enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_INSERT_AFTER_WITH_VIDEO_FRAME")) root.app.insertLine(false, "frame")
                             }
@@ -3670,44 +3746,52 @@ ApplicationWindow {
                             text: qsTranslate("HikariSub.Grid", "&Duplicate lines") + (keys.length ? "\t" + keys : "")
                             onTriggered: if (!root.gridGesture(this, "GRID_DUPLICATE_LINES")) root.app.duplicateLines()
                         }
-                        ShellMenuItem { objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
-                        ShellMenuItem { objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
-                        ShellMenuItem { objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
-                        ShellMenuItem { objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
+                        ShellMenuItem { iconRole: "swap-lines"; objectName: "swapLines"; text: qsTranslate("HikariSub.Grid", "&Swap"); onTriggered: if (!root.gridGesture(this, "GRID_SWAP_LINES")) root.app.swapLines() }
+                        ShellMenuItem { iconRole: "join-lines"; objectName: "joinLines"; text: qsTranslate("HikariSub.Grid", "Join &lines"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_LINES")) root.app.joinLines("join") }
+                        ShellMenuItem { iconRole: "join-keep-first"; objectName: "joinFirst"; text: qsTranslate("HikariSub.Grid", "Join lines and keep first"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_FIRST_LINE")) root.app.joinLines("first") }
+                        ShellMenuItem { iconRole: "join-keep-last"; objectName: "joinLast"; text: qsTranslate("HikariSub.Grid", "Join lines and keep last"); onTriggered: if (!root.gridGesture(this, "GRID_JOIN_TO_LAST_LINE")) root.app.joinLines("last") }
                         ShellMenuItem {
+                            iconRole: "continuous-previous"
                             objectName: "continuousPrevious"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (previous line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_PREVIOUS_LINE")) root.app.makeContinuous(true)
                         }
                         ShellMenuItem {
+                            iconRole: "continuous-next"
                             objectName: "continuousNext"; text: qsTranslate("HikariSub.Grid", "Set times as a continuous (next line)")
                             onTriggered: if (!root.gridGesture(this, "GRID_MAKE_CONTINOUS_NEXT_LINE")) root.app.makeContinuous(false)
                         }
                         // Legacy "Split lines" (GRID_SPLIT_BY_*).
                         ShellMenu {
+                            iconRole: "split-lines"
                             title: qsTranslate("HikariSub.Grid", "Split lines")
                             ShellMenuItem {
+                                iconRole: "split-at-video"
                                 objectName: "splitAtVideoTime"
                                 text: qsTranslate("HikariSub.Grid", "Split line at video time")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_VIDEO_TIME")) root.app.splitLines("videoTime")
                             }
                             ShellMenuItem {
+                                iconRole: "split-frames"
                                 objectName: "splitIntoFrames"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into frames")
                                 enabled: root.video.hasVideo
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_FRAME")) root.app.splitLines("frames")
                             }
                             ShellMenuItem {
+                                iconRole: "split-characters"
                                 objectName: "splitIntoCharacters"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into characters")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_CHARS")) root.app.splitLines("chars")
                             }
                             ShellMenuItem {
+                                iconRole: "split-words"
                                 objectName: "splitIntoWords"
                                 text: qsTranslate("HikariSub.Grid", "Split lines into words")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WORDS")) root.app.splitLines("words")
                             }
                             ShellMenuItem {
+                                iconRole: "split-wraps"
                                 objectName: "splitByWraps"
                                 text: qsTranslate("HikariSub.Grid", "Split lines by wraps")
                                 onTriggered: if (!root.gridGesture(this, "GRID_SPLIT_BY_WRAPS")) root.app.splitLines("wraps")
@@ -3715,10 +3799,11 @@ ApplicationWindow {
                         }
                         // V6: after "Split lines", as legacy's menu (SubsGrid.cpp:264-265).
                         ShellMenuItem {
+                            iconRole: "select-visible"
                             objectName: "selectVisibleLines"; text: qsTranslate("HikariSub.Grid", "Select all lines visible on video")
                             onTriggered: if (!root.gridGesture(this, "GRID_SELECT_VISIBLE_LINES")) root.app.selectLinesVisibleOnVideo()
                         }
-                        ShellMenuItem { objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
+                        ShellMenuItem { iconRole: "make-tree"; objectName: "makeTree"; text: qsTranslate("HikariSub.Grid", "Make tree"); onTriggered: if (!root.gridGesture(this, "GRID_TREE_MAKE")) root.app.makeGroups() }
                         // R2: legacy's in-Grid preview, here another tab in the reference tray (SubsGrid.cpp:277).
                         ShellMenuItem {
                             iconRole: "reference"
@@ -3730,6 +3815,7 @@ ApplicationWindow {
                         }
                         // E3: GRID_PASTE_TRANSLATION and GRID_TRANSLATION_DIALOG.
                         ShellMenuItem {
+                            iconRole: "paste-translation"
                             objectName: "pasteTranslation"
                             text: qsTranslate("HikariSub.Grid", "Paste translation text")
                             enabled: gridMenu.canPasteTranslation
@@ -3742,12 +3828,13 @@ ApplicationWindow {
                             }
                         }
                         ShellMenuItem {
+                            iconRole: "translation-shift"
                             objectName: "translationDialog"
                             text: qsTranslate("HikariSub.Grid", "Dialogue shifting window")
                             enabled: gridMenu.canShiftTranslation
                             onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.show()
                         }
-                        ShellMenuItem { objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
+                        ShellMenuItem { iconRole: "hide"; objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
                         // Legacy Filtering submenu (GRID_FILTER_*).
                         ShellMenu {
                             id: filteringMenu
@@ -3780,6 +3867,7 @@ ApplicationWindow {
                             }
                             ShellMenu {
                                 id: filterStylesMenu
+                                iconRole: "styles"
                                 title: qsTranslate("HikariSub.Grid", "Hide lines with styles")
                                 enabled: root.shell.assColumns
                                 Instantiator {
@@ -3818,8 +3906,9 @@ ApplicationWindow {
                                 onObjectAdded: (index, object) => filteringMenu.insertItem(4 + index, object)
                                 onObjectRemoved: (index, object) => filteringMenu.removeItem(object)
                             }
-                            ShellMenuItem { objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
+                            ShellMenuItem { iconRole: "filter"; objectName: "filter"; text: qsTranslate("HikariSub.Grid", "Filter"); onTriggered: if (!root.gridGesture(this, "GRID_FILTER")) root.app.filterLines() }
                             ShellMenuItem {
+                                iconRole: "filter-off"
                                 objectName: "turnOffFiltering"
                                 text: qsTranslate("HikariSub.Grid", "Turn off filtering")
                                 enabled: root.shell.filtered
@@ -3836,8 +3925,20 @@ ApplicationWindow {
                         // Legacy "Hide columns" (GRID_HIDE_LAYER ... GRID_HIDE_WRAPS).
                         ShellMenu {
                             id: hideColumnsMenu
+                            iconRole: "columns"
                             objectName: "hideColumnsMenu"
                             title: qsTranslate("HikariSub.Grid", "Hide columns")
+                            // GR3 (Aegisub's convention): columns empty in
+                            // the whole Document hide themselves; the same
+                            // setting as Settings > Editor's.
+                            ShellMenuItem {
+                                objectName: "hideEmptyColumns"
+                                text: qsTranslate("HikariSub.Grid", "Hide empty columns")
+                                checkable: true
+                                checked: root.shell.autoHideColumns
+                                onTriggered: root.shell.autoHideColumns = checked
+                            }
+                            MenuSeparator {}
                             Instantiator {
                                 model: [
                                     { bit: 1, label: qsTranslate("HikariSub.Grid", "Hide layer"), ass: true, symbol: "GRID_HIDE_LAYER" },
@@ -3861,22 +3962,23 @@ ApplicationWindow {
                                     enabled: (!modelData.ass || root.shell.assColumns) && (!modelData.end || root.shell.endColumn)
                                     onTriggered: if (!root.gridGesture(this, modelData.symbol)) root.shell.toggleColumn(modelData.bit)
                                 }
-                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(index, object)
+                                onObjectAdded: (index, object) => hideColumnsMenu.insertItem(2 + index, object)
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        ShellMenuItem { objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
+                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
                         ShellMenuItem {
+                            iconRole: "fps-from-video"
                             objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
                             enabled: root.video.hasVideo; onTriggered: if (!root.gridGesture(this, "GRID_SET_FPS_FROM_VIDEO")) root.app.setFpsFromVideo()
                         }
                         ShellMenuItem { iconRole: "edit-copy"; objectName: "copyLines"; text: qsTranslate("HikariSub.Grid", "Copy\tCtrl+C"); onTriggered: if (!root.gridGesture(this, "GRID_COPY")) root.app.copyLines() }
                         ShellMenuItem { iconRole: "edit-cut"; objectName: "cutLines"; text: qsTranslate("HikariSub.Grid", "Cut\tCtrl+X"); onTriggered: if (!root.gridGesture(this, "GRID_CUT")) root.app.cutLines() }
                         ShellMenuItem { iconRole: "edit-paste"; objectName: "pasteLines"; text: qsTranslate("HikariSub.Grid", "Paste\tCtrl+V"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE")) root.app.pasteLines() }
-                        ShellMenuItem { objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
-                        ShellMenuItem { objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
+                        ShellMenuItem { iconRole: "columns-copy"; objectName: "copyColumns"; text: qsTranslate("HikariSub.Grid", "Copy columns"); onTriggered: if (!root.gridGesture(this, "GRID_COPY_COLUMNS")) columnsWindow.choose(false) }
+                        ShellMenuItem { iconRole: "columns-paste"; objectName: "pasteColumns"; text: qsTranslate("HikariSub.Grid", "Paste columns"); onTriggered: if (!root.gridGesture(this, "GRID_PASTE_COLUMNS")) columnsWindow.choose(true) }
                         // E6: SubsGrid's menu, "Delete text" before "Delete" (SubsGrid.cpp:285-286).
-                        ShellMenuItem { objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
+                        ShellMenuItem { iconRole: "clear"; objectName: "deleteText"; text: qsTranslate("HikariSub.Grid", "Delete text"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_TEXT")) root.app.deleteText() }
                         ShellMenuItem { iconRole: "delete"; objectName: "deleteLines"; text: qsTranslate("HikariSub.Grid", "Delete lines\tShift+Del"); onTriggered: if (!root.gridGesture(this, "GLOBAL_REMOVE_LINES")) root.app.deleteLines() }
                         // Y8: SubsGrid's menu (SubsGrid.cpp:286-288).
                         MenuSeparator {}
@@ -3947,207 +4049,18 @@ ApplicationWindow {
                 id: timingPanel
                 objectName: "timingPanel"
                 dockName: "Timing"
-                minimumBodySize: Qt.size(shiftForm.implicitWidth + 20, 120) // the form scrolls
+                minimumBodySize: shiftTimesPanel.minimumBodySize // the form scrolls
                 anchors.fill: parent
                 title: qsTranslate("HikariSub.TimeShift", "Shift times")
-                ScrollView {
-                    id: shiftScroll
+                // TS1: the form and its run button.
+                ShiftTimesPanel {
+                    id: shiftTimesPanel
                     anchors.fill: parent
-                    clip: true
-                    // The scroll bar shows while the form is taller than the
-                    // panel (the post processor and profiles lay below it unseen).
-                    ScrollBar.vertical.policy: contentHeight > height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded
-                    // The form 1 inside the clipped view: a focus ring at its
-                    // edge shows whole.
-                    contentWidth: shiftForm.implicitWidth + 2
-                    contentHeight: shiftForm.implicitHeight + 2
-                    ColumnLayout {
-                        id: shiftForm
-                        x: 1
-                        y: 1
-                        width: timingPanel.width - 20
-                        readonly property var settings: root.shiftTimes.settings
-                        function set(key, value) {
-                            const next = Object.assign({}, settings)
-                            next[key] = value
-                            root.shiftTimes.settings = next
-                        }
-                        // Legacy time control: h:mm:ss.cc, or frames when shown as frames.
-                        function timeText(ms) {
-                            const cs = Math.floor(ms / 10) % 100, s = Math.floor(ms / 1000) % 60
-                            const m = Math.floor(ms / 60000) % 60, h = Math.floor(ms / 3600000)
-                            return h + ":" + String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0") + "." + String(cs).padStart(2, "0")
-                        }
-                        function parseTime(text) {
-                            const m = /^(\d+):(\d{1,2}):(\d{1,2})(?:[.,](\d{1,2}))?$/.exec(text.trim())
-                            if (!m)
-                                return -1
-                            return ((+m[1] * 60 + +m[2]) * 60 + +m[3]) * 1000 + (m[4] ? +m[4].padEnd(2, "0") * 10 : 0)
-                        }
-                        RowLayout {
-                            Label { text: shiftForm.settings.byFrames ? qsTranslate("HikariSub.TimeShift", "Frames") : qsTranslate("HikariSub.TimeShift", "Time") }
-                            TextField {
-                                id: shiftTime
-                                objectName: "shiftTime"
-                                Layout.fillWidth: true
-                                Accessible.name: qsTranslate("HikariSub.TimeShift", "Shift subtitle times")
-                                text: shiftForm.settings.byFrames ? String(shiftForm.settings.frames)
-                                                                  : shiftForm.timeText(shiftForm.settings.timeMs)
-                                onEditingFinished: {
-                                    if (shiftForm.settings.byFrames) {
-                                        shiftForm.set("frames", Math.max(0, parseInt(text) || 0))
-                                    } else {
-                                        const ms = shiftForm.parseTime(text)
-                                        if (ms >= 0)
-                                            shiftForm.set("timeMs", ms)
-                                    }
-                                }
-                            }
-                            Button {
-                                objectName: "shiftApply"
-                                text: qsTranslate("HikariSub.TimeShift", "Shift")
-                                Accessible.description: qsTranslate("HikariSub.TimeShift", "Shift subtitle times")
-                                onClicked: root.runShiftTimes()
-                            }
-                        }
-                        RowLayout {
-                            RadioButton { objectName: "shiftForward"; text: qsTranslate("HikariSub.TimeShift", "Forward"); checked: shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", true) }
-                            RadioButton { objectName: "shiftBackward"; text: qsTranslate("HikariSub.TimeShift", "Backward"); checked: !shiftForm.settings.forward; onToggled: if (checked) shiftForm.set("forward", false) }
-                        }
-                        RowLayout {
-                            CheckBox {
-                                objectName: "shiftFrames"
-                                text: qsTranslate("HikariSub.TimeShift", "Frames")
-                                checked: shiftForm.settings.byFrames
-                                enabled: checked || root.app.exactTimebase()
-                                onToggled: shiftForm.set("byFrames", checked)
-                            }
-                            CheckBox { objectName: "shiftTagTimes"; text: qsTranslate("HikariSub.TimeShift", "Tag times"); checked: shiftForm.settings.tagTimes; onToggled: shiftForm.set("tagTimes", checked) }
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Shift by video / audio")
-                            Layout.fillWidth: true
-                            ColumnLayout {
-                                RowLayout {
-                                    RadioButton { text: qsTranslate("HikariSub.TimeShift", "Beginning"); checked: shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", true) }
-                                    RadioButton { text: qsTranslate("HikariSub.TimeShift", "End"); checked: !shiftForm.settings.fromStartTime; onToggled: if (checked) shiftForm.set("fromStartTime", false) }
-                                }
-                                CheckBox { objectName: "shiftToVideo"; text: qsTranslate("HikariSub.TimeShift", "Move the marker to video time"); checked: shiftForm.settings.moveToVideoTime; onToggled: shiftForm.set("moveToVideoTime", checked) }
-                                CheckBox { objectName: "shiftToAudio"; text: qsTranslate("HikariSub.TimeShift", "Move the marker to audio time"); enabled: root.audio.hasMark /* A3: ShiftTimes::Contents */; checked: shiftForm.settings.moveToAudioTime; onToggled: shiftForm.set("moveToAudioTime", checked) }
-                            }
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "Which lines") }
-                        ComboBox {
-                            objectName: "shiftWhichLines"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Which lines")
-                            model: [qsTranslate("HikariSub.TimeShift", "All lines"), qsTranslate("HikariSub.TimeShift", "Selected lines"), qsTranslate("HikariSub.TimeShift", "From the selected line"),
-                                    qsTranslate("HikariSub.TimeShift", "All times higher and equal"), qsTranslate("HikariSub.TimeShift", "All times lower and equal"),
-                                    qsTranslate("HikariSub.TimeShift", "According to the selected styles")]
-                            currentIndex: shiftForm.settings.whichLines
-                            onActivated: (index) => shiftForm.set("whichLines", index)
-                        }
-                        TextField {
-                            objectName: "shiftStyles"
-                            Layout.fillWidth: true
-                            visible: shiftForm.settings.whichLines === 5
-                            placeholderText: qsTranslate("HikariSub.TimeShift", "Styles, separated by commas")
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Styles")
-                            text: shiftForm.settings.styles
-                            onEditingFinished: shiftForm.set("styles", text)
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "A method of time shift") }
-                        ComboBox {
-                            objectName: "shiftWhichTimes"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "A method of time shift")
-                            model: [qsTranslate("HikariSub.TimeShift", "Both times"), qsTranslate("HikariSub.TimeShift", "The starting time"), qsTranslate("HikariSub.TimeShift", "End time")]
-                            currentIndex: shiftForm.settings.whichTimes
-                            onActivated: (index) => shiftForm.set("whichTimes", index)
-                        }
-                        Label { text: qsTranslate("HikariSub.TimeShift", "Correction end times") }
-                        ComboBox {
-                            objectName: "shiftEndCorrection"
-                            Layout.fillWidth: true
-                            Accessible.name: qsTranslate("HikariSub.TimeShift", "Correction end times")
-                            model: [qsTranslate("HikariSub.TimeShift", "Leave unchanged"), qsTranslate("HikariSub.TimeShift", "Adjust overlapping times"), qsTranslate("HikariSub.TimeShift", "New times")]
-                            currentIndex: shiftForm.settings.correctEndTimes
-                            onActivated: (index) => shiftForm.set("correctEndTimes", index)
-                        }
-                        // F6: legacy "Post processor" (the panel switches between shift and postprocessor).
-                        CheckBox {
-                            objectName: "postprocessorOn"
-                            text: qsTranslate("HikariSub.TimeShift", "Run post processor")
-                            checked: (shiftForm.settings.postprocessor & 16) !== 0
-                            onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | 16)
-                                                                              : (shiftForm.settings.postprocessor & ~16))
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Post processor")
-                            Layout.fillWidth: true
-                            visible: (shiftForm.settings.postprocessor & 16) !== 0
-                            GridLayout {
-                                anchors.fill: parent
-                                columns: 2
-                                component FlagBox: CheckBox {
-                                    property int bit
-                                    checked: (shiftForm.settings.postprocessor & bit) !== 0
-                                    onToggled: shiftForm.set("postprocessor", checked ? (shiftForm.settings.postprocessor | bit)
-                                                                                      : (shiftForm.settings.postprocessor & ~bit))
-                                }
-                                component MsBox: SpinBox {
-                                    property string key
-                                    from: 0; to: 100000; stepSize: 10; editable: true
-                                    value: shiftForm.settings[key]
-                                    onValueModified: shiftForm.set(key, value)
-                                }
-                                FlagBox { objectName: "ppLeadIn"; bit: 1; text: qsTranslate("HikariSub.TimeShift", "Lead-in") }
-                                MsBox { key: "leadIn"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Lead-in") }
-                                FlagBox { objectName: "ppLeadOut"; bit: 2; text: qsTranslate("HikariSub.TimeShift", "Lead-out") }
-                                MsBox { key: "leadOut"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Lead-out") }
-                                FlagBox { objectName: "ppContinuous"; bit: 4; text: qsTranslate("HikariSub.TimeShift", "Set times as continuous"); Layout.columnSpan: 2 }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Start time threshold") }
-                                MsBox { key: "thresholdStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Start time threshold") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "End time threshold") }
-                                MsBox { key: "thresholdEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "End time threshold") }
-                                FlagBox { objectName: "ppSnap"; bit: 8; text: qsTranslate("HikariSub.TimeShift", "Snap to keyframes"); enabled: root.app.exactTimebase(); Layout.columnSpan: 2 }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Before the start of time") }
-                                MsBox { key: "keyframeBeforeStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Before the start of time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "After the start time") }
-                                MsBox { key: "keyframeAfterStart"; Accessible.name: qsTranslate("HikariSub.TimeShift", "After the start time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "Before the end time") }
-                                MsBox { key: "keyframeBeforeEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "Before the end time") }
-                                Label { text: qsTranslate("HikariSub.TimeShift", "After the end time") }
-                                MsBox { key: "keyframeAfterEnd"; Accessible.name: qsTranslate("HikariSub.TimeShift", "After the end time") }
-                            }
-                        }
-                        GroupBox {
-                            title: qsTranslate("HikariSub.TimeShift", "Profiles")
-                            Layout.fillWidth: true
-                            RowLayout {
-                                anchors.fill: parent
-                                ComboBox {
-                                    id: shiftProfile
-                                    objectName: "shiftProfile"
-                                    Layout.fillWidth: true
-                                    Accessible.name: qsTranslate("HikariSub.TimeShift", "Profiles")
-                                    editable: true
-                                    model: root.shiftTimes.profiles
-                                    onActivated: (index) => root.shiftTimes.loadProfile(textAt(index))
-                                }
-                                IconToolButton { objectName: "shiftProfileSave"; iconRole: "add"; text: qsTranslate("HikariSub.TimeShift", "Adding and editing profiles"); onClicked: root.shiftTimes.saveProfile(shiftProfile.editText) }
-                                IconToolButton { objectName: "shiftProfileRemove"; iconRole: "remove"; text: qsTranslate("HikariSub.TimeShift", "Removing profiles"); onClicked: root.shiftTimes.removeProfile(shiftProfile.editText) }
-                            }
-                        }
-                        Label {
-                            id: shiftMessage
-                            objectName: "shiftMessage"
-                            Layout.fillWidth: true
-                            wrapMode: Text.WordWrap
-                            color: palette.highlight
-                            Accessible.role: Accessible.AlertMessage
-                        }
-                    }
+                    shiftTimes: root.shiftTimes
+                    app: root.app
+                    hasVideo: root.video.hasVideo
+                    audioHasMark: root.audio.hasMark
+                    onRun: root.runShiftTimes()
                 }
             }
         }
@@ -4236,6 +4149,7 @@ ApplicationWindow {
         spacing: 0
         // P6: the open Documents' tabs (legacy Notebook's bar).
         DocumentTabBar {
+            id: documentTabBar
             app: root.app
             Layout.fillWidth: true
             onCloseRequested: index => root.closeTab(index)
@@ -5180,7 +5094,7 @@ ApplicationWindow {
         anchors.centerIn: parent
         standardButtons: Dialog.Yes | Dialog.No
         Label { text: qsTranslate("HikariSub.TimeShift", "Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTranslate("HikariSub.TimeShift", "start") : qsTranslate("HikariSub.TimeShift", "end")) }
-        onAccepted: shiftMessage.text = root.app.shiftTimes()
+        onAccepted: shiftTimesPanel.message = root.app.shiftTimes()
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.

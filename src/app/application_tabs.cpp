@@ -180,12 +180,8 @@ void Application::closeDocument(application::DocumentId document)
     m_files->close(document);
     m_workspace.remove(document); // the legacy DeletePage successor becomes active
     forgetTab(document);
-    // Notebook::DeletePage: with no tab left, a new empty (Untitled) one.
-    if (m_workspace.tabs().empty()) {
-        const auto id = m_files->createNew();
-        m_workspace.add(id, QCoreApplication::translate("HikariSub.Documents", "Untitled").toStdString());
-        m_workspace.setEditingTarget(id);
-    }
+    // SH2-last-tab-home: with no tab left the Home page shows, where legacy
+    // Notebook::DeletePage made a new empty (Untitled) tab.
     refreshViews();
     saveLastSession(); // Notebook::DeletePage ends with SaveLastSession
 }
@@ -561,6 +557,24 @@ bool Application::lastSessionCrashed() const
     return text && !application::sessionClosed(*text);
 }
 
+QVariantMap Application::lastSessionSummary() const
+{
+    QStringList names;
+    if (const auto text = readSessionText(lastSessionPath()))
+        if (const auto session = application::parseSession(*text))
+            for (const auto &tab : session->tabs) {
+                // A tab with neither subtitles nor a video file is an
+                // Untitled one, which restores as nothing worth offering; a
+                // dummy video ("?dummy:...") is not a file applySession
+                // reopens.
+                const bool dummy = tab.subtitles.empty() && tab.video.starts_with("?dummy");
+                const QString file = !tab.subtitles.empty() ? qs(tab.subtitles) : dummy ? QString() : qs(tab.video);
+                if (!file.isEmpty())
+                    names << QFileInfo(file).fileName();
+            }
+    return {{QStringLiteral("names"), names}};
+}
+
 QString Application::startupSession() const
 {
     // hikarisubApp::OnInit (release build): only without paths to open.
@@ -571,12 +585,21 @@ QString Application::startupSession() const
     // legacy reached the CheckLastSession prompt below, as here.
     if (m_startedWithPaths || lastSessionPath().isEmpty())
         return {};
+    QString kind;
     switch (sessionRestore()) {
-    case 2: return QStringLiteral("load");
-    case 1: return QStringLiteral("ask"); // a "No" goes on to the crash check
-    default: break;
+    case 2: kind = QStringLiteral("load"); break;
+    case 1: kind = QStringLiteral("ask"); break; // a "No" goes on to the crash check
+    default: kind = lastSessionCrashed() ? QStringLiteral("crash") : QString(); break;
     }
-    return lastSessionCrashed() ? QStringLiteral("crash") : QString();
+    m_startupSessionPending = !kind.isEmpty(); // WS5: until startupSessionDecided()
+    return kind;
+}
+
+bool Application::forwardedOpenWaits() const
+{
+    // A review (close, open, session, dropped files) waits for its answer;
+    // so does the startup session, which would replace the tabs (P6).
+    return m_startupSessionPending || !m_closeThen.isEmpty() || m_quitApproved;
 }
 
 QVariantMap Application::reviewSession(const QUrl &file)
