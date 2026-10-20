@@ -5867,25 +5867,22 @@ private slots:
         // take fewer rows, and squeezing then makes the panel report the
         // taller minimum again, which puts its real minimum back over the
         // smaller one (Hyprland's 1558-pixel window: 461x216, nothing cut off).
-        // The inspector bar's groups do the same (VT1: narrower, they wrap
-        // onto more lines, and the bar keeps the tallest family's height),
-        // so the panel is squeezed below its minimum in height alone, at
-        // its own minimum width: nothing wraps again, and the controls are
-        // cut off (Ubuntu CI on f07aead8d: squeezed in width too, the bar
-        // wrapped and the panel stayed at its real minimum, 466x323).
+        // The inspector bar's groups wrap too (VT1), and with them the
+        // panel's minimum changes as it is squeezed, so the panel does not
+        // report it here (no dockName) and stays below it (Ubuntu CI on
+        // f07aead8d: it reported its real minimum again, 466x323).
         {
             QQuickItem *panel = item("videoPanel");
             const QString dock = panel->property("dockName").toString();
             QVERIFY(docking->resizeInLayout(dock, 0, 0, -2000, -2000));
             QTRY_VERIFY(settled(panel));
-            const qreal width = panel->width();
+            QVERIFY(panel->setProperty("dockName", QString()));
             QVERIFY(docking->setMinimumSize(dock, QSize(40, 40)));
-            QVERIFY(docking->resizeInLayout(dock, 0, 0, 0, -2000));
-            QVERIFY(docking->resizeInLayout(dock, 0, -2000, 0, 0));
-            QTRY_VERIFY(settled(panel));
-            QCOMPARE(panel->width(), width);
+            QVERIFY(docking->resizeInLayout(dock, 0, 0, -2000, -2000));
+            QVERIFY(docking->resizeInLayout(dock, -2000, -2000, 0, 0));
             QTRY_VERIFY(settled(panel));
             QVERIFY2(!clippedIn(panel).isEmpty(), qPrintable(QStringLiteral("%1x%2").arg(panel->width()).arg(panel->height())));
+            QVERIFY(panel->setProperty("dockName", dock));
             QVERIFY(QMetaObject::invokeMethod(panel, "reportMinimumSize"));
             QCOMPARE(docking->minimumSize(dock), panel->property("minimumSize").toSizeF().toSize());
             application->workspaceLayout().resetLayout();
