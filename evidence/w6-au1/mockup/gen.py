@@ -126,9 +126,9 @@ def strip(t, *, mode=0, view=0, play="play-before-start", auto=True, nxt=False, 
     else:
         right = [seg(["audio-line-mode", "karaoke"], mode)]
         if mode == 1:
-            right.append(btn("karaoke-split", "chk" + h("split")))
+            right.append(btn("karaoke-split", "tg" + h("split")))
         right += [seg(["waveform", "spectrum"], view), SEP,
-                  btn("auto-scroll", "chk" + h("scroll")), btn("audio-video-sync", "chk" + h("sync")),
+                  btn("auto-scroll", "tg" + h("scroll")), btn("audio-video-sync", "tg" + h("sync")),
                   btn("spectrum-nonlinear", h("speech")), SEP,
                   f'<span class="b zoom{" on" if open_menu == "zoom" else ""}{h("zoom")}">{icon("zoom")}<span class="ro">{zoom}</span></span>',
                   f'<span class="b{" on" if open_menu == "vol" else ""}{h("vol")}">{icon(vol)}</span>']
@@ -407,8 +407,8 @@ svg #accent{{color:{t['accent']}}}
 .b{{height:26px;min-width:26px;display:inline-flex;align-items:center;justify-content:center;gap:4px;border:1px solid transparent;border-radius:3px;color:{t['text']}}}
 .b.hov,.split.hov .face,.split.hov .arrow{{background:{t['raised']};border-color:{t['control']}}}
 .b.on,.split.open .face,.split.open .arrow{{background:{t['select']};border-color:{t['accent'] if hc else t['control']}}}
-.b.chk{{background:{t['select']};border-color:{t['accent'] if hc else 'transparent'};box-shadow:inset 0 -2px 0 {t['accent']}}}
-.b.chk.hov{{border-color:{t['control']}}}
+.b.tg{{background:{t['select']};border-color:{t['accent'] if hc else 'transparent'};box-shadow:inset 0 -2px 0 {t['accent']}}}
+.b.tg.hov{{border-color:{t['control']}}}
 .b.zoom{{padding:0 6px 0 4px}}
 .b .ro{{font-size:11.5px;font-variant-numeric:tabular-nums;color:{t['text']}}}
 .split{{display:inline-flex;align-items:stretch;height:26px}}
