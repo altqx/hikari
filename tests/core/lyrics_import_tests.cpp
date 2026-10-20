@@ -257,6 +257,12 @@ TEST(LyricsImport, TtmlMustBeWellFormedXml)
               (LyricsProblem{Kind::NotWellFormed, 3, u8"]]>"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><1x/>" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"<1x/>"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" -end=\"2\">x" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"-end=\"2\">"}));
+    // Names follow XML's grammar, in any script it allows.
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><$>x</$>" + tail, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><a$>x</a$>" + tail, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\" $a=\"1\">x" + tail, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" end=\"2\" x:l\xC3\xA9-g\xC2\xB7.1=\"1\"><\xE6\x97\xA5\xE6\x9C\xAC/>x" + tail))
+                    .has_value());
     // Characters XML forbids, as references or written out.
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x &#xFFFE; y" + tail, u8"ttml"),
               (LyricsProblem{Kind::NotWellFormed, 3, u8"x &#xFFFE; y</p>"}));
@@ -402,6 +408,26 @@ TEST(LyricsImport, TtmlTimesAndWordEnds)
                                          "</p></body></tt>"));
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(rows(*result), (std::vector<Row>{{1500, 3500, "", "{\\k90}a {\\k50}b{\\k60}"}}));
+}
+
+TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
+{
+    const auto timed = [](std::string_view body) {
+        const auto result = importTtml(bytes("<tt><body>" + std::string(body) + "</body></tt>"));
+        return result ? rows(*result) : std::vector<Row>{};
+    };
+    // A <p> without times is active over its nearest timed ancestor's.
+    EXPECT_EQ(timed("<div begin=\"1\" end=\"3\"><p>hello</p></div>"), (std::vector<Row>{{1000, 3000, "", "hello"}}));
+    EXPECT_EQ(timed("<div begin=\"1\" dur=\"1\"><div><p>a</p></div></div>"), (std::vector<Row>{{1000, 2000, "", "a"}}));
+    EXPECT_EQ(timed("<div begin=\"1\" end=\"3\"><p begin=\"2\">a</p><p end=\"2\">b</p></div>"),
+              (std::vector<Row>{{2000, 3000, "", "a"}, {1000, 2000, "", "b"}}));
+    // A word-timed Line spans its words; the ancestor ends its last word.
+    EXPECT_EQ(timed("<div begin=\"0\" end=\"4\"><p><span begin=\"1\" end=\"2\">a</span> <span begin=\"2\">b</span></p></div>"),
+              (std::vector<Row>{{1000, 4000, "", "{\\k100}a {\\k200}b"}}));
+    // Its own begin after the end it inherits; no times anywhere.
+    EXPECT_EQ(problemOf("<tt><body>\n<div begin=\"1\" end=\"3\">\n<p begin=\"5\">x</p></div></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::EndBeforeBegin, 3, u8"5"}));
+    EXPECT_EQ(problemOf("<tt><body><div><p>x</p></div></body></tt>", u8"ttml").kind, Kind::MissingTime);
 }
 
 TEST(LyricsImport, LrcAngleAndSquareBracketsThatAreNotStamps)
