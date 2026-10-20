@@ -239,6 +239,18 @@ TEST(LyricsImport, MalformedTtmlNamesTheLineAtFault)
     EXPECT_EQ(problemOf(head + "<p><span begin=\"2\" end=\"3\">a</span>\n<span begin=\"1\" end=\"2\">b</span></p></body></tt>",
                         u8"ttml"),
               (LyricsProblem{Kind::TimeGoesBack, 4, u8"1"}));
+    // A time on a later line of its tag is at fault on its own line.
+    EXPECT_EQ(problemOf(head + "<p\nbegin=\"bad\" end=\"2\">x</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::UnreadableTime, 4, u8"bad"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"99:59:59\"\ndur=\"10\">x</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::UnreadableTime, 4, u8"10"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"2\"\nend=\"1\">x</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::EndBeforeBegin, 4, u8"1"}));
+    EXPECT_EQ(problemOf(head + "<div end=\"1\"><p\nbegin=\"2\">x</p></div></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::EndBeforeBegin, 4, u8"2"}));
+    EXPECT_EQ(problemOf(head + "<p><span begin=\"2\" end=\"3\">a</span><span\nbegin=\"1\" end=\"2\">b</span></p></body></tt>",
+                        u8"ttml"),
+              (LyricsProblem{Kind::TimeGoesBack, 4, u8"1"}));
     EXPECT_EQ(problemOf(head + "<p>no time</p></body></tt>", u8"ttml"), (LyricsProblem{Kind::MissingTime, 3, u8"no time"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\"><span begin=\"1\">a</span></p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::MissingTime, 3, u8"a"}));
@@ -452,6 +464,12 @@ TEST(LyricsImport, TtmlPrologIsChecked)
     EXPECT_TRUE(imports("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<!DOCTYPE tt>\n"));
     EXPECT_TRUE(imports("\xEF\xBB\xBF<?xml version=\"1.0\"?><!-- c --><?app data?><!DOCTYPE tt [<!ENTITY a \"]>\"><!-- ]> -->]>"));
     EXPECT_EQ(problemOf("<!DOCTYPE tt [<!ENTITY a \"]>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    // A "]" closes only the "[" that opened the internal subset, and ">" follows it.
+    EXPECT_TRUE(imports("<!DOCTYPE tt [ ] >"));
+    EXPECT_EQ(problemOf("<!DOCTYPE tt ]>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<!DOCTYPE tt []]>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<!DOCTYPE tt [] x>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<!DOCTYPE tt [][]>" + root, u8"ttml").kind, Kind::NotWellFormed);
     // A DOCTYPE needs the root's name, comes once and only before the root.
     EXPECT_EQ(problemOf("<!DOCTYPE>" + root, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 1, u8"<!DOCTYPE>"}));
     EXPECT_EQ(problemOf("<!DOCTYPEtt>" + root, u8"ttml").kind, Kind::NotWellFormed);

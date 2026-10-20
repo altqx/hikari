@@ -38,6 +38,7 @@ using Kind = LyricsProblem::Kind;
 struct XmlNode {
     std::u8string name; // as written, with its prefix; empty for text
     std::vector<std::pair<std::u8string, std::u8string>> attributes;
+    std::vector<std::size_t> attributeLines; // the line each attribute's value starts on
     std::vector<XmlNode> children;
     std::u8string text;
     std::size_t line = 0;
@@ -57,6 +58,15 @@ std::optional<u8sv> attribute(const XmlNode &node, u8sv local)
         if (!name.starts_with(u8"xmlns") && localName(name) == local)
             return u8sv(value);
     return std::nullopt;
+}
+
+// The line an attribute's value starts on, or the element's when it has none.
+std::size_t attributeLine(const XmlNode &node, u8sv local)
+{
+    for (std::size_t i = 0; i < node.attributes.size(); ++i)
+        if (const auto &name = node.attributes[i].first; !name.starts_with(u8"xmlns") && localName(name) == local)
+            return node.attributeLines[i];
+    return node.line;
 }
 
 bool isSpace(char8_t c)
@@ -263,9 +273,18 @@ private:
                         ok = skipComment();
                         continue;
                     }
+                    if (c == u8']' && depth == 0) { // a "]" that no "[" opened
+                        ok = false;
+                        break;
+                    }
                     depth += c == u8'[' ? 1 : c == u8']' ? -1 : 0;
                     advance(1);
-                    if (c == u8'>' && depth <= 0)
+                    if (c == u8']' && depth == 0) { // the internal subset ends the declaration
+                        skipSpace();
+                        ok = at(u8">");
+                        continue;
+                    }
+                    if (c == u8'>' && depth == 0)
                         break;
                 }
             } else
@@ -445,6 +464,7 @@ private:
                         return std::unexpected(broken());
                     }
                     node.attributes.emplace_back(*key, *value);
+                    node.attributeLines.push_back(m_line);
                     advance(end + 1 - m_pos);
                     if (!done() && !isSpace(m_s[m_pos]) && !at(u8">") && !at(u8"/>"))
                         return std::unexpected(broken()); // attributes run together
@@ -772,7 +792,8 @@ private:
             return std::nullopt;
         const auto t = ttmlTime(*value);
         if (!t)
-            return std::unexpected(LyricsProblem{Kind::UnreadableTime, node.line, std::u8string(*value)});
+            return std::unexpected(
+                LyricsProblem{Kind::UnreadableTime, attributeLine(node, which), std::u8string(*value)});
         return t;
     }
 
@@ -792,13 +813,15 @@ private:
             if (*dur) {
                 *end = **begin + **dur;
                 if (**end > detail::kLatestLyricsTime)
-                    return std::unexpected(LyricsProblem{Kind::UnreadableTime, node.line,
+                    return std::unexpected(LyricsProblem{Kind::UnreadableTime, attributeLine(node, u8"dur"),
                                                          std::u8string(*attribute(node, u8"dur"))});
             }
         }
-        if (*begin && *end && **end < **begin)
-            return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, node.line,
-                                                 std::u8string(attribute(node, u8"end").value_or(attribute(node, u8"dur").value_or(u8"")))});
+        if (*begin && *end && **end < **begin) {
+            const u8sv which = attribute(node, u8"end") ? u8"end" : u8"dur";
+            return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, attributeLine(node, which),
+                                                 std::u8string(attribute(node, which).value_or(u8""))});
+        }
         return std::pair{*begin, *end};
     }
 
@@ -873,7 +896,7 @@ private:
                 if (word.empty())
                     continue; // a timed span with no lyric is no word; the gaps come from the words
                 if (!into.words.empty() && begin < into.words.back().begin)
-                    return std::unexpected(LyricsProblem{Kind::TimeGoesBack, child.line,
+                    return std::unexpected(LyricsProblem{Kind::TimeGoesBack, attributeLine(child, u8"begin"),
                                                          std::u8string(*attribute(child, u8"begin"))});
                 append(into.plain, word, kept);
                 into.words.push_back(LyricWord{begin, 0, std::u8string(word)});
@@ -908,7 +931,7 @@ private:
         begin = own->first ? own->first : begin;
         end = own->second ? own->second : end;
         if (begin && end && *end < *begin) // its own begin after the end it inherits
-            return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, node.line,
+            return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, attributeLine(node, u8"begin"),
                                                  std::u8string(attribute(node, u8"begin").value_or(u8""))});
         Words words;
         Backgrounds backgrounds;
