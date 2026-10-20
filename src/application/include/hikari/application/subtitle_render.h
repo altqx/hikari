@@ -73,6 +73,18 @@ private:
 };
 
 // Premultiplied BGRA, top-down, `stride` bytes per row.
+// KE1-render-cost-overlay: what drawing a frame's subtitles cost. The
+// renderer selection times every render; libass also counts what it drew.
+struct RenderCost {
+    double milliseconds = 0; // render(), as its caller waited for it
+    bool counted = false;    // the counts below are known (libass)
+    int events = 0;          // events shown at the frame's time
+    int images = 0;          // bitmaps the renderer produced
+    std::int64_t area = 0;   // their pixels, overlaps counted again
+    int blurred = 0;         // shown events with \blur or \be
+    int vectorClips = 0;     // shown events with a drawing \clip or \iclip
+};
+
 struct OverlayFrame {
     int width = 0, height = 0, stride = 0;
     OverlayPixels pixels;
@@ -88,6 +100,7 @@ struct OverlayFrame {
     std::optional<PixelRect> bounds;
     bool empty = true;
     std::uint64_t generation = 0; // the snapshot (context) this frame came from
+    RenderCost cost;
 };
 
 enum class RenderError {

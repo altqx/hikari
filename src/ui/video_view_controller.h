@@ -56,6 +56,8 @@ class VideoViewController : public QObject {
     Q_PROPERTY(int zoomCursor READ zoomCursor NOTIFY changed)
     Q_PROPERTY(int volume READ volume NOTIFY changed)
     Q_PROPERTY(bool progressBar READ progressBar NOTIFY changed)
+    // KE1-render-cost-overlay (video.renderCost).
+    Q_PROPERTY(bool renderCost READ renderCost NOTIFY changed)
     // A paused frame to take a snapshot of (legacy GetState() == Paused).
     Q_PROPERTY(bool canSnapshot READ canSnapshot NOTIFY changed)
     // The last PNG a snapshot wrote.
@@ -83,6 +85,7 @@ public:
     int zoomCursor() const { return m_zoomCursor; }
     int volume() const;
     bool progressBar() const;
+    bool renderCost() const;
     bool canSnapshot() const;
     QString lastSnapshot() const { return m_lastSnapshot; }
     bool pauseOnClick() const;
@@ -138,6 +141,8 @@ public:
 
     // VIDEO_HIDE_PROGRESS_BAR (VideoBox::OnHidePB): needs a video.
     Q_INVOKABLE bool toggleProgressBar();
+    // GLOBAL_VIDEO_RENDER_COST (KE1-render-cost-overlay): needs a video.
+    Q_INVOKABLE bool toggleRenderCost();
 
     // RendererVideo::SaveFrame: `id` the action's legacy id (2017..2020).
     Q_INVOKABLE bool snapshot(const QString &action);

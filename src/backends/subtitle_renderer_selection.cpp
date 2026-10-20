@@ -4,6 +4,7 @@
 #include "hikari/backends/csri_renderer.h"
 #endif
 
+#include <chrono>
 #include <algorithm>
 #include <iterator>
 
@@ -119,7 +120,12 @@ std::expected<application::OverlayFrame, application::RenderError>
 SubtitleRendererSelection::render(core::DocumentTime time, int width, int height)
 {
     std::shared_lock lock(m_switch);
-    return m_active->render(time, width, height);
+    const auto started = std::chrono::steady_clock::now();
+    auto frame = m_active->render(time, width, height);
+    if (frame)
+        frame->cost.milliseconds =
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+    return frame;
 }
 
 } // namespace hikari::backends

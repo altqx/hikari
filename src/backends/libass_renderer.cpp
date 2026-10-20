@@ -18,6 +18,7 @@ static_assert(LIBASS_VERSION >= 0x01705020, "the altqx libass fork is older than
 
 #include <algorithm>
 #include <cstring>
+#include <string_view>
 #include <utility>
 
 namespace hikari::backends {
@@ -250,6 +251,48 @@ std::expected<std::uint64_t, RenderError> LibassRenderer::prepare(application::R
     return generation;
 }
 
+namespace {
+
+// A drawing \clip or \iclip: its arguments hold the drawing's commands.
+bool hasVectorClip(std::string_view text)
+{
+    for (std::size_t at = text.find("clip("); at != std::string_view::npos; at = text.find("clip(", at + 5)) {
+        if (at == 0 || (text[at - 1] != '\\' && !(at >= 2 && text[at - 1] == 'i' && text[at - 2] == '\\')))
+            continue;
+        const std::size_t end = text.find(')', at);
+        const auto args = text.substr(at + 5, end == std::string_view::npos ? std::string_view::npos : end - at - 5);
+        if (std::ranges::any_of(args, [](char c) { return c == 'm' || c == 'M'; }))
+            return true;
+    }
+    return false;
+}
+
+bool hasBlur(std::string_view text)
+{
+    return text.find("\\blur") != std::string_view::npos || text.find("\\be") != std::string_view::npos;
+}
+
+// KE1-render-cost-overlay: what libass drew, and the shown events' costly tags.
+void count(application::RenderCost &cost, const ASS_Track &track, long long ms, const ASS_Image *images)
+{
+    cost.counted = true;
+    for (int i = 0; i < track.n_events; ++i) {
+        const ASS_Event &e = track.events[i];
+        if (e.Start > ms || e.Start + e.Duration <= ms)
+            continue;
+        ++cost.events;
+        const std::string_view text = e.Text ? std::string_view(e.Text) : std::string_view();
+        cost.blurred += hasBlur(text);
+        cost.vectorClips += hasVectorClip(text);
+    }
+    for (const ASS_Image *img = images; img; img = img->next) {
+        ++cost.images;
+        cost.area += static_cast<std::int64_t>(img->w) * img->h;
+    }
+}
+
+} // namespace
+
 std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTime time, int width, int height)
 {
     std::lock_guard lock(m_mutex);
@@ -276,6 +319,7 @@ std::expected<OverlayFrame, RenderError> LibassRenderer::render(core::DocumentTi
     frame.height = height;
     frame.stride = width * 4;
     frame.generation = m_generation;
+    count(frame.cost, *e.current(), ms, images);
     if (change == 0 && !m_redraw && m_buffers.shown()) {
         // Nothing moved: the shown buffer is still current, handed out again.
         frame.pixels = OverlayPixels(m_buffers.shown()->bytes);

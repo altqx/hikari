@@ -7,6 +7,7 @@
 
 #include "hikari/application/playback_pipeline.h"
 #include "hikari/backends/libass_renderer.h"
+#include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -870,4 +871,63 @@ TEST(LibassRenderer, ParsesWhileTheShownTrackRenders)
     const auto after = renderer.render(core::DocumentTime(10'500'000), 96, 64);
     ASSERT_TRUE(after.has_value());
     EXPECT_FALSE(after->empty); // the new script is shown
+}
+
+// KE1-render-cost-overlay: a frame says what libass drew for it: the events
+// shown at its time, the bitmaps and their area, and how many of the shown
+// events use blur or a drawing clip. An unchanged frame handed out again
+// counts as the first did.
+TEST(LibassRenderer, FramesCountWhatTheirSubtitlesCost)
+{
+    backends::LibassRenderer renderer;
+    ASSERT_TRUE(renderer.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,10)}Hi\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,30)\\blur2}Blur\n"
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,"
+                                          "{\\pos(40,10)\\clip(m 0 0 l 50 0 50 50 0 50)}Clip\n"
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,30)\\clip(0,0,90,60)}Box\n"
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,50)\\iclip(1,m 0 0 l 9 9)}I\n")));
+    const auto none = renderer.render(core::DocumentTime(500'000), 96, 64);
+    ASSERT_TRUE(none);
+    EXPECT_TRUE(none->cost.counted);
+    EXPECT_EQ(none->cost.events, 0);
+    EXPECT_EQ(none->cost.images, 0);
+    EXPECT_EQ(none->cost.area, 0);
+
+    const auto two = renderer.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(two);
+    EXPECT_EQ(two->cost.events, 2);
+    EXPECT_EQ(two->cost.blurred, 1);
+    EXPECT_EQ(two->cost.vectorClips, 0);
+    EXPECT_GT(two->cost.images, 0);
+    EXPECT_GT(two->cost.area, 0);
+
+    const auto five = renderer.render(core::DocumentTime(2'500'000), 96, 64);
+    ASSERT_TRUE(five);
+    EXPECT_EQ(five->cost.events, 5);
+    EXPECT_EQ(five->cost.blurred, 1);
+    EXPECT_EQ(five->cost.vectorClips, 2) << "a rectangle \\clip is not a vector clip";
+
+    // A frame handed out again unchanged counts as the first one did.
+    backends::LibassRenderer plain;
+    ASSERT_TRUE(plain.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,{\\pos(10,10)}Hi\n")));
+    const auto first = plain.render(core::DocumentTime(1'500'000), 96, 64);
+    const auto again = plain.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(first && again);
+    EXPECT_TRUE(again->changed.empty());
+    EXPECT_EQ(again->cost.events, 1);
+    EXPECT_GT(again->cost.images, 0);
+    EXPECT_EQ(again->cost.images, first->cost.images);
+    EXPECT_EQ(again->cost.area, first->cost.area);
+}
+
+// The renderer selection times each render, whichever renderer draws.
+TEST(LibassRenderer, TheSelectionTimesEveryRender)
+{
+    backends::SubtitleRendererSelection selection;
+    ASSERT_TRUE(selection.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,10)\\blur3}Hi\n")));
+    const auto frame = selection.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(frame);
+    EXPECT_GT(frame->cost.milliseconds, 0.0);
+    EXPECT_TRUE(frame->cost.counted);
+    EXPECT_EQ(frame->cost.blurred, 1);
 }

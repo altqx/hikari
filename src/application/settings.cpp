@@ -297,6 +297,9 @@ const std::vector<SettingDefinition> &definitions()
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
+        // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
+        // over the video (GLOBAL_VIDEO_RENDER_COST).
+        {"video.renderCost", "", Bool, Profile, Mapped, false, false},
     };
     return table;
 }
