@@ -51,7 +51,13 @@ protected:
                 wait(100ms);
         }
         observed.push_back(shown ? "video shown" : "no video"); // 0
-        // The vector clip, Add line on (VectorItem's default).
+        // The vector clip, Add line on (VectorItem's default). In the default
+        // window the rail scrolls (its lower tools are below the panel's
+        // height): scrolled to its end first, as a user would.
+        const std::string size = prop("mainWindow/visualToolRailScrollBar", "size");
+        if (!size.empty() && std::stod(size) < 1)
+            setStringProperty("mainWindow/visualToolRailScrollBar", "position", std::to_string(1 - std::stod(size)));
+        wait(100ms);
         mouseClick("mainWindow/visualTool7");
         wait(200ms);
         observed.push_back(prop("mainWindow/visualTool7", "checked"));        // 1
