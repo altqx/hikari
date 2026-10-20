@@ -114,6 +114,7 @@ Loader {
                     anchors.rightMargin: 6
                     spacing: 8
                     Label {
+                        id: entryLabel
                         objectName: choice.objectName.length > 0 ? choice.objectName + "_text" : ""
                         Layout.fillWidth: true
                         // As wide as the longest entry, so the bar does not
@@ -132,7 +133,7 @@ Loader {
                         }
                         FontMetrics {
                             id: entryMetrics
-                            font: parent.font
+                            font: entryLabel.font
                         }
                     }
                     ColorImage {
