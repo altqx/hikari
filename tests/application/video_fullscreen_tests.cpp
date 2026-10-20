@@ -120,6 +120,14 @@ TEST(VideoFullscreenBar, TheCurrentLinesTextOnOneLine)
     EXPECT_EQ(fullscreenLineText(""), "");
 }
 
+TEST(VideoFullscreenBar, UnicodeSeparatorsAreSpaces)
+{
+    // One row: a line or paragraph separator (or NEL, VT, FF) pasted into a
+    // Line is a space, not a break that would hide the rest.
+    EXPECT_EQ(fullscreenLineText("one\xE2\x80\xA8two\xE2\x80\xA9three\xC2\x85" "four\vfive\fsix"), "one two three four five six");
+    EXPECT_EQ(fullscreenLineText("\xE2\x80\xA8  edge \xE2\x80\xA9"), "edge");
+}
+
 TEST(VideoFullscreenBar, TheLineLabelIsBounded)
 {
     // A Line of megabytes: the label's length, not the Line's.

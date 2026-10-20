@@ -106,7 +106,10 @@ std::string fullscreenLineText(std::string_view text)
         case core::SpanKind::Text:
             for (std::size_t i = span.rawStart; i < span.rawEnd && !full; ++i) {
                 const char16_t c = raw[i];
-                if (c == u' ' || c == u'\t' || c == u'\r' || c == u'\n')
+                // A space, as is any other white space a label would wrap at
+                // (vertical tab, form feed, NEL, line and paragraph separators).
+                if (c == u' ' || c == u'\t' || c == u'\r' || c == u'\n' || c == u'\v' || c == u'\f' ||
+                    c == u'\u0085' || c == u'\u2028' || c == u'\u2029')
                     space = true;
                 else
                     put(c);

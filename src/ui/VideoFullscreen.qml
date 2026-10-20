@@ -201,6 +201,7 @@ Window {
                 anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter
                           leftMargin: 12; rightMargin: 12 }
                 text: fs.controller.videoName
+                textFormat: Text.PlainText // a file's name, never markup
                 color: Theme.text
                 elide: Text.ElideMiddle
             }
@@ -478,6 +479,7 @@ Window {
                             Layout.fillWidth: true
                             Layout.minimumWidth: 0
                             text: fs.controller.lineLabel(fs.shell.editor.videoText)
+                            textFormat: Text.PlainText // a Line's text, never markup (no <img> fetched)
                             color: Theme.text
                             elide: Text.ElideRight
                             maximumLineCount: 1

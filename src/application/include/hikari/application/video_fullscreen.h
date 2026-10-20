@@ -80,8 +80,8 @@ bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state)
 // FS1-current-line: the bar's read-only label of the current Line's text,
 // on one line, read as core::project reads it: override blocks ({...}),
 // drawings (a top-level \p1 and up, to \p0) and malformed blocks left out,
-// \N and \n shown as " ↵ ", \h as a space, runs of white space as one,
-// trimmed. A label of one elided row: it reads the first
+// \N and \n shown as " ↵ ", \h and Unicode line and paragraph separators as
+// a space, runs of white space as one, trimmed. A label of one elided row: it reads the first
 // kFullscreenLineInputBytes of the text at most (to a whole character) and
 // gives kFullscreenLineLabelUnits UTF-16 units at most (a pair kept whole).
 inline constexpr std::size_t kFullscreenLineInputBytes = 65536;

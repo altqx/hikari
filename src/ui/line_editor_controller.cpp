@@ -271,7 +271,9 @@ bool LineEditorController::translationMode() const
 
 QString LineEditorController::videoText() const
 {
-    const auto r = record();
+    // The session's (the draft applied), not E5's split, which is shown
+    // only until an edit makes it the draft.
+    const auto r = sessionRecord();
     if (!r)
         return {};
     return qs(translationMode() && !r->translation.empty() ? r->translation : r->text);

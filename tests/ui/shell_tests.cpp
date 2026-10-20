@@ -9980,8 +9980,10 @@ private slots:
         QCOMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}{\\b1}"));
         QTRY_VERIFY(translated->hasActiveFocus());
         QCOMPARE(translated->property("cursorPosition").toInt(), 5);
-        // Shown only: the Document and the draft are untouched.
+        // Shown only: the Document and the draft are untouched, and the video
+        // (FS1's Line label) still shows the stored text.
         QVERIFY(!session->draftLine());
+        QCOMPARE(application->editor().videoText(), QStringLiteral("{\\i1}Wall {\\b1}high"));
         QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
         // A translated Line is shown whole.
         item("editingGrid")->forceActiveFocus();
@@ -9998,6 +10000,7 @@ private slots:
         QVERIFY(session->draftRecord());
         QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("Wall high"));
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}X{\\b1}"));
+        QCOMPARE(application->editor().videoText(), QStringLiteral("{\\i1}X{\\b1}")); // the draft's translation now
         QVERIFY(application->editor().commit());
         QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("Wall high"));
         QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\i1}X{\\b1}"));
@@ -22436,6 +22439,13 @@ private slots:
         // The Line editor's draft, as the video shows it, not the stored text.
         application->editor().textEdited(QStringLiteral("{\\i1}draft\\Nnow"), 5);
         QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("draft \u21B5 now"));
+        // Markup in a Line (and a file's name) is text: nothing parsed, no
+        // <img> fetched.
+        const QString markup = QStringLiteral("<img src=\"http://127.0.0.1:9/x\"><b>bold</b>");
+        application->editor().textEdited(markup, int(markup.size()));
+        QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), markup);
+        QCOMPARE(fullscreenItem("fullscreenLineText")->property("textFormat").toInt(), int(Qt::PlainText));
+        QCOMPARE(fullscreenItem("fullscreenVideoName")->property("textFormat").toInt(), int(Qt::PlainText));
         application->editor().discard();
         QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
         // The progress bar's times (VIDEO_PROGRESS_BAR is on by default).
