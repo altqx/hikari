@@ -11463,6 +11463,9 @@ private slots:
     // switches into ⋯.
     void audioPanelRowFoldsItsControls()
     {
+        // it plays: without a device (Windows CI) the playback's failure
+        // log window would take the activation and the keys with it
+        restartWithoutSound();
         keysNeverRepeat();
         window->resize(1280, 800);
         QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
