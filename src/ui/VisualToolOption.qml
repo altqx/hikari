@@ -25,6 +25,10 @@ Loader {
     required property var modelData
     required property VisualToolsController tools
     readonly property bool grouped: modelData.group.length > 0
+    // The tools' help texts are legacy's; the bar's own action (VT1's Copy
+    // video position) is named in the catalog.
+    readonly property string tooltip: modelData.kind === "action" && modelData.name === "copyPosition"
+                                      ? qsTr("Copy video position") : modelData.tooltip
     sourceComponent: modelData.kind !== "choice" ? buttonComponent
                      : modelData.iconRole.length === 0 ? listComponent : choiceComponent
     Layout.alignment: Qt.AlignVCenter
@@ -35,8 +39,8 @@ Loader {
             objectName: "visualOption_" + option.modelData.name
             // The roles the families' options show (one line: icon_tests reads the roles from it).
             iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit", "copy-position"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
-            text: option.modelData.tooltip.split("\n")[0]
-            tip: option.modelData.tooltip
+            text: option.tooltip.split("\n")[0]
+            tip: option.tooltip
             checkable: option.modelData.kind === "toggle"
             checked: option.modelData.checked
             enabled: option.modelData.enabled && option.tools.railEnabled
@@ -70,8 +74,7 @@ Loader {
                     return qsTr("Edit shapes…")
                 return model[index] ?? ""
             }
-            // The K1 roles the choices name (on one line: icon_tests reads them from it).
-            readonly property string role: ["shape-presets", "tag-list", "tag-change-option"].indexOf(option.modelData.iconRole) >= 0 ? option.modelData.iconRole : ""
+            readonly property string role: option.modelData.iconRole
             text: option.modelData.tooltip.split("\n")[0]
             Accessible.role: asText ? Accessible.ComboBox : Accessible.Button
             Accessible.name: text
@@ -97,7 +100,8 @@ Loader {
                 Icon {
                     anchors.centerIn: parent
                     visible: !choice.asText
-                    iconRole: choice.role
+                    // The K1 roles the choices name (on one line: icon_tests reads them from it).
+                    iconRole: ["shape-presets", "tag-list", "tag-change-option"].indexOf(choice.role) >= 0 ? choice.role : ""
                 }
                 RowLayout {
                     id: textBox
