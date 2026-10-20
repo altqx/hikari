@@ -14,6 +14,7 @@
 #include <regex>
 #include <set>
 #include <sstream>
+#include <string_view>
 
 using namespace hikari::application;
 
@@ -76,8 +77,8 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
 {
     ASSERT_EQ(ids().size(), 243u);
     // Legacy's IDS, then the rewrite's own commands (LE3: GLOBAL_EDITOR_HIDE_TAGS,
-    // TM1: GLOBAL_TRANSLATION_MODE).
-    ASSERT_EQ(hotkeyActions().size(), 245u);
+    // TM1: GLOBAL_TRANSLATION_MODE, the nine run keys and the next run).
+    ASSERT_EQ(hotkeyActions().size(), 255u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(ids().at(std::string(a.symbol)), a.id) << a.symbol;
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
@@ -86,12 +87,17 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     for (const auto &a : hotkeyActions().subspan(kLegacyHotkeyActions)) {
         EXPECT_FALSE(ids().contains(std::string(a.symbol))) << a.symbol;
         EXPECT_TRUE(std::ranges::none_of(ids(), [&](const auto &l) { return l.second == a.id; })) << a.symbol;
-        EXPECT_EQ(hotkeyType(a.id), GlobalHotkey) << a.symbol;
+        // The run keys work in the Translated field: Editor hotkeys.
+        const bool editor = std::string_view(a.symbol).starts_with("EDITBOX_");
+        EXPECT_EQ(hotkeyType(a.id), editor ? EditorHotkey : GlobalHotkey) << a.symbol;
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
         EXPECT_EQ(hotkeySymbol(a.id), a.symbol);
     }
     EXPECT_EQ(hotkeyIdOf("GLOBAL_EDITOR_HIDE_TAGS"), 5169);
     EXPECT_EQ(hotkeyIdOf("GLOBAL_TRANSLATION_MODE"), 5170);
+    EXPECT_EQ(hotkeyIdOf("EDITBOX_PLACE_RUN_1"), 3020);
+    EXPECT_EQ(hotkeyIdOf("EDITBOX_PLACE_RUN_9"), 3028);
+    EXPECT_EQ(hotkeyIdOf("EDITBOX_PLACE_NEXT_RUN"), 3029);
     // docs/qt/proposals/settings-migration-map/actions.csv: symbol, numeric alias.
     std::istringstream csv(readFile(HIKARI_ACTIONS_CSV));
     std::string line;
@@ -141,6 +147,9 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     // The rewrite's own commands are named too (LE3, TM1).
     legacy[5169] = "Hide tags in the line editor";
     legacy[5170] = "Translation mode";
+    for (int n = 1; n <= 9; ++n)
+        legacy[3019 + n] = "Place run " + std::to_string(n);
+    legacy[3029] = "Place the next run";
     EXPECT_EQ(hotkeyNames(), legacy);
     EXPECT_EQ(hotkeyName(kSave), "Save");
     EXPECT_EQ(hotkeyName(kGlobalQuit), ""); // not named: never listed
@@ -161,11 +170,14 @@ TEST(Hotkeys, DefaultsAreLoadDefault)
     // WS3-view-arrangements-retired: the editor switch's Ctrl-E is no default.
     EXPECT_EQ(legacy.at(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey}).accel, "Ctrl-E");
     legacy.erase(HotkeyId{ids().at("GLOBAL_EDITOR"), GlobalHotkey});
+    // TM1: the run keys are the rewrite's own, Alt-1 to Alt-9 in the editor.
+    for (int n = 1; n <= 9; ++n)
+        legacy[HotkeyId{3019 + n, EditorHotkey}] = Hotkey{"Place run " + std::to_string(n), "Alt-" + std::to_string(n)};
     EXPECT_EQ(defaultHotkeys(), legacy);
     HotkeyMap main, audio;
     loadDefaultHotkeys(main, false);
     loadDefaultHotkeys(audio, true);
-    EXPECT_EQ(main.size(), 62u);
+    EXPECT_EQ(main.size(), 71u);
     EXPECT_EQ(audio.size(), 23u);
     for (const auto &[k, h] : audio)
         EXPECT_EQ(k.type, AudioHotkey);
@@ -211,7 +223,7 @@ TEST(Hotkeys, StoredLinesAreSaveHkeys)
     map[HotkeyId{ids().at("AUDIO_PLAY"), GlobalHotkey}] = Hotkey{"", "Ctrl-P"}; // main file: not an Audio binding
     const auto main = hotkeyLines(map, false);
     const auto audio = hotkeyLines(map, true);
-    EXPECT_EQ(main.size(), 62u + 2u - 1u + 1u); // WS3: the defaults bind no Ctrl-E
+    EXPECT_EQ(main.size(), 71u + 2u - 1u + 1u); // WS3: the defaults bind no Ctrl-E
     EXPECT_EQ(audio.size(), 23u);
     EXPECT_EQ(main.front(), "AUDIO_PLAY G=Ctrl-P"); // map order: window, then id
     EXPECT_NE(std::ranges::find(main, "GLOBAL_SAVE_SUBS G=Ctrl-S"), main.end());
@@ -344,7 +356,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     // The names table from the highest id down; no GLOBAL_QUIT.
     // V3: no "Open video with FFMS2" row; WS3: none for the five View
     // arrangements and the editor switch; LE3's and TM1's commands have theirs.
-    ASSERT_EQ(list.rowCount(), 221u);
+    ASSERT_EQ(list.rowCount(), 231u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -368,7 +380,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 223u); // 221 named rows and these two
+    ASSERT_EQ(more.rowCount(), 233u); // 231 named rows and these two
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -384,7 +396,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 220u); // 221 named rows less Commit alt
+    EXPECT_EQ(cut.rowCount(), 230u); // 231 named rows less Commit alt
     EXPECT_EQ(cut.find("Audio Commit alt"), -1);
     // A binding in a window legacy cannot name (-1) is never listed, and so
     // the list never ends early.
@@ -392,7 +404,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 221u);
+    EXPECT_EQ(whole.rowCount(), 231u);
 }
 
 TEST(Hotkeys, FilterModesAndSelection)
@@ -405,7 +417,7 @@ TEST(Hotkeys, FilterModesAndSelection)
         list.filter(mode);
         return list.shown().size();
     };
-    EXPECT_EQ(count(1), 84u); // set shortcuts (GLOBAL_QUIT is not listed; WS3: no Ctrl-E)
+    EXPECT_EQ(count(1), 93u); // set shortcuts (GLOBAL_QUIT is not listed; WS3: no Ctrl-E)
     EXPECT_EQ(count(3), std::size_t(std::ranges::count_if(hotkeyNames(), [](const auto &n) { return hotkeyType(n.first) == GridHotkey; })));
     EXPECT_EQ(count(6), 23u);
     list.filter(5);
@@ -416,12 +428,12 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     const int first = list.selection();
     list.remove(first, live);
-    EXPECT_EQ(list.shown().size(), 84u);
+    EXPECT_EQ(list.shown().size(), 93u);
     EXPECT_EQ(list.row(first).accel, "");
     list.filter(1);
-    EXPECT_EQ(list.shown().size(), 83u);
+    EXPECT_EQ(list.shown().size(), 92u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 221u);
+    EXPECT_EQ(list.shown().size(), 231u);
 }
 
 TEST(Hotkeys, MapSetsTheBindingAndCommitWritesTheCopy)
@@ -557,8 +569,8 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S"); // the Global row keeps its keys
-    ASSERT_EQ(list.rowCount(), 222u);
-    const auto &added = list.row(221);
+    ASSERT_EQ(list.rowCount(), 232u);
+    const auto &added = list.row(231);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
@@ -566,9 +578,9 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     // Again: that row changes and is selected.
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 222u);
-    EXPECT_EQ(list.row(221).accel, "F6");
-    EXPECT_EQ(list.selection(), 221);
+    EXPECT_EQ(list.rowCount(), 232u);
+    EXPECT_EQ(list.row(231).accel, "F6");
+    EXPECT_EQ(list.selection(), 231);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -660,7 +672,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 221u); // every row shown, the filter choice as it was
+    EXPECT_EQ(third.shown().size(), 231u); // every row shown, the filter choice as it was
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
