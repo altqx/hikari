@@ -22711,9 +22711,33 @@ private slots:
         QTest::mouseMove(fsWindow, picture + QPoint(20, 0));
         QVERIFY(fs.barShown());
         QTRY_VERIFY(!fs.barShown());
+        // The pointer hides with it there too (before the zoom mode's shape).
+        QCOMPARE(cursor(), int(Qt::BlankCursor));
+        QTRY_COMPARE(fsWindow->cursor().shape(), Qt::BlankCursor);
         QVERIFY(view.toggleZoom());
         QVERIFY(!view.zoomMode());
         QVERIFY(view.resetZoom());
+        // The tool rail stays when the bar hides; a move over it wakes the bar.
+        auto &tools = application->visualTools();
+        const qreal barHeight = panel->height();
+        tools.selectFamily(3);
+        auto *rail = fullscreenItem("fullscreenToolRail");
+        QTRY_VERIFY(rail->isVisible());
+        pause();
+        playFromStart();
+        QTRY_VERIFY(!fs.barShown());
+        QVERIFY(rail->isVisible());
+        auto *railTool = findItem(rail, QStringLiteral("visualTool3"));
+        QVERIFY(railTool && railTool->isVisible());
+        const QPoint onRail = railTool->mapToScene(QPointF(railTool->width() / 2, railTool->height() / 2)).toPoint();
+        QTest::mouseMove(fsWindow, onRail);
+        QTRY_VERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        QTest::mouseMove(fsWindow, onRail + QPoint(0, 2));
+        QTRY_VERIFY(fs.barShown());
+        tools.selectFamily(0);
+        QTRY_VERIFY(!rail->isVisible());
+        QTRY_COMPARE(panel->height(), barHeight); // without the tool's row again
         pause();
         QVERIFY(fs.barShown()); // paused again
         // The pointer over the bar holds it.
@@ -22921,6 +22945,17 @@ private slots:
         QCoreApplication::sendEvent(fsWindow, &wheel);
         QTRY_VERIFY(!view.muted());
         QCOMPARE(view.volume(), -7);
+        // In the zoom mode, which takes the rest of the bar's wheel, the
+        // speaker's wheel stays the volume's.
+        QVERIFY(view.toggleZoom());
+        const int zoom = view.zoomPercent();
+        QWheelEvent again(over, fsWindow->mapToGlobal(over), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(fsWindow, &again);
+        QTRY_COMPARE(view.volume(), -4);
+        QCOMPARE(view.zoomPercent(), zoom);
+        QVERIFY(view.toggleZoom());
+        QVERIFY(view.resetZoom());
         // Right-click: AV1's output device menu, which holds the bar.
         QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, over);
         auto *outputs = named("fullscreenAudioOutputMenu");

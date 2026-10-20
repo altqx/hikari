@@ -517,6 +517,11 @@ Window {
                         down: outputMenu.visible
                         focusPolicy: Qt.NoFocus
                         onClicked: fs.shell.videoView.toggleMute()
+                        // The volume's even in the zoom mode, which takes the bar's wheel.
+                        WheelHandler {
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: event => fs.shell.videoView.volumeWheel(Math.round(event.angleDelta.y / 120))
+                        }
                         TapHandler {
                             acceptedButtons: Qt.RightButton
                             onTapped: fs.popupAbove(outputMenu, speaker)

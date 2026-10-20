@@ -112,6 +112,9 @@ public:
     // under the docked panel (VideoBox.cpp:508-518) and is the volume's in
     // fullscreen (V5: the Ctrl test is `!m_IsFullscreen`).
     Q_INVOKABLE void panelWheel(int steps, int modifiers = 0);
+    // The volume slider's wheel step (FS1: the fullscreen speaker's wheel,
+    // in the zoom mode too).
+    Q_INVOKABLE void volumeWheel(int steps);
     // A key the Video panel's bindings left (VideoBox::OnKeyPress): Return
     // in the zoom mode, Ctrl+Shift+Z. F (fullscreen) is the panel's own.
     Q_INVOKABLE bool key(int key, int modifiers);

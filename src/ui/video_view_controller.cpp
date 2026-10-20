@@ -239,6 +239,13 @@ void VideoViewController::panelWheel(int steps, int modifiers)
     // panel's wheel is the volume's with or without Ctrl.
     if ((modifiers & Qt::ControlModifier) != 0 && !m_fullscreen)
         return;
+    volumeWheel(steps);
+}
+
+void VideoViewController::volumeWheel(int steps)
+{
+    if (!m_video.hasVideo() || steps == 0)
+        return;
     if (const auto v = application::videoVolumeWheelStep(volume(), steps))
         setVolume(*v);
 }
