@@ -408,7 +408,7 @@ def sheet(key, t):
 
     cells.append(cell(1, "The Template editor, docked as a tab beside the Line editor, with the preview on the video.",
                       window(t),
-                      "Opened from View › Template editor (and by KP1's Karaoke preset later). It edits the "
+                      "Opened from View › Panels › Template editor (and by KP1's Karaoke preset later). It edits the "
                       "Document's template and code Lines like any other edit (the Grid shows the new text, Ctrl+Z "
                       "takes it back). Each edit re-runs the templater on the <b>current Line</b> only, and the video "
                       "draws that result in place of the Line's generated Lines; <b>no generated Line is written until "
