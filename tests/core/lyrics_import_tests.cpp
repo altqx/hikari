@@ -209,6 +209,9 @@ TEST(LyricsImport, MalformedLrcNamesTheLineAtFault)
               (LyricsProblem{Kind::UnreadableTime, 1, u8"<999999999:00.00>"}));
     // An offset is whole signed milliseconds, up to 100 hours.
     EXPECT_EQ(problemOf("[offset:100oops]\n[00:01.00]x", u8"lrc"), (LyricsProblem{Kind::UnreadableTime, 1, u8"[offset:100oops]"}));
+    EXPECT_EQ(problemOf("[offset:+]\n[00:01.00]x", u8"lrc"), (LyricsProblem{Kind::UnreadableTime, 1, u8"[offset:+]"}));
+    EXPECT_EQ(problemOf("[offset: - ]\n[00:01.00]x", u8"lrc"), (LyricsProblem{Kind::UnreadableTime, 1, u8"[offset: - ]"}));
+    EXPECT_TRUE(importLrc(bytes("[offset:]\n[offset: ]\n[00:01.00]x")).has_value());
     EXPECT_EQ(problemOf("[offset:1234567890]\n[00:01.00]x", u8"lrc"),
               (LyricsProblem{Kind::UnreadableTime, 1, u8"[offset:1234567890]"}));
     EXPECT_EQ(problemOf("[offset:-360000001]\n[00:01.00]x", u8"lrc"),
@@ -493,6 +496,27 @@ TEST(LyricsImport, TtmlTextBeforeTheFirstWordJoinsItAsWritten)
               "{\\k100}hello world");
     EXPECT_EQ(text("<p begin=\"2\" end=\"3\">hello<span begin=\"2\" end=\"3\"> world</span></p>"),
               "{\\k100}hello world");
+}
+
+TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
+{
+    const auto text = [](std::string_view body) {
+        const auto result = importTtml(bytes("<tt><body" + std::string(body) + "</body></tt>"));
+        return result && !rows(*result).empty() ? rows(*result).front().text : std::string("(none)");
+    };
+    EXPECT_EQ(text("><p begin=\"1\" end=\"2\">a  \t b</p>"), "a b");
+    EXPECT_EQ(text("><p begin=\"1\" end=\"2\" xml:space=\"preserve\">a  \t b</p>"), "a    b");
+    // Inherited from the body or a div; a line end is a line break.
+    EXPECT_EQ(text(" xml:space=\"preserve\"><div><p begin=\"1\" end=\"2\">a  b\nc</p></div>"), "a  b\\Nc");
+    // xml:space="default" inside switches back.
+    EXPECT_EQ(text("><p begin=\"1\" end=\"2\" xml:space=\"preserve\">a  <span xml:space=\"default\">b   c</span></p>"),
+              "a  b c");
+    // Spaces between preserved words stay with the word before.
+    EXPECT_EQ(text("><p begin=\"1\" end=\"3\" xml:space=\"preserve\"><span begin=\"1\" end=\"2\">a</span>  "
+                   "<span begin=\"2\" end=\"3\">b</span></p>"),
+              "{\\k100}a  {\\k100}b");
+    // Only xml:space counts, not another prefix's "space".
+    EXPECT_EQ(text("><p begin=\"1\" end=\"2\" x:space=\"preserve\">a  b</p>"), "a b");
 }
 
 TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)
