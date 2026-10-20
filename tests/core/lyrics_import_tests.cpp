@@ -451,6 +451,7 @@ TEST(LyricsImport, TtmlPrologIsChecked)
     // A DOCTYPE needs the root's name, comes once and only before the root.
     EXPECT_EQ(problemOf("<!DOCTYPE>" + root, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 1, u8"<!DOCTYPE>"}));
     EXPECT_EQ(problemOf("<!DOCTYPEtt>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<!DOCTYPE html>\n" + root, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 2, u8"<tt>"}));
     EXPECT_EQ(problemOf("<!DOCTYPE tt>\n<!DOCTYPE tt>\n" + root, u8"ttml"),
               (LyricsProblem{Kind::NotWellFormed, 2, u8"<!DOCTYPE tt>"}));
     EXPECT_EQ(problemOf(root + "\n<!DOCTYPE tt>", u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 2, u8"<!DOCTYPE tt>"}));
@@ -496,6 +497,39 @@ TEST(LyricsImport, TtmlTextBeforeTheFirstWordJoinsItAsWritten)
               "{\\k100}hello world");
     EXPECT_EQ(text("<p begin=\"2\" end=\"3\">hello<span begin=\"2\" end=\"3\"> world</span></p>"),
               "{\\k100}hello world");
+}
+
+TEST(LyricsImport, TtmlEmptyAndNestedTimedSpans)
+{
+    const auto text = [](std::string_view p) {
+        const auto result = importTtml(bytes("<tt><body>" + std::string(p) + "</body></tt>"));
+        return result && !rows(*result).empty() ? rows(*result).front().text : std::string("(none)");
+    };
+    // A timed span without lyrics is no word, and no lyrics at all is NoLyrics.
+    EXPECT_EQ(problemOf("<tt><body><p><span begin=\"1\" end=\"2\"/></p></body></tt>", u8"ttml").kind, Kind::NoLyrics);
+    EXPECT_EQ(problemOf("<tt><body><p><span begin=\"1\" end=\"2\">  </span></p></body></tt>", u8"ttml").kind,
+              Kind::NoLyrics);
+    EXPECT_EQ(text("<p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\">a</span><span begin=\"2\" end=\"3\"> </span></p>"),
+              "{\\k100}a{\\k100}");
+    // A word without its own end ends with the timed span around it.
+    EXPECT_EQ(text("<p begin=\"0\" end=\"4\"><span begin=\"1\" end=\"2\"><span begin=\"1\">x</span></span></p>"),
+              "{\\k100}{\\k100}x{\\k200}");
+}
+
+TEST(LyricsImport, ActorsKeepAMarkerLikeStart)
+{
+    // The loader reads "[hidden]" and the other markers in a Name that starts
+    // with "["; a word joiner keeps such an agent's name as written.
+    const auto result = importTtml(bytes("<tt><head><metadata><ttm:agent xml:id=\"v1\"><ttm:name>[hidden]Singer</ttm:name>"
+                                         "</ttm:agent></metadata></head><body><p begin=\"1\" end=\"2\" ttm:agent=\"v1\">a</p>"
+                                         "<p begin=\"2\" end=\"3\" ttm:agent=\"[bookmark]v2\">b</p></body></tt>"));
+    ASSERT_TRUE(result.has_value());
+    const auto lines = result->document.lines();
+    ASSERT_EQ(lines.size(), 2u);
+    EXPECT_EQ(str(lines[0]->actor), "⁠[hidden]Singer");
+    EXPECT_EQ(lines[0]->visibility, LineVisibility::Visible);
+    EXPECT_EQ(str(lines[1]->actor), "⁠[bookmark]v2");
+    EXPECT_FALSE(lines[1]->bookmark);
 }
 
 TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
