@@ -1,0 +1,85 @@
+# compositor windows
+floating_con id=12 hikarisub 'HikariSub' 160,127 1280x773 client=162,127 1276x771 output=HEADLESS-1 fullscreen=0  visible=True border=normal
+floating_con id=13 hikarisub 'About HikariSub' 568,367 464x268 client=570,367 460x266 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=normal
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "HikariSub",
+   "id": "HikariSub",
+   "active": false,
+   "x": 0,
+   "y": 0,
+   "w": 1276,
+   "h": 771
+  },
+  {
+   "name": "About HikariSub",
+   "id": "About HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 460,
+   "h": 266
+  }
+ ],
+ "panels": [
+  {
+   "name": "Home",
+   "id": "Home",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 59,
+   "w": 1276,
+   "h": 683
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 527,
+   "w": 1276,
+   "h": 215
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 94,
+   "w": 637,
+   "h": 389
+  },
+  {
+   "name": "Line editor",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 638,
+   "y": 298,
+   "w": 638,
+   "h": 185
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "HikariSub",
+   "x": 638,
+   "y": 94,
+   "w": 638,
+   "h": 168
+  }
+ ],
+ "focus": "[dialog] 'About HikariSub' <focused,showing,visible,enabled> @0,0 460x266 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'About HikariSub' > dialog:'About HikariSub'",
+ "texts": {
+  "Line text": "",
+  "Start": "",
+  "End": ""
+ },
+ "labels": [
+  "Editing",
+  "Video times"
+ ]
+}

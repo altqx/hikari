@@ -1,0 +1,71 @@
+{
+ "dialog-frame-window": {
+  "status": "observed",
+  "detail": "kwin: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame False (KWin frame 460x286, client 460x286)",
+  "evidence": [
+   "dialogs-0-about.png",
+   "dialogs-0-about.txt"
+  ],
+  "at": "2026-10-20T22:09:54"
+ },
+ "dialog-frame-centred": {
+  "status": "not-observable",
+  "detail": "kwin: a Wayland client cannot place its windows; the compositor put About at (570, 357, 460, 286) (main window (160, 100, 1280, 800))",
+  "evidence": [
+   "dialogs-0-about.png",
+   "dialogs-0-about.txt"
+  ],
+  "at": "2026-10-20T22:09:57"
+ },
+ "dialog-frame-move": {
+  "status": "observed",
+  "detail": "title bar dragged by (-80,+50): (570, 357, 460, 286) -> (498, 402, 460, 286); Esc closed it: True",
+  "evidence": [
+   "dialogs-1-moved-reopened.png",
+   "dialogs-1-moved-reopened.txt"
+  ],
+  "at": "2026-10-20T22:10:13"
+ },
+ "dialog-frame-remembered": {
+  "status": "not-observable",
+  "detail": "opened again at (570, 357, 460, 286) (left at (498, 402, 460, 286)); on Wayland only the size is kept, the compositor places it",
+  "evidence": [
+   "dialogs-1-moved-reopened.png",
+   "dialogs-1-moved-reopened.txt"
+  ],
+  "at": "2026-10-20T22:10:13"
+ },
+ "dialog-frame-modeless": {
+  "status": "observed",
+  "detail": "About open, a click on the main window, Help > Credits: both open True (windows ['About HikariSub', 'Credits', 'HikariSub'], active ['Credits'])",
+  "evidence": [
+   "dialogs-2-about-and-credits.png",
+   "dialogs-2-about-and-credits.txt"
+  ],
+  "at": "2026-10-20T22:10:23"
+ },
+ "dialog-frame-system": {
+  "status": "observed",
+  "detail": "About with the system's title bar: HikariSub's drawn buttons []; window system frame True (KWin frame 460x302, client 460x266)",
+  "evidence": [
+   "dialogs-3-system-title-bar.png",
+   "dialogs-3-system-title-bar.txt"
+  ],
+  "at": "2026-10-20T22:10:39"
+ },
+ "dialog-frame-themes": {
+  "status": "observed",
+  "detail": "About on HikariSub's frame in the four themes (screenshots)",
+  "evidence": [
+   "dialogs-4-theme-light.png",
+   "dialogs-4-theme-light.txt",
+   "dialogs-4-theme-dark.png",
+   "dialogs-4-theme-dark.txt",
+   "dialogs-4-theme-highContrastWhite.png",
+   "dialogs-4-theme-highContrastWhite.txt",
+   "dialogs-4-theme-highContrastBlack.png",
+   "dialogs-4-theme-highContrastBlack.txt"
+  ],
+  "at": "2026-10-20T22:11:29"
+ }
+}

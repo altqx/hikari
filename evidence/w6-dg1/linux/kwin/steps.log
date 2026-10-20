@@ -1,0 +1,17 @@
+22:01:22 --- kwin: dialogframe
+22:01:38 == dialog-frame-window: observed - kwin: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame False (KWin frame 460x286, client 460x286)
+22:01:41 == dialog-frame-centred: not-observable - kwin: a Wayland client cannot place its windows; the compositor put About at (570, 357, 460, 286) (main window (160, 100, 1280, 800))
+22:01:57 == dialog-frame-move: observed - title bar dragged by (-80,+50): (570, 357, 460, 286) -> (498, 402, 460, 286); Esc closed it: True
+22:01:57 == dialog-frame-remembered: not-observable - opened again at (570, 357, 460, 286) (left at (498, 402, 460, 286)); on Wayland only the size is kept, the compositor places it
+22:02:11 == dialog-frame-modeless: failed - About and Credits open at once: False
+22:02:26 == dialog-frame-system: observed - About with the system's title bar: HikariSub's drawn buttons []; window system frame True (KWin frame 460x302, client 460x266)
+22:03:20 == dialog-frame-themes: observed - About on HikariSub's frame in the four themes (screenshots)
+22:09:39 --- kwin: dialogframe
+22:09:54 == dialog-frame-window: observed - kwin: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame False (KWin frame 460x286, client 460x286)
+22:09:57 == dialog-frame-centred: not-observable - kwin: a Wayland client cannot place its windows; the compositor put About at (570, 357, 460, 286) (main window (160, 100, 1280, 800))
+22:10:13 == dialog-frame-move: observed - title bar dragged by (-80,+50): (570, 357, 460, 286) -> (498, 402, 460, 286); Esc closed it: True
+22:10:13 == dialog-frame-remembered: not-observable - opened again at (570, 357, 460, 286) (left at (498, 402, 460, 286)); on Wayland only the size is kept, the compositor places it
+22:10:17 active after the click: ['HikariSub']
+22:10:23 == dialog-frame-modeless: observed - About open, a click on the main window, Help > Credits: both open True (windows ['About HikariSub', 'Credits', 'HikariSub'], active ['Credits'])
+22:10:39 == dialog-frame-system: observed - About with the system's title bar: HikariSub's drawn buttons []; window system frame True (KWin frame 460x302, client 460x266)
+22:11:29 == dialog-frame-themes: observed - About on HikariSub's frame in the four themes (screenshots)

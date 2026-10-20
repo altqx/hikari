@@ -1,0 +1,59 @@
+{
+ "dialog-frame-window": {
+  "status": "observed",
+  "detail": "mutter: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame None (mutter publishes no frame geometry (see the screenshot))",
+  "evidence": [
+   "dialogs-0-about.png",
+   "dialogs-0-about.txt"
+  ],
+  "at": "2026-10-20T22:03:45"
+ },
+ "dialog-frame-centred": {
+  "status": "not-observable",
+  "detail": "mutter: a Wayland client cannot place its windows; the compositor put About at None (main window (160, 100, 1280, 800))",
+  "evidence": [
+   "dialogs-0-about.png",
+   "dialogs-0-about.txt"
+  ],
+  "at": "2026-10-20T22:03:48"
+ },
+ "dialog-frame-move": {
+  "status": "not-observable",
+  "detail": "mutter: no window position published or no Close",
+  "evidence": [],
+  "at": "2026-10-20T22:03:49"
+ },
+ "dialog-frame-modeless": {
+  "status": "observed",
+  "detail": "About and Credits open at once: True",
+  "evidence": [
+   "dialogs-2-about-and-credits.png",
+   "dialogs-2-about-and-credits.txt"
+  ],
+  "at": "2026-10-20T22:03:57"
+ },
+ "dialog-frame-system": {
+  "status": "observed",
+  "detail": "About with the system's title bar: HikariSub's drawn buttons []; window system frame None (mutter publishes no frame geometry (see the screenshot))",
+  "evidence": [
+   "dialogs-3-system-title-bar.png",
+   "dialogs-3-system-title-bar.txt"
+  ],
+  "at": "2026-10-20T22:04:12"
+ },
+ "dialog-frame-themes": {
+  "status": "observed",
+  "detail": "About on HikariSub's frame in the four themes (screenshots)",
+  "evidence": [
+   "dialogs-4-theme-light.png",
+   "dialogs-4-theme-light.txt",
+   "dialogs-4-theme-dark.png",
+   "dialogs-4-theme-dark.txt",
+   "dialogs-4-theme-highContrastWhite.png",
+   "dialogs-4-theme-highContrastWhite.txt",
+   "dialogs-4-theme-highContrastBlack.png",
+   "dialogs-4-theme-highContrastBlack.txt"
+  ],
+  "at": "2026-10-20T22:05:25"
+ }
+}

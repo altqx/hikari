@@ -1,0 +1,17 @@
+22:05:34 --- sway: dialogframe
+22:05:48 == dialog-frame-window: observed - sway: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame False (sway border 'csd': floating_con id=9 hikarisub 'About HikariSub' 570,357 460x286 client=570,357 460x286 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=csd)
+22:05:48 == dialog-frame-centred: not-observable - sway: a Wayland client cannot place its windows; the compositor put About at (570, 357, 460, 286) (main window (160, 100, 1280, 800))
+22:06:01 == dialog-frame-move: observed - title bar dragged by (-80,+50): (570, 357, 460, 286) -> (498, 402, 460, 286); Esc closed it: True
+22:06:01 == dialog-frame-remembered: not-observable - opened again at (570, 357, 460, 286) (left at (498, 402, 460, 286)); on Wayland only the size is kept, the compositor places it
+22:06:12 == dialog-frame-modeless: failed - About and Credits open at once: False
+22:06:24 == dialog-frame-system: observed - About with the system's title bar: HikariSub's drawn buttons []; window system frame True (sway border 'normal': floating_con id=12 hikarisub 'About HikariSub' 568,367 464x268 client=570,367 460x266 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=normal)
+22:07:10 == dialog-frame-themes: observed - About on HikariSub's frame in the four themes (screenshots)
+22:11:37 --- sway: dialogframe
+22:11:50 == dialog-frame-window: observed - sway: About 460x286 with its own buttons {'Close': True, 'Maximise': False, 'Minimise': False}; window system frame False (sway border 'csd': floating_con id=9 hikarisub 'About HikariSub' 570,357 460x286 client=570,357 460x286 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=csd)
+22:11:50 == dialog-frame-centred: not-observable - sway: a Wayland client cannot place its windows; the compositor put About at (570, 357, 460, 286) (main window (160, 100, 1280, 800))
+22:12:03 == dialog-frame-move: observed - title bar dragged by (-80,+50): (570, 357, 460, 286) -> (498, 402, 460, 286); Esc closed it: True
+22:12:03 == dialog-frame-remembered: not-observable - opened again at (570, 357, 460, 286) (left at (498, 402, 460, 286)); on Wayland only the size is kept, the compositor places it
+22:12:05 active after the click: ['HikariSub']
+22:12:10 == dialog-frame-modeless: observed - About open, a click on the main window, Help > Credits: both open True (windows ['About HikariSub', 'Credits', 'HikariSub'], active ['Credits'])
+22:12:23 == dialog-frame-system: observed - About with the system's title bar: HikariSub's drawn buttons []; window system frame True (sway border 'normal': floating_con id=13 hikarisub 'About HikariSub' 568,367 464x268 client=570,367 460x266 output=HEADLESS-1 fullscreen=0 FOCUSED visible=True border=normal)
+22:13:11 == dialog-frame-themes: observed - About on HikariSub's frame in the four themes (screenshots)

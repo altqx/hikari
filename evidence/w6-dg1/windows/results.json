@@ -1,0 +1,80 @@
+{
+ "dialog-frame-window": {
+  "status": "observed",
+  "detail": "About (250, 242, 460, 275) beside the main window (0, 0, 960, 720): its own buttons {'Close': True, 'Minimise': False, 'Maximise': False} (Close only on a fixed-size dialog), Close 0 px below the window's top (no caption of Windows' above the bar); window style 0x96c80000 (WS_CAPTION and WS_SYSMENU kept, no WS_MINIMIZEBOX, WS_MAXIMIZEBOX or WS_THICKFRAME: True)",
+  "evidence": [
+   "dialogs-0-about.png",
+   "dialogs-0-about.txt"
+  ],
+  "at": "2026-10-21T04:54:47"
+ },
+ "dialog-frame-centred": {
+  "status": "observed",
+  "detail": "About's centre off the main window's centre + (0, 20) by (0, 1)",
+  "evidence": [
+   "dialogs-0-about.png",
+   "dialogs-0-about.txt"
+  ],
+  "at": "2026-10-21T04:54:47"
+ },
+ "dialog-frame-system-menu": {
+  "status": "observed",
+  "detail": "Windows' system menu from a right click on the title bar: ['Restore', 'Move', 'Size', 'Minimize', 'Maximize', 'Close'], enabled ['Close', 'Move'] (Move and Close; Restore, Size, Minimize and Maximize greyed on a fixed-size dialog)",
+  "evidence": [
+   "dialogs-1-system-menu.png",
+   "dialogs-1-system-menu.txt"
+  ],
+  "at": "2026-10-21T04:54:52"
+ },
+ "dialog-frame-no-maximise": {
+  "status": "observed",
+  "detail": "Win+Up on About: (250, 242, 460, 275) -> (250, 242, 460, 275) (its size kept)",
+  "evidence": [
+   "dialogs-2-win-up.png",
+   "dialogs-2-win-up.txt"
+  ],
+  "at": "2026-10-21T04:54:59"
+ },
+ "dialog-frame-move-remembered": {
+  "status": "observed",
+  "detail": "title bar dragged by (-60,+40): (250, 242, 460, 275) -> (190, 282, 460, 275); Esc closed it: True; opened again at (190, 282, 460, 275)",
+  "evidence": [
+   "dialogs-3-moved-reopened.png",
+   "dialogs-3-moved-reopened.txt"
+  ],
+  "at": "2026-10-21T04:55:20"
+ },
+ "dialog-frame-modeless": {
+  "status": "observed",
+  "detail": "About and Credits open at once: True (Credits (210, 128, 540, 503))",
+  "evidence": [
+   "dialogs-4-about-and-credits.png",
+   "dialogs-4-about-and-credits.txt"
+  ],
+  "at": "2026-10-21T04:55:33"
+ },
+ "dialog-frame-system": {
+  "status": "observed",
+  "detail": "About with the system's title bar: Windows' caption buttons ['Close'], HikariSub's drawn buttons []",
+  "evidence": [
+   "dialogs-5-system-title-bar.png",
+   "dialogs-5-system-title-bar.txt"
+  ],
+  "at": "2026-10-21T04:56:10"
+ },
+ "dialog-frame-themes": {
+  "status": "observed",
+  "detail": "About's title bar in each theme's panel colour",
+  "evidence": [
+   "dialogs-6-theme-light.png",
+   "dialogs-6-theme-light.txt",
+   "dialogs-6-theme-dark.png",
+   "dialogs-6-theme-dark.txt",
+   "dialogs-6-theme-highContrastWhite.png",
+   "dialogs-6-theme-highContrastWhite.txt",
+   "dialogs-6-theme-highContrastBlack.png",
+   "dialogs-6-theme-highContrastBlack.txt"
+  ],
+  "at": "2026-10-21T04:58:31"
+ }
+}

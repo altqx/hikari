@@ -1,0 +1,116 @@
+# compositor windows
+Monitors:
+├──Monitor Meta-0 (MetaVendor)
+│  ├──Vendor: MetaVendor
+│  ├──Product: MetaVirtualMonitor
+│  ├──Serial: 0x00
+│  ├──Current mode
+│  │   └──1600x1000@60.000
+│  └──Preferences
+│      └──Backlight: None
+└──Monitor Meta-1 (MetaVendor)
+   ├──Vendor: MetaVendor
+   ├──Product: MetaVirtualMonitor
+   ├──Serial: 0x01
+   ├──Current mode
+   │   └──1600x1000@60.000
+   └──Preferences
+       └──Backlight: None
+
+Logical monitors:
+├──Logical monitor #1
+│  ├──Position: (0, 0)
+│  ├──Scale: 1.0
+│  ├──Transform: normal
+│  ├──Primary: yes
+│  └──Monitors: (1)
+│      └──Meta-0 (MetaVendor)
+└──Logical monitor #2
+   ├──Position: (1600, 0)
+   ├──Scale: 1.0
+   ├──Transform: normal
+   ├──Primary: no
+   └──Monitors: (1)
+       └──Meta-1 (MetaVendor)
+
+# AT-SPI
+{
+ "frames": [
+  {
+   "name": "HikariSub",
+   "id": "HikariSub",
+   "active": false,
+   "x": 0,
+   "y": 0,
+   "w": 1280,
+   "h": 800
+  },
+  {
+   "name": "About HikariSub",
+   "id": "About HikariSub",
+   "active": true,
+   "x": 0,
+   "y": 0,
+   "w": 460,
+   "h": 266
+  }
+ ],
+ "panels": [
+  {
+   "name": "Home",
+   "id": "Home",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 59,
+   "w": 1280,
+   "h": 712
+  },
+  {
+   "name": "Grid",
+   "id": "Grid",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 546,
+   "w": 1280,
+   "h": 225
+  },
+  {
+   "name": "Video",
+   "id": "Video",
+   "frame": "HikariSub",
+   "x": 0,
+   "y": 94,
+   "w": 640,
+   "h": 408
+  },
+  {
+   "name": "Line editor",
+   "id": "Line editor",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 308,
+   "w": 639,
+   "h": 194
+  },
+  {
+   "name": "Audio",
+   "id": "Audio",
+   "frame": "HikariSub",
+   "x": 641,
+   "y": 94,
+   "w": 639,
+   "h": 178
+  }
+ ],
+ "focus": "[dialog] 'About HikariSub' <focused,showing,visible,enabled> @0,0 460x266 actions=",
+ "focusPath": "desktop frame:'main' > application:'HikariSub' > frame:'About HikariSub' > dialog:'About HikariSub'",
+ "texts": {
+  "Line text": "",
+  "Start": "",
+  "End": ""
+ },
+ "labels": [
+  "Editing",
+  "Video times"
+ ]
+}
