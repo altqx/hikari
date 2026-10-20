@@ -565,6 +565,47 @@ Output device: %2</source>
         <source>Set</source>
         <translation type="unfinished">กำหนดค่า</translation>
     </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>A short duration in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <extracomment>A duration in seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Karaoke template: %n Line(s) generated from %1 karaoke Line(s) in %2.</source>
+        <extracomment>Status bar after applying karaoke templates; %n is the number of Lines generated, %1 the number of karaoke Lines templated, %2 the time the run took</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n template problem(s): see the log.</source>
+        <extracomment>After the karaoke template status; %n is the number of template problems the log lists</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Measuring the karaoke Lines: %1</source>
+        <extracomment>In the karaoke template report; %1 is the time karaskel took to measure the karaoke Lines</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code Line %1 (%2, %3): %4</source>
+        <extracomment>In the karaoke template report: a code Line&apos;s number, its effect and style, and the time it took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Template Line %1 (%2, %3): %4, %n Line(s) generated</source>
+        <extracomment>In the karaoke template report: a template Line&apos;s number, its effect and style, the time it took and %n the number of Lines it generated</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Colours</name>
@@ -3539,8 +3580,24 @@ Failed to copy %2 fonts.</source>
         <translation type="vanished">แก้ไข</translation>
     </message>
     <message>
+        <source>Development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Design and development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Translation</source>
-        <translation type="vanished">ข้อความแปล</translation>
+        <translation>ข้อความแปล</translation>
+    </message>
+    <message>
+        <source>Korean, Polish, Tamil and Thai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built with</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
@@ -3863,6 +3920,10 @@ Failed to copy %2 fonts.</source>
         <translation>เล่น / หยุดวิดีโอชั่วคราว</translation>
     </message>
     <message>
+        <source>Show / hide render cost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens audio file</source>
         <translation>เปิดแฟ้มเสียง</translation>
     </message>
@@ -3931,6 +3992,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Check for updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>You already have the latest version</source>
         <translation>คุณใช้เวอร์ชันล่าสุดอยู่แล้ว</translation>
     </message>
@@ -3948,7 +4013,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>You have version %1; version %2 is available</source>
-        <translation type="unfinished">คุณใช้เวอร์ชัน %1 อยู่ และมีเวอร์ชัน %2 ให้ใช้งาน</translation>
+        <translation type="obsolete">คุณใช้เวอร์ชัน %1 อยู่ และมีเวอร์ชัน %2 ให้ใช้งาน</translation>
     </message>
     <message>
         <source>This version needs Windows %1 or later.</source>
@@ -3959,7 +4024,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Downloading...</source>
+        <source>You have version %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading… %1 %</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3991,15 +4060,34 @@ Failed to copy %2 fonts.</source>
         <translation>เกี่ยวกับ HikariSub</translation>
     </message>
     <message>
-        <source>HikariSub subtitle editor by altqx,
-version %1</source>
+        <source>Version %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitle editor by altqx.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub is free software under the GNU General Public License, version 3. It comes with no warranty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub website</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Report an issue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
 
 </source>
-        <translation>พัฒนาต่อยอดจาก Kainote ของ Marcin Drob หรือ Bakura หรือ Bjakja
+        <translation type="vanished">พัฒนาต่อยอดจาก Kainote ของ Marcin Drob หรือ Bakura หรือ Bjakja
 
 </translation>
     </message>
@@ -4008,7 +4096,7 @@ version %1</source>
 open an issue at https://github.com/altqx/hikari/issues.
 
 </source>
-        <translation>หากพบข้อผิดพลาด หรือมีข้อเสนอแนะเกี่ยวกับการเปลี่ยนแปลงหรือฟีเจอร์ใหม่
+        <translation type="vanished">หากพบข้อผิดพลาด หรือมีข้อเสนอแนะเกี่ยวกับการเปลี่ยนแปลงหรือฟีเจอร์ใหม่
 โปรดแจ้งได้ที่ https://github.com/altqx/hikari/issues
 
 </translation>
@@ -4016,14 +4104,8 @@ open an issue at https://github.com/altqx/hikari/issues.
     <message>
         <source>HikariSub includes parts of the following projects:
 </source>
-        <translation>HikariSub มีบางส่วนของโครงการดังต่อไปนี้:
+        <translation type="vanished">HikariSub มีบางส่วนของโครงการดังต่อไปนี้:
 </translation>
-    </message>
-    <message>
-        <source>Color picker, audio box, audio player, automation,
-and several other individual features taken from Aegisub -
-</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Credits</source>
@@ -4032,93 +4114,93 @@ and several other individual features taken from Aegisub -
     <message>
         <source>Graphical help: (buttons, help pictures etc.)
 </source>
-        <translation>ความช่วยเหลือด้านกราฟิก: (ปุ่ม, รูปภาพช่วยเหลือ ฯลฯ )
+        <translation type="vanished">ความช่วยเหลือด้านกราฟิก: (ปุ่ม, รูปภาพช่วยเหลือ ฯลฯ )
 </translation>
     </message>
     <message>
         <source>- Xandros (new video buttons).
 </source>
-        <translation>- Xandros (ปุ่มวิดีโอ)
+        <translation type="vanished">- Xandros (ปุ่มวิดีโอ)
 </translation>
     </message>
     <message>
         <source>- Devilkan (menu and toolbar buttons)
 </source>
-        <translation>- Devilkan (ไอคอนเมนูและแถบเครื่องมือ)
+        <translation type="vanished">- Devilkan (ไอคอนเมนูและแถบเครื่องมือ)
 </translation>
     </message>
     <message>
         <source>- Zły Los (icons for file associations and menu).
 </source>
-        <translation>- Zły Los (ไอคอนแฟ้มและเมนู)
+        <translation type="vanished">- Zły Los (ไอคอนแฟ้มและเมนู)
 </translation>
     </message>
     <message>
         <source>Testers:
 </source>
-        <translation>ผู้ทดสอบ:
+        <translation type="vanished">ผู้ทดสอบ:
 </translation>
     </message>
     <message>
         <source>- Sacredus (first translator using translator mode,
 great help testing HikariSub on a slow computer)
 </source>
-        <translation>- Sacredus (นักแปลคนแรกที่ใช้โหมดการแปล
+        <translation type="vanished">- Sacredus (นักแปลคนแรกที่ใช้โหมดการแปล
 ช่วยได้มากในการทดสอบ HikariSub บนคอมพิวเตอร์ช้า)
 </translation>
     </message>
     <message>
         <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
 </source>
-        <translation>- Devilkan (ผู้ค้นหาข้อขัดข้อง ซึ่งพบข้อขัดข้องจำนวนมากจากระบบและพฤติกรรมการใช้งานของตน
+        <translation type="vanished">- Devilkan (ผู้ค้นหาข้อขัดข้อง ซึ่งพบข้อขัดข้องจำนวนมากจากระบบและพฤติกรรมการใช้งานของตน
 </translation>
     </message>
     <message>
         <source>helped with typesetting tools and came up with many more improvements).
 </source>
-        <translation>และช่วยปรับปรุงการทำงานของเครื่องมือจัดวางตัวอักษร รวมถึงเสนอการปรับปรุงอื่น ๆ อีกมากมาย)
+        <translation type="vanished">และช่วยปรับปรุงการทำงานของเครื่องมือจัดวางตัวอักษร รวมถึงเสนอการปรับปรุงอื่น ๆ อีกมากมาย)
 </translation>
     </message>
     <message>
         <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
 </source>
-        <translation>- MatiasMovie (พบข้อขัดข้องบางส่วน เสนอการปรับปรุงหลายรายการ และช่วยดีบักข้อขัดข้อง)
+        <translation type="vanished">- MatiasMovie (พบข้อขัดข้องบางส่วน เสนอการปรับปรุงหลายรายการ และช่วยดีบักข้อขัดข้อง)
 </translation>
     </message>
     <message>
         <source>- mas1904 (found some errors and helping with crash debuging).
 </source>
-        <translation>- mas1904 (พบข้อผิดพลาดบางส่วนและช่วยดีบักข้อขัดข้อง)
+        <translation type="vanished">- mas1904 (พบข้อผิดพลาดบางส่วนและช่วยดีบักข้อขัดข้อง)
 </translation>
     </message>
     <message>
         <source>- Senami (made new themes and found some bugs).
 </source>
-        <translation>- Senami (สร้างธีมใหม่และเป็นผู้พบข้อบกพร่องหลายอย่าง)
+        <translation type="vanished">- Senami (สร้างธีมใหม่และเป็นผู้พบข้อบกพร่องหลายอย่าง)
 </translation>
     </message>
     <message>
         <source>- altinat (Thai translation).
 </source>
-        <translation>- altinat (ผู้แปลภาษาไทย)
+        <translation type="vanished">- altinat (ผู้แปลภาษาไทย)
 </translation>
     </message>
     <message>
         <source>- labrie75 (Korean translation).
 </source>
-        <translation>- labrie75 (ผู้แปลภาษาเกาหลี)
+        <translation type="vanished">- labrie75 (ผู้แปลภาษาเกาหลี)
 </translation>
     </message>
     <message>
         <source>- Niskala5570 (Malay translation).
 </source>
-        <translation>- Niskala5570 (ผู้แปลภาษามาเลย์)
+        <translation type="vanished">- Niskala5570 (ผู้แปลภาษามาเลย์)
 </translation>
     </message>
     <message>
         <source>Thanks to other HikariSub users who reported bugs:
 </source>
-        <translation>ขอขอบพระคุณผู้ที่ใช้โปรแกรมนี้และรายงานข้อผิดพลาด:
+        <translation type="vanished">ขอขอบพระคุณผู้ที่ใช้โปรแกรมนี้และรายงานข้อผิดพลาด:
 </translation>
     </message>
     <message>
@@ -4235,6 +4317,34 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Installing update...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Application menu</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -4484,6 +4594,18 @@ when find results window is open</source>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use system title bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8032,6 +8154,10 @@ Foreign language text will be deleted.</source>
         <translation>แสดงหรือซ่อนแถบความคืบหน้า</translation>
     </message>
     <message>
+        <source>Show / hide render cost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change aspect ratio</source>
         <translation>เปลี่ยนอัตราส่วนภาพ</translation>
     </message>
@@ -8208,6 +8334,25 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Aspect ratio: %1</source>
         <translation type="unfinished">อัตราส่วนหน้าจอ: %1</translation>
+    </message>
+    <message>
+        <source>No subtitles on this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles drawn in %1 ms</source>
+        <extracomment>Over the video: how long drawing the frame&apos;s subtitles took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 event(s), %2 bitmap(s), %3 Mpx</source>
+        <extracomment>Over the video: %1 events shown, %2 bitmaps libass drew, %3 their area in megapixels</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 with blur, %2 with a vector clip</source>
+        <extracomment>Over the video: of the shown events, %1 use <byte value="x8"/>lur or <byte value="x8"/>e and %2 a drawing clip or iclip</extracomment>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
