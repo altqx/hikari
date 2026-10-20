@@ -50,6 +50,21 @@ Dialog {
             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
         }
     }
+    // The answer is for the tab it was asked in: another editing target
+    // (Ctrl+PgUp, Ctrl+PgDn, a click on a tab) closes the dialog unanswered.
+    property var askedFor: null
+    function editingTarget() {
+        const tab = dialog.app.tabs[dialog.app.currentTab]
+        return tab ? tab.id : null
+    }
+    Connections {
+        target: dialog.app
+        function onTabsChanged() {
+            if (dialog.opened && dialog.editingTarget() !== dialog.askedFor)
+                dialog.close()
+        }
+    }
+    onAboutToShow: askedFor = editingTarget()
     onOpened: turnOn.forceActiveFocus()
     onAccepted: dialog.app.turnOnTranslationMode()
     onRejected: dialog.app.declineTranslationMode()
