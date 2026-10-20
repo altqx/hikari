@@ -10497,6 +10497,7 @@ private slots:
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
         QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("text").toString(), QStringLiteral("B"));
         application->editor().translationEdited(QStringLiteral("x y z"), 5);
         QVERIFY(application->editor().placeRun(1, 2, 3));
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x {\\b1}y{\\b0} z"));
@@ -10504,7 +10505,13 @@ private slots:
         const auto *line = session->document().lines()[0];
         QCOMPARE(q8(line->style), QStringLiteral("Heavy"));
         QCOMPARE(q8(line->translation), QStringLiteral("x y z"));
-        QTRY_COMPARE(application->editor().tagRuns().size(), 2); // "A" and "C", not bold
+        // Under the bold Style "A" and "B" are as the Style is: the one run
+        // is "C", not bold (its leading space is no visible change).
+        const auto runText = [&] {
+            const auto runs = application->editor().tagRuns();
+            return runs.size() == 1 ? runs[0].toMap().value("text").toString() : QString();
+        };
+        QTRY_COMPARE(runText(), QStringLiteral("C"));
     }
 
     // TM1: a karaoke Line carries its leading tags without its \k timing,

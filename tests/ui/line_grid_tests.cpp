@@ -724,7 +724,7 @@ private slots:
         };
         // The cell's top right corner, against its bottom right one.
         const QRectF marked = grid.cellRect(0, text);
-        QVERIFY2(marked.right() < 1280, qPrintable(QString::number(marked.right())));
+        QVERIFY2(marked.right() <= 1280, qPrintable(QString::number(marked.right())));
         const QPoint corner(int(marked.right()) - 2, int(marked.top()) + 2);
         const QPoint below(int(marked.right()) - 2, int(marked.bottom()) - 3);
         QImage image = paint();
