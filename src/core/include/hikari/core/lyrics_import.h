@@ -31,7 +31,7 @@ struct LyricsProblem {
         NotWellFormed,    // TTML: the XML is broken here
         NotTtml,          // TTML: the root element is not <tt>
         TooDeep,          // TTML: elements nested past kMaxTtmlDepth
-        TooLarge,         // the Lines would outgrow kMaxLyricsGrowth times the file
+        TooLarge,         // larger than a lyrics file: the file, its XML or its Lines
         NoLyrics,         // nothing timed in the whole file
     };
     Kind kind = Kind::NoLyrics;
@@ -43,10 +43,16 @@ struct LyricsProblem {
 // TTML lyrics nest a handful of elements; deeper files are refused, so no
 // walk over the tree can run out of stack.
 inline constexpr std::size_t kMaxTtmlDepth = 64;
-// Text a file repeats (a lyric under many line times, a voice or agent name
-// on every Line) is copied into each Line; a file whose Lines would outgrow
-// this many times its own size (plus 1 MiB) is refused, so a small file
-// cannot make a huge Document.
+// What an import may take, so a file cannot make a huge Document or exhaust
+// memory while it is read (each refused as TooLarge):
+// - the file: lyrics files are tens of kilobytes, so 1 MiB is plenty;
+// - TTML's element tree: one node (element or text) per kTtmlBytesPerNode
+//   bytes of the file, plus 4096 (real files have one per 25 bytes or so);
+// - the Lines: text a file repeats (a lyric under many line times, an agent
+//   name on every Line) is copied into each Line, so the Lines may take
+//   kMaxLyricsGrowth times the file's size, plus 1 MiB.
+inline constexpr std::size_t kMaxLyricsFileSize = std::size_t(1) << 20;
+inline constexpr std::size_t kTtmlBytesPerNode = 8;
 inline constexpr std::size_t kMaxLyricsGrowth = 16;
 
 // "lrc" or "ttml" (lower-case, without the dot).

@@ -15,6 +15,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
 #include <map>
 #include <optional>
 #include <string>
@@ -64,6 +65,22 @@ bool isDigit(char8_t c)
     return c >= u8'0' && c <= u8'9';
 }
 
+// XML's Char: tab, line feed, carriage return and U+0020 on, without the
+// surrogates and the noncharacters U+FFFE and U+FFFF.
+bool xmlChar(std::uint32_t cp)
+{
+    return cp == 0x9 || cp == 0xA || cp == 0xD || (cp >= 0x20 && cp <= 0xD7FF) || (cp >= 0xE000 && cp <= 0xFFFD) ||
+           (cp >= 0x10000 && cp <= 0x10FFFF);
+}
+
+// "U+0001": a character XML forbids, named for the message.
+std::u8string codePointName(std::uint32_t cp)
+{
+    char buffer[16];
+    std::snprintf(buffer, sizeof buffer, "U+%04X", static_cast<unsigned>(cp));
+    return std::u8string(reinterpret_cast<const char8_t *>(buffer));
+}
+
 void appendUtf8(std::u8string &out, std::uint32_t cp)
 {
     if (cp < 0x80) {
@@ -85,7 +102,7 @@ void appendUtf8(std::u8string &out, std::uint32_t cp)
 
 class XmlReader {
 public:
-    explicit XmlReader(u8sv text) : m_s(text) {}
+    explicit XmlReader(u8sv text) : m_s(text), m_nodesLeft(text.size() / kTtmlBytesPerNode + 4096) {}
 
     std::expected<XmlNode, LyricsProblem> document()
     {
@@ -232,7 +249,7 @@ private:
                         return std::nullopt;
                     cp = cp * (hex ? 16 : 10) + static_cast<std::uint32_t>(v);
                 }
-                if (cp == 0 || cp > 0x10FFFF || (cp >= 0xD800 && cp <= 0xDFFF))
+                if (!xmlChar(cp))
                     return std::nullopt;
                 appendUtf8(out, cp);
             } else
@@ -287,6 +304,8 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
+                if (!takeNode())
+                    return std::unexpected(tooLarge());
                 XmlNode text;
                 text.text = std::u8string(m_s.substr(m_pos, end - m_pos));
                 text.line = line;
@@ -299,6 +318,8 @@ private:
                     problem.kind = Kind::TooDeep;
                     return std::unexpected(std::move(problem));
                 }
+                if (!takeNode())
+                    return std::unexpected(tooLarge());
                 advance(1);
                 XmlNode node;
                 node.line = line;
@@ -374,6 +395,8 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
+                if (!takeNode())
+                    return std::unexpected(tooLarge());
                 XmlNode node;
                 node.text = *text;
                 node.line = line;
@@ -383,9 +406,20 @@ private:
         }
     }
 
+    // One more node in the tree, if the budget has room (kTtmlBytesPerNode).
+    bool takeNode()
+    {
+        if (m_nodesLeft == 0)
+            return false;
+        --m_nodesLeft;
+        return true;
+    }
+    LyricsProblem tooLarge() const { return LyricsProblem{Kind::TooLarge, m_line, {}}; }
+
     u8sv m_s;
     std::size_t m_pos = 0;
     std::size_t m_line = 1;
+    std::size_t m_nodesLeft = 0;
 };
 
 // A TTML time: clock time ("hh:mm:ss.fff", and the "mm:ss.fff" and
@@ -747,12 +781,25 @@ private:
 
 std::expected<LoadResult, LyricsProblem> importTtml(std::span<const std::byte> bytes)
 {
+    if (bytes.size() > kMaxLyricsFileSize)
+        return std::unexpected(LyricsProblem{Kind::TooLarge, 0, {}});
     const u8sv text(reinterpret_cast<const char8_t *>(bytes.data()), bytes.size());
     std::size_t line = 1;
     for (std::size_t from = 0; from <= text.size(); ++line) {
         const std::size_t newline = std::min(text.find(u8'\n', from), text.size());
         if (!detail::validUtf8(bytes.data() + from, newline - from))
             return std::unexpected(LyricsProblem{Kind::NotUtf8, line, {}});
+        // Characters XML forbids, written as they are: control characters
+        // and U+FFFE or U+FFFF (EF BF BE, EF BF BF).
+        for (std::size_t i = from; i < newline; ++i) {
+            const auto byte = static_cast<unsigned char>(text[i]);
+            if (byte < 0x20 && byte != 0x9 && byte != 0xD)
+                return std::unexpected(LyricsProblem{Kind::NotWellFormed, line, codePointName(byte)});
+            if (byte == 0xEF && i + 2 < newline && static_cast<unsigned char>(text[i + 1]) == 0xBF &&
+                (static_cast<unsigned char>(text[i + 2]) & 0xFE) == 0xBE)
+                return std::unexpected(LyricsProblem{Kind::NotWellFormed, line,
+                                                     codePointName(text[i + 2] == u8'\xBE' ? 0xFFFE : 0xFFFF)});
+        }
         from = newline + 1;
     }
     const auto root = XmlReader(text).document();

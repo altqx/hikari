@@ -1501,9 +1501,7 @@ QString Application::openProblem(const QString &path, const application::StageFa
                    .arg(QString::number(core::kMaxTtmlDepth), excerpt);
         break;
     case Kind::TooLarge:
-        what = QCoreApplication::translate("HikariSub.Documents",
-                                           "its lines would make a Document over %1 times the size of the file")
-                   .arg(QString::number(core::kMaxLyricsGrowth));
+        what = QCoreApplication::translate("HikariSub.Documents", "it is too large for a lyrics file");
         break;
     case Kind::NoLyrics: what = QCoreApplication::translate("HikariSub.Documents", "it has no timed lyrics"); break;
     }

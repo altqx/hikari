@@ -257,6 +257,16 @@ TEST(LyricsImport, TtmlMustBeWellFormedXml)
               (LyricsProblem{Kind::NotWellFormed, 3, u8"]]>"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><1x/>" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"<1x/>"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" -end=\"2\">x" + tail, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"-end=\"2\">"}));
+    // Characters XML forbids, as references or written out.
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x &#xFFFE; y" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"x &#xFFFE; y</p>"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x &#1; y" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"x &#1; y</p>"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x \x01 y" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"U+0001"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x \xEF\xBF\xBF y" + tail, u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 3, u8"U+FFFF"}));
+    EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" end=\"2\">x&#9;y\ty" + tail)).has_value());
     // A comment may not hold "--" or end with "-".
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">a<!-- bad -- comment -->b" + tail, u8"ttml"),
               (LyricsProblem{Kind::NotWellFormed, 3, u8"<!-- bad -- comment -->"}));
@@ -281,7 +291,7 @@ TEST(LyricsImport, TtmlNestedTooDeepIsRefused)
     };
     EXPECT_TRUE(importTtml(bytes(nested(kMaxTtmlDepth - 3))).has_value());
     EXPECT_EQ(problemOf(nested(kMaxTtmlDepth - 2), u8"ttml"), (LyricsProblem{Kind::TooDeep, 3, u8"<p begin=\"1\" end=\"2\">"}));
-    EXPECT_EQ(problemOf(nested(100000), u8"ttml"), (LyricsProblem{Kind::TooDeep, 3, u8"<div>"}));
+    EXPECT_EQ(problemOf(nested(50000), u8"ttml"), (LyricsProblem{Kind::TooDeep, 3, u8"<div>"}));
 }
 
 TEST(LyricsImport, TtmlWhitespaceAndBreaksAcrossElements)
@@ -320,6 +330,22 @@ TEST(LyricsImport, RepeatedTextCannotOutgrowTheFile)
     EXPECT_TRUE(importLrc(bytes("[00:01.00][00:05.00][00:09.00]chorus\n[00:03.00]verse\n")).has_value());
 }
 
+TEST(LyricsImport, FilesAndXmlTreesHaveALimit)
+{
+    // Over 1 MiB is more than any lyrics file.
+    const std::string big = "[00:01.00]" + std::string(kMaxLyricsFileSize, 'x');
+    EXPECT_EQ(problemOf(big, u8"lrc"), (LyricsProblem{Kind::TooLarge, 0, u8""}));
+    EXPECT_EQ(problemOf("<tt>" + std::string(kMaxLyricsFileSize, ' ') + "</tt>", u8"ttml"),
+              (LyricsProblem{Kind::TooLarge, 0, u8""}));
+    // Elements packed far denser than lyrics need (two nodes per five bytes)
+    // stop while the tree is built.
+    std::string dense = "<tt><body>\n<p begin=\"1\" end=\"2\">";
+    for (int i = 0; i < 100000; ++i)
+        dense += "a<x/>";
+    dense += "</p></body></tt>";
+    EXPECT_EQ(problemOf(dense, u8"ttml"), (LyricsProblem{Kind::TooLarge, 2, u8""}));
+}
+
 TEST(LyricsImport, TtmlTimesPast100HoursAreRefused)
 {
     const std::string head = "<tt><body>\n";
@@ -331,6 +357,10 @@ TEST(LyricsImport, TtmlTimesPast100HoursAreRefused)
     // A begin and a dur adding up past 100 hours too.
     EXPECT_EQ(problemOf(head + "<p begin=\"99h\" dur=\"2h\">x</p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::UnreadableTime, 2, u8"2h"}));
+    // A last Line's five seconds stop at 100 hours too.
+    const auto last = importLrc(bytes("[99:59:59.99]x\n"));
+    ASSERT_TRUE(last.has_value());
+    EXPECT_EQ(rows(*last), (std::vector<Row>{{359'999'990, 360'000'000, "", "x"}}));
     // An LRC offset cannot move a time past 100 hours either.
     const auto shifted = importLrc(bytes("[offset:-99999999]\n[99:00:00.00]x\n"));
     ASSERT_TRUE(shifted.has_value());
@@ -372,6 +402,19 @@ TEST(LyricsImport, TtmlTimesAndWordEnds)
                                          "</p></body></tt>"));
     ASSERT_TRUE(result.has_value());
     EXPECT_EQ(rows(*result), (std::vector<Row>{{1500, 3500, "", "{\\k90}a {\\k50}b{\\k60}"}}));
+}
+
+TEST(LyricsImport, LrcAngleAndSquareBracketsThatAreNotStamps)
+{
+    // Only a stamp's shape (digits, then a colon) is a stamp.
+    const auto plain = importLrc(bytes("[00:01.00]I <3 you, <12 roses>\n"));
+    ASSERT_TRUE(plain.has_value());
+    EXPECT_EQ(rows(*plain).front().text, "I <3 you, <12 roses>");
+    const auto words = importLrc(bytes("[00:01.00]<00:01.00>I <00:02.00><3\n"));
+    ASSERT_TRUE(words.has_value());
+    EXPECT_EQ(rows(*words).front().text, "{\\k100}I {\\k500}<3");
+    // "[1st verse]" is lyrics with no time, like "[Chorus]".
+    EXPECT_EQ(problemOf("[00:01.00]ok\n[1st verse]\n", u8"lrc"), (LyricsProblem{Kind::MissingTime, 2, u8"[1st verse]"}));
 }
 
 TEST(LyricsImport, LrcOffsets)

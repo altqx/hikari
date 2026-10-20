@@ -191,6 +191,20 @@ bool isDigit(char8_t c)
     return c >= u8'0' && c <= u8'9';
 }
 
+// Whether text (after a "[" or "<") has a time stamp's shape: digits, then
+// digits, colons and dots holding a colon ("00:12.34"), as far as they go.
+// "<3 you" and "[1st verse]" are lyrics; "<00:0x.00>" is a broken stamp.
+bool stampShaped(u8sv text)
+{
+    text = detail::trimLeft(text);
+    if (text.empty() || !isDigit(text.front()))
+        return false;
+    std::size_t n = 0;
+    while (n < text.size() && (isDigit(text[n]) || text[n] == u8':' || text[n] == u8'.'))
+        ++n;
+    return text.substr(0, n).find(u8':') != u8sv::npos;
+}
+
 // One lyrics line of the file, before the times are resolved.
 struct LrcEntry {
     std::size_t lineNumber = 0;
@@ -230,6 +244,8 @@ bool isLyricsExtension(std::u8string_view extension)
 std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> bytes)
 {
     using Kind = LyricsProblem::Kind;
+    if (bytes.size() > kMaxLyricsFileSize)
+        return std::unexpected(LyricsProblem{Kind::TooLarge, 0, {}});
     u8sv all(reinterpret_cast<const char8_t *>(bytes.data()), bytes.size());
     if (detail::startsWith(all, u8"\xEF\xBB\xBF"))
         all.remove_prefix(3);
@@ -258,7 +274,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             const std::size_t close = rest.find(u8']');
             const u8sv tag = close == u8sv::npos ? rest.substr(1) : rest.substr(1, close - 1);
             const u8sv inner = detail::trimLeft(tag);
-            if (!inner.empty() && isDigit(inner.front())) {
+            if (stampShaped(inner)) {
                 const auto time = close == u8sv::npos ? std::nullopt : lrcTime(tag);
                 if (!time)
                     return std::unexpected(LyricsProblem{Kind::UnreadableTime, lineNumber,
@@ -318,7 +334,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         };
         std::optional<std::int64_t> lastStamp;
         for (std::size_t i = 0; i < rest.size();) {
-            if (rest[i] == u8'<' && i + 1 < rest.size() && isDigit(rest[i + 1])) {
+            if (rest[i] == u8'<' && stampShaped(rest.substr(i + 1))) {
                 const std::size_t close = rest.find(u8'>', i);
                 const auto time = close == u8sv::npos ? std::nullopt : lrcTime(rest.substr(i + 1, close - i - 1));
                 if (!time)
@@ -390,7 +406,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         line.start = placed[i].start;
         line.actor = entry.actor;
         if (entry.words.empty()) {
-            line.end = next.value_or(line.start + kLastLine);
+            line.end = next.value_or(std::min(line.start + kLastLine, detail::kLatestLyricsTime));
             line.text = entry.text;
         } else {
             for (std::size_t k = 0; k < entry.words.size(); ++k) {
@@ -402,7 +418,8 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             line.start = std::min(line.start, line.words.front().begin);
             const std::int64_t lastBegin = line.words.back().begin;
             if (line.words.back().end < 0)
-                line.words.back().end = std::max(lastBegin, next.value_or(lastBegin + kLastLine));
+                line.words.back().end =
+                        std::max(lastBegin, next.value_or(std::min(lastBegin + kLastLine, detail::kLatestLyricsTime)));
             for (std::size_t k = 0; k + 1 < line.words.size(); ++k)
                 if (line.words[k].end < 0)
                     line.words[k].end = line.words[k + 1].begin;
