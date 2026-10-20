@@ -353,6 +353,11 @@ public:
     QString translationHint() const;
     Q_INVOKABLE bool turnOnTranslationMode();
     Q_INVOKABLE void setMoveTags(bool on);
+    // TM1 (#232): choosing the Translation preset asks "Turn on Translation
+    // mode for this file?" when the editing target can take the mode, has it
+    // off and was not answered Not now (declineTranslationMode) this session.
+    Q_INVOKABLE bool translationQuestionDue() const;
+    Q_INVOKABLE void declineTranslationMode();
     // GLOBAL_SAVE_WITH_VIDEO_NAME (legacy SUBS_AUTONAMING, subtitles.saveWithVideoName).
     Q_PROPERTY(bool saveWithVideoName READ saveWithVideoName WRITE setSaveWithVideoName NOTIFY saveWithVideoNameChanged)
     bool saveWithVideoName() const { return m_settings->boolean("subtitles.saveWithVideoName"); }
@@ -1152,6 +1157,7 @@ private:
         application::OriginalColumns columns;
     };
     std::map<std::uint64_t, OriginalColumnsEntry> m_originalColumns;
+    std::set<std::uint64_t> m_translationDeclined; // TM1: Documents answered Not now
     application::OriginalColumns &originalColumns(application::DocumentId document);
     bool showOriginal(application::DocumentId document);
     void setUpTranslationControls();
