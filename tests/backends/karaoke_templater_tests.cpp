@@ -399,6 +399,32 @@ TEST_F(KaraokeTemplater, NamedTemplateProblemsNameTheLineTheyAreIn)
     EXPECT_EQ(saved(session), templatedBytes(bytesOf(text), pristineScript()));
 }
 
+// A commented fx line is not a generated line: a run keeps it, so it counts
+// in the numbers of the Lines after it.
+TEST_F(KaraokeTemplater, CommentedFxLinesStayAndCount)
+{
+    const std::string text =
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+        "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+        "MarginR, MarginV, Encoding\n"
+        "Style: Err,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,fx,a note kept as fx\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template syl,{\\pos($x,$nosuchvar)}\n"
+        "Dialogue: 0,0:00:01.00,0:00:03.00,Err,,0,0,0,,{\\k50}ha{\\k50}ru\n";
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    const auto note = session.document().lines().front()->id;
+    const auto templateLine = session.document().lines()[1]->id;
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto &lines = session.document().lines();
+    ASSERT_GE(lines.size(), 2u);
+    EXPECT_EQ(lines[0]->id, note);
+    EXPECT_EQ(lines[1]->id, templateLine);
+    EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Template Line: 2\n")));
+    EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{templateLine}));
+}
+
 // Stock 2.1.7 names no Line and leaves the selection as it was.
 TEST_F(KaraokeTemplater, StockTemplaterNamesNoLine)
 {
