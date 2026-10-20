@@ -235,12 +235,16 @@ void HotkeysController::load()
     // GLOBAL_VIDEO_INDEXING, from a carried-over Hotkeys.txt) is dropped with
     // a notice, and the list is written without it so the notice is given
     // once. AM1-hotkeys-window-retired: so is one of "Open shortcut mapping
-    // window" (GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW).
+    // window" (GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW). AV3: the same for
+    // "Open blank 2h30m audio" (GLOBAL_OPEN_DUMMY_AUDIO).
     const auto dropped = application::dropRetiredHotkeys(m_live);
     for (const auto &[key, hotkey] : dropped)
         m_retiredNotices << (key.id == application::hotkeyIdOf("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW")
                                  ? QCoreApplication::translate("HikariSub.Hotkeys",
                                                                "The shortcut %1 of \"Open shortcut mapping window\" was removed: the window is gone and each macro's shortcut is set in the Automation panel.")
+                             : key.id == application::hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO")
+                                 ? QCoreApplication::translate("HikariSub.Hotkeys",
+                                                               "The shortcut %1 of \"Open blank 2h30m audio\" was removed: the command is retired and a dummy video brings its own silent audio.")
                                  : QCoreApplication::translate("HikariSub.Hotkeys",
                                                                "The shortcut %1 of \"Open video with FFMS2\" was removed: the command is retired and videos are always indexed."))
                                 .arg(qs(hotkey.accel));

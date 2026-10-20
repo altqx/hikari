@@ -521,7 +521,7 @@ QSGNode *AudioDisplayItem::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData
     };
     auto cursorShapes = [this] {
         return m_controller->cursor() && m_controller->ready()
-                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), m_controller->playing(),
+                   ? application::audioCursor(m_controller->view(), *m_controller->cursor(), m_controller->cursorIsPlayback(),
                                                          m_controller->options(), m_controller->karaoke())
                    : std::vector<AudioShape>{};
     };

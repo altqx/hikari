@@ -60,6 +60,8 @@ target_sources(hikari_composition PRIVATE application_video_timing.cpp)
 target_sources(hikari_composition PRIVATE application_translation.cpp)
 # O5: the interface language (catalogs, live switching, aegisub.gettext's lookup).
 target_sources(hikari_composition PRIVATE localisation.cpp include/hikari/app/localisation.h application_language.cpp)
+# AV1: the audio panel's output device menu and the unplugged-device notice.
+target_sources(hikari_composition PRIVATE application_audio.cpp)
 # W1: the optional DirectShow playback adapter (Windows), chosen in the settings.
 target_sources(hikari_composition PRIVATE application_directshow.cpp)
 if(WIN32)

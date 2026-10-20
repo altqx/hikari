@@ -751,6 +751,15 @@ icon("hotkeys", "Hotkeys", [], ["settings-dialog", AUTOPANEL],
      rect(1.5, 3.5, 13, 9, 1) + stroke("M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1") + accent(stroke("M6.5 9.5h3")))
 
 
+# Audio panel, wave 6 (#213): the output device menu (AV1 #238), a speaker
+# cabinet so that volume's cone keeps its one meaning; the cursor sync toggle
+# (AV2 #239), one playhead through a video frame and a waveform.
+icon("audio-output", "Output device", [], [AUDIOBOX],
+     rect(3.5, 1.5, 9, 13, 1) + circle(8, 4.75, 1.25) + accent(circle(8, 10.25, 2.75)))
+icon("audio-video-sync", "Sync the video and audio cursors", [], [AUDIOBOX],
+     rect(1.5, 1.5, 13, 5, 1) + stroke("M2.5 11.25v1.5M4.5 10v4M6.5 10.75v2.5M10.5 10.5v3M12.5 11.25v1.5")
+     + accent(stroke("M8.5 1v14")))
+
 # IC1 (#226): every menu and context-menu item that runs a command has an
 # icon (docs/qt/ux/menu-icon-gaps.md lists the items and the ones left
 # without: check items, entries named by their data). The rules above hold:
@@ -932,7 +941,6 @@ icon("ui-colours", "UI colors", [], ["settings-dialog"],
      + accent(frect(2, 3, 3, 3), frect(2, 10, 3, 3)), mirror=True)
 icon("restore-default", "Restore default", [], ["settings-dialog"],
      stroke("M2.5 8a5.5 5.5 0 1 0 1.75-4") + stroke("M2.5 1.5v3h3") + accent(dot(8, 8, 1.5)), mirror=True)
-
 
 # The legacy bitmaps the set does not replace, and why (the card's Excluded:
 # the application and file-type icons stay, and controls Qt draws itself).

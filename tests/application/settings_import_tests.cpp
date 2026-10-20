@@ -408,7 +408,8 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         const PlanRow &row = rowOf(plan, rowId);
         EXPECT_EQ(row.binding, (HotkeyId{id, type})) << symbol;
         EXPECT_EQ(row.destination, symbol + " (" + std::string(hotkeyWindowName(type)) + ")");
-        if (symbol == "GLOBAL_VIDEO_INDEXING" || symbol == "GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW") {
+        if (symbol == "GLOBAL_VIDEO_INDEXING" || symbol == "GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW" ||
+            symbol == "GLOBAL_OPEN_DUMMY_AUDIO") { // AM1, AV3: retired too
             EXPECT_EQ(row.disposition, Disposition::Retired);
             EXPECT_FALSE(row.selectable);
         } else {
@@ -426,14 +427,17 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
     int bound = 0;
     for (const auto &a : hotkeyActions()) {
         const auto it = map.find(HotkeyId{a.id, hotkeyType(a.id)});
-        if (a.symbol == "GLOBAL_VIDEO_INDEXING" || a.symbol == "GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW") {
+        if (a.symbol == "GLOBAL_VIDEO_INDEXING" || a.symbol == "GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW" ||
+            a.symbol == "GLOBAL_OPEN_DUMMY_AUDIO") {
             EXPECT_EQ(it, map.end());
             continue;
         }
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 242); // 241 legacy actions and the rewrite's GLOBAL_EDITOR_HIDE_TAGS (LE3)
+    // 240 legacy actions (AM1 retires GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AV3
+    // GLOBAL_OPEN_DUMMY_AUDIO) and the rewrite's GLOBAL_EDITOR_HIDE_TAGS (LE3)
+    EXPECT_EQ(bound, 241);
 }
 
 // ---- Config.txt / AudioConfig.txt readings
@@ -654,7 +658,8 @@ TEST(SettingsImport, RetiredOptionsAndActionsAreDroppedWithANotice)
 {
     const Plan plan = buildPlan({config(padding() + "TOOLBAR_IDS={\n\tGLOBAL_SAVE_SUBS\n}\r\nTOOLBAR_ALIGNMENT=2\r\n"),
                                  hotkeys("GLOBAL_VIDEO_INDEXING G=Ctrl-Alt-I\r\n5015 S=Ctrl-Alt-J\r\n"
-                                         "GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW G=Ctrl-Shift-H\r\n")},
+                                         "GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW G=Ctrl-Shift-H\r\n"
+                                         "GLOBAL_OPEN_DUMMY_AUDIO G=Ctrl-Alt-B\r\n")},
                                 linuxHost(), readBy(ReadBy::Windows));
     for (const auto *key : {"TOOLBAR_IDS", "TOOLBAR_ALIGNMENT"}) {
         const PlanRow &row = rowOf(plan, std::string("setting:") + key);
@@ -667,6 +672,10 @@ TEST(SettingsImport, RetiredOptionsAndActionsAreDroppedWithANotice)
         EXPECT_EQ(rowOf(plan, id).disposition, Disposition::Retired) << id;
         EXPECT_NE(rowOf(plan, id).reason.find("retired"), std::string::npos);
     }
+    // AV3 (owner 2026-10-18): "Open blank 2h30m audio" is retired too.
+    const PlanRow &blank = rowOf(plan, "shortcut:GLOBAL_OPEN_DUMMY_AUDIO:G");
+    EXPECT_EQ(blank.disposition, Disposition::Retired);
+    EXPECT_NE(blank.reason.find("dummy video"), std::string::npos) << blank.reason;
     const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
     EXPECT_FALSE(profile.values.contains("toolbar.actions"));
     EXPECT_FALSE(profile.values.contains("toolbar.alignment"));

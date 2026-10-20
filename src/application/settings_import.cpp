@@ -358,7 +358,8 @@ bool isRetiredAction(int id)
 {
     // The commands whose stored bindings the hotkeys drop as they are read
     // (GLOBAL_VIDEO_INDEXING, user decision 2026-10-05;
-    // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AM1 2026-10-19).
+    // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AM1 2026-10-19;
+    // GLOBAL_OPEN_DUMMY_AUDIO, AV3 owner 2026-10-18).
     return isRetiredHotkey(id);
 }
 
@@ -1318,6 +1319,8 @@ Plan buildPlan(const std::vector<SourceFile> &sources, const Destination &destin
             row.disposition = Disposition::Retired;
             because(id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING")
                         ? "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)"
+                    : id == hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO")
+                        ? "retired: a dummy video brings its own silent audio (owner decision, 2026-10-18)"
                         : "retired: the shortcut mapping window is gone; each macro's shortcut is set in the "
                           "Automation panel (user decision, 2026-10-19)");
             add(std::move(row));

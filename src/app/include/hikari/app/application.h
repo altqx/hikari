@@ -107,6 +107,8 @@ signals:
     void playbackPlayerChanged();
     // W1: DirectShow could not open the video: legacy's warning box.
     void playerNotice(const QString &message);
+    // AV1: the route both audio paths follow changed.
+    void audioOutputChanged();
     // F1: find and replace shows a legacy message box (kind: 0 message, 1
     // "Reached end", 2 missing styles, 3 no style found, 4 replace in files);
     // a question (kinds 1-4) waits for answerFindQuestion(id, ...), a message
@@ -761,6 +763,15 @@ public:
     static QString outputDeviceLabel(const application::OutputDeviceChoice &choice);
     // tests: the route both audio paths follow now
     application::OutputRoute audioRoute() const { return m_audioRouting->route(); }
+    // AV1 (#238, application_audio.cpp): the audio panel's output menu, the
+    // entries of Settings > Audio's device choice: {label, checked, id, name}
+    // each, the stored choice checked. Choosing one (its id and name, as the
+    // menu showed it) stores it as the dialog's OK does.
+    Q_INVOKABLE QVariantList audioOutputMenu() const;
+    Q_INVOKABLE void chooseAudioOutput(const QString &id, const QString &name);
+    // The device audio plays through now, as the speaker button's tooltip names it.
+    Q_PROPERTY(QString audioOutputName READ audioOutputName NOTIFY audioOutputChanged)
+    QString audioOutputName() const;
     backends::AudioBoxPlayer &audioPlayer() { return *m_audioPlayer; }
     ui::LogController &log() { return *m_log; }
     // O5: the interface language (PROGRAM_LANGUAGE, switched live) and
@@ -1290,6 +1301,24 @@ private:
     std::unique_ptr<application::AudioDevicesPort> m_audioDevices;
     std::unique_ptr<application::AudioOutputRouting> m_audioRouting;
     void routeAudio(const application::OutputRoute &route, bool move);
+    // AV1: the status bar says so when the chosen device went away and the
+    // system default plays (application_audio.cpp).
+    void noticeAudioRoute(const application::OutputRoute &before, const application::OutputRoute &after);
+    application::OutputRoute m_noticedRoute;
+    QString m_audioRouteNotice; // the unplugged device's notice while it shows
+    int m_audioRouteNoticeSerial = 0;
+    // AV2 (#239, application_audio.cpp): with the sync toggle on, the audio
+    // cursor follows the playing video, and the paused video shows the frame
+    // the playing audio box is at: one frame asked for at a time, the newest
+    // wanted one once it arrived.
+    void syncAudioWithVideo();
+    // AV3 (#240): a dummy video's own silent audio (its AudioBox name), empty
+    // for another video; and whether `audio` is the video's own (the video's
+    // file, or a dummy video's silence), which a tab does not keep as its own.
+    static QString dummyVideoAudio(const QString &videoPath);
+    static bool isVideoAudio(const QString &audio, const QString &videoPath);
+    void showVideoAtAudio(int ms);
+    std::optional<int> m_audioWantsFrame;
     void refreshAudio();
     void followVideoInAudio();
     // V3 (application_video.cpp)

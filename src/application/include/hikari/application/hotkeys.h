@@ -91,9 +91,11 @@ std::string hotkeyName(int id);
 // decision 2026-10-05): the rewrite always indexes. AM1:
 // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW ("Open shortcut mapping window") is
 // retired with its window (each macro's shortcut is in the Automation
-// panel). Each keeps its IDS symbol, so stored lines naming it are
-// recognised, but has no name (never listed in the Options page) and its
-// bindings are dropped as the lists are read.
+// panel). AV3 (#240, owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO ("Open blank
+// 2h30m audio") is retired: a dummy video brings its own silent audio. Each
+// keeps its IDS symbol, so stored lines naming it are recognised, but has no
+// name (never listed in the Options page) and its bindings are dropped as the
+// lists are read.
 bool isRetiredHotkey(int id);
 // Removes the retired actions' bindings from `map` and returns them, for the
 // notice the reader gives.

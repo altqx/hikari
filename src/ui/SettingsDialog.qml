@@ -44,8 +44,9 @@ Dialog {
     property var tagButtonList: []
     signal reloaded()
 
-    // AM1: `page` "hotkeys" opens on the Hotkeys page with the filter
-    // `filter` chosen (the Automation panel's "Shortcuts in Settings…",
+    // `page`: the page list's row to show (AV1's "Audio settings…" asks for
+    // Audio); legacy opened on the first. AM1: `filter` is the Hotkeys page's
+    // filter to choose (the Automation panel's "Shortcuts in Settings…",
     // MuseScore's deep link from a plugin to its shortcut).
     function openDialog(page, filter) {
         const r = app.openSettingsDialog()
@@ -60,10 +61,9 @@ Dialog {
         copyTagButtons()
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
-        pageList.currentIndex = 0 // legacy ChangeSelection(0)
-        if (page === "hotkeys") {
-            pageList.currentIndex = 7
-            hotkeyFilter.currentIndex = filter ?? 0
+        pageList.currentIndex = page ?? 0 // legacy ChangeSelection(0)
+        if (filter !== undefined) {
+            hotkeyFilter.currentIndex = filter
             hotkeys.filter(hotkeyFilter.currentIndex)
         }
         open()

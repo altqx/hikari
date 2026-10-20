@@ -875,3 +875,28 @@ TEST(Hotkeys, RetiredAutomationHotkeysWindowBindingsAreDropped)
     list.build(defaultHotkeys());
     EXPECT_EQ(list.find("Global Open shortcut mapping window"), -1);
 }
+
+// AV3-dummy-video-audio (owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO ("Open
+// blank 2h30m audio") is retired the same way: a dummy video brings its own
+// silent audio. A stored binding is recognised and dropped; it never had a name.
+TEST(Hotkeys, RetiredBlankAudioBindingsAreDropped)
+{
+    HotkeyMap map;
+    readHotkeyLines(map, {"GLOBAL_OPEN_DUMMY_AUDIO G=Ctrl-Alt-B", "GLOBAL_SAVE_SUBS G=Ctrl-S"});
+    const int blank = ids().at("GLOBAL_OPEN_DUMMY_AUDIO");
+    EXPECT_TRUE(map.contains(HotkeyId{blank, GlobalHotkey}));
+    EXPECT_TRUE(isRetiredHotkey(blank));
+    EXPECT_FALSE(isRetiredHotkey(ids().at("GLOBAL_OPEN_DUMMY_VIDEO")));
+    const auto dropped = dropRetiredHotkeys(map);
+    ASSERT_EQ(dropped.size(), 1u);
+    EXPECT_EQ(dropped[0].first, (HotkeyId{blank, GlobalHotkey}));
+    EXPECT_EQ(dropped[0].second.accel, "Ctrl-Alt-B");
+    EXPECT_EQ(map.size(), 1u);
+    EXPECT_EQ(hotkeyName(blank), "");
+    for (const auto &line : hotkeyLines(map, false))
+        EXPECT_EQ(line.find("GLOBAL_OPEN_DUMMY_AUDIO"), std::string::npos);
+    // no default binds it
+    HotkeyMap defaults;
+    loadDefaultHotkeys(defaults, false);
+    EXPECT_FALSE(defaults.contains(HotkeyId{blank, GlobalHotkey}));
+}

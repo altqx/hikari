@@ -108,6 +108,9 @@ Rectangle {
         Field {
             objectName: "statusText"
             text: bar.shell.statusText
+            // AV1: a message cut short by the fields beside it reads whole
+            // in its tooltip (the unplugged output device's notice)
+            tip: truncated ? text : ""
             stretch: 12
             Layout.horizontalStretchFactor: 12
         }

@@ -14,6 +14,7 @@
 #include <algorithm>
 #include <array>
 #include <climits>
+#include <cmath>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -311,6 +312,10 @@ TEST(DummyVideo, FramesAndTimecodesAsLegacyMakesThem)
     EXPECT_EQ(times[24], 1001);
     EXPECT_EQ(times[1000], 41708);
     EXPECT_EQ(times[35963], 1499958);
+    // AV3: its own silent audio lasts the frames' whole duration
+    EXPECT_EQ(dummyVideoAudioFrames(film, 44100), std::llround(35964 * double(1000.f / 23.976f) * 44.1));
+    EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{25.f, 50, 2, 2, 0, 0, 0, false}, 44100), 88200); // 2 s
+    EXPECT_EQ(dummyVideoAudioFrames(DummyVideo{0.f, 50, 2, 2, 0, 0, 0, false}, 44100), 0);
 }
 
 // The dummy goes through the session as any video: its frames, its legacy
