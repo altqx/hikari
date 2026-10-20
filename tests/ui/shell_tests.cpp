@@ -12666,10 +12666,10 @@ private slots:
         QVERIFY(!application->automation().running());
     }
 
-    // AM1: the panel reads the Document's scripts (Script Info "Automation
+    // AM1: the panel offers the Document's scripts (Script Info "Automation
     // Scripts") as it shows and as the editing target changes while it
-    // shows, as the Automation menu opening does (Automation.cpp:1359).
-    void automationPanelReadsTheDocumentScripts()
+    // shows; loading runs a script's code, so nothing loads before Load.
+    void automationPanelOffersTheDocumentScripts()
     {
         QTemporaryDir scripts;
         const auto document = [&](const QString &name) {
@@ -12700,19 +12700,41 @@ private slots:
         QVERIFY(dock);
         QVERIFY(!dock->property("isOpen").toBool());
         QTest::qWait(100);
-        QVERIFY(!listed("First")); // closed: nothing reads them
+        QVERIFY(!listed("First"));
         QVERIFY(QMetaObject::invokeMethod(dock, "open"));
-        QTRY_VERIFY(listed("First"));
+        auto *offer = visualItem("documentScriptsOffer");
+        QVERIFY(offer);
+        QTRY_VERIFY(offer->isVisible());
+        QCOMPARE(visualItem("documentScriptsOfferText")->property("text").toString(),
+                 QStringLiteral("This file names scripts: First.lua"));
+        QTest::qWait(200);
+        QVERIFY(!listed("First")); // offered, not loaded
+        QVERIFY(std::ranges::none_of(application->automation().scripts(), [&](const auto &script) {
+            return QString::fromStdString(script.path).endsWith(QStringLiteral("First.lua"));
+        }));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("documentScriptsLoad"), "clicked"));
+        QVERIFY(listed("First"));
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_First"), 30000);
-        // Another tab while it shows: its Document's scripts are read as it
-        // becomes the editing target.
+        QTRY_VERIFY(!offer->isVisible());
+        // Another tab while it shows: its Document's scripts are offered as
+        // it becomes the editing target.
         QVERIFY(application->openFile(second));
-        QVERIFY(!listed("Second"));
         application->selectTab(1);
         QTRY_COMPARE(visualItem("automationTool")->property("documentName").toString(), QStringLiteral("Second.ass"));
         QVERIFY(dock->property("isOpen").toBool());
-        QTRY_VERIFY(listed("Second"));
+        QTRY_COMPARE(visualItem("documentScriptsOfferText")->property("text").toString(),
+                     QStringLiteral("This file names scripts: Second.lua"));
+        QVERIFY(offer->isVisible());
+        QVERIFY(!listed("Second"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("documentScriptsLoad"), "clicked"));
+        QVERIFY(listed("Second"));
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Second"), 30000);
+        QTRY_VERIFY(!offer->isVisible());
+        // Back on the first tab: its script is loaded, nothing is offered.
+        application->selectTab(0);
+        QTRY_COMPARE(visualItem("automationTool")->property("documentName").toString(), QStringLiteral("First.ass"));
+        QTest::qWait(200);
+        QVERIFY(!offer->isVisible());
     }
 
     // AM1: the Automation panel, closed by default and opened from

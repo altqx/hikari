@@ -347,6 +347,22 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>This file names scripts: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading a script runs its code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load</source>
+        <translation type="unfinished">파일에서</translation>
+    </message>
+    <message>
+        <source>Load the scripts this file names</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No macros match</source>
         <translation type="unfinished"></translation>
     </message>

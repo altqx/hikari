@@ -431,6 +431,22 @@ void AutomationShell::addFromDocument()
         loadDocumentScript(path);
 }
 
+QStringList AutomationShell::documentScriptsToLoad()
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *s = target ? session(*target) : nullptr;
+    const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
+    QStringList out;
+    if (!value)
+        return out;
+    const auto &listed = m_documentScripts.scripts();
+    for (const std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
+        if (QFileInfo(QString::fromStdString(path)).isFile() && std::ranges::find(listed, path) == listed.end() &&
+            !out.contains(QString::fromStdString(path)))
+            out << QString::fromStdString(path);
+    return out;
+}
+
 void AutomationShell::menuOpened()
 {
     // HikariSubFrame::OnMenuOpened (HikariSubFrame.cpp:2307-2316): BuildMenu

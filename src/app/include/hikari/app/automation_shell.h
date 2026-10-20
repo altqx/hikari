@@ -107,6 +107,10 @@ public:
     // S4, legacy Automation::AddFromSubs: the scripts the editing target's
     // Script Info names ("Automation Scripts") load.
     Q_INVOKABLE void addFromDocument();
+    // AM1: what addFromDocument would load now: the existing files the
+    // editing target's Script Info names that are not listed. The panel
+    // offers them; loading a script runs its code, so it waits for the user.
+    Q_INVOKABLE QStringList documentScriptsToLoad();
     // The Automation menu opens (legacy BuildMenu): with a Document open, its
     // scripts load and every script whose file changed reloads.
     Q_INVOKABLE void menuOpened();

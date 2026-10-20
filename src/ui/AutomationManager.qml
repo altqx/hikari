@@ -58,18 +58,27 @@ Pane {
     readonly property bool running: automation !== null && automation.running
     readonly property string filterText: filter.text.trim().toLowerCase()
 
-    // The Document's scripts (its Script Info) are read as the panel shows
-    // and as the editing target changes while it shows: legacy read them as
-    // the Automation menu opened (Automation.cpp:1359), and the panel stays
-    // open, restored with a layout or a tab's arrangement.
+    // The Document's scripts (its Script Info) that are not loaded, offered
+    // as the panel shows and as the editing target changes while it shows
+    // (the panel stays open, restored with a layout or a tab's arrangement).
+    // Loading a script runs its code, so the panel waits for Load; the
+    // Automation menu opening still loads them, as legacy's did
+    // (Automation.cpp:1359).
+    property var offeredScripts: []
     function readDocumentScripts() {
-        if (automation && visible)
-            automation.addFromDocument()
+        offeredScripts = automation && visible ? automation.documentScriptsToLoad() : []
+    }
+    function fileName(path) {
+        return path.replace(/^.*[\\/]/, "")
     }
     // After the change: the tab and its name change before the target does.
     onVisibleChanged: Qt.callLater(readDocumentScripts)
     onDocumentNameChanged: Qt.callLater(readDocumentScripts)
     onDocumentTabChanged: Qt.callLater(readDocumentScripts)
+    Connections {
+        target: root.controller
+        function onChanged() { Qt.callLater(root.readDocumentScripts) }
+    }
 
     // A macro row runs (Run, a double click, Enter) when its script is ready
     // and no macro is running.
@@ -349,6 +358,57 @@ Pane {
                         Accessible.name: qsTr("Log")
                     }
                     FontMetrics { id: logMetrics; font: logText.font }
+                }
+            }
+        }
+
+        // The Document's scripts, offered until loaded.
+        Rectangle {
+            objectName: "documentScriptsOffer"
+            visible: root.offeredScripts.length > 0
+            Layout.fillWidth: true
+            Layout.leftMargin: 8
+            Layout.rightMargin: 8
+            Layout.bottomMargin: 6
+            implicitHeight: offerRow.implicitHeight + 16
+            color: Theme.panel
+            border.width: 1
+            border.color: Theme.line
+            Accessible.role: Accessible.Grouping
+            Accessible.name: offerText.text
+            RowLayout {
+                id: offerRow
+                anchors.fill: parent
+                anchors.margins: 8
+                spacing: 8
+                ColumnLayout {
+                    Layout.fillWidth: true
+                    spacing: 2
+                    Label {
+                        id: offerText
+                        objectName: "documentScriptsOfferText"
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        text: qsTr("This file names scripts: %1").arg(root.offeredScripts.map(root.fileName).join(", "))
+                        ToolTip.visible: offerHover.hovered
+                        ToolTip.text: root.offeredScripts.join("\n")
+                        HoverHandler { id: offerHover }
+                    }
+                    Label {
+                        Layout.fillWidth: true
+                        wrapMode: Text.Wrap
+                        color: Theme.muted
+                        text: qsTr("Loading a script runs its code.")
+                    }
+                }
+                Button {
+                    objectName: "documentScriptsLoad"
+                    text: qsTr("Load")
+                    Accessible.description: qsTr("Load the scripts this file names")
+                    onClicked: {
+                        root.automation.addFromDocument()
+                        root.readDocumentScripts()
+                    }
                 }
             }
         }
