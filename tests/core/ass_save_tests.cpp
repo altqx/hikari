@@ -261,6 +261,86 @@ TEST(AssSave, RendererScriptFollowsGetVisible)
               plain);
 }
 
+// LoadASS reads a Dialogue or Comment in any section as a Line, which the
+// Grid shows; the renderers read events only under [Events]. The renderer
+// script writes such Lines into the next [Events] section after its Format
+// line, in the Grid's order (GetVisible writes every Line under [Events]),
+// or into an [Events] section of their own at the end. The saved file keeps
+// every byte where it was.
+TEST(AssSave, RendererScriptPutsEveryLineUnderEvents)
+{
+    const std::string input = "[Script Info]\r\nTitle: t\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
+                              "\r\n[Events]\r\n"
+                              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+                              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n"
+                              "\r\n[Aegisub Project Garbage]\r\nComment: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,after";
+    auto r = loadAss(bytesOf(input));
+    ASSERT_EQ(r.document.lines().size(), 3u);
+    EXPECT_EQ(text(encodeAss(r.document)), input);
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.renderer = true})),
+              "[Script Info]\r\nTitle: t\r\n"
+              "\r\n[Events]\r\n"
+              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
+              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n"
+              "\r\n[Aegisub Project Garbage]\r\n"
+              "\r\n[Events]\r\nComment: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,after\r\n");
+}
+
+TEST(AssSave, RendererScriptPutsHeldLinesAfterTheEventsFormat)
+{
+    // A comment or blank before the Format line: the held Lines wait for it,
+    // as the fields they are read by come from it.
+    const std::string input = "[Script Info]\r\nTitle: t\r\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
+                              "\r\n[Events]\r\n; made by hand\r\n\r\n"
+                              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+                              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n";
+    auto r = loadAss(bytesOf(input));
+    ASSERT_EQ(r.document.lines().size(), 2u);
+    EXPECT_EQ(text(encodeAss(r.document)), input);
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.renderer = true})),
+              "[Script Info]\r\nTitle: t\r\n"
+              "\r\n[Events]\r\n; made by hand\r\n\r\n"
+              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\r\n"
+              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\r\n");
+    // No Format line: before the section's first Line.
+    const std::string unformatted = "[Script Info]\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\n"
+                                    "[Events]\n; made by hand\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\n";
+    r = loadAss(bytesOf(unformatted));
+    ASSERT_EQ(r.document.lines().size(), 2u);
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.renderer = true})),
+              "[Script Info]\n[Events]\n; made by hand\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,info\n"
+              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,events\n");
+}
+
+TEST(AssSave, RendererScriptKeepsTheOrderOfLinesBeforeTheEventsFormat)
+{
+    // A Line of [Events] before its Format line, with Lines held from before
+    // [Events]: it waits with them, after the Format line in the
+    // Document's order, as legacy LoadASS reads every Line in file order.
+    const std::string input = "[Script Info]\nTitle: t\nDialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\n"
+                              "\n[Events]\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n"
+                              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                              "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,C\n";
+    auto r = loadAss(bytesOf(input));
+    ASSERT_EQ(r.document.lines().size(), 3u);
+    EXPECT_EQ(text(encodeAss(r.document)), input);
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.renderer = true})),
+              "[Script Info]\nTitle: t\n"
+              "\n[Events]\n"
+              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+              "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,A\n"
+              "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n"
+              "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,C\n");
+    // Nothing held: a Line before the Format line stays where it is.
+    const std::string own = "[Script Info]\nTitle: t\n\n[Events]\nDialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,B\n"
+                            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+    r = loadAss(bytesOf(own));
+    EXPECT_EQ(text(encodeAss(r.document, AssSaveOptions{.renderer = true})), own);
+}
+
 TEST(AssLoad, TLModePairingEdges)
 {
     const auto r = loadAss(bytesOf("[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"

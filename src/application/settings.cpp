@@ -300,6 +300,12 @@ const std::vector<SettingDefinition> &definitions()
         // (default), 1 Always (legacy's "Show toolbar", never saved there),
         // 2 Never; VIDEO_FULLSCREEN_BAR and the bar's mode menu set it.
         {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // WS2 (owner decision 2026-10-18, #216): "Save panel layout in
+        // subtitle files": an ASS file keeps its Document tab's panel
+        // arrangement in a [Hikari] section, written at each save and taken
+        // when the file opens. Off, the section is neither read nor written
+        // (an existing one is kept as it is).
+        {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
     };
     return table;
 }
