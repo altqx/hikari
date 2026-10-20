@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <map>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -345,4 +346,72 @@ TEST_F(Files, OnlyAssSavesWriteTheActiveLine)
     ASSERT_TRUE(plan);
     EXPECT_FALSE(plan->activeLine);
     EXPECT_EQ(text(plan->bytes).find("Active Line"), std::string::npos);
+}
+
+// WS2: a save of an ASS Document writes its tab's panel arrangement into the
+// [Hikari] section, as the active Line: the arrangement changing marks
+// nothing modified, the next save writes it, the Document takes it once
+// written. Without a value (the setting off, no tab) the section stays.
+TEST_F(Files, SaveWritesTheLayoutIntoTheHikariSection)
+{
+    std::map<std::uint64_t, std::u8string> layouts;
+    service.setLayoutSource([&](DocumentId d) -> std::optional<std::u8string> {
+        const auto it = layouts.find(d.value);
+        return it == layouts.end() ? std::nullopt : std::optional(it->second);
+    });
+    const auto doc = open("/a.ass");
+    EditSession &s = *service.session(doc);
+    layouts[doc.value] = u8"QUJD";
+    EXPECT_FALSE(s.isDirty()); // a layout is not an edit
+    const auto steps = s.historySize();
+    const auto content = s.contentId();
+
+    auto failed = service.prepareSave(doc);
+    ASSERT_TRUE(failed);
+    EXPECT_EQ(failed->layout, std::optional<std::u8string>(u8"QUJD"));
+    ASSERT_TRUE(service.startSave(*failed));
+    finish(WriteOutcome::Failed);
+    EXPECT_FALSE(s.document().hikariProperty(kLayoutKey)); // only once written
+
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Written);
+    std::string expected = kAss;
+    expected.replace(expected.find("Title: t\n"), 9, "Title: t\nActive Line: 0\n");
+    EXPECT_EQ(text(disk.files["/a.ass"]), expected + "\n[Hikari]\nLayout=QUJD\n");
+    EXPECT_EQ(s.document().hikariProperty(kLayoutKey), std::optional<std::u8string>(u8"QUJD"));
+    EXPECT_EQ(s.historySize(), steps);
+    EXPECT_EQ(s.contentId(), content);
+    EXPECT_FALSE(s.isDirty());
+
+    // The next save replaces it in place; with no value the section stays.
+    layouts[doc.value] = u8"TEFTVA==";
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Written);
+    EXPECT_EQ(text(disk.files["/a.ass"]), expected + "\n[Hikari]\nLayout=TEFTVA==\n");
+    layouts.erase(doc.value);
+    auto kept = service.prepareSave(doc);
+    ASSERT_TRUE(kept);
+    EXPECT_FALSE(kept->layout);
+    EXPECT_EQ(text(kept->bytes), expected + "\n[Hikari]\nLayout=TEFTVA==\n");
+
+    // Reopened, the Document has it.
+    ASSERT_TRUE(service.close(doc));
+    EXPECT_EQ(service.session(open("/a.ass"))->document().hikariProperty(kLayoutKey),
+              std::optional<std::u8string>(u8"TEFTVA=="));
+}
+
+TEST_F(Files, OnlyAssSavesWriteTheLayout)
+{
+    bool asked = false;
+    service.setLayoutSource([&](DocumentId) -> std::optional<std::u8string> {
+        asked = true;
+        return u8"QUJD";
+    });
+    disk.files["/a.srt"] = bytesOf("1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
+    const auto doc = open("/a.srt");
+    auto plan = service.prepareSave(doc);
+    ASSERT_TRUE(plan);
+    EXPECT_FALSE(asked);
+    EXPECT_FALSE(plan->layout);
+    EXPECT_EQ(text(plan->bytes), "1\r\n00:00:01,000 --> 00:00:02,000\r\none\r\n\r\n");
 }

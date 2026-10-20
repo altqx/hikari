@@ -245,6 +245,16 @@ hikari_add_qttest(hikari_ui_tab_layouts_tests SOURCES tab_layouts_tests.cpp
 target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_tab_layouts_tests hikari_media_fixtures hikari_media_helper)
+# WS2: the tab's arrangement in an ASS file's [Hikari] section. Seven parts,
+# each its own process under the default 60 s (decision 38g): a refusal row
+# starts the application as the other functions do, and in one process the
+# suite took 55 s here and timed out in CI on both platforms.
+hikari_add_qttest(hikari_ui_file_layouts_tests SOURCES file_layouts_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets
+    PARTS arrangements refusals=anUnusableFileArrangementFollowsTheNewTabRule
+          bounds=aLayoutLargerThanThePanelsIsRefused tree=aLayoutTheEngineCannotReadIsRefused
+          positions=aPanelPositionTheEngineCannotReadIsRefused places=aWindowPlaceNoWindowCanHaveIsRefused recovery=aRecoveredCopyKeepsItsArrangement)
+target_include_directories(hikari_ui_file_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
 # WS3 (#217): the layout presets and saved layouts (save, apply, rename,
 # delete, persistence) and the retired View arrangements and editor switch.
 # Every function starts the application and its QML, as D2's suite did, so
@@ -265,6 +275,14 @@ hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_test
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC (update_apply_tests.cpp).
 target_compile_definitions(hikari_ui_update_apply_tests PRIVATE HIKARI_UPDATE_APPLY_WINDOWS_TESTS=$<BOOL:${WIN32}>)
+# The stand-in setup that holds the setup mutex: no Qt, so its start does not
+# depend on the runner's load (PowerShell's took over launch's 10 s once).
+if(WIN32)
+    add_executable(hikari_setup_mutex_helper setup_mutex_helper.cpp)
+    target_compile_definitions(hikari_ui_update_apply_tests PRIVATE
+        HIKARI_SETUP_MUTEX_HELPER="$<TARGET_FILE:hikari_setup_mutex_helper>")
+    add_dependencies(hikari_ui_update_apply_tests hikari_setup_mutex_helper)
+endif()
 # F3: the spell checker's Qt adapters and the Grid's marks; the shell tests use the fake backend.
 hikari_add_qttest(hikari_ui_spelling_tests SOURCES spelling_ui_tests.cpp LIBRARIES hikari_ui)
 target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
@@ -361,6 +379,10 @@ if(WIN32)
     set_tests_properties(hikari_ui_title_bar_tests.windows PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=windows" LABELS "qttest;windows" TIMEOUT 120)
 endif()
+# SH1: the main window's frame: the title bar's default by desktop, the
+# frameless window's hints, its parts as the window system is told of them
+# and Alt alone (window_frame.h).
+hikari_add_qttest(hikari_ui_window_frame_tests SOURCES window_frame_tests.cpp LIBRARIES hikari_ui)
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")

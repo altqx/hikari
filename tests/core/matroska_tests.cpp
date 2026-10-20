@@ -186,6 +186,26 @@ TEST(MatroskaDocument, AssHeaderFromTheCodecPrivateData)
     EXPECT_EQ(d.scriptInfo(u8"YCbCr Matrix"), u8"TV.601");
 }
 
+TEST(MatroskaDocument, KeepsNoHikariSection)
+{
+    // WS2: Demux.cpp:128-154 keeps only the Script Info, the Styles and the
+    // Comment lines of the codec-private data, so a `[Hikari]` section muxed
+    // with the track, after the Events or before the Styles, gives the
+    // Document no panel arrangement, and its saves write no section of it.
+    const std::string after = "[Script Info]\r\nScriptType: v4.00+\r\n\r\n[V4+ Styles]\r\n"
+                              "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,"
+                              "0,1,2,2,2,10,10,10,1\r\n\r\n[Events]\r\n"
+                              "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\r\n\r\n"
+                              "[Hikari]\r\nLayout=eyJlbmdpbmUiOiJLRERvY2tXaWRnZXRzIn0=\r\n";
+    const std::string before = "[Script Info]\r\nScriptType: v4.00+\r\n\r\n"
+                               "[Hikari]\r\nLayout=eyJlbmdpbmUiOiJLRERvY2tXaWRnZXRzIn0=\r\n\r\n[V4+ Styles]\r\n";
+    for (const std::string &priv : {after, before}) {
+        const Document d = matroskaDocument(priv, {ass(0, 1000, "0,0,Default,,0,0,0,,one")}, MatroskaCodec::Ass);
+        EXPECT_EQ(d.hikariProperty(u8"Layout"), std::nullopt);
+        EXPECT_EQ(text(encodeAss(d)).find("[Hikari]"), std::string::npos);
+    }
+}
+
 TEST(MatroskaDocument, MatrixIsAddedForAssOnly)
 {
     // codecType < 1 (Demux.cpp:161): an ASS track without the key gains it at

@@ -127,7 +127,7 @@ struct StyleRecord {
 };
 
 struct PropertyRecord {
-    std::u8string key;   // trimmed text before the first ':'
+    std::u8string key;   // trimmed text before the first ':' (in [Hikari], the first '=')
     std::u8string value; // trimmed text after it
     SourceSpan span;
     bool edited = false;   // written as "key: value" (legacy GetSInfos)
@@ -156,6 +156,7 @@ enum class SectionKind {
     Fonts,
     Graphics,
     Unknown,    // retained untouched (C03-preservation)
+    Hikari,     // [Hikari]: HikariSub's own "key=value" lines (WS2, setHikariProperty)
     Cues,       // the single body of a sectionless format (SRT)
 };
 
@@ -269,6 +270,20 @@ public:
         std::optional<std::pair<std::u8string, std::u8string>> property;
     };
     bool rearrangeScriptInfo(const std::vector<PropertySlot> &slots);
+
+    // WS2: the [Hikari] section, HikariSub's own data in an ASS file (the
+    // Document tab's panel arrangement). Its lines are "key=value": no ':',
+    // so legacy LoadASS, which takes any line with one into Script Info,
+    // passes over them. The last value for key in any [Hikari] section, as
+    // the Document holds it (no copy: a file's value can be any length),
+    // valid until the Document changes.
+    std::optional<std::u8string_view> hikariProperty(std::u8string_view key) const;
+    // The key's (last) value is replaced in place, or the key is added after
+    // the last property of the last [Hikari] section. A Document without one
+    // gets the section at its end, before the embedded [Fonts]/[Graphics]
+    // data that may end it (libass reads any line after [Fonts] as font
+    // data). False for the formats other than ASS.
+    bool setHikariProperty(std::u8string_view key, std::u8string value);
 
     SubtitleFormat format() const { return m_format; }
     // MicroDVD frame rate for this Document only; nullopt while unknown.
