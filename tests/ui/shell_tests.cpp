@@ -12524,6 +12524,20 @@ private slots:
         press(Qt::Key_Down);
         QTRY_COMPARE(session->selection().active, lines[1]->id);
         QVERIFY(!audio.playing());
+        // A panel that leaves a still pointer (a dock moved or resized) is
+        // no longer hovered at the next key.
+        hover("audioDisplay");
+        QCOMPARE(hovered(), QStringLiteral("audioPanel"));
+        auto *audioPanel = item("audioPanel");
+        audioPanel->setTransformOrigin(QQuickItem::TopLeft);
+        audioPanel->setScale(0.1);
+        press(Qt::Key_Up); // the focused Grid's previous Line
+        QTRY_COMPARE(session->selection().active, lines[0]->id);
+        QVERIFY(!audio.playing());
+        QVERIFY(hovered() != QStringLiteral("audioPanel"));
+        audioPanel->setScale(1);
+        QTest::mouseMove(window, QPoint(0, 0));
+        QCoreApplication::processEvents();
         // Focus in the audio, the pointer over the Grid: the Grid's Ctrl+D.
         item("audioDisplay")->forceActiveFocus();
         hover("editingGrid");

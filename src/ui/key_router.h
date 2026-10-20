@@ -21,6 +21,7 @@
 
 #include <QJSValue>
 #include <QObject>
+#include <QPointF>
 #include <QPointer>
 #include <QtQml/qqmlregistration.h>
 
@@ -80,12 +81,17 @@ private:
     const Panel *panelAt(QQuickWindow *window, QPointF scenePos) const;
     const Panel *panelOf(QQuickItem *item) const;
     void setHovered(QQuickItem *panel);
+    void hoverAtPointer();
     bool shortcutOverride(QQuickWindow *window, QKeyEvent *event);
     bool keyPress(QKeyEvent *event);
     bool takes(QQuickItem *target, const QKeyEvent *event);
 
     std::vector<Panel> m_panels;
     QPointer<QQuickItem> m_hovered;
+    // Where the pointer last moved: panels moved or resized under a still
+    // pointer change the hovered panel without a move.
+    QPointer<QQuickWindow> m_pointerWindow;
+    QPointF m_pointerPos;
     QJSValue m_fallbackAccepts;
     QJSValue m_followsPointer;
     QPointer<QQuickItem> m_fallbackTarget;

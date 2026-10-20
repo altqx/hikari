@@ -109,9 +109,16 @@ bool KeyRouter::takes(QQuickItem *target, const QKeyEvent *event)
     return probe.isAccepted();
 }
 
+void KeyRouter::hoverAtPointer()
+{
+    const Panel *p = m_pointerWindow ? panelAt(m_pointerWindow, m_pointerPos) : nullptr;
+    setHovered(p ? p->panel.data() : nullptr);
+}
+
 bool KeyRouter::shortcutOverride(QQuickWindow *window, QKeyEvent *event)
 {
     m_routed.reset();
+    hoverAtPointer();
     QQuickItem *focus = window->activeFocusItem();
     if (takesText(focus) || keyboardFocused(focus) || inPopup(focus))
         return false;
@@ -184,14 +191,17 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
         auto *window = qobject_cast<QQuickWindow *>(watched);
         if (!window || !shellWindow(window))
             return false;
-        const Panel *p = panelAt(window, static_cast<QMouseEvent *>(event)->scenePosition());
-        setHovered(p ? p->panel.data() : nullptr);
+        m_pointerWindow = window;
+        m_pointerPos = static_cast<QMouseEvent *>(event)->scenePosition();
+        hoverAtPointer();
         return false;
     }
     case QEvent::Leave: {
         auto *window = qobject_cast<QQuickWindow *>(watched);
-        if (window && m_hovered && m_hovered->window() == window)
+        if (window && window == m_pointerWindow) {
+            m_pointerWindow = nullptr;
             setHovered(nullptr);
+        }
         return false;
     }
     case QEvent::ShortcutOverride: {
