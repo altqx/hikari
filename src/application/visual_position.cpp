@@ -1448,6 +1448,12 @@ bool MoveTool::setValue(const std::string &name, const std::u16string &text, Vis
     if (name.size() != 2 || (name[0] != 'x' && name[0] != 'y' && name[0] != 't') || (name[1] != '1' && name[1] != '2') ||
         !parseValue(text, value) || (host.gesture() && !m_valueEdit) || !host.activeLine())
         return false;
+    // The first sample is the press: the handles' places the several-Line
+    // path moves every target's \move from (Move::OnMouseEvent's click).
+    if (!host.gesture()) {
+        m_lastmove = m_lastTo = m_to;
+        m_firstmove = m_lastFrom = m_from;
+    }
     const bool start = name[1] == '1';
     if (name[0] == 't') {
         const int typed = static_cast<int>(std::lround(value));

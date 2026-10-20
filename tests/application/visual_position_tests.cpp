@@ -1162,8 +1162,10 @@ TEST(VisualMoveValues, TypedTimesGoIntoEveryPickedLine)
     host.tool = &tool;
     tool.selected(host);
     tool.reset(host);
+    // Codex on #293: the points stay where they were (the press's places
+    // are the handles', not the tool's zeroes).
     EXPECT_TRUE(tool.setValue("t1", u"100", host));
-    EXPECT_EQ(moveTimesOf(text(host, 1)), u8"100,2000");
+    EXPECT_EQ(text(host, 1), u8"{\\move(30,60,90,120,100,2000)}y");
     EXPECT_EQ(moveTimesOf(text(host, 2)).substr(0, 4), u8"100,");
     tool.reset(host);
     EXPECT_TRUE(tool.setValue("t2", u"1500", host));
@@ -1172,7 +1174,7 @@ TEST(VisualMoveValues, TypedTimesGoIntoEveryPickedLine)
     // The edit over, a point's drag keeps each Line's own times.
     tool.reset(host);
     EXPECT_TRUE(tool.setValue("x1", u"60", host));
-    EXPECT_EQ(moveTimesOf(text(host, 1)), u8"100,1500");
+    EXPECT_EQ(text(host, 1), u8"{\\move(60,60,90,120,100,1500)}y");
 }
 
 // VT1 (Codex on #293): the times are read and written from the start the
