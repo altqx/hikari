@@ -6,7 +6,9 @@
 // Lyrics TTML (Apple Music, AMLL TTML Tool) times every <p> and <span> on
 // the media timeline, although TTML's own rule makes a child's times
 // relative to its parent's begin; the files agree with themselves only when
-// read as absolute times, so they are read that way. A <p> without times
+// read as absolute times, so they are read that way. Lyric text collapses
+// whitespace runs unless xml:space="preserve" keeps them; head names (the
+// title, agents) are single-line fields and always collapse. A <p> without times
 // of its own takes its nearest timed ancestor's (a <div>, the <body>).
 
 #include "hikari/core/lyrics_import.h"
@@ -21,6 +23,7 @@
 #include <optional>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace hikari::core {
@@ -581,6 +584,36 @@ std::u8string collapsed(u8sv text)
     return out;
 }
 
+// Whether text under `node` keeps its whitespace: its xml:space, or else
+// its parent's (`inherited`).
+bool preserves(const XmlNode &node, bool inherited)
+{
+    for (const auto &[name, value] : node.attributes)
+        if (name == u8"xml:space")
+            return value == u8"preserve" ? true : value == u8"default" ? false : inherited;
+    return inherited;
+}
+
+// A text node's lyrics, literal: whitespace runs as one space (TTML's
+// default), or under xml:space="preserve" as written, a tab a space and a
+// line end a line break.
+std::u8string lyricText(u8sv raw, bool preserve)
+{
+    if (!preserve)
+        return detail::literalText(collapsed(raw));
+    std::u8string out;
+    for (std::size_t from = 0; from <= raw.size();) {
+        const auto [end, next] = detail::lineAt(raw, from);
+        std::u8string piece(raw.substr(from, end - from));
+        std::ranges::replace(piece, u8'\t', u8' ');
+        if (from > 0)
+            out += u8"\\N";
+        out += detail::literalText(piece);
+        from = next;
+    }
+    return out;
+}
+
 class TtmlReader {
 public:
     explicit TtmlReader(std::size_t budget) { m_sheet.budget = budget; }
@@ -592,7 +625,7 @@ public:
         readHead(root);
         for (const XmlNode &child : root.children)
             if (localName(child.name) == u8"body")
-                if (auto ok = paragraphs(child, std::nullopt, std::nullopt); !ok)
+                if (auto ok = paragraphs(child, std::nullopt, std::nullopt, preserves(root, false)); !ok)
                     return std::unexpected(ok.error());
         if (m_sheet.lines.empty())
             return std::unexpected(LyricsProblem{Kind::NoLyrics, 0, {}});
@@ -608,6 +641,8 @@ private:
         std::u8string leading;                    // text before the first word
         std::u8string plain;                      // all the text, for a Line without words
     };
+    // Background vocal spans, each with whether its parent keeps whitespace.
+    using Backgrounds = std::vector<std::pair<const XmlNode *, bool>>;
 
     // The text of a head element (a title, an agent's name); a <br/> is a space.
     static std::u8string allText(const XmlNode &node)
@@ -624,26 +659,28 @@ private:
     }
 
     // Text appended with whitespace collapsed across the join too: TTML's
-    // default whitespace handling is over the whole paragraph, not each node.
-    static void append(std::u8string &to, u8sv text)
+    // default whitespace handling is over the whole paragraph, not each
+    // node. Preserved text is appended as it is.
+    static void append(std::u8string &to, u8sv text, bool preserve)
     {
         for (char8_t c : text)
-            if (c != u8' ' || !to.ends_with(u8' '))
+            if (preserve || c != u8' ' || !to.ends_with(u8' '))
                 to += c;
     }
 
     // A timed span's word: its text, literal, with a <br/> inside it a line
     // break as under the paragraph.
-    static std::u8string spanText(const XmlNode &node)
+    static std::u8string spanText(const XmlNode &node, bool preserve)
     {
+        preserve = preserves(node, preserve);
         std::u8string out;
         for (const XmlNode &child : node.children)
             if (child.isText())
-                append(out, detail::literalText(collapsed(child.text)));
+                append(out, lyricText(child.text, preserve), preserve);
             else if (localName(child.name) == u8"br")
                 out += u8"\\N";
             else if (!attribute(child, u8"role"))
-                append(out, spanText(child));
+                append(out, spanText(child, preserve), preserves(child, preserve));
         return out;
     }
 
@@ -719,34 +756,35 @@ private:
         return false;
     }
 
-    static void addText(Words &into, u8sv text)
+    static void addText(Words &into, u8sv text, bool preserve)
     {
-        append(into.plain, text);
+        append(into.plain, text, preserve);
         if (into.words.empty())
-            append(into.leading, text);
+            append(into.leading, text, preserve);
         else
-            append(into.words.back().text, text); // spaces after a word stay with it
+            append(into.words.back().text, text, preserve); // spaces after a word stay with it
     }
 
     // The words of a <p> (or of a background span), and the background
     // vocals inside it, each a Line of its own.
-    std::expected<void, LyricsProblem> collect(const XmlNode &node, Words &into, std::vector<const XmlNode *> &backgrounds)
+    // `preserve`: whether the node keeps its whitespace (xml:space).
+    std::expected<void, LyricsProblem> collect(const XmlNode &node, Words &into, Backgrounds &backgrounds, bool preserve)
     {
         for (const XmlNode &child : node.children) {
             if (child.isText()) {
-                addText(into, detail::literalText(collapsed(child.text)));
+                addText(into, lyricText(child.text, preserve), preserve);
                 continue;
             }
             const u8sv local = localName(child.name);
             const auto role = attribute(child, u8"role");
             if (role == u8sv(u8"x-bg")) {
-                backgrounds.push_back(&child);
+                backgrounds.emplace_back(&child, preserve);
                 continue;
             }
             if (role)
                 continue; // translations, romanisations and other untimed companions
             if (local == u8"br") {
-                addText(into, u8"\\N");
+                addText(into, u8"\\N", preserve);
                 continue;
             }
             if (local == u8"span" && attribute(child, u8"begin") && !hasTimedSpan(child)) {
@@ -757,17 +795,18 @@ private:
                 if (!into.words.empty() && begin < into.words.back().begin)
                     return std::unexpected(LyricsProblem{Kind::TimeGoesBack, child.line,
                                                          std::u8string(*attribute(child, u8"begin"))});
-                const std::u8string text = spanText(child);
+                const bool kept = preserves(child, preserve);
+                const std::u8string text = spanText(child, preserve);
                 const u8sv word = detail::trimLeft(text);
-                if (word.size() < text.size())
-                    addText(into, u8" ");
-                append(into.plain, word);
+                if (word.size() < text.size()) // spaces before a word stay with the text before it
+                    addText(into, kept ? u8sv(text).substr(0, text.size() - word.size()) : u8sv(u8" "), kept);
+                append(into.plain, word, kept);
                 into.words.push_back(LyricWord{begin, 0, std::u8string(word)});
                 into.ends.push_back(t->second);
                 into.lines.push_back(child.line);
                 continue;
             }
-            if (auto ok = collect(child, into, backgrounds); !ok)
+            if (auto ok = collect(child, into, backgrounds, preserves(child, preserve)); !ok)
                 return ok;
         }
         return {};
@@ -776,8 +815,9 @@ private:
     // A <p>, or an x-bg span, as Lines. `begin` and `end` are its nearest
     // timed ancestor's: they time a plain paragraph without times of its own
     // and end its last word, but a word-timed Line still spans its words.
+    // `inherited`: whether its parent keeps whitespace (xml:space).
     std::expected<void, LyricsProblem> line(const XmlNode &node, std::optional<std::int64_t> begin,
-                                            std::optional<std::int64_t> end, const std::u8string &actor)
+                                            std::optional<std::int64_t> end, const std::u8string &actor, bool inherited)
     {
         const auto own = times(node);
         if (!own)
@@ -788,8 +828,8 @@ private:
             return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, node.line,
                                                  std::u8string(attribute(node, u8"begin").value_or(u8""))});
         Words words;
-        std::vector<const XmlNode *> backgrounds;
-        if (auto ok = collect(node, words, backgrounds); !ok)
+        Backgrounds backgrounds;
+        if (auto ok = collect(node, words, backgrounds, preserves(node, inherited)); !ok)
             return ok;
         LyricLine out;
         out.actor = actor;
@@ -822,8 +862,8 @@ private:
             if (auto ok = add(std::move(out), node.line); !ok)
                 return ok;
         }
-        for (const XmlNode *background : backgrounds)
-            if (auto ok = line(*background, begin, end, actorOf(*background, actor)); !ok)
+        for (const auto &[background, preserve] : backgrounds)
+            if (auto ok = line(*background, begin, end, actorOf(*background, actor), preserve); !ok)
                 return ok;
         return {};
     }
@@ -855,8 +895,9 @@ private:
     // The <p>s under the body and its divs. A <p> without its own begin or
     // end takes its nearest ancestor's (read as absolute, as its own are).
     std::expected<void, LyricsProblem> paragraphs(const XmlNode &node, std::optional<std::int64_t> begin,
-                                                  std::optional<std::int64_t> end)
+                                                  std::optional<std::int64_t> end, bool inherited)
     {
+        const bool preserve = preserves(node, inherited);
         const auto own = times(node);
         if (!own)
             return std::unexpected(own.error());
@@ -866,9 +907,9 @@ private:
             if (child.isText())
                 continue;
             if (localName(child.name) == u8"p") {
-                if (auto ok = line(child, begin, end, actorOf(child, {})); !ok)
+                if (auto ok = line(child, begin, end, actorOf(child, {}), preserve); !ok)
                     return ok;
-            } else if (auto ok = paragraphs(child, begin, end); !ok) {
+            } else if (auto ok = paragraphs(child, begin, end, preserve); !ok) {
                 return ok;
             }
         }
