@@ -316,6 +316,30 @@ TEST_F(KaraokeTemplater, MacroIsOfferedWhereverTheTemplateIs)
     EXPECT_TRUE(validates(bundledScript()));
 }
 
+// Code Lines alone do not offer the macro, in 2.1.7 or now: without a
+// template a run generates nothing.
+TEST_F(KaraokeTemplater, CodeLinesAloneDoNotOfferTheMacro)
+{
+    const std::string text =
+        "[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+        "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+        "MarginR, MarginV, Encoding\n"
+        "Style: Err,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,code once,n = 1\n"
+        "Dialogue: 0,0:00:01.00,0:00:03.00,Err,,0,0,0,,{\\k50}ha{\\k50}ru\n";
+    for (const QString &script : {pristineScript(), bundledScript()}) {
+        hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+        auto host = load(script);
+        const auto snapshot = hikari::application::snapshotForMacro(session);
+        run = {};
+        ASSERT_TRUE(host->validate(macro(*host, "Apply karaoke template"), *snapshot));
+        ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+        EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::NotValid) << script.toStdString();
+    }
+}
+
 // Without any template the macro is still not offered.
 TEST_F(KaraokeTemplater, MacroIsNotOfferedWithoutATemplate)
 {

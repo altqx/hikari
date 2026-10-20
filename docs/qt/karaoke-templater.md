@@ -22,7 +22,7 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 
 | Departure | What changes |
 | --- | --- |
-| KE1-no-50-line-gate | "Apply karaoke template" is offered when any Line is a template or code Line. 2.1.7 looked at the first 50 dialogue lines only. |
+| KE1-no-50-line-gate | "Apply karaoke template" is offered when any Line is a template Line. 2.1.7 looked at the first 50 dialogue lines only. As in 2.1.7, code Lines alone do not offer it: without a template they generate nothing. |
 | KE1-template-problems | Each problem with a template or code Line ends with `Template Line: N` or `Code Line: N`, N being the Line's number in the Grid. A named line template made of several Lines names the Line whose text the variable or expression is in. A run that had problems selects those Lines, the first active, and its progress window stays open so the log can be read. |
 | KE1-regenerate-selected | "Apply karaoke template to selected lines" replaces only the selected karaoke Lines' generated Lines, as one undo step. |
 | KE1-template-timing | A run reports its time and, per template or code Line, the time it took and the Lines it generated. The report goes to the status bar and the log window. |
