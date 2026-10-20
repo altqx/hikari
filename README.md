@@ -65,7 +65,7 @@ HikariSub will stay actively maintained rather than go dormant, and its dependen
 
 * **Displays**: waveform or spectrum, with optional speech-frequency enhancement, keyframe and second markers, and a time readout next to the cursor.
 * **Playback controls**: plays before or after the markers, the first or last 500 ms, to the end, or the active line, and can follow the audio during playback.
-* **Sources**: loads audio files or audio from a video, optionally into RAM, with an audio delay setting, a disk cache, and a blank 2h30m track for timing without audio.
+* **Sources**: loads audio files or audio from a video, optionally into RAM, with an audio delay setting and a disk cache. A dummy video brings its own silent audio for timing without an audio file.
 * **Snapping**: snaps to keyframes and to other lines, with linked volume and horizontal stretch sliders.
 * **Karaoke**: splits syllables automatically and edits them on the waveform.
 

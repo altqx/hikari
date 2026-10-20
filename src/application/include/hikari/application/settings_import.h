@@ -30,7 +30,8 @@
 // colour key: per-colour theme settings are gone, the theme layer owns
 // appearance). The wave-5 retirements (user decisions, 2026-10-05) are dropped
 // with a notice: GLOBAL_VIDEO_INDEXING bindings, and TOOLBAR_IDS /
-// TOOLBAR_ALIGNMENT (no main toolbar); so are WS3's (owner 2026-10-18): the
+// TOOLBAR_ALIGNMENT (no main toolbar); so are GLOBAL_OPEN_DUMMY_AUDIO
+// bindings (AV3, owner 2026-10-18) and WS3's (owner 2026-10-18): the
 // GLOBAL_VIEW_* and GLOBAL_EDITOR bindings and EDITOR_ON. Unknown and invalid
 // records stay visible as unresolved.
 

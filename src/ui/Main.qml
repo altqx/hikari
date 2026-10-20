@@ -1453,7 +1453,8 @@ ApplicationWindow {
             }
         }
         // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
-        // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_OPEN_DUMMY_AUDIO, GLOBAL_CLOSE_AUDIO).
+        // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_CLOSE_AUDIO). AV3 (#240) retired
+        // GLOBAL_OPEN_DUMMY_AUDIO: a dummy video brings its own silent audio.
         ShellMenu {
             id: audioMenu
             objectName: "audioMenu"
@@ -1511,15 +1512,6 @@ ApplicationWindow {
                     text: qsTr("Open audio from video")
                     enabled: root.video.hasVideo
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUDIO_FROM_VIDEO")) root.app.openAudioFromVideo()
-                }
-            }
-            ShellMenuItem {
-                help: qsTr("Opens blank audio 2 hour and 30 minutes long") // HikariSubFrame.cpp:301
-                objectName: "dummyAudioMenuItem"
-                action: Action {
-                    id: dummyAudioAction
-                    text: qsTr("Open blank 2h30m audio")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_AUDIO")) root.audio.openDummy()
                 }
             }
             ShellMenuItem {
@@ -2921,6 +2913,17 @@ ApplicationWindow {
                         tip: qsTranslate("HikariSub.Audio", "Auto-scroll to the active line")
                         onToggled: { root.audio.setAutoScroll(checked); audioDisplay.forceActiveFocus() }
                     }
+                    // AV2 (#239): the video and audio cursors follow each
+                    // other while playing (audio.syncVideo, on by default).
+                    AudioButton {
+                        objectName: "audioSyncVideo"
+                        iconRole: "audio-video-sync"
+                        text: qsTranslate("HikariSub.Audio", "Sync with video")
+                        checkable: true
+                        checked: root.audio.syncVideo
+                        tip: qsTranslate("HikariSub.Audio", "Sync the video and audio cursors")
+                        onToggled: root.audio.setSyncVideo(checked)
+                    }
                     AudioButton {
                         objectName: "audioSpectrumMode"
                         iconRole: "spectrum"
@@ -2940,6 +2943,27 @@ ApplicationWindow {
                         onToggled: { root.audio.setSpectrumNonLinear(checked); audioDisplay.forceActiveFocus() }
                     }
                     Item { Layout.fillWidth: true }
+                    // AV1 (#238): the output device menu, at the strip's end
+                    // (MuseScore's playback device sits beside its mixer).
+                    AudioButton {
+                        id: audioOutputButton
+                        objectName: "audioOutputButton"
+                        iconRole: "audio-output"
+                        text: qsTranslate("HikariSub.Audio", "Output device")
+                        //: The audio panel's speaker button; %1 is the device audio plays through now
+                        tip: root.app.audioOutputName.length
+                             ? qsTranslate("HikariSub.Audio", "Output device: %1").arg(root.app.audioOutputName)
+                             : qsTranslate("HikariSub.Audio", "Output device")
+                        gap: 0
+                        down: audioOutputMenu.visible
+                        onRun: audioOutputMenu.popup(audioOutputButton, 0, audioOutputButton.height)
+                        AudioOutputMenu {
+                            id: audioOutputMenu
+                            objectName: "audioOutputMenu"
+                            app: root.app
+                            onSettingsRequested: settingsDialog.openDialog(4) // the Audio page
+                        }
+                    }
                 }
                 // Legacy AudioBox's accelerator table (AudioBox::SetAccels:
                 // its window's bindings in the hotkey registry, O2), acting
@@ -5860,7 +5884,7 @@ ApplicationWindow {
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
-        GLOBAL_OPEN_DUMMY_AUDIO: dummyAudioAction, GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
+        GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
         GLOBAL_DELETE_TEMPORARY_FILES: removeTemporaryAction, GLOBAL_SETTINGS: settingsAction,
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
@@ -5930,7 +5954,7 @@ ApplicationWindow {
         // GLOBAL_SELECT_FROM_VIDEO..GLOBAL_STYLE_MANAGER_CLEAN_STYLE) pass
         // CheckLastKeyEvent (HikariSubFrame.cpp:1005).
         const menuSelected1 = ["GLOBAL_OPEN_SUBS", "GLOBAL_OPEN_VIDEO", "GLOBAL_OPEN_KEYFRAMES", "GLOBAL_OPEN_DUMMY_VIDEO",
-                               "GLOBAL_OPEN_DUMMY_AUDIO", "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
+                               "GLOBAL_OPEN_AUTO_SAVE", "GLOBAL_DELETE_TEMPORARY_FILES",
                                "GLOBAL_SETTINGS", "GLOBAL_QUIT", "GLOBAL_ABOUT", "GLOBAL_HELPERS",
                                "GLOBAL_HELP", "GLOBAL_ANSI", "GLOBAL_CHECK_FOR_UPDATES", "GLOBAL_SELECT_FROM_VIDEO",
                                "GLOBAL_PLAY_ACTUAL_LINE", "GLOBAL_STYLE_MANAGER_CLEAN_STYLE"]

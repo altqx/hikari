@@ -754,6 +754,7 @@ const std::map<int, std::string> &hotkeyNames()
 bool isRetiredHotkey(int id)
 {
     return id == 5015 // GLOBAL_VIDEO_INDEXING
+           || id == 5104 // GLOBAL_OPEN_DUMMY_AUDIO (AV3)
            || (id >= 5031 && id <= 5035) // GLOBAL_VIEW_ALL..GLOBAL_VIEW_SUBS (WS3)
            || id == 5109; // GLOBAL_EDITOR (WS3)
 }

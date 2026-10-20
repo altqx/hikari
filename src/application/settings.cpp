@@ -262,6 +262,9 @@ const std::vector<SettingDefinition> &definitions()
         // not connected and to find it in PortAudio's list.
         {"audio.outputDevice", "", String, Profile, Mapped, false, std::string()},
         {"audio.outputDeviceName", "", String, Profile, Mapped, false, std::string()},
+        // AV2 (#239): the audio panel's sync toggle: the audio cursor follows
+        // the playing video and the video the playing audio box. On by default.
+        {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other

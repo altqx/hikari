@@ -23,8 +23,10 @@
 // was new.
 //
 // A name starting with "dummy" opens blank audio (legacy ProviderDummy):
-// 2 h 30 min of 44.1 kHz mono silence, ready at once; "?dummy" (a dummy
-// video's name) has no audio. Answers for an earlier open are dropped.
+// 44.1 kHz mono silence, ready at once, as long as its "ln=" says (legacy's
+// 2 h 30 min without one); "?dummy" (a dummy video's name) is not audio. A
+// dummy video brings its own (AV3, dummyName). Answers for an earlier open
+// are dropped.
 //
 // Blocks are read as legacy ProviderFFMS2::GetAudio read them into its
 // caches' buffers (BlockRead): frames past legacy's sample count (the audio
@@ -49,6 +51,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 namespace hikari::application {
@@ -91,8 +94,15 @@ public:
     static constexpr std::int64_t kRamBlockBytes = 1 << 22;     // legacy RAMCache block
     static constexpr int kDummyRate = 44100;                    // legacy ParseDummyData
     static constexpr std::int64_t kDummySamples = 396'900'000;  // 5 * 30 * 60 * 1000 * 44100 / 1000
-    // GLOBAL_OPEN_DUMMY_AUDIO's name.
+    // The retired GLOBAL_OPEN_DUMMY_AUDIO's name, which older sessions name.
     static constexpr char kDummyName[] = "dummy-audio:silence?sr=44100&bd=16&ch=1&ln=396900000";
+    // AV3 (#240): the name of `samples` frames of that silence (a dummy
+    // video's own audio), and whether a name is dummy audio.
+    static std::string dummyName(std::int64_t samples);
+    static bool isDummyName(std::string_view name) { return name.starts_with("dummy"); }
+    // The frames a dummy name asks for: its "ln=" when it is a positive
+    // number, else kDummySamples.
+    static std::int64_t dummySamples(std::string_view name);
 
     // HikariLog, or HikariLogDebug (shown only in legacy debug builds).
     enum class LogLevel { Shown, Debug };

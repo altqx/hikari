@@ -364,6 +364,42 @@ void AudioController::setVideoTime(std::optional<int> pausedMs)
     redraw();
 }
 
+// AV2: the sync toggle. Off, a cursor following the video goes at once.
+void AudioController::setSyncVideo(bool on)
+{
+    m_syncVideo = on;
+    if (m_store)
+        m_store->set("audio.syncVideo", on);
+    if (!on)
+        stopFollowingVideo();
+    emit boxControlsChanged();
+}
+
+// AV2: the playing video's time. The box's own playback keeps its cursor.
+void AudioController::setPlayingVideoTime(std::optional<int> ms)
+{
+    const auto *audio = m_box.audio();
+    if (!ms || !m_syncVideo || !ready() || !audio || playing())
+        return stopFollowingVideo();
+    const auto followed = application::followCursor(
+        m_view, static_cast<std::int64_t>(*ms) * audio->sampleRate() / 1000, m_scrollbarThickness);
+    m_followingVideo = true;
+    if (followed.moved)
+        redraw();
+    if (followed.x != m_cursor || followed.moved) {
+        m_cursor = followed.x;
+        emit cursorChanged();
+    }
+}
+
+void AudioController::stopFollowingVideo()
+{
+    if (!std::exchange(m_followingVideo, false))
+        return;
+    m_cursor.reset();
+    emit cursorChanged();
+}
+
 application::AudioMarks AudioController::marks() const
 {
     application::AudioMarks marks;
@@ -402,8 +438,8 @@ void AudioController::resize(int width, int height, int timelineHeight, int scro
 
 void AudioController::setCursor(std::optional<float> x)
 {
-    if (playing())
-        return; // legacy draws the mouse's cursor only while not playing
+    if (playing() || m_followingVideo)
+        return; // legacy draws the mouse's cursor only while not playing (AV2: nor the video)
     if (x == m_cursor)
         return;
     m_cursor = x;
@@ -492,6 +528,7 @@ void AudioController::loadBoxControls()
         // A5: legacy AudioDisplay's constructor
         m_hasKara = m_store->boolean("audio.karaoke");
         m_karaAuto = m_store->boolean("audio.karaokeSplitMode");
+        m_syncVideo = m_store->boolean("audio.syncVideo"); // AV2
     }
     m_view.setSamplesPercent(zoom, false);
     m_horizontalZoom = std::clamp(zoom, 0, 100);
@@ -736,6 +773,7 @@ void AudioController::playRange(int startMs, int endMs)
     if (!audio || !m_playback)
         return;
     m_playedSerial = m_box.serial();
+    stopFollowingVideo(); // AV2: the box's own cursor from now on
     m_lastRange = m_playback->play(audio->sampleRate(), audio->sampleCount(), startMs, endMs);
     m_playTimer.start();
     playbackStateChanged();
@@ -816,6 +854,12 @@ void AudioController::tick()
         return m_playTimer.stop();
     const auto redrawn = m_playback->tick(m_view, m_scrollbarThickness);
     m_cursor = m_playback->cursorPainted() ? std::optional(m_playback->cursorX()) : std::nullopt;
+    // AV2: the video shows where the box is (legacy GetMSAtSample)
+    // inside the played range (not in the silence after its end)
+    if (m_syncVideo && m_showVideoAt && playing())
+        if (const auto *audio = m_box.audio(); audio && audio->sampleRate() > 0)
+            if (const auto at = m_player->position(); at >= m_player->startPosition() && at <= m_player->endPosition())
+                m_showVideoAt(static_cast<int>(at * 1000 / audio->sampleRate()));
     if (redrawn == application::AudioPlayback::Redraw::Image)
         redraw();
     if (redrawn != application::AudioPlayback::Redraw::None)

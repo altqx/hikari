@@ -4551,7 +4551,6 @@ private slots:
             {main, QStringLiteral(R"("macro_" + modelData.name)"), QStringLiteral("a macro of the loaded scripts")},
             {main, QStringLiteral(R"("panelMenu" + modelData.uniqueName)"), QStringLiteral("a panel, under Panels")},
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
-            {main, QStringLiteral(R"("dummyAudioMenuItem")"), QStringLiteral("AV3 #240 removes the dummy audio")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
         if (!problems.isEmpty())
@@ -13030,6 +13029,120 @@ private slots:
         QVERIFY(!audio.playing());
     }
 
+    // AV2 (#239): the sync toggle, on by default. The audio cursor follows
+    // the playing video, a playback cursor without a time, and the view keeps
+    // it in sight; the paused video shows the frame the playing box is at.
+    // Off, each keeps to itself; the state persists. Which mode plays does
+    // not change (ADR 0009): the box's play still pauses the video, and the
+    // video never plays from the box.
+    void audioAndVideoCursorsFollowEachOther()
+    {
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.spellingBackend = {}; // no Dictionary folder there: no notice over the window
+        // the application writes its settings into `own`: it goes first
+        const auto close = qScopeGuard([this] {
+            delete engine;
+            delete application;
+            engine = nullptr;
+            application = nullptr;
+        });
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &video = application->video();
+        video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audio.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY(video.session().shownFrame());
+        // (the resolution question the video asks, which comes a moment later)
+        auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
+        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000))
+            QMetaObject::invokeMethod(mismatch, "close");
+        QTRY_VERIFY(!mismatch || !mismatch->property("visible").toBool());
+        QTest::mouseMove(window, QPoint(0, 0)); // the pointer away from the display
+        auto *toggle = qobject_cast<QQuickItem *>(named("audioSyncVideo"));
+        QVERIFY(toggle);
+        QTRY_VERIFY(toggle->isVisible() && toggle->width() > 0);
+        QCOMPARE(toggle->property("iconRole").toString(), QStringLiteral("audio-video-sync"));
+        QCOMPARE(toggle->property("display").toInt(), 0); // AbstractButton.IconOnly
+        QVERIFY(toggle->property("checked").toBool());
+        QVERIFY(audio.syncVideo());
+        QVERIFY(application->settingsStore()->boolean("audio.syncVideo"));
+        audio.setHorizontalZoom(10); // a few samples a column: the video outruns the view
+        audio.setScrollPosition(0);  // the view at the start (the active line put it elsewhere)
+
+        // The video plays: the cursor is at its time, the view moves with it.
+        QTRY_COMPARE(audio.view().position(), 0);
+        QVERIFY(video.play());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.cursor().has_value(), 10000);
+        QVERIFY(audio.cursorIsPlayback());
+        QVERIFY(!audio.playing());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.view().position() > 0, 10000);
+        QVERIFY(video.playing());
+        {
+            const int ms = video.session().tellMs();
+            const auto *display = audio.box().audio();
+            QVERIFY(display);
+            QVERIFY(audio.cursor());
+            QVERIFY(qAbs(*audio.cursor() - audio.view().xAtSample(std::int64_t(ms) * display->sampleRate() / 1000)) < 1.f);
+            QVERIFY(*audio.cursor() >= 0.f && *audio.cursor() < float(audio.view().width()));
+        }
+        QVERIFY(video.pause());
+        QTRY_VERIFY(!audio.cursor().has_value());
+
+        // The box plays: the paused video shows the frame it is at.
+        QVERIFY(video.session().seekToMs(0));
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        const auto timebase = video.session().legacyTimebase();
+        audio.playRange(500, -1);
+        QVERIFY(audio.playing());
+        QVERIFY(!video.playing());
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame().value_or(0) >= timebase.frameShownAt(800), 10000);
+        QVERIFY(!video.playing());
+        // Switched off while the box plays, the video stays at the frame asked
+        // for then (one the box wanted while it was on its way is dropped).
+        {
+            const auto asked = video.session().requestedFrame();
+            audio.setSyncVideo(false);
+            QTest::qWait(500);
+            QCOMPARE(video.session().shownFrame(), asked);
+            QCOMPARE(video.session().requestedFrame(), asked);
+            audio.setSyncVideo(true);
+        }
+        audio.stopPlayback();
+        QVERIFY(!audio.playing());
+
+        // Off: neither follows the other.
+        clickWith(toggle, Qt::NoModifier);
+        QTRY_VERIFY(!audio.syncVideo());
+        QVERIFY(!toggle->property("checked").toBool());
+        QVERIFY(!application->settingsStore()->boolean("audio.syncVideo"));
+        QTest::mouseMove(window, QPoint(0, 0));
+        const auto viewAt = audio.view().position();
+        QVERIFY(video.play());
+        QTRY_VERIFY_WITH_TIMEOUT(video.session().tellMs() > 300, 10000);
+        QTest::qWait(200);
+        QVERIFY(!audio.cursor().has_value());
+        QCOMPARE(audio.view().position(), viewAt);
+        QVERIFY(video.pause());
+        QVERIFY(video.session().seekToMs(0));
+        QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(0));
+        audio.playRange(500, -1);
+        QTest::qWait(700);
+        QCOMPARE(video.session().shownFrame(), std::optional<int>(0));
+        audio.stopPlayback();
+
+        // It persists: the next run starts off, and on again once switched on.
+        restartWith(options);
+        QVERIFY(!application->audio().syncVideo());
+        application->audio().setSyncVideo(true);
+        restartWith(options);
+        QVERIFY(application->audio().syncVideo());
+    }
+
     // O2 with A2-A4: the audio box's keys are its window's bindings in the
     // hotkey registry (AudioBox::SetAccels), and the Grid takes the Audio
     // bindings but AUDIO_COMMIT to AUDIO_NEXT (TabPanel::SetAccels, handed
@@ -14130,6 +14243,230 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(application->settingsStore()->text("audio.outputDevice"), QString());
         QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
+    }
+
+    // AV1 (AV1-linux-pulseaudio): on Linux the application starts Qt
+    // Multimedia on its PulseAudio backend, unless QT_AUDIO_BACKEND names one.
+    void linuxAudioPrefersPulseAudio()
+    {
+#ifndef Q_OS_LINUX
+        QSKIP("Linux only");
+#else
+        const QByteArray before = qgetenv("QT_AUDIO_BACKEND");
+        const bool wasSet = qEnvironmentVariableIsSet("QT_AUDIO_BACKEND");
+        const auto restore = qScopeGuard([&] {
+            if (wasSet)
+                qputenv("QT_AUDIO_BACKEND", before);
+            else
+                qunsetenv("QT_AUDIO_BACKEND");
+        });
+        qunsetenv("QT_AUDIO_BACKEND");
+        app::preferPulseAudioBackend();
+        QCOMPARE(qgetenv("QT_AUDIO_BACKEND"), QByteArray("pulseaudio"));
+        qputenv("QT_AUDIO_BACKEND", "pipewire"); // the user's own choice stays
+        app::preferPulseAudioBackend();
+        QCOMPARE(qgetenv("QT_AUDIO_BACKEND"), QByteArray("pipewire"));
+#endif
+    }
+
+    // AV1 (#238): the speaker button in the audio panel's tool strip opens
+    // the output device list (Settings > Audio's choice), marks the stored
+    // one and ends with "Audio settings…". Choosing a device moves both audio
+    // paths at once, the playing box going on through a reopened output; the
+    // menu and the dialog show the same choice; an unplugged choice falls
+    // back to the default with a notice in the status bar.
+    void audioPanelOutputDeviceMenu()
+    {
+        delete engine;
+        delete application;
+        engine = nullptr;
+        application = nullptr;
+        struct Devices final : application::AudioDevicesPort {
+            std::vector<application::SystemOutputDevice> &list;
+            std::function<void()> &changed;
+            Devices(std::vector<application::SystemOutputDevice> &l, std::function<void()> &c) : list(l), changed(c) {}
+            std::vector<application::SystemOutputDevice> outputs() const override { return list; }
+            void setChangedCallback(std::function<void()> callback) override { changed = std::move(callback); }
+        };
+        struct Output final : application::AudioOutputPort {
+            backends::SimulatedOutput inner;
+            int &opens;
+            explicit Output(int &o) : opens(o) {}
+            std::vector<application::OutputDevice> devices() override { return inner.devices(); }
+            std::expected<application::OutputFormat, application::OutputError> open(const std::string &id,
+                                                                                    application::OutputFormat f) override
+            {
+                ++opens;
+                return inner.open(id, f);
+            }
+            std::expected<void, application::OutputError> start() override { return inner.start(); }
+            void stop() override { inner.stop(); }
+            void close() override { inner.close(); }
+            application::OutputFormat format() const override { return inner.format(); }
+            std::size_t write(std::span<const float> s) override { return inner.write(s); }
+            application::OutputStatus status() const override { return inner.status(); }
+            application::ClockEstimate clock() const override { return inner.clock(); }
+        };
+        const application::SystemOutputDevice monitor{"dev-monitor", "22E1W (NVIDIA High Definition Audio)", true};
+        const application::SystemOutputDevice headset{"dev-headset", "Speakers (Razer BlackShark V2 X USB)", false};
+        std::vector<application::SystemOutputDevice> list{monitor, headset};
+        std::function<void()> changed;
+        int opens = 0;
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        app::Application::Options options;
+        options.playbackAudio = false;
+        options.settingsFile = own.filePath(QStringLiteral("hikari.ini"));
+        options.catalogDir = own.filePath(QStringLiteral("Catalog"));
+        options.spellingBackend = {}; // no Dictionary folder there: no notice over the window
+        options.makeAudioDevices = [&] { return std::make_unique<Devices>(list, changed); };
+        options.makeAudioOutput = [&](const backends::PortAudioOutput::Options &) { return std::make_unique<Output>(opens); };
+        const auto close = qScopeGuard([this] {
+            delete engine;
+            delete application;
+            engine = nullptr;
+            application = nullptr;
+        });
+        application = new app::Application(options);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        auto &settings = *application->settingsStore();
+        using Route = application::OutputRoute;
+        const auto labels = [&] {
+            QStringList out;
+            for (const QVariant &row : application->audioOutputMenu())
+                out << row.toMap().value(QStringLiteral("label")).toString();
+            return out;
+        };
+        const auto checkedRow = [&] {
+            const auto rows = application->audioOutputMenu();
+            for (int i = 0; i < rows.size(); ++i)
+                if (rows[i].toMap().value(QStringLiteral("checked")).toBool())
+                    return i;
+            return -1;
+        };
+
+        // The button: icon only, its name and the device in use as the tooltip.
+        auto *button = qobject_cast<QQuickItem *>(named("audioOutputButton"));
+        QVERIFY(button);
+        QTRY_VERIFY(button->isVisible() && button->width() > 0);
+        QCOMPARE(button->property("iconRole").toString(), QStringLiteral("audio-output"));
+        QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
+        QCOMPARE(button->property("tip").toString(), QStringLiteral("Output device: ") + QString::fromStdString(monitor.name));
+        // It opens the list: System default (checked), the devices, Audio settings….
+        auto *menu = named("audioOutputMenu");
+        QVERIFY(menu);
+        clickWith(button, Qt::NoModifier);
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QCOMPARE(labels(), (QStringList{QStringLiteral("System default"), QString::fromStdString(monitor.name),
+                                        QString::fromStdString(headset.name)}));
+        QCOMPARE(checkedRow(), 0);
+        QTRY_VERIFY(named("audioOutput2"));
+        QVERIFY(named("audioOutput0")->property("checked").toBool());
+        QVERIFY(!named("audioOutput2")->property("checked").toBool());
+        QCOMPARE(named("audioOutputSettings")->property("text").toString(), QStringLiteral("Audio settings…"));
+        // The headset, while the box plays: stored as OK stores it, both paths
+        // move, the box goes on through a reopened output.
+        audio.playLine();
+        QVERIFY(audio.playing());
+        const int opensBefore = opens;
+        QVERIFY(QMetaObject::invokeMethod(named("audioOutput2"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QCOMPARE(settings.text("audio.outputDevice"), QString::fromStdString(headset.id));
+        QCOMPARE(settings.text("audio.outputDeviceName"), QString::fromStdString(headset.name));
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, false}));
+        QCOMPARE(application->generalPlayer().outputDeviceRequest(), headset.id);
+        QVERIFY(audio.playing());
+        QCOMPARE(opens, opensBefore + 1);
+        QCOMPARE(checkedRow(), 2);
+        QCOMPARE(button->property("tip").toString(), QStringLiteral("Output device: ") + QString::fromStdString(headset.name));
+        audio.stopPlayback();
+        // The dialog shows the menu's choice, and the menu the dialog's.
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "setting_audio.outputDevice"), "activated",
+                                          Q_ARG(int, 1)));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(checkedRow(), 1);
+        QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, false}));
+        // The chosen monitor is unplugged: the default plays, the status bar says so.
+        QCOMPARE(application->shell().statusText(), QString());
+        list.erase(list.begin());
+        list[0].isDefault = true;
+        changed();
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, true}));
+        QCOMPARE(application->shell().statusText(),
+                 QString::fromStdString(monitor.name) + QStringLiteral(" is not connected. Audio plays through ") +
+                     QString::fromStdString(headset.name) + QStringLiteral("."));
+        {
+            // cut short by the fields beside it, it reads whole in the tooltip
+            auto *status = item<QObject>("statusText");
+            QTRY_COMPARE(status->property("text").toString(), application->shell().statusText());
+            QCOMPARE(status->property("tip").toString(),
+                     status->property("truncated").toBool() ? application->shell().statusText() : QString());
+        }
+        QCOMPARE(labels(), (QStringList{QStringLiteral("System default"), QString::fromStdString(headset.name),
+                                        QString::fromStdString(monitor.name) + QStringLiteral(" (not connected)")}));
+        QCOMPARE(checkedRow(), 2); // still the choice, as the dialog keeps it
+        // Plugged back in, it plays again and the notice goes at once; out
+        // again, the new notice stays its 5 s (the first one's time is not its).
+        list[0].isDefault = false;
+        list.insert(list.begin(), monitor);
+        changed();
+        QCOMPARE(application->audioRoute(), (Route{monitor.id, monitor.name, false}));
+        QCOMPARE(application->shell().statusText(), QString());
+        QTest::qWait(3000);
+        list.erase(list.begin());
+        list[0].isDefault = true;
+        changed();
+        const QString notice = application->shell().statusText();
+        QVERIFY(notice.startsWith(QString::fromStdString(monitor.name)));
+        QTest::qWait(3000); // past the first notice's 5 s
+        QCOMPARE(application->shell().statusText(), notice);
+        QTRY_COMPARE_WITH_TIMEOUT(application->shell().statusText(), QString(), 4000);
+        // A device plugged in while the menu is open moves its rows; the entry
+        // clicked is the device it showed.
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QTRY_COMPARE(named("audioOutput1")->property("text").toString(), QString::fromStdString(headset.name));
+        const application::SystemOutputDevice hdmi{"dev-hdmi", "HDMI (Intel Display Audio)", false};
+        list.insert(list.begin(), hdmi);
+        changed();
+        QCOMPARE(labels()[1], QString::fromStdString(hdmi.name));
+        QVERIFY(QMetaObject::invokeMethod(named("audioOutput1"), "triggered"));
+        QCOMPARE(settings.text("audio.outputDevice"), QString::fromStdString(headset.id));
+        QCOMPARE(settings.text("audio.outputDeviceName"), QString::fromStdString(headset.name));
+        QCOMPARE(application->audioRoute(), (Route{headset.id, headset.name, false}));
+        QCOMPARE(checkedRow(), 2);
+        // System default from the menu: nothing stored, and no notice.
+        QVERIFY(QMetaObject::invokeMethod(menu, "aboutToShow"));
+        QTRY_VERIFY(named("audioOutput0"));
+        QVERIFY(QMetaObject::invokeMethod(named("audioOutput0"), "triggered"));
+        QCOMPARE(settings.text("audio.outputDevice"), QString());
+        QCOMPARE(settings.text("audio.outputDeviceName"), QString());
+        QCOMPARE(checkedRow(), 0);
+        QCOMPARE(application->shell().statusText(), QString());
+        // "Audio settings…" opens the dialog on its Audio page.
+        QVERIFY(QMetaObject::invokeMethod(named("audioOutputSettings"), "triggered"));
+        dialog = named("settingsDialog");
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 4);
+        QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     // T1: the tool rail, the shared view placing the frame, the crosshair
@@ -19892,9 +20229,11 @@ private slots:
 
     // V3: GLOBAL_OPEN_DUMMY_VIDEO (legacy DummyVideo, ProviderDummy): the
     // dialog's defaults and frame count, a refused frame rate logged, the
-    // dummy's frames, duration and colour, the audio box left as it was, the
-    // recent list taking the dummy's text (and pruning it when shown, as
-    // legacy's IsMissingLocalFile does).
+    // dummy's frames, duration and colour, the recent list taking the dummy's
+    // text (and pruning it when shown, as legacy's IsMissingLocalFile does).
+    // AV3 (#240, AV3-dummy-video-audio): the dummy brings its own silent
+    // audio, as long as it, in place of the box's (legacy left the box as it
+    // was); the Audio menu has no blank audio entry.
     void dummyVideoFromItsDialog()
     {
         QVERIFY(application->openFile(episode));
@@ -19967,11 +20306,37 @@ private slots:
         QCOMPARE(int(frame->bgra[0]), 254);
         QCOMPARE(int(frame->bgra[1]), 163);
         QCOMPARE(int(frame->bgra[2]), 47);
-        QVERIFY(audio.ready()); // legacy loads the dummy without the audio (dontLoadAudio)
-        QCOMPARE(audio.path(), nativeFixture("audioonly.mkv"));
+        QTRY_VERIFY(audio.ready());
+        QCOMPARE(audio.path(), QStringLiteral("dummy-audio:silence?sr=44100&bd=16&ch=1&ln=88200")); // 2 s
+        QCOMPARE(audio.box().audio()->sampleCount(), 88200);
+        QCOMPARE(audio.box().audio()->sampleRate(), 44100);
+        // the same dummy opened again over another audio brings its silence back
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready() && audio.path().endsWith(QStringLiteral("audioonly.mkv")), 20000);
+        video.openVideo(QStringLiteral("?dummy:25.000000:50:320:240:47:163:254:"));
+        QTRY_COMPARE(audio.path(), QStringLiteral("dummy-audio:silence?sr=44100&bd=16&ch=1&ln=88200"));
+        QTRY_VERIFY(audio.ready());
+        // "Open audio from video" opens it again, the video's own as before
+        application->openAudioFromVideo();
+        QTRY_VERIFY(audio.ready());
+        QCOMPARE(audio.path(), QStringLiteral("dummy-audio:silence?sr=44100&bd=16&ch=1&ln=88200"));
+        // generated, it is no recent audio file
+        for (const QString &recent : application->settingsStore()->list("recent.audio"))
+            QVERIFY2(!recent.startsWith(QStringLiteral("dummy")), qPrintable(recent));
+        QVERIFY(!named("dummyAudioMenuItem"));
         QVERIFY(!video.play()); // no file for the general player
         QCOMPARE(application->settingsStore()->list("recent.video").first(), QStringLiteral("?dummy:25.000000:50:320:240:47:163:254:"));
         QVERIFY(application->recentVideos().isEmpty()); // not a file: pruned when shown
+        // AV3: a stored binding of the retired blank-audio command is dropped with a notice
+        QTemporaryDir own;
+        QVERIFY(own.isValid());
+        const QString ini = own.filePath(QStringLiteral("hikari.ini"));
+        ui::SettingsStore(ini).set("shortcuts.hotkeys", QStringList{QStringLiteral("GLOBAL_OPEN_DUMMY_AUDIO G=Ctrl-Alt-B"),
+                                                                    QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
+        restartWithSettings(ini);
+        QVERIFY(application->log().history().contains(QStringLiteral("Ctrl-Alt-B")));
+        QVERIFY(application->log().history().contains(QStringLiteral("Open blank 2h30m audio")));
+        QCOMPARE(application->settingsStore()->list("shortcuts.hotkeys"), QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
     }
 
     // V3: VIDEO_PREVIOUS_FILE / VIDEO_NEXT_FILE (legacy VideoBox::NextFile,
