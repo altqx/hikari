@@ -3384,6 +3384,7 @@ ApplicationWindow {
                                 }
                             }
                             Repeater {
+                                id: colourButtons
                                 model: [
                                     { number: 1, name: qsTranslate("HikariSub.Editor", "Primary color"), symbol: "EDITBOX_CHANGE_COLOR_PRIMARY" },
                                     { number: 2, name: qsTranslate("HikariSub.Editor", "Secondary color for karaoke"), symbol: "EDITBOX_CHANGE_COLOR_SECONDARY" },
@@ -4502,6 +4503,7 @@ ApplicationWindow {
     AutomationDialog {
         objectName: "automationDialog"
         controller: root.automationDialogs
+        colourPicker: root.colourPicker
     }
     AutomationFilePicker {
         picker: root.automationPicker
@@ -4611,6 +4613,7 @@ ApplicationWindow {
     DummyVideoDialog {
         id: dummyVideoDialog
         app: root.app
+        colourPicker: root.colourPicker
         anchors.centerIn: parent
         onRefused: message => root.log.log(message)
     }
@@ -5514,6 +5517,7 @@ ApplicationWindow {
         id: settingsDialog
         app: root.app
         hotkeys: root.hotkeys
+        colourPicker: root.colourPicker
         tagButtons: root.tagButtons
         anchors.centerIn: parent
     }
@@ -5651,30 +5655,25 @@ ApplicationWindow {
         catalogs: root.fontCatalogs
         anchors.centerIn: parent
     }
-    ColourPickerDialog {
-        id: colourDialog
-        picker: root.colourPicker
-        anchors.centerIn: parent
-    }
-    SimpleColourPicker {
-        id: simpleColourPicker
+    // SY2: the one colour picker, anchored to the colour button.
+    ColourPopover {
+        id: colourPopover
         picker: root.colourPicker
     }
-    // Y7: EditBox::AllColorClick (EditBox.cpp:862-919): a left click and the
-    // hotkey open "Choose color", a right click the simple "Color picker";
-    // COLORPICKER_SWITCH_CLICKS swaps them.
+    // Y7: EditBox::AllColorClick (EditBox.cpp:862-919). SY2: a left click and
+    // the hotkey open the colour popover, a right click opens it with the
+    // eyedropper started (legacy's simple "Color picker" took the pointer at
+    // once); COLORPICKER_SWITCH_CLICKS swaps them.
     function colourClick(number, leftClick, field) {
         if (root.colourPicker.switchClicks)
             leftClick = !leftClick
-        const c = root.editor.beginColour(number, field.role, field.selectionStart, field.selectionEnd)
-        if (c.r === undefined)
-            return
-        if (!leftClick) {
-            simpleColourPicker.openFor(root.editor, number, c)
-        } else {
-            colourDialog.openFor(root.editor, number, c)
-            root.app.colourPickerOpened()
-        }
+        const button = colourButtons.itemAt(number - 1)
+        colourPopover.openFor(button, root.editor, () => {
+            const c = root.editor.beginColour(number, field.role, field.selectionStart, field.selectionEnd)
+            if (c.r !== undefined)
+                root.app.colourPickerOpened()
+            return c
+        }, { title: button ? button.text : "", dropper: !leftClick, focus: field })
     }
 
     // Legacy TreeDialog ("Tree description").

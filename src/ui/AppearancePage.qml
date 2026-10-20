@@ -184,7 +184,7 @@ ScrollView {
                             objectName: "highContrastChoose_" + pick.modelData.setting
                             text: qsTr("Choose…")
                             Accessible.name: qsTr("Choose %1").arg(pick.modelData.name)
-                            onClicked: page.dialog.pickThemeColour(pick.modelData.setting, pick.colour)
+                            onClicked: page.dialog.pickThemeColour(pick.modelData.setting, pick.colour, this, pick.modelData.name)
                         }
                     }
                 }
