@@ -184,7 +184,7 @@ int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int but
     }
     if (view.zoomMode()) {
         zoomPointer(kind, view.toDevice(x), view.toDevice(y), button, buttons, wheelSteps);
-        return NoRequest;
+        return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest; // FS1: it wakes the bar too
     }
     if (kind == Wheel && wheelSteps != 0) {
         // Ctrl+wheel resized legacy's video window (TabPanel::SetVideoWindowSizes);

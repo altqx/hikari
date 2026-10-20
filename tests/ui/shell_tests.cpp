@@ -22697,6 +22697,16 @@ private slots:
         QCOMPARE(cursor(), -1);
         QTRY_VERIFY(panel->isVisible());
         QTRY_VERIFY(!fs.barShown());
+        // In the zoom mode as well, which takes the pointer's other events.
+        auto &view = application->videoView();
+        QVERIFY(view.toggleZoom());
+        QVERIFY(view.zoomMode());
+        QTest::mouseMove(fsWindow, picture + QPoint(20, 0));
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        QVERIFY(view.toggleZoom());
+        QVERIFY(!view.zoomMode());
+        QVERIFY(view.resetZoom());
         pause();
         QVERIFY(fs.barShown()); // paused again
         // The pointer over the bar holds it.

@@ -93,8 +93,8 @@ public:
     Q_INVOKABLE bool resetZoom();
     // What a pointer event asks of the Video panel (pointer's answer).
     // MovedOverVideo: a move with no button held that reached the
-    // fullscreen part of OnMouseEvent after the zoom mode (FS1: with any
-    // tool; a drag does not wake the fullscreen bar).
+    // fullscreen part of OnMouseEvent (FS1: in the zoom mode and with any
+    // tool too; a drag does not wake the fullscreen bar).
     enum PointerRequest { NoRequest = 0, ContextMenuRequest = 1, FullScreenRequest = 2, MovedOverVideo = 3 };
     Q_ENUM(PointerRequest)
     // A pointer event over the video area (VisualToolsController::pointer's
