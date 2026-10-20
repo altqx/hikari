@@ -543,6 +543,19 @@ TEST(LyricsImport, TtmlEmptyAndNestedTimedSpans)
     // A word without its own end ends with the timed span around it.
     EXPECT_EQ(text("<p begin=\"0\" end=\"4\"><span begin=\"1\" end=\"2\"><span begin=\"1\">x</span></span></p>"),
               "{\\k100}{\\k100}x{\\k200}");
+    // Text in a timed span beside its timed words is a word that span times:
+    // from its begin, or from the end of the word before it, to its end.
+    EXPECT_EQ(text("<p begin=\"0\" end=\"4\"><span begin=\"1\" end=\"3\">hello <span begin=\"2\" end=\"3\">world</span>"
+                   "</span></p>"),
+              "{\\k100}{\\k100}hello {\\k100}world{\\k100}");
+    EXPECT_EQ(text("<p begin=\"1\" end=\"4\"><span begin=\"1\" end=\"4\">hello <span begin=\"2\" end=\"3\">world</span>"
+                   " again</span></p>"),
+              "{\\k100}hello {\\k100}world {\\k100}again");
+    EXPECT_EQ(text("<p begin=\"0\" end=\"3\"><span begin=\"1\" end=\"3\"><span>hel</span><span begin=\"2\" end=\"3\">lo</span>"
+                   "</span></p>"),
+              "{\\k100}{\\k100}hel{\\k100}lo");
+    // A paragraph's own text still joins its first word as written.
+    EXPECT_EQ(text("<p begin=\"1\" end=\"3\">hel<span begin=\"2\" end=\"3\">lo</span></p>"), "{\\k100}{\\k100}hello");
 }
 
 TEST(LyricsImport, ActorsKeepAMarkerLikeStart)
