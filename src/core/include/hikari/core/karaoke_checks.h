@@ -24,7 +24,7 @@ struct KaraokeProblem {
         Unclosed,         // a "{" with a karaoke tag and no "}", or a tag with no number
         TotalNotDuration, // the syllables add up to more or less than the Line lasts
         ZeroLength,       // a syllable of no length
-        OutsideLine,      // a syllable that starts before the Line or after it ends
+        OutsideLine,      // a syllable that starts before the Line or ends after it
     };
     LineId line;
     std::size_t row = 0;   // the Line's place among all Lines, from 0

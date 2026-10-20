@@ -118,6 +118,9 @@ TEST(KaraokeChecks, SyllablesAddUpInCentiseconds)
     // one at the end is only zero-length.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\k0}")),
               (std::vector<Found>{{0, Kind::ZeroLength, 0, 0, {2}}}));
+    // A syllable that starts inside the Line and ends after it is outside it.
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k80}a{\\k30}b")),
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 1100, 1000, {}}, {0, Kind::OutsideLine, 0, 0, {2}}}));
 }
 
 TEST(KaraokeChecks, SignedAndOversizedValuesRead)
@@ -128,7 +131,7 @@ TEST(KaraokeChecks, SignedAndOversizedValuesRead)
               (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
     // A huge value counts as 10^9 centiseconds, so the sum cannot overflow.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k99999999999999999999999}a{\\k99999999999999999999999}b")),
-              (std::vector<Found>{{0, Kind::TotalNotDuration, 20'000'000'000, 1000, {}}, {0, Kind::OutsideLine, 0, 0, {2}}}));
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 20'000'000'000, 1000, {}}, {0, Kind::OutsideLine, 0, 0, {1, 2}}}));
     // Parentheses as the tag parser reads them; a fraction is dropped, as the
     // karaoke the application plays drops it (50.5 + 49.5 is 99 cs).
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k(50)}a{\\kf(+50)}b")).empty());

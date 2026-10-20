@@ -153,7 +153,7 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
             total += length;
             if (length == 0)
                 zero.syllables.push_back(i + 1);
-            if (start < 0 || total < 0 || start > duration || (start == duration && length > 0))
+            if (start < 0 || total < 0 || start > duration || total > duration)
                 outside.syllables.push_back(i + 1);
         }
         if (!syllables.values.empty() && total != duration) {
