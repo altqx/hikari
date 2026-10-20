@@ -384,7 +384,9 @@ private slots:
         QCOMPARE(session.tabs.size(), std::size_t(1));
         const QJsonObject payload = QJsonDocument::fromJson(layoutOf(session.tabs[0]).payload).object();
         QCOMPARE(payload.value(QStringLiteral("floatingWindows")).toArray().size(), 1);
-        QVERIFY(payload.value(QStringLiteral("closedDockWidgets")).toArray().size() < 4);
+        // Not every panel closed; the Original text panel (TM1) stays closed
+        // outside Translation mode.
+        QVERIFY(payload.value(QStringLiteral("closedDockWidgets")).toArray().size() < 5);
         engine.reset();
         application.reset();
     }

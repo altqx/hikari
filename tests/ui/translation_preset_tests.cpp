@@ -63,6 +63,9 @@ class TranslationPresetTest : public QObject {
         options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
         options.playbackAudio = false;
         application = std::make_unique<app::Application>(options);
+        // No dictionaries here: the first spell check would turn spelling off
+        // and show its notice, which takes the focus.
+        application->applySettings({{QStringLiteral("editor.spellchecker"), false}});
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
         engine->setInitialProperties(application->qmlProperties());
@@ -319,13 +322,37 @@ private slots:
         stop();
     }
 
+    // Tab in the Original text goes on to the Translated text in the Line
+    // editor, and Shift+Tab comes back, as in legacy's one EditBox; nothing
+    // is typed.
+    void tabCrossesFromTheOriginalToTheTranslation()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(originalInPanel());
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_VERIFY(original->isVisible() && translated->isVisible());
+        original->forceActiveFocus();
+        QTRY_VERIFY(original->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Tab);
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QCOMPARE(translated->property("focusReason").toInt(), int(Qt::TabFocusReason));
+        QTest::keyClick(window(), Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(original->hasActiveFocus());
+        QCOMPARE(original->property("text").toString(), QStringLiteral("line 1"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("linia 1"));
+        stop();
+    }
+
     // A narrow Original text panel folds its header's buttons into one
     // "More" button whose menu holds them in the same order.
     void aNarrowHeaderFoldsTheButtons()
     {
         start();
         openFile("tl.ass", true);
-        QTRY_VERIFY(item("originalTextButtons")->isVisible());
+        QTRY_VERIFY(item("originalTextButtons") && item("originalTextButtons")->isVisible());
         auto *tools = item("originalTextButtons")->parentItem();
         QVERIFY(!item("originalTextMore")->isVisible());
         QVERIFY(dock("originalDock")->setProperty("isFloating", true));

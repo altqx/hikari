@@ -510,6 +510,24 @@ class ShellTest : public QObject {
                 return found;
         return nullptr;
     }
+    // TM1: the Original text panel closed by hand puts the Original text back
+    // in the Line editor, above the Translated text (legacy's EditBox). The
+    // engine shares the panel's room out; the Audio panel above takes back
+    // the Editing preset's 170 px box from the Line editor (fitAudioBox).
+    void closeTheOriginalTextPanel()
+    {
+        auto *dock = item<QObject>("originalDock");
+        QVERIFY(dock);
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(item("lineTextSlot")->isVisible());
+        QTRY_COMPARE(item("lineText")->parentItem(), item("lineTextSlot"));
+        auto *audio = item("audioPanel");
+        const int deficit = qRound(170 - audio->property("bodyHeight").toReal());
+        if (deficit != 0)
+            QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Audio"), 0, 0, 0, deficit));
+        QTRY_VERIFY(std::abs(audio->property("bodyHeight").toReal() - 170) <= 1);
+    }
     // Repeater delegates are not QObject children of the window: walk the items.
     static QQuickItem *findItem(QQuickItem *from, const QString &name)
     {
@@ -4872,7 +4890,7 @@ private slots:
         QVERIFY(panelBox && kindBox && targetBox);
         panelBox->setProperty("currentIndex", 1);  // Audio
         kindBox->setProperty("currentIndex", 1);   // Left of
-        targetBox->setProperty("currentIndex", 3); // Grid
+        targetBox->setProperty("currentIndex", 4); // Grid (after TM1's Original text)
         QVERIFY(QMetaObject::invokeMethod(findItem(placement->contentItem(), QStringLiteral("placementMove")), "click"));
         // Audio sits left of the Grid, in the Grid's row.
         auto *audio = item("audioPanel");
@@ -4981,15 +4999,18 @@ private slots:
         auto *targetBox = findItem(placement->contentItem(), QStringLiteral("placementTarget"));
         QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Grid"));
         QCOMPARE(kindBox->property("displayText").toString(), QStringLiteral("Tab with"));
-        QCOMPARE(targetBox->property("currentIndex").toInt(), 3);
+        QCOMPARE(targetBox->property("currentIndex").toInt(), 4);
         QCOMPARE(targetBox->property("displayText").toString(), QStringLiteral("Grid"));
-        // Panel: Up twice from the Grid is Audio; Next to: Down from the Grid is the Reference.
+        // Panel: Up three times from the Grid is Audio (past TM1's Original
+        // text); Next to: Down from the Grid is the Reference.
         QVERIFY(QTest::qWaitForWindowExposed(placement));
         placement->requestActivate();
         QTRY_COMPARE(QGuiApplication::focusWindow(), placement);
         panelBox->forceActiveFocus();
         QTest::keyClick(placement, Qt::Key_Up);
         QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Line editor"));
+        QTest::keyClick(placement, Qt::Key_Up);
+        QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Original text"));
         QTest::keyClick(placement, Qt::Key_Up);
         QCOMPARE(panelBox->property("currentIndex").toInt(), 1);
         QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Audio"));
@@ -9417,7 +9438,7 @@ private slots:
         // Paste the selected: the Original's selection goes in at the Translated caret.
         QMetaObject::invokeMethod(original, "select", Q_ARG(int, 5), Q_ARG(int, 11));
         translated->forceActiveFocus();
-        QTRY_VERIFY(item("originalPasteSelection")->isVisible());
+        QTRY_VERIFY(item("originalPasteSelection") && item("originalPasteSelection")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(item<QObject>("originalPasteSelection"), "clicked"));
         QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("keeper"));
         QCOMPARE(translated->property("cursorPosition").toInt(), 6);
@@ -9513,7 +9534,10 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         QVERIFY(!action->property("checked").toBool());
         QVERIFY(!item("translationText")->isVisible());
-        QVERIFY(!item("originalNotConfirmed")->isVisible());
+        // The Original text panel's header: not in any window until its dock
+        // first opens.
+        const auto *notConfirmed = item("originalNotConfirmed");
+        QVERIFY(!notConfirmed || !notConfirmed->isVisible());
         const auto steps = session->historySize();
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(application->editor().translationMode());
@@ -9522,7 +9546,7 @@ private slots:
         QCOMPARE(session->document().scriptInfo(u8"TLMode Style"), std::optional<std::u8string>(u8"TLmode"));
         QVERIFY(action->property("checked").toBool());
         QTRY_VERIFY(item("translationText")->isVisible());
-        QTRY_VERIFY(item("originalNotConfirmed")->isVisible());
+        QTRY_VERIFY(item("originalNotConfirmed") && item("originalNotConfirmed")->isVisible());
         QVERIFY(item("originalMovingTags")->isVisible());
 
         // Turning it off asks; No, the focused default, keeps it on.
@@ -9582,6 +9606,9 @@ private slots:
             f.write(body);
         }
         QVERIFY(application->openFile(ass));
+        // The tab's external-change check (Qt.callLater) runs before the save
+        // below, as it does when the user reaches the menu.
+        QCoreApplication::processEvents();
         auto *action = translationModeAction();
         auto *menuItem = item<QObject>("translationModeMenuItem");
         QTRY_VERIFY(action->property("enabled").toBool());
@@ -9703,6 +9730,7 @@ private slots:
         QVERIFY(application->openFile(writeTranslationFile("e5-overflow.ass")));
         QTRY_VERIFY(application->editor().translationMode());
         QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        closeTheOriginalTextPanel();
         auto *panel = item("editorPanel");
         auto *view = item("editorScroll");
         auto *content = item("editorContent");
@@ -9711,8 +9739,6 @@ private slots:
         QVERIFY(panel->mapRectToScene(panel->boundingRect()).contains(view->mapRectToScene(view->boundingRect())));
         QCOMPARE(view->property("contentY").toReal(), 0.0);
         QTRY_VERIFY(!inTheEditorView(item("startField"))); // below the fold, once laid out
-        const qreal audioBody = item("audioPanel")->property("bodyHeight").toReal();
-        QVERIFY2(std::abs(audioBody - 170) <= 1, qPrintable(QString::number(audioBody)));
 
         // The wheel brings every control into view.
         QList<QQuickItem *> controls;
@@ -9727,8 +9753,9 @@ private slots:
             }
         };
         collect(content);
-        // (LE2 and LE3 took the Times/Frames radios and Hide tags out.)
-        QVERIFY2(controls.size() >= 22, qPrintable(QString::number(controls.size())));
+        // (LE2 and LE3 took the Times/Frames radios and Hide tags out; TM1
+        // the Translator mode row.)
+        QVERIFY2(controls.size() >= 20, qPrintable(QString::number(controls.size())));
         for (QQuickItem *control : std::as_const(controls))
             scrollTheEditorTo(control);
         scrollTheEditorTo(controls.first()); // and back up
@@ -9802,6 +9829,7 @@ private slots:
         // A fold to scroll past: the Editing layout (WS1: not the Translation
         // preset the file's tab starts with).
         QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        closeTheOriginalTextPanel(); // the two fields in the Line editor (translation_preset_tests: across panels)
         auto *original = item("lineText");
         auto *translated = item("translationText");
         auto *layer = item("layerField");
