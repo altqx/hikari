@@ -1,0 +1,53 @@
+[Script Info]
+; Aegisub karaoke templater tutorials 1-2 (aegisub.org/docs/latest/automation/karaoke_templater/tutorial_1, tutorial_2); karaoke text authored
+Title: KE1 corpus stock-tutorials
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: T2c-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: T2b-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: T2a-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: T1b-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style: T1a-furigana,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,1,1,8,20,20,20,1
+Style:  T1a,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  T1b,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  T2a,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  T2b,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style:  T2c,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,T1a,,0,0,0,template line,{\r\t($start,$mid,\fscy120)\t($mid,$end,\fscy100)}
+Comment: 0,0:00:00.00,0:00:05.00,T1b,,0,0,0,template line,{\r\k$kdur\t($start,$end,\1c&H00FF00&)\t($start,$mid,\fscy120)\t($mid,$end,\fscy100)}
+Comment: 0,0:00:00.00,0:00:05.00,T2a,,0,0,0,template line,{\r\k$kdur\t($start,$end,\1c&H00FF00&)\t($start,$mid,\fscy120)\t($mid,$end,\fscy100)\t($end,!$end+200!,\alpha&HFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,T2b,,0,0,0,template line,{\r\k$kdur\t($start,$end,\1c&H00FF00&)\t($start,!$start+$dur*0.3!,\fscy120)\t(!$start+$dur*0.3!,$end,\fscy100)}
+Comment: 0,0:00:00.00,0:00:05.00,T2c,,0,0,0,template syl,{\an5\pos($scenter,$smiddle)\t($start,!$end+200!,\alpha&HFF&)}
+Comment: 0,0:00:01.85,0:00:09.06,T1a,,0,0,0,karaoke,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Comment: 0,0:00:09.28,0:00:16.21,T1a,,0,0,0,karaoke,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Comment: 0,0:00:01.85,0:00:09.06,T1b,,0,0,0,karaoke,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Comment: 0,0:00:09.28,0:00:16.21,T2a,,0,0,0,karaoke,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Comment: 0,0:00:20.00,0:00:26.00,T2b,,0,0,0,karaoke,{\k12}ki{\k14}mi{\k0} {\k20}to{\k0}  {\k33}so{\k21}ra{\k0} {\k45}wo{\k0} {\k38}mi{\k57}ta
+Comment: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,karaoke,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Dialogue: 0,0:00:01.85,0:00:09.06,T1a,,0,0,0,fx,{\r\t(0,160,\fscy120)\t(160,320,\fscy100)}ha{\r\t(320,460,\fscy120)\t(460,600,\fscy100)}ru{\r\t(600,600,\fscy120)\t(600,600,\fscy100)} {\r\t(600,805,\fscy120)\t(805,1010,\fscy100)}no{\r\t(1010,1010,\fscy120)\t(1010,1010,\fscy100)} {\r\t(1010,1135,\fscy120)\t(1135,1260,\fscy100)}ka{\r\t(1260,1410,\fscy120)\t(1410,1560,\fscy100)}ze{\r\t(1560,1560,\fscy120)\t(1560,1560,\fscy100)} {\r\t(1560,1785,\fscy120)\t(1785,2010,\fscy100)}ga{\r\t(2010,2010,\fscy120)\t(2010,2010,\fscy100)} {\r\t(2010,2120,\fscy120)\t(2120,2230,\fscy100)}fu{\r\t(2230,2530,\fscy120)\t(2530,2830,\fscy100)}ku
+Dialogue: 0,0:00:09.28,0:00:16.21,T1a,,0,0,0,fx,{\r\t(0,90,\fscy120)\t(90,180,\fscy100)}to{\r\t(180,290,\fscy120)\t(290,400,\fscy100)}o{\r\t(400,575,\fscy120)\t(575,750,\fscy100)}ku{\r\t(750,750,\fscy120)\t(750,750,\fscy100)} {\r\t(750,885,\fscy120)\t(885,1020,\fscy100)}ma{\r\t(1020,1175,\fscy120)\t(1175,1330,\fscy100)}de{\r\t(1330,1330,\fscy120)\t(1330,1330,\fscy100)} {\r\t(1330,1530,\fscy120)\t(1530,1730,\fscy100)}a{\r\t(1730,1825,\fscy120)\t(1825,1920,\fscy100)}ru{\r\t(1920,2040,\fscy120)\t(2040,2160,\fscy100)}i{\r\t(2160,2335,\fscy120)\t(2335,2510,\fscy100)}te{\r\t(2510,2760,\fscy120)\t(2760,3010,\fscy100)}ku
+Dialogue: 0,0:00:01.85,0:00:09.06,T1b,,0,0,0,fx,{\r\k32\t(0,320,\1c&H00FF00&)\t(0,160,\fscy120)\t(160,320,\fscy100)}ha{\r\k28\t(320,600,\1c&H00FF00&)\t(320,460,\fscy120)\t(460,600,\fscy100)}ru{\r\k0\t(600,600,\1c&H00FF00&)\t(600,600,\fscy120)\t(600,600,\fscy100)} {\r\k41\t(600,1010,\1c&H00FF00&)\t(600,805,\fscy120)\t(805,1010,\fscy100)}no{\r\k0\t(1010,1010,\1c&H00FF00&)\t(1010,1010,\fscy120)\t(1010,1010,\fscy100)} {\r\k25\t(1010,1260,\1c&H00FF00&)\t(1010,1135,\fscy120)\t(1135,1260,\fscy100)}ka{\r\k30\t(1260,1560,\1c&H00FF00&)\t(1260,1410,\fscy120)\t(1410,1560,\fscy100)}ze{\r\k0\t(1560,1560,\1c&H00FF00&)\t(1560,1560,\fscy120)\t(1560,1560,\fscy100)} {\r\k45\t(1560,2010,\1c&H00FF00&)\t(1560,1785,\fscy120)\t(1785,2010,\fscy100)}ga{\r\k0\t(2010,2010,\1c&H00FF00&)\t(2010,2010,\fscy120)\t(2010,2010,\fscy100)} {\r\k22\t(2010,2230,\1c&H00FF00&)\t(2010,2120,\fscy120)\t(2120,2230,\fscy100)}fu{\r\k60\t(2230,2830,\1c&H00FF00&)\t(2230,2530,\fscy120)\t(2530,2830,\fscy100)}ku
+Dialogue: 0,0:00:09.28,0:00:16.21,T2a,,0,0,0,fx,{\r\k18\t(0,180,\1c&H00FF00&)\t(0,90,\fscy120)\t(90,180,\fscy100)\t(180,380,\alpha&HFF&)}to{\r\k22\t(180,400,\1c&H00FF00&)\t(180,290,\fscy120)\t(290,400,\fscy100)\t(400,600,\alpha&HFF&)}o{\r\k35\t(400,750,\1c&H00FF00&)\t(400,575,\fscy120)\t(575,750,\fscy100)\t(750,950,\alpha&HFF&)}ku{\r\k0\t(750,750,\1c&H00FF00&)\t(750,750,\fscy120)\t(750,750,\fscy100)\t(750,950,\alpha&HFF&)} {\r\k27\t(750,1020,\1c&H00FF00&)\t(750,885,\fscy120)\t(885,1020,\fscy100)\t(1020,1220,\alpha&HFF&)}ma{\r\k31\t(1020,1330,\1c&H00FF00&)\t(1020,1175,\fscy120)\t(1175,1330,\fscy100)\t(1330,1530,\alpha&HFF&)}de{\r\k0\t(1330,1330,\1c&H00FF00&)\t(1330,1330,\fscy120)\t(1330,1330,\fscy100)\t(1330,1530,\alpha&HFF&)} {\r\k40\t(1330,1730,\1c&H00FF00&)\t(1330,1530,\fscy120)\t(1530,1730,\fscy100)\t(1730,1930,\alpha&HFF&)}a{\r\k19\t(1730,1920,\1c&H00FF00&)\t(1730,1825,\fscy120)\t(1825,1920,\fscy100)\t(1920,2120,\alpha&HFF&)}ru{\r\k24\t(1920,2160,\1c&H00FF00&)\t(1920,2040,\fscy120)\t(2040,2160,\fscy100)\t(2160,2360,\alpha&HFF&)}i{\r\k35\t(2160,2510,\1c&H00FF00&)\t(2160,2335,\fscy120)\t(2335,2510,\fscy100)\t(2510,2710,\alpha&HFF&)}te{\r\k50\t(2510,3010,\1c&H00FF00&)\t(2510,2760,\fscy120)\t(2760,3010,\fscy100)\t(3010,3210,\alpha&HFF&)}ku
+Dialogue: 0,0:00:20.00,0:00:26.00,T2b,,0,0,0,fx,{\r\k12\t(0,120,\1c&H00FF00&)\t(0,36,\fscy120)\t(36,120,\fscy100)}ki{\r\k14\t(120,260,\1c&H00FF00&)\t(120,162,\fscy120)\t(162,260,\fscy100)}mi{\r\k0\t(260,260,\1c&H00FF00&)\t(260,260,\fscy120)\t(260,260,\fscy100)} {\r\k20\t(260,460,\1c&H00FF00&)\t(260,320,\fscy120)\t(320,460,\fscy100)}to{\r\k0\t(460,460,\1c&H00FF00&)\t(460,460,\fscy120)\t(460,460,\fscy100)}  {\r\k33\t(460,790,\1c&H00FF00&)\t(460,559,\fscy120)\t(559,790,\fscy100)}so{\r\k21\t(790,1000,\1c&H00FF00&)\t(790,853,\fscy120)\t(853,1000,\fscy100)}ra{\r\k0\t(1000,1000,\1c&H00FF00&)\t(1000,1000,\fscy120)\t(1000,1000,\fscy100)} {\r\k45\t(1000,1450,\1c&H00FF00&)\t(1000,1135,\fscy120)\t(1135,1450,\fscy100)}wo{\r\k0\t(1450,1450,\1c&H00FF00&)\t(1450,1450,\fscy120)\t(1450,1450,\fscy100)} {\r\k38\t(1450,1830,\1c&H00FF00&)\t(1450,1564,\fscy120)\t(1564,1830,\fscy100)}mi{\r\k57\t(1830,2400,\1c&H00FF00&)\t(1830,2001,\fscy120)\t(2001,2400,\fscy100)}ta
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(420,40)\t(0,200,\alpha&HFF&)}
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(442,40)\t(0,520,\alpha&HFF&)}ha
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(486,40)\t(320,800,\alpha&HFF&)}ru
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(530,40)\t(600,800,\alpha&HFF&)} 
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(552,40)\t(600,1210,\alpha&HFF&)}no
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(596,40)\t(1010,1210,\alpha&HFF&)} 
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(618,40)\t(1010,1460,\alpha&HFF&)}ka
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(662,40)\t(1260,1760,\alpha&HFF&)}ze
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(706,40)\t(1560,1760,\alpha&HFF&)} 
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(728,40)\t(1560,2210,\alpha&HFF&)}ga
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(772,40)\t(2010,2210,\alpha&HFF&)} 
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(794,40)\t(2010,2430,\alpha&HFF&)}fu
+Dialogue: 0,0:00:20.00,0:00:26.00,T2c,,0,0,0,fx,{\an5\pos(838,40)\t(2230,3030,\alpha&HFF&)}ku

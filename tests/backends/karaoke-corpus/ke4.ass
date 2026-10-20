@@ -1,0 +1,28 @@
+[Script Info]
+; Kara Effector 3.6 ke4 library (Include/effector-auto4.lua) used from stock templates, as its own usage comments show; R() is left out because it mixes os.time() into its result
+Title: KE1 corpus ke4
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: KE,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: KEShape,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: KEText,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,KE,,0,0,0,template syl,!retime("start2syl", _G.ke4.time.mid1($si, $syln, 60), 0)!{\an5\pos($x,$y)\fad(!_G.ke4.time.li($si, $syln, 50)!,0)}
+Comment: 0,0:00:00.00,0:00:05.00,KE,,0,0,0,template syl,!retime("syl2end", 0, _G.ke4.time.lo($si, $syln, 50))!{\an5\pos($x,$y)\fscx!_G.ke4.math.clamp(3, 5, 10)*20!}
+Comment: 0,0:00:00.00,0:00:05.00,KE,,0,0,0,template syl,!retime("start2syl", _G.ke4.time.mid2($si, $syln, 60), 0)!{\an5\pos($x,!$y+_G.ke4.math.round($sdur/7)!)}
+Comment: 0,0:00:00.00,0:00:05.00,KEShape,,0,0,0,template syl notext,{\an5\pos($x,$y)\bord0\shad0\p1}!_G.ke4.shape.rotate(_G.ke4.shape.rectangle, 15)!
+Comment: 0,0:00:00.00,0:00:05.00,KEShape,,0,0,0,template syl notext,{\an7\pos($sleft,$stop)\p1}!_G.ke4.shape.filter7(_G.ke4.shape.rectangle, \"x = 2 * x\")!
+Comment: 0,0:00:00.00,0:00:05.00,KEText,,0,0,0,template line notext,{\an5\pos($lx,$ly)}!_G.ke4.text.upper(line.text_stripped)!
+Comment: 0,0:00:00.00,0:00:05.00,KEText,,0,0,0,template line notext,{\an5\pos($lx,!$ly+50!)\fs!_G.ke4.string.toval(\"5 + 7\")!\1c!_G.ke4.math.to16(255)!}!_G.ke4.time.HMS_to_ms(\"0:03:37.134\")!
+Comment: 0,0:00:00.00,0:00:05.00,KEText,,0,0,0,template line notext,!_G.ke4.text.gradienth(line, line.text_stripped, { line.center, line.middle }, \"&H00FFFF&\", \"&H0000FF&\")!
+Dialogue: 0,0:00:01.00,0:00:05.00,KE,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Dialogue: 0,0:00:01.00,0:00:05.00,KEShape,,0,0,0,,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Dialogue: 0,0:00:01.00,0:00:05.00,KEText,,0,0,0,,{\k12}ki{\k14}mi{\k0} {\k20}to{\k0}  {\k33}so{\k21}ra{\k0} {\k45}wo{\k0} {\k38}mi{\k57}ta

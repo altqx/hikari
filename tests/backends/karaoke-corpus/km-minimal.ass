@@ -1,0 +1,27 @@
+[Script Info]
+; Karaoke Mugen minimal template (docs.karaokes.moe contrib-guide/create-karaoke/karaoke), verbatim; kf/K/ko/zero-length syllables, full-width space, existing fx and karaoke lines
+Title: KE1 corpus km-minimal
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Sample,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Other,Arial,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,2,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Sample,,0,0,0,template pre-line all keeptags,!retime("line",$start < 900 and -$start or -900,200)!{!$start < 900 and "\\k" .. ($start/10) or "\\k90"!\fad(!$start < 900 and $start or 300!,200)}
+Dialogue: 0,0:00:00.50,0:00:03.00,Sample,,0,0,0,,{\kf30}ha{\kf40}ji{\kf50}me{\k0} {\K60}ma{\ko20}shi{\k0}te
+Dialogue: 0,0:00:04.00,0:00:07.00,Sample,,0,0,0,,{\k25}u{\k25}ta{\k0}　{\k30}u{\k30}ta{\k40}u {\k0}{\k20}yo
+Dialogue: 0,0:00:08.00,0:00:10.00,Other,,0,0,0,,{\k50\1c&H00FFFF&}i{\k50}ro {\i1\k40}to {\k60}ri
+Dialogue: 0,0:00:11.00,0:00:12.00,Sample,,0,0,0,,no karaoke tags here
+Comment: 0,0:00:13.00,0:00:15.00,Sample,,0,0,0,karaoke,{\k50}mo{\k50}u
+Dialogue: 0,0:00:16.00,0:00:18.00,Sample,,0,0,0,Karaoke,{\k70}ka{\k70}e
+Dialogue: 0,0:00:19.00,0:00:20.00,Sample,,0,0,0,karaoke-off,{\k50}skip{\k50}me
+Dialogue: 0,0:00:01.00,0:00:02.00,Sample,,0,0,0,fx,stale generated output
+Comment: 0,0:00:01.00,0:00:02.00,Sample,,0,0,0,fx,generated output kept as a comment
+Dialogue: 0,0:00:21.00,0:00:22.00,Sample,,0,0,0,sign,{\k50}not{\k50}input

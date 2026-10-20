@@ -5,3 +5,7 @@
 
 # 38c: the attachment fixtures are compared byte for byte (CRLF script, font, image).
 /tests/fixtures/attachments/** -text
+
+# KE1: the karaoke template corpus and its goldens are compared byte for byte;
+# the 3.2.2 reference script keeps its original bytes.
+/tests/backends/karaoke-corpus/** -text

@@ -187,6 +187,15 @@ ShellMenu {
         enabled: videoMenu.fullscreen
         onTriggered: if (!videoMenu.gesture("VIDEO_HIDE_PROGRESS_BAR")) videoMenu.shell.videoView.toggleProgressBar()
     }
+    // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
+    ShellMenuItem {
+        iconRole: "render-cost"
+        objectName: videoMenu.itemPrefix + "RenderCost"
+        text: qsTr("Show / hide render cost") + (videoMenu.shell.boundKeys("GLOBAL_VIDEO_RENDER_COST", 0).length
+                                                 ? "\t" + videoMenu.shell.boundKeys("GLOBAL_VIDEO_RENDER_COST", 0) : "")
+        enabled: videoMenu.shell.video.hasVideo
+        onTriggered: if (!videoMenu.shell.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST", 0)) videoMenu.shell.videoView.toggleRenderCost()
+    }
     ShellMenuItem {
         iconRole: "aspect-ratio"
         objectName: videoMenu.itemPrefix + "AspectRatio"
