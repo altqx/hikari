@@ -11591,6 +11591,24 @@ private slots:
         QCoreApplication::sendEvent(window, &up);
         QCOMPARE(audio.volume(), 60);
         QCOMPARE(settings.integer("audio.volume"), 60);
+        // a touchpad's parts of a notch add up to whole notches, a half notch
+        // alone does nothing, a turn back drops the rest; pixels alone count
+        const auto turn = [&](QPoint pixels, QPoint angle) {
+            QWheelEvent event(over, window->mapToGlobal(over), pixels, angle, Qt::NoButton, Qt::NoModifier,
+                              Qt::ScrollUpdate, false);
+            QCoreApplication::sendEvent(window, &event);
+        };
+        turn({}, {0, 60});
+        QCOMPARE(audio.volume(), 60);
+        turn({}, {0, 40});
+        turn({}, {0, 40});
+        QCOMPARE(audio.volume(), 65); // 140: one notch, 20 kept
+        turn({}, {0, -60});
+        QCOMPARE(audio.volume(), 65); // the 20 went with the turn back
+        turn({}, {0, -60});
+        QCOMPARE(audio.volume(), 60);
+        turn({0, 15}, {});
+        QCOMPARE(audio.volume(), 65);
         audio.setVolume(90);
         QCOMPARE(speaker->property("iconRole").toString(), QStringLiteral("volume"));
         audio.setVolume(10);

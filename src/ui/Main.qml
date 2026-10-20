@@ -3415,12 +3415,28 @@ ApplicationWindow {
                                  : qsTranslate("HikariSub.Audio", "Volume: %1").arg(root.audio.volume)
                             down: audioOutputMenu.visible
                             onRun: audioOutputMenu.popup(audioOutputButton, 0, audioOutputButton.height)
+                            // 5 a notch of 120. A touchpad or high-resolution
+                            // wheel sends parts of a notch (or only pixels, 15
+                            // a notch): they add up until a whole notch, and a
+                            // turn the other way drops what was left over.
                             WheelHandler {
+                                id: speakerWheel
+                                property real rest: 0
                                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                                 onWheel: event => {
-                                    const notches = Math.round((event.angleDelta.y !== 0 ? event.angleDelta.y : -event.angleDelta.x) / 120)
-                                    if (notches !== 0)
-                                        root.audio.setVolume(Math.max(1, Math.min(100, root.audio.volume + 5 * notches)))
+                                    let delta = event.angleDelta.y !== 0 ? event.angleDelta.y : -event.angleDelta.x
+                                    if (delta === 0)
+                                        delta = 8 * (event.pixelDelta.y !== 0 ? event.pixelDelta.y : -event.pixelDelta.x)
+                                    if (delta === 0)
+                                        return
+                                    if (delta * speakerWheel.rest < 0)
+                                        speakerWheel.rest = 0
+                                    speakerWheel.rest += delta
+                                    const notches = Math.trunc(speakerWheel.rest / 120)
+                                    if (notches === 0)
+                                        return
+                                    speakerWheel.rest -= 120 * notches
+                                    root.audio.setVolume(Math.max(1, Math.min(100, root.audio.volume + 5 * notches)))
                                 }
                             }
                             AudioOutputMenu {
