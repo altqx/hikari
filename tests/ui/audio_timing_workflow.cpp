@@ -8,10 +8,12 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "log_controller.h"
 
 #include <QDeadlineTimer>
 #include <QFile>
 #include <QGuiApplication>
+#include <QKeyEvent>
 #include <QQmlApplicationEngine>
 #include <QQuickWindow>
 #include <QTemporaryDir>
@@ -67,6 +69,30 @@ protected:
     }
 };
 
+QString nameOf(const QObject *o)
+{
+    if (!o)
+        return QStringLiteral("none");
+    if (!o->objectName().isEmpty())
+        return o->objectName();
+    if (const auto *w = qobject_cast<const QWindow *>(o); w && !w->title().isEmpty())
+        return w->title();
+    return QString::fromLatin1(o->metaObject()->className());
+}
+
+// Each key a window receives, with the item it goes to.
+class KeyLog : public QObject {
+protected:
+    bool eventFilter(QObject *watched, QEvent *event) override
+    {
+        if (event->type() == QEvent::KeyPress)
+            if (auto *w = qobject_cast<QQuickWindow *>(watched))
+                std::printf("key %d to %s, focus %s\n", static_cast<QKeyEvent *>(event)->key(), qPrintable(nameOf(w)),
+                            qPrintable(nameOf(w->activeFocusItem())));
+        return false;
+    }
+};
+
 std::int64_t ms(hikari::core::DocumentTime t)
 {
     return t.microseconds() / 1000;
@@ -101,6 +127,25 @@ int main(int argc, char **argv)
     if (engine.rootObjects().isEmpty())
         return 2;
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+    // Where the keys go: Spix posts plain key presses to the window, so they
+    // reach the focused item.
+    QObject::connect(window, &QQuickWindow::activeFocusItemChanged, window,
+                     [window] { std::printf("focus %s\n", qPrintable(nameOf(window->activeFocusItem()))); });
+    QObject::connect(&app, &QGuiApplication::focusWindowChanged, &app, [](QWindow *w) {
+        QStringList shown;
+        for (const QWindow *t : QGuiApplication::topLevelWindows())
+            if (t->isVisible())
+                shown.append(nameOf(t));
+        std::printf("focus window %s (shown: %s)\n", qPrintable(nameOf(w)), qPrintable(shown.join(QStringLiteral(", "))));
+    });
+    // A message that is not silent opens the log window, which takes the
+    // activation from the main window.
+    QObject::connect(&application.log(), &hikari::ui::LogController::changed, &app, [&application] {
+        std::printf("log%s: %s\n", application.log().shown() ? " (shown)" : "",
+                    qPrintable(application.log().lastMessage()));
+    });
+    KeyLog keys;
+    app.installEventFilter(&keys);
     window->requestActivate();
     QDeadlineTimer deadline(10'000);
     while (!(window->isExposed() && window->isActive()) && !deadline.hasExpired())
@@ -148,6 +193,8 @@ int main(int argc, char **argv)
         expect(history[5] == QStringLiteral("Changing time on audio spectrum, active line 3"), "lead-in, Line 3");
         expect(history[7] == QStringLiteral("Adding a new line, active line 3"), "Enter on the last Line");
     }
+    std::printf("editor text \"%s\", audio selection from %lld\n", qPrintable(application.editor().text()),
+                static_cast<long long>(application.audio().selectionStart()));
     expect(application.editor().text() == QStringLiteral("Three"), "Z, Z and Right end on the third Line");
     expect(application.audio().selectionStart() == 4800, "the box follows the active Line");
     expect(!application.audio().modified(), "nothing left to commit");

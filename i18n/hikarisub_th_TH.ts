@@ -4984,8 +4984,12 @@ after switching from full screen</source>
         <translation>เลื่อนกราฟเสียงตามในระหว่างการเล่น</translation>
     </message>
     <message>
+        <source>Hotkeys follow the panel under the pointer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
-        <translation>ใช้งานหน้าต่างเสียงเมื่อวางเมาส์ไว้เหนือ</translation>
+        <translation type="vanished">ใช้งานหน้าต่างเสียงเมื่อวางเมาส์ไว้เหนือ</translation>
     </message>
     <message>
         <source>Snap to keyframe</source>

@@ -161,6 +161,7 @@ protected:
     void focusOutEvent(QFocusEvent *event) override;
     void hoverMoveEvent(QHoverEvent *event) override;
     void hoverLeaveEvent(QHoverEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
 
 private:
     void modelLayoutChanged();

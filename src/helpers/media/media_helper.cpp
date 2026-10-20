@@ -77,14 +77,31 @@ std::string errorText(const FFMS_ErrorInfo &e)
     return e.Buffer ? std::string(e.Buffer) : std::string("unknown FFMS2 error");
 }
 
+// AV4: FFMS2 reports progress for every packet it reads, hundreds of
+// thousands for a long video. A report goes to the application only when it
+// moves the progress by a thousandth (legacy's dialog showed whole percents);
+// cancelling is still checked at every packet.
 struct Progress {
     Responder *responder;
+    std::int64_t sent = -2; // the last permille sent; none yet
+
+    void report(std::int64_t current, std::int64_t total)
+    {
+        const std::int64_t permille = total <= 0         ? -1
+                                      : current <= 0     ? 0
+                                      : current >= total ? 1000
+                                                         : current * 1000 / total;
+        if (permille == sent)
+            return;
+        sent = permille;
+        responder->progress(Writer().i64(current).i64(total).take());
+    }
 };
 
 int FFMS_CC onProgress(int64_t current, int64_t total, void *opaque)
 {
     auto *p = static_cast<Progress *>(opaque);
-    p->responder->progress(Writer().i64(current).i64(total).take());
+    p->report(current, total);
     return p->responder->cancelled() ? 1 : 0; // non-zero cancels indexing
 }
 
