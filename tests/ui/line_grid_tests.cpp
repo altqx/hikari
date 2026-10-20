@@ -729,6 +729,13 @@ private slots:
         QVERIFY(image.pixelColor(corner) != image.pixelColor(below));
         QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-unplaced-runs.png")));
+        // The Line editor's draft placing the run takes the mark off its row.
+        auto draft = *model.recordAt(0);
+        draft.translation = u8"{\\i1}Mur {\\b1}wysoki";
+        model.setDraft(draft);
+        QVERIFY(!model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
+        model.setDraft(std::nullopt);
+        QVERIFY(model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
         model.setRunMarks(false);
         QCOMPARE(grid.rowStateText(0), QString());
         image = paint();

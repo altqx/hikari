@@ -443,6 +443,7 @@ void LineTableModel::setDraft(std::optional<core::LineRecord> draft)
         shown.measures.reset();
         shown.spellMarks.reset();
         shown.shownText.reset();
+        shown.unplacedRuns.reset();
         m_draft = std::move(shown);
         m_draftRow = *row;
     }
