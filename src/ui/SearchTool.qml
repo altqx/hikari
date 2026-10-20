@@ -275,7 +275,7 @@ Item {
                             IconToolButton {
                                 objectName: "findChooseFolder"
                                 iconRole: "folder-open"
-                                text: qsTr("Choose save folder")
+                                text: qsTr("Choose subtitle search folder")
                                 onClicked: {
                                     search.skipActivation = true
                                     folderDialog.open()
@@ -542,7 +542,8 @@ Item {
 
     Dialogs.FolderDialog {
         id: folderDialog
-        title: qsTr("Choose save folder")
+        objectName: "findFolderDialog"
+        title: qsTr("Choose subtitle search folder") // TI1-find-folder-title
         onAccepted: folderText.editText = search.app.localPath(selectedFolder)
     }
 

@@ -4845,6 +4845,8 @@ ApplicationWindow {
         }
         FileDialog {
             id: closeSaveAs
+            objectName: "closeSaveAs"
+            title: qsTranslate("HikariSub.Documents", "Save subtitle file")
             property int row: -1
             fileMode: FileDialog.SaveFile
             nameFilters: [qsTranslate("HikariSub.Documents", "ASS subtitles (*.ass)"), qsTranslate("HikariSub.Documents", "All files (*)")]
@@ -5365,7 +5367,8 @@ ApplicationWindow {
     }
     FileDialog {
         id: keyframesDialog
-        title: qsTranslate("HikariSub.Video", "Choose video file")
+        objectName: "keyframesDialog"
+        title: qsTranslate("HikariSub.Video", "Choose keyframes file") // TI1-keyframes-title
         nameFilters: [qsTranslate("HikariSub.Video", "Keyframes file (*.txt *.pass *.stats *.log)"), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
             // V3: the recent keyframes take the file too (SetRecent(3))
@@ -5927,6 +5930,7 @@ ApplicationWindow {
         id: spellingNotice
         objectName: "spellingNotice"
         property alias text: spellingNoticeLabel.text
+        title: qsTranslate("HikariSub.Spelling", "Spellchecker") // TI1-popup-titles
         anchors.centerIn: parent
         modal: true // legacy HikariMessageBox is modal
         standardButtons: Dialog.Ok

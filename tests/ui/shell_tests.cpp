@@ -8028,6 +8028,120 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(notice, "accept"));
     }
 
+    // TI1: each picker and popup says what it is for, where legacy's caption
+    // was wrong or empty (TI1-keyframes-title, TI1-fonts-folder-title,
+    // TI1-find-folder-title, TI1-popup-titles). With HIKARI_SURFACE_SHOT_DIR
+    // each opens in turn and is saved as ti1-<objectName>.png; a window of its
+    // own gets its title written above it, as no window manager draws one
+    // under Xvfb.
+    void popupsAreTitledForWhatTheyShow()
+    {
+        auto *settings = openSettings(); // the fonts folder's picker is in Settings
+        QVERIFY(settings);
+        QTRY_VERIFY(settings->property("visible").toBool());
+        // The Search tool, and its folder's picker, come with its panel.
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
+        QTRY_VERIFY(item<QObject>("searchTool"));
+        const auto find = [&](const char *name) {
+            QObject *found = named(name);
+            return found ? found : item<QObject>(name);
+        };
+        const QList<std::pair<const char *, QString>> titles{
+            {"keyframesDialog", QStringLiteral("Choose keyframes file")},
+            {"fontsFolderDialog", QStringLiteral("Choose external font folder")},
+            {"findFolderDialog", QStringLiteral("Choose subtitle search folder")},
+            {"closeSaveAs", QStringLiteral("Save subtitle file")},
+            {"spellingNotice", QStringLiteral("Spellchecker")},
+            {"mkvNoTracksMessage", QStringLiteral("Load subtitles from an MKV/OGM file")},
+            {"mkvProgress", QStringLiteral("Load subtitles from an MKV/OGM file")},
+            {"aspectRatioDialog", QStringLiteral("Change aspect ratio")},
+        };
+        for (const auto &[name, title] : titles) {
+            QObject *popup = find(name);
+            QVERIFY2(popup, name);
+            QCOMPARE(popup->property("title").toString(), title);
+        }
+        // The Find folder button is named for the picker it opens.
+        QCOMPARE(find("findChooseFolder")->property("text").toString(), QStringLiteral("Choose subtitle search folder"));
+        // The refusal of each mapping window (Settings' and the shell's).
+        QList<QQuickWindow *> refusals;
+        for (QWindow *w : QGuiApplication::allWindows())
+            if (w->objectName() == QLatin1String("hotkeyRefusal"))
+                refusals << qobject_cast<QQuickWindow *>(w);
+        QCOMPARE(refusals.size(), 2);
+        for (QQuickWindow *refusal : refusals)
+            QCOMPARE(refusal->title(), QStringLiteral("Warning"));
+
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            return;
+        QVERIFY(QDir().mkpath(out));
+        // The window a dialog or popup shows in: its first window or item up.
+        const auto windowOf = [](QObject *o) -> QQuickWindow * {
+            for (; o; o = o->parent()) {
+                if (auto *w = qobject_cast<QQuickWindow *>(o))
+                    return w;
+                if (auto *i = qobject_cast<QQuickItem *>(o); i && i->window())
+                    return i->window();
+            }
+            return nullptr;
+        };
+        const auto save = [&](const char *name, QQuickWindow *w, bool ownWindow) {
+            QVERIFY2(w, name);
+            QTest::qWait(300); // the popup's enter transition
+            const QImage shot = w->grabWindow();
+            QImage image = shot;
+            if (ownWindow) {
+                const int bar = 30;
+                image = QImage(shot.width(), shot.height() + bar, QImage::Format_ARGB32);
+                image.fill(Qt::darkGray);
+                QPainter p(&image);
+                p.setPen(Qt::white);
+                p.drawText(QRect(8, 0, shot.width() - 16, bar), Qt::AlignVCenter, QStringLiteral("Window title: ") + w->title());
+                p.drawImage(0, bar, shot);
+            }
+            QVERIFY(image.save(out + QStringLiteral("/ti1-") + QLatin1String(name) + QStringLiteral(".png")));
+        };
+        // The pickers (Qt Quick's own dialogs here) open in a window of their own.
+        const auto shown = [] {
+            QSet<QWindow *> out;
+            for (QWindow *w : QGuiApplication::allWindows())
+                if (w->isVisible())
+                    out << w;
+            return out;
+        };
+        named("closeReview")->setProperty("visible", true);
+        for (const char *name : {"keyframesDialog", "fontsFolderDialog", "findFolderDialog", "closeSaveAs"}) {
+            QObject *dialog = find(name);
+            const QSet<QWindow *> before = shown();
+            QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
+            QTRY_VERIFY2(dialog->property("visible").toBool(), name);
+            QTRY_VERIFY2(!(shown() - before).isEmpty(), name);
+            auto *own = qobject_cast<QQuickWindow *>(*(shown() - before).begin());
+            QVERIFY(QTest::qWaitForWindowExposed(own));
+            save(name, own, true);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            QTRY_VERIFY(!own->isVisible());
+        }
+        named("closeReview")->setProperty("visible", false);
+        QVERIFY(QMetaObject::invokeMethod(settings, "close"));
+        find("spellingNotice")->setProperty("text", QStringLiteral("Error. Word \"wrold\" was not added."));
+        for (const char *name : {"spellingNotice", "mkvNoTracksMessage", "mkvProgress", "aspectRatioDialog"}) {
+            QObject *popup = find(name);
+            QVERIFY(QMetaObject::invokeMethod(popup, qstrcmp(name, "aspectRatioDialog") == 0 ? "openAtCursor" : "open"));
+            QTRY_VERIFY2(popup->property("opened").toBool(), name);
+            save(name, windowOf(popup), false);
+            QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+        }
+        QQuickWindow *refusal = refusals.first();
+        refusal->setProperty("text", QStringLiteral("You cannot use the program exit shortcut."));
+        refusal->show();
+        QVERIFY(QTest::qWaitForWindowExposed(refusal));
+        save("hotkeyRefusal", refusal, true);
+        refusal->close();
+    }
+
     // F3: without a spelling backend there is no spell checker: no notice,
     // no SPELLCHECKER_ON change, bracket marks only. The bundled Dictionary
     // folder (legacy's, beside the executable) is read after the user's.
