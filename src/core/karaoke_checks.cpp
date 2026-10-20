@@ -2,7 +2,7 @@
 
 #include "text_util.h"
 
-#include <cstdlib>
+#include <algorithm>
 #include <optional>
 #include <string>
 
@@ -41,6 +41,10 @@ bool hasKaraokeTag(u8sv block)
     return false;
 }
 
+// Longer syllables count as this long (over 115 days), so adding them up
+// cannot overflow.
+constexpr std::int64_t kLongestSyllable = 1'000'000'000;
+
 struct Syllables {
     std::vector<std::int64_t> values; // centiseconds
     bool unclosed = false;
@@ -68,17 +72,18 @@ Syllables syllablesOf(u8sv text)
                 continue;
             if (block[i + 1] == u8'k' && j < block.size() && (block[j] == u8'f' || block[j] == u8'o'))
                 ++j;
-            const std::size_t number = j;
-            if (j < block.size() && block[j] == u8'-')
+            const bool negative = j < block.size() && block[j] == u8'-';
+            if (j < block.size() && (block[j] == u8'-' || block[j] == u8'+'))
                 ++j;
             const std::size_t digits = j;
-            while (j < block.size() && isDigit(block[j]))
-                ++j;
+            std::int64_t value = 0;
+            for (; j < block.size() && isDigit(block[j]); ++j)
+                value = std::min<std::int64_t>(value * 10 + (block[j] - u8'0'), kLongestSyllable);
             if (j == digits) {
                 out.unclosed = true; // "\k" with no number
                 continue;
             }
-            out.values.push_back(std::strtoll(std::string(block.begin() + number, block.begin() + j).c_str(), nullptr, 10));
+            out.values.push_back(negative ? -value : value);
             i = j - 1;
         }
         pos = close + 1;
@@ -97,7 +102,8 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
         const LineRecord &line = *lines[row];
         if (isTemplateLine(line))
             continue;
-        const Syllables syllables = syllablesOf(line.text);
+        // The text karaoke plays: the translation when there is one.
+        const Syllables syllables = syllablesOf(line.translation.empty() ? line.text : line.translation);
         if (syllables.values.empty() && !syllables.unclosed)
             continue;
         auto problem = [&](Kind kind) {

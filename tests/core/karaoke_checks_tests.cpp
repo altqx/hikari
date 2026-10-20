@@ -119,3 +119,27 @@ TEST(KaraokeChecks, SyllablesAddUpInCentiseconds)
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\k0}")),
               (std::vector<Found>{{0, Kind::ZeroLength, 0, 0, {2}}}));
 }
+
+TEST(KaraokeChecks, SignedAndOversizedValuesRead)
+{
+    // "+" may lead the number, as "-" may.
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k+50}a{\\kf+50}b")).empty());
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k+}a{\\k100}b")),
+              (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
+    // A huge value counts as 10^9 centiseconds, so the sum cannot overflow.
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k99999999999999999999999}a{\\k99999999999999999999999}b")),
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 2'000'000'000, 100, {}}, {0, Kind::OutsideLine, 0, 0, {2}}}));
+}
+
+TEST(KaraokeChecks, TranslatedLinesAreCheckedOnTheirTranslation)
+{
+    // Karaoke plays the translation, so its syllables are the ones checked.
+    const std::string ass = "[Script Info]\nTLMode: Yes\nTLMode Style: O\n[Events]\n"
+                            "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                            "Comment: 0,0:00:00.00,0:00:01.00,O,,0,0,0,,{\\k0}orig\n"
+                            "Dialogue: 0,0:00:00.00,0:00:01.00,T,,0,0,0,,{\\k50}tr{\\k40}ans\n";
+    const Document document = loadAss(bytes(ass)).document;
+    ASSERT_EQ(document.lines().size(), 1u);
+    ASSERT_FALSE(document.lines()[0]->translation.empty());
+    EXPECT_EQ(found(document), (std::vector<Found>{{0, Kind::TotalNotDuration, 90, 100, {}}}));
+}

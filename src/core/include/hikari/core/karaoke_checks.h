@@ -5,7 +5,8 @@
 // one); template, code and mixin Lines (their Effect's first word) are
 // skipped. The tags are read as the renderers read them: each starts a
 // syllable that runs until the next tag, its value in centiseconds, and an
-// unclosed "{" makes the rest of the text literal.
+// unclosed "{" makes the rest of the text literal. A translated Line is
+// checked on its translation, the text karaoke plays.
 
 #include "hikari/core/document.h"
 
