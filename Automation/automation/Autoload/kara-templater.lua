@@ -264,12 +264,18 @@ function parse_template(meta, styles, line, templates, mods, where)
 			inserted = true
 			template.isline = true
 			-- apply text to correct string
+			-- (a named template joins the text of all its Lines; each Line's
+			-- part is kept so a problem can name the Line it is in)
 			if m == "line" then
 				template.t = template.t .. line.text
 				template.t_where = template.t_where or where
+				template.t_parts = template.t_parts or {}
+				table.insert(template.t_parts, { text = line.text, where = where })
 			else -- must be pre-line
 				template.pre = template.pre .. line.text
 				template.pre_where = template.pre_where or where
+				template.pre_parts = template.pre_parts or {}
+				table.insert(template.pre_parts, { text = line.text, where = where })
 			end
 		elseif m == "syl" and not template.isline then
 			table.insert(templates.syl, template)
@@ -697,7 +703,7 @@ function apply_line(meta, styles, subs, line, templates, tenv)
 				newline.layer = t.layer
 				newline.text = ""
 				if t.pre ~= "" then
-					newline.text = newline.text .. run_text_template(t.pre, tenv, varctx, t.pre_where)
+					newline.text = newline.text .. run_text_template(t.pre, tenv, varctx, t.pre_where, t.pre_parts)
 				end
 				if t.t ~= "" then
 					for i = 1, line.kara.n do
@@ -705,7 +711,7 @@ function apply_line(meta, styles, subs, line, templates, tenv)
 						tenv.syl = syl
 						tenv.basesyl = syl
 						set_ctx_syl(varctx, line, syl)
-						newline.text = newline.text .. run_text_template(t.t, tenv, varctx, t.t_where)
+						newline.text = newline.text .. run_text_template(t.t, tenv, varctx, t.t_where, t.t_parts)
 						if t.addtext then
 							if t.keeptags then
 								newline.text = newline.text .. syl.text
@@ -772,14 +778,37 @@ function run_code_template(template, tenv)
 	end
 end
 
-function run_text_template(template, tenv, varctx, where)
+-- The Line of a named template's `parts` that the text at `pos` came from,
+-- `convert` being what the run did to each part's text so far. A variable or
+-- expression across two parts, or no parts, gives the template's first Line.
+local function part_where(parts, where, pos, length, convert)
+	if not parts or #parts < 2 then
+		return where
+	end
+	local found, at = nil, 0
+	for _, part in ipairs(parts) do
+		at = at + #convert(part.text)
+		if not found and pos <= at then
+			found = part.where
+		end
+	end
+	if at ~= length then
+		return where
+	end
+	return found or where
+end
+
+function run_text_template(template, tenv, varctx, where, parts)
 	local res = template
 	aegisub.debug.out(5, "Running text template '%s'\n", res)
+	-- What the variables did to each named template part (for part_where)
+	local function unchanged(s) return s end
+	local replaced = unchanged
 	
 	-- Replace the variables in the string (this is probably faster than using a custom function, but doesn't provide error reporting)
 	if varctx then
 		aegisub.debug.out(5, "Has varctx, replacing variables\n")
-		local function var_replacer(varname)
+		local function var_replacer(pos, varname)
 			varname = string.lower(varname)
 			aegisub.debug.out(5, "Found variable named '%s', ", varname)
 			if varctx[varname] ~= nil then
@@ -787,19 +816,34 @@ function run_text_template(template, tenv, varctx, where)
 				return varctx[varname]
 			else
 				aegisub.debug.out(5, "doesn't exist\n")
-				problem(2, where, "Unknown variable name: %s\nIn karaoke template: %s\n", varname, template)
+				problem(2, part_where(parts, where, pos, #template, unchanged),
+					"Unknown variable name: %s\nIn karaoke template: %s\n", varname, template)
 				return "$" .. varname
 			end
 		end
-		res = string.gsub(res, "$([%a_]+)", var_replacer)
+		res = string.gsub(res, "()$([%a_]+)", var_replacer)
 		aegisub.debug.out(5, "Done replacing variables, new template string is '%s'\n", res)
+		replaced = function(s)
+			return (string.gsub(s, "$([%a_]+)", function(varname)
+				varname = string.lower(varname)
+				local value = varctx[varname]
+				if value ~= nil then
+					return value
+				end
+				return "$" .. varname
+			end))
+		end
 	end
+	local expanded = res
 	
 	-- Function for evaluating expressions
-	local function expression_evaluator(expression)
+	local function expression_evaluator(pos, expression)
+		local function expression_where()
+			return part_where(parts, where, pos, #expanded, replaced)
+		end
 		f, err = loadstring(string.format("return (%s)", expression))
 		if (err) ~= nil then
-			problem(2, where, "Error parsing expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", err, expression, template)
+			problem(2, expression_where(), "Error parsing expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", err, expression, template)
 			return "!" .. expression .. "!"
 		else
 			setfenv(f, tenv)
@@ -807,14 +851,14 @@ function run_text_template(template, tenv, varctx, where)
 			if res then
 				return val
 			else
-				problem(2, where, "Runtime error in template expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", val, expression, template)
+				problem(2, expression_where(), "Runtime error in template expression: %s\nExpression producing error: %s\nTemplate with expression: %s\n", val, expression, template)
 				return "!" .. expression .. "!"
 			end
 		end
 	end
 	-- Find and evaluate expressions
 	aegisub.debug.out(5, "Now evaluating expressions\n")
-	res = string.gsub(res , "!(.-)!", expression_evaluator)
+	res = string.gsub(res , "()!(.-)!", expression_evaluator)
 	aegisub.debug.out(5, "After evaluation: %s\nDone handling template\n\n", res)
 	
 	return res

@@ -366,6 +366,39 @@ TEST_F(KaraokeTemplater, TemplateProblemsNameAndSelectTheirLines)
                                             "{\\pos($x,$nosuchvar)}\nTemplate Line: 5\n\n")));
 }
 
+// A named line template joins the text of all its Lines (2.1.7); a problem
+// names the Line whose text the variable or expression is in.
+TEST_F(KaraokeTemplater, NamedTemplateProblemsNameTheLineTheyAreIn)
+{
+    const std::string text =
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+        "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+        "MarginR, MarginV, Encoding\n"
+        "Style: Err,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line joined,{\\t($start,$end,\\fscx120)}\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line joined,{\\pos($x,$nosuchvar)}\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line joined,{\\fscy!nosuch.field!}\n"
+        "Dialogue: 0,0:00:01.00,0:00:03.00,Err,,0,0,0,,{\\k50}ha{\\k50}ru\n";
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    std::vector<hikari::core::LineId> ids;
+    for (const auto *l : session.document().lines())
+        ids.push_back(l->id);
+    ASSERT_EQ(ids.size(), 4u);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const QString log = run.log.join(QString());
+    EXPECT_TRUE(log.contains(QStringLiteral("Unknown variable name: nosuchvar\n")));
+    EXPECT_TRUE(log.contains(QStringLiteral("Expression producing error: nosuch.field\n")));
+    EXPECT_TRUE(log.contains(QStringLiteral("Template Line: 2\n")));
+    EXPECT_TRUE(log.contains(QStringLiteral("Template Line: 3\n")));
+    EXPECT_FALSE(log.contains(QStringLiteral("Template Line: 1\n")));
+    EXPECT_EQ(session.selection().selected, (std::set<hikari::core::LineId>{ids[1], ids[2]}));
+    EXPECT_EQ(session.selection().active, ids[1]);
+    // The output is 2.1.7's.
+    EXPECT_EQ(saved(session), templatedBytes(bytesOf(text), pristineScript()));
+}
+
 // Stock 2.1.7 names no Line and leaves the selection as it was.
 TEST_F(KaraokeTemplater, StockTemplaterNamesNoLine)
 {
