@@ -437,6 +437,11 @@ private slots:
         QVERIFY(!wheel({}, {-120, 0}));
         QVERIFY(!wheel({-30, 0}, {-240, 0}));
         QCOMPARE(grid.contentY(), before + 7);
+        // Shift+wheel that the platform turned sideways scrolls as the wheel.
+        QVERIFY(wheel({}, {-120, 0}, Qt::ShiftModifier));
+        QCOMPARE(grid.contentY(), before + 7 + notch);
+        QVERIFY(wheel({-5, 0}, {-40, 0}, Qt::ShiftModifier));
+        QCOMPARE(grid.contentY(), before + 12 + notch);
         // Clamped at both ends.
         QVERIFY(wheel({}, {0, 120 * 1000}));
         QCOMPARE(grid.contentY(), 0.0);

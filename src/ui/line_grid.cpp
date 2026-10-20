@@ -341,11 +341,14 @@ void LineGrid::wheelEvent(QWheelEvent *event)
     // Shift included (SubsGridWindow.cpp:1460-1466). A notch here is the
     // system's lines per notch; a touchpad's pixel deltas scroll by pixels.
     // The Grid has no horizontal scrolling, so a sideways delta is left to
-    // the items under it. Scrolling never moves the selection.
+    // the items under it, except with Shift, which some platforms and
+    // drivers turn into a sideways delta. Scrolling never moves the selection.
+    const bool shift = event->modifiers() & Qt::ShiftModifier;
+    const auto vertical = [shift](QPoint delta) { return delta.y() == 0 && shift ? delta.x() : delta.y(); };
     const QPoint pixels = event->pixelDelta();
     const qreal dy = !pixels.isNull()
-                         ? pixels.y()
-                         : event->angleDelta().y() / qreal(QWheelEvent::DefaultDeltasPerStep)
+                         ? vertical(pixels)
+                         : vertical(event->angleDelta()) / qreal(QWheelEvent::DefaultDeltasPerStep)
                                * QGuiApplication::styleHints()->wheelScrollLines() * m_geometry.rowHeight;
     if (dy == 0) {
         event->ignore();
