@@ -1174,6 +1174,10 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>its lines would make a Document over %1 times the size of the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>it has no timed lyrics</source>
         <translation type="unfinished"></translation>
     </message>
