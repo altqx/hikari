@@ -299,7 +299,9 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                     if (!digits.empty() && (digits.front() == u8'-' || digits.front() == u8'+'))
                         digits.remove_prefix(1);
                     std::int64_t n = 0;
-                    const bool number = digits.size() <= 9 && std::ranges::all_of(digits, isDigit); // "": none
+                    // "": none; a sign needs digits after it.
+                    const bool number = digits.empty() ? digits.size() == value.size()
+                                                       : digits.size() <= 9 && std::ranges::all_of(digits, isDigit);
                     for (char8_t c : number ? digits : u8sv())
                         n = n * 10 + (c - u8'0');
                     if (!number || n > detail::kLatestLyricsTime)
