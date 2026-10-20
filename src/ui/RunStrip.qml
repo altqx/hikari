@@ -1,7 +1,7 @@
 // TM1 (#232) tags from the original: the Original text's runs under the
 // Translated text, one chip each (LineEditorController::tagRuns). A placed
 // run's chip is filled, an unplaced one only outlined. A click, its Alt+n
-// (EDITBOX_PLACE_RUN_n) or Ctrl+B/I/U for its style places it on the
+// (EDITBOX_PLACE_RUN_n, runs 1 to 9) or Ctrl+B/I/U for its style places it on the
 // Translated text's selection; on the same selection again it comes off.
 // The chips take no focus, so the selection stays.
 pragma Translator: "HikariSub.Translation"
@@ -27,7 +27,8 @@ Flow {
         delegate: AbstractButton {
             id: chip
             required property var modelData
-            readonly property string symbol: "EDITBOX_PLACE_RUN_" + modelData.number
+            // Runs 1 to 9 have a command each (Alt+n); later ones are click only.
+            readonly property string symbol: modelData.number <= 9 ? "EDITBOX_PLACE_RUN_" + modelData.number : ""
             objectName: "runChip" + modelData.number
             focusPolicy: Qt.NoFocus
             enabled: strip.editor.editable
@@ -40,13 +41,13 @@ Flow {
             ToolTip.visible: hovered
             ToolTip.delay: 500
             ToolTip.text: {
-                const keys = strip.shellRoot.boundKeys(symbol, 2)
+                const keys = symbol ? strip.shellRoot.boundKeys(symbol, 2) : ""
                 const how = keys.length ? qsTr("Select text in the translation, then press %1 or click.").arg(keys)
                                         : qsTr("Select text in the translation, then click.")
                 return qsTr("Run %1: %2 (%3)").arg(modelData.number).arg(modelData.text).arg(modelData.kind) + "\n" + how
             }
             onClicked: {
-                if (strip.shellRoot.hotkeyGesture(symbol, 2, true))
+                if (symbol && strip.shellRoot.hotkeyGesture(symbol, 2, true))
                     return
                 strip.editor.placeRun(modelData.number, strip.translated.selectionStart, strip.translated.selectionEnd)
             }
