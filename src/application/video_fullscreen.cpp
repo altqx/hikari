@@ -2,6 +2,7 @@
 
 #include "hikari/core/text_projection.h"
 
+#include <algorithm>
 #include <cstdio>
 
 namespace hikari::application {
@@ -76,12 +77,21 @@ std::string fullscreenLineText(std::string_view text)
     // What the renderer shows, read as the Line editor's hidden-tag view
     // reads it (core::project): override blocks and drawings (a top-level
     // \pN only) show nothing, and an unclosed or nested block hides what it
-    // covers.
-    const std::u16string raw = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(text.data()), text.size()));
+    // covers. Bounded: core::project makes a span per character, and a
+    // Line's text has no limit.
+    std::size_t cut = std::min(text.size(), kFullscreenLineInputBytes);
+    while (cut > 0 && cut < text.size() && (static_cast<unsigned char>(text[cut]) & 0xC0) == 0x80)
+        --cut; // not in a character
+    const std::u16string raw = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(text.data()), cut));
     std::u16string out;
     bool space = false; // white space, then a break, wait for the next shown character
     bool lineBreak = false;
+    bool full = false;
     const auto put = [&](char16_t c) {
+        if (out.size() >= kFullscreenLineLabelUnits && (c < 0xDC00 || c > 0xDFFF)) {
+            full = true; // a low surrogate still ends its pair
+            return;
+        }
         if (!out.empty() && lineBreak)
             out += u" \u21B5 ";
         else if (!out.empty() && space)
@@ -90,9 +100,11 @@ std::string fullscreenLineText(std::string_view text)
         out += c;
     };
     for (const auto &span : core::project(raw).spans) {
+        if (full)
+            break;
         switch (span.kind) {
         case core::SpanKind::Text:
-            for (std::size_t i = span.rawStart; i < span.rawEnd; ++i) {
+            for (std::size_t i = span.rawStart; i < span.rawEnd && !full; ++i) {
                 const char16_t c = raw[i];
                 if (c == u' ' || c == u'\t' || c == u'\r' || c == u'\n')
                     space = true;

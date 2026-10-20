@@ -9,6 +9,7 @@
 // bar's modes and when it shows (FS1), the current Line's label, and the
 // progress bar drawn over the video in the window's top right corner.
 
+#include <cstddef>
 #include <cstdint>
 #include <string>
 #include <string_view>
@@ -80,7 +81,11 @@ bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state)
 // on one line, read as core::project reads it: override blocks ({...}),
 // drawings (a top-level \p1 and up, to \p0) and malformed blocks left out,
 // \N and \n shown as " ↵ ", \h as a space, runs of white space as one,
-// trimmed.
+// trimmed. A label of one elided row: it reads the first
+// kFullscreenLineInputBytes of the text at most (to a whole character) and
+// gives kFullscreenLineLabelUnits UTF-16 units at most (a pair kept whole).
+inline constexpr std::size_t kFullscreenLineInputBytes = 65536;
+inline constexpr std::size_t kFullscreenLineLabelUnits = 1024;
 std::string fullscreenLineText(std::string_view text);
 
 // VideoBox::RefreshTime (VideoBox.cpp:1366-1385): "<time> / <duration>",

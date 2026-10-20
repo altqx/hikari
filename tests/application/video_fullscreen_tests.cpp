@@ -120,6 +120,33 @@ TEST(VideoFullscreenBar, TheCurrentLinesTextOnOneLine)
     EXPECT_EQ(fullscreenLineText(""), "");
 }
 
+TEST(VideoFullscreenBar, TheLineLabelIsBounded)
+{
+    // A Line of megabytes: the label's length, not the Line's.
+    EXPECT_EQ(fullscreenLineText(std::string(10'000'000, 'a')), std::string(kFullscreenLineLabelUnits, 'a'));
+    // Only the first kFullscreenLineInputBytes are read: a block left open
+    // there hides what follows, though it closes after them.
+    EXPECT_EQ(fullscreenLineText("Before{" + std::string(kFullscreenLineInputBytes, 'x') + "}After"), "Before");
+    // The cut is never inside a character, nor the label inside a pair.
+    const std::string emoji = "\xF0\x9F\x98\x80"; // U+1F600, a surrogate pair
+    std::string many = "a";
+    for (int i = 0; i < 20'000; ++i)
+        many += emoji;
+    std::string expected = "a";
+    for (std::size_t i = 0; i < (kFullscreenLineLabelUnits + 1) / 2; ++i)
+        expected += emoji;
+    EXPECT_EQ(fullscreenLineText(many), expected);
+    // A hidden block, then é (two bytes each) with the cut 1001 bytes in:
+    // 500 of them, no U+FFFD for the half one.
+    std::string twoByte = "{" + std::string(kFullscreenLineInputBytes - 1003, 'x') + "}";
+    std::string shown;
+    for (int i = 0; i < 2000; ++i)
+        twoByte += "\xC3\xA9";
+    for (int i = 0; i < 500; ++i)
+        shown += "\xC3\xA9";
+    EXPECT_EQ(fullscreenLineText(twoByte), shown);
+}
+
 TEST(VideoFullscreenProgress, TheTimesInTmpFormat)
 {
     EXPECT_EQ(fullscreenProgressText(0, 2002), "00:00:00 / 00:00:02");
