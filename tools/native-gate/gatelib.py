@@ -1,6 +1,7 @@
 """The parts of gate.py that need no session: finding a floating frame in a
-screenshot, the steps of a pointer drag, the test skips the gate accepts and
-the order of the default run. test_gatelib.py tests them."""
+screenshot, the steps of a pointer drag, the test skips the gate accepts,
+the order of the default run and which application on the accessibility bus
+is HikariSub's. test_gatelib.py tests them."""
 
 # The UI test executables step "tests" runs, with the test functions it
 # runs of each (none: all of them).
@@ -126,3 +127,14 @@ def default_order(steps, sweep_steps):
     """The default run: every step, the sweep's included, LAST_STEPS last."""
     return ([n for n in steps if n not in LAST_STEPS] + [n for n in sweep_steps if n not in LAST_STEPS]
             + [n for n in LAST_STEPS if n in steps or n in sweep_steps])
+
+
+def hikarisub_application(toolkits):
+    """A11Y1 (#298): of the applications on the accessibility bus named after
+    HikariSub, given by toolkit in the bus's order, the index of HikariSub's
+    own: Qt's. On GNOME Qt's GTK3 platform theme starts GTK, whose ATK bridge
+    registers the process a second time, ahead of Qt's, holding only GTK's
+    dialogs (the theme's file chooser). None when there is no application."""
+    if "Qt" in toolkits:
+        return toolkits.index("Qt")
+    return 0 if toolkits else None

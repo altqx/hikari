@@ -178,6 +178,15 @@ class Session(unittest.TestCase):
         for name in ("gate.py", "atspi_tool.py", "gatelib.py"):
             ast.parse(self.read(name), filename=name)
 
+    def test_the_lookup_finds_qt_s_application(self):
+        # A11Y1 (#298): on GNOME GTK's ATK bridge registered the process a
+        # second time, without windows, ahead of Qt's; the lookup took it
+        self.assertEqual(gatelib.hikarisub_application(["gtk", "Qt"]), 1)
+        self.assertEqual(gatelib.hikarisub_application(["Qt"]), 0)
+        self.assertEqual(gatelib.hikarisub_application(["gtk"]), 0)
+        self.assertIsNone(gatelib.hikarisub_application([]))
+        self.assertIn("hikarisub_application(", self.read("atspi_tool.py"))
+
     def test_kwin_runs_its_qt_quick_windows_in_software(self):
         # KWin aborted in QSGRenderLoop::handleContextCreationFailure when the
         # PickColor prompt opened
