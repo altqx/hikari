@@ -16576,11 +16576,13 @@ private slots:
             QQuickItem *bar = visualItem("visualToolBar");
             QQmlProperty maximum(bar, QStringLiteral("Layout.maximumWidth"), qmlContext(bar));
             const QSize was = window->size();
-            window->resize(1600, 1400); // wide: one line
-            QTRY_VERIFY(groups->height() < 40);
+            // (implicitHeight is the tool's own lines; the bar keeps the
+            // tallest family's, which may be more.)
+            window->resize(1600, 1400); // wide: Scale on one line
+            QTRY_VERIFY(groups->implicitHeight() < 40);
             QVERIFY(maximum.write(420));
             QTRY_COMPARE(bar->width(), qreal(420));
-            QTRY_VERIFY2(groups->height() > 40, qPrintable(QString::number(groups->height())));
+            QTRY_VERIFY2(groups->implicitHeight() > 40, qPrintable(QString::number(groups->implicitHeight())));
             QQuickItem *pick = visualItem("visualPickBatch");
             QVERIFY(pick->isVisible());
             QVERIFY(pick->mapToItem(bar, QPointF(pick->width(), 0)).x() <= bar->width());
@@ -16588,8 +16590,20 @@ private slots:
             for (QQuickItem *group : groups->childItems())
                 if (group->isVisible())
                     QVERIFY2(group->x() + group->width() <= groups->width() + 0.5, qPrintable(group->objectName()));
+            // A tool switch keeps the bar's height (the approved design;
+            // Codex on #293): the crosshair, on fewer lines here, keeps the
+            // lines the tallest family needs.
+            const qreal wrapped = bar->height();
+            QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
+            QTRY_COMPARE(tools.activeFamily(), 0);
+            QTRY_VERIFY2(groups->implicitHeight() < groups->height() - 10,
+                         qPrintable(QStringLiteral("%1 %2").arg(groups->implicitHeight()).arg(groups->height())));
+            QCOMPARE(bar->height(), wrapped);
+            QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool3"), "click"));
+            QTRY_COMPARE(tools.activeFamily(), 3);
+            QCOMPARE(bar->height(), wrapped);
             QVERIFY(maximum.write(std::numeric_limits<qreal>::infinity()) /* the Layout default */);
-            QTRY_VERIFY(groups->height() < 40);
+            QTRY_VERIFY(groups->implicitHeight() < 40);
             window->resize(was);
             QTRY_VERIFY(!tools.videoRect().isEmpty());
         }

@@ -24,6 +24,9 @@ Loader {
     id: option
     required property var modelData
     required property VisualToolsController tools
+    // VT1: an unseen copy the bar measures (no names, no focus).
+    property bool measuring: false
+    readonly property string nameOf: measuring ? "" : "visualOption_" + modelData.name
     readonly property bool grouped: modelData.group.length > 0
     // The tools' help texts are legacy's; the bar's own action (VT1's Copy
     // video position) is named in the catalog.
@@ -36,7 +39,7 @@ Loader {
     Component {
         id: buttonComponent
         IconToolButton {
-            objectName: "visualOption_" + option.modelData.name
+            objectName: option.nameOf
             // The roles the families' options show (one line: icon_tests reads the roles from it).
             iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit", "copy-position"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
             text: option.tooltip.split("\n")[0]
@@ -58,7 +61,7 @@ Loader {
         id: choiceComponent
         AbstractButton {
             id: choice
-            objectName: "visualOption_" + option.modelData.name
+            objectName: option.nameOf
             readonly property var model: option.modelData.choices
             readonly property int currentIndex: option.modelData.index
             readonly property bool listEnds: option.modelData.listEnds
@@ -111,7 +114,7 @@ Loader {
                     anchors.rightMargin: 6
                     spacing: 8
                     Label {
-                        objectName: choice.objectName + "_text"
+                        objectName: choice.objectName.length > 0 ? choice.objectName + "_text" : ""
                         Layout.fillWidth: true
                         // As wide as the longest entry, so the bar does not
                         // move as the choice changes (up to a limit).
@@ -159,7 +162,7 @@ Loader {
             onActivated: index => option.tools.setOption(option.modelData.name, index)
             ShellMenu {
                 id: choiceMenu
-                objectName: choice.objectName + "_menu"
+                objectName: choice.objectName.length > 0 ? choice.objectName + "_menu" : ""
                 // A press on the button closes it through onClicked.
                 closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
                 // Made with the button before the Loader puts it in the
@@ -177,7 +180,7 @@ Loader {
                         required property string modelData
                         readonly property bool isAction: choice.listEnds && index === choice.model.length - 1 && index > 0
                         iconRole: isAction ? "edit" : ""
-                        objectName: choice.objectName + "_" + index
+                        objectName: choice.objectName.length > 0 ? choice.objectName + "_" + index : ""
                         text: choice.entryText(index)
                         checkable: !isAction
                         checked: index === choice.currentIndex
@@ -198,7 +201,7 @@ Loader {
         id: listComponent
         // T2: a choice without an icon (PositionItem's alignment).
         ComboBox {
-            objectName: "visualOption_" + option.modelData.name
+            objectName: option.nameOf
             model: option.modelData.choices
             currentIndex: option.modelData.index
             enabled: option.modelData.enabled && option.tools.railEnabled
