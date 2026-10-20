@@ -68,6 +68,10 @@ AudioController::AudioController(application::DisplayAudioPort &own, QObject *pa
     m_playTimer.setTimerType(Qt::PreciseTimer);
     m_playTimer.setInterval(16);
     connect(&m_playTimer, &QTimer::timeout, this, &AudioController::tick);
+    // KA2: the latency calibration follows its beeps
+    m_calibrationTimer.setTimerType(Qt::PreciseTimer);
+    m_calibrationTimer.setInterval(16);
+    connect(&m_calibrationTimer, &QTimer::timeout, this, &AudioController::calibrationTick);
     // A2 with A4: the volume slider (and the vertical zoom while linked)
     // sets the player's volume as it moves (legacy OnVolume, OnVerticalZoom,
     // OnVerticalLink: player->SetVolume).
@@ -268,6 +272,8 @@ void AudioController::reselect()
     m_previousActive = m_active;
     if (m_hasKara) // A5: SetDialogue splits the new Line
         splitKaraoke();
+    if (m_tapState != TapOff) // KA2: the new Line is the one to tap
+        beginTapLine();
     update();
 }
 
@@ -317,6 +323,8 @@ void AudioController::splitKaraoke()
 void AudioController::toggleKaraoke()
 {
     emit focusRequested();
+    if (m_hasKara && m_tapState != TapOff)
+        toggleTap(); // KA2: tap mode is Karaoke mode's
     m_hasKara = !m_hasKara;
     const int value = application::legacyKaraokeZoom(m_hasKara, m_horizontalZoom, m_lastHorizontalZoom);
     if (m_hasKara)
@@ -530,6 +538,11 @@ void AudioController::loadBoxControls()
         m_hasKara = m_store->boolean("audio.karaoke");
         m_karaAuto = m_store->boolean("audio.karaokeSplitMode");
         m_syncVideo = m_store->boolean("audio.syncVideo"); // AV2
+        // KA2
+        m_speedPercent = std::clamp(m_store->integer("audio.speedPercent"), 25, 100);
+        m_tap.setMode(m_store->boolean("audio.tapHold") ? application::KaraokeTap::Mode::Hold
+                                                         : application::KaraokeTap::Mode::Press);
+        m_tapLatency = m_store->integer("audio.tapLatency");
     }
     m_view.setSamplesPercent(zoom, false);
     m_horizontalZoom = std::clamp(zoom, 0, 100);
@@ -745,6 +758,7 @@ void AudioController::setPlayer(application::AudioPlayerPort *player)
     m_player = player;
     m_playback = player ? std::make_unique<application::AudioPlayback>(*player) : nullptr;
     m_playedSerial = m_box.serial();
+    applySpeed();
 }
 
 void AudioController::setPlaybackSettings(std::function<int()> markPlayTimeMs)
@@ -782,6 +796,10 @@ void AudioController::play(application::PlayMode mode)
 // provider (here: the box's audio and a player).
 void AudioController::playRange(int startMs, int endMs)
 {
+    // KA2-tap-to-time: while tapping only tap mode plays (a Line change's
+    // play, a play key)
+    if (m_tapState == TapTapping && !m_tapPlaying)
+        return;
     if (m_videoPlaying && m_videoPlaying() && m_pauseVideo)
         m_pauseVideo();
     const auto *audio = m_box.audio();
@@ -844,10 +862,22 @@ bool AudioController::runHotkey(const QString &symbol)
         {QStringLiteral("AUDIO_LEAD_OUT"), [](AudioController &c) { c.leadOut(); }},
         {QStringLiteral("AUDIO_SCROLL_LEFT"), [](AudioController &c) { c.scrollRight(); }},
         {QStringLiteral("AUDIO_SCROLL_RIGHT"), [](AudioController &c) { c.scrollLeft(); }},
+        // KA2
+        {QStringLiteral("AUDIO_TAP"), [](AudioController &c) { c.toggleTap(); }},
+        {QStringLiteral("AUDIO_SPEED_DOWN"), [](AudioController &c) { c.stepSpeed(-1); }},
+        {QStringLiteral("AUDIO_SPEED_UP"), [](AudioController &c) { c.stepSpeed(1); }},
     };
     const auto found = actions.find(symbol);
     if (found == actions.end())
         return false;
+    // KA2-tap-to-time: while tapping the other audio hotkeys wait; Stop stops tapping
+    if (m_tapState == TapTapping) {
+        if (symbol == QLatin1String("AUDIO_STOP"))
+            tapStop();
+        else if (symbol == QLatin1String("AUDIO_TAP") || symbol.startsWith(QLatin1String("AUDIO_SPEED_")))
+            found->second(*this);
+        return true;
+    }
     if (hasAudio())
         found->second(*this);
     return true;
@@ -881,6 +911,13 @@ void AudioController::tick()
         emit cursorChanged();
     if (!m_playback->timerRunning() || !playing())
         m_playTimer.stop();
+    if (m_tapState == TapTapping) {
+        if (!playing()) { // the audio's end
+            m_tap.stop();
+            setTapState(TapStopped);
+        }
+        emit tapSpansChanged();
+    }
     playbackStateChanged();
 }
 
@@ -947,14 +984,18 @@ application::AudioSnapContext AudioController::snapContext() const
 // Legacy CommitChanges: the times go into the editor's fields and, with
 // `save`, to the Line (EditBox::Send); then Update(moveToEnd).
 void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent,
-                                    std::optional<std::u16string> karaokeText)
+                                    std::optional<std::u16string> karaokeText, const char *stepName)
 {
     if (!loaded())
         return;
     if (save)
         m_needCommit = false;
-    if (m_hooks.commit)
-        m_hooks.commit({m_startMs, m_endMs, save, nextLine, m_timing.hold() != 0, adjacent, std::move(karaokeText)});
+    if (m_hooks.commit) {
+        application::AudioCommitRequest request{m_startMs, m_endMs, save, nextLine, m_timing.hold() != 0, adjacent,
+                                                std::move(karaokeText)};
+        request.stepName = stepName;
+        m_hooks.commit(request);
+    }
     update(moveToEnd);
 }
 
@@ -1149,6 +1190,407 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
     else if (result.redraw)
         redraw();
     return result;
+}
+
+// KA2 (#277): slowed playback and tap-to-time.
+
+namespace {
+
+// A syllable's or Line's text as the tap bar shows it: without its override blocks.
+QString visibleText(std::u16string_view text)
+{
+    QString out;
+    bool inBlock = false;
+    for (const char16_t c : text) {
+        if (c == u'{')
+            inBlock = true;
+        else if (c == u'}' && inBlock)
+            inBlock = false;
+        else if (!inBlock)
+            out += QChar(c);
+    }
+    return out.simplified();
+}
+
+// The calibration's beeps: 1 kHz, 40 ms with 5 ms fades, every
+// kCalibrationIntervalMs from 1 s, then 1 s of silence.
+constexpr int kBeepRate = 48000;
+constexpr int kFirstBeepMs = 1000;
+
+std::vector<double> calibrationBeatsMs()
+{
+    std::vector<double> beats;
+    for (int i = 0; i < application::kCalibrationBeats; i++)
+        beats.push_back(kFirstBeepMs + double(i) * application::kCalibrationIntervalMs);
+    return beats;
+}
+
+std::shared_ptr<application::DisplayAudio> calibrationBeeps()
+{
+    const auto beats = calibrationBeatsMs();
+    const auto frames = static_cast<std::int64_t>((beats.back() + 1000) * kBeepRate / 1000);
+    std::vector<std::int16_t> samples(static_cast<std::size_t>(frames), 0);
+    const int beep = kBeepRate * 40 / 1000, fade = kBeepRate * 5 / 1000;
+    for (const double at : beats) {
+        const auto start = static_cast<std::int64_t>(at * kBeepRate / 1000);
+        for (int i = 0; i < beep; i++) {
+            const double gain = std::min({1.0, double(i) / fade, double(beep - i) / fade});
+            samples[static_cast<std::size_t>(start + i)] = static_cast<std::int16_t>(
+                12000 * gain * std::sin(2 * 3.14159265358979 * 1000 * double(i) / kBeepRate));
+        }
+    }
+    auto audio = std::make_shared<application::DisplayAudio>(kBeepRate, frames);
+    audio->appendFrames(samples.data(), frames, 1);
+    audio->finish();
+    return audio;
+}
+
+} // namespace
+
+void AudioController::applySpeed()
+{
+    if (m_player)
+        m_player->setSpeed(m_speedPercent / 100.0);
+}
+
+void AudioController::setSpeedPercent(int percent)
+{
+    percent = std::clamp(percent, 25, 100);
+    if (percent == m_speedPercent)
+        return;
+    m_speedPercent = percent;
+    if (m_store)
+        m_store->set("audio.speedPercent", percent);
+    applySpeed();
+    emit boxControlsChanged();
+}
+
+// The preset nearest the speed, `delta` presets on.
+void AudioController::stepSpeed(int delta)
+{
+    const int count = static_cast<int>(std::size(kSpeeds));
+    int nearest = 0;
+    for (int i = 1; i < count; i++)
+        if (std::abs(kSpeeds[i] - m_speedPercent) < std::abs(kSpeeds[nearest] - m_speedPercent))
+            nearest = i;
+    setSpeedPercent(kSpeeds[std::clamp(nearest + delta, 0, count - 1)]);
+}
+
+double AudioController::positionMs() const
+{
+    const auto *audio = m_box.audio();
+    if (!audio || !m_player || audio->sampleRate() <= 0)
+        return 0;
+    return double(m_player->position()) * 1000.0 / audio->sampleRate();
+}
+
+int AudioController::tapSongNow() const
+{
+    return application::tapSongMs(positionMs(), m_tapLatency, m_speedPercent / 100.0);
+}
+
+void AudioController::setTapState(TapState state)
+{
+    m_tapState = state;
+    emit tapChanged();
+    emit tapSpansChanged();
+}
+
+void AudioController::beginTapLine()
+{
+    m_tap.begin(application::KaraokeTap::targets(m_karaoke), m_startMs);
+    m_tapMessage.clear();
+    if (m_tapState == TapTapping && m_tap.needsSplit()) {
+        if (playing())
+            stopPlayback();
+        m_tapState = TapReady;
+    }
+    emit tapChanged();
+    emit tapSpansChanged();
+}
+
+void AudioController::playForTap(int fromMs)
+{
+    m_tapPlaying = true;
+    playRange(fromMs, -1);
+    m_tapPlaying = false;
+}
+
+void AudioController::toggleTap()
+{
+    emit focusRequested();
+    if (m_tapState != TapOff) {
+        m_tap.revert();
+        if (playing())
+            stopPlayback();
+        m_tapMessage.clear();
+        setTapState(TapOff);
+        return;
+    }
+    if (!m_hasKara || !hasAudio())
+        return;
+    beginTapLine();
+    if (m_tap.needsSplit())
+        return setTapState(TapReady);
+    setTapState(TapTapping);
+    playForTap(m_tap.resumeMs());
+}
+
+void AudioController::setTapHold(bool hold)
+{
+    m_tap.setMode(hold ? application::KaraokeTap::Mode::Hold : application::KaraokeTap::Mode::Press);
+    if (m_store)
+        m_store->set("audio.tapHold", hold);
+    emit tapChanged();
+}
+
+void AudioController::setTapLatency(int ms)
+{
+    m_tapLatency = std::clamp(ms, -200, 500);
+    if (m_store)
+        m_store->set("audio.tapLatency", m_tapLatency);
+    emit tapChanged();
+}
+
+bool AudioController::tapKey(int key, bool pressed, bool autoRepeat, bool shift)
+{
+    using Event = application::KaraokeTap::Event;
+    if (m_tapState == TapOff)
+        return false;
+    if (key == Qt::Key_Backspace) {
+        if (pressed && !autoRepeat)
+            tapUndo(shift);
+        return true;
+    }
+    if (key == Qt::Key_Escape) {
+        if (pressed && !autoRepeat) {
+            if (m_tapState == TapTapping)
+                tapStop();
+            else
+                toggleTap();
+        }
+        return true;
+    }
+    if (key != Qt::Key_Space)
+        return false;
+    if (autoRepeat)
+        return true;
+    if (m_tapState != TapTapping) {
+        if (pressed)
+            tapResume();
+        return true;
+    }
+    const int songMs = tapSongNow();
+    const Event event = pressed ? m_tap.press(key, songMs) : m_tap.release(key, songMs);
+    if (event == Event::LineDone)
+        finishTapLine(pressed ? std::optional(key) : std::nullopt, songMs);
+    else if (event != Event::None)
+        emit tapChanged();
+    emit tapSpansChanged();
+    return true;
+}
+
+void AudioController::tapFocusLost()
+{
+    if (m_tapState == TapTapping)
+        tapKey(Qt::Key_Space, false, false, false);
+}
+
+// The finished Line committed as one step, the next Line made active
+// (reselect begins it); Press mode's press that ended the Line starts the
+// next one's first syllable.
+void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
+{
+    const auto result = m_tap.result();
+    std::vector<std::u16string> syllables, tags;
+    std::vector<int> times;
+    for (const auto &s : result.syllables) {
+        syllables.push_back(s.text);
+        tags.push_back(s.tag);
+        times.push_back(s.endMs);
+    }
+    m_karaoke.assign(std::move(syllables), std::move(tags), std::move(times));
+    m_startMs = result.startMs;
+    m_endMs = result.endMs;
+    const int before = m_active;
+    const bool hasNext = application::legacyKeyFromPosition(m_lines, m_active, 1) != m_active;
+    commitChanges(hasNext, true, false, application::AudioAdjacent::None, m_karaoke.text(m_startMs),
+                  "Tap timing");
+    if (!hasNext || m_active == before) {
+        if (playing())
+            stopPlayback();
+        m_tap.begin(application::KaraokeTap::targets(m_karaoke), m_startMs);
+        m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "Every Line is tapped.");
+        setTapState(TapReady);
+        return;
+    }
+    if (carryKey && m_tapState == TapTapping)
+        m_tap.press(*carryKey, carryMs);
+    emit tapChanged();
+    emit tapSpansChanged();
+}
+
+void AudioController::tapStop()
+{
+    if (m_tapState != TapTapping)
+        return;
+    m_tap.stop();
+    if (playing())
+        stopPlayback();
+    m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "%1 of %2 tapped").arg(m_tap.tapped()).arg(m_tap.count());
+    setTapState(TapStopped);
+}
+
+void AudioController::tapResume()
+{
+    if (m_tapState == TapOff || m_tap.needsSplit())
+        return;
+    m_tapMessage.clear();
+    setTapState(TapTapping);
+    playForTap(m_tap.resumeMs());
+}
+
+void AudioController::tapRevert()
+{
+    if (m_tapState == TapOff)
+        return;
+    m_tap.revert();
+    if (playing())
+        stopPlayback();
+    m_tapMessage.clear();
+    setTapState(TapReady);
+}
+
+void AudioController::tapUndo(bool line)
+{
+    if (m_tapState == TapOff)
+        return;
+    // the note names the earliest syllable taken back
+    const int earliest = m_tap.tapped() > 0 ? m_tap.tapped() - 1 : m_tap.holding() ? 0 : -1;
+    const QString name = earliest >= 0 ? visibleText(m_tap.syllables()[static_cast<std::size_t>(earliest)].text)
+                                       : QString();
+    const int from = line ? m_tap.undoLine() : m_tap.undo();
+    if (line)
+        m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "Undid the Line");
+    else
+        m_tapMessage = name.isEmpty() ? QString() : QCoreApplication::translate("HikariSub.Audio", "Undid “%1”").arg(name);
+    if (m_tapState == TapTapping)
+        playForTap(from);
+    emit tapChanged();
+    emit tapSpansChanged();
+}
+
+void AudioController::tapAutoSplit()
+{
+    if (m_tapState == TapOff)
+        return;
+    if (!m_karaAuto)
+        toggleKaraokeSplitMode();
+    else
+        splitKaraoke();
+    beginTapLine();
+    redraw();
+}
+
+QVariantList AudioController::tapSyllables() const
+{
+    QVariantList out;
+    const auto states = m_tap.states();
+    for (std::size_t i = 0; i < states.size(); i++)
+        out.push_back(QVariantMap{{QStringLiteral("text"), visibleText(m_tap.syllables()[i].text)},
+                                  {QStringLiteral("state"), static_cast<int>(states[i])}});
+    return out;
+}
+
+QString AudioController::tapNextText() const
+{
+    if (!m_lineText || m_active < 0)
+        return {};
+    const int next = application::legacyKeyFromPosition(m_lines, m_active, 1);
+    if (next == m_active)
+        return {};
+    return visibleText(m_lineText(next).toStdU16String());
+}
+
+QVariantList AudioController::tapSpans() const
+{
+    QVariantList out;
+    if (m_tapState == TapOff || !m_view.hasSource())
+        return out;
+    const auto spans = m_tap.spans(m_tapState == TapTapping ? tapSongNow() : 0);
+    for (std::size_t i = 0; i < spans.size(); i++) {
+        const bool held = m_tap.holding() && i + 1 == spans.size();
+        out.push_back(QVariantMap{{QStringLiteral("x1"), m_view.xAtMs(spans[i].startMs)},
+                                  {QStringLiteral("x2"), m_view.xAtMs(spans[i].endMs)},
+                                  {QStringLiteral("text"), visibleText(m_tap.syllables()[i].text)},
+                                  {QStringLiteral("held"), held}});
+    }
+    return out;
+}
+
+void AudioController::startCalibration()
+{
+    if (!m_player)
+        return;
+    if (m_tapState == TapTapping)
+        tapStop();
+    if (playing())
+        stopPlayback();
+    m_calibrationPresses.clear();
+    m_calibration = {};
+    m_calibrationBeat = 0;
+    m_calibrating = m_player->playClip(calibrationBeeps());
+    if (m_calibrating)
+        m_calibrationTimer.start();
+    emit calibrationChanged();
+}
+
+void AudioController::calibrationPress()
+{
+    if (!m_calibrating || !m_player)
+        return;
+    m_calibrationPresses.push_back(double(m_player->position()) * 1000.0 / kBeepRate);
+    m_calibration = application::calibrateLatency(calibrationBeatsMs(), m_calibrationPresses);
+    emit calibrationChanged();
+}
+
+void AudioController::calibrationTick()
+{
+    if (!m_calibrating)
+        return m_calibrationTimer.stop();
+    const auto beats = calibrationBeatsMs();
+    const double at = m_player ? double(m_player->position()) * 1000.0 / kBeepRate : 0;
+    const int heard = static_cast<int>(std::ranges::count_if(beats, [at](double b) { return b <= at; }));
+    const bool over = !m_player || !m_player->playing() || at > beats.back() + 900;
+    if (heard != m_calibrationBeat || over) {
+        m_calibrationBeat = heard;
+        if (over)
+            stopCalibration();
+        emit calibrationChanged();
+    }
+}
+
+void AudioController::stopCalibration()
+{
+    if (m_calibrating && m_player && m_player->playing())
+        m_player->stop();
+    m_calibrating = false;
+    m_calibrationTimer.stop();
+    emit calibrationChanged();
+}
+
+QVariantList AudioController::calibrationDelays() const
+{
+    QVariantList out;
+    const auto beats = calibrationBeatsMs();
+    for (const double press : m_calibrationPresses) {
+        const auto nearest = std::ranges::min_element(beats, {}, [press](double b) { return std::fabs(press - b); });
+        const auto index = nearest - beats.begin();
+        const double delay = press - *nearest;
+        if (index >= application::kCalibrationPractice && std::fabs(delay) <= application::kCalibrationIntervalMs / 2.0)
+            out.push_back(delay);
+    }
+    return out;
 }
 
 } // namespace hikari::ui

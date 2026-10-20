@@ -1096,6 +1096,18 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
         m_audio->setTimingHooks(std::move(hooks));
     }
+    // KA2-tap-to-time: the tap bar's next Line (keys as refreshAudio gives them)
+    m_audio->setLineText([this](int key) -> QString {
+        const auto target = m_workspace.editingTarget();
+        auto *session = target ? m_files->session(*target) : nullptr;
+        if (!session)
+            return {};
+        const auto &lines = session->document().lines();
+        if (key < 0 || key >= static_cast<int>(lines.size()))
+            return {};
+        const auto *line = lines[static_cast<std::size_t>(key)];
+        return QString::fromStdU16String(core::toUtf16(line->translation.empty() ? line->text : line->translation));
+    });
     m_audio->setFollowAudio([this](int ms) { showVideoAtAudio(ms); }); // AV2
     // Legacy RendererFFMS2::OpenFile: a file with audio and no video goes to
     // the audio box (as audio from video: SetRecent, the box's own provider),
