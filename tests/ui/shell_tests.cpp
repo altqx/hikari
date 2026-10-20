@@ -60,6 +60,7 @@
 #include <QTimer>
 #include <QDirIterator>
 #include <QContextMenuEvent>
+#include <QJSValue>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -11899,12 +11900,23 @@ private slots:
         QVERIFY(item<QObject>("audioLineMode")->property("checked").toBool());
         click(item("audioKaraoke"));
         QVERIFY(audio.karaoke());
-        QVERIFY(!item("audioButtons")->property("folded").toBool()); // the default 640 px panel holds it all
-        QVERIFY(split->isVisible());
+        // AU2 (#268): with the Customise gear the default 640 px panel no
+        // longer holds Karaoke mode's row: Auto split goes into ⋯ with the
+        // switches (Line mode still holds it all)
+        QVERIFY(item("audioButtons")->property("folded").toBool());
+        QVERIFY(!split->isVisible());
+        auto *moreMenu = named("audioMoreMenu");
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, item("audioMore")), Q_ARG(qreal, 0),
+                                          Q_ARG(qreal, item("audioMore")->height())));
+        QTRY_VERIFY(moreMenu->property("opened").toBool());
+        QVERIFY(named("audioMoreKaraokeSplit")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
+        QTRY_VERIFY(!moreMenu->property("visible").toBool());
         QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
         click(item("audioLineMode"));
         QVERIFY(!audio.karaoke());
+        QTRY_VERIFY(!item("audioButtons")->property("folded").toBool());
         QVERIFY(!split->isVisible());
         click(item("audioWaveformMode")); // the chosen segment again: nothing
         QVERIFY(!audio.spectrumOn());
@@ -11938,9 +11950,323 @@ private slots:
         QTRY_VERIFY(item("audioPanel")->window() == window);
     }
 
+    // AU2 (#268): Customise shows each control AU1 folded as a button of its
+    // own and hides it again; Classic shows them all with the slider column
+    // and hides Play around, Default goes back to AU1's row. A shown toggle
+    // leaves Commit's face, and a row without room folds the switches into ⋯
+    // first, then the extras from its right end.
+    void audioPanelCustomiseShowsTheFoldedControls()
+    {
+        restartWithoutSound(); // it plays (Windows CI has no device)
+        keysNeverRepeat();
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        using application::PlayRange;
+        auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
+        auto click = [&](QObject *control) { QVERIFY(QMetaObject::invokeMethod(control, "clicked")); };
+        auto toggleItem = [&](QObject *menuItem) {
+            QVERIFY(QMetaObject::invokeMethod(menuItem, "toggle"));
+            QVERIFY(QMetaObject::invokeMethod(menuItem, "toggled"));
+        };
+        auto *panel = item("audioPanel");
+        // the extras are Repeater delegates, in whichever window the panel is
+        auto extra = [&](const char *name) { return findItem(panel->window()->contentItem(), QLatin1String(name)); };
+        auto *row = item("audioButtons");
+        auto *transport = item("audioTransport");
+        // the ids of the extras the row keeps (a JS array)
+        auto kept = [&] {
+            QVariant v = row->property("kept");
+            if (v.metaType() == QMetaType::fromType<QJSValue>())
+                v = v.value<QJSValue>().toVariant();
+            return v.toStringList();
+        };
+        auto *content = item("audioDisplay")->parentItem();
+        // the row's own sum of the fixed sizes is the transport's width
+        // (the layout's once it has been polished)
+        auto computedWidth = [&] {
+            QVariant width;
+            QVERIFY(QMetaObject::invokeMethod(row, "transportWidth", Q_RETURN_ARG(QVariant, width),
+                                              Q_ARG(QVariant, row->property("kept"))));
+            QTRY_COMPARE(transport->implicitWidth(), width.toReal());
+        };
+        // what ⋯ lists: its items are visible only while it is open
+        auto *more = named("audioMoreMenu");
+        auto moreLists = [&](const QString &name) -> bool {
+            [&] {
+                QVERIFY(QMetaObject::invokeMethod(more, "popup", Q_ARG(QQuickItem *, item("audioMore")),
+                                                  Q_ARG(qreal, 0), Q_ARG(qreal, item("audioMore")->height())));
+                QTRY_VERIFY(more->property("opened").toBool());
+            }();
+            const bool shown = named(name.toLatin1().constData())->property("visible").toBool();
+            [&] {
+                QVERIFY(QMetaObject::invokeMethod(more, "close"));
+                QTRY_VERIFY(!more->property("visible").toBool());
+            }();
+            return shown;
+        };
+        auto endsInside = [&] {
+            auto *gear = item("audioCustomise");
+            QVERIFY(gear->isVisible());
+            QVERIFY(gear->mapToItem(panel, QPointF(gear->width(), 0)).x() <= panel->width() + 0.5);
+        };
+
+        // the default: AU1's row, the gear at its end
+        QCOMPARE(settings.list("audio.panelControls"), QStringList{QStringLiteral("playAround")});
+        QVERIFY(item("audioPlayAround")->isVisible());
+        QVERIFY(!item("audioSliderColumn")->isVisible());
+        QVERIFY(!row->property("folded").toBool());
+        for (const char *name : {"audioExtraBeforeMark", "audioExtraToEnd", "audioExtraAutoCommit", "audioExtraGoto"})
+            QVERIFY2(!extra(name)->isVisible(), name);
+        computedWidth();
+        endsInside();
+        auto *customise = named("audioCustomiseMenu");
+        click(item("audioCustomise"));
+        QTRY_VERIFY(customise->property("opened").toBool());
+        QVERIFY(item<QObject>("audioCustomisePlayAround")->property("checked").toBool());
+        auto *showGoto = item<QObject>("audioCustomiseGoto");
+        QVERIFY(!showGoto->property("checked").toBool());
+        QVERIFY(showGoto->property("keepsMenuOpen").toBool()); // tick after tick
+        QCOMPARE(item<QObject>("audioCustomiseBefore")->property("text").toString(),
+                 QStringLiteral("Play 500 ms before the start\tQ"));
+
+        // shown from the menu, a play is a button that plays its range
+        toggleItem(item<QObject>("audioCustomiseFirst"));
+        QCOMPARE(settings.list("audio.panelControls"),
+                 (QStringList{QStringLiteral("playAround"), QStringLiteral("first")}));
+        QVERIFY(item<QObject>("audioCustomiseFirst")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(customise, "close"));
+        QTRY_VERIFY(!customise->property("visible").toBool());
+        auto *first = extra("audioExtraFirst");
+        QVERIFY(first->isVisible());
+        QCOMPARE(first->property("tip").toString(), QStringLiteral("Play 500 ms after the start time"));
+        click(first);
+        QCOMPARE(range(), (PlayRange{44100, 22050})); // 1.00 for 500 ms at 44.1 kHz
+        audio.stopPlayback();
+        computedWidth();
+        // and hidden again
+        toggleItem(item<QObject>("audioCustomiseFirst"));
+        QCOMPARE(settings.list("audio.panelControls"), QStringList{QStringLiteral("playAround")});
+        QVERIFY(!first->isVisible());
+
+        // Classic: every extra and the slider column, Play around hidden
+        QVERIFY(QMetaObject::invokeMethod(named("audioCustomiseClassic"), "triggered"));
+        const QStringList classic{"beforeMark", "afterMark", "before", "first", "last", "after", "toEnd",
+                                  "autoCommit", "nextCommit", "goto", "sliders"};
+        QCOMPARE(settings.list("audio.panelControls"), classic);
+        QVERIFY(!item("audioPlayAround")->isVisible());
+        QVERIFY(item("audioSliderColumn")->isVisible());
+        QVERIFY(item<QObject>("audioCustomiseSliders")->property("checked").toBool());
+        QVERIFY(!item<QObject>("audioCustomisePlayAround")->property("checked").toBool());
+        // the display gives the column its room
+        QCOMPARE(item("audioDisplay")->width() + item("audioSliderColumn")->width(), content->width());
+
+        // the default dock has no room for it all: the switches go into ⋯,
+        // then the extras from the right; the row still ends in the panel
+        QVERIFY(row->property("folded").toBool());
+        QVERIFY(item("audioMore")->isVisible());
+        QVERIFY(!item("audioSwitches")->isVisible());
+        const QStringList docked = kept();
+        QVERIFY(docked.size() < 10);
+        QCOMPARE(docked, classic.mid(0, docked.size()));
+        computedWidth();
+        endsInside();
+        for (const QString &id : classic.mid(docked.size(), 10 - docked.size())) {
+            const QString name = QStringLiteral("audioMoreExtra") + id[0].toUpper() + id.mid(1);
+            QVERIFY2(moreLists(name), qPrintable(name));
+        }
+        QVERIFY(!moreLists(QStringLiteral("audioMoreExtraBeforeMark")));
+        // a folded toggle's mark is back on Commit's face; a kept one's is not
+        QVERIFY(settings.boolean("audio.autoCommit") && settings.boolean("audio.nextLineOnCommit"));
+        QCOMPARE(extra("audioNextCommitMark")->isVisible(), !docked.contains(QStringLiteral("nextCommit")));
+        QCOMPARE(extra("audioAutoCommitMark")->isVisible(), !docked.contains(QStringLiteral("autoCommit")));
+        // ⋯'s folded Go acts
+        audio.setHorizontalZoom(10);
+        audio.setScrollPosition(5000);
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreExtraGoto"), "triggered"));
+        QCOMPARE(audio.lineOutOfView(), 0);
+
+        // a wide floating dock holds the whole row
+        auto *dock = item<QObject>("audioDock");
+        dock->setProperty("isFloating", true);
+        QTRY_VERIFY(panel->window() != window);
+        QQuickWindow *floating = panel->window();
+        floating->resize(1100, 300);
+        QTRY_VERIFY(!row->property("folded").toBool());
+        QCOMPARE(kept(), classic.mid(0, 10));
+        QVERIFY(item("audioSwitches")->isVisible());
+        QVERIFY(!item("audioMore")->isVisible());
+        computedWidth();
+        endsInside();
+        // each play button plays its hotkey's range
+        const std::pair<const char *, const char *> plays[] = {
+            {"audioExtraBeforeMark", "AUDIO_PLAY_BEFORE_MARK"}, {"audioExtraAfterMark", "AUDIO_PLAY_AFTER_MARK"},
+            {"audioExtraBefore", "AUDIO_PLAY_500MS_BEFORE"},    {"audioExtraFirst", "AUDIO_PLAY_500MS_FIRST"},
+            {"audioExtraLast", "AUDIO_PLAY_500MS_LAST"},        {"audioExtraAfter", "AUDIO_PLAY_500MS_AFTER"},
+            {"audioExtraToEnd", "AUDIO_PLAY_TO_END"}};
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_LINE")));
+        const PlayRange line = range();
+        audio.stopPlayback();
+        for (const auto &[name, symbol] : plays) {
+            QVERIFY2(extra(name)->isVisible(), name);
+            QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_LINE")));
+            audio.stopPlayback();
+            click(extra(name));
+            const PlayRange clicked = range();
+            audio.stopPlayback();
+            QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_LINE")));
+            audio.stopPlayback();
+            QVERIFY(audio.runHotkey(QString::fromLatin1(symbol)));
+            QVERIFY2(range() == clicked, name);
+            audio.stopPlayback();
+            if (QByteArray(name).contains("Mark"))
+                continue;
+            QVERIFY2(clicked != line, name);
+        }
+        // Commit's options as buttons, their marks off the face
+        QVERIFY(!extra("audioAutoCommitMark")->isVisible());
+        QVERIFY(!extra("audioNextCommitMark")->isVisible());
+        auto *autoButton = extra("audioExtraAutoCommit");
+        QVERIFY(autoButton->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(autoButton, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(autoButton, "toggled"));
+        QVERIFY(!settings.boolean("audio.autoCommit"));
+        QVERIFY(!item<QObject>("audioAutoCommit")->property("checked").toBool()); // Commit's menu follows
+        settings.setValue(QStringLiteral("audio.autoCommit"), true);
+        QVERIFY(autoButton->property("checked").toBool());
+        auto *nextButton = extra("audioExtraNextCommit");
+        QVERIFY(QMetaObject::invokeMethod(nextButton, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(nextButton, "toggled"));
+        QVERIFY(!settings.boolean("audio.nextLineOnCommit"));
+        settings.setValue(QStringLiteral("audio.nextLineOnCommit"), true);
+        // Go: the Back to line chip still shows beside it
+        audio.setScrollPosition(5000);
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(item("audioBackToLine")->isVisible());
+        click(extra("audioExtraGoto"));
+        QCOMPARE(audio.lineOutOfView(), 0);
+        audio.setHorizontalZoom(50);
+
+        // the slider column follows the zoom, the volume and Link both ways
+        auto *horizontal = item("audioColumnHorizontal");
+        auto *vertical = item("audioColumnVertical");
+        auto *volume = item("audioColumnVolume");
+        audio.setHorizontalZoom(40);
+        audio.setVerticalZoom(70);
+        audio.setVolume(30);
+        QCOMPARE(horizontal->property("value").toInt(), 40);
+        QCOMPARE(vertical->property("value").toInt(), 70);
+        QCOMPARE(volume->property("value").toInt(), 30);
+        horizontal->setProperty("value", 20);
+        QVERIFY(QMetaObject::invokeMethod(horizontal, "moved"));
+        QCOMPARE(audio.horizontalZoom(), 20);
+        vertical->setProperty("value", 60);
+        QVERIFY(QMetaObject::invokeMethod(vertical, "moved"));
+        QCOMPARE(audio.verticalZoom(), 60);
+        volume->setProperty("value", 80);
+        QVERIFY(QMetaObject::invokeMethod(volume, "moved"));
+        QCOMPARE(audio.volume(), 80);
+        auto *link = item("audioColumnLink");
+        QVERIFY(!link->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(link, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(link, "toggled"));
+        QVERIFY(audio.linked());
+        audio.setLinked(false);
+        QVERIFY(!link->property("checked").toBool());
+        audio.resetZoom();
+        audio.setVolume(50);
+
+        // narrower: only the extras that fit stay, from the left; ⋯ holds
+        // the rest and plays them
+        floating->resize(700, 300);
+        QTRY_VERIFY(row->property("folded").toBool());
+        const QStringList narrow = kept();
+        QVERIFY(narrow.size() < 10);
+        QCOMPARE(narrow, classic.mid(0, narrow.size()));
+        computedWidth();
+        endsInside();
+        floating->resize(560, 300);
+        QTRY_VERIFY(kept().size() < narrow.size());
+        computedWidth();
+        endsInside();
+        QVERIFY(moreLists(QStringLiteral("audioMoreExtraToEnd")));
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_TO_END")));
+        const PlayRange toEnd = range();
+        audio.stopPlayback();
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_LINE")));
+        audio.stopPlayback();
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreExtraToEnd"), "triggered"));
+        QCOMPARE(range(), toEnd);
+        audio.stopPlayback();
+
+        // Default: AU1's row again
+        QVERIFY(QMetaObject::invokeMethod(named("audioCustomiseDefault"), "triggered"));
+        QCOMPARE(settings.list("audio.panelControls"), QStringList{QStringLiteral("playAround")});
+        QVERIFY(!item("audioSliderColumn")->isVisible());
+        QVERIFY(item("audioPlayAround")->isVisible());
+        QCOMPARE(item("audioDisplay")->width(), content->width());
+        computedWidth();
+        // and with nothing between the transport and the timing group, one
+        // separator there, not two
+        toggleItem(item<QObject>("audioCustomisePlayAround"));
+        QCOMPARE(settings.list("audio.panelControls"), QStringList());
+        QVERIFY(!item("audioPlayAround")->isVisible());
+        computedWidth();
+        floating->resize(1100, 300);
+        QTRY_VERIFY(!row->property("folded").toBool());
+        toggleItem(item<QObject>("audioCustomiseLast")); // a time play without Play around
+        computedWidth();
+        toggleItem(item<QObject>("audioCustomiseAfterMark"));
+        computedWidth();
+        dock->setProperty("isFloating", false);
+        QTRY_VERIFY(panel->window() == window);
+    }
+
+    // AU2: the arrangement is a profile setting: it survives a restart,
+    // an empty one too (nothing extra, Play around hidden).
+    void audioPanelArrangementSurvivesARestart()
+    {
+        const QString file = dir.filePath(QStringLiteral("au2/hikari.ini"));
+        app::Application::Options options;
+        options.settingsFile = file;
+        options.playbackAudio = false;
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        application->audio().openDummy();
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("audioCustomiseClassic"), "triggered"));
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        application->audio().openDummy();
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QCOMPARE(application->settingsStore()->list("audio.panelControls").size(), qsizetype(11));
+        QVERIFY(item("audioSliderColumn")->isVisible());
+        QVERIFY(!item("audioPlayAround")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("audioCustomiseDefault"), "triggered"));
+        auto *around = item<QObject>("audioCustomisePlayAround");
+        QVERIFY(QMetaObject::invokeMethod(around, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(around, "toggled"));
+        QCOMPARE(application->settingsStore()->list("audio.panelControls"), QStringList());
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        application->audio().openDummy();
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QCOMPARE(application->settingsStore()->list("audio.panelControls"), QStringList());
+        QVERIFY(!item("audioPlayAround")->isVisible());
+        QVERIFY(!item("audioSliderColumn")->isVisible());
+        restartWith(app::Application::Options());
+    }
+
     // AU1: the audio panel's states in the four themes, for review: written
     // to HIKARI_SURFACE_SHOT_DIR when it is set (audio-panel-<state>-<theme>.png),
     // the panel with room under it for its menus, at the default 1280 × 800.
+    // AU2: Customise (the whole window: the menu is taller than the room
+    // under the panel), Classic docked and in a wide floating dock.
     void audioPanelScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -12006,11 +12332,30 @@ private slots:
             popupAndShot(QStringLiteral("karaoke-spectrum"), theme, nullptr, nullptr);
             audio.toggleKaraoke();
             audio.setSpectrumOn(false);
-            // floating at 440 px: the switches in ⋯, its menu open
+            auto *customise = named("audioCustomiseMenu");
+            QVERIFY(QMetaObject::invokeMethod(customise, "popup", Q_ARG(QQuickItem *, item("audioCustomise")),
+                                              Q_ARG(qreal, 0), Q_ARG(qreal, item("audioCustomise")->height())));
+            QTRY_VERIFY(customise->property("opened").toBool());
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/audio-panel-customise-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(customise, "close"));
+            QTRY_VERIFY(!customise->property("visible").toBool());
+            const QStringList classic{"beforeMark", "afterMark", "before", "first", "last", "after", "toEnd",
+                                      "autoCommit", "nextCommit", "goto", "sliders"};
+            settings.setValue(QStringLiteral("audio.panelControls"), classic);
+            popupAndShot(QStringLiteral("classic"), theme, nullptr, nullptr);
+            popupAndShot(QStringLiteral("classic-more"), theme, "audioMoreMenu", "audioMore");
+            // floating at 440 px: the switches in ⋯, its menu open; before
+            // that, Classic at 1100 px
             auto *dock = item<QObject>("audioDock");
             dock->setProperty("isFloating", true);
             QTRY_VERIFY(panel->window() != window);
             QQuickWindow *floating = panel->window();
+            floating->resize(1100, 300);
+            QTRY_VERIFY(!item("audioButtons")->property("folded").toBool());
+            QTest::qWait(300);
+            QVERIFY(floating->grabWindow().save(out + QStringLiteral("/audio-panel-classic-wide-") + theme + QStringLiteral(".png")));
+            settings.setValue(QStringLiteral("audio.panelControls"), QStringList{QStringLiteral("playAround")});
             floating->resize(440, 560);
             QTRY_VERIFY(item("audioButtons")->property("folded").toBool());
             auto *more = named("audioMoreMenu");
