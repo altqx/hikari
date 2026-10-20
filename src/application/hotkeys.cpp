@@ -259,6 +259,10 @@ constexpr HotkeyAction kActions[] = {
         // unused in its windows' ranges (listed among their neighbours).
         // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
+        // KA2-tap-to-time and KA2-slowed-playback: tap mode and the speed.
+        {"AUDIO_TAP", 1028},
+        {"AUDIO_SPEED_DOWN", 1029},
+        {"AUDIO_SPEED_UP", 1030},
 };
 
 struct NameRow {
@@ -493,6 +497,9 @@ constexpr NameRow kNames[] = {
         {2001, "Stop"}, // VIDEO_STOP
         // The rewrite's own (LE3-tags-shown).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
+        {1028, "Tap to time"}, // AUDIO_TAP (KA2)
+        {1029, "Slower"}, // AUDIO_SPEED_DOWN (KA2)
+        {1030, "Faster"}, // AUDIO_SPEED_UP (KA2)
 };
 
 struct DefaultRow {
@@ -591,6 +598,9 @@ constexpr DefaultRow kAudioDefaults[] = {
         {1022, AudioHotkey, "Play to the end", "T"}, // AUDIO_PLAY_TO_END
         {1026, AudioHotkey, "Add lead-in", "C"}, // AUDIO_LEAD_IN
         {1027, AudioHotkey, "Add lead-out", "V"}, // AUDIO_LEAD_OUT
+        {1028, AudioHotkey, "Tap to time", "Y"}, // AUDIO_TAP (KA2)
+        {1029, AudioHotkey, "Slower", "["}, // AUDIO_SPEED_DOWN (KA2)
+        {1030, AudioHotkey, "Faster", "]"}, // AUDIO_SPEED_UP (KA2)
 };
 
 constexpr std::string_view kWindowNames[] = {"Global", "Subtitles", "Editor", "Video", "Audio"};

@@ -655,7 +655,10 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         session.discardDraft();
     std::optional<core::LineId> added;
     const auto ran = session.run(Command{
-        append ? "Adding a new line" : "Changing time on audio spectrum", session.revision(), touches,
+        append                ? "Adding a new line"
+        : request.stepName    ? request.stepName
+                              : "Changing time on audio spectrum",
+        session.revision(), touches,
         [&](core::Document &d) {
             moveAdjacent(d);
             for (const auto &target : targets)
