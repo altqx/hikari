@@ -384,6 +384,37 @@ private slots:
         stop();
     }
 
+    // With the Original text panel tabbed with the Line editor, Tab brings
+    // the Line editor's tab to the front and gives the Translated text the
+    // focus; Shift+Tab brings the Original text back.
+    void tabRaisesTheOtherTabOfTheGroup()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVariant placed;
+        QVERIFY(QMetaObject::invokeMethod(window(), "placePanel", Q_RETURN_ARG(QVariant, placed),
+                                          Q_ARG(QVariant, QVariant::fromValue(dock("originalDock"))), Q_ARG(QVariant, 0),
+                                          Q_ARG(QVariant, QVariant::fromValue(dock("editorDock")))));
+        QVERIFY(placed.toBool());
+        QVERIFY(originalInPanel());
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_VERIFY(original->isVisible());
+        QTRY_VERIFY(!translated->isVisible());
+        original->forceActiveFocus();
+        QTRY_VERIFY(original->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Tab);
+        QTRY_VERIFY(translated->isVisible());
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QVERIFY(!original->isVisible());
+        QTest::keyClick(window(), Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_VERIFY(original->isVisible());
+        QTRY_VERIFY(original->hasActiveFocus());
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("linia 1"));
+        stop();
+    }
+
     // A tag button acts on the text field focused last. With the Original
     // text panel floating, the main window's activation by the button's
     // click gives the Translated text its window's focus back; the Original

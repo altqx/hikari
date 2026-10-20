@@ -2245,11 +2245,14 @@ ApplicationWindow {
         // ignores it, so Ctrl+Tab and Ctrl+Shift+Tab move the same way.
         // TM1: from the Original text panel, Tab goes on to the Translated
         // text, and Shift+Tab comes back, as in legacy's one EditBox. The
-        // other panel may float in its own window, which focusPanel activates.
+        // other panel may float in its own window, which focusPanel activates,
+        // or be the hidden tab of the same group, which comes to the front.
         function tabOut(forward) {
             const reason = forward ? Qt.TabFocusReason : Qt.BacktabFocusReason
             const linked = forward ? field.tabNext : field.tabPrevious
-            if (linked && linked.visible) {
+            const dock = linked === translationText ? editorDock : linked === lineText ? originalDock : null
+            if (dock && dock.isOpen) {
+                dock.raise()
                 root.focusPanel(linked, reason)
                 return
             }
