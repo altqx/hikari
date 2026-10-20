@@ -33,18 +33,26 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation>Rozciągnięcie w poziomie</translation>
+        <translation type="vanished">Rozciągnięcie w poziomie</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation>Rozciągnięcie w pionie</translation>
+        <translation type="vanished">Rozciągnięcie w pionie</translation>
     </message>
     <message>
         <source>Volume</source>
         <translation>Głośność</translation>
     </message>
     <message>
-        <source>Link</source>
+        <source>Linked to vertical stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -88,56 +96,28 @@
         <translation>Zatrzymaj odtwarzanie</translation>
     </message>
     <message>
-        <source>Before mark</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play before the tag</source>
         <translation>Odtwórz przed znacznikiem</translation>
-    </message>
-    <message>
-        <source>After mark</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play after the tag</source>
         <translation>Odtwórz po znaczniku</translation>
     </message>
     <message>
-        <source>500 before</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms before the start time</source>
         <translation>Odtwórz 500ms przed czasem startowym</translation>
-    </message>
-    <message>
-        <source>500 first</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
         <translation>Odtwórz 500ms po czasie startowym</translation>
     </message>
     <message>
-        <source>500 last</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms before the end time</source>
         <translation>Odtwórz 500ms przed czasem końcowym</translation>
     </message>
     <message>
-        <source>500 after</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms after the end time</source>
         <translation>Odtwórz 500ms po czasie końcowym</translation>
-    </message>
-    <message>
-        <source>To end</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -168,10 +148,6 @@
         <translation>Zatwierdź zmiany</translation>
     </message>
     <message>
-        <source>Go</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Go to selection</source>
         <translation>Przejdź do zaznaczenia</translation>
     </message>
@@ -192,16 +168,8 @@
         <translation>Włącz / Wyłącz automatyczne dzielenie sylab</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Automatically apply changes</source>
         <translation>Automatycznie zatwierdza zmiany</translation>
-    </message>
-    <message>
-        <source>Next</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to the next line after applying changes</source>
@@ -220,8 +188,73 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1×</source>
+        <extracomment>The audio panel&apos;s zoom readout; %1 is the magnification</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Commit options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waveform mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Spectrum mode</source>
         <translation>Tryb spektrum</translation>
+    </message>
+    <message>
+        <source>Sync with video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sync the video and audio cursors</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Speech</source>
@@ -230,6 +263,52 @@
     <message>
         <source>Enhance speech frequencies in the spectrum</source>
         <translation>Uwydatnienie częstotliwości głosu na spektrum</translation>
+    </message>
+    <message>
+        <source>More audio options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speech (non-linear spectrum)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom: horizontal and vertical stretching</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift+wheel and Ctrl+wheel on the waveform zoom too</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume and output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1
+Output device: %2</source>
+        <extracomment>The audio panel&apos;s speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose audio file</source>
@@ -253,6 +332,16 @@
     </message>
     <message>
         <source>Indexing video %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. No output device is available.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not connected. Audio plays through %2.</source>
+        <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3104,6 +3193,10 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open video with FFMS2&quot; was removed: the command is retired and videos are always indexed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3428,7 +3521,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Open blank 2h30m audio</source>
-        <translation>Otwórz puste audio na 2:30 godziny</translation>
+        <translation type="vanished">Otwórz puste audio na 2:30 godziny</translation>
     </message>
     <message>
         <source>Close audio</source>
@@ -3804,7 +3897,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
-        <translation>Otwiera puste audio na 2:30 godziny</translation>
+        <translation type="vanished">Otwiera puste audio na 2:30 godziny</translation>
     </message>
     <message>
         <source>Closes audio</source>
