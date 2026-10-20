@@ -137,7 +137,7 @@ public:
 
     std::expected<XmlNode, LyricsProblem> document()
     {
-        if (m_s.starts_with(u8"\xEF\xBB\xBF"))
+        if (m_s.starts_with(u8"\uFEFF"))
             m_pos = 3;
         m_start = m_pos;
         if (auto skipped = skipMisc(true); !skipped)
@@ -603,7 +603,7 @@ bool preserves(const XmlNode &node, bool inherited)
 
 // A space xml:space="preserve" keeps, until its Line is put together. No
 // text of a well-formed file can hold U+0001, so it stands for one alone.
-constexpr char8_t kKeptSpace = u8'\x01';
+constexpr char8_t kKeptSpace = 1;
 
 bool blank(char8_t c)
 {

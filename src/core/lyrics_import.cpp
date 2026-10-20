@@ -259,7 +259,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
     if (bytes.size() > kMaxLyricsFileSize)
         return std::unexpected(LyricsProblem{Kind::TooLarge, 0, {}});
     u8sv all(reinterpret_cast<const char8_t *>(bytes.data()), bytes.size());
-    if (detail::startsWith(all, u8"\xEF\xBB\xBF"))
+    if (detail::startsWith(all, u8"\uFEFF"))
         all.remove_prefix(3);
 
     detail::LyricSheet sheet;
