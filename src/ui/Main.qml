@@ -412,6 +412,8 @@ ApplicationWindow {
     // D1 keyboard placement: kind 0 tab with, 1 left of, 2 above, 3 right of,
     // 4 below, 5 float. The moved panel keeps the focus.
     function placePanel(dock, kind, target) {
+        if (!root.panelAvailable(dock))
+            return false
         if (kind === 5) {
             if (!dock.isFloating)
                 root.setPanelFloating(dock, true)
@@ -450,7 +452,14 @@ ApplicationWindow {
         if (root.app.openEditorFromFullScreen())
             root.showPanel(editorDock)
     }
+    // TM1: the Original text panel has no content outside translation mode,
+    // so nothing opens it then.
+    function panelAvailable(dock) {
+        return dock !== originalDock || root.editor.translationMode
+    }
     function showPanel(dock) {
+        if (!root.panelAvailable(dock))
+            return
         if (dock === originalDock)
             root.openOriginal()
         else
@@ -1629,8 +1638,7 @@ ApplicationWindow {
                             iconRole: "show"
                             objectName: "panelShow" + modelData.uniqueName
                             text: qsTr("Show")
-                            // TM1: the Original text panel has no content outside translation mode.
-                            enabled: modelData !== originalDock || root.editor.translationMode
+                            enabled: root.panelAvailable(modelData)
                             onTriggered: root.showPanel(modelData)
                         }
                         ShellMenuItem {
@@ -2141,12 +2149,18 @@ ApplicationWindow {
         // HikariContainer::OnNavigation first (HikariPanel.cpp:23), which
         // ignores it, so Ctrl+Tab and Ctrl+Shift+Tab move the same way.
         // TM1: from the Original text panel, Tab goes on to the Translated
-        // text, and Shift+Tab comes back, as in legacy's one EditBox.
+        // text, and Shift+Tab comes back, as in legacy's one EditBox. The
+        // other panel may float in its own window, which focusPanel activates.
         function tabOut(forward) {
+            const reason = forward ? Qt.TabFocusReason : Qt.BacktabFocusReason
             const linked = forward ? field.tabNext : field.tabPrevious
-            const next = linked && linked.visible ? linked : field.nextItemInFocusChain(forward)
+            if (linked && linked.visible) {
+                root.focusPanel(linked, reason)
+                return
+            }
+            const next = field.nextItemInFocusChain(forward)
             if (next && next !== field)
-                next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+                next.forceActiveFocus(reason)
         }
         // Undo and Redo go through the draft first (editor-shortcuts.md):
         // the field takes Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z whatever the
@@ -4937,6 +4951,7 @@ ApplicationWindow {
             Button {
                 objectName: "placementMove"
                 text: qsTranslate("HikariSub.Workspace", "Move")
+                enabled: root.panelAvailable(root.dockList[placementPanel.currentIndex])
                 onClicked: {
                     root.placePanel(root.dockList[placementPanel.currentIndex], placementKind.currentIndex,
                                     root.dockList[placementTarget.currentIndex])

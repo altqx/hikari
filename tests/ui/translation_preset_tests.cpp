@@ -16,6 +16,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -87,6 +88,15 @@ class TranslationPresetTest : public QObject {
     template <typename T = QQuickItem> T *item(const char *name) const
     {
         return window()->findChild<T *>(QLatin1String(name));
+    }
+    static QQuickItem *findItem(QQuickItem *from, const char *name)
+    {
+        if (from->objectName() == QLatin1String(name))
+            return from;
+        for (QQuickItem *child : from->childItems())
+            if (QQuickItem *found = findItem(child, name))
+                return found;
+        return nullptr;
     }
     QObject *dock(const char *name) const { return item<QObject>(name); }
     bool isOpen(const char *name) const { return dock(name)->property("isOpen").toBool(); }
@@ -345,6 +355,101 @@ private slots:
         QTRY_VERIFY(original->hasActiveFocus());
         QCOMPARE(original->property("text").toString(), QStringLiteral("line 1"));
         QCOMPARE(translated->property("text").toString(), QStringLiteral("linia 1"));
+        stop();
+    }
+
+    // The same from a floating Original text panel: Tab activates the main
+    // window, where the Translated text is, and Shift+Tab goes back.
+    void tabCrossesIntoAnotherWindow()
+    {
+        start();
+        openFile("tl.ass", true);
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(dock("originalDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(isFloating("originalDock"));
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QQuickWindow *floating = original->window();
+        QVERIFY(floating && floating != window());
+        floating->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), floating);
+        original->forceActiveFocus();
+        QTRY_VERIFY(original->hasActiveFocus());
+        QTest::keyClick(floating, Qt::Key_Tab);
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window());
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QTest::keyClick(window(), Qt::Key_Backtab, Qt::ShiftModifier);
+        QTRY_COMPARE(QGuiApplication::focusWindow(), floating);
+        QTRY_VERIFY(original->hasActiveFocus());
+        stop();
+    }
+
+    // Outside translation mode nothing opens the Original text panel: not
+    // View > Panels, not Move panel (its Move button is disabled for it).
+    void theOriginalPanelOpensInTranslationModeOnly()
+    {
+        start();
+        openFile("a.ass", false);
+        QVERIFY(!translationMode());
+        auto *original = dock("originalDock");
+        auto *grid = dock("gridDock");
+        QVariant placed;
+        QVERIFY(QMetaObject::invokeMethod(window(), "placePanel", Q_RETURN_ARG(QVariant, placed),
+                                          Q_ARG(QVariant, QVariant::fromValue(original)), Q_ARG(QVariant, 3),
+                                          Q_ARG(QVariant, QVariant::fromValue(grid))));
+        QVERIFY(!placed.toBool());
+        QVERIFY(QMetaObject::invokeMethod(window(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(original))));
+        QTest::qWait(100);
+        QVERIFY(!isOpen("originalDock"));
+        auto *placement = window()->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
+        QVERIFY(placement);
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("movePanel"), "triggered"));
+        QTRY_VERIFY(placement->isVisible());
+        auto *panelBox = findItem(placement->contentItem(), "placementPanel");
+        auto *move = findItem(placement->contentItem(), "placementMove");
+        QVERIFY(panelBox && move);
+        const auto docks = window()->property("dockList").toList();
+        int originalIndex = -1;
+        for (int i = 0; i < docks.size(); ++i)
+            if (docks[i].value<QObject *>() == original)
+                originalIndex = i;
+        QVERIFY(originalIndex >= 0);
+        panelBox->setProperty("currentIndex", originalIndex);
+        QVERIFY(!move->isEnabled());
+        panelBox->setProperty("currentIndex", originalIndex == 0 ? 1 : 0);
+        QVERIFY(move->isEnabled());
+        placement->hide();
+        stop();
+    }
+
+    // The mode's questions answer for the tab they were asked in: showing
+    // another tab closes them unanswered.
+    void anotherTabClosesTheModeQuestions()
+    {
+        start();
+        openFile("a.ass", false);
+        application->addPage();
+        openFile("tl.ass", true);
+        QVERIFY(translationMode());
+        auto *confirm = item<QObject>("translatorModeOffConfirm");
+        QVERIFY(QMetaObject::invokeMethod(modeAction(), "trigger"));
+        QTRY_VERIFY(confirm->property("visible").toBool());
+        application->selectTab(0);
+        QTRY_VERIFY(!confirm->property("visible").toBool());
+        application->selectTab(1);
+        QVERIFY(translationMode());
+
+        application->selectTab(0);
+        applyPreset("Translation");
+        QTRY_VERIFY(asked());
+        application->selectTab(1);
+        QTRY_VERIFY(!asked());
+        application->selectTab(0);
+        QVERIFY(!translationMode());
+        applyPreset("Editing");
+        applyPreset("Translation");
+        QTRY_VERIFY(asked()); // not answered Not now
+        answer(false);
         stop();
     }
 
