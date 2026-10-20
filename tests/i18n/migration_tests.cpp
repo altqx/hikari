@@ -548,7 +548,11 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                     continue;
                 ASSERT_NE(now, nullptr) << language.toStdString() << " " << m.source.toStdString();
                 EXPECT_EQ(now->translations, m.translations) << m.source.toStdString();
-                EXPECT_TRUE(now->state == m.state || now->state == TsState::Vanished) << m.source.toStdString();
+                // A key the sources dropped: lupdate marks it vanished if it
+                // was finished, obsolete if not.
+                EXPECT_TRUE(now->state == m.state || now->state == TsState::Vanished ||
+                            (m.state == TsState::Unfinished && now->state == TsState::Obsolete))
+                    << m.source.toStdString();
             }
     }
 }
