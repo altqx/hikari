@@ -742,7 +742,7 @@ icon("frame-snapshot", "Save frame as PNG", [], [VIDEOMENU],
      + accent(circle(8, 8.5, 2.5)))
 icon("zoom-reset", "Turn off video zoom", [], [VIDEO],
      magnifier(6.5, 6.5, 4.5, 4) + accent(stroke("M5 5l3 3M8 5L5 8")))
-icon("volume", "Volume", [], [TRANSPORT, FULLSCREEN],
+icon("volume", "Volume", [], [TRANSPORT, FULLSCREEN, AUDIOBOX],
      stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z") + accent(stroke("M10 5.5a3.5 3.5 0 0 1 0 5M12 3.5a6.25 6.25 0 0 1 0 9")))
 # FS1 (#275): the fullscreen speaker while muted (FS1-speaker-gestures).
 icon("volume-muted", "Unmute", [], [FULLSCREEN, TRANSPORT],
@@ -775,6 +775,19 @@ icon("audio-output", "Output device", [], [AUDIOBOX],
 icon("audio-video-sync", "Sync the video and audio cursors", [], [AUDIOBOX],
      rect(1.5, 1.5, 13, 5, 1) + stroke("M2.5 11.25v1.5M4.5 10v4M6.5 10.75v2.5M10.5 10.5v3M12.5 11.25v1.5")
      + accent(stroke("M8.5 1v14")))
+# AU1 (#267): the audio panel's mode switches and the speaker's level.
+# Line timing is one span between its start and end boundaries; the waveform
+# is bars mirrored about the middle (the spectrum's stand on a baseline).
+# The speaker keeps volume's body and shows the level in its waves: none at
+# the quietest, one, then volume's two (the volume never reaches 0, so there
+# is no muted icon).
+icon("audio-line-mode", "Line timing mode", [], [AUDIOBOX],
+     stroke("M2.5 3.5v9M13.5 3.5v9") + accent(frect(4, 6.5, 8, 3, 0.5)))
+icon("audio-waveform", "Waveform mode", [], [AUDIOBOX],
+     stroke("M1.5 7v2M3.5 5v6M5.5 2.5v11M7.5 5.5v5M9.5 3.5v9M11.5 6v4M13.5 4.5v7"))
+icon("volume-quiet", "Volume", [], [AUDIOBOX], stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z"))
+icon("volume-low", "Volume", [], [AUDIOBOX],
+     stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z") + accent(stroke("M10 5.5a3.5 3.5 0 0 1 0 5")))
 
 # IC1 (#226): every menu and context-menu item that runs a command has an
 # icon (docs/qt/ux/menu-icon-gaps.md lists the items and the ones left

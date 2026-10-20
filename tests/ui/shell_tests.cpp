@@ -11550,7 +11550,8 @@ private slots:
         QVERIFY(!audio.spectrumNonLinear());
         audio.openDummy();
         QVERIFY(audio.ready());
-        QVERIFY(item("audioSliders")->isVisible());
+        // AU1: the slider column is folded into the zoom and speaker buttons
+        QVERIFY(item("audioZoom")->isVisible());
         QVERIFY(item("audioAutoScroll")->isVisible()); // the switches, in the button row
         const auto &view = audio.view();
         QCOMPARE(view.samples(), 1323);
@@ -11706,6 +11707,332 @@ private slots:
         application->editor().discard();
     }
 
+    // AU1 (#267): the redesigned button row. Play around repeats the play
+    // last chosen from its menu, Commit's menu holds its two options with
+    // marks on the face, the zoom and speaker popovers hold the slider
+    // column, the Back to line chip shows only while the Line is out of
+    // view, Auto split only in Karaoke mode, and a narrow panel folds the
+    // switches into ⋯.
+    void audioPanelRowFoldsItsControls()
+    {
+        // it plays: without a device (Windows CI) the playback's failure
+        // log window would take the activation and the keys with it
+        restartWithoutSound();
+        keysNeverRepeat();
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        using application::PlayRange;
+        auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
+        auto click = [&](QObject *control) { QVERIFY(QMetaObject::invokeMethod(control, "clicked")); };
+
+        // Play around: 500 ms before the start until a play is chosen
+        auto *face = item("audioPlayAround");
+        QCOMPARE(settings.text("audio.playAround"), QStringLiteral("AUDIO_PLAY_500MS_BEFORE"));
+        QCOMPARE(face->property("iconRole").toString(), QStringLiteral("play-before-start"));
+        audio.play500Before();
+        const PlayRange before = range();
+        audio.stopPlayback();
+        click(face);
+        QCOMPARE(range(), before);
+        audio.stopPlayback();
+        // the menu's item plays and becomes the face, checked in the menu
+        auto *after = item<QObject>("audioPlay500After");
+        QVERIFY(!after->property("checked").toBool());
+        QVERIFY(item<QObject>("audioPlay500Before")->property("checked").toBool());
+        QVERIFY(after->property("text").toString().endsWith(QStringLiteral("\tW")));
+        QVERIFY(QMetaObject::invokeMethod(after, "triggered"));
+        QCOMPARE(settings.text("audio.playAround"), QStringLiteral("AUDIO_PLAY_500MS_AFTER"));
+        QCOMPARE(face->property("iconRole").toString(), QStringLiteral("play-after-end"));
+        QCOMPARE(face->property("tip").toString(), QStringLiteral("Play 500ms after the end time"));
+        QVERIFY(after->property("checked").toBool());
+        QVERIFY(!item<QObject>("audioPlay500Before")->property("checked").toBool());
+        audio.play500After();
+        const PlayRange afterRange = range();
+        QVERIFY(afterRange != before);
+        audio.stopPlayback();
+        click(face); // repeats it
+        QCOMPARE(range(), afterRange);
+        audio.stopPlayback();
+        // a hotkey plays its range but leaves the face. The keys go by the
+        // focus: the pointer over no panel (hotkeys follow the panel under
+        // it, KB1), wherever earlier tests or popups left it.
+        QTest::mouseMove(window, kOverNoPanel);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        press(Qt::Key_Q);
+        QCOMPARE(range(), before);
+        press(Qt::Key_H);
+        QCOMPARE(face->property("iconRole").toString(), QStringLiteral("play-after-end"));
+
+        // Commit: its menu holds Auto-commit and Next after commit, the face
+        // marks the ones that are on
+        auto *autoMark = visualItem("audioAutoCommitMark");
+        auto *nextMark = visualItem("audioNextCommitMark");
+        QVERIFY(autoMark && nextMark);
+        // the menu's Commit names both its keys, as the face's tip does
+        QCOMPARE(item<QObject>("audioCommitItem")->property("text").toString(),
+                 QStringLiteral("Commit\tEnter or G"));
+        QVERIFY(settings.boolean("audio.autoCommit")); // both on by default (legacy's)
+        QVERIFY(settings.boolean("audio.nextLineOnCommit"));
+        QVERIFY(autoMark->isVisible());
+        QVERIFY(nextMark->isVisible());
+        auto *autoCommit = item<QObject>("audioAutoCommit");
+        QVERIFY(autoCommit->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(autoCommit, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(autoCommit, "toggled"));
+        QVERIFY(!settings.boolean("audio.autoCommit"));
+        QVERIFY(!autoMark->isVisible());
+        QVERIFY(!autoCommit->property("checked").toBool());
+        auto *nextCommit = item<QObject>("audioNextCommit");
+        QVERIFY(nextCommit->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(nextCommit, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(nextCommit, "toggled"));
+        QVERIFY(!settings.boolean("audio.nextLineOnCommit"));
+        QVERIFY(!nextMark->isVisible());
+        // set elsewhere (Settings, a profile), the menu and the marks follow
+        settings.setValue(QStringLiteral("audio.autoCommit"), true);
+        settings.setValue(QStringLiteral("audio.nextLineOnCommit"), true);
+        QVERIFY(autoMark->isVisible() && nextMark->isVisible());
+        QVERIFY(autoCommit->property("checked").toBool());
+        QVERIFY(nextCommit->property("checked").toBool());
+
+        // zoom: the readout is the horizontal stretch against the default
+        auto *readout = item<QObject>("audioZoomReadout");
+        QCOMPARE(readout->property("text").toString(), QStringLiteral("1.0×"));
+        audio.setHorizontalZoom(40); // (50 / 40)^3
+        QCOMPARE(readout->property("text").toString(), QStringLiteral("2.0×"));
+        QCOMPARE(item("audioHorizontalZoom")->property("value").toInt(), 40);
+        audio.setHorizontalZoom(20);
+        QCOMPARE(readout->property("text").toString(), QStringLiteral("16×"));
+        audio.wheel(120, false, true, 0); // Shift+wheel: the readout follows
+        QCOMPARE(audio.horizontalZoom(), 19);
+        QCOMPARE(readout->property("text").toString(), QStringLiteral("18×"));
+        audio.setVerticalZoom(70);
+        QVERIFY(QMetaObject::invokeMethod(named("audioZoomReset"), "triggered"));
+        QCOMPARE(audio.horizontalZoom(), 50);
+        QCOMPARE(audio.verticalZoom(), 50);
+        QCOMPARE(readout->property("text").toString(), QStringLiteral("1.0×"));
+        // the popover opens from the button, with Link in it
+        auto *zoomMenu = named("audioZoomMenu");
+        click(item("audioZoom"));
+        QTRY_VERIFY(zoomMenu->property("opened").toBool());
+        auto *link = item<QObject>("audioLink");
+        QVERIFY(!link->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(link, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(link, "toggled"));
+        QVERIFY(audio.linked());
+        QVERIFY(link->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(zoomMenu, "close"));
+        QTRY_VERIFY(!zoomMenu->property("visible").toBool());
+
+        // the speaker: the volume above the devices, noted while linked; the
+        // icon shows the level and the wheel over the button changes it
+        auto *speaker = item("audioOutputButton");
+        auto *speakerMenu = named("audioOutputMenu");
+        click(speaker);
+        QTRY_VERIFY(speakerMenu->property("opened").toBool());
+        QCOMPARE(item("audioVolume")->property("value").toInt(), 50);
+        QVERIFY(item("audioVolume")->isVisible());
+        QVERIFY(item("audioVolumeLinked")->isVisible());
+        audio.setLinked(false);
+        QVERIFY(!item("audioVolumeLinked")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(speakerMenu, "close"));
+        QTRY_VERIFY(!speakerMenu->property("visible").toBool());
+        QCOMPARE(speaker->property("iconRole").toString(), QStringLiteral("volume-low"));
+        const QPointF over = speaker->mapToScene(QPointF(speaker->width() / 2, speaker->height() / 2));
+        QWheelEvent up(over, window->mapToGlobal(over), QPoint(), QPoint(0, 240), Qt::NoButton, Qt::NoModifier,
+                       Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(window, &up);
+        QCOMPARE(audio.volume(), 60);
+        QCOMPARE(settings.integer("audio.volume"), 60);
+        // a touchpad's parts of a notch add up to whole notches, a half notch
+        // alone does nothing, a turn back drops the rest; pixels alone count
+        const auto turn = [&](QPoint pixels, QPoint angle) {
+            QWheelEvent event(over, window->mapToGlobal(over), pixels, angle, Qt::NoButton, Qt::NoModifier,
+                              Qt::ScrollUpdate, false);
+            QCoreApplication::sendEvent(window, &event);
+        };
+        turn({}, {0, 60});
+        QCOMPARE(audio.volume(), 60);
+        turn({}, {0, 40});
+        turn({}, {0, 40});
+        QCOMPARE(audio.volume(), 65); // 140: one notch, 20 kept
+        turn({}, {0, -60});
+        QCOMPARE(audio.volume(), 65); // the 20 went with the turn back
+        turn({}, {0, -60});
+        QCOMPARE(audio.volume(), 60);
+        turn({0, 15}, {});
+        QCOMPARE(audio.volume(), 65);
+        audio.setVolume(90);
+        QCOMPARE(speaker->property("iconRole").toString(), QStringLiteral("volume"));
+        audio.setVolume(10);
+        QCOMPARE(speaker->property("iconRole").toString(), QStringLiteral("volume-quiet"));
+        audio.setVolume(50);
+
+        // Back to line: only while none of the Line is in view, on its side
+        auto *chip = item("audioBackToLine");
+        QVERIFY(!chip->isVisible());
+        QCOMPARE(audio.lineOutOfView(), 0);
+        audio.setHorizontalZoom(10); // 10 samples a column
+        audio.setScrollPosition(5000); // column 60000: 13.6 s
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(chip->isVisible());
+        QVERIFY(chip->x() < item("audioDisplay")->width() / 2); // at the left edge
+        click(chip);
+        QCOMPARE(audio.lineOutOfView(), 0);
+        QVERIFY(!chip->isVisible());
+        audio.setScrollPosition(0);
+        QCOMPARE(audio.lineOutOfView(), 1); // 1.00 is column 4410, past the right edge
+        QVERIFY(chip->isVisible());
+        QVERIFY(chip->x() > item("audioDisplay")->width() / 2);
+        // the popovers above have come and gone: the key by the focus again
+        QTest::mouseMove(window, kOverNoPanel);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        press(Qt::Key_B); // AUDIO_GOTO
+        QCOMPARE(audio.lineOutOfView(), 0);
+        audio.setHorizontalZoom(50);
+
+        // Auto split: shown in Karaoke mode only
+        auto *split = item("audioKaraokeSplit");
+        QVERIFY(!split->isVisible());
+        QVERIFY(item<QObject>("audioLineMode")->property("checked").toBool());
+        click(item("audioKaraoke"));
+        QVERIFY(audio.karaoke());
+        QVERIFY(!item("audioButtons")->property("folded").toBool()); // the default 640 px panel holds it all
+        QVERIFY(split->isVisible());
+        QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
+        QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
+        click(item("audioLineMode"));
+        QVERIFY(!audio.karaoke());
+        QVERIFY(!split->isVisible());
+        click(item("audioWaveformMode")); // the chosen segment again: nothing
+        QVERIFY(!audio.spectrumOn());
+
+        // a narrow panel folds the switches and toggles into ⋯, which holds them
+        auto *row = item("audioButtons");
+        QVERIFY(!row->property("folded").toBool());
+        QVERIFY(item("audioSwitches")->isVisible());
+        QVERIFY(!item("audioMore")->isVisible());
+        auto *dock = item<QObject>("audioDock");
+        dock->setProperty("isFloating", true);
+        QTRY_VERIFY(item("audioPanel")->window() != window);
+        QQuickWindow *floating = item("audioPanel")->window();
+        floating->resize(440, 300);
+        QTRY_VERIFY(row->property("folded").toBool());
+        QVERIFY(!item("audioSwitches")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
+        // the row still ends inside the panel
+        auto *panel = item("audioPanel");
+        QVERIFY(speaker->mapToItem(panel, QPointF(speaker->width(), 0)).x() <= panel->width() + 0.5);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraoke"), "triggered"));
+        QVERIFY(audio.karaoke());
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreSpectrum"), "triggered"));
+        QVERIFY(audio.spectrumOn());
+        audio.toggleKaraoke();
+        audio.setSpectrumOn(false);
+        floating->resize(900, 300);
+        QTRY_VERIFY(!row->property("folded").toBool());
+        QVERIFY(item("audioSwitches")->isVisible());
+        dock->setProperty("isFloating", false);
+        QTRY_VERIFY(item("audioPanel")->window() == window);
+    }
+
+    // AU1: the audio panel's states in the four themes, for review: written
+    // to HIKARI_SURFACE_SHOT_DIR when it is set (audio-panel-<state>-<theme>.png),
+    // the panel with room under it for its menus, at the default 1280 × 800.
+    void audioPanelScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QTest::mouseMove(window, QPoint(1, 1));
+        auto *root = engine->rootObjects().first();
+        auto *panel = item("audioPanel");
+        const auto popupAndShot = [&](const QString &state, const QString &theme, const char *menu, const char *button) {
+            QObject *popup = menu ? named(menu) : nullptr;
+            if (popup) {
+                QQuickItem *anchor = item(button);
+                QVERIFY(QMetaObject::invokeMethod(popup, "popup", Q_ARG(QQuickItem *, anchor), Q_ARG(qreal, 0),
+                                                  Q_ARG(qreal, anchor->height())));
+                QTRY_VERIFY(popup->property("opened").toBool());
+            }
+            QTest::qWait(300);
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            QRectF r = panel->mapRectToScene(QRectF(0, -36, panel->width(), panel->height() + 36 + 300));
+            r = r.intersected(QRectF(0, 0, window->width(), window->height()));
+            const QImage image = window->grabWindow().copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect());
+            QVERIFY(image.save(out + QStringLiteral("/audio-panel-") + state + QLatin1Char('-') + theme + QStringLiteral(".png")));
+            if (popup) {
+                QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+                QTRY_VERIFY(!popup->property("visible").toBool());
+            }
+        };
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            settings.setValue(QStringLiteral("audio.playAround"), QStringLiteral("AUDIO_PLAY_500MS_BEFORE"));
+            settings.setValue(QStringLiteral("audio.nextLineOnCommit"), false);
+            audio.setHorizontalZoom(50);
+            audio.goToSelection();
+            popupAndShot(QStringLiteral("default"), theme, nullptr, nullptr);
+            settings.setValue(QStringLiteral("audio.playAround"), QStringLiteral("AUDIO_PLAY_500MS_AFTER"));
+            popupAndShot(QStringLiteral("play-around"), theme, "audioPlayAroundMenu", "audioPlayAround");
+            settings.setValue(QStringLiteral("audio.nextLineOnCommit"), true);
+            popupAndShot(QStringLiteral("commit"), theme, "audioCommitMenu", "audioCommit");
+            settings.setValue(QStringLiteral("audio.nextLineOnCommit"), false);
+            popupAndShot(QStringLiteral("speaker"), theme, "audioOutputMenu", "audioOutputButton");
+            audio.setHorizontalZoom(40);
+            popupAndShot(QStringLiteral("zoom"), theme, "audioZoomMenu", "audioZoom");
+            audio.setHorizontalZoom(10); // 1.00 at column 4800, past the right edge
+            audio.setScrollPosition(0);
+            QTRY_VERIFY(item("audioBackToLine")->isVisible());
+            popupAndShot(QStringLiteral("back-to-line"), theme, nullptr, nullptr);
+            audio.setHorizontalZoom(50);
+            audio.toggleKaraoke();
+            audio.setSpectrumOn(true);
+            popupAndShot(QStringLiteral("karaoke-spectrum"), theme, nullptr, nullptr);
+            audio.toggleKaraoke();
+            audio.setSpectrumOn(false);
+            // floating at 440 px: the switches in ⋯, its menu open
+            auto *dock = item<QObject>("audioDock");
+            dock->setProperty("isFloating", true);
+            QTRY_VERIFY(panel->window() != window);
+            QQuickWindow *floating = panel->window();
+            floating->resize(440, 560);
+            QTRY_VERIFY(item("audioButtons")->property("folded").toBool());
+            auto *more = named("audioMoreMenu");
+            QQuickItem *moreButton = item("audioMore");
+            QVERIFY(QMetaObject::invokeMethod(more, "popup", Q_ARG(QQuickItem *, moreButton), Q_ARG(qreal, 0),
+                                              Q_ARG(qreal, moreButton->height())));
+            QTRY_VERIFY(more->property("opened").toBool());
+            QTest::qWait(300);
+            QVERIFY(floating->grabWindow().save(out + QStringLiteral("/audio-panel-narrow-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(more, "close"));
+            QTRY_VERIFY(!more->property("visible").toBool());
+            dock->setProperty("isFloating", false);
+            QTRY_VERIFY(panel->window() == window);
+            QTRY_VERIFY(!item("audioButtons")->property("folded").toBool());
+        }
+    }
+
     // A2: spectrum mode (AUDIO_SPECTRUM_ON) and its speech layout
     // (AUDIO_SPECTRUM_NON_LINEAR_ON): legacy RenderRange's picture over the
     // background in place of the waveform, drawn as it is by whichever
@@ -11719,10 +12046,9 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         auto *toggle = item("audioSpectrumMode");
         QVERIFY(!toggle->property("checked").toBool());
-        // the switch as a click toggles it (not hovered: a tooltip's popup
-        // window upsets offscreen RHI grabs)
-        QVERIFY(QMetaObject::invokeMethod(toggle, "toggle"));
-        QVERIFY(QMetaObject::invokeMethod(toggle, "toggled"));
+        // the switch's Spectrum segment as a click chooses it (not hovered:
+        // a tooltip's popup window upsets offscreen RHI grabs)
+        QVERIFY(QMetaObject::invokeMethod(toggle, "clicked"));
         QTRY_VERIFY(audio.spectrumOn());
         QVERIFY(toggle->property("checked").toBool());
         QVERIFY(settings.boolean("audio.spectrumOn"));
@@ -13462,11 +13788,14 @@ private slots:
         press(Qt::Key_H);
         QVERIFY(!audio.playing());
 
-        // the buttons, which focus the display
+        // the buttons, which focus the display (Play around showing the
+        // first 500 ms, AU1)
+        application->settingsStore()->setValue(QStringLiteral("audio.playAround"), QStringLiteral("AUDIO_PLAY_500MS_FIRST"));
         item("editingGrid")->forceActiveFocus();
-        auto *first = visualItem("audioPlay500First"); // Repeater delegates
+        auto *first = visualItem("audioPlayAround"); // Repeater delegates
         auto *stop = visualItem("audioStop");
         QVERIFY(first && stop);
+        QCOMPARE(first->property("iconRole").toString(), QStringLiteral("play-after-start"));
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, first->mapToScene(QPointF(4, 4)).toPoint());
         QCOMPARE(range(), (PlayRange{48000, 24000}));
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
@@ -14069,6 +14398,37 @@ private slots:
     // auto-commit unless DISABLE_LIVE_VIDEO_EDITING (the video's preview of
     // the edit). The rewrite's video shows the committed Document, and the
     // box's commit is one: the video takes the new times either way.
+    // AU1: in Karaoke, Back to line shows while the current syllable is out
+    // of view, though another part of the Line is in it: Go to selection
+    // brings that syllable back.
+    void audioBackToLineFollowsTheSyllable()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.20,Default,,0,0,0,,{\\k20}ka{\\k30}ra{\\k50}oke\n");
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        audio.toggleKaraoke();
+        QVERIFY(audio.karaoke());
+        audio.setHorizontalZoom(10);
+        audio.setScrollPosition(0);
+        const auto &view = audio.view();
+        // the view from 0.80 s: "oke" (0.70-1.20) in it, "ka" (0.20-0.40) before it
+        audio.setScrollPosition(static_cast<int>(view.xAtMs(800) / 12));
+        QVERIFY(view.xAtMs(1200) > 0 && view.xAtMs(700) < view.width());
+        QVERIFY(view.xAtMs(400) < 0);
+        QCOMPARE(audio.karaokeModel().current, 0);
+        QCOMPARE(audio.lineOutOfView(), -1);
+        auto *chip = item("audioBackToLine");
+        QVERIFY(chip->isVisible());
+        audio.goToSelection();
+        QVERIFY(view.xAtMs(400) >= 0);
+        QCOMPARE(audio.lineOutOfView(), 0);
+        QVERIFY(!chip->isVisible());
+    }
+
     // A5: karaoke mode in the audio box with the real mouse and keys: the
     // Karaoke button (zoom in by 20, into AUDIO_HORIZONTAL_ZOOM), the
     // syllables' plays through the player (the output without a device),
@@ -14103,13 +14463,19 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(button, "toggle"));
             QVERIFY(QMetaObject::invokeMethod(button, "toggled"));
         };
+        // a segment of the Line | Karaoke switch (AU1)
+        auto choose = [&](const char *name) {
+            auto *segment = item(name);
+            QVERIFY(segment);
+            QVERIFY(QMetaObject::invokeMethod(segment, "clicked"));
+        };
         using application::PlayRange;
         auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
         const auto steps = editor.history().size();
         auto lastStep = [&] { return editor.history().last(); };
 
         // the Karaoke button: the Line in syllables, 20 closer, the display focused
-        click("audioKaraoke");
+        choose("audioKaraoke");
         QVERIFY(audio.karaoke());
         QCOMPARE(audio.karaokeModel().count(), 3);
         QVERIFY(audio.karaokeModel().times() == (std::vector<int>{400, 700, 1200}));
@@ -14217,7 +14583,7 @@ private slots:
         QCOMPARE(audio.karaokeModel().count(), 4);
 
         // off again: the zoom it had, nothing drawn for karaoke
-        click("audioKaraoke");
+        choose("audioLineMode");
         QVERIFY(!audio.karaoke());
         QCOMPARE(audio.horizontalZoom(), 50);
         QVERIFY(!store->boolean("audio.karaoke"));
@@ -15181,9 +15547,10 @@ private slots:
         auto *button = qobject_cast<QQuickItem *>(named("audioOutputButton"));
         QVERIFY(button);
         QTRY_VERIFY(button->isVisible() && button->width() > 0);
-        QCOMPARE(button->property("iconRole").toString(), QStringLiteral("audio-output"));
+        // AU1: the icon shows the volume's level, the tooltip says it too
+        QCOMPARE(button->property("iconRole").toString(), QStringLiteral("volume-low"));
         QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
-        QCOMPARE(button->property("tip").toString(), QStringLiteral("Output device: ") + QString::fromStdString(monitor.name));
+        QCOMPARE(button->property("tip").toString(), QStringLiteral("Volume: 50\nOutput device: ") + QString::fromStdString(monitor.name));
         // It opens the list: System default (checked), the devices, Audio settings….
         auto *menu = named("audioOutputMenu");
         QVERIFY(menu);
@@ -15211,7 +15578,7 @@ private slots:
         QVERIFY(audio.playing());
         QCOMPARE(opens, opensBefore + 1);
         QCOMPARE(checkedRow(), 2);
-        QCOMPARE(button->property("tip").toString(), QStringLiteral("Output device: ") + QString::fromStdString(headset.name));
+        QCOMPARE(button->property("tip").toString(), QStringLiteral("Volume: 50\nOutput device: ") + QString::fromStdString(headset.name));
         audio.stopPlayback();
         // The dialog shows the menu's choice, and the menu the dialog's.
         auto *dialog = openSettings();
@@ -17959,8 +18326,8 @@ private slots:
     }
 
     // K1: representative surfaces show the set's icons and keep their
-    // accessible names: the audio box's buttons (22 px squares, as legacy's
-    // MappedButtons), the Line editor's tag buttons, the menus (the icon as
+    // accessible names: the audio box's buttons (26 px squares since AU1;
+    // legacy's MappedButtons were 22), the Line editor's tag buttons, the menus (the icon as
     // the item's image source), the document tabs (close, new and the
     // modified mark), the Search tool's tabs, a dialog's title and the
     // windows' icons.
@@ -17984,7 +18351,7 @@ private slots:
         // The audio box (its buttons exist before audio is open).
         for (const Expected &e : {Expected{"audioPrevious", "audio-previous-line", "Play the previous line"},
                                   Expected{"audioCommit", "commit", "Apply changes"},
-                                  Expected{"audioPlay500After", "play-after-end", "Play 500ms after the end time"},
+                                  Expected{"audioPlayAround", "play-before-start", "Play 500ms before the start time"},
                                   Expected{"audioKaraoke", "karaoke", "Enable / disable karaoke creation"},
                                   Expected{"audioSpectrumNonLinear", "spectrum-nonlinear", "Enhance speech frequencies in the spectrum"}}) {
             auto *button = visualItem(e.object);
@@ -17992,10 +18359,11 @@ private slots:
             QCOMPARE(icon(button), QLatin1String(e.role));
             QCOMPARE(name(button), QLatin1String(e.name));
             QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
-            QCOMPARE(QSizeF(button->implicitWidth(), button->implicitHeight()), QSizeF(22, 22));
+            QCOMPARE(QSizeF(button->implicitWidth(), button->implicitHeight()), QSizeF(26, 26));
         }
-        QCOMPARE(icon(visualItem("audioLink")), QStringLiteral("link"));
-        QCOMPARE(name(visualItem("audioLink")), QStringLiteral("Link the volume and stretch sliders"));
+        // (AU1: Link is an item of the zoom popover)
+        QCOMPARE(item<QObject>("audioLink")->property("iconRole").toString(), QStringLiteral("link"));
+        QCOMPARE(item<QObject>("audioLink")->property("text").toString(), QStringLiteral("Link the volume and stretch sliders"));
         // The Line editor's tag buttons.
         for (const Expected &e : {Expected{"tag_b", "tag-bold", "Bold"}, Expected{"tag_s", "tag-strikeout", "Strikeout"},
                                   Expected{"changeFont", "tag-font", "Font selection"},
