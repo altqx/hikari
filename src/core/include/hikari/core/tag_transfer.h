@@ -72,6 +72,9 @@ struct OriginalTags {
 // A text past either is read as having no runs (an Original: malformed).
 inline constexpr std::size_t kMaxTagTransferUnits = 16384; // UTF-16 code units
 inline constexpr std::size_t kMaxTagTransferTags = 1024;
+// A Document with more Styles carries nothing: each Line's runs are read
+// against them all (named resets), and the Grid reads every Line's.
+inline constexpr std::size_t kMaxTagTransferStyles = 4096;
 
 // `style` is the Line's Style; `styles` the Document's, for named resets
 // (legacy GetStyle: the first of a name).

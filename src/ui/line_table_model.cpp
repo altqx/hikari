@@ -241,7 +241,7 @@ bool LineTableModel::unplacedRunsOf(const Row &row) const
         return *row.unplacedRuns;
     const core::LineRecord &line = row.line;
     bool unplaced = false;
-    if (m_runMarks && m_translationMode && !line.comment && !line.translation.empty()) {
+    if (m_runMarks && m_translationMode && !m_tooManyStyles && !line.comment && !line.translation.empty()) {
         // Legacy GetStyle(0, name): the first Style of that name.
         const auto style = std::ranges::find(m_styles, line.style, &core::StyleValues::name);
         const auto tags =
@@ -355,7 +355,15 @@ void LineTableModel::setDocument(const core::Document &document,
     m_format = document.format();
     // Legacy measures the translation when translation mode shows one.
     m_translationMode = document.scriptInfo(u8"TLMode") == u8"Yes";
-    m_styles = core::decodeStyles(document);
+    // TM1: the runs' Styles, only while the marks are shown (the Document is
+    // read again when they are turned on: ShellController::setRunMarks).
+    m_styles.clear();
+    m_tooManyStyles = false;
+    if (m_runMarks && m_translationMode) {
+        m_tooManyStyles = core::styleCount(document) > core::kMaxTagTransferStyles;
+        if (!m_tooManyStyles)
+            m_styles = core::decodeStyles(document);
+    }
     const auto lines = document.lines();
     m_empty = kAutoHideBits;
     for (const core::LineRecord *line : lines) {

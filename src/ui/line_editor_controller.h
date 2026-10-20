@@ -29,6 +29,7 @@
 
 #include <functional>
 #include <map>
+#include <tuple>
 #include <utility>
 #include <optional>
 #include <set>
@@ -470,6 +471,16 @@ private:
         std::u8string leading, trailing;
     };
     std::optional<Carry> carry(const core::LineRecord &line) const;
+    // The Document's Styles for carry(), decoded once a revision; nullptr for
+    // one with more than core::kMaxTagTransferStyles (nothing carried).
+    const std::vector<core::StyleValues> *carryStyles() const;
+    struct CarryStyles {
+        using Key = std::tuple<std::uint64_t, const core::Document *, std::uint64_t>;
+        Key key;
+        std::vector<core::StyleValues> styles;
+        bool within = true;
+    };
+    mutable std::optional<CarryStyles> m_carryStyles;
     // The active Line's Original tags read with its Style, for its runs;
     // nullopt when nothing is carried.
     std::optional<core::OriginalTags> runTags() const;

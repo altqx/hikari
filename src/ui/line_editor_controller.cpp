@@ -103,9 +103,12 @@ std::optional<LineEditorController::Carry> LineEditorController::carry(const cor
         return std::nullopt;
     // The runs are read against the Line's Style (legacy GetStyle(0, name):
     // the first of that name), and named resets against the Document's.
-    const auto styles = session() ? core::decodeStyles(session()->document()) : std::vector<core::StyleValues>{};
-    const auto style = std::ranges::find(styles, line.style, &core::StyleValues::name);
-    Carry c{core::readOriginalTags(core::toUtf16(line.text), style != styles.end() ? &*style : nullptr, styles), {}, {}};
+    const auto *styles = carryStyles();
+    if (!styles)
+        return std::nullopt;
+    const auto style = std::ranges::find(*styles, line.style, &core::StyleValues::name);
+    Carry c{core::readOriginalTags(core::toUtf16(line.text), style != styles->end() ? &*style : nullptr, *styles), {},
+            {}};
     if (c.tags.drawing || c.tags.malformed)
         return std::nullopt;
     c.leading = core::toUtf8(c.tags.leading);
@@ -115,6 +118,22 @@ std::optional<LineEditorController::Carry> LineEditorController::carry(const cor
                        !t.ends_with(c.trailing)))
         return std::nullopt; // the translation's own tags differ: shown whole
     return c;
+}
+
+const std::vector<core::StyleValues> *LineEditorController::carryStyles() const
+{
+    static const std::vector<core::StyleValues> none;
+    auto *s = session();
+    if (!s)
+        return &none;
+    const CarryStyles::Key key{m_document->value, &s->document(), s->revision()};
+    if (!m_carryStyles || m_carryStyles->key != key) {
+        CarryStyles styles{key, {}, core::styleCount(s->document()) <= core::kMaxTagTransferStyles};
+        if (styles.within)
+            styles.styles = core::decodeStyles(s->document());
+        m_carryStyles = std::move(styles);
+    }
+    return m_carryStyles->within ? &m_carryStyles->styles : nullptr;
 }
 
 std::u8string LineEditorController::carried(const Carry &carry, std::u8string body)
@@ -2256,7 +2275,17 @@ bool LineEditorController::chooseStyle(const QString &name)
     const auto r = record();
     if (!editable() || !r || !assFields() || name.isEmpty())
         return false;
-    session()->editDraft(r->id, application::DraftChange{.style = u8(name)});
+    application::DraftChange change{.style = u8(name)};
+    // TM1: the runs are read against the Style: the placed ones are written
+    // again for the new one (core::matchRuns; one it no longer has is dropped).
+    if (const auto real = sessionRecord(); real && !real->translation.empty() && carry(*real)) {
+        auto after = *real;
+        after.style = *change.style;
+        after.translation.clear();
+        if (const auto next = carry(after))
+            change.translation = recarried(*real, *next);
+    }
+    session()->editDraft(r->id, change);
     m_attempted.clear();
     const bool sent = sendDraft(false, visualToolOn()); // OnCommit
     refresh();

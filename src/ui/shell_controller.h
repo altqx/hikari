@@ -150,7 +150,8 @@ public:
             emit hideTagsChanged();
     }
     // TM1: the Grids' "runs not placed" marks while tags from the original
-    // are carried (translation.autoMoveTagsFromOriginal).
+    // are carried (translation.autoMoveTagsFromOriginal). Turned on, they
+    // show from the next refresh, which reads the Styles they need.
     void setRunMarks(bool on)
     {
         m_lines.setRunMarks(on);

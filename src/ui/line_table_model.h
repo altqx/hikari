@@ -244,6 +244,7 @@ private:
     bool m_showOriginal = false;
     bool m_runMarks = false;
     std::vector<core::StyleValues> m_styles; // TM1: the runs' base
+    bool m_tooManyStyles = false;            // past core::kMaxTagTransferStyles: no marks
     bool m_filtered = false;
     int m_headerBlock = 0;
     int m_hidden = 0;

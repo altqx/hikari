@@ -34,6 +34,9 @@ void Application::setUpTranslationControls()
     connect(m_settings.get(), &ui::SettingsStore::changed, this, [this, apply](const QString &id) {
         if (id == QLatin1String(kMoveTags) || id == QLatin1String(kHideOriginal))
             apply();
+        // TM1: the Grids read the Styles their run marks need when shown.
+        if (id == QLatin1String(kMoveTags))
+            refreshViews();
         // GetVisible reads the option when the video next takes the subtitles.
         if (id == QLatin1String(kHideOriginal))
             m_videoRevision.reset();
