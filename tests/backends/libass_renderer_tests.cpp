@@ -880,12 +880,17 @@ TEST(LibassRenderer, ParsesWhileTheShownTrackRenders)
 TEST(LibassRenderer, FramesCountWhatTheirSubtitlesCost)
 {
     backends::LibassRenderer renderer;
+    renderer.countCost(true); // the overlay is shown
     ASSERT_TRUE(renderer.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,10)}Hi\n"
                                           "Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,30)\\blur2}Blur\n"
                                           "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,"
                                           "{\\pos(40,10)\\clip(m 0 0 l 50 0 50 50 0 50)}Clip\n"
                                           "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,30)\\clip(0,0,90,60)}Box\n"
-                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,50)\\iclip(1,m 0 0 l 9 9)}I\n")));
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,50)\\iclip(1,m 0 0 l 9 9)}I\n"
+                                          // Tags outside an override block are text, and \blur0 or \be0 do not blur.
+                                          "Dialogue: 0,0:00:04.00,0:00:05.00,D,,0,0,0,,"
+                                          "{\\pos(10,10)}a \\blur2 \\be1 \\clip(m 0 0 l 9 9)\n"
+                                          "Dialogue: 0,0:00:04.00,0:00:05.00,D,,0,0,0,,{\\pos(10,30)\\blur0\\be0\\bord2}Zero\n")));
     const auto none = renderer.render(core::DocumentTime(500'000), 96, 64);
     ASSERT_TRUE(none);
     EXPECT_TRUE(none->cost.counted);
@@ -907,8 +912,15 @@ TEST(LibassRenderer, FramesCountWhatTheirSubtitlesCost)
     EXPECT_EQ(five->cost.blurred, 1);
     EXPECT_EQ(five->cost.vectorClips, 2) << "a rectangle \\clip is not a vector clip";
 
+    const auto text = renderer.render(core::DocumentTime(4'500'000), 96, 64);
+    ASSERT_TRUE(text);
+    EXPECT_EQ(text->cost.events, 2);
+    EXPECT_EQ(text->cost.blurred, 0);
+    EXPECT_EQ(text->cost.vectorClips, 0);
+
     // A frame handed out again unchanged counts as the first one did.
     backends::LibassRenderer plain;
+    plain.countCost(true);
     ASSERT_TRUE(plain.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,{\\pos(10,10)}Hi\n")));
     const auto first = plain.render(core::DocumentTime(1'500'000), 96, 64);
     const auto again = plain.render(core::DocumentTime(1'500'000), 96, 64);
@@ -925,9 +937,19 @@ TEST(LibassRenderer, TheSelectionTimesEveryRender)
 {
     backends::SubtitleRendererSelection selection;
     ASSERT_TRUE(selection.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,10)\\blur3}Hi\n")));
-    const auto frame = selection.render(core::DocumentTime(1'500'000), 96, 64);
+    // Without the overlay libass only draws: the track is not walked.
+    const auto drawn = selection.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(drawn);
+    EXPECT_GT(drawn->cost.milliseconds, 0.0);
+    EXPECT_FALSE(drawn->cost.counted);
+    EXPECT_EQ(drawn->cost.events, 0);
+    EXPECT_EQ(drawn->cost.countMilliseconds, 0.0);
+    // With it, the counts too (their time is taken off the drawing's).
+    selection.countCost(true);
+    const auto frame = selection.render(core::DocumentTime(1'600'000), 96, 64);
     ASSERT_TRUE(frame);
     EXPECT_GT(frame->cost.milliseconds, 0.0);
     EXPECT_TRUE(frame->cost.counted);
+    EXPECT_EQ(frame->cost.events, 1);
     EXPECT_EQ(frame->cost.blurred, 1);
 }

@@ -124,7 +124,8 @@ SubtitleRendererSelection::render(core::DocumentTime time, int width, int height
     auto frame = m_active->render(time, width, height);
     if (frame)
         frame->cost.milliseconds =
-            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count();
+            std::chrono::duration<double, std::milli>(std::chrono::steady_clock::now() - started).count() -
+            frame->cost.countMilliseconds;
     return frame;
 }
 
