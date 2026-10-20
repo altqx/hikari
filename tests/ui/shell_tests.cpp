@@ -22819,6 +22819,28 @@ private slots:
         QTRY_COMPARE(editor.videoText(), QStringLiteral("untranslated three"));
     }
 
+    // The bar's Open editor is the context menu's: with the Line editor
+    // closed by the layout it opens it and gives it the keyboard (WS3).
+    void videoFullscreenOpenEditorShowsTheLineEditor()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        QObject *editorDock = named("editorDock");
+        QVERIFY(QMetaObject::invokeMethod(editorDock, "close"));
+        QTRY_VERIFY(!editorDock->property("isOpen").toBool());
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto *open = fullscreenItem("fullscreenOpenEditor");
+        QTRY_VERIFY(open->isVisible());
+        clickWith(open, Qt::NoModifier);
+        QTRY_VERIFY(!fs.active());
+        QTRY_VERIFY(editorDock->property("isOpen").toBool());
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+    }
+
     // V5-volume-slider: the fullscreen panel shows the Video panel's volume
     // slider with every player (legacy only for DirectShow,
     // VideoFullscreen.cpp:164-168); it sets the player's volume and the main

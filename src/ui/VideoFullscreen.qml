@@ -489,7 +489,7 @@ Window {
                         iconRole: "editor"
                         text: qsTr("Open editor")
                         focusPolicy: Qt.NoFocus
-                        onClicked: fs.shell.app.openEditorFromFullScreen()
+                        onClicked: fs.shell.openEditorFromFullScreen() // Main's: the Line editor shown too (WS3)
                     }
                     Item { Layout.fillWidth: !currentLine.visible }
                     // FS1-tool-rail-contextual: the eleven tools, by name.
