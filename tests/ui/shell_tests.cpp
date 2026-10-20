@@ -8025,8 +8025,10 @@ private slots:
         menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("wrold"));
         // D3: the Line editor grows to its translation-mode minimum (its
-        // rows laid out) before the field is clicked where it ends up.
-        QTRY_VERIFY(item("translationText")->y() > field->y());
+        // rows laid out) before the field is clicked where it ends up: in
+        // the Original text panel above it (TM1).
+        QTRY_VERIFY(field->parentItem() == item("originalSlot"));
+        QTRY_VERIFY(item("translationText")->mapToScene(QPointF()).y() > field->mapToScene(QPointF()).y());
         QTRY_VERIFY(item("editorPanel")->height() >= item("editorPanel")->property("minimumSize").toSizeF().height());
         rightClick(fieldPoint(field, 1));
         QTRY_VERIFY(menu->property("visible").toBool());
@@ -9367,7 +9369,8 @@ private slots:
         auto *translated = item("translationText");
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Gate"));
         QVERIFY(translated->isVisible());
-        QTRY_VERIFY(original->y() < translated->y()); // Original above Translated, once laid out
+        // TM1: the Original text panel above the Line editor's Translated text, once laid out.
+        QTRY_VERIFY(original->mapToScene(QPointF()).y() < translated->mapToScene(QPointF()).y());
         translated->forceActiveFocus();
         for (char c : std::string("Brama"))
             QTest::keyClick(window, c);
@@ -9385,7 +9388,8 @@ private slots:
                  bytes.constData());
     }
 
-    // #101: the legacy translation-mode buttons.
+    // #101: the legacy translation-mode buttons, in the Original text
+    // panel's header (TM1).
     void translationButtonsFollowTheLegacyEditBox()
     {
         const QString path = dir.filePath(QStringLiteral("tl-buttons.ass"));
@@ -9413,14 +9417,15 @@ private slots:
         // Paste the selected: the Original's selection goes in at the Translated caret.
         QMetaObject::invokeMethod(original, "select", Q_ARG(int, 5), Q_ARG(int, 11));
         translated->forceActiveFocus();
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("pasteSelectionToTranslation"), "clicked"));
+        QTRY_VERIFY(item("originalPasteSelection")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("originalPasteSelection"), "clicked"));
         QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("keeper"));
         QCOMPARE(translated->property("cursorPosition").toInt(), 6);
         // Paste all: the Original's raw text, tags included.
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("pasteAllToTranslation"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("originalPasteAll"), "clicked"));
         QTRY_COMPARE(raw(true), QStringLiteral("Gate {\\i1}keeper"));
         // Comment out original wraps the raw Original in braces.
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("commentOutOriginal"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("originalCommentOut"), "clicked"));
         QTRY_COMPARE(raw(false), QStringLiteral("{Gate {\\i1}keeper}"));
     }
 
@@ -9486,60 +9491,69 @@ private slots:
         return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size()));
     }
 
-    // E5: the editor's "Translator mode" check box (EditBox::OnTlMode,
-    // SubsGrid::SetTlMode): one step each way, the turn-off asked first with
-    // No as the default, and one Undo per switch.
+    // TM1: Subtitles > Translation mode (GLOBAL_TRANSLATION_MODE), which
+    // replaced the editor's "Translator mode" check box (EditBox::OnTlMode,
+    // SubsGrid::SetTlMode).
+    QObject *translationModeAction()
+    {
+        auto *menuItem = item<QObject>("translationModeMenuItem");
+        return menuItem ? menuItem->property("action").value<QObject *>() : nullptr;
+    }
+
+    // E5: Translation mode switches with one step each way, the turn-off
+    // asked first with No as the default, and one Undo per switch.
     void translatorModeSwitchesWithOneStepEach()
     {
-        auto *check = item("translatorMode");
-        QVERIFY(check);
-        QVERIFY(!check->isEnabled()); // no Document
+        auto *action = translationModeAction();
+        QVERIFY(action);
+        QVERIFY(!item<QObject>("translatorMode")); // TM1-translator-check-removed
+        QVERIFY(!action->property("enabled").toBool()); // no Document
         QVERIFY(application->openFile(writeTranslationFile("e5-switch.ass", false)));
-        QTRY_VERIFY(check->isEnabled());
+        QTRY_VERIFY(action->property("enabled").toBool());
         auto *session = application->files().session(*application->workspace().editingTarget());
-        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(!action->property("checked").toBool());
         QVERIFY(!item("translationText")->isVisible());
-        QVERIFY(!item("notConfirmed")->isVisible());
+        QVERIFY(!item("originalNotConfirmed")->isVisible());
         const auto steps = session->historySize();
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(application->editor().translationMode());
         QCOMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Turning on translator mode"));
         QCOMPARE(session->document().scriptInfo(u8"TLMode Style"), std::optional<std::u8string>(u8"TLmode"));
-        QVERIFY(check->property("checked").toBool());
+        QVERIFY(action->property("checked").toBool());
         QTRY_VERIFY(item("translationText")->isVisible());
-        QVERIFY(item("notConfirmed")->isVisible());
-        QVERIFY(item("movingTags")->isVisible());
+        QTRY_VERIFY(item("originalNotConfirmed")->isVisible());
+        QVERIFY(item("originalMovingTags")->isVisible());
 
         // Turning it off asks; No, the focused default, keeps it on.
         auto *confirm = item<QObject>("translatorModeOffConfirm");
         QVERIFY(confirm);
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(confirm->property("opened").toBool());
-        QVERIFY(check->property("checked").toBool()); // still checked while it asks
+        QVERIFY(action->property("checked").toBool()); // still checked while it asks
         press(Qt::Key_Space); // the focused No
         QTRY_VERIFY(!confirm->property("visible").toBool());
         QVERIFY(application->editor().translationMode());
         QCOMPARE(session->historySize(), steps + 1);
         // Yes turns it off as one step.
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(confirm->property("opened").toBool());
         QVERIFY(QMetaObject::invokeMethod(confirm, "accept"));
         QTRY_VERIFY(!application->editor().translationMode());
         QCOMPARE(session->historySize(), steps + 2);
         QCOMPARE(session->history().back().name, std::string("Turning off translator mode"));
-        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(!action->property("checked").toBool());
         QTRY_VERIFY(!item("translationText")->isVisible());
         // One Undo per switch.
         QVERIFY(application->editor().undo());
         QTRY_VERIFY(application->editor().translationMode());
-        QVERIFY(check->property("checked").toBool());
+        QVERIFY(action->property("checked").toBool());
         QVERIFY(application->editor().undo());
         QTRY_VERIFY(!application->editor().translationMode());
-        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(!action->property("checked").toBool());
     }
 
-    // E5: legacy enables the check box for ASS only.
+    // E5: legacy enables the mode for ASS only.
     void translatorModeIsForAssOnly()
     {
         const QString path = dir.filePath(QStringLiteral("e5.srt"));
@@ -9549,14 +9563,14 @@ private slots:
             f.write("1\n00:00:01,000 --> 00:00:02,000\nA\n\n");
         }
         QVERIFY(application->openFile(path));
-        QVERIFY(!item("translatorMode")->isEnabled());
+        QVERIFY(!translationModeAction()->property("enabled").toBool());
         QVERIFY(!application->turnOnTranslationMode());
     }
 
     // E5-tlmode-needs-script-info: an ASS file without a [Script Info]
     // section turns the mode on and saves the section at the top (legacy
-    // AddSInfo and SaveFile's header); a plain-text Document leaves the check
-    // box and Paste translation disabled, and both say why.
+    // AddSInfo and SaveFile's header); a plain-text Document leaves the
+    // command and Paste translation disabled, and both say why.
     void translatorModeNeedsScriptInfo()
     {
         const QString ass = dir.filePath(QStringLiteral("e5-sectionless.ass"));
@@ -9568,14 +9582,15 @@ private slots:
             f.write(body);
         }
         QVERIFY(application->openFile(ass));
-        auto *check = item("translatorMode");
-        QTRY_VERIFY(check->isEnabled());
+        auto *action = translationModeAction();
+        auto *menuItem = item<QObject>("translationModeMenuItem");
+        QTRY_VERIFY(action->property("enabled").toBool());
         QVERIFY(application->translationHint().isEmpty());
-        QCOMPARE(QQmlProperty(check, QStringLiteral("ToolTip.text"), qmlContext(check)).read().toString(),
+        QCOMPARE(menuItem->property("help").toString(),
                  QStringLiteral("Translator mode displays and saves both foreign text and translation text"));
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(application->editor().translationMode());
-        QVERIFY(check->property("checked").toBool());
+        QVERIFY(action->property("checked").toBool());
         QVERIFY(application->editor().save());
         application->waitForWrites();
         QFile saved(ass);
@@ -9593,22 +9608,12 @@ private slots:
         QVERIFY(application->openFile(text));
         auto *session = targetSession();
         QCOMPARE(session->document().format(), core::SubtitleFormat::PlainText);
-        QTRY_VERIFY(!check->isEnabled());
+        QTRY_VERIFY(!action->property("enabled").toBool());
         QVERIFY(!application->translatorModeAvailable());
         QVERIFY(!application->turnOnTranslationMode());
         const QString hint = application->translationHint();
         QCOMPARE(hint, QStringLiteral("Translation needs an ASS file: plain text cannot store it."));
-        QCOMPARE(QQmlProperty(check, QStringLiteral("ToolTip.text"), qmlContext(check)).read().toString(), hint);
-        // The hint shows over the disabled box.
-        const QQmlProperty tipVisible(check, QStringLiteral("ToolTip.visible"), qmlContext(check));
-        const QPoint away(window->width() - 5, window->height() - 5);
-        QTest::mouseMove(window, away);
-        QTRY_VERIFY(!tipVisible.read().toBool());
-        QTest::mouseMove(window, centreOf(check) - QPoint(0, 1));
-        QTest::mouseMove(window, centreOf(check));
-        QTRY_VERIFY(tipVisible.read().toBool());
-        QTest::mouseMove(window, away);
-        QTRY_VERIFY(!tipVisible.read().toBool());
+        QCOMPARE(menuItem->property("help").toString(), hint); // the status bar's text over it
         QVERIFY(!application->canPasteTranslation());
         auto *grid = item("editingGrid");
         grid->forceActiveFocus();
@@ -9626,7 +9631,7 @@ private slots:
     }
 
     // E5: an ASS Document needs a file too (HikariSubFrame.cpp:2401,
-    // SubsPath != ""): an Untitled one leaves the check box disabled.
+    // SubsPath != ""): an Untitled one leaves the command disabled.
     void translatorModeNeedsAFile()
     {
         application->addPage();
@@ -9634,12 +9639,12 @@ private slots:
         QVERIFY(session);
         QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
         QVERIFY(!application->translatorModeAvailable());
-        QVERIFY(!item("translatorMode")->isEnabled());
+        QVERIFY(!translationModeAction()->property("enabled").toBool());
         QVERIFY(!application->turnOnTranslationMode());
         QVERIFY(!session->document().scriptInfo(u8"TLMode"));
         // The same text with a file enables it.
         QVERIFY(application->openFile(writeTranslationFile("e5-file.ass", false)));
-        QTRY_VERIFY(item("translatorMode")->isEnabled());
+        QTRY_VERIFY(translationModeAction()->property("enabled").toBool());
     }
 
     // E5: the Grid's Moving translation text entries do nothing while the
@@ -9905,11 +9910,11 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
-        auto *button = item("notConfirmed");
+        auto *button = item("originalNotConfirmed"); // TM1: in the Original text panel's header
+        QTRY_VERIFY(button->isVisible());
         QTRY_VERIFY(button->property("checked").toBool()); // the "\fD" pair loads Unconfirmed
         press(Qt::Key_A, Qt::ControlModifier);
         QTRY_COMPARE(session->selection().selected.size(), std::size_t(3));
-        scrollTheEditorTo(button);
         const auto steps = session->historySize();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(button));
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -9964,9 +9969,9 @@ private slots:
         QVERIFY(application->openFile(writeTranslationFile("e5-moving.ass")));
         auto *session = application->files().session(*application->workspace().editingTarget());
         application->editor().setShowTags(true);
-        auto *moving = item("movingTags");
+        auto *moving = item("originalMovingTags"); // TM1: in the Original text panel's header
+        QTRY_VERIFY(moving->isVisible());
         QVERIFY(!moving->property("checked").toBool());
-        scrollTheEditorTo(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QVERIFY(moving->property("checked").toBool());
@@ -10004,7 +10009,6 @@ private slots:
         // Undo takes the edit back; turning Moving tags off shows the Line whole.
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
-        scrollTheEditorTo(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
@@ -12095,8 +12099,8 @@ private slots:
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" retired, never listed; WS3: the five View
         // arrangements and "Enable / Disable editor" too; LE3's "Hide tags in
-        // the line editor" listed.
-        QCOMPARE(hotkeyRows().size(), 220);
+        // the line editor" and TM1's "Translation mode" listed.
+        QCOMPARE(hotkeyRows().size(), 221);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
