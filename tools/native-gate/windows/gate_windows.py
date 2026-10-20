@@ -2792,17 +2792,22 @@ def step_title_bar():
     focus_main_compositor()
     combo("win", "down")  # restore from maximised
     time.sleep(1.2)
+    rrest = main_rect()
     combo("win", "left")
     time.sleep(1.5)
     keys("escape", 0.5)  # Snap Assist offers the other windows for the right half
     st = uia()
     rleft = main_rect(st)
     ev_l, _ = snap("titlebar-5-aero-snap-left")
-    half = rleft is not None and abs(rleft[0] - prim["x"]) <= 10 and abs(rleft[2] - prim["w"] // 2) <= 24 \
-        and rleft[3] >= prim["h"] - 60
+    # Snapped into the top-left corner at the work area's height; half the
+    # width, or as narrow as its minimum allows (821 is more than half of 1024).
+    half = rleft is not None and rrest is not None and abs(rleft[0] - prim["x"]) <= 10 \
+        and abs(rleft[1] - prim["y"]) <= 10 and rleft[3] >= prim["h"] - 60 \
+        and (abs(rleft[2] - prim["w"] // 2) <= 24 or prim["w"] // 2 < rleft[2] < rrest[2])
     verdict("titlebar-aero-snap", "observed" if top_max and half else "failed",
             f"free part dragged to the primary's top edge: window {r0} -> {rtop}, maximised (Restore shown) "
-            f"{top_max}; Win+Left: {rleft}, the left half of {prim['w']}x{prim['h']}: {half}", ev_t + ev_l)
+            f"{top_max}; Win+Left: {rrest} -> {rleft}, the left half of {prim['w']}x{prim['h']} (or the "
+            f"minimum width): {half}", ev_t + ev_l)
     combo("win", "right")
     time.sleep(1.2)
     keys("escape", 0.5)
@@ -2895,6 +2900,7 @@ def step_title_bar():
     else:
         verdict("titlebar-minimise", "failed", f"no Minimise ({sorted(ctl)})")
     title_bar_start("custom")
+    place_on_primary()
     cl = title_bar_controls().get("Close")
     if cl:
         pointer([centre(cl)])
