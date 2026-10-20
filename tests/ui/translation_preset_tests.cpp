@@ -533,6 +533,36 @@ private slots:
         stop();
     }
 
+    // An alignment chosen for an untranslated Line sends the focus to the
+    // Original text in its floating panel, whose window it activates.
+    void alignmentFocusReachesTheFloatingOriginal()
+    {
+        start();
+        QFile f(dir.filePath(QStringLiteral("empty.ass")));
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLMode Original\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,Wall\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(f.fileName()));
+        QTRY_VERIFY(isOpen("originalDock"));
+        QVERIFY(dock("originalDock")->setProperty("isFloating", true));
+        QTRY_VERIFY(isFloating("originalDock"));
+        auto *original = item("lineText");
+        QQuickWindow *floating = original->window();
+        QVERIFY(floating && floating != window());
+        window()->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window());
+        auto *translated = item("translationText");
+        translated->forceActiveFocus();
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("alignmentChoice"), "chosen"));
+        QTRY_COMPARE(QGuiApplication::focusWindow(), floating);
+        QTRY_VERIFY(original->hasActiveFocus());
+        stop();
+    }
+
     // Outside translation mode nothing opens the Original text panel: not
     // View > Panels, not Move panel (its Move button is disabled for it).
     void theOriginalPanelOpensInTranslationModeOnly()

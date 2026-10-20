@@ -3959,7 +3959,9 @@ ApplicationWindow {
                             // E4: Text position (legacy Ban, after the colours).
                             AlignmentChoice {
                                 editor: root.editor
-                                onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
+                                // TM1: the Original text may be in its own panel, floating or a hidden tab.
+                                onChosen: root.focusPanel(root.editor.translationMode && root.editor.translationText.length ? translationText : lineText,
+                                                          Qt.OtherFocusReason)
                             }
                             // E2: custom tag buttons. LE5: a button without a tag
                             // opens its popover; the right click its menu.
