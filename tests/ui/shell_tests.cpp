@@ -10468,6 +10468,45 @@ private slots:
         QTRY_COMPARE(item("translationText")->property("text").toString(), QStringLiteral("{\\b1}Wieza"));
     }
 
+    // TM1: the runs are read against the Line's Style, so choosing another
+    // writes the placed ones again for it: in a bold Style the Original's
+    // bold word is no run, and its placement goes.
+    void tagsFromOriginalFollowTheStyle()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-style.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n"
+                "Style: Heavy,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n"
+                "Style: O,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,"
+                "10,10,10,1\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\b1}B{\\b0} C\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("x y z"), 5);
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x {\\b1}y{\\b0} z"));
+        QVERIFY(application->editor().chooseStyle(QStringLiteral("Heavy")));
+        const auto *line = session->document().lines()[0];
+        QCOMPARE(q8(line->style), QStringLiteral("Heavy"));
+        QCOMPARE(q8(line->translation), QStringLiteral("x y z"));
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2); // "A" and "C", not bold
+    }
+
     // TM1: a karaoke Line carries its leading tags without its \k timing,
     // and says so under the Translated text.
     void tagsFromOriginalOnAKaraokeLine()

@@ -706,7 +706,7 @@ private slots:
         QVERIFY(model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
         QVERIFY(!model.index(1, 0).data(LineTableModel::UnplacedRunsRole).toBool());
         LineGrid grid;
-        grid.setSize(QSizeF(720, 100));
+        grid.setSize(QSizeF(1280, 100)); // the Text column whole, whatever the fonts make the others
         grid.setModel(&model);
         QCOMPARE(grid.rowStateText(0), QStringLiteral("runs not placed"));
         QCOMPARE(grid.rowStateText(1), QString());
@@ -716,13 +716,15 @@ private slots:
                 text = c;
         QVERIFY(text >= 0);
         const auto paint = [&] {
-            QImage image(720, 100, QImage::Format_ARGB32);
+            QImage image(1280, 100, QImage::Format_ARGB32);
+            image.fill(Qt::transparent);
             QPainter painter(&image);
             grid.paint(&painter);
             return image;
         };
         // The cell's top right corner, against its bottom right one.
         const QRectF marked = grid.cellRect(0, text);
+        QVERIFY2(marked.right() < 1280, qPrintable(QString::number(marked.right())));
         const QPoint corner(int(marked.right()) - 2, int(marked.top()) + 2);
         const QPoint below(int(marked.right()) - 2, int(marked.bottom()) - 3);
         QImage image = paint();
