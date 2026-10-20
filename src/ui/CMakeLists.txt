@@ -5,7 +5,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     automation_dialog_controller.cpp automation_dialog_controller.h video_presenter.cpp video_presenter.h
     automation_manager_controller.cpp automation_manager_controller.h
     automation_services_qt.cpp automation_services_qt.h video_controller.cpp video_controller.h
-    log_controller.cpp log_controller.h tag_buttons_controller.cpp tag_buttons_controller.h
+    log_controller.cpp log_controller.h karaoke_report.cpp karaoke_report.h tag_buttons_controller.cpp tag_buttons_controller.h
     line_measures.cpp line_measures.h grid_filter_controller.cpp grid_filter_controller.h
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
@@ -134,6 +134,7 @@ target_sources(hikari_ui PRIVATE video_view_controller.cpp video_view_controller
 target_sources(hikari_ui PRIVATE video_fullscreen_controller.cpp video_fullscreen_controller.h)
 qt_target_qml_sources(hikari_ui QML_FILES VideoFullscreen.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
+    VideoRenderCost.qml # KE1-render-cost-overlay
     VideoVolumeSlider.qml)
 # V6: the video toolbar's seek-after and play-after lists.
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)

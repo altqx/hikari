@@ -111,6 +111,9 @@ struct MacroStyleLine {
 };
 struct MacroDialogueLine {
     std::uint64_t id = 0; // the Line it came from; 0 for a line the macro added
+    // KE1: the Line (id) a karaoke templater generated this one from; 0 for
+    // none. Scripts read and set it through aegisub.hikari; it is never saved.
+    std::uint64_t generatedFrom = 0;
     bool comment = false;
     int layer = 0;
     std::int64_t startMs = 0, endMs = 0;
@@ -147,6 +150,9 @@ struct MacroResult {
     // applyMacroResult refuses such a result.
     bool valid = true;
     std::string validationError;
+    // KE1: what the script attached with aegisub.hikari.report (the karaoke
+    // templater's run report); empty when it attached nothing.
+    std::string report;
 };
 
 // A host service a running macro asks for (L3; docs/qt/automation.md). The

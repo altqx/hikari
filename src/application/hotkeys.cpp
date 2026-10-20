@@ -259,8 +259,10 @@ constexpr HotkeyAction kActions[] = {
         // unused in its windows' ranges (listed among their neighbours).
         // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
+        // KE1-render-cost-overlay: the subtitles' render cost over the video.
+        {"GLOBAL_VIDEO_RENDER_COST", 5170},
         // KA7: the Karaoke check window.
-        {"GLOBAL_CHECK_KARAOKE", 5170},
+        {"GLOBAL_CHECK_KARAOKE", 5171},
 };
 
 struct NameRow {
@@ -493,9 +495,10 @@ constexpr NameRow kNames[] = {
         {2007, "Volume down"}, // VIDEO_VOLUME_MINUS
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
-        // The rewrite's own (LE3-tags-shown).
+        // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay, KA7).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
-        {5170, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
+        {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
+        {5171, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
 };
 
 struct DefaultRow {

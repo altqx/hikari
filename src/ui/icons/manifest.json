@@ -2752,6 +2752,19 @@
    ]
   },
   {
+   "role": "render-cost",
+   "file": "render-cost.svg",
+   "label": "Show / hide render cost",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video",
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
    "role": "aspect-ratio",
    "file": "aspect-ratio.svg",
    "label": "Change aspect ratio",

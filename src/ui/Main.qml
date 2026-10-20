@@ -1524,6 +1524,16 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
                 }
             }
+            // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
+            ShellMenuItem {
+                iconRole: "render-cost"
+                objectName: "renderCostMenuItem"
+                action: Action {
+                    id: renderCostAction
+                    text: qsTr("Show / hide render cost"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST")) root.videoView.toggleRenderCost()
+                }
+            }
         }
         // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
         // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_CLOSE_AUDIO). AV3 (#240) retired
@@ -2452,6 +2462,12 @@ ApplicationWindow {
                 VideoZoomFrame {
                     anchors.fill: presenter
                     view: root.videoView
+                }
+                // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
+                VideoRenderCost {
+                    anchors.fill: presenter
+                    visible: root.videoView.renderCost && root.video.hasVideo
+                    cost: presenter.renderCost
                 }
                 }
                 VideoContextMenu {
@@ -4901,12 +4917,15 @@ ApplicationWindow {
         width: 520
         height: 340
         flags: Qt.Dialog
-        // Shown while a macro runs; it stays after a failure so its log can be read.
+        // Shown while a macro runs; it stays after a failure, or a karaoke
+        // template run that named template problems (KE1), so its log can be read.
         property bool keep: false
         visible: root.automation.running || keep
         Connections {
             target: root.automation
-            function onRunCompleted(ok, message) { automationProgress.keep = !ok && message.length > 0 }
+            function onRunCompleted(ok, message) {
+                automationProgress.keep = (!ok && message.length > 0) || root.automation.keepLog
+            }
         }
         ColumnLayout {
             anchors.fill: parent
@@ -6431,6 +6450,7 @@ ApplicationWindow {
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
+        GLOBAL_VIDEO_RENDER_COST: renderCostAction, // KE1
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
