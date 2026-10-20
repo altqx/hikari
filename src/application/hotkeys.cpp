@@ -259,6 +259,8 @@ constexpr HotkeyAction kActions[] = {
         // unused in its windows' ranges (listed among their neighbours).
         // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
+        // TM1: Translation mode for the editing target (Subtitles menu).
+        {"GLOBAL_TRANSLATION_MODE", 5170},
 };
 
 struct NameRow {
@@ -493,6 +495,7 @@ constexpr NameRow kNames[] = {
         {2001, "Stop"}, // VIDEO_STOP
         // The rewrite's own (LE3-tags-shown).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
+        {5170, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
 };
 
 struct DefaultRow {
