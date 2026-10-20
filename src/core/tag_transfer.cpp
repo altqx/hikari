@@ -850,4 +850,12 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
     return out;
 }
 
+bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation)
+{
+    if (translation.empty() || tags.runs.empty())
+        return false;
+    const auto draft = readTranslation(tags, translation);
+    return draft.carried && nextUnplacedRun(tags, draft.placements) != 0;
+}
+
 } // namespace hikari::core

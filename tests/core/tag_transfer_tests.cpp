@@ -286,6 +286,16 @@ TEST(TagTransfer, RunsWhoseTextIsKeptAreSuggested)
     EXPECT_TRUE(suggestPlacements(tags, draft(u"Tokyo", {{0, 5, 1}})).empty());
 }
 
+TEST(TagTransfer, ATranslationLeavingARunUnplacedIsMarked)
+{
+    const auto tags = readOriginalTags(u"{\\i1}Wall {\\b1}high");
+    EXPECT_TRUE(hasUnplacedRuns(tags, u"{\\i1}Mur wysoki"));
+    EXPECT_FALSE(hasUnplacedRuns(tags, u"{\\i1}Mur {\\b1}wysoki"));
+    EXPECT_FALSE(hasUnplacedRuns(tags, u""));             // untranslated
+    EXPECT_FALSE(hasUnplacedRuns(tags, u"{\\an2}Mur"));  // its own tags: the translator's
+    EXPECT_FALSE(hasUnplacedRuns(readOriginalTags(u"{\\i1}Wall"), u"{\\i1}Mur")); // no runs
+}
+
 TEST(TagTransfer, OverlappingFormattingIsOneRunPerState)
 {
     const auto tags = readOriginalTags(u"a{\\i1}b{\\b1}c{\\i0}d{\\b0}e");

@@ -108,5 +108,9 @@ int runWithProperty(const OriginalTags &tags, std::span<const RunPlacement> plac
 // Placements for unplaced runs whose text appears once in the body, as a
 // whole word, outside every placement.
 std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const TranslationDraft &draft);
+// Whether a saved translation leaves a run of the Original unplaced (the
+// Grid's "runs not placed" mark). An empty translation has none, and so has
+// one whose own leading or trailing tags differ (the translator's, shown whole).
+bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation);
 
 } // namespace hikari::core
