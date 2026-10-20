@@ -266,8 +266,9 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
                 }
         // 13 since the UI polish: the batch picker's tooltip and description
         // came, its untranslated "Targets: %n picked line(s)" went. 14 with
-        // the Home page's "%n documents" (SH2).
-        ASSERT_EQ(numerus, 14) << language.toStdString();
+        // the Home page's "%n documents" (SH2). 15 with the inspector bar's
+        // picked count beside its picker, "%n lines" (VT1).
+        ASSERT_EQ(numerus, 15) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);
