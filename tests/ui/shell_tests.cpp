@@ -23332,6 +23332,20 @@ private slots:
         QTest::qWait(50);
         QVERIFY(!fs.barShown());
         QCOMPARE(cursor(), int(Qt::BlankCursor));
+        // Out of the window (to another monitor) and back at the same point:
+        // a move. (QGuiApplication drops a test move to the last position, so
+        // the window's points are given to the controller here.)
+        const QPointF at(picture.x() + 0.5, picture.y() + 0.5);
+        fs.pointerMoved(at);
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        fs.pointerMoved(at);
+        QVERIFY(!fs.barShown()); // the same point: no move
+        QEvent leave(QEvent::Leave);
+        QCoreApplication::sendEvent(fsWindow, &leave);
+        fs.pointerMoved(at);
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
         // A move brings them back for a while.
         QTest::mouseMove(fsWindow, picture + QPoint(10, 0));
         QVERIFY(fs.barShown());

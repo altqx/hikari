@@ -141,6 +141,10 @@ signals:
     void panelChanged();
     void progressChanged();
 
+protected:
+    // The pointer leaving the fullscreen window: a return at the same point is a move.
+    bool eventFilter(QObject *watched, QEvent *event) override;
+
 private:
     bool enter(int monitor);
     void place(QScreen *screen);
@@ -158,7 +162,7 @@ private:
     bool m_onAnotherMonitor = false;
     QTimer m_idle;        // kFullscreenBarIdleMs after the last move
     bool m_awake = false; // a move less than that ago
-    std::optional<QPointF> m_pointer; // where the last move was, in the window
+    std::optional<QPointF> m_pointer; // where the last move was, in the window (none once it left)
     bool m_menuOpen = false;
     bool m_pointerOverBar = false;
     bool m_barShown = false;

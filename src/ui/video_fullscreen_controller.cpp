@@ -6,6 +6,7 @@
 
 #include "hikari/application/video_fullscreen.h"
 
+#include <QEvent>
 #include <QFileInfo>
 #include <QGuiApplication>
 #include <QQuickItem>
@@ -77,8 +78,22 @@ VideoFullscreenController::VideoFullscreenController(VideoController &video, Vid
 
 void VideoFullscreenController::setWindows(QQuickWindow *fullscreen, QWindow *main)
 {
+    if (m_window)
+        m_window->removeEventFilter(this);
     m_window = fullscreen;
     m_main = main;
+    if (m_window)
+        m_window->installEventFilter(this);
+}
+
+bool VideoFullscreenController::eventFilter(QObject *watched, QEvent *event)
+{
+    // FS1: Qt Quick's hover for a still pointer repeats its point, so a move
+    // is a new point; one that left the window (another monitor) and comes
+    // back where it left is a move too.
+    if (watched == m_window && event->type() == QEvent::Leave)
+        m_pointer.reset();
+    return QObject::eventFilter(watched, event);
 }
 
 QQuickWindow *VideoFullscreenController::window() const
