@@ -194,6 +194,12 @@ target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
     HIKARI_S4_SCRIPTS="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/document-scripts")
 add_dependencies(hikari_ui_automation_document_scripts_tests hikari_lua_helper hikari_automation_stage
     hikari_media_helper hikari_media_fixtures)
+# KE1-template-timing: the karaoke templater's report in the status bar and the log window.
+hikari_add_qttest(hikari_ui_karaoke_report_tests SOURCES karaoke_report_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_karaoke_report_tests PRIVATE
+    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
+    HIKARI_KARAOKE_CORPUS="${PROJECT_SOURCE_DIR}/tests/backends/karaoke-corpus")
+add_dependencies(hikari_ui_karaoke_report_tests hikari_lua_helper hikari_automation_stage)
 # Y4-playres-ask: the script resolution question with real Lua helpers and media.
 hikari_add_qttest(hikari_ui_automation_resolution_tests SOURCES automation_resolution_tests.cpp
     LIBRARIES hikari_composition)
@@ -275,6 +281,14 @@ hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_test
 hikari_add_qttest(hikari_ui_update_apply_tests SOURCES update_apply_tests.cpp LIBRARIES hikari_composition)
 # For the compiler and moc alike: moc gets no _WIN32 under MSVC (update_apply_tests.cpp).
 target_compile_definitions(hikari_ui_update_apply_tests PRIVATE HIKARI_UPDATE_APPLY_WINDOWS_TESTS=$<BOOL:${WIN32}>)
+# The stand-in setup that holds the setup mutex: no Qt, so its start does not
+# depend on the runner's load (PowerShell's took over launch's 10 s once).
+if(WIN32)
+    add_executable(hikari_setup_mutex_helper setup_mutex_helper.cpp)
+    target_compile_definitions(hikari_ui_update_apply_tests PRIVATE
+        HIKARI_SETUP_MUTEX_HELPER="$<TARGET_FILE:hikari_setup_mutex_helper>")
+    add_dependencies(hikari_ui_update_apply_tests hikari_setup_mutex_helper)
+endif()
 # F3: the spell checker's Qt adapters and the Grid's marks; the shell tests use the fake backend.
 hikari_add_qttest(hikari_ui_spelling_tests SOURCES spelling_ui_tests.cpp LIBRARIES hikari_ui)
 target_include_directories(hikari_ui_spelling_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")

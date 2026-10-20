@@ -464,6 +464,48 @@ TEST_F(LuaHelper, StagedSubtitlesFollowTheLegacyObject)
     EXPECT_EQ(session.selection().active, session.document().lines()[0]->id);
 }
 
+// KE1: aegisub.hikari marks a line as generated from a Line; the mark comes
+// back with the result, stays on the Line in memory and reaches the next
+// run's subtitles object, where sources() follows the staged indices. A
+// report reaches the result, the last one winning.
+TEST_F(LuaHelper, GeneratedLineMarksAndTheReportRoundTrip)
+{
+    using namespace hikari::application;
+    auto session = macroSession();
+    auto host = load(fixture("hikari-api.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready);
+    auto snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Mark"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    const auto &result = *host->lastResult();
+    ASSERT_EQ(result.dialogues.size(), 5u);
+    EXPECT_EQ(result.dialogues[0].generatedFrom, 0u);
+    EXPECT_EQ(result.dialogues[3].generatedFrom, 1u);
+    EXPECT_EQ(result.dialogues[4].generatedFrom, 1u);
+    EXPECT_EQ(result.report, "marked");
+    ASSERT_TRUE(applyMacroResult(session, *snapshot, result, "Mark"));
+    const auto &lines = session.document().lines();
+    ASSERT_EQ(lines.size(), 5u);
+    EXPECT_EQ(lines[3]->generatedFrom, lines[0]->id);
+    EXPECT_EQ(lines[4]->generatedFrom, lines[0]->id);
+    EXPECT_FALSE(lines[0]->generatedFrom.value);
+
+    snapshot = snapshotForMacro(session);
+    ASSERT_TRUE(snapshot);
+    run = {};
+    ASSERT_TRUE(host->run(macro(*host, "Sources"), *snapshot));
+    ASSERT_TRUE(waitFor([&] { return run.outcome.has_value(); }));
+    ASSERT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << run.message.toStdString();
+    EXPECT_EQ(host->lastResult()->report, "8=5,9=5");
+
+    ASSERT_TRUE(session.undo());
+    for (const auto *l : session.document().lines())
+        EXPECT_FALSE(l->generatedFrom.value);
+}
+
 // S4: with validateFirst (protocol RunValidated) the macro's validation
 // function runs first with (subtitles, selected rows, active row) and the
 // macro runs only when it answers true, as legacy LuaCommand::Validate before

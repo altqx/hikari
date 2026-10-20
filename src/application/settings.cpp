@@ -271,6 +271,10 @@ const std::vector<SettingDefinition> &definitions()
         // AV2 (#239): the audio panel's sync toggle: the audio cursor follows
         // the playing video and the video the playing audio box. On by default.
         {"audio.syncVideo", "", Bool, Profile, Mapped, false, true},
+        // AU1 (#267): the audio panel's Play around button: the play its face
+        // shows and a click repeats, the last one chosen from its menu (an
+        // AUDIO_HOTKEY symbol). Starts on 500 ms before the start.
+        {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other
@@ -308,6 +312,9 @@ const std::vector<SettingDefinition> &definitions()
         // when the file opens. Off, the section is neither read nor written
         // (an existing one is kept as it is).
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
+        // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
+        // over the video (GLOBAL_VIDEO_RENDER_COST).
+        {"video.renderCost", "", Bool, Profile, Mapped, false, false},
     };
     return table;
 }

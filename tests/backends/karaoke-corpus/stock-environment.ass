@@ -1,0 +1,58 @@
+[Script Info]
+; Aegisub code execution environment and code lines pages (aegisub.org/docs/latest/automation/karaoke_templater/code_execution_environment, code_lines_and_blocks): retime modes, relayer, restyle, maxloop, remember/recall, fxgroup
+Title: KE1 corpus stock-environment
+ScriptType: v4.00+
+WrapStyle: 0
+PlayResX: 1280
+PlayResY: 720
+ScaledBorderAndShadow: yes
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Retime,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Env,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Alt,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Clip,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Mem,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Loops,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Long,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+Style: Blocks,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("syl",0, 0)!{\an5\pos($x,$y)\1c&H0000FF&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("presyl",-200, 0)!{\an5\pos($x,$y)\1c&H00FF00&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("postsyl",0, 300)!{\an5\pos($x,$y)\1c&HFF0000&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("line",-100, 100)!{\an5\pos($x,$y)\1c&H00FFFF&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("preline",-1000, 0)!{\an5\pos($x,$y)\1c&HFF00FF&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("postline",0, 500)!{\an5\pos($x,$y)\1c&HFFFF00&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("start2syl",0, 0)!{\an5\pos($x,$y)\1c&H808080&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("syl2end",0, 0)!{\an5\pos($x,$y)\1c&H404040&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("abs",1000, 2000)!{\an5\pos($x,$y)\1c&HC0C0C0&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("set",3000, 4000)!{\an5\pos($x,$y)\1c&H202020&}
+Comment: 0,0:00:00.00,0:00:05.00,Retime,,0,0,0,template syl,!retime("sylpct",0, 50)!{\an5\pos($x,$y)\1c&H101010&}
+Comment: 0,0:00:00.00,0:00:05.00,Env,,0,0,0,template syl,!retime("preline", -1000, 0)!{\pos($scenter,$smiddle)\an5\fscx0\fscy0\t(\fscx100\fscy100)}
+Comment: 0,0:00:00.00,0:00:05.00,Env,,0,0,0,template syl,!retime("sylpct", 0, 50)!{\move($x,$y,$x,!$y-10!)}
+Comment: 0,0:00:00.00,0:00:05.00,Env,,0,0,0,template syl,!retime("sylpct", 50, 100)!{\move($x,!$y-10!,$x,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Env,,0,0,0,template syl,!relayer(syl.i*5+20)!{\pos($x,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Env,,0,0,0,template syl,!restyle("Alt")!{\an5\pos($x,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Clip,,0,0,0,template syl,!maxloop(syl.width + 2*line.styleref.outline)!{\clip(!line.left+syl.left-line.styleref.outline+j-1!,0,!line.left+syl.left-line.styleref.outline+j!,!meta.res_y!)\an5\move(!line.left+syl.center!,!line.middle!,!line.left+syl.center!,!line.middle+math.random(-20,20)!,$start,$end)\shad0}
+Comment: 0,0:00:00.00,0:00:05.00,Mem,,0,0,0,template syl,{\frz!remember("entryrotation",math.random(100,200))!\fscx300\fscy300\t(0,300,\frz0\fscx100\fscy100)\pos($x,$y)}
+Comment: 0,0:00:00.00,0:00:05.00,Mem,,0,0,0,template syl,{\frz-!recall("entryrotation")!\fscx300\fscy300\t(0,300,\frz0\fscx100\fscy100)\pos($x,$y)\fad(300,0)}
+Comment: 0,0:00:00.00,0:00:05.00,Mem,,0,0,0,template syl,{\fscx!remember_if("longsyllables", recall("longsyllables", 100)+10, syl.duration>200)!}
+Comment: 0,0:00:00.00,0:00:05.00,Mem,,0,0,0,template syl,{\fscy!remember_line("w", syl.width)!!recall("w")!}
+Comment: 0,0:00:00.00,0:00:05.00,Loops,,0,0,0,template syl loop 5,{\an5\pos($scenter,$smiddle)\1a&HFF&\3a&Hcc&\t($start,$end,\fscx!100+j*10!\fscy!100+j*10!\3a&HFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,Loops,,0,0,0,template syl loop 20,{\move($x,$y,!$x+15*math.cos(math.pi*2*j/maxj)!,!$y+15*math.sin(math.pi*2*j/maxj)!,$start,$end)\t($start,$end,\alpha&HFF&)}
+Comment: 0,0:00:00.00,0:00:05.00,Long,,0,0,0,code syl,fxgroup.long = (syl.duration > 200)
+Comment: 0,0:00:00.00,0:00:05.00,Long,,0,0,0,template syl noblank,all here:
+Comment: 0,0:00:00.00,0:00:05.00,Long,,0,0,0,template syl fxgroup long,is long:
+Comment: 0,0:00:00.00,0:00:05.00,Blocks,,0,0,0,template syl,{\t($start,!syl.start_time+20!,\bord0)}
+Comment: 0,0:00:00.00,0:00:05.00,Blocks,,0,0,0,template syl,{\k!syl.duration > 100 and "f" or ""!$kdur}
+Comment: 0,0:00:00.00,0:00:05.00,Blocks,,0,0,0,template syl,{\pos($sleft,$stop)\an7}$si/$syln $sstart-$send $sdur $smid $swidth $sheight $sbottom $sright $lleft $lright $ltop $lbottom $lwidth $lheight $lmid $lstart $lend $ldur $li $layer $style $actor $margin_l $margin_r $margin_t $margin_b $margin_v
+Dialogue: 0,0:00:01.00,0:00:04.00,Retime,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Env,,0,0,0,,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Clip,,0,0,0,,{\k40}a{\k60}i
+Dialogue: 0,0:00:01.00,0:00:04.00,Mem,,0,0,0,,{\k12}ki{\k14}mi{\k0} {\k20}to{\k0}  {\k33}so{\k21}ra{\k0} {\k45}wo{\k0} {\k38}mi{\k57}ta
+Dialogue: 0,0:00:01.00,0:00:04.00,Loops,,0,0,0,,{\k32}ha{\k28}ru{\k0} {\k41}no{\k0} {\k25}ka{\k30}ze{\k0} {\k45}ga{\k0} {\k22}fu{\k60}ku
+Dialogue: 0,0:00:01.00,0:00:04.00,Long,,0,0,0,,{\k10}huh? {\k40}wee~~
+Dialogue: 0,0:00:01.00,0:00:04.00,Blocks,Singer,0,0,0,,{\k18}to{\k22}o{\k35}ku{\k0} {\k27}ma{\k31}de{\k0} {\k40}a{\k19}ru{\k24}i{\k35}te{\k50}ku

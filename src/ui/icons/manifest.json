@@ -2446,7 +2446,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "video-transport"
+    "video-transport",
+    "audio-box"
    ]
   },
   {
@@ -2563,6 +2564,50 @@
    "role": "audio-video-sync",
    "file": "audio-video-sync.svg",
    "label": "Sync the video and audio cursors",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "audio-line-mode",
+   "file": "audio-line-mode.svg",
+   "label": "Line timing mode",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "audio-waveform",
+   "file": "audio-waveform.svg",
+   "label": "Waveform mode",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "volume-quiet",
+   "file": "volume-quiet.svg",
+   "label": "Volume",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "volume-low",
+   "file": "volume-low.svg",
+   "label": "Volume",
    "accent": true,
    "mirror": false,
    "legacy": [],
@@ -2713,6 +2758,19 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
+    "video-context-menu",
+    "video-fullscreen"
+   ]
+  },
+  {
+   "role": "render-cost",
+   "file": "render-cost.svg",
+   "label": "Show / hide render cost",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:video",
     "video-context-menu",
     "video-fullscreen"
    ]
