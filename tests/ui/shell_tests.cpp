@@ -15218,8 +15218,9 @@ private slots:
         QTest::mouseMove(window, p);
         QTRY_VERIFY(!tools.overlay().isEmpty());
         QTRY_VERIFY(readoutY() && !readoutY()->property("text").toString().isEmpty());
-        QCOMPARE(readoutY()->mapToScene(QPointF(0, 0)), emptyAt);
-        QCOMPARE(readoutY()->width(), emptyWidth);
+        // (Once laid out: a field made again is placed at the next polish.)
+        QTRY_COMPARE(readoutY()->mapToScene(QPointF(0, 0)), emptyAt);
+        QTRY_COMPARE(readoutY()->width(), emptyWidth);
         QVERIFY(tools.hideCursor());
         const QVariantList shapes = tools.overlay();
         QCOMPARE(shapes.size(), 5); // two black lines, two white, the label
