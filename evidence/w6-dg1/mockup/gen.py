@@ -118,68 +118,64 @@ def checkbox(text, on):
 
 VERSION = "0.1.0 (portable)"
 
+# The Qt rewrite's own components (vcpkg.json, plus libass's text stack), with their licences.
 COMPONENTS = [
-    ("Qt", "© The Qt Company Ltd. and other contributors"),
-    ("KDDockWidgets", "© Klarälvdalens Datakonsult AB (KDAB)"),
-    ("Aegisub", "© Rodrigo Braz Monteiro: the colour picker, audio box, audio player, automation and several "
-                "other features"),
-    ("Hunspell", "© Kevin Hendricks"),
-    ("CSRI", "© David Lamparter (BSD licence) · Windows only"),
-    ("VSFilter", "© Gabest (GNU GPL 2 or later) · when VSFiltermod is installed"),
-    ("FFMPEGSource2", "© Fredrik Mellbin"),
-    ("FFmpeg", "© the FFmpeg developers"),
-    ("LuaJIT", "© Mike Pall"),
-    ("ICU", "© 1995-2016 International Business Machines Corporation and others"),
-    ("Boost", "© Joe Coder 2004 - 2006"),
-    ("FreeType2", "© 2006-2019 David Turner, Robert Wilhelm, and Werner Lemberg"),
-    ("Fribidi", "© 1991, 1999 Free Software Foundation, Inc."),
-    ("Libass", "© 2006-2016 libass contributors"),
+    ("Qt", "The Qt Company Ltd. and other contributors", "LGPL 3"),
+    ("KDDockWidgets", "Klarälvdalens Datakonsult AB (KDAB)", "GPL 2 or 3"),
+    ("FFmpeg", "The FFmpeg developers", "LGPL 2.1 or later"),
+    ("FFMS2", "Fredrik Mellbin and contributors", "MIT"),
+    ("libass", "libass contributors", "ISC"),
+    ("FreeType", "David Turner, Robert Wilhelm, Werner Lemberg and others", "FreeType licence"),
+    ("FriBidi", "FriBidi contributors", "LGPL 2.1 or later"),
+    ("HarfBuzz", "HarfBuzz contributors", "MIT"),
+    ("LuaJIT", "Mike Pall", "MIT"),
+    ("Boost", "Boost contributors", "Boost Software Licence 1.0"),
+    ("ICU", "Unicode, Inc. and others", "Unicode licence"),
+    ("Hunspell", "László Németh and others", "MPL 1.1, GPL 2 or LGPL 2.1"),
+    ("PortAudio", "Ross Bencina, Phil Burk and contributors", "MIT"),
+    ("curl", "Daniel Stenberg and contributors", "curl licence"),
+    ("PCRE2", "University of Cambridge and others", "BSD 3-clause"),
+    ("uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"),
+    ("CSRI", "David Lamparter · Windows only", "BSD"),
+    ("VSFilter", "Gabest and contributors · when VSFiltermod is installed", "GPL 2 or later"),
 ]
 
 
 def about(focus_copy=False, **kw):
-    rows = "".join(f'<div class="crow"><span class="cname">{n}</span><span class="cby">{b}</span></div>'
-                   for n, b in COMPONENTS)
     body = (
         '<div class="ahead">'
         f'<img class="alogo" src="{APP_ICON_64}" width="64" height="64" alt="">'
         '<div class="ameta"><div class="aname">HikariSub</div>'
         f'<div class="aver">Version {VERSION}'
         f'<span class="qb{" ring" if focus_copy else ""}" title="Copy version">{ic("edit-copy", 14)}</span></div>'
-        '<div class="aby">Subtitle editor by altqx. Based on Kainote by Marcin Drob aka Bakura or Bjakja.</div>'
+        '<div class="aby">Subtitle editor by altqx.</div>'
         '</div></div>'
+        '<p class="alic">HikariSub is free software under the GNU General Public License, version 3. It comes '
+        'with no warranty.</p>'
         '<div class="alinks">'
         f'<span class="lnk">{ic("link", 14)}HikariSub website</span>'
         f'<span class="lnk">{ic("report-issue", 14)}Report an issue</span></div>'
-        '<div class="seclabel">Includes parts of</div>'
-        f'<div class="clist"><div class="cscroll">{rows}</div><span class="sbar" style="top:4px;height:118px"></span></div>'
     )
-    return dialog("About HikariSub", body, btn("OK", primary=True, focus=not focus_copy), 500, **kw)
+    return dialog("About HikariSub", body, btn("OK", primary=True, focus=not focus_copy), 460, **kw)
 
 
-CREDITS = [
-    ("Graphics", [("Xandros", "New video buttons"), ("Devilkan", "Menu and toolbar buttons"),
-                  ("Zły Los", "Icons for file associations and menus")]),
-    ("Testing", [("Sacredus", "The first translator to use translation mode; great help testing HikariSub on a "
-                              "slow computer"),
-                 ("Devilkan", "Crash hunter: because of his system and habits he made HikariSub crash a lot; "
-                              "helped with the typesetting tools and came up with many more improvements"),
-                 ("MatiasMovie", "Found some crashes, suggested some improvements, helps with crash debugging"),
-                 ("mas1904", "Found some errors, helps with crash debugging"),
-                 ("Senami", "Made new themes and found some bugs")]),
-    ("Translation", [("altinat", "Thai"), ("labrie75", "Korean"), ("Niskala5570", "Malay")]),
+PEOPLE = [
+    ("Development", [("altqx", "Design and development")]),
+    ("Translation", [("altqx", "Korean, Polish, Tamil and Thai")]),
 ]
 
 
 def credits(**kw):
     s = []
-    for head, people in CREDITS:
+    for head, people in PEOPLE:
         s.append(f'<div class="seclabel">{head}</div><div class="plist">')
         s.extend(f'<span class="pname">{n}</span><span class="pwhat">{w}</span>' for n, w in people)
         s.append('</div>')
-    s.append('<div class="seclabel">Bug reports</div>'
-             '<p class="ptext">Thanks to the other HikariSub users who reported bugs: SoheiMajin, BadRequest, '
-             'Ognisty321, ZlyLos, Thomas Leigh, TomBit.</p>')
+    rows = "".join(f'<div class="crow"><span class="cname">{n}</span><span class="cby">© {by}'
+                   f'<span class="clic">{lic}</span></span></div>' for n, by, lic in COMPONENTS)
+    s.append('<div class="seclabel">Built with</div>'
+             f'<div class="clist"><div class="cscroll">{rows}</div>'
+             '<span class="sbar" style="top:4px;height:96px"></span></div>')
     return dialog("Credits", "".join(s), btn("OK", primary=True, focus=True), 540, **kw)
 
 
@@ -311,11 +307,13 @@ code{font:12px 'Liberation Mono',Consolas,monospace;background:%(raised)s;paddin
 .aver{display:flex;align-items:center;color:%(muted)s;margin-top:2px}
 .aby{margin-top:6px;line-height:1.4}
 .alinks{display:flex;gap:24px;margin-top:16px}
-.clist{position:relative;height:184px;background:%(field)s;outline:1px solid %(line)s;overflow:hidden}
+.clist{position:relative;height:250px;background:%(field)s;outline:1px solid %(line)s;overflow:hidden}
 .cscroll{padding:6px 14px 6px 10px}
 .crow{display:flex;gap:10px;line-height:18px;padding:2px 0}
 .cname{flex:none;width:104px}
 .cby{color:%(muted)s;flex:1}
+.clic{display:block;font-size:11px;color:%(muted)s;opacity:.85}
+.alic{margin-top:14px;line-height:1.45;color:%(muted)s}
 
 /* Credits */
 .plist{display:grid;grid-template-columns:110px 1fr;column-gap:12px;row-gap:5px;line-height:1.4}
@@ -360,14 +358,14 @@ def page(key, content, width=1280):
 
 def overview(key):
     th = THEMES[key]
-    # About, 500 wide, centred on the 1280x800 main window and moved 20 down (MuseScore's rule).
+    # About, 460 wide, centred on the 1280x800 main window and moved 20 down (MuseScore's rule).
     s = [f'<h1>DG1 dialog frame: About over the main window ({th["name"]})</h1>',
          '<p class="note">The dialog is its own top-level window in the custom title-bar style: the title, and '
          'Close (Maximise too when the dialog can be resized; never Minimise). It opens centred on the window '
          'that opened it, 20 lower, and later where it was left. It is modeless: the main window behind it stays '
          'usable and is not dimmed. Windows draws the shadow; on Wayland and X11 the frame is a 1-pixel line '
          'with no shadow, as SH1’s main window. The main window is today’s build (qt 9c1eef089).</p>',
-         f'<div class="app">{dialog_at(about(), 390, 108)}</div>']
+         f'<div class="app">{dialog_at(about(), 410, 270)}</div>']
     return "".join(s)
 
 
@@ -384,10 +382,11 @@ def dialogs(key):
          'string are examples.</p>',
          '<div class="row">',
          f'<div class="col">{about()}<p class="cap">About: fixed size. The version copies with the button '
-         'beside it. The links open the browser. The component list scrolls; CSRI and VSFilter show only where '
-         'they apply.</p></div>',
-         f'<div class="col">{credits()}<p class="cap">Credits: legacy’s people, grouped; translators get their '
-         'own group; spelling fixed (“suggessted”, “debuging”).</p></div>',
+         'beside it. The links open the browser. No legacy attribution; the GPL notice the licence asks of an '
+         'interactive program.</p></div>',
+         f'<div class="col">{credits()}<p class="cap">Credits: the Qt rewrite’s own people, and the components '
+         'it is built on (moved here from About) with their licences; the list scrolls. CSRI and VSFilter show '
+         'only where they apply.</p></div>',
          '</div>',
          '<div class="row" style="margin-top:28px">',
          f'<div class="col">{update_available()}<p class="cap">Update available: resizable (the notes grow). '
