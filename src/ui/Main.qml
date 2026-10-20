@@ -703,8 +703,14 @@ ApplicationWindow {
     // Focus a panel, activating its window first when that is not the focus
     // window (a floating panel, or the main window from one). Activation is
     // asynchronous on X11 and Wayland, and the window gives the focus to its
-    // own item when it activates, so the panel takes it again then.
+    // own item when it activates, so the panel takes it again then. A panel
+    // behind another tab of its group (TM1: the Original text and the Line
+    // editor tabbed together) comes to the front first.
     function focusPanel(panel, reason) {
+        const owner = root.panelOf(panel)
+        const dock = owner ? root.dockList[root.panels.indexOf(owner)] : null
+        if (dock && dock.isOpen && !owner.visible)
+            dock.raise()
         const w = panel.Window.window
         root.pendingFocus = null
         if (w && root.workspaceLayout.focusWindow !== w) {
@@ -2252,7 +2258,6 @@ ApplicationWindow {
             const linked = forward ? field.tabNext : field.tabPrevious
             const dock = linked === translationText ? editorDock : linked === lineText ? originalDock : null
             if (dock && dock.isOpen) {
-                dock.raise()
                 root.focusPanel(linked, reason)
                 return
             }
