@@ -200,9 +200,16 @@ void DialogPlacement::place(QWindow *opener, QSize natural)
     };
     if (dp::isWayland()) {
         // The compositor places the window: only a resizable dialog's size.
+        // As big as it was left up to the screen, as elsewhere.
         fit(screen, {});
         const QSize smallest = natural.boundedTo(m_room);
-        m_window->resize(saved && m_resizable ? saved->size().expandedTo(smallest) : smallest);
+        QSize size = smallest;
+        if (saved && m_resizable) {
+            size = saved->size().expandedTo(smallest);
+            if (screen)
+                size = size.boundedTo(screen->availableGeometry().size());
+        }
+        m_window->resize(size);
         return;
     }
     // The window system's frame is known once the window is made, and on

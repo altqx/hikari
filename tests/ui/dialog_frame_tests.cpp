@@ -311,6 +311,12 @@ private slots:
         QVERIFY(open(s));
         QCOMPARE(s.dialog->size(), natural + QSize(10, 10));
         QVERIFY(s.dialog->position() != at + QPoint(50, 50));
+        QMetaObject::invokeMethod(s.dialog, "close");
+        QTRY_VERIFY(!s.dialog->isVisible());
+        // Left bigger than this screen (another one, another resolution): the screen's.
+        store->setValue(QLatin1String(dp::kSetting), QStringList{QStringLiteral("test\t0,0,30000,20000")});
+        QVERIFY(open(s));
+        QCOMPARE(s.dialog->size(), s.dialog->screen()->availableGeometry().size());
     }
 
     void aDialogBiggerThanTheScreenFitsIt()
