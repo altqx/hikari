@@ -10045,6 +10045,56 @@ private slots:
         QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("X"));
     }
 
+    // TM1: the Original's runs are placed on the translation's words: Alt+1
+    // over a selection (again over the same one takes it off), a click on
+    // its chip, or Ctrl+B for a bold run. The chip fills when placed, the
+    // Original text shows the run's badge, and only the run's tags are added.
+    void tagsFromOriginalRunsArePlacedOnTheTranslation()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-runs.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high": run 1 is the bold "high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        const auto runs = application->editor().tagRuns();
+        QCOMPARE(runs.size(), 1);
+        QCOMPARE(runs[0].toMap().value("text").toString(), QStringLiteral("high"));
+        QCOMPARE(runs[0].toMap().value("kind").toString(), QStringLiteral("Bold"));
+        QVERIFY(!runs[0].toMap().value("placed").toBool());
+        QTRY_VERIFY(visualItem("runChip1") && visualItem("runChip1")->isVisible());
+        QTRY_VERIFY(visualItem("lineTextRun1") && visualItem("lineTextRun1")->isVisible());
+        QVERIFY(!visualItem("translationTextRun1")->isVisible());
+
+        application->editor().translationEdited(QStringLiteral("Mur wysoki"), 10);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur wysoki"));
+        translated->setProperty("cursorPosition", 4);
+        QVERIFY(QMetaObject::invokeMethod(translated, "select", Q_ARG(int, 4), Q_ARG(int, 10)));
+        press(Qt::Key_1, Qt::AltModifier);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wysoki"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("Mur wysoki"));
+        QCOMPARE(translated->property("selectedText").toString(), QStringLiteral("wysoki"));
+        QTRY_VERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("start").toInt(), 4);
+        QTRY_VERIFY(visualItem("translationTextRun1")->isVisible());
+        // The same selection again takes it off.
+        press(Qt::Key_1, Qt::AltModifier);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur wysoki"));
+        // Ctrl+B over "Mur" places the bold run there.
+        QVERIFY(QMetaObject::invokeMethod(translated, "select", Q_ARG(int, 0), Q_ARG(int, 3)));
+        press(Qt::Key_B, Qt::ControlModifier);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}{\\b1}Mur{\\b} wysoki"));
+        // The chip moves it to the selection.
+        QVERIFY(QMetaObject::invokeMethod(translated, "select", Q_ARG(int, 4), Q_ARG(int, 10)));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(visualItem("runChip1")));
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wysoki"));
+        QVERIFY(translated->hasActiveFocus());
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+    }
+
     // TM1: Paste all puts the Original's text in the Translated field with
     // its runs; a translation whose own tags differ from the Original's is
     // shown whole and left alone.

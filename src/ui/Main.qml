@@ -1941,6 +1941,57 @@ ApplicationWindow {
                     root.focusPanel(field, Qt.OtherFocusReason)
             }
         }
+        // TM1: the Original's runs (editor.tagRuns): a numbered badge where
+        // each starts in the Original text, and in the Translated text a
+        // badge and an underline under the text it is placed on.
+        Repeater {
+            model: root.editor.translationMode ? root.editor.tagRuns : []
+            delegate: Item {
+                id: mark
+                required property var modelData
+                readonly property int from: field.role === 0 ? modelData.originalStart : modelData.start
+                readonly property int to: field.role === 0 ? modelData.originalEnd : modelData.end
+                readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                objectName: field.objectName + "Run" + modelData.number
+                visible: from >= 0 && to > from && to <= field.length
+                anchors.fill: parent
+                z: 2
+                Rectangle {
+                    objectName: mark.objectName + "Badge"
+                    x: mark.first.x - width / 2
+                    y: mark.first.y - height / 2
+                    width: Math.max(badgeText.implicitWidth + 4, height)
+                    height: badgeText.implicitHeight
+                    radius: height / 2
+                    color: Theme.accent
+                    Label {
+                        id: badgeText
+                        anchors.centerIn: parent
+                        text: mark.modelData.number
+                        font.pixelSize: Math.max(8, field.font.pixelSize * 0.6)
+                        color: Theme.onAccent
+                    }
+                }
+                // The underline, over two rows at most (a wrapped run).
+                Rectangle {
+                    visible: field.role === 1
+                    x: mark.first.x
+                    y: mark.first.y + mark.first.height - 1
+                    width: (mark.last.y === mark.first.y ? mark.last.x : field.width - field.rightPadding) - mark.first.x
+                    height: 2
+                    color: Theme.accent
+                }
+                Rectangle {
+                    visible: field.role === 1 && mark.last.y > mark.first.y
+                    x: field.leftPadding
+                    y: mark.last.y + mark.last.height - 1
+                    width: mark.last.x - field.leftPadding
+                    height: 2
+                    color: Theme.accent
+                }
+            }
+        }
         // F3: the spell-checked field (legacy TextEdit: the Translated one in
         // translation mode) marks misspellings and bracket errors while
         // spelling is on, and its menu offers suggestions, the Spellchecker
@@ -3540,6 +3591,13 @@ ApplicationWindow {
                             visible: root.editor.translationMode
                             tabPrevious: root.originalShown ? lineText : null
                             Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
+                        }
+                        // TM1: the Original's runs, placed on the translation's words.
+                        RunStrip {
+                            editor: root.editor
+                            shellRoot: root
+                            translated: translationText
+                            Layout.fillWidth: true
                         }
                         // Legacy translation-mode buttons (EDITBOX_PASTE_*,
                         // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
@@ -6262,6 +6320,13 @@ ApplicationWindow {
         const edited = root.editor.translationMode ? translationText : lineText
         if (tags[action] !== undefined) {
             root.editor.toggleTagIn(field.role, tags[action], field.selectionStart, field.selectionEnd)
+            return true
+        }
+        // TM1: the Original's runs go on the Translated text's selection.
+        if (action.startsWith("EDITBOX_PLACE_RUN_") || action === "EDITBOX_PLACE_NEXT_RUN") {
+            const number = action === "EDITBOX_PLACE_NEXT_RUN" ? 0 : Number(action.substring(18))
+            if (field.role === 1)
+                root.editor.placeRun(number, field.selectionStart, field.selectionEnd)
             return true
         }
         if (colours[action] !== undefined) {
