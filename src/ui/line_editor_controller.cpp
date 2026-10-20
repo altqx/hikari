@@ -1,6 +1,7 @@
 #include "line_editor_controller.h"
 
 #include "hikari/application/translation_mode.h"
+#include "hikari/application/video_fullscreen.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/checked.h"
 #include "hikari/core/editor_font_colour.h"
@@ -276,7 +277,11 @@ QString LineEditorController::videoText() const
     const auto r = sessionRecord();
     if (!r)
         return {};
-    return qs(translationMode() && !r->translation.empty() ? r->translation : r->text);
+    // Only the part FS1's label reads, cut before the conversion.
+    const std::u8string &text = translationMode() && !r->translation.empty() ? r->translation : r->text;
+    const std::string_view cut =
+        application::fullscreenLineInput(std::string_view(reinterpret_cast<const char *>(text.data()), text.size()));
+    return QString::fromUtf8(cut.data(), qsizetype(cut.size()));
 }
 
 void LineEditorController::refresh()

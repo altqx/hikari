@@ -87,6 +87,13 @@ bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state)
 inline constexpr std::size_t kFullscreenLineInputBytes = 65536;
 inline constexpr std::size_t kFullscreenLineLabelUnits = 1024;
 std::string fullscreenLineText(std::string_view text);
+// The part of a Line's text the label reads: its first
+// kFullscreenLineInputBytes, cut back to a whole UTF-8 character (to take
+// before any copy of a Line of megabytes).
+std::string_view fullscreenLineInput(std::string_view text);
+// FS1-file-name-strip: a text on one row, its line breaks and line and
+// paragraph separators (\r, \n, VT, FF, NEL, U+2028, U+2029) as spaces.
+std::string fullscreenOneRow(std::string_view text);
 
 // VideoBox::RefreshTime (VideoBox.cpp:1366-1385): "<time> / <duration>",
 // each SubsTime::raw(TMP) ("%02i:%02i:%02i", SubsTime.cpp:96-100).

@@ -128,6 +128,25 @@ TEST(VideoFullscreenBar, UnicodeSeparatorsAreSpaces)
     EXPECT_EQ(fullscreenLineText("\xE2\x80\xA8  edge \xE2\x80\xA9"), "edge");
 }
 
+TEST(VideoFullscreenBar, TheLabelsInputIsCutBeforeAnyCopy)
+{
+    const std::string big(3 * kFullscreenLineInputBytes, 'a');
+    EXPECT_EQ(fullscreenLineInput(big).size(), kFullscreenLineInputBytes);
+    EXPECT_EQ(fullscreenLineInput(big).data(), big.data()); // a view, no copy
+    EXPECT_EQ(fullscreenLineInput("short"), "short");
+    // An é across the cut: left out whole.
+    const std::string across = std::string(kFullscreenLineInputBytes - 1, 'a') + "\xC3\xA9";
+    EXPECT_EQ(fullscreenLineInput(across), std::string(kFullscreenLineInputBytes - 1, 'a'));
+}
+
+TEST(VideoFullscreenBar, TheFileNameOnOneRow)
+{
+    EXPECT_EQ(fullscreenOneRow("Episode 01.mkv"), "Episode 01.mkv");
+    EXPECT_EQ(fullscreenOneRow("a\nb\rc\vd\fe"), "a b c d e");
+    EXPECT_EQ(fullscreenOneRow("a\xE2\x80\xA8" "b\xE2\x80\xA9" "c\xC2\x85" "d"), "a b c d");
+    EXPECT_EQ(fullscreenOneRow("\xE2\x80\xA6 \xC3\xA9"), "\xE2\x80\xA6 \xC3\xA9"); // other characters kept
+}
+
 TEST(VideoFullscreenBar, TheLineLabelIsBounded)
 {
     // A Line of megabytes: the label's length, not the Line's.

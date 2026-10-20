@@ -202,7 +202,11 @@ QString VideoFullscreenController::progressText() const
 
 QString VideoFullscreenController::videoName() const
 {
-    return m_video.hasVideo() ? QFileInfo(QString::fromStdString(m_video.session().path())).fileName() : QString();
+    if (!m_video.hasVideo())
+        return {};
+    // One row in the strip, whatever the file system allows in a name.
+    const QString name = QFileInfo(QString::fromStdString(m_video.session().path())).fileName();
+    return QString::fromStdString(application::fullscreenOneRow(name.toStdString()));
 }
 
 bool VideoFullscreenController::toggle(int monitor)

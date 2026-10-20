@@ -29,6 +29,7 @@
 #include "hikari/application/visual_scale.h"
 #include "hikari/application/visual_shift.h"
 #include "hikari/application/grid_translation.h"
+#include "hikari/application/video_fullscreen.h"
 #include "icon_theme.h"
 #include "all_tags_editor.h"
 #include "shape_editor.h"
@@ -22875,9 +22876,49 @@ private slots:
         QTRY_COMPARE(editor.videoText(), QStringLiteral("tl two"));
         editor.translationEdited(QStringLiteral("tl draft"), 8);
         QTRY_COMPARE(editor.videoText(), QStringLiteral("tl draft"));
+        // Only what the label reads, cut before the conversion.
+        const QString huge(3 * int(application::kFullscreenLineInputBytes), QLatin1Char('a'));
+        editor.translationEdited(huge, int(huge.size()));
+        QTRY_COMPARE(editor.videoText().size(), qsizetype(application::kFullscreenLineInputBytes));
         editor.discard();
         session->setSelection(application::Selection{lines[1]->id, {lines[1]->id}, lines[1]->id, {}});
         QTRY_COMPARE(editor.videoText(), QStringLiteral("untranslated three"));
+    }
+
+    // FS1: the file name's strip and the bar between its controls take their
+    // clicks; they are not the picture's (VIDEO_PAUSE_ON_CLICK, a tool).
+    void videoFullscreenStripAndBarTakeTheirClicks()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        application->settingsStore()->set("video.pauseOnClick", true);
+        auto &fs = application->videoFullscreen();
+        auto &video = application->video();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto *title = fullscreenItem("videoFullscreenTitle");
+        auto *panel = fullscreenItem("videoFullscreenPanel");
+        QTRY_VERIFY(title->isVisible());
+        QTRY_VERIFY(panel->isVisible());
+        QVERIFY(!video.playing());
+        const QPoint onTitle = title->mapToScene(QPointF(title->width() / 2, title->height() / 2)).toPoint();
+        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, onTitle);
+        QTest::qWait(100);
+        QVERIFY(!video.playing());
+        // Above the slider, inside the bar's top margin.
+        const QPoint betweenControls = panel->mapToScene(QPointF(panel->width() / 2, 2)).toPoint();
+        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, betweenControls);
+        QTest::qWait(100);
+        QVERIFY(!video.playing());
+        QVERIFY(fs.active());
+        // The picture's click still plays.
+        const QPoint picture(fsWindow->width() / 2, fsWindow->height() / 3);
+        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, picture);
+        QTRY_VERIFY(video.playing());
+        QVERIFY(video.pause());
+        QVERIFY(fs.leave());
     }
 
     // The bar's Open editor is the context menu's: with the Line editor

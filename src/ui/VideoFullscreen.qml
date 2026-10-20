@@ -191,6 +191,8 @@ Window {
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: 200 } }
             HoverHandler { cursorShape: Qt.ArrowCursor }
+            // Its clicks are not the picture's (pause on click, a tool's gesture).
+            MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
             Rectangle {
                 anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
                 height: 1
@@ -202,6 +204,8 @@ Window {
                           leftMargin: 12; rightMargin: 12 }
                 text: fs.controller.videoName
                 textFormat: Text.PlainText // a file's name, never markup
+                maximumLineCount: 1
+                clip: true
                 color: Theme.text
                 elide: Text.ElideMiddle
             }
@@ -325,6 +329,8 @@ Window {
                 cursorShape: Qt.ArrowCursor
                 onHoveredChanged: fs.controller.pointerOverBar = hovered
             }
+            // Clicks between its controls are not the picture's either.
+            MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
             // VideoBox.cpp:519-534: the wheel below the picture is the volume's.
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad

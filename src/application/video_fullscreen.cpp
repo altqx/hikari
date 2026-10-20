@@ -79,10 +79,8 @@ std::string fullscreenLineText(std::string_view text)
     // \pN only) show nothing, and an unclosed or nested block hides what it
     // covers. Bounded: core::project makes a span per character, and a
     // Line's text has no limit.
-    std::size_t cut = std::min(text.size(), kFullscreenLineInputBytes);
-    while (cut > 0 && cut < text.size() && (static_cast<unsigned char>(text[cut]) & 0xC0) == 0x80)
-        --cut; // not in a character
-    const std::u16string raw = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(text.data()), cut));
+    const std::string_view input = fullscreenLineInput(text);
+    const std::u16string raw = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(input.data()), input.size()));
     std::u16string out;
     bool space = false; // white space, then a break, wait for the next shown character
     bool lineBreak = false;
@@ -125,6 +123,36 @@ std::string fullscreenLineText(std::string_view text)
     }
     const std::u8string utf8 = core::toUtf8(out);
     return {reinterpret_cast<const char *>(utf8.data()), utf8.size()};
+}
+
+std::string_view fullscreenLineInput(std::string_view text)
+{
+    std::size_t cut = std::min(text.size(), kFullscreenLineInputBytes);
+    while (cut > 0 && cut < text.size() && (static_cast<unsigned char>(text[cut]) & 0xC0) == 0x80)
+        --cut; // not in a character
+    return text.substr(0, cut);
+}
+
+std::string fullscreenOneRow(std::string_view text)
+{
+    std::string out;
+    out.reserve(text.size());
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        const unsigned char c = static_cast<unsigned char>(text[i]);
+        if (c == '\r' || c == '\n' || c == '\v' || c == '\f') {
+            out += ' ';
+        } else if (c == 0xC2 && i + 1 < text.size() && static_cast<unsigned char>(text[i + 1]) == 0x85) {
+            out += ' '; // NEL
+            ++i;
+        } else if (c == 0xE2 && i + 2 < text.size() && static_cast<unsigned char>(text[i + 1]) == 0x80 &&
+                   (static_cast<unsigned char>(text[i + 2]) == 0xA8 || static_cast<unsigned char>(text[i + 2]) == 0xA9)) {
+            out += ' '; // U+2028, U+2029
+            i += 2;
+        } else {
+            out += static_cast<char>(c);
+        }
+    }
+    return out;
 }
 
 namespace {
