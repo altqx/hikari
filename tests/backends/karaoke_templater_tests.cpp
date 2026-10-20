@@ -658,6 +658,53 @@ TEST_F(KaraokeTemplater, RegenerateSelectedTellsIdenticalOutputsApartByOrder)
     EXPECT_EQ(saved(session), templatedBytes(bytesOf(input + edited), bundledScript()));
 }
 
+// In a file, a karaoke Line that now generates fewer lines (here none: it is
+// no longer a karaoke Line) leaves old generated lines nothing accounts for.
+// They are the selected Lines' only when they can be: of a selected Line's
+// style or its lines' now, and between the generated lines of the karaoke
+// Lines around it. Otherwise the run is refused rather than deleting them.
+TEST_F(KaraokeTemplater, RegenerateSelectedRefusesLinesLeftFromAnotherLine)
+{
+    const auto notKaraoke = [](hikari::application::EditSession &session, hikari::core::LineId line) {
+        select(session, {line});
+        hikari::application::DraftChange change;
+        change.effect = u8"";
+        return session.editDraft(line, change) && session.commitDraft();
+    };
+    {
+        // T2c's old lines are not of T1a's style.
+        hikari::application::EditSession session(
+            hikari::core::loadAss(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.out.ass"))).document);
+        std::optional<hikari::core::LineId> t2c;
+        for (const auto *l : session.document().lines())
+            if (l->style == u8"T2c" && l->effect == u8"karaoke")
+                t2c = l->id;
+        ASSERT_TRUE(t2c);
+        ASSERT_TRUE(notKaraoke(session, *t2c));
+        select(session, {lineWithText(session.document(), kFirstT1a, u8"karaoke")->id});
+        EXPECT_EQ(outcomeOf(session, bundledScript(), kSelected), LuaScriptHost::RunOutcome::Cancelled);
+        EXPECT_TRUE(run.log.join(QString()).contains(QStringLiteral("Cannot tell which generated lines")));
+    }
+    {
+        // The first T1a Line's old lines are of the last one's style, but
+        // before the other karaoke Lines' generated lines, not after them.
+        const std::string again =
+            "Dialogue: 0,0:00:01.85,0:00:09.06,T1a,,0,0,0,,{\\k32}ha{\\k28}ru{\\k0} {\\k41}no{\\k0} {\\k25}ka{\\k30}ze"
+            "{\\k0} {\\k45}ga{\\k0} {\\k22}fu{\\k60}ku\n";
+        const std::string input = textOf(readBytes(corpusDir() + QStringLiteral("/stock-tutorials.ass")));
+        hikari::application::EditSession session(
+            hikari::core::loadAss(bytesOf(templatedBytes(bytesOf(input + again), bundledScript()))).document);
+        std::vector<hikari::core::LineId> copies;
+        for (const auto *l : session.document().lines())
+            if (l->text == kFirstT1a && l->effect == u8"karaoke" && l->style == u8"T1a")
+                copies.push_back(l->id);
+        ASSERT_EQ(copies.size(), 2u);
+        ASSERT_TRUE(notKaraoke(session, copies.front()));
+        select(session, {copies.back()});
+        EXPECT_EQ(outcomeOf(session, bundledScript(), kSelected), LuaScriptHost::RunOutcome::Cancelled);
+    }
+}
+
 // TLMode: a translated karaoke Line is templated from its translation, and
 // its generated lines carry its original text as theirs. When a karaoke
 // Line's original changed, its old generated lines are not what the

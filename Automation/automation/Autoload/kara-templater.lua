@@ -1134,8 +1134,57 @@ end
 -- karaoke Lines. A generated line whose karaoke Line is unknown (the Document
 -- came from a file) is matched against what the templates give the other
 -- unmarked karaoke Lines now; the ones no other karaoke Line accounts for are
--- the chosen Lines'. Also returns the first of those. Nil when another
--- karaoke Line's output is not there as the templates give it now.
+-- the chosen Lines' (see owned). Also returns the first of those. Nil when
+-- another karaoke Line's output is not there as the templates give it now,
+-- or a line left over may be another karaoke Line's.
+-- The chosen karaoke Lines that may own generated lines nothing else
+-- accounts for: those without marked ones, each with the styles its lines
+-- can have (its own, and those of its lines now) and, when the other karaoke
+-- Lines' generated lines lie in their order as a run leaves them, the part of
+-- the file between those of the karaoke Lines before and after it.
+local function owners_of(subs, outputs, chosen, known, others, spans)
+	local ordered, last = true, 0
+	for _, source in ipairs(others) do
+		local span = spans[source]
+		if span then
+			ordered = ordered and span.from > last
+			last = span.to
+		end
+	end
+	local owners = {}
+	for source in pairs(chosen) do
+		if not known[source] then
+			local owner = { styles = { [subs[source].style] = true }, after = 0, before = math.huge }
+			for _, l in ipairs(outputs[source] or {}) do
+				owner.styles[l.style] = true
+			end
+			if ordered then
+				for _, other in ipairs(others) do
+					local span = spans[other]
+					if span and other < source then
+						owner.after = math.max(owner.after, span.to)
+					elseif span and other > source then
+						owner.before = math.min(owner.before, span.from)
+					end
+				end
+			end
+			table.insert(owners, owner)
+		end
+	end
+	return owners
+end
+
+-- Whether generated line `l`, at `i`, can be one of the owners'. Otherwise it
+-- may be left from another karaoke Line that now generates fewer lines.
+local function owned(owners, l, i)
+	for _, owner in ipairs(owners) do
+		if owner.styles[l.style] and i > owner.after and i < owner.before then
+			return true
+		end
+	end
+	return false
+end
+
 local function find_generated(subs, outputs, chosen, generated_from, unknown)
 	local old, known = {}, {}
 	for i = 1, #subs do
@@ -1159,7 +1208,7 @@ local function find_generated(subs, outputs, chosen, generated_from, unknown)
 		pool[key] = pool[key] or { next = 1 }
 		table.insert(pool[key], i)
 	end
-	local others = {}
+	local others, spans = {}, {}
 	for source in pairs(outputs) do
 		if not chosen[source] and not known[source] then
 			table.insert(others, source)
@@ -1172,13 +1221,21 @@ local function find_generated(subs, outputs, chosen, generated_from, unknown)
 			if not list or list.next > #list then
 				return nil
 			end
-			taken[list[list.next]] = true
+			local at = list[list.next]
+			taken[at] = true
 			list.next = list.next + 1
+			local span = spans[source] or { from = at, to = at }
+			span.from, span.to = math.min(span.from, at), math.max(span.to, at)
+			spans[source] = span
 		end
 	end
+	local owners = owners_of(subs, outputs, chosen, known, others, spans)
 	local first
 	for _, i in ipairs(unknown) do
 		if not taken[i] then
+			if not owned(owners, subs[i], i) then
+				return nil
+			end
 			table.insert(old, i)
 			first = math.min(first or i, i)
 		end
