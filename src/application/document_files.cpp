@@ -187,9 +187,7 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
     if (!snapshot)
         return std::unexpected(SaveRefusal::InvalidDraft);
     auto activeLine = activeLineToSave(*entry->session); // S4: as GetAssHeader
-    std::optional<std::u8string> layout;
-    if (m_layoutSource && snapshot->document.format() == core::SubtitleFormat::Ass)
-        layout = m_layoutSource(document);
+    auto layout = layoutToSave(document, snapshot->document);
     core::Document saved = withActiveLine(std::move(snapshot->document), activeLine);
     if (layout)
         saved.setHikariProperty(kLayoutKey, *layout);
@@ -202,6 +200,13 @@ std::expected<SavePlan, SaveRefusal> DocumentFiles::prepareSave(DocumentId docum
                     saveAs.has_value() && *saveAs != entry->destination,
                     std::move(activeLine),
                     std::move(layout)};
+}
+
+std::optional<std::u8string> DocumentFiles::layoutToSave(DocumentId document, const core::Document &saved) const
+{
+    if (!m_layoutSource || saved.format() != core::SubtitleFormat::Ass)
+        return std::nullopt;
+    return m_layoutSource(document);
 }
 
 std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, bool overwriteExternalChange)

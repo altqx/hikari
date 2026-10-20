@@ -1384,6 +1384,10 @@ private:
     // The arrangement the Document's file holds, when the setting is on and
     // it validates; `report`: one that does not is named in the log.
     std::optional<QByteArray> fileArrangement(application::DocumentId document, bool report = false);
+    // A tab made from a file's bytes (opened, recovered, a Matroska track)
+    // starts with the arrangement the file holds; one that does not
+    // validate is named in the log.
+    void takeFileArrangement(application::DocumentId document);
     // A file opened into the tab of `old`: the arrangement its file holds,
     // else WS1's start.
     void openIntoTabArrangement(application::DocumentId old, application::DocumentId replacement);

@@ -149,6 +149,9 @@ public:
     const core::AssSaveOptions &saveOptions() const { return m_saveOptions; }
     // WS2: where prepareSave takes the panel arrangement an ASS save writes.
     void setLayoutSource(LayoutSource source) { m_layoutSource = std::move(source); }
+    // The arrangement a save of the Document writes now: an ASS Document's,
+    // from the layout source; none for other formats or without a source.
+    std::optional<std::u8string> layoutToSave(DocumentId document, const core::Document &saved) const;
 
 private:
     struct Entry {

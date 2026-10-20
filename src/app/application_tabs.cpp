@@ -313,6 +313,12 @@ std::optional<QByteArray> Application::fileArrangement(application::DocumentId d
     return std::nullopt;
 }
 
+void Application::takeFileArrangement(application::DocumentId document)
+{
+    if (const auto file = fileArrangement(document, true))
+        m_workspaceLayout->setFileArrangement(document.value, *file);
+}
+
 void Application::openIntoTabArrangement(application::DocumentId old, application::DocumentId replacement)
 {
     const auto file = fileArrangement(replacement);

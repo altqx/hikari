@@ -1,10 +1,11 @@
 // WS2 (#216): an ASS file keeps its Document tab's panel arrangement in a
-// [Hikari] section. A save writes the tab's (a layout change alone marks
-// nothing modified); opening the file gives its tab that arrangement, the
-// floating panels placed from the main window; a restored Session's own
-// arrangement takes precedence; a file without one, or one that does not
-// validate, follows WS1's new-tab rule. "Save panel layout in subtitle
-// files" off, the section is neither read nor written and stays as it is.
+// [Hikari] section. A save or an autosave writes the tab's (a layout change
+// alone marks nothing modified); opening the file, or recovering it, gives
+// its tab that arrangement, the floating panels placed from the main
+// window; a restored Session's own arrangement takes precedence; a file
+// without one, or one that does not validate, follows WS1's new-tab rule.
+// "Save panel layout in subtitle files" off, the section is neither read
+// nor written and stays as it is.
 // Other formats keep the arrangement only in the Session.
 
 #include "hikari/app/application.h"
@@ -19,6 +20,7 @@
 #include <kddockwidgets/LayoutSaver.h>
 #include <kddockwidgets/core/DockRegistry.h>
 
+#include <QDirIterator>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -127,11 +129,12 @@ class FileLayoutsTest : public QObject {
     std::unique_ptr<QQmlApplicationEngine> engine;
 
     QString path(const char *name) const { return dir.filePath(QLatin1String(name)); }
-    void start()
+    void start(const QString &recovery = {})
     {
         app::Application::Options options;
         options.settingsFile = path("hikari.ini");
         options.playbackAudio = false;
+        options.recoveryDir = recovery;
         application = std::make_unique<app::Application>(options);
         engine = std::make_unique<QQmlApplicationEngine>();
         QVERIFY(ui::attachDocking(*engine));
@@ -899,6 +902,73 @@ private slots:
         QTRY_VERIFY(isOpen("videoDock")); // a copy of the tab as it was
         QVERIFY(!isFloating("audioDock"));
         QVERIFY(application->log().history().contains(QStringLiteral("position.ass")));
+        stop();
+    }
+
+    // An autosave writes the tab's arrangement as a save does, and the open
+    // Document takes it (still as modified as it was); the copy recovered
+    // after a crash starts with it.
+    void aRecoveredCopyKeepsItsArrangement()
+    {
+        const QString file = write(path("r.ass"), kAss);
+        const QString recovery = path("Recovery");
+        const QString kept = path("Recovery-kept");
+        start(recovery);
+        QVERIFY(application->openFile(file));
+        close("videoDock");
+        float_("audioDock", true);
+        QTRY_VERIFY(settled());
+        const auto target = *application->workspace().editingTarget();
+        auto *session = application->files().session(target);
+        const auto line = session->document().lines().front()->id;
+        session->run(application::Command{"Set text", session->revision(), {line},
+                                          [&](core::Document &d) { return d.setLineText(line, u8"changed"); }});
+        QVERIFY(application->autosaveNow());
+        QVERIFY(targetDirty());
+        QByteArray layout;
+        QDirIterator files(recovery, QDir::Files, QDirIterator::Subdirectories);
+        while (layout.isEmpty() && files.hasNext())
+            layout = layoutLine(readAll(files.next()));
+        QCOMPARE(layout, application->workspaceLayout().fileArrangement(target.value));
+        const auto taken = session->document().hikariProperty(application::kLayoutKey);
+        QVERIFY(taken && QByteArrayView(reinterpret_cast<const char *>(taken->data()), qsizetype(taken->size())) == layout);
+        QVERIFY(!readAll(file).contains("[Hikari]")); // the file itself only on Save
+        // As a crash leaves it: the work kept, the session's lock gone.
+        for (QDirIterator it(recovery, QDir::Files, QDirIterator::Subdirectories); it.hasNext();) {
+            const QString from = it.next();
+            const QString to = kept + from.mid(recovery.size());
+            QVERIFY(QDir().mkpath(QFileInfo(to).path()));
+            if (!from.endsWith(QStringLiteral(".lock")))
+                QVERIFY(QFile::copy(from, to));
+        }
+        stop();
+        QVERIFY(QDir(recovery).removeRecursively());
+        QVERIFY(QDir().rename(kept, recovery));
+
+        start(recovery);
+        QVERIFY(isOpen("videoDock"));
+        const QVariantList bundles = application->recoveryBundles();
+        QCOMPARE(bundles.size(), qsizetype(1));
+        const QVariantMap bundle = bundles.first().toMap();
+        const QVariantMap generation = bundle.value(QStringLiteral("generations")).toList().first().toMap();
+        QVERIFY(application->recoverBundle(bundle.value(QStringLiteral("key")).toString(),
+                                           generation.value(QStringLiteral("generation")).toULongLong()));
+        QTRY_VERIFY(!isOpen("videoDock"));
+        QVERIFY(isFloating("audioDock"));
+        QCOMPARE(floatingWindows(), 1);
+        stop();
+    }
+
+    // A file opened from the legacy autosave folder is a new tab made from
+    // a file: it starts with the arrangement the file holds.
+    void aLegacyAutosaveOpensWithItsArrangement()
+    {
+        const QString file = write(path("legacy.ass"), kAss + "\n[Hikari]\nLayout=" + fileLayout() + "\n");
+        start();
+        QVERIFY(isOpen("videoDock"));
+        QVERIFY(application->openLegacyAutosave(file));
+        QTRY_VERIFY(!isOpen("videoDock"));
+        QVERIFY(isFloating("audioDock"));
         stop();
     }
 

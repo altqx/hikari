@@ -1463,8 +1463,7 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
     // WS2: the tab takes the arrangement its file keeps (a Session's, set
     // after this, takes precedence). A file opened as the reference keeps it
     // for when it becomes a tab (closeReference, promoteReference).
-    if (const auto file = fileArrangement(*id, true))
-        m_workspaceLayout->setFileArrangement(id->value, *file);
+    takeFileArrangement(*id);
     recordFileTime(*id);
     if (!asReference)
         rememberRecent(QFileInfo(path).absoluteFilePath().toStdString());
@@ -2778,9 +2777,14 @@ bool Application::autosave(application::DocumentId document)
     application::RecoveryContent content;
     // S4: legacy's autosave is SaveFile too, so it writes the active Line
     // into the file and the open Document (SubsGridBase.cpp:1470 at 20d647c4).
+    // WS2: and the tab's panel arrangement, as a save does, so a recovered
+    // copy has it.
     const auto activeLine = application::activeLineToSave(*session);
-    content.bytes = core::encodeSubtitle(application::withActiveLine(session->document(), activeLine),
-                                         m_files->saveOptions()); // E5: as SaveFile
+    const auto layout = m_files->layoutToSave(document, session->document());
+    core::Document saved = application::withActiveLine(session->document(), activeLine);
+    if (layout)
+        saved.setHikariProperty(application::kLayoutKey, *layout);
+    content.bytes = core::encodeSubtitle(saved, m_files->saveOptions()); // E5: as SaveFile
     const auto format = session->document().format();
     content.extension = format == core::SubtitleFormat::Ass || format == core::SubtitleFormat::PlainText ? "ass"
                         : format == core::SubtitleFormat::Srt                                            ? "srt"
@@ -2803,6 +2807,8 @@ bool Application::autosave(application::DocumentId document)
         return false;
     if (activeLine)
         session->amendScriptInfo(application::kActiveLineKey, *activeLine);
+    if (layout)
+        session->amendHikariProperty(application::kLayoutKey, *layout);
     return true;
 }
 
@@ -2864,6 +2870,7 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
             selectRow(id, 0); // InsertSelection(currentLine) of a new tab
         }
         m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
+        takeFileArrangement(id); // WS2: as a file opened in a new tab
         m_matroskaPaths[id.value] = subsPath;
         m_tabMedia[id.value]; // a new tab: no media of its own yet
         m_workspace.setEditingTarget(id);
@@ -2938,6 +2945,7 @@ bool Application::recoverBundle(const QString &key, qulonglong generation)
     }
     m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)")
                             .arg(QString::fromStdString(content->title)).toStdString());
+    takeFileArrangement(id); // WS2: the arrangement the autosave kept
     m_workspace.setEditingTarget(id);
     refreshViews();
     return true;
@@ -3017,6 +3025,7 @@ bool Application::openLegacyAutosave(const QString &file)
     if (auto *session = m_files->session(id))
         selectLegacyActiveLine(*session);
     m_workspace.add(id, QCoreApplication::translate("HikariSub.Session", "%1 (recovered)").arg(QFileInfo(file).fileName()).toStdString());
+    takeFileArrangement(id); // WS2
     m_tabMedia[id.value]; // a new tab
     m_workspace.setEditingTarget(id);
     refreshViews();
