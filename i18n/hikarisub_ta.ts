@@ -33,18 +33,26 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation>கிடைமட்ட நீட்சி</translation>
+        <translation type="vanished">கிடைமட்ட நீட்சி</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation>செங்குத்து நீட்சி</translation>
+        <translation type="vanished">செங்குத்து நீட்சி</translation>
     </message>
     <message>
         <source>Volume</source>
         <translation>ஒலியளவு</translation>
     </message>
     <message>
-        <source>Link</source>
+        <source>Linked to vertical stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -88,56 +96,28 @@
         <translation>பிளேபேக்கை நிறுத்துங்கள்</translation>
     </message>
     <message>
-        <source>Before mark</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play before the tag</source>
         <translation>குறிச்சொல்லுக்கு முன் விளையாடுங்கள்</translation>
-    </message>
-    <message>
-        <source>After mark</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play after the tag</source>
         <translation>குறிச்சொல்லுக்குப் பிறகு விளையாடுங்கள்</translation>
     </message>
     <message>
-        <source>500 before</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms before the start time</source>
         <translation>தொடக்க நேரத்திற்கு முன் 500 மி.வி. இயக்கவும்</translation>
-    </message>
-    <message>
-        <source>500 first</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play 500 ms after the start time</source>
         <translation>தொடக்க நேரத்திற்குப் பிறகு 500 மி.வி. இயக்கவும்</translation>
     </message>
     <message>
-        <source>500 last</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms before the end time</source>
         <translation>இறுதி நேரத்திற்கு முன் 500 மி.வி. இயக்கவும்</translation>
     </message>
     <message>
-        <source>500 after</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Play 500ms after the end time</source>
         <translation>இறுதி நேரத்திற்குப் பிறகு 500 மி.வி. இயக்கவும்</translation>
-    </message>
-    <message>
-        <source>To end</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Play to the end</source>
@@ -168,10 +148,6 @@
         <translation>மாற்றங்களைப் பயன்படுத்துங்கள்</translation>
     </message>
     <message>
-        <source>Go</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Go to selection</source>
         <translation>தேர்வுக்குச் செல்லுங்கள்</translation>
     </message>
@@ -192,16 +168,8 @@
         <translation>எழுத்துக்களின் தானியங்கி பிளவுகளை இயக்கவும் / முடக்கவும்</translation>
     </message>
     <message>
-        <source>Auto</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Automatically apply changes</source>
         <translation>மாற்றங்களை தானாக ஒப்புதல் அளிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Next</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Go to the next line after applying changes</source>
@@ -216,20 +184,77 @@
         <translation>செயலில் உள்ள வரிக்கு தானாக ச்க்ரோல்</translation>
     </message>
     <message>
+        <source>Spectrum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1×</source>
+        <extracomment>The audio panel&apos;s zoom readout; %1 is the magnification</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back to line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms before the start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the first 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play the last 500 ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play 500 ms after the end</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play before the mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play after the mark</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Commit options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waveform</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Waveform mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spectrum mode</source>
+        <translation>ச்பெக்ட்ரம் பயன்முறை</translation>
+    </message>
+    <message>
         <source>Sync with video</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sync the video and audio cursors</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spectrum</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spectrum mode</source>
-        <translation>ச்பெக்ட்ரம் பயன்முறை</translation>
     </message>
     <message>
         <source>Speech</source>
@@ -240,12 +265,49 @@
         <translation>ச்பெக்ட்ரம் பேச்சு அதிர்வெண் மேம்பாடு</translation>
     </message>
     <message>
-        <source>Output device</source>
+        <source>More audio options</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Output device: %1</source>
-        <extracomment>The audio panel&apos;s speaker button; %1 is the device audio plays through now</extracomment>
+        <source>Speech (non-linear spectrum)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom: horizontal and vertical stretching</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Horizontal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Vertical</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift+wheel and Ctrl+wheel on the waveform zoom too</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume and output device</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1
+Output device: %2</source>
+        <extracomment>The audio panel&apos;s speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Volume: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -280,10 +342,6 @@
     <message>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Audio settings…</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -324,6 +382,24 @@
     <message>
         <source>Force stop</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>This file names scripts: %1 and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This file names scripts: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Subtitle scripts</source>
@@ -376,24 +452,6 @@
     <message>
         <source>Log</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This file names scripts: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>This file names scripts: %1 and %n more</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message numerus="yes">
-        <source>and %n more</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message>
         <source>Loading a script runs its code.</source>
@@ -3297,14 +3355,6 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3326,6 +3376,14 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>The shortcut %1 of &quot;Enable / Disable editor&quot; was removed: the editor is always shown; hide panels or choose a layout instead.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4398,6 +4456,34 @@ great help testing HikariSub on a slow computer)
         <source>Installing update...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Application menu</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4645,6 +4731,18 @@ when find results window is open</source>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use system title bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
