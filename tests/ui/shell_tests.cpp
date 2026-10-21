@@ -18236,6 +18236,24 @@ private slots:
             QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("130"));
             tools.setOption(QStringLiteral("changeAll"), 0);
         }
+        // Typed text not yet applied belongs to its Line (Codex on #293):
+        // another active Line puts the value back, so Enter does not write
+        // the old Line's text into the new one.
+        {
+            type("fscy", QStringLiteral("175"), Qt::Key_End);
+            QCOMPARE(field("fscy")->property("text").toString(), QStringLiteral("175"));
+            QVERIFY(field("fscy")->hasActiveFocus());
+            application->selectLine(session->document().lines()[1]->id.value);
+            QTRY_VERIFY(field("fscy")->property("text").toString() != QStringLiteral("175"));
+            field("fscy")->forceActiveFocus();
+            QTest::keyClick(window, Qt::Key_Return);
+            QTest::qWait(50);
+            QVERIFY2(!text(session->document().lines()[1]).contains(QStringLiteral("\\fscy175")),
+                     qPrintable(text(session->document().lines()[1])));
+            application->selectLine(third.value);
+            QTRY_VERIFY(session->selection().active == third);
+            QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("130"));
+        }
 
         // A narrow panel wraps the groups onto more lines; the picker stays.
         // (The window is at least 800 wide, the Video panel all of it here:

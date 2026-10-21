@@ -68,6 +68,9 @@ class VisualToolsController : public QObject, public application::visual::Visual
     // The batch picker.
     Q_PROPERTY(int batchCount READ batchCount NOTIFY changed)
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
+    // VT1: counts the changes of what a value edits (the Document, the
+    // active Line, the picked Lines): a field's typed text is dropped then.
+    Q_PROPERTY(int editTarget READ editTarget NOTIFY changed)
     // The last text VIDEO_COPY_COORDS put on the clipboard.
     Q_PROPERTY(QString copied READ copied NOTIFY changed)
     // T2-T4: the family's own options (legacy VideoToolbar's second row):
@@ -147,6 +150,7 @@ public:
     bool escapable() const;
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
     bool gestureActive() const { return m_gesture.has_value(); }
+    int editTarget() const { return m_editTarget; }
     QString copied() const { return m_copied; }
     QVariantList options() const { return m_options; }
     QVariantList familyLayouts() const;
@@ -294,6 +298,7 @@ private:
     std::uint64_t m_seenRevision = 0;
     const void *m_seenSession = nullptr;
     std::optional<core::LineId> m_seenActive;
+    int m_editTarget = 0;
     std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft; // the active Line's draft text, translation
     std::int64_t m_seenTime = -1;
     QString m_frameWarning; // the warning the last video change notified

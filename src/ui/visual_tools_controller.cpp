@@ -198,6 +198,8 @@ void VisualToolsController::refresh()
         (void)escape();
         reset = true;
     }
+    if (id != m_seenSession || active != m_seenActive)
+        ++m_editTarget;
     m_seenSession = id;
     m_seenRevision = revision;
     m_seenActive = active;
@@ -907,12 +909,14 @@ void VisualToolsController::pickBatch()
         if (s->selection().selected.contains(line->id))
             picked.push_back(line->id);
     m_picker.pick(std::move(picked));
+    ++m_editTarget;
     emit changed();
 }
 
 void VisualToolsController::clearBatch()
 {
     m_picker.clear();
+    ++m_editTarget;
     emit changed();
 }
 

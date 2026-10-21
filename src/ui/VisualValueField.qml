@@ -208,6 +208,10 @@ RowLayout {
         input.text = field.value.text
     }
     onValueChanged: if (!input.editing && !scrub.active) input.text = value.text
+    // Typed text belongs to what it was typed for: another Document, active
+    // Line or picked Lines put the value back (Codex on #293).
+    readonly property int editTarget: tools.editTarget
+    onEditTargetChanged: if (input.editing) restore()
     Component.onCompleted: input.text = value.text
     function finish() {
         scrub.active = false
