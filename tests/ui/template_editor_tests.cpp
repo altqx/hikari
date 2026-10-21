@@ -1714,6 +1714,24 @@ private slots:
         QCOMPARE(layer->property("to").toInt(), 10'000'000);
     }
 
+    // A first preview that fails has ended: the panel says so, not that the
+    // templates are still running.
+    void aFailedFirstPreviewIsNotStillRunning()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        for (const auto *l : doc.lines())
+            if (application::templateKindOf(*l) == application::TemplateKind::Template)
+                QVERIFY(doc.editLine(l->id, [](core::LineRecord &t) { t.text = u8"{\\fscx!nosuch.field!}"; }));
+        openDocument(std::move(doc), true);
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        showPanel();
+        QVERIFY(QTest::qWaitFor([&] { return editor->hasProblems() && !editor->previewPending(); }, 20'000));
+        QVERIFY(!editor->hasPreview());
+        QTRY_VERIFY(!textOf(QStringLiteral("templatePreviewEmpty")).startsWith(QStringLiteral("Running")));
+        QVERIFY(textOf(QStringLiteral("templatePreviewEmpty")).contains(QStringLiteral("problem")));
+    }
+
     void applyFromThePanelIsOneStepAndSaysWhatItWrote()
     {
         open(QStringLiteral("stock-tutorials.ass"));

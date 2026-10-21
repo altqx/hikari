@@ -742,7 +742,10 @@ Pane {
                         color: Theme.muted
                         text: root.controller.source === 0
                               ? qsTr("Select a karaoke Line to preview the templates on it.")
-                              : qsTr("Running the templates on Line %1…").arg(root.controller.sourceNumber)
+                              : root.controller.previewPending
+                                ? qsTr("Running the templates on Line %1…").arg(root.controller.sourceNumber)
+                                : qsTr("No preview of Line %1: the templates stopped with a problem.")
+                                  .arg(root.controller.sourceNumber)
                     }
                     Rectangle {
                         visible: !previewSection.folded && root.controller.hasPreview

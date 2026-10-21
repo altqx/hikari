@@ -78,6 +78,8 @@ class TemplateEditorController : public QObject {
     Q_PROPERTY(double previewMs READ previewMs NOTIFY previewChanged)
     // A preview has come since the source last changed.
     Q_PROPERTY(bool hasPreview READ hasPreview NOTIFY previewChanged)
+    // A preview is due or running (its edit's or the Line's).
+    Q_PROPERTY(bool previewPending READ previewPending NOTIFY changed)
     // The last preview had a problem: the one before it, which worked, is kept.
     Q_PROPERTY(bool previewKept READ previewKept NOTIFY previewChanged)
     // The panel header's eye: the video draws the preview.
