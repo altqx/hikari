@@ -102,7 +102,7 @@ public:
     // SH3: reads the release list alone, for What's new: no update check,
     // nothing reported but releasesRead, the next check's time unchanged. A
     // check started meanwhile takes the read over; while one runs, its list
-    // is the one read.
+    // is the one read (at once when the check is past it).
     void readReleases();
     // The list as last read (releasesRead(true)).
     const std::vector<application::ReleaseEntry> &releases() const { return m_releases; }

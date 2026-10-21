@@ -144,6 +144,7 @@ QString origin(const QUrl &url)
 struct UpdateChecker::Run {
     bool interactive = false;
     bool listOnly = false; // SH3: What's new's read of the list, no check
+    bool listRead = false; // SH3: past the list (m_releases is this run's)
     int page = 0;
     std::vector<a::ReleaseEntry> releases;
     std::vector<a::ReleaseEntry> candidates;
@@ -293,6 +294,8 @@ void UpdateChecker::readReleases()
 {
     if (!m_run)
         start(true, false);
+    else if (m_run->listRead) // checking manifests: the list is read
+        emit releasesRead(true);
 }
 
 bool UpdateChecker::checkOnStartup()
@@ -444,6 +447,7 @@ void UpdateChecker::pageFinished()
         return;
     }
     m_releases = m_run->releases;
+    m_run->listRead = true;
     if (m_run->listOnly) {
         end(QString());
         emit releasesRead(true);

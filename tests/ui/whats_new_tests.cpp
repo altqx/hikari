@@ -276,6 +276,29 @@ private slots:
         QCOMPARE(read.at(0).at(0).toBool(), true);
     }
 
+    // What's new asking while a check is past its list (checking the
+    // releases' manifests) takes the list that check read.
+    void aReadDuringACheckPastItsListTakesThatList()
+    {
+        auto copy = start(QStringLiteral("late"), QStringLiteral("0.1.3"), false, true, QStringLiteral("0.1.1"));
+        QVERIFY(copy);
+        QCOMPARE(copy->whatsNew->state(), QStringLiteral("off"));
+        // A menu check with checks off: once its list is read, checks go on
+        // and Help > What's new opens.
+        bool asked = false;
+        connect(copy->updates.get(), &UpdateChecker::releasesRead, copy->whatsNew.get(), [&](bool ok) {
+            if (asked || !ok)
+                return;
+            asked = true;
+            copy->updates->setAutoCheck(true);
+            copy->whatsNew->fetchIfNeeded();
+        });
+        copy->updates->checkNow();
+        QTRY_VERIFY(asked);
+        QTRY_COMPARE(copy->whatsNew->state(), QStringLiteral("ready"));
+        QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
+    }
+
     // Markdown as plain rich text: headings shrink to section labels, raw
     // HTML and images never come through, only http(s) links stay links.
     void releaseNotesRenderAsPlainRichText()
