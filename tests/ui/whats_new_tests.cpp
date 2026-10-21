@@ -586,6 +586,18 @@ private slots:
         QVERIFY(!inCode.contains(QStringLiteral("href=\"https://example.com/c")));
         QVERIFY(inCode.contains(QStringLiteral("href=\"https://example.com/d...e\"")));
         QVERIFY(!inCode.contains(QStringLiteral("&lt;https")));
+        // A bare URL ends as GitHub ends it: a balanced ")" is the URL's,
+        // an unbalanced one and trailing punctuation are the prose's.
+        const QString ends = copy->whatsNew->render(
+            QStringLiteral("See https://en.wikipedia.org/wiki/Foo_(bar) and (https://example.com/f) or "
+                           "https://example.com/g_(h)_i?x=(1)(2)). Also \"https://example.com/j\"; "
+                           "https://example.com/k;"),
+            muted, link, code);
+        QVERIFY2(ends.contains(QStringLiteral("href=\"https://en.wikipedia.org/wiki/Foo_(bar)\"")), qPrintable(ends));
+        QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/f\"")));
+        QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/g_(h)_i?x=(1)(2)\"")));
+        QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/j\"")));
+        QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/k\"")));
         // An HTML comment (release templates leave them), over lines too.
         const QString commented = copy->whatsNew->render(
             QStringLiteral("Before <!-- one --> after\n<!-- two\nlines -->\nlast `<b>kept</b>`"), muted, link, code);

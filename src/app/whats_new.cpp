@@ -173,13 +173,34 @@ void dropHtml(QTextDocument &doc)
     }
 }
 
-// A bare http(s) URL outside code and links becomes a link, all of it;
-// trailing punctuation stays outside, as on GitHub.
+// Where a bare URL ends, as GitHub's autolinker (cmark-gfm's
+// autolink_delim) ends it: trailing punctuation, an entity or ";", and a ")"
+// without its "(" in the URL are the prose's.
+qsizetype urlEnd(QStringView url)
+{
+    static const QRegularExpression entity(QStringLiteral("&[A-Za-z0-9]+;$"));
+    qsizetype end = url.size();
+    while (end > 0) {
+        const QChar last = url[end - 1];
+        if (QStringView(u"?!.,:*_~'\"").contains(last)) {
+            --end;
+        } else if (last == u';') {
+            const auto found = entity.matchView(url.first(end));
+            end = found.hasMatch() ? found.capturedStart() : end - 1;
+        } else if (last == u')' && url.first(end).count(u'(') < url.first(end).count(u')')) {
+            --end;
+        } else {
+            break;
+        }
+    }
+    return end;
+}
+
+// A bare http(s) URL outside code and links becomes a link, all of it.
 void linkUrls(QTextDocument &doc)
 {
-    static const QRegularExpression url(
-        QStringLiteral("(?<![\\w/])https?://[^\\s<>`]*[^\\s<>`.,:;!?'\")\\]*_~]"),
-        QRegularExpression::UseUnicodePropertiesOption);
+    static const QRegularExpression url(QStringLiteral("(?<![\\w/])https?://[^\\s<>`]+"),
+                                        QRegularExpression::UseUnicodePropertiesOption);
     struct Link {
         int from, to;
         QString href;
@@ -191,7 +212,10 @@ void linkUrls(QTextDocument &doc)
         const auto scan = [&] {
             for (auto m = url.globalMatch(text); m.hasNext();) {
                 const QRegularExpressionMatch found = m.next();
-                links.push_back({position + int(found.capturedStart()), position + int(found.capturedEnd()), found.captured()});
+                const QString href = found.captured().first(urlEnd(found.capturedView()));
+                const int from = position + int(found.capturedStart());
+                if (href.size() > found.captured().indexOf(u"://") + 3)
+                    links.push_back({from, from + int(href.size()), href});
             }
             position = -1;
             text.clear();
