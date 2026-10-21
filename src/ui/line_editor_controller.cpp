@@ -331,6 +331,20 @@ QString runKind(const core::TagRun &run)
     return names.join(QStringLiteral(", "));
 }
 
+// Whether a run turns a flag on, for its chip's preview: a \b0 or \i0
+// over a bold or italic base turns it off. A \b weight is bold from 600.
+bool runTurnsOn(const core::TagRun &run, const std::u16string &component)
+{
+    const auto it = run.differs.find(component);
+    if (it == run.differs.end())
+        return false;
+    if (component != u"b")
+        return it->second != u"0";
+    bool ok = false;
+    const int weight = QString::fromStdU16String(it->second).toInt(&ok);
+    return ok && (weight == 1 || weight >= 600);
+}
+
 // "#rrggbb" for a run that changes the primary colour (stored as BBGGRR).
 QString runColour(const core::TagRun &run)
 {
@@ -394,6 +408,10 @@ QVariantList LineEditorController::tagRuns() const
                            {QStringLiteral("text"), qs16(run.text)},
                            {QStringLiteral("kind"), runKind(run)},
                            {QStringLiteral("colour"), runColour(run)},
+                           {QStringLiteral("italic"), runTurnsOn(run, u"i")},
+                           {QStringLiteral("bold"), runTurnsOn(run, u"b")},
+                           {QStringLiteral("underline"), runTurnsOn(run, u"u")},
+                           {QStringLiteral("strikeout"), runTurnsOn(run, u"s")},
                            {QStringLiteral("placed"), start >= 0},
                            {QStringLiteral("originalStart"), static_cast<int>(originalStart)},
                            {QStringLiteral("originalEnd"), static_cast<int>(originalEnd)},

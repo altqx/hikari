@@ -10644,6 +10644,32 @@ private slots:
         application->editor().discard();
     }
 
+    // TM1: a run's chip shows its text as placing it gives it: a \b0 run
+    // over a bold base is regular.
+    void tagsFromOriginalChipShowsWhatTheRunGives()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-chip.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\b1\\i1}a {\\b0}plain{\\b1} c {\\i0}upright{\\i1} d\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        const auto font = [&](const char *name) { return visualItem(name)->property("font").value<QFont>(); };
+        QTRY_VERIFY(visualItem("runChipText1") && visualItem("runChipText2"));
+        QCOMPARE(visualItem("runChipText1")->property("text").toString(), QStringLiteral("plain"));
+        QVERIFY(!font("runChipText1").bold());
+        QVERIFY(!font("runChipText2").italic());
+        application->editor().discard();
+    }
+
     // TM1: a run whose text comes back unchanged is suggested (a dotted
     // underline): Tab places it, Escape dismisses it, and without
     // suggestions both keys do what they always do.

@@ -103,10 +103,11 @@ Flow {
                     textFormat: Text.PlainText // the subtitle's text, never markup (no <img> fetched)
                     elide: Text.ElideRight
                     Layout.maximumWidth: 180
-                    font.italic: chip.modelData.kind.indexOf(qsTr("Italic")) >= 0
-                    font.bold: chip.modelData.kind.indexOf(qsTr("Bold")) >= 0
-                    font.underline: chip.modelData.kind.indexOf(qsTr("Underline")) >= 0
-                    font.strikeout: chip.modelData.kind.indexOf(qsTr("Strikeout")) >= 0
+                    // What placing it gives (a \b0 run is regular).
+                    font.italic: chip.modelData.italic
+                    font.bold: chip.modelData.bold
+                    font.underline: chip.modelData.underline
+                    font.strikeout: chip.modelData.strikeout
                     color: Theme.text
                 }
                 Label {
