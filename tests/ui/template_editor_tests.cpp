@@ -1225,6 +1225,37 @@ private slots:
         QVERIFY(std::u8string_view(l->translation).ends_with(u8"{\\bord4}{\\bord5}"));
     }
 
+    // In TLMode a karaoke Line is templated from its translation: the
+    // preview lists the generated text Apply writes there, not the original.
+    void aTranslatedLinesPreviewListsWhatApplyWrites()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> source;
+        for (const auto *l : doc.lines())
+            if (!source && application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                source = l->id;
+        QVERIFY(source);
+        doc.editLine(*source, [](core::LineRecord &l) {
+            l.translation = l.text;
+            l.text = u8"original";
+        });
+        openDocument(std::move(doc), true);
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        application::EditSession copy(session->document());
+        Templater whole(copy);
+        QVERIFY(QTest::qWaitFor([&] { return whole.available(); }, 20'000));
+        QVERIFY(whole.apply(false));
+        QStringList applied;
+        for (const auto *l : copy.document().lines())
+            if (l->generatedFrom == *source)
+                applied << QString::fromUtf8(reinterpret_cast<const char *>(l->translation.data()),
+                                             static_cast<qsizetype>(l->translation.size()));
+        QVERIFY(!applied.isEmpty());
+        QCOMPARE(previewTexts(), applied);
+    }
+
     // Apply's summary is of the Document Apply left: an Undo or another
     // edit after it takes it away.
     void anUndoneApplyLeavesNoSummary()

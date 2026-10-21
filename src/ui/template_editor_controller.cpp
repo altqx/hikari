@@ -765,7 +765,8 @@ QVariantList TemplateEditorController::previewLines() const
             {QStringLiteral("start"), qs(core::legacy::assTimeText(msOf(l.start)))},
             {QStringLiteral("end"), qs(core::legacy::assTimeText(msOf(l.end)))},
             {QStringLiteral("style"), qs(l.style)},
-            {QStringLiteral("text"), qs(l.text)},
+            // In TLMode the run wrote the translation (lineOfMacro).
+            {QStringLiteral("text"), qs(l.translation.empty() ? l.text : l.translation)},
             {QStringLiteral("own"), k < m_own.size() && m_own[k]},
         });
     }
