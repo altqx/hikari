@@ -756,12 +756,13 @@ namespace update_manifest
 	// Whether the startup check that answered spends a reminder that has
 	// come, as it does whether the offer shows now or waits for a legacy
 	// update: not when a check asked for from the menu joined it, as the
-	// offer does not show at start then, nor while the offer waits in a
-	// check with the automatic checks off (StartCheck::OfferOnly), as
-	// only the reminder brings the next.
-	constexpr bool SpendsReminder(bool askedFromMenu, bool offerOnly, bool offerWaits)
+	// offer does not show at start then, nor in a check with the automatic
+	// checks off (StartCheck::OfferOnly) while the offer waits, or when
+	// none came as a manifest did not (offerMissed), as only the reminder
+	// brings the next.
+	constexpr bool SpendsReminder(bool askedFromMenu, bool offerOnly, bool offerWaits, bool offerMissed)
 	{
-		return !askedFromMenu && !(offerOnly && offerWaits);
+		return !askedFromMenu && !(offerOnly && (offerWaits || offerMissed));
 	}
 
 	// How a check ends that ending stopped while it read the manifests:
@@ -848,7 +849,8 @@ namespace update_manifest
 
 	// The releases a check looks at, in order: the candidates that fit the
 	// channel, then those "stable versions only" kept out, kMaxCandidates
-	// legacy releases and as many of the rewrite's. The first that Admit()
+	// legacy releases, and as many of the rewrite's from each list, so
+	// stable ones do not keep out a newer prerelease's offer. The first that Admit()
 	// takes is the update. Past it, only the rewrite's are left, for the
 	// offers they may carry: those newer than the update, when it is the
 	// rewrite's itself.
@@ -858,10 +860,11 @@ namespace update_manifest
 		CandidateWalk(const std::vector<update_policy::Release> &releases,
 			const update_policy::Candidates &candidates)
 		{
-			size_t legacyCount = 0, rewriteCount = 0;
+			size_t legacyCount = 0;
 			for (const auto &[list, skipped] : { std::pair{ &candidates.offer, false },
 				std::pair{ &candidates.skipped, true } })
 			{
+				size_t rewriteCount = 0;
 				for (int index : *list) {
 					std::optional<SemVer> version =
 						ParseSemVer(update_policy::CandidateVersion(releases[index].tag));

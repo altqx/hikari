@@ -1038,15 +1038,19 @@ TEST(update_reminder_outlasts_a_check_that_shows_no_offer)
 {
 	// A startup check that answered spends a reminder that has come,
 	// whether the offer shows now or waits for a legacy update.
-	CHECK(SpendsReminder(false, false, false));
-	CHECK(SpendsReminder(false, false, true));
-	CHECK(SpendsReminder(false, true, false));
+	CHECK(SpendsReminder(false, false, false, false));
+	CHECK(SpendsReminder(false, false, true, false));
+	CHECK(SpendsReminder(false, true, false, false));
+	// With the automatic checks on, the next day's check looks again.
+	CHECK(SpendsReminder(false, false, false, true));
 	// Not when a check from the menu joined it, as the offer is not
 	// shown at start then; nor, with the automatic checks off, while the
-	// offer waits, as only the reminder brings a check.
-	CHECK(!SpendsReminder(true, false, false));
-	CHECK(!SpendsReminder(true, true, false));
-	CHECK(!SpendsReminder(false, true, true));
+	// offer waits, or when no offer came as a manifest failed to, as only
+	// the reminder brings a check.
+	CHECK(!SpendsReminder(true, false, false, false));
+	CHECK(!SpendsReminder(true, true, false, false));
+	CHECK(!SpendsReminder(false, true, true, false));
+	CHECK(!SpendsReminder(false, true, false, true));
 }
 
 TEST(update_check_keeps_a_found_update_when_the_offer_scan_times_out)
@@ -1177,6 +1181,24 @@ TEST(update_walk_after_a_rewrite_update_keeps_only_newer_offers)
 	CHECK(stable.Current() == 1);
 	stable.Skip();
 	CHECK(stable.Current() == -1);
+}
+
+TEST(update_walk_looks_at_newer_prereleases_past_stable_rewrite_releases)
+{
+	// "Stable versions only": kMaxCandidates stable rewrite releases do
+	// not keep out a newer prerelease, whose offer may be for the stable
+	// channel; each list has its own kMaxCandidates of the rewrite's.
+	std::vector<Release> releases;
+	for (int i = 0; i < 6; i++)
+		releases.push_back(Release{ "v0.1." + std::to_string(i), false, false });
+	releases.push_back(Release{ "v0.2.0-beta.1", false, true });
+	CandidateWalk walk(releases, ListCandidates(releases, "0.0.2", true));
+	std::vector<int> looked;
+	while (walk.Current() >= 0) {
+		looked.push_back(walk.Current());
+		walk.Skip();
+	}
+	CHECK(looked == (std::vector<int>{ 5, 4, 3, 2, 1, 6 }));
 }
 
 TEST(update_walk_finds_a_legacy_update_past_newer_rewrite_releases)

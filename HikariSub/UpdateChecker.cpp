@@ -790,6 +790,8 @@ namespace
 				std::string url = ReplyUrl(evt);
 				bool came = ending == update_policy::Ending::Answered && evt.GetResponse().GetStatus() == 200 &&
 					update_installer::IsAssetReplyUrl(url);
+				if (!came)
+					missedManifest = true;
 				const update_policy::Release &release = pages.Releases()[walk->Current()];
 				Consider(update_manifest::Consider(release, came ? &body : nullptr, SeesPrereleases()));
 				body.clear();
@@ -904,6 +906,7 @@ namespace
 					request.Start();
 					return true;
 				}
+				missedManifest = true;
 				walk->Skip();
 			}
 			return false;
@@ -990,8 +993,9 @@ namespace
 			// A startup check that answered: a reminder that has come is
 			// done with (SpendsReminder()).
 			long long remindAt = LoadOfferRemind();
+			const update_manifest::Manifest *offer = offers.Get();
 			if (update_manifest::OfferReminderDue(remindAt, Now()) &&
-				update_manifest::SpendsReminder(asksUpdates || asksOffer, offerOnly, waits))
+				update_manifest::SpendsReminder(asksUpdates || asksOffer, offerOnly, waits, !offer && missedManifest))
 			{
 				SetOfferRemind(0);
 				Options.SaveOptions(true, false);
@@ -999,7 +1003,6 @@ namespace
 			// Asked for from the menu, it has had its answer.
 			if (asksUpdates || asksOffer)
 				return;
-			const update_manifest::Manifest *offer = offers.Get();
 			if (waits || !offer)
 				return;
 			if (!update_manifest::ShowsOfferAtStart(offer->version, offer->offer->legacySupportEnded,
@@ -1076,8 +1079,8 @@ namespace
 					// installed, and a lower one does not replace it.
 					if (update_manifest::IsNewer(update_installer::PendingVersion(), version))
 						return true;
-					update_installer::Download(parent, update_installer::Target{ version, offer.package });
-					return true;
+					// One that did not start is no update shown (Download()).
+					return update_installer::Download(parent, update_installer::Target{ version, offer.package }) != 0;
 				}
 				break;
 			case update_manifest::OfferType::Notify:
@@ -1106,6 +1109,8 @@ namespace
 		bool asksOffer = false;
 		bool atStartup = false;
 		bool offerOnly = false;
+		// Whether a manifest asked for did not come whole.
+		bool missedManifest = false;
 		bool timedOut = false;
 		// Stopped by its destructor, so it never fires at a deleted check.
 		wxTimer deadline;
