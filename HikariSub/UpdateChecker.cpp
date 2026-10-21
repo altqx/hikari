@@ -201,45 +201,12 @@ namespace
 		return wxString::FromUTF8(text.c_str());
 	}
 
-	// Plain text broken at spaces into lines of about width characters,
-	// as HikariStaticText does not wrap.
+	// Plain text broken into lines of up to width columns, as
+	// HikariStaticText does not wrap (update_manifest::WrapText()).
 	wxString Wrap(const wxString &text, size_t width = 64)
 	{
-		wxString wrapped;
-		size_t line = 0;
-		wxString word;
-		auto flush = [&] {
-			if (word.empty())
-				return;
-			if (line > 0 && line + 1 + word.length() > width) {
-				wrapped += L"\n";
-				line = 0;
-			}
-			else if (line > 0) {
-				wrapped += L" ";
-				line++;
-			}
-			wrapped += word;
-			line += word.length();
-			word.clear();
-		};
-		for (wxUniChar c : text) {
-			if (c == L' ') {
-				flush();
-			}
-			else if (c == L'\n') {
-				flush();
-				wrapped += L"\n";
-				line = 0;
-			}
-			else {
-				word += c;
-			}
-		}
-		flush();
-		return wrapped;
+		return FromUtf8(update_manifest::WrapText(text.utf8_string(), width));
 	}
-
 
 	// Says that only a prerelease is newer, and offers to open its page.
 	void ShowNewerPrerelease(wxWindow *parent, const ReleaseInfo &release)
@@ -771,7 +738,7 @@ namespace
 				// took in of the reply is not kept meanwhile.
 				body.clear();
 				body.shrink_to_fit();
-				if (Finish(update_policy::Ending::TimedOut))
+				if (Finish(WalkEnding(update_policy::Ending::TimedOut)))
 					Release();
 				break;
 			}
@@ -815,7 +782,7 @@ namespace
 			if (phase == Phase::Manifests) {
 				if (ending == update_policy::Ending::TimedOut) {
 					run.Finish();
-					Finish(ending);
+					Finish(WalkEnding(ending));
 					Release();
 					return;
 				}
@@ -831,7 +798,7 @@ namespace
 				if (Walk())
 					return;
 				run.Finish();
-				Finish(timedOut ? update_policy::Ending::TimedOut : update_policy::Ending::Answered);
+				Finish(WalkEnding(timedOut ? update_policy::Ending::TimedOut : update_policy::Ending::Answered));
 				Release();
 				return;
 			}
@@ -868,9 +835,20 @@ namespace
 					ending = update_policy::Ending::TimedOut;
 			}
 			run.Finish();
-			Finish(ending);
+			Finish(WalkEnding(ending));
 			// Last, as nothing of this object may be used after it.
 			Release();
+		}
+
+		// How the check ends, stopped as ending: a found update stands
+		// against the deadline (update_manifest::WalkEnding()) in a check
+		// that shows it. One for the offer, from Help or for a reminder
+		// with the automatic checks off, still says it could not check.
+		update_policy::Ending WalkEnding(update_policy::Ending ending) const
+		{
+			bool showsUpdate = (asksUpdates || (atStartup && !offerOnly)) && !asksOffer;
+			return update_manifest::WalkEnding(ending,
+				showsUpdate && phase == Phase::Manifests && walk && walk->Found());
 		}
 
 		bool SeesPrereleases() const
@@ -1007,20 +985,23 @@ namespace
 				ReportOffer(ending, !asksUpdates);
 			if (!atStartup || ending != update_policy::Ending::Answered)
 				return;
+			// A legacy update comes first, the one shown now or the one
+			// waiting to be installed; the offer waits for a later start.
+			bool waits = shown || !update_installer::PendingVersion().empty();
 			// A startup check that answered: a reminder that has come is
-			// done with, whether the offer shows now or not.
+			// done with (SpendsReminder()).
 			long long remindAt = LoadOfferRemind();
-			if (update_manifest::OfferReminderDue(remindAt, Now())) {
+			if (update_manifest::OfferReminderDue(remindAt, Now()) &&
+				update_manifest::SpendsReminder(asksUpdates || asksOffer, offerOnly, waits))
+			{
 				SetOfferRemind(0);
 				Options.SaveOptions(true, false);
 			}
 			// Asked for from the menu, it has had its answer.
 			if (asksUpdates || asksOffer)
 				return;
-			// A legacy update comes first, the one shown now or the one
-			// waiting to be installed; the offer waits for a later start.
 			const update_manifest::Manifest *offer = offers.Get();
-			if (shown || !offer || !update_installer::PendingVersion().empty())
+			if (waits || !offer)
 				return;
 			if (!update_manifest::ShowsOfferAtStart(offer->version, offer->offer->legacySupportEnded,
 				LoadOfferDeclined(), remindAt, Now()))

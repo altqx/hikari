@@ -1034,6 +1034,51 @@ TEST(update_reminder_checks_at_start_with_automatic_checks_off)
 	CHECK(CheckAtStart(false, true, true) == StartCheck::OfferOnly);
 }
 
+TEST(update_reminder_outlasts_a_check_that_shows_no_offer)
+{
+	// A startup check that answered spends a reminder that has come,
+	// whether the offer shows now or waits for a legacy update.
+	CHECK(SpendsReminder(false, false, false));
+	CHECK(SpendsReminder(false, false, true));
+	CHECK(SpendsReminder(false, true, false));
+	// Not when a check from the menu joined it, as the offer is not
+	// shown at start then; nor, with the automatic checks off, while the
+	// offer waits, as only the reminder brings a check.
+	CHECK(!SpendsReminder(true, false, false));
+	CHECK(!SpendsReminder(true, true, false));
+	CHECK(!SpendsReminder(false, true, true));
+}
+
+TEST(update_check_keeps_a_found_update_when_the_offer_scan_times_out)
+{
+	using update_policy::Ending;
+	// Past the update, only offers are left to look for.
+	CHECK(WalkEnding(Ending::TimedOut, true) == Ending::Answered);
+	CHECK(WalkEnding(Ending::TimedOut, false) == Ending::TimedOut);
+	CHECK(WalkEnding(Ending::Answered, false) == Ending::Answered);
+	CHECK(WalkEnding(Ending::NoRequest, true) == Ending::NoRequest);
+}
+
+TEST(update_offer_text_wraps_words_and_long_runs)
+{
+	// UTF-8 in bytes, as MSVC reads the source in the ANSI code page.
+	CHECK(WrapText("one two three", 7) == "one two\nthree");
+	CHECK(WrapText("one\ntwo three", 20) == "one\ntwo three");
+	CHECK(WrapText("", 10).empty());
+	// A run longer than the width, as Thai is written, is split at it.
+	CHECK(WrapText("abcdefghij", 4) == "abcd\nefgh\nij");
+	// It goes on from the line it starts on, as after a bullet.
+	CHECK(WrapText("go abcdefghij", 4) == "go a\nbcde\nfghi\nj");
+	CHECK(WrapText("go abcd", 4) == "go\nabcd");
+	CHECK(WrapText("\xe0\xb8\xa0\xe0\xb8\xb2\xe0\xb8\xa9\xe0\xb8\xb2\xe0\xb9\x84\xe0\xb8\x97\xe0\xb8\xa2", 4) ==
+		"\xe0\xb8\xa0\xe0\xb8\xb2\xe0\xb8\xa9\xe0\xb8\xb2\n\xe0\xb9\x84\xe0\xb8\x97\xe0\xb8\xa2");
+	// Wide characters take two columns.
+	CHECK(WrapText("\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e\xe3\x81\xae\xe6\x96\x87\xe7\xab\xa0", 4) ==
+		"\xe6\x97\xa5\xe6\x9c\xac\n\xe8\xaa\x9e\xe3\x81\xae\n\xe6\x96\x87\xe7\xab\xa0");
+	CHECK(WrapText("Hi \xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e", 6) == "Hi\n\xe6\x97\xa5\xe6\x9c\xac\xe8\xaa\x9e");
+	CHECK(WrapText("\xf0\x9f\x98\x80\xf0\x9f\x98\x80\xf0\x9f\x98\x80", 4) == "\xf0\x9f\x98\x80\xf0\x9f\x98\x80\n\xf0\x9f\x98\x80");
+}
+
 TEST(update_offer_declined_shows_once_more_when_legacy_support_ends)
 {
 	long long now = 1800000000;

@@ -34,6 +34,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace update_manifest
@@ -750,6 +751,99 @@ namespace update_manifest
 		if (!autoCheck)
 			return reminderDue ? StartCheck::OfferOnly : StartCheck::None;
 		return checkDue || reminderDue ? StartCheck::Full : StartCheck::None;
+	}
+
+	// Whether the startup check that answered spends a reminder that has
+	// come, as it does whether the offer shows now or waits for a legacy
+	// update: not when a check asked for from the menu joined it, as the
+	// offer does not show at start then, nor while the offer waits in a
+	// check with the automatic checks off (StartCheck::OfferOnly), as
+	// only the reminder brings the next.
+	constexpr bool SpendsReminder(bool askedFromMenu, bool offerOnly, bool offerWaits)
+	{
+		return !askedFromMenu && !(offerOnly && offerWaits);
+	}
+
+	// How a check ends that ending stopped while it read the manifests:
+	// answered once the update is found, as only offers were left to look
+	// for, and the highest found so far stands.
+	constexpr update_policy::Ending WalkEnding(update_policy::Ending ending, bool updateFound)
+	{
+		return ending == update_policy::Ending::TimedOut && updateFound ? update_policy::Ending::Answered : ending;
+	}
+
+	// The columns a code point takes: two for the wide East Asian ones and
+	// emoji, one for the rest.
+	constexpr size_t ColumnsOf(char32_t c)
+	{
+		return (c >= 0x1100 && c <= 0x115F) || (c >= 0x2E80 && c <= 0xA4CF) || (c >= 0xAC00 && c <= 0xD7A3) ||
+			(c >= 0xF900 && c <= 0xFAFF) || (c >= 0xFE30 && c <= 0xFE4F) || (c >= 0xFF00 && c <= 0xFF60) ||
+			(c >= 0xFFE0 && c <= 0xFFE6) || (c >= 0x1F300 && c <= 0x1FAFF) || (c >= 0x20000 && c <= 0x3FFFD) ? 2 : 1;
+	}
+
+	// UTF-8 text broken at spaces into lines of up to width columns, as
+	// the static texts do not wrap; a run longer than that, as Thai or
+	// Chinese is written, goes on from the line it starts on and is
+	// broken at the width.
+	inline std::string WrapText(std::string_view text, size_t width)
+	{
+		std::string wrapped;
+		size_t line = 0;
+		// The word so far: where each code point starts in it, and its
+		// columns.
+		std::string word;
+		std::vector<std::pair<size_t, size_t>> points;
+		size_t wordColumns = 0;
+		auto flush = [&] {
+			if (word.empty())
+				return;
+			if (line > 0 && (line + 1 + wordColumns <= width || (wordColumns > width && line + 1 < width))) {
+				wrapped += ' ';
+				line++;
+			}
+			else if (line > 0) {
+				wrapped += '\n';
+				line = 0;
+			}
+			for (size_t i = 0; i < points.size(); i++) {
+				if (line > 0 && line + points[i].second > width) {
+					wrapped += '\n';
+					line = 0;
+				}
+				size_t end = i + 1 < points.size() ? points[i + 1].first : word.size();
+				wrapped.append(word, points[i].first, end - points[i].first);
+				line += points[i].second;
+			}
+			word.clear();
+			points.clear();
+			wordColumns = 0;
+		};
+		for (size_t i = 0; i < text.size();) {
+			unsigned char lead = static_cast<unsigned char>(text[i]);
+			size_t length = lead >= 0xF0 ? 4 : lead >= 0xE0 ? 3 : lead >= 0xC0 ? 2 : 1;
+			if (i + length > text.size())
+				length = 1;
+			char32_t c = length == 1 ? lead : lead & (0x7F >> length);
+			for (size_t k = 1; k < length; k++)
+				c = (c << 6) | (static_cast<unsigned char>(text[i + k]) & 0x3F);
+			if (c == ' ') {
+				flush();
+			}
+			else if (c == '\n') {
+				flush();
+				wrapped += '\n';
+				line = 0;
+			}
+			else {
+				size_t columns = ColumnsOf(c);
+				points.emplace_back(word.size(), columns);
+				word.append(text.substr(i, length));
+				wordColumns += columns;
+			}
+			i += length;
+		}
+		flush();
+		return wrapped;
 	}
 
 	// The releases a check looks at, in order: the candidates that fit the
