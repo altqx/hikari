@@ -15,6 +15,8 @@ target_sources(hikari_application PRIVATE audio_karaoke.cpp)
 target_sources(hikari_application PRIVATE karaoke_split.cpp include/hikari/application/karaoke_split.h)
 # KA2 (#277): tap-to-time karaoke timing and the latency calibration.
 target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/application/karaoke_tap.h)
+# KA5 (#280): vocal onsets for snapping syllable boundaries.
+target_sources(hikari_application PRIVATE vocal_onsets.cpp include/hikari/application/vocal_onsets.h)
 target_include_directories(hikari_application PUBLIC include)
 # V1: player frames off the GUI thread (latest wins, pooled buffers, the
 # overlay on a worker) and the Y'CbCr rows to BGRA the CPU paths share.

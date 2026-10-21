@@ -40,6 +40,17 @@ u16 number(int value)
     return u16(s.begin(), s.end());
 }
 
+// A \move time: whole milliseconds exactly (a float rounds them past 2^24,
+// Codex on #293), anything else as legacy getfloat wrote it.
+u16 timeText(double value)
+{
+    if (std::nearbyint(value) == value && std::fabs(value) < 1e15) {
+        const std::string s = std::to_string(static_cast<long long>(value));
+        return u16(s.begin(), s.end());
+    }
+    return ft(static_cast<float>(value));
+}
+
 int atoi16(const u16 &text)
 {
     const std::u8string u = core::toUtf8(text);
@@ -55,27 +66,6 @@ PointF sub(PointF a, PointF b)
 bool isInPos(int x, int y, int x2, int y2, int diff)
 {
     return std::abs(x - x2) < diff && std::abs(y - y2) < diff;
-}
-
-bool parseNumber(const std::u16string &text, double &out)
-{
-    std::string s;
-    for (const char16_t c : text) {
-        if (c > 0x7F)
-            return false;
-        s += static_cast<char>(c);
-    }
-    std::size_t a = 0, b = s.size();
-    while (a < b && s[a] == ' ')
-        ++a;
-    while (b > a && s[b - 1] == ' ')
-        --b;
-    if (a < b && s[a] == '+')
-        ++a;
-    if (a >= b)
-        return false;
-    const auto [end, ec] = std::from_chars(s.data() + a, s.data() + b, out);
-    return ec == std::errc() && end == s.data() + b && std::isfinite(out);
 }
 
 // The record a target has for the gesture: its text as the gesture began, or
@@ -831,13 +821,16 @@ std::vector<ToolValue> PositionTool::values(const VisualHost &host) const
     return {};
 }
 
-bool PositionTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host)
+bool PositionTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
     // The active Line's \pos at the typed point, the other Lines moved with
-    // it, as a right click there would (VisualPosition.cpp:330-352).
+    // it, as a right click there would (VisualPosition.cpp:330-352). VT1: a
+    // scrub's samples are staged on one gesture, committed by its release.
     double value = 0;
     const auto active = host.activeLine();
-    if ((name != "x" && name != "y") || !active || !parseNumber(text, value) || host.gesture())
+    if (!host.gesture())
+        m_valueEdit = false;
+    if ((name != "x" && name != "y") || !active || !parseValue(text, value) || (host.gesture() && !m_valueEdit))
         return false;
     for (const Data &d : m_data) {
         if (d.line != *active)
@@ -845,6 +838,9 @@ bool PositionTool::setValue(const std::string &name, const std::u16string &text,
         PointF script = host.view().viewToScript(d.pos);
         (name == "x" ? script.x : script.y) = static_cast<float>(value);
         setPointFor(*active, host.view().scriptToView(script));
+        if (edit == ValueEdit::Sample)
+            return m_valueEdit = stageAll(host);
+        m_valueEdit = false;
         return commitAll(host);
     }
     return false;
@@ -861,6 +857,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     rect.tooltip = u"Set position by rectangle.\nAfter drawing a rectangle, the line will be\npositioned on one or "
                    u"both axes\nfor the selected alignment.";
     rect.checked = m_toggled[0];
+    rect.group = u"Rectangle"; // VT1: the bar's group
     out.push_back(rect);
     ToolOption x;
     x.name = "x";
@@ -868,6 +865,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     x.tooltip = u"Positioning in X axis";
     x.checked = m_toggled[1];
     x.enabled = m_toggled[0];
+    x.group = u"Rectangle";
     out.push_back(x);
     ToolOption y;
     y.name = "y";
@@ -875,6 +873,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     y.tooltip = u"Positioning in Y axis";
     y.checked = m_toggled[2];
     y.enabled = m_toggled[0];
+    y.group = u"Rectangle";
     out.push_back(y);
     ToolOption an;
     an.name = "alignment";
@@ -883,6 +882,7 @@ std::vector<ToolOption> PositionTool::options(const VisualHost &host) const
     for (const auto a : positionAlignments())
         an.choices.emplace_back(a);
     an.index = m_an;
+    an.group = u"Rectangle";
     out.push_back(an);
     return out;
 }
@@ -947,6 +947,8 @@ void MoveTool::selected(VisualHost &host)
 
 void MoveTool::reset(VisualHost &host)
 {
+    if (!host.gesture())
+        m_typedTimes = {}; // a value edit ended (committed or dropped)
     if (m_inGesture && !host.gesture()) {
         m_cancelled = true;
         m_keyNudge = false;
@@ -1021,6 +1023,7 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
     const PointF moveFrom = sub(m_lastFrom, m_from);
     const PointF moveTo = sub(m_lastTo, m_to);
     int moveStartTime = 0, moveEndTime = 0;
+    u16 tagStart, tagEnd; // the \move's own times, as written
     u16 tagBefore;
     if (!lp.putInBracket && lp.textStart < txt.size())
         tagBefore = txt.substr(lp.textStart, lp.textLength);
@@ -1047,6 +1050,16 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
         std::erase(t2, u')');
         moveStartTime = atoi16(t1); // wxAtoi
         moveEndTime = atoi16(t2);
+        tagStart = t1;
+        tagEnd = t2;
+    }
+    u16 startText = number(moveStartTime), endText = number(moveEndTime);
+    // VT1: a typed time goes into every target, from its own start; the
+    // other keeps its text (Codex on #293: not wxAtoi's whole part, as a
+    // drag writes it).
+    if (m_typedTimes[0] || m_typedTimes[1]) {
+        startText = m_typedTimes[0] ? number(*m_typedTimes[0]) : tagStart.empty() ? startText : tagStart;
+        endText = m_typedTimes[1] ? number(*m_typedTimes[1]) : tagEnd.empty() ? endText : tagEnd;
     }
     const VideoView &view = host.view();
     const float coeffW = view.coeffW(), coeffH = view.coeffH();
@@ -1055,7 +1068,7 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
                     ft(lp.pos.y - (moveFrom.y / zoomScale.y) * coeffH) + u"," +
                     ft(lp.pos.x + ((m_moveDistance.x - moveTo.x) / zoomScale.x) * coeffW) + u"," +
                     ft(lp.pos.y + ((m_moveDistance.y - moveTo.y) / zoomScale.y) * coeffH) + u"," +
-                    number(moveStartTime) + u"," + number(moveEndTime) + u")";
+                    startText + u"," + endText + u")";
     const long x = static_cast<long>(lp.textStart);
     const long y = static_cast<long>(lp.textLength) + x - 1;
     (void)changeText(txt, tag, !lp.putInBracket, x, y);
@@ -1106,8 +1119,8 @@ void MoveTool::setVisual(bool dummy, VisualHost &host)
         const PointF from = view.viewToScript(m_from);
         const PointF to = view.viewToScript(m_to);
         const u16 visual = u"\\move(" + ft(from.x) + u"," + ft(from.y) + u"," + ft(to.x) + u"," + ft(to.y) + u"," +
-                           ft(static_cast<float>(m_moveValues[4] - startTime)) + u"," +
-                           ft(static_cast<float>(m_moveValues[5] - startTime)) + u")";
+                           timeText(m_moveValues[4] - startTime) + u"," +
+                           timeText(m_moveValues[5] - startTime) + u")";
         const auto [px, py] = editor.position();
         (void)replaceTag(txt, visual, editor.inBracket(), px, py);
         gesture->stage(before.id, core::toUtf8(txt), editsTranslation(before));
@@ -1422,37 +1435,63 @@ Overlay MoveTool::overlay(const VisualHost &host) const
 std::vector<ToolValue> MoveTool::values(const VisualHost &host) const
 {
     // The numeric alternative: the \move's points in script coordinates and
-    // its times from the Line's start, as the tool writes them.
+    // its times from the Line's start, as the tool writes them; VT1: the
+    // times are editable too (whole milliseconds, as the tag takes them).
     const PointF from = host.view().viewToScript(m_from);
     const PointF to = host.view().viewToScript(m_to);
-    const auto *session = host.session();
-    int startTime = 0;
-    if (session && host.activeLine())
-        for (const auto *l : session->document().lines())
-            if (l->id == *host.activeLine())
-                startTime = zeroit(startMs(*l));
-    return {{"x1", u"X1", ft(from.x), true},
-            {"y1", u"Y1", ft(from.y), true},
-            {"x2", u"X2", ft(to.x), true},
-            {"y2", u"Y2", ft(to.y), true},
-            {"t1", u"T1", ft(static_cast<float>(m_moveValues[4] - startTime)), false},
-            {"t2", u"T2", ft(static_cast<float>(m_moveValues[5] - startTime)), false}};
+    const int startTime = activeStart(host);
+    return {{"x1", u"X", ft(from.x), true, u"Start"},
+            {"y1", u"Y", ft(from.y), true, u"Start"},
+            {"t1", u"T", timeText(m_moveValues[4] - startTime), true, u"Start", u"ms", 10},
+            {"x2", u"X", ft(to.x), true, u"End"},
+            {"y2", u"Y", ft(to.y), true, u"End"},
+            {"t2", u"T", timeText(m_moveValues[5] - startTime), true, u"End", u"ms", 10}};
 }
 
-bool MoveTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host)
+int MoveTool::activeStart(const VisualHost &host) const
 {
-    // A typed point written as a key's nudge writes it (SetVisual).
+    // The active Line as the Line editor holds it (its pending draft's
+    // start), as setVisual and the gesture read it.
+    const ScriptState state = scriptState(host);
+    return state.active ? zeroit(startMs(*state.active)) : 0;
+}
+
+bool MoveTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
+{
+    // A typed point written as a key's nudge writes it (SetVisual). VT1: the
+    // times are set from the Line's start as the tag holds them, and a
+    // scrub's samples are staged on one gesture its release commits.
     double value = 0;
-    if ((name != "x1" && name != "y1" && name != "x2" && name != "y2") || !parseNumber(text, value) ||
-        host.gesture() || !host.activeLine())
+    if (!host.gesture())
+        m_valueEdit = false;
+    if (name.size() != 2 || (name[0] != 'x' && name[0] != 'y' && name[0] != 't') || (name[1] != '1' && name[1] != '2') ||
+        !parseValue(text, value) || (host.gesture() && !m_valueEdit) || !host.activeLine())
         return false;
+    // The first sample is the press: the handles' places the several-Line
+    // path moves every target's \move from (Move::OnMouseEvent's click).
+    if (!host.gesture()) {
+        m_lastmove = m_lastTo = m_to;
+        m_firstmove = m_lastFrom = m_from;
+    }
     const bool start = name[1] == '1';
-    PointF script = host.view().viewToScript(start ? m_from : m_to);
-    (name[0] == 'x' ? script.x : script.y) = static_cast<float>(value);
-    (start ? m_from : m_to) = host.view().scriptToView(script);
+    if (name[0] == 't') {
+        const int typed = static_cast<int>(std::lround(value));
+        m_moveValues[start ? 4 : 5] = activeStart(host) + typed;
+        m_typedTimes[start ? 0 : 1] = typed;
+    } else {
+        PointF script = host.view().viewToScript(start ? m_from : m_to);
+        (name[0] == 'x' ? script.x : script.y) = static_cast<float>(value);
+        (start ? m_from : m_to) = host.view().scriptToView(script);
+    }
+    if (edit == ValueEdit::Sample) {
+        setVisual(true, host);
+        return m_valueEdit = host.gesture() != nullptr;
+    }
+    m_valueEdit = false;
     const std::uint64_t before = host.session() ? host.session()->revision() : 0;
     setVisual(true, host);
     setVisual(false, host);
+    m_typedTimes = {};
     return host.session() && host.session()->revision() != before;
 }
 

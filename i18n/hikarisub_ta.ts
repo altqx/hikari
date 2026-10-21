@@ -8730,8 +8730,69 @@ or codecs or a splitter may be missing</source>
         <translation>திருத்தப்பட்ட குறிச்சொல்</translation>
     </message>
     <message>
+        <source>Rectangle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tags</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Points</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change</source>
+        <translation type="unfinished">மாற்று</translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">தொடங்கு</translation>
+    </message>
+    <message>
+        <source>End</source>
+        <translation type="unfinished">முடிவு</translation>
+    </message>
+    <message>
+        <source>Origin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Pick selected lines (%n lines picked: the tools edit them, not the active line)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 line picked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines picked</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>New tag name</source>
@@ -8930,6 +8991,18 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Copy video position</source>
+        <translation type="unfinished">வீடியோ நிலையை நகலெடுக்கவும்</translation>
+    </message>
+    <message>
+        <source>Free drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit shapes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Shape: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8945,23 +9018,9 @@ or codecs or a splitter may be missing</source>
         <source>Pick selected lines</source>
         <translation type="unfinished"></translation>
     </message>
-    <message numerus="yes">
-        <source>Pick selected lines (%n line(s) picked: the tools edit them, not the active line)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
-    </message>
     <message>
         <source>Pick selected lines (the tools edit them, not the active line)</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n line(s) picked</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message>
         <source>Clear picked lines</source>

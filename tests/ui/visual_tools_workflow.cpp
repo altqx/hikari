@@ -56,7 +56,8 @@ protected:
         // A plain click places the crosshair at the pointer.
         mouseClick("mainWindow/visualOverlay", spix::Point(0.5, 0.5));
         wait(200ms);
-        observed.push_back(prop("mainWindow/visualValue_position", "text")); // 2: its label
+        // 2: its label, as the inspector bar reads it (VT1: X and Y).
+        observed.push_back(prop("mainWindow/visualValue_x", "text") + ", " + prop("mainWindow/visualValue_y", "text"));
         // VIDEO_COPY_COORDS (no default key; the context menu is V4's).
         invokeMethod("mainWindow", "runVideoHotkey", {std::string("VIDEO_COPY_COORDS")});
         wait(200ms);

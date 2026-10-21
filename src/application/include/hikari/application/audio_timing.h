@@ -115,6 +115,11 @@ struct AudioKaraokeMouse {
     // KA1: a start as the field commits it (committedAudioTime); a dragged
     // start moves the syllables by that, not by the dragged time
     std::function<int(int)> fieldTime;
+    // KA5-onset-snap: with snapping on, the vocal onsets found (ascending);
+    // empty, nothing snaps. Only a boundary dragged snaps (to the nearest
+    // within kOnsetSnapWindowMs and 16 columns, between its neighbours), not
+    // one clicked or moved by a click.
+    std::span<const int> onsetsMs;
 };
 
 // Legacy AudioDisplay's timing state (hold, holding, selStart/selEnd, the
@@ -168,6 +173,10 @@ private:
     // takes the syllables along (the right button)
     int m_startOrigin = 0;
     bool m_startCarries = false;
+    // KA5-onset-snap: where the button went down, and whether the mouse has
+    // moved from there since.
+    std::int64_t m_pressX = 0;
+    bool m_dragged = false;
 };
 
 // Legacy AudioDisplay::CommitChanges: the selection goes into the editor's

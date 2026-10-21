@@ -2509,9 +2509,33 @@ ApplicationWindow {
                 objectName: "videoPanel"
                 dockName: "Video"
                 // The controls below the video at their narrowest (the
-                // follow choices wrap), above two rail buttons' height.
+                // follow choices wrap), above two rail buttons' height. The
+                // inspector bar counts with its tool's own lines; what it
+                // holds for a taller tool comes out of the height above that
+                // (VT1), so the minimum does not grow with it.
                 minimumBodySize: Qt.size(Math.max(videoTransport.implicitWidth, videoFollow.minimumWidth),
-                                         videoControls.implicitHeight + 72)
+                                         controlsOwnHeight + 72)
+                // Measured, not bound (the held height follows the room this
+                // leaves), whenever the column's height or the held height
+                // changes: a switch to a tool with more lines can leave the
+                // column as tall, holding less (Codex on #293). The bar's
+                // layout and the column are laid out first, so the two
+                // numbers are of one layout.
+                property real controlsOwnHeight: 0
+                function measureControls() {
+                    videoToolBar.contentItem.ensurePolished()
+                    videoControls.ensurePolished()
+                    controlsOwnHeight = videoControls.implicitHeight - videoToolBar.held
+                }
+                Connections {
+                    target: videoControls
+                    function onImplicitHeightChanged() { Qt.callLater(videoPanel.measureControls) }
+                }
+                Connections {
+                    target: videoToolBar
+                    function onHeldChanged() { Qt.callLater(videoPanel.measureControls) }
+                }
+                Component.onCompleted: measureControls()
                 title: qsTranslate("HikariSub.Video", "Video")
                 // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
                 // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
@@ -2670,8 +2694,11 @@ ApplicationWindow {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
-                VisualToolValues { // T1-T4: the family's options, values and batch picker
+                VisualToolBar { // VT1: the tool, its options and values, the batch picker
+                    id: videoToolBar
                     Layout.fillWidth: true
+                    dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
+                    room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
                     // push Next frame out of the panel.
@@ -2721,7 +2748,6 @@ ApplicationWindow {
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
                     }
-                    VisualToolReadout { tools: root.visualTools } // T1: the tool's read-only values
                 }
                 VideoFollowChoices { id: videoFollow; Layout.fillWidth: true; settings: root.app.settings } // V6
                 RowLayout {
@@ -3862,6 +3888,19 @@ ApplicationWindow {
                                 onTriggered: {
                                     root.audio.setTapHold(false)
                                     checked = Qt.binding(() => !root.audio.tapHold)
+                                }
+                            }
+                            MenuSeparator {}
+                            // KA5 (#280, KA5-onset-snap): dragged and tapped
+                            // boundaries snap to vocal onsets
+                            ShellMenuItem {
+                                objectName: "audioOnsetSnap"
+                                text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
+                                checkable: true
+                                checked: root.audio.onsetSnap
+                                onToggled: {
+                                    root.audio.setOnsetSnap(checked)
+                                    checked = Qt.binding(() => root.audio.onsetSnap)
                                 }
                             }
                             MenuSeparator {}
