@@ -152,6 +152,8 @@ public:
     void setPreviewOnVideo(bool on);
     bool videoPreview() const;
     bool canApply() const;
+    // The current text's preview has not come yet (waiting or running).
+    bool previewPending() const;
     int changedNumber() const;
     int changedCount() const;
     QVariantMap lastApply() const { return m_lastApply; }
@@ -258,6 +260,9 @@ private:
     // the current template (its own Lines), the values.
     std::uint64_t m_generation = 0;
     bool m_running = false;
+    // A preview of the current text is waiting for its pause or running;
+    // Apply waits for it (a values run does not count).
+    bool m_previewing = false;
     bool m_wantValues = false;
     std::optional<application::MacroSnapshot> m_previewSnapshot;
     std::optional<core::Document> m_previewSeen; // the Document it was built from

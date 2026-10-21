@@ -372,7 +372,7 @@ private slots:
         Templater whole(copy);
         QVERIFY(QTest::qWaitFor([&] { return whole.available(); }, 20'000));
         QVERIFY(whole.apply(false));
-        QVERIFY(editor->canApply());
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
         QVERIFY(editor->apply(false));
         editor->applied(templater->report);
         editor->refresh();
@@ -381,6 +381,29 @@ private slots:
         QVERIFY(editor->templates().front().toMap().value(QStringLiteral("generated")).toInt() >= 0);
         QVERIFY(session->undo());
         QCOMPARE(bytesOf(session->document()), before);
+    }
+
+    // Apply waits for the preview of the last edit: a problem typed just
+    // before it is known before the stock macro runs.
+    void applyWaitsForTheLastEditsPreview()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(previewCame());
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
+        editor->setDelays(60'000, 60'000);
+        const std::string before = bytesOf(session->document());
+        editor->setText(QStringLiteral("{\\fscx!nosuch.field!}") + editor->text());
+        QVERIFY(!editor->canApply());
+        QVERIFY(!editor->apply(false));
+        QCOMPARE(templater->applies, 0);
+        QVERIFY(QTest::qWaitFor([&] { return editor->hasProblems(); }, 20'000));
+        QVERIFY(!editor->canApply());
+        QVERIFY(!editor->apply(false));
+        QCOMPARE(templater->applies, 0);
+        // Only the template Line's edit went in.
+        QVERIFY(bytesOf(session->document()) != before);
     }
 
     void aPendingEditGoesInBeforeApply()
@@ -398,6 +421,7 @@ private slots:
         open(QStringLiteral("stock-tutorials.ass"));
         // Apply once so every generated Line is marked with its source.
         editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
         QVERIFY(editor->apply(false));
         editor->refresh();
         const auto source = firstKaraoke();
@@ -776,8 +800,9 @@ private slots:
         QVERIFY(textOf(QStringLiteral("templateStatus")).endsWith(QStringLiteral("Undo removes them in one step.")));
         QVERIFY(session->undo());
         QCOMPARE(bytesOf(session->document()), before);
-        // The arrow: the selected Lines.
+        // The arrow: the selected Lines, once the Undo's preview came.
         editor->refresh();
+        QTRY_VERIFY(item(QStringLiteral("templateApplyArrow"))->isEnabled());
         click(item(QStringLiteral("templateApplyArrow")));
         auto *menu = object(QStringLiteral("templateApplyMenu"));
         QTRY_VERIFY(menu->property("opened").toBool());

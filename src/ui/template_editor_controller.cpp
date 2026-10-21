@@ -425,6 +425,7 @@ void TemplateEditorController::setShown(bool shown)
         m_previewTimer.stop();
         ++m_generation;
         m_running = false;
+        m_previewing = false;
         if (m_templater)
             m_templater->cancelPreview();
     }
@@ -688,7 +689,13 @@ std::optional<core::Document> TemplateEditorController::videoDocument(const core
 bool TemplateEditorController::canApply() const
 {
     const auto *s = session();
-    return available() && m_editable && s && !s->isReadOnly() && templateCount() > 0 && !hasProblems();
+    return available() && m_editable && s && !s->isReadOnly() && templateCount() > 0 && !hasProblems() &&
+           !previewPending();
+}
+
+bool TemplateEditorController::previewPending() const
+{
+    return m_shown && (m_previewTimer.isActive() || m_previewing);
 }
 
 int TemplateEditorController::changedNumber() const
@@ -796,6 +803,12 @@ void TemplateEditorController::commit()
 bool TemplateEditorController::apply(bool selectedOnly)
 {
     commit();
+    // The edit's preview runs now rather than after the pause; Apply waits
+    // for it unless the last one already ran on this text.
+    if (m_previewTimer.isActive()) {
+        m_previewTimer.stop();
+        runPreview();
+    }
     if (!canApply() || m_pending)
         return false;
     return m_templater->apply(selectedOnly);
@@ -875,14 +888,20 @@ std::map<core::LineId, std::u8string> TemplateEditorController::pendingTexts() c
 
 void TemplateEditorController::schedulePreview()
 {
-    if (m_shown && m_templater)
-        m_previewTimer.start();
+    if (!m_shown || !m_templater)
+        return;
+    const bool was = previewPending();
+    m_previewTimer.start();
+    if (!was)
+        emit changed(); // canApply
 }
 
 void TemplateEditorController::runPreview()
 {
     if (!m_shown || !available() || !m_source || templateCount() == 0) {
         m_running = false;
+        m_previewing = false;
+        emit changed(); // canApply
         return;
     }
     // The pending Effect, Style and Layer reach the run through the record.
@@ -901,13 +920,16 @@ void TemplateEditorController::runPreview()
     for (const auto &st : snapshot->styles)
         for (const auto &f : st.fields)
             key += f + ',';
-    if (key == m_previewSnapshotKey && !m_running)
+    if (key == m_previewSnapshotKey && !m_running) {
+        emit changed(); // canApply: the preview is this text's
         return;
+    }
     m_previewSnapshotKey = key;
     m_previewSnapshot = std::move(snapshot);
     m_previewSeen = std::move(seen);
     const std::uint64_t generation = ++m_generation;
     m_running = true;
+    m_previewing = true;
     runChain(generation);
 }
 
@@ -988,6 +1010,7 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
         }
     }
     m_previewKept = !worked && m_preview.has_value();
+    m_previewing = false; // the edit's problems are known
     emit changed();
     emit previewChanged();
     emit videoChanged();
@@ -1039,6 +1062,8 @@ void TemplateEditorController::markOwn(std::uint64_t generation, application::Ka
 void TemplateEditorController::finishChain(std::uint64_t generation)
 {
     m_running = false;
+    m_previewing = false;
+    emit changed(); // canApply
     if (m_wantValues)
         runValues(generation);
 }
