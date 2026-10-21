@@ -21025,6 +21025,7 @@ private slots:
         const auto shownPopups = [&] { return shownMenus(start); };
         const int popupsBefore = shownPopups();
         const QPoint at = charPoint(start, 6);
+        const QPointF fieldOrigin = start->mapToScene(QPointF());
         QTest::mousePress(window, Qt::RightButton, {}, at);
         QVERIFY(start->hasActiveFocus());
         QCOMPARE(start->property("cursorPosition").toInt(), 6);
@@ -21039,9 +21040,15 @@ private slots:
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QTest::mouseMove(window, at + QPoint(10, -8));
         QCOMPARE(text(), QStringLiteral("0:00:12.00"));
+        // Start past End: "End is before Start." shows below the fields and
+        // the layout moves them up under the held pointer on its next
+        // polish, which is no drag (the pointer's travel in the window).
+        QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
+        QTRY_VERIFY(start->mapToScene(QPointF()).y() < fieldOrigin.y());
         QTest::mouseMove(window, at + QPoint(-2, -8));
         QCOMPARE(text(), QStringLiteral("0:00:02.00"));
         QCOMPARE(draftStart(), 2'000'000); // live: NUMBER_CHANGED
+        QTRY_COMPARE(start->mapToScene(QPointF()), fieldOrigin); // the problem gone
         QTest::mouseRelease(window, Qt::RightButton, {}, at + QPoint(-2, -8));
         QCOMPARE(shownPopups(), popupsBefore);
         // Released: moving changes nothing.
@@ -21497,9 +21504,17 @@ private slots:
         QVERIFY(layer->hasActiveFocus());
         QTest::mouseMove(window, layerAt + QPoint(0, -8));
         QCOMPARE(text(layer), QStringLiteral("1"));
+        // The editor scrolled under the held pointer: no drag (the pointer's
+        // travel in the window).
+        auto *editorView = item("editorScroll");
+        const qreal scrolledFrom = editorView->property("contentY").toReal();
+        const qreal layerTop = layer->mapToScene(QPointF()).y();
+        editorView->setProperty("contentY", scrolledFrom + 20);
+        QCOMPARE(layer->mapToScene(QPointF()).y(), layerTop - 20);
         QTest::mouseMove(window, layerAt + QPoint(10, -8));
         QCOMPARE(text(layer), QStringLiteral("11"));
         QTest::mouseRelease(window, Qt::RightButton, {}, layerAt + QPoint(10, -8));
+        editorView->setProperty("contentY", scrolledFrom);
         QCoreApplication::processEvents();
         int menus = 0;
         for (auto *popup : layer->findChildren<QObject *>())
