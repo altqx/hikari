@@ -12,6 +12,8 @@
 
 #include <algorithm>
 #include <numeric>
+#include <string_view>
+#include <unordered_set>
 
 namespace hikari::app {
 
@@ -298,6 +300,11 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
     connect(&m_manager, &backends::AutomationManager::servicesWithdrawn, this, [this] { m_router.withdraw(); });
     m_managerController = std::make_unique<ui::AutomationManagerController>(*this);
+    // AM1: the panel lists the Document scripts apart from autoload's (the
+    // list changes only with a load, reload or unload, which refresh it).
+    m_managerController->setDocumentScript([this](const std::string &path) {
+        return std::ranges::find(m_documentScripts.scripts(), path) != m_documentScripts.scripts().end();
+    });
 }
 
 void AutomationShell::setAudioBox(std::function<const application::AudioBox *()> box)
@@ -406,8 +413,11 @@ void AutomationShell::loadScript(const QUrl &file)
     // Automation.cpp:1162-1168: "|<path>" is appended to the Script Info
     // value as a "Changing the subtitle header" step (SetModified(ASS_PROPERTIES)).
     const auto key = wide(application::kAutomationScriptsKey);
-    const std::string value =
-        application::scriptInfoWithScript(narrow(s->document().scriptInfo(key).value_or(std::u8string())), path);
+    const std::string before = narrow(s->document().scriptInfo(key).value_or(std::u8string()));
+    const std::string value = application::scriptInfoWithScript(before, path);
+    // A value read before stays read with the path the user chose added.
+    if (before.empty() || m_readScriptInfo.contains(before))
+        m_readScriptInfo.insert(value);
     s->run(application::Command{"Changing the subtitle header", s->revision(), {},
                                 [&](core::Document &d) { return d.setScriptInfo(key, wide(value)); }});
     if (m_documentChanged)
@@ -420,11 +430,32 @@ void AutomationShell::addFromDocument()
     const auto *s = target ? session(*target) : nullptr;
     const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
     std::vector<std::string> added;
+    if (value)
+        m_readScriptInfo.insert(narrow(*value));
     m_documentScripts.readScriptInfo(
         value ? narrow(*value) : std::string(),
         [](const std::string &path) { return QFileInfo(QString::fromStdString(path)).isFile(); }, &added);
     for (const auto &path : added)
         loadDocumentScript(path);
+}
+
+QStringList AutomationShell::documentScriptsToLoad()
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *s = target ? session(*target) : nullptr;
+    const auto value = s ? s->document().scriptInfo(wide(application::kAutomationScriptsKey)) : std::nullopt;
+    QStringList out;
+    if (!value || m_readScriptInfo.contains(narrow(*value)))
+        return out;
+    // No file check before consent: one would open a UNC path's server.
+    // Sets keep a long value (thousands of paths) linear on the GUI thread.
+    const auto &listed = m_documentScripts.scripts();
+    const std::unordered_set<std::string_view> loaded(listed.begin(), listed.end());
+    std::unordered_set<std::string> offered;
+    for (std::string &path : application::scriptInfoScriptPaths(narrow(*value)))
+        if (!path.empty() && !loaded.contains(path) && offered.insert(path).second)
+            out << QString::fromStdString(path);
+    return out;
 }
 
 void AutomationShell::menuOpened()
@@ -584,6 +615,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_task.clear();
     m_log.clear();
     m_lastMessage.clear();
+    m_lastOutcome.clear();
     m_progress = 0;
     m_keepLog = false;
     if (m_documentChanged)
@@ -711,6 +743,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     }
     bool ok = false;
     QString text;
+    QString ended;
     switch (outcome) {
     case Outcome::Ok: {
         const auto *host = m_manager.host(run.path);
@@ -722,10 +755,15 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
             else if (const auto report = ui::readKaraokeReport(host->lastResult()->report))
                 karaokeReport(*report);
         }
+        ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
         break;
     }
-    case Outcome::Failed: text = message; break;
+    case Outcome::Failed:
+        text = message;
+        ended = QStringLiteral("failed");
+        break;
     case Outcome::Cancelled:
+        ended = run.declined && !resolutionSet ? QStringLiteral("declined") : QStringLiteral("cancelled");
         // A user who declined to set the script resolution chose not to run it.
         // A resolution the user set before cancelling is kept as its own step.
         if (resolutionSet)
@@ -736,12 +774,15 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         break;
     case Outcome::HelperLost:
         text = QCoreApplication::translate("HikariSub.Automation", "The script's helper ended; reload the script to use it again.");
+        ended = QStringLiteral("lost");
         break;
     case Outcome::ForceStopped:
         text = QCoreApplication::translate("HikariSub.Automation",
                                            "The macro was force stopped; reload the script to use it again.");
+        ended = QStringLiteral("stopped");
         break;
     case Outcome::NotValid:
+        ended = QStringLiteral("invalid");
         // LuaCommand::Validate logs a runtime error (Automation.cpp:953); the
         // menu says nothing more (RunScript), a hotkey and "Run the last
         // loaded script" say validation failed (HikariSubFrame.cpp:929, 2641).
@@ -758,6 +799,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     if (!text.isEmpty())
         m_log += (m_log.isEmpty() || m_log.endsWith(QLatin1Char('\n')) ? QString() : QStringLiteral("\n")) + text;
     m_lastMessage = text;
+    m_lastOutcome = ended;
     m_editor.reloadFromSession();
     if (m_documentChanged)
         m_documentChanged();

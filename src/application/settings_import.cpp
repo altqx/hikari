@@ -374,6 +374,10 @@ std::string_view retiredActionReason(int id)
     // User decision 2026-10-05: GLOBAL_VIDEO_INDEXING is retired.
     if (id == hotkeyIdOf("GLOBAL_VIDEO_INDEXING"))
         return "retired: the rewrite has no FFMS2 indexing command (user decision, 2026-10-05)";
+    // AM1 (2026-10-19): GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, as the window is gone.
+    if (id == hotkeyIdOf("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
+        return "retired: the shortcut mapping window is gone; each macro's shortcut is set in the "
+               "Automation panel (user decision, 2026-10-19)";
     // AV3 (owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO, as a dummy video brings its own audio.
     if (id == hotkeyIdOf("GLOBAL_OPEN_DUMMY_AUDIO"))
         return "retired: a dummy video brings its own silent audio (owner decision, 2026-10-18)";
