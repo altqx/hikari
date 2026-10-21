@@ -207,6 +207,24 @@ TEST_F(TemplatePreview, TheVideoDrawsThePreviewInPlaceOfTheSourcesLines)
     EXPECT_EQ(doc.lines().size(), 11u) << "the Document itself is untouched";
 }
 
+// The preview takes the place of the Lines it replaces, as Apply writes them:
+// read order decides collisions and stacking among Lines on one layer.
+TEST_F(TemplatePreview, ThePreviewStandsWhereTheSourcesLinesStood)
+{
+    core::LineRecord a = line(5), b = line(6);
+    a.text = u8"{\\pos(9,9)}ha";
+    b.text = u8"{\\pos(9,9)}ru";
+    a.generatedFrom = b.generatedFrom = {};
+    const std::vector<std::u8string> inPlace{u8"{\\pos(9,9)}ha", u8"{\\pos(9,9)}ru", u8"{\\k50}ka{\\k50}ze",
+                                             u8"{\\pos(1,2)}ka"};
+    EXPECT_EQ(textsOf(templatePreviewDocument(doc, ids[4], {a, b}, {}, {1000, 5000})), inPlace);
+    // Unmarked Lines a matching run found: the same place.
+    core::Document unmarked = doc;
+    for (const std::size_t i : {5u, 6u})
+        ASSERT_TRUE(unmarked.editLine(ids[i], [](core::LineRecord &l) { l.generatedFrom = {}; }, core::ChangeMark::Kept));
+    EXPECT_EQ(textsOf(templatePreviewDocument(unmarked, ids[4], {a, b}, {ids[5], ids[6]}, {1000, 5000})), inPlace);
+}
+
 // The source not applied yet (a Dialogue): Apply turns it into a Comment when
 // its templates make Lines, so the frame does not draw it under them.
 TEST_F(TemplatePreview, TheSourceIsLeftOutWhenItsTemplatesMakeLines)

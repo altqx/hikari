@@ -146,13 +146,33 @@ core::Document templatePreviewDocument(const core::Document &doc, core::LineId s
     // The source too when its templates make Lines: Apply turns it into a
     // Comment then.
     const bool sourceGoes = !preview.empty();
-    out.removeLinesIf([&](const core::LineRecord &l) {
-        return l.comment || l.generatedFrom == source || replaced.contains(l.id) || !over(l, window) ||
-               (sourceGoes && l.id == source);
-    });
+    const auto replacedHere = [&](const core::LineRecord &l) {
+        return l.generatedFrom == source || replaced.contains(l.id);
+    };
+    const auto goes = [&](const core::LineRecord &l) {
+        return l.comment || replacedHere(l) || !over(l, window) || (sourceGoes && l.id == source);
+    };
+    // The preview stands where the Lines it replaces stood, as Apply writes
+    // it (read order decides collisions and stacking): before the first Line
+    // after them that stays; at the end when there were none.
+    std::optional<core::LineId> before;
+    bool past = false;
+    for (const auto *l : doc.lines()) {
+        if (replacedHere(*l))
+            past = true;
+        else if (past && !goes(*l)) {
+            before = l->id;
+            break;
+        }
+    }
+    out.removeLinesIf(goes);
     for (const auto &l : preview)
-        if (!l.comment && over(l, window))
-            out.appendLine(l, core::ChangeMark::Kept);
+        if (!l.comment && over(l, window)) {
+            if (before)
+                out.insertLineBefore(*before, l, core::ChangeMark::Kept);
+            else
+                out.appendLine(l, core::ChangeMark::Kept);
+        }
     return out;
 }
 
