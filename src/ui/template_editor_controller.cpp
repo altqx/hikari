@@ -355,7 +355,7 @@ void TemplateEditorController::refresh()
         m_values.clear();
         m_lastApply.clear();
         m_previewSnapshotKey.clear();
-        ++m_generation;
+        stopRuns();
         takeBaseline();
     }
     if (!s) {
@@ -1168,7 +1168,9 @@ void TemplateEditorController::runValues(std::uint64_t generation)
     const core::LineId id = *m_source;
     m_running = true;
     m_templater->preview(*snapshot, [self, generation, id](application::KaraokeTemplaterPort::Preview p) {
-        if (!self)
+        // Another tab or a newer run since: the same Line id may be
+        // another Document's.
+        if (!self || generation != self->m_generation)
             return;
         self->m_running = false;
         self->m_wantValues = false;
@@ -1182,7 +1184,6 @@ void TemplateEditorController::runValues(std::uint64_t generation)
         for (std::size_t k = 0; k < variables().size() && k < static_cast<std::size_t>(values.size()); ++k)
             self->m_values[QString::fromLatin1(variables()[k].name)] = values[static_cast<qsizetype>(k)];
         emit self->valuesChanged();
-        (void)generation;
     });
 }
 

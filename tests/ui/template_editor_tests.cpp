@@ -698,6 +698,33 @@ private slots:
         QVERIFY(!editor->previewPending());
     }
 
+    // The values asked for on one tab stay that tab's: the same file in
+    // another tab (the same Line ids) shows none until asked there.
+    void valuesFromAnotherTabAreDropped()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500); // the run marking the current template's own Lines
+        templater->holdPreviews = 1;
+        editor->requestValues();
+        QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
+        auto first = std::move(session);
+        session = std::make_unique<application::EditSession>(loadFile(QStringLiteral("stock-tutorials.ass")));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QVERIFY(answerHeld());
+        QTest::qWait(100);
+        QVERIFY(editor->values().isEmpty());
+        // Asked on this tab, they come.
+        activate(*firstKaraoke());
+        editor->trustDocument();
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        editor->requestValues();
+        QVERIFY(QTest::qWaitFor([&] { return !editor->values().isEmpty(); }, 20'000));
+    }
+
     void anUndoneApplyMatchesAgain()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
