@@ -201,6 +201,12 @@ TEST(KaraokeChecks, SignedAndOversizedValuesRead)
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep unclosed")).problems.empty());
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\ko\\i1}b")),
               (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
+    // The text ending in a tag's name, after a tag the editor cannot read:
+    // "\\kf" is a tag with no number, "\\kfo" no karaoke tag at all.
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k+100}a{\\kf")),
+              (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}, {0, Kind::NotForAudioEditor, 0, 0, {}}}));
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k+100}a{\\kfo")),
+              (std::vector<Found>{{0, Kind::NotForAudioEditor, 0, 0, {}}}));
 }
 
 TEST(KaraokeChecks, LinesTheAudioEditorCannotReadAreFlagged)

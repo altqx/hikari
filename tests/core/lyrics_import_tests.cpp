@@ -156,6 +156,14 @@ TEST(LyricsImport, AmllTtmlBecomesKaraokeLines)
                                         "</metadata></head><body><p begin=\"1\" end=\"2\">x</p></body></tt>"));
     ASSERT_TRUE(named.has_value());
     EXPECT_EQ(named->document.scriptInfo(u8"Title"), u8"My Song");
+    // Another namespace's title and agent are not TTML's, nor is what they hold.
+    const auto foreign = importTtml(bytes("<tt><head><metadata><f:title xmlns:f=\"urn:other\">Wrong</f:title>"
+                                          "<f:x xmlns:f=\"urn:other\"><ttm:title>Inside</ttm:title></f:x><ttm:title>Right</ttm:title>"
+                                          "<f:agent xmlns:f=\"urn:other\" xml:id=\"v1\"><ttm:name>Wrong</ttm:name></f:agent>"
+                                          "</metadata></head><body><p begin=\"1\" end=\"2\" ttm:agent=\"v1\">x</p></body></tt>"));
+    ASSERT_TRUE(foreign.has_value());
+    EXPECT_EQ(foreign->document.scriptInfo(u8"Title"), u8"Right");
+    EXPECT_EQ(rows(*foreign), (std::vector<Row>{{1000, 2000, "v1", "x"}}));
     const std::vector<Row> expected{
         // The space between the spans stays after its word; the romanisation
         // and translation spans are not lyrics to time.
@@ -306,6 +314,14 @@ TEST(LyricsImport, TtmlMustBeWellFormedXml)
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><$>x</$>" + tail, u8"ttml").kind, Kind::NotWellFormed);
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><a$>x</a$>" + tail, u8"ttml").kind, Kind::NotWellFormed);
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\" $a=\"1\">x" + tail, u8"ttml").kind, Kind::NotWellFormed);
+    // And namespaces' grammar: a prefix and a local name, neither empty, at
+    // most one colon.
+    EXPECT_EQ(problemOf("<:tt><:body><:p begin=\"1\" end=\"2\">x</:p></:body></:tt>", u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 1, u8"<:tt>"}));
+    for (const char *bad : {"<a:/>", "<a:b:c/>", "<p:/>", "<x/ :a=\"1\">"})
+        EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">" + bad + "x" + tail, u8"ttml").kind, Kind::NotWellFormed) << bad;
+    for (const char *bad : {" :a=\"1\"", " a:=\"1\"", " a:b:c=\"1\""})
+        EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"" + bad + ">x" + tail, u8"ttml").kind, Kind::NotWellFormed) << bad;
     EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" end=\"2\" x:l\xC3\xA9-g\xC2\xB7.1=\"1\"><\xE6\x97\xA5\xE6\x9C\xAC/>x" + tail))
                     .has_value());
     // Characters XML forbids, as references or written out.
@@ -656,8 +672,20 @@ TEST(LyricsImport, TtmlEmptyAndNestedTimedSpans)
     EXPECT_EQ(text("<p begin=\"0\" end=\"3\"><span begin=\"1\" end=\"3\">hel<span>lo</span><span begin=\"2\" end=\"3\">world"
                    "</span></span></p>"),
               "{\\k100}{\\k100}hello{\\k100}world");
-    // A paragraph's own text still joins its first word as written.
-    EXPECT_EQ(text("<p begin=\"1\" end=\"3\">hel<span begin=\"2\" end=\"3\">lo</span></p>"), "{\\k100}{\\k100}hello");
+    // So is a paragraph's own text beside its timed words, from the
+    // paragraph's begin; text with no time of its own joins the word
+    // beside it as written.
+    EXPECT_EQ(text("<p begin=\"1\" end=\"3\">hel<span begin=\"2\" end=\"3\">lo</span></p>"), "{\\k100}hel{\\k100}lo");
+    EXPECT_EQ(text("<p begin=\"0\" end=\"4\">hello <span begin=\"2\" end=\"3\">world</span></p>"),
+              "{\\k200}hello {\\k100}world{\\k100}");
+    EXPECT_EQ(text("<p begin=\"0\" end=\"4\"><span begin=\"0\" end=\"1\">a</span> b <span begin=\"2\" end=\"4\">c</span>"
+                   "</p>"),
+              "{\\k100}a {\\k100}b {\\k200}c");
+    EXPECT_EQ(text("<p begin=\"0\" end=\"4\"><span begin=\"0\" end=\"3\">a</span> b <span begin=\"2\" end=\"4\">c</span>"
+                   "</p>"),
+              "{\\k200}a {\\k200}b c"); // b would begin after c does
+    EXPECT_EQ(text("<p begin=\"0\" end=\"2\"><span begin=\"0\" end=\"2\">a</span> b</p>"), "{\\k200}a b");
+    EXPECT_EQ(text("<p begin=\"0\"><span begin=\"0\" end=\"2\">a</span> b</p>"), "{\\k200}a b");
 }
 
 TEST(LyricsImport, ActorsKeepAMarkerLikeStart)

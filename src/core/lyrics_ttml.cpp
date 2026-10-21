@@ -63,6 +63,14 @@ struct XmlNode {
     bool isText() const { return name.empty(); }
 };
 
+// Whether a name is a QName (Namespaces in XML): a local name, or a
+// prefix, one colon and a local name, neither empty.
+bool qualifiedName(u8sv name)
+{
+    const std::size_t colon = name.find(u8':');
+    return colon == u8sv::npos || (colon > 0 && colon + 1 < name.size() && name.find(u8':', colon + 1) == u8sv::npos);
+}
+
 u8sv localName(u8sv name)
 {
     const std::size_t colon = name.rfind(u8':');
@@ -812,7 +820,7 @@ private:
                 XmlNode node;
                 node.line = line;
                 const auto tag = name();
-                if (!tag) {
+                if (!tag || !qualifiedName(*tag)) {
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
@@ -836,7 +844,7 @@ private:
                     const auto attributeStart = std::pair{m_pos, m_line};
                     const auto key = name();
                     skipSpace();
-                    if (!key || !at(u8"=")) {
+                    if (!key || !qualifiedName(*key) || !at(u8"=")) {
                         std::tie(m_pos, m_line) = attributeStart;
                         return std::unexpected(broken());
                     }
@@ -1133,9 +1141,11 @@ private:
         std::vector<LyricWord> words;
         std::vector<std::size_t> lines;           // each word's line in the file
         std::vector<std::optional<std::int64_t>> ends;
+        std::vector<bool> own;                    // each word: whether it is a span's or paragraph's own text
         std::u8string leading;                    // text before the first word
         std::u8string plain;                      // all the text, for a Line without words
         const XmlNode *textOf = nullptr;          // the timed span whose own text the last word is
+        std::optional<std::int64_t> timedBegin;   // the last timed span's word's begin (own text sets no order)
         std::optional<std::int64_t> lineBegin;    // the Line's begin, which a dur inside it counts from
     };
     // A background vocal span: whether its parent keeps whitespace, and the
@@ -1191,24 +1201,34 @@ private:
     void readHead(const XmlNode &root)
     {
         std::optional<std::u8string> musicName;
+        // TTML's metadata (ttm:title, ttm:agent, ttm:name), or the same
+        // names with no namespace or TTML's, as such files write them;
+        // another namespace's are not, nor what they hold. AMLL's meta is
+        // read under whatever prefix the file gives it.
+        auto metadata = [](const XmlNode &node, u8sv local) {
+            return (node.ns == Namespace::TtmlMetadata || node.ns == Namespace::Ttml || node.ns == Namespace::None) &&
+                   localName(node.name) == local;
+        };
         auto visit = [&](auto &self, const XmlNode &node) -> void {
             const u8sv local = localName(node.name);
             // A title counts once it has words: an empty one leaves the
             // next title, or musicName, to name the file.
-            if (local == u8"title" && !m_sheet.title)
+            if (metadata(node, u8"title") && !m_sheet.title)
                 if (const auto title = collapsed(allText(node)); !detail::trim(title).empty())
                     m_sheet.title = detail::trim(title);
             if (local == u8"meta" && attribute(node, u8"key") == u8sv(u8"musicName") && !musicName)
                 if (const auto title = collapsed(attribute(node, u8"value").value_or(u8"")); !detail::trim(title).empty())
                     musicName = detail::trim(title);
-            if (local == u8"agent") {
+            if (metadata(node, u8"agent")) {
                 const auto id = attribute(node, u8"id", Namespace::Xml);
                 for (const XmlNode &child : node.children)
-                    if (id && localName(child.name) == u8"name")
+                    if (id && metadata(child, u8"name"))
                         m_agents[std::u8string(*id)] = detail::trim(collapsed(allText(child)));
             }
+            if (node.ns == Namespace::Other)
+                return; // another namespace's element: nothing inside it is TTML's
             for (const XmlNode &child : node.children)
-                if (!isTtml(child, u8"body"))
+                if (!child.isText() && !isTtml(child, u8"body"))
                     self(self, child);
         };
         for (const XmlNode &child : root.children)
@@ -1339,6 +1359,7 @@ private:
                 into.words.push_back(LyricWord{begin, 0, std::u8string(lyric)});
                 into.ends.push_back(spanEnd);
                 into.lines.push_back(child.line);
+                into.own.push_back(true);
                 into.textOf = span;
                 continue;
             }
@@ -1374,13 +1395,15 @@ private:
                 backgroundsIn(child, backgrounds, kept, begin, t->second ? t->second : spanEnd);
                 if (word.empty())
                     continue; // a timed span with no lyric is no word; the gaps come from the words
-                if (t->first && !into.words.empty() && begin < into.words.back().begin)
+                if (t->first && into.timedBegin && begin < *into.timedBegin)
                     return std::unexpected(LyricsProblem{Kind::TimeGoesBack, attributeLine(child, u8"begin"),
                                                          std::u8string(*attribute(child, u8"begin"))});
                 append(into.plain, word, kept);
                 into.words.push_back(LyricWord{begin, 0, std::u8string(word)});
                 into.ends.push_back(t->second ? t->second : spanEnd);
                 into.lines.push_back(child.line);
+                into.own.push_back(false);
+                into.timedBegin = begin;
                 into.textOf = nullptr;
                 continue;
             }
@@ -1405,6 +1428,52 @@ private:
         return {};
     }
 
+    // Own text with no time of its own joins the word beside it as
+    // written: text that begins no earlier than the word after it
+    // ("hello<span begin=\"2\">world" from 2 s stays "helloworld"), and
+    // text after the last timed word with nothing left to time it. `end`:
+    // the Line's end. One pass, however many words join.
+    static void joinUntimed(Words &words, std::optional<std::int64_t> end)
+    {
+        std::size_t n = words.words.size();
+        if (n > 1 && words.own[n - 1]) {
+            const auto lastEnd = words.ends[n - 1] ? words.ends[n - 1] : end;
+            if (!lastEnd || *lastEnd <= words.words[n - 1].begin) {
+                words.words[n - 2].text += words.words[n - 1].text;
+                --n;
+            }
+        }
+        // Each word that joins the one kept after it, found from the back.
+        std::vector<bool> joins(n);
+        for (std::size_t i = n, next = n; i-- > 0;) {
+            if (next < n && words.own[i] && words.words[i].begin >= words.words[next].begin)
+                joins[i] = true;
+            else
+                next = i;
+        }
+        std::size_t kept = 0;
+        std::u8string before;
+        for (std::size_t i = 0; i < n; ++i) {
+            if (joins[i]) {
+                before += words.words[i].text;
+                continue;
+            }
+            words.words[i].text.insert(0, before);
+            before.clear();
+            if (kept != i) {
+                words.words[kept] = std::move(words.words[i]);
+                words.ends[kept] = words.ends[i];
+                words.lines[kept] = words.lines[i];
+                words.own[kept] = words.own[i];
+            }
+            ++kept;
+        }
+        words.words.resize(kept);
+        words.ends.resize(kept);
+        words.lines.resize(kept);
+        words.own.resize(kept);
+    }
+
     // A <p>, or an x-bg span, as Lines. `begin` and `end` are its nearest
     // timed ancestor's: they time a plain paragraph without times of its own
     // and end its last word, but a word-timed Line still spans its words.
@@ -1424,8 +1493,14 @@ private:
         words.lineBegin = begin;
         Backgrounds backgrounds;
         const bool preserve = preserves(node, inherited);
-        if (auto ok = collect(node, words, backgrounds, preserve, nullptr, std::nullopt, std::nullopt); !ok)
+        // A paragraph with timed words times its own text as a span does:
+        // "hello <span>world</span>" sings hello from the paragraph's begin.
+        const bool spans = begin && hasTimedSpan(node);
+        if (auto ok = collect(node, words, backgrounds, preserve, spans ? &node : nullptr, spans ? begin : std::nullopt,
+                              spans ? end : std::nullopt);
+            !ok)
             return ok;
+        joinUntimed(words, end);
         LyricLine out;
         out.actor = actor;
         if (words.words.empty()) {
