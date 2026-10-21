@@ -22,10 +22,13 @@
                                                        object announcing it), one per line
   atspi_tool.py statusbar                              P10: the showing status bar's children (role,
                                                        name, description) as JSON
+  atspi_tool.py apps PID                               A11Y1: every application process PID registered
+                                                       (bus name, toolkit, windows) as JSON
 
 Every line names the role, the accessible name, the states that matter for
 the gate (focused, active, showing, visible) and the screen extents.
 """
+import os
 import sys
 import time
 import warnings
@@ -36,6 +39,10 @@ import gi
 
 gi.require_version("Atspi", "2.0")
 from gi.repository import Atspi, GLib  # noqa: E402
+
+# gate.py also runs this file's functions from a python3 -c elsewhere.
+sys.path.insert(0, os.environ.get("GATE_DIR", os.path.dirname(os.path.abspath(sys.argv[0]))))
+from gatelib import hikarisub_application  # noqa: E402
 
 INTERESTING = [
     Atspi.StateType.FOCUSED,
@@ -50,12 +57,42 @@ INTERESTING = [
 
 
 def app(name="hikarisub"):
+    """HikariSub's application on the bus (gatelib.hikarisub_application)."""
     desktop = Atspi.get_desktop(0)
+    named = []
     for i in range(desktop.get_child_count()):
         a = desktop.get_child_at_index(i)
         if a and (a.get_name() or "").lower().startswith(name.lower()):
-            return a
-    return None
+            named.append(a)
+
+    def toolkit(a):
+        try:
+            return a.get_toolkit_name()
+        except GLib.Error:
+            return None
+
+    at = hikarisub_application([toolkit(a) for a in named])
+    return None if at is None else named[at]
+
+
+def apps(pid):
+    """A11Y1: every application on the bus that process PID registered (one
+    per toolkit bridge), with its bus name, toolkit and top-level windows."""
+    desktop = Atspi.get_desktop(0)
+    out = []
+    for i in range(desktop.get_child_count()):
+        a = desktop.get_child_at_index(i)
+        try:
+            if not a or a.get_process_id() != pid:
+                continue
+            bus = getattr(getattr(a, "app", None), "bus_name", None)
+            windows = [{"role": w.get_role_name(), "name": w.get_name()}
+                       for w in (a.get_child_at_index(j) for j in range(a.get_child_count())) if w]
+            out.append({"name": a.get_name(), "bus": bus, "toolkit": a.get_toolkit_name(),
+                        "toolkitVersion": a.get_toolkit_version(), "windows": windows})
+        except GLib.Error as e:
+            out.append({"error": str(e)})
+    return out
 
 
 def states(o):
@@ -205,6 +242,10 @@ def main():
         loop = GLib.MainLoop()
         GLib.timeout_add(int(seconds * 1000), loop.quit)
         loop.run()
+        return 0
+    if cmd == "apps":
+        import json
+        print(json.dumps(apps(int(sys.argv[2])), indent=1))
         return 0
     a = app()
     if a is None:
