@@ -340,7 +340,7 @@ TEST(LyricsImport, RepeatedTextCannotOutgrowTheFile)
     std::string ttml = "<tt><head><ttm:agent xml:id=\"a\"><ttm:name>" + std::string(100000, 'n') +
                        "</ttm:name></ttm:agent></head><body>\n";
     for (int i = 0; i < 2000; ++i)
-        ttml += "<p agent=\"a\" begin=\"1\" end=\"2\">x</p>\n";
+        ttml += "<p ttm:agent=\"a\" begin=\"1\" end=\"2\">x</p>\n";
     ttml += "</body></tt>";
     EXPECT_EQ(problemOf(ttml, u8"ttml").kind, Kind::TooLarge);
     // A voice marker is at most nine digits; a longer one is lyrics text.
@@ -473,6 +473,14 @@ TEST(LyricsImport, TtmlPrologIsChecked)
     EXPECT_EQ(problemOf("<!DOCTYPE tt [<!ENTITY a \"]>" + root, u8"ttml").kind, Kind::NotWellFormed);
     // A "]" closes only the "[" that opened the internal subset, and ">" follows it.
     EXPECT_TRUE(imports("<!DOCTYPE tt [ ] >"));
+    // An XML declaration: version 1.n, then an encoding name and standalone,
+    // in that order.
+    EXPECT_TRUE(imports("<?xml version='1.1' encoding=\"utf-8\" standalone='no' ?>"));
+    for (const char *bad : {"<?xml?>", "<?xml garbage?>", "<?xml version=\"2.0\"?>", "<?xml version=\"1.\"?>",
+                            "<?xml encoding=\"UTF-8\" version=\"1.0\"?>", "<?xml version=\"1.0\" standalone=\"maybe\"?>",
+                            "<?xml version=\"1.0\" encoding=\"8bit\"?>", "<?xml version=\"1.0\"encoding=\"UTF-8\"?>",
+                            "<?xml version=\"1.0\" extra=\"x\"?>", "<?xml version=\"1.0\""})
+        EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
     // After the name only an external id, an internal subset and ">".
     EXPECT_TRUE(imports("<!DOCTYPE tt SYSTEM \"ttml.dtd\">"));
     EXPECT_TRUE(imports("<!DOCTYPE tt PUBLIC '-//W3C//DTD TTML//EN' 'ttml.dtd' [ ]>"));
@@ -510,6 +518,12 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     // A <p> without times is active over its nearest timed ancestor's.
     EXPECT_EQ(timed("<div begin=\"1\" end=\"3\"><p>hello</p></div>"), (std::vector<Row>{{1000, 3000, "", "hello"}}));
     EXPECT_EQ(timed("<div begin=\"1\" dur=\"1\"><div><p>a</p></div></div>"), (std::vector<Row>{{1000, 2000, "", "a"}}));
+    // A dur without a begin of its own counts from the begin it inherits.
+    EXPECT_EQ(timed("<div begin=\"1\" end=\"10\"><p dur=\"2\">x</p></div>"), (std::vector<Row>{{1000, 3000, "", "x"}}));
+    EXPECT_EQ(timed("<div begin=\"1\"><div dur=\"3\"><p>y</p></div></div>"), (std::vector<Row>{{1000, 4000, "", "y"}}));
+    EXPECT_EQ(timed("<p begin=\"1\" end=\"9\"><span begin=\"1\" end=\"2\">a</span><span dur=\"2\"><span begin=\"2\">b</span>"
+                    "</span></p>"),
+              (std::vector<Row>{{1000, 9000, "", "{\\k100}a{\\k100}b{\\k600}"}})); // the span ends at 1 + 2 s
     EXPECT_EQ(timed("<div begin=\"1\" end=\"3\"><p begin=\"2\">a</p><p end=\"2\">b</p></div>"),
               (std::vector<Row>{{2000, 3000, "", "a"}, {1000, 2000, "", "b"}}));
     // A word-timed Line spans its words; the ancestor ends its last word.
@@ -630,6 +644,27 @@ TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
     EXPECT_EQ(text("><p begin=\"1\" end=\"2\" x:space=\"preserve\">a  b</p>"), "a b");
 }
 
+TEST(LyricsImport, TtmlAttributesAreReadByNamespace)
+{
+    const auto lines = [](std::string_view tt) {
+        const auto result = importTtml(bytes(std::string(tt)));
+        return result ? rows(*result) : std::vector<Row>{};
+    };
+    // Timing attributes are unprefixed: an extension's "begin" is not one.
+    EXPECT_EQ(lines("<tt><body><p foo:begin=\"10\" begin=\"1\" end=\"2\">x</p></body></tt>"),
+              (std::vector<Row>{{1000, 2000, "", "x"}}));
+    EXPECT_EQ(lines("<tt xmlns:foo=\"urn:x\"><body><p begin=\"1\" foo:end=\"0\" end=\"2\">x</p></body></tt>"),
+              (std::vector<Row>{{1000, 2000, "", "x"}}));
+    // ttm:role and ttm:agent by TTML's metadata namespace, under any prefix;
+    // another namespace's "role" is not one.
+    EXPECT_EQ(lines("<tt xmlns:m=\"http://www.w3.org/ns/ttml#metadata\"><body><p begin=\"1\" end=\"2\">a"
+                    "<span m:role=\"x-translation\">b</span></p></body></tt>"),
+              (std::vector<Row>{{1000, 2000, "", "a"}}));
+    EXPECT_EQ(lines("<tt xmlns:foo=\"urn:x\"><body><p begin=\"1\" end=\"2\">a <span foo:role=\"x-translation\">b</span>"
+                    "</p></body></tt>"),
+              (std::vector<Row>{{1000, 2000, "", "a b"}}));
+}
+
 TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)
 {
     const std::string head = "<tt><head><metadata>"
@@ -672,6 +707,22 @@ TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)
 
 TEST(LyricsImport, LrcAngleAndSquareBracketsThatAreNotStamps)
 {
+    // After a line's time a tag has a lowercase key (lyrsync's "class");
+    // another bracket there is lyrics text.
+    {
+        const auto result = importLrc(bytes("[ti:Song][00:01.00][Verse: 1]Hello\n[00:03.00][class:shhh]Bye\n"
+                                            "[00:05.00][Part:A]x\n[00:07.00]"));
+        ASSERT_TRUE(result.has_value());
+        EXPECT_EQ(rows(*result), (std::vector<Row>{{1000, 3000, "", "[Verse: 1]Hello"}, {3000, 5000, "", "Bye"},
+                                                   {5000, 7000, "", "[Part:A]x"}}));
+    }
+    // Spaces between words stay as written, before or after the stamp.
+    for (const char *line : {"[00:01.00]<00:01.00>a<00:02.00>   b<00:03.00>", "[00:01.00]<00:01.00>a   <00:02.00>b<00:03.00>",
+                             "[00:01.00]<00:01.00>a <00:02.00>  b<00:03.00>"}) {
+        const auto result = importLrc(bytes(line));
+        ASSERT_TRUE(result.has_value()) << line;
+        EXPECT_EQ(rows(*result).front().text, "{\\k100}a   {\\k100}b") << line;
+    }
     // A colon must have a digit after it to make a stamp.
     {
         const auto result = importLrc(bytes("[00:01.00]Meet me <12: tonight>\n[00:03.00]"));

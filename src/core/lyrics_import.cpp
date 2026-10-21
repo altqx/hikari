@@ -294,8 +294,16 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                 entry.times.push_back(*time);
             } else {
                 const std::size_t colon = tag.find(u8':');
-                if (close == u8sv::npos || colon == u8sv::npos)
-                    break; // "[Chorus]": lyrics text
+                // "[Chorus]" is lyrics text. After a line's time a tag's key is
+                // a lowercase word, as lyrsync's "[00:30.79][class:shhh]";
+                // another bracket there is lyrics ("[00:01.00][Verse: 1]").
+                auto tagKey = [](u8sv key) {
+                    return !key.empty() && std::ranges::all_of(key, [](char8_t c) {
+                        return (c >= u8'a' && c <= u8'z') || isDigit(c) || c == u8'_' || c == u8'-';
+                    });
+                };
+                if (close == u8sv::npos || colon == u8sv::npos || (!entry.times.empty() && !tagKey(tag.substr(0, colon))))
+                    break;
                 const u8sv key = detail::trim(tag.substr(0, colon));
                 const u8sv value = detail::trim(tag.substr(colon + 1));
                 if (entry.times.empty() && key == u8"ti")
@@ -335,11 +343,12 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         // word before. Text before the first stamp starts at the line time.
         std::u8string pending;
         std::optional<std::int64_t> pendingBegin;
-        // Spaces before a word belong to the word before it.
+        // Spaces before a word belong to the word before it, as written
+        // (on either side of the stamp between them).
         auto closeWord = [&](std::optional<std::int64_t> end) {
             const u8sv word = detail::trimLeft(pending);
-            if (!entry.words.empty() && word.size() < pending.size() && !entry.words.back().text.ends_with(u8' '))
-                entry.words.back().text += u8' ';
+            if (!entry.words.empty() && word.size() < pending.size())
+                entry.words.back().text += detail::literalText(u8sv(pending).substr(0, pending.size() - word.size()));
             if (!word.empty()) {
                 entry.words.push_back(LyricWord{pendingBegin.value_or(-1), end.value_or(0), detail::literalText(word)});
                 entry.ended.push_back(end.has_value());

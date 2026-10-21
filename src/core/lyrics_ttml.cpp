@@ -39,6 +39,7 @@ struct XmlNode {
     std::u8string name; // as written, with its prefix; empty for text
     std::vector<std::pair<std::u8string, std::u8string>> attributes;
     std::vector<std::size_t> attributeLines; // the line each attribute's value starts on
+    std::vector<std::u8string> attributeNamespaces; // the namespace each attribute's prefix names; none unprefixed
     std::vector<XmlNode> children;
     std::u8string text;
     std::size_t line = 0;
@@ -52,21 +53,63 @@ u8sv localName(u8sv name)
     return colon == u8sv::npos ? name : name.substr(colon + 1);
 }
 
-std::optional<u8sv> attribute(const XmlNode &node, u8sv local)
+constexpr u8sv kXmlNamespace = u8"http://www.w3.org/XML/1998/namespace";
+constexpr u8sv kXmlnsNamespace = u8"http://www.w3.org/2000/xmlns/";
+constexpr u8sv kTtmlMetadata = u8"http://www.w3.org/ns/ttml#metadata";
+
+// An attribute by its namespace and local name. TTML's timing attributes
+// and AMLL's meta fields have none (unprefixed); ttm:agent and ttm:role are
+// in TTML's metadata namespace, xml:id in XML's. So "foo:begin" is not a
+// begin.
+std::optional<std::size_t> attributeAt(const XmlNode &node, u8sv local, u8sv ns)
 {
-    for (const auto &[name, value] : node.attributes)
-        if (!name.starts_with(u8"xmlns") && localName(name) == local)
-            return u8sv(value);
+    for (std::size_t i = 0; i < node.attributes.size(); ++i)
+        if (node.attributeNamespaces[i] == ns && localName(node.attributes[i].first) == local)
+            return i;
     return std::nullopt;
 }
 
-// The line an attribute's value starts on, or the element's when it has none.
-std::size_t attributeLine(const XmlNode &node, u8sv local)
+std::optional<u8sv> attribute(const XmlNode &node, u8sv local, u8sv ns = {})
 {
-    for (std::size_t i = 0; i < node.attributes.size(); ++i)
-        if (const auto &name = node.attributes[i].first; !name.starts_with(u8"xmlns") && localName(name) == local)
-            return node.attributeLines[i];
-    return node.line;
+    const auto i = attributeAt(node, local, ns);
+    return i ? std::optional(u8sv(node.attributes[*i].second)) : std::nullopt;
+}
+
+// The line an attribute's value starts on, or the element's when it has none.
+std::size_t attributeLine(const XmlNode &node, u8sv local, u8sv ns = {})
+{
+    const auto i = attributeAt(node, local, ns);
+    return i ? node.attributeLines[*i] : node.line;
+}
+
+// The namespace an attribute's prefix names (Namespaces in XML): xml and
+// xmlns their own, another from the nearest xmlns:prefix on the element or
+// an ancestor (`open`); an unprefixed attribute is in none. A ttm: no one
+// declares is TTML's metadata namespace, as such files mean; another
+// undeclared prefix names a namespace no lookup asks for.
+std::u8string namespaceOf(u8sv name, const XmlNode &node, const std::vector<XmlNode> &open)
+{
+    const std::size_t colon = name.find(u8':');
+    if (colon == u8sv::npos)
+        return {};
+    const u8sv prefix = name.substr(0, colon);
+    if (prefix == u8"xml")
+        return std::u8string(kXmlNamespace);
+    if (prefix == u8"xmlns")
+        return std::u8string(kXmlnsNamespace);
+    const std::u8string declaration = u8"xmlns:" + std::u8string(prefix);
+    auto declared = [&](const XmlNode &element) -> const std::u8string * {
+        for (const auto &[key, value] : element.attributes)
+            if (key == declaration)
+                return &value;
+        return nullptr;
+    };
+    if (const auto *uri = declared(node))
+        return *uri;
+    for (auto it = open.rbegin(); it != open.rend(); ++it)
+        if (const auto *uri = declared(*it))
+            return *uri;
+    return prefix == u8"ttm" ? std::u8string(kTtmlMetadata) : u8"undeclared:" + std::u8string(prefix);
 }
 
 bool isSpace(char8_t c)
@@ -215,9 +258,63 @@ private:
             c = c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c - u8'A' + u8'a') : c;
         if (lower == u8"xml" && (!first || *target != u8"xml"))
             return false;
+        if (lower == u8"xml")
+            return xmlDeclaration();
         if (!at(u8"?>") && (done() || !isSpace(m_s[m_pos])))
             return false;
         return skipPast(u8"?>");
+    }
+
+    // The rest of an XML declaration after "<?xml": version="1.n", then
+    // optionally encoding="name" and standalone="yes" or "no", each after
+    // whitespace and in that order, then "?>".
+    bool xmlDeclaration()
+    {
+        // A field: absent (0, nothing read), well formed (1, `value` set)
+        // or broken (-1).
+        auto field = [&](u8sv key, u8sv &value) {
+            const auto start = std::pair{m_pos, m_line};
+            if (done() || !isSpace(m_s[m_pos]))
+                return 0;
+            skipSpace();
+            if (!at(key)) {
+                std::tie(m_pos, m_line) = start;
+                return 0;
+            }
+            advance(key.size());
+            skipSpace();
+            if (!at(u8"="))
+                return -1;
+            advance(1);
+            skipSpace();
+            const char8_t quote = done() ? u8'\0' : m_s[m_pos];
+            const std::size_t close = quote == u8'"' || quote == u8'\'' ? m_s.find(quote, m_pos + 1) : u8sv::npos;
+            if (close == u8sv::npos)
+                return -1;
+            value = m_s.substr(m_pos + 1, close - m_pos - 1);
+            advance(close + 1 - m_pos);
+            return 1;
+        };
+        auto letter = [](char8_t c) { return (c >= u8'A' && c <= u8'Z') || (c >= u8'a' && c <= u8'z'); };
+        auto digit = [](char8_t c) { return c >= u8'0' && c <= u8'9'; };
+        u8sv value;
+        if (field(u8"version", value) != 1 || value.size() < 3 || !value.starts_with(u8"1.") ||
+            !std::ranges::all_of(value.substr(2), digit))
+            return false;
+        int found = field(u8"encoding", value);
+        if (found < 0 || (found > 0 && (value.empty() || !letter(value.front()) ||
+                                        !std::ranges::all_of(value, [&](char8_t c) {
+                                            return letter(c) || digit(c) || c == u8'.' || c == u8'_' || c == u8'-';
+                                        }))))
+            return false;
+        found = field(u8"standalone", value);
+        if (found < 0 || (found > 0 && value != u8"yes" && value != u8"no"))
+            return false;
+        skipSpace();
+        if (!at(u8"?>"))
+            return false;
+        advance(2);
+        return true;
     }
 
     bool skipPast(u8sv terminator)
@@ -232,7 +329,7 @@ private:
     // Whitespace, comments and processing instructions between the
     // top-level parts of the file, and in the prolog (before the root
     // element) one DOCTYPE: "<!DOCTYPE", a space and the root's name, then
-    // anything up to its ">" outside the internal subset's brackets.
+    // an external id and an internal subset as XML allows them.
     std::expected<void, LyricsProblem> skipMisc(bool prolog)
     {
         for (;;) {
@@ -497,6 +594,8 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken()); // an attribute given twice
                 }
+                for (const auto &[key, value] : node.attributes)
+                    node.attributeNamespaces.push_back(namespaceOf(key, node, open));
                 if (!empty) {
                     open.push_back(std::move(node));
                 } else if (open.empty()) {
@@ -737,6 +836,7 @@ private:
         std::u8string leading;                    // text before the first word
         std::u8string plain;                      // all the text, for a Line without words
         const XmlNode *textOf = nullptr;          // the timed span whose own text the last word is
+        std::optional<std::int64_t> lineBegin;    // the Line's begin, which a dur inside it counts from
     };
     // A background vocal span: whether its parent keeps whitespace, and the
     // times of the nearest timed span around it, which time it in place of
@@ -757,7 +857,7 @@ private:
                 out += child.text;
             else if (localName(child.name) == u8"br")
                 out += u8' ';
-            else if (!attribute(child, u8"role"))
+            else if (!attribute(child, u8"role", kTtmlMetadata))
                 out += allText(child);
         return out;
     }
@@ -783,7 +883,7 @@ private:
                 append(out, lyricText(child.text, preserve), preserve);
             else if (localName(child.name) == u8"br")
                 out += u8"\\N";
-            else if (!attribute(child, u8"role"))
+            else if (!attribute(child, u8"role", kTtmlMetadata))
                 append(out, spanText(child, preserve), preserves(child, preserve));
         return out;
     }
@@ -798,7 +898,7 @@ private:
             if (local == u8"meta" && attribute(node, u8"key") == u8sv(u8"musicName") && !musicName)
                 musicName = std::u8string(attribute(node, u8"value").value_or(u8""));
             if (local == u8"agent") {
-                const auto id = attribute(node, u8"id");
+                const auto id = attribute(node, u8"id", kXmlNamespace);
                 for (const XmlNode &child : node.children)
                     if (id && localName(child.name) == u8"name")
                         m_agents[std::u8string(*id)] = detail::trim(collapsed(allText(child)));
@@ -827,8 +927,10 @@ private:
         return t;
     }
 
+    // An element's own begin and end; a dur counts from its own begin, or
+    // from `inheritedBegin` (its nearest timed ancestor's) when it has none.
     static std::expected<std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>>, LyricsProblem>
-    times(const XmlNode &node)
+    times(const XmlNode &node, std::optional<std::int64_t> inheritedBegin)
     {
         const auto begin = time(node, u8"begin");
         if (!begin)
@@ -836,12 +938,12 @@ private:
         auto end = time(node, u8"end");
         if (!end)
             return std::unexpected(end.error());
-        if (!*end && *begin) {
+        if (const auto from = *begin ? *begin : inheritedBegin; !*end && from) {
             const auto dur = time(node, u8"dur");
             if (!dur)
                 return std::unexpected(dur.error());
             if (*dur) {
-                *end = **begin + **dur;
+                *end = *from + **dur;
                 if (**end > detail::kLatestLyricsTime)
                     return std::unexpected(LyricsProblem{Kind::UnreadableTime, attributeLine(node, u8"dur"),
                                                          std::u8string(*attribute(node, u8"dur"))});
@@ -858,7 +960,8 @@ private:
     static bool hasTimedSpan(const XmlNode &node)
     {
         for (const XmlNode &child : node.children)
-            if (!child.isText() && !attribute(child, u8"role") && (attribute(child, u8"begin") || hasTimedSpan(child)))
+            if (!child.isText() && !attribute(child, u8"role", kTtmlMetadata) &&
+                (attribute(child, u8"begin") || hasTimedSpan(child)))
                 return true;
         return false;
     }
@@ -871,7 +974,7 @@ private:
         for (const XmlNode &child : node.children) {
             if (child.isText())
                 continue;
-            const auto role = attribute(child, u8"role");
+            const auto role = attribute(child, u8"role", kTtmlMetadata);
             if (role == u8sv(u8"x-bg"))
                 backgrounds.push_back(Background{&child, preserve, begin, end});
             else if (!role)
@@ -924,7 +1027,7 @@ private:
                 continue;
             }
             const u8sv local = localName(child.name);
-            const auto role = attribute(child, u8"role");
+            const auto role = attribute(child, u8"role", kTtmlMetadata);
             if (role == u8sv(u8"x-bg")) {
                 backgrounds.push_back(Background{&child, preserve, spanBegin, spanEnd});
                 continue;
@@ -936,7 +1039,7 @@ private:
                 continue;
             }
             if (local == u8"span" && attribute(child, u8"begin") && !hasTimedSpan(child)) {
-                const auto t = times(child);
+                const auto t = times(child, spanBegin ? spanBegin : into.lineBegin);
                 if (!t)
                     return std::unexpected(t.error());
                 const std::int64_t begin = *t->first;
@@ -962,8 +1065,8 @@ private:
             }
             const XmlNode *innerSpan = span;
             std::optional<std::int64_t> innerBegin = spanBegin, innerEnd = spanEnd;
-            if (attribute(child, u8"begin") || attribute(child, u8"end")) {
-                const auto t = times(child);
+            if (attribute(child, u8"begin") || attribute(child, u8"end") || attribute(child, u8"dur")) {
+                const auto t = times(child, spanBegin ? spanBegin : into.lineBegin);
                 if (!t)
                     return std::unexpected(t.error());
                 if (t->first) {
@@ -986,7 +1089,7 @@ private:
     std::expected<void, LyricsProblem> line(const XmlNode &node, std::optional<std::int64_t> begin,
                                             std::optional<std::int64_t> end, const std::u8string &actor, bool inherited)
     {
-        const auto own = times(node);
+        const auto own = times(node, begin);
         if (!own)
             return std::unexpected(own.error());
         begin = own->first ? own->first : begin;
@@ -995,6 +1098,7 @@ private:
             return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, attributeLine(node, u8"begin"),
                                                  std::u8string(attribute(node, u8"begin").value_or(u8""))});
         Words words;
+        words.lineBegin = begin;
         Backgrounds backgrounds;
         const bool preserve = preserves(node, inherited);
         if (auto ok = collect(node, words, backgrounds, preserve, nullptr, std::nullopt, std::nullopt); !ok)
@@ -1045,7 +1149,7 @@ private:
     // background vocal is its paragraph's singer unless it names its own).
     std::u8string actorOf(const XmlNode &node, const std::u8string &inherited) const
     {
-        const auto agent = attribute(node, u8"agent");
+        const auto agent = attribute(node, u8"agent", kTtmlMetadata);
         if (!agent)
             return inherited;
         const auto name = m_agents.find(std::u8string(*agent));
@@ -1070,7 +1174,7 @@ private:
                                                   std::optional<std::int64_t> end, bool inherited)
     {
         const bool preserve = preserves(node, inherited);
-        const auto own = times(node);
+        const auto own = times(node, begin);
         if (!own)
             return std::unexpected(own.error());
         begin = own->first ? own->first : begin;
