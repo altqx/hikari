@@ -8,6 +8,7 @@
 
 #include "hikari/application/audio_timing.h"
 #include "hikari/core/ass_load.h"
+#include "hikari/core/subtitle_load.h"
 
 #include <gtest/gtest.h>
 
@@ -129,6 +130,22 @@ TEST(AudioTiming, FieldTimesKeepTheFormatsPrecision)
     EXPECT_EQ(legacyFieldTime(core::SubtitleFormat::Srt, 1239), 1239);
     EXPECT_EQ(legacyFieldTime(core::SubtitleFormat::Ass, -50), 0);
     EXPECT_EQ(legacyZeroIt(-15), -10); // ZEROIT truncates towards zero
+}
+
+// KA1: the start the commit writes, which karaoke text is written against
+TEST(AudioTiming, TheCommittedTimeIsTheOneTheFieldKeeps)
+{
+    EXPECT_EQ(committedAudioTime(load("[Events]\n"), 999), 990);
+    const std::string_view sub = "{25}{50}text\n";
+    std::vector<std::byte> bytes(sub.size());
+    std::memcpy(bytes.data(), sub.data(), sub.size());
+    auto loaded = core::loadSubtitle(bytes, u8"sub");
+    ASSERT_TRUE(loaded);
+    auto &document = loaded->document;
+    ASSERT_EQ(document.format(), core::SubtitleFormat::MicroDvd);
+    document.setFrameRate(*core::FrameRate::make(25, 1));
+    EXPECT_EQ(committedAudioTime(document, 1001), 1040); // up to the next frame's start
+    EXPECT_EQ(committedAudioTime(document, 1000), 1000);
 }
 
 TEST_F(TimingTest, SnapIsOffByDefaultAndStillDropsTheMilliseconds)

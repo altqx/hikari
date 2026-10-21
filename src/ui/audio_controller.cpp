@@ -337,7 +337,7 @@ void AudioController::splitKaraoke()
 void AudioController::commitKaraoke()
 {
     commitChanges(false, timingOptions().autoCommit, false, application::AudioAdjacent::None,
-                  m_karaoke.text(committedStart()), false);
+                  committedKaraokeText(), false);
 }
 
 // KA1: the start as the commit writes it; the \k text is written against it
@@ -345,6 +345,17 @@ void AudioController::commitKaraoke()
 int AudioController::committedStart() const
 {
     return m_hooks.fieldTime ? m_hooks.fieldTime(m_startMs) : m_startMs;
+}
+
+// The syllables' text for that start: an earlier one lengthens the first
+// syllable; a later one (MicroDVD rounds up to a frame) first cuts the
+// syllables it passes, as moving the start does, so none is negative.
+std::u16string AudioController::committedKaraokeText()
+{
+    const int start = committedStart();
+    if (start > m_startMs)
+        m_karaoke.moveStart(m_startMs, start);
+    return m_karaoke.text(start);
 }
 
 void AudioController::splitSyllableAtCursor()
@@ -1242,7 +1253,7 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
     // editor, then CommitChanges(false, AUDIO_AUTO_COMMIT, moveToEnd)
     if (result.commit)
         commitChanges(false, timingOptions().autoCommit, *result.commit, result.adjacent,
-                      m_hasKara ? std::optional(m_karaoke.text(committedStart())) : std::nullopt, !result.keepView);
+                      m_hasKara ? std::optional(committedKaraokeText()) : std::nullopt, !result.keepView);
     else if (result.redraw)
         redraw();
     return result;

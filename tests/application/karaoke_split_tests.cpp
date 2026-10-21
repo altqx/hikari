@@ -198,6 +198,9 @@ TEST(KaraokeAutoSplit, SpacesPunctuationAndBlocks)
     // \N \n \h are spaces; blocks go with the syllable after them
     EXPECT_EQ(syllables("ka\\Nra"), "ka\\N|ra");
     EXPECT_EQ(syllables("{\\b1}ka{\\b0}ra"), "{\\b1}ka|{\\b0}ra");
+    // an apostrophe in a word stays in it with a block beside it (Codex)
+    EXPECT_EQ(syllables("I don'{\\i1}t know"), "I |don'{\\i1}t |know");
+    EXPECT_EQ(syllables("I don't know"), "I |don't |know");
     // an unclosed block is no text
     EXPECT_EQ(syllables("kara{ke"), "ka|ra{ke");
     // digits and symbols open the syllable after them
@@ -276,6 +279,14 @@ TEST(KaraokeGraphemes, ALetterIsNeverHalfACharacter)
     EXPECT_EQ(karaokeWeight(u("a{\\b1}\xCC\x81" "b"), KaraokeCharClass::ascii()), 2);
     EXPECT_EQ(karaokeLetterEnd(u"a{\\b1}b", 0), 1u); // no mark after the block: the letter ends before it
     EXPECT_EQ(karaokeLetterEnd(u"a{\\b1", 0), 1u);   // an unclosed "{" is text
+    // a window PCRE2 reads that would end inside a surrogate pair (Codex): an
+    // emoji, marks, a zero width joiner and an emoji are one letter, whether
+    // a block comes after the first emoji or not
+    const std::u16string marks(60, u'\u0301');
+    const std::u16string joined = u"\U0001F600" + marks + u"\u200D\U0001F600" + u"b";
+    EXPECT_EQ(karaokeGraphemePrefix(joined, 1), joined.size() - 1);
+    const std::u16string blocked2 = u"\U0001F600{\\b1}" + std::u16string(62, u'\u0301') + u"\u200D\U0001F600" + u"b";
+    EXPECT_EQ(karaokeLetterEnd(blocked2, 0), blocked2.size() - 1);
     // \N is one letter
     auto breaks = kara("{\\k20}a\\Nb", 0, 1000);
     EXPECT_EQ(breaks.letters(0, 2), std::pair(std::u16string(u"{}a\\N"), std::u16string(u"b")));

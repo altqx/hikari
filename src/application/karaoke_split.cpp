@@ -142,11 +142,11 @@ std::vector<Unit> units(u16v text, const KaraokeCharClass &classes)
         out.push_back(unit);
         i += unit.len;
     }
-    // an apostrophe between two Latin letters is part of the word (don't, n'yo)
+    // an apostrophe between two Latin letters is part of the word (don't,
+    // n'yo), with a block beside it too (don'{\i1}t reads as don't)
     for (std::size_t k = 1; k + 1 < out.size(); k++)
         if (out[k].kind == Kind::Punct && isApostrophe(out[k].cp) && out[k - 1].kind == Kind::Latin &&
-            out[k + 1].kind == Kind::Latin && out[k - 1].at + out[k - 1].len == out[k].at &&
-            out[k].at + out[k].len == out[k + 1].at)
+            out[k + 1].kind == Kind::Latin)
             out[k].kind = Kind::Latin;
     return out;
 }

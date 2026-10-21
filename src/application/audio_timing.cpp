@@ -482,6 +482,14 @@ int legacyFieldTime(core::SubtitleFormat format, int ms)
     return static_cast<int>(fieldPrecisionTime(format, ms));
 }
 
+int committedAudioTime(const core::Document &document, int ms)
+{
+    if (document.format() == core::SubtitleFormat::MicroDvd)
+        if (const auto frame = microDvdFieldTime(ms, document.frameRate()))
+            return static_cast<int>(frame->ms);
+    return legacyFieldTime(document.format(), ms);
+}
+
 namespace {
 
 constexpr std::int64_t kMarginMax = 9999;

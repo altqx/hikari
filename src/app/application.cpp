@@ -1097,7 +1097,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
         hooks.fieldTime = [this](int ms) {
             const auto *session = targetSession();
-            return session ? application::legacyFieldTime(session->document().format(), ms) : ms;
+            return session ? application::committedAudioTime(session->document(), ms) : ms;
         };
         m_audio->setTimingHooks(std::move(hooks));
     }

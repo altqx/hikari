@@ -198,6 +198,9 @@ struct AudioCommitOutcome {
 // in seconds, SRT in milliseconds; never below 0 (SubsTime::NewTime, raw and
 // SetRaw).
 int legacyFieldTime(core::SubtitleFormat format, int ms);
+// KA1: the start or end time commitAudioTimes writes for `ms` in this
+// Document: legacyFieldTime, or a MicroDVD frame's start at its rate.
+int committedAudioTime(const core::Document &document, int ms);
 // `shown`: the Grid's shown Lines (legacy isVisible). Refused with
 // InvalidDraft when E63-invalid-commit blocks the draft (it stays).
 std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &session,

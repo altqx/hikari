@@ -109,32 +109,45 @@ std::size_t letterEnd(std::u16string_view text, std::size_t at)
 {
     if (text[at] == u'\\' && at + 1 < text.size() && (text[at + 1] == u'N' || text[at + 1] == u'n' || text[at + 1] == u'h'))
         return at + 2;
-    u16 seen;            // the grapheme so far, without its blocks
-    std::size_t end = at; // where it ends in `text`
-    std::size_t pos = at; // where to read on
-    for (std::size_t window = 64; pos < text.size(); window = std::max(window * 2, seen.size())) {
-        if (text[pos] == u'{') {
-            const auto shut = text.find(u'}', pos + 1);
-            if (pos == at || shut == u16::npos)
-                break; // (no letter starts with a block; an unclosed "{" is text, and no mark)
-            pos = shut + 1;
-            continue;
+    // the grapheme up to a block (searched for only within it: long Lines stay linear)
+    const auto begin = text.begin();
+    std::size_t end = static_cast<std::size_t>(
+        std::find(begin + static_cast<std::ptrdiff_t>(at) + 1, begin + static_cast<std::ptrdiff_t>(core::graphemeEnd(text, at)), u'{') -
+        begin);
+    if (end == text.size() || text[end] != u'{')
+        return end;
+    // it goes on past the block when the text after it continues it
+    u16 seen(text.substr(at, end - at)); // the grapheme so far, without its blocks
+    std::size_t window = 64;
+    while (end < text.size() && text[end] == u'{') {
+        std::size_t from = end; // past the block, and any right after it
+        while (from < text.size() && text[from] == u'{') {
+            const auto shut = text.find(u'}', from + 1);
+            if (shut == u16::npos)
+                return end; // an unclosed "{" is text, and no mark
+            from = shut + 1;
         }
-        // the text up to the next block, a window of it at a time (long Lines stay linear)
-        const auto first = text.begin() + static_cast<std::ptrdiff_t>(pos);
-        const auto last = text.begin() + static_cast<std::ptrdiff_t>(std::min(text.size(), pos + window));
-        const auto chunk = std::u16string_view(first, std::find(first, last, u'{'));
-        const u16 probe = seen + u16(chunk);
-        const std::size_t length = core::graphemeEnd(probe, 0);
+        // the text after them up to the next block, a window of it at a time,
+        // wider while the grapheme comes too near its end to be sure of it
+        u16 probe;
+        std::size_t length = 0;
+        for (;; window *= 2) {
+            const auto first = begin + static_cast<std::ptrdiff_t>(from);
+            const auto last = begin + static_cast<std::ptrdiff_t>(std::min(text.size(), from + window));
+            const auto stop = std::find(first, last, u'{');
+            probe = seen + u16(first, stop);
+            length = core::graphemeEnd(probe, 0);
+            if (stop != last || last == text.end() || length + 2 <= probe.size())
+                break;
+        }
         if (length <= seen.size())
-            break;
-        end = pos + (length - seen.size());
+            return end; // it ends at the block
+        end = from + (length - seen.size());
         if (length < probe.size())
-            break;
-        seen = probe;
-        pos = end;
+            return end;
+        seen = std::move(probe); // on to the next block
     }
-    return std::max(end, at + 1);
+    return end;
 }
 
 // The letters of a stripped text, each one's [begin, end).
