@@ -62,6 +62,17 @@ bool hasKaraokeTag(u8sv block)
     return false;
 }
 
+// The length of the "k" the editor reads at text[i], 0 for none. It
+// lower-cases with QChar::toLower, under which one character outside
+// ASCII becomes a letter it matches: U+212A KELVIN SIGN, "k" (Qt 6.11's
+// tables; none becomes "\", "f", "o", a digit or a brace).
+std::size_t editorK(u8sv text, std::size_t i)
+{
+    if (i < text.size() && (text[i] == u8'k' || text[i] == u8'K'))
+        return 1;
+    return text.substr(std::min(i, text.size())).starts_with(u8"K") ? 3 : 0;
+}
+
 // The editor's tags: each backslash it reads as karaoke and where its
 // number starts. `stop` is asked of each in turn; true ends the search.
 template <typename Stop> bool audioEditorTags(u8sv text, Stop stop)
@@ -74,8 +85,8 @@ template <typename Stop> bool audioEditorTags(u8sv text, Stop stop)
             inBlock = true;
         else if (text[i] == u8'}')
             inBlock = false;
-        else if (inBlock && text[i] == u8'\\' && i + 1 < text.size() && lower(text[i + 1]) == u8'k') {
-            std::size_t r = i + 2;
+        else if (const std::size_t k = inBlock && text[i] == u8'\\' ? editorK(text, i + 1) : 0) {
+            std::size_t r = i + 1 + k;
             if (r < text.size() && lower(text[r]) == u8'f')
                 ++r;
             if (r < text.size() && lower(text[r]) == u8'o')
@@ -97,9 +108,9 @@ bool audioEditorReads(u8sv text)
 }
 
 // Whether the editor reads a tag the renderers do not play as karaoke:
-// "\kfo50" (no tag of theirs) or "\KF50" and "\kO50" (the tag parser's
-// names are lower case after k), so the editor splits syllables where
-// playback has none.
+// "\kfo50" (no tag of theirs), "\KF50" and "\kO50" (the tag parser's
+// names are lower case after k) or "\K50" with a Kelvin sign for the K, so
+// the editor splits syllables where playback has none.
 bool audioEditorOnly(u8sv text)
 {
     return audioEditorTags(text, [text](std::size_t i, std::size_t value) { return karaokeValue(text, i) != value; });

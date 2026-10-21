@@ -287,8 +287,10 @@ std::optional<std::uint32_t> characterReference(u8sv reference)
         return std::nullopt;
     const bool hex = reference[1] == u8'x';
     const u8sv digits = reference.substr(hex ? 2 : 1);
-    if (digits.empty() || digits.size() > 8)
+    if (digits.empty())
         return std::nullopt;
+    // Any number of digits, leading zeros too ("&#00000065;"); past
+    // U+10FFFF the value stops growing, as no character is there.
     std::uint32_t cp = 0;
     for (char8_t c : digits) {
         const int v = c >= u8'0' && c <= u8'9'           ? c - u8'0'
@@ -297,7 +299,7 @@ std::optional<std::uint32_t> characterReference(u8sv reference)
                                                          : -1;
         if (v < 0)
             return std::nullopt;
-        cp = cp * (hex ? 16 : 10) + static_cast<std::uint32_t>(v);
+        cp = std::min<std::uint32_t>(cp * (hex ? 16 : 10) + static_cast<std::uint32_t>(v), 0x110000);
     }
     return xmlChar(cp) ? std::optional(cp) : std::nullopt;
 }

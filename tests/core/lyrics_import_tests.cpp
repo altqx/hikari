@@ -355,6 +355,13 @@ TEST(LyricsImport, TtmlMustBeWellFormedXml)
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x \xEF\xBF\xBF y" + tail, u8"ttml"),
               (LyricsProblem{Kind::NotWellFormed, 3, u8"U+FFFF"}));
     EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" end=\"2\">x&#9;y\ty" + tail)).has_value());
+    // A character reference may have any number of digits, leading zeros too.
+    EXPECT_EQ(rows(*importTtml(bytes(head + "<p begin=\"1\" end=\"2\" xml:id=\"&#x0000000041;\">&#00000000065;&#x000000042;" + tail))),
+              (std::vector<Row>{{1000, 2000, "", "AB"}}));
+    EXPECT_TRUE(importTtml(bytes("<!DOCTYPE tt [<!ENTITY e '&#0000000065;'>]>" + head + "<p begin=\"1\" end=\"2\">x" + tail))
+                    .has_value());
+    for (const char *bad : {"&#x110000;", "&#x0000000110000;", "&#99999999999999999999;", "&#x;", "&#;"})
+        EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">" + bad + tail, u8"ttml").kind, Kind::NotWellFormed) << bad;
     // A comment may not hold "--" or end with "-".
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">a<!-- bad -- comment -->b" + tail, u8"ttml"),
               (LyricsProblem{Kind::NotWellFormed, 3, u8"<!-- bad -- comment -->"}));
