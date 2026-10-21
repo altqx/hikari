@@ -28,6 +28,8 @@ Changed code, dependencies, fixtures or packages invalidate affected evidence. T
 
 ## Side-by-side use and independent recovery
 
+Amended by [ADR-0021](../../adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md): installed legacy and Qt packages share one installation identity, and Qt installs over legacy. Profiles stay separate, and portable packages still sit side by side.
+
 Use separate legacy, Qt beta and Qt stable installation identities and writable profiles, with visibly distinct launchers. Portable packages unpack beside existing versions with their explicit sibling data directories. Do not share mutable caches/recovery stores or silently take associations, defaults or legacy profile ownership. Verify install/uninstall of one leaves the others and user data intact.
 
 Existing files, catalogs, Sessions, autosaves and Lua scripts remain directly usable under the accepted compatibility contract. Import is separate: snapshot legacy settings/hotkeys and authored rules/dictionaries, preserve originals, report unresolved mappings, and activate only a reviewed Qt destination. **No legacy themes, theme colors or `PROGRAM_THEME`.** Preserve the previous destination profile independently of the new application's recovery mechanism. Exact importer/conflict UX awaits its own decision; release policy cannot approve C04 or other unresolved fixes.
@@ -37,6 +39,8 @@ Beta guidance uses copies for writable Documents/catalogs and separate recovery 
 Keep the previous verified package, dependency/source provenance and pre-migration profile backup with restoration instructions tested independently of the failed build. Rollback means stop safely, select/reinstall the prior package and restore a compatible profile after reviewing newer profile changes. It does **not** silently restore older subtitle files or discard work created after backup. Recover such Documents separately, preserving original and newer copies; do not assume a legacy Session contains drafts or undo history. Format-specific backward readability/export loss needs evidence. Incompatible profile migration has no promised automatic downgrade.
 
 ## Ownership and replacing `main`
+
+Amended by [ADR-0021](../../adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md): when wave 6 ends, `main` becomes `legacy` and `qt` becomes `main`. The gates below then apply to the first stable Qt release rather than to the branch rename.
 
 Until cutover, `main` remains the wx bug-fix line. Recommend limiting it to security, data-loss and critical-regression fixes with characterization; no new rewrite features or accidental second architecture. Transfer applicable outcomes/fixtures to `qt`, not wx internals. Observable changes still require the compatibility approval rule.
 

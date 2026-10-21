@@ -45,6 +45,8 @@ The offer is an optional member of a rewrite release's `hikarisub-update.json`. 
 
 Legacy 0.0.2 and later read `offer` from rewrite releases before dropping them as not offered to legacy. Of the releases whose offer applies to the user, they take the highest one. The packages, sizes and SHA-256 come from the same manifest, as for any update.
 
+Legacy 0.0.2 and later look for a legacy update and for an offer separately. The five-release walk of the update check runs over 0.0.x releases for the update and over rewrite releases for the offer, so rewrite releases never push a legacy update out of the walk. Builds 0.0.2-rc.1 to rc.4 walk both together and find legacy updates only while fewer than five rewrite releases are newer than them; 0.0.2 ships before 0.1.0-beta.1, so they update to it first.
+
 The manifest is uploaded after `SHA256SUMS` is computed. To change a published offer's pitch or `legacy_support`, upload a new `hikarisub-update.json` to the same release. The owner approves every pitch before it is published.
 
 ## In legacy
@@ -53,7 +55,7 @@ The manifest is uploaded after `SHA256SUMS` is computed. To change a published o
   - the pitch;
   - **Try it**;
   - **Remind me later**, which shows it again at the first start at least 3 days later;
-  - **Don't offer again**, which holds until a higher rewrite version carries an offer.
+  - **Don't offer again**, which holds until a higher rewrite version carries an offer, or until the offer's `legacy_support` changes to `ended`, which shows it once more.
 - Help has "Try the new HikariSub…", which shows the current offer even after Don't offer again.
 - A legacy update always comes first. The offer waits for a later start.
 - Nothing is downloaded before Try it. After that, the download shows its progress and is checked against its SHA-256, then "Update ready" offers Restart now and Later, as for a legacy update.
@@ -61,7 +63,7 @@ The manifest is uploaded after `SHA256SUMS` is computed. To change a published o
 
 ## Moving and going back
 
-The rewrite installs over legacy under the same identity, as ADR-0019 decided. It reads legacy's settings and never writes them, so going back is reinstalling a legacy 0.0.x release with the settings intact. A user who moves keeps the channel they had in legacy, and the rewrite's own updater takes over.
+The rewrite installs over legacy under the same identity, as ADR-0019 decided, for betas as for stable releases. This replaces the separate legacy and Qt beta installation identities of the [readiness policy](../qt/proposals/cutover-readiness.md). The profiles stay separate: the rewrite keeps its own settings and only reads legacy's, so going back is reinstalling a legacy 0.0.x release with the settings intact. Portable packages still unpack side by side. A user who moves keeps the channel they had in legacy, and the rewrite's own updater takes over.
 
 ## AUR
 
@@ -69,9 +71,11 @@ Each AUR package moves to the rewrite on its own:
 - `hikarisub-beta-bin` follows the rewrite from 0.1.0-beta.1, so its users move without an offer;
 - `hikarisub-stable-bin` keeps legacy stable releases until the rewrite has a stable release.
 
+There is no AUR package for legacy after that: from the rewrite's first stable release, legacy's continued support covers its other packages, and AUR users move with `hikarisub-stable-bin`.
+
 ## Legacy 0.0.1
 
-0.0.1 reads no manifest. It reports the highest stable release, so it will show the first stable rewrite release as an ordinary "0.1.0 is available" notice that leads to the download page. That release's notes begin with "Coming from 0.0.x? Moving is optional; legacy keeps getting updates", linking the latest legacy release.
+0.0.1 reads no manifest. It shows the highest release newer than it that fits its channel, as a notice that leads to the release page: with "Stable versions only" on, the default, that is the highest stable release, and with it off a rewrite prerelease can be shown too. So every rewrite release's notes begin with "Coming from 0.0.x? Moving is optional; legacy keeps getting updates", linking the latest legacy release.
 
 ## Branches
 
