@@ -573,6 +573,14 @@ private slots:
             QStringLiteral("Before <script\ntype=\"x\">hidden()</script> after"), muted, link, code);
         QVERIFY2(!split.contains(QStringLiteral("hidden()")), qPrintable(split));
         QVERIFY(split.contains(QStringLiteral("after")));
+        // An image's alt text is text, escaped markup in it too.
+        const QString alts = copy->whatsNew->render(
+            QStringLiteral("Before ![Use \\<video\\>](a.png) mid ![x \\<script\\>](b.png) after\n\nNext"),
+            muted, link, code);
+        QVERIFY2(alts.contains(QStringLiteral("Use &lt;video&gt;")), qPrintable(alts));
+        QVERIFY(alts.contains(QStringLiteral("x &lt;script&gt;")));
+        QVERIFY(alts.contains(QStringLiteral("after")));
+        QVERIFY(alts.contains(QStringLiteral("Next")));
         // What is dropped ends at its closer in code too; what follows stays.
         const QString closed = copy->whatsNew->render(
             QStringLiteral("<script>const x = `</script>` kept\n\nNext paragraph\n\n"

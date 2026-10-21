@@ -447,8 +447,11 @@ QString WhatsNew::render(const QString &markdown, const QColor &muted, const QCo
     doc.setMarkdown(markdown, QTextDocument::MarkdownFeatures((int(QTextDocument::MarkdownDialectGitHub) &
                                                                ~(kMd4cPermissiveUrlAutolinks | kMd4cPermissiveWwwAutolinks)) |
                                                               int(QTextDocument::MarkdownNoHTML)));
-    // Images first, last to first so the positions hold: the alt text in
-    // their place, nothing loaded.
+    dropHtml(doc);
+    linkUrls(doc);
+    // Images after the raw HTML went (an alt's escaped "<b>" is text), last
+    // to first so the positions hold: the alt text in their place, nothing
+    // loaded.
     struct Image {
         int position, length;
         QString alt;
@@ -465,8 +468,6 @@ QString WhatsNew::render(const QString &markdown, const QColor &muted, const QCo
         cursor.setPosition(it->position + it->length, QTextCursor::KeepAnchor);
         cursor.insertText(it->alt, QTextCharFormat());
     }
-    dropHtml(doc);
-    linkUrls(doc);
     for (QTextBlock block = doc.begin(); block.isValid(); block = block.next()) {
         // A heading is a section label: the body's size, semibold, muted.
         if (block.blockFormat().headingLevel() > 0) {
