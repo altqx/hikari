@@ -40,6 +40,17 @@ u16 number(int value)
     return u16(s.begin(), s.end());
 }
 
+// A \move time: whole milliseconds exactly (a float rounds them past 2^24,
+// Codex on #293), anything else as legacy getfloat wrote it.
+u16 timeText(double value)
+{
+    if (std::nearbyint(value) == value && std::fabs(value) < 1e15) {
+        const std::string s = std::to_string(static_cast<long long>(value));
+        return u16(s.begin(), s.end());
+    }
+    return ft(static_cast<float>(value));
+}
+
 int atoi16(const u16 &text)
 {
     const std::u8string u = core::toUtf8(text);
@@ -1106,8 +1117,8 @@ void MoveTool::setVisual(bool dummy, VisualHost &host)
         const PointF from = view.viewToScript(m_from);
         const PointF to = view.viewToScript(m_to);
         const u16 visual = u"\\move(" + ft(from.x) + u"," + ft(from.y) + u"," + ft(to.x) + u"," + ft(to.y) + u"," +
-                           ft(static_cast<float>(m_moveValues[4] - startTime)) + u"," +
-                           ft(static_cast<float>(m_moveValues[5] - startTime)) + u")";
+                           timeText(m_moveValues[4] - startTime) + u"," +
+                           timeText(m_moveValues[5] - startTime) + u")";
         const auto [px, py] = editor.position();
         (void)replaceTag(txt, visual, editor.inBracket(), px, py);
         gesture->stage(before.id, core::toUtf8(txt), editsTranslation(before));
@@ -1423,10 +1434,10 @@ std::vector<ToolValue> MoveTool::values(const VisualHost &host) const
     const int startTime = activeStart(host);
     return {{"x1", u"X", ft(from.x), true, u"Start"},
             {"y1", u"Y", ft(from.y), true, u"Start"},
-            {"t1", u"T", ft(static_cast<float>(m_moveValues[4] - startTime)), true, u"Start", u"ms", 10},
+            {"t1", u"T", timeText(m_moveValues[4] - startTime), true, u"Start", u"ms", 10},
             {"x2", u"X", ft(to.x), true, u"End"},
             {"y2", u"Y", ft(to.y), true, u"End"},
-            {"t2", u"T", ft(static_cast<float>(m_moveValues[5] - startTime)), true, u"End", u"ms", 10}};
+            {"t2", u"T", timeText(m_moveValues[5] - startTime), true, u"End", u"ms", 10}};
 }
 
 int MoveTool::activeStart(const VisualHost &host) const

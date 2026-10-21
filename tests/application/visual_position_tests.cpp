@@ -1138,6 +1138,21 @@ TEST(VisualMoveValues, TypedPointsWriteTheMove)
     EXPECT_EQ(tool.values(host)[5].text, u"1500");
 }
 
+// VT1 (Codex on #293): a typed time is whole milliseconds, kept exactly
+// past a float's 2^24 in the field and in the tag.
+TEST(VisualMoveValues, LargeTypedTimesAreKeptExactly)
+{
+    TestHost host;
+    standard(host, 1);
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t2", u"16777217", host));
+    EXPECT_EQ(text(host, 1), u8"{\\move(30,60,90,120,0,16777217)}y");
+    EXPECT_EQ(tool.values(host)[5].text, u"16777217");
+}
+
 // The \move's two times of a Line's text ("t1,t2"), or empty.
 std::u8string moveTimesOf(const std::u8string &t)
 {
