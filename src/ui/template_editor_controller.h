@@ -271,8 +271,10 @@ private:
     TemplateLines templateLines() const;
     // What the templater runs of a template or code Line.
     static std::string formOf(const core::LineRecord &line);
-    // The Actor and Style values of the Lines the templater reads, which it
-    // puts into templates ($actor, $style) before it runs their !expressions!.
+    // The Actor and Style values, each with its role, of the Lines the
+    // templater runs templates on (the karaoke Lines; a comment or a
+    // generated Line is none), which it puts into templates ($actor,
+    // $style) before it runs their !expressions!.
     std::set<std::string> sourceFields() const;
     // `lines` and `fields` as the user chose to run them, on top of what they
     // chose before.

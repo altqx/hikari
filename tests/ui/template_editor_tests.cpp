@@ -1223,6 +1223,48 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->source() == owner->value && settled(); }, 20'000));
     }
 
+    // Only the Lines the templater runs give trusted Actor and Style
+    // values, each in its own role: a value a comment held, or a Style's
+    // name, put as a runnable Line's Actor asks first.
+    void onlyRunnableLinesValuesAreTrusted()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord dormant = *doc.lines().back();
+        dormant.comment = true;
+        dormant.effect = u8"note";
+        dormant.actor = u8"!_G.marker = 1!";
+        QVERIFY(doc.appendLine(dormant));
+        openDocument(std::move(doc), true);
+        const auto source = firstKaraoke();
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500); // the run marking the current template's own Lines
+        const int before = templater->previews;
+        core::LineRecord row;
+        for (const auto *l : session->document().lines())
+            if (l->id == *source)
+                row = *l;
+        row.actor = u8"!_G.marker = 1!";
+        QVERIFY(change([&](core::Document &d) { return d.appendLine(row).has_value(); }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, before);
+        // A Style's name as an Actor.
+        QVERIFY(change([&](core::Document &d) {
+            return d.removeLinesIf([](const core::LineRecord &l) {
+                       return !l.comment && l.actor == u8"!_G.marker = 1!";
+                   }) == 1;
+        }));
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        row.actor = row.style;
+        QVERIFY(change([&](core::Document &d) { return d.appendLine(row).has_value(); }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));
