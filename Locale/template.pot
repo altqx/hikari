@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-16 05:50+0700\n"
+"POT-Creation-Date: 2026-10-21 21:31+0700\n"
 "Language: en\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
@@ -215,7 +215,7 @@ msgstr ""
 msgid "Versions"
 msgstr ""
 
-#: HikariSub/AutoSaveOpen.cpp:60 HikariSub/HikariSubFrame.cpp:1664
+#: HikariSub/AutoSaveOpen.cpp:60 HikariSub/HikariSubFrame.cpp:1667
 msgid "Open"
 msgstr ""
 
@@ -255,7 +255,7 @@ msgstr ""
 msgid "Failed to load autosave"
 msgstr ""
 
-#: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:202
+#: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:200
 msgid "Remove temporary files"
 msgstr ""
 
@@ -417,7 +417,7 @@ msgid "An error occurred while executing the Lua script:\n"
 msgstr ""
 
 #: HikariSub/Automation.cpp:1253 HikariSub/Automation.cpp:1293
-#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2769
+#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2791
 #, c-format
 msgid ""
 "Error loading Lua script: %s\n"
@@ -459,9 +459,9 @@ msgstr ""
 
 #: HikariSub/Automation.cpp:1400 HikariSub/Automation.cpp:1447
 #: HikariSub/EditBox.cpp:688 HikariSub/HikariSubFrame.cpp:930
-#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2277
-#: HikariSub/HikariSubFrame.cpp:2278 HikariSub/HikariSubFrame.cpp:2739
-#: HikariSub/HikariSubFrame.cpp:2765 HikariSub/HikariSubFrame.cpp:2769
+#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2290
+#: HikariSub/HikariSubFrame.cpp:2291 HikariSub/HikariSubFrame.cpp:2761
+#: HikariSub/HikariSubFrame.cpp:2787 HikariSub/HikariSubFrame.cpp:2791
 #: HikariSub/OptionsDialog.cpp:311 HikariSub/OptionsDialog.cpp:712
 #: HikariSub/VideoBox.cpp:1850 HikariSub/VisualAllTagsEdition.cpp:168
 #: HikariSub/VisualAllTagsEdition.cpp:172
@@ -561,9 +561,9 @@ msgid ""
 msgstr ""
 
 #: HikariSub/AutomationHotkeysDialog.cpp:241
-#: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/HikariSubFrame.cpp:1315
-#: HikariSub/HikariSubFrame.cpp:1329 HikariSub/HikariSubFrame.cpp:1506
-#: HikariSub/HikariSubFrame.cpp:2642 HikariSub/Hotkeys.cpp:485
+#: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/HikariSubFrame.cpp:1318
+#: HikariSub/HikariSubFrame.cpp:1332 HikariSub/HikariSubFrame.cpp:1509
+#: HikariSub/HikariSubFrame.cpp:2664 HikariSub/Hotkeys.cpp:485
 #: HikariSub/Hotkeys.cpp:495 HikariSub/Notebook.cpp:1244
 #: HikariSub/Notebook.cpp:1651 HikariSub/Notebook.cpp:1655
 #: HikariSub/OptionsDialog.cpp:120 HikariSub/OptionsDialog.cpp:129
@@ -609,8 +609,8 @@ msgstr ""
 #: HikariSub/FontCollector.cpp:217 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
-#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:175
-#: HikariSub/UpdateChecker.cpp:252 HikariSub/UpdateChecker.cpp:361
+#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:251
+#: HikariSub/UpdateChecker.cpp:329 HikariSub/UpdateChecker.cpp:438
 #: HikariSub/UpdateInstaller.cpp:280 HikariSub/stylestore.cpp:172
 msgid "Close"
 msgstr ""
@@ -759,62 +759,62 @@ msgstr ""
 msgid "Fix suggestions"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2307 HikariSub/HikariListCtrl.cpp:118
+#: HikariSub/DialogueTextEditor.cpp:2313 HikariSub/HikariListCtrl.cpp:118
 #: HikariSub/HikariTextCtrl.cpp:1475
 msgid "&Copy"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2308 HikariSub/HikariTextCtrl.cpp:1476
+#: HikariSub/DialogueTextEditor.cpp:2314 HikariSub/HikariTextCtrl.cpp:1476
 msgid "Cu&t"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2309 HikariSub/HikariListCtrl.cpp:119
+#: HikariSub/DialogueTextEditor.cpp:2315 HikariSub/HikariListCtrl.cpp:119
 #: HikariSub/HikariTextCtrl.cpp:1477
 msgid "&Paste"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2312
+#: HikariSub/DialogueTextEditor.cpp:2318
 msgid "Search word translation on ling.pl"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2313
+#: HikariSub/DialogueTextEditor.cpp:2319
 msgid "Search word translation on pl.ba.bla"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2314 HikariSub/HikariTextCtrl.cpp:1482
+#: HikariSub/DialogueTextEditor.cpp:2320 HikariSub/HikariTextCtrl.cpp:1482
 msgid "Search for the selected phrase on Google"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2315
+#: HikariSub/DialogueTextEditor.cpp:2321
 msgid "Search for synonyms on synonimy.net"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2325 HikariSub/SpellCheckerDialog.cpp:33
+#: HikariSub/DialogueTextEditor.cpp:2331 HikariSub/SpellCheckerDialog.cpp:33
 msgid "Spellchecker"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2331
+#: HikariSub/DialogueTextEditor.cpp:2337
 msgid "Installed languages"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2335
+#: HikariSub/DialogueTextEditor.cpp:2341
 #, c-format
 msgid "&Add word \"%s\" to dictionary"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2338 HikariSub/HikariTextCtrl.cpp:1484
+#: HikariSub/DialogueTextEditor.cpp:2344 HikariSub/HikariTextCtrl.cpp:1484
 msgid "&Delete"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2339
+#: HikariSub/DialogueTextEditor.cpp:2345
 msgid "Show status bar"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2341
+#: HikariSub/DialogueTextEditor.cpp:2347
 msgid "Automatically change quotes"
 msgstr ""
 
-#: HikariSub/DialogueTextEditor.cpp:2396
+#: HikariSub/DialogueTextEditor.cpp:2402
 #, c-format
 msgid "Error. Word \"%s\" was not added."
 msgstr ""
@@ -998,7 +998,7 @@ msgstr ""
 
 #: HikariSub/EditBox.cpp:285 HikariSub/FindReplaceDialog.cpp:137
 #: HikariSub/GridColumnChoices.h:45 HikariSub/GridColumnChoices.h:82
-#: HikariSub/HikariSubFrame.cpp:237 HikariSub/SelectLines.cpp:76
+#: HikariSub/HikariSubFrame.cpp:235 HikariSub/SelectLines.cpp:76
 #: HikariSub/SubsGridWindow.cpp:321 HikariSub/SubsGridWindow.cpp:709
 #: HikariSub/SubsGridWindow.cpp:1158 HikariSub/SubsGridWindow.cpp:1327
 msgid "Actor"
@@ -1006,7 +1006,7 @@ msgstr ""
 
 #: HikariSub/EditBox.cpp:291 HikariSub/FindReplaceDialog.cpp:140
 #: HikariSub/GridColumnChoices.h:50 HikariSub/GridColumnChoices.h:87
-#: HikariSub/HikariSubFrame.cpp:238 HikariSub/SelectLines.cpp:77
+#: HikariSub/HikariSubFrame.cpp:236 HikariSub/SelectLines.cpp:77
 #: HikariSub/SubsGridWindow.cpp:325 HikariSub/SubsGridWindow.cpp:713
 #: HikariSub/SubsGridWindow.cpp:1171 HikariSub/SubsGridWindow.cpp:1340
 msgid "Effect"
@@ -1221,7 +1221,7 @@ msgid "Text"
 msgstr ""
 
 #: HikariSub/FindReplaceDialog.cpp:131 HikariSub/GridColumnChoices.h:46
-#: HikariSub/GridColumnChoices.h:83 HikariSub/HikariSubFrame.cpp:236
+#: HikariSub/GridColumnChoices.h:83 HikariSub/HikariSubFrame.cpp:234
 #: HikariSub/SelectLines.cpp:75 HikariSub/SubsGridWindow.cpp:320
 #: HikariSub/SubsGridWindow.cpp:708 HikariSub/SubsGridWindow.cpp:1152
 #: HikariSub/SubsGridWindow.cpp:1321
@@ -1230,7 +1230,7 @@ msgstr ""
 
 #: HikariSub/FindReplaceDialog.cpp:162 HikariSub/FindReplaceDialog.cpp:414
 #: HikariSub/FindReplaceDialog.cpp:428 HikariSub/Hotkeys.cpp:148
-#: HikariSub/HotkeysNaming.cpp:239 HikariSub/SelectLines.cpp:52
+#: HikariSub/HotkeysNaming.cpp:240 HikariSub/SelectLines.cpp:52
 msgid "Find"
 msgstr ""
 
@@ -1299,7 +1299,7 @@ msgid "From selected"
 msgstr ""
 
 #: HikariSub/FindReplaceDialog.cpp:415 HikariSub/FindReplaceDialog.cpp:429
-#: HikariSub/Hotkeys.cpp:149 HikariSub/HotkeysNaming.cpp:176
+#: HikariSub/Hotkeys.cpp:149 HikariSub/HotkeysNaming.cpp:177
 msgid "Find and replace"
 msgstr ""
 
@@ -1475,8 +1475,8 @@ msgstr ""
 msgid "In lines: "
 msgstr ""
 
-#: HikariSub/FontCollector.cpp:155 HikariSub/HikariSubFrame.cpp:343
-#: HikariSub/HikariSubFrame.cpp:344 HikariSub/HotkeysNaming.cpp:177
+#: HikariSub/FontCollector.cpp:155 HikariSub/HikariSubFrame.cpp:341
+#: HikariSub/HikariSubFrame.cpp:342 HikariSub/HotkeysNaming.cpp:178
 #: HikariSub/SubsGrid.cpp:291
 msgid "Font collector"
 msgstr ""
@@ -1559,8 +1559,8 @@ msgstr ""
 msgid "The save path is not valid."
 msgstr ""
 
-#: HikariSub/FontCollector.cpp:540 HikariSub/HikariSubFrame.cpp:1434
-#: HikariSub/HikariSubFrame.cpp:2243 HikariSub/Notebook.cpp:1324
+#: HikariSub/FontCollector.cpp:540 HikariSub/HikariSubFrame.cpp:1437
+#: HikariSub/HikariSubFrame.cpp:2256 HikariSub/Notebook.cpp:1324
 #: HikariSub/SubsGrid.cpp:1141 HikariSub/SubsGridBase.cpp:559
 #: HikariSub/SubsGridBase.cpp:1580 HikariSub/SubsGridDialogs.cpp:109
 #: HikariSub/VideoBox.cpp:952 HikariSub/VideoBox.cpp:964
@@ -1899,20 +1899,20 @@ msgid "Cannot load external font folder"
 msgstr ""
 
 #: HikariSub/GridColumnChoices.h:42 HikariSub/GridColumnChoices.h:79
-#: HikariSub/HikariSubFrame.cpp:239
+#: HikariSub/HikariSubFrame.cpp:237
 msgid "Layer"
 msgstr ""
 
 #: HikariSub/GridColumnChoices.h:43 HikariSub/GridColumnChoices.h:63
 #: HikariSub/GridColumnChoices.h:68 HikariSub/GridColumnChoices.h:80
 #: HikariSub/GridColumnChoices.h:94 HikariSub/GridColumnChoices.h:99
-#: HikariSub/HikariSubFrame.cpp:232 HikariSub/ShiftTimes.cpp:357
+#: HikariSub/HikariSubFrame.cpp:230 HikariSub/ShiftTimes.cpp:357
 msgid "The starting time"
 msgstr ""
 
 #: HikariSub/GridColumnChoices.h:44 HikariSub/GridColumnChoices.h:69
 #: HikariSub/GridColumnChoices.h:81 HikariSub/GridColumnChoices.h:100
-#: HikariSub/HikariSubFrame.cpp:234 HikariSub/SelectLines.cpp:79
+#: HikariSub/HikariSubFrame.cpp:232 HikariSub/SelectLines.cpp:79
 #: HikariSub/ShiftTimes.cpp:358
 msgid "End time"
 msgstr ""
@@ -1969,664 +1969,672 @@ msgstr ""
 msgid "Untitled - "
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:156
 msgid "Video duration"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:156
 msgid "Video scale"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:156
 msgid "Video zoom"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:159
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Frames per second"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:159 HikariSub/SubsResampleDialog.cpp:33
+#: HikariSub/HikariSubFrame.cpp:157 HikariSub/SubsResampleDialog.cpp:33
 msgid "Subtitles resolution"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:159
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video aspect ratio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:159
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video file name"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:159
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video resolution"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:166 HikariSub/HotkeysNaming.cpp:218
+#: HikariSub/HikariSubFrame.cpp:164 HikariSub/HotkeysNaming.cpp:219
 msgid "Load last session"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:167
+#: HikariSub/HikariSubFrame.cpp:165
 msgid "Loads previously loaded files"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:168
+#: HikariSub/HikariSubFrame.cpp:166
 msgid "Load session from file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:169
+#: HikariSub/HikariSubFrame.cpp:167
 msgid "Loads session from saved session file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:171
+#: HikariSub/HikariSubFrame.cpp:169
 msgid "Save session to file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:171
+#: HikariSub/HikariSubFrame.cpp:169
 msgid "Saves session to file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:174
+#: HikariSub/HikariSubFrame.cpp:172
 msgid "Ask whether to load the last session at program startup"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:175
+#: HikariSub/HikariSubFrame.cpp:173
 msgid "Asks whether to load previously loaded files at program startup"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:178
+#: HikariSub/HikariSubFrame.cpp:176
 msgid "Load last session after program start"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:179
+#: HikariSub/HikariSubFrame.cpp:177
 msgid "Loads previously loaded files at program startup"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:183
+#: HikariSub/HikariSubFrame.cpp:181
 msgid "&Open subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:184
+#: HikariSub/HikariSubFrame.cpp:182
 msgid "Open subtitle file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:185
+#: HikariSub/HikariSubFrame.cpp:183
 msgid "&Save"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:186
+#: HikariSub/HikariSubFrame.cpp:184
 msgid "Save current file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:187
+#: HikariSub/HikariSubFrame.cpp:185
 msgid "Save &all"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:188 HikariSub/HotkeysNaming.cpp:234
+#: HikariSub/HikariSubFrame.cpp:186 HikariSub/HotkeysNaming.cpp:235
 msgid "Save all subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:189
+#: HikariSub/HikariSubFrame.cpp:187
 msgid "Save &as..."
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:190
+#: HikariSub/HikariSubFrame.cpp:188
 msgid "Save as"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:191
+#: HikariSub/HikariSubFrame.cpp:189
 msgid "Save &translation"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:192 HikariSub/HotkeysNaming.cpp:237
+#: HikariSub/HikariSubFrame.cpp:190 HikariSub/HotkeysNaming.cpp:238
 msgid "Save translation"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:193
+#: HikariSub/HikariSubFrame.cpp:191
 msgid "Recently opened &subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:194 HikariSub/VideoBox.cpp:1052
+#: HikariSub/HikariSubFrame.cpp:192 HikariSub/VideoBox.cpp:1052
 msgid "Recently opened subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:195
+#: HikariSub/HikariSubFrame.cpp:193
 msgid "Remove subtitles from the &editor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:196 HikariSub/HotkeysNaming.cpp:232
+#: HikariSub/HikariSubFrame.cpp:194 HikariSub/HotkeysNaming.cpp:233
 msgid "Remove subtitles from the editor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:197 HikariSub/HikariSubFrame.cpp:198
-#: HikariSub/HotkeysNaming.cpp:238
+#: HikariSub/HikariSubFrame.cpp:195 HikariSub/HikariSubFrame.cpp:196
+#: HikariSub/HotkeysNaming.cpp:239
 msgid "Save subtitles using the video name"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:201 HikariSub/HotkeysNaming.cpp:185
+#: HikariSub/HikariSubFrame.cpp:199 HikariSub/HotkeysNaming.cpp:186
 msgid "Open auto save"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:201
+#: HikariSub/HikariSubFrame.cpp:199
 msgid "Opens the selected autosave from the list"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:203
+#: HikariSub/HikariSubFrame.cpp:201
 msgid "Opens the temporary file removal window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:204
+#: HikariSub/HikariSubFrame.cpp:202
 msgid "Show / Hide log window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:205
+#: HikariSub/HikariSubFrame.cpp:203
 msgid "Last session"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:205
+#: HikariSub/HikariSubFrame.cpp:203
 msgid "Last session options"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:207
+#: HikariSub/HikariSubFrame.cpp:205
 msgid "&Settings"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:208
+#: HikariSub/HikariSubFrame.cpp:206
 msgid "Program settings"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:209
+#: HikariSub/HikariSubFrame.cpp:207
 msgid "&Exit\tAlt-F4"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:210
+#: HikariSub/HikariSubFrame.cpp:208
 msgid "Exit the program"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:211
+#: HikariSub/HikariSubFrame.cpp:209
 msgid "&File"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:214 HikariSub/HikariSubFrame.cpp:2449
+#: HikariSub/HikariSubFrame.cpp:212 HikariSub/HikariSubFrame.cpp:2462
 msgid "&Undo"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:214 HikariSub/Hotkeys.cpp:150
-#: HikariSub/HotkeysNaming.cpp:203
+#: HikariSub/HikariSubFrame.cpp:212 HikariSub/Hotkeys.cpp:150
+#: HikariSub/HotkeysNaming.cpp:204
 msgid "Undo"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:217 HikariSub/HotkeysNaming.cpp:204
+#: HikariSub/HikariSubFrame.cpp:215 HikariSub/HotkeysNaming.cpp:205
 msgid "Undo to last save"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:219 HikariSub/HikariSubFrame.cpp:2465
+#: HikariSub/HikariSubFrame.cpp:217 HikariSub/HikariSubFrame.cpp:2478
 msgid "&Redo"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:220 HikariSub/Hotkeys.cpp:151
-#: HikariSub/HotkeysNaming.cpp:230
+#: HikariSub/HikariSubFrame.cpp:218 HikariSub/Hotkeys.cpp:151
+#: HikariSub/HotkeysNaming.cpp:231
 msgid "Redo"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:221
+#: HikariSub/HikariSubFrame.cpp:219
 msgid "&History"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:222 HikariSub/Hotkeys.cpp:152
-#: HikariSub/HotkeysNaming.cpp:181 HikariSub/SubsFile.cpp:28
+#: HikariSub/HikariSubFrame.cpp:220 HikariSub/Hotkeys.cpp:152
+#: HikariSub/HotkeysNaming.cpp:182 HikariSub/SubsFile.cpp:28
 #: HikariSub/SubsFile.cpp:58
 msgid "History"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:223
+#: HikariSub/HikariSubFrame.cpp:221
 msgid "Find and re&place"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:224
+#: HikariSub/HikariSubFrame.cpp:222
 msgid "Searches for the specified text phrases and replaces them"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:225
+#: HikariSub/HikariSubFrame.cpp:223
 msgid "&Find"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:226
+#: HikariSub/HikariSubFrame.cpp:224
 msgid "Searches for the specified text phrase"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:227 HikariSub/Hotkeys.cpp:165
-#: HikariSub/HotkeysNaming.cpp:217
+#: HikariSub/HikariSubFrame.cpp:225 HikariSub/Hotkeys.cpp:165
+#: HikariSub/HotkeysNaming.cpp:218
 msgid "Find next"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:228
+#: HikariSub/HikariSubFrame.cpp:226
 msgid "Finds the next occurrence of the phrase in the text"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:233
+#: HikariSub/HikariSubFrame.cpp:231
 msgid "Sort by start time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:235
+#: HikariSub/HikariSubFrame.cpp:233
 msgid "Sort by end time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:236
+#: HikariSub/HikariSubFrame.cpp:234
 msgid "Sort by styles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:237
+#: HikariSub/HikariSubFrame.cpp:235
 msgid "Sort by actor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:238
+#: HikariSub/HikariSubFrame.cpp:236
 msgid "Sort by effect"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:239
+#: HikariSub/HikariSubFrame.cpp:237
 msgid "Sort by layer"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:242
+#: HikariSub/HikariSubFrame.cpp:240
 msgid "So&rt all lines"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:243
+#: HikariSub/HikariSubFrame.cpp:241
 msgid "Sorts all lines in ASS file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:244
+#: HikariSub/HikariSubFrame.cpp:242
 msgid "So&rt selected lines"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:245
+#: HikariSub/HikariSubFrame.cpp:243
 msgid "Sorts selected lines in ASS file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:246 HikariSub/HotkeysNaming.cpp:216
+#: HikariSub/HikariSubFrame.cpp:244 HikariSub/HotkeysNaming.cpp:217
 msgid "Fix minor errors (experimental)"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:247
+#: HikariSub/HikariSubFrame.cpp:245
 msgid "Turns on multireplacer"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:248
+#: HikariSub/HikariSubFrame.cpp:246
 msgid "Select &lines"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:248
+#: HikariSub/HikariSubFrame.cpp:246
 msgid "Selects lines by expressions"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:249
+#: HikariSub/HikariSubFrame.cpp:247
 msgid "&Edit"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:252 HikariSub/Hotkeys.cpp:147
-#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:1054
+#: HikariSub/HikariSubFrame.cpp:250 HikariSub/Hotkeys.cpp:147
+#: HikariSub/HotkeysNaming.cpp:225 HikariSub/VideoBox.cpp:1054
 msgid "Open video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:253
+#: HikariSub/HikariSubFrame.cpp:251
 msgid "Opens video file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:255 HikariSub/HikariSubFrame.cpp:256
+#: HikariSub/HikariSubFrame.cpp:253 HikariSub/HikariSubFrame.cpp:254
 #: HikariSub/VideoBox.cpp:1053
 msgid "Recently opened videos"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:257 HikariSub/HikariSubFrame.cpp:258
-#: HikariSub/HotkeysNaming.cpp:184
+#: HikariSub/HikariSubFrame.cpp:255 HikariSub/HikariSubFrame.cpp:256
+#: HikariSub/HotkeysNaming.cpp:185
 msgid "Open keyframes"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:261
+#: HikariSub/HikariSubFrame.cpp:259
 msgid "Recently opened keyframes"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:263
+#: HikariSub/HikariSubFrame.cpp:261
 msgid "Open dummy video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:264 HikariSub/Hotkeys.cpp:158
-#: HikariSub/HotkeysNaming.cpp:245
+#: HikariSub/HikariSubFrame.cpp:262 HikariSub/Hotkeys.cpp:158
+#: HikariSub/HotkeysNaming.cpp:246
 msgid "Insert start time from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:265
+#: HikariSub/HikariSubFrame.cpp:263
 msgid "Inserts the start time from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:266 HikariSub/Hotkeys.cpp:159
-#: HikariSub/HotkeysNaming.cpp:244
+#: HikariSub/HikariSubFrame.cpp:264 HikariSub/Hotkeys.cpp:159
+#: HikariSub/HotkeysNaming.cpp:245
 msgid "Insert end time from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:267
+#: HikariSub/HikariSubFrame.cpp:265
 msgid "Inserts the end time from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:268 HikariSub/Hotkeys.cpp:161
-#: HikariSub/HotkeysNaming.cpp:227
+#: HikariSub/HikariSubFrame.cpp:266 HikariSub/Hotkeys.cpp:161
+#: HikariSub/HotkeysNaming.cpp:228
 msgid "Previous frame"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:269
+#: HikariSub/HikariSubFrame.cpp:267
 msgid "Go to previous frame"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:270 HikariSub/Hotkeys.cpp:162
-#: HikariSub/HotkeysNaming.cpp:219
+#: HikariSub/HikariSubFrame.cpp:268 HikariSub/Hotkeys.cpp:162
+#: HikariSub/HotkeysNaming.cpp:220
 msgid "Next frame"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:271
+#: HikariSub/HikariSubFrame.cpp:269
 msgid "Go to next frame"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:273 HikariSub/HotkeysNaming.cpp:247
+#: HikariSub/HikariSubFrame.cpp:271 HikariSub/HotkeysNaming.cpp:248
 msgid "Go to start time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:273
+#: HikariSub/HikariSubFrame.cpp:271
 msgid "Moves video to start time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:276 HikariSub/HotkeysNaming.cpp:248
+#: HikariSub/HikariSubFrame.cpp:274 HikariSub/HotkeysNaming.cpp:249
 msgid "Go to end time of line"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:276
+#: HikariSub/HikariSubFrame.cpp:274
 msgid "Moves video to end time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:278 HikariSub/Hotkeys.cpp:160
-#: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:225
-#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:162
+#: HikariSub/HikariSubFrame.cpp:276 HikariSub/Hotkeys.cpp:160
+#: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:226
+#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:162
 #: HikariSub/VideoFullscreen.cpp:61
 msgid "Play / Pause"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:279
+#: HikariSub/HikariSubFrame.cpp:277
 msgid "Plays / Pauses video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:281 HikariSub/HotkeysNaming.cpp:200
+#: HikariSub/HikariSubFrame.cpp:279 HikariSub/HotkeysNaming.cpp:201
 msgid "Go to previous keyframe"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:283 HikariSub/HotkeysNaming.cpp:201
+#: HikariSub/HikariSubFrame.cpp:281 HikariSub/HotkeysNaming.cpp:202
 msgid "Go to next keyframe"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:285 HikariSub/HotkeysNaming.cpp:242
+#: HikariSub/HikariSubFrame.cpp:283 HikariSub/HotkeysNaming.cpp:243
 msgid "Set audio position to video time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:287 HikariSub/HotkeysNaming.cpp:243
+#: HikariSub/HikariSubFrame.cpp:285 HikariSub/HotkeysNaming.cpp:244
 msgid "Set audio marker to video time"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:288 HikariSub/HotkeysNaming.cpp:206
+#: HikariSub/HikariSubFrame.cpp:286 HikariSub/HotkeysNaming.cpp:207
 msgid "Zoom video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:289 HikariSub/HotkeysNaming.cpp:207
+#: HikariSub/HikariSubFrame.cpp:287 HikariSub/HotkeysNaming.cpp:208
 msgid "Turn off video zoom"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:291 HikariSub/HotkeysNaming.cpp:205
+#: HikariSub/HikariSubFrame.cpp:289 HikariSub/HotkeysNaming.cpp:206
 msgid "Open video with FFMS2"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:292
+#: HikariSub/HikariSubFrame.cpp:290
 msgid "Opens video with FFMS2 for frame precision"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:295
+#: HikariSub/HikariSubFrame.cpp:293
 msgid "&Video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:298 HikariSub/HotkeysNaming.cpp:222
+#: HikariSub/HikariSubFrame.cpp:296 HikariSub/HotkeysNaming.cpp:223
 msgid "Open audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:299
+#: HikariSub/HikariSubFrame.cpp:297
 msgid "Opens audio file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:302 HikariSub/HikariSubFrame.cpp:303
+#: HikariSub/HikariSubFrame.cpp:300 HikariSub/HikariSubFrame.cpp:301
 msgid "Recently opened audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:304 HikariSub/HotkeysNaming.cpp:169
+#: HikariSub/HikariSubFrame.cpp:302 HikariSub/HotkeysNaming.cpp:170
 msgid "Open audio from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:305
+#: HikariSub/HikariSubFrame.cpp:303
 msgid "Opens audio from video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:306
+#: HikariSub/HikariSubFrame.cpp:304
 msgid "Open blank 2h30m audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:307
+#: HikariSub/HikariSubFrame.cpp:305
 msgid "Opens blank audio 2 hour and 30 minutes long"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:308 HikariSub/HotkeysNaming.cpp:174
+#: HikariSub/HikariSubFrame.cpp:306 HikariSub/HotkeysNaming.cpp:175
 msgid "Close audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:309
+#: HikariSub/HikariSubFrame.cpp:307
 msgid "Closes audio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:310
+#: HikariSub/HikariSubFrame.cpp:308
 msgid "A&udio"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:313 HikariSub/OptionsDialog.cpp:691
+#: HikariSub/HikariSubFrame.cpp:311 HikariSub/OptionsDialog.cpp:691
 msgid "All"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:313
+#: HikariSub/HikariSubFrame.cpp:311
 msgid "Shows all windows"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:314
+#: HikariSub/HikariSubFrame.cpp:312
 msgid "Shows only video window and subs window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:314
+#: HikariSub/HikariSubFrame.cpp:312
 msgid "Video and subs"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:315
+#: HikariSub/HikariSubFrame.cpp:313
 msgid "Audio and subs"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:315
+#: HikariSub/HikariSubFrame.cpp:313
 msgid "Shows only audio window and subs window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:316
+#: HikariSub/HikariSubFrame.cpp:314
 msgid "Only video"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:316
+#: HikariSub/HikariSubFrame.cpp:314
 msgid "Shows only video window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:317
+#: HikariSub/HikariSubFrame.cpp:315
 msgid "Only subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:317
+#: HikariSub/HikariSubFrame.cpp:315
 msgid "Shows only the subtitle window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:318
+#: HikariSub/HikariSubFrame.cpp:316
 msgid "View"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:321 HikariSub/Hotkeys.cpp:146
-#: HikariSub/HotkeysNaming.cpp:175
+#: HikariSub/HikariSubFrame.cpp:319 HikariSub/Hotkeys.cpp:146
+#: HikariSub/HotkeysNaming.cpp:176
 msgid "Enable / Disable editor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:322
+#: HikariSub/HikariSubFrame.cpp:320
 msgid "Enables / disables editor"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:323 HikariSub/HotkeysNaming.cpp:160
+#: HikariSub/HikariSubFrame.cpp:321 HikariSub/HotkeysNaming.cpp:160
 msgid "ASS file properties"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:324 HikariSub/ScriptInfo.cpp:25
+#: HikariSub/HikariSubFrame.cpp:322 HikariSub/ScriptInfo.cpp:25
 msgid "ASS subtitle properties"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:325
+#: HikariSub/HikariSubFrame.cpp:323
 msgid "Style &manager"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:326
+#: HikariSub/HikariSubFrame.cpp:324
 msgid "Is used to manage ASS styles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:328 HikariSub/Hotkeys.cpp:140
-#: HikariSub/HotkeysNaming.cpp:164
+#: HikariSub/HikariSubFrame.cpp:326 HikariSub/Hotkeys.cpp:140
+#: HikariSub/HotkeysNaming.cpp:165
 msgid "Convert to ASS"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:329
+#: HikariSub/HikariSubFrame.cpp:327
 msgid "Converts to ASS format"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:330 HikariSub/Hotkeys.cpp:141
-#: HikariSub/HotkeysNaming.cpp:165
+#: HikariSub/HikariSubFrame.cpp:328 HikariSub/Hotkeys.cpp:141
+#: HikariSub/HotkeysNaming.cpp:166
 msgid "Convert to SRT"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:331
+#: HikariSub/HikariSubFrame.cpp:329
 msgid "Converts to SRT format"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:332 HikariSub/Hotkeys.cpp:142
-#: HikariSub/HotkeysNaming.cpp:166
+#: HikariSub/HikariSubFrame.cpp:330 HikariSub/Hotkeys.cpp:142
+#: HikariSub/HotkeysNaming.cpp:167
 msgid "Convert to MDVD"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:333
+#: HikariSub/HikariSubFrame.cpp:331
 msgid "Converts to microDVD format"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:334 HikariSub/Hotkeys.cpp:143
-#: HikariSub/HotkeysNaming.cpp:167
+#: HikariSub/HikariSubFrame.cpp:332 HikariSub/Hotkeys.cpp:143
+#: HikariSub/HotkeysNaming.cpp:168
 msgid "Convert to MPL2"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:335
+#: HikariSub/HikariSubFrame.cpp:333
 msgid "Converts to MPL2 format"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:336 HikariSub/Hotkeys.cpp:144
-#: HikariSub/HotkeysNaming.cpp:168
+#: HikariSub/HikariSubFrame.cpp:334 HikariSub/Hotkeys.cpp:144
+#: HikariSub/HotkeysNaming.cpp:169
 msgid "Convert to TMP"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:337
+#: HikariSub/HikariSubFrame.cpp:335
 msgid "Converts to TMPlayer format (not recommended)"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:339 HikariSub/OptionsDialog.cpp:1052
+#: HikariSub/HikariSubFrame.cpp:337 HikariSub/OptionsDialog.cpp:1052
 msgid "Conversion"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:339
+#: HikariSub/HikariSubFrame.cpp:337
 msgid "Converts from one format to another"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:341
+#: HikariSub/HikariSubFrame.cpp:339
 msgid "Shift &times...\tCtrl-I"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:342
+#: HikariSub/HikariSubFrame.cpp:340
 msgid "Shifting subtitle times"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:345 HikariSub/HikariSubFrame.cpp:346
-#: HikariSub/HotkeysNaming.cpp:202
+#: HikariSub/HikariSubFrame.cpp:343 HikariSub/HikariSubFrame.cpp:344
+#: HikariSub/HotkeysNaming.cpp:203
 msgid "Resample subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:347 HikariSub/HikariSubFrame.cpp:348
-#: HikariSub/HotkeysNaming.cpp:251
+#: HikariSub/HikariSubFrame.cpp:345 HikariSub/HikariSubFrame.cpp:346
+#: HikariSub/HotkeysNaming.cpp:252
 msgid "Check spelling"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:349 HikariSub/HotkeysNaming.cpp:180
+#: HikariSub/HikariSubFrame.cpp:347 HikariSub/HotkeysNaming.cpp:181
 msgid "Hide tags"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:350
+#: HikariSub/HikariSubFrame.cpp:348
 msgid "Hides tags in ASS and MDVD"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:351
+#: HikariSub/HikariSubFrame.cpp:349
 msgid "Su&btitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:354 HikariSub/HikariSubFrame.cpp:355
-#: HikariSub/HotkeysNaming.cpp:170
+#: HikariSub/HikariSubFrame.cpp:352 HikariSub/HikariSubFrame.cpp:353
+#: HikariSub/HotkeysNaming.cpp:171
 msgid "Load script"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:356 HikariSub/HikariSubFrame.cpp:357
-#: HikariSub/HotkeysNaming.cpp:172
+#: HikariSub/HikariSubFrame.cpp:354 HikariSub/HikariSubFrame.cpp:355
+#: HikariSub/HotkeysNaming.cpp:173
 msgid "Refresh autoload scripts"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:358 HikariSub/HikariSubFrame.cpp:359
-#: HikariSub/HotkeysNaming.cpp:186
+#: HikariSub/HikariSubFrame.cpp:356 HikariSub/HikariSubFrame.cpp:357
+#: HikariSub/HotkeysNaming.cpp:187
 msgid "Run the last loaded script"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:360 HikariSub/HikariSubFrame.cpp:361
-#: HikariSub/HotkeysNaming.cpp:171
+#: HikariSub/HikariSubFrame.cpp:358 HikariSub/HikariSubFrame.cpp:359
+#: HikariSub/HotkeysNaming.cpp:172
 msgid "Open shortcut mapping window"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:362
+#: HikariSub/HikariSubFrame.cpp:360
 msgid "Au&tomation"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:365
+#: HikariSub/HikariSubFrame.cpp:363
 msgid "HikariSub &website"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:366
+#: HikariSub/HikariSubFrame.cpp:364
 msgid "Opens the HikariSub website in the default browser"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:367
+#: HikariSub/HikariSubFrame.cpp:365
 msgid "&Report an issue"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:368
+#: HikariSub/HikariSubFrame.cpp:366
 msgid "Opens the HikariSub issue tracker"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:369
+#: HikariSub/HikariSubFrame.cpp:367
 msgid "Check for &updates"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:370
+#: HikariSub/HikariSubFrame.cpp:368
 msgid "Checks whether a newer version is available"
+msgstr ""
+
+#: HikariSub/HikariSubFrame.cpp:369
+msgid "&Try the new HikariSub..."
+msgstr ""
+
+#: HikariSub/HikariSubFrame.cpp:370
+msgid "Shows the offer to try the new HikariSub, if there is one"
 msgstr ""
 
 #: HikariSub/HikariSubFrame.cpp:371
@@ -2667,7 +2675,7 @@ msgstr ""
 msgid "This subtitle file does not have any scripts added"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:930 HikariSub/HikariSubFrame.cpp:2765
+#: HikariSub/HikariSubFrame.cpp:930 HikariSub/HikariSubFrame.cpp:2787
 #, c-format
 msgid "Validation Lua script '%s' failed"
 msgstr ""
@@ -2703,20 +2711,20 @@ msgid ""
 "All files (*.*)|*.*"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1125
+#: HikariSub/HikariSubFrame.cpp:1128
 #, c-format
 msgid ""
 "HikariSub subtitle editor by altqx,\n"
 "version %s from %s"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1129
+#: HikariSub/HikariSubFrame.cpp:1132
 msgid ""
 "Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n"
 "\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1130
+#: HikariSub/HikariSubFrame.cpp:1133
 msgid ""
 "If you have noticed any bugs or have any suggestions for changes or new "
 "features,\n"
@@ -2724,187 +2732,187 @@ msgid ""
 "\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1131
+#: HikariSub/HikariSubFrame.cpp:1134
 msgid "HikariSub includes parts of the following projects:\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1133
+#: HikariSub/HikariSubFrame.cpp:1136
 msgid ""
 "Color picker, demuxing subtitles from MKV, audio box, audio player, "
 "automation,\n"
 "and several other individual features taken from Aegisub -\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1144
+#: HikariSub/HikariSubFrame.cpp:1147
 msgid "About HikariSub"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1149
+#: HikariSub/HikariSubFrame.cpp:1152
 msgid "Graphical help: (buttons, help pictures etc.)\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1150
+#: HikariSub/HikariSubFrame.cpp:1153
 msgid "- Xandros (new video buttons).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1151
+#: HikariSub/HikariSubFrame.cpp:1154
 msgid "- Devilkan (menu and toolbar buttons)\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1152
+#: HikariSub/HikariSubFrame.cpp:1155
 msgid "- Zły Los (icons for file associations and menu).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1153
+#: HikariSub/HikariSubFrame.cpp:1156
 msgid "Testers:\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1154
+#: HikariSub/HikariSubFrame.cpp:1157
 msgid ""
 "- Sacredus (first translator using translator mode,\n"
 "great help testing HikariSub on a slow computer)\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1155
+#: HikariSub/HikariSubFrame.cpp:1158
 msgid ""
 "- Devilkan (crashhunter, because of his system and habits he made HikariSub "
 "crash a lot\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1156
+#: HikariSub/HikariSubFrame.cpp:1159
 msgid ""
 "helped with typesetting tools and came up with many more improvements).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1157
+#: HikariSub/HikariSubFrame.cpp:1160
 msgid ""
 "- MatiasMovie (found some crashes and suggessted some improvements, helps "
 "with crash debugging).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1158
+#: HikariSub/HikariSubFrame.cpp:1161
 msgid "- mas1904 (found some errors and helping with crash debuging).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1159
+#: HikariSub/HikariSubFrame.cpp:1162
 msgid "- Senami (made new themes and found some bugs).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1160
+#: HikariSub/HikariSubFrame.cpp:1163
 msgid "- altinat (Thai translation).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1161
+#: HikariSub/HikariSubFrame.cpp:1164
 msgid "- labrie75 (Korean translation).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1162
+#: HikariSub/HikariSubFrame.cpp:1165
 msgid "- Niskala5570 (Malay translation).\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1163
+#: HikariSub/HikariSubFrame.cpp:1166
 msgid "Thanks to other HikariSub users who reported bugs:\n"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1164 HikariSub/HotkeysNaming.cpp:179
+#: HikariSub/HikariSubFrame.cpp:1167 HikariSub/HotkeysNaming.cpp:180
 #: HikariSub/OptionsDialog.cpp:699
 msgid "Credits"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1298
+#: HikariSub/HikariSubFrame.cpp:1301
 msgid "Subtitle file "
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1308
+#: HikariSub/HikariSubFrame.cpp:1311
 msgid "Save subtitle file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1315 HikariSub/HikariSubFrame.cpp:1329
-#: HikariSub/HikariSubFrame.cpp:2642
+#: HikariSub/HikariSubFrame.cpp:1318 HikariSub/HikariSubFrame.cpp:1332
+#: HikariSub/HikariSubFrame.cpp:2664
 msgid ""
 "Chosen file is read only,\n"
 "please save with different name or change file attribute."
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1433
+#: HikariSub/HikariSubFrame.cpp:1436
 #, c-format
 msgid "Load subtitles named \"%s\"?"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1506 HikariSub/VideoBox.cpp:1998
+#: HikariSub/HikariSubFrame.cpp:1509 HikariSub/VideoBox.cpp:1998
 msgid "Cannot open subtitle file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:1670 HikariSub/OptionsDialog.cpp:776
+#: HikariSub/HikariSubFrame.cpp:1673 HikariSub/OptionsDialog.cpp:776
 #: HikariSub/ProviderFFMS2.cpp:1047 HikariSub/ProviderFFMS2.cpp:1058
 #: HikariSub/ScriptInfo.cpp:119 HikariSub/stylestore.cpp:771
 #: HikariSub/stylestore.cpp:772
 msgid "None"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2238
+#: HikariSub/HikariSubFrame.cpp:2251
 #, c-format
 msgid "Save subtitles named \"%s\" before %s?"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2239
+#: HikariSub/HikariSubFrame.cpp:2252
 msgid "exiting program"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2240
+#: HikariSub/HikariSubFrame.cpp:2253
 msgid "closing tab"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2241
+#: HikariSub/HikariSubFrame.cpp:2254
 msgid "loading new subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2242
+#: HikariSub/HikariSubFrame.cpp:2255
 msgid "removing subtitles"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2277 HikariSub/OptionsDialog.cpp:712
+#: HikariSub/HikariSubFrame.cpp:2290 HikariSub/OptionsDialog.cpp:712
 msgid "Cannot load audio hotkeys"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2278 HikariSub/OptionsDialog.cpp:311
+#: HikariSub/HikariSubFrame.cpp:2291 HikariSub/OptionsDialog.cpp:311
 #: HikariSub/ProviderFFMS2.cpp:117
 msgid "Cannot load audio configuration"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2282
+#: HikariSub/HikariSubFrame.cpp:2295
 msgid "Choose audio file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2285
+#: HikariSub/HikariSubFrame.cpp:2298
 msgid "Audio and video files"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2287
+#: HikariSub/HikariSubFrame.cpp:2300
 msgid "All files"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2446
+#: HikariSub/HikariSubFrame.cpp:2459
 msgid "Undo to "
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2462
+#: HikariSub/HikariSubFrame.cpp:2475
 msgid "Redo to "
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2625
+#: HikariSub/HikariSubFrame.cpp:2647
 msgid "Choose session file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2627 HikariSub/HikariSubFrame.cpp:2636
+#: HikariSub/HikariSubFrame.cpp:2649 HikariSub/HikariSubFrame.cpp:2658
 msgid "Session file (*.kls),|*.kls"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2635
+#: HikariSub/HikariSubFrame.cpp:2657
 msgid "Save session file"
 msgstr ""
 
-#: HikariSub/HikariSubFrame.cpp:2739
+#: HikariSub/HikariSubFrame.cpp:2761
 #, c-format
 msgid "Hotkey \"%s\" it's not script hotkey."
 msgstr ""
@@ -2913,87 +2921,87 @@ msgstr ""
 msgid "Exit"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:137 HikariSub/HotkeysNaming.cpp:213
+#: HikariSub/Hotkeys.cpp:137 HikariSub/HotkeysNaming.cpp:214
 #: HikariSub/Notebook.cpp:693
 msgid "Open new tab"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:138 HikariSub/HotkeysNaming.cpp:214
+#: HikariSub/Hotkeys.cpp:138 HikariSub/HotkeysNaming.cpp:215
 msgid "Close current tab"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:139 HikariSub/HotkeysNaming.cpp:173
+#: HikariSub/Hotkeys.cpp:139 HikariSub/HotkeysNaming.cpp:174
 msgid "Time shift window"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:145 HikariSub/HotkeysNaming.cpp:252
+#: HikariSub/Hotkeys.cpp:145 HikariSub/HotkeysNaming.cpp:253
 #: HikariSub/stylestore.cpp:42
 msgid "Style manager"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:153 HikariSub/HotkeysNaming.cpp:223
+#: HikariSub/Hotkeys.cpp:153 HikariSub/HotkeysNaming.cpp:224
 #: HikariSub/VideoBox.cpp:1056
 msgid "Open subtitles"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:154 HikariSub/HotkeysNaming.cpp:235
+#: HikariSub/Hotkeys.cpp:154 HikariSub/HotkeysNaming.cpp:236
 #: HikariSub/Notebook.cpp:983 HikariSub/ScriptInfo.cpp:160
 msgid "Save"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:155 HikariSub/HotkeysNaming.cpp:236
+#: HikariSub/Hotkeys.cpp:155 HikariSub/HotkeysNaming.cpp:237
 msgid "Save as..."
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:156 HikariSub/HotkeysNaming.cpp:233
+#: HikariSub/Hotkeys.cpp:156 HikariSub/HotkeysNaming.cpp:234
 #: HikariSub/SubsGrid.cpp:288
 msgid "Delete text"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:157 HikariSub/HotkeysNaming.cpp:231
+#: HikariSub/Hotkeys.cpp:157 HikariSub/HotkeysNaming.cpp:232
 #: HikariSub/TLDialog.cpp:31 HikariSub/TLDialog.cpp:39
 msgid "Delete line"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:163 HikariSub/Hotkeys.cpp:203
-#: HikariSub/HotkeysNaming.cpp:49 HikariSub/HotkeysNaming.cpp:228
+#: HikariSub/HotkeysNaming.cpp:49 HikariSub/HotkeysNaming.cpp:229
 msgid "Previous line"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:164 HikariSub/Hotkeys.cpp:205
-#: HikariSub/HotkeysNaming.cpp:51 HikariSub/HotkeysNaming.cpp:220
+#: HikariSub/HotkeysNaming.cpp:51 HikariSub/HotkeysNaming.cpp:221
 msgid "Next line"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:166 HikariSub/HotkeysNaming.cpp:182
+#: HikariSub/Hotkeys.cpp:166 HikariSub/HotkeysNaming.cpp:183
 msgid "Merge with previous line"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:167 HikariSub/HotkeysNaming.cpp:183
+#: HikariSub/Hotkeys.cpp:167 HikariSub/HotkeysNaming.cpp:184
 msgid "Merge with next line"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:168 HikariSub/HotkeysNaming.cpp:250
+#: HikariSub/Hotkeys.cpp:168 HikariSub/HotkeysNaming.cpp:251
 msgid "Change start time to nearest keyframe"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:169 HikariSub/HotkeysNaming.cpp:249
+#: HikariSub/Hotkeys.cpp:169 HikariSub/HotkeysNaming.cpp:250
 msgid "Change end time to nearest keyframe"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:170 HikariSub/HotkeysNaming.cpp:221
+#: HikariSub/Hotkeys.cpp:170 HikariSub/HotkeysNaming.cpp:222
 msgid "Next tab"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:171 HikariSub/HotkeysNaming.cpp:229
+#: HikariSub/Hotkeys.cpp:171 HikariSub/HotkeysNaming.cpp:230
 msgid "Previous tab"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:172 HikariSub/HotkeysNaming.cpp:240
+#: HikariSub/Hotkeys.cpp:172 HikariSub/HotkeysNaming.cpp:241
 msgid "Select line at current video position"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:173 HikariSub/HotkeysNaming.cpp:178
+#: HikariSub/Hotkeys.cpp:173 HikariSub/HotkeysNaming.cpp:179
 msgid "HikariSub website"
 msgstr ""
 
@@ -3016,45 +3024,45 @@ msgstr ""
 msgid "Show subtitles preview"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:179 HikariSub/HotkeysNaming.cpp:263
+#: HikariSub/Hotkeys.cpp:179 HikariSub/HotkeysNaming.cpp:264
 msgid "5 seconds forward"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:180 HikariSub/HotkeysNaming.cpp:256
+#: HikariSub/Hotkeys.cpp:180 HikariSub/HotkeysNaming.cpp:257
 msgid "5 seconds backward"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:181 HikariSub/HotkeysNaming.cpp:264
+#: HikariSub/Hotkeys.cpp:181 HikariSub/HotkeysNaming.cpp:265
 msgid "1 minute forward"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:182 HikariSub/HotkeysNaming.cpp:257
+#: HikariSub/Hotkeys.cpp:182 HikariSub/HotkeysNaming.cpp:258
 msgid "1 minute backward"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:183 HikariSub/HotkeysNaming.cpp:260
+#: HikariSub/Hotkeys.cpp:183 HikariSub/HotkeysNaming.cpp:261
 #: HikariSub/VideoBox.cpp:168 HikariSub/VideoFullscreen.cpp:67
 msgid "Next file"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:184 HikariSub/HotkeysNaming.cpp:266
+#: HikariSub/Hotkeys.cpp:184 HikariSub/HotkeysNaming.cpp:267
 #: HikariSub/VideoBox.cpp:160
 msgid "Previous file"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:185 HikariSub/HotkeysNaming.cpp:269
+#: HikariSub/Hotkeys.cpp:185 HikariSub/HotkeysNaming.cpp:270
 msgid "Volume up"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:186 HikariSub/HotkeysNaming.cpp:270
+#: HikariSub/Hotkeys.cpp:186 HikariSub/HotkeysNaming.cpp:271
 msgid "Volume down"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:187 HikariSub/HotkeysNaming.cpp:259
+#: HikariSub/Hotkeys.cpp:187 HikariSub/HotkeysNaming.cpp:260
 msgid "Next chapter"
 msgstr ""
 
-#: HikariSub/Hotkeys.cpp:188 HikariSub/HotkeysNaming.cpp:265
+#: HikariSub/Hotkeys.cpp:188 HikariSub/HotkeysNaming.cpp:266
 msgid "Previous chapter"
 msgstr ""
 
@@ -3128,7 +3136,7 @@ msgid "Play line alt"
 msgstr ""
 
 #: HikariSub/Hotkeys.cpp:211 HikariSub/HotkeysNaming.cpp:57
-#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:166
+#: HikariSub/HotkeysNaming.cpp:273 HikariSub/VideoBox.cpp:166
 #: HikariSub/VideoBox.cpp:1018 HikariSub/VideoFullscreen.cpp:65
 msgid "Stop"
 msgstr ""
@@ -3493,130 +3501,134 @@ msgid "Check for updates"
 msgstr ""
 
 #: HikariSub/HotkeysNaming.cpp:162
-msgid "About"
+msgid "Try the new HikariSub"
 msgstr ""
 
 #: HikariSub/HotkeysNaming.cpp:163
+msgid "About"
+msgstr ""
+
+#: HikariSub/HotkeysNaming.cpp:164
 msgid "Report an issue"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:187
+#: HikariSub/HotkeysNaming.cpp:188
 msgid "Sort all lines by start time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:188
+#: HikariSub/HotkeysNaming.cpp:189
 msgid "Sort all lines by end time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:189
+#: HikariSub/HotkeysNaming.cpp:190
 msgid "Sort all lines by styles"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:190
+#: HikariSub/HotkeysNaming.cpp:191
 msgid "Sort all lines by actor"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:191
+#: HikariSub/HotkeysNaming.cpp:192
 msgid "Sort all lines by effect"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:192
+#: HikariSub/HotkeysNaming.cpp:193
 msgid "Sort all lines by layer"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:193
+#: HikariSub/HotkeysNaming.cpp:194
 msgid "Sort selected lines by start time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:194
+#: HikariSub/HotkeysNaming.cpp:195
 msgid "Sort selected lines by end time"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:195
+#: HikariSub/HotkeysNaming.cpp:196
 msgid "Sort selected lines by styles"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:196
+#: HikariSub/HotkeysNaming.cpp:197
 msgid "Sort selected lines by actor"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:197
+#: HikariSub/HotkeysNaming.cpp:198
 msgid "Sort selected lines by effect"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:198
+#: HikariSub/HotkeysNaming.cpp:199
 msgid "Sort selected lines by layer"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:199
+#: HikariSub/HotkeysNaming.cpp:200
 msgid "Shift times / run time post processor"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:208
+#: HikariSub/HotkeysNaming.cpp:209
 msgid "View all"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:209
+#: HikariSub/HotkeysNaming.cpp:210
 msgid "View audio and subtitles"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:210
+#: HikariSub/HotkeysNaming.cpp:211
 msgid "View only subtitles"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:211
+#: HikariSub/HotkeysNaming.cpp:212
 msgid "View video and subtitles"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:212
+#: HikariSub/HotkeysNaming.cpp:213
 msgid "View only video"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:215
+#: HikariSub/HotkeysNaming.cpp:216
 msgid "Clean styles of ASS file"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:226
+#: HikariSub/HotkeysNaming.cpp:227
 msgid "Play active line"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:241
+#: HikariSub/HotkeysNaming.cpp:242
 msgid "Select lines"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:246
+#: HikariSub/HotkeysNaming.cpp:247
 msgid "Settings"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1063
+#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1063
 msgid "Copy frame to clipboard"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1066
+#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1066
 msgid "Remove video"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1062
+#: HikariSub/HotkeysNaming.cpp:256 HikariSub/VideoBox.cpp:1062
 msgid "Save frame as PNG"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1058
+#: HikariSub/HotkeysNaming.cpp:259 HikariSub/VideoBox.cpp:1058
 msgid "Show / hide progress bar"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1059
+#: HikariSub/HotkeysNaming.cpp:263 HikariSub/VideoBox.cpp:1059
 msgid "Change aspect ratio"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1061
+#: HikariSub/HotkeysNaming.cpp:268 HikariSub/VideoBox.cpp:1061
 msgid "Copy frame with subtitles to clipboard"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:268
+#: HikariSub/HotkeysNaming.cpp:269
 msgid "Full screen"
 msgstr ""
 
-#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1060
+#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:1060
 msgid "Save frame with subtitles as PNG"
 msgstr ""
 
@@ -4065,7 +4077,7 @@ msgstr ""
 msgid "Updates"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:233
+#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:310
 msgid "Check for updates automatically"
 msgstr ""
 
@@ -4074,7 +4086,7 @@ msgid ""
 "When the program starts: once a day, or an hour after a check that failed"
 msgstr ""
 
-#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:237
+#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:314
 msgid "Stable versions only"
 msgstr ""
 
@@ -6497,7 +6509,7 @@ msgstr ""
 msgid "Translation"
 msgstr ""
 
-#: HikariSub/SubsGridWindow.cpp:2104
+#: HikariSub/SubsGridWindow.cpp:2108
 msgid "Cannot show preview cause grid height is too low"
 msgstr ""
 
@@ -6655,17 +6667,17 @@ msgid ""
 "Translation - text pasted into subtitles with correct timing."
 msgstr ""
 
-#: HikariSub/TabPanel.cpp:351
+#: HikariSub/TabPanel.cpp:360
 msgid ""
 "Subtitles were modified by another program.\n"
 "Reload and discard the unsaved changes in this tab?"
 msgstr ""
 
-#: HikariSub/TabPanel.cpp:352 HikariSub/TabPanel.cpp:353
+#: HikariSub/TabPanel.cpp:361 HikariSub/TabPanel.cpp:362
 msgid "Reloading"
 msgstr ""
 
-#: HikariSub/TabPanel.cpp:353
+#: HikariSub/TabPanel.cpp:362
 msgid "Subtitles were modified by another program. Reload?"
 msgstr ""
 
@@ -6982,70 +6994,68 @@ msgstr ""
 msgid "Toolbar alignment"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:172
+#: HikariSub/UpdateChecker.cpp:248
 #, c-format
 msgid ""
 "You have the latest stable version. A newer prerelease, %s, is available."
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:173 HikariSub/UpdateChecker.cpp:695
-#: HikariSub/UpdateChecker.cpp:702 HikariSub/UpdateChecker.cpp:774
-#: HikariSub/UpdateInstaller.cpp:271 HikariSub/UpdateInstaller.cpp:840
-#: HikariSub/UpdateInstaller.cpp:867 HikariSub/UpdateInstaller.cpp:1055
-#: HikariSub/UpdateInstaller.cpp:1344 HikariSub/UpdateInstaller.cpp:1353
-#: HikariSub/UpdateInstaller.cpp:1390 HikariSub/UpdateInstaller.cpp:1422
+#: HikariSub/UpdateChecker.cpp:249 HikariSub/UpdateInstaller.cpp:271
+#: HikariSub/UpdateInstaller.cpp:840 HikariSub/UpdateInstaller.cpp:1060
+#: HikariSub/UpdateInstaller.cpp:1345
 msgid "Update"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:174 HikariSub/UpdateChecker.cpp:250
+#: HikariSub/UpdateChecker.cpp:250 HikariSub/UpdateChecker.cpp:327
 msgid "Open the download page"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:203 HikariSub/UpdateChecker.cpp:343
-#: HikariSub/UpdateChecker.cpp:347
+#: HikariSub/UpdateChecker.cpp:280 HikariSub/UpdateChecker.cpp:420
+#: HikariSub/UpdateChecker.cpp:424
 msgid "A new version is available"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:215
+#: HikariSub/UpdateChecker.cpp:292
 #, c-format
 msgid "You have version %s; version %s is available"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:220
+#: HikariSub/UpdateChecker.cpp:297 HikariSub/UpdateChecker.cpp:579
 #, c-format
 msgid "It needs %s or newer, so it cannot be installed here."
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:250
+#: HikariSub/UpdateChecker.cpp:327
 msgid "Download and install"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:251 HikariSub/UpdateChecker.cpp:360
+#: HikariSub/UpdateChecker.cpp:328 HikariSub/UpdateChecker.cpp:437
 msgid "Remind me in a week"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:300
+#: HikariSub/UpdateChecker.cpp:377 HikariSub/UpdateChecker.cpp:598
 msgid "Downloading..."
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:306
+#: HikariSub/UpdateChecker.cpp:383 HikariSub/UpdateChecker.cpp:602
 #, c-format
 msgid "Downloading... %d%%"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:316 HikariSub/UpdateInstaller.cpp:415
-#: HikariSub/UpdateInstaller.cpp:420 HikariSub/UpdateInstaller.cpp:569
+#: HikariSub/UpdateChecker.cpp:393 HikariSub/UpdateChecker.cpp:612
+#: HikariSub/UpdateInstaller.cpp:415 HikariSub/UpdateInstaller.cpp:420
+#: HikariSub/UpdateInstaller.cpp:569
 msgid "Cannot download the update"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:352
+#: HikariSub/UpdateChecker.cpp:429
 #, c-format
 msgid ""
 "HikariSub %s is a prerelease. The AUR package carries stable versions only. "
 "To try it, use the AppImage from the release page."
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:354
+#: HikariSub/UpdateChecker.cpp:431
 #, c-format
 msgid ""
 "HikariSub %s is available; you have %s. You installed HikariSub from the "
@@ -7053,15 +7063,53 @@ msgid ""
 "-Syu or paru -Syu."
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:359 HikariSub/UpdateInstaller.cpp:331
+#: HikariSub/UpdateChecker.cpp:436 HikariSub/UpdateInstaller.cpp:331
 msgid "What's new"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:695 HikariSub/UpdateChecker.cpp:774
+#: HikariSub/UpdateChecker.cpp:471
+msgid "The new HikariSub"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:483
+#, c-format
+msgid "Version %s. You have HikariSub %s."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:498
+msgid ""
+"Try it opens the release page. Unpack the new HikariSub into a folder of its "
+"own, beside this copy, which stays as it is."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:504
+msgid ""
+"This version of HikariSub gets no further updates. It keeps working, and "
+"moving to the new HikariSub is up to you."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:514
+msgid "Try it"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:516
+msgid "Remind me later"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:518
+msgid "Don't offer again"
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:1042 HikariSub/UpdateChecker.cpp:1056
+#: HikariSub/UpdateChecker.cpp:1155
 msgid "Cannot check for updates"
 msgstr ""
 
-#: HikariSub/UpdateChecker.cpp:702
+#: HikariSub/UpdateChecker.cpp:1048
+msgid "There is no new HikariSub to try at the moment."
+msgstr ""
+
+#: HikariSub/UpdateChecker.cpp:1063
 msgid "You already have the latest version"
 msgstr ""
 
@@ -7143,11 +7191,11 @@ msgid ""
 "not installed. It is tried again at the next quit."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:822 HikariSub/UpdateInstaller.cpp:1040
+#: HikariSub/UpdateInstaller.cpp:822 HikariSub/UpdateInstaller.cpp:1045
 msgid "The update could not be handed to the installer."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:824 HikariSub/UpdateInstaller.cpp:1462
+#: HikariSub/UpdateInstaller.cpp:824 HikariSub/UpdateInstaller.cpp:1512
 #, c-format
 msgid ""
 "The installer of HikariSub %s could not be started. You can run it yourself: "
@@ -7158,78 +7206,78 @@ msgstr ""
 msgid "Checking the update..."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1020
+#: HikariSub/UpdateInstaller.cpp:1025
 #, c-format
 msgid "HikariSub %s did not start, so HikariSub %s was put back."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1022
+#: HikariSub/UpdateInstaller.cpp:1027
 #, c-format
 msgid ""
 "HikariSub %s did not start. The previous version is %s; rename it back to "
 "use it."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1033
+#: HikariSub/UpdateInstaller.cpp:1038
 msgid "The update was refused: the package does not match its release."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1035
+#: HikariSub/UpdateInstaller.cpp:1040
 #, c-format
 msgid ""
 "The package manager could not install the update. You can install it "
 "yourself: %s"
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1038
+#: HikariSub/UpdateInstaller.cpp:1043
 msgid ""
 "The package manager was busy with another installation. The update is "
 "installed at the next quit."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1042
+#: HikariSub/UpdateInstaller.cpp:1047
 #, c-format
 msgid ""
 "The update could not be checked against its release on GitHub, so it was not "
 "installed. You can install it yourself: %s"
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1045
+#: HikariSub/UpdateInstaller.cpp:1050
 #, c-format
 msgid "The update could not be installed (code %d)."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1057
+#: HikariSub/UpdateInstaller.cpp:1062
 msgid "Installing update..."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1081
+#: HikariSub/UpdateInstaller.cpp:1086
 #, c-format
 msgid ""
 "No password prompt could be shown to install HikariSub %s. Install it "
 "yourself: %s"
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1342
+#: HikariSub/UpdateInstaller.cpp:1392
 #, c-format
 msgid "HikariSub %s could not be installed (code %d)."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1352
+#: HikariSub/UpdateInstaller.cpp:1402
 #, c-format
 msgid ""
 "HikariSub %s was not installed: its installer did not finish. If another "
 "administrator account approved it, that account was told why."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1416
+#: HikariSub/UpdateInstaller.cpp:1466
 #, c-format
 msgid ""
 "The download of HikariSub %s changed or went missing, so it was not "
 "installed. It is downloaded again at the next check."
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1456
+#: HikariSub/UpdateInstaller.cpp:1506
 #, c-format
 msgid ""
 "HikariSub is installed for all users in a folder that can be changed without "
@@ -7237,7 +7285,7 @@ msgid ""
 "can run its installer yourself: %s"
 msgstr ""
 
-#: HikariSub/UpdateInstaller.cpp:1473 HikariSub/UpdateInstaller.cpp:1531
+#: HikariSub/UpdateInstaller.cpp:1523 HikariSub/UpdateInstaller.cpp:1581
 #, c-format
 msgid "HikariSub %s could not replace the AppImage. The download is at %s."
 msgstr ""

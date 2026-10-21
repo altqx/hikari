@@ -719,6 +719,11 @@ bool hikarisubApp::OnInit()
 
 		Frame->Show();
 		SetTopWindow(Frame);
+		// Once the main window shows, not before, for an AppImage
+		// update's watchdog: a file opened above may run a progress
+		// dialog's event loop first. The rest of the updater's start waits
+		// for the prompts (StartUpdater()).
+		Frame->CallAfter([] { update_installer::OnShown(); });
 		openTimer.SetOwner(this, 1199);
 		Bind(wxEVT_TIMER, &hikarisubApp::OnOpen, this, 1199);
 		if (opevent){
@@ -742,6 +747,8 @@ bool hikarisubApp::OnInit()
 			}
 		}
 #endif
+		// The last-session and crash prompts are closed.
+		Frame->StartUpdater();
 		if (loadSession){
 			debugtimer.SetOwner(this, 2299);
 			debugtimer.Start(100, true);

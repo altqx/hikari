@@ -139,12 +139,6 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 	}
 #endif
 
-	// Deferred: wxWebRequest needs a running event loop.
-	CallAfter([this] {
-		update_installer::OnStartup(this);
-		UpdateChecker::CheckOnStartup(this);
-	});
-
 	Menubar = new MenuBar(this);
 
 	
@@ -368,6 +362,8 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 		_("Opens the HikariSub issue tracker"), PTR_BITMAP_PNG(L"ansi"));
 	HelpMenu->AppendTool(Toolbar, GLOBAL_CHECK_FOR_UPDATES, _("Check for &updates"),
 		_("Checks whether a newer version is available"), PTR_BITMAP_PNG(L"about"));
+	HelpMenu->AppendTool(Toolbar, GLOBAL_TRY_NEW_HIKARISUB, _("&Try the new HikariSub..."),
+		_("Shows the offer to try the new HikariSub, if there is one"), PTR_BITMAP_PNG(L"about"));
 	HelpMenu->AppendTool(Toolbar, GLOBAL_ABOUT, _("&About"), 
 		_("Shows program info"), PTR_BITMAP_PNG(L"about"));
 	HelpMenu->AppendTool(Toolbar, GLOBAL_HELPERS, 
@@ -391,7 +387,7 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 	Bind(wxEVT_COMMAND_MENU_SELECTED, &HikariSubFrame::OnMenuSelected, this, 
 		GLOBAL_SORT_ALL_BY_START_TIMES, GLOBAL_SORT_SELECTED_BY_LAYER);
 	Bind(wxEVT_COMMAND_MENU_SELECTED, &HikariSubFrame::OnMenuSelected, this, GLOBAL_SHIFT_TIMES);
-	Connect(GLOBAL_OPEN_SUBS, GLOBAL_ANSI, wxEVT_COMMAND_MENU_SELECTED, (wxObjectEventFunction)&HikariSubFrame::OnMenuSelected1);
+	Connect(GLOBAL_OPEN_SUBS, GLOBAL_TRY_NEW_HIKARISUB, wxEVT_COMMAND_MENU_SELECTED, (wxObjectEventFunction)&HikariSubFrame::OnMenuSelected1);
 	Connect(GLOBAL_SELECT_FROM_VIDEO, GLOBAL_STYLE_MANAGER_CLEAN_STYLE, wxEVT_COMMAND_MENU_SELECTED, (wxObjectEventFunction)&HikariSubFrame::OnMenuSelected1);
 	Connect(GLOBAL_PREVIOUS_LINE, GLOBAL_JOIN_WITH_NEXT, wxEVT_COMMAND_MENU_SELECTED, (wxObjectEventFunction)&HikariSubFrame::OnChangeLine);
 	Connect(GLOBAL_REMOVE_LINES, GLOBAL_REMOVE_TEXT, wxEVT_COMMAND_MENU_SELECTED, (wxObjectEventFunction)&HikariSubFrame::OnDelete);
@@ -1120,6 +1116,9 @@ void HikariSubFrame::OnMenuSelected1(wxCommandEvent& event)
 	}
 	else if (id == GLOBAL_CHECK_FOR_UPDATES){
 		UpdateChecker::CheckNow(this);
+	}
+	else if (id == GLOBAL_TRY_NEW_HIKARISUB){
+		UpdateChecker::OfferNow(this);
 	}
 	else if (id == GLOBAL_ABOUT){
 		HikariMessageBox(wxString::Format(_("HikariSub subtitle editor by altqx,\nversion %s from %s"),
@@ -2580,6 +2579,15 @@ void HikariSubFrame::OnDelete(wxCommandEvent& event)
 		GetTab()->grid->DeleteText();
 	}
 
+}
+
+void HikariSubFrame::StartUpdater()
+{
+	// Deferred: wxWebRequest needs a running event loop.
+	CallAfter([this] {
+		update_installer::OnStartup(this);
+		UpdateChecker::CheckOnStartup(this);
+	});
 }
 
 void HikariSubFrame::OnClose1(wxCloseEvent& event)

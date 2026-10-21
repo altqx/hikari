@@ -54,6 +54,13 @@ namespace
 	constexpr int kInstallId = 20003;
 	// The dialog's result once its download has verified.
 	constexpr int kInstalledId = 20004;
+	// The offer of the rewrite's buttons, and its results.
+	constexpr int kTryId = 20005;
+	constexpr int kRemindLaterId = 20006;
+	constexpr int kNoOfferId = 20007;
+	// Tried: downloaded, or its page opened.
+	constexpr int kTriedId = 20008;
+	// Tried by an AUR install, which is told to use its package manager.
 
 	struct ReleaseInfo
 	{
@@ -164,6 +171,42 @@ namespace
 	OptionsNextCheck optionsNextCheck;
 	update_policy::CheckTracker tracker(optionsNextCheck);
 
+	// "Remind me later" of the rewrite's offer: when it shows again, or 0.
+	long long LoadOfferRemind()
+	{
+		return update_policy::ParseNextCheck(Options.GetString(UPDATER_OFFER_REMIND).utf8_string());
+	}
+
+	void SetOfferRemind(long long remindAt)
+	{
+		Options.SetString(UPDATER_OFFER_REMIND,
+			remindAt > 0 ? wxString::FromUTF8(update_policy::FormatNextCheck(remindAt)) : wxString());
+	}
+
+	// What "Don't offer again" of the rewrite's offer declined.
+	update_manifest::DeclinedOffer LoadOfferDeclined()
+	{
+		return { Options.GetString(UPDATER_OFFER_DECLINED).utf8_string(),
+			update_policy::ReadOption(Options.GetString(UPDATER_OFFER_DECLINED_ENDED).utf8_string(), false) };
+	}
+
+	void SetOfferDeclined(const update_manifest::DeclinedOffer &declined)
+	{
+		Options.SetString(UPDATER_OFFER_DECLINED, wxString::FromUTF8(declined.version));
+		Options.SetString(UPDATER_OFFER_DECLINED_ENDED, declined.ended ? L"true" : L"false");
+	}
+
+	wxString FromUtf8(const std::string &text)
+	{
+		return wxString::FromUTF8(text.c_str());
+	}
+
+	// Plain text broken into lines of up to width columns, as
+	// HikariStaticText does not wrap (update_manifest::WrapText()).
+	wxString Wrap(const wxString &text, size_t width = 64)
+	{
+		return FromUtf8(update_manifest::WrapText(text.utf8_string(), width));
+	}
 
 	// Says that only a prerelease is newer, and offers to open its page.
 	void ShowNewerPrerelease(wxWindow *parent, const ReleaseInfo &release)
@@ -173,6 +216,7 @@ namespace
 				release.tag), _("Update"), wxYES_NO);
 		message.SetYesLabel(_("Open the download page"));
 		message.SetNoLabel(_("Close"));
+		update_installer::Present(&message, parent);
 		if (message.ShowModal() & wxYES)
 			OpenReleasePage(release.url);
 	}
@@ -353,7 +397,7 @@ namespace
 					version) :
 				wxString::Format(_("HikariSub %s is available; you have %s. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu."),
 					version, VersionHikariSub);
-			sizer->Add(new HikariStaticText(this, -1, body), 0, wxEXPAND | wxALL, 4);
+			sizer->Add(new HikariStaticText(this, -1, Wrap(body)), 0, wxEXPAND | wxALL, 4);
 
 			wxBoxSizer *buttons = new wxBoxSizer(wxHORIZONTAL);
 			buttons->Add(new MappedButton(this, kOpenId, _("What's new")), 1, wxALL, 2);
@@ -379,6 +423,199 @@ namespace
 		wxString tag;
 	};
 
+
+	// The rewrite's offer (ADR-0021): its pitch, in the interface language
+	// or English, and Try it, Remind me later and Don't offer again. Closing
+	// it otherwise is Remind me later. Nothing is downloaded before Try
+	// it; then, as for an update of this kind, the package is downloaded
+	// with its progress here and checked, and "Update ready" follows, or
+	// the release page opens, or an AUR install is told to use its
+	// package manager.
+	class OfferDialog : public HikariDialog
+	{
+	public:
+		OfferDialog(wxWindow *parent, const update_manifest::Manifest &manifest)
+			: HikariDialog(parent, -1, _("The new HikariSub"))
+			, frame(parent)
+			, manifest(manifest)
+			, tryOffer(update_manifest::TryOffer(update_installer::Kind(), update_installer::CanInstall(),
+				manifest, update_installer::GetSystemInfo()))
+		{
+			const update_manifest::Pitch &pitch = update_manifest::PitchFor(*manifest.offer,
+				Options.GetString(PROGRAM_LANGUAGE).utf8_string());
+			wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
+
+			HikariStaticText *title = new HikariStaticText(this, -1, Wrap(FromUtf8(pitch.title), 48));
+			title->SetFont(title->GetFont().Bold().Larger());
+			sizer->Add(title, 0, wxEXPAND | wxALL, 6);
+			sizer->Add(new HikariStaticText(this, -1,
+				wxString::Format(_("Version %s. You have HikariSub %s."), FromUtf8(manifest.version),
+					VersionHikariSub)), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			sizer->AddSpacer(6);
+			for (const std::string &highlight : pitch.highlights) {
+				sizer->Add(new HikariStaticText(this, -1, Wrap(L"\u2022 " + FromUtf8(highlight))), 0,
+					wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			}
+			if (!pitch.note.empty()) {
+				sizer->AddSpacer(6);
+				sizer->Add(new HikariStaticText(this, -1, Wrap(FromUtf8(pitch.note))), 0,
+					wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			}
+			if (update_manifest::TryOpensBeside(update_installer::Kind())) {
+				sizer->AddSpacer(6);
+				sizer->Add(new HikariStaticText(this, -1,
+					Wrap(_("Try it opens the release page. Unpack the new HikariSub into a folder of its own, beside this copy, which stays as it is."))),
+					0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			}
+			if (tryOffer.type == update_manifest::OfferType::NotifyRequirement) {
+				sizer->AddSpacer(6);
+				sizer->Add(new HikariStaticText(this, -1,
+					Wrap(wxString::Format(_("It needs %s or newer, so it cannot be installed here."),
+						FromUtf8(tryOffer.requirement)))), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			}
+			if (manifest.offer->legacySupportEnded) {
+				sizer->AddSpacer(6);
+				HikariStaticText *ended = new HikariStaticText(this, -1,
+					Wrap(_("This version of HikariSub gets no further updates. It keeps working, and moving to the new HikariSub is up to you.")));
+				ended->SetFont(ended->GetFont().Bold());
+				sizer->Add(ended, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			}
+
+			progress = new HikariStaticText(this, -1, wxString());
+			sizer->Add(progress, 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			progress->Hide();
+
+			wxBoxSizer *buttons = new wxBoxSizer(wxHORIZONTAL);
+			tryIt = new MappedButton(this, kTryId, _("Try it"));
+			buttons->Add(tryIt, 1, wxALL, 2);
+			remindLater = new MappedButton(this, kRemindLaterId, _("Remind me later"));
+			buttons->Add(remindLater, 1, wxALL, 2);
+			noOffer = new MappedButton(this, kNoOfferId, _("Don't offer again"));
+			buttons->Add(noOffer, 1, wxALL, 2);
+			sizer->AddSpacer(6);
+			sizer->Add(buttons, 0, wxEXPAND | wxALL, 2);
+			wxBoxSizer *margin = new wxBoxSizer(wxVERTICAL);
+			margin->Add(sizer, 1, wxEXPAND | wxALL, 8);
+
+			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &) { TryIt(); }, kTryId);
+			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &) { EndModal(kRemindLaterId); },
+				kRemindLaterId);
+			Bind(wxEVT_COMMAND_BUTTON_CLICKED, [this](wxCommandEvent &) { EndModal(kNoOfferId); }, kNoOfferId);
+			SetEscapeId(kRemindLaterId);
+			SetSizerAndFit(margin);
+		}
+
+		~OfferDialog()
+		{
+			if (listenerId)
+				update_installer::Detach(listenerId);
+		}
+
+		// A download asked for here goes on however the window closes, and
+		// counts as tried.
+		void SaveChoices(int result)
+		{
+			if (downloading)
+				result = kTriedId;
+			update_manifest::OfferAnswer answer = result == kTriedId ? update_manifest::OfferAnswer::Tried :
+				result == kNoOfferId ? update_manifest::OfferAnswer::NoOffer : update_manifest::OfferAnswer::Later;
+			update_manifest::OfferRecord record = update_manifest::RecordAfter(answer, manifest.version,
+				manifest.offer->legacySupportEnded, LoadOfferDeclined(), Now());
+			SetOfferDeclined(record.declined);
+			SetOfferRemind(record.remindAt);
+			Options.SaveOptions(true, false);
+		}
+
+	private:
+		void TryIt()
+		{
+			// An AUR install gets no offer (GetsOffers()).
+			if (update_manifest::TryOpensReleasePage(tryOffer.type)) {
+				OpenReleasePage(update_installer::ReleasePage(L"v" + FromUtf8(manifest.version)));
+				EndModal(kTriedId);
+				return;
+			}
+			StartDownload(tryOffer.package);
+		}
+
+		void ShowProgress(const wxString &text)
+		{
+			progress->SetLabelText(text);
+			progress->Show();
+			Fit();
+			Layout();
+		}
+
+		void StartDownload(const update_manifest::Package &package)
+		{
+			// It counts as tried from here, so the other choices are not
+			// offered while it lasts.
+			SetDownloading(true);
+			ShowProgress(_("Downloading..."));
+			update_installer::Listener listener;
+			listener.progress = [this](long long received, long long total) {
+				if (total > 0)
+					progress->SetLabelText(wxString::Format(_("Downloading... %d%%"),
+						static_cast<int>(received * 100 / total)));
+			};
+			listener.done = [this](bool ok, const wxString &error) {
+				listenerId = 0;
+				if (ok) {
+					EndModal(kTriedId);
+					return;
+				}
+				SetDownloading(false);
+				progress->SetLabelText(error.empty() ? _("Cannot download the update") : error);
+				Layout();
+			};
+			listenerId = update_installer::Download(frame, update_installer::Target{ manifest.version, package },
+				listener);
+		}
+
+		void SetDownloading(bool on)
+		{
+			downloading = on;
+			tryIt->Show(!on);
+			remindLater->Enable(!on);
+			noOffer->Enable(!on);
+		}
+
+		wxWindow *frame;
+		update_manifest::Manifest manifest;
+		// What Try it does here.
+		update_manifest::Offer tryOffer;
+		HikariStaticText *progress;
+		MappedButton *tryIt;
+		MappedButton *remindLater;
+		MappedButton *noOffer;
+		int listenerId = 0;
+		bool downloading = false;
+	};
+
+	// Shows the offer, and saves the user's choice.
+	void ShowOffer(wxWindow *parent, const update_manifest::Manifest &manifest)
+	{
+		OfferDialog dialog(parent, manifest);
+		update_installer::Present(&dialog, parent);
+		dialog.SaveChoices(dialog.ShowModal());
+	}
+
+	// What a check was asked for from the menu: the updates, or the offer
+	// of the rewrite. One at startup asks for neither, and shows only what
+	// it finds to show; with the automatic checks off, it comes for a
+	// reminder of the offer and shows no update.
+	enum class Ask
+	{
+		Nothing,
+		Updates,
+		Offer,
+		Reminder,
+	};
+
+	class UpdateRequest;
+	// The check that runs, which a check asked for meanwhile joins.
+	UpdateRequest *runningCheck = nullptr;
+
 	// One check: the request's handler, separate from the frame so that it
 	// can be unbound with it. It asks for a page of the release list at a
 	// time, keeps the details of only the candidates so far, then reads the
@@ -402,6 +639,27 @@ namespace
 			Bind(wxEVT_WEBREQUEST_DATA, &UpdateRequest::OnData, this);
 			Bind(wxEVT_WEBREQUEST_STATE, &UpdateRequest::OnState, this);
 			Bind(wxEVT_TIMER, &UpdateRequest::OnDeadline, this, deadline.GetId());
+		}
+
+		~UpdateRequest()
+		{
+			if (runningCheck == this)
+				runningCheck = nullptr;
+		}
+
+		// What it reports. A check that starts asking for nothing is the
+		// startup check, which shows only what it finds to show, still so
+		// when a check from the menu joins it.
+		void Asks(Ask ask)
+		{
+			if (ask == Ask::Updates)
+				asksUpdates = true;
+			else if (ask == Ask::Offer)
+				asksOffer = true;
+			else {
+				atStartup = true;
+				offerOnly = ask == Ask::Reminder;
+			}
 		}
 
 		// Asks for a page of the release list, from 1.
@@ -532,8 +790,10 @@ namespace
 				std::string url = ReplyUrl(evt);
 				bool came = ending == update_policy::Ending::Answered && evt.GetResponse().GetStatus() == 200 &&
 					update_installer::IsAssetReplyUrl(url);
+				if (!came)
+					missedManifest = true;
 				const update_policy::Release &release = pages.Releases()[walk->Current()];
-				Consider(update_manifest::Admit(release, came ? &body : nullptr));
+				Consider(update_manifest::Consider(release, came ? &body : nullptr, SeesPrereleases()));
 				body.clear();
 				body.shrink_to_fit();
 				if (Walk())
@@ -568,7 +828,8 @@ namespace
 			if (ending == update_policy::Ending::Answered) {
 				// The list is read: on to the candidates' manifests.
 				phase = Phase::Manifests;
-				walk.emplace(update_policy::ListCandidates(pages.Releases(), pages.Installed(), pages.StableOnly()));
+				walk.emplace(pages.Releases(),
+					update_policy::ListCandidates(pages.Releases(), pages.Installed(), pages.StableOnly()));
 				if (Walk())
 					return;
 				if (timedOut)
@@ -580,17 +841,36 @@ namespace
 			Release();
 		}
 
-		// What the current candidate offers, or nothing, and on to the
-		// next.
-		void Consider(std::optional<update_manifest::Manifest> manifest)
+		// How the check ends for the update, stopped as ending: a found
+		// update stands against the deadline (update_manifest::WalkEnding()).
+		// The offer's is ending, as the walk for it did not end.
+		update_policy::Ending UpdateEnding(update_policy::Ending ending) const
 		{
-			if (!manifest) {
+			return update_manifest::WalkEnding(ending, phase == Phase::Manifests && walk && walk->Found());
+		}
+
+		bool SeesPrereleases() const
+		{
+			return update_manifest::SeesPrereleases(pages.StableOnly(), VersionHikariSub);
+		}
+
+		// What the current candidate offers, or nothing, and on to the
+		// next. The first update is the one; an offer of the rewrite is
+		// kept when it is the highest so far.
+		void Consider(update_manifest::Considered considered)
+		{
+			// AUR installs get none, and the release that is the update
+			// offers nothing besides it.
+			bool isUpdate = considered.update && !walk->Found();
+			if (!isUpdate && update_manifest::GetsOffers(update_installer::Kind()))
+				offers.Take(std::move(considered.offer));
+			if (!isUpdate) {
 				walk->Skip();
 				return;
 			}
 			found = walk->Current();
 			foundSkipped = walk->CurrentIsSkipped();
-			foundManifest = std::move(*manifest);
+			foundManifest = std::move(*considered.update);
 			walk->Take();
 		}
 
@@ -601,8 +881,14 @@ namespace
 		{
 			while (walk->Current() >= 0) {
 				const update_policy::Release &release = pages.Releases()[walk->Current()];
+				// Past the update, only the rewrite's releases are left,
+				// and only a manifest can hold more: an offer.
+				if (walk->Found() && !update_manifest::HasManifest(release)) {
+					walk->Skip();
+					continue;
+				}
 				if (!update_manifest::HasManifest(release)) {
-					Consider(update_manifest::Admit(release, nullptr));
+					Consider(update_manifest::Consider(release, nullptr, SeesPrereleases()));
 					continue;
 				}
 				// Nothing would be shown.
@@ -620,6 +906,7 @@ namespace
 					request.Start();
 					return true;
 				}
+				missedManifest = true;
 				walk->Skip();
 			}
 			return false;
@@ -633,7 +920,10 @@ namespace
 		bool Finish(update_policy::Ending ending)
 		{
 			deadline.Stop();
-			tracker.End(Now(), ending);
+			// No check joins it from here (CheckTracker::Begin()).
+			if (runningCheck == this)
+				runningCheck = nullptr;
+			tracker.End(Now(), UpdateEnding(ending));
 			run.ReportBegins();
 			if (IsParentOpen())
 				Report(ending);
@@ -689,28 +979,80 @@ namespace
 
 		void Report(update_policy::Ending ending)
 		{
-			bool interactive = tracker.Reports();
+			// A legacy update comes first, then the offer asked for from
+			// Help, if both were.
+			update_policy::Ending updateEnding = UpdateEnding(ending);
+			bool shown = (asksUpdates || (atStartup && !offerOnly)) && ReportUpdate(updateEnding, asksUpdates);
+			if (asksOffer)
+				ReportOffer(ending, !asksUpdates || updateEnding != ending);
+			if (!atStartup || ending != update_policy::Ending::Answered)
+				return;
+			// A legacy update comes first, the one shown now or the one
+			// waiting to be installed; the offer waits for a later start.
+			bool waits = shown || !update_installer::PendingVersion().empty();
+			// A startup check that answered: a reminder that has come is
+			// done with (SpendsReminder()).
+			long long remindAt = LoadOfferRemind();
+			const update_manifest::Manifest *offer = offers.Get();
+			if (update_manifest::OfferReminderDue(remindAt, Now()) &&
+				update_manifest::SpendsReminder(asksUpdates || asksOffer, offerOnly, waits, !offer && missedManifest))
+			{
+				SetOfferRemind(0);
+				Options.SaveOptions(true, false);
+			}
+			// Asked for from the menu, it has had its answer.
+			if (asksUpdates || asksOffer)
+				return;
+			if (waits || !offer)
+				return;
+			if (!update_manifest::ShowsOfferAtStart(offer->version, offer->offer->legacySupportEnded,
+				LoadOfferDeclined(), remindAt, Now()))
+			{
+				return;
+			}
+			ShowOffer(parent, *offer);
+		}
+
+		// "Try the new HikariSub...": the current offer, whatever was
+		// chosen of it before, or that there is none. saysFailure: a
+		// failed check is said here, when the update's report did not.
+		void ReportOffer(update_policy::Ending ending, bool saysFailure)
+		{
+			if (ending != update_policy::Ending::Answered) {
+				if (saysFailure)
+					update_installer::Message(parent, _("Cannot check for updates"));
+				return;
+			}
+			if (const update_manifest::Manifest *offer = offers.Get())
+				ShowOffer(parent, *offer);
+			else
+				update_installer::Message(parent, _("There is no new HikariSub to try at the moment."));
+		}
+
+		// Whether it showed an update, or started or found one waiting.
+		bool ReportUpdate(update_policy::Ending ending, bool interactive)
+		{
 			if (ending != update_policy::Ending::Answered) {
 				if (interactive)
-					HikariMessageBox(_("Cannot check for updates"), _("Update"));
-				return;
+					update_installer::Message(parent, _("Cannot check for updates"));
+				return false;
 			}
 
 			const ReleaseInfo *info = found >= 0 ? details.Find(found) : nullptr;
 			if (!info) {
 				if (interactive)
-					HikariMessageBox(_("You already have the latest version"), _("Update"));
-				return;
+					update_installer::Message(parent, _("You already have the latest version"));
+				return false;
 			}
 			if (foundSkipped) {
 				if (interactive)
 					ShowNewerPrerelease(parent, *info);
-				return;
+				return interactive;
 			}
 			if (!interactive && update_policy::WasDeclined(info->tag.utf8_string(),
 				Options.GetString(UPDATER_DECLINED_VERSION).utf8_string()))
 			{
-				return;
+				return false;
 			}
 
 			const update_policy::Release &release = pages.Releases()[found];
@@ -723,17 +1065,22 @@ namespace
 			case update_manifest::OfferType::AurNotice: {
 				AurNoticeDialog dialog(parent, *info,
 					!package_kind::AurCarries(update_manifest::IsPrerelease(release), update_installer::AurChannel()));
+				update_installer::Present(&dialog, parent);
 				dialog.SaveChoices(dialog.ShowModal());
-				return;
+				return true;
 			}
 			case update_manifest::OfferType::Install:
 				// Already downloaded and waiting: its notice shows at
 				// each start, and at the next quit it is installed.
 				if (update_installer::IsPending(version) && !interactive)
-					return;
+					return true;
 				if (!interactive) {
-					update_installer::Download(parent, update_installer::Target{ version, offer.package });
-					return;
+					// A higher version the user chose to try waits to be
+					// installed, and a lower one does not replace it.
+					if (update_manifest::IsNewer(update_installer::PendingVersion(), version))
+						return true;
+					// One that did not start is no update shown (Download()).
+					return update_installer::Download(parent, update_installer::Target{ version, offer.package }) != 0;
 				}
 				break;
 			case update_manifest::OfferType::Notify:
@@ -741,7 +1088,9 @@ namespace
 				break;
 			}
 			UpdateAvailableDialog dialog(parent, *info, offer, version);
+			update_installer::Present(&dialog, parent);
 			dialog.SaveChoices(dialog.ShowModal());
+			return true;
 		}
 
 		wxWeakRef<wxWindow> parent;
@@ -755,39 +1104,71 @@ namespace
 		int found = -1;
 		bool foundSkipped = false;
 		update_manifest::Manifest foundManifest;
+		update_manifest::OfferChoice offers;
+		bool asksUpdates = false;
+		bool asksOffer = false;
+		bool atStartup = false;
+		bool offerOnly = false;
+		// Whether a manifest asked for did not come whole.
+		bool missedManifest = false;
 		bool timedOut = false;
 		// Stopped by its destructor, so it never fires at a deleted check.
 		wxTimer deadline;
 		bool released = false;
 	};
 
-	void Check(wxWindow *parent, bool interactive)
+	void Check(wxWindow *parent, Ask ask)
 	{
-		if (tracker.Begin(Now(), interactive) != update_policy::Start::Started)
+		switch (tracker.Begin(Now(), ask == Ask::Updates || ask == Ask::Offer)) {
+		case update_policy::Start::Ignored:
 			return;
+		case update_policy::Start::Joined:
+			if (runningCheck)
+				runningCheck->Asks(ask);
+			return;
+		case update_policy::Start::Started:
+			break;
+		}
 
 		UpdateRequest *check = new UpdateRequest(parent);
+		check->Asks(ask);
 		if (!check->Start()) {
 			delete check;
 			tracker.End(Now(), update_policy::Ending::NoRequest);
 			if (tracker.Reports())
-				HikariMessageBox(_("Cannot check for updates"), _("Update"));
+				update_installer::Message(parent, _("Cannot check for updates"));
 			tracker.Done();
+			return;
 		}
+		runningCheck = check;
 	}
 }
 
 void UpdateChecker::CheckOnStartup(wxWindow *parent)
 {
-	if (!Options.GetBool(UPDATER_AUTO_CHECK))
+	// A reminder of the offer that has come shows it at this start, even
+	// within a day of the last check or with the automatic checks off.
+	switch (update_manifest::CheckAtStart(Options.GetBool(UPDATER_AUTO_CHECK),
+		update_policy::IsCheckDue(Now(), LoadNextCheck()),
+		update_manifest::OfferReminderDue(LoadOfferRemind(), Now())))
+	{
+	case update_manifest::StartCheck::None:
 		return;
-	if (!update_policy::IsCheckDue(Now(), LoadNextCheck()))
+	case update_manifest::StartCheck::Full:
+		Check(parent, Ask::Nothing);
 		return;
-
-	Check(parent, false);
+	case update_manifest::StartCheck::OfferOnly:
+		Check(parent, Ask::Reminder);
+		return;
+	}
 }
 
 void UpdateChecker::CheckNow(wxWindow *parent)
 {
-	Check(parent, true);
+	Check(parent, Ask::Updates);
+}
+
+void UpdateChecker::OfferNow(wxWindow *parent)
+{
+	Check(parent, Ask::Offer);
 }

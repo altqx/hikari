@@ -30,10 +30,22 @@
 #include <optional>
 #include <string>
 
+class HikariDialog;
 class wxWindow;
 
 namespace update_installer
 {
+	// Readies an updater window, owned by the frame, to be shown (ADR-0021):
+	// centred on the frame, and brought to the front once shown; while the
+	// app is in the background or minimised, it is shown without taking
+	// the focus, and the frame's taskbar button flashes instead. Before
+	// its Show() or ShowModal().
+	void Present(HikariDialog *window, wxWindow *frame);
+
+	// A message of the updater, presented so, until it is closed: the
+	// HikariMessageBox result.
+	int Message(wxWindow *frame, const wxString &text, long buttons = wxOK);
+
 	// This copy's kind, resolved once from the marker and $APPIMAGE.
 	package_kind::Kind Kind();
 
@@ -93,13 +105,20 @@ namespace update_installer
 	// installed, or downloading now.
 	bool IsPending(const std::string &version);
 
+	// The version that is downloaded and waiting to be installed, or
+	// downloading now, or "".
+	std::string PendingVersion();
+
 	// The switches of a start that an update made (4.3).
 	void SetCommandLine(const wxString &healthFile, const wxString &updatedFrom);
 
-	// The main window is shown: what a start does for the updater. The
-	// result of the last install, once; the pending update's notice; the
-	// cache of versions that are not newer cleared; the AppImage's health
-	// file written and its old file removed.
+	// The main window is shown: the AppImage's health file is written, and
+	// its old file removed. At once, as the watchdog waits for it.
+	void OnShown();
+
+	// The startup prompts are closed: what a start does for the updater
+	// besides. The result of the last install, once; the pending update's
+	// notice; the cache of versions that are not newer cleared.
 	void OnStartup(wxWindow *frame);
 
 	enum class Quit

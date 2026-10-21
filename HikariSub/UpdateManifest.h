@@ -34,6 +34,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace update_manifest
@@ -68,7 +69,7 @@ namespace update_manifest
 	// Legacy stays below 0.1.0 and Qt starts there (1.2).
 	constexpr Codebase CodebaseOf(const SemVer &version)
 	{
-		return version.major == 0 && version.minor == 0 ? Codebase::Legacy : Codebase::Qt;
+		return update_policy::IsLegacyVersion(version) ? Codebase::Legacy : Codebase::Qt;
 	}
 
 	constexpr std::string_view kManifestName = "hikarisub-update.json";
@@ -205,6 +206,40 @@ namespace update_manifest
 		std::string minGlibc;
 	};
 
+	// What a rewrite release's manifest may offer legacy users, its
+	// "offer" member (ADR-0021): to try the rewrite, opt-in.
+	enum class OfferChannel
+	{
+		// To those who see prereleases (SeesPrereleases()).
+		Prerelease,
+		// To every legacy user.
+		Stable,
+	};
+
+	// Plain text, in one language.
+	struct Pitch
+	{
+		std::string title;
+		std::vector<std::string> highlights;
+		// Or "".
+		std::string note;
+	};
+
+	struct RewriteOffer
+	{
+		OfferChannel channel = OfferChannel::Prerelease;
+		// legacy_support "ended": legacy gets no further updates.
+		bool legacySupportEnded = false;
+		// By language tag as the manifest gives it; "en" is always there.
+		std::map<std::string, Pitch> pitch;
+	};
+
+	// The pitch's limits, in characters.
+	constexpr size_t kMaxOfferTitle = 80;
+	constexpr size_t kMaxOfferHighlights = 5;
+	constexpr size_t kMaxOfferHighlight = 120;
+	constexpr size_t kMaxOfferNote = 200;
+
 	struct Manifest
 	{
 		std::string version;
@@ -213,6 +248,9 @@ namespace update_manifest
 		bool offerQt = false;
 		// By package key; a kind the release does not build is absent.
 		std::map<std::string, Package> packages;
+		// A rewrite release's offer to legacy, when it holds one that
+		// keeps to the rules.
+		std::optional<RewriteOffer> offer;
 
 		bool OffersTo(Codebase client) const { return client == Codebase::Legacy ? offerLegacy : offerQt; }
 	};
@@ -282,6 +320,84 @@ namespace update_manifest
 			}
 			return true;
 		}
+
+		// The characters of UTF-8 text: the bytes that do not continue one.
+		inline size_t CharacterCount(std::string_view text)
+		{
+			size_t count = 0;
+			for (char c : text) {
+				if ((static_cast<unsigned char>(c) & 0xC0) != 0x80)
+					count++;
+			}
+			return count;
+		}
+
+		// A string of 1 to limit characters, or "" for anything else.
+		inline bool ReadText(const JsonValue *value, size_t limit, std::string *out)
+		{
+			if (!value || value->GetType() != JsonValue::Type::String)
+				return false;
+			size_t length = CharacterCount(value->Utf8());
+			if (length == 0 || length > limit)
+				return false;
+			*out = value->Utf8();
+			return true;
+		}
+
+		inline bool ReadPitch(const JsonValue &entry, Pitch *pitch)
+		{
+			if (entry.GetType() != JsonValue::Type::Object)
+				return false;
+			if (!ReadText(entry.Find("title"), kMaxOfferTitle, &pitch->title))
+				return false;
+			const JsonValue *highlights = Member(entry, "highlights", JsonValue::Type::Array);
+			if (!highlights || highlights->Items().empty() || highlights->Items().size() > kMaxOfferHighlights)
+				return false;
+			for (const JsonValue &highlight : highlights->Items()) {
+				std::string text;
+				if (!ReadText(&highlight, kMaxOfferHighlight, &text))
+					return false;
+				pitch->highlights.push_back(text);
+			}
+			if (const JsonValue *note = entry.Find("note")) {
+				if (!ReadText(note, kMaxOfferNote, &pitch->note))
+					return false;
+			}
+			return true;
+		}
+
+		// The offer member (ADR-0021), or nothing when it breaks a rule.
+		// Unknown keys are ignored, as elsewhere in the manifest.
+		inline std::optional<RewriteOffer> ReadOffer(const JsonValue &value)
+		{
+			if (value.GetType() != JsonValue::Type::Object)
+				return std::nullopt;
+			const JsonValue *to = Member(value, "to", JsonValue::Type::String);
+			const JsonValue *channel = Member(value, "channel", JsonValue::Type::String);
+			const JsonValue *support = Member(value, "legacy_support", JsonValue::Type::String);
+			const JsonValue *pitches = Member(value, "pitch", JsonValue::Type::Object);
+			if (!to || to->Utf8() != CodebaseName(Codebase::Legacy) || !channel || !support || !pitches)
+				return std::nullopt;
+			RewriteOffer offer;
+			if (channel->Utf8() == "prerelease")
+				offer.channel = OfferChannel::Prerelease;
+			else if (channel->Utf8() == "stable")
+				offer.channel = OfferChannel::Stable;
+			else
+				return std::nullopt;
+			if (support->Utf8() != "continues" && support->Utf8() != "ended")
+				return std::nullopt;
+			offer.legacySupportEnded = support->Utf8() == "ended";
+			for (const auto &[language, entry] : pitches->Members()) {
+				Pitch pitch;
+				if (!ReadPitch(entry, &pitch))
+					return std::nullopt;
+				offer.pitch[language] = std::move(pitch);
+			}
+			if (!offer.pitch.count("en"))
+				return std::nullopt;
+			return offer;
+		}
 	}
 
 	// Reads a manifest for the release of version, its tag without "v"
@@ -333,6 +449,12 @@ namespace update_manifest
 			if (!detail::ReadPackage(*entry, key, version, &package))
 				return ManifestRead::Invalid;
 			read.packages[std::string(key)] = package;
+		}
+		// A rewrite release's only; one that breaks a rule is ignored, and
+		// the rest of the manifest still counts.
+		if (read.codebase == Codebase::Qt) {
+			if (const JsonValue *offer = root.Find("offer"))
+				read.offer = detail::ReadOffer(*offer);
 		}
 		*manifest = std::move(read);
 		return ManifestRead::Valid;
@@ -393,20 +515,41 @@ namespace update_manifest
 		return false;
 	}
 
-	// What a candidate release offers this copy, from its manifest when it
-	// has one, or nothing: a release whose manifest failed to come
-	// (manifest null) or to read, one not offered to this codebase, or a
-	// tag that is no candidate. A broken manifest is never bypassed.
-	inline std::optional<Manifest> Admit(const Release &release, const std::string *manifestText,
+	// Whether a user sees prereleases: "Stable versions only" is off, or
+	// this is a release candidate (update_policy::SkipsPrereleases()).
+	constexpr bool SeesPrereleases(bool stableOnly, std::string_view installed)
+	{
+		return !update_policy::SkipsPrereleases(stableOnly, installed);
+	}
+
+	// What a candidate release holds for this copy.
+	struct Considered
+	{
+		// The update it offers, as Admit() gives it.
+		std::optional<Manifest> update;
+		// A rewrite release whose offer applies to this user (ADR-0021):
+		// its manifest, the packages cross-checked as an update's are.
+		std::optional<Manifest> offer;
+	};
+
+	// What a candidate release holds for this copy, from its manifest when
+	// it has one: an update, or nothing for a release whose manifest failed
+	// to come (manifest null) or to read, one not offered to this codebase,
+	// or a tag that is no candidate. A broken manifest is never bypassed.
+	// A rewrite release that is not offered to legacy can still carry an
+	// offer, which applies by its channel; one that is offered to legacy is
+	// an update like any other. seesPrereleases: SeesPrereleases().
+	inline Considered Consider(const Release &release, const std::string *manifestText, bool seesPrereleases,
 		Codebase client = kThisCodebase)
 	{
+		Considered considered;
 		std::string version = update_policy::CandidateVersion(release.tag);
 		if (version.empty())
-			return std::nullopt;
+			return considered;
 		Manifest manifest;
 		if (HasManifest(release)) {
 			if (!manifestText || manifestText->size() > kMaxManifestBytes)
-				return std::nullopt;
+				return considered;
 			switch (ReadManifest(JsonValue::Parse(*manifestText), version, &manifest)) {
 			case ManifestRead::Valid:
 				break;
@@ -414,62 +557,379 @@ namespace update_manifest
 				manifest = FallbackManifest(version, release.assets);
 				break;
 			case ManifestRead::Invalid:
-				return std::nullopt;
+				return considered;
 			}
 		}
 		else {
 			manifest = FallbackManifest(version, release.assets);
 		}
-		if (!manifest.OffersTo(client))
-			return std::nullopt;
 		CrossCheck(&manifest, release.assets);
-		return manifest;
+		if (manifest.OffersTo(client)) {
+			considered.update = std::move(manifest);
+			return considered;
+		}
+		if (client == Codebase::Legacy && manifest.offer &&
+			(manifest.offer->channel == OfferChannel::Stable || seesPrereleases))
+		{
+			considered.offer = std::move(manifest);
+		}
+		return considered;
+	}
+
+	// The update a candidate release offers this copy (Consider()).
+	inline std::optional<Manifest> Admit(const Release &release, const std::string *manifestText,
+		Codebase client = kThisCodebase)
+	{
+		return Consider(release, manifestText, false, client).update;
+	}
+
+	// The highest of the offers a check comes across, in whatever order
+	// it comes across them (ADR-0021).
+	class OfferChoice
+	{
+	public:
+		void Take(std::optional<Manifest> offered)
+		{
+			if (!offered)
+				return;
+			std::optional<SemVer> version = ParseSemVer(offered->version);
+			if (!version)
+				return;
+			if (best && CompareSemVer(*version, *ParseSemVer(best->version)) <= 0)
+				return;
+			best = std::move(offered);
+		}
+
+		// Its manifest, offer and packages, or nullptr.
+		const Manifest *Get() const { return best ? &*best : nullptr; }
+
+	private:
+		std::optional<Manifest> best;
+	};
+
+	// The pitch in the interface language, as Config.txt names it ("pl",
+	// "ko_KR"; "" for English), else in English. A tag is matched without
+	// case and with "_" as "-": the whole tag, then its language alone,
+	// then the language in any region.
+	inline const Pitch &PitchFor(const RewriteOffer &offer, std::string_view language)
+	{
+		auto normal = [](std::string_view tag) {
+			std::string text = Lowercase(tag);
+			for (char &c : text) {
+				if (c == '_')
+					c = '-';
+			}
+			return text;
+		};
+		auto primary = [](const std::string &tag) { return tag.substr(0, tag.find('-')); };
+		std::string wanted = normal(language);
+		if (wanted.empty())
+			return offer.pitch.at("en");
+		const Pitch *same = nullptr;
+		const Pitch *base = nullptr;
+		const Pitch *region = nullptr;
+		for (const auto &[tag, pitch] : offer.pitch) {
+			std::string key = normal(tag);
+			if (key == wanted)
+				same = &pitch;
+			else if (key == primary(wanted))
+				base = &pitch;
+			else if (!region && primary(key) == primary(wanted))
+				region = &pitch;
+		}
+		return same ? *same : base ? *base : region ? *region : offer.pitch.at("en");
+	}
+
+	// "Remind me later" shows the offer again at the first start this long
+	// after.
+	constexpr long long kOfferRemindDelay = 3 * update_policy::kDay;
+
+	constexpr long long OfferRemindAt(long long now)
+	{
+		return now + kOfferRemindDelay;
+	}
+
+	// Whether a reminder is set and has come: a time further off than the
+	// delay was set before the clock was turned back, and has too.
+	constexpr bool OfferReminderDue(long long remindAt, long long now)
+	{
+		return remindAt > 0 && (now >= remindAt || remindAt - now > kOfferRemindDelay);
+	}
+
+	// What "Don't offer again" declined: the offer's version, and whether
+	// it said legacy gets no further updates.
+	struct DeclinedOffer
+	{
+		std::string version;
+		bool ended = false;
+	};
+
+	// Whether the startup check shows the offer of version, ended when it
+	// says legacy gets no further updates: not one that "Don't offer
+	// again" declined, or a lower one, unless it is the first to say so
+	// since; and not while a reminder is waiting.
+	inline bool ShowsOfferAtStart(std::string_view version, bool ended, const DeclinedOffer &declined,
+		long long remindAt, long long now)
+	{
+		if (update_policy::WasDeclined(version, declined.version) && (!ended || declined.ended))
+			return false;
+		return remindAt <= 0 || OfferReminderDue(remindAt, now);
+	}
+
+	// The decline after "Don't offer again" on the offer of version: it
+	// replaces declined unless declined is higher, as when the end of
+	// legacy support showed a lower offer once more; that keeps the
+	// higher version and spends the lift.
+	inline DeclinedOffer DeclinedAfter(std::string_view version, bool ended, const DeclinedOffer &declined)
+	{
+		std::optional<SemVer> offered = ParseSemVer(version), kept = ParseSemVer(declined.version);
+		if (offered && kept && CompareSemVer(*kept, *offered) > 0)
+			return { declined.version, declined.ended || ended };
+		return { std::string(version), ended };
+	}
+
+	// The decline after Try it on the offer of version: one it covers now
+	// covers the end of legacy support too, if the offer said so, as that
+	// was shown once more.
+	inline DeclinedOffer TriedAfter(std::string_view version, bool ended, DeclinedOffer declined)
+	{
+		if (ended && update_policy::WasDeclined(version, declined.version))
+			declined.ended = true;
+		return declined;
+	}
+
+	// How the offer's window was left: Try it, Don't offer again, or
+	// Remind me later, as any other way of closing it is.
+	enum class OfferAnswer
+	{
+		Tried,
+		NoOffer,
+		Later,
+	};
+
+	// What the offer's window leaves recorded: the decline, and when the
+	// reminder comes (0 for none).
+	struct OfferRecord
+	{
+		DeclinedOffer declined;
+		long long remindAt = 0;
+	};
+
+	// The record after answer, at now, on the offer of version. Remind me
+	// later is the later choice than a decline, as when Help showed an
+	// offer declined before, so the offer comes back at the reminder.
+	inline OfferRecord RecordAfter(OfferAnswer answer, std::string_view version, bool ended,
+		const DeclinedOffer &declined, long long now)
+	{
+		switch (answer) {
+		case OfferAnswer::Tried:
+			return { TriedAfter(version, ended, declined), 0 };
+		case OfferAnswer::NoOffer:
+			return { DeclinedAfter(version, ended, declined), 0 };
+		case OfferAnswer::Later:
+			break;
+		}
+		return { {}, OfferRemindAt(now) };
+	}
+
+	// What the check at startup looks for.
+	enum class StartCheck
+	{
+		None,
+		// The updates and the offer.
+		Full,
+		// The offer only: a reminder came with the automatic checks off,
+		// which show no update.
+		OfferOnly,
+	};
+
+	// The check at startup, with autoCheck the automatic checks, checkDue
+	// once a day is over since the last, and reminderDue once a reminder
+	// of the offer has come (OfferReminderDue()).
+	constexpr StartCheck CheckAtStart(bool autoCheck, bool checkDue, bool reminderDue)
+	{
+		if (!autoCheck)
+			return reminderDue ? StartCheck::OfferOnly : StartCheck::None;
+		return checkDue || reminderDue ? StartCheck::Full : StartCheck::None;
+	}
+
+	// Whether the startup check that answered spends a reminder that has
+	// come, as it does whether the offer shows now or waits for a legacy
+	// update: not when a check asked for from the menu joined it, as the
+	// offer does not show at start then, nor in a check with the automatic
+	// checks off (StartCheck::OfferOnly) while the offer waits, or when
+	// none came as a manifest did not (offerMissed), as only the reminder
+	// brings the next.
+	constexpr bool SpendsReminder(bool askedFromMenu, bool offerOnly, bool offerWaits, bool offerMissed)
+	{
+		return !askedFromMenu && !(offerOnly && (offerWaits || offerMissed));
+	}
+
+	// How a check ends that ending stopped while it read the manifests:
+	// answered once the update is found, as only offers were left to look
+	// for, and the highest found so far stands.
+	constexpr update_policy::Ending WalkEnding(update_policy::Ending ending, bool updateFound)
+	{
+		return ending == update_policy::Ending::TimedOut && updateFound ? update_policy::Ending::Answered : ending;
+	}
+
+	// The columns a code point takes: two for the wide East Asian ones and
+	// emoji, one for the rest.
+	constexpr size_t ColumnsOf(char32_t c)
+	{
+		return (c >= 0x1100 && c <= 0x115F) || (c >= 0x2E80 && c <= 0xA4CF) || (c >= 0xAC00 && c <= 0xD7A3) ||
+			(c >= 0xF900 && c <= 0xFAFF) || (c >= 0xFE30 && c <= 0xFE4F) || (c >= 0xFF00 && c <= 0xFF60) ||
+			(c >= 0xFFE0 && c <= 0xFFE6) || (c >= 0x1F300 && c <= 0x1FAFF) || (c >= 0x20000 && c <= 0x3FFFD) ? 2 : 1;
+	}
+
+	// UTF-8 text broken at spaces into lines of up to width columns, as
+	// the static texts do not wrap; a run longer than that, as Thai or
+	// Chinese is written, goes on from the line it starts on and is
+	// broken at the width.
+	inline std::string WrapText(std::string_view text, size_t width)
+	{
+		std::string wrapped;
+		size_t line = 0;
+		// The word so far: where each code point starts in it, and its
+		// columns.
+		std::string word;
+		std::vector<std::pair<size_t, size_t>> points;
+		size_t wordColumns = 0;
+		auto flush = [&] {
+			if (word.empty())
+				return;
+			if (line > 0 && (line + 1 + wordColumns <= width || (wordColumns > width && line + 1 < width))) {
+				wrapped += ' ';
+				line++;
+			}
+			else if (line > 0) {
+				wrapped += '\n';
+				line = 0;
+			}
+			for (size_t i = 0; i < points.size(); i++) {
+				if (line > 0 && line + points[i].second > width) {
+					wrapped += '\n';
+					line = 0;
+				}
+				size_t end = i + 1 < points.size() ? points[i + 1].first : word.size();
+				wrapped.append(word, points[i].first, end - points[i].first);
+				line += points[i].second;
+			}
+			word.clear();
+			points.clear();
+			wordColumns = 0;
+		};
+		for (size_t i = 0; i < text.size();) {
+			unsigned char lead = static_cast<unsigned char>(text[i]);
+			size_t length = lead >= 0xF0 ? 4 : lead >= 0xE0 ? 3 : lead >= 0xC0 ? 2 : 1;
+			if (i + length > text.size())
+				length = 1;
+			char32_t c = length == 1 ? lead : lead & (0x7F >> length);
+			for (size_t k = 1; k < length; k++)
+				c = (c << 6) | (static_cast<unsigned char>(text[i + k]) & 0x3F);
+			if (c == ' ') {
+				flush();
+			}
+			else if (c == '\n') {
+				flush();
+				wrapped += '\n';
+				line = 0;
+			}
+			else {
+				size_t columns = ColumnsOf(c);
+				points.emplace_back(word.size(), columns);
+				word.append(text.substr(i, length));
+				wordColumns += columns;
+			}
+			i += length;
+		}
+		flush();
+		return wrapped;
 	}
 
 	// The releases a check looks at, in order: the candidates that fit the
 	// channel, then those "stable versions only" kept out, kMaxCandidates
-	// in all. The first that Admit() takes is the one offered.
+	// legacy releases, and as many of the rewrite's from each list, so
+	// stable ones do not keep out a newer prerelease's offer. The first that Admit()
+	// takes is the update. Past it, only the rewrite's are left, for the
+	// offers they may carry: those newer than the update, when it is the
+	// rewrite's itself.
 	class CandidateWalk
 	{
 	public:
-		explicit CandidateWalk(const update_policy::Candidates &candidates)
+		CandidateWalk(const std::vector<update_policy::Release> &releases,
+			const update_policy::Candidates &candidates)
 		{
-			for (int index : candidates.offer)
-				order.push_back({ index, false });
-			for (int index : candidates.skipped)
-				order.push_back({ index, true });
-			if (order.size() > update_policy::kMaxCandidates)
-				order.resize(update_policy::kMaxCandidates);
+			size_t legacyCount = 0;
+			for (const auto &[list, skipped] : { std::pair{ &candidates.offer, false },
+				std::pair{ &candidates.skipped, true } })
+			{
+				size_t rewriteCount = 0;
+				for (int index : *list) {
+					std::optional<SemVer> version =
+						ParseSemVer(update_policy::CandidateVersion(releases[index].tag));
+					bool legacy = version && CodebaseOf(*version) == Codebase::Legacy;
+					size_t &count = legacy ? legacyCount : rewriteCount;
+					if (count < update_policy::kMaxCandidates) {
+						count++;
+						order.push_back({ index, skipped, legacy, version });
+					}
+				}
+			}
 		}
 
 		// The release to look at, as an index into the list, or -1 when
 		// the walk is over.
-		int Current() const { return done || next >= order.size() ? -1 : order[next].first; }
+		int Current() const { return next >= order.size() ? -1 : order[next].index; }
 
 		// Whether the current release is a prerelease that "stable
 		// versions only" kept out, which is mentioned, not offered.
-		bool CurrentIsSkipped() const { return Current() >= 0 && order[next].second; }
+		bool CurrentIsSkipped() const { return Current() >= 0 && order[next].skipped; }
 
 		// The current release is ruled out; on to the next.
-		void Skip()
+		void Skip() { Advance(); }
+
+		// The current release is the update; on to the rewrite's after it.
+		void Take()
 		{
-			if (Current() >= 0)
+			if (Current() < 0)
+				return;
+			found = true;
+			if (!order[next].legacy)
+				foundRewrite = order[next].version;
+			Advance();
+		}
+
+		bool Found() const { return found; }
+
+	private:
+		struct Entry
+		{
+			int index;
+			bool skipped;
+			bool legacy;
+			std::optional<SemVer> version;
+		};
+
+		// Whether an entry is done with once the update is found.
+		bool Passed(const Entry &entry) const
+		{
+			return entry.legacy || (foundRewrite && (!entry.version || CompareSemVer(*entry.version, *foundRewrite) <= 0));
+		}
+
+		void Advance()
+		{
+			if (next < order.size())
+				next++;
+			while (found && next < order.size() && Passed(order[next]))
 				next++;
 		}
 
-		// The current release is the one; the walk is over.
-		void Take()
-		{
-			if (Current() >= 0)
-				done = true;
-		}
-
-		bool Found() const { return done; }
-
-	private:
-		std::vector<std::pair<int, bool>> order;
+		std::vector<Entry> order;
 		size_t next = 0;
-		bool done = false;
+		bool found = false;
+		// The update, when it is the rewrite's.
+		std::optional<SemVer> foundRewrite;
 	};
 
 	// What the system is, for a package's min_os and min_glibc.
@@ -536,6 +996,37 @@ namespace update_manifest
 		offer.type = OfferType::Install;
 		offer.package = package;
 		return offer;
+	}
+
+	// AUR installs get no offer of the rewrite: each AUR package moves to
+	// it on its own (ADR-0021).
+	constexpr bool GetsOffers(Kind kind)
+	{
+		return package_kind::FlowOf(kind) != package_kind::Flow::AurNotice;
+	}
+
+	// What Try it on the offer does: an installed kind downloads it, as
+	// the user asked, whatever "Install updates automatically" says;
+	// canInstall is whether this copy can replace itself. A portable copy,
+	// or one that cannot, gets the release page.
+	inline Offer TryOffer(Kind kind, bool canInstall, const Manifest &manifest, const SystemInfo &system)
+	{
+		return Decide(kind, canInstall, manifest, system);
+	}
+
+	// Whether Try it leads to a package to unpack beside this copy: a
+	// portable one's.
+	constexpr bool TryOpensBeside(Kind kind)
+	{
+		return package_kind::FlowOf(kind) == package_kind::Flow::Notify;
+	}
+
+	// Whether Try it opens the release page, which ends the offer's
+	// window as tried, rather than download: also when the package needs
+	// a newer system, which the window then says.
+	constexpr bool TryOpensReleasePage(OfferType type)
+	{
+		return type != OfferType::Install;
 	}
 
 	// Whether a release is a prerelease, by GitHub's flag or its tag, for

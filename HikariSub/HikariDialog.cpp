@@ -138,7 +138,7 @@ HikariDialog::~HikariDialog()
 int HikariDialog::ShowModal()
 {
 	int result = wxID_CANCEL;
-	wxWindowDisabler disableOtherTopWindows(this);
+	disabler = std::make_unique<wxWindowDisabler>(this);
 	Show();
 	if (IsShown()){
 		loop = new wxModalEventLoop(this);
@@ -147,12 +147,16 @@ int HikariDialog::ShowModal()
 		delete loop;
 		loop = nullptr;
 	}
+	disabler.reset();
 	return result;
 }
 
 void HikariDialog::EndModal(int retCode)
 {
 	if (loop)loop->Exit(retCode);
+	// The other windows first, as wxDialog does: hidden over a disabled
+	// owner, the dialog would leave Windows to activate another app's.
+	disabler.reset();
 	wxTopLevelWindow::Show(false);
 }
 
@@ -168,6 +172,13 @@ bool HikariDialog::Show(bool show)
 	}
 	if (!show){
 		return Hide();
+	}
+	else if (showInactive){
+		// Focus would activate it. wxGTK's comes back here through Show(),
+		// once the flag is down.
+		showInactive = false;
+		wxTopLevelWindow::ShowWithoutActivating();
+		return true;
 	}
 	else{
 		wxWindow *win = FindWindow((setEscapeIdWithFocus) ? escapeId : enterId);

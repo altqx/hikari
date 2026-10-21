@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-16 05:50+0700\n"
+"POT-Creation-Date: 2026-10-21 21:31+0700\n"
 "PO-Revision-Date: 2026-09-26 19:00+0700\n"
 "Last-Translator: altqx <al@altqx.com>\n"
 "Language-Team: Korean\n"
@@ -240,7 +240,7 @@ msgstr "파일"
 msgid "Versions"
 msgstr "자동 저장 파일"
 
-#: HikariSub/AutoSaveOpen.cpp:60 HikariSub/HikariSubFrame.cpp:1664
+#: HikariSub/AutoSaveOpen.cpp:60 HikariSub/HikariSubFrame.cpp:1667
 msgid "Open"
 msgstr "열기"
 
@@ -280,7 +280,7 @@ msgstr "자동 저장 폴더가 비어 있음"
 msgid "Failed to load autosave"
 msgstr "자동 저장 파일을 불러오지 못했습니다"
 
-#: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:202
+#: HikariSub/AutoSavesRemoving.cpp:29 HikariSub/HikariSubFrame.cpp:200
 msgid "Remove temporary files"
 msgstr "임시 파일 삭제"
 
@@ -441,7 +441,7 @@ msgid "An error occurred while executing the Lua script:\n"
 msgstr "Lua 스크립트를 불러오는 동안 오류가 발생했습니다:\n"
 
 #: HikariSub/Automation.cpp:1253 HikariSub/Automation.cpp:1293
-#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2769
+#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2791
 #, c-format
 msgid ""
 "Error loading Lua script: %s\n"
@@ -489,9 +489,9 @@ msgstr "편집기를 시작할 수 없습니다."
 
 #: HikariSub/Automation.cpp:1400 HikariSub/Automation.cpp:1447
 #: HikariSub/EditBox.cpp:688 HikariSub/HikariSubFrame.cpp:930
-#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2277
-#: HikariSub/HikariSubFrame.cpp:2278 HikariSub/HikariSubFrame.cpp:2739
-#: HikariSub/HikariSubFrame.cpp:2765 HikariSub/HikariSubFrame.cpp:2769
+#: HikariSub/HikariSubFrame.cpp:934 HikariSub/HikariSubFrame.cpp:2290
+#: HikariSub/HikariSubFrame.cpp:2291 HikariSub/HikariSubFrame.cpp:2761
+#: HikariSub/HikariSubFrame.cpp:2787 HikariSub/HikariSubFrame.cpp:2791
 #: HikariSub/OptionsDialog.cpp:311 HikariSub/OptionsDialog.cpp:712
 #: HikariSub/VideoBox.cpp:1850 HikariSub/VisualAllTagsEdition.cpp:168
 #: HikariSub/VisualAllTagsEdition.cpp:172
@@ -593,9 +593,9 @@ msgstr ""
 "어떻게 할까요?"
 
 #: HikariSub/AutomationHotkeysDialog.cpp:241
-#: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/HikariSubFrame.cpp:1315
-#: HikariSub/HikariSubFrame.cpp:1329 HikariSub/HikariSubFrame.cpp:1506
-#: HikariSub/HikariSubFrame.cpp:2642 HikariSub/Hotkeys.cpp:485
+#: HikariSub/AutomationHotkeysDialog.cpp:250 HikariSub/HikariSubFrame.cpp:1318
+#: HikariSub/HikariSubFrame.cpp:1332 HikariSub/HikariSubFrame.cpp:1509
+#: HikariSub/HikariSubFrame.cpp:2664 HikariSub/Hotkeys.cpp:485
 #: HikariSub/Hotkeys.cpp:495 HikariSub/Notebook.cpp:1244
 #: HikariSub/Notebook.cpp:1651 HikariSub/Notebook.cpp:1655
 #: HikariSub/OptionsDialog.cpp:120 HikariSub/OptionsDialog.cpp:129
@@ -643,8 +643,8 @@ msgstr "계속 설정"
 #: HikariSub/FontCollector.cpp:217 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
-#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:175
-#: HikariSub/UpdateChecker.cpp:252 HikariSub/UpdateChecker.cpp:361
+#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:251
+#: HikariSub/UpdateChecker.cpp:329 HikariSub/UpdateChecker.cpp:438
 #: HikariSub/UpdateInstaller.cpp:280 HikariSub/stylestore.cpp:172
 msgid "Close"
 msgstr "닫기"
@@ -799,62 +799,62 @@ msgstr "Matroska(MKV)에서 자막 불러오기."
 msgid "Fix suggestions"
 msgstr "제안 수정"
 
-#: HikariSub/DialogueTextEditor.cpp:2307 HikariSub/HikariListCtrl.cpp:118
+#: HikariSub/DialogueTextEditor.cpp:2313 HikariSub/HikariListCtrl.cpp:118
 #: HikariSub/HikariTextCtrl.cpp:1475
 msgid "&Copy"
 msgstr "복사[&C]"
 
-#: HikariSub/DialogueTextEditor.cpp:2308 HikariSub/HikariTextCtrl.cpp:1476
+#: HikariSub/DialogueTextEditor.cpp:2314 HikariSub/HikariTextCtrl.cpp:1476
 msgid "Cu&t"
 msgstr "잘라내기[&T]"
 
-#: HikariSub/DialogueTextEditor.cpp:2309 HikariSub/HikariListCtrl.cpp:119
+#: HikariSub/DialogueTextEditor.cpp:2315 HikariSub/HikariListCtrl.cpp:119
 #: HikariSub/HikariTextCtrl.cpp:1477
 msgid "&Paste"
 msgstr "붙여넣기[&P]"
 
-#: HikariSub/DialogueTextEditor.cpp:2312
+#: HikariSub/DialogueTextEditor.cpp:2318
 msgid "Search word translation on ling.pl"
 msgstr "[검색] ling.pl"
 
-#: HikariSub/DialogueTextEditor.cpp:2313
+#: HikariSub/DialogueTextEditor.cpp:2319
 msgid "Search word translation on pl.ba.bla"
 msgstr "[검색] pl.ba.bla"
 
-#: HikariSub/DialogueTextEditor.cpp:2314 HikariSub/HikariTextCtrl.cpp:1482
+#: HikariSub/DialogueTextEditor.cpp:2320 HikariSub/HikariTextCtrl.cpp:1482
 msgid "Search for the selected phrase on Google"
 msgstr "[검색] Google"
 
-#: HikariSub/DialogueTextEditor.cpp:2315
+#: HikariSub/DialogueTextEditor.cpp:2321
 msgid "Search for synonyms on synonimy.net"
 msgstr "[검색] synonimy.net"
 
-#: HikariSub/DialogueTextEditor.cpp:2325 HikariSub/SpellCheckerDialog.cpp:33
+#: HikariSub/DialogueTextEditor.cpp:2331 HikariSub/SpellCheckerDialog.cpp:33
 msgid "Spellchecker"
 msgstr "철자 검사기"
 
-#: HikariSub/DialogueTextEditor.cpp:2331
+#: HikariSub/DialogueTextEditor.cpp:2337
 msgid "Installed languages"
 msgstr "설치된 언어(철자 확인용)"
 
-#: HikariSub/DialogueTextEditor.cpp:2335
+#: HikariSub/DialogueTextEditor.cpp:2341
 #, c-format
 msgid "&Add word \"%s\" to dictionary"
 msgstr "사전에 \"%s\" 단어 추가[&A]"
 
-#: HikariSub/DialogueTextEditor.cpp:2338 HikariSub/HikariTextCtrl.cpp:1484
+#: HikariSub/DialogueTextEditor.cpp:2344 HikariSub/HikariTextCtrl.cpp:1484
 msgid "&Delete"
 msgstr "삭제[&D]"
 
-#: HikariSub/DialogueTextEditor.cpp:2339
+#: HikariSub/DialogueTextEditor.cpp:2345
 msgid "Show status bar"
 msgstr "상태 바 표시"
 
-#: HikariSub/DialogueTextEditor.cpp:2341
+#: HikariSub/DialogueTextEditor.cpp:2347
 msgid "Automatically change quotes"
 msgstr "따옴표 자동 변경"
 
-#: HikariSub/DialogueTextEditor.cpp:2396
+#: HikariSub/DialogueTextEditor.cpp:2402
 #, c-format
 msgid "Error. Word \"%s\" was not added."
 msgstr "\"%s\" 단어가 추가되지 않아 오류 발생."
@@ -1038,7 +1038,7 @@ msgstr "주석처리"
 
 #: HikariSub/EditBox.cpp:285 HikariSub/FindReplaceDialog.cpp:137
 #: HikariSub/GridColumnChoices.h:45 HikariSub/GridColumnChoices.h:82
-#: HikariSub/HikariSubFrame.cpp:237 HikariSub/SelectLines.cpp:76
+#: HikariSub/HikariSubFrame.cpp:235 HikariSub/SelectLines.cpp:76
 #: HikariSub/SubsGridWindow.cpp:321 HikariSub/SubsGridWindow.cpp:709
 #: HikariSub/SubsGridWindow.cpp:1158 HikariSub/SubsGridWindow.cpp:1327
 msgid "Actor"
@@ -1046,7 +1046,7 @@ msgstr "배우"
 
 #: HikariSub/EditBox.cpp:291 HikariSub/FindReplaceDialog.cpp:140
 #: HikariSub/GridColumnChoices.h:50 HikariSub/GridColumnChoices.h:87
-#: HikariSub/HikariSubFrame.cpp:238 HikariSub/SelectLines.cpp:77
+#: HikariSub/HikariSubFrame.cpp:236 HikariSub/SelectLines.cpp:77
 #: HikariSub/SubsGridWindow.cpp:325 HikariSub/SubsGridWindow.cpp:713
 #: HikariSub/SubsGridWindow.cpp:1171 HikariSub/SubsGridWindow.cpp:1340
 msgid "Effect"
@@ -1265,7 +1265,7 @@ msgid "Text"
 msgstr "글자"
 
 #: HikariSub/FindReplaceDialog.cpp:131 HikariSub/GridColumnChoices.h:46
-#: HikariSub/GridColumnChoices.h:83 HikariSub/HikariSubFrame.cpp:236
+#: HikariSub/GridColumnChoices.h:83 HikariSub/HikariSubFrame.cpp:234
 #: HikariSub/SelectLines.cpp:75 HikariSub/SubsGridWindow.cpp:320
 #: HikariSub/SubsGridWindow.cpp:708 HikariSub/SubsGridWindow.cpp:1152
 #: HikariSub/SubsGridWindow.cpp:1321
@@ -1274,7 +1274,7 @@ msgstr "스타일"
 
 #: HikariSub/FindReplaceDialog.cpp:162 HikariSub/FindReplaceDialog.cpp:414
 #: HikariSub/FindReplaceDialog.cpp:428 HikariSub/Hotkeys.cpp:148
-#: HikariSub/HotkeysNaming.cpp:239 HikariSub/SelectLines.cpp:52
+#: HikariSub/HotkeysNaming.cpp:240 HikariSub/SelectLines.cpp:52
 msgid "Find"
 msgstr "찾기"
 
@@ -1351,7 +1351,7 @@ msgid "From selected"
 msgstr "스타일 선택"
 
 #: HikariSub/FindReplaceDialog.cpp:415 HikariSub/FindReplaceDialog.cpp:429
-#: HikariSub/Hotkeys.cpp:149 HikariSub/HotkeysNaming.cpp:176
+#: HikariSub/Hotkeys.cpp:149 HikariSub/HotkeysNaming.cpp:177
 msgid "Find and replace"
 msgstr "찾아서 바꾸기"
 
@@ -1529,8 +1529,8 @@ msgstr " 탭: "
 msgid "In lines: "
 msgstr "줄에서: "
 
-#: HikariSub/FontCollector.cpp:155 HikariSub/HikariSubFrame.cpp:343
-#: HikariSub/HikariSubFrame.cpp:344 HikariSub/HotkeysNaming.cpp:177
+#: HikariSub/FontCollector.cpp:155 HikariSub/HikariSubFrame.cpp:341
+#: HikariSub/HikariSubFrame.cpp:342 HikariSub/HotkeysNaming.cpp:178
 #: HikariSub/SubsGrid.cpp:291
 msgid "Font collector"
 msgstr "글꼴 수집"
@@ -1615,8 +1615,8 @@ msgstr "이름 선택"
 msgid "The save path is not valid."
 msgstr "저장 경로가 잘못되었습니다."
 
-#: HikariSub/FontCollector.cpp:540 HikariSub/HikariSubFrame.cpp:1434
-#: HikariSub/HikariSubFrame.cpp:2243 HikariSub/Notebook.cpp:1324
+#: HikariSub/FontCollector.cpp:540 HikariSub/HikariSubFrame.cpp:1437
+#: HikariSub/HikariSubFrame.cpp:2256 HikariSub/Notebook.cpp:1324
 #: HikariSub/SubsGrid.cpp:1141 HikariSub/SubsGridBase.cpp:559
 #: HikariSub/SubsGridBase.cpp:1580 HikariSub/SubsGridDialogs.cpp:109
 #: HikariSub/VideoBox.cpp:952 HikariSub/VideoBox.cpp:964
@@ -1966,20 +1966,20 @@ msgid "Cannot load external font folder"
 msgstr "외부 글꼴 폴더를 불러올 수 없음"
 
 #: HikariSub/GridColumnChoices.h:42 HikariSub/GridColumnChoices.h:79
-#: HikariSub/HikariSubFrame.cpp:239
+#: HikariSub/HikariSubFrame.cpp:237
 msgid "Layer"
 msgstr "레이어"
 
 #: HikariSub/GridColumnChoices.h:43 HikariSub/GridColumnChoices.h:63
 #: HikariSub/GridColumnChoices.h:68 HikariSub/GridColumnChoices.h:80
 #: HikariSub/GridColumnChoices.h:94 HikariSub/GridColumnChoices.h:99
-#: HikariSub/HikariSubFrame.cpp:232 HikariSub/ShiftTimes.cpp:357
+#: HikariSub/HikariSubFrame.cpp:230 HikariSub/ShiftTimes.cpp:357
 msgid "The starting time"
 msgstr "시작 시간"
 
 #: HikariSub/GridColumnChoices.h:44 HikariSub/GridColumnChoices.h:69
 #: HikariSub/GridColumnChoices.h:81 HikariSub/GridColumnChoices.h:100
-#: HikariSub/HikariSubFrame.cpp:234 HikariSub/SelectLines.cpp:79
+#: HikariSub/HikariSubFrame.cpp:232 HikariSub/SelectLines.cpp:79
 #: HikariSub/ShiftTimes.cpp:358
 msgid "End time"
 msgstr "종료 시간"
@@ -2036,665 +2036,673 @@ msgstr "도움말"
 msgid "Untitled - "
 msgstr "새 자막 - "
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:156
 msgid "Video duration"
 msgstr "영상의 길이"
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:156
 msgid "Video scale"
 msgstr "영상 크기"
 
-#: HikariSub/HikariSubFrame.cpp:158
+#: HikariSub/HikariSubFrame.cpp:156
 msgid "Video zoom"
 msgstr "영상 확대"
 
-#: HikariSub/HikariSubFrame.cpp:159
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Frames per second"
 msgstr "초당 프레임"
 
-#: HikariSub/HikariSubFrame.cpp:159 HikariSub/SubsResampleDialog.cpp:33
+#: HikariSub/HikariSubFrame.cpp:157 HikariSub/SubsResampleDialog.cpp:33
 msgid "Subtitles resolution"
 msgstr "자막 해상도"
 
-#: HikariSub/HikariSubFrame.cpp:159
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video aspect ratio"
 msgstr "영상 가로 세로 비율"
 
-#: HikariSub/HikariSubFrame.cpp:159
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video file name"
 msgstr "영상 파일 이름"
 
-#: HikariSub/HikariSubFrame.cpp:159
+#: HikariSub/HikariSubFrame.cpp:157
 msgid "Video resolution"
 msgstr "영상 해상도"
 
-#: HikariSub/HikariSubFrame.cpp:166 HikariSub/HotkeysNaming.cpp:218
+#: HikariSub/HikariSubFrame.cpp:164 HikariSub/HotkeysNaming.cpp:219
 msgid "Load last session"
 msgstr "마지막 작업 열기"
 
-#: HikariSub/HikariSubFrame.cpp:167
+#: HikariSub/HikariSubFrame.cpp:165
 msgid "Loads previously loaded files"
 msgstr "마지막으로 불러온 파일 열기"
 
-#: HikariSub/HikariSubFrame.cpp:168
+#: HikariSub/HikariSubFrame.cpp:166
 msgid "Load session from file"
 msgstr "파일에서 세션 불러오기"
 
-#: HikariSub/HikariSubFrame.cpp:169
+#: HikariSub/HikariSubFrame.cpp:167
 msgid "Loads session from saved session file"
 msgstr "저장된 세션 파일에서 세션 불러오기"
 
-#: HikariSub/HikariSubFrame.cpp:171
+#: HikariSub/HikariSubFrame.cpp:169
 msgid "Save session to file"
 msgstr "파일로 세션 저장"
 
-#: HikariSub/HikariSubFrame.cpp:171
+#: HikariSub/HikariSubFrame.cpp:169
 msgid "Saves session to file"
 msgstr "파일로 세션 저장"
 
-#: HikariSub/HikariSubFrame.cpp:174
+#: HikariSub/HikariSubFrame.cpp:172
 msgid "Ask whether to load the last session at program startup"
 msgstr "프로그램 실행 시 마지막 작업 물어보기"
 
-#: HikariSub/HikariSubFrame.cpp:175
+#: HikariSub/HikariSubFrame.cpp:173
 msgid "Asks whether to load previously loaded files at program startup"
 msgstr "프로그램을 시작할 때 최근에 읽은 파일을 불러올지 묻습니다"
 
-#: HikariSub/HikariSubFrame.cpp:178
+#: HikariSub/HikariSubFrame.cpp:176
 msgid "Load last session after program start"
 msgstr "마지막 작업 항상 열기"
 
-#: HikariSub/HikariSubFrame.cpp:179
+#: HikariSub/HikariSubFrame.cpp:177
 msgid "Loads previously loaded files at program startup"
 msgstr "프로그램 시작 후 마지막 세션 로드"
 
-#: HikariSub/HikariSubFrame.cpp:183
+#: HikariSub/HikariSubFrame.cpp:181
 msgid "&Open subtitles"
 msgstr "자막 열기[&O]"
 
-#: HikariSub/HikariSubFrame.cpp:184
+#: HikariSub/HikariSubFrame.cpp:182
 msgid "Open subtitle file"
 msgstr "자막 파일 열기"
 
-#: HikariSub/HikariSubFrame.cpp:185
+#: HikariSub/HikariSubFrame.cpp:183
 msgid "&Save"
 msgstr "저장[&S]"
 
-#: HikariSub/HikariSubFrame.cpp:186
+#: HikariSub/HikariSubFrame.cpp:184
 msgid "Save current file"
 msgstr "현재 파일 저장"
 
-#: HikariSub/HikariSubFrame.cpp:187
+#: HikariSub/HikariSubFrame.cpp:185
 msgid "Save &all"
 msgstr "모두 저장[&A]"
 
-#: HikariSub/HikariSubFrame.cpp:188 HikariSub/HotkeysNaming.cpp:234
+#: HikariSub/HikariSubFrame.cpp:186 HikariSub/HotkeysNaming.cpp:235
 msgid "Save all subtitles"
 msgstr "자막 모두 저장"
 
-#: HikariSub/HikariSubFrame.cpp:189
+#: HikariSub/HikariSubFrame.cpp:187
 msgid "Save &as..."
 msgstr "다른 이름으로...[&A]"
 
-#: HikariSub/HikariSubFrame.cpp:190
+#: HikariSub/HikariSubFrame.cpp:188
 msgid "Save as"
 msgstr "다른 이름으로 저장"
 
-#: HikariSub/HikariSubFrame.cpp:191
+#: HikariSub/HikariSubFrame.cpp:189
 msgid "Save &translation"
 msgstr "번역본 저장[&T]"
 
-#: HikariSub/HikariSubFrame.cpp:192 HikariSub/HotkeysNaming.cpp:237
+#: HikariSub/HikariSubFrame.cpp:190 HikariSub/HotkeysNaming.cpp:238
 msgid "Save translation"
 msgstr "번역 저장"
 
-#: HikariSub/HikariSubFrame.cpp:193
+#: HikariSub/HikariSubFrame.cpp:191
 msgid "Recently opened &subtitles"
 msgstr "열었던 자막[&S]"
 
-#: HikariSub/HikariSubFrame.cpp:194 HikariSub/VideoBox.cpp:1052
+#: HikariSub/HikariSubFrame.cpp:192 HikariSub/VideoBox.cpp:1052
 msgid "Recently opened subtitles"
 msgstr "열었던 자막"
 
-#: HikariSub/HikariSubFrame.cpp:195
+#: HikariSub/HikariSubFrame.cpp:193
 msgid "Remove subtitles from the &editor"
 msgstr "편집기에서 자막 제거[&E]"
 
-#: HikariSub/HikariSubFrame.cpp:196 HikariSub/HotkeysNaming.cpp:232
+#: HikariSub/HikariSubFrame.cpp:194 HikariSub/HotkeysNaming.cpp:233
 msgid "Remove subtitles from the editor"
 msgstr "모든 자막을 삭제하고 \"새 자막\"으로 만들기"
 
-#: HikariSub/HikariSubFrame.cpp:197 HikariSub/HikariSubFrame.cpp:198
-#: HikariSub/HotkeysNaming.cpp:238
+#: HikariSub/HikariSubFrame.cpp:195 HikariSub/HikariSubFrame.cpp:196
+#: HikariSub/HotkeysNaming.cpp:239
 msgid "Save subtitles using the video name"
 msgstr "영상과 같은 이름으로 자막 저장"
 
-#: HikariSub/HikariSubFrame.cpp:201 HikariSub/HotkeysNaming.cpp:185
+#: HikariSub/HikariSubFrame.cpp:199 HikariSub/HotkeysNaming.cpp:186
 msgid "Open auto save"
 msgstr "자동 저장 파일 열기"
 
-#: HikariSub/HikariSubFrame.cpp:201
+#: HikariSub/HikariSubFrame.cpp:199
 msgid "Opens the selected autosave from the list"
 msgstr "자동 저장 목록 열기"
 
-#: HikariSub/HikariSubFrame.cpp:203
+#: HikariSub/HikariSubFrame.cpp:201
 msgid "Opens the temporary file removal window"
 msgstr "임시 파일 제거 창 열기"
 
-#: HikariSub/HikariSubFrame.cpp:204
+#: HikariSub/HikariSubFrame.cpp:202
 msgid "Show / Hide log window"
 msgstr "기록 창 열기/닫기"
 
-#: HikariSub/HikariSubFrame.cpp:205
+#: HikariSub/HikariSubFrame.cpp:203
 msgid "Last session"
 msgstr "마지막 작업"
 
-#: HikariSub/HikariSubFrame.cpp:205
+#: HikariSub/HikariSubFrame.cpp:203
 msgid "Last session options"
 msgstr "마지막 작업 설정"
 
-#: HikariSub/HikariSubFrame.cpp:207
+#: HikariSub/HikariSubFrame.cpp:205
 msgid "&Settings"
 msgstr "설정[&T]"
 
-#: HikariSub/HikariSubFrame.cpp:208
+#: HikariSub/HikariSubFrame.cpp:206
 msgid "Program settings"
 msgstr "프로그램 설정"
 
-#: HikariSub/HikariSubFrame.cpp:209
+#: HikariSub/HikariSubFrame.cpp:207
 msgid "&Exit\tAlt-F4"
 msgstr "프로그램 종료[&X]\tAlt-F4"
 
-#: HikariSub/HikariSubFrame.cpp:210
+#: HikariSub/HikariSubFrame.cpp:208
 msgid "Exit the program"
 msgstr "프로그램 종료"
 
-#: HikariSub/HikariSubFrame.cpp:211
+#: HikariSub/HikariSubFrame.cpp:209
 msgid "&File"
 msgstr "파일[&F]"
 
-#: HikariSub/HikariSubFrame.cpp:214 HikariSub/HikariSubFrame.cpp:2449
+#: HikariSub/HikariSubFrame.cpp:212 HikariSub/HikariSubFrame.cpp:2462
 msgid "&Undo"
 msgstr "실행 취소[&U]"
 
-#: HikariSub/HikariSubFrame.cpp:214 HikariSub/Hotkeys.cpp:150
-#: HikariSub/HotkeysNaming.cpp:203
+#: HikariSub/HikariSubFrame.cpp:212 HikariSub/Hotkeys.cpp:150
+#: HikariSub/HotkeysNaming.cpp:204
 msgid "Undo"
 msgstr "실행 취소"
 
-#: HikariSub/HikariSubFrame.cpp:217 HikariSub/HotkeysNaming.cpp:204
+#: HikariSub/HikariSubFrame.cpp:215 HikariSub/HotkeysNaming.cpp:205
 msgid "Undo to last save"
 msgstr "마지막 저장으로 돌리기"
 
-#: HikariSub/HikariSubFrame.cpp:219 HikariSub/HikariSubFrame.cpp:2465
+#: HikariSub/HikariSubFrame.cpp:217 HikariSub/HikariSubFrame.cpp:2478
 msgid "&Redo"
 msgstr "되돌리기[&R]"
 
-#: HikariSub/HikariSubFrame.cpp:220 HikariSub/Hotkeys.cpp:151
-#: HikariSub/HotkeysNaming.cpp:230
+#: HikariSub/HikariSubFrame.cpp:218 HikariSub/Hotkeys.cpp:151
+#: HikariSub/HotkeysNaming.cpp:231
 msgid "Redo"
 msgstr "되돌리기"
 
-#: HikariSub/HikariSubFrame.cpp:221
+#: HikariSub/HikariSubFrame.cpp:219
 msgid "&History"
 msgstr "수정사항 보기[&H]"
 
-#: HikariSub/HikariSubFrame.cpp:222 HikariSub/Hotkeys.cpp:152
-#: HikariSub/HotkeysNaming.cpp:181 HikariSub/SubsFile.cpp:28
+#: HikariSub/HikariSubFrame.cpp:220 HikariSub/Hotkeys.cpp:152
+#: HikariSub/HotkeysNaming.cpp:182 HikariSub/SubsFile.cpp:28
 #: HikariSub/SubsFile.cpp:58
 msgid "History"
 msgstr "기록"
 
-#: HikariSub/HikariSubFrame.cpp:223
+#: HikariSub/HikariSubFrame.cpp:221
 msgid "Find and re&place"
 msgstr "찾아서 바꾸기[&P]"
 
-#: HikariSub/HikariSubFrame.cpp:224
+#: HikariSub/HikariSubFrame.cpp:222
 msgid "Searches for the specified text phrases and replaces them"
 msgstr "글자를 검색하고 변경합니다"
 
-#: HikariSub/HikariSubFrame.cpp:225
+#: HikariSub/HikariSubFrame.cpp:223
 msgid "&Find"
 msgstr "찾기[&F]"
 
-#: HikariSub/HikariSubFrame.cpp:226
+#: HikariSub/HikariSubFrame.cpp:224
 msgid "Searches for the specified text phrase"
 msgstr "글자를 검색합니다"
 
-#: HikariSub/HikariSubFrame.cpp:227 HikariSub/Hotkeys.cpp:165
-#: HikariSub/HotkeysNaming.cpp:217
+#: HikariSub/HikariSubFrame.cpp:225 HikariSub/Hotkeys.cpp:165
+#: HikariSub/HotkeysNaming.cpp:218
 msgid "Find next"
 msgstr "다음 찾기"
 
-#: HikariSub/HikariSubFrame.cpp:228
+#: HikariSub/HikariSubFrame.cpp:226
 msgid "Finds the next occurrence of the phrase in the text"
 msgstr "텍스트에서 다음 문구 위치 찾기"
 
-#: HikariSub/HikariSubFrame.cpp:233
+#: HikariSub/HikariSubFrame.cpp:231
 msgid "Sort by start time"
 msgstr "정렬 / 시작 시간"
 
-#: HikariSub/HikariSubFrame.cpp:235
+#: HikariSub/HikariSubFrame.cpp:233
 msgid "Sort by end time"
 msgstr "정렬 / 종료 시간"
 
-#: HikariSub/HikariSubFrame.cpp:236
+#: HikariSub/HikariSubFrame.cpp:234
 msgid "Sort by styles"
 msgstr "정렬 / 스타일"
 
-#: HikariSub/HikariSubFrame.cpp:237
+#: HikariSub/HikariSubFrame.cpp:235
 msgid "Sort by actor"
 msgstr "정렬 / 배우"
 
-#: HikariSub/HikariSubFrame.cpp:238
+#: HikariSub/HikariSubFrame.cpp:236
 msgid "Sort by effect"
 msgstr "정렬 / 효과"
 
-#: HikariSub/HikariSubFrame.cpp:239
+#: HikariSub/HikariSubFrame.cpp:237
 msgid "Sort by layer"
 msgstr "정렬 / 레이어"
 
-#: HikariSub/HikariSubFrame.cpp:242
+#: HikariSub/HikariSubFrame.cpp:240
 msgid "So&rt all lines"
 msgstr "줄 정렬[&S]"
 
-#: HikariSub/HikariSubFrame.cpp:243
+#: HikariSub/HikariSubFrame.cpp:241
 msgid "Sorts all lines in ASS file"
 msgstr "모든 줄 정렬 / ASS 파일"
 
-#: HikariSub/HikariSubFrame.cpp:244
+#: HikariSub/HikariSubFrame.cpp:242
 msgid "So&rt selected lines"
 msgstr "선택 줄 정렬[&O]"
 
-#: HikariSub/HikariSubFrame.cpp:245
+#: HikariSub/HikariSubFrame.cpp:243
 msgid "Sorts selected lines in ASS file"
 msgstr "선택 줄 정렬 / ASS 파일"
 
-#: HikariSub/HikariSubFrame.cpp:246 HikariSub/HotkeysNaming.cpp:216
+#: HikariSub/HikariSubFrame.cpp:244 HikariSub/HotkeysNaming.cpp:217
 msgid "Fix minor errors (experimental)"
 msgstr "사소한 오류 수정 (실험적)"
 
-#: HikariSub/HikariSubFrame.cpp:247
+#: HikariSub/HikariSubFrame.cpp:245
 msgid "Turns on multireplacer"
 msgstr "자동 바꾸기 창 열기"
 
-#: HikariSub/HikariSubFrame.cpp:248
+#: HikariSub/HikariSubFrame.cpp:246
 msgid "Select &lines"
 msgstr "다중 찾기[&L]"
 
-#: HikariSub/HikariSubFrame.cpp:248
+#: HikariSub/HikariSubFrame.cpp:246
 msgid "Selects lines by expressions"
 msgstr "주어진 텍스트 구문으로 선택한 줄을 만듭니다"
 
-#: HikariSub/HikariSubFrame.cpp:249
+#: HikariSub/HikariSubFrame.cpp:247
 msgid "&Edit"
 msgstr "편집[&E]"
 
-#: HikariSub/HikariSubFrame.cpp:252 HikariSub/Hotkeys.cpp:147
-#: HikariSub/HotkeysNaming.cpp:224 HikariSub/VideoBox.cpp:1054
+#: HikariSub/HikariSubFrame.cpp:250 HikariSub/Hotkeys.cpp:147
+#: HikariSub/HotkeysNaming.cpp:225 HikariSub/VideoBox.cpp:1054
 msgid "Open video"
 msgstr "영상 파일 열기"
 
-#: HikariSub/HikariSubFrame.cpp:253
+#: HikariSub/HikariSubFrame.cpp:251
 msgid "Opens video file"
 msgstr "영상 파일 열기"
 
-#: HikariSub/HikariSubFrame.cpp:255 HikariSub/HikariSubFrame.cpp:256
+#: HikariSub/HikariSubFrame.cpp:253 HikariSub/HikariSubFrame.cpp:254
 #: HikariSub/VideoBox.cpp:1053
 msgid "Recently opened videos"
 msgstr "열었던 영상"
 
-#: HikariSub/HikariSubFrame.cpp:257 HikariSub/HikariSubFrame.cpp:258
-#: HikariSub/HotkeysNaming.cpp:184
+#: HikariSub/HikariSubFrame.cpp:255 HikariSub/HikariSubFrame.cpp:256
+#: HikariSub/HotkeysNaming.cpp:185
 msgid "Open keyframes"
 msgstr "키 프레임 열기"
 
-#: HikariSub/HikariSubFrame.cpp:261
+#: HikariSub/HikariSubFrame.cpp:259
 msgid "Recently opened keyframes"
 msgstr "열었던 키 프레임"
 
-#: HikariSub/HikariSubFrame.cpp:263
+#: HikariSub/HikariSubFrame.cpp:261
 msgid "Open dummy video"
 msgstr "더미 영상 열기"
 
-#: HikariSub/HikariSubFrame.cpp:264 HikariSub/Hotkeys.cpp:158
-#: HikariSub/HotkeysNaming.cpp:245
+#: HikariSub/HikariSubFrame.cpp:262 HikariSub/Hotkeys.cpp:158
+#: HikariSub/HotkeysNaming.cpp:246
 msgid "Insert start time from video"
 msgstr "영상위치->시작시간"
 
-#: HikariSub/HikariSubFrame.cpp:265
+#: HikariSub/HikariSubFrame.cpp:263
 msgid "Inserts the start time from video"
 msgstr "현재 영상위치를 시작시간으로"
 
-#: HikariSub/HikariSubFrame.cpp:266 HikariSub/Hotkeys.cpp:159
-#: HikariSub/HotkeysNaming.cpp:244
+#: HikariSub/HikariSubFrame.cpp:264 HikariSub/Hotkeys.cpp:159
+#: HikariSub/HotkeysNaming.cpp:245
 msgid "Insert end time from video"
 msgstr "영상위치->종료시간"
 
-#: HikariSub/HikariSubFrame.cpp:267
+#: HikariSub/HikariSubFrame.cpp:265
 msgid "Inserts the end time from video"
 msgstr "현재 영상위치를 종료시간으로"
 
-#: HikariSub/HikariSubFrame.cpp:268 HikariSub/Hotkeys.cpp:161
-#: HikariSub/HotkeysNaming.cpp:227
+#: HikariSub/HikariSubFrame.cpp:266 HikariSub/Hotkeys.cpp:161
+#: HikariSub/HotkeysNaming.cpp:228
 msgid "Previous frame"
 msgstr "이전 프레임"
 
-#: HikariSub/HikariSubFrame.cpp:269
+#: HikariSub/HikariSubFrame.cpp:267
 msgid "Go to previous frame"
 msgstr "이전 프레임으로 이동"
 
-#: HikariSub/HikariSubFrame.cpp:270 HikariSub/Hotkeys.cpp:162
-#: HikariSub/HotkeysNaming.cpp:219
+#: HikariSub/HikariSubFrame.cpp:268 HikariSub/Hotkeys.cpp:162
+#: HikariSub/HotkeysNaming.cpp:220
 msgid "Next frame"
 msgstr "다음 프레임"
 
-#: HikariSub/HikariSubFrame.cpp:271
+#: HikariSub/HikariSubFrame.cpp:269
 msgid "Go to next frame"
 msgstr "다음 프레임으로 이동"
 
-#: HikariSub/HikariSubFrame.cpp:273 HikariSub/HotkeysNaming.cpp:247
+#: HikariSub/HikariSubFrame.cpp:271 HikariSub/HotkeysNaming.cpp:248
 msgid "Go to start time"
 msgstr "시작 시간으로"
 
-#: HikariSub/HikariSubFrame.cpp:273
+#: HikariSub/HikariSubFrame.cpp:271
 msgid "Moves video to start time"
 msgstr "영상을 시작 시간으로 이동"
 
-#: HikariSub/HikariSubFrame.cpp:276 HikariSub/HotkeysNaming.cpp:248
+#: HikariSub/HikariSubFrame.cpp:274 HikariSub/HotkeysNaming.cpp:249
 msgid "Go to end time of line"
 msgstr "종료 시간으로"
 
-#: HikariSub/HikariSubFrame.cpp:276
+#: HikariSub/HikariSubFrame.cpp:274
 msgid "Moves video to end time"
 msgstr "영상을 종료 시간으로 이동"
 
-#: HikariSub/HikariSubFrame.cpp:278 HikariSub/Hotkeys.cpp:160
-#: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:225
-#: HikariSub/HotkeysNaming.cpp:261 HikariSub/VideoBox.cpp:162
+#: HikariSub/HikariSubFrame.cpp:276 HikariSub/Hotkeys.cpp:160
+#: HikariSub/Hotkeys.cpp:178 HikariSub/HotkeysNaming.cpp:226
+#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:162
 #: HikariSub/VideoFullscreen.cpp:61
 msgid "Play / Pause"
 msgstr "재생 / 일시 정지"
 
-#: HikariSub/HikariSubFrame.cpp:279
+#: HikariSub/HikariSubFrame.cpp:277
 msgid "Plays / Pauses video"
 msgstr "영상 재생 / 일시정지"
 
-#: HikariSub/HikariSubFrame.cpp:281 HikariSub/HotkeysNaming.cpp:200
+#: HikariSub/HikariSubFrame.cpp:279 HikariSub/HotkeysNaming.cpp:201
 msgid "Go to previous keyframe"
 msgstr "이전 키 프레임"
 
-#: HikariSub/HikariSubFrame.cpp:283 HikariSub/HotkeysNaming.cpp:201
+#: HikariSub/HikariSubFrame.cpp:281 HikariSub/HotkeysNaming.cpp:202
 msgid "Go to next keyframe"
 msgstr "다음 키 프레임"
 
-#: HikariSub/HikariSubFrame.cpp:285 HikariSub/HotkeysNaming.cpp:242
+#: HikariSub/HikariSubFrame.cpp:283 HikariSub/HotkeysNaming.cpp:243
 msgid "Set audio position to video time"
 msgstr "영상지점으로 소리 이동"
 
-#: HikariSub/HikariSubFrame.cpp:287 HikariSub/HotkeysNaming.cpp:243
+#: HikariSub/HikariSubFrame.cpp:285 HikariSub/HotkeysNaming.cpp:244
 msgid "Set audio marker to video time"
 msgstr "영상지점 소리 표시선 설정"
 
-#: HikariSub/HikariSubFrame.cpp:288 HikariSub/HotkeysNaming.cpp:206
+#: HikariSub/HikariSubFrame.cpp:286 HikariSub/HotkeysNaming.cpp:207
 msgid "Zoom video"
 msgstr "영상 확대"
 
-#: HikariSub/HikariSubFrame.cpp:289 HikariSub/HotkeysNaming.cpp:207
+#: HikariSub/HikariSubFrame.cpp:287 HikariSub/HotkeysNaming.cpp:208
 msgid "Turn off video zoom"
 msgstr "영상 확대 해제"
 
-#: HikariSub/HikariSubFrame.cpp:291 HikariSub/HotkeysNaming.cpp:205
+#: HikariSub/HikariSubFrame.cpp:289 HikariSub/HotkeysNaming.cpp:206
 msgid "Open video with FFMS2"
 msgstr "FFMS2로 영상 열기"
 
-#: HikariSub/HikariSubFrame.cpp:292
+#: HikariSub/HikariSubFrame.cpp:290
 msgid "Opens video with FFMS2 for frame precision"
 msgstr "프레임 정밀도를 위해 FFMS2로 영상 열기"
 
-#: HikariSub/HikariSubFrame.cpp:295
+#: HikariSub/HikariSubFrame.cpp:293
 msgid "&Video"
 msgstr "영상[&V]"
 
-#: HikariSub/HikariSubFrame.cpp:298 HikariSub/HotkeysNaming.cpp:222
+#: HikariSub/HikariSubFrame.cpp:296 HikariSub/HotkeysNaming.cpp:223
 msgid "Open audio"
 msgstr "소리 파일 열기"
 
-#: HikariSub/HikariSubFrame.cpp:299
+#: HikariSub/HikariSubFrame.cpp:297
 msgid "Opens audio file"
 msgstr "소리 파일 열기"
 
-#: HikariSub/HikariSubFrame.cpp:302 HikariSub/HikariSubFrame.cpp:303
+#: HikariSub/HikariSubFrame.cpp:300 HikariSub/HikariSubFrame.cpp:301
 msgid "Recently opened audio"
 msgstr "열었던 소리"
 
-#: HikariSub/HikariSubFrame.cpp:304 HikariSub/HotkeysNaming.cpp:169
+#: HikariSub/HikariSubFrame.cpp:302 HikariSub/HotkeysNaming.cpp:170
 msgid "Open audio from video"
 msgstr "영상/소리 파일 열기"
 
-#: HikariSub/HikariSubFrame.cpp:305
+#: HikariSub/HikariSubFrame.cpp:303
 msgid "Opens audio from video"
 msgstr "영상/소리 열기"
 
-#: HikariSub/HikariSubFrame.cpp:306
+#: HikariSub/HikariSubFrame.cpp:304
 msgid "Open blank 2h30m audio"
 msgstr "빈 2h30m 오디오 열기"
 
-#: HikariSub/HikariSubFrame.cpp:307
+#: HikariSub/HikariSubFrame.cpp:305
 msgid "Opens blank audio 2 hour and 30 minutes long"
 msgstr "2시간 30분 길이의 빈 오디오를 엽니다"
 
-#: HikariSub/HikariSubFrame.cpp:308 HikariSub/HotkeysNaming.cpp:174
+#: HikariSub/HikariSubFrame.cpp:306 HikariSub/HotkeysNaming.cpp:175
 msgid "Close audio"
 msgstr "소리 닫기"
 
-#: HikariSub/HikariSubFrame.cpp:309
+#: HikariSub/HikariSubFrame.cpp:307
 msgid "Closes audio"
 msgstr "소리를 닫기"
 
-#: HikariSub/HikariSubFrame.cpp:310
+#: HikariSub/HikariSubFrame.cpp:308
 msgid "A&udio"
 msgstr "소리[&U]"
 
-#: HikariSub/HikariSubFrame.cpp:313 HikariSub/OptionsDialog.cpp:691
+#: HikariSub/HikariSubFrame.cpp:311 HikariSub/OptionsDialog.cpp:691
 msgid "All"
 msgstr "모두"
 
-#: HikariSub/HikariSubFrame.cpp:313
+#: HikariSub/HikariSubFrame.cpp:311
 msgid "Shows all windows"
 msgstr "모든 창을 표시합니다"
 
-#: HikariSub/HikariSubFrame.cpp:314
+#: HikariSub/HikariSubFrame.cpp:312
 msgid "Shows only video window and subs window"
 msgstr "영상 창과 자막 창만 표시"
 
-#: HikariSub/HikariSubFrame.cpp:314
+#: HikariSub/HikariSubFrame.cpp:312
 msgid "Video and subs"
 msgstr "영상과 자막"
 
-#: HikariSub/HikariSubFrame.cpp:315
+#: HikariSub/HikariSubFrame.cpp:313
 msgid "Audio and subs"
 msgstr "소리와 자막"
 
-#: HikariSub/HikariSubFrame.cpp:315
+#: HikariSub/HikariSubFrame.cpp:313
 msgid "Shows only audio window and subs window"
 msgstr "소리 창과 자막 창만 표시"
 
-#: HikariSub/HikariSubFrame.cpp:316
+#: HikariSub/HikariSubFrame.cpp:314
 msgid "Only video"
 msgstr "영상만"
 
-#: HikariSub/HikariSubFrame.cpp:316
+#: HikariSub/HikariSubFrame.cpp:314
 msgid "Shows only video window"
 msgstr "영상 창만 표시"
 
-#: HikariSub/HikariSubFrame.cpp:317
+#: HikariSub/HikariSubFrame.cpp:315
 msgid "Only subtitles"
 msgstr "자막만"
 
-#: HikariSub/HikariSubFrame.cpp:317
+#: HikariSub/HikariSubFrame.cpp:315
 msgid "Shows only the subtitle window"
 msgstr "자막 창만 표시"
 
-#: HikariSub/HikariSubFrame.cpp:318
+#: HikariSub/HikariSubFrame.cpp:316
 msgid "View"
 msgstr "보기[&W]"
 
-#: HikariSub/HikariSubFrame.cpp:321 HikariSub/Hotkeys.cpp:146
-#: HikariSub/HotkeysNaming.cpp:175
+#: HikariSub/HikariSubFrame.cpp:319 HikariSub/Hotkeys.cpp:146
+#: HikariSub/HotkeysNaming.cpp:176
 msgid "Enable / Disable editor"
 msgstr "편집 활성/비활성"
 
-#: HikariSub/HikariSubFrame.cpp:322
+#: HikariSub/HikariSubFrame.cpp:320
 msgid "Enables / disables editor"
 msgstr "편집박스 활성화 / 비활성화"
 
-#: HikariSub/HikariSubFrame.cpp:323 HikariSub/HotkeysNaming.cpp:160
+#: HikariSub/HikariSubFrame.cpp:321 HikariSub/HotkeysNaming.cpp:160
 msgid "ASS file properties"
 msgstr "ASS 파일 정보"
 
-#: HikariSub/HikariSubFrame.cpp:324 HikariSub/ScriptInfo.cpp:25
+#: HikariSub/HikariSubFrame.cpp:322 HikariSub/ScriptInfo.cpp:25
 msgid "ASS subtitle properties"
 msgstr "ASS 파일 정보"
 
-#: HikariSub/HikariSubFrame.cpp:325
+#: HikariSub/HikariSubFrame.cpp:323
 msgid "Style &manager"
 msgstr "스타일 관리자[&M]"
 
-#: HikariSub/HikariSubFrame.cpp:326
+#: HikariSub/HikariSubFrame.cpp:324
 msgid "Is used to manage ASS styles"
 msgstr "ASS 스타일 관리창을 엽니다"
 
-#: HikariSub/HikariSubFrame.cpp:328 HikariSub/Hotkeys.cpp:140
-#: HikariSub/HotkeysNaming.cpp:164
+#: HikariSub/HikariSubFrame.cpp:326 HikariSub/Hotkeys.cpp:140
+#: HikariSub/HotkeysNaming.cpp:165
 msgid "Convert to ASS"
 msgstr "ASS로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:329
+#: HikariSub/HikariSubFrame.cpp:327
 msgid "Converts to ASS format"
 msgstr "ASS로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:330 HikariSub/Hotkeys.cpp:141
-#: HikariSub/HotkeysNaming.cpp:165
+#: HikariSub/HikariSubFrame.cpp:328 HikariSub/Hotkeys.cpp:141
+#: HikariSub/HotkeysNaming.cpp:166
 msgid "Convert to SRT"
 msgstr "SRT로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:331
+#: HikariSub/HikariSubFrame.cpp:329
 msgid "Converts to SRT format"
 msgstr "SRT로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:332 HikariSub/Hotkeys.cpp:142
-#: HikariSub/HotkeysNaming.cpp:166
+#: HikariSub/HikariSubFrame.cpp:330 HikariSub/Hotkeys.cpp:142
+#: HikariSub/HotkeysNaming.cpp:167
 msgid "Convert to MDVD"
 msgstr "MDVD로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:333
+#: HikariSub/HikariSubFrame.cpp:331
 msgid "Converts to microDVD format"
 msgstr "MicroDVD로 변환하기"
 
-#: HikariSub/HikariSubFrame.cpp:334 HikariSub/Hotkeys.cpp:143
-#: HikariSub/HotkeysNaming.cpp:167
+#: HikariSub/HikariSubFrame.cpp:332 HikariSub/Hotkeys.cpp:143
+#: HikariSub/HotkeysNaming.cpp:168
 msgid "Convert to MPL2"
 msgstr "MPL2로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:335
+#: HikariSub/HikariSubFrame.cpp:333
 msgid "Converts to MPL2 format"
 msgstr "MPL2로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:336 HikariSub/Hotkeys.cpp:144
-#: HikariSub/HotkeysNaming.cpp:168
+#: HikariSub/HikariSubFrame.cpp:334 HikariSub/Hotkeys.cpp:144
+#: HikariSub/HotkeysNaming.cpp:169
 msgid "Convert to TMP"
 msgstr "TMP로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:337
+#: HikariSub/HikariSubFrame.cpp:335
 msgid "Converts to TMPlayer format (not recommended)"
 msgstr "TMPlayer(권하지 않음)로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:339 HikariSub/OptionsDialog.cpp:1052
+#: HikariSub/HikariSubFrame.cpp:337 HikariSub/OptionsDialog.cpp:1052
 msgid "Conversion"
 msgstr "변환"
 
-#: HikariSub/HikariSubFrame.cpp:339
+#: HikariSub/HikariSubFrame.cpp:337
 msgid "Converts from one format to another"
 msgstr "다른 자막 형식으로 변환"
 
-#: HikariSub/HikariSubFrame.cpp:341
+#: HikariSub/HikariSubFrame.cpp:339
 msgid "Shift &times...\tCtrl-I"
 msgstr "시간 조정...[&T]\tCtrl-I"
 
-#: HikariSub/HikariSubFrame.cpp:342
+#: HikariSub/HikariSubFrame.cpp:340
 msgid "Shifting subtitle times"
 msgstr "자막 시간 이동"
 
-#: HikariSub/HikariSubFrame.cpp:345 HikariSub/HikariSubFrame.cpp:346
-#: HikariSub/HotkeysNaming.cpp:202
+#: HikariSub/HikariSubFrame.cpp:343 HikariSub/HikariSubFrame.cpp:344
+#: HikariSub/HotkeysNaming.cpp:203
 msgid "Resample subtitles"
 msgstr "자막해상도 변경"
 
-#: HikariSub/HikariSubFrame.cpp:347 HikariSub/HikariSubFrame.cpp:348
-#: HikariSub/HotkeysNaming.cpp:251
+#: HikariSub/HikariSubFrame.cpp:345 HikariSub/HikariSubFrame.cpp:346
+#: HikariSub/HotkeysNaming.cpp:252
 msgid "Check spelling"
 msgstr "철자 확인창"
 
-#: HikariSub/HikariSubFrame.cpp:349 HikariSub/HotkeysNaming.cpp:180
+#: HikariSub/HikariSubFrame.cpp:347 HikariSub/HotkeysNaming.cpp:181
 msgid "Hide tags"
 msgstr "태그 숨김"
 
-#: HikariSub/HikariSubFrame.cpp:350
+#: HikariSub/HikariSubFrame.cpp:348
 msgid "Hides tags in ASS and MDVD"
 msgstr "ASS 및 MDVD에서 태그 숨김"
 
-#: HikariSub/HikariSubFrame.cpp:351
+#: HikariSub/HikariSubFrame.cpp:349
 msgid "Su&btitles"
 msgstr "자막[&S]"
 
-#: HikariSub/HikariSubFrame.cpp:354 HikariSub/HikariSubFrame.cpp:355
-#: HikariSub/HotkeysNaming.cpp:170
+#: HikariSub/HikariSubFrame.cpp:352 HikariSub/HikariSubFrame.cpp:353
+#: HikariSub/HotkeysNaming.cpp:171
 msgid "Load script"
 msgstr "스크립트 불러오기"
 
-#: HikariSub/HikariSubFrame.cpp:356 HikariSub/HikariSubFrame.cpp:357
-#: HikariSub/HotkeysNaming.cpp:172
+#: HikariSub/HikariSubFrame.cpp:354 HikariSub/HikariSubFrame.cpp:355
+#: HikariSub/HotkeysNaming.cpp:173
 msgid "Refresh autoload scripts"
 msgstr "자동 불러오기 스크립트 새로 고침"
 
-#: HikariSub/HikariSubFrame.cpp:358 HikariSub/HikariSubFrame.cpp:359
-#: HikariSub/HotkeysNaming.cpp:186
+#: HikariSub/HikariSubFrame.cpp:356 HikariSub/HikariSubFrame.cpp:357
+#: HikariSub/HotkeysNaming.cpp:187
 msgid "Run the last loaded script"
 msgstr "최근 스크립트 실행"
 
-#: HikariSub/HikariSubFrame.cpp:360 HikariSub/HikariSubFrame.cpp:361
-#: HikariSub/HotkeysNaming.cpp:171
+#: HikariSub/HikariSubFrame.cpp:358 HikariSub/HikariSubFrame.cpp:359
+#: HikariSub/HotkeysNaming.cpp:172
 msgid "Open shortcut mapping window"
 msgstr "단축키 설정 창 열기"
 
-#: HikariSub/HikariSubFrame.cpp:362
+#: HikariSub/HikariSubFrame.cpp:360
 msgid "Au&tomation"
 msgstr "자동화[&A]"
 
-#: HikariSub/HikariSubFrame.cpp:365
+#: HikariSub/HikariSubFrame.cpp:363
 msgid "HikariSub &website"
 msgstr "HikariSub 웹사이트[&W]"
 
-#: HikariSub/HikariSubFrame.cpp:366
+#: HikariSub/HikariSubFrame.cpp:364
 msgid "Opens the HikariSub website in the default browser"
 msgstr "기본 브라우저에서 HikariSub 웹사이트를 엽니다"
 
-#: HikariSub/HikariSubFrame.cpp:367
+#: HikariSub/HikariSubFrame.cpp:365
 msgid "&Report an issue"
 msgstr "문제 보고[&R]"
 
-#: HikariSub/HikariSubFrame.cpp:368
+#: HikariSub/HikariSubFrame.cpp:366
 msgid "Opens the HikariSub issue tracker"
 msgstr "HikariSub 이슈 트래커를 엽니다"
 
-#: HikariSub/HikariSubFrame.cpp:369
+#: HikariSub/HikariSubFrame.cpp:367
 msgid "Check for &updates"
 msgstr "업데이트 확인[&U]"
 
-#: HikariSub/HikariSubFrame.cpp:370
+#: HikariSub/HikariSubFrame.cpp:368
 msgid "Checks whether a newer version is available"
 msgstr "새 버전이 있는지 확인합니다"
+
+#: HikariSub/HikariSubFrame.cpp:369
+msgid "&Try the new HikariSub..."
+msgstr "새 HikariSub 사용해 보기...[&T]"
+
+#: HikariSub/HikariSubFrame.cpp:370
+msgid "Shows the offer to try the new HikariSub, if there is one"
+msgstr "새 HikariSub를 사용해 보라는 제안이 있으면 보여 줍니다"
 
 #: HikariSub/HikariSubFrame.cpp:371
 msgid "&About"
@@ -2734,7 +2742,7 @@ msgstr "스크립트 파일 (*.lua),(*.moon)|*.lua;*.moon;"
 msgid "This subtitle file does not have any scripts added"
 msgstr "이 자막에는 스크립트가 추가되지 않았습니다"
 
-#: HikariSub/HikariSubFrame.cpp:930 HikariSub/HikariSubFrame.cpp:2765
+#: HikariSub/HikariSubFrame.cpp:930 HikariSub/HikariSubFrame.cpp:2787
 #, c-format
 msgid "Validation Lua script '%s' failed"
 msgstr "'%s' Lua 스크립트 유효성 검사 실패"
@@ -2761,7 +2769,7 @@ msgstr "영상 파일 (*.avi),(*.mkv),(*.mp4),(*.ogm),(*.wmv),(*.asf),(*.rmvb),(
 msgid "Keyframes file (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|All files (*.*)|*.*"
 msgstr "키 프레임 파일 (*.txt),(*.pass),(*.stats),(*.log)|*.txt;*.pass;*.stats;*.log|모든 파일 (*.*)|*.*"
 
-#: HikariSub/HikariSubFrame.cpp:1125
+#: HikariSub/HikariSubFrame.cpp:1128
 #, c-format
 msgid ""
 "HikariSub subtitle editor by altqx,\n"
@@ -2770,7 +2778,7 @@ msgstr ""
 "altqx가 만든 HikariSub 자막 편집기,\n"
 "버전 %s (%s)"
 
-#: HikariSub/HikariSubFrame.cpp:1129
+#: HikariSub/HikariSubFrame.cpp:1132
 msgid ""
 "Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n"
 "\n"
@@ -2778,7 +2786,7 @@ msgstr ""
 "Marcin Drob(Bakura 또는 Bjakja)의 Kainote를 기반으로 합니다.\n"
 "\n"
 
-#: HikariSub/HikariSubFrame.cpp:1130
+#: HikariSub/HikariSubFrame.cpp:1133
 msgid ""
 "If you have noticed any bugs or have any suggestions for changes or new features,\n"
 "open an issue at https://github.com/altqx/hikari/issues.\n"
@@ -2788,11 +2796,11 @@ msgstr ""
 "https://github.com/altqx/hikari/issues 에 이슈를 등록해 주세요.\n"
 "\n"
 
-#: HikariSub/HikariSubFrame.cpp:1131
+#: HikariSub/HikariSubFrame.cpp:1134
 msgid "HikariSub includes parts of the following projects:\n"
 msgstr "HikariSub에는 다음 프로젝트의 일부가 포함됩니다:\n"
 
-#: HikariSub/HikariSubFrame.cpp:1133
+#: HikariSub/HikariSubFrame.cpp:1136
 msgid ""
 "Color picker, demuxing subtitles from MKV, audio box, audio player, automation,\n"
 "and several other individual features taken from Aegisub -\n"
@@ -2800,31 +2808,31 @@ msgstr ""
 "Aegisub에서 가져온 기능 - \n"
 "색상 선택기, mkv자막 muxing, 소리박스, 소리 재생, 자동화\n"
 
-#: HikariSub/HikariSubFrame.cpp:1144
+#: HikariSub/HikariSubFrame.cpp:1147
 msgid "About HikariSub"
 msgstr "HikariSub 정보"
 
-#: HikariSub/HikariSubFrame.cpp:1149
+#: HikariSub/HikariSubFrame.cpp:1152
 msgid "Graphical help: (buttons, help pictures etc.)\n"
 msgstr "그래픽 지원: (버튼, 이미지 기타 등등..)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1150
+#: HikariSub/HikariSubFrame.cpp:1153
 msgid "- Xandros (new video buttons).\n"
 msgstr "- Xandros (새로운 영상 버튼).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1151
+#: HikariSub/HikariSubFrame.cpp:1154
 msgid "- Devilkan (menu and toolbar buttons)\n"
 msgstr "- Devilkan (메뉴 및 도구 모음 버튼)\n"
 
-#: HikariSub/HikariSubFrame.cpp:1152
+#: HikariSub/HikariSubFrame.cpp:1155
 msgid "- Zły Los (icons for file associations and menu).\n"
 msgstr "- Zły Los (파일 연결 및 메뉴 아이콘).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1153
+#: HikariSub/HikariSubFrame.cpp:1156
 msgid "Testers:\n"
 msgstr "테스터:\n"
 
-#: HikariSub/HikariSubFrame.cpp:1154
+#: HikariSub/HikariSubFrame.cpp:1157
 msgid ""
 "- Sacredus (first translator using translator mode,\n"
 "great help testing HikariSub on a slow computer)\n"
@@ -2832,57 +2840,57 @@ msgstr ""
 "- Sacredus (번역 모드를 사용하는 첫 번째 사용자입니다,\n"
 "느린 컴퓨터에서 HikariSub를 테스트하는데 많은 도움이 되었습니다).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1155
+#: HikariSub/HikariSubFrame.cpp:1158
 msgid "- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n"
 msgstr "- Devilkan (크래시 헌터. 그의 시스템과 사용 습관 덕분에 HikariSub가 자주 충돌했고,\n"
 
-#: HikariSub/HikariSubFrame.cpp:1156
+#: HikariSub/HikariSubFrame.cpp:1159
 msgid "helped with typesetting tools and came up with many more improvements).\n"
 msgstr "타입세팅 도구 작업을 돕고 많은 개선 사항을 제안했습니다).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1157
+#: HikariSub/HikariSubFrame.cpp:1160
 msgid "- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n"
 msgstr "- MatiasMovie (일부 충돌을 발견하고 몇 가지 개선 사항을 제안했으며 버그 수정에 도움이 되었습니다).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1158
+#: HikariSub/HikariSubFrame.cpp:1161
 msgid "- mas1904 (found some errors and helping with crash debuging).\n"
 msgstr "- mas1904 (오류를 발견하고 충돌 디버깅에 도움을 주었습니다).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1159
+#: HikariSub/HikariSubFrame.cpp:1162
 msgid "- Senami (made new themes and found some bugs).\n"
 msgstr "- Senami (새로운 테마를 만들고 몇 가지 버그를 발견했습니다).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1160
+#: HikariSub/HikariSubFrame.cpp:1163
 msgid "- altinat (Thai translation).\n"
 msgstr "- altinat (태국어 번역).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1161
+#: HikariSub/HikariSubFrame.cpp:1164
 msgid "- labrie75 (Korean translation).\n"
 msgstr "- labrie75 (한국어 번역).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1162
+#: HikariSub/HikariSubFrame.cpp:1165
 msgid "- Niskala5570 (Malay translation).\n"
 msgstr "- Niskala5570(말레이어 번역).\n"
 
-#: HikariSub/HikariSubFrame.cpp:1163
+#: HikariSub/HikariSubFrame.cpp:1166
 msgid "Thanks to other HikariSub users who reported bugs:\n"
 msgstr "프로그램을 사용하고 버그를 제보 해 주신 분들께 감사드립니다.\n"
 
-#: HikariSub/HikariSubFrame.cpp:1164 HikariSub/HotkeysNaming.cpp:179
+#: HikariSub/HikariSubFrame.cpp:1167 HikariSub/HotkeysNaming.cpp:180
 #: HikariSub/OptionsDialog.cpp:699
 msgid "Credits"
 msgstr "만든사람들"
 
-#: HikariSub/HikariSubFrame.cpp:1298
+#: HikariSub/HikariSubFrame.cpp:1301
 msgid "Subtitle file "
 msgstr "자막 파일 "
 
-#: HikariSub/HikariSubFrame.cpp:1308
+#: HikariSub/HikariSubFrame.cpp:1311
 msgid "Save subtitle file"
 msgstr "자막 파일 저장"
 
-#: HikariSub/HikariSubFrame.cpp:1315 HikariSub/HikariSubFrame.cpp:1329
-#: HikariSub/HikariSubFrame.cpp:2642
+#: HikariSub/HikariSubFrame.cpp:1318 HikariSub/HikariSubFrame.cpp:1332
+#: HikariSub/HikariSubFrame.cpp:2664
 msgid ""
 "Chosen file is read only,\n"
 "please save with different name or change file attribute."
@@ -2890,85 +2898,85 @@ msgstr ""
 "선택한 파일은 읽기 전용이며,\n"
 "다른 이름으로 저장하거나 파일 속성을 변경하십시오."
 
-#: HikariSub/HikariSubFrame.cpp:1433
+#: HikariSub/HikariSubFrame.cpp:1436
 #, c-format
 msgid "Load subtitles named \"%s\"?"
 msgstr "%s 파일도 같이 불러 오겠습니까?"
 
-#: HikariSub/HikariSubFrame.cpp:1506 HikariSub/VideoBox.cpp:1998
+#: HikariSub/HikariSubFrame.cpp:1509 HikariSub/VideoBox.cpp:1998
 msgid "Cannot open subtitle file"
 msgstr "자막 파일을 열 수 없음"
 
-#: HikariSub/HikariSubFrame.cpp:1670 HikariSub/OptionsDialog.cpp:776
+#: HikariSub/HikariSubFrame.cpp:1673 HikariSub/OptionsDialog.cpp:776
 #: HikariSub/ProviderFFMS2.cpp:1047 HikariSub/ProviderFFMS2.cpp:1058
 #: HikariSub/ScriptInfo.cpp:119 HikariSub/stylestore.cpp:771
 #: HikariSub/stylestore.cpp:772
 msgid "None"
 msgstr "없음"
 
-#: HikariSub/HikariSubFrame.cpp:2238
+#: HikariSub/HikariSubFrame.cpp:2251
 #, c-format
 msgid "Save subtitles named \"%s\" before %s?"
 msgstr "\"%s\" 자막을 저장하시겠습니까? (%s 전)"
 
-#: HikariSub/HikariSubFrame.cpp:2239
+#: HikariSub/HikariSubFrame.cpp:2252
 msgid "exiting program"
 msgstr "프로그램 종료"
 
-#: HikariSub/HikariSubFrame.cpp:2240
+#: HikariSub/HikariSubFrame.cpp:2253
 msgid "closing tab"
 msgstr "탭 닫기"
 
-#: HikariSub/HikariSubFrame.cpp:2241
+#: HikariSub/HikariSubFrame.cpp:2254
 msgid "loading new subtitles"
 msgstr "새 자막 불러오기"
 
-#: HikariSub/HikariSubFrame.cpp:2242
+#: HikariSub/HikariSubFrame.cpp:2255
 msgid "removing subtitles"
 msgstr "자막 제거"
 
-#: HikariSub/HikariSubFrame.cpp:2277 HikariSub/OptionsDialog.cpp:712
+#: HikariSub/HikariSubFrame.cpp:2290 HikariSub/OptionsDialog.cpp:712
 msgid "Cannot load audio hotkeys"
 msgstr "소리 단축키를 불러올 수 없음"
 
-#: HikariSub/HikariSubFrame.cpp:2278 HikariSub/OptionsDialog.cpp:311
+#: HikariSub/HikariSubFrame.cpp:2291 HikariSub/OptionsDialog.cpp:311
 #: HikariSub/ProviderFFMS2.cpp:117
 msgid "Cannot load audio configuration"
 msgstr "소리 설정을 불러올 수 없음"
 
-#: HikariSub/HikariSubFrame.cpp:2282
+#: HikariSub/HikariSubFrame.cpp:2295
 msgid "Choose audio file"
 msgstr "소리 파일 선택"
 
-#: HikariSub/HikariSubFrame.cpp:2285
+#: HikariSub/HikariSubFrame.cpp:2298
 msgid "Audio and video files"
 msgstr "영상 및 소리 파일"
 
-#: HikariSub/HikariSubFrame.cpp:2287
+#: HikariSub/HikariSubFrame.cpp:2300
 msgid "All files"
 msgstr "모든 파일"
 
-#: HikariSub/HikariSubFrame.cpp:2446
+#: HikariSub/HikariSubFrame.cpp:2459
 msgid "Undo to "
 msgstr "실행 취소 - "
 
-#: HikariSub/HikariSubFrame.cpp:2462
+#: HikariSub/HikariSubFrame.cpp:2475
 msgid "Redo to "
 msgstr "되돌리기 - "
 
-#: HikariSub/HikariSubFrame.cpp:2625
+#: HikariSub/HikariSubFrame.cpp:2647
 msgid "Choose session file"
 msgstr "세션 파일 선택"
 
-#: HikariSub/HikariSubFrame.cpp:2627 HikariSub/HikariSubFrame.cpp:2636
+#: HikariSub/HikariSubFrame.cpp:2649 HikariSub/HikariSubFrame.cpp:2658
 msgid "Session file (*.kls),|*.kls"
 msgstr "세션 파일(*.kls),|*.kls"
 
-#: HikariSub/HikariSubFrame.cpp:2635
+#: HikariSub/HikariSubFrame.cpp:2657
 msgid "Save session file"
 msgstr "세션 파일 저장"
 
-#: HikariSub/HikariSubFrame.cpp:2739
+#: HikariSub/HikariSubFrame.cpp:2761
 #, c-format
 msgid "Hotkey \"%s\" it's not script hotkey."
 msgstr "단축키 '%s'는 스크립트의 내용이 아닙니다."
@@ -2977,87 +2985,87 @@ msgstr "단축키 '%s'는 스크립트의 내용이 아닙니다."
 msgid "Exit"
 msgstr "종료"
 
-#: HikariSub/Hotkeys.cpp:137 HikariSub/HotkeysNaming.cpp:213
+#: HikariSub/Hotkeys.cpp:137 HikariSub/HotkeysNaming.cpp:214
 #: HikariSub/Notebook.cpp:693
 msgid "Open new tab"
 msgstr "새 탭 열기"
 
-#: HikariSub/Hotkeys.cpp:138 HikariSub/HotkeysNaming.cpp:214
+#: HikariSub/Hotkeys.cpp:138 HikariSub/HotkeysNaming.cpp:215
 msgid "Close current tab"
 msgstr "현재 탭 닫기"
 
-#: HikariSub/Hotkeys.cpp:139 HikariSub/HotkeysNaming.cpp:173
+#: HikariSub/Hotkeys.cpp:139 HikariSub/HotkeysNaming.cpp:174
 msgid "Time shift window"
 msgstr "시간 이동"
 
-#: HikariSub/Hotkeys.cpp:145 HikariSub/HotkeysNaming.cpp:252
+#: HikariSub/Hotkeys.cpp:145 HikariSub/HotkeysNaming.cpp:253
 #: HikariSub/stylestore.cpp:42
 msgid "Style manager"
 msgstr "스타일 관리"
 
-#: HikariSub/Hotkeys.cpp:153 HikariSub/HotkeysNaming.cpp:223
+#: HikariSub/Hotkeys.cpp:153 HikariSub/HotkeysNaming.cpp:224
 #: HikariSub/VideoBox.cpp:1056
 msgid "Open subtitles"
 msgstr "자막 파일 열기"
 
-#: HikariSub/Hotkeys.cpp:154 HikariSub/HotkeysNaming.cpp:235
+#: HikariSub/Hotkeys.cpp:154 HikariSub/HotkeysNaming.cpp:236
 #: HikariSub/Notebook.cpp:983 HikariSub/ScriptInfo.cpp:160
 msgid "Save"
 msgstr "저장"
 
-#: HikariSub/Hotkeys.cpp:155 HikariSub/HotkeysNaming.cpp:236
+#: HikariSub/Hotkeys.cpp:155 HikariSub/HotkeysNaming.cpp:237
 msgid "Save as..."
 msgstr "다른 이름으로 저장..."
 
-#: HikariSub/Hotkeys.cpp:156 HikariSub/HotkeysNaming.cpp:233
+#: HikariSub/Hotkeys.cpp:156 HikariSub/HotkeysNaming.cpp:234
 #: HikariSub/SubsGrid.cpp:288
 msgid "Delete text"
 msgstr "글자 삭제"
 
-#: HikariSub/Hotkeys.cpp:157 HikariSub/HotkeysNaming.cpp:231
+#: HikariSub/Hotkeys.cpp:157 HikariSub/HotkeysNaming.cpp:232
 #: HikariSub/TLDialog.cpp:31 HikariSub/TLDialog.cpp:39
 msgid "Delete line"
 msgstr "줄 삭제"
 
 #: HikariSub/Hotkeys.cpp:163 HikariSub/Hotkeys.cpp:203
-#: HikariSub/HotkeysNaming.cpp:49 HikariSub/HotkeysNaming.cpp:228
+#: HikariSub/HotkeysNaming.cpp:49 HikariSub/HotkeysNaming.cpp:229
 msgid "Previous line"
 msgstr "이전 줄"
 
 #: HikariSub/Hotkeys.cpp:164 HikariSub/Hotkeys.cpp:205
-#: HikariSub/HotkeysNaming.cpp:51 HikariSub/HotkeysNaming.cpp:220
+#: HikariSub/HotkeysNaming.cpp:51 HikariSub/HotkeysNaming.cpp:221
 msgid "Next line"
 msgstr "다음 줄"
 
-#: HikariSub/Hotkeys.cpp:166 HikariSub/HotkeysNaming.cpp:182
+#: HikariSub/Hotkeys.cpp:166 HikariSub/HotkeysNaming.cpp:183
 msgid "Merge with previous line"
 msgstr "이전 줄과 병합"
 
-#: HikariSub/Hotkeys.cpp:167 HikariSub/HotkeysNaming.cpp:183
+#: HikariSub/Hotkeys.cpp:167 HikariSub/HotkeysNaming.cpp:184
 msgid "Merge with next line"
 msgstr "다음 줄과 병합"
 
-#: HikariSub/Hotkeys.cpp:168 HikariSub/HotkeysNaming.cpp:250
+#: HikariSub/Hotkeys.cpp:168 HikariSub/HotkeysNaming.cpp:251
 msgid "Change start time to nearest keyframe"
 msgstr "시작 시간을 가까운 키 프레임으로"
 
-#: HikariSub/Hotkeys.cpp:169 HikariSub/HotkeysNaming.cpp:249
+#: HikariSub/Hotkeys.cpp:169 HikariSub/HotkeysNaming.cpp:250
 msgid "Change end time to nearest keyframe"
 msgstr "종료 시간을 가까운 키 프레임으로"
 
-#: HikariSub/Hotkeys.cpp:170 HikariSub/HotkeysNaming.cpp:221
+#: HikariSub/Hotkeys.cpp:170 HikariSub/HotkeysNaming.cpp:222
 msgid "Next tab"
 msgstr "다음 탭"
 
-#: HikariSub/Hotkeys.cpp:171 HikariSub/HotkeysNaming.cpp:229
+#: HikariSub/Hotkeys.cpp:171 HikariSub/HotkeysNaming.cpp:230
 msgid "Previous tab"
 msgstr "이전 탭"
 
-#: HikariSub/Hotkeys.cpp:172 HikariSub/HotkeysNaming.cpp:240
+#: HikariSub/Hotkeys.cpp:172 HikariSub/HotkeysNaming.cpp:241
 msgid "Select line at current video position"
 msgstr "현재 영상지점으로 줄 이동"
 
-#: HikariSub/Hotkeys.cpp:173 HikariSub/HotkeysNaming.cpp:178
+#: HikariSub/Hotkeys.cpp:173 HikariSub/HotkeysNaming.cpp:179
 msgid "HikariSub website"
 msgstr "HikariSub 웹사이트"
 
@@ -3080,45 +3088,45 @@ msgstr "구분 열 붙여 넣기"
 msgid "Show subtitles preview"
 msgstr "자막 미리보기 표시"
 
-#: HikariSub/Hotkeys.cpp:179 HikariSub/HotkeysNaming.cpp:263
+#: HikariSub/Hotkeys.cpp:179 HikariSub/HotkeysNaming.cpp:264
 msgid "5 seconds forward"
 msgstr "5초 앞으로"
 
-#: HikariSub/Hotkeys.cpp:180 HikariSub/HotkeysNaming.cpp:256
+#: HikariSub/Hotkeys.cpp:180 HikariSub/HotkeysNaming.cpp:257
 msgid "5 seconds backward"
 msgstr "5초 뒤로"
 
-#: HikariSub/Hotkeys.cpp:181 HikariSub/HotkeysNaming.cpp:264
+#: HikariSub/Hotkeys.cpp:181 HikariSub/HotkeysNaming.cpp:265
 msgid "1 minute forward"
 msgstr "1분 앞으로"
 
-#: HikariSub/Hotkeys.cpp:182 HikariSub/HotkeysNaming.cpp:257
+#: HikariSub/Hotkeys.cpp:182 HikariSub/HotkeysNaming.cpp:258
 msgid "1 minute backward"
 msgstr "1분 뒤로"
 
-#: HikariSub/Hotkeys.cpp:183 HikariSub/HotkeysNaming.cpp:260
+#: HikariSub/Hotkeys.cpp:183 HikariSub/HotkeysNaming.cpp:261
 #: HikariSub/VideoBox.cpp:168 HikariSub/VideoFullscreen.cpp:67
 msgid "Next file"
 msgstr "다음 파일"
 
-#: HikariSub/Hotkeys.cpp:184 HikariSub/HotkeysNaming.cpp:266
+#: HikariSub/Hotkeys.cpp:184 HikariSub/HotkeysNaming.cpp:267
 #: HikariSub/VideoBox.cpp:160
 msgid "Previous file"
 msgstr "이전 파일"
 
-#: HikariSub/Hotkeys.cpp:185 HikariSub/HotkeysNaming.cpp:269
+#: HikariSub/Hotkeys.cpp:185 HikariSub/HotkeysNaming.cpp:270
 msgid "Volume up"
 msgstr "소리 크게"
 
-#: HikariSub/Hotkeys.cpp:186 HikariSub/HotkeysNaming.cpp:270
+#: HikariSub/Hotkeys.cpp:186 HikariSub/HotkeysNaming.cpp:271
 msgid "Volume down"
 msgstr "소리 작게"
 
-#: HikariSub/Hotkeys.cpp:187 HikariSub/HotkeysNaming.cpp:259
+#: HikariSub/Hotkeys.cpp:187 HikariSub/HotkeysNaming.cpp:260
 msgid "Next chapter"
 msgstr "다음 장"
 
-#: HikariSub/Hotkeys.cpp:188 HikariSub/HotkeysNaming.cpp:265
+#: HikariSub/Hotkeys.cpp:188 HikariSub/HotkeysNaming.cpp:266
 msgid "Previous chapter"
 msgstr "이전 장"
 
@@ -3192,7 +3200,7 @@ msgid "Play line alt"
 msgstr "현재 줄 재생"
 
 #: HikariSub/Hotkeys.cpp:211 HikariSub/HotkeysNaming.cpp:57
-#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:166
+#: HikariSub/HotkeysNaming.cpp:273 HikariSub/VideoBox.cpp:166
 #: HikariSub/VideoBox.cpp:1018 HikariSub/VideoFullscreen.cpp:65
 msgid "Stop"
 msgstr "멈춤"
@@ -3555,130 +3563,134 @@ msgid "Check for updates"
 msgstr "업데이트 확인"
 
 #: HikariSub/HotkeysNaming.cpp:162
+msgid "Try the new HikariSub"
+msgstr "새 HikariSub 사용해 보기"
+
+#: HikariSub/HotkeysNaming.cpp:163
 msgid "About"
 msgstr "프로그램 정보"
 
-#: HikariSub/HotkeysNaming.cpp:163
+#: HikariSub/HotkeysNaming.cpp:164
 msgid "Report an issue"
 msgstr "문제 보고"
 
-#: HikariSub/HotkeysNaming.cpp:187
+#: HikariSub/HotkeysNaming.cpp:188
 msgid "Sort all lines by start time"
 msgstr "모든 줄 정렬 / 시작 시간"
 
-#: HikariSub/HotkeysNaming.cpp:188
+#: HikariSub/HotkeysNaming.cpp:189
 msgid "Sort all lines by end time"
 msgstr "모든 줄 정렬 / 종료 시간"
 
-#: HikariSub/HotkeysNaming.cpp:189
+#: HikariSub/HotkeysNaming.cpp:190
 msgid "Sort all lines by styles"
 msgstr "모든 줄 정렬 / 스타일"
 
-#: HikariSub/HotkeysNaming.cpp:190
+#: HikariSub/HotkeysNaming.cpp:191
 msgid "Sort all lines by actor"
 msgstr "모든 줄 정렬 / 배우"
 
-#: HikariSub/HotkeysNaming.cpp:191
+#: HikariSub/HotkeysNaming.cpp:192
 msgid "Sort all lines by effect"
 msgstr "모든 줄 정렬 / 효과"
 
-#: HikariSub/HotkeysNaming.cpp:192
+#: HikariSub/HotkeysNaming.cpp:193
 msgid "Sort all lines by layer"
 msgstr "모든 줄 정렬 / 레이어"
 
-#: HikariSub/HotkeysNaming.cpp:193
+#: HikariSub/HotkeysNaming.cpp:194
 msgid "Sort selected lines by start time"
 msgstr "선택 줄 정렬 / 시작 시간"
 
-#: HikariSub/HotkeysNaming.cpp:194
+#: HikariSub/HotkeysNaming.cpp:195
 msgid "Sort selected lines by end time"
 msgstr "선택 줄 정렬 / 종료 시간"
 
-#: HikariSub/HotkeysNaming.cpp:195
+#: HikariSub/HotkeysNaming.cpp:196
 msgid "Sort selected lines by styles"
 msgstr "선택 줄 정렬 / 스타일"
 
-#: HikariSub/HotkeysNaming.cpp:196
+#: HikariSub/HotkeysNaming.cpp:197
 msgid "Sort selected lines by actor"
 msgstr "선택 줄 정렬 / 배우"
 
-#: HikariSub/HotkeysNaming.cpp:197
+#: HikariSub/HotkeysNaming.cpp:198
 msgid "Sort selected lines by effect"
 msgstr "선택 줄 정렬 / 효과"
 
-#: HikariSub/HotkeysNaming.cpp:198
+#: HikariSub/HotkeysNaming.cpp:199
 msgid "Sort selected lines by layer"
 msgstr "선택 줄 정렬 / 레이어"
 
-#: HikariSub/HotkeysNaming.cpp:199
+#: HikariSub/HotkeysNaming.cpp:200
 msgid "Shift times / run time post processor"
 msgstr "시간 이동 / 포스트 프로세서"
 
-#: HikariSub/HotkeysNaming.cpp:208
+#: HikariSub/HotkeysNaming.cpp:209
 msgid "View all"
 msgstr "모두 보기"
 
-#: HikariSub/HotkeysNaming.cpp:209
+#: HikariSub/HotkeysNaming.cpp:210
 msgid "View audio and subtitles"
 msgstr "소리 및 자막보기"
 
-#: HikariSub/HotkeysNaming.cpp:210
+#: HikariSub/HotkeysNaming.cpp:211
 msgid "View only subtitles"
 msgstr "자막만 보기"
 
-#: HikariSub/HotkeysNaming.cpp:211
+#: HikariSub/HotkeysNaming.cpp:212
 msgid "View video and subtitles"
 msgstr "영상 및 자막보기"
 
-#: HikariSub/HotkeysNaming.cpp:212
+#: HikariSub/HotkeysNaming.cpp:213
 msgid "View only video"
 msgstr "영상만 보기"
 
-#: HikariSub/HotkeysNaming.cpp:215
+#: HikariSub/HotkeysNaming.cpp:216
 msgid "Clean styles of ASS file"
 msgstr "스타일 초기화"
 
-#: HikariSub/HotkeysNaming.cpp:226
+#: HikariSub/HotkeysNaming.cpp:227
 msgid "Play active line"
 msgstr "현재 줄 재생"
 
-#: HikariSub/HotkeysNaming.cpp:241
+#: HikariSub/HotkeysNaming.cpp:242
 msgid "Select lines"
 msgstr "선택 줄"
 
-#: HikariSub/HotkeysNaming.cpp:246
+#: HikariSub/HotkeysNaming.cpp:247
 msgid "Settings"
 msgstr "프로그램 설정"
 
-#: HikariSub/HotkeysNaming.cpp:253 HikariSub/VideoBox.cpp:1063
+#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1063
 msgid "Copy frame to clipboard"
 msgstr "현재 화면 복사(클립보드)"
 
-#: HikariSub/HotkeysNaming.cpp:254 HikariSub/VideoBox.cpp:1066
+#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1066
 msgid "Remove video"
 msgstr "영상 삭제(휴지통으로)"
 
-#: HikariSub/HotkeysNaming.cpp:255 HikariSub/VideoBox.cpp:1062
+#: HikariSub/HotkeysNaming.cpp:256 HikariSub/VideoBox.cpp:1062
 msgid "Save frame as PNG"
 msgstr "PNG 파일로 화면 저장"
 
-#: HikariSub/HotkeysNaming.cpp:258 HikariSub/VideoBox.cpp:1058
+#: HikariSub/HotkeysNaming.cpp:259 HikariSub/VideoBox.cpp:1058
 msgid "Show / hide progress bar"
 msgstr "진행 표시 줄 보임/ 숨김"
 
-#: HikariSub/HotkeysNaming.cpp:262 HikariSub/VideoBox.cpp:1059
+#: HikariSub/HotkeysNaming.cpp:263 HikariSub/VideoBox.cpp:1059
 msgid "Change aspect ratio"
 msgstr "가로/세로 비율 변경"
 
-#: HikariSub/HotkeysNaming.cpp:267 HikariSub/VideoBox.cpp:1061
+#: HikariSub/HotkeysNaming.cpp:268 HikariSub/VideoBox.cpp:1061
 msgid "Copy frame with subtitles to clipboard"
 msgstr "현재 화면/자막 복사(클립보드)"
 
-#: HikariSub/HotkeysNaming.cpp:268
+#: HikariSub/HotkeysNaming.cpp:269
 msgid "Full screen"
 msgstr "전체 화면"
 
-#: HikariSub/HotkeysNaming.cpp:271 HikariSub/VideoBox.cpp:1060
+#: HikariSub/HotkeysNaming.cpp:272 HikariSub/VideoBox.cpp:1060
 msgid "Save frame with subtitles as PNG"
 msgstr "PNG 파일로 화면/자막 저장"
 
@@ -4139,7 +4151,7 @@ msgstr "맞춤법 검사 (\"Dictionary\" 폴더)"
 msgid "Updates"
 msgstr "업데이트"
 
-#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:233
+#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:310
 msgid "Check for updates automatically"
 msgstr "자동으로 업데이트 확인"
 
@@ -4147,7 +4159,7 @@ msgstr "자동으로 업데이트 확인"
 msgid "When the program starts: once a day, or an hour after a check that failed"
 msgstr "프로그램 시작 시: 하루에 한 번, 또는 확인에 실패한 경우 1시간 후"
 
-#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:237
+#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:314
 msgid "Stable versions only"
 msgstr "안정 버전만"
 
@@ -6596,7 +6608,7 @@ msgstr "원본"
 msgid "Translation"
 msgstr "번역본"
 
-#: HikariSub/SubsGridWindow.cpp:2104
+#: HikariSub/SubsGridWindow.cpp:2108
 msgid "Cannot show preview cause grid height is too low"
 msgstr "자막보기의 높이가 너무 낮아 미리보기를 표시 할 수 없습니다"
 
@@ -6777,7 +6789,7 @@ msgstr ""
 "원본 - 비교 및 번역에 사용됩니다. 나중에 삭제됩니다.\n"
 "번역 - 번역과 수정을 거침."
 
-#: HikariSub/TabPanel.cpp:351
+#: HikariSub/TabPanel.cpp:360
 msgid ""
 "Subtitles were modified by another program.\n"
 "Reload and discard the unsaved changes in this tab?"
@@ -6785,11 +6797,11 @@ msgstr ""
 "다른 프로그램에서 자막이 수정되었습니다.\n"
 "이 탭의 저장하지 않은 변경 사항을 버리고 다시 불러오시겠습니까?"
 
-#: HikariSub/TabPanel.cpp:352 HikariSub/TabPanel.cpp:353
+#: HikariSub/TabPanel.cpp:361 HikariSub/TabPanel.cpp:362
 msgid "Reloading"
 msgstr "다시 불러오기"
 
-#: HikariSub/TabPanel.cpp:353
+#: HikariSub/TabPanel.cpp:362
 msgid "Subtitles were modified by another program. Reload?"
 msgstr "다른 프로그램에서 자막이 수정되었습니다. 다시 불러오시겠습니까?"
 
@@ -7106,80 +7118,112 @@ msgstr "위로"
 msgid "Toolbar alignment"
 msgstr "도구 모음 정렬"
 
-#: HikariSub/UpdateChecker.cpp:172
+#: HikariSub/UpdateChecker.cpp:248
 #, c-format
 msgid "You have the latest stable version. A newer prerelease, %s, is available."
 msgstr "최신 안정 버전을 사용 중입니다. 더 새로운 시험판 %s을(를) 사용할 수 있습니다."
 
-#: HikariSub/UpdateChecker.cpp:173 HikariSub/UpdateChecker.cpp:695
-#: HikariSub/UpdateChecker.cpp:702 HikariSub/UpdateChecker.cpp:774
-#: HikariSub/UpdateInstaller.cpp:271 HikariSub/UpdateInstaller.cpp:840
-#: HikariSub/UpdateInstaller.cpp:867 HikariSub/UpdateInstaller.cpp:1055
-#: HikariSub/UpdateInstaller.cpp:1344 HikariSub/UpdateInstaller.cpp:1353
-#: HikariSub/UpdateInstaller.cpp:1390 HikariSub/UpdateInstaller.cpp:1422
+#: HikariSub/UpdateChecker.cpp:249 HikariSub/UpdateInstaller.cpp:271
+#: HikariSub/UpdateInstaller.cpp:840 HikariSub/UpdateInstaller.cpp:1060
+#: HikariSub/UpdateInstaller.cpp:1345
 msgid "Update"
 msgstr "업데이트"
 
-#: HikariSub/UpdateChecker.cpp:174 HikariSub/UpdateChecker.cpp:250
+#: HikariSub/UpdateChecker.cpp:250 HikariSub/UpdateChecker.cpp:327
 msgid "Open the download page"
 msgstr "다운로드 페이지 열기"
 
-#: HikariSub/UpdateChecker.cpp:203 HikariSub/UpdateChecker.cpp:343
-#: HikariSub/UpdateChecker.cpp:347
+#: HikariSub/UpdateChecker.cpp:280 HikariSub/UpdateChecker.cpp:420
+#: HikariSub/UpdateChecker.cpp:424
 msgid "A new version is available"
 msgstr "새 버전을 사용할 수 있습니다"
 
-#: HikariSub/UpdateChecker.cpp:215
+#: HikariSub/UpdateChecker.cpp:292
 #, c-format
 msgid "You have version %s; version %s is available"
 msgstr "현재 버전은 %s이며, %s 버전을 사용할 수 있습니다"
 
-#: HikariSub/UpdateChecker.cpp:220
+#: HikariSub/UpdateChecker.cpp:297 HikariSub/UpdateChecker.cpp:579
 #, c-format
 msgid "It needs %s or newer, so it cannot be installed here."
 msgstr "이 버전은 %s 이상이 필요하므로 이 시스템에 설치할 수 없습니다."
 
-#: HikariSub/UpdateChecker.cpp:250
+#: HikariSub/UpdateChecker.cpp:327
 msgid "Download and install"
 msgstr "다운로드 및 설치"
 
-#: HikariSub/UpdateChecker.cpp:251 HikariSub/UpdateChecker.cpp:360
+#: HikariSub/UpdateChecker.cpp:328 HikariSub/UpdateChecker.cpp:437
 msgid "Remind me in a week"
 msgstr "1주일 후에 다시 알림"
 
-#: HikariSub/UpdateChecker.cpp:300
+#: HikariSub/UpdateChecker.cpp:377 HikariSub/UpdateChecker.cpp:598
 msgid "Downloading..."
 msgstr "다운로드 중..."
 
-#: HikariSub/UpdateChecker.cpp:306
+#: HikariSub/UpdateChecker.cpp:383 HikariSub/UpdateChecker.cpp:602
 #, c-format
 msgid "Downloading... %d%%"
 msgstr "다운로드 중... %d%%"
 
-#: HikariSub/UpdateChecker.cpp:316 HikariSub/UpdateInstaller.cpp:415
-#: HikariSub/UpdateInstaller.cpp:420 HikariSub/UpdateInstaller.cpp:569
+#: HikariSub/UpdateChecker.cpp:393 HikariSub/UpdateChecker.cpp:612
+#: HikariSub/UpdateInstaller.cpp:415 HikariSub/UpdateInstaller.cpp:420
+#: HikariSub/UpdateInstaller.cpp:569
 msgid "Cannot download the update"
 msgstr "업데이트를 다운로드할 수 없음"
 
-#: HikariSub/UpdateChecker.cpp:352
+#: HikariSub/UpdateChecker.cpp:429
 #, c-format
 msgid "HikariSub %s is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page."
 msgstr "HikariSub %s은(는) 시험판입니다. AUR 패키지는 안정 버전만 제공합니다. 사용해 보려면 릴리스 페이지의 AppImage를 이용하십시오."
 
-#: HikariSub/UpdateChecker.cpp:354
+#: HikariSub/UpdateChecker.cpp:431
 #, c-format
 msgid "HikariSub %s is available; you have %s. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu."
 msgstr "HikariSub %s을(를) 사용할 수 있습니다. 현재 버전은 %s입니다. HikariSub를 AUR에서 설치했으므로 패키지 관리자나 AUR 도우미로 업데이트하십시오(예: yay -Syu 또는 paru -Syu)."
 
-#: HikariSub/UpdateChecker.cpp:359 HikariSub/UpdateInstaller.cpp:331
+#: HikariSub/UpdateChecker.cpp:436 HikariSub/UpdateInstaller.cpp:331
 msgid "What's new"
 msgstr "새로운 기능"
 
-#: HikariSub/UpdateChecker.cpp:695 HikariSub/UpdateChecker.cpp:774
+#: HikariSub/UpdateChecker.cpp:471
+msgid "The new HikariSub"
+msgstr "새 HikariSub"
+
+#: HikariSub/UpdateChecker.cpp:483
+#, c-format
+msgid "Version %s. You have HikariSub %s."
+msgstr "버전 %s입니다. 현재 HikariSub %s을(를) 사용 중입니다."
+
+#: HikariSub/UpdateChecker.cpp:498
+msgid "Try it opens the release page. Unpack the new HikariSub into a folder of its own, beside this copy, which stays as it is."
+msgstr "사용해 보기를 누르면 릴리스 페이지가 열립니다. 새 HikariSub는 이 사본 옆의 별도 폴더에 압축을 푸세요. 이 사본은 그대로 남습니다."
+
+#: HikariSub/UpdateChecker.cpp:504
+msgid "This version of HikariSub gets no further updates. It keeps working, and moving to the new HikariSub is up to you."
+msgstr "이 버전의 HikariSub는 더 이상 업데이트되지 않습니다. 계속 사용할 수 있으며, 새 HikariSub로 옮길지는 사용자가 결정합니다."
+
+#: HikariSub/UpdateChecker.cpp:514
+msgid "Try it"
+msgstr "사용해 보기"
+
+#: HikariSub/UpdateChecker.cpp:516
+msgid "Remind me later"
+msgstr "나중에 다시 알림"
+
+#: HikariSub/UpdateChecker.cpp:518
+msgid "Don't offer again"
+msgstr "다시 제안하지 않음"
+
+#: HikariSub/UpdateChecker.cpp:1042 HikariSub/UpdateChecker.cpp:1056
+#: HikariSub/UpdateChecker.cpp:1155
 msgid "Cannot check for updates"
 msgstr "업데이트를 확인할 수 없음"
 
-#: HikariSub/UpdateChecker.cpp:702
+#: HikariSub/UpdateChecker.cpp:1048
+msgid "There is no new HikariSub to try at the moment."
+msgstr "지금은 사용해 볼 새 HikariSub가 없습니다."
+
+#: HikariSub/UpdateChecker.cpp:1063
 msgid "You already have the latest version"
 msgstr "이미 최신 버전을 사용 중입니다"
 
@@ -7259,11 +7303,11 @@ msgstr "업데이트를 거부했습니다: 설치 프로그램이 릴리스와 
 msgid "HikariSub %s could not be checked against its release on GitHub, so it was not installed. It is tried again at the next quit."
 msgstr "HikariSub %s을(를) GitHub의 릴리스와 대조하여 확인할 수 없어 설치하지 않았습니다. 다음에 종료할 때 다시 시도합니다."
 
-#: HikariSub/UpdateInstaller.cpp:822 HikariSub/UpdateInstaller.cpp:1040
+#: HikariSub/UpdateInstaller.cpp:822 HikariSub/UpdateInstaller.cpp:1045
 msgid "The update could not be handed to the installer."
 msgstr "업데이트를 설치 프로그램에 전달할 수 없습니다."
 
-#: HikariSub/UpdateInstaller.cpp:824 HikariSub/UpdateInstaller.cpp:1462
+#: HikariSub/UpdateInstaller.cpp:824 HikariSub/UpdateInstaller.cpp:1512
 #, c-format
 msgid "The installer of HikariSub %s could not be started. You can run it yourself: %s"
 msgstr "HikariSub %s 설치 프로그램을 시작할 수 없습니다. 직접 실행할 수 있습니다: %s"
@@ -7272,69 +7316,69 @@ msgstr "HikariSub %s 설치 프로그램을 시작할 수 없습니다. 직접 �
 msgid "Checking the update..."
 msgstr "업데이트 검증 중..."
 
-#: HikariSub/UpdateInstaller.cpp:1020
+#: HikariSub/UpdateInstaller.cpp:1025
 #, c-format
 msgid "HikariSub %s did not start, so HikariSub %s was put back."
 msgstr "HikariSub %s이(가) 시작되지 않아 HikariSub %s(으)로 되돌렸습니다."
 
-#: HikariSub/UpdateInstaller.cpp:1022
+#: HikariSub/UpdateInstaller.cpp:1027
 #, c-format
 msgid "HikariSub %s did not start. The previous version is %s; rename it back to use it."
 msgstr "HikariSub %s이(가) 시작되지 않았습니다. 이전 버전 파일은 %s입니다. 사용하려면 이름을 원래대로 바꾸십시오."
 
-#: HikariSub/UpdateInstaller.cpp:1033
+#: HikariSub/UpdateInstaller.cpp:1038
 msgid "The update was refused: the package does not match its release."
 msgstr "업데이트를 거부했습니다: 패키지가 릴리스와 일치하지 않습니다."
 
-#: HikariSub/UpdateInstaller.cpp:1035
+#: HikariSub/UpdateInstaller.cpp:1040
 #, c-format
 msgid "The package manager could not install the update. You can install it yourself: %s"
 msgstr "패키지 관리자가 업데이트를 설치할 수 없습니다. 직접 설치할 수 있습니다: %s"
 
-#: HikariSub/UpdateInstaller.cpp:1038
+#: HikariSub/UpdateInstaller.cpp:1043
 msgid "The package manager was busy with another installation. The update is installed at the next quit."
 msgstr "패키지 관리자가 다른 설치를 진행 중이었습니다. 업데이트는 다음에 종료할 때 설치됩니다."
 
-#: HikariSub/UpdateInstaller.cpp:1042
+#: HikariSub/UpdateInstaller.cpp:1047
 #, c-format
 msgid "The update could not be checked against its release on GitHub, so it was not installed. You can install it yourself: %s"
 msgstr "업데이트를 GitHub의 릴리스와 대조하여 확인할 수 없어 설치하지 않았습니다. 직접 설치할 수 있습니다: %s"
 
-#: HikariSub/UpdateInstaller.cpp:1045
+#: HikariSub/UpdateInstaller.cpp:1050
 #, c-format
 msgid "The update could not be installed (code %d)."
 msgstr "업데이트를 설치할 수 없습니다(코드 %d)."
 
-#: HikariSub/UpdateInstaller.cpp:1057
+#: HikariSub/UpdateInstaller.cpp:1062
 msgid "Installing update..."
 msgstr "업데이트 설치 중..."
 
-#: HikariSub/UpdateInstaller.cpp:1081
+#: HikariSub/UpdateInstaller.cpp:1086
 #, c-format
 msgid "No password prompt could be shown to install HikariSub %s. Install it yourself: %s"
 msgstr "HikariSub %s을(를) 설치하기 위한 암호 입력 창을 표시할 수 없습니다. 직접 설치하십시오: %s"
 
-#: HikariSub/UpdateInstaller.cpp:1342
+#: HikariSub/UpdateInstaller.cpp:1392
 #, c-format
 msgid "HikariSub %s could not be installed (code %d)."
 msgstr "HikariSub %s을(를) 설치할 수 없습니다(코드 %d)."
 
-#: HikariSub/UpdateInstaller.cpp:1352
+#: HikariSub/UpdateInstaller.cpp:1402
 #, c-format
 msgid "HikariSub %s was not installed: its installer did not finish. If another administrator account approved it, that account was told why."
 msgstr "HikariSub %s이(가) 설치되지 않았습니다: 설치 프로그램이 완료되지 않았습니다. 다른 관리자 계정이 승인했다면 해당 계정에 그 이유가 표시되었습니다."
 
-#: HikariSub/UpdateInstaller.cpp:1416
+#: HikariSub/UpdateInstaller.cpp:1466
 #, c-format
 msgid "The download of HikariSub %s changed or went missing, so it was not installed. It is downloaded again at the next check."
 msgstr "HikariSub %s 다운로드 파일이 변경되었거나 사라져 설치하지 않았습니다. 다음 업데이트 확인 때 다시 다운로드합니다."
 
-#: HikariSub/UpdateInstaller.cpp:1456
+#: HikariSub/UpdateInstaller.cpp:1506
 #, c-format
 msgid "HikariSub is installed for all users in a folder that can be changed without administrator rights, so HikariSub %s was not installed automatically. You can run its installer yourself: %s"
 msgstr "HikariSub가 관리자 권한 없이 변경할 수 있는 폴더에 모든 사용자용으로 설치되어 있어 HikariSub %s을(를) 자동으로 설치하지 않았습니다. 설치 프로그램을 직접 실행할 수 있습니다: %s"
 
-#: HikariSub/UpdateInstaller.cpp:1473 HikariSub/UpdateInstaller.cpp:1531
+#: HikariSub/UpdateInstaller.cpp:1523 HikariSub/UpdateInstaller.cpp:1581
 #, c-format
 msgid "HikariSub %s could not replace the AppImage. The download is at %s."
 msgstr "HikariSub %s(으)로 AppImage를 교체할 수 없습니다. 다운로드한 파일은 %s에 있습니다."

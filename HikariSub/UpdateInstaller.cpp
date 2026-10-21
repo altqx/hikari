@@ -299,7 +299,7 @@ namespace
 			evt.Skip();
 		});
 		dialog->SetSizerAndFit(sizer);
-		dialog->CenterOnParent();
+		update_installer::Present(dialog, frame);
 		dialog->Show();
 	}
 
@@ -349,7 +349,7 @@ namespace
 			evt.Skip();
 		});
 		dialog->SetSizerAndFit(sizer);
-		dialog->CenterOnParent();
+		update_installer::Present(dialog, frame);
 		dialog->Show();
 	}
 
@@ -837,11 +837,11 @@ namespace
 		ApplyWait(wxWindow *frame, HANDLE process, const Pending &pending, bool withRelaunch)
 			: owner(frame), process(process), pending(pending), withRelaunch(withRelaunch)
 		{
-			busy = new HikariDialog(nullptr, -1, _("Update"));
+			busy = new HikariDialog(frame, -1, _("Update"));
 			wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 			sizer->Add(new HikariStaticText(busy, -1, _("Checking the update...")), 0, wxEXPAND | wxALL, 12);
 			busy->SetSizerAndFit(sizer);
-			busy->CenterOnScreen();
+			update_installer::Present(busy, frame);
 			busy->Show();
 			frame->Hide();
 			Start(200);
@@ -864,12 +864,17 @@ namespace
 				// not newer, will not become right: it is dropped.
 				if (code == update_verify::kMismatch || code == update_verify::kBadArguments)
 					DropPending(pending);
-				HikariMessageBox(ApplyMessage(int(code), pending), _("Update"), wxOK, nullptr);
 				handedOff = false;
-				if (withRelaunch && owner) {
+				// Restart now keeps the app: its window is back before the
+				// message, which it owns either way.
+				bool keep = withRelaunch && owner;
+				if (keep) {
 					relaunch = false;
 					owner->Show();
 					owner->Raise();
+				}
+				update_installer::Message(owner, ApplyMessage(int(code), pending));
+				if (keep) {
 					wxTheApp->CallAfter([this] { delete this; });
 					return;
 				}
@@ -1052,11 +1057,11 @@ namespace
 	// when the install did not happen, waits for AfterExit().
 	void RunPkexec(wxWindow *frame, const Pending &pending)
 	{
-		HikariDialog *busy = new HikariDialog(nullptr, -1, _("Update"));
+		HikariDialog *busy = new HikariDialog(frame, -1, _("Update"));
 		wxBoxSizer *sizer = new wxBoxSizer(wxVERTICAL);
 		sizer->Add(new HikariStaticText(busy, -1, _("Installing update...")), 0, wxEXPAND | wxALL, 12);
 		busy->SetSizerAndFit(sizer);
-		busy->CenterOnScreen();
+		update_installer::Present(busy, frame);
 		busy->Show();
 		frame->Hide();
 		waitingForInstaller = true;
@@ -1302,13 +1307,53 @@ bool update_installer::IsPending(const std::string &version)
 		wxFileExists(FromUtf8(pending->file));
 }
 
+std::string update_installer::PendingVersion()
+{
+	if (current)
+		return current->Version();
+	std::optional<Pending> pending = LoadPending();
+	if (!pending || ForAnotherCopy(*pending) || !wxFileExists(FromUtf8(pending->file)))
+		return std::string();
+	return pending->version;
+}
+
+void update_installer::Present(HikariDialog *window, wxWindow *frame)
+{
+	wxTopLevelWindow *top = frame ? wxDynamicCast(wxGetTopLevelParent(frame), wxTopLevelWindow) : nullptr;
+	if (!top) {
+		window->CenterOnScreen();
+		return;
+	}
+	window->CenterOnParent();
+	// A frame hidden for an install on quit has no taskbar button to
+	// flash: its windows come to the front.
+	if (!top->IsShown() || (wxTheApp->IsActive() && !top->IsIconized())) {
+		window->Bind(wxEVT_SHOW, [window](wxShowEvent &evt) {
+			if (evt.IsShown())
+				window->Raise();
+			evt.Skip();
+		});
+		return;
+	}
+	window->ShowWithoutActivatingNext();
+	// Until the app is brought to the front.
+	top->RequestUserAttention(wxUSER_ATTENTION_ERROR);
+}
+
+int update_installer::Message(wxWindow *frame, const wxString &text, long buttons)
+{
+	HikariMessageDialog dialog(frame, text, _("Update"), buttons);
+	Present(&dialog, frame);
+	return dialog.ShowModal();
+}
+
 void update_installer::SetCommandLine(const wxString &health, const wxString &from)
 {
 	healthFile = health;
 	updatedFrom = from;
 }
 
-void update_installer::OnStartup(wxWindow *frame)
+void update_installer::OnShown()
 {
 	// The new version's window is up: say so to the watchdog, and drop
 	// the old file, which is kept until a start of the new one shows its
@@ -1326,8 +1371,13 @@ void update_installer::OnStartup(wxWindow *frame)
 		if (wxFileExists(old))
 			RemoveFile(old);
 	}
+#else
+	(void)reported;
 #endif
+}
 
+void update_installer::OnStartup(wxWindow *frame)
+{
 	std::string text;
 	std::string installing;
 	if (ReadSmallFile(InstallingPath(), &installing, 64))
@@ -1341,7 +1391,7 @@ void update_installer::OnStartup(wxWindow *frame)
 			if (message.empty())
 				message = wxString::Format(_("HikariSub %s could not be installed (code %d)."),
 					FromUtf8(result->version), result->code);
-			HikariMessageBox(message, _("Update"), wxOK, frame);
+			update_installer::Message(frame, message);
 		}
 	}
 	// Handed to the installer, no result here, and still not installed:
@@ -1349,8 +1399,8 @@ void update_installer::OnStartup(wxWindow *frame)
 	if (!installing.empty() && installing.back() == '\n')
 		installing.pop_back();
 	if (update_verify::IsReleaseVersion(installing) && update_manifest::IsNewer(installing, VersionHikariSub)) {
-		HikariMessageBox(wxString::Format(_("HikariSub %s was not installed: its installer did not finish. If another administrator account approved it, that account was told why."),
-			FromUtf8(installing)), _("Update"), wxOK, frame);
+		update_installer::Message(frame, wxString::Format(_("HikariSub %s was not installed: its installer did not finish. If another administrator account approved it, that account was told why."),
+			FromUtf8(installing)));
 	}
 
 	std::optional<Pending> pending = LoadPending();
@@ -1387,7 +1437,7 @@ static update_installer::Quit Unstarted(wxWindow *frame, const Pending &pending,
 	// at the next start.
 	if (relaunch) {
 		relaunch = false;
-		HikariMessageBox(message, _("Update"), wxOK, frame);
+		update_installer::Message(frame, message);
 		return update_installer::Quit::Veto;
 	}
 	WriteLastResult(pending.version, false, code, message);
@@ -1419,7 +1469,7 @@ update_installer::Quit update_installer::OnQuit(wxWindow *frame, bool canWait)
 		// the next start.
 		if (relaunch) {
 			relaunch = false;
-			HikariMessageBox(message, _("Update"), wxOK, frame);
+			update_installer::Message(frame, message);
 			return Quit::Veto;
 		}
 		WriteLastResult(pending->version, false, 2, message);

@@ -669,8 +669,15 @@ namespace update_policy
 
 	// How many releases a check looks at closely, reading the update
 	// manifest of each that has one, before it gives up offering one
-	// (installers spec, 2.4).
+	// (installers spec, 2.4). Legacy releases, for the update, and the
+	// rewrite's, for its offer, have that many each (ADR-0021).
 	constexpr size_t kMaxCandidates = 5;
+
+	// Legacy versions are 0.0.x; any other is the rewrite's.
+	constexpr bool IsLegacyVersion(const SemVer &version)
+	{
+		return version.major == 0 && version.minor == 0;
+	}
 
 	// The version of a release's tag, without its "v", when the tag can be
 	// offered: "v" and a semantic version without build metadata, made of
@@ -689,8 +696,8 @@ namespace update_policy
 	// version first and, of two of one version, the first listed: those
 	// that are not drafts, whose tag CandidateVersion() takes, newer than
 	// installed. offer fits the channel; skipped holds the prereleases
-	// that "stable versions only" kept out. Each has kMaxCandidates at
-	// most.
+	// that "stable versions only" kept out. Each has kMaxCandidates legacy
+	// releases at most, and as many of the rewrite's.
 	struct Candidates
 	{
 		std::vector<int> offer;
@@ -726,8 +733,14 @@ namespace update_policy
 				return CompareSemVer(a.first, b.first) > 0;
 			});
 			std::vector<int> indices;
-			for (size_t i = 0; i < list.size() && i < kMaxCandidates; i++)
-				indices.push_back(list[i].second);
+			size_t legacy = 0, rewrite = 0;
+			for (const auto &entry : list) {
+				size_t &count = IsLegacyVersion(entry.first) ? legacy : rewrite;
+				if (count < kMaxCandidates) {
+					count++;
+					indices.push_back(entry.second);
+				}
+			}
 			return indices;
 		};
 		candidates.offer = sorted(offer);
