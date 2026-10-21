@@ -313,15 +313,22 @@ TEST_F(TemplatePreview, UnmarkedLinesFoundToBeTheSourcesAreLeftOutToo)
 
 TEST_F(TemplatePreview, PlayingTheLineKeepsOneTrack)
 {
-    const auto paused = templatePreviewWindow(1500, false, 1000, 3000);
+    const std::vector<std::int64_t> ends{500, 3000, 4000, 6000, 8000};
+    const auto paused = templatePreviewWindow(1500, false, 1000, 3000, ends);
     EXPECT_EQ(paused.fromMs, 1500);
     EXPECT_EQ(paused.toMs, 1500);
-    const auto looping = templatePreviewWindow(2200, true, 1000, 3000);
+    const auto looping = templatePreviewWindow(2200, true, 1000, 3000, ends);
     EXPECT_EQ(looping.fromMs, 1000);
     EXPECT_EQ(looping.toMs, 3000);
-    const auto elsewhere = templatePreviewWindow(5000, true, 1000, 3000);
-    EXPECT_EQ(elsewhere.fromMs, 5000);
-    EXPECT_EQ(elsewhere.toMs, std::numeric_limits<std::int64_t>::max()) << "every Line not over yet";
+    // Elsewhere every Line not over yet: the window holds from the last end
+    // passed, so frame after frame it stays until another Line ends.
+    const auto elsewhere = templatePreviewWindow(5000, true, 1000, 3000, ends);
+    EXPECT_EQ(elsewhere.fromMs, 4000);
+    EXPECT_EQ(elsewhere.toMs, std::numeric_limits<std::int64_t>::max());
+    const auto later = templatePreviewWindow(5958, true, 1000, 3000, ends);
+    EXPECT_EQ(later.fromMs, elsewhere.fromMs) << "no Line ended between";
+    EXPECT_EQ(templatePreviewWindow(6001, true, 1000, 3000, ends).fromMs, 6000);
+    EXPECT_EQ(templatePreviewWindow(200, true, 1000, 3000, ends).fromMs, std::numeric_limits<std::int64_t>::min());
 }
 
 TEST_F(TemplatePreview, PreviewRunsOnlyReadFromTheHost)

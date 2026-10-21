@@ -192,13 +192,16 @@ std::optional<core::LineId> templatePreviewLineOf(const MacroSnapshot &snapshot,
 }
 
 TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, std::int64_t spanStart,
-                                            std::int64_t spanEnd)
+                                            std::int64_t spanEnd, const std::vector<std::int64_t> &ends)
 {
     if (!playing)
         return {timeMs, timeMs};
     if (timeMs >= spanStart && timeMs < spanEnd)
         return {spanStart, spanEnd};
-    return {timeMs, std::numeric_limits<std::int64_t>::max()};
+    // The Lines over after timeMs are those over after the last end passed.
+    const auto passed = std::ranges::upper_bound(ends, timeMs);
+    return {passed == ends.begin() ? std::numeric_limits<std::int64_t>::min() : *std::prev(passed),
+            std::numeric_limits<std::int64_t>::max()};
 }
 
 core::Document templatePreviewDocument(const core::Document &doc, core::LineId source,

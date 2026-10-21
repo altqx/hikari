@@ -65,12 +65,14 @@ std::optional<core::LineId> templatePreviewLineOf(const MacroSnapshot &snapshot,
 // The span of time whose Lines the video's preview track keeps: the frame
 // at `timeMs` when paused. While playing inside the preview's span
 // [spanStart, spanEnd) it is that span, so a loop over the Line keeps one
-// track; elsewhere it is every Line not over yet.
+// track; elsewhere it is every Line not over yet, from the last of `ends`
+// (the drawn Lines' ends, ascending) passed, so it changes only when a
+// Line ends, not every frame.
 struct TemplatePreviewWindow {
     std::int64_t fromMs = 0, toMs = 0;
 };
 TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, std::int64_t spanStart,
-                                            std::int64_t spanEnd);
+                                            std::int64_t spanEnd, const std::vector<std::int64_t> &ends);
 
 // The Document the video draws: Lines generated from `source`, and the
 // Lines in `replaced` (a file's unmarked generated Lines found to be its),

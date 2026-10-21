@@ -771,11 +771,18 @@ application::TemplatePreviewWindow TemplateEditorController::videoWindow(std::in
         return {};
     const auto *source = line(*m_source);
     std::int64_t from = msOf(source->start), to = msOf(source->end);
+    std::vector<std::int64_t> ends;
     for (const auto &l : *m_preview) {
         from = std::min(from, msOf(l.start));
         to = std::max(to, msOf(l.end));
+        ends.push_back(msOf(l.end));
     }
-    return application::templatePreviewWindow(timeMs, playing, from, to);
+    if (playing && (timeMs < from || timeMs >= to)) {
+        for (const auto *l : document()->lines())
+            ends.push_back(msOf(l->end));
+        std::ranges::sort(ends);
+    }
+    return application::templatePreviewWindow(timeMs, playing, from, to, ends);
 }
 
 std::optional<core::Document> TemplateEditorController::videoDocument(const core::Document &doc, std::int64_t timeMs,
