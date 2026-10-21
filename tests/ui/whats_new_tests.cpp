@@ -7,6 +7,7 @@
 // Markdown without raw HTML or images, http(s) links only.
 
 #include "hikari/app/update_checker.h"
+#include "hikari/app/update_installer.h"
 #include "hikari/app/whats_new.h"
 #include "desktop_guard.h"
 #include "settings_store.h"
@@ -26,8 +27,10 @@
 #include <tuple>
 
 using hikari::app::UpdateChecker;
+using hikari::app::UpdateEnvironment;
 using hikari::app::UpdateFeed;
 using hikari::app::WhatsNew;
+using hikari::application::PackageKind;
 using hikari::ui::SettingsStore;
 namespace desktop = hikari::test::desktop;
 
@@ -352,6 +355,29 @@ private slots:
         const auto again = run(QStringLiteral("package"), QStringLiteral("0.1.3"), false);
         QCOMPARE(std::get<1>(again), QStringLiteral("0.1.1"));
         QCOMPARE(std::get<2>(again), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
+    }
+
+    // Each copy has its own cache file in the shared cache folder: an
+    // AppImage by its image, every other copy by its executable.
+    void eachCopyHasItsOwnCacheFile()
+    {
+        const auto file = [](PackageKind kind, const QString &executable, const QString &appImage = {}) {
+            UpdateEnvironment environment;
+            environment.cacheDir = QStringLiteral("/cache");
+            environment.package.kind = kind;
+            environment.package.appImage = appImage;
+            environment.executable = executable;
+            return WhatsNew::cacheFileIn(environment);
+        };
+        const QString portable = file(PackageKind::Portable, QStringLiteral("/home/u/A/hikarisub"));
+        QVERIFY(portable.startsWith(QStringLiteral("/cache/whats-new-")));
+        QVERIFY(portable != file(PackageKind::Portable, QStringLiteral("/home/u/B/hikarisub")));
+        QCOMPARE(file(PackageKind::Portable, QStringLiteral("/home/u/A/hikarisub")), portable);
+        const QString image = QStringLiteral("/home/u/Apps/HikariSub.AppImage");
+        QCOMPARE(file(PackageKind::AppImage, QStringLiteral("/tmp/.mount_a/usr/bin/hikarisub"), image),
+                 file(PackageKind::AppImage, QStringLiteral("/tmp/.mount_b/usr/bin/hikarisub"), image));
+        QVERIFY(file(PackageKind::AppImage, QString(), image) !=
+                file(PackageKind::AppImage, QString(), QStringLiteral("/home/u/Apps/Other.AppImage")));
     }
 
     // The cache holds what its reader takes: past the limit the lowest

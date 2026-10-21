@@ -771,8 +771,9 @@ QString WhatsNew::cacheFileIn(const UpdateEnvironment &environment)
 {
     if (environment.cacheDir.isEmpty())
         return {};
-    const auto key = a::updateCopyKey(packageKindToken(environment.package.kind).toStdString(),
-                                      environment.package.appImage.toStdString());
+    const QString &file = environment.package.kind == a::PackageKind::AppImage ? environment.package.appImage
+                                                                                : environment.executable;
+    const auto key = a::whatsNewCopyKey(packageKindToken(environment.package.kind).toStdString(), file.toStdString());
     return environment.cacheDir + QStringLiteral("/whats-new-%1.json").arg(qs(key));
 }
 

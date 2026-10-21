@@ -275,6 +275,10 @@ std::string appImageStagingPath(std::string_view appImage, std::string_view vers
 // at other paths, keep their own: the kind's token, and for an AppImage a
 // hash of its path too (FNV-1a 64).
 std::string updateCopyKey(std::string_view kindToken, std::string_view appImage);
+// What's new's name for a copy: every copy by its file (the AppImage, else
+// the executable), as copies of one kind in two folders (portable) can run
+// different versions; with no file, the kind alone.
+std::string whatsNewCopyKey(std::string_view kindToken, std::string_view path);
 
 // The program's own switches; the rest of the command line is left as it is.
 struct StartupArguments {

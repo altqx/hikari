@@ -738,12 +738,12 @@ std::string appImageStagingPath(std::string_view appImage, std::string_view vers
            std::string(version) + ".update";
 }
 
-std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
+namespace {
+// The kind, then the path's FNV-1a hash.
+std::string keyWithPath(std::string_view kindToken, std::string_view path)
 {
-    if (kindToken != packageKindToken(PackageKind::AppImage, false))
-        return std::string(kindToken);
     std::uint64_t hash = 14695981039346656037ULL;
-    for (const unsigned char c : appImage) {
+    for (const unsigned char c : path) {
         hash ^= c;
         hash *= 1099511628211ULL;
     }
@@ -751,6 +751,19 @@ std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
     for (int shift = 60; shift >= 0; shift -= 4)
         key += "0123456789abcdef"[(hash >> shift) & 0xF];
     return key;
+}
+} // namespace
+
+std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
+{
+    if (kindToken != packageKindToken(PackageKind::AppImage, false))
+        return std::string(kindToken);
+    return keyWithPath(kindToken, appImage);
+}
+
+std::string whatsNewCopyKey(std::string_view kindToken, std::string_view path)
+{
+    return path.empty() ? std::string(kindToken) : keyWithPath(kindToken, path);
 }
 
 std::string manualInstallCommand(std::string_view helper, std::string_view file, std::string_view version)
