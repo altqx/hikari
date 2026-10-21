@@ -111,6 +111,10 @@ public:
     // or reloaded): an edit typed for it commits there after another tab is
     // chosen.
     using SessionOf = std::function<application::EditSession *(DocumentKey)>;
+    // What a run reads from the host besides the Document (the video and
+    // its frame shown, keyframes, audio selection, file name), as one value
+    // that differs when any of it does.
+    using HostState = std::function<std::string()>;
 
     explicit TemplateEditorController(QObject *parent = nullptr);
     ~TemplateEditorController() override;
@@ -118,10 +122,14 @@ public:
     void setSessionSource(SessionSource source);
     void setDocumentKey(DocumentKeySource key);
     void setSessionOf(SessionOf sessionOf);
+    void setHostState(HostState state);
     void setTemplater(application::KaraokeTemplaterPort *templater);
     void setEditable(bool editable);
     // The Document, its selection or the editing target changed.
     void refresh();
+    // The host may have changed: a preview made under another state runs
+    // again.
+    void hostChanged();
     // A karaoke templater run was applied (its report).
     void applied(const std::string &report);
     // The milliseconds to wait after an edit before a preview, and before
@@ -283,6 +291,8 @@ private:
     SessionSource m_sessionSource;
     DocumentKeySource m_documentKey;
     SessionOf m_sessionOf;
+    HostState m_hostState;
+    std::string m_hostSeen; // the host state the last preview was asked under
     // The template and code Lines the user chose to run, per Document, each
     // in every form the user chose: as they were when the user previewed or
     // applied, as New made them and as the panel's edits left them (an Undo

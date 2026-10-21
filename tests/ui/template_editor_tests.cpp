@@ -516,6 +516,30 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return templater->previews > before && settled(); }, 20'000));
     }
 
+    // The video, keyframes, audio selection, frame shown and file name are
+    // read by the templates too: a change of them previews again.
+    void aHostChangePreviewsAgain()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto host = std::make_shared<std::string>("video a");
+        editor->setHostState([host] { return *host; });
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500); // the run marking the current template's own Lines
+        const int before = templater->previews;
+        editor->hostChanged();
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, before); // the same host: no run
+        *host = "video b";
+        editor->hostChanged();
+        QVERIFY(QTest::qWaitFor([&] { return templater->previews > before && settled(); }, 20'000));
+        const int after = templater->previews;
+        *host = "video c"; // seen at the next refresh too
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return templater->previews > after && settled(); }, 20'000));
+    }
+
     // Apply waits for the preview of the last edit: a problem typed just
     // before it is known before the stock macro runs.
     void applyWaitsForTheLastEditsPreview()

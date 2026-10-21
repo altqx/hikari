@@ -271,6 +271,20 @@ void TemplateEditorController::setSessionOf(SessionOf sessionOf)
     m_sessionOf = std::move(sessionOf);
 }
 
+void TemplateEditorController::setHostState(HostState state)
+{
+    m_hostState = std::move(state);
+}
+
+void TemplateEditorController::hostChanged()
+{
+    std::string now = m_hostState ? m_hostState() : std::string();
+    if (now == m_hostSeen)
+        return;
+    m_hostSeen = std::move(now);
+    schedulePreview();
+}
+
 void TemplateEditorController::setTemplater(application::KaraokeTemplaterPort *templater)
 {
     m_templater = templater;
@@ -429,6 +443,7 @@ void TemplateEditorController::refresh()
             m_lastApply.clear(); // an Undo or an edit since Apply
         schedulePreview();
     }
+    hostChanged(); // e.g. the audio selection, the active Line's times
     emit changed();
 }
 
@@ -1142,9 +1157,11 @@ void TemplateEditorController::runPreview()
     if (!snapshot)
         return;
     // What the run reads: Script Info (meta, karaskel's resolution), the
-    // styles and the Lines; and the current template, whose own Lines the
-    // chain marks.
+    // styles, the Lines and the host; and the current template, whose own
+    // Lines the chain marks.
     std::string key = std::to_string(m_current ? m_current->value : 0) + '\n';
+    m_hostSeen = m_hostState ? m_hostState() : std::string();
+    key += m_hostSeen + '\n';
     for (const auto &i : snapshot->info)
         key += i.key + ':' + i.value + '\n';
     for (const auto &d : snapshot->dialogues)
