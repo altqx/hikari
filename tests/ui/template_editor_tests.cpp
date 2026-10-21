@@ -1046,6 +1046,32 @@ private slots:
         QVERIFY(!editor->hasPreview());
     }
 
+    // A code Line made a template in the panel previews before the Effect
+    // is committed, as the first template of its file.
+    void aFirstTemplateByItsEffectPreviews()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        bool first = true;
+        doc.removeLinesIf([&](const core::LineRecord &l) {
+            if (!application::templateKindOf(l))
+                return false;
+            const bool keep = first;
+            first = false;
+            return !keep;
+        });
+        for (const auto *l : doc.lines())
+            if (application::templateKindOf(*l))
+                doc.editLine(l->id, [](core::LineRecord &r) { r.effect = u8"code line"; });
+        openDocument(std::move(doc), true);
+        QCOMPARE(editor->templateCount(), 0);
+        activate(*firstKaraoke());
+        editor->setDelays(10, 60'000);
+        editor->setShown(true);
+        editor->setEffect(QStringLiteral("template line"));
+        QVERIFY(previewCame());
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+    }
+
     // Typing that ends where it began changes nothing: no step, no save
     // question.
     void anEditBackToTheStartIsNoStep()

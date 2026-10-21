@@ -1047,17 +1047,7 @@ void TemplateEditorController::schedulePreview()
 
 void TemplateEditorController::runPreview()
 {
-    if (m_preview && templateCount() == 0) {
-        // The last template went: its preview and the run making one too.
-        stopRuns();
-        m_preview.reset();
-        m_own.clear();
-        m_previewKept = false;
-        m_previewSnapshotKey.clear();
-        emit previewChanged();
-        emit videoChanged();
-    }
-    if (!m_shown || !available() || !m_source || templateCount() == 0 || !trusted()) {
+    if (!m_shown || !available() || !m_source || !trusted()) {
         m_running = false;
         m_previewing = false;
         emit changed(); // canApply
@@ -1070,6 +1060,17 @@ void TemplateEditorController::runPreview()
         (m_pending->effect || m_pending->style || m_pending->layer)) {
         const auto r = currentRecord();
         seen.editLine(r->id, [&](core::LineRecord &l) { l = *r; }, core::ChangeMark::Kept);
+    }
+    // A template made by an Effect still pending counts.
+    if (std::ranges::none_of(seen.lines(), [](const core::LineRecord *l) {
+            return application::templateKindOf(*l) == application::TemplateKind::Template;
+        })) {
+        if (m_preview)
+            clearPreview(); // the last template went: its preview too
+        m_running = false;
+        m_previewing = false;
+        emit changed(); // canApply
+        return;
     }
     auto snapshot = application::templatePreviewSnapshot(seen, *m_source, pendingTexts());
     if (!snapshot)
