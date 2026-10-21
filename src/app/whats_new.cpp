@@ -163,8 +163,9 @@ public:
                                  std::vector<Change> &changes) {
             const bool codeBlock = block.blockFormat().hasProperty(QTextFormat::BlockCodeLanguage) ||
                                    block.blockFormat().hasProperty(QTextFormat::BlockCodeFence);
-            const int from = fragment.position() - block.position();
-            for (int i = from; i < from + fragment.length(); ++i)
+            // length() walks the fragment's pieces: taken once.
+            const int from = fragment.position() - block.position(), to = from + fragment.length();
+            for (int i = from; i < to; ++i)
                 if (const Mark *mark = find(text[i]); mark && mark->tag)
                     changes.push_back({block.position() + i, 1,
                                        codeBlock ? mark->written : QString(mark->written).replace(u'\n', u' '),
@@ -182,10 +183,15 @@ public:
             QTextCharFormat format = fragment.charFormat();
             if (!format.isAnchor())
                 return;
-            QString href = format.anchorHref();
-            for (const Mark &mark : m_marks)
-                href.replace(mark.marker, mark.meant);
-            if (href == format.anchorHref())
+            const QString written = format.anchorHref();
+            QString href;
+            bool marked = false;
+            for (const QChar c : written) {
+                const Mark *mark = find(c);
+                href += mark ? mark->meant : QString(c);
+                marked = marked || mark;
+            }
+            if (!marked)
                 return;
             format.setAnchorHref(href);
             changes.push_back({fragment.position(), fragment.length(), fragment.text(), format});
@@ -196,8 +202,8 @@ public:
             forEachFragment(doc, [&](const QTextBlock &block, const QString &text, const QTextFragment &fragment,
                                      std::vector<Change> &changes) {
                 const bool code = isCode(block, fragment.charFormat());
-                const int from = fragment.position() - block.position();
-                for (int i = from; i < from + fragment.length(); ++i) {
+                const int from = fragment.position() - block.position(), to = from + fragment.length();
+                for (int i = from; i < to; ++i) {
                     const Mark *mark = find(text[i]);
                     if (!mark || mark->tag || mark->shown.isEmpty() == linked)
                         continue;

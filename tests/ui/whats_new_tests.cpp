@@ -647,6 +647,15 @@ private slots:
         const QString manyHtml = copy->whatsNew->render(many, muted, link, code);
         QVERIFY2(marked.elapsed() < 2000, qPrintable(QString::number(marked.elapsed())));
         QVERIFY(manyHtml.contains(QStringLiteral("href=\"https://example.com/4999\"")));
+        // As do the most marks there are, with more links to restore.
+        QString linked;
+        for (int i = 0; i < 20000; ++i)
+            linked += QStringLiteral("[![b](%1.svg)](https://example.com/%1) \\<%1\\> ").arg(i);
+        QElapsedTimer restored;
+        restored.start();
+        const QString linkedHtml = copy->whatsNew->render(linked, muted, link, code);
+        QVERIFY2(restored.elapsed() < 2000, qPrintable(QString::number(restored.elapsed())));
+        QVERIFY(linkedHtml.contains(QStringLiteral("&lt;19999&gt;")));
         // An image's alt text is text, escaped markup in it too.
         const QString alts = copy->whatsNew->render(
             QStringLiteral("Before ![Use \\<video\\>](a.png) mid ![x \\<script\\>](b.png) after\n\nNext"),
