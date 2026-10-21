@@ -576,6 +576,8 @@ private:
         core::legacy::TagColour editedColour; // the colour last chosen in the dialog
     };
     bool beginDialog(int role, int selectionStart, int selectionEnd);
+    bool applyDialogToPlacedBody(DialogSession &d,
+                                 const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one);
     bool applyDialogChange(const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one,
                            const std::function<void(std::u16string &, std::u16string &)> &several);
     void publishRawSelection(const core::legacy::EditorText &state);

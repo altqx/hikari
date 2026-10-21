@@ -2046,6 +2046,15 @@ ApplicationWindow {
         Layout.minimumHeight: topPadding + bottomPadding + cursorRectangle.height
 
         property bool syncing: false
+        // Where `inner` starts in `outer` past its carried tags: a match
+        // after whole override blocks, not one inside a tag ("an8" in
+        // "{\an8}an8").
+        function carriedPrefix(outer, inner) {
+            for (let at = outer.indexOf(inner); at > 0; at = outer.indexOf(inner, at + 1))
+                if (outer[0] === "{" && outer[at - 1] === "}")
+                    return at
+            return -1
+        }
         function sync() {
             if (text === shown)
                 return
@@ -2053,8 +2062,8 @@ ApplicationWindow {
             let caret = cursorPosition
             // TM1: the carried tags shown or left out around the same text
             // (Tags from original switched): the caret keeps its place in it.
-            const added = text.length > 0 ? shown.indexOf(text) : -1
-            const removed = shown.length > 0 ? text.indexOf(shown) : -1
+            const added = text.length > 0 ? carriedPrefix(shown, text) : -1
+            const removed = shown.length > 0 ? carriedPrefix(text, shown) : -1
             if (added > 0)
                 caret += added
             else if (removed > 0)

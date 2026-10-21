@@ -1600,6 +1600,57 @@ void LineEditorController::publishRawSelection(const core::legacy::EditorText &s
     emit selectionRequested();
 }
 
+// TM1: a dialog's change on one Line whose translation has placed runs goes
+// to the draft's body, the translator's own text, and the runs' tags are
+// written again around the same text (editPlacedBody): a tag put in over a
+// placed run is not merged into the run's own block. False when it does not
+// apply (nothing placed, or a change to the text itself).
+bool LineEditorController::applyDialogToPlacedBody(
+    DialogSession &d, const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one)
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!tags || !real || real->translation.empty())
+        return false;
+    auto draft = translationDraft(*tags, *real);
+    if (!draft.carried || draft.placements.empty())
+        return false;
+    // The field's raw offsets and the body's meet at the visible text.
+    const auto field = core::project(d.state.text);
+    const auto before = core::project(draft.body);
+    auto toBody = [&](long at, bool afterTags) {
+        const auto shown = core::displayOffset(field, static_cast<std::size_t>(std::max(at, 0L)));
+        return static_cast<long>(core::rawOffset(before, shown, afterTags));
+    };
+    std::vector<std::pair<std::size_t, std::size_t>> placed;
+    for (const auto &p : draft.placements)
+        placed.emplace_back(core::displayOffset(before, p.start), core::displayOffset(before, p.end));
+    const core::legacy::EditorText state{draft.body, toBody(d.state.selectionStart, true),
+                                         toBody(d.state.selectionEnd, d.state.selectionEnd == d.state.selectionStart)};
+    const auto result = one(state, toBody(d.position, false));
+    const auto after = core::project(result.state.text);
+    if (after.text != before.text)
+        return false;
+    draft.body = result.state.text;
+    for (std::size_t i = 0; i < placed.size(); ++i) {
+        draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
+        draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
+    }
+    if (result.state.text != state.text && !saveTranslationDraft(*tags, std::move(draft)))
+        return false;
+    const auto text = core::toUtf16(record()->translation);
+    const auto now = core::project(text);
+    auto toField = [&](long at, bool afterTags) {
+        const auto shown = core::displayOffset(after, static_cast<std::size_t>(std::max(at, 0L)));
+        return static_cast<long>(core::rawOffset(now, shown, afterTags));
+    };
+    d.state = core::legacy::EditorText{text, toField(result.state.selectionStart, true),
+                                       toField(result.state.selectionEnd, false)};
+    d.position = toField(result.position, false);
+    publishRawSelection(d.state);
+    return true;
+}
+
 bool LineEditorController::applyDialogChange(
     const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one,
     const std::function<void(std::u16string &, std::u16string &)> &several)
@@ -1609,6 +1660,8 @@ bool LineEditorController::applyDialogChange(
     auto &d = *m_dialog;
     auto *s = session();
     if (!d.several) {
+        if (d.role == 1 && applyDialogToPlacedBody(d, one))
+            return true;
         auto result = one(d.state, d.position);
         if (result.state.text != d.state.text && !setRaw(d.role, core::toUtf8(result.state.text)))
             return false;

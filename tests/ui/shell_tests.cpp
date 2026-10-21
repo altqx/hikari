@@ -11018,6 +11018,69 @@ private slots:
         QVERIFY(!run().value("placed").toBool());
     }
 
+    // TM1: the caret keeps its place when the carried tags show or hide,
+    // even where the text could be read inside them ("an8" in "{\an8}").
+    void tagsFromOriginalCaretPastTheCarriedBlock()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-caret.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}Wall\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an8}an8\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *translated = item("translationText");
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("an8"));
+        translated->setProperty("cursorPosition", 3);
+        application->editor().setMoveTags(false);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\an8}an8"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 9);
+        application->editor().setMoveTags(true);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("an8"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 3);
+    }
+
+    // TM1: the font dialog on one Line with a placed run changes the
+    // translation's own text; the run stays placed, its tags written again
+    // around it, not merged into the new tag.
+    void tagsFromOriginalDialogKeepsThePlacedRun()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-dialog.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("y x"), 3);
+        QVERIFY(application->editor().placeRun(1, 0, 1));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}y{\\i0} x"));
+        // Bold over the placed run's text, the whole of it selected.
+        auto font = application->editor().beginFont(1, 0, 1);
+        QVERIFY(!font.isEmpty());
+        font.insert(QStringLiteral("bold"), true);
+        QVERIFY(application->editor().changeFont(font));
+        application->editor().endDialog(true);
+        const auto saved = q8(session->draftRecord()->translation);
+        QVERIFY2(saved.contains(QStringLiteral("\\b1")), qPrintable(saved));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("start").toInt(), 0);
+    }
+
     // TM1: a run is not placed over text across the translator's own tags,
     // which no one run reads back over.
     void tagsFromOriginalNoRunAcrossOwnTags()
