@@ -663,6 +663,11 @@ TEST(LyricsImport, TtmlAttributesAreReadByNamespace)
     EXPECT_EQ(lines("<tt xmlns:foo=\"urn:x\"><body><p begin=\"1\" end=\"2\">a <span foo:role=\"x-translation\">b</span>"
                     "</p></body></tt>"),
               (std::vector<Row>{{1000, 2000, "", "a b"}}));
+    // A long namespace on many attributes is not copied for each of them.
+    std::string many = "<tt xmlns:n=\"urn:" + std::string(100'000, 'x') + "\"><body><p begin=\"1\" end=\"2\"";
+    for (int i = 0; i < 8'000; ++i)
+        many += " n:a" + std::to_string(i) + "=\"\"";
+    EXPECT_EQ(lines(many + ">x</p></body></tt>"), (std::vector<Row>{{1000, 2000, "", "x"}}));
 }
 
 TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)
