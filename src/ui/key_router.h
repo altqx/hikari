@@ -12,7 +12,9 @@
 //   `fallbackAccepts(key, modifiers)` says so (Space plays and pauses
 //   everywhere);
 // - a key the focused panel binds but the hovered one does not is the
-//   focused panel's no longer: the Global bindings may still take it.
+//   focused panel's no longer: the Global bindings may still take it;
+// - a routed key's release goes where its press went (VT2: a visual tool's
+//   nudge commits on its key's release), wherever the pointer is by then.
 //
 // It stands aside while a text field has focus (typing is never redirected
 // by hover), while a control the keyboard moved to has focus (it keeps its
@@ -26,6 +28,7 @@
 #include <QPointer>
 #include <QtQml/qqmlregistration.h>
 
+#include <map>
 #include <optional>
 #include <vector>
 
@@ -85,6 +88,7 @@ private:
     void hoverAtPointer();
     bool shortcutOverride(QQuickWindow *window, QKeyEvent *event);
     bool keyPress(QKeyEvent *event);
+    bool keyRelease(QKeyEvent *event);
     bool takes(QQuickItem *target, const QKeyEvent *event);
 
     std::vector<Panel> m_panels;
@@ -97,6 +101,7 @@ private:
     QJSValue m_followsPointer;
     QPointer<QQuickItem> m_fallbackTarget;
     std::optional<Routed> m_routed;
+    std::map<int, QPointer<QQuickItem>> m_held; // a routed press's key: where its release goes
     const QEvent *m_withheld = nullptr; // an override kept from the focused panel's items
     bool m_dispatching = false;
 };

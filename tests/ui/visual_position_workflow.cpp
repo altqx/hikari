@@ -96,20 +96,21 @@ protected:
         const std::string initial = lineText();
         type("mainWindow/visualValue_x", "150");
         observed.push_back(changedFrom(initial)); // 4
-        // The keyboard alternative: D, then Shift+S, with the video focused.
+        // The keyboard alternative: Right, then Shift+Down (VT2-arrow-nudge,
+        // legacy's D and Shift+S), with the video focused.
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
-        enterKey("mainWindow/videoPanel", Qt::Key_D, spix::KeyModifiers::None);
+        enterKey("mainWindow/videoPanel", Qt::Key_Right, spix::KeyModifiers::None);
         observed.push_back(changedFrom(observed[4])); // 5
-        enterKey("mainWindow/videoPanel", Qt::Key_S, spix::KeyModifiers::Shift);
+        enterKey("mainWindow/videoPanel", Qt::Key_Down, spix::KeyModifiers::Shift);
         observed.push_back(changedFrom(observed[5])); // 6
-        // Move: the typed end point, then K nudges the end down.
+        // Move: the typed end point, then Alt+Down (legacy's K) nudges the end down.
         mouseClick("mainWindow/visualTool2");
         wait(200ms);
         observed.push_back(prop("mainWindow/visualTool2", "checked")); // 7
         type("mainWindow/visualValue_x2", "200");
         observed.push_back(changedFrom(observed[6])); // 8
         invokeMethod("mainWindow/videoPanel", "forceActiveFocus", {});
-        enterKey("mainWindow/videoPanel", Qt::Key_K, spix::KeyModifiers::None);
+        enterKey("mainWindow/videoPanel", Qt::Key_Down, spix::KeyModifiers::Alt);
         observed.push_back(changedFrom(observed[8])); // 9
         // The two-point option toggles from its icon button.
         mouseClick("mainWindow/visualOption_twoPoints");
