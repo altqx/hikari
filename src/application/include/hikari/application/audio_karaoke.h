@@ -159,6 +159,9 @@ std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int
 
 // The UTF-16 length of the first `graphemes` graphemes of `text`.
 std::size_t karaokeGraphemePrefix(std::u16string_view text, int graphemes);
+// KA1-grapheme-letters: where the letter at `at` (outside blocks) ends: its
+// grapheme read without the blocks inside it, or \N \n \h.
+std::size_t karaokeLetterEnd(std::u16string_view text, std::size_t at);
 
 // Legacy AudioBox::OnKaraoke's zoom: switching on remembers the slider
 // (lastHorizontalZoom) and zooms in by 20 (not below 30); switching off goes

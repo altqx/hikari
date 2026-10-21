@@ -292,6 +292,9 @@ public:
         std::function<void(int key)> setActive;
         // tab->video->Seek (Ctrl+left or middle click).
         std::function<void(int ms)> seekVideo;
+        // KA1: the start the editor's field keeps (legacyFieldTime: 10 ms in
+        // ASS), so a commit's \k text is written against it.
+        std::function<int(int ms)> fieldTime;
         // (Playback is the box's own since A4: Play after Next/Previous
         // unless AUDIO_DONT_PLAY_WHEN_LINE_CHANGES, the middle double click's
         // Play and the player's end while a boundary is dragged.)
@@ -369,7 +372,8 @@ private:
     void commitChanges(bool nextLine, bool save, bool moveToEnd,
                        application::AudioAdjacent adjacent = application::AudioAdjacent::None,
                        std::optional<std::u16string> karaokeText = std::nullopt, bool scroll = true);
-    void commitKaraoke(); // KA1: the syllables' text committed as a split on the letters is
+    void commitKaraoke();       // KA1: the syllables' text committed as a letter split is, the view kept
+    int committedStart() const; // KA1: the start the commit writes (TimingHooks::fieldTime)
     void makeDialogueVisible(bool force = false, bool moveToEnd = false); // legacy MakeDialogueVisible
     void splitKaraoke();                                                   // legacy Karaoke::Split
     void changeLine(int delta);

@@ -15720,6 +15720,14 @@ private slots:
         audio.leadIn();
         QCOMPARE(audio.karaokeModel().count(), 3);
         QCOMPARE(editor.text(), QStringLiteral("{\\k20}{\\k40}sakura{\\k120}hana"));
+        // a lead-in of no whole centiseconds (Codex): the text is written for
+        // the start the Line keeps, 95 ms kept as 90
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 105);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 200);
         audio.setHorizontalZoom(50);
         press(Qt::Key_H);
     }

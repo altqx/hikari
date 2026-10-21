@@ -1095,6 +1095,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.commit = [this](const application::AudioCommitRequest &request) { commitAudioTimes(request); };
         hooks.setActive = [this](int key) { setAudioActive(key); };
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
+        hooks.fieldTime = [this](int ms) {
+            const auto *session = targetSession();
+            return session ? application::legacyFieldTime(session->document().format(), ms) : ms;
+        };
         m_audio->setTimingHooks(std::move(hooks));
     }
     m_audio->setFollowAudio([this](int ms) { showVideoAtAudio(ms); }); // AV2

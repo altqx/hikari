@@ -176,6 +176,18 @@ TEST(KaraokeAutoSplit, MixedLines)
     EXPECT_EQ(syllables("\xE6\x9D\xB1\xE4\xBA\xAC love story"), "\xE6\x9D\xB1|\xE4\xBA\xAC |love |sto|ry");
     // capitals read as the lower case does
     EXPECT_EQ(syllables("KARAOKE nani"), "KA|RA|O|KE |na|ni");
+    // a letter with a combining mark (NFD) votes as its composed form (Codex):
+    // é is no romaji, a macron or circumflex vowel is the long vowel
+    const auto decomposed = [](std::string text) {
+        for (const auto &[composed, nfd] : {std::pair<std::string, std::string>{"\xC3\xA9", "e\xCC\x81"},
+                                            {"\xC5\x8D", "o\xCC\x84"}, {"\xC3\xBB", "u\xCC\x82"}})
+            for (std::size_t at; (at = text.find(composed)) != std::string::npos;)
+                text.replace(at, composed.size(), nfd);
+        return text;
+    };
+    for (const char *line : {"caf\xC3\xA9 caf\xC3\xA9 take", "t\xC5\x8Dky\xC5\x8D", "k\xC3\xBBki"})
+        EXPECT_EQ(syllables(decomposed(line)), decomposed(syllables(line))) << line;
+    EXPECT_EQ(syllables("caf\xC3\xA9 caf\xC3\xA9 take").find("ta|ke"), std::string::npos);
 }
 
 TEST(KaraokeAutoSplit, SpacesPunctuationAndBlocks)
@@ -257,6 +269,13 @@ TEST(KaraokeGraphemes, ALetterIsNeverHalfACharacter)
     auto hindi = kara("{\\k30}\xE0\xA4\xA8\xE0\xA4\xAE\xE0\xA4\xB8\xE0\xA5\x8D\xE0\xA4\xA4\xE0\xA5\x87", 0, 1000);
     EXPECT_EQ(hindi.letters(0, 1), std::pair(u("{}\xE0\xA4\xA8"), u("\xE0\xA4\xAE\xE0\xA4\xB8\xE0\xA5\x8D\xE0\xA4\xA4\xE0\xA5\x87")));
     EXPECT_EQ(hindi.letters(0, 2).first, u("{}\xE0\xA4\xA8\xE0\xA4\xAE"));
+    // a block inside a letter (Codex): a{\b1} and its accent are one letter,
+    // for the splits and Auto split's units alike
+    auto blocked = kara("{\\k20}a{\\b1}\xCC\x81" "b", 0, 1000);
+    EXPECT_EQ(blocked.letters(0, 1), std::pair(u("{}a{\\b1}\xCC\x81"), u("b")));
+    EXPECT_EQ(karaokeWeight(u("a{\\b1}\xCC\x81" "b"), KaraokeCharClass::ascii()), 2);
+    EXPECT_EQ(karaokeLetterEnd(u"a{\\b1}b", 0), 1u); // no mark after the block: the letter ends before it
+    EXPECT_EQ(karaokeLetterEnd(u"a{\\b1", 0), 1u);   // an unclosed "{" is text
     // \N is one letter
     auto breaks = kara("{\\k20}a\\Nb", 0, 1000);
     EXPECT_EQ(breaks.letters(0, 2), std::pair(std::u16string(u"{}a\\N"), std::u16string(u"b")));

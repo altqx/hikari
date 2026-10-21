@@ -33,7 +33,8 @@ enum class Kind { Space, Punct, Kana, Han, Hangul, Latin, Other };
 
 struct Unit {
     std::size_t at = 0, len = 0;
-    char32_t cp = 0;
+    char32_t cp = 0;   // the grapheme's first character
+    char32_t mark = 0; // its one mark after that (NFD), 0xFFFD for more, else 0
     Kind kind = Kind::Other;
 };
 
@@ -108,9 +109,20 @@ std::vector<Unit> units(u16v text, const KaraokeCharClass &classes)
             continue;
         }
         unit.cp = codePointAt(text, i, unit.len);
-        // the whole grapheme (KA1-grapheme-letters), up to a block
-        const auto end = text.begin() + static_cast<std::ptrdiff_t>(core::graphemeEnd(text, i));
-        unit.len = std::max(unit.len, static_cast<std::size_t>(std::find(text.begin() + i + 1, end, u'{') - text.begin()) - i);
+        // the whole letter, a block inside it too (KA1-grapheme-letters), and
+        // what follows its first character outside blocks
+        const std::size_t base = unit.len;
+        unit.len = std::max(unit.len, karaokeLetterEnd(text, i) - i);
+        for (std::size_t m = i + base; m < i + unit.len;) {
+            if (text[m] == u'{') {
+                m = text.find(u'}', m) + 1;
+                continue;
+            }
+            std::size_t len = 0;
+            const char32_t cp = codePointAt(text, m, len);
+            unit.mark = unit.mark ? 0xFFFD : cp;
+            m += len;
+        }
         const char32_t c = unit.cp;
         const bool bmp = c < 0x10000;
         if (bmp && classes.space && classes.space(static_cast<char16_t>(c)))
@@ -270,17 +282,20 @@ char16_t romajiLetter(char32_t c, const KaraokeCharClass &classes)
 
 // ---- one word ----------------------------------------------------------------
 
-// The units (indices from `from`) of the word [from, to) that open a
-// syllable, after its first.
 // The run [from, to) of Latin units as romaji reads it, and how many
-// letters it has.
+// letters it has. A letter written with a combining mark (NFD) reads as its
+// composed form does: a circumflex or macron on a vowel is the long vowel,
+// any other mark no romaji letter.
 std::pair<u16, int> latinLetters(const std::vector<Unit> &all, std::size_t from, std::size_t to,
                                  const KaraokeCharClass &classes)
 {
     u16 letters;
     int count = 0;
     for (std::size_t k = from; k < to; k++) {
-        letters += romajiLetter(all[k].cp, classes);
+        const char16_t letter = romajiLetter(all[k].cp, classes);
+        const bool longVowel = (all[k].mark == 0x0302 || all[k].mark == 0x0304) &&
+                               std::u16string_view(u"aiueo").find(letter) != std::u16string_view::npos;
+        letters += all[k].mark && !longVowel ? u'\uFFFD' : letter;
         if (!isApostrophe(all[k].cp))
             ++count;
     }

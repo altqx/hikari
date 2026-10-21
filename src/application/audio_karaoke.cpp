@@ -8,6 +8,8 @@
 #include <climits>
 #include <cmath>
 #include <cstdint>
+#include <iterator>
+#include <vector>
 
 namespace hikari::application {
 
@@ -100,14 +102,39 @@ std::u16string number(int value)
 }
 
 // KA1-grapheme-letters: where the letter at `at` ends: a whole grapheme, or
-// \N \n \h as one.
+// \N \n \h as one. The grapheme is read without the blocks in it, so one
+// that goes on after a block (a{\b1}\u0301) takes the block in and no split
+// comes between a letter and its marks.
 std::size_t letterEnd(std::u16string_view text, std::size_t at)
 {
     if (text[at] == u'\\' && at + 1 < text.size() && (text[at + 1] == u'N' || text[at + 1] == u'n' || text[at + 1] == u'h'))
         return at + 2;
-    // (a block's "{" ends it; searched only within it, to keep long Lines linear)
-    const std::size_t end = core::graphemeEnd(text, at);
-    return static_cast<std::size_t>(std::find(text.begin() + at + 1, text.begin() + end, u'{') - text.begin());
+    u16 seen;            // the grapheme so far, without its blocks
+    std::size_t end = at; // where it ends in `text`
+    std::size_t pos = at; // where to read on
+    for (std::size_t window = 64; pos < text.size(); window = std::max(window * 2, seen.size())) {
+        if (text[pos] == u'{') {
+            const auto shut = text.find(u'}', pos + 1);
+            if (pos == at || shut == u16::npos)
+                break; // (no letter starts with a block; an unclosed "{" is text, and no mark)
+            pos = shut + 1;
+            continue;
+        }
+        // the text up to the next block, a window of it at a time (long Lines stay linear)
+        const auto first = text.begin() + static_cast<std::ptrdiff_t>(pos);
+        const auto last = text.begin() + static_cast<std::ptrdiff_t>(std::min(text.size(), pos + window));
+        const auto chunk = std::u16string_view(first, std::find(first, last, u'{'));
+        const u16 probe = seen + u16(chunk);
+        const std::size_t length = core::graphemeEnd(probe, 0);
+        if (length <= seen.size())
+            break;
+        end = pos + (length - seen.size());
+        if (length < probe.size())
+            break;
+        seen = probe;
+        pos = end;
+    }
+    return std::max(end, at + 1);
 }
 
 // The letters of a stripped text, each one's [begin, end).
@@ -352,21 +379,27 @@ std::u16string AudioKaraoke::text(int curStartMs) const
         all += m_syls[i];
     }
     std::ranges::stable_sort(tags, {}, &std::pair<std::size_t, u16>::first);
-    // the last "{" and "}" before each place, read in one pass (Codex: a
-    // search for each tag made long blocks of tags quadratic)
-    std::vector<std::size_t> opens(all.size() + 1, u16::npos), shuts(all.size() + 1, u16::npos);
-    for (std::size_t p = 0; p < all.size(); p++) {
-        opens[p + 1] = all[p] == u'{' ? p : opens[p];
-        shuts[p + 1] = all[p] == u'}' ? p : shuts[p];
-    }
-    const std::size_t lastShut = shuts[all.size()];
+    // where the "{" and "}" are, read in one pass: the last of each before a
+    // place is a binary search (Codex: a search for each tag made long
+    // blocks of tags quadratic, and a table for every unit cost memory)
+    std::vector<std::size_t> opens, shuts;
+    for (std::size_t p = 0; p < all.size(); p++)
+        if (all[p] == u'{')
+            opens.push_back(p);
+        else if (all[p] == u'}')
+            shuts.push_back(p);
+    const auto lastBefore = [](const std::vector<std::size_t> &at, std::size_t place) {
+        const auto it = std::ranges::lower_bound(at, place);
+        return it == at.begin() ? u16::npos : *std::prev(it);
+    };
+    const std::size_t lastShut = shuts.empty() ? u16::npos : shuts.back();
     u16 text;
     std::size_t from = 0;
     for (auto &[wanted, tag] : tags) {
         std::size_t at = std::clamp(wanted, from, all.size());
         // into the block it is in, else a block of its own
-        const auto open = opens[at];
-        const auto shut = shuts[at];
+        const auto open = lastBefore(opens, at);
+        const auto shut = lastBefore(shuts, at);
         bool inside = open != u16::npos && (shut == u16::npos || shut < open);
         if (inside && (lastShut == u16::npos || lastShut < at)) {
             inside = false; // an unclosed "{" is text: the tag goes before it (A5-kara-unclosed)
@@ -628,6 +661,11 @@ std::optional<std::pair<int, int>> AudioKaraoke::letterAt(int x, const AudioView
         center += tw / 2;
     }
     return std::pair(syl, static_cast<int>(spans.size()));
+}
+
+std::size_t karaokeLetterEnd(std::u16string_view text, std::size_t at)
+{
+    return at < text.size() ? letterEnd(text, at) : text.size();
 }
 
 std::size_t karaokeGraphemePrefix(std::u16string_view text, int graphemes)
