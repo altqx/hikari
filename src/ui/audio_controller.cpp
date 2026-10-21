@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <exception>
 #include <map>
 
 #include <utility>
@@ -1425,8 +1426,9 @@ std::string AudioController::onsetKey() const
 
 // KA5-onset-snap: the open audio's onsets, from this session's cache or found
 // by a worker over the loaded audio, while snapping is on in Karaoke mode.
-// A worker for audio since closed is cancelled; one finished for the same
-// file is kept for when it opens again.
+// A worker for audio since closed, or once snapping is off or Karaoke mode
+// left, is cancelled; one finished for the same file is kept for when it
+// opens again.
 void AudioController::findOnsets()
 {
     if (m_onsetsSerial != m_box.serial()) {
@@ -1434,7 +1436,9 @@ void AudioController::findOnsets()
         m_onsets.reset();
         m_onsetsSerial = m_box.serial();
     }
-    if (!m_onsetSnap || !m_hasKara || !ready() || m_onsets || m_onsetCancel)
+    if (!m_onsetSnap || !m_hasKara)
+        return stopFindingOnsets(); // a detection no longer wanted stops
+    if (!ready() || m_onsets || m_onsetCancel)
         return;
     const std::string key = onsetKey();
     if (const auto it = m_onsetCache.find(key); it != m_onsetCache.end()) {
@@ -1446,7 +1450,12 @@ void AudioController::findOnsets()
     m_onsetCancel = cancel;
     ++m_onsetDetections;
     m_onsetWorker = std::thread([this, audio = m_box.sharedAudio(), cancel, key, serial = m_onsetsSerial] {
-        auto found = application::detectVocalOnsets(*audio, cancel.get());
+        std::optional<std::vector<int>> found;
+        try {
+            found = application::detectVocalOnsets(*audio, cancel.get());
+        } catch (const std::exception &) {
+            found.emplace(); // out of memory: no onsets, rather than the editor ending
+        }
         if (!found)
             return;
         auto onsets = std::make_shared<const std::vector<int>>(std::move(*found));

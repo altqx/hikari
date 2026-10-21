@@ -34,7 +34,8 @@ struct Envelope {
 std::optional<Envelope> envelope(const DisplayAudio &audio, const std::atomic<bool> *cancel)
 {
     const int rate = audio.sampleRate();
-    const std::int64_t samples = std::min(audio.sampleCount(), audio.decoded());
+    const std::int64_t samples =
+        std::min({audio.sampleCount(), audio.decoded(), kOnsetMaxMs / 1000 * std::int64_t(rate)});
     const std::int64_t frames = samples * 1000 / rate / kOnsetHopMs + 1;
     const int window = std::min<int>(kSpectrumDoubleLength, rate * kWindowMs / 1000);
     const int lowBin = std::max(1, int(std::ceil(kBandLowHz * kSpectrumDoubleLength / rate)));

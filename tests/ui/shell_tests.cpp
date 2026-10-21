@@ -16420,6 +16420,13 @@ private slots:
         QVERIFY(audio.karaoke());
         QVERIFY(audio.karaokeModel().times() == (std::vector<int>{1500, 2000, 3000}));
         QCOMPARE(audio.onsetDetections(), 0); // off: nothing is looked for
+        // turned off again before the worker's result arrives: it is cancelled
+        // and nothing is kept
+        audio.setOnsetSnap(true);
+        QCOMPARE(audio.onsetDetections(), 1);
+        audio.setOnsetSnap(false);
+        QTest::qWait(300);
+        QVERIFY(!audio.onsetsFound());
 
         // on: found off the UI thread, the boundaries left as they are
         QVERIFY(QMetaObject::invokeMethod(snapItem, "toggle"));
@@ -16428,7 +16435,7 @@ private slots:
         QVERIFY(store->boolean("audio.onsetSnap"));
         QVERIFY(snapItem->property("checked").toBool());
         QTRY_VERIFY_WITH_TIMEOUT(audio.onsetsFound(), 10000);
-        QCOMPARE(audio.onsetDetections(), 1);
+        QCOMPARE(audio.onsetDetections(), 2);
         const std::vector<int> onsets(audio.snapOnsets().begin(), audio.snapOnsets().end());
         QCOMPARE(onsets.size(), std::size_t(3));
         for (const auto &[found, at] : {std::pair(onsets[0], 1000), std::pair(onsets[1], 1630), std::pair(onsets[2], 2140)})
@@ -16472,12 +16479,12 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(snapItem, "toggled"));
         audio.openDummy();
         QTRY_VERIFY_WITH_TIMEOUT(audio.onsetsFound(), 10000);
-        QCOMPARE(audio.onsetDetections(), 2);
+        QCOMPARE(audio.onsetDetections(), 3);
         QVERIFY(audio.snapOnsets().empty()); // silence
         audio.openAudio(sung);
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QVERIFY(audio.onsetsFound());
-        QCOMPARE(audio.onsetDetections(), 2);
+        QCOMPARE(audio.onsetDetections(), 3);
         QVERIFY(std::ranges::equal(audio.snapOnsets(), onsets));
 
         // tapping (Hold): each press near an onset lands on it

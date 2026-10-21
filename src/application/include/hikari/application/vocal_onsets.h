@@ -14,6 +14,7 @@
 
 #include <atomic>
 #include <climits>
+#include <cstdint>
 #include <optional>
 #include <span>
 #include <vector>
@@ -23,9 +24,13 @@ namespace hikari::application {
 inline constexpr int kOnsetHopMs = 10;      // the onsets' grid (legacy ZEROIT's)
 inline constexpr int kOnsetMinGapMs = 50;   // two onsets closer than this are one
 inline constexpr int kOnsetSnapWindowMs = 100; // a boundary snaps to an onset this near
+// Audio past this is not looked at: a dummy audio's length is whatever its
+// name says, and the detection keeps two numbers per 10 ms (about 35 MB here).
+inline constexpr std::int64_t kOnsetMaxMs = std::int64_t(6) * 3600 * 1000;
 
-// The onsets of the audio's decoded samples, in ms on the kOnsetHopMs grid,
-// ascending. Nullopt once `cancel` is set (checked between blocks).
+// The onsets of the audio's decoded samples up to kOnsetMaxMs, in ms on the
+// kOnsetHopMs grid, ascending. Nullopt once `cancel` is set (checked between
+// blocks).
 std::optional<std::vector<int>> detectVocalOnsets(const DisplayAudio &audio,
                                                   const std::atomic<bool> *cancel = nullptr);
 

@@ -204,6 +204,15 @@ TEST(VocalOnsets, OtherSampleRates)
     }
 }
 
+// Audio past kOnsetMaxMs is not looked at, however long a dummy audio's
+// name makes it (its buffers would not fit in memory).
+TEST(VocalOnsets, AudioPastTheCapIsNotLookedAt)
+{
+    const auto found = detectVocalOnsets(DisplayAudio::silence(48000, std::int64_t(3000000000000000)));
+    ASSERT_TRUE(found.has_value());
+    EXPECT_TRUE(found->empty());
+}
+
 // A set cancel ends the detection without onsets.
 TEST(VocalOnsets, CancelEndsTheDetection)
 {
