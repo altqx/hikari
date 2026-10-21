@@ -36,6 +36,18 @@ bool isGeneratedLine(const core::LineRecord &line);
 std::optional<core::LineId> templatePreviewSource(const core::Document &doc, std::optional<core::LineId> active,
                                                   std::optional<core::LineId> last);
 
+// A file's generated Lines carry no marks (KE1 keeps them in memory only).
+// Which karaoke Line each came from is found as KE1's selected-Lines run
+// finds it: a run on the snapshot below gives every karaoke Line's Lines,
+// and each karaoke Line, in file order, takes for each of its Lines the
+// first unmarked generated Line still free that reads back the same.
+// The snapshot: the Document without its generated Lines, every karaoke
+// Line selected; nothing without karaoke Lines.
+std::optional<MacroSnapshot> templateOwnersSnapshot(const core::Document &doc);
+// The karaoke Line of each unmarked generated Line, from that run's result;
+// none when a Line the templates give now is not in the file.
+std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, const MacroResult &result);
+
 // The snapshot a preview runs on: the Script Info, the Styles, the template
 // and code Lines and `source`, which is selected and active. `texts` gives
 // template or code Lines text not yet in the Document. Nothing when `source`

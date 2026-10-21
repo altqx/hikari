@@ -259,6 +259,10 @@ private:
     void updateSource();
     // Every run going on answers to nothing more.
     void stopRuns();
+    // An unmarked generated Line is active: asks which karaoke Lines a
+    // file's generated Lines came from (templateOwners); false when it
+    // cannot run (hidden, not trusted, no templater).
+    bool askOwners();
 
     DocumentKey documentKey() const;
     // The Document's template and code Lines, each with what the templater
@@ -300,6 +304,10 @@ private:
     std::optional<Pending> m_pending;
     QTimer m_previewTimer, m_commitTimer;
     std::optional<core::LineId> m_source, m_lastSource;
+    // The karaoke Line of each unmarked generated Line, as the Document was
+    // at m_ownersRevision; m_ownersAsked while that run goes.
+    std::map<core::LineId, core::LineId> m_owners;
+    std::optional<std::uint64_t> m_ownersRevision, m_ownersAsked;
     // The preview: what it saw and gave.
     std::optional<std::vector<core::LineRecord>> m_preview;
     std::vector<bool> m_own;

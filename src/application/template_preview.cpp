@@ -4,6 +4,7 @@
 #include "hikari/application/macro_transaction.h"
 
 #include <algorithm>
+#include <deque>
 #include <limits>
 
 namespace hikari::application {
@@ -24,6 +25,25 @@ std::u8string firstWord(const std::u8string &effect)
         if (c >= u8'A' && c <= u8'Z')
             c = static_cast<char8_t>(c - u8'A' + u8'a');
     return word;
+}
+
+// kara-templater.lua's line_key: a dialogue line as it reads back once
+// saved, spaces trimmed around the actor, effect and texts.
+std::string lineKey(const MacroDialogueLine &l)
+{
+    const auto trim = [](const std::string &s) {
+        const auto first = std::ranges::find_if_not(s, [](char c) { return space(static_cast<char8_t>(c)); });
+        const auto last = std::find_if_not(s.rbegin(), std::string::const_reverse_iterator(first),
+                                           [](char c) { return space(static_cast<char8_t>(c)); });
+        return std::string(first, last.base());
+    };
+    std::string key;
+    for (const auto &field : {std::string(l.comment ? "1" : "0"), std::to_string(l.layer), std::to_string(l.startMs),
+                              std::to_string(l.endMs), l.style, trim(l.actor), std::to_string(l.marginL),
+                              std::to_string(l.marginR), std::to_string(l.marginV), trim(l.effect), trim(l.text),
+                              trim(l.translation)})
+        key += field + '\0';
+    return key;
 }
 
 std::int64_t msOf(const core::TimeField &t)
@@ -81,6 +101,48 @@ std::optional<core::LineId> templatePreviewSource(const core::Document &doc, std
         return l->id;
     const auto first = std::ranges::find_if(lines, [](const core::LineRecord *l) { return isKaraokeLine(*l); });
     return first == lines.end() ? std::nullopt : std::optional((*first)->id);
+}
+
+std::optional<MacroSnapshot> templateOwnersSnapshot(const core::Document &doc)
+{
+    core::Document plain = doc;
+    plain.removeLinesIf([](const core::LineRecord &l) { return isGeneratedLine(l); });
+    Selection all;
+    for (const auto *l : plain.lines())
+        if (isKaraokeLine(*l) && !templateKindOf(*l)) {
+            all.selected.insert(l->id);
+            if (!all.active)
+                all.active = l->id;
+        }
+    if (all.selected.empty())
+        return std::nullopt;
+    return macroSnapshotOf(plain, all);
+}
+
+std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, const MacroResult &result)
+{
+    std::map<std::string, std::deque<core::LineId>> free;
+    for (const auto *l : doc.lines())
+        if (isGeneratedLine(*l) && l->generatedFrom.value == 0)
+            free[lineKey(macroLineOf(*l))].push_back(l->id);
+    std::map<std::uint64_t, std::vector<const MacroDialogueLine *>> made;
+    for (const auto &d : result.dialogues)
+        if (d.id == 0 && d.generatedFrom != 0)
+            made[d.generatedFrom].push_back(&d);
+    std::map<core::LineId, core::LineId> owners;
+    for (const auto *l : doc.lines()) {
+        const auto lines = made.find(l->id.value);
+        if (lines == made.end())
+            continue;
+        for (const auto *d : lines->second) {
+            auto &list = free[lineKey(*d)];
+            if (list.empty())
+                return {}; // the templates give what the file does not hold
+            owners[list.front()] = l->id;
+            list.pop_front();
+        }
+    }
+    return owners;
 }
 
 std::optional<MacroSnapshot> templatePreviewSnapshot(const core::Document &doc, core::LineId source,

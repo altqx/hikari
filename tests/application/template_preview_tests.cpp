@@ -155,6 +155,54 @@ TEST_F(TemplatePreview, ATranslatedTemplatesTextStandsForItsTranslation)
     EXPECT_EQ(s->dialogues[1].translation, "{\\pos($x,$y)}") << "the original";
 }
 
+// A file's unmarked generated Lines go to the karaoke Lines that give them
+// now, identical ones in file order, as KE1's selected-Lines run matches
+// them; a Line the templates no longer give leaves them all unknown.
+TEST_F(TemplatePreview, AFilesGeneratedLinesGoToTheKaraokeLinesThatGiveThem)
+{
+    const auto file = load("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                           "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                           "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
+                           "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                           "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,"
+                           "0,1,2,2,2,10,10,10,1\n\n[Events]\n"
+                           "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                           "Comment: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,template line,{\\pos(1,1)}\n"
+                           "Comment: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,karaoke,{\\k50}a\n"
+                           "Comment: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,karaoke,{\\k50}a\n"
+                           "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,karaoke,{\\k50}b\n"
+                           "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,fx,{\\pos(1,1)}b\n"
+                           "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,fx,{\\pos(1,1)}a\n"
+                           "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,fx,{\\pos(1,1)}a\n");
+    std::vector<core::LineId> id;
+    for (const auto *l : file.lines())
+        id.push_back(l->id);
+    const auto s = templateOwnersSnapshot(file);
+    ASSERT_TRUE(s);
+    ASSERT_EQ(s->dialogues.size(), 4u) << "no generated Lines";
+    EXPECT_EQ(s->selected.size(), 3u) << "every karaoke Line";
+    // The run's Lines, each marked with its karaoke Line.
+    MacroResult result;
+    result.dialogues = s->dialogues;
+    const auto made = [&](core::LineId from, std::int64_t start, const char *text) {
+        MacroDialogueLine d;
+        d.generatedFrom = from.value;
+        d.startMs = start;
+        d.endMs = start + 1000;
+        d.style = "Default";
+        d.effect = "fx";
+        d.text = text;
+        return d;
+    };
+    result.dialogues.push_back(made(id[1], 0, "{\\pos(1,1)}a"));
+    result.dialogues.push_back(made(id[2], 0, "{\\pos(1,1)}a"));
+    result.dialogues.push_back(made(id[3], 1000, "{\\pos(1,1)}b"));
+    EXPECT_EQ(templateOwners(file, result),
+              (std::map<core::LineId, core::LineId>{{id[4], id[3]}, {id[5], id[1]}, {id[6], id[2]}}));
+    result.dialogues.back().text = "{\\pos(2,2)}b"; // the template changed since
+    EXPECT_TRUE(templateOwners(file, result).empty());
+}
+
 TEST_F(TemplatePreview, TheSnapshotKeepsTheSourcesPlaceAmongTheTemplates)
 {
     // A template after the source stays after it, as the whole run sees it.

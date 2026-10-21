@@ -1194,6 +1194,35 @@ private slots:
         QVERIFY(editor->canApply());
     }
 
+    // A generated Line clicked in a file opened without marks previews the
+    // karaoke Line it came from, found as KE1 finds it, not the first one.
+    void anUnmarkedGeneratedLinePreviewsItsOwnKaraokeLine()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        const auto first = firstKaraoke();
+        QVERIFY(first);
+        // The last generated Line whose Style and times are one karaoke
+        // Line's alone.
+        std::optional<core::LineId> clicked, owner;
+        for (const auto *g : session->document().lines()) {
+            if (!application::isGeneratedLine(*g))
+                continue;
+            std::vector<core::LineId> same;
+            for (const auto *k : session->document().lines())
+                if (application::isKaraokeLine(*k) && !application::templateKindOf(*k) &&
+                    k->style == g->style && k->start.value == g->start.value && k->end.value == g->end.value)
+                    same.push_back(k->id);
+            if (same.size() == 1 && same.front() != *first) {
+                clicked = g->id;
+                owner = same.front();
+            }
+        }
+        QVERIFY(clicked);
+        editor->setShown(true);
+        activate(*clicked);
+        QVERIFY(QTest::qWaitFor([&] { return editor->source() == owner->value && settled(); }, 20'000));
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));

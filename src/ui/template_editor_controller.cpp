@@ -428,8 +428,20 @@ void TemplateEditorController::refresh()
 void TemplateEditorController::updateSource()
 {
     const auto *s = session();
-    const std::optional<core::LineId> source =
+    std::optional<core::LineId> source =
         s ? application::templatePreviewSource(s->document(), s->selection().active, m_lastSource) : std::nullopt;
+    // A generated Line of a file opened without marks: its karaoke Line is
+    // found first; the preview stays until then.
+    const auto active = s ? s->selection().active : std::nullopt;
+    if (const auto *l = active ? line(*active) : nullptr;
+        l && application::isGeneratedLine(*l) && l->generatedFrom.value == 0) {
+        if (m_ownersRevision == s->revision()) {
+            if (const auto owner = m_owners.find(*active); owner != m_owners.end())
+                source = owner->second;
+        } else if (m_ownersAsked == s->revision() || askOwners()) {
+            return;
+        }
+    }
     if (source == m_source)
         return;
     m_source = source;
@@ -466,8 +478,44 @@ void TemplateEditorController::stopRuns()
     ++m_generation;
     m_running = false;
     m_previewing = false;
+    m_ownersAsked.reset();
     if (m_templater)
         m_templater->cancelPreview();
+}
+
+bool TemplateEditorController::askOwners()
+{
+    auto *s = session();
+    if (!s || !m_shown || !available() || !trusted())
+        return false;
+    const auto snapshot = application::templateOwnersSnapshot(s->document());
+    if (!snapshot) {
+        m_owners.clear();
+        m_ownersRevision = s->revision();
+        return false;
+    }
+    stopRuns(); // one run at a time: this one first
+    const std::uint64_t revision = s->revision();
+    m_ownersAsked = revision;
+    emit changed(); // canApply waits for the preview it leads to
+    QPointer<TemplateEditorController> self = this;
+    const std::uint64_t generation = m_generation;
+    const DocumentKey key = documentKey();
+    m_templater->preview(*snapshot, [self, generation, key, revision](application::KaraokeTemplaterPort::Preview p) {
+        if (!self || generation != self->m_generation)
+            return;
+        self->m_ownersAsked.reset();
+        const auto *now = self->session();
+        if (now && self->documentKey() == key && now->revision() == revision) {
+            self->m_owners = p.result ? application::templateOwners(now->document(), *p.result)
+                                      : std::map<core::LineId, core::LineId>{};
+            self->m_ownersRevision = revision;
+        }
+        self->m_previewSnapshotKey.clear();
+        self->refresh();
+        self->schedulePreview();
+    });
+    return true;
 }
 
 void TemplateEditorController::setShown(bool shown)
@@ -751,7 +799,7 @@ bool TemplateEditorController::canApply() const
 
 bool TemplateEditorController::previewPending() const
 {
-    return m_shown && trusted() && (m_previewTimer.isActive() || m_previewing);
+    return m_shown && trusted() && (m_previewTimer.isActive() || m_previewing || m_ownersAsked);
 }
 
 TemplateEditorController::DocumentKey TemplateEditorController::documentKey() const
@@ -822,6 +870,7 @@ void TemplateEditorController::trustDocument()
     trust(templateLines(), sourceFields());
     m_previewSnapshotKey.clear();
     emit changed();
+    updateSource(); // an unmarked generated Line's karaoke Line can be found now
     schedulePreview();
 }
 
@@ -1047,6 +1096,8 @@ void TemplateEditorController::schedulePreview()
 
 void TemplateEditorController::runPreview()
 {
+    if (m_ownersAsked)
+        return; // its answer previews
     if (!m_shown || !available() || !m_source || !trusted()) {
         m_running = false;
         m_previewing = false;
@@ -1253,7 +1304,7 @@ void TemplateEditorController::runValues(std::uint64_t generation)
     // m_wantValues stays until the answer comes: a preview that replaces
     // this run asks again when its chain ends.
     const auto *doc = document();
-    if (!doc || !m_source || !available() || !trusted())
+    if (!doc || !m_source || !available() || !trusted() || m_ownersAsked)
         return;
     auto snapshot = application::templatePreviewSnapshot(*doc, *m_source);
     const auto *source = line(*m_source);
