@@ -146,7 +146,11 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
     std::unordered_map<u8, std::size_t> first;
     for (std::size_t i = into.size(); i-- > 0;)
         first[into[i].name] = i;
+    // The incoming names are reserved too: a clash renamed onto a later
+    // new Style's name would make that one a clash nobody answered.
     StyleNames taken = namesOf(into);
+    for (const auto &style : styles)
+        taken.insert(style.name);
     std::unordered_map<u8, int> next;
     std::unordered_map<u8, int> clashes; // per name, the clashes so far
     const auto add = [&](core::StyleValues style) {

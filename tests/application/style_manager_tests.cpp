@@ -141,6 +141,12 @@ TEST(StyleLists, TransferWithClashChoices)
     EXPECT_EQ(apart[0].fontname, u8"Three");
     EXPECT_EQ(apart[1].fontname, u8"One");
     EXPECT_EQ(apartRows, (std::vector<std::size_t>{1, 0}));
+    // A clash renamed onto a later new Style's name takes a free one, and
+    // the new Style is still copied (Codex review).
+    StyleList onto{named(u8"A")};
+    transferStyles(onto, {named(u8"A", u8"Times"), named(u8"B")},
+                   ClashChoices{{{u8"A", 0}, {ClashAction::Rename, u8"B"}}});
+    EXPECT_EQ(names(onto), (std::vector<std::u8string>{u8"A", u8"B (2)", u8"B"}));
 }
 
 // PK1 (#301, Codex security review): a file with X, X (2)... X (n) and many

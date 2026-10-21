@@ -77,6 +77,10 @@ RowLayout {
         show(d)
     }
     function openCalendar() {
+        // A typed date not yet committed is the one to start from.
+        const typed = parse(dateField.text)
+        if (typed && day(typed).getTime() !== date.getTime())
+            setDate(typed)
         show(date)
         // Made before the popover measures its content.
         gridLoader.active = true

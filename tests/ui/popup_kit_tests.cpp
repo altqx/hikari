@@ -672,6 +672,18 @@ private slots:
         typeText(root.get(), QStringLiteral("not a date"));
         QTest::keyClick(root.get(), Qt::Key_Return);
         QCOMPARE(field->property("text").toString(), shortDate(QDate(2025, 3, 4)));
+        // A typed date not yet committed is where the calendar opens, and
+        // Esc keeps it (Codex review).
+        QTest::keyClick(root.get(), Qt::Key_A, Qt::ControlModifier);
+        typeText(root.get(), shortDate(QDate(2024, 6, 10)));
+        QTest::keyClick(root.get(), Qt::Key_Down, Qt::AltModifier);
+        QTRY_VERIFY(run(QStringLiteral("date.popover.opened")).toBool());
+        QCOMPARE(run(QStringLiteral("date.shownYear * 100 + date.shownMonth")).toInt(), 202405);
+        QTest::keyClick(root.get(), Qt::Key_Escape);
+        QTRY_VERIFY(!run(QStringLiteral("date.popover.visible")).toBool());
+        QCOMPARE(run(QStringLiteral("date.date.getFullYear() * 10000 + (date.date.getMonth() + 1) * 100 + date.date.getDate()"))
+                     .toInt(),
+                 20240610);
         // A month back from the 31st is the last day of a shorter month.
         const auto ymd = [&](const char *expression) { return run(QString::fromLatin1(expression)).toInt(); };
         QCOMPARE(ymd("(d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate())"
