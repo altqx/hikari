@@ -664,26 +664,27 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
     }
 }
 
+bool ScaleTool::takesKey(const Key &event) const
+{
+    return nudgeDirection(event).has_value();
+}
+
 bool ScaleTool::key(const Key &event, VisualHost &host)
 {
-    // Scale::OnKeyPress (VisualScale.cpp:564-607): W/A/S/D move the arrows'
-    // end by one percent (Shift: a tenth) unless Alt alone is held; each
-    // press is its own edit.
+    // Scale::OnKeyPress (VisualScale.cpp:564-607): a nudge moves the arrows'
+    // end by one percent (Shift: a tenth); VT2-arrow-nudge: the arrows, for
+    // legacy's W/A/S/D. Each press is its own edit.
     if (event.release)
         return false;
-    const bool left = event.key == 'A';
-    const bool right = event.key == 'D';
-    const bool up = event.key == 'W';
-    const bool down = event.key == 'S';
-    const bool altOnly = event.alt && !event.control && !event.shift;
-    if (!((left || right || up || down) && !altOnly))
+    const auto direction = nudgeDirection(event);
+    if (!direction)
         return false;
     if (!beginEdit(host))
         return true;
     const float unitx = std::abs(m_arrowLengths.x / 100);
     const float unity = std::abs(m_arrowLengths.y / 100);
-    float directionX = (left) ? -unitx : (right) ? unitx : 0;
-    float directionY = (up) ? -unity : (down) ? unity : 0;
+    float directionX = direction->x * unitx;
+    float directionY = direction->y * unity;
     m_type = (directionX) ? 0 : 1;
     if (event.shift) {
         directionX /= 10.f;

@@ -16,7 +16,11 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
 
+#include "legacy_visual_keys.h"
+
 #include <gtest/gtest.h>
+
+#include <tuple>
 
 #include <QFile>
 #include <QJsonArray>
@@ -586,14 +590,14 @@ TEST(VisualPositionCapture, ReplaysTheLegacyProbe)
             } else if (op == "key") {
                 std::string k;
                 in >> k;
-                Key key;
-                key.key = k[0];
+                bool shift = false, control = false, alt = false;
                 std::string w;
                 while (in >> w) {
-                    key.shift |= w == "shift";
-                    key.control |= w == "ctrl";
-                    key.alt |= w == "alt";
+                    shift |= w == "shift";
+                    control |= w == "ctrl";
+                    alt |= w == "alt";
                 }
+                Key key = legacy_keys::legacyKey(k, shift, control, alt, tool->family());
                 // VideoBox::OnKeyPress hands every key to the tool, blocked
                 // or not (VideoBox.cpp:666-668).
                 if (host.blocked())
@@ -844,7 +848,7 @@ TEST(VisualPositionGesture, AHeldNudgeIsOneStepCommittedOnRelease)
 {
     // Legacy committed every key press (VisualPosition.cpp:554); the
     // transaction rule (#55) commits a nudge on its key's release, so the
-    // presses of a held key make one step.
+    // presses of a held key make one step. VT2-arrow-nudge: Right, legacy's D.
     TestHost host;
     standard(host);
     PositionTool tool;
@@ -853,7 +857,7 @@ TEST(VisualPositionGesture, AHeldNudgeIsOneStepCommittedOnRelease)
     tool.reset(host);
     const auto before = host.s->history().size();
     Key key;
-    key.key = 'D';
+    key.key = keys::Right;
     EXPECT_TRUE(tool.key(key, host));
     key.autoRepeat = true;
     EXPECT_TRUE(tool.key(key, host));
@@ -867,11 +871,86 @@ TEST(VisualPositionGesture, AHeldNudgeIsOneStepCommittedOnRelease)
     EXPECT_TRUE(tool.key(key, host));
     EXPECT_EQ(text(host, 0), u8"{\\pos(303,300)}x");
     EXPECT_EQ(host.s->history().size(), before + 1);
-    // Alt alone leaves the key to others; Ctrl+Alt nudges.
-    Key alt;
-    alt.key = 'A';
-    alt.alt = true;
-    EXPECT_FALSE(tool.key(alt, host));
+    // Alt and Ctrl leave the arrows to others (Ctrl+Left is the Global
+    // Insert start time from video); the letters nudge no longer.
+    for (const auto &[k, control, alt] : {std::tuple{keys::Left, false, true}, std::tuple{keys::Left, true, false},
+                                          std::tuple{keys::Left, true, true}, std::tuple{int('A'), false, false},
+                                          std::tuple{int('D'), false, false}}) {
+        Key other;
+        other.key = k;
+        other.control = control;
+        other.alt = alt;
+        EXPECT_FALSE(tool.takesKey(other)) << k;
+        EXPECT_FALSE(tool.key(other, host)) << k;
+    }
+    EXPECT_EQ(text(host, 0), u8"{\\pos(303,300)}x");
+    EXPECT_EQ(host.s->history().size(), before + 1);
+}
+
+TEST(VisualPositionGesture, TheArrowsNudgeShiftATenth)
+{
+    // VT2-arrow-nudge: Left, Right, Up and Down for legacy's A, D, W and S;
+    // Shift a tenth. Each press and release is its own step.
+    TestHost host;
+    standard(host);
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    const auto press = [&](int k, bool shift = false) {
+        Key key;
+        key.key = k;
+        key.shift = shift;
+        EXPECT_TRUE(tool.takesKey(key));
+        EXPECT_TRUE(tool.key(key, host));
+        key.release = true;
+        EXPECT_TRUE(tool.key(key, host));
+        tool.reset(host); // the shell reads the Line again after the commit
+    };
+    press(keys::Left);
+    EXPECT_EQ(text(host, 0), u8"{\\pos(299,300)}x");
+    press(keys::Down);
+    EXPECT_EQ(text(host, 0), u8"{\\pos(299,301)}x");
+    press(keys::Up);
+    press(keys::Right);
+    EXPECT_EQ(text(host, 0), u8"{\\pos(300,300)}x");
+    press(keys::Right, true);
+    EXPECT_EQ(text(host, 0), u8"{\\pos(300.1,300)}x");
+}
+
+TEST(VisualMoveGesture, TheArrowsMoveTheStartAltArrowsTheEnd)
+{
+    // VT2-arrow-nudge: the arrows move the \move's start (legacy A/D/W/S),
+    // Alt+arrows its end (legacy J/L/I/K, whose L never reached the tool:
+    // it is VIDEO_5_SECONDS_FORWARD). Ctrl+arrows stay the Global bindings'.
+    TestHost host;
+    standard(host, 1);
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    const auto press = [&](int k, bool alt, bool control = false) {
+        Key key;
+        key.key = k;
+        key.alt = alt;
+        key.control = control;
+        const bool taken = tool.takesKey(key);
+        EXPECT_EQ(tool.key(key, host), taken);
+        key.release = true;
+        (void)tool.key(key, host);
+        tool.reset(host);
+        return taken;
+    };
+    EXPECT_TRUE(press(keys::Right, false));
+    EXPECT_EQ(text(host, 1), u8"{\\move(31,60,90,120,0,2000)}y");
+    EXPECT_TRUE(press(keys::Down, true));
+    EXPECT_EQ(text(host, 1), u8"{\\move(31,60,90,121,0,2000)}y");
+    EXPECT_TRUE(press(keys::Left, true));
+    EXPECT_EQ(text(host, 1), u8"{\\move(31,60,89,121,0,2000)}y");
+    EXPECT_FALSE(press(keys::Left, false, true));
+    EXPECT_FALSE(press(int('J'), false));
+    EXPECT_FALSE(press(int('D'), false));
+    EXPECT_EQ(text(host, 1), u8"{\\move(31,60,89,121,0,2000)}y");
 }
 
 TEST(VisualPositionGesture, QtsDoubleClickOrderGivesLegacysResult)

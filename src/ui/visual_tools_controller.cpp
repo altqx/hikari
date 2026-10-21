@@ -117,6 +117,7 @@ QVariantList VisualToolsController::families() const
     for (const FamilyInfo &f : application::visual::families())
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromLatin1(f.tooltip.data(), f.tooltip.size())},
                                {QStringLiteral("icon"), QString::fromLatin1(f.icon.data(), f.icon.size())},
+                               {QStringLiteral("hotkey"), QString::fromLatin1(f.hotkey.data(), f.hotkey.size())},
                                {QStringLiteral("available"),
                                 m_tools[static_cast<std::size_t>(f.family)] != nullptr}});
     return out;
@@ -793,6 +794,20 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     emit changed();
 }
 
+namespace {
+
+Key keyOf(int key, int modifiers)
+{
+    Key k;
+    k.key = key;
+    k.control = (modifiers & Qt::ControlModifier) != 0;
+    k.shift = (modifiers & Qt::ShiftModifier) != 0;
+    k.alt = (modifiers & Qt::AltModifier) != 0;
+    return k;
+}
+
+} // namespace
+
 bool VisualToolsController::key(int key, int modifiers, bool release, bool autoRepeat)
 {
     auto *t = tool();
@@ -800,14 +815,27 @@ bool VisualToolsController::key(int key, int modifiers, bool release, bool autoR
         return false;
     // VideoBox::OnKeyPress hands the keys to the tool whether or not its
     // events are blocked (VideoBox.cpp:666-668; blockevents is the pointer's).
-    Key k;
-    k.key = key;
+    Key k = keyOf(key, modifiers);
     k.release = release;
     k.autoRepeat = autoRepeat;
-    k.control = (modifiers & Qt::ControlModifier) != 0;
-    k.shift = (modifiers & Qt::ShiftModifier) != 0;
-    k.alt = (modifiers & Qt::AltModifier) != 0;
     return t->key(k, *this);
+}
+
+bool VisualToolsController::takesKey(int key, int modifiers) const
+{
+    const auto *t = tool();
+    return t && m_view.hasVideo() && t->takesKey(keyOf(key, modifiers));
+}
+
+bool VisualToolsController::runHotkey(const QString &action)
+{
+    const auto family = application::visual::familyOfHotkey(action.toStdString());
+    if (!family)
+        return false;
+    // VT2: the command toggles as the rail does, so the on tool's key goes
+    // back to the crosshair (the crosshair's stays on it).
+    selectFamily(static_cast<int>(*family));
+    return true;
 }
 
 void VisualToolsController::selectFamily(int family)

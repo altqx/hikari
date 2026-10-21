@@ -68,13 +68,6 @@ bool isInPos(int x, int y, int x2, int y2, int diff)
     return std::abs(x - x2) < diff && std::abs(y - y2) < diff;
 }
 
-// The key a nudge reads (Position/Move::OnKeyPress): any modifiers but Alt
-// alone (evt.GetModifiers() != wxMOD_ALT).
-bool altAlone(const Key &key)
-{
-    return key.alt && !key.control && !key.shift;
-}
-
 // The record a target has for the gesture: its text as the gesture began, or
 // as staged (legacy committed each step and read the Line back).
 core::LineRecord stagedRecord(const Gesture &gesture, core::LineId id)
@@ -693,28 +686,31 @@ void PositionTool::getPositioningData(VisualHost &host)
     }
 }
 
+bool PositionTool::takesKey(const Key &evt) const
+{
+    return nudgeDirection(evt).has_value();
+}
+
 bool PositionTool::key(const Key &evt, VisualHost &host)
 {
-    // Position::OnKeyPress (VisualPosition.cpp:523-558): A/D/W/S nudge every
-    // Line one script pixel (a tenth with Shift). Legacy committed each
-    // press; here the presses while the key is held make one gesture
-    // committed on its release (the transaction rule, #55).
-    const bool left = evt.key == 'A';
-    const bool right = evt.key == 'D';
-    const bool up = evt.key == 'W';
-    const bool down = evt.key == 'S';
-    if (!(left || right || up || down))
-        return false;
+    // Position::OnKeyPress (VisualPosition.cpp:523-558): a nudge moves every
+    // Line one script pixel (a tenth with Shift); VT2-arrow-nudge: the
+    // arrows, for legacy's A/D/W/S. Legacy committed each press; here the
+    // presses while the key is held make one gesture committed on its
+    // release (the transaction rule, #55).
     if (evt.release) {
+        if (!isArrowKey(evt.key))
+            return false;
         if (evt.autoRepeat || !m_keyNudge)
             return m_keyNudge;
         (void)commitAll(host);
         return true;
     }
-    if (altAlone(evt))
+    const auto direction = nudgeDirection(evt);
+    if (!direction)
         return false;
-    float directionX = left ? -1.f : right ? 1.f : 0.f;
-    float directionY = up ? -1.f : down ? 1.f : 0.f;
+    float directionX = direction->x;
+    float directionY = direction->y;
     if (evt.shift) {
         directionX /= 10.f;
         directionY /= 10.f;
@@ -1351,18 +1347,22 @@ void MoveTool::pointer(const Pointer &evt, VisualHost &host)
     host.toolChanged();
 }
 
+bool MoveTool::takesKey(const Key &evt) const
+{
+    return nudgeDirection(evt, true).has_value();
+}
+
 bool MoveTool::key(const Key &evt, VisualHost &host)
 {
-    // Move::OnKeyPress (VisualMove.cpp:421-458): A/D/W/S move the start,
-    // J/L/I/K the end, one script pixel unzoomed (a tenth with Shift). Legacy
-    // committed each press and read the Line back; here the presses while the
-    // key is held make one gesture committed on its release (#55).
-    const bool left = evt.key == 'A', right = evt.key == 'D', up = evt.key == 'W', down = evt.key == 'S';
-    const bool sleft = evt.key == 'J', sright = evt.key == 'L', sup = evt.key == 'I', sdown = evt.key == 'K';
-    const bool secondShortcut = sleft || sright || sup || sdown;
-    if (!(left || right || up || down || secondShortcut))
-        return false;
+    // Move::OnKeyPress (VisualMove.cpp:421-458): a nudge moves the start or
+    // the end one script pixel unzoomed (a tenth with Shift);
+    // VT2-arrow-nudge: the arrows the start and Alt+arrows the end, for
+    // legacy's A/D/W/S and J/L/I/K. Legacy committed each press and read the
+    // Line back; here the presses while the key is held make one gesture
+    // committed on its release (#55).
     if (evt.release) {
+        if (!isArrowKey(evt.key))
+            return false;
         if (evt.autoRepeat || !m_keyNudge)
             return m_keyNudge;
         if (host.gesture() && m_inGesture)
@@ -1370,10 +1370,12 @@ bool MoveTool::key(const Key &evt, VisualHost &host)
         m_keyNudge = false;
         return true;
     }
-    if (altAlone(evt))
+    const auto direction = nudgeDirection(evt, true);
+    if (!direction)
         return false;
-    float directionX = (left || sleft) ? -1.f : (right || sright) ? 1.f : 0.f;
-    float directionY = (up || sup) ? -1.f : (down || sdown) ? 1.f : 0.f;
+    const bool secondShortcut = evt.alt;
+    float directionX = direction->x;
+    float directionY = direction->y;
     if (evt.shift) {
         directionX /= 10.f;
         directionY /= 10.f;

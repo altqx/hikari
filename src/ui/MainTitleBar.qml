@@ -51,10 +51,6 @@ Rectangle {
     Accessible.role: Accessible.TitleBar
     Accessible.name: custom ? title : qsTr("Menus")
 
-    // Press, a shade beyond hover (the mockup's: hover is `raised`).
-    readonly property color pressColor: Theme.highContrast
-        ? Theme.select : Qt.tint(Theme.raised, Qt.rgba(Theme.text.r, Theme.text.g, Theme.text.b, 0.06))
-
     Component.onCompleted: {
         menus.parent = lead
         more.parent = lead
@@ -278,55 +274,12 @@ Rectangle {
         return closed
     }
 
-    // The free parts of the bar: moving, maximising, the window menu. On
-    // Windows the window system takes the pointer here (WM_NCHITTEST says
-    // HTCAPTION, MainWindowFrame), so it never reaches this area.
-    MouseArea {
+    // The free parts of the bar: moving, maximising, the window menu.
+    TitleBarMoveArea {
         id: moveArea
         objectName: "titleBarMoveArea"
         anchors.fill: parent
-        enabled: bar.custom
-        acceptedButtons: Qt.LeftButton | Qt.RightButton
-        property point pressedAt
-        property point windowAt
-        property bool moving: false
-        property bool following: false
-        function follow(at: point) {
-            bar.window.x = Math.round(windowAt.x + at.x - pressedAt.x)
-            bar.window.y = Math.round(windowAt.y + at.y - pressedAt.y)
-        }
-        onPressed: mouse => {
-            moving = false
-            following = false
-            pressedAt = mapToGlobal(mouse.x, mouse.y)
-            if (mouse.button === Qt.RightButton)
-                bar.frame.showWindowMenu(mapToItem(null, mouse.x, mouse.y))
-        }
-        onPositionChanged: mouse => {
-            if (!(pressedButtons & Qt.LeftButton))
-                return
-            const at = mapToGlobal(mouse.x, mouse.y)
-            if (following) {
-                follow(at)
-                return
-            }
-            if (moving || Math.abs(at.x - pressedAt.x) + Math.abs(at.y - pressedAt.y) < Application.styleHints.startDragDistance)
-                return
-            moving = true
-            // Where the platform declines the move (X11 with no window
-            // manager), the window follows the pointer; never a maximised one.
-            if (!Docking.startSystemMove(moveArea) && !bar.maximized) {
-                windowAt = Qt.point(bar.window.x, bar.window.y)
-                following = true
-                follow(at)
-            }
-        }
-        onDoubleClicked: mouse => {
-            if (mouse.button === Qt.LeftButton)
-                bar.frame.toggleMaximized()
-        }
-        onReleased: { moving = false; following = false }
-        onCanceled: { moving = false; following = false }
+        frame: bar.frame
     }
 
     // The application icon: the window menu (MuseScore and Windows put it
@@ -440,46 +393,21 @@ Rectangle {
     // (WM_NCHITTEST's HTMAXBUTTON, for Windows 11's snap layouts): the
     // window system tracks its pointer (MainWindowFrame.maximizeHovered,
     // maximizePressed) and maximises.
-    component WindowButton: AbstractButton {
-        id: windowButton
-        required property string iconRole
-        property bool shownHover: hovered
-        property bool shownDown: down
-        implicitWidth: 46
-        implicitHeight: 32
-        focusPolicy: Qt.NoFocus
-        hoverEnabled: true
-        contentItem: Item {
-            Icon {
-                anchors.centerIn: parent
-                iconRole: windowButton.iconRole
-                color: bar.active ? IconTheme.normal : IconTheme.disabled
-            }
-        }
-        background: Rectangle {
-            color: windowButton.shownDown ? bar.pressColor : windowButton.shownHover ? Theme.raised : "transparent"
-            border.width: Theme.highContrast && (windowButton.shownDown || windowButton.shownHover) ? 1 : 0
-            border.color: Theme.line
-        }
-        Accessible.role: Accessible.Button
-        Accessible.name: text
-        ToolTip.visible: shownHover && !shownDown
-        ToolTip.text: text
-        ToolTip.delay: Application.styleHints.mousePressAndHoldInterval
-    }
     Row {
         id: buttons
         objectName: "titleBarButtons"
         visible: bar.custom
         anchors.right: parent.right
         anchors.top: parent.top
-        WindowButton {
+        TitleBarButton {
+            active: bar.active
             objectName: "titleBarMinimize"
             iconRole: "window-minimize"
             text: qsTr("Minimise")
             onClicked: bar.window.showMinimized()
         }
-        WindowButton {
+        TitleBarButton {
+            active: bar.active
             id: maximizeButton
             objectName: "titleBarMaximize"
             iconRole: bar.maximized ? "window-restore" : "window-maximize"
@@ -488,7 +416,8 @@ Rectangle {
             shownDown: down || bar.frame.maximizePressed
             onClicked: bar.frame.toggleMaximized()
         }
-        WindowButton {
+        TitleBarButton {
+            active: bar.active
             objectName: "titleBarClose"
             iconRole: "window-close"
             text: qsTr("Close")

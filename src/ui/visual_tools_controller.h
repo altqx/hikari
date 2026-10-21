@@ -167,11 +167,18 @@ public:
     Q_INVOKABLE void pointer(int kind, qreal x, qreal y, int button, int buttons, int modifiers, int wheelSteps = 0);
     // A key while the Video panel has focus: true when the tool used it.
     Q_INVOKABLE bool key(int key, int modifiers, bool release, bool autoRepeat);
+    // VT2: whether the tool takes the key ahead of the Video and Global
+    // bindings (VT2-arrow-nudge: its nudge's arrows), for the Video panel's
+    // ShortcutOverride.
+    Q_INVOKABLE bool takesKey(int key, int modifiers) const;
     // Esc: cancels the open gesture, if any (true then).
     Q_INVOKABLE bool escape();
     // A rail button: legacy's toggle (the toggled family again goes back to
     // the crosshair, VideoToolbar.cpp:209-210).
     Q_INVOKABLE void selectFamily(int family);
+    // VT2: a VIDEO_TOOL_* command chooses its family as its rail button does
+    // (true for one of them, whether or not the rail is enabled).
+    Q_INVOKABLE bool runHotkey(const QString &action);
     // VIDEO_COPY_COORDS at a logical position in the video area, or at the
     // pointer (legacy wxGetMousePosition, VideoBox.cpp:1151): the last
     // pointer event's position while the pointer is over the video, else

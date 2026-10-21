@@ -143,11 +143,16 @@ Window {
             return (event.key === Qt.Key_Escape || event.key === Qt.Key_B)
                     && fs.shell.hotkeys.actionFor(0, event.key, event.modifiers) === ""
         }
-        Keys.onShortcutOverride: event => event.accepted = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
+        // VT2-arrow-nudge: a tool's nudge (the arrows) before the bindings.
+        Keys.onShortcutOverride: event => event.accepted = fs.shell.visualTools.takesKey(event.key, event.modifiers)
+                                                          || fs.shell.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
                                                           || keys.leaves(event)
         Keys.onPressed: event => {
             const action = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers)
-            if (action !== "") {
+            if (fs.shell.visualTools.takesKey(event.key, event.modifiers)) {
+                fs.shell.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)
+                event.accepted = true
+            } else if (action !== "") {
                 fs.shell.runVideoHotkey(action)
                 event.accepted = true
             } else if (event.key === Qt.Key_Escape && fs.shell.visualTools.escape()) {
@@ -269,6 +274,7 @@ Window {
             id: rail
             objectName: "fullscreenToolRail"
             tools: fs.shell.visualTools
+            keyOf: symbol => fs.shell.boundKeys(symbol, 3)
             visible: fs.toolOn
             z: 3
             x: 8

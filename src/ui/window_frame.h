@@ -99,6 +99,9 @@ public:
     // Whether the main window keeps the system's title bar for the
     // setting's value ("auto", "system", "custom").
     Q_INVOKABLE bool usesSystemTitleBar(const QString &setting) const;
+    // Whether `window` is hidden only while its frame is made again (on
+    // Wayland, MainWindowFrame::apply): no closing.
+    Q_INVOKABLE static bool remaking(QWindow *window);
 
     // Tests: the desktop changed (windowframe::overrideDesktop).
     static void notifyDesktopChanged();
@@ -128,6 +131,11 @@ class MainWindowFrame : public QObject {
     // Alt held down (the menus underline their letters while it is, MS1 §1
     // "Menu bar"); a press and release of Alt alone is altTapped.
     Q_PROPERTY(bool altHeld READ altHeld NOTIFY altHeldChanged FINAL)
+    // Whether the window can be resized and maximised (a dialog's choice,
+    // DialogFrame; the main window always can).
+    Q_PROPERTY(bool resizable READ resizable WRITE setResizable NOTIFY resizableChanged FINAL)
+    // A dialog's frame (DialogFrame): no Minimise, and no Alt handling.
+    Q_PROPERTY(bool dialog READ dialog CONSTANT FINAL)
 public:
     enum Hit {
         Client,           // a control: the pointer is the window's
@@ -155,6 +163,9 @@ public:
     bool maximizeHovered() const { return m_maximizeHovered; }
     bool maximizePressed() const { return m_maximizePressed; }
     bool altHeld() const { return m_altHeld; }
+    bool resizable() const { return m_resizable; }
+    void setResizable(bool resizable);
+    bool dialog() const { return m_dialog; }
 
     // What the title bar has at `position` (window coordinates): a control
     // is any item that takes mouse buttons, other than the move area.
@@ -179,12 +190,16 @@ signals:
     // Tests: showWindowMenu was asked (whether or not the system has one).
     void windowMenuRequested(QPointF position);
     void altHeldChanged();
+    void resizableChanged();
     // Alt pressed and released with nothing between: the menus take the
     // keyboard. The release goes no further (on Windows Qt's menu bar would
     // take it too, and the system would enter its menu mode).
     void altTapped();
 
 protected:
+    // A dialog's frame (DialogFrame).
+    struct DialogKind {};
+    MainWindowFrame(DialogKind, QObject *parent);
     bool eventFilter(QObject *watched, QEvent *event) override;
 
 private:
@@ -202,7 +217,24 @@ private:
     bool m_maximizePressed = false;
     bool m_altHeld = false;
     bool m_altAlone = false;
+    bool m_resizable = true;
+    const bool m_dialog = false;
     std::unique_ptr<windowframe::NativeFrame> m_native;
+};
+
+// DG1 (#222): a dialog's frame (DialogWindow.qml), the main window's (SH1)
+// with a dialog's buttons: Close, and Maximise only while the dialog can be
+// resized (`resizable`); never Minimise. The window is a dialog to the
+// window system as well: on Windows no minimise box, and no sizing frame or
+// maximise box while it cannot be resized, so Aero Snap and the system menu
+// leave a fixed-size dialog its size; on Wayland and X11 the resize band
+// (MainWindowEdges) only while it can be resized. Alt is the main window's
+// (its menus), not a dialog's.
+class DialogFrame : public MainWindowFrame {
+    Q_OBJECT
+    QML_ELEMENT
+public:
+    explicit DialogFrame(QObject *parent = nullptr);
 };
 
 } // namespace hikari::ui

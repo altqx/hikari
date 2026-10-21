@@ -130,7 +130,7 @@ const QStringList &WorkspaceLayoutController::panelIds()
 {
     static const QStringList ids{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor"),
                                  QStringLiteral("Grid"), QStringLiteral("Reference"), QStringLiteral("Timing"),
-                                 QStringLiteral("Search"), QStringLiteral("Automation")};
+                                 QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original")};
     return ids;
 }
 
@@ -364,6 +364,24 @@ QString WorkspaceLayoutController::presetLabel(const QString &name)
     if (name == QLatin1String("Typesetting"))
         return QCoreApplication::translate("HikariSub.Workspace", "Typesetting");
     return name;
+}
+
+QString WorkspaceLayoutController::presetMode(const QString &preset)
+{
+    // KP1 (#286) adds Karaoke here.
+    static const std::map<QString, QString> modes{{QStringLiteral("Translation"), QStringLiteral("Translation")}};
+    const auto mode = modes.find(preset);
+    return mode == modes.end() ? QString() : mode->second;
+}
+
+void WorkspaceLayoutController::choseFrom(const QString &before)
+{
+    const QString left = presetMode(before);
+    const QString chosen = presetMode(m_preset);
+    if (!left.isEmpty() && left != chosen)
+        emit presetModeLeft(left);
+    if (!chosen.isEmpty())
+        emit presetModeChosen(chosen);
 }
 
 void WorkspaceLayoutController::setPreset(const QString &preset)
@@ -791,6 +809,15 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
 }
 
 bool WorkspaceLayoutController::applyPreset(const QString &name)
+{
+    const QString before = m_preset;
+    if (!applyPresetArrangement(name))
+        return false;
+    choseFrom(before);
+    return true;
+}
+
+bool WorkspaceLayoutController::applyPresetArrangement(const QString &name)
 {
     if (!presets().contains(name) || m_default.isEmpty())
         return false;
@@ -1346,6 +1373,15 @@ bool WorkspaceLayoutController::saveLayoutAs(const QString &name)
 
 bool WorkspaceLayoutController::applySavedLayout(const QString &name)
 {
+    const QString before = m_preset;
+    if (!applySavedArrangement(name))
+        return false;
+    choseFrom(before);
+    return true;
+}
+
+bool WorkspaceLayoutController::applySavedArrangement(const QString &name)
+{
     const int index = savedLayoutIndex(name);
     if (index < 0 || !m_loaded || m_default.isEmpty())
         return false;
@@ -1363,8 +1399,8 @@ bool WorkspaceLayoutController::applySavedLayout(const QString &name)
 bool WorkspaceLayoutController::resetCurrentLayout()
 {
     if (const QString saved = layout(); !saved.isEmpty() && m_saved[static_cast<std::size_t>(savedLayoutIndex(saved))].arrangement)
-        return applySavedLayout(saved);
-    return applyPreset(m_preset);
+        return applySavedArrangement(saved);
+    return applyPresetArrangement(m_preset);
 }
 
 bool WorkspaceLayoutController::renameSavedLayout(const QString &from, const QString &to)

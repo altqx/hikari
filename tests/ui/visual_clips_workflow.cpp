@@ -70,13 +70,13 @@ protected:
         wait(200ms);
         mouseClick("mainWindow/visualOverlay", spix::Point(0.75, 0.75));
         wait(300ms);
-        // Move points: a click selects the last point, D nudges it.
+        // Move points: a click selects the last point, Right (legacy's D) nudges it.
         mouseClick("mainWindow/visualOption_mode0");
         wait(100ms);
         observed.push_back(prop("mainWindow/visualOption_mode0", "checked")); // 4
         mouseClick("mainWindow/visualOverlay", spix::Point(0.75, 0.75));
         wait(200ms);
-        enterKey("mainWindow/visualOverlay", Qt::Key_D, 0);
+        enterKey("mainWindow/visualOverlay", Qt::Key_Right, 0);
         wait(300ms);
         // Invert clip.
         mouseClick("mainWindow/visualOption_invert");

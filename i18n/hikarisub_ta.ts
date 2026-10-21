@@ -3838,8 +3838,24 @@ Failed to copy %2 fonts.</source>
         <translation type="vanished">புதுப்பித்தார்</translation>
     </message>
     <message>
+        <source>Development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Design and development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Translation</source>
-        <translation type="vanished">மொழிபெயர்ப்பு</translation>
+        <translation>மொழிபெயர்ப்பு</translation>
+    </message>
+    <message>
+        <source>Korean, Polish, Tamil and Thai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built with</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
@@ -4238,6 +4254,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Check for updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>You already have the latest version</source>
         <translation>உங்களிடம் ஏற்கனவே சமீபத்திய பதிப்பு உள்ளது</translation>
     </message>
@@ -4255,7 +4275,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>You have version %1; version %2 is available</source>
-        <translation type="unfinished">உங்களிடம் பதிப்பு %1 உள்ளது; பதிப்பு %2 கிடைக்கிறது</translation>
+        <translation type="obsolete">உங்களிடம் பதிப்பு %1 உள்ளது; பதிப்பு %2 கிடைக்கிறது</translation>
     </message>
     <message>
         <source>This version needs Windows %1 or later.</source>
@@ -4266,7 +4286,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Downloading...</source>
+        <source>You have version %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading… %1 %</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4298,15 +4322,34 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub பற்றி</translation>
     </message>
     <message>
-        <source>HikariSub subtitle editor by altqx,
-version %1</source>
+        <source>Version %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitle editor by altqx.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub is free software under the GNU General Public License, version 3. It comes with no warranty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub website</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Report an issue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
 
 </source>
-        <translation>Marcin Drob (Bakura அல்லது Bjakja) உருவாக்கிய Kainote-ஐ அடிப்படையாகக் கொண்டது.
+        <translation type="vanished">Marcin Drob (Bakura அல்லது Bjakja) உருவாக்கிய Kainote-ஐ அடிப்படையாகக் கொண்டது.
 
 </translation>
     </message>
@@ -4315,7 +4358,7 @@ version %1</source>
 open an issue at https://github.com/altqx/hikari/issues.
 
 </source>
-        <translation>பிழைகளைக் கண்டாலோ, மாற்றங்கள் அல்லது புதிய வசதிகள் பற்றிய பரிந்துரைகள் இருந்தாலோ,
+        <translation type="vanished">பிழைகளைக் கண்டாலோ, மாற்றங்கள் அல்லது புதிய வசதிகள் பற்றிய பரிந்துரைகள் இருந்தாலோ,
 https://github.com/altqx/hikari/issues இல் ஒரு சிக்கலைப் பதிவு செய்யவும்.
 
 </translation>
@@ -4323,14 +4366,8 @@ https://github.com/altqx/hikari/issues இல் ஒரு சிக்கலை
     <message>
         <source>HikariSub includes parts of the following projects:
 </source>
-        <translation>HikariSub பின்வரும் திட்டங்களின் சில பகுதிகளை உள்ளடக்கியது:
+        <translation type="vanished">HikariSub பின்வரும் திட்டங்களின் சில பகுதிகளை உள்ளடக்கியது:
 </translation>
-    </message>
-    <message>
-        <source>Color picker, audio box, audio player, automation,
-and several other individual features taken from Aegisub -
-</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Credits</source>
@@ -4339,93 +4376,93 @@ and several other individual features taken from Aegisub -
     <message>
         <source>Graphical help: (buttons, help pictures etc.)
 </source>
-        <translation>வரைகலை உதவி: (பொத்தான்கள், உதவி படங்கள் போன்றவை)
+        <translation type="vanished">வரைகலை உதவி: (பொத்தான்கள், உதவி படங்கள் போன்றவை)
 </translation>
     </message>
     <message>
         <source>- Xandros (new video buttons).
 </source>
-        <translation>- சாண்ட்ரோச் (புதிய வீடியோ பொத்தான்கள்).
+        <translation type="vanished">- சாண்ட்ரோச் (புதிய வீடியோ பொத்தான்கள்).
 </translation>
     </message>
     <message>
         <source>- Devilkan (menu and toolbar buttons)
 </source>
-        <translation>- Devilkan (மெனு மற்றும் கருவிப்பட்டி பொத்தான்கள்)
+        <translation type="vanished">- Devilkan (மெனு மற்றும் கருவிப்பட்டி பொத்தான்கள்)
 </translation>
     </message>
     <message>
         <source>- Zły Los (icons for file associations and menu).
 </source>
-        <translation>- Zły Los (கோப்பு சங்கங்கள் மற்றும் மெனுவுக்கான சின்னங்கள்).
+        <translation type="vanished">- Zły Los (கோப்பு சங்கங்கள் மற்றும் மெனுவுக்கான சின்னங்கள்).
 </translation>
     </message>
     <message>
         <source>Testers:
 </source>
-        <translation>சோதனையாளர்கள்:
+        <translation type="vanished">சோதனையாளர்கள்:
 </translation>
     </message>
     <message>
         <source>- Sacredus (first translator using translator mode,
 great help testing HikariSub on a slow computer)
 </source>
-        <translation>- சேக்ரெடச் (மொழிபெயர்ப்பாளர் பயன்முறையைப் பயன்படுத்திய முதல் மொழிபெயர்ப்பாளர்,
+        <translation type="vanished">- சேக்ரெடச் (மொழிபெயர்ப்பாளர் பயன்முறையைப் பயன்படுத்திய முதல் மொழிபெயர்ப்பாளர்,
 மெதுவான கணினியில் HikariSub-ஐச் சோதிப்பதில் பெரும் உதவி)
 </translation>
     </message>
     <message>
         <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
 </source>
-        <translation>- Devilkan (crashhunter, அவரது அமைப்பு மற்றும் பழக்கவழக்கங்கள் காரணமாக அவர் HikariSub-ஐ நிறைய செயலிழக்கச் செய்தார்
+        <translation type="vanished">- Devilkan (crashhunter, அவரது அமைப்பு மற்றும் பழக்கவழக்கங்கள் காரணமாக அவர் HikariSub-ஐ நிறைய செயலிழக்கச் செய்தார்
 </translation>
     </message>
     <message>
         <source>helped with typesetting tools and came up with many more improvements).
 </source>
-        <translation>தட்டச்சு செய்யும் கருவிகளுக்கு உதவியது மற்றும் இன்னும் பல மேம்பாடுகளைக் கொண்டு வந்தது).
+        <translation type="vanished">தட்டச்சு செய்யும் கருவிகளுக்கு உதவியது மற்றும் இன்னும் பல மேம்பாடுகளைக் கொண்டு வந்தது).
 </translation>
     </message>
     <message>
         <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
 </source>
-        <translation>- மத்தியாச்மோவி (சில விபத்துக்களைக் கண்டறிந்தது மற்றும் சில மேம்பாடுகளை பரிந்துரைத்தது, செயலிழப்பு பிழைத்திருத்தத்திற்கு உதவுகிறது).
+        <translation type="vanished">- மத்தியாச்மோவி (சில விபத்துக்களைக் கண்டறிந்தது மற்றும் சில மேம்பாடுகளை பரிந்துரைத்தது, செயலிழப்பு பிழைத்திருத்தத்திற்கு உதவுகிறது).
 </translation>
     </message>
     <message>
         <source>- mas1904 (found some errors and helping with crash debuging).
 </source>
-        <translation>- mas1904 (சில பிழைகளைக் கண்டறிந்தார், செயலிழப்பு பிழைத்திருத்தத்திற்கு உதவுகிறார்).
+        <translation type="vanished">- mas1904 (சில பிழைகளைக் கண்டறிந்தார், செயலிழப்பு பிழைத்திருத்தத்திற்கு உதவுகிறார்).
 </translation>
     </message>
     <message>
         <source>- Senami (made new themes and found some bugs).
 </source>
-        <translation>- சேனாமி (புதிய கருப்பொருள்களை உருவாக்கி சில பிழைகள் கிடைத்தன).
+        <translation type="vanished">- சேனாமி (புதிய கருப்பொருள்களை உருவாக்கி சில பிழைகள் கிடைத்தன).
 </translation>
     </message>
     <message>
         <source>- altinat (Thai translation).
 </source>
-        <translation>- ஆல்டினாட் (தாய் மொழிபெயர்ப்பு).
+        <translation type="vanished">- ஆல்டினாட் (தாய் மொழிபெயர்ப்பு).
 </translation>
     </message>
     <message>
         <source>- labrie75 (Korean translation).
 </source>
-        <translation>- labrie75 (கொரிய மொழிபெயர்ப்பு).
+        <translation type="vanished">- labrie75 (கொரிய மொழிபெயர்ப்பு).
 </translation>
     </message>
     <message>
         <source>- Niskala5570 (Malay translation).
 </source>
-        <translation>- Niskala5570 (மலாய் மொழிபெயர்ப்பு).
+        <translation type="vanished">- Niskala5570 (மலாய் மொழிபெயர்ப்பு).
 </translation>
     </message>
     <message>
         <source>Thanks to other HikariSub users who reported bugs:
 </source>
-        <translation>பிழைகளைப் புகாரளித்த பிற HikariSub பயனர்களுக்கு நன்றி:
+        <translation type="vanished">பிழைகளைப் புகாரளித்த பிற HikariSub பயனர்களுக்கு நன்றி:
 </translation>
     </message>
     <message>
