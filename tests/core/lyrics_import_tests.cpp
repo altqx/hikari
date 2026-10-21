@@ -142,6 +142,11 @@ TEST(LyricsImport, AmllTtmlBecomesKaraokeLines)
     const auto result = importTtml(fixture("amll.ttml"));
     ASSERT_TRUE(result.has_value()) << int(result.error().kind) << " line " << result.error().line;
     EXPECT_EQ(result->document.scriptInfo(u8"Title"), u8"さくら さくら");
+    // AMLL's musicName collapses its whitespace, as a <ttm:title> does.
+    const auto named = importTtml(bytes("<tt><head><metadata><amll:meta key=\"musicName\" value=\"  My \t  Song \"/>"
+                                        "</metadata></head><body><p begin=\"1\" end=\"2\">x</p></body></tt>"));
+    ASSERT_TRUE(named.has_value());
+    EXPECT_EQ(named->document.scriptInfo(u8"Title"), u8"My Song");
     const std::vector<Row> expected{
         // The space between the spans stays after its word; the romanisation
         // and translation spans are not lyrics to time.
@@ -521,6 +526,12 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     // A dur without a begin of its own counts from the begin it inherits.
     EXPECT_EQ(timed("<div begin=\"1\" end=\"10\"><p dur=\"2\">x</p></div>"), (std::vector<Row>{{1000, 3000, "", "x"}}));
     EXPECT_EQ(timed("<div begin=\"1\"><div dur=\"3\"><p>y</p></div></div>"), (std::vector<Row>{{1000, 4000, "", "y"}}));
+    // With an end too, the earlier of the two ends it.
+    EXPECT_EQ(timed("<p begin=\"1\" end=\"5\" dur=\"2\">x</p>"), (std::vector<Row>{{1000, 3000, "", "x"}}));
+    EXPECT_EQ(timed("<p begin=\"1\" end=\"2\" dur=\"5\">x</p>"), (std::vector<Row>{{1000, 2000, "", "x"}}));
+    // A dur past the latest time does not matter when the end comes first.
+    EXPECT_EQ(timed("<p begin=\"99:59:59\" end=\"99:59:59.5\" dur=\"10\">x</p>"),
+              (std::vector<Row>{{359'999'000, 359'999'500, "", "x"}}));
     EXPECT_EQ(timed("<p begin=\"1\" end=\"9\"><span begin=\"1\" end=\"2\">a</span><span dur=\"2\"><span begin=\"2\">b</span>"
                     "</span></p>"),
               (std::vector<Row>{{1000, 9000, "", "{\\k100}a{\\k100}b{\\k600}"}})); // the span ends at 1 + 2 s

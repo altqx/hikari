@@ -913,7 +913,7 @@ private:
             if (local == u8"title" && !m_sheet.title)
                 m_sheet.title = detail::trim(collapsed(allText(node)));
             if (local == u8"meta" && attribute(node, u8"key") == u8sv(u8"musicName") && !musicName)
-                musicName = std::u8string(attribute(node, u8"value").value_or(u8""));
+                musicName = detail::trim(collapsed(attribute(node, u8"value").value_or(u8"")));
             if (local == u8"agent") {
                 const auto id = attribute(node, u8"id", Namespace::Xml);
                 for (const XmlNode &child : node.children)
@@ -945,7 +945,9 @@ private:
     }
 
     // An element's own begin and end; a dur counts from its own begin, or
-    // from `inheritedBegin` (its nearest timed ancestor's) when it has none.
+    // from `inheritedBegin` (its nearest timed ancestor's) when it has none,
+    // and with an end too the earlier of the two ends it (TTML2's active
+    // duration, the lesser of dur and end - begin).
     static std::expected<std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>>, LyricsProblem>
     times(const XmlNode &node, std::optional<std::int64_t> inheritedBegin)
     {
@@ -955,15 +957,16 @@ private:
         auto end = time(node, u8"end");
         if (!end)
             return std::unexpected(end.error());
-        if (const auto from = *begin ? *begin : inheritedBegin; !*end && from) {
+        if (const auto from = *begin ? *begin : inheritedBegin; from) {
             const auto dur = time(node, u8"dur");
             if (!dur)
                 return std::unexpected(dur.error());
             if (*dur) {
-                *end = *from + **dur;
-                if (**end > detail::kLatestLyricsTime)
+                const std::int64_t byDur = *from + **dur;
+                if (byDur > detail::kLatestLyricsTime && !*end)
                     return std::unexpected(LyricsProblem{Kind::UnreadableTime, attributeLine(node, u8"dur"),
                                                          std::u8string(*attribute(node, u8"dur"))});
+                *end = *end ? std::min(**end, byDur) : byDur;
             }
         }
         if (*begin && *end && **end < **begin) {
