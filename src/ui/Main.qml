@@ -5477,10 +5477,11 @@ ApplicationWindow {
         target: root.updates
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
+                // The automatic check's notice takes no keyboard (DG1).
                 if (release.offer === "aur")
-                    updateAurNotice.showRelease(release)
+                    updateAurNotice.showRelease(release, !interactive)
                 else
-                    updateAvailable.showRelease(release)
+                    updateAvailable.showRelease(release, !interactive)
             } else {
                 // DG1: titled with the command that gave it (DG1-update-titles).
                 updateMessage.showMessage(qsTr("Check for updates"),

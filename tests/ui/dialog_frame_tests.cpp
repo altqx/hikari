@@ -404,6 +404,71 @@ private slots:
         QVERIFY(s.opener->property("opening").value<QQuickItem *>()->hasFocus());
     }
 
+    void anAutomaticNoticeTakesNoKeyboard()
+    {
+        Shown s = show();
+        QVERIFY(QTest::qWaitForWindowActive(s.opener.get()));
+        QQuickWindow other;
+        other.resize(200, 100);
+        other.show();
+        other.requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(&other));
+        // Shown without activating (Qt's _q_showWithoutActivating), raised by nothing.
+        QVERIFY(QMetaObject::invokeMethod(s.dialog, "openQuietly"));
+        QVERIFY(s.dialog->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(s.dialog));
+        QTest::qWait(50);
+        QVERIFY(s.dialog->property("_q_showWithoutActivating").toBool());
+        // (The offscreen platform activates every window it shows.)
+        if (QGuiApplication::platformName() != QLatin1String("offscreen"))
+            QCOMPARE(QGuiApplication::focusWindow(), &other);
+        // Asked for: it takes the keyboard.
+        QMetaObject::invokeMethod(s.dialog, "close");
+        QTRY_VERIFY(!s.dialog->isVisible());
+        QVERIFY(open(s));
+        QVERIFY(!s.dialog->property("_q_showWithoutActivating").toBool());
+        QVERIFY(QTest::qWaitForWindowActive(s.dialog));
+    }
+
+    void aMinimisedDialogComesBackWhenOpenedAgain()
+    {
+        Shown s = show();
+        QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
+        QVERIFY(open(s));
+        s.dialog->showMinimized();
+        QTRY_COMPARE(s.dialog->visibility(), QWindow::Minimized);
+        QTest::qWait(50);
+        QMetaObject::invokeMethod(s.dialog, "open");
+        QTRY_COMPARE(s.dialog->visibility(), QWindow::Windowed);
+    }
+
+    void aShownDialogKeepsToTheScreenWhenItsFrameChanges()
+    {
+        namespace wf = ui::windowframe;
+        // The offscreen platform has no desktop: KDE Plasma's, where a dialog can draw its own frame.
+        wf::overrideDesktop(wf::Desktop::Kde);
+        auto restore = qScopeGuard([] { wf::overrideDesktop(std::nullopt); });
+        store->setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        Shown s = show();
+        QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
+        s.item("spacer")->setProperty("implicitHeight", 5000);
+        QVERIFY(open(s));
+        QVERIFY(s.dialog->flags().testFlag(Qt::FramelessWindowHint));
+        const QRect area = s.dialog->screen()->availableGeometry().marginsRemoved(QMargins(20, 20, 20, 20));
+        QCOMPARE(s.dialog->frameGeometry().height(), area.height());
+        // Moved partly off the screen, then the system's frame: kept on the
+        // screen with the room the frame leaves (the offscreen platform
+        // keeps a shown window's frame margins, so the move stands in for
+        // the borders a real frame adds).
+        const QRect screen = s.dialog->screen()->availableGeometry();
+        s.dialog->setY(s.dialog->y() + 200);
+        QTRY_VERIFY(!screen.contains(s.dialog->frameGeometry()));
+        store->setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("system"));
+        QTRY_VERIFY(!s.dialog->flags().testFlag(Qt::FramelessWindowHint));
+        QTRY_VERIFY(screen.contains(s.dialog->frameGeometry()));
+        QVERIFY(s.dialog->frameGeometry().height() <= area.height());
+    }
+
     void aDialogBiggerThanTheScreenFitsIt()
     {
         Shown s = show();

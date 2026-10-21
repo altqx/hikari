@@ -45,7 +45,7 @@ Window {
     readonly property int naturalWidth: Math.ceil(column.implicitWidth)
     readonly property int naturalHeight: Math.ceil(column.implicitHeight)
     // Where the keyboard goes back to.
-    property Window returnWindow: null
+    property QtObject returnWindow: null // (a QWindow: a floating panel is no QML Window)
     property Item returnFocus: null
     property bool accepting: false
     property Item startFocus: null
@@ -64,9 +64,16 @@ Window {
     // Shows the dialog (or raises it while shown), opened from the window
     // with the keyboard.
     function open() { openFrom(null) }
+    // Shows it without taking the keyboard from the window or program in
+    // use (a notice the program gives by itself); a shown one stays as it is.
+    function openQuietly() { openFrom(null, true) }
     // The same, opened from `from` (a window; null: the one with the keyboard).
-    function openFrom(from) {
+    function openFrom(from, quiet) {
         if (visible) {
+            if (quiet)
+                return
+            // Minimised by the window system: raising alone leaves it so.
+            placement.unminimize()
             raise()
             requestActivate()
             return
@@ -77,10 +84,13 @@ Window {
         if (opener)
             transientParent = opener
         placement.place(opener, column)
+        placement.showWithoutActivating(quiet === true)
         // (Not show(): a dialog may name a function of its own so.)
         visible = true
-        raise()
-        requestActivate()
+        if (quiet !== true) {
+            raise()
+            requestActivate()
+        }
         const first = initialFocus && initialFocus.visible ? initialFocus : defaultButton
         if (first && first.visible && first.enabled) {
             first.forceActiveFocus(Qt.TabFocusReason)
@@ -184,6 +194,20 @@ Window {
         resizable: dialog.resizable
         // (customAvailable is read for its notification: the desktop can change in tests.)
         custom: WindowFrame.customAvailable && !WindowFrame.usesSystemTitleBar(dialog.titleBarChoice)
+        // A shown dialog on its screen with the new frame's room: now, and
+        // again once the window system has given the frame's margins (X11
+        // sends them after the frame is made).
+        onCustomChanged: {
+            if (!dialog.visible)
+                return
+            Qt.callLater(placement.refit)
+            refitAgain.restart()
+        }
+    }
+    Timer {
+        id: refitAgain
+        interval: 250
+        onTriggered: placement.refit()
     }
     DialogPlacement {
         id: placement

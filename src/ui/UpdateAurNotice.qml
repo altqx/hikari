@@ -20,9 +20,13 @@ DialogWindow {
     title: qsTr("A new version is available")
     defaultButton: closeButton
 
-    function showRelease(r) {
+    // `quiet`: the automatic check's, which takes no keyboard (openQuietly).
+    function showRelease(r, quiet) {
         release = r
-        open()
+        if (quiet)
+            openQuietly()
+        else
+            open()
     }
 
     RowLayout {

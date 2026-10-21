@@ -29,6 +29,7 @@
 
 #include "settings_store.h"
 
+class QScreen;
 class QWindow;
 
 namespace hikari::ui {
@@ -97,6 +98,16 @@ public:
     // the width it opens at on the screen it opens on first (wrapped text
     // takes its height there).
     Q_INVOKABLE void place(QWindow *opener, QQuickItem *content);
+    // Keeps a shown dialog on its screen after its frame changed (the
+    // title bar setting): the room for the new frame, and the dialog
+    // moved and sized into it.
+    Q_INVOKABLE void refit();
+    // Whether the dialog's next show leaves the keyboard where it is (a
+    // notice the program raises by itself, while another window or
+    // program may be in use).
+    Q_INVOKABLE void showWithoutActivating(bool quiet);
+    // A minimised shown dialog back as it was before.
+    Q_INVOKABLE void unminimize();
     // Keeps where the dialog is and how big (as it is hidden), unless it
     // was maximised or full screen.
     Q_INVOKABLE void remember();
@@ -119,7 +130,13 @@ signals:
     void roomChanged();
 
 private:
+    // The room on `on` for a frame of `margins`, and the content laid out
+    // at the width the dialog opens at there.
+    void fitRoom(QScreen *on, const QMargins &margins);
+    QSize natural() const;
+
     QPointer<QQuickWindow> m_window;
+    QPointer<QQuickItem> m_content;
     QString m_dialogId;
     QPointer<SettingsStore> m_settings;
     bool m_resizable = false;
