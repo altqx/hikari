@@ -56,6 +56,11 @@ QVariantList Application::checkKaraoke() const
             detail = QCoreApplication::translate("HikariSub.Karaoke",
                                                 "A karaoke tag has no duration, or its override block is never closed");
             break;
+        case Kind::NotForAudioEditor:
+            check = QCoreApplication::translate("HikariSub.Karaoke", "Not read by the audio editor");
+            detail = QCoreApplication::translate(
+                "HikariSub.Karaoke", "No karaoke tag's duration starts with a digit, as in \\k50, so the audio editor splits the line anew");
+            break;
         case Kind::TotalNotDuration:
             check = QCoreApplication::translate("HikariSub.Karaoke", "Syllables don't match the line");
             detail = QCoreApplication::translate("HikariSub.Karaoke", "The syllables last %1 s; the line lasts %2 s")

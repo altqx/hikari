@@ -8,8 +8,10 @@
 // unclosed "{" makes the rest of the text literal. A value may be signed,
 // have a fraction and sit in parentheses ("\k(50)", "\k+12.5"), as the tag
 // parser reads it (lua_helper's karaoke tags); the fraction is dropped, as
-// the karaoke the application plays drops it. A translated Line is
-// checked on its translation, the text karaoke plays.
+// the karaoke the application plays drops it. The audio editor reads only
+// a number that follows the tag at once ("\k50"), so a Line with none of
+// those is flagged for it. A translated Line is checked on its
+// translation, the text karaoke plays.
 
 #include "hikari/core/document.h"
 
@@ -25,10 +27,11 @@ inline constexpr std::size_t kListedSyllables = 20;
 
 struct KaraokeProblem {
     enum class Kind {
-        Unclosed,         // a "{" with a karaoke tag and no "}", or a tag with no number
-        TotalNotDuration, // the syllables add up to more or less than the Line lasts
-        ZeroLength,       // a syllable of no length
-        OutsideLine,      // a syllable that starts before the Line, ends after it, or runs backward
+        Unclosed,          // a "{" with a karaoke tag and no "}", or a tag with no number
+        NotForAudioEditor, // no tag the audio editor reads: none whose number starts at once ("\k50")
+        TotalNotDuration,  // the syllables add up to more or less than the Line lasts
+        ZeroLength,        // a syllable of no length
+        OutsideLine,       // a syllable that starts before the Line, ends after it, or runs backward
     };
     LineId line;
     std::size_t row = 0;   // the Line's place among all Lines, from 0

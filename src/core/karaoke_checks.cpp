@@ -62,6 +62,33 @@ bool hasKaraokeTag(u8sv block)
     return false;
 }
 
+// Whether the audio editor reads a text as karaoke (AudioKaraoke's
+// hasKaraokeTag, legacy's {([^}]*)\\kf?o?[0-9]([^}]*)} on the lower-cased
+// text): a tag whose number starts at once, in a block that closes. It
+// reads none of "\k+50", "\k(50)" or "\k.5", which the renderers play.
+bool audioEditorReads(u8sv text)
+{
+    auto lower = [](char8_t c) { return c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c - u8'A' + u8'a') : c; };
+    const std::size_t lastClose = text.rfind(u8'}');
+    bool inBlock = false;
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] == u8'{')
+            inBlock = true;
+        else if (text[i] == u8'}')
+            inBlock = false;
+        else if (inBlock && text[i] == u8'\\' && i + 1 < text.size() && lower(text[i + 1]) == u8'k') {
+            std::size_t r = i + 2;
+            if (r < text.size() && lower(text[r]) == u8'f')
+                ++r;
+            if (r < text.size() && lower(text[r]) == u8'o')
+                ++r;
+            if (r < text.size() && isDigit(text[r]) && lastClose != u8sv::npos && lastClose > r)
+                return true;
+        }
+    }
+    return false;
+}
+
 // Longer syllables count as this long (over 115 days, in milliseconds), so
 // adding them up cannot overflow.
 constexpr std::int64_t kLongestSyllable = 10'000'000'000;
@@ -153,7 +180,8 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
             ++p.syllableCount;
         };
         // The text karaoke plays: the translation when there is one.
-        const bool unclosed = syllablesOf(line.translation.empty() ? line.text : line.translation, [&](std::int64_t length) {
+        const u8sv text = line.translation.empty() ? u8sv(line.text) : u8sv(line.translation);
+        const bool unclosed = syllablesOf(text, [&](std::int64_t length) {
             const std::int64_t start = total;
             total += length;
             ++count;
@@ -166,6 +194,8 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
             continue;
         if (unclosed)
             problems.push_back(problem(Kind::Unclosed));
+        if (count > 0 && !audioEditorReads(text))
+            problems.push_back(problem(Kind::NotForAudioEditor));
         if (count > 0 && total != duration) {
             KaraokeProblem p = problem(Kind::TotalNotDuration);
             p.totalMs = total;
