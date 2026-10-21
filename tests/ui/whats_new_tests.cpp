@@ -142,6 +142,12 @@ private slots:
         copy->whatsNew->fetchIfNeeded();
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("off"));
         QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases")));
+        // Checks turned on (an open dialog shows it at once): the notes come.
+        copy->updates->setAutoCheck(true);
+        QCOMPARE(copy->whatsNew->state(), QStringLiteral("fetching"));
+        QVERIFY(settled(*copy->whatsNew));
+        QCOMPARE(copy->whatsNew->state(), QStringLiteral("ready"));
+        QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
     }
 
     // The first start ever: the installed version alone.

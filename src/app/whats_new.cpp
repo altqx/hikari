@@ -412,8 +412,11 @@ WhatsNew::WhatsNew(UpdateChecker &updates, QString cacheFile, QObject *parent)
     : QObject(parent), m_updates(updates), m_cacheFile(std::move(cacheFile))
 {
     connect(&m_updates, &UpdateChecker::releasesRead, this, &WhatsNew::listRead);
-    // The channel, and whether checks are on ("off" or "failed").
+    // The channel, and whether checks are on ("off" or "failed"); checks
+    // turned on fetch what is missing (an open dialog waits for it).
     connect(&m_updates, &UpdateChecker::optionsChanged, this, [this] {
+        if (m_started)
+            fetchIfNeeded();
         show();
         emit changed();
     });
@@ -423,6 +426,7 @@ void WhatsNew::start()
 {
     // The cache's "installed" ran last, its notes from "since": per copy, as
     // copies sharing the settings can run different versions.
+    m_started = true;
     const QString installed = m_updates.version();
     const QJsonObject cache = readCache();
     const QString lastRun = cache.value(QStringLiteral("installed")).toString();

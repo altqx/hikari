@@ -99,6 +99,7 @@ private:
     std::vector<application::ReleaseEntry> m_between;
     bool m_known = false;
     bool m_waiting = false;
+    bool m_started = false; // start() ran: the range is known
     QVariantList m_shown;
     int m_more = 0;
 };
