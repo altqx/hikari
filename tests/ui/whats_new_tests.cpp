@@ -635,6 +635,19 @@ private slots:
         QVERIFY(closed.contains(QStringLiteral("after")));
         QVERIFY(!closed.contains(QStringLiteral("const x")));
         QVERIFY(!closed.contains(QStringLiteral("note")));
+        // Declarations, processing instructions and CDATA go whole too.
+        const QString declared = copy->whatsNew->render(
+            QStringLiteral("A <!DOCTYPE html> B <?xml version=\"1.0\"?> C <![CDATA[x < y]]> D <?php  \necho 1;\n?> E "
+                           "`<?kept?>`"),
+            muted, link, code);
+        QVERIFY2(declared.contains(QStringLiteral("A  B  C  D")), qPrintable(declared));
+        QVERIFY(declared.contains(QStringLiteral("E")));
+        QVERIFY(!declared.contains(QStringLiteral("&lt;!DOCTYPE")));
+        QVERIFY(!declared.contains(QStringLiteral("xml")));
+        QVERIFY(!declared.contains(QStringLiteral("CDATA")));
+        QVERIFY(!declared.contains(QStringLiteral("x &lt; y")));
+        QVERIFY(!declared.contains(QStringLiteral("echo")));
+        QVERIFY(declared.contains(QStringLiteral("&lt;?kept?&gt;")));
         // A tag's attributes may go on over a line break, soft or hard.
         const QString wrapped = copy->whatsNew->render(
             QStringLiteral("Text <div\nclass=\"note\"\nid=x>inside</div> more <span  \ntitle=y>z</span>"), muted,

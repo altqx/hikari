@@ -270,15 +270,18 @@ private:
 
 // Raw HTML goes, outside code (with MarkdownNoHTML md4c keeps it as text):
 // tags (a quoted value may hold ">"), with their text between them kept;
-// comments, scripts and styles whole, over code and paragraphs too. A
+// comments, processing instructions, CDATA, declarations, scripts and
+// styles whole, over code and paragraphs too. A
 // paragraph left empty goes. Escaped brackets are markers here (SourceMarks).
 void dropHtml(QTextDocument &doc)
 {
     static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s(?:[^>\"']|\"[^\"]*\"|'[^']*')*)?/?>"),
                                         QRegularExpression::UseUnicodePropertiesOption);
-    static const QRegularExpression dropped(QStringLiteral("<!--|<(script|style)(?=[\\s>/]|$)"),
-                                            QRegularExpression::CaseInsensitiveOption |
-                                                QRegularExpression::UseUnicodePropertiesOption);
+    // What goes whole, to its closer: a comment, a processing instruction,
+    // CDATA, a declaration, a script, a style.
+    static const QRegularExpression dropped(
+        QStringLiteral("<!--|<\\?|<!\\[CDATA\\[|<![A-Za-z]|<(script|style)(?=[\\s>/]|$)"),
+        QRegularExpression::CaseInsensitiveOption | QRegularExpression::UseUnicodePropertiesOption);
     struct Range {
         int from, to;
     };
@@ -329,11 +332,15 @@ void dropHtml(QTextDocument &doc)
                 const QRegularExpressionMatch element = tag.match(run.text, at);
                 if (open.hasMatch() && (!element.hasMatch() || open.capturedStart() <= element.capturedStart())) {
                     drop(run.position + int(open.capturedStart()), run.position + int(open.capturedEnd()));
-                    closer = open.captured(1).isEmpty()
-                                 ? QRegularExpression(QStringLiteral("-->"))
-                                 : QRegularExpression(QStringLiteral("</%1\\s*>").arg(open.captured(1)),
+                    const QString opened = open.captured();
+                    closer = !open.captured(1).isEmpty()
+                                 ? QRegularExpression(QStringLiteral("</%1\\s*>").arg(open.captured(1)),
                                                       QRegularExpression::CaseInsensitiveOption |
-                                                          QRegularExpression::UseUnicodePropertiesOption);
+                                                          QRegularExpression::UseUnicodePropertiesOption)
+                             : opened == u"<!--"         ? QRegularExpression(QStringLiteral("-->"))
+                             : opened == u"<?"           ? QRegularExpression(QStringLiteral("\\?>"))
+                             : opened == u"<![CDATA["    ? QRegularExpression(QStringLiteral("\\]\\]>"))
+                                                         : QRegularExpression(QStringLiteral(">"));
                     at = open.capturedEnd();
                 } else if (element.hasMatch()) {
                     drop(run.position + int(element.capturedStart()), run.position + int(element.capturedEnd()));
