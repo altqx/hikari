@@ -2,6 +2,7 @@
 
 #include "hikari/application/script_resolution.h"
 #include "hikari/backends/desktop_handoff.h"
+#include "hikari/backends/karaoke_preview_runner.h"
 
 #include <QCoreApplication>
 #include <QDir>
@@ -310,6 +311,64 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
 void AutomationShell::setAudioBox(std::function<const application::AudioBox *()> box)
 {
     static_cast<MediaAdapter *>(m_media.get())->audioBox = std::move(box);
+}
+
+class AutomationShell::Templater final : public application::KaraokeTemplaterPort {
+public:
+    explicit Templater(AutomationShell &shell)
+        : m_shell(shell), m_runner(shell.m_paths.helper, sharedIncludes(shell.m_paths))
+    {
+        // Previews read what the shell's services read (isPreviewService
+        // keeps them to the ones that only read).
+        m_runner.setServiceHandler([this](const application::HostServiceRequest &r,
+                                          backends::LuaScriptHost::ServiceReply reply) {
+            m_shell.m_router.handle(r, std::move(reply));
+        });
+    }
+
+    // The loaded templater script: kara-templater.lua, the user's or the
+    // shipped one, with both of its macros.
+    std::string path() const
+    {
+        for (const auto &s : m_shell.m_manager.scripts())
+            if ((s.state == application::ScriptStatus::State::Ready ||
+                 s.state == application::ScriptStatus::State::Running) &&
+                QFileInfo(QString::fromStdString(s.path)).fileName().compare(QStringLiteral("kara-templater.lua"),
+                                                                             Qt::CaseInsensitive) == 0 &&
+                s.info.macros.size() >= 2)
+                return s.path;
+        return {};
+    }
+    void update() { m_runner.setScript(QString::fromStdString(path())); }
+
+    bool available() const override { return m_runner.ready() && !path().empty(); }
+    void preview(const application::MacroSnapshot &snapshot, PreviewDone done) override
+    {
+        m_runner.run(snapshot, std::move(done));
+    }
+    void cancelPreview() override { m_runner.cancel(); }
+    bool apply(bool selectedOnly) override
+    {
+        const std::string script = path();
+        return !script.empty() && m_shell.run(script, selectedOnly ? 1 : 0, RunOrigin::Menu);
+    }
+    backends::KaraokePreviewRunner &runner() { return m_runner; }
+
+private:
+    AutomationShell &m_shell;
+    backends::KaraokePreviewRunner m_runner;
+};
+
+application::KaraokeTemplaterPort &AutomationShell::templater()
+{
+    if (!m_templater) {
+        m_templater = std::make_unique<Templater>(*this);
+        connect(&m_manager, &backends::AutomationManager::changed, this, [this] { m_templater->update(); });
+        connect(&m_templater->runner(), &backends::KaraokePreviewRunner::readyChanged, this,
+                &AutomationShell::progressChanged);
+        m_templater->update();
+    }
+    return *m_templater;
 }
 
 AutomationShell::~AutomationShell()
@@ -752,8 +811,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
             ok = applied.has_value();
             if (!ok)
                 text = refusalText(applied.error());
-            else if (const auto report = ui::readKaraokeReport(host->lastResult()->report))
+            else if (const auto report = ui::readKaraokeReport(host->lastResult()->report)) {
                 karaokeReport(*report);
+                emit karaokeApplied(QByteArray::fromStdString(host->lastResult()->report));
+            }
         }
         ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
         break;

@@ -16,6 +16,7 @@
 #include "hikari/application/document_files.h"
 #include "hikari/application/macro_validation.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/template_preview.h"
 #include "hikari/application/workspace.h"
 #include "hikari/backends/automation_manager.h"
 
@@ -147,6 +148,10 @@ public:
     bool keepLog() const { return m_keepLog; }
 
     ui::AutomationManagerController *managerController() { return m_managerController.get(); }
+    // KE2: the karaoke templater for the Template editor. Its previews run
+    // in a helper of their own on the loaded kara-templater.lua; its Apply
+    // is this shell's run of the stock macro.
+    application::KaraokeTemplaterPort &templater();
     ui::AutomationDialogController *dialogs() { return &m_dialogs; }
     ui::AutomationFilePickerController *picker() { return &m_picker; }
     // Y4-playres-ask: the question a macro reading a missing script resolution asks.
@@ -165,8 +170,11 @@ signals:
     void notice(const QString &title, const QString &text);
     // Legacy "Select a script editor" (a program to open `script` with).
     void chooseScriptEditor(const QString &script);
+    // A karaoke templater run was applied (its report, KE1's JSON).
+    void karaokeApplied(const QByteArray &report);
 
 private:
+    class Templater;
     struct Run {
         application::DocumentId target;
         application::MacroSnapshot snapshot;
@@ -224,6 +232,7 @@ private:
     double m_progress = 0;
     bool m_keepLog = false;
     std::uint64_t m_statusSerial = 0;
+    std::unique_ptr<Templater> m_templater;
 };
 
 } // namespace hikari::app

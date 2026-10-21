@@ -45,6 +45,7 @@
 #endif
 #include "hikari/backends/platform_files.h"
 #include "line_editor_controller.h"
+#include "template_editor_controller.h"
 #include "log_controller.h"
 #include "colour_picker_controller.h"
 #include "workspace_layout.h"
@@ -723,6 +724,7 @@ public:
 
     ui::ShellController &shell() { return *m_shell; }
     ui::LineEditorController &editor() { return *m_editor; }
+    ui::TemplateEditorController &templateEditor() { return *m_templateEditor; }
     ui::VideoController &video() { return *m_video; }
     backends::QtGeneralPlayer &generalPlayer() { return *m_generalPlayer; } // tests: general playback (V3), its volume (V4)
     // W1: the player that plays video: the general player, or on Windows the
@@ -1062,6 +1064,10 @@ private:
     bool m_selectLinesOpened = false; // legacy SelectLines exists
     application::OptionsLists m_optionsLists; // what the open Options dialog lists
     std::unique_ptr<AutomationShell> m_automation;
+    // KE2: the Template editor panel; the video shows its preview.
+    std::unique_ptr<ui::TemplateEditorController> m_templateEditor;
+    bool m_videoShowsTemplate = false;
+    std::optional<std::pair<std::int64_t, std::int64_t>> m_templateWindow; // the span it was drawn for
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
     std::unique_ptr<UpdateChecker> m_updates;
