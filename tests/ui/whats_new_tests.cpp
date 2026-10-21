@@ -537,6 +537,19 @@ private slots:
         QVERIFY(!indented.contains(QStringLiteral("href=\"https://example.com/x")));
         QVERIFY(!indented.contains(QStringLiteral("&lt;i&gt;")));
         QVERIFY(indented.contains(QStringLiteral("of it")));
+        // Fences inside a list item or a quote, with a blank line inside.
+        const QString contained = copy->whatsNew->render(
+            QStringLiteral("- item\n\n    ```\n    <b>in item</b>\n\n    https://example.com/y <u>u</u>\n    ```\n\n"
+                           "> ```\n> <i>quoted</i>\n>\n> <s>s</s>\n> ```\n"),
+            muted, link, code);
+        QVERIFY2(contained.contains(QStringLiteral("&lt;b&gt;in item&lt;/b&gt;")), qPrintable(contained));
+        QVERIFY(contained.contains(QStringLiteral("&lt;u&gt;u&lt;/u&gt;")));
+        QVERIFY(!contained.contains(QStringLiteral("href=\"https://example.com/y")));
+        QVERIFY(contained.contains(QStringLiteral("&lt;i&gt;quoted&lt;/i&gt;")));
+        QVERIFY(contained.contains(QStringLiteral("&lt;s&gt;s&lt;/s&gt;")));
+        // A paragraph that was raw HTML alone leaves no empty paragraph.
+        const QString alone = copy->whatsNew->render(QStringLiteral("One\n\n<img src=\"x.gif\"> <br>\n\nTwo"), muted, link, code);
+        QCOMPARE(alone.count(QStringLiteral("<p")), 2);
         // A script whose name ends the line.
         const QString split = copy->whatsNew->render(
             QStringLiteral("Before <script\ntype=\"x\">hidden()</script> after"), muted, link, code);

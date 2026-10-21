@@ -17,7 +17,9 @@
 #include <QTextDocument>
 #include <QTextFragment>
 
+#include <algorithm>
 #include <utility>
+#include <vector>
 
 namespace hikari::app {
 
@@ -51,172 +53,170 @@ QVariantMap shownRelease(const a::ReleaseEntry &release)
             {QStringLiteral("notes"), qs(release.notes)}};
 }
 
-// The notes before md4c reads them, outside code (fences, `spans`):
-// - raw HTML goes, tags and comments alike (with MarkdownNoHTML Qt would
-//   show it as text); its text between tags stays, but a script's or a
-//   style's goes with it, code and fences inside it too;
-// - a bare URL becomes an autolink ("<url>"), so all of it is the link:
-//   md4c's own detection stops at "...", and GitHub's "Full Changelog"
-//   lines read ".../compare/v0.1.2...v0.1.3". Not in a link's own syntax;
-//   trailing punctuation stays outside, as on GitHub.
-// Code as CommonMark has it: a fence closes on a line of its own character
-// at least as long as the opening one; a block indented four columns after
-// a blank line is code (eight under a list item, whose text is indented
-// four); a span runs from a run of backticks to the next run of as many,
-// over line breaks but not a blank line, and a run with none is plain
-// backticks.
-QString prepareMarkdown(const QString &markdown)
+// md4c's flags (Qt passes MarkdownFeatures to it as they are): GitHub's
+// permissive URL and www. autolinks stop at "...", and GitHub's "Full
+// Changelog" lines read ".../compare/v0.1.2...v0.1.3"; linkUrls() links
+// bare URLs instead.
+constexpr int kMd4cPermissiveUrlAutolinks = 0x0004;
+constexpr int kMd4cPermissiveWwwAutolinks = 0x0400;
+
+// Code as md4c read it: a code block (fenced, in a list or a quote too,
+// or indented) or a code span.
+bool isCode(const QTextBlock &block, const QTextCharFormat &format)
 {
-    static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s[^>]*)?/?>"));
-    static const QRegularExpression url(
-        QStringLiteral("(^|[^(<\\[\\w/\"'=])(https?://[^\\s<>`]*[^\\s<>`.,:;!?'\")\\]*_~])"));
-    // What is dropped whole, up to its end, over lines too.
-    static const QRegularExpression dropped(QStringLiteral("<!--|<(script|style)(?=[\\s>/])"),
-                                            QRegularExpression::CaseInsensitiveOption);
-    static const QRegularExpression fence(QStringLiteral("^ {0,3}(`{3,}|~{3,})"));
-    static const QRegularExpression blankLine(QStringLiteral("\n[ \t]*\n"));
-    static const QRegularExpression listItem(QStringLiteral("^( {0,3}(?:[-*+]|\\d{1,9}[.)]))( {1,4}|$)"));
-    const auto text = [](QString part) { return part.remove(tag).replace(url, QStringLiteral("\\1<\\2>")); };
-    const QString &md = markdown;
-    const auto lineEnd = [&](qsizetype from) {
-        const qsizetype end = md.indexOf(QLatin1Char('\n'), from);
-        return end < 0 ? md.size() : end;
+    return block.blockFormat().hasProperty(QTextFormat::BlockCodeLanguage) ||
+           block.blockFormat().hasProperty(QTextFormat::BlockCodeFence) || format.fontFixedPitch();
+}
+
+// Raw HTML goes, outside code (with MarkdownNoHTML md4c keeps it as text):
+// tags, with their text between them kept; comments, scripts and styles
+// whole, over code and paragraphs too. A paragraph left empty goes. An
+// entity ("&lt;b&gt;") reads as what it stands for, so it goes too.
+void dropHtml(QTextDocument &doc)
+{
+    static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s[^>]*)?/?>"),
+                                        QRegularExpression::UseUnicodePropertiesOption);
+    static const QRegularExpression dropped(QStringLiteral("<!--|<(script|style)(?=[\\s>/]|$)"),
+                                            QRegularExpression::CaseInsensitiveOption |
+                                                QRegularExpression::UseUnicodePropertiesOption);
+    struct Range {
+        int from, to;
     };
-    // Columns of leading space (a tab to the next multiple of four).
-    const auto indentOf = [](const QString &line) {
-        qsizetype columns = 0;
-        for (const QChar c : line) {
-            if (c == QLatin1Char(' '))
-                ++columns;
-            else if (c == QLatin1Char('\t'))
-                columns += 4 - columns % 4;
-            else
-                break;
-        }
-        return columns;
+    std::vector<Range> gone;
+    const auto drop = [&](int from, int to) {
+        if (from >= to)
+            return;
+        if (!gone.empty() && gone.back().to >= from)
+            gone.back().to = std::max(gone.back().to, to);
+        else
+            gone.push_back({from, to});
     };
-    const auto blank = [](const QString &line) { return line.trimmed().isEmpty(); };
-    const auto runAt = [&](qsizetype from, QChar c) {
-        qsizetype end = from;
-        while (end < md.size() && md.at(end) == c)
-            ++end;
-        return end - from;
-    };
-    QString kept;
     QRegularExpression closer; // empty while nothing is being dropped
-    bool lineStart = true;
-    bool afterBlank = true; // the line before was blank (or there was none)
-    qsizetype listText = -1; // the last list item's text column; -1: no list
-    qsizetype at = 0;
-    while (at < md.size()) {
-        if (!closer.pattern().isEmpty()) {
-            const QRegularExpressionMatch end = closer.match(md, at);
-            if (!end.hasMatch())
-                break;
-            closer = QRegularExpression();
-            at = end.capturedEnd();
-            lineStart = false;
-            continue;
+    for (QTextBlock block = doc.begin(); block.isValid(); block = block.next()) {
+        // The block's text in runs of code and not code.
+        struct Run {
+            int position;
+            QString text;
+            bool code;
+        };
+        std::vector<Run> runs;
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            const bool code = isCode(block, fragment.charFormat());
+            if (!runs.empty() && runs.back().code == code && !code)
+                runs.back().text += fragment.text();
+            else
+                runs.push_back({fragment.position(), fragment.text(), code});
         }
-        if (lineStart) {
-            const qsizetype end = lineEnd(at);
-            const QString line = md.mid(at, end - at);
-            const bool wasAfterBlank = afterBlank;
-            afterBlank = blank(line);
-            const qsizetype indent = indentOf(line);
-            const qsizetype codeIndent = (listText >= 0 ? listText : 0) + 4;
-            if (!afterBlank && wasAfterBlank && indent >= codeIndent) {
-                // An indented code block: verbatim while its lines are blank
-                // or as indented.
-                qsizetype stop = end;
-                while (stop < md.size()) {
-                    const qsizetype next = lineEnd(stop + 1);
-                    const QString following = md.mid(stop + 1, next - stop - 1);
-                    if (!blank(following) && indentOf(following) < codeIndent)
-                        break;
-                    stop = next;
-                }
-                kept += md.mid(at, stop - at);
-                at = stop; // at the line break: an empty line, no paragraph
+        const int before = int(gone.size());
+        for (const Run &run : runs) {
+            if (run.code) {
+                if (!closer.pattern().isEmpty())
+                    drop(run.position, run.position + int(run.text.size()));
                 continue;
             }
-            if (!afterBlank) {
-                const QRegularExpressionMatch item = listItem.match(line);
-                if (item.hasMatch())
-                    listText = item.capturedLength(1) + std::max<qsizetype>(item.capturedLength(2), 1);
-                else if (wasAfterBlank && listText >= 0 && indent < listText)
-                    listText = -1; // a paragraph after the list
-            }
-            const QRegularExpressionMatch open = fence.match(line);
-            if (open.hasMatch()) {
-                // Verbatim to the closing fence's line (or the end).
-                const QChar c = open.captured(1).at(0);
-                const qsizetype length = open.capturedLength(1);
-                qsizetype line = end;
-                while (line < md.size()) {
-                    const qsizetype next = line + 1;
-                    const qsizetype stop = lineEnd(next);
-                    qsizetype indent = next;
-                    while (indent < stop && indent - next < 4 && md.at(indent) == QLatin1Char(' '))
-                        ++indent;
-                    const qsizetype run = indent - next < 4 ? runAt(indent, c) : 0;
-                    line = stop;
-                    if (run >= length && md.mid(indent + run, stop - indent - run).trimmed().isEmpty())
-                        break;
+            qsizetype at = 0;
+            while (at < run.text.size()) {
+                if (!closer.pattern().isEmpty()) {
+                    const QRegularExpressionMatch end = closer.match(run.text, at);
+                    const qsizetype to = end.hasMatch() ? end.capturedEnd() : run.text.size();
+                    drop(run.position + int(at), run.position + int(to));
+                    if (end.hasMatch())
+                        closer = QRegularExpression();
+                    at = to;
+                    continue;
                 }
-                kept += md.mid(at, line - at);
-                at = line;
-                continue; // at the line break, or the end
+                const QRegularExpressionMatch open = dropped.match(run.text, at);
+                const QRegularExpressionMatch element = tag.match(run.text, at);
+                if (open.hasMatch() && (!element.hasMatch() || open.capturedStart() <= element.capturedStart())) {
+                    drop(run.position + int(open.capturedStart()), run.position + int(open.capturedEnd()));
+                    closer = open.captured(1).isEmpty()
+                                 ? QRegularExpression(QStringLiteral("-->"))
+                                 : QRegularExpression(QStringLiteral("</%1\\s*>").arg(open.captured(1)),
+                                                      QRegularExpression::CaseInsensitiveOption |
+                                                          QRegularExpression::UseUnicodePropertiesOption);
+                    at = open.capturedEnd();
+                } else if (element.hasMatch()) {
+                    drop(run.position + int(element.capturedStart()), run.position + int(element.capturedEnd()));
+                    at = element.capturedEnd();
+                } else {
+                    break;
+                }
             }
         }
-        // Text to the next backtick or line break.
-        qsizetype stop = at;
-        while (stop < md.size() && md.at(stop) != QLatin1Char('`') && md.at(stop) != QLatin1Char('\n'))
-            ++stop;
-        const QString part = md.mid(at, stop - at);
-        // The line's end can end a tag's name (<script, then its attributes).
-        const bool lineEnds = stop >= md.size() || md.at(stop) == QLatin1Char('\n');
-        const QRegularExpressionMatch open = dropped.match(lineEnds ? part + QLatin1Char('\n') : part);
-        if (open.hasMatch()) {
-            kept += text(part.left(open.capturedStart()));
-            closer = open.captured(1).isEmpty()
-                         ? QRegularExpression(QStringLiteral("-->"))
-                         : QRegularExpression(QStringLiteral("</%1\\s*>").arg(open.captured(1)),
-                                              QRegularExpression::CaseInsensitiveOption);
-            at += open.capturedEnd();
-            lineStart = false;
-            continue;
-        }
-        kept += text(part);
-        at = stop;
-        if (at >= md.size())
-            break;
-        if (md.at(at) == QLatin1Char('\n')) {
-            kept += QLatin1Char('\n');
-            ++at;
-            lineStart = true;
-            continue;
-        }
-        // A code span: to the next run of as many backticks, within the
-        // paragraph; with none, the run is plain backticks.
-        const qsizetype run = runAt(at, QLatin1Char('`'));
-        const QRegularExpressionMatch paragraph = blankLine.match(md, at);
-        const qsizetype limit = paragraph.hasMatch() ? paragraph.capturedStart() : md.size();
-        qsizetype close = -1;
-        for (qsizetype next = md.indexOf(QLatin1Char('`'), at + run); next >= 0 && next < limit;) {
-            const qsizetype length = runAt(next, QLatin1Char('`'));
-            if (length == run) {
-                close = next;
-                break;
-            }
-            next = md.indexOf(QLatin1Char('`'), next + length);
-        }
-        const qsizetype end = close < 0 ? at + run : close + run;
-        kept += md.mid(at, end - at);
-        at = end;
-        lineStart = false;
+        // Dropping on past the block takes its end too: the paragraphs join.
+        if (!closer.pattern().isEmpty() && block.next().isValid())
+            drop(block.position() + block.length() - 1, block.position() + block.length());
+        if (int(gone.size()) != before || (!gone.empty() && gone.back().to > block.position()))
+            block.setUserState(1); // touched: if it is left empty, it goes
     }
-    return kept;
+    for (auto it = gone.rbegin(); it != gone.rend(); ++it) {
+        QTextCursor cursor(&doc);
+        cursor.setPosition(it->from);
+        cursor.setPosition(it->to, QTextCursor::KeepAnchor);
+        cursor.removeSelectedText();
+    }
+    std::vector<QTextBlock> empty;
+    for (QTextBlock block = doc.begin(); block.isValid(); block = block.next())
+        if (block.userState() == 1 && block.text().trimmed().isEmpty() && !isCode(block, QTextCharFormat()))
+            empty.push_back(block);
+    for (auto it = empty.rbegin(); it != empty.rend(); ++it) {
+        QTextCursor cursor(&doc);
+        if (it->next().isValid()) {
+            cursor.setPosition(it->position());
+            cursor.setPosition(it->position() + it->length(), QTextCursor::KeepAnchor);
+        } else if (it->previous().isValid()) {
+            cursor.setPosition(it->previous().position() + it->previous().length() - 1);
+            cursor.setPosition(it->position() + it->length() - 1, QTextCursor::KeepAnchor);
+        }
+        cursor.removeSelectedText();
+    }
+}
+
+// A bare http(s) URL outside code and links becomes a link, all of it;
+// trailing punctuation stays outside, as on GitHub.
+void linkUrls(QTextDocument &doc)
+{
+    static const QRegularExpression url(
+        QStringLiteral("(?<![\\w/])https?://[^\\s<>`]*[^\\s<>`.,:;!?'\")\\]*_~]"),
+        QRegularExpression::UseUnicodePropertiesOption);
+    struct Link {
+        int from, to;
+        QString href;
+    };
+    std::vector<Link> links;
+    for (QTextBlock block = doc.begin(); block.isValid(); block = block.next()) {
+        int position = -1;
+        QString text;
+        const auto scan = [&] {
+            for (auto m = url.globalMatch(text); m.hasNext();) {
+                const QRegularExpressionMatch found = m.next();
+                links.push_back({position + int(found.capturedStart()), position + int(found.capturedEnd()), found.captured()});
+            }
+            position = -1;
+            text.clear();
+        };
+        for (auto it = block.begin(); !it.atEnd(); ++it) {
+            const QTextFragment fragment = it.fragment();
+            if (isCode(block, fragment.charFormat()) || fragment.charFormat().isAnchor()) {
+                scan();
+                continue;
+            }
+            if (position < 0)
+                position = fragment.position();
+            text += fragment.text();
+        }
+        scan();
+    }
+    for (const Link &link : links) {
+        QTextCursor cursor(&doc);
+        cursor.setPosition(link.from);
+        cursor.setPosition(link.to, QTextCursor::KeepAnchor);
+        QTextCharFormat format;
+        format.setAnchor(true);
+        format.setAnchorHref(link.href);
+        cursor.mergeCharFormat(format);
+    }
 }
 
 } // namespace
@@ -421,8 +421,9 @@ void WhatsNew::saveCache() const
 QString WhatsNew::render(const QString &markdown, const QColor &muted, const QColor &link, const QColor &code) const
 {
     QTextDocument doc;
-    doc.setMarkdown(prepareMarkdown(markdown), QTextDocument::MarkdownFeatures(QTextDocument::MarkdownDialectGitHub |
-                                                              QTextDocument::MarkdownNoHTML));
+    doc.setMarkdown(markdown, QTextDocument::MarkdownFeatures((int(QTextDocument::MarkdownDialectGitHub) &
+                                                               ~(kMd4cPermissiveUrlAutolinks | kMd4cPermissiveWwwAutolinks)) |
+                                                              int(QTextDocument::MarkdownNoHTML)));
     // Images first, last to first so the positions hold: the alt text in
     // their place, nothing loaded.
     struct Image {
@@ -441,6 +442,8 @@ QString WhatsNew::render(const QString &markdown, const QColor &muted, const QCo
         cursor.setPosition(it->position + it->length, QTextCursor::KeepAnchor);
         cursor.insertText(it->alt, QTextCharFormat());
     }
+    dropHtml(doc);
+    linkUrls(doc);
     for (QTextBlock block = doc.begin(); block.isValid(); block = block.next()) {
         // A heading is a section label: the body's size, semibold, muted.
         if (block.blockFormat().headingLevel() > 0) {
