@@ -80,18 +80,38 @@ Pane {
             Accessible.checked: checked
         }
         IconToolButton {
+            id: loopButton
             objectName: "templateLoop"
             iconRole: "loop"
             text: qsTr("Loop the Line")
             checkable: true
             enabled: root.video !== null && root.video.hasVideo && root.controller.source !== 0
             checked: root.video !== null && root.video.looping
+            // The span the loop plays: another Line previewed, or new times,
+            // loop that instead.
+            property var span: null
+            function loopSource() {
+                span = [root.controller.sourceStartMs, root.controller.sourceEndMs]
+                root.video.loopRange(span[0], span[1])
+            }
             onToggled: {
                 if (checked)
-                    root.video.loopRange(root.controller.sourceStartMs, root.controller.sourceEndMs)
+                    loopSource()
                 else
                     root.video.pause()
                 checked = Qt.binding(() => root.video !== null && root.video.looping)
+            }
+            Connections {
+                target: root.controller
+                function onPreviewChanged() {
+                    if (!root.video || !root.video.looping || !loopButton.span)
+                        return
+                    if (root.controller.source === 0)
+                        root.video.pause()
+                    else if (loopButton.span[0] !== root.controller.sourceStartMs
+                             || loopButton.span[1] !== root.controller.sourceEndMs)
+                        loopButton.loopSource()
+                }
             }
             Accessible.checkable: true
             Accessible.checked: checked

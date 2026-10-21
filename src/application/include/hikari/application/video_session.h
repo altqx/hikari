@@ -139,6 +139,8 @@ public:
     // from its start each time the end is shown, until a pause, stop or seek.
     bool playLine(int startMs, int endMs, bool loop = false);
     bool looping() const { return m_playing && m_playEndMs > 0 && m_loop; }
+    // The span a loop plays (its start and end in ms), whether or not it plays.
+    std::pair<int, int> loopSpan() const { return {m_loopStartMs, m_loopEndMs}; }
     // A1: legacy's Stopped state: Stop while playing, until the next Play
     // (legacy marks the paused video's frame in the audio box only when Paused).
     bool stopped() const { return m_stopped; }

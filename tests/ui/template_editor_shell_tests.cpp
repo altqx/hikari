@@ -284,6 +284,38 @@ private slots:
         QFAIL("no second karaoke Line");
     }
 
+    // Loop the Line follows the preview's Line: choosing another karaoke Line
+    // (no seek on a single click) loops that one.
+    void theLoopFollowsTheLinePreviewed()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", true));
+        showPanel("templateDock");
+        QTRY_VERIFY_WITH_TIMEOUT(editor().source() != 0, 20'000);
+        auto *loop = item(QStringLiteral("templateLoop"));
+        QTRY_VERIFY(loop->isEnabled());
+        // The test's first playback opens the player and may end there;
+        // later ones play on.
+        application->video().loopRange(editor().sourceStartMs(), editor().sourceEndMs());
+        QTest::qWait(500);
+        application->video().pause();
+        click(loop);
+        QTRY_VERIFY(application->video().looping());
+        const auto first = editor().source();
+        QCOMPARE(application->video().session().loopSpan(),
+                 std::pair(editor().sourceStartMs(), editor().sourceEndMs()));
+        for (const auto *l : session()->document().lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l) && l->id.value != first) {
+                application->clickLine(l->id.value, 0);
+                break;
+            }
+        QTRY_VERIFY(editor().source() != first);
+        QTRY_COMPARE(application->video().session().loopSpan(),
+                     std::pair(editor().sourceStartMs(), editor().sourceEndMs()));
+        QVERIFY(application->video().looping());
+        click(loop);
+        QTRY_VERIFY(!application->video().looping());
+    }
+
     // A reload from the file is new content: a trusted Document asks again,
     // one without templates before too.
     void aReloadedFileAsksAgain()
