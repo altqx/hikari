@@ -257,8 +257,13 @@ jobs:
           path: dist
           if-no-files-found: error
 
+  # The wxWidgets build of the root CMakeLists.  On the qt branch the root is
+  # the Qt rewrite (cmake/provision), which this job's packages cannot
+  # configure and which qt-linux.yml and qt-fedora.yml already build; the
+  # legacy Linux sources are not on that branch, so the job is skipped there.
   linux:
     name: Linux (${{ matrix.build_type }})
+    if: github.base_ref != 'qt' && github.ref_name != 'qt'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false
