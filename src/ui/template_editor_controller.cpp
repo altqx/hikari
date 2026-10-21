@@ -28,7 +28,7 @@ std::u8string u8(const QString &s)
     return std::u8string(b.begin(), b.end());
 }
 
-QString tr(const char *text)
+QString translated(const char *text)
 {
     return QCoreApplication::translate("HikariSub.TemplateEditor", text);
 }
@@ -964,7 +964,8 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
     if (!p.result) {
         m_runError = QString::fromStdString(p.error).trimmed();
         if (m_runError.isEmpty())
-            m_runError = tr("The templater stopped before it finished.");
+            m_runError = QCoreApplication::translate("HikariSub.TemplateEditor",
+                                                     "The templater stopped before it finished.");
     } else {
         const QJsonObject report = reportOf(p.result->report);
         for (const QJsonValue v : report.value(QLatin1String("templates")).toArray()) {
@@ -1112,7 +1113,7 @@ QVariantList TemplateEditorController::completions(const QString &text, int curs
             out.append(QVariantMap{{QStringLiteral("name"), QLatin1Char('$') + name},
                                    {QStringLiteral("insert"), QLatin1Char('$') + name},
                                    {QStringLiteral("from"), from - 1},
-                                   {QStringLiteral("help"), tr(v.help)},
+                                   {QStringLiteral("help"), translated(v.help)},
                                    {QStringLiteral("value"), m_values.value(name).toString()}});
         }
         return out;
@@ -1126,7 +1127,7 @@ QVariantList TemplateEditorController::completions(const QString &text, int curs
             out.append(QVariantMap{{QStringLiteral("name"), name},
                                    {QStringLiteral("insert"), QString::fromLatin1(f.insert)},
                                    {QStringLiteral("from"), from},
-                                   {QStringLiteral("help"), tr(f.help)},
+                                   {QStringLiteral("help"), translated(f.help)},
                                    {QStringLiteral("value"), QString()}});
         }
     }
