@@ -319,19 +319,10 @@ private slots:
                 "Dialogue: 0,0:00:01.00,0:00:08.00,T2a,,0,0,0,,{\\k60}Your {\\k60}name, {\\k60}carried {\\k40}on "
                 "{\\k40}the {\\k60}spring {\\k80}wind\n");
         f.close();
-        QVERIFY(openPath(path, true));
+        QVERIFY(openPath(path, true, false));
         // The panel its whole height beside the video (no audio here).
         QVERIFY(QMetaObject::invokeMethod(object(QStringLiteral("audioDock")), "close"));
         showPanel("templateDock");
-        QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview(), 20'000);
-        // The syllable template current; the frame on its third syllable.
-        for (const QVariant &v : editor().templates())
-            if (v.toMap().value(QStringLiteral("effect")).toString().startsWith(QStringLiteral("template syl"))) {
-                editor().setCurrent(v.toMap().value(QStringLiteral("id")).toULongLong());
-                break;
-            }
-        application->video().showFrameAt(qRound(1.75 * 23.976));
-        QTest::qWait(1500);
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         const auto shoot = [&](const QString &name) {
@@ -344,6 +335,20 @@ private slots:
                                   QStringLiteral(".png")));
             }
         };
+        // The file just opened: its templates wait for the user's Preview.
+        QTRY_VERIFY(item(QStringLiteral("templatePreviewTrust"))->isVisible());
+        QTest::qWait(500);
+        shoot(QStringLiteral("trust"));
+        editor().trustDocument();
+        QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview(), 20'000);
+        // The syllable template current; the frame on its third syllable.
+        for (const QVariant &v : editor().templates())
+            if (v.toMap().value(QStringLiteral("effect")).toString().startsWith(QStringLiteral("template syl"))) {
+                editor().setCurrent(v.toMap().value(QStringLiteral("id")).toULongLong());
+                break;
+            }
+        application->video().showFrameAt(qRound(1.75 * 23.976));
+        QTest::qWait(1500);
         shoot(QStringLiteral("editor"));
         // A problem in the current template.
         const QString text = editor().text();
