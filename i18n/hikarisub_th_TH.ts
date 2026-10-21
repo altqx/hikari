@@ -359,8 +359,16 @@ Output device: %2</source>
         <translation>แฟ้มทั้งหมด</translation>
     </message>
     <message>
+        <source>Choose the audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">เปิด</translation>
+    </message>
+    <message>
         <source>Choose the track</source>
-        <translation>เลือกแทร็ก</translation>
+        <translation type="vanished">เลือกแทร็ก</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -3354,7 +3362,11 @@ Failed to copy %2 fonts.</source>
     <name>HikariSub.Hotkeys</name>
     <message>
         <source>Hotkey mapping</source>
-        <translation>การกำหนดปุ่มลัด</translation>
+        <translation type="vanished">การกำหนดปุ่มลัด</translation>
+    </message>
+    <message>
+        <source>Keys for &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Global hotkey</source>
@@ -3377,32 +3389,68 @@ Failed to copy %2 fonts.</source>
         <translation>ปุ่มลัดของเสียง</translation>
     </message>
     <message>
+        <source>Press the keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press the keys…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Window</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Please enter a hotkey for &quot;%1&quot;.</source>
-        <translation type="unfinished">ป้อนปุ่มลัดสำหรับ &quot;%1&quot;</translation>
-    </message>
-    <message>
-        <source>OK</source>
+        <source>%1 is already used by %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Swap with %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take it from %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">ล้าง</translation>
+    </message>
+    <message>
+        <source>Please enter a hotkey for &quot;%1&quot;.</source>
+        <translation type="obsolete">ป้อนปุ่มลัดสำหรับ &quot;%1&quot;</translation>
+    </message>
+    <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
     </message>
     <message>
         <source>Switch hotkeys</source>
-        <translation>สลับปุ่มลัด</translation>
+        <translation type="vanished">สลับปุ่มลัด</translation>
     </message>
     <message>
         <source>Delete hotkey</source>
-        <translation>ลบปุ่มลัด</translation>
+        <translation type="vanished">ลบปุ่มลัด</translation>
     </message>
     <message>
         <source>Set anyway</source>
-        <translation>กำหนดต่อไป</translation>
+        <translation type="vanished">กำหนดต่อไป</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -3411,10 +3459,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shortcut can be set using Shift + Click</source>
         <translation>กด Shift พร้อมคลิกเพื่อกำหนดปุ่มลัด</translation>
-    </message>
-    <message>
-        <source>&quot;%1&quot; is already assigned to %2. Press it again to replace it.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Exit</source>
@@ -4591,6 +4635,140 @@ great help testing HikariSub on a slow computer)
         <source>Application menu</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Don&apos;t ask again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more notice(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open the Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">แทนที่</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Action for every row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">ชื่อ</translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation type="unfinished">การดำเนินการ</translation>
+    </message>
+    <message>
+        <source>Action for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New name for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Choose styles</source>
+        <translation type="unfinished">เลือกสไตล์</translation>
+    </message>
+    <message>
+        <source>Search styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No style matches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A week ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A month ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Date, as %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous month</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next month</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4623,8 +4801,16 @@ great help testing HikariSub on a slow computer)
         <translation>แฟ้มนี้ไม่มีแทร็กคำบรรยาย</translation>
     </message>
     <message>
+        <source>Choose the subtitle track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">เปิด</translation>
+    </message>
+    <message>
         <source>Choose subtitle track</source>
-        <translation>เลือกแทร็กคำบรรยาย</translation>
+        <translation type="vanished">เลือกแทร็กคำบรรยาย</translation>
     </message>
     <message>
         <source>Loading subtitles from Matroska.</source>
@@ -4946,6 +5132,22 @@ when find results window is open</source>
     </message>
     <message>
         <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show notices as toasts (off: in the Log only)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brings back the questions hidden with &quot;Don&apos;t ask again&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6312,64 +6514,52 @@ cause it was edited.</source>
         <translation>ลบแฟ้มที่เก่ากว่า</translation>
     </message>
     <message>
-        <source>Day</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>January</source>
-        <translation>มกราคม</translation>
+        <translation type="vanished">มกราคม</translation>
     </message>
     <message>
         <source>February</source>
-        <translation>กุมภาพันธ์</translation>
+        <translation type="vanished">กุมภาพันธ์</translation>
     </message>
     <message>
         <source>March</source>
-        <translation>มีนาคม</translation>
+        <translation type="vanished">มีนาคม</translation>
     </message>
     <message>
         <source>April</source>
-        <translation>เมษายน</translation>
+        <translation type="vanished">เมษายน</translation>
     </message>
     <message>
         <source>May</source>
-        <translation>พฤษภาคม</translation>
+        <translation type="vanished">พฤษภาคม</translation>
     </message>
     <message>
         <source>June</source>
-        <translation>มิถุนายน</translation>
+        <translation type="vanished">มิถุนายน</translation>
     </message>
     <message>
         <source>July</source>
-        <translation>กรกฎาคม</translation>
+        <translation type="vanished">กรกฎาคม</translation>
     </message>
     <message>
         <source>August</source>
-        <translation>สิงหาคม</translation>
+        <translation type="vanished">สิงหาคม</translation>
     </message>
     <message>
         <source>September</source>
-        <translation>กันยายน</translation>
+        <translation type="vanished">กันยายน</translation>
     </message>
     <message>
         <source>October</source>
-        <translation>ตุลาคม</translation>
+        <translation type="vanished">ตุลาคม</translation>
     </message>
     <message>
         <source>November</source>
-        <translation>พฤศจิกายน</translation>
+        <translation type="vanished">พฤศจิกายน</translation>
     </message>
     <message>
         <source>December</source>
-        <translation>ธันวาคม</translation>
-    </message>
-    <message>
-        <source>Month</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Year</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ธันวาคม</translation>
     </message>
     <message>
         <source>Remove older auto save files</source>
@@ -6826,19 +7016,19 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Style named &quot;%1&quot; already exists. Replace?</source>
-        <translation type="unfinished">มีสไตล์ชื่อ &quot;%1&quot; อยู่แล้ว ต้องการที่จะแทนที่หรือไม่?</translation>
+        <translation type="obsolete">มีสไตล์ชื่อ &quot;%1&quot; อยู่แล้ว ต้องการที่จะแทนที่หรือไม่?</translation>
     </message>
     <message>
         <source>Yes to all</source>
-        <translation>ใช่ทั้งหมด</translation>
+        <translation type="vanished">ใช่ทั้งหมด</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation>ใช่</translation>
+        <translation type="vanished">ใช่</translation>
     </message>
     <message>
         <source>No</source>
-        <translation>ไม่</translation>
+        <translation type="vanished">ไม่</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -6855,6 +7045,74 @@ Spell checking will be disabled</source>
     <message>
         <source>Create</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>bold, italic or underline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>shadow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>alignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>margins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 styles already exist in %3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more are the same as the ones there and are left as they are.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copy %n style(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -6965,12 +7223,20 @@ Spell checking will be disabled</source>
         <translation>คัดลอกสไตล์จากแฟ้ม ASS ไปยังที่เก็บข้อมูล</translation>
     </message>
     <message>
+        <source>the storage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add to ASS</source>
         <translation>เพิ่มไปยังแฟ้ม ASS</translation>
     </message>
     <message>
         <source>Copy style from storage to ASS</source>
         <translation>คัดลอกสไตล์จากที่เก็บข้อมูลไปยังแฟ้ม ASS</translation>
+    </message>
+    <message>
+        <source>the ASS file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to all open ASS files</source>
@@ -7226,7 +7492,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Choose styles</source>
-        <translation>เลือกสไตล์</translation>
+        <translation type="vanished">เลือกสไตล์</translation>
     </message>
     <message>
         <source>Copy of </source>
@@ -8025,6 +8291,18 @@ after the end time in milliseconds</source>
         <translation>เลือกแฟ้มคำบรรยาย</translation>
     </message>
     <message>
+        <source>Translation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original text</source>
+        <translation type="unfinished">ข้อความต้นฉบับ</translation>
+    </message>
+    <message>
+        <source>Original text: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8106,7 +8384,7 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Translator mode</source>
-        <translation>โหมดผู้แปล</translation>
+        <translation type="vanished">โหมดผู้แปล</translation>
     </message>
     <message>
         <source>Translator mode displays and saves both foreign text and translation text</source>
@@ -8128,6 +8406,30 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Translation needs an ASS file: plain text cannot store it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not confirmed: marks the selected Lines for review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on Translation mode for this file?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
