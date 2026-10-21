@@ -24,10 +24,10 @@ T1 ([#176](https://github.com/altqx/hikari/issues/176)) lays the ground the visu
 
 A family's card adds one class and one line; the rail, the routing and the drawing need no change.
 
-1. Implement `visual::VisualTool`: `family()`, `pointer()`, `overlay()`, and as needed `reset()` (legacy SetCurVisual: the view, script or active Line changed), `key()` (true when used), `values()` / `setValue()` (the numeric alternative shown below the canvas), `options()` / `setOption()` (the family's own row, below), `previewLines()` (Lines the video renders after the Document's) and `warnsOutsideLine()` (true but for the crosshair).
+1. Implement `visual::VisualTool`: `family()`, `pointer()`, `overlay()`, and as needed `reset()` (legacy SetCurVisual: the view, script or active Line changed), `key()` (true when used), `takesKey()` (VT2: the keys it takes ahead of the bindings, its nudge's arrows), `values()` / `setValue()` (the numeric alternative shown below the canvas), `options()` / `setOption()` (the family's own row, below), `previewLines()` (Lines the video renders after the Document's) and `warnsOutsideLine()` (true but for the crosshair).
 2. Return it from `makeVisualTool()` in `src/application/visual_tools.cpp`.
 
-The host gives a tool only what legacy's Visuals got: pointer events in device pixels over the video while a video is open, the Video panel's keys that no Video binding takes, and resets. A tool other than the crosshair gets nothing outside its Line's time or on a comment (Visuals::Draw's blockevents); the host draws the warning centred on the video unless VIDEO_VISUAL_WARNINGS_OFF (approved departure T1-warning-centre).
+The host gives a tool only what legacy's Visuals got: pointer events in device pixels over the video while a video is open, the Video panel's keys that no Video binding takes (and, first, the keys `takesKey()` claims: [the arrow nudge](#tool-hotkeys-and-the-arrow-nudge-vt2)), and resets. A tool other than the crosshair gets nothing outside its Line's time or on a comment (Visuals::Draw's blockevents); the host draws the warning centred on the video unless VIDEO_VISUAL_WARNINGS_OFF (approved departure T1-warning-centre).
 
 Every edit goes through a gesture:
 
@@ -38,6 +38,43 @@ Every edit goes through a gesture:
 - A change of the active Line or of the editing target drops an open gesture the same way, and the tool is reset to the new Line (legacy's SetVisual dropped the tool's unsent preview). The gesture is never moved to the new Line.
 
 Draw with `Overlay` (lines, circles, text, and filled polygons below or above the lines) in device pixels of the video window; the host converts to logical coordinates and paints it apart from the frame. Tests can swap in a tool with `VisualToolsController::setTool`.
+
+## Tool hotkeys and the arrow nudge (VT2)
+
+VT2 ([#270](https://github.com/altqx/hikari/issues/270), owner-approved audit [issuecomment-6307366142](https://github.com/altqx/hikari/issues/270#issuecomment-6307366142)) gives each tool a Video command and moves the nudge to the arrows. Legacy had no key to choose a tool (VideoToolbar::OnMouseEvent only).
+
+**The tool commands.** `FamilyInfo::hotkey` names each family's command (`familyOfHotkey` reads it back); `VisualToolsController::runHotkey` chooses the family as its rail button does, so the on tool's key goes back to the Position pointer. The commands are Video bindings (`hotkeys.cpp`, ids 2022-2032, named as the rail names the tools), listed, rebound and imported as the others; they act while the Video panel is focused or hovered (KB1's router) and in fullscreen, never while a text field has the focus. The rail's tooltip shows the key ("Text scaling (S)").
+
+**The audit.** Each key is checked against every default binding of the five contexts and the keys the Video panel takes in code (F full screen, B and Esc leaving it, Menu, Return in the zoom mode, Ctrl+Shift+Z). `shell_tests` everyDefaultBindingReachesItsCommand (KB3's audit) lists the ten that are legacy defaults elsewhere as the Video window's departures.
+
+| Tool | Command (id) | Key | Video and Global | Other contexts |
+| --- | --- | --- | --- | --- |
+| Position pointer | VIDEO_TOOL_CROSSHAIR (2022) | X | free | Audio Next line alt |
+| Text positioning | VIDEO_TOOL_POSITION (2023) | P | free | free |
+| Text moving | VIDEO_TOOL_MOVE (2024) | G | free | Audio Commit alt |
+| Text scaling | VIDEO_TOOL_SCALE (2025) | S | free (the S nudge retired) | Audio Play alt |
+| Text Z rotation | VIDEO_TOOL_ROTATION_Z (2026) | R | free | Audio Play line alt |
+| Text X / Y rotation | VIDEO_TOOL_ROTATION_XY (2027) | T | free | Audio Play to the end |
+| Rectangle clipping | VIDEO_TOOL_RECTANGLE_CLIP (2028) | C | free | Audio Add lead-in |
+| Vector clipping | VIDEO_TOOL_VECTOR_CLIP (2029) | V | free | Audio Add lead-out |
+| Vector drawing | VIDEO_TOOL_DRAWING (2030) | D | free (the D nudge retired) | Audio Play last 500ms |
+| Position shifter | VIDEO_TOOL_POSITION_SHIFTER (2031) | A | free (the A nudge retired) | Audio Scroll left |
+| Hydra | VIDEO_TOOL_HYDRA (2032) | H | free | Audio Stop |
+
+The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPanel::SetAccels), not over the video, so they keep their keys.
+
+**The nudge** ([VT2-arrow-nudge](compatibility-decisions.md)). `nudgeDirection` reads an arrow (none with Ctrl, or with Alt but for Move's end point); a tool that nudges answers `takesKey()` for the arrows and Shift+arrows whatever its state, and the Video panel (docked and fullscreen) claims them at ShortcutOverride ahead of its bindings and the Global ones, so over the video they do not step frames (Left/Right), snap to keyframes (Shift+Left/Right) or seek a minute (Up/Down). From another panel, and with the Position pointer, the two rotations or Hydra on, the arrows keep their bindings; Ctrl+arrows stay Global. KB1's router sends a routed key's release where its press went, so a nudge from the hovered video commits wherever the pointer is by then.
+
+| Tool | Arrows | Shift+arrows | Legacy |
+| --- | --- | --- | --- |
+| Text positioning, Position shifter | every target one script pixel | a tenth | A/D/W/S |
+| Text moving | the start one script pixel; Alt+arrows the end | a tenth | A/D/W/S, J/L/I/K (L never reached it: VIDEO_5_SECONDS_FORWARD) |
+| Text scaling | Left/Right the X arrow, Up/Down the Y arrow, one percent | a tenth | W/A/S/D |
+| Rectangle clipping | the second corner one unit | a tenth | A/D/W/S |
+| Vector clipping | the selected points one unit | one unit (the clip is written in whole units) | W/A/S/D |
+| Vector drawing | the selected points one unit | a tenth | W/A/S/D |
+
+The legacy probes' presses replay as the rewrite's (`tests/application/legacy_visual_keys.h`): a press legacy nudged with becomes the arrow for the same nudge.
 
 ## What T2 added for the families
 
@@ -83,7 +120,7 @@ T4 ([#179](https://github.com/altqx/hikari/issues/179)) adds `RectangleClipTool`
 | Part | File | Legacy |
 | --- | --- | --- |
 | Reading and writing a Line's clip, inverting, the mask's text | `visual_clip.h` (`clip::`) | ClipRect::SetCurVisual / ChangeVisual / InvertClip, DrawingAndClip::SetCurVisual / ChangeVectorVisual / InvertClip / CreateClipMask, Visuals::GetPosnScale's clip scale |
-| The rectangle clip: drag, edges, corners, move, A/D/W/S, Invert clip, its mask | `RectangleClipTool` | ClipRect (VisualClipRect.cpp) |
+| The rectangle clip: drag, edges, corners, move, the arrow nudge, Invert clip, its mask | `RectangleClipTool` | ClipRect (VisualClipRect.cpp) |
 | The vector clip: modes, Invert clip, the mask Line | `VectorClipTool` | DrawingAndClip as VECTORCLIP (VisualClips.cpp) |
 | The points: parsing, writing, the modes' mouse, keys and wheel, selection, snapping, removal, drawing | `VectorEditor`, `parseVectorPoints`, `serializeVectorPoints`, `flattenCurve` | DrawingAndClip, ClipPoint, Visuals::GetVectorPoints / Curve / DrawRect / DrawCircle / DrawDashedLine, getfloat |
 
@@ -95,7 +132,7 @@ The editor holds legacy's points (`VectorPoint`: x, y, command, start, selected)
 
 Every step keeps legacy's float arithmetic and int truncations, and the files are built without floating-point contraction. The `legacy_clip_capture` probe (`tools/legacy-capture/clip_capture.cpp`) runs the legacy VisualClipRect.cpp and VisualClips.cpp unchanged on `inputs/clip-cases.txt`; `hikari_application_visual_clip_tests` replays its observations ([local-t4-clip-20261005](../../tests/fixtures/legacy-observations/local-t4-clip-20261005/README.md)).
 
-A gesture's targets follow legacy's two paths: with several Lines (the batch picker's; legacy several selected) each sample and the release rewrite every target from its own text; with one, each sample rewrites the text the previous sample left (legacy's Line editor) and the release commits it. A nudge (A/D/W/S, Delete) commits on its key's release, auto-repeat included, as the transaction rule says.
+A gesture's targets follow legacy's two paths: with several Lines (the batch picker's; legacy several selected) each sample and the release rewrite every target from its own text; with one, each sample rewrites the text the previous sample left (legacy's Line editor) and the release commits it. A nudge (the arrows, Delete) commits on its key's release, auto-repeat included, as the transaction rule says.
 
 ## Drawing and shape presets (T5)
 
@@ -125,7 +162,7 @@ T6 ([#181](https://github.com/altqx/hikari/issues/181)) adds the last two famili
 
 | Part | File | Legacy |
 | --- | --- | --- |
-| The shifter: the active Line's position, \move points, clips, drawings and \org as handles; a drag (Shift locks an axis, the right button takes the first handle) or A/D/W/S (Shift a tenth) moves every chosen kind in every target | `PositionShifterTool` | MoveAll (VisualMoveAll.cpp), MoveAllItem (VideoToolbar.cpp:354-414) |
+| The shifter: the active Line's position, \move points, clips, drawings and \org as handles; a drag (Shift locks an axis, the right button takes the first handle) or the arrows (Shift a tenth) move every chosen kind in every target | `PositionShifterTool` | MoveAll (VisualMoveAll.cpp), MoveAllItem (VideoToolbar.cpp:354-414) |
 | The definitions: legacy's 22 defaults, Config/AllTagsSettings.txt read and written as legacy did ("HYDRA2.0" first, UTF-8 with a BOM, an older file replaced by the defaults) | `defaultAllTags`, `parseAllTags`, `writeAllTags` | LoadSettings, SaveSettings, GetNames (VisualAllTagsEdition.cpp:328-446) |
 | The all-tags tool: a slider per value of the chosen definition, its thumb at the Line's value (the tag found at the caret or from the start, else the Style's); a thumb drag, a track click or the wheel writes the tag by the change option; Shift and the wheel step through the definitions; the right button drags the sliders; the Line editor's "Insert difference" keys put the video's time into a \fad or \t | `AllTagsTool` | AllTags (VisualAllTags.cpp), AllTagsSlider (VisualAllTagsControls.cpp), AllTagsItem (VideoToolbar.cpp:646-824) |
 | The "Tag editing" dialog: Add tag, Delete tag, the list's "Save changes" question, the fields (legacy NumCtrl's number fields), Apply, OK, Cancel, Restore default | `AllTagsEdition`, `NumberField` (application), `AllTagsEditor` (QML model), `AllTagsEditionDialog.qml` | AllTagsEdition (VisualAllTagsEdition.cpp:155-455) |

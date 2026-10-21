@@ -140,6 +140,9 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml)
 # AU1: the rows of the audio panel's zoom and speaker popovers.
 qt_target_qml_sources(hikari_ui QML_FILES AudioSliderRow.qml)
+# KA2 (#277): the audio panel's tap bar, the latency calibration window and
+# the key caps their hints show.
+qt_target_qml_sources(hikari_ui QML_FILES AudioTapBar.qml TapCalibrationWindow.qml Keycap.qml)
 # E5: the Line editor's Not confirmed and Moving tags buttons. TM1: the
 # Original text panel's toolbar, the Translation preset's question and the
 # turn-off confirmation (the Translator mode check box is gone).

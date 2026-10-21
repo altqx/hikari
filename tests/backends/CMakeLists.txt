@@ -124,7 +124,7 @@ hikari_add_gtest(hikari_backends_portaudio_tests SOURCES portaudio_output_tests.
 # A4: the audio box's player through the editor output (a device the test
 # drives, and the output without a device).
 hikari_add_gtest(hikari_backends_audio_box_player_tests SOURCES audio_box_player_tests.cpp
-    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+    LIBRARIES hikari_backends Qt6::Core LABELS backends PROPERTIES RUN_SERIAL TRUE)
 
 # N8: the isolated Lua helper with the unchanged bundled edgeblur script and
 # authored fixtures.

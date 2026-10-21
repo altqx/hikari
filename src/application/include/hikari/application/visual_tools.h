@@ -52,9 +52,12 @@ struct FamilyInfo {
     std::string_view icon;    // VideoToolbar.cpp's bitmap name
     std::string_view tooltip; // VideoToolbar.cpp:44-54
     std::string_view history; // SubsFile.cpp:228-238: the edit's history name
+    std::string_view hotkey;  // VT2: the Video command choosing it (hotkeys.cpp)
 };
 const std::array<FamilyInfo, kFamilyCount> &families();
 const FamilyInfo &familyInfo(Family family);
+// VT2: the family a VIDEO_TOOL_* command chooses, if `symbol` is one.
+std::optional<Family> familyOfHotkey(std::string_view symbol);
 
 // A pointer event over the video window, in its device pixels (legacy
 // wxMouseEvent::GetX/GetY on VideoBox).
@@ -80,6 +83,19 @@ struct Key {
     bool autoRepeat = false;
     bool control = false, shift = false, alt = false;
 };
+
+// The arrow keys (Qt::Key values; the application layer does not link Qt).
+namespace keys {
+inline constexpr int Left = 0x01000012, Up = 0x01000013, Right = 0x01000014, Down = 0x01000015;
+} // namespace keys
+
+// VT2-arrow-nudge: the arrows nudge, Shift a tenth (legacy's A/D/W/S). The
+// direction of `key`'s arrow, -1, 0 or 1 on each axis; none for another key,
+// with Ctrl (Ctrl+arrows stay the Global bindings') or with Alt unless `alt`
+// (Move's end point). The tool applies Shift's tenth.
+std::optional<PointF> nudgeDirection(const Key &key, bool alt = false);
+// Whether `key` is an arrow, whatever the modifiers (a nudge's release).
+bool isArrowKey(int key);
 
 // What a tool draws over the frame, in device pixels of the video window.
 struct OverlayLine {
@@ -334,6 +350,13 @@ public:
     // its state (the caret at the tag, the angles, the press point).
     virtual bool keepsStateAfterCommit() const { return false; }
     virtual void pointer(const Pointer &event, VisualHost &host) = 0;
+    // VT2: true for a key the tool takes ahead of the Video and Global
+    // bindings (its nudge's arrows), whatever its state; the host claims it.
+    virtual bool takesKey(const Key &event) const
+    {
+        (void)event;
+        return false;
+    }
     // True when the tool used the key (a nudge: begin on press, commit on release).
     virtual bool key(const Key &event, VisualHost &host)
     {

@@ -78,6 +78,9 @@ public:
     // this piece's own are left there.
     void splitTags(const Line &line, std::vector<std::u16string> *carried = nullptr);
     void clear();
+    // KA2-tap-to-time: the syllables a tap made (texts, tags and each one's
+    // end in ms); the first one is current.
+    void assign(std::vector<std::u16string> syllables, std::vector<std::u16string> tags, std::vector<int> times);
     // Legacy GetText: each syllable with its \k tag (the time from the
     // previous syllable's end, or from `curStartMs`, in centiseconds).
     // KA1-k-round-trip: each tag goes back where Split read it (a tag before

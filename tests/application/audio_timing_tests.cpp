@@ -534,6 +534,24 @@ TEST_F(CommitTest, SeveralSelectedLinesAllTakeTheTimes)
     EXPECT_EQ(ms(line(2).start.value), 700);
 }
 
+// KA2-tap-to-time: a tapped Line's times and syllables are its own.
+TEST_F(CommitTest, AnActiveOnlyCommitLeavesTheOtherSelectedLinesAlone)
+{
+    select({a, c}, a);
+    AudioCommitRequest request{500, 900, true, false};
+    request.karaokeText = u"{\\k20}ta{\\k20}p";
+    request.stepName = "Tap timing";
+    request.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, request, shown));
+    EXPECT_EQ(ms(line(0).start.value), 500);
+    EXPECT_EQ(ms(line(0).end.value), 900);
+    EXPECT_EQ(line(0).text, u8"{\\k20}ta{\\k20}p");
+    EXPECT_EQ(ms(line(2).start.value), 6500);
+    EXPECT_EQ(ms(line(2).end.value), 8000);
+    EXPECT_EQ(line(2).text, u8"c");
+    EXPECT_EQ(lastStep(), "Tap timing");
+}
+
 TEST_F(CommitTest, AnEndBeforeTheStartIsBlockedUnlessLegacyCommitsIt)
 {
     select({b}, b);

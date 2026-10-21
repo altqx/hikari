@@ -649,7 +649,7 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     // SubsGrid::ChangeLine: one Line, or every selected Line with several selected
     std::vector<core::LineId> targets;
     const auto &selected = session.selection().selected;
-    if (selected.size() < 2) {
+    if (selected.size() < 2 || request.activeOnly) {
         targets.push_back(*active);
     } else {
         for (const auto *l : lines)
@@ -683,7 +683,10 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         session.discardDraft();
     std::optional<core::LineId> added;
     const auto ran = session.run(Command{
-        append ? "Adding a new line" : "Changing time on audio spectrum", session.revision(), touches,
+        append                ? "Adding a new line"
+        : request.stepName    ? request.stepName
+                              : "Changing time on audio spectrum",
+        session.revision(), touches,
         [&](core::Document &d) {
             moveAdjacent(d);
             for (const auto &target : targets)

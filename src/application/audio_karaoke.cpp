@@ -404,6 +404,17 @@ void AudioKaraoke::splitTags(const Line &line, std::vector<std::u16string> *carr
     carry();
 }
 
+void AudioKaraoke::assign(std::vector<std::u16string> syllables, std::vector<std::u16string> tags,
+                          std::vector<int> times)
+{
+    m_syls = std::move(syllables);
+    m_tags = std::move(tags);
+    m_times = std::move(times);
+    current = 0;
+    hover = -1;
+    character = -1;
+}
+
 std::u16string AudioKaraoke::text(int curStartMs) const
 {
     // KA1-k-round-trip: the syllables' texts in a row, each tag put back
