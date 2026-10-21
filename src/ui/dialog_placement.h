@@ -92,9 +92,11 @@ public:
     // else the dialog's transient parent.
     Q_INVOKABLE QWindow *opener() const;
     // Sets the dialog's geometry for an open from `opener` (nullptr: the
-    // screen) at its content's `natural` size; call it before the dialog
-    // is shown.
-    Q_INVOKABLE void place(QWindow *opener, QSize natural);
+    // screen); call it before the dialog is shown. `content` is the item
+    // whose implicit size is the dialog's natural one: it is laid out at
+    // the width it opens at on the screen it opens on first (wrapped text
+    // takes its height there).
+    Q_INVOKABLE void place(QWindow *opener, QQuickItem *content);
     // Keeps where the dialog is and how big (as it is hidden), unless it
     // was maximised or full screen.
     Q_INVOKABLE void remember();

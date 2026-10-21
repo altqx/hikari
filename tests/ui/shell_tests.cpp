@@ -6300,6 +6300,19 @@ private slots:
 #endif
         QCOMPARE(dialogItem("creditsDialog", "creditsDevelopment")->property("name").toString(), QStringLiteral("altqx"));
         QCOMPARE(dialogItem("creditsDialog", "creditsTranslation")->property("name").toString(), QStringLiteral("altqx"));
+        // The components one under another, each as tall as its row: more
+        // than the list shows, so it scrolls.
+        QQuickItem *list = dialogItem("creditsDialog", "creditsComponents");
+        QVERIFY(list);
+        QQuickItem *first = nullptr;
+        QQuickItem *second = nullptr;
+        QVERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, first), Q_ARG(int, 0)));
+        QVERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, second), Q_ARG(int, 1)));
+        QVERIFY(first && second);
+        QVERIFY(first->height() > 0);
+        QCOMPARE(first->height(), first->implicitHeight());
+        QCOMPARE(second->y(), first->y() + first->height());
+        QVERIFY(list->property("contentHeight").toReal() > list->height());
         // Both at once: modeless windows of their own.
         QVERIFY(QMetaObject::invokeMethod(about, "open"));
         QTRY_VERIFY(about->isVisible());

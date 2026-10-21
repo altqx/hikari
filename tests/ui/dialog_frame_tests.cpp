@@ -72,17 +72,20 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 Window {
+    id: opener
     width: 600; height: 400
     property alias dialog: dialog
+    property int columnWidth: 280
     DialogWindow {
         id: dialog
         title: "Wrapping"
         ColumnLayout {
-            Layout.preferredWidth: 280
+            Layout.preferredWidth: opener.columnWidth
             RowLayout {
                 Layout.fillWidth: true
                 Label { text: "Name"; Layout.preferredWidth: 60 }
-                Label { objectName: "wrapped"; text: "A line of text long enough to wrap in the column of the dialog more than once at its width"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+                Label { objectName: "wrapped"; text: "A line of text long enough to wrap in the column of the dialog more than once at its width, "
+                    + "and then some more of it, so that even a column as wide as a whole screen breaks it into lines"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
             }
         }
     }
@@ -359,6 +362,46 @@ private slots:
         QVERIFY(s.item("wrapped")->property("lineCount").toInt() > 1);
         QCOMPARE(s.dialog->property("naturalHeight").toInt(), opened);
         QCOMPARE(s.dialog->height(), opened);
+    }
+
+    void wrappedTextHasItsHeightOnANarrowerScreen()
+    {
+        // Wider than the screen: laid out at the room it gets, before it is placed.
+        Shown s = show(true, kWrappingQml);
+        QVERIFY(s.dialog);
+        s.opener->setProperty("columnWidth", 3000);
+        QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
+        QMetaObject::invokeMethod(s.dialog, "open");
+        const int opened = s.dialog->height();
+        const qreal width = s.item("wrapped")->width();
+        QVERIFY(QTest::qWaitForWindowExposed(s.dialog));
+        QTest::qWait(50);
+        const QRect area = s.dialog->screen()->availableGeometry().marginsRemoved(QMargins(20, 20, 20, 20));
+        QCOMPARE(s.dialog->frameGeometry().width(), area.width());
+        QVERIFY(s.item("wrapped")->property("lineCount").toInt() > 1);
+        QCOMPARE(s.item("wrapped")->width(), width);
+        QCOMPARE(s.dialog->height(), opened);
+        QCOMPARE(s.dialog->property("naturalHeight").toInt(), opened);
+    }
+
+    void aDialogClosedInTheBackgroundTakesNoKeyboard()
+    {
+        Shown s = show();
+        QVERIFY(QTest::qWaitForWindowActive(s.opener.get()));
+        QVERIFY(open(s));
+        QVERIFY(QTest::qWaitForWindowActive(s.dialog));
+        // Another window in use when the program closes the dialog: it stays so.
+        QQuickWindow other;
+        other.resize(200, 100);
+        other.show();
+        other.requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(&other));
+        QMetaObject::invokeMethod(s.dialog, "close");
+        QTRY_VERIFY(!s.dialog->isVisible());
+        QTest::qWait(50);
+        QCOMPARE(QGuiApplication::focusWindow(), &other);
+        // The opener's own control has the focus again for when it is used.
+        QVERIFY(s.opener->property("opening").value<QQuickItem *>()->hasFocus());
     }
 
     void aDialogBiggerThanTheScreenFitsIt()

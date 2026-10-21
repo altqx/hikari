@@ -3123,7 +3123,14 @@ def step_dialog_frame():
             time.sleep(1.0)
         moved = rect(frames(uia()).get(DIALOG_TITLES["About"]))
         keys("escape", 1.0)
-        gone = DIALOG_TITLES["About"] not in frames(uia())
+        after = uia()
+        gone = DIALOG_TITLES["About"] not in frames(after)
+        # The keyboard back on the main window, which comes forward again.
+        fg = (after.get("foreground") or {}).get("title") or ""
+        back = active_frames(after)
+        verdict("dialog-frame-focus-back",
+                "observed" if gone and back and "HikariSub" in fg and fg not in DIALOG_TITLES.values() else "failed",
+                f"Esc on About: the foreground window {fg!r}, active {back}, focus {after.get('focus')}")
         help_item("About")
         time.sleep(0.8)
         reopened = rect(frames(uia()).get(DIALOG_TITLES["About"]))

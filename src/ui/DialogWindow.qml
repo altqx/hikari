@@ -76,12 +76,7 @@ Window {
         returnFocus = opener && !placement.inPopup(opener.activeFocusItem) ? opener.activeFocusItem : null
         if (opener)
             transientParent = opener
-        placement.settle(dialog.contentItem)
-        // Wrapped text's height at the width it opens at: a hidden window
-        // has not sized its content (0 wide before the first open).
-        contentItem.width = Math.min(naturalWidth, placement.room.width)
-        placement.settle(dialog.contentItem)
-        placement.place(opener, Qt.size(naturalWidth, naturalHeight))
+        placement.place(opener, column)
         // (Not show(): a dialog may name a function of its own so.)
         visible = true
         raise()
@@ -154,7 +149,11 @@ Window {
         returnWindow = null
         returnFocus = null
         if (back && back.visible) {
-            back.requestActivate()
+            // The opener comes forward only when the keyboard was the
+            // dialog's: a notice the program closes while another window
+            // or program is in use takes nothing from it.
+            if (active)
+                back.requestActivate()
             if (item && item.visible && item.enabled && item.Window.window === back)
                 item.forceActiveFocus()
         }

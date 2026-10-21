@@ -6,6 +6,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QScreen>
+#include <QtMath>
 
 #include <algorithm>
 
@@ -172,9 +173,9 @@ QWindow *DialogPlacement::opener() const
     return m_window ? m_window->transientParent() : nullptr;
 }
 
-void DialogPlacement::place(QWindow *opener, QSize natural)
+void DialogPlacement::place(QWindow *opener, QQuickItem *content)
 {
-    if (!m_window)
+    if (!m_window || !content)
         return;
     namespace dp = dialogplacement;
     // Opened as it was before any maximising: the place kept is the normal one.
@@ -186,23 +187,33 @@ void DialogPlacement::place(QWindow *opener, QSize natural)
     QScreen *screen = opener && opener->isVisible() ? opener->screen() : nullptr;
     if (!screen)
         screen = m_window->transientParent() ? m_window->transientParent()->screen() : QGuiApplication::primaryScreen();
-    // The room, before the geometry: the window's minimum follows it, and
-    // a minimum the screen can't hold would undo the fit.
-    const auto fit = [this](QScreen *on, const QMargins &margins) {
-        if (!on)
-            return;
-        const QMargins room(dp::kMargin, dp::kMargin, dp::kMargin, dp::kMargin);
-        const QSize size = on->availableGeometry().size().shrunkBy(room).shrunkBy(margins).expandedTo(QSize(1, 1));
-        if (size != m_room) {
-            m_room = size;
-            emit roomChanged();
+    const auto natural = [content] {
+        return QSize(qCeil(content->implicitWidth()), qCeil(content->implicitHeight()));
+    };
+    // The room on `on`, and the content laid out at the width it opens at
+    // there: a hidden window has not sized its content (0 wide before the
+    // first open), and wrapped text's height depends on it. The room is
+    // set before the geometry: the window's minimum follows it, and a
+    // minimum the screen can't hold would undo the fit.
+    QQuickItem *root = m_window->contentItem();
+    settle(root);
+    const auto fit = [this, root, &natural](QScreen *on, const QMargins &margins) {
+        if (on) {
+            const QMargins room(dp::kMargin, dp::kMargin, dp::kMargin, dp::kMargin);
+            const QSize size = on->availableGeometry().size().shrunkBy(room).shrunkBy(margins).expandedTo(QSize(1, 1));
+            if (size != m_room) {
+                m_room = size;
+                emit roomChanged();
+            }
         }
+        root->setWidth(std::min(natural().width(), m_room.width()));
+        settle(root);
     };
     if (dp::isWayland()) {
-        // The compositor places the window: only a resizable dialog's size.
-        // As big as it was left up to the screen, as elsewhere.
+        // The compositor places the window: only a resizable dialog's
+        // size, as big as it was left up to the screen, as elsewhere.
         fit(screen, {});
-        const QSize smallest = natural.boundedTo(m_room);
+        const QSize smallest = natural().boundedTo(m_room);
         QSize size = smallest;
         if (saved && m_resizable) {
             size = saved->size().expandedTo(smallest);
@@ -223,22 +234,28 @@ void DialogPlacement::place(QWindow *opener, QSize natural)
     QList<QRect> screens;
     for (QScreen *each : QGuiApplication::screens())
         screens << each->availableGeometry();
+    fit(screen, margins);
     if (saved) {
-        if (const auto rect = dp::restored(*saved, natural, natural, m_resizable, screens, margins)) {
+        if (auto rect = dp::restored(*saved, natural(), natural(), m_resizable, screens, margins)) {
+            // Kept on another screen: laid out for its room.
             QScreen *on = QGuiApplication::screenAt(rect->center());
-            fit(on ? on : screen, margins);
-            m_window->setGeometry(*rect);
-            return;
+            if (on && on != screen) {
+                fit(on, margins);
+                rect = dp::restored(*saved, natural(), natural(), m_resizable, screens, margins);
+            }
+            if (rect) {
+                m_window->setGeometry(*rect);
+                return;
+            }
         }
     }
     if (!screen) {
-        m_window->resize(natural);
+        m_window->resize(natural());
         return;
     }
     const QRect available = screen->availableGeometry();
     const QRect around = opener && opener->isVisible() ? opener->frameGeometry() : available;
-    fit(screen, margins);
-    m_window->setGeometry(dp::centred(around, natural, available, margins));
+    m_window->setGeometry(dp::centred(around, natural(), available, margins));
 }
 
 void DialogPlacement::remember()
