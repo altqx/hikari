@@ -438,6 +438,28 @@ TEST(TagTransfer, NoSuggestionAcrossTheTranslatorsOwnTags)
     EXPECT_EQ(suggestPlacements(tags, draft(u"{\\b1}Tokyo{\\b0}")).size(), 1u);
 }
 
+TEST(TagTransfer, ValuesTheRendererClampsOrResetsAreNoRun)
+{
+    StyleValues style;
+    style.name = u8"Default";
+    style.fontname = u8"Arial";
+    style.outlineWidth = u8"0";
+    style.shadow = u8"0";
+    const std::vector<StyleValues> styles{style};
+    const auto runs = [&](std::u16string_view text) { return readOriginalTags(text, &style, styles).runs.size(); };
+    // libass (ass_parse.c): \fn0 is the Style's font, \fsc both its scales.
+    EXPECT_EQ(runs(u"a {\\fn0}b{\\fnArial} c"), 0u);
+    // No border, \shad or blur below 0, \be rounded to a whole number.
+    EXPECT_EQ(runs(u"a {\\bord-1}b{\\bord0} c"), 0u);
+    EXPECT_EQ(runs(u"a {\\shad-3}b{\\shad0} c"), 0u);
+    EXPECT_EQ(runs(u"a {\\blur-2}b{\\blur0} c"), 0u);
+    EXPECT_EQ(runs(u"a {\\be0.4}b{\\be0} c"), 0u);
+    EXPECT_EQ(runs(u"a {\\xshad-3}b{\\xshad0} c"), 1u); // \xshad may be below 0
+    const auto fsc = readOriginalTags(u"a {\\fscx200}b {\\fsc}c", &style, styles);
+    ASSERT_EQ(fsc.runs.size(), 1u);
+    EXPECT_EQ(u8(fsc.runs[0].text), "b");
+}
+
 TEST(TagTransfer, ManyTransformsStayCheapAndTooManyTagsCarryNothing)
 {
     std::u16string many = u"{\\an8}a";

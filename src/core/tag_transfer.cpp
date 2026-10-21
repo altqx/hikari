@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <cstdio>
 #include <optional>
@@ -38,7 +39,7 @@ struct Tokens {
 // Longest names first, so "\bord" is not read as "\b".
 constexpr std::u16string_view kNames[] = {
     u"alpha", u"iclip", u"xbord", u"ybord", u"xshad", u"yshad", u"blur", u"bord", u"clip", u"fade", u"fscx",
-    u"fscy",  u"move",  u"shad",  u"fad",   u"fax",   u"fay",   u"frx",  u"fry",  u"frz",  u"fsp",  u"org",
+    u"fscy",  u"move",  u"shad",  u"fad",   u"fax",   u"fay",   u"frx",  u"fry",  u"frz",  u"fsc",  u"fsp",  u"org",
     u"pbo",   u"pos",   u"1c",    u"2c",    u"3c",    u"4c",    u"1a",   u"2a",   u"3a",   u"4a",   u"an",
     u"be",    u"fe",    u"fn",    u"fr",    u"fs",    u"kf",    u"ko",   u"kt",   u"a",    u"b",    u"c",
     u"i",     u"k",     u"K",     u"p",     u"q",     u"r",     u"s",    u"t",    u"u",
@@ -209,6 +210,8 @@ Effect effectOf(std::u16string_view name)
         return {Kind::Number, {u"xbord", u"ybord"}};
     if (n == u"shad")
         return {Kind::Number, {u"xshad", u"yshad"}};
+    if (n == u"fsc") // both scales back to the Style's, whatever follows
+        return {Kind::Number, {u"fscx", u"fscy"}};
     for (const auto number : {u"fs", u"fscx", u"fscy", u"fsp", u"frx", u"fry", u"fax", u"fay", u"be", u"blur", u"fe",
                               u"xbord", u"ybord", u"xshad", u"yshad"})
         if (n == number)
@@ -332,6 +335,31 @@ std::optional<double> numberIn(std::u16string_view text)
     if (std::from_chars(digitsFrom(s.data(), last), last, n).ec != std::errc{})
         return std::nullopt;
     return n;
+}
+
+// A number as libass keeps it (ass_parse.c): no border, \shad, scale or
+// blur below 0, \blur at most 100, \be a whole number from 0 to 127 (+0.5
+// and truncated, as VSFilter rounds it). Other values are kept.
+std::u16string clamped(std::u16string_view name, std::u16string value)
+{
+    const auto n = numberIn(value);
+    if (!n)
+        return value;
+    double v = *n;
+    if (name == u"bord" || name == u"xbord" || name == u"ybord" || name == u"shad" || name == u"fscx" ||
+        name == u"fscy")
+        v = std::max(v, 0.0);
+    else if (name == u"blur")
+        v = std::clamp(v, 0.0, 100.0);
+    else if (name == u"be")
+        v = std::clamp(std::trunc(v + 0.5), 0.0, 127.0);
+    else
+        return value;
+    if (v == *n)
+        return value;
+    char buf[32];
+    const auto r = std::to_chars(buf, buf + sizeof buf, v);
+    return normalised(Kind::Number, ascii(std::string(buf, r.ptr)));
 }
 
 // \fs as libass reads it (ass_parse.c TAG_FS): a signed size scales the
@@ -479,14 +507,16 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
                 state[u"fs"] = trimmed(tag.args);
             break;
         }
+        // \fsc, and \fn0, are the Style's whatever follows (ass_parse.c).
+        const bool styles = tag.name == u"fsc" || (tag.name == u"fn" && trimmed(tag.args) == u"0");
         for (const auto &component : effect.components) {
-            if (isStyleValue(effect.kind, tag.args)) {
+            if (styles || isStyleValue(effect.kind, tag.args)) {
                 if (const auto it = base.find(component); it != base.end())
                     state[component] = it->second;
                 else
                     state.erase(component);
             } else {
-                state[component] = normalised(effect.kind, tag.args);
+                state[component] = clamped(tag.name, normalised(effect.kind, tag.args));
             }
         }
     }
