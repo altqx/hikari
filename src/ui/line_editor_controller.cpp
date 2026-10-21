@@ -1567,7 +1567,27 @@ bool LineEditorController::applyDialogChange(
                         const auto c = translation.empty() ? std::nullopt : carry(l);
                         const std::size_t lead = c ? c->tags.leading.size() : 0;
                         const std::size_t trail = c ? c->tags.trailing.size() : 0;
-                        if (c && translation.size() > lead + trail) {
+                        auto draft = c ? translationDraft(c->tags, l) : core::TranslationDraft{};
+                        if (c && draft.carried && !draft.placements.empty()) {
+                            // Placed runs stay placed: the change goes to the
+                            // draft's body and the runs' tags are written
+                            // again around the same text (editPlacedBody).
+                            const auto before = core::project(draft.body);
+                            std::vector<std::pair<std::size_t, std::size_t>> placed;
+                            for (const auto &p : draft.placements)
+                                placed.emplace_back(core::displayOffset(before, p.start),
+                                                    core::displayOffset(before, p.end));
+                            several(text, draft.body);
+                            const auto after = core::project(draft.body);
+                            if (after.text != before.text)
+                                draft.placements.clear();
+                            for (std::size_t i = 0; i < draft.placements.size(); ++i) {
+                                draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
+                                draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
+                            }
+                            composedBody(c->tags, draft, l.id);
+                            translation = core::composeTranslation(c->tags, draft);
+                        } else if (c && translation.size() > lead + trail) {
                             auto body = translation.substr(lead, translation.size() - lead - trail);
                             several(text, body);
                             translation = c->tags.leading + body + c->tags.trailing;

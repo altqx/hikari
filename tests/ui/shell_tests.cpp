@@ -10957,6 +10957,46 @@ private slots:
         QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an9}Wieza"));
     }
 
+    // TM1: the font dialog on several Lines changes each translation's own
+    // text; a placed run stays placed, its tags written again around it, not
+    // merged into the new tag.
+    void tagsFromOriginalSeveralLinesKeepThePlacedRun()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-several.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Wieza\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("y x"), 3);
+        QVERIFY(application->editor().placeRun(1, 0, 1));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}y{\\i0} x"));
+        QVERIFY(application->editor().commit());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        auto font = application->editor().beginFont(1, 0, 0);
+        QVERIFY(!font.isEmpty());
+        font.insert(QStringLiteral("bold"), true);
+        QVERIFY(application->editor().changeFont(font));
+        application->editor().endDialog(true);
+        const auto bold = session->document().lines();
+        QCOMPARE(q8(bold[0]->translation), QStringLiteral("{\\b1}{\\i1}y{\\i0} x"));
+        QCOMPARE(q8(bold[1]->translation), QStringLiteral("{\\b1}Wieza"));
+        QTRY_VERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+    }
+
     // TM1: a karaoke Line carries its leading tags without its \k timing,
     // and says so under the Translated text.
     void tagsFromOriginalOnAKaraokeLine()
