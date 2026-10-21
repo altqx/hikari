@@ -36,13 +36,14 @@ using detail::LyricWord;
 using detail::u8sv;
 using Kind = LyricsProblem::Kind;
 
-// The namespaces the reader asks attributes for, and "another": an
-// attribute keeps which one its prefix names, never the URI itself, so a
+// The namespaces the reader asks for, and "another": an element or
+// attribute keeps which one its name is in, never the URI itself, so a
 // long namespace on many attributes costs nothing per attribute.
 enum class Namespace : std::uint8_t {
-    None,         // unprefixed
+    None,         // no namespace: an unprefixed attribute, or an element with no default one
     Xml,          // xml:
     Xmlns,        // xmlns:
+    Ttml,         // http://www.w3.org/ns/ttml
     TtmlMetadata, // http://www.w3.org/ns/ttml#metadata (ttm:)
     Other,        // any other namespace, or a prefix no one declares
 };
@@ -55,6 +56,7 @@ struct XmlNode {
     std::vector<XmlNode> children;
     std::u8string text;
     std::size_t line = 0;
+    Namespace ns = Namespace::None; // the element's
 
     bool isText() const { return name.empty(); }
 };
@@ -67,6 +69,7 @@ u8sv localName(u8sv name)
 
 constexpr u8sv kXmlNamespace = u8"http://www.w3.org/XML/1998/namespace";
 constexpr u8sv kXmlnsNamespace = u8"http://www.w3.org/2000/xmlns/";
+constexpr u8sv kTtmlUri = u8"http://www.w3.org/ns/ttml";
 constexpr u8sv kTtmlMetadataUri = u8"http://www.w3.org/ns/ttml#metadata";
 
 // An attribute by its namespace and local name. TTML's timing attributes
@@ -94,39 +97,66 @@ std::size_t attributeLine(const XmlNode &node, u8sv local, Namespace ns = Namesp
     return i ? node.attributeLines[*i] : node.line;
 }
 
-// The namespace an attribute's prefix names (Namespaces in XML): xml and
-// xmlns their own, another from the nearest xmlns:prefix on the element or
-// an ancestor (`open`); an unprefixed attribute is in none. A ttm: no one
-// declares is TTML's metadata namespace, as such files mean; another
-// undeclared prefix names a namespace no lookup asks for.
-Namespace namespaceOf(u8sv name, const XmlNode &node, const std::vector<XmlNode> &open)
+// The URI a prefix is declared for (Namespaces in XML): by the nearest
+// xmlns:prefix on the element or an ancestor (`open`); the default
+// namespace's, by xmlns, for an empty prefix. Null when none declares it.
+const std::u8string *declaredUri(u8sv prefix, const XmlNode &node, const std::vector<XmlNode> &open)
+{
+    auto declared = [&](const XmlNode &element) -> const std::u8string * {
+        for (const auto &[key, value] : element.attributes) {
+            const u8sv k = key;
+            if (prefix.empty() ? k == u8"xmlns" : k.starts_with(u8"xmlns:") && k.substr(6) == prefix)
+                return &value;
+        }
+        return nullptr;
+    };
+    if (const auto *uri = declared(node))
+        return uri;
+    for (auto it = open.rbegin(); it != open.rend(); ++it)
+        if (const auto *uri = declared(*it))
+            return uri;
+    return nullptr;
+}
+
+Namespace knownNamespace(u8sv uri)
+{
+    return uri.empty()                ? Namespace::None
+           : uri == kTtmlUri          ? Namespace::Ttml
+           : uri == kTtmlMetadataUri  ? Namespace::TtmlMetadata
+           : uri == kXmlNamespace     ? Namespace::Xml
+           : uri == kXmlnsNamespace   ? Namespace::Xmlns
+                                      : Namespace::Other;
+}
+
+// The namespace a name is in (Namespaces in XML): xml and xmlns their own,
+// another prefix the one declared for it. An unprefixed attribute is in
+// none; an unprefixed element in the default namespace, if one is
+// declared. A ttm: no one declares is TTML's metadata namespace, as such
+// files mean; another undeclared prefix names a namespace no lookup asks for.
+Namespace namespaceOf(u8sv name, const XmlNode &node, const std::vector<XmlNode> &open, bool element)
 {
     const std::size_t colon = name.find(u8':');
-    if (colon == u8sv::npos)
-        return Namespace::None;
+    if (colon == u8sv::npos) {
+        if (!element)
+            return Namespace::None;
+        const auto *uri = declaredUri({}, node, open);
+        return uri ? knownNamespace(*uri) : Namespace::None;
+    }
     const u8sv prefix = name.substr(0, colon);
     if (prefix == u8"xml")
         return Namespace::Xml;
     if (prefix == u8"xmlns")
         return Namespace::Xmlns;
-    auto known = [](u8sv uri) {
-        return uri == kTtmlMetadataUri ? Namespace::TtmlMetadata
-               : uri == kXmlNamespace  ? Namespace::Xml
-               : uri == kXmlnsNamespace ? Namespace::Xmlns
-                                        : Namespace::Other;
-    };
-    auto declared = [&](const XmlNode &element) -> const std::u8string * {
-        for (const auto &[key, value] : element.attributes)
-            if (u8sv(key).starts_with(u8"xmlns:") && u8sv(key).substr(6) == prefix)
-                return &value;
-        return nullptr;
-    };
-    if (const auto *uri = declared(node))
-        return known(*uri);
-    for (auto it = open.rbegin(); it != open.rend(); ++it)
-        if (const auto *uri = declared(*it))
-            return known(*uri);
+    if (const auto *uri = declaredUri(prefix, node, open))
+        return knownNamespace(*uri);
     return prefix == u8"ttm" ? Namespace::TtmlMetadata : Namespace::Other;
+}
+
+// Whether an element is TTML's `local`: in TTML's namespace, or in none
+// (files that leave the namespace out), never in another.
+bool isTtml(const XmlNode &node, u8sv local)
+{
+    return !node.isText() && (node.ns == Namespace::Ttml || node.ns == Namespace::None) && localName(node.name) == local;
 }
 
 bool isSpace(char8_t c)
@@ -657,7 +687,26 @@ private:
                     return std::unexpected(broken()); // an attribute given twice
                 }
                 for (const auto &[key, value] : node.attributes)
-                    node.attributeNamespaces.push_back(namespaceOf(key, node, open));
+                    node.attributeNamespaces.push_back(namespaceOf(key, node, open, false));
+                node.ns = namespaceOf(node.name, node, open, true);
+                // Nor twice by expanded name, the namespace and the local
+                // name, as a:role and b:role with one namespace are.
+                std::vector<std::tuple<Namespace, u8sv, u8sv>> expanded;
+                for (std::size_t i = 0; i < node.attributes.size(); ++i) {
+                    const u8sv key = node.attributes[i].first;
+                    u8sv uri;
+                    if (node.attributeNamespaces[i] == Namespace::Other) {
+                        const std::size_t colon = key.find(u8':');
+                        const auto *declared = declaredUri(key.substr(0, colon), node, open);
+                        uri = declared ? u8sv(*declared) : key.substr(0, colon + 1); // "p:" for an undeclared p
+                    }
+                    expanded.emplace_back(node.attributeNamespaces[i], uri, localName(key));
+                }
+                std::ranges::sort(expanded);
+                if (std::ranges::adjacent_find(expanded) != expanded.end()) {
+                    std::tie(m_pos, m_line) = start;
+                    return std::unexpected(broken()); // an attribute given twice
+                }
                 if (!empty) {
                     open.push_back(std::move(node));
                 } else if (open.empty()) {
@@ -881,11 +930,11 @@ public:
 
     std::expected<detail::LyricSheet, LyricsProblem> read(const XmlNode &root)
     {
-        if (localName(root.name) != u8"tt")
+        if (!isTtml(root, u8"tt"))
             return std::unexpected(LyricsProblem{Kind::NotTtml, root.line, u8"<" + root.name + u8">"});
         readHead(root);
         for (const XmlNode &child : root.children)
-            if (localName(child.name) == u8"body")
+            if (isTtml(child, u8"body"))
                 if (auto ok = paragraphs(child, std::nullopt, std::nullopt, preserves(root, false)); !ok)
                     return std::unexpected(ok.error());
         if (m_sheet.lines.empty())
@@ -921,7 +970,7 @@ private:
         for (const XmlNode &child : node.children)
             if (child.isText())
                 out += child.text;
-            else if (localName(child.name) == u8"br")
+            else if (isTtml(child, u8"br"))
                 out += u8' ';
             else if (!attribute(child, u8"role", Namespace::TtmlMetadata))
                 out += allText(child);
@@ -947,7 +996,7 @@ private:
         for (const XmlNode &child : node.children)
             if (child.isText())
                 append(out, lyricText(child.text, preserve), preserve);
-            else if (localName(child.name) == u8"br")
+            else if (isTtml(child, u8"br"))
                 out += u8"\\N";
             else if (!attribute(child, u8"role", Namespace::TtmlMetadata))
                 append(out, spanText(child, preserve), preserves(child, preserve));
@@ -959,10 +1008,14 @@ private:
         std::optional<std::u8string> musicName;
         auto visit = [&](auto &self, const XmlNode &node) -> void {
             const u8sv local = localName(node.name);
+            // A title counts once it has words: an empty one leaves the
+            // next title, or musicName, to name the file.
             if (local == u8"title" && !m_sheet.title)
-                m_sheet.title = detail::trim(collapsed(allText(node)));
+                if (const auto title = collapsed(allText(node)); !detail::trim(title).empty())
+                    m_sheet.title = detail::trim(title);
             if (local == u8"meta" && attribute(node, u8"key") == u8sv(u8"musicName") && !musicName)
-                musicName = detail::trim(collapsed(attribute(node, u8"value").value_or(u8"")));
+                if (const auto title = collapsed(attribute(node, u8"value").value_or(u8"")); !detail::trim(title).empty())
+                    musicName = detail::trim(title);
             if (local == u8"agent") {
                 const auto id = attribute(node, u8"id", Namespace::Xml);
                 for (const XmlNode &child : node.children)
@@ -970,11 +1023,11 @@ private:
                         m_agents[std::u8string(*id)] = detail::trim(collapsed(allText(child)));
             }
             for (const XmlNode &child : node.children)
-                if (localName(child.name) != u8"body")
+                if (!isTtml(child, u8"body"))
                     self(self, child);
         };
         for (const XmlNode &child : root.children)
-            if (localName(child.name) == u8"head")
+            if (isTtml(child, u8"head"))
                 visit(visit, child);
         if (!m_sheet.title && musicName)
             m_sheet.title = musicName;
@@ -1102,7 +1155,6 @@ private:
                 into.textOf = span;
                 continue;
             }
-            const u8sv local = localName(child.name);
             const auto role = attribute(child, u8"role", Namespace::TtmlMetadata);
             if (role == u8sv(u8"x-bg")) {
                 backgrounds.push_back(Background{&child, preserve, spanBegin, spanEnd});
@@ -1110,12 +1162,12 @@ private:
             }
             if (role)
                 continue; // translations, romanisations and other untimed companions
-            if (local == u8"br") {
+            if (isTtml(child, u8"br")) {
                 addText(into, u8"\\N", preserve);
                 continue;
             }
             const auto inheritedBegin = spanBegin ? spanBegin : into.lineBegin;
-            if (local == u8"span" && (attribute(child, u8"begin") || (timed(child) && inheritedBegin)) &&
+            if (isTtml(child, u8"span") && (attribute(child, u8"begin") || (timed(child) && inheritedBegin)) &&
                 !hasTimedSpan(child)) {
                 const auto t = times(child, inheritedBegin);
                 if (!t)
@@ -1266,9 +1318,11 @@ private:
         for (const XmlNode &child : node.children) {
             if (child.isText())
                 continue;
-            if (localName(child.name) == u8"p") {
+            if (isTtml(child, u8"p")) {
                 if (auto ok = line(child, begin, end, actorOf(child, {}), preserve); !ok)
                     return ok;
+            } else if (child.ns != Namespace::Ttml && child.ns != Namespace::None) {
+                continue; // another namespace's element is not TTML's, nor what it holds
             } else if (auto ok = paragraphs(child, begin, end, preserve); !ok) {
                 return ok;
             }

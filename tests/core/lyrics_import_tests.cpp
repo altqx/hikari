@@ -146,6 +146,11 @@ TEST(LyricsImport, AmllTtmlBecomesKaraokeLines)
     const auto result = importTtml(fixture("amll.ttml"));
     ASSERT_TRUE(result.has_value()) << int(result.error().kind) << " line " << result.error().line;
     EXPECT_EQ(result->document.scriptInfo(u8"Title"), u8"さくら さくら");
+    // An empty title leaves the next one, or musicName, to name the file.
+    const auto untitled = importTtml(bytes("<tt><head><metadata><ttm:title> </ttm:title><amll:meta key=\"musicName\" value=\"Song\"/>"
+                                           "</metadata></head><body><p begin=\"1\" end=\"2\">x</p></body></tt>"));
+    ASSERT_TRUE(untitled.has_value());
+    EXPECT_EQ(untitled->document.scriptInfo(u8"Title"), u8"Song");
     // AMLL's musicName collapses its whitespace, as a <ttm:title> does.
     const auto named = importTtml(bytes("<tt><head><metadata><amll:meta key=\"musicName\" value=\"  My \t  Song \"/>"
                                         "</metadata></head><body><p begin=\"1\" end=\"2\">x</p></body></tt>"));
@@ -246,6 +251,17 @@ TEST(LyricsImport, MalformedTtmlNamesTheLineAtFault)
               (LyricsProblem{Kind::NotWellFormed, 3, u8"end=2>"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x</p>\n", u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 4, u8""}));
     EXPECT_EQ(problemOf("<html>\n<body/></html>", u8"ttml"), (LyricsProblem{Kind::NotTtml, 1, u8"<html>"}));
+    // A tt in another namespace is not TTML's; one in TTML's, or in none, is.
+    EXPECT_EQ(problemOf("<x:tt xmlns:x=\"urn:other\"><x:body><x:p begin=\"1\" end=\"2\">x</x:p></x:body></x:tt>", u8"ttml"),
+              (LyricsProblem{Kind::NotTtml, 1, u8"<x:tt>"}));
+    EXPECT_EQ(problemOf("<tt xmlns=\"urn:other\"><body><p begin=\"1\" end=\"2\">x</p></body></tt>", u8"ttml").kind, Kind::NotTtml);
+    EXPECT_TRUE(importTtml(bytes("<t:tt xmlns:t=\"http://www.w3.org/ns/ttml\"><t:body><t:p begin=\"1\" end=\"2\">x</t:p>"
+                                 "</t:body></t:tt>")).has_value());
+    // Another namespace's body or p, and what it holds, is not read.
+    EXPECT_EQ(problemOf("<tt xmlns:x=\"urn:other\"><x:body><p begin=\"1\" end=\"2\">x</p></x:body></tt>", u8"ttml").kind,
+              Kind::NoLyrics);
+    EXPECT_EQ(problemOf("<tt xmlns:x=\"urn:other\"><body><x:p begin=\"1\" end=\"2\">x</x:p></body></tt>", u8"ttml").kind,
+              Kind::NoLyrics);
     EXPECT_EQ(problemOf(head + "<p>\n<span begin=\"00:01:02:03\" end=\"00:01:03.000\">x</span></p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::UnreadableTime, 4, u8"00:01:02:03"}));
     EXPECT_EQ(problemOf(head + "<p>\n<span begin=\"2.0\" end=\"1.5\">x</span></p></body></tt>", u8"ttml"),
@@ -694,6 +710,17 @@ TEST(LyricsImport, TtmlAttributesAreReadByNamespace)
     EXPECT_EQ(lines("<tt><body><p foo:begin=\"10\" begin=\"1\" end=\"2\">x</p></body></tt>"),
               (std::vector<Row>{{1000, 2000, "", "x"}}));
     EXPECT_EQ(lines("<tt xmlns:foo=\"urn:x\"><body><p begin=\"1\" foo:end=\"0\" end=\"2\">x</p></body></tt>"),
+              (std::vector<Row>{{1000, 2000, "", "x"}}));
+    // One attribute given twice under two prefixes for its namespace is
+    // malformed XML, as one given twice by name is.
+    EXPECT_EQ(problemOf("<tt xmlns:a=\"http://www.w3.org/ns/ttml#metadata\" xmlns:b=\"http://www.w3.org/ns/ttml#metadata\">"
+                        "<body><p begin=\"1\" end=\"2\"><span a:role=\"x-translation\" b:role=\"x-bg\">x</span></p></body></tt>",
+                        u8"ttml").kind,
+              Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<tt xmlns:a=\"urn:x\" xmlns:b=\"urn:x\"><body><p begin=\"1\" end=\"2\" a:k=\"1\" b:k=\"2\">x</p>"
+                        "</body></tt>", u8"ttml").kind,
+              Kind::NotWellFormed);
+    EXPECT_EQ(lines("<tt xmlns:a=\"urn:x\" xmlns:b=\"urn:y\"><body><p begin=\"1\" end=\"2\" a:k=\"1\" b:k=\"2\">x</p></body></tt>"),
               (std::vector<Row>{{1000, 2000, "", "x"}}));
     // ttm:role and ttm:agent by TTML's metadata namespace, under any prefix;
     // another namespace's "role" is not one.
