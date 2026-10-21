@@ -449,6 +449,14 @@ TEST(LyricsImport, TtmlTimesPast100HoursAreRefused)
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"999999999999999\">x</p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::UnreadableTime, 2, u8"999999999999999"}));
     EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"99h\" end=\"100h\">x</p></body></tt>")).has_value());
+    // Any number of digits, leading zeros too; a value too large is refused
+    // however long it is.
+    const auto padded = importTtml(bytes("<tt><body><p begin=\"000000000000000000001s\" "
+                                         "end=\"00:00:0000000000000000000002.5000000000000000000\">x</p></body></tt>"));
+    ASSERT_TRUE(padded.has_value());
+    EXPECT_EQ(rows(*padded), (std::vector<Row>{{1000, 2500, "", "x"}}));
+    const std::string huge(400, '9');
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"" + huge + "s\">x</p></body></tt>", u8"ttml").kind, Kind::UnreadableTime);
     // A begin and a dur adding up past 100 hours too.
     EXPECT_EQ(problemOf(head + "<p begin=\"99h\" dur=\"2h\">x</p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::UnreadableTime, 2, u8"2h"}));
@@ -594,10 +602,12 @@ TEST(LyricsImport, TtmlPrologIsChecked)
         EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
     // Literals by their grammar: references in entity and attribute values
     // as XML writes them, a public id of PubidChars; ENTITIES is a type.
-    EXPECT_TRUE(imports("<!DOCTYPE tt [<!ENTITY e 'a &amp; &#x41; &#65; &f; %p; b'> <!ATTLIST p a CDATA 'a %b &amp; &#9;'>"
+    EXPECT_TRUE(imports("<!DOCTYPE tt [<!ENTITY e 'a &amp; &#x41; &#65; &f; b'> <!ATTLIST p a CDATA 'a %b &amp; &#9;'>"
                         " <!ATTLIST p refs ENTITIES #IMPLIED ref ENTITY #IMPLIED> <!ENTITY g PUBLIC '-//W3C//x (1) +:=?;!*#@$_%' 'u'>]>"));
     for (const char *bad : {"<!DOCTYPE tt [<!ENTITY e '&broken'>]>", "<!DOCTYPE tt [<!ENTITY e 'a & b'>]>",
                             "<!DOCTYPE tt [<!ENTITY e '%p'>]>", "<!DOCTYPE tt [<!ENTITY e '50%'>]>",
+                            // No parameter-entity reference inside the internal subset's declarations.
+                            "<!DOCTYPE tt [<!ENTITY e '%p;'>]>",
                             "<!DOCTYPE tt [<!ENTITY e '&#1;'>]>", "<!DOCTYPE tt [<!ENTITY e '&#xZ;'>]>",
                             "<!DOCTYPE tt [<!ENTITY e '&1a;'>]>", "<!DOCTYPE tt [<!ATTLIST p a CDATA '&x'>]>",
                             "<!DOCTYPE tt [<!ATTLIST p a CDATA '&#xFFFE;'>]>", "<!DOCTYPE tt [<!ENTITY g PUBLIC 'a{b' 'u'>]>",
@@ -775,6 +785,73 @@ TEST(LyricsImport, ActorsKeepAMarkerLikeStart)
     EXPECT_EQ(lines[0]->visibility, LineVisibility::Visible);
     EXPECT_EQ(str(lines[1]->actor), "⁠[bookmark]v2");
     EXPECT_FALSE(lines[1]->bookmark);
+}
+
+TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
+{
+    const auto read = [](std::string_view subset, std::string_view body) {
+        const auto result = importTtml(bytes("<!DOCTYPE tt [" + std::string(subset) + "]><tt><body>" + std::string(body) + "</body></tt>"));
+        return result ? rows(*result) : std::vector<Row>{};
+    };
+    // In text: as text, inside a word, holding markup, naming another, and
+    // with its character references read when declared.
+    EXPECT_EQ(read("<!ENTITY lyric 'hello'>", "<p begin=\"1\" end=\"2\">&lyric;</p>"), (std::vector<Row>{{1000, 2000, "", "hello"}}));
+    EXPECT_EQ(read("<!ENTITY lo 'lo'>", "<p begin=\"1\" end=\"2\">hel&lo; you</p>"), (std::vector<Row>{{1000, 2000, "", "hello you"}}));
+    EXPECT_EQ(read("<!ENTITY w '<span begin=\"1\" end=\"2\">a</span>'>",
+                   "<p begin=\"1\" end=\"3\">&w;<span begin=\"2\" end=\"3\">b</span></p>"),
+              (std::vector<Row>{{1000, 3000, "", "{\\k100}a{\\k100}b"}}));
+    EXPECT_EQ(read("<!ENTITY a 'x&b;'><!ENTITY b 'y&#38;amp;'>", "<p begin=\"1\" end=\"2\">&a;</p>"),
+              (std::vector<Row>{{1000, 2000, "", "xy&"}}));
+    EXPECT_EQ(read("<!ENTITY nbsp '&#160;'>", "<p begin=\"1\" end=\"2\">a&nbsp;b</p>"),
+              (std::vector<Row>{{1000, 2000, "", "a\u00A0b"}}));
+    // The first declaration of a name binds.
+    EXPECT_EQ(read("<!ENTITY e 'a'><!ENTITY e 'b'>", "<p begin=\"1\" end=\"2\">&e;</p>"), (std::vector<Row>{{1000, 2000, "", "a"}}));
+    // In an attribute value, as text.
+    EXPECT_EQ(read("<!ENTITY t '1.5s'><!ENTITY u '&t;'>", "<p begin=\"&u;\" end=\"2s\">x</p>"),
+              (std::vector<Row>{{1500, 2000, "", "x"}}));
+    // Attribute defaults, and values of a tokenized type normalized.
+    EXPECT_EQ(read("<!ATTLIST p begin CDATA '1s' end CDATA #FIXED '2s'>", "<p>x</p><p begin=\"3s\" end=\"4s\">y</p>"),
+              (std::vector<Row>{{1000, 2000, "", "x"}, {3000, 4000, "", "y"}}));
+    EXPECT_EQ(read("<!ATTLIST p xml:space (default|preserve) 'preserve'>", "<p begin=\"1\" end=\"2\">a  b</p>"),
+              (std::vector<Row>{{1000, 2000, "", "a  b"}}));
+    EXPECT_EQ(problemOf("<!DOCTYPE tt [<!ATTLIST tt xmlns CDATA #FIXED 'urn:other'>]><tt><body/></tt>", u8"ttml").kind,
+              Kind::NotTtml); // a default namespace declaration too
+    EXPECT_EQ(read("<!ATTLIST p xml:space NMTOKEN #IMPLIED>", "<p begin=\"1\" end=\"2\" xml:space=\" preserve  \">a  b</p>"),
+              (std::vector<Row>{{1000, 2000, "", "a  b"}}));
+    // Past a parameter-entity reference never read, declarations are only
+    // checked, unless the file is standalone.
+    EXPECT_TRUE(read("%p;<!ENTITY e 'a'>", "<p begin=\"1\" end=\"2\">&e;</p>").empty());
+    const auto standalone = importTtml(bytes("<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE tt [%p;<!ENTITY e 'a'>]>"
+                                             "<tt><body><p begin=\"1\" end=\"2\">&e;</p></body></tt>"));
+    ASSERT_TRUE(standalone.has_value());
+    EXPECT_EQ(rows(*standalone), (std::vector<Row>{{1000, 2000, "", "a"}}));
+
+    // Refused: an entity naming itself, an external one, one that opens
+    // or closes an element it does not close or open, a "<" into an
+    // attribute value, an XML declaration inside one; reported at the
+    // reference.
+    const auto problem = [](std::string_view subset, std::string_view body) {
+        return problemOf("<!DOCTYPE tt [" + std::string(subset) + "]>\n<tt><body>\n" + std::string(body) + "</body></tt>", u8"ttml");
+    };
+    const std::string p = "<p begin=\"1\" end=\"2\">x &e;</p>";
+    EXPECT_EQ(problem("<!ENTITY e '&f;'><!ENTITY f '&e;'>", p), (LyricsProblem{Kind::NotWellFormed, 3, u8"&e;</p>"}));
+    for (const char *subset : {"<!ENTITY e SYSTEM 'e.xml'>", "<!ENTITY e '<span>'>", "<!ENTITY e '</p><p>'>", "<!ENTITY e '<?xml version=\"1.0\"?>'>"})
+        EXPECT_EQ(problem(subset, p).kind, Kind::NotWellFormed) << subset;
+    EXPECT_EQ(problem("<!ENTITY e '<span>'>", "<p begin=\"1\" end=\"2\">\n&e;</span></p>"), (LyricsProblem{Kind::NotWellFormed, 4, u8"&e;</span>"}));
+    EXPECT_EQ(problem("<!ENTITY e '<'>", "<p begin=\"&e;\" end=\"2\">x</p>").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problem("<!ENTITY e '&e;'>", "<p begin=\"&e;\" end=\"2\">x</p>").kind, Kind::NotWellFormed);
+    EXPECT_EQ(problem("<!ATTLIST p begin CDATA '&e;'>", "<p end=\"2\">x</p>").kind, Kind::NotWellFormed);
+    // Entities naming entities stop at the budget, in text and attributes.
+    std::string laughs = "<!ENTITY a0 '0123456789'>";
+    for (int i = 1; i <= 9; ++i) {
+        laughs += "<!ENTITY a" + std::to_string(i) + " '";
+        for (int j = 0; j < 10; ++j)
+            laughs += "&a" + std::to_string(i - 1) + ";";
+        laughs += "'>";
+    }
+    EXPECT_EQ(problem(laughs, "<p begin=\"1\" end=\"2\">&a9;</p>").kind, Kind::TooLarge);
+    EXPECT_EQ(problem(laughs, "<p begin=\"1\" end=\"2\" a=\"&a9;\">x</p>").kind, Kind::TooLarge);
+    EXPECT_EQ(problem(laughs + "<!ATTLIST p a CDATA '&a9;'>", "<p begin=\"1\" end=\"2\">x</p>").kind, Kind::TooLarge);
 }
 
 TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)

@@ -1,7 +1,8 @@
 // KA6: TTML lyrics. The core has no XML library, so a small reader builds
-// the element tree: elements, attributes, text, CDATA and the predefined and
-// numeric entities; comments, processing instructions and the DOCTYPE are
-// skipped. Names keep their prefixes and are matched by local name.
+// the element tree: elements, attributes, text, CDATA and entities, the
+// predefined, numeric and internal ones, with the attribute defaults the
+// DOCTYPE's internal subset declares; comments and processing instructions
+// are skipped. Names keep their prefixes and are matched by local name.
 //
 // Lyrics TTML (Apple Music, AMLL TTML Tool) times every <p> and <span> on
 // the media timeline, although TTML's own rule makes a child's times
@@ -51,8 +52,9 @@ enum class Namespace : std::uint8_t {
 };
 
 struct XmlNode {
+    using Attribute = std::pair<std::u8string, std::u8string>;
     std::u8string name; // as written, with its prefix; empty for text
-    std::vector<std::pair<std::u8string, std::u8string>> attributes;
+    std::vector<Attribute> attributes;
     std::vector<std::size_t> attributeLines; // the line each attribute's value starts on
     std::vector<Namespace> attributeNamespaces; // the namespace each attribute's prefix names
     std::vector<XmlNode> children;
@@ -305,23 +307,33 @@ std::optional<std::uint32_t> characterReference(u8sv reference)
 }
 
 // Whether a DTD literal's references follow XML's grammar: each "&" starts
-// "&name;" or a character reference, and with `parameters` (an
-// EntityValue) each "%" starts "%name;". Which entities they name is not
-// checked, as none is ever expanded.
-bool referencesWritten(u8sv text, bool parameters)
+// "&name;" or a character reference. Which entities they name is checked
+// where they are used.
+bool referencesWritten(u8sv text)
 {
     for (std::size_t i = 0; i < text.size(); ++i) {
-        if (text[i] != u8'&' && !(parameters && text[i] == u8'%'))
+        if (text[i] != u8'&')
             continue;
         const std::size_t semi = text.find(u8';', i);
         if (semi == u8sv::npos)
             return false;
         const u8sv reference = text.substr(i + 1, semi - i - 1);
-        if (!(text[i] == u8'&' && reference.starts_with(u8'#') ? characterReference(reference).has_value() : xmlName(reference)))
+        if (!(reference.starts_with(u8'#') ? characterReference(reference).has_value() : xmlName(reference)))
             return false;
         i = semi;
     }
     return true;
+}
+
+// An attribute value of a tokenized type (any but CDATA): its spaces
+// trimmed and each run made one (XML 1.0 section 3.3.3).
+std::u8string tokens(u8sv value)
+{
+    std::u8string out;
+    for (std::size_t i = 0; i < value.size(); ++i)
+        if (value[i] != u8' ' || (!out.empty() && i + 1 < value.size() && value[i + 1] != u8' '))
+            out += value[i];
+    return out;
 }
 
 // XML's PubidChar: what a public identifier may hold.
@@ -358,9 +370,29 @@ void appendUtf8(std::u8string &out, std::uint32_t cp)
     }
 }
 
+// An entity value's replacement text: its character references replaced,
+// its entity references kept for when it is used (XML 1.0 section 4.5).
+std::u8string replacementText(u8sv value)
+{
+    std::u8string out;
+    for (std::size_t i = 0; i < value.size();) {
+        if (value.substr(i).starts_with(u8"&#")) {
+            const std::size_t semi = value.find(u8';', i);
+            appendUtf8(out, *characterReference(value.substr(i + 1, semi - i - 1)));
+            i = semi + 1;
+        } else {
+            out += value[i++];
+        }
+    }
+    return out;
+}
+
 class XmlReader {
 public:
-    explicit XmlReader(u8sv text) : m_s(text), m_nodesLeft(text.size() / kTtmlBytesPerNode + 4096) {}
+    explicit XmlReader(u8sv text)
+        : m_s(text), m_nodesLeft(text.size() / kTtmlBytesPerNode + 4096), m_expansionLeft(detail::lyricsBudget(text.size()))
+    {
+    }
 
     std::expected<XmlNode, LyricsProblem> document()
     {
@@ -380,9 +412,11 @@ private:
 
     void advance(std::size_t n)
     {
-        // A line ends at LF, CRLF or a lone CR, as XML ends lines.
+        // A line ends at LF, CRLF or a lone CR, as XML ends lines. An
+        // entity's text is all on the line of its reference.
         for (std::size_t end = std::min(m_s.size(), m_pos + n); m_pos < end; ++m_pos)
-            if (m_s[m_pos] == u8'\n' || (m_s[m_pos] == u8'\r' && (m_pos + 1 == m_s.size() || m_s[m_pos + 1] != u8'\n')))
+            if (m_inputs.empty() &&
+                (m_s[m_pos] == u8'\n' || (m_s[m_pos] == u8'\r' && (m_pos + 1 == m_s.size() || m_s[m_pos + 1] != u8'\n'))))
                 ++m_line;
     }
 
@@ -429,7 +463,7 @@ private:
     // written in lower case at the very start of the file.
     bool skipPi()
     {
-        const bool first = m_pos == m_start;
+        const bool first = m_pos == m_start && m_inputs.empty();
         advance(2);
         const auto target = name();
         if (!target)
@@ -494,6 +528,7 @@ private:
         found = field(u8"standalone", value);
         if (found < 0 || (found > 0 && value != u8"yes" && value != u8"no"))
             return false;
+        m_standalone = found > 0 && value == u8"yes";
         skipSpace();
         if (!at(u8"?>"))
             return false;
@@ -560,6 +595,10 @@ private:
                             ok = name().has_value() && at(u8";");
                             if (ok)
                                 advance(1);
+                            // Never read, so what it declares is unknown: past it,
+                            // unless the file is standalone, declarations are only
+                            // checked (XML 1.0 section 5.1).
+                            m_declarations = m_declarations && m_standalone;
                         } else {
                             ok = markupDeclaration();
                         }
@@ -573,6 +612,8 @@ private:
                     advance(1);
             } else
                 return {};
+            if (!ok && m_overBudget)
+                return std::unexpected(tooLarge()); // an attribute default's entities
             if (!ok) {
                 std::tie(m_pos, m_line) = start;
                 return std::unexpected(broken());
@@ -584,8 +625,8 @@ private:
     // follows it is the caller's to check ("<a$>" is broken there).
     // The internal subset's markup declarations, each read by its
     // production in XML 1.0 (elementdecl, AttlistDecl, EntityDecl,
-    // NotationDecl), so a malformed one is not well-formed XML. They are
-    // checked, never used: entities are not expanded.
+    // NotationDecl), so a malformed one is not well-formed XML. Entities
+    // and attribute lists are kept (entityDeclaration, attlistDeclaration).
     bool markupDeclaration()
     {
         bool ok = false;
@@ -615,11 +656,10 @@ private:
         skipSpace();
         return any;
     }
-    // A quoted literal; an attribute value (AttValue) holds no "<".
     // A quoted literal of the DTD, held to its grammar: a SystemLiteral
     // holds anything, a PubidLiteral only PubidChars, an AttValue no "<"
-    // and only references as "&" starts them, an EntityValue the same with
-    // "%" too.
+    // and only references as "&" starts them, an EntityValue the same and
+    // no "%" (the internal subset's rule).
     enum class Literal : std::uint8_t { System, Pubid, AttValue, EntityValue };
     bool quoted(Literal literal)
     {
@@ -630,8 +670,10 @@ private:
             return false;
         const u8sv text = m_s.substr(m_pos + 1, close - m_pos - 1);
         const bool written = literal == Literal::Pubid      ? std::ranges::all_of(text, pubidChar)
-                             : literal == Literal::AttValue ? text.find(u8'<') == u8sv::npos && referencesWritten(text, false)
-                             : literal == Literal::EntityValue ? referencesWritten(text, true)
+                             : literal == Literal::AttValue ? text.find(u8'<') == u8sv::npos && referencesWritten(text)
+                             // No "%": a parameter-entity reference may not stand
+                             // inside a declaration of the internal subset.
+                             : literal == Literal::EntityValue ? text.find(u8'%') == u8sv::npos && referencesWritten(text)
                                                                : true;
         if (!written)
             return false;
@@ -720,23 +762,45 @@ private:
             advance(1);
     }
     // AttlistDecl after its keyword: the element's name, then each AttDef
-    // (a name, an AttType and a DefaultDecl).
+    // (a name, an AttType and a DefaultDecl). Each attribute is kept, the
+    // first declaration of it binding: whether its type is tokenized and
+    // its default, normalized as the element's own value would be.
     bool attlistDeclaration()
     {
-        if (!space() || !name())
+        if (!space())
+            return false;
+        const auto element = name();
+        if (!element)
             return false;
         for (;;) {
             const bool spaced = space();
             if (at(u8">"))
                 return true;
-            if (!spaced || !name() || !space() || !attributeType() || !space())
+            const auto attribute = spaced ? name() : std::nullopt;
+            if (!attribute || !space())
                 return false;
-            if (keyword(u8"#REQUIRED") || keyword(u8"#IMPLIED"))
+            const bool tokenized = !at(u8"CDATA");
+            if (!attributeType() || !space())
+                return false;
+            std::optional<std::u8string> value;
+            if (!keyword(u8"#REQUIRED") && !keyword(u8"#IMPLIED")) {
+                if (keyword(u8"#FIXED") && !space())
+                    return false;
+                const std::size_t literal = m_pos;
+                if (!quoted(Literal::AttValue))
+                    return false;
+                if (m_declarations) {
+                    const auto decoded = decode(m_s.substr(literal + 1, m_pos - literal - 2), true);
+                    if (!decoded)
+                        return false;
+                    value = tokenized ? tokens(*decoded) : *decoded;
+                }
+            }
+            if (!m_declarations)
                 continue;
-            if (keyword(u8"#FIXED") && !space())
-                return false;
-            if (!quoted(Literal::AttValue))
-                return false;
+            auto &declared = m_attributes[*element];
+            if (std::ranges::find(declared, *attribute, &AttributeDeclaration::name) == declared.end())
+                declared.push_back({*attribute, tokenized, std::move(value)});
         }
     }
     bool attributeType()
@@ -765,18 +829,32 @@ private:
         }
     }
     // EntityDecl after its keyword: a general entity's name and value or
-    // external id (NDATA too), or "%", a parameter entity's.
+    // external id (NDATA too), or "%", a parameter entity's. A general
+    // entity is kept, the first declaration of a name binding it; an
+    // external one with no text, as it is never read.
     bool entityDeclaration()
     {
         if (!space())
             return false;
         const bool parameter = keyword(u8"%");
-        if ((parameter && !space()) || !name() || !space())
+        if (parameter && !space())
             return false;
-        if (quoted(Literal::EntityValue))
+        auto entity = name();
+        if (!entity || !space())
+            return false;
+        auto declare = [&](std::optional<std::u8string> text) {
+            static constexpr u8sv kPredefined[] = {u8"lt", u8"gt", u8"amp", u8"apos", u8"quot"};
+            if (!parameter && m_declarations && std::ranges::find(kPredefined, u8sv(*entity)) == std::end(kPredefined))
+                m_entities.try_emplace(std::move(*entity), std::move(text));
+        };
+        const std::size_t literal = m_pos;
+        if (quoted(Literal::EntityValue)) {
+            declare(replacementText(m_s.substr(literal + 1, m_pos - literal - 2)));
             return true;
+        }
         if (!externalId(false))
             return false;
+        declare(std::nullopt);
         const auto mark = std::pair{m_pos, m_line};
         if (!parameter && space() && keyword(u8"NDATA"))
             return space() && name();
@@ -799,11 +877,22 @@ private:
     }
 
     // Text with its entities replaced, or where in it the entity that
-    // cannot be read starts.
-    std::expected<std::u8string, std::size_t> decode(u8sv raw) const
+    // cannot be read starts. An `attribute` value's whitespace is each a
+    // space (a line end in the file one) and the entities the internal
+    // subset declares are replaced too, holding no "<" (XML 1.0 section
+    // 3.3.3); the text of an element reads those as markup (element()).
+    // A replacement past the expansion budget sets m_overBudget.
+    std::expected<std::u8string, std::size_t> decode(u8sv raw, bool attribute = false, std::size_t depth = 0)
     {
         std::u8string out;
         for (std::size_t i = 0; i < raw.size();) {
+            if (attribute && (raw[i] == u8'\t' || raw[i] == u8'\n' || raw[i] == u8'\r')) {
+                if (depth == 0 && raw.substr(i).starts_with(u8"\r\n"))
+                    ++i;
+                out += u8' ';
+                ++i;
+                continue;
+            }
             if (raw[i] != u8'&') {
                 out += raw[i++];
                 continue;
@@ -824,21 +913,90 @@ private:
                 out += u8'\'';
             else if (const auto cp = characterReference(entity))
                 appendUtf8(out, *cp);
-            else
+            else if (const auto *text = attribute ? declared(entity) : nullptr;
+                     text && text->find(u8'<') == u8sv::npos && depth < kMaxTtmlDepth && spend(text->size())) {
+                const auto inner = decode(*text, true, depth + 1);
+                if (!inner)
+                    return std::unexpected(i);
+                out += *inner;
+            } else
                 return std::unexpected(i);
             i = semi + 1;
         }
         return out;
     }
 
-    // An element and everything in it, from its '<'. Open elements are kept
-    // on a stack, so reading costs no recursion; nesting past kMaxTtmlDepth
-    // is refused, so the walks over the tree (and its destruction) stay
-    // shallow too.
+    // The replacement text of a parsed entity the internal subset declares.
+    const std::u8string *declared(u8sv entity) const
+    {
+        const auto found = m_entities.find(entity);
+        return found == m_entities.end() || !found->second ? nullptr : &*found->second;
+    }
+
+    // Takes an entity's text from the expansion budget (lyricsBudget), so
+    // entities naming entities cannot grow without end.
+    bool spend(std::size_t bytes)
+    {
+        bytes = std::max<std::size_t>(bytes, 1);
+        if (bytes > m_expansionLeft) {
+            m_overBudget = true;
+            return false;
+        }
+        m_expansionLeft -= bytes;
+        return true;
+    }
+
+    // Where in `raw` the first reference to an entity other than the
+    // predefined ones starts, npos for none before a reference decode()
+    // cannot read.
+    static std::size_t entityReference(u8sv raw)
+    {
+        for (std::size_t i = raw.find(u8'&'); i != u8sv::npos; i = raw.find(u8'&', i + 1)) {
+            const std::size_t semi = raw.find(u8';', i);
+            if (semi == u8sv::npos)
+                return u8sv::npos;
+            const u8sv entity = raw.substr(i + 1, semi - i - 1);
+            if (!entity.starts_with(u8'#') && entity != u8"lt" && entity != u8"gt" && entity != u8"amp" &&
+                entity != u8"quot" && entity != u8"apos")
+                return i;
+        }
+        return u8sv::npos;
+    }
+
+    // The root element and everything in it, from its '<'. A problem met
+    // in an entity's text is reported at its reference in the file.
     std::expected<XmlNode, LyricsProblem> element()
+    {
+        auto root = elementTree();
+        if (!root && !m_inputs.empty()) {
+            const Input outer = m_inputs.front();
+            m_inputs.clear();
+            m_s = outer.text;
+            m_pos = outer.reference;
+            m_line = outer.line;
+            if (root.error().kind != Kind::TooLarge)
+                root.error().excerpt = broken().excerpt;
+        }
+        return root;
+    }
+
+    // Open elements are kept on a stack, so reading costs no recursion;
+    // nesting past kMaxTtmlDepth is refused, so the walks over the tree (and
+    // its destruction) stay shallow too. An entity's text is read where it
+    // is referenced, as XML includes it (section 4.4.3): it closes what it
+    // opens, and no more.
+    std::expected<XmlNode, LyricsProblem> elementTree()
     {
         std::vector<XmlNode> open;
         for (;;) {
+            if (done() && !m_inputs.empty() && open.size() == m_inputs.back().depth) {
+                const Input outer = m_inputs.back(); // the entity's text read: back to its reference's
+                m_inputs.pop_back();
+                m_s = outer.text;
+                m_pos = outer.resume;
+                m_line = outer.line;
+                continue;
+            }
             if (done())
                 return std::unexpected(broken());
             const std::size_t line = m_line;
@@ -847,7 +1005,8 @@ private:
                 advance(2);
                 const auto closing = name();
                 skipSpace();
-                if (!closing || open.empty() || *closing != open.back().name || !at(u8">")) {
+                if (!closing || open.empty() || *closing != open.back().name || !at(u8">") ||
+                    (!m_inputs.empty() && open.size() <= m_inputs.back().depth)) {
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
@@ -934,7 +1093,9 @@ private:
                         std::tie(m_pos, m_line) = attributeStart;
                         return std::unexpected(broken());
                     }
-                    const auto value = decode(raw);
+                    const auto value = decode(raw, true);
+                    if (!value && m_overBudget)
+                        return std::unexpected(tooLarge());
                     if (!value) {
                         // From the start of the entity's line, the attribute's on its first.
                         if (const std::size_t from = lineStartIn(raw, value.error()); from > 0)
@@ -957,6 +1118,22 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken()); // an attribute given twice
                 }
+                // What the internal subset declares of its attributes: a
+                // tokenized value normalized, a default for one not given.
+                const std::size_t given = node.attributes.size();
+                if (const auto declared = m_attributes.find(node.name); declared != m_attributes.end())
+                    for (const AttributeDeclaration &attribute : declared->second) {
+                        const auto it = std::ranges::find(node.attributes, attribute.name, &XmlNode::Attribute::first);
+                        if (it != node.attributes.end()) {
+                            if (attribute.tokenized)
+                                it->second = tokens(it->second);
+                        } else if (attribute.value) {
+                            if (!spend(attribute.value->size()))
+                                return std::unexpected(tooLarge());
+                            node.attributes.emplace_back(attribute.name, *attribute.value);
+                            node.attributeLines.push_back(line);
+                        }
+                    }
                 // Its declarations within Namespaces in XML's rules, and no
                 // element in the xmlns namespace.
                 if (node.name.starts_with(u8"xmlns:") || !m_scope.enter(node)) {
@@ -968,14 +1145,16 @@ private:
                 // the namespace and the local name, as a:role and b:role with
                 // one namespace are.
                 std::vector<std::tuple<Namespace, std::uint32_t, u8sv>> expanded;
-                for (const auto &[key, value] : node.attributes) {
-                    const auto place = m_scope.of(key, false);
+                for (std::size_t i = 0; i < node.attributes.size(); ++i) {
+                    const auto place = m_scope.of(node.attributes[i].first, false);
                     if (place.uri == NamespaceScope::kUndeclared) {
                         std::tie(m_pos, m_line) = start;
                         return std::unexpected(broken()); // a prefix no one declares
                     }
                     node.attributeNamespaces.push_back(place.ns);
-                    expanded.emplace_back(place.ns, place.ns == Namespace::Other ? place.uri : 0, localName(key));
+                    if (i < given) // the tag's own (Namespaces in XML, section 6.3)
+                        expanded.emplace_back(place.ns, place.ns == Namespace::Other ? place.uri : 0,
+                                              localName(node.attributes[i].first));
                 }
                 const auto place = m_scope.of(node.name, true);
                 if (place.uri == NamespaceScope::kUndeclared) {
@@ -1004,7 +1183,27 @@ private:
             } else {
                 const auto start = std::pair{m_pos, m_line};
                 const std::size_t end = std::min(m_s.find(u8'<', m_pos), m_s.size());
-                const u8sv raw = m_s.substr(m_pos, end - m_pos);
+                u8sv raw = m_s.substr(m_pos, end - m_pos);
+                // Text up to an entity the internal subset declares; that
+                // entity's text is read next, in its place.
+                if (const std::size_t reference = entityReference(raw); reference != u8sv::npos) {
+                    const std::size_t semi = raw.find(u8';', reference);
+                    const u8sv entity = raw.substr(reference + 1, semi - reference - 1);
+                    const std::u8string *text = declared(entity);
+                    if (!text || open.empty() || std::ranges::contains(m_inputs, entity, &Input::entity)) {
+                        advance(lineStartIn(raw, reference)); // from the start of the entity's line
+                        return std::unexpected(broken());
+                    }
+                    if (reference == 0) {
+                        if (m_inputs.size() >= kMaxTtmlDepth || !spend(text->size()))
+                            return std::unexpected(tooLarge());
+                        m_inputs.push_back({m_s, m_pos, m_pos + semi + 1, m_line, open.size(), entity});
+                        m_s = *text;
+                        m_pos = 0;
+                        continue;
+                    }
+                    raw = raw.substr(0, reference);
+                }
                 if (const std::size_t cdataEnd = raw.find(u8"]]>"); cdataEnd != u8sv::npos) {
                     advance(cdataEnd); // only a CDATA section may end with "]]>"
                     return std::unexpected(broken());
@@ -1024,7 +1223,7 @@ private:
                 node.text = *text;
                 node.line = line;
                 open.back().children.push_back(std::move(node));
-                advance(end - m_pos);
+                advance(raw.size());
             }
         }
     }
@@ -1039,10 +1238,34 @@ private:
     }
     LyricsProblem tooLarge() const { return LyricsProblem{Kind::TooLarge, m_line, {}}; }
 
-    u8sv m_s;
+    // An entity being read in an element's text: the text around its
+    // reference, where the reference starts and where reading resumes.
+    struct Input {
+        u8sv text;
+        std::size_t reference = 0, resume = 0, line = 0;
+        std::size_t depth = 0; // the elements open at the reference
+        u8sv entity;
+    };
+    // An attribute the internal subset declares for an element.
+    struct AttributeDeclaration {
+        std::u8string name;
+        bool tokenized = false;
+        std::optional<std::u8string> value; // the default, normalized
+    };
+
+    u8sv m_s; // the file, or the text of the entity being read
     std::size_t m_pos = 0;
     std::size_t m_line = 1;
     std::size_t m_nodesLeft = 0;
+    std::size_t m_expansionLeft = 0;
+    bool m_overBudget = false;
+    bool m_standalone = false;
+    bool m_declarations = true; // false past a parameter-entity reference (unless standalone)
+    // The general entities the internal subset declares: each one's
+    // replacement text, none for an external one.
+    std::map<std::u8string, std::optional<std::u8string>, std::less<>> m_entities;
+    std::map<std::u8string, std::vector<AttributeDeclaration>, std::less<>> m_attributes;
+    std::vector<Input> m_inputs; // the entities being read, innermost last
     std::size_t m_start = 0; // after the byte order mark
     bool m_doctype = false;
     std::optional<std::u8string> m_doctypeName; // the root the DOCTYPE names
@@ -1056,10 +1279,11 @@ std::optional<std::int64_t> ttmlTime(u8sv text)
 {
     text = detail::trim(text);
     auto decimal = [](u8sv s) -> std::optional<double> {
-        if (s.empty() || s.size() > 15)
+        if (s.empty())
             return std::nullopt;
         // Digits, then a "." and digits if there is a fraction ("1.5", not
-        // "1." or ".5").
+        // "1." or ".5"), as many as written ("000001.500s" is 1.5 s); past
+        // 10^15 the whole part stops growing, far beyond any time read.
         bool dot = false, wholeDigit = false, fractionDigit = false;
         double whole = 0, scale = 1, fraction = 0;
         for (char8_t c : s) {
@@ -1070,7 +1294,7 @@ std::optional<std::int64_t> ttmlTime(u8sv text)
                 if (dot)
                     fraction += (c - u8'0') * (scale /= 10);
                 else
-                    whole = whole * 10 + (c - u8'0');
+                    whole = std::min(whole * 10 + (c - u8'0'), 1e15);
             } else {
                 return std::nullopt;
             }
