@@ -5,7 +5,8 @@ import QtQuick.Layouts
 import Hikari.Ui
 
 // VT1 (#269): the visual tool inspector bar below the canvas, in the Video
-// panel and in fullscreen's tool row. It replaces T1-T6's options row,
+// panel and in fullscreen's bar (FS1's inspector row, while a tool other
+// than the crosshair is on). It replaces T1-T6's options row,
 // values row and the readout beside the video times. The active tool's icon
 // and name lead; then its options (VisualToolOption: legacy VideoToolbar's
 // second row) and its values (VisualValueField), each group after its
@@ -27,8 +28,6 @@ Control {
     id: bar
     objectName: "visualToolBar"
     required property VisualToolsController tools
-    // Fullscreen's tool row shows the families' buttons before the bar.
-    property bool showsName: true
     readonly property int family: tools.activeFamily
     readonly property var familyInfo: tools.families[family] ?? ({})
     readonly property bool batchTool: family > 0 && (familyInfo.available ?? false)
@@ -179,7 +178,6 @@ Control {
                 Layout.alignment: Qt.AlignVCenter
                 color: Theme.line
                 opacity: segment.x > 0 ? 1 : 0
-                visible: bar.showsName || segment.index > 0
             }
             Label {
                 visible: segment.modelData.group.length > 0
@@ -225,7 +223,6 @@ Control {
             spacing: 6
             ToolName {
                 objectName: "visualToolName"
-                visible: bar.showsName
                 family: bar.family
                 name: bar.familyInfo.name ?? ""
             }
@@ -303,7 +300,7 @@ Control {
                 width: Math.max(0, parent.width - (bar.batchFamily(index) ? bar.pickerWidth : 0))
                 spacing: 6
                 ToolName {
-                    visible: bar.showsName && (modelData.options !== undefined)
+                    visible: modelData.options !== undefined
                     family: index
                     name: bar.tools.families[index]?.name ?? ""
                 }
