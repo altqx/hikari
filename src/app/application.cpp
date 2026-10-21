@@ -539,6 +539,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         return target ? m_files->session(*target) : nullptr;
     });
     m_templateEditor->setTemplater(&m_automation->templater());
+    // A shortcut's or the menu's macro starts from the template just typed.
+    m_automation->setBeforeRun([this] { m_templateEditor->commit(); });
     connect(m_templateEditor.get(), &ui::TemplateEditorController::documentEdited, this, [this] { refreshViews(); });
     connect(m_templateEditor.get(), &ui::TemplateEditorController::videoChanged, this, [this] {
         if (m_videoShowsTemplate || m_templateEditor->videoPreview())

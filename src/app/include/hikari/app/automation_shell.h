@@ -74,6 +74,9 @@ public:
 
     // Called after a macro changed the Document (the views show it again).
     void setDocumentChanged(std::function<void()> changed) { m_documentChanged = std::move(changed); }
+    // Called before a macro reads the target: a panel's draft is committed
+    // first, as the Line editor's is (KE2's Template editor).
+    void setBeforeRun(std::function<void()> before) { m_beforeRun = std::move(before); }
     // The audio box whose audio aegisub.get_frequency_peaks reads, and whose
     // presence aegisub.get_audio_selection checks (null: none).
     void setAudioBox(std::function<const application::AudioBox *()> box);
@@ -225,6 +228,7 @@ private:
     std::unique_ptr<application::EditorPort> m_editorPort;
     std::unique_ptr<ui::AutomationManagerController> m_managerController;
     std::function<void()> m_documentChanged;
+    std::function<void()> m_beforeRun;
     std::optional<Run> m_run;
     std::optional<std::pair<std::string, int>> m_last;
     application::DocumentScripts m_documentScripts;

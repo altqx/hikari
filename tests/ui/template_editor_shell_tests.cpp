@@ -243,6 +243,23 @@ private slots:
         QCOMPARE(session()->document().lines().size(), lines);
     }
 
+    // A macro run another way than the panel's (a shortcut, the Automation
+    // menu) starts from the template edit just typed, committed first.
+    void aShortcutsRunSeesTheEditJustTyped()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        showPanel("templateDock");
+        QTRY_VERIFY_WITH_TIMEOUT(item(QStringLiteral("templateApply"))->isEnabled(), 20'000);
+        editor().setText(editor().text() + QStringLiteral("{\\bord7}"));
+        QSignalSpy done(&application->automation(), &app::AutomationShell::runCompleted);
+        QVERIFY(application->automation().run(HIKARI_KARAOKE_TEMPLATER, 0, app::AutomationShell::RunOrigin::Hotkey));
+        QVERIFY(done.wait(30'000));
+        QVERIFY(done.first().at(0).toBool());
+        QVERIFY(std::ranges::any_of(session()->document().lines(), [](const core::LineRecord *l) {
+            return application::isGeneratedLine(*l) && std::u8string_view(l->text).find(u8"bord7") != std::u8string_view::npos;
+        }));
+    }
+
     // A file opened while the panel shows runs none of its templates or
     // code until the user previews it; a second file asks again.
     void aFileRunsNoCodeUntilTheUserPreviewsIt()

@@ -647,6 +647,8 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     for (const auto &script : m_manager.scripts())
         if (script.path == path && ordinal >= 0 && static_cast<std::size_t>(ordinal) < script.info.macros.size())
             macro = script.info.macros[static_cast<std::size_t>(ordinal)].name;
+    if (m_beforeRun)
+        m_beforeRun();
     // The pending draft is committed first (T43-reconcile); the target is
     // read-only until the macro ends.
     auto snapshot = application::snapshotForMacro(*s);
