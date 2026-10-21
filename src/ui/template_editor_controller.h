@@ -234,6 +234,7 @@ private:
     application::KaraokeTemplaterPort *m_templater = nullptr;
     bool m_editable = false;
     bool m_shown = false;
+    bool m_wasAvailable = false; // at the last refresh
     bool m_previewOnVideo = true;
     const application::EditSession *m_seenSession = nullptr;
     std::uint64_t m_seenRevision = 0;

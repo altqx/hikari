@@ -377,7 +377,12 @@ void TemplateEditorController::refresh()
     for (auto it = m_replaced.begin(); it != m_replaced.end();)
         it = line(it->first) ? std::next(it) : m_replaced.erase(it);
     updateSource();
-    if (s->revision() != m_seenRevision) {
+    // The templater's helper loaded after the panel showed: the preview
+    // skipped then runs now.
+    const bool ready = available();
+    const bool becameReady = ready && !m_wasAvailable;
+    m_wasAvailable = ready;
+    if (s->revision() != m_seenRevision || becameReady) {
         m_seenRevision = s->revision();
         schedulePreview();
     }

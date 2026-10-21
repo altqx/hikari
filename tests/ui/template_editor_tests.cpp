@@ -563,6 +563,29 @@ private slots:
         QCOMPARE(editor->source(), karaoke->value); // editing a template keeps the karaoke Line
     }
 
+    // The templater's helper still loading when the panel shows: the preview
+    // runs once it is ready (the application refreshes on its readiness).
+    void thePreviewRunsOnceTheTemplaterIsReady()
+    {
+        view.reset();
+        editor.reset();
+        templater.reset();
+        session = std::make_unique<application::EditSession>(loadFile(QStringLiteral("stock-tutorials.ass")));
+        templater = std::make_unique<Templater>(*session);
+        editor = std::make_unique<TemplateEditorController>();
+        editor->setDelays(10, 60);
+        editor->setEditable(true);
+        editor->setTemplater(templater.get());
+        editor->setSessionSource([this] { return session.get(); });
+        QVERIFY(!templater->available());
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return templater->available(); }, 20'000));
+        QTest::qWait(50);
+        editor->refresh();
+        QVERIFY(previewCame());
+    }
+
     void colourRunsAreATemplatesOrACodeLines()
     {
         open(QStringLiteral("stock-tutorials.ass"));
