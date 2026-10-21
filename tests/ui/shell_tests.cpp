@@ -12229,6 +12229,7 @@ private slots:
         };
         QVERIFY2(split->isVisible(), qPrintable(rowWidths()));
         QVERIFY(tap->isVisible());
+        QVERIFY2(item("audioKaraokeSplitArrow")->isVisible(), qPrintable(rowWidths())); // KA1: room for the arrow
         QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
         // KA2-karaoke-row-fold: with Tap the three toggles go into ⋯ first;
@@ -15976,6 +15977,23 @@ private slots:
         QVERIFY(audio.karaoke());
         QCOMPARE(audio.karaokeModel().count(), 2);
         QCOMPARE(item("audioKaraokeSplitArrow")->width(), 9.0); // narrower than the other split buttons' arrows
+        // KA1 (owner 2026-10-21): the default panel has no room for the arrow
+        // beside KA2's Tap; it folds first, its commands in ⋯, the switches,
+        // Auto split and Tap still shown
+        QVERIFY(item("audioButtons")->property("splitArrowFolded").toBool());
+        QVERIFY(!item("audioButtons")->property("folded").toBool());
+        QVERIFY(!item("audioKaraokeSplitArrow")->isVisible());
+        QVERIFY(item("audioKaraokeSplit")->isVisible());
+        QVERIFY(item("audioTap")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
+        auto *moreMenu = named("audioMoreMenu");
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, item("audioMore")), Q_ARG(qreal, 0),
+                                          Q_ARG(qreal, item("audioMore")->height())));
+        QTRY_VERIFY(moreMenu->property("opened").toBool());
+        QVERIFY(item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(item("audioMoreKaraokeKf")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
+        QTRY_VERIFY(!moreMenu->property("visible").toBool());
         auto *display = item("audioDisplay");
         const auto &view = audio.view();
         auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };

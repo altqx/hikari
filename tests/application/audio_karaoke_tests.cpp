@@ -400,6 +400,16 @@ TEST(AudioKaraoke, JoinTakesTheNextSyllableAndDropsEmptyBlocks)
     EXPECT_EQ(k.count(), 2);
 }
 
+// KA2's taps replace the syllables: their tags go in their own places,
+// not where the Line's read ones were (KA1-k-round-trip)
+TEST(AudioKaraoke, AssignedSyllablesTakeTheirOwnPlaces)
+{
+    AudioKaraoke k;
+    k.split({u"{\\b1}ki{\\k30}mi{\\k40}no", 0, 1000}, false, {});
+    k.assign({u"ki", u"mi", u"no"}, {u"k", u"k", u"kf"}, {150, 400, 1000});
+    EXPECT_EQ(s(k.text(0)), "{\\k15}ki{\\k25}mi{\\kf60}no");
+}
+
 TEST(AudioKaraoke, SplittingASyllableSharesItsTimeByCharacter)
 {
     auto k = split("{\\k25}kara", 0, 1000);

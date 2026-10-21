@@ -410,6 +410,11 @@ void AudioKaraoke::assign(std::vector<std::u16string> syllables, std::vector<std
     m_syls = std::move(syllables);
     m_tags = std::move(tags);
     m_times = std::move(times);
+    // KA1-k-round-trip: new syllables, each tag in its own place (the read
+    // ones' places are another text's)
+    m_places.clear();
+    for (const auto &syl : m_syls)
+        m_places.push_back(newPlace(syl));
     current = 0;
     hover = -1;
     character = -1;

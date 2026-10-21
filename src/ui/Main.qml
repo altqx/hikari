@@ -3243,6 +3243,13 @@ ApplicationWindow {
                                                            + audioTail.unfoldedWidth + 3 * spacing
                     readonly property bool togglesFolded: folded
                         || width < transportWidth(shownExtras) + audioSwitches.fullWidth + audioTail.unfoldedWidth + 3 * spacing
+                    // KA1 (owner 2026-10-21): Auto split's arrow, after the
+                    // toggles and before the switches; its commands are in ⋯
+                    // while it is folded (the default panel folds it)
+                    readonly property bool splitArrowFolded: folded
+                        || root.audio.karaoke && width < transportWidth(shownExtras) + audioSwitches.modesWidth
+                                                        + audioSwitches.splitArrowWidth + 26 + spacing
+                                                        + audioTail.unfoldedWidth + 3 * spacing
                     // the row with the switches in ⋯ and no extra shown: the
                     // panel's least width
                     readonly property real foldedWidth: transportWidth([]) + audioTail.unfoldedWidth + 26 + 3 * spacing
@@ -3386,6 +3393,7 @@ ApplicationWindow {
                         // KA1: a face that toggles (Auto split), and a narrower arrow
                         property string faceText: tip
                         property real arrowWidth: 13
+                        property bool arrowShown: true
                         property alias checkable: splitFace.checkable
                         property alias checked: splitFace.checked
                         default property alias marks: splitFace.data
@@ -3404,6 +3412,7 @@ ApplicationWindow {
                         }
                         ToolButton {
                             objectName: split.name + "Arrow"
+                            visible: split.arrowShown
                             focusPolicy: Qt.NoFocus
                             implicitWidth: split.arrowWidth
                             implicitHeight: 26
@@ -3743,10 +3752,12 @@ ApplicationWindow {
                         objectName: "audioSwitches"
                         visible: !audioButtons.folded
                         spacing: 2
-                        // two switches, and Auto split (with its arrow) and Tap
-                        // in Karaoke mode; a separator and three toggles
-                        readonly property real modesWidth: 2 * 54 + 2 * spacing + (root.audio.karaoke ? 26 + 9 + 39 + 2 * spacing : 0)
-                        readonly property real fullWidth: modesWidth + 5 + 3 * 26 + 4 * spacing
+                        // two switches, and Auto split and Tap in Karaoke
+                        // mode (and Auto split's arrow); a separator and three
+                        // toggles
+                        readonly property real modesWidth: 2 * 54 + 2 * spacing + (root.audio.karaoke ? 26 + 39 + 2 * spacing : 0)
+                        readonly property real splitArrowWidth: root.audio.karaoke ? 9 : 0
+                        readonly property real fullWidth: modesWidth + splitArrowWidth + 5 + 3 * 26 + 4 * spacing
                         // A5: legacy AudioBox's KaraSwitch, as a switch
                         AudioSwitch {
                             AudioSegment {
@@ -3780,7 +3791,8 @@ ApplicationWindow {
                             tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
                             menuTip: qsTranslate("HikariSub.Audio", "Syllable commands")
                             menu: audioKaraokeMenu
-                            arrowWidth: 9 // the default panel still holds the row (owner, 2026-10-21)
+                            arrowWidth: 9 // narrower than the others (owner, 2026-10-21)
+                            arrowShown: !audioButtons.splitArrowFolded
                             onToggled: {
                                 root.audio.toggleKaraokeSplitMode()
                                 checked = Qt.binding(() => root.audio.karaokeSplitMode)
@@ -4067,7 +4079,7 @@ ApplicationWindow {
                                 // KA1 (#276): the Auto split arrow's commands, while it is folded
                                 FoldedItem {
                                     objectName: "audioMoreKaraokeSplitAtCursor"
-                                    visible: audioButtons.folded && root.audio.karaoke
+                                    visible: audioButtons.splitArrowFolded && root.audio.karaoke
                                     checkable: false
                                     iconRole: "karaoke-split"
                                     text: qsTranslate("HikariSub.Audio", "Split syllable at the cursor") + "\t"
@@ -4076,7 +4088,7 @@ ApplicationWindow {
                                 }
                                 FoldedItem {
                                     objectName: "audioMoreKaraokeKf"
-                                    visible: audioButtons.folded && root.audio.karaoke
+                                    visible: audioButtons.splitArrowFolded && root.audio.karaoke
                                     checkable: false
                                     iconRole: "karaoke"
                                     text: qsTranslate("HikariSub.Audio", "Switch long syllables between %1 and %2").arg("\\k").arg("\\kf") + "\t"
