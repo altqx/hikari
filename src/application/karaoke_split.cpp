@@ -197,7 +197,8 @@ bool smallKana(char32_t c)
 {
     static constexpr std::u32string_view set =
         U"ぁぃぅぇぉゃゅょゎァィゥェォャュョ"
-        U"ヮｧｨｩｪｫｬｭｮﾞﾟ";
+        U"ヮｧｨｩｪｫｬｭｮﾞﾟ"
+        U"ゕゖヵヶ"; // small ka and ke (Codex); between kanji (一ヶ月) a run of their own
     return set.find(c) != std::u32string_view::npos || inRange(c, 0x31F0, 0x31FF);
 }
 
