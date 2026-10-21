@@ -491,7 +491,8 @@
     "video-transport",
     "video-fullscreen",
     "menu:video",
-    "video-context-menu"
+    "video-context-menu",
+    "automation-panel"
    ]
   },
   {
@@ -528,7 +529,7 @@
     "video-fullscreen",
     "audio-box",
     "video-context-menu",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -1369,7 +1370,7 @@
    ],
    "surfaces": [
     "menu:automation",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -1532,6 +1533,17 @@
    "legacy": [],
    "surfaces": [
     "title-bar"
+   ]
+  },
+  {
+   "role": "notice-warning",
+   "file": "notice-warning.svg",
+   "label": "Warning",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dialogs"
    ]
   },
   {
@@ -2164,7 +2176,8 @@
    "legacy": [],
    "surfaces": [
     "shift-times-panel",
-    "line-editor"
+    "line-editor",
+    "automation-panel"
    ]
   },
   {
@@ -2178,7 +2191,8 @@
     "line-editor",
     "style-manager",
     "grid-menu",
-    "visual-tools"
+    "visual-tools",
+    "automation-panel"
    ]
   },
   {
@@ -2227,7 +2241,8 @@
    "surfaces": [
     "style-manager",
     "visual-tools",
-    "grid-menu"
+    "grid-menu",
+    "automation-panel"
    ]
   },
   {
@@ -2239,7 +2254,7 @@
    "legacy": [],
    "surfaces": [
     "font-catalog",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -2493,7 +2508,7 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -2504,7 +2519,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:automation"
+    "menu:automation",
+    "automation-panel"
    ]
   },
   {
@@ -2548,7 +2564,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "settings-dialog"
+    "settings-dialog",
+    "automation-panel"
    ]
   },
   {
@@ -2686,7 +2703,7 @@
   {
    "role": "automation-manager",
    "file": "automation-manager.svg",
-   "label": "Automation manager",
+   "label": "Show panel",
    "accent": true,
    "mirror": false,
    "legacy": [],

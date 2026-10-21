@@ -19,6 +19,7 @@
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
+#include <QQuickWindow>
 #include <QSaveFile>
 #include <QSet>
 #include <QScreen>
@@ -97,13 +98,39 @@ bool isInMenu(QObject *focus)
     return false;
 }
 
+// A window's popup layer (QQuickOverlay, a private type: matched by class
+// name), made with the window's first popup; under the content item or
+// beside it.
+QQuickItem *overlayOf(QQuickWindow *window)
+{
+    for (QQuickItem *layer : {window->contentItem(), window->contentItem()->parentItem()})
+        if (layer)
+            for (QQuickItem *item : layer->childItems())
+                if (item->inherits("QQuickOverlay"))
+                    return item;
+    return nullptr;
+}
+
+// Whether `overlay` shows a modal popup. An open popup's item is a child of
+// the overlay from its opening to the end of its closing (before it shows,
+// so its visibility is not asked), and the popup is the item's QObject
+// parent (as a menu's, above).
+bool showsModal(QQuickItem *overlay)
+{
+    for (QQuickItem *item : overlay->childItems())
+        if (item->inherits("QQuickPopupItem") && item->parent() &&
+            item->parent()->property("modal").toBool())
+            return true;
+    return false;
+}
+
 } // namespace
 
 const QStringList &WorkspaceLayoutController::panelIds()
 {
     static const QStringList ids{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor"),
                                  QStringLiteral("Grid"), QStringLiteral("Reference"), QStringLiteral("Timing"),
-                                 QStringLiteral("Search"), QStringLiteral("Original")};
+                                 QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original")};
     return ids;
 }
 
@@ -115,11 +142,13 @@ WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QObject
     readSavedLayouts();
     if (auto *app = qobject_cast<QGuiApplication *>(QCoreApplication::instance())) {
         connect(app, &QGuiApplication::focusWindowChanged, this, &WorkspaceLayoutController::focusWindowChanged);
+        connect(app, &QGuiApplication::focusWindowChanged, this, &WorkspaceLayoutController::checkModal);
         connect(app, &QGuiApplication::focusObjectChanged, this, [this](QObject *focus) {
             if (const bool inMenu = isInMenu(focus); inMenu != m_menuHasFocus) {
                 m_menuHasFocus = inMenu;
                 emit menuHasFocusChanged();
             }
+            checkModal();
         });
         // A screen that goes away or shrinks can leave a floating panel
         // where no screen shows it: bring it back (docs/qt/docking.md).
@@ -139,6 +168,28 @@ WorkspaceLayoutController::WorkspaceLayoutController(QString layoutFile, QObject
 QObject *WorkspaceLayoutController::focusWindow() const
 {
     return QGuiApplication::focusWindow();
+}
+
+void WorkspaceLayoutController::checkModal()
+{
+    bool open = false;
+    for (QWindow *window : QGuiApplication::topLevelWindows()) {
+        auto *quick = qobject_cast<QQuickWindow *>(window);
+        if (!quick || !quick->isVisible())
+            continue;
+        // A popup opening or closing moves its item in or out of the
+        // overlay, with or without the keyboard.
+        QQuickItem *overlay = overlayOf(quick);
+        if (!overlay)
+            continue;
+        connect(overlay, &QQuickItem::childrenChanged, this, &WorkspaceLayoutController::checkModal,
+                Qt::UniqueConnection);
+        open = open || showsModal(overlay);
+    }
+    if (open != m_modalOpen) {
+        m_modalOpen = open;
+        emit modalOpenChanged();
+    }
 }
 
 namespace {

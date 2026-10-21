@@ -249,10 +249,13 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        // Tools start closed (docs/qt/ux/workspaces.md); Timing tabs with the editor.
+        // Tools start closed (docs/qt/ux/workspaces.md); Timing and
+        // Automation tab with the editor.
         editorDock.addDockWidgetAsTab(timingDock)
+        editorDock.addDockWidgetAsTab(automationDock)
         editorDock.setAsCurrentTab()
         timingDock.close()
+        automationDock.close()
     }
     Connections {
         target: root.shell
@@ -304,12 +307,22 @@ ApplicationWindow {
             dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(400, 0))
     }
 
+    // AM1: a macro started while the Automation panel is closed opens it
+    // (its run status holds Cancel and the log), without taking the focus.
+    readonly property bool automationRunning: root.automation.running
+    onAutomationRunningChanged: {
+        if (root.automationRunning && !automationDock.isOpen) {
+            automationDock.open()
+            root.workspaceLayout.keepFloatingPanelsOnScreen()
+        }
+    }
+
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel]
+                                          timingPanel, searchPanel, automationPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock]
+                                     searchDock, automationDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -527,6 +540,19 @@ ApplicationWindow {
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
                       enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference(), iconRole: "compare" }]
+        // AM1: the Automation menu's commands for scripts, the Hotkeys page
+        // on the macros' shortcuts, and the import of a legacy Hotkeys.txt
+        // (from the retired window).
+        if (dock === automationDock)
+            return [{ name: "automationLoadScript", text: qsTranslate("HikariSub.Automation", "Load script…"), iconRole: "automation",
+                      enabled: () => loadScriptAction.enabled, run: () => loadScriptAction.trigger() },
+                    { name: "automationRefreshAutoload", text: qsTranslate("HikariSub.Automation", "Refresh autoload scripts"),
+                      iconRole: "refresh", enabled: () => reloadAutoloadAction.enabled && !root.automation.running,
+                      run: () => reloadAutoloadAction.trigger() },
+                    { name: "automationShortcutsInSettings", text: qsTranslate("HikariSub.Automation", "Shortcuts in Settings…"),
+                      iconRole: "hotkeys", run: () => settingsDialog.openDialog(7, 7) },
+                    { name: "automationImportLegacy", text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…"),
+                      iconRole: "import", run: () => legacyHotkeysDialog.open() }]
         return []
     }
     function closePanel(dock) {
@@ -1334,17 +1360,9 @@ ApplicationWindow {
             title: qsTr("&Automation")
             // S4: legacy BuildMenu on opening (the Document's scripts, changed files reloaded).
             onAboutToShow: root.automation.menuOpened()
-            Action {
-                id: automationHotkeysAction
-                property string help: qsTr("Open shortcut mapping window") // HikariSubFrame.cpp:355
-                text: qsTr("Open shortcut mapping window")
-                onTriggered: {
-                    if (root.hotkeyGesture("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
-                        return
-                    root.automationHotkeys.begin()
-                    automationHotkeysWindow.show()
-                }
-            }
+            // AM1: legacy's "Open shortcut mapping window" is gone with its
+            // window (AM1-hotkeys-window-retired); each macro's shortcut is
+            // in the Automation panel and Settings → Hotkeys.
             ShellMenuItem {
                 help: qsTr("Load script") // HikariSubFrame.cpp:349
                 iconRole: "automation"
@@ -1372,8 +1390,9 @@ ApplicationWindow {
                     id: loadLastScriptAction
                     text: qsTr("Run the last loaded script")
                     // Legacy's modal progress dialog blocks it while a macro
-                    // runs; D2: OnMenuOpened disables m_AutoMenu's items.
-                    enabled: !root.automation.running
+                    // runs; D2: OnMenuOpened disables m_AutoMenu's items. AM1:
+                    // off under a modal dialog, as the macros' shortcuts.
+                    enabled: !root.automation.running && !root.workspaceLayout.modalOpen
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
                 }
             }
@@ -1382,7 +1401,7 @@ ApplicationWindow {
                 objectName: "rerunMenuItem"
                 action: Action {
                     text: qsTr("Rerun last macro")
-                    enabled: root.automation.canRerun
+                    enabled: root.automation.canRerun && !root.workspaceLayout.modalOpen
                     onTriggered: root.automation.rerunLast()
                 }
             }
@@ -1390,8 +1409,8 @@ ApplicationWindow {
                 iconRole: "automation-manager"
                 objectName: "automationManagerMenuItem"
                 action: Action {
-                    text: qsTr("Automation &manager")
-                    onTriggered: automationManagerWindow.show()
+                    text: qsTr("Show &panel")
+                    onTriggered: root.showPanel(automationDock)
                 }
             }
             MenuSeparator {}
@@ -1403,14 +1422,19 @@ ApplicationWindow {
                     text: modelData.name
                     enabled: !root.automation.running
                     // Automation.cpp:1376-1379: Shift maps the macro's hotkey
-                    // (OnMapHkey(-1, "Script <file>-<n>"), no window choice).
+                    // (OnMapHkey(-1, "Script <file>-<n>")); AM1: in the
+                    // Automation panel, which records it in place
+                    // (AM1-hotkeys-window-retired).
                     onTriggered: {
-                        const name = root.automationHotkeys.legacyNameFor(modelData.path, modelData.ordinal)
-                        if (!root.hotkeyGesture(name, 0, "macro"))
+                        if (root.hotkeys.shiftClicked(true)) {
+                            root.showPanel(automationDock)
+                            automationTool.record(root.automationHotkeys.legacyNameFor(modelData.path, modelData.ordinal))
+                        } else {
                             root.automationManager.run(modelData.path, modelData.ordinal)
+                        }
                     }
                 }
-                onObjectAdded: (index, object) => automationMenu.insertItem(6 + index, object)
+                onObjectAdded: (index, object) => automationMenu.insertItem(5 + index, object)
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }
@@ -2925,7 +2949,8 @@ ApplicationWindow {
                     visible: root.audio.loaded
                     focus: true
                     clip: true
-                    anchors { left: parent.left; right: parent.right; top: parent.top; bottom: audioScroll.top }
+                    anchors { left: parent.left; right: audioSliderColumn.visible ? audioSliderColumn.left : parent.right
+                              top: parent.top; bottom: audioScroll.top }
                     Accessible.role: Accessible.Graphic
                     Accessible.name: qsTranslate("HikariSub.Audio", "Audio display")
                     Accessible.description: root.audio.status
@@ -2938,7 +2963,8 @@ ApplicationWindow {
                     policy: ScrollBar.AlwaysOn
                     focusPolicy: Qt.NoFocus
                     // legacy DisplaySizer: wxBOTTOM 4 under the search bar
-                    anchors { left: parent.left; right: parent.right; bottom: audioButtons.top; bottomMargin: visible ? 4 : 0 }
+                    anchors { left: parent.left; right: audioSliderColumn.visible ? audioSliderColumn.left : parent.right
+                              bottom: audioButtons.top; bottomMargin: visible ? 4 : 0 }
                     height: visible ? implicitHeight : 0
                     size: root.audio.scrollRange > 0 ? Math.min(1, root.audio.scrollPage / root.audio.scrollRange) : 1
                     // A visible track in the boundary colour: the handle alone
@@ -2958,6 +2984,99 @@ ApplicationWindow {
                             root.audio.setScrollPosition(Math.round(position * root.audio.scrollRange))
                     }
                     ToolTip.text: qsTranslate("HikariSub.Audio", "Search bar")
+                }
+                // AU2 (#268): legacy's slider column beside the display and
+                // its search bar (TopSizer, AudioBox.cpp:105-143), shown from
+                // Customise: the horizontal stretch, then the vertical
+                // stretch and the volume with Link under them. The zoom and
+                // speaker popovers keep the same values.
+                RowLayout {
+                    id: audioSliderColumn
+                    objectName: "audioSliderColumn"
+                    visible: root.audio.loaded && audioPanel.shows("sliders")
+                    anchors { right: parent.right; top: parent.top; bottom: audioButtons.top; bottomMargin: 4 }
+                    width: visible ? implicitWidth : 0
+                    spacing: 2
+                    component ColumnSlider: Slider {
+                        property string tip
+                        orientation: Qt.Vertical
+                        stepSize: 1
+                        focusPolicy: Qt.NoFocus
+                        Layout.fillHeight: true
+                        Layout.preferredWidth: 20
+                        Accessible.name: tip
+                        ToolTip.text: tip
+                        ToolTip.visible: hovered || pressed
+                    }
+                    Rectangle {
+                        Layout.fillHeight: true
+                        implicitWidth: 1
+                        color: Theme.line
+                    }
+                    // legacy HorizontalZoom: 0 at the top (wxSL_VERTICAL)
+                    ColumnSlider {
+                        objectName: "audioColumnHorizontal"
+                        tip: qsTranslate("HikariSub.Audio", "Horizontal stretching")
+                        from: 100
+                        to: 0
+                        value: root.audio.horizontalZoom
+                        onMoved: root.audio.setHorizontalZoom(Math.round(value))
+                    }
+                    ColumnLayout {
+                        Layout.fillHeight: true
+                        spacing: 2
+                        RowLayout {
+                            spacing: 2
+                            // legacy VerticalZoom and VolumeBar: the top end
+                            // at the top (wxSL_INVERSE)
+                            ColumnSlider {
+                                objectName: "audioColumnVertical"
+                                tip: qsTranslate("HikariSub.Audio", "Vertical stretching")
+                                from: 1
+                                to: 100
+                                value: root.audio.verticalZoom
+                                onMoved: root.audio.setVerticalZoom(Math.round(value))
+                            }
+                            ColumnSlider {
+                                objectName: "audioColumnVolume"
+                                tip: qsTranslate("HikariSub.Audio", "Volume")
+                                from: 1
+                                to: 100
+                                value: root.audio.volume
+                                onMoved: root.audio.setVolume(Math.round(value))
+                            }
+                        }
+                        // legacy VerticalLink, under the two it links
+                        ToolButton {
+                            objectName: "audioColumnLink"
+                            Layout.fillWidth: true
+                            implicitHeight: 26
+                            focusPolicy: Qt.NoFocus
+                            checkable: true
+                            checked: root.audio.linked
+                            display: AbstractButton.IconOnly
+                            text: qsTranslate("HikariSub.Audio", "Link the volume and stretch sliders")
+                            contentItem: Item {
+                                Icon {
+                                    anchors.centerIn: parent
+                                    iconRole: "link"
+                                }
+                            }
+                            Accessible.name: text
+                            ToolTip.text: text
+                            ToolTip.visible: hovered
+                            onToggled: {
+                                root.audio.setLinked(checked)
+                                checked = Qt.binding(() => root.audio.linked)
+                            }
+                            Rectangle {
+                                anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                                height: 2
+                                color: Theme.accent
+                                visible: parent.checked
+                            }
+                        }
+                    }
                 }
                 Label {
                     id: audioStatus
@@ -2985,22 +3104,30 @@ ApplicationWindow {
                 // legacy's button tips (AudioBox.cpp:149-193). audio.playAround
                 // holds the one the face shows and a click repeats: the last
                 // one chosen from the menu (a hotkey plays its range without
-                // changing it).
+                // changing it). AU2: `id` is the play's in
+                // audio.panelControls, `label` its menu text.
                 readonly property var playArounds: [
-                    { symbol: "AUDIO_PLAY_500MS_BEFORE", icon: "play-before-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500ms before the start time") },
-                    { symbol: "AUDIO_PLAY_500MS_FIRST", icon: "play-after-start",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time") },
-                    { symbol: "AUDIO_PLAY_500MS_LAST", icon: "play-before-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500ms before the end time") },
-                    { symbol: "AUDIO_PLAY_500MS_AFTER", icon: "play-after-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play 500ms after the end time") },
-                    { symbol: "AUDIO_PLAY_TO_END", icon: "play-to-end",
-                      tip: qsTranslate("HikariSub.Audio", "Play to the end") },
-                    { symbol: "AUDIO_PLAY_BEFORE_MARK", icon: "play-before-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play before the tag") },
-                    { symbol: "AUDIO_PLAY_AFTER_MARK", icon: "play-after-mark",
-                      tip: qsTranslate("HikariSub.Audio", "Play after the tag") }
+                    { id: "before", symbol: "AUDIO_PLAY_500MS_BEFORE", icon: "play-before-start",
+                      tip: qsTranslate("HikariSub.Audio", "Play 500ms before the start time"),
+                      label: qsTranslate("HikariSub.Audio", "Play 500 ms before the start") },
+                    { id: "first", symbol: "AUDIO_PLAY_500MS_FIRST", icon: "play-after-start",
+                      tip: qsTranslate("HikariSub.Audio", "Play 500 ms after the start time"),
+                      label: qsTranslate("HikariSub.Audio", "Play the first 500 ms") },
+                    { id: "last", symbol: "AUDIO_PLAY_500MS_LAST", icon: "play-before-end",
+                      tip: qsTranslate("HikariSub.Audio", "Play 500ms before the end time"),
+                      label: qsTranslate("HikariSub.Audio", "Play the last 500 ms") },
+                    { id: "after", symbol: "AUDIO_PLAY_500MS_AFTER", icon: "play-after-end",
+                      tip: qsTranslate("HikariSub.Audio", "Play 500ms after the end time"),
+                      label: qsTranslate("HikariSub.Audio", "Play 500 ms after the end") },
+                    { id: "toEnd", symbol: "AUDIO_PLAY_TO_END", icon: "play-to-end",
+                      tip: qsTranslate("HikariSub.Audio", "Play to the end"),
+                      label: qsTranslate("HikariSub.Audio", "Play to the end") },
+                    { id: "beforeMark", symbol: "AUDIO_PLAY_BEFORE_MARK", icon: "play-before-mark",
+                      tip: qsTranslate("HikariSub.Audio", "Play before the tag"),
+                      label: qsTranslate("HikariSub.Audio", "Play before the mark") },
+                    { id: "afterMark", symbol: "AUDIO_PLAY_AFTER_MARK", icon: "play-after-mark",
+                      tip: qsTranslate("HikariSub.Audio", "Play after the tag"),
+                      label: qsTranslate("HikariSub.Audio", "Play after the mark") }
                 ]
                 property string playAroundSetting: root.app.settings.value("audio.playAround")
                 readonly property var playAround: playArounds.find(p => p.symbol === playAroundSetting) ?? playArounds[0]
@@ -3022,8 +3149,34 @@ ApplicationWindow {
                             audioPanel.nextLineOnCommit = root.app.settings.value(id)
                         else if (id === "audio.playAround")
                             audioPanel.playAroundSetting = root.app.settings.value(id)
+                        else if (id === "audio.panelControls")
+                            audioPanel.panelControls = root.app.settings.value(id)
                     }
                 }
+                // AU2 (#268): the controls AU1 folded that the row shows
+                // (audio.panelControls, the Customise menu). The extras in
+                // the row's order, left to right: legacy's (AudioBox.cpp:
+                // 160-193), the mark plays, the 500 ms plays and Play to end,
+                // then Auto-commit, Next after commit and Go after Commit.
+                property var panelControls: root.app.settings.value("audio.panelControls")
+                readonly property var extraOrder: ["beforeMark", "afterMark", "before", "first", "last", "after", "toEnd",
+                                                   "autoCommit", "nextCommit", "goto"]
+                readonly property var playExtras: ["beforeMark", "afterMark", "before", "first", "last", "after", "toEnd"]
+                // Classic: close to legacy's box (AU2-classic-arrangement);
+                // Default: AU1's row.
+                readonly property var classicControls: extraOrder.concat(["sliders"])
+                readonly property var defaultControls: ["playAround"]
+                function shows(id) { return panelControls.indexOf(id) >= 0 }
+                function setShown(id, on) {
+                    const list = panelControls.filter(c => c !== id)
+                    if (on)
+                        list.push(id)
+                    root.app.settings.setValue("audio.panelControls", list)
+                }
+                function arrange(list) { root.app.settings.setValue("audio.panelControls", list) }
+                function play(id) { return playArounds.find(p => p.id === id) }
+                readonly property var markPlays: ["beforeMark", "afterMark"].map(play)
+                readonly property var timePlays: ["before", "first", "last", "after", "toEnd"].map(play)
                 function setCommitOption(id, on) {
                     root.app.settings.setValue(id, on)
                     audioDisplay.forceActiveFocus()
@@ -3103,11 +3256,48 @@ ApplicationWindow {
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
                     // From the fixed sizes, not the right-hand items' own,
                     // which change as the row folds.
-                    readonly property bool folded: width < audioTransport.implicitWidth + audioSwitches.fullWidth
+                    readonly property bool folded: width < transportWidth(shownExtras) + audioSwitches.fullWidth
                                                            + audioTail.unfoldedWidth + 3 * spacing
-                    // the row with the switches in ⋯: the panel's least width
-                    readonly property real foldedWidth: audioTransport.implicitWidth + audioTail.unfoldedWidth + 26
-                                                        + 3 * spacing
+                    // the row with the switches in ⋯ and no extra shown: the
+                    // panel's least width
+                    readonly property real foldedWidth: transportWidth([]) + audioTail.unfoldedWidth + 26 + 3 * spacing
+                    // AU2: the extras Customise shows, in the row's order;
+                    // `kept` the ones the row has room for. Once the switches
+                    // are in ⋯, the extras that do not fit follow them from
+                    // the right end (AU2-classic-arrangement).
+                    readonly property var shownExtras: audioPanel.extraOrder.filter(id => audioPanel.shows(id))
+                    readonly property var kept: {
+                        if (!folded)
+                            return shownExtras
+                        const room = width - audioTail.unfoldedWidth - 26 - 3 * spacing
+                        let k = shownExtras.length
+                        while (k > 0 && transportWidth(shownExtras.slice(0, k)) > room)
+                            --k
+                        return shownExtras.slice(0, k)
+                    }
+                    function keeps(id) { return kept.indexOf(id) >= 0 }
+                    function foldsOut(id) { return audioPanel.shows(id) && !keeps(id) }
+                    // audioTransport's width with the extras in `extras`
+                    // shown, from the fixed sizes (a button 26, a split
+                    // button 39, a separator 5 with its margins).
+                    function transportWidth(extras) {
+                        const around = audioPanel.shows("playAround")
+                        const marks = extras.filter(id => id === "beforeMark" || id === "afterMark").length
+                        const plays = extras.filter(id => audioPanel.playExtras.indexOf(id) >= 0).length
+                        const widths = [26, 26, 26, 26, 26, 5]
+                        if (around)
+                            widths.push(39)
+                        if (marks > 0 && around)
+                            widths.push(5)
+                        if (plays > marks && (around || marks > 0))
+                            widths.push(5)
+                        for (let i = 0; i < extras.length; ++i)
+                            widths.push(26)
+                        if (around || plays > 0)
+                            widths.push(5)
+                        widths.push(26, 26, 39)
+                        return widths.reduce((a, b) => a + b, 0) + (widths.length - 1) * spacing
+                    }
                     // Legacy MappedButton's square buttons; a Shift+click maps
                     // the action's Audio hotkey instead (Hotkeys::OnMapHkey).
                     // K1: each shows the set's icon in place of legacy's
@@ -3284,6 +3474,7 @@ ApplicationWindow {
 
                     RowLayout {
                         id: audioTransport
+                        objectName: "audioTransport"
                         spacing: 2
                         // A3, A4: AUDIO_PREVIOUS, AUDIO_PLAY, AUDIO_PLAY_LINE
                         // (two hotkeys each), AUDIO_STOP, AUDIO_NEXT
@@ -3319,9 +3510,11 @@ ApplicationWindow {
                         }
                         AudioSeparator {}
                         // A4: the 500 ms, to-end and mark plays in one split
-                        // button (AU1-play-around-split).
+                        // button (AU1-play-around-split); AU2: unless
+                        // Customise hides it.
                         AudioSplitButton {
                             name: "audioPlayAround"
+                            visible: audioPanel.shows("playAround")
                             iconRole: audioPanel.playAround.icon
                             symbol: audioPanel.playAround.symbol
                             tip: audioPanel.playAround.tip
@@ -3362,7 +3555,39 @@ ApplicationWindow {
                                 symbol: "AUDIO_PLAY_AFTER_MARK"; label: qsTranslate("HikariSub.Audio", "Play after the mark")
                             }
                         }
-                        AudioSeparator {}
+                        // AU2 (#268): the plays Customise shows as their own
+                        // buttons, legacy's (AudioBox.cpp:160-176): the mark
+                        // plays, then the 500 ms plays and Play to end.
+                        component ExtraPlay: AudioButton {
+                            required property var modelData
+                            objectName: "audioExtra" + modelData.id[0].toUpperCase() + modelData.id.slice(1)
+                            visible: audioButtons.keeps(modelData.id)
+                            iconRole: modelData.icon
+                            text: modelData.label
+                            symbol: modelData.symbol
+                            tip: modelData.tip
+                            onRun: root.audio.runHotkey(modelData.symbol)
+                        }
+                        AudioSeparator {
+                            visible: audioPanel.shows("playAround") && (audioButtons.keeps("beforeMark") || audioButtons.keeps("afterMark"))
+                        }
+                        Repeater {
+                            model: audioPanel.markPlays
+                            delegate: ExtraPlay {}
+                        }
+                        AudioSeparator {
+                            visible: (audioPanel.shows("playAround") || audioButtons.keeps("beforeMark") || audioButtons.keeps("afterMark"))
+                                     && audioPanel.timePlays.some(p => audioButtons.keeps(p.id))
+                        }
+                        Repeater {
+                            model: audioPanel.timePlays
+                            delegate: ExtraPlay {}
+                        }
+                        // not twice when nothing sits between the transport and
+                        // the timing group
+                        AudioSeparator {
+                            visible: audioPanel.shows("playAround") || audioPanel.playArounds.some(p => audioButtons.keeps(p.id))
+                        }
                         // A3: AUDIO_LEAD_IN, AUDIO_LEAD_OUT, AUDIO_COMMIT
                         AudioButton {
                             objectName: "audioLeadIn"; text: qsTranslate("HikariSub.Audio", "In")
@@ -3390,15 +3615,17 @@ ApplicationWindow {
                             Row {
                                 anchors { right: parent.right; bottom: parent.bottom; rightMargin: 1; bottomMargin: 1 }
                                 spacing: 1
+                                // AU2: not while the option is a button of
+                                // its own on the row
                                 CommitMark {
                                     objectName: "audioAutoCommitMark"
                                     glyph: "A"
-                                    visible: audioPanel.autoCommit
+                                    visible: audioPanel.autoCommit && !audioButtons.keeps("autoCommit")
                                 }
                                 CommitMark {
                                     objectName: "audioNextCommitMark"
                                     glyph: "↓"
-                                    visible: audioPanel.nextLineOnCommit
+                                    visible: audioPanel.nextLineOnCommit && !audioButtons.keeps("nextCommit")
                                 }
                             }
                         }
@@ -3439,6 +3666,44 @@ ApplicationWindow {
                                     checked = Qt.binding(() => audioPanel.nextLineOnCommit)
                                 }
                             }
+                        }
+                        // AU2: Commit's options and Go to selection as
+                        // buttons after Commit (legacy's AutoCommit,
+                        // NextCommit and Goto, AudioBox.cpp:180-215).
+                        AudioButton {
+                            objectName: "audioExtraAutoCommit"
+                            visible: audioButtons.keeps("autoCommit")
+                            iconRole: "auto-commit"
+                            text: qsTranslate("HikariSub.Audio", "Auto-commit")
+                            tip: qsTranslate("HikariSub.Audio", "Automatically apply changes")
+                            checkable: true
+                            checked: audioPanel.autoCommit
+                            onToggled: {
+                                audioPanel.setCommitOption("audio.autoCommit", checked)
+                                checked = Qt.binding(() => audioPanel.autoCommit)
+                            }
+                        }
+                        AudioButton {
+                            objectName: "audioExtraNextCommit"
+                            visible: audioButtons.keeps("nextCommit")
+                            iconRole: "next-after-commit"
+                            text: qsTranslate("HikariSub.Audio", "Next after commit")
+                            tip: qsTranslate("HikariSub.Audio", "Go to the next line after applying changes")
+                            checkable: true
+                            checked: audioPanel.nextLineOnCommit
+                            onToggled: {
+                                audioPanel.setCommitOption("audio.nextLineOnCommit", checked)
+                                checked = Qt.binding(() => audioPanel.nextLineOnCommit)
+                            }
+                        }
+                        AudioButton {
+                            objectName: "audioExtraGoto"
+                            visible: audioButtons.keeps("goto")
+                            iconRole: "go-to-selection"
+                            text: qsTranslate("HikariSub.Audio", "Go to selection")
+                            symbol: "AUDIO_GOTO"
+                            tip: qsTranslate("HikariSub.Audio", "Go to selection")
+                            onRun: root.audio.goToSelection()
                         }
                     }
                     Item { Layout.fillWidth: true }
@@ -3542,8 +3807,8 @@ ApplicationWindow {
                     RowLayout {
                         id: audioTail
                         spacing: 2
-                        // the separator, zoom and the speaker
-                        readonly property real unfoldedWidth: 5 + audioZoomButton.implicitWidth + 26 + 2 * spacing
+                        // the separator, zoom, the speaker and Customise
+                        readonly property real unfoldedWidth: 5 + audioZoomButton.implicitWidth + 2 * 26 + 3 * spacing
                         AudioSeparator {}
                         // AU1: the switches and toggles of a narrow panel.
                         AudioButton {
@@ -3558,6 +3823,62 @@ ApplicationWindow {
                             ShellMenu {
                                 id: audioMoreMenu
                                 objectName: "audioMoreMenu"
+                                // AU2: the extras the row has no room for,
+                                // first, in its order
+                                component FoldedPlay: ShellMenuItem {
+                                    property var play
+                                    objectName: "audioMoreExtra" + play.id[0].toUpperCase() + play.id.slice(1)
+                                    visible: audioButtons.foldsOut(play.id)
+                                    height: visible ? implicitHeight : 0
+                                    iconRole: play.icon
+                                    text: play.label + "\t" + root.boundKeys(play.symbol, 4)
+                                    onTriggered: if (!root.hotkeyGesture(play.symbol, 4, true, false)) root.audio.runHotkey(play.symbol)
+                                }
+                                FoldedPlay { play: audioPanel.play("beforeMark") }
+                                FoldedPlay { play: audioPanel.play("afterMark") }
+                                FoldedPlay { play: audioPanel.play("before") }
+                                FoldedPlay { play: audioPanel.play("first") }
+                                FoldedPlay { play: audioPanel.play("last") }
+                                FoldedPlay { play: audioPanel.play("after") }
+                                FoldedPlay { play: audioPanel.play("toEnd") }
+                                ShellMenuItem {
+                                    objectName: "audioMoreExtraAutoCommit"
+                                    visible: audioButtons.foldsOut("autoCommit")
+                                    height: visible ? implicitHeight : 0
+                                    iconRole: "auto-commit"
+                                    text: qsTranslate("HikariSub.Audio", "Automatically apply changes")
+                                    checkable: true
+                                    checked: audioPanel.autoCommit
+                                    onToggled: {
+                                        audioPanel.setCommitOption("audio.autoCommit", checked)
+                                        checked = Qt.binding(() => audioPanel.autoCommit)
+                                    }
+                                }
+                                ShellMenuItem {
+                                    objectName: "audioMoreExtraNextCommit"
+                                    visible: audioButtons.foldsOut("nextCommit")
+                                    height: visible ? implicitHeight : 0
+                                    iconRole: "next-after-commit"
+                                    text: qsTranslate("HikariSub.Audio", "Go to the next line after applying changes")
+                                    checkable: true
+                                    checked: audioPanel.nextLineOnCommit
+                                    onToggled: {
+                                        audioPanel.setCommitOption("audio.nextLineOnCommit", checked)
+                                        checked = Qt.binding(() => audioPanel.nextLineOnCommit)
+                                    }
+                                }
+                                ShellMenuItem {
+                                    objectName: "audioMoreExtraGoto"
+                                    visible: audioButtons.foldsOut("goto")
+                                    height: visible ? implicitHeight : 0
+                                    iconRole: "go-to-selection"
+                                    text: qsTranslate("HikariSub.Audio", "Go to selection") + "\t" + root.boundKeys("AUDIO_GOTO", 4)
+                                    onTriggered: if (!root.hotkeyGesture("AUDIO_GOTO", 4, true, false)) root.audio.goToSelection()
+                                }
+                                MenuSeparator {
+                                    visible: audioButtons.kept.length < audioButtons.shownExtras.length
+                                    height: visible ? implicitHeight : 0
+                                }
                                 ShellMenuItem {
                                     iconRole: "audio-line-mode"
                                     text: qsTranslate("HikariSub.Audio", "Line timing")
@@ -3582,6 +3903,7 @@ ApplicationWindow {
                                     }
                                 }
                                 ShellMenuItem {
+                                    objectName: "audioMoreKaraokeSplit"
                                     visible: root.audio.karaoke
                                     height: visible ? implicitHeight : 0
                                     iconRole: "karaoke-split"
@@ -3777,6 +4099,101 @@ ApplicationWindow {
                                 app: root.app
                                 audio: root.audio
                                 onSettingsRequested: settingsDialog.openDialog(4) // the Audio page
+                            }
+                        }
+                        // AU2 (#268): Customise: each control AU1 folded as a
+                        // button of its own, and the two arrangements.
+                        AudioButton {
+                            id: audioCustomiseButton
+                            objectName: "audioCustomise"
+                            iconRole: "settings"
+                            text: qsTranslate("HikariSub.Audio", "Customise the audio panel")
+                            tip: text
+                            down: audioCustomiseMenu.visible
+                            onRun: audioCustomiseMenu.popup(audioCustomiseButton, 0, audioCustomiseButton.height)
+                            ShellMenu {
+                                id: audioCustomiseMenu
+                                objectName: "audioCustomiseMenu"
+                                // An item a tick shows or hides; the menu stays
+                                // open (checkable).
+                                component ShownItem: ShellMenuItem {
+                                    property string control
+                                    checkable: true
+                                    checked: audioPanel.shows(control)
+                                    onToggled: {
+                                        audioPanel.setShown(control, checked)
+                                        checked = Qt.binding(() => audioPanel.shows(control))
+                                    }
+                                }
+                                component ShownPlay: ShownItem {
+                                    property var play
+                                    control: play.id
+                                    objectName: "audioCustomise" + play.id[0].toUpperCase() + play.id.slice(1)
+                                    iconRole: play.icon
+                                    text: play.label + "\t" + root.boundKeys(play.symbol, 4)
+                                }
+                                Label {
+                                    leftPadding: 12
+                                    rightPadding: 12
+                                    topPadding: 4
+                                    bottomPadding: 2
+                                    color: Theme.muted
+                                    font.bold: true
+                                    text: qsTranslate("HikariSub.Audio", "Show on the panel")
+                                }
+                                ShownItem {
+                                    objectName: "audioCustomisePlayAround"
+                                    control: "playAround"
+                                    iconRole: audioPanel.playAround.icon
+                                    text: qsTranslate("HikariSub.Audio", "Play around button")
+                                }
+                                MenuSeparator {}
+                                ShownPlay { play: audioPanel.play("beforeMark") }
+                                ShownPlay { play: audioPanel.play("afterMark") }
+                                ShownPlay { play: audioPanel.play("before") }
+                                ShownPlay { play: audioPanel.play("first") }
+                                ShownPlay { play: audioPanel.play("last") }
+                                ShownPlay { play: audioPanel.play("after") }
+                                ShownPlay { play: audioPanel.play("toEnd") }
+                                MenuSeparator {}
+                                ShownItem {
+                                    objectName: "audioCustomiseAutoCommit"
+                                    control: "autoCommit"
+                                    iconRole: "auto-commit"
+                                    text: qsTranslate("HikariSub.Audio", "Auto-commit")
+                                }
+                                ShownItem {
+                                    objectName: "audioCustomiseNextCommit"
+                                    control: "nextCommit"
+                                    iconRole: "next-after-commit"
+                                    text: qsTranslate("HikariSub.Audio", "Go to the next line after commit")
+                                }
+                                ShownItem {
+                                    objectName: "audioCustomiseGoto"
+                                    control: "goto"
+                                    iconRole: "go-to-selection"
+                                    text: qsTranslate("HikariSub.Audio", "Go to selection") + "\t" + root.boundKeys("AUDIO_GOTO", 4)
+                                }
+                                MenuSeparator {}
+                                ShownItem {
+                                    objectName: "audioCustomiseSliders"
+                                    control: "sliders"
+                                    iconRole: "link"
+                                    text: qsTranslate("HikariSub.Audio", "Zoom and volume sliders")
+                                }
+                                MenuSeparator {}
+                                ShellMenuItem {
+                                    objectName: "audioCustomiseClassic"
+                                    iconRole: "layout-restore"
+                                    text: qsTranslate("HikariSub.Audio", "Classic arrangement")
+                                    onTriggered: audioPanel.arrange(audioPanel.classicControls)
+                                }
+                                ShellMenuItem {
+                                    objectName: "audioCustomiseDefault"
+                                    iconRole: "layout-reset"
+                                    text: qsTranslate("HikariSub.Audio", "Default arrangement")
+                                    onTriggered: audioPanel.arrange(audioPanel.defaultControls)
+                                }
                             }
                         }
                     }
@@ -4801,6 +5218,36 @@ ApplicationWindow {
             }
         }
 
+        // AM1: the Automation panel (the persistent manager tool,
+        // docs/qt/automation.md), with its macros' shortcuts.
+        KDDW.DockWidget {
+            id: automationDock
+            objectName: "automationDock"
+            uniqueName: "Automation"
+            title: qsTranslate("HikariSub.Automation", "Automation")
+            Panel {
+                id: automationPanel
+                objectName: "automationPanel"
+                dockName: "Automation"
+                minimumBodySize: automationTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Automation", "Automation")
+                AutomationManager {
+                    id: automationTool
+                    objectName: "automationTool"
+                    anchors.fill: parent
+                    controller: root.automationManager
+                    automation: root.automation
+                    macroHotkeys: root.automationHotkeys
+                    hotkeys: root.hotkeys
+                    loadAction: loadScriptAction
+                    refreshAction: reloadAutoloadAction
+                    documentName: root.shell.editingTitle
+                    documentTab: root.app.currentTab
+                }
+            }
+        }
+
         Component.onCompleted: {
             // D3: the horizontal panels keep a one-tab header even alone;
             // the Reference tray's toolbar sits in its header.
@@ -5231,85 +5678,6 @@ ApplicationWindow {
     }
     AutomationNotices {
         automation: root.automation
-    }
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: automationManagerWindow
-        objectName: "automationManagerWindow"
-        // K1: the set's automation icon as the window's (as legacy's dialogs show theirs, SetIcon).
-        Component.onCompleted: IconTheme.setWindowIcon(automationManagerWindow, "automation")
-        title: qsTranslate("HikariSub.Automation", "Automation manager")
-        width: 560
-        height: 420
-        AutomationManager {
-            anchors.fill: parent
-            controller: root.automationManager
-            loadAction: loadScriptAction
-        }
-    }
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: automationProgress
-        objectName: "automationProgress"
-        title: root.automation.runTitle
-        width: 520
-        height: 340
-        flags: Qt.Dialog
-        // Shown while a macro runs; it stays after a failure, or a karaoke
-        // template run that named template problems (KE1), so its log can be read.
-        property bool keep: false
-        visible: root.automation.running || keep
-        Connections {
-            target: root.automation
-            function onRunCompleted(ok, message) {
-                automationProgress.keep = (!ok && message.length > 0) || root.automation.keepLog
-            }
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                objectName: "automationTask"
-                text: root.automation.task
-                Layout.fillWidth: true
-            }
-            ProgressBar {
-                from: 0
-                to: 100
-                value: root.automation.progress
-                Layout.fillWidth: true
-            }
-            ScrollView {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                TextArea {
-                    objectName: "automationLog"
-                    readOnly: true
-                    wrapMode: TextEdit.Wrap
-                    text: root.automation.log
-                }
-            }
-            WindowFooter {
-                FooterButton {
-                    objectName: "automationForceStop"
-                    text: qsTranslate("HikariSub.Automation", "Force stop")
-                    visible: root.automation.forceStopOffered
-                    DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
-                    onClicked: root.automation.forceStopRun()
-                }
-                Button {
-                    objectName: "automationCancel"
-                    text: root.automation.running ? qsTranslate("HikariSub.Automation", "Cancel") : qsTranslate("HikariSub.Automation", "Close")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: {
-                        if (root.automation.running)
-                            root.automation.cancelRun()
-                        else
-                            automationProgress.keep = false
-                    }
-                }
-            }
-        }
     }
     FileDialog {
         id: scriptDialog
@@ -5842,176 +6210,53 @@ ApplicationWindow {
         target: root.updates
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
-                if (release.offer === "aur") {
-                    updateAurNotice.show(release)
-                } else {
-                    updateAvailable.release = release
-                    updateAvailable.open()
-                }
+                // The automatic check's notice takes no keyboard (DG1).
+                if (release.offer === "aur")
+                    updateAurNotice.showRelease(release, !interactive)
+                else
+                    updateAvailable.showRelease(release, !interactive)
             } else {
-                updateMessage.text = outcome === "current" ? qsTr("You already have the latest version")
-                                                          : qsTr("Cannot check for updates")
-                updateMessage.open()
+                // DG1: titled with the command that gave it (DG1-update-titles).
+                updateMessage.showMessage(qsTr("Check for updates"),
+                                   outcome === "current" ? qsTr("You already have the latest version")
+                                                         : qsTr("Cannot check for updates"),
+                                   outcome !== "current")
             }
         }
         function onNotice(message) {
-            updateMessage.text = message
-            updateMessage.open()
+            updateMessage.showMessage(qsTr("Update"), message, true)
         }
     }
     Connections {
         target: root.updates.installer
         function onReady() { updateAvailable.close() }
     }
-    Dialog {
+    // DG1 (#222): About, Credits and the update notices are windows of their
+    // own on the dialog frame (DialogWindow.qml), modeless.
+    UpdateMessage {
         id: updateMessage
-        objectName: "updateMessage"
-        property alias text: updateMessageLabel.text
-        title: qsTr("Update")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { id: updateMessageLabel; wrapMode: Text.WordWrap; width: Math.min(implicitWidth, 520) }
+        settings: root.app.settings
     }
     UpdateAurNotice {
         id: updateAurNotice
         updates: root.updates
-        anchors.centerIn: parent
+        settings: root.app.settings
     }
-    Dialog {
+    UpdateAvailable {
         id: updateAvailable
-        objectName: "updateAvailable"
-        property var release: ({})
-        readonly property bool installs: release.offer === "install" && root.updates.autoInstall
-        readonly property bool downloading: root.updates.installer.state === "downloading"
-        title: qsTr("A new version is available")
-        modal: true
-        anchors.centerIn: parent
-        ColumnLayout {
-            anchors.fill: parent
-            Label { text: updateAvailable.release.name || ""; font.bold: true }
-            Label { text: qsTr("You have version %1; version %2 is available").arg(root.updates.version).arg(updateAvailable.release.tag || "") }
-            ScrollView {
-                Layout.preferredWidth: 460
-                Layout.preferredHeight: 220
-                TextArea { objectName: "updateNotes"; text: updateAvailable.release.notes || ""; readOnly: true; wrapMode: TextEdit.Wrap }
-            }
-            // A package this system cannot run: the release page only.
-            Label {
-                objectName: "updateRequirement"
-                visible: updateAvailable.release.offer === "requirement"
-                wrapMode: Text.WordWrap
-                Layout.preferredWidth: 460
-                text: updateAvailable.release.requirementIsOs
-                      ? qsTr("This version needs Windows %1 or later.").arg(updateAvailable.release.requirement || "")
-                      : qsTr("This version needs glibc %1 or later.").arg(updateAvailable.release.requirement || "")
-            }
-            // The download in place of the button that started it.
-            RowLayout {
-                visible: updateAvailable.downloading
-                Layout.fillWidth: true
-                ProgressBar {
-                    objectName: "updateProgress"
-                    Layout.fillWidth: true
-                    value: root.updates.installer.progress
-                }
-                Label { text: qsTr("Downloading...") }
-            }
-            CheckBox {
-                objectName: "updateAutoCheck"
-                text: qsTr("Check for updates automatically")
-                checked: root.updates.autoCheck
-                onToggled: root.updates.autoCheck = checked
-            }
-            CheckBox {
-                objectName: "updateStableOnly"
-                visible: root.updates.stableOnlyOption
-                text: qsTr("Stable versions only")
-                checked: root.updates.stableOnly
-                onToggled: root.updates.stableOnly = checked
-            }
-            CheckBox {
-                objectName: "updateAutoInstall"
-                visible: root.updates.installsUpdates
-                text: qsTr("Install updates automatically")
-                checked: root.updates.autoInstall
-                onToggled: root.updates.autoInstall = checked
-            }
-            WindowFooter {
-                Button {
-                    visible: !updateAvailable.downloading
-                    text: updateAvailable.installs ? qsTr("Download and install") : qsTr("Open the download page")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        if (updateAvailable.installs)
-                            root.updates.downloadOffer()
-                        else
-                            root.updates.openReleasePage(updateAvailable.release.url || "")
-                    }
-                }
-                Button { objectName: "updateRemind"; text: qsTr("Remind me in a week"); DialogButtonBox.buttonRole: DialogButtonBox.NoRole; onClicked: { root.updates.remindInAWeek(); updateAvailable.close() } }
-                Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: updateAvailable.close() }
-            }
-        }
+        updates: root.updates
+        settings: root.app.settings
     }
-    Dialog {
+    AboutDialog {
         id: aboutDialog
-        objectName: "aboutDialog"
-        title: qsTr("About HikariSub")
-        header: IconDialogHeader { objectName: "aboutDialogTitle"; iconRole: "about"; text: aboutDialog.title }
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label {
-            objectName: "aboutText"
-            text: qsTr("HikariSub subtitle editor by altqx,\nversion %1").arg(root.updates.versionLabel) + " \n\n" +
-                  qsTr("Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n") +
-                  qsTr("If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n") +
-                  qsTr("HikariSub includes parts of the following projects:\n") +
-                  "Qt - Copyright © The Qt Company Ltd. and other contributors.\n" +
-                  "KDDockWidgets - Copyright © Klarälvdalens Datakonsult AB (KDAB).\n" +
-                  qsTr("Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n") +
-                  "Copyright © Rodrigo Braz Monteiro.\n" +
-                  "Hunspell - Copyright © Kevin Hendricks.\n" +
-                  // W2: legacy's two lines (HikariSubFrame.cpp:1123-1124), with their licences.
-                  (root.app.includesCsri ? "CSRI - Copyright © David Lamparter (BSD licence).\n" : "") +
-                  (root.app.includesVsfilter ? "Vsfilter - Copyright © Gabest (GNU GPL 2 or later).\n" : "") +
-                  "FFMPEGSource2 - Copyright © Fredrik Mellbin.\n" +
-                  "FFmpeg - Copyright © the FFmpeg developers.\n" +
-                  "LuaJIT - Copyright © Mike Pall.\n" +
-                  "ICU - Copyright © 1995-2016 International Business Machines Corporation and others.\n" +
-                  "Boost - Copyright © Joe Coder 2004 - 2006.\n" +
-                  "FreeType2 - Copyright © 2006-2019 David Turner, Robert Wilhelm, and Werner Lemberg.\n" +
-                  "Fribidi - Copyright © 1991, 1999 Free Software Foundation, Inc.\n" +
-                  "Libass - Copyright © 2006-2016 libass contributors.\n"
-        }
+        app: root.app
+        updates: root.updates
+        settings: root.app.settings
     }
-    Dialog {
+    CreditsDialog {
         id: creditsDialog
-        objectName: "creditsDialog"
-        title: qsTr("Credits")
-        header: IconDialogHeader { objectName: "creditsDialogTitle"; iconRole: "credits"; text: creditsDialog.title }
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label {
-            text: qsTr("Graphical help: (buttons, help pictures etc.)\n") +
-                  qsTr("- Xandros (new video buttons).\n") +
-                  qsTr("- Devilkan (menu and toolbar buttons)\n") +
-                  qsTr("- Zły Los (icons for file associations and menu).\n") +
-                  qsTr("Testers:\n") +
-                  qsTr("- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n") +
-                  qsTr("- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n") +
-                  qsTr("helped with typesetting tools and came up with many more improvements).\n") +
-                  qsTr("- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n") +
-                  qsTr("- mas1904 (found some errors and helping with crash debuging).\n") +
-                  qsTr("- Senami (made new themes and found some bugs).\n") +
-                  qsTr("- altinat (Thai translation).\n") +
-                  qsTr("- labrie75 (Korean translation).\n") +
-                  qsTr("- Niskala5570 (Malay translation).\n") +
-                  qsTr("Thanks to other HikariSub users who reported bugs:\n") +
-                  "SoheiMajin, BadRequest, Ognisty321, ZlyLos, Thomas Leigh, TomBit."
-        }
+        app: root.app
+        settings: root.app.settings
     }
     // Y5: conversion with the approved loss preview (C02-loss-preview): the
     // legacy CONVERT_* options, then what the conversion removes or
@@ -6791,7 +7036,7 @@ ApplicationWindow {
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
-        GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW: automationHotkeysAction, GLOBAL_PLAY_PAUSE: playPauseAction,
+        GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
         GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction, // V6
@@ -7176,112 +7421,23 @@ ApplicationWindow {
                 context: Qt.ApplicationShortcut
                 // The scripts' entries follow the static ones in the frame's
                 // table (map order: ids from 30100), so a static Global
-                // binding of the same keys wins.
-                enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes(modelData.keys)
+                // binding of the same keys wins, as the Video window's
+                // Play / Pause does (KB2: it acts from every panel).
+                // Off under a modal dialog, which keeps the panel's run
+                // controls out of reach.
+                enabled: !root.menuHasKeys && !root.workspaceLayout.modalOpen
+                         && !root.hotkeys.macroTakenSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }
     }
 
-    // Legacy AutomationHotkeysDialog ("List of automation shortcuts").
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: automationHotkeysWindow
-        objectName: "automationHotkeysWindow"
-        title: qsTranslate("HikariSub.Automation", "List of automation shortcuts")
-        width: 800
-        height: 360
-        flags: Qt.Dialog
-        property int selected: -1
-        function selectedName() {
-            const rows = root.automationHotkeys.rows
-            return selected >= 0 && selected < rows.length ? rows[selected].legacyName : ""
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            ListView {
-                id: hotkeyList
-                objectName: "automationHotkeyList"
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                model: root.automationHotkeys.rows
-                header: RowLayout {
-                    width: hotkeyList.width
-                    Label { text: qsTranslate("HikariSub.Automation", "Path and script name"); Layout.preferredWidth: hotkeyList.width * 0.5 }
-                    Label { text: qsTranslate("HikariSub.Automation", "Macro"); Layout.preferredWidth: hotkeyList.width * 0.35 }
-                    Label { text: qsTranslate("HikariSub.Automation", "Hotkey"); Layout.fillWidth: true }
-                }
-                delegate: ItemDelegate {
-                    required property var modelData
-                    required property int index
-                    width: hotkeyList.width
-                    highlighted: automationHotkeysWindow.selected === index
-                    onClicked: automationHotkeysWindow.selected = index
-                    onDoubleClicked: {
-                        automationHotkeysWindow.selected = index
-                        hotkeyCapture.capture(modelData.legacyName)
-                    }
-                    Accessible.name: modelData.macro + " " + modelData.keys + " " + modelData.problem
-                    contentItem: RowLayout {
-                        Label { text: modelData.script.length ? modelData.script : modelData.legacyName; elide: Text.ElideMiddle; Layout.preferredWidth: hotkeyList.width * 0.5 }
-                        Label { text: modelData.macro; elide: Text.ElideRight; Layout.preferredWidth: hotkeyList.width * 0.35 }
-                        Label {
-                            text: modelData.problem.length ? modelData.problem : modelData.keys
-                            color: modelData.problem.length ? Theme.warning : palette.windowText
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                    }
-                }
-            }
-            WindowFooter {
-                Button {
-                    objectName: "automationHotkeysOk"
-                    text: qsTranslate("HikariSub.Automation", "OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        root.automationHotkeys.commit()
-                        automationHotkeysWindow.close()
-                    }
-                }
-                Button {
-                    objectName: "mapHotkey"
-                    text: qsTranslate("HikariSub.Automation", "Map hotkey")
-                    enabled: automationHotkeysWindow.selectedName().length > 0
-                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                    onClicked: hotkeyCapture.capture(automationHotkeysWindow.selectedName())
-                }
-                Button {
-                    objectName: "deleteHotkey"
-                    text: qsTranslate("HikariSub.Automation", "Delete hotkey")
-                    enabled: automationHotkeysWindow.selectedName().length > 0
-                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                    onClicked: root.automationHotkeys.clearKeys(automationHotkeysWindow.selectedName())
-                }
-                Button {
-                    objectName: "importLegacyHotkeys"
-                    text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…")
-                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                    onClicked: legacyHotkeysDialog.open()
-                }
-                Button {
-                    objectName: "automationHotkeysCancel"
-                    text: qsTranslate("HikariSub.Automation", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: {
-                        root.automationHotkeys.cancel()
-                        automationHotkeysWindow.close()
-                    }
-                }
-            }
-        }
-        FileDialog {
-            id: legacyHotkeysDialog
-            nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
-            onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
-        }
+    // AM1: a legacy Hotkeys.txt's script lines (the Automation panel's menu).
+    FileDialog {
+        id: legacyHotkeysDialog
+        objectName: "legacyHotkeysDialog"
+        nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
+        onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
     }
     // Legacy HkeysDialog ("Hotkey mapping").
     Window {

@@ -255,6 +255,9 @@ const std::vector<SettingDefinition> &definitions()
         // SH1 (#220): "Use system title bar" ("system" or "custom"; "auto"
         // is the desktop's default, the system's on tiling window managers).
         {"appearance.titleBar", "", String, Profile, Mapped, false, std::string("auto")},
+        // DG1 (#222): where each dialog was left and how big, one
+        // "<id>\t<x>,<y>,<width>,<height>" row per dialog (dialog_placement.h).
+        {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).
@@ -273,6 +276,11 @@ const std::vector<SettingDefinition> &definitions()
         // shows and a click repeats, the last one chosen from its menu (an
         // AUDIO_HOTKEY symbol). Starts on 500 ms before the start.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
+        // AU2 (#268): the audio panel's Customise menu: the controls AU1
+        // folded that the row shows ("playAround", the plays, "autoCommit",
+        // "nextCommit", "goto", "sliders"). Starts on AU1's row; legacy has
+        // no such option, so an import leaves it as it is.
+        {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other

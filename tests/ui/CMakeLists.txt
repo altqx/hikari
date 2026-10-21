@@ -393,6 +393,11 @@ endif()
 # frameless window's hints, its parts as the window system is told of them
 # and Alt alone (window_frame.h).
 hikari_add_qttest(hikari_ui_window_frame_tests SOURCES window_frame_tests.cpp LIBRARIES hikari_ui)
+# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h): the frame's
+# buttons, the first and later places, Esc, Enter, the keyboard's return,
+# modality and closing with the opener.
+hikari_add_qttest(hikari_ui_dialog_frame_tests SOURCES dialog_frame_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")

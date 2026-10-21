@@ -33,11 +33,11 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation type="vanished">ยืดในแนวนอน</translation>
+        <translation>ยืดในแนวนอน</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation type="vanished">ยืดในแนวตั้ง</translation>
+        <translation>ยืดในแนวตั้ง</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -229,6 +229,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Auto-commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Line</source>
         <translation type="unfinished"></translation>
     </message>
@@ -311,6 +319,34 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Customise the audio panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on the panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to the next line after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom and volume sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Classic arrangement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default arrangement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose audio file</source>
         <translation>เลือกแฟ้มเสียง</translation>
     </message>
@@ -348,10 +384,6 @@ Output device: %2</source>
 <context>
     <name>HikariSub.Automation</name>
     <message>
-        <source>A script is running</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>ยกเลิก</translation>
     </message>
@@ -372,19 +404,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Ready</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Failed to load</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unavailable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -395,8 +419,192 @@ Output device: %2</source>
         <source>Force stop</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>This file names scripts: %1 and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This file names scripts: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Subtitle scripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autoload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcuts for missing macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rerun last macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 named problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its validation did not let it run; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is read-only until the macro ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading a script runs its code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load</source>
+        <translation type="unfinished">โหลด</translation>
+    </message>
+    <message>
+        <source>Load the scripts this file names</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No macros match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unfolded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show full error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcut %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press a shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already assigned to: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 also uses %2 and takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Unload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set shortcut…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reassign shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is assigned to %2. Assign it to %3 instead?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reassign</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep both</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -420,10 +628,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Automation manager</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Close</source>
         <translation>ปิด</translation>
     </message>
@@ -433,42 +637,46 @@ Output device: %2</source>
     </message>
     <message>
         <source>List of automation shortcuts</source>
-        <translation>รายการปุ่มลัดของสคริปต์อัตโนมัติ</translation>
+        <translation type="vanished">รายการปุ่มลัดของสคริปต์อัตโนมัติ</translation>
     </message>
     <message>
         <source>Path and script name</source>
-        <translation>ตำแหน่งและชื่อสคริปต์</translation>
+        <translation type="vanished">ตำแหน่งและชื่อสคริปต์</translation>
     </message>
     <message>
         <source>Macro</source>
-        <translation>มาโคร</translation>
+        <translation type="vanished">มาโคร</translation>
     </message>
     <message>
         <source>Hotkey</source>
-        <translation>ปุ่มลัด</translation>
+        <translation type="vanished">ปุ่มลัด</translation>
     </message>
     <message>
         <source>Map hotkey</source>
-        <translation>กำหนดปุ่มลัด</translation>
+        <translation type="vanished">กำหนดปุ่มลัด</translation>
     </message>
     <message>
         <source>Delete hotkey</source>
-        <translation>ลบปุ่มลัด</translation>
+        <translation type="vanished">ลบปุ่มลัด</translation>
+    </message>
+    <message>
+        <source>Refresh autoload scripts</source>
+        <translation type="unfinished">รีเฟรชสคริปต์อัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>Shortcuts in Settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import legacy hotkeys…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Automation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hotkeys (Hotkeys.txt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unresolved: the script or its macros changed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unresolved: no loaded script has this macro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -564,6 +772,71 @@ Output device: %2</source>
     <message>
         <source>Set</source>
         <translation type="unfinished">กำหนดค่า</translation>
+    </message>
+    <message>
+        <source>No loaded script has this macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Several loaded scripts have this file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script has no such macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script or its macro changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a macro shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Several loaded scripts have this file name, so a shortcut cannot tell their macros apart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>A short duration in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <extracomment>A duration in seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Karaoke template: %n line(s) generated from %1 karaoke line(s) in %2.</source>
+        <extracomment>Status bar after applying karaoke templates; %n is the number of Lines generated, %1 the number of karaoke Lines templated, %2 the time the run took</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Measuring the karaoke lines: %1</source>
+        <extracomment>In the karaoke template report; %1 is the time karaskel took to measure the karaoke lines</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code line %1 (%2, %3): %4</source>
+        <extracomment>In the karaoke template report: a code Line&apos;s number, its effect and style, and the time it took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Template line %1 (%2, %3): %4, %n line(s) generated</source>
+        <extracomment>In the karaoke template report: a template Line&apos;s number, its effect and style, the time it took and %n the number of Lines it generated</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n template problem(s): see the log.</source>
+        <extracomment>After the karaoke template status; %n is the number of template problems the log lists</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -3144,6 +3417,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Exit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3168,6 +3445,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3178,6 +3459,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
         <translation type="unfinished">ปุ่มลัด &quot;%1&quot; ไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>%1 takes it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3372,7 +3657,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open shortcut mapping window</source>
-        <translation>เปิดหน้าต่างกำหนดปุ่มลัด</translation>
+        <translation type="vanished">เปิดหน้าต่างกำหนดปุ่มลัด</translation>
     </message>
     <message>
         <source>&amp;Load script…</source>
@@ -3384,10 +3669,6 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automation &amp;manager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3539,8 +3820,24 @@ Failed to copy %2 fonts.</source>
         <translation type="vanished">แก้ไข</translation>
     </message>
     <message>
+        <source>Development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Design and development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Translation</source>
-        <translation type="vanished">ข้อความแปล</translation>
+        <translation>ข้อความแปล</translation>
+    </message>
+    <message>
+        <source>Korean, Polish, Tamil and Thai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built with</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
@@ -3843,6 +4140,10 @@ Failed to copy %2 fonts.</source>
         <translation>โหลดสคริปต์</translation>
     </message>
     <message>
+        <source>Show &amp;panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to previous frame</source>
         <translation>ถอยหลังหนึ่งเฟรม</translation>
     </message>
@@ -3861,6 +4162,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plays / Pauses video</source>
         <translation>เล่น / หยุดวิดีโอชั่วคราว</translation>
+    </message>
+    <message>
+        <source>Show / hide render cost</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -3931,6 +4236,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Check for updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>You already have the latest version</source>
         <translation>คุณใช้เวอร์ชันล่าสุดอยู่แล้ว</translation>
     </message>
@@ -3948,7 +4257,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>You have version %1; version %2 is available</source>
-        <translation type="unfinished">คุณใช้เวอร์ชัน %1 อยู่ และมีเวอร์ชัน %2 ให้ใช้งาน</translation>
+        <translation type="obsolete">คุณใช้เวอร์ชัน %1 อยู่ และมีเวอร์ชัน %2 ให้ใช้งาน</translation>
     </message>
     <message>
         <source>This version needs Windows %1 or later.</source>
@@ -3959,7 +4268,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Downloading...</source>
+        <source>You have version %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading… %1 %</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3991,15 +4304,34 @@ Failed to copy %2 fonts.</source>
         <translation>เกี่ยวกับ HikariSub</translation>
     </message>
     <message>
-        <source>HikariSub subtitle editor by altqx,
-version %1</source>
+        <source>Version %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitle editor by altqx.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub is free software under the GNU General Public License, version 3. It comes with no warranty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub website</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Report an issue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
 
 </source>
-        <translation>พัฒนาต่อยอดจาก Kainote ของ Marcin Drob หรือ Bakura หรือ Bjakja
+        <translation type="vanished">พัฒนาต่อยอดจาก Kainote ของ Marcin Drob หรือ Bakura หรือ Bjakja
 
 </translation>
     </message>
@@ -4008,7 +4340,7 @@ version %1</source>
 open an issue at https://github.com/altqx/hikari/issues.
 
 </source>
-        <translation>หากพบข้อผิดพลาด หรือมีข้อเสนอแนะเกี่ยวกับการเปลี่ยนแปลงหรือฟีเจอร์ใหม่
+        <translation type="vanished">หากพบข้อผิดพลาด หรือมีข้อเสนอแนะเกี่ยวกับการเปลี่ยนแปลงหรือฟีเจอร์ใหม่
 โปรดแจ้งได้ที่ https://github.com/altqx/hikari/issues
 
 </translation>
@@ -4016,14 +4348,8 @@ open an issue at https://github.com/altqx/hikari/issues.
     <message>
         <source>HikariSub includes parts of the following projects:
 </source>
-        <translation>HikariSub มีบางส่วนของโครงการดังต่อไปนี้:
+        <translation type="vanished">HikariSub มีบางส่วนของโครงการดังต่อไปนี้:
 </translation>
-    </message>
-    <message>
-        <source>Color picker, audio box, audio player, automation,
-and several other individual features taken from Aegisub -
-</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Credits</source>
@@ -4032,93 +4358,93 @@ and several other individual features taken from Aegisub -
     <message>
         <source>Graphical help: (buttons, help pictures etc.)
 </source>
-        <translation>ความช่วยเหลือด้านกราฟิก: (ปุ่ม, รูปภาพช่วยเหลือ ฯลฯ )
+        <translation type="vanished">ความช่วยเหลือด้านกราฟิก: (ปุ่ม, รูปภาพช่วยเหลือ ฯลฯ )
 </translation>
     </message>
     <message>
         <source>- Xandros (new video buttons).
 </source>
-        <translation>- Xandros (ปุ่มวิดีโอ)
+        <translation type="vanished">- Xandros (ปุ่มวิดีโอ)
 </translation>
     </message>
     <message>
         <source>- Devilkan (menu and toolbar buttons)
 </source>
-        <translation>- Devilkan (ไอคอนเมนูและแถบเครื่องมือ)
+        <translation type="vanished">- Devilkan (ไอคอนเมนูและแถบเครื่องมือ)
 </translation>
     </message>
     <message>
         <source>- Zły Los (icons for file associations and menu).
 </source>
-        <translation>- Zły Los (ไอคอนแฟ้มและเมนู)
+        <translation type="vanished">- Zły Los (ไอคอนแฟ้มและเมนู)
 </translation>
     </message>
     <message>
         <source>Testers:
 </source>
-        <translation>ผู้ทดสอบ:
+        <translation type="vanished">ผู้ทดสอบ:
 </translation>
     </message>
     <message>
         <source>- Sacredus (first translator using translator mode,
 great help testing HikariSub on a slow computer)
 </source>
-        <translation>- Sacredus (นักแปลคนแรกที่ใช้โหมดการแปล
+        <translation type="vanished">- Sacredus (นักแปลคนแรกที่ใช้โหมดการแปล
 ช่วยได้มากในการทดสอบ HikariSub บนคอมพิวเตอร์ช้า)
 </translation>
     </message>
     <message>
         <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
 </source>
-        <translation>- Devilkan (ผู้ค้นหาข้อขัดข้อง ซึ่งพบข้อขัดข้องจำนวนมากจากระบบและพฤติกรรมการใช้งานของตน
+        <translation type="vanished">- Devilkan (ผู้ค้นหาข้อขัดข้อง ซึ่งพบข้อขัดข้องจำนวนมากจากระบบและพฤติกรรมการใช้งานของตน
 </translation>
     </message>
     <message>
         <source>helped with typesetting tools and came up with many more improvements).
 </source>
-        <translation>และช่วยปรับปรุงการทำงานของเครื่องมือจัดวางตัวอักษร รวมถึงเสนอการปรับปรุงอื่น ๆ อีกมากมาย)
+        <translation type="vanished">และช่วยปรับปรุงการทำงานของเครื่องมือจัดวางตัวอักษร รวมถึงเสนอการปรับปรุงอื่น ๆ อีกมากมาย)
 </translation>
     </message>
     <message>
         <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
 </source>
-        <translation>- MatiasMovie (พบข้อขัดข้องบางส่วน เสนอการปรับปรุงหลายรายการ และช่วยดีบักข้อขัดข้อง)
+        <translation type="vanished">- MatiasMovie (พบข้อขัดข้องบางส่วน เสนอการปรับปรุงหลายรายการ และช่วยดีบักข้อขัดข้อง)
 </translation>
     </message>
     <message>
         <source>- mas1904 (found some errors and helping with crash debuging).
 </source>
-        <translation>- mas1904 (พบข้อผิดพลาดบางส่วนและช่วยดีบักข้อขัดข้อง)
+        <translation type="vanished">- mas1904 (พบข้อผิดพลาดบางส่วนและช่วยดีบักข้อขัดข้อง)
 </translation>
     </message>
     <message>
         <source>- Senami (made new themes and found some bugs).
 </source>
-        <translation>- Senami (สร้างธีมใหม่และเป็นผู้พบข้อบกพร่องหลายอย่าง)
+        <translation type="vanished">- Senami (สร้างธีมใหม่และเป็นผู้พบข้อบกพร่องหลายอย่าง)
 </translation>
     </message>
     <message>
         <source>- altinat (Thai translation).
 </source>
-        <translation>- altinat (ผู้แปลภาษาไทย)
+        <translation type="vanished">- altinat (ผู้แปลภาษาไทย)
 </translation>
     </message>
     <message>
         <source>- labrie75 (Korean translation).
 </source>
-        <translation>- labrie75 (ผู้แปลภาษาเกาหลี)
+        <translation type="vanished">- labrie75 (ผู้แปลภาษาเกาหลี)
 </translation>
     </message>
     <message>
         <source>- Niskala5570 (Malay translation).
 </source>
-        <translation>- Niskala5570 (ผู้แปลภาษามาเลย์)
+        <translation type="vanished">- Niskala5570 (ผู้แปลภาษามาเลย์)
 </translation>
     </message>
     <message>
         <source>Thanks to other HikariSub users who reported bugs:
 </source>
-        <translation>ขอขอบพระคุณผู้ที่ใช้โปรแกรมนี้และรายงานข้อผิดพลาด:
+        <translation type="vanished">ขอขอบพระคุณผู้ที่ใช้โปรแกรมนี้และรายงานข้อผิดพลาด:
 </translation>
     </message>
     <message>
@@ -5091,6 +5417,10 @@ removing audio cache files.</source>
         <translation>ปุ่มลัดเสียง</translation>
     </message>
     <message>
+        <source>Automation shortcuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Filtering mode:</source>
         <translation>โหมดการกรอง:</translation>
     </message>
@@ -5109,6 +5439,10 @@ removing audio cache files.</source>
     <message>
         <source>Hotkey</source>
         <translation>ปุ่มลัด</translation>
+    </message>
+    <message>
+        <source>Missing macro</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Map hotkey</source>
@@ -8088,6 +8422,10 @@ Foreign language text will be deleted.</source>
         <translation>แสดงหรือซ่อนแถบความคืบหน้า</translation>
     </message>
     <message>
+        <source>Show / hide render cost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change aspect ratio</source>
         <translation>เปลี่ยนอัตราส่วนภาพ</translation>
     </message>
@@ -8188,12 +8526,71 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Press Esc to exit full screen</source>
+        <extracomment>Shown for two seconds on entering full screen video</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Previous video file</source>
         <translation>แฟ้มวิดีโอก่อนหน้า</translation>
     </message>
     <message>
+        <source>Line %1, %2: %3</source>
+        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Visual tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Wheel: volume · Right-click: output device</source>
+        <extracomment>The full screen speaker&apos;s tooltip: %1 is Mute or Unmute</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen bar: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on pointer movement, hide when idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the bar; the picture ends above it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Picture only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show toolbar</source>
-        <translation>แสดงแถบเครื่องมือ</translation>
+        <translation type="vanished">แสดงแถบเครื่องมือ</translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -8264,6 +8661,25 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Aspect ratio: %1</source>
         <translation type="unfinished">อัตราส่วนหน้าจอ: %1</translation>
+    </message>
+    <message>
+        <source>No subtitles on this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles drawn in %1 ms</source>
+        <extracomment>Over the video: how long drawing the frame&apos;s subtitles took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 event(s), %2 bitmap(s), %3 Mpx</source>
+        <extracomment>Over the video: %1 events shown, %2 bitmaps libass drew, %3 their area in megapixels</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 with blur, %2 with a vector clip</source>
+        <extracomment>Over the video: of the shown events, %1 use <byte value="x8"/>lur or <byte value="x8"/>e and %2 a drawing clip or iclip</extracomment>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
