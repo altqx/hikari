@@ -236,6 +236,13 @@ private:
     }
 
     // The text here, up to the end of its line or tag, as the excerpt.
+    // Where in `raw` the line holding raw[at] starts.
+    static std::size_t lineStartIn(u8sv raw, std::size_t at)
+    {
+        const std::size_t breakAt = raw.substr(0, at).find_last_of(u8"\r\n");
+        return breakAt == u8sv::npos ? 0 : breakAt + 1;
+    }
+
     LyricsProblem broken() const
     {
         u8sv rest = m_s.substr(std::min(m_pos, m_s.size()));
@@ -446,8 +453,9 @@ private:
         return std::u8string(m_s.substr(from, m_pos - from));
     }
 
-    // Text with its entities replaced.
-    std::optional<std::u8string> decode(u8sv raw) const
+    // Text with its entities replaced, or where in it the entity that
+    // cannot be read starts.
+    std::expected<std::u8string, std::size_t> decode(u8sv raw) const
     {
         std::u8string out;
         for (std::size_t i = 0; i < raw.size();) {
@@ -457,7 +465,7 @@ private:
             }
             const std::size_t semi = raw.find(u8';', i);
             if (semi == u8sv::npos)
-                return std::nullopt;
+                return std::unexpected(i);
             const u8sv entity = raw.substr(i + 1, semi - i - 1);
             if (entity == u8"lt")
                 out += u8'<';
@@ -474,21 +482,21 @@ private:
                 const u8sv digits = entity.substr(hex ? 2 : 1);
                 std::uint32_t cp = 0;
                 if (digits.empty() || digits.size() > 8)
-                    return std::nullopt;
+                    return std::unexpected(i);
                 for (char8_t c : digits) {
                     const int v = c >= u8'0' && c <= u8'9' ? c - u8'0'
                                   : hex && c >= u8'a' && c <= u8'f' ? c - u8'a' + 10
                                   : hex && c >= u8'A' && c <= u8'F' ? c - u8'A' + 10
                                                                      : -1;
                     if (v < 0)
-                        return std::nullopt;
+                        return std::unexpected(i);
                     cp = cp * (hex ? 16 : 10) + static_cast<std::uint32_t>(v);
                 }
                 if (!xmlChar(cp))
-                    return std::nullopt;
+                    return std::unexpected(i);
                 appendUtf8(out, cp);
             } else
-                return std::nullopt;
+                return std::unexpected(i);
             i = semi + 1;
         }
         return out;
@@ -592,9 +600,17 @@ private:
                     const char8_t quote = done() ? u8'\0' : m_s[m_pos];
                     const std::size_t end = quote == u8'"' || quote == u8'\'' ? m_s.find(quote, m_pos + 1) : u8sv::npos;
                     const u8sv raw = end == u8sv::npos ? u8sv() : m_s.substr(m_pos + 1, end - m_pos - 1);
-                    const auto value = end == u8sv::npos || raw.find(u8'<') != u8sv::npos ? std::nullopt : decode(raw);
-                    if (!value) {
+                    if (end == u8sv::npos || raw.find(u8'<') != u8sv::npos) {
                         std::tie(m_pos, m_line) = attributeStart;
+                        return std::unexpected(broken());
+                    }
+                    const auto value = decode(raw);
+                    if (!value) {
+                        // From the start of the entity's line, the attribute's on its first.
+                        if (const std::size_t from = lineStartIn(raw, value.error()); from > 0)
+                            advance(1 + from);
+                        else
+                            std::tie(m_pos, m_line) = attributeStart;
                         return std::unexpected(broken());
                     }
                     node.attributes.emplace_back(*key, *value);
@@ -633,7 +649,11 @@ private:
                     return std::unexpected(broken());
                 }
                 const auto text = decode(raw);
-                if (!text || open.empty()) {
+                if (!text) {
+                    advance(lineStartIn(raw, text.error())); // from the start of the entity's line
+                    return std::unexpected(broken());
+                }
+                if (open.empty()) {
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
@@ -957,10 +977,10 @@ private:
         auto end = time(node, u8"end");
         if (!end)
             return std::unexpected(end.error());
+        const auto dur = time(node, u8"dur"); // read even with no begin to count from
+        if (!dur)
+            return std::unexpected(dur.error());
         if (const auto from = *begin ? *begin : inheritedBegin; from) {
-            const auto dur = time(node, u8"dur");
-            if (!dur)
-                return std::unexpected(dur.error());
             if (*dur) {
                 const std::int64_t byDur = *from + **dur;
                 if (byDur > detail::kLatestLyricsTime && !*end)
@@ -977,11 +997,18 @@ private:
         return std::pair{*begin, *end};
     }
 
+    // Whether an element has times of its own: a begin, or an end or dur
+    // (counted from the begin it inherits).
+    static bool timed(const XmlNode &node)
+    {
+        return attribute(node, u8"begin") || attribute(node, u8"end") || attribute(node, u8"dur");
+    }
+
     static bool hasTimedSpan(const XmlNode &node)
     {
         for (const XmlNode &child : node.children)
             if (!child.isText() && !attribute(child, u8"role", Namespace::TtmlMetadata) &&
-                (attribute(child, u8"begin") || hasTimedSpan(child)))
+                (timed(child) || hasTimedSpan(child)))
                 return true;
         return false;
     }
@@ -1058,11 +1085,17 @@ private:
                 addText(into, u8"\\N", preserve);
                 continue;
             }
-            if (local == u8"span" && attribute(child, u8"begin") && !hasTimedSpan(child)) {
-                const auto t = times(child, spanBegin ? spanBegin : into.lineBegin);
+            const auto inheritedBegin = spanBegin ? spanBegin : into.lineBegin;
+            if (local == u8"span" && (attribute(child, u8"begin") || (timed(child) && inheritedBegin)) &&
+                !hasTimedSpan(child)) {
+                const auto t = times(child, inheritedBegin);
                 if (!t)
                     return std::unexpected(t.error());
-                const std::int64_t begin = *t->first;
+                // Without a begin of its own a word starts at the begin it
+                // inherits, or where the word before it ends if that is later.
+                std::int64_t begin = t->first ? *t->first : *inheritedBegin;
+                if (!t->first && !into.words.empty())
+                    begin = std::max(begin, into.ends.back().value_or(into.words.back().begin));
                 const bool kept = preserves(child, preserve);
                 const std::u8string text = spanText(child, preserve);
                 const u8sv word = trimBlankLeft(text);
@@ -1073,7 +1106,7 @@ private:
                 backgroundsIn(child, backgrounds, kept, begin, t->second ? t->second : spanEnd);
                 if (word.empty())
                     continue; // a timed span with no lyric is no word; the gaps come from the words
-                if (!into.words.empty() && begin < into.words.back().begin)
+                if (t->first && !into.words.empty() && begin < into.words.back().begin)
                     return std::unexpected(LyricsProblem{Kind::TimeGoesBack, attributeLine(child, u8"begin"),
                                                          std::u8string(*attribute(child, u8"begin"))});
                 append(into.plain, word, kept);
@@ -1085,8 +1118,8 @@ private:
             }
             const XmlNode *innerSpan = span;
             std::optional<std::int64_t> innerBegin = spanBegin, innerEnd = spanEnd;
-            if (attribute(child, u8"begin") || attribute(child, u8"end") || attribute(child, u8"dur")) {
-                const auto t = times(child, spanBegin ? spanBegin : into.lineBegin);
+            if (timed(child)) {
+                const auto t = times(child, inheritedBegin);
                 if (!t)
                     return std::unexpected(t.error());
                 if (t->first) {

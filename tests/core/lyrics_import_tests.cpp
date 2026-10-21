@@ -232,6 +232,11 @@ TEST(LyricsImport, MalformedTtmlNamesTheLineAtFault)
               (LyricsProblem{Kind::NotWellFormed, 3, u8"</span>"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x &nbsp; y</p>\n</body></tt>", u8"ttml"),
               (LyricsProblem{Kind::NotWellFormed, 3, u8"x &nbsp; y</p>"}));
+    // An entity on a later line of a text or a value is that line's fault.
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">ok\nnot &nbsp; y</p>\n</body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 4, u8"not &nbsp; y</p>"}));
+    EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\" x:a=\"ok\nnot &nbsp;\">x</p>\n</body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 4, u8"not &nbsp;\">"}));
     EXPECT_EQ(problemOf(head + "<!-- open\n</body></tt>", u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 3, u8"<!-- open"}));
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=2>x</p>\n</body></tt>", u8"ttml"),
               (LyricsProblem{Kind::NotWellFormed, 3, u8"end=2>"}));
@@ -526,6 +531,14 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     // A dur without a begin of its own counts from the begin it inherits.
     EXPECT_EQ(timed("<div begin=\"1\" end=\"10\"><p dur=\"2\">x</p></div>"), (std::vector<Row>{{1000, 3000, "", "x"}}));
     EXPECT_EQ(timed("<div begin=\"1\"><div dur=\"3\"><p>y</p></div></div>"), (std::vector<Row>{{1000, 4000, "", "y"}}));
+    // A dur is read even with no begin to count from.
+    EXPECT_EQ(problemOf("<tt><body dur=\"bogus\"><p begin=\"1\" end=\"2\">x</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::UnreadableTime, 1, u8"bogus"}));
+    // A word's span with only a dur or an end counts from the begin it
+    // inherits, or from the end of the word before it.
+    EXPECT_EQ(timed("<p begin=\"1\" end=\"4\"><span dur=\"1\">a</span></p>"), (std::vector<Row>{{1000, 4000, "", "{\\k100}a{\\k200}"}}));
+    EXPECT_EQ(timed("<p begin=\"1\" end=\"4\"><span begin=\"1\" end=\"2\">a</span><span end=\"3\">b</span></p>"),
+              (std::vector<Row>{{1000, 4000, "", "{\\k100}a{\\k100}b{\\k100}"}}));
     // With an end too, the earlier of the two ends it.
     EXPECT_EQ(timed("<p begin=\"1\" end=\"5\" dur=\"2\">x</p>"), (std::vector<Row>{{1000, 3000, "", "x"}}));
     EXPECT_EQ(timed("<p begin=\"1\" end=\"2\" dur=\"5\">x</p>"), (std::vector<Row>{{1000, 2000, "", "x"}}));
