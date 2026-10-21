@@ -11,6 +11,7 @@
 #include "hikari/application/audio_display.h"
 
 #include <cstdint>
+#include <memory>
 #include <optional>
 
 namespace hikari::application {
@@ -44,6 +45,18 @@ public:
     // player stops when it has already read past the new end.
     virtual void setEndPosition(std::int64_t end) = 0;
     virtual void setVolume(double volume) = 0;
+    // KA2-slowed-playback: the box's audio played at `speed` (0.25 to 1) with
+    // its pitch kept. Frames, positions and the end stay in the audio's own
+    // frames; a change while playing goes on from the frame being heard.
+    virtual void setSpeed(double speed) { (void)speed; }
+    // KA2: other audio played instead of the box's (the latency calibration's
+    // beeps), from its start to its end and at speed 1; its frames are the
+    // position's. False when nothing plays.
+    virtual bool playClip(std::shared_ptr<const DisplayAudio> clip)
+    {
+        (void)clip;
+        return false;
+    }
     // Legacy CloseStream: the box's audio closed or was replaced.
     virtual void close() {}
 };

@@ -90,6 +90,12 @@ find_package(ICU REQUIRED COMPONENTS uc i18n data)
 add_library(hikari_portaudio INTERFACE)
 target_link_libraries(hikari_portaudio INTERFACE portaudio_static)
 add_library(Hikari::portaudio ALIAS hikari_portaudio)
+# KA2-slowed-playback: SoundTouch (LGPL-2.1-or-later, static) keeps the pitch
+# while the audio box plays slowed.
+find_package(SoundTouch CONFIG REQUIRED)
+add_library(hikari_soundtouch INTERFACE)
+target_link_libraries(hikari_soundtouch INTERFACE SoundTouch::SoundTouch)
+add_library(Hikari::soundtouch ALIAS hikari_soundtouch)
 
 # LuaJIT for the isolated Lua helper only (ADR 0006). Its flags export the
 # executable's symbols (-Wl,-E), which Lua native modules need, so it must not
@@ -106,6 +112,7 @@ file(WRITE "${CMAKE_BINARY_DIR}/provision-evidence/dependency-origins.txt"
     "FFMPEG_LIBRARIES=${FFMPEG_LIBRARIES}\n"
     "libass=${HIKARI_LIBASS_VERSION} ${HIKARI_LIBASS_LINK_LIBRARIES}\n"
     "portaudio_DIR=${portaudio_DIR} ${portaudio_VERSION}\n"
+    "SoundTouch_DIR=${SoundTouch_DIR} ${SoundTouch_VERSION}\n"
     "luajit=${HIKARI_LUAJIT_VERSION} ${HIKARI_LUAJIT_LINK_LIBRARIES}\n"
     "hunspell=${HIKARI_HUNSPELL_VERSION} ${HIKARI_HUNSPELL_LINK_LIBRARIES}\n"
     "toolchain=${CMAKE_TOOLCHAIN_FILE}\ntriplet=${VCPKG_TARGET_TRIPLET}\n"

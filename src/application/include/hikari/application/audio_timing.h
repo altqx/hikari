@@ -182,6 +182,12 @@ struct AudioCommitRequest {
     // E4: the editor's Duration field takes the times too (CommitChanges);
     // AddLead's UpdateTimeEditCtrls sets Start and End only.
     bool duration = true;
+    // KA2-tap-to-time: the history step's name ("Tap timing"); otherwise
+    // legacy's "Changing time on audio spectrum".
+    const char *stepName = nullptr;
+    // KA2-tap-to-time: the active Line alone takes the times and text, however
+    // many are selected (a tapped Line's syllables are its own).
+    bool activeOnly = false;
 };
 struct AudioCommitOutcome {
     bool stepped = false;              // a history step was recorded

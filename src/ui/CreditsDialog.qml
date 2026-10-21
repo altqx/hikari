@@ -35,6 +35,8 @@ DialogWindow {
             ["ICU", "Unicode, Inc. and others", "Unicode License"],
             ["Hunspell", "László Németh and others", "MPL 1.1, GPL 2 or LGPL 2.1"],
             ["PortAudio", "Ross Bencina, Phil Burk and contributors", "MIT"],
+            // KA2-slowed-playback: the slowed audio box keeps its pitch
+            ["SoundTouch", "Olli Parviainen", "LGPL 2.1 or later"],
             ["curl", "Daniel Stenberg and contributors", "curl License"],
             ["PCRE2", "University of Cambridge and others", "BSD 3-Clause"],
             ["uchardet", "uchardet contributors", "MPL 1.1, GPL 2 or LGPL 2.1"],
