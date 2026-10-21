@@ -408,11 +408,14 @@ void TemplateEditorController::refresh()
     // skipped then runs now.
     const bool ready = available();
     const bool becameReady = ready && !m_wasAvailable;
+    const bool unloaded = !ready && m_wasAvailable;
     m_wasAvailable = ready;
     if (becameReady)
         m_previewSnapshotKey.clear(); // a reloaded script may write otherwise
-    if (!trusted() && (m_preview || m_previewing))
-        clearPreview(); // made before trust went: not this file's result
+    // Made before trust went, or by a script no longer loaded: not this
+    // file's result, nor are its problems.
+    if ((!trusted() || unloaded) && (m_preview || m_previewing || !m_issues.empty() || !m_runError.isEmpty()))
+        clearPreview();
     if (s->revision() != m_seenRevision || becameReady) {
         m_seenRevision = s->revision();
         if (s->revision() != m_applyRevision)
@@ -450,6 +453,8 @@ void TemplateEditorController::clearPreview()
     stopRuns();
     m_preview.reset();
     m_own.clear();
+    m_issues.clear();
+    m_runError.clear();
     m_previewKept = false;
     m_previewSnapshotKey.clear();
     emit previewChanged();

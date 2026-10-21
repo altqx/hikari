@@ -1152,6 +1152,48 @@ private slots:
         QVERIFY(editor->lastApply().isEmpty());
     }
 
+    // A templater unloaded from the Automation panel takes its preview with
+    // it, and the run it had going.
+    void anUnloadedTemplaterTakesThePreviewAway()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        templater->holdPreviews = 1;
+        editor->setText(editor->text() + QStringLiteral("{\\bord3}"));
+        QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
+        templater->down = true;
+        editor->refresh();
+        QVERIFY(!editor->hasPreview());
+        QVERIFY(!editor->videoPreview());
+        QVERIFY(!editor->previewPending());
+    }
+
+    // A problem found before trust went is the old text's: it no longer
+    // keeps Apply off.
+    void revokedTrustDropsTheOldProblem()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        editor->setText(QStringLiteral("{\\fscx!nosuch.field!}") + editor->text());
+        QVERIFY(QTest::qWaitFor([&] { return editor->hasProblems() && !editor->previewPending(); }, 20'000));
+        QVERIFY(!editor->canApply());
+        editor->commit();
+        QVERIFY(change([&](core::Document &doc) {
+            return doc.editLine(core::LineId{editor->current()}, [](core::LineRecord &l) {
+                l.text = std::u8string(l.text).substr(std::u8string_view(u8"{\\fscx!nosuch.field!}").size()) +
+                         u8"{\\bord1}"; // fixed in the Line editor
+            });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QVERIFY(!editor->hasProblems());
+        QVERIFY(editor->canApply());
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));
