@@ -324,6 +324,11 @@ const std::vector<SettingDefinition> &definitions()
         // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
         // over the video (GLOBAL_VIDEO_RENDER_COST).
         {"video.renderCost", "", Bool, Profile, Mapped, false, false},
+        // SH3 (#223): What's new. The version that ran last, recorded at each
+        // start, and the one that ran before the installed version: the notes
+        // of the releases after it show, until the next update.
+        {"updater.lastVersion", "", String, Profile, Mapped, false, std::string()},
+        {"updater.notesSince", "", String, Profile, Mapped, false, std::string()},
     };
     return table;
 }

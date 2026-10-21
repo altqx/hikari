@@ -279,6 +279,10 @@ add_dependencies(hikari_ui_saved_layouts_tests hikari_media_helper hikari_media_
 # Wave 6's Line editor cards (LE2-LE6) through the composition, with restarts.
 hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
+# SH3: What's new against a recorded answer of GitHub's release list.
+hikari_add_qttest(hikari_ui_whats_new_tests SOURCES whats_new_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_whats_new_tests PRIVATE
+    HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json")
 # ADR 0019: the download, its checks and the hand-off per package kind.
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 # ADR 0019: the Windows installing side checks the installer against the release before it runs.
