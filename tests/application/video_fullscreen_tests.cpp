@@ -1,7 +1,7 @@
 // V5 (#184): fullscreen's legacy arithmetic at 20d647c4 — the monitor
-// GetMonitorRect1 picks, the context menu's monitor entries, the panel's
-// showing and hiding under the pointer (VideoBox::OnMouseEvent) and the
-// progress bar RendererVideo::DrawProgressBar places in the window's corner.
+// GetMonitorRect1 picks, the context menu's monitor entries and the
+// progress bar RendererVideo::DrawProgressBar places in the window's corner;
+// FS1 (#275): the bar's modes, when it hides, and the current Line's label.
 #include "hikari/application/video_fullscreen.h"
 
 #include <gtest/gtest.h>
@@ -61,17 +61,117 @@ TEST(VideoFullscreenWindow, OwnedByTheMainWindowExceptOnWayland)
         EXPECT_FALSE(fullscreenOwnedByMainWindow(platform)) << platform;
 }
 
-TEST(VideoFullscreenPanel, ShowsBelowTheVideoAndHidesOverItUnlessPinned)
+// FS1-bar-mode: the setting's values, and the key's order.
+TEST(VideoFullscreenBar, ModesFromTheSettingAndTheirCycle)
 {
-    // A 1080-high window with a 60-pixel panel: the video ends at 1020.
-    using C = FullscreenPanelChange;
-    EXPECT_EQ(fullscreenPanelOnPointer(false, false, 1019, 1080, 60), C::None);
-    EXPECT_EQ(fullscreenPanelOnPointer(false, false, 1020, 1080, 60), C::Show);
-    EXPECT_EQ(fullscreenPanelOnPointer(false, true, 1050, 1080, 60), C::None);
-    EXPECT_EQ(fullscreenPanelOnPointer(false, true, 500, 1080, 60), C::Hide);
-    // Pinned ("Show toolbar"): never hidden by the pointer.
-    EXPECT_EQ(fullscreenPanelOnPointer(true, true, 500, 1080, 60), C::None);
-    EXPECT_EQ(fullscreenPanelOnPointer(true, false, 1050, 1080, 60), C::Show);
+    EXPECT_EQ(fullscreenBarMode(0), FullscreenBarMode::Auto);
+    EXPECT_EQ(fullscreenBarMode(1), FullscreenBarMode::Always);
+    EXPECT_EQ(fullscreenBarMode(2), FullscreenBarMode::Never);
+    EXPECT_EQ(fullscreenBarMode(-1), FullscreenBarMode::Auto);
+    EXPECT_EQ(fullscreenBarMode(3), FullscreenBarMode::Auto);
+    EXPECT_EQ(nextFullscreenBarMode(FullscreenBarMode::Auto), FullscreenBarMode::Always);
+    EXPECT_EQ(nextFullscreenBarMode(FullscreenBarMode::Always), FullscreenBarMode::Never);
+    EXPECT_EQ(nextFullscreenBarMode(FullscreenBarMode::Never), FullscreenBarMode::Auto);
+    EXPECT_EQ(kFullscreenBarIdleMs, 1500);
+}
+
+// FS1-bar-auto-hide and FS1-cursor-hide: Auto hides the bar, and every mode
+// the pointer, only while the video plays with nothing holding them.
+TEST(VideoFullscreenBar, AutoHidesOnlyWhenNothingHoldsIt)
+{
+    const FullscreenBarState idle{false, true, false, false};
+    EXPECT_TRUE(fullscreenIdle(idle));
+    EXPECT_FALSE(fullscreenBarShown(FullscreenBarMode::Auto, idle));
+    EXPECT_TRUE(fullscreenBarShown(FullscreenBarMode::Always, idle));
+    EXPECT_FALSE(fullscreenBarShown(FullscreenBarMode::Never, idle));
+    // A movement, a pause (or stop), an open menu, the pointer over the bar.
+    for (const FullscreenBarState held : {FullscreenBarState{true, true, false, false},
+                                          FullscreenBarState{false, false, false, false},
+                                          FullscreenBarState{false, true, true, false},
+                                          FullscreenBarState{false, true, false, true}}) {
+        EXPECT_FALSE(fullscreenIdle(held));
+        EXPECT_TRUE(fullscreenBarShown(FullscreenBarMode::Auto, held));
+        EXPECT_TRUE(fullscreenBarShown(FullscreenBarMode::Always, held));
+        EXPECT_FALSE(fullscreenBarShown(FullscreenBarMode::Never, held));
+    }
+}
+
+// FS1-current-line: the label shows what the Line says, on one line.
+TEST(VideoFullscreenBar, TheCurrentLinesTextOnOneLine)
+{
+    EXPECT_EQ(fullscreenLineText("We'll meet again"), "We'll meet again");
+    EXPECT_EQ(fullscreenLineText("{\\an8\\pos(10,20)}Station{\\i1}, now{\\i0}"), "Station, now");
+    EXPECT_EQ(fullscreenLineText("at the station,\\NI promise."), "at the station, ↵ I promise.");
+    EXPECT_EQ(fullscreenLineText("one\\ntwo\\N\\Nthree"), "one ↵ two ↵ three");
+    EXPECT_EQ(fullscreenLineText("a\\hb   c\td"), "a b c d");
+    EXPECT_EQ(fullscreenLineText("  {\\b1}  trimmed  \\N"), "trimmed");
+    EXPECT_EQ(fullscreenLineText("\\Nstarts"), "starts");
+    // A drawing is not text; \p0 ends it.
+    EXPECT_EQ(fullscreenLineText("{\\p1}m 0 0 l 10 0 10 10{\\p0}Sign"), "Sign");
+    EXPECT_EQ(fullscreenLineText("{\\p2\\p0}Text"), "Text");
+    EXPECT_EQ(fullscreenLineText("{\\pos(1,2)}Kept{\\p1}m 0 0"), "Kept");
+    // Only a top-level \\pN draws: one inside \\t(...) is not read (core::project).
+    EXPECT_EQ(fullscreenLineText("{\\t(0,1000,\\p1)}Visible text"), "Visible text");
+    EXPECT_EQ(fullscreenLineText("{\\t(\\p1)\\p1}m 0 0{\\p0}After"), "After");
+    // An unclosed block hides the rest; a block inside a block is not text.
+    EXPECT_EQ(fullscreenLineText("Shown{\\i1 hidden"), "Shown");
+    EXPECT_EQ(fullscreenLineText("a{b{\\i1}c"), "ac");
+    EXPECT_EQ(fullscreenLineText("caf\u00e9 \u65e5\u672c"), "caf\u00e9 \u65e5\u672c");
+    EXPECT_EQ(fullscreenLineText(""), "");
+}
+
+TEST(VideoFullscreenBar, UnicodeSeparatorsAreSpaces)
+{
+    // One row: a line or paragraph separator (or NEL, VT, FF) pasted into a
+    // Line is a space, not a break that would hide the rest.
+    EXPECT_EQ(fullscreenLineText("one\xE2\x80\xA8two\xE2\x80\xA9three\xC2\x85" "four\vfive\fsix"), "one two three four five six");
+    EXPECT_EQ(fullscreenLineText("\xE2\x80\xA8  edge \xE2\x80\xA9"), "edge");
+}
+
+TEST(VideoFullscreenBar, TheLabelsInputIsCutBeforeAnyCopy)
+{
+    const std::string big(3 * kFullscreenLineInputBytes, 'a');
+    EXPECT_EQ(fullscreenLineInput(big).size(), kFullscreenLineInputBytes);
+    EXPECT_EQ(fullscreenLineInput(big).data(), big.data()); // a view, no copy
+    EXPECT_EQ(fullscreenLineInput("short"), "short");
+    // An é across the cut: left out whole.
+    const std::string across = std::string(kFullscreenLineInputBytes - 1, 'a') + "\xC3\xA9";
+    EXPECT_EQ(fullscreenLineInput(across), std::string(kFullscreenLineInputBytes - 1, 'a'));
+}
+
+TEST(VideoFullscreenBar, TheFileNameOnOneRow)
+{
+    EXPECT_EQ(fullscreenOneRow("Episode 01.mkv"), "Episode 01.mkv");
+    EXPECT_EQ(fullscreenOneRow("a\nb\rc\vd\fe"), "a b c d e");
+    EXPECT_EQ(fullscreenOneRow("a\xE2\x80\xA8" "b\xE2\x80\xA9" "c\xC2\x85" "d"), "a b c d");
+    EXPECT_EQ(fullscreenOneRow("\xE2\x80\xA6 \xC3\xA9"), "\xE2\x80\xA6 \xC3\xA9"); // other characters kept
+}
+
+TEST(VideoFullscreenBar, TheLineLabelIsBounded)
+{
+    // A Line of megabytes: the label's length, not the Line's.
+    EXPECT_EQ(fullscreenLineText(std::string(10'000'000, 'a')), std::string(kFullscreenLineLabelUnits, 'a'));
+    // Only the first kFullscreenLineInputBytes are read: a block left open
+    // there hides what follows, though it closes after them.
+    EXPECT_EQ(fullscreenLineText("Before{" + std::string(kFullscreenLineInputBytes, 'x') + "}After"), "Before");
+    // The cut is never inside a character, nor the label inside a pair.
+    const std::string emoji = "\xF0\x9F\x98\x80"; // U+1F600, a surrogate pair
+    std::string many = "a";
+    for (int i = 0; i < 20'000; ++i)
+        many += emoji;
+    std::string expected = "a";
+    for (std::size_t i = 0; i < (kFullscreenLineLabelUnits + 1) / 2; ++i)
+        expected += emoji;
+    EXPECT_EQ(fullscreenLineText(many), expected);
+    // A hidden block, then é (two bytes each) with the cut 1001 bytes in:
+    // 500 of them, no U+FFFD for the half one.
+    std::string twoByte = "{" + std::string(kFullscreenLineInputBytes - 1003, 'x') + "}";
+    std::string shown;
+    for (int i = 0; i < 2000; ++i)
+        twoByte += "\xC3\xA9";
+    for (int i = 0; i < 500; ++i)
+        shown += "\xC3\xA9";
+    EXPECT_EQ(fullscreenLineText(twoByte), shown);
 }
 
 TEST(VideoFullscreenProgress, TheTimesInTmpFormat)

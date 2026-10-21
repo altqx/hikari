@@ -41,6 +41,7 @@ void ShellController::refresh(const core::Document *target, const core::Document
     m_referenceLines.setDocument(reference ? *reference : core::Document{}, referenceComparison);
     m_activeText.clear();
     m_activeStyle.clear();
+    m_activeNumber = 0;
     emit targetsChanged();
     emit activeLineChanged();
 }
@@ -71,6 +72,7 @@ void ShellController::activateLine(qulonglong id)
     const core::LineRecord *record = m_lines.recordAt(*row);
     m_activeText = qs(record->text);
     m_activeStyle = qs(record->style);
+    m_activeNumber = *row + 1;
     emit activeLineChanged();
 }
 
@@ -88,6 +90,7 @@ void ShellController::setSelection(const application::Selection &selection)
     const core::LineRecord *record = row ? m_lines.recordAt(*row) : nullptr;
     m_activeText = record ? qs(record->text) : QString();
     m_activeStyle = record ? qs(record->style) : QString();
+    m_activeNumber = record ? *row + 1 : 0;
     const auto shown = displayedLines();
     const auto hidden = std::count_if(selection.selected.begin(), selection.selected.end(), [&](core::LineId id) {
         return std::find(shown.begin(), shown.end(), id) == shown.end();
