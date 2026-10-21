@@ -109,10 +109,13 @@ std::u8string karaokeText(LyricLine &line)
 
 LoadResult lyricsDocument(LyricSheet sheet)
 {
+    std::u8string title = sheet.title ? titleField(*sheet.title) : std::u8string();
+    if (title.empty())
+        title = u8"HikariSub Ass File";
     std::u8string script =
         u8"[Script Info]\r\n"
         u8"Title: " +
-        (sheet.title && !titleField(*sheet.title).empty() ? titleField(*sheet.title) : u8"HikariSub Ass File") +
+        title +
         u8"\r\n"
         u8"PlayResX: 1280\r\n"
         u8"PlayResY: 720\r\n"
@@ -174,14 +177,9 @@ std::optional<std::int64_t> lrcTime(u8sv text)
     if (parts.size() < 2 || parts.size() > 3)
         return std::nullopt;
     auto digits = [](u8sv s) {
-        return !s.empty() && s.size() <= 9 && std::all_of(s.begin(), s.end(), [](char8_t c) { return c >= u8'0' && c <= u8'9'; });
+        return !s.empty() && std::all_of(s.begin(), s.end(), [](char8_t c) { return c >= u8'0' && c <= u8'9'; });
     };
-    auto value = [](u8sv s) {
-        std::int64_t n = 0;
-        for (char8_t c : s)
-            n = n * 10 + (c - u8'0');
-        return n;
-    };
+    auto value = [](u8sv s) { return detail::clampedNumber(s); };
     // The first part may run past 59 ("[75:02.00]"); the others are a
     // clock's minutes and seconds.
     std::int64_t ms = 0;
@@ -331,9 +329,9 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                     std::int64_t n = 0;
                     // "": none; a sign needs digits after it.
                     const bool number = digits.empty() ? digits.size() == value.size()
-                                                       : digits.size() <= 9 && std::ranges::all_of(digits, isDigit);
-                    for (char8_t c : number ? digits : u8sv())
-                        n = n * 10 + (c - u8'0');
+                                                       : std::ranges::all_of(digits, isDigit);
+                    if (number)
+                        n = detail::clampedNumber(digits);
                     if (!number || n > detail::kLatestLyricsTime)
                         return std::unexpected(LyricsProblem{Kind::UnreadableTime, lineNumber,
                                                              std::u8string(rest.substr(0, close + 1))});

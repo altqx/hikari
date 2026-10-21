@@ -1705,9 +1705,12 @@ private:
             if (metadata(node, u8"title") && !m_sheet.title)
                 if (const auto title = collapsed(textOf(node)); !detail::trim(title).empty())
                     m_sheet.title = detail::trim(title);
-            if (local == u8"meta" && attribute(node, u8"key") == u8sv(u8"musicName") && !musicName)
-                if (const auto title = collapsed(attribute(node, u8"value").value_or(u8"")); !detail::trim(title).empty())
-                    musicName = detail::trim(title);
+            if (local == u8"meta" && attribute(node, u8"key") == u8sv(u8"musicName") && !musicName && !m_overAt) {
+                const u8sv value = attribute(node, u8"value").value_or(u8"");
+                if (charge(value.size() + 64, node.line)) // an entity may have made it long
+                    if (const auto title = collapsed(value); !detail::trim(title).empty())
+                        musicName = detail::trim(title);
+            }
             if (metadata(node, u8"agent")) {
                 const auto id = attribute(node, u8"id", Namespace::Xml);
                 for (const XmlNode &child : node.children)

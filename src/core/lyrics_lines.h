@@ -56,6 +56,17 @@ inline bool spend(LyricSheet &sheet, std::size_t textBytes, std::size_t actorByt
 // a time can overflow.
 inline constexpr std::int64_t kLatestLyricsTime = 360'000'000;
 
+// A run of ASCII digits as a number, however many leading zeros pad it;
+// past 10^12 it stops growing (far past any time, and three clock parts
+// times 60, 60 and 1000 still fit an int64).
+inline std::int64_t clampedNumber(std::u8string_view digits)
+{
+    std::int64_t n = 0;
+    for (char8_t c : digits)
+        n = std::min<std::int64_t>(n * 10 + (c - u8'0'), 1'000'000'000'000);
+    return n;
+}
+
 // Where the line from `from` ends, and where the next one starts: a line
 // ends at LF, CRLF or a lone CR (as XML ends lines; old Mac LRC files).
 inline std::pair<std::size_t, std::size_t> lineAt(std::u8string_view text, std::size_t from)

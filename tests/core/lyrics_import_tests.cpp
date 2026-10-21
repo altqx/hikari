@@ -465,6 +465,18 @@ TEST(LyricsImport, TtmlHeadNamesShareTheBudget)
                         u8"ttml")
                   .kind,
               Kind::TooLarge);
+    // AMLL's musicName too, however long an entity makes it: with the
+    // lyrics beside it, it is past the budget.
+    std::string refs;
+    for (int i = 0; i < 40; ++i)
+        refs += "&e;";
+    const std::string named = "<!DOCTYPE tt [<!ENTITY e '" + std::string(20000, 'n') +
+                              "'>]><tt xmlns:amll=\"http://www.example.com/ns/amll\"><head><metadata><amll:meta key=\"musicName\" value=\"" + refs +
+                              "\"/></metadata></head><body><p begin=\"1\" end=\"2\">";
+    EXPECT_EQ(problemOf(named + "&e;&e;&e;</p></body></tt>", u8"ttml").kind, Kind::TooLarge);
+    const auto titled = importTtml(bytes(named + "x</p></body></tt>"));
+    ASSERT_TRUE(titled.has_value());
+    EXPECT_EQ(titled->document.scriptInfo(u8"Title")->size(), 800000u);
     // One such name is read.
     const auto one = importTtml(bytes("<tt><head><ttm:agent xml:id=\"v1\"><ttm:name>" + std::string(200000, 'n') +
                                       "</ttm:name></ttm:agent></head><body><p begin=\"1\" end=\"2\" ttm:agent=\"v1\">x</p></body></tt>"));
@@ -499,6 +511,15 @@ TEST(LyricsImport, TtmlTimesPast100HoursAreRefused)
     const auto shifted = importLrc(bytes("[offset:-99999999]\n[99:00:00.00]x\n"));
     ASSERT_TRUE(shifted.has_value());
     EXPECT_EQ(rows(*shifted).front().start, 360'000'000);
+    // LRC stamps and offsets are digits of any length too: padding is read,
+    // and a value too large is refused however long it is.
+    const auto lrcPadded = importLrc(bytes("[offset:+0000000000000500]\n[0000000001:00.00]a <0000000001:000000000001.5>b\n"));
+    ASSERT_TRUE(lrcPadded.has_value());
+    EXPECT_EQ(rows(*lrcPadded), (std::vector<Row>{{59'500, 66'000, "", "{\\k150}a {\\k500}b"}}));
+    EXPECT_EQ(problemOf("[" + huge + ":00.00]x\n", u8"lrc").kind, Kind::UnreadableTime);
+    EXPECT_EQ(problemOf("[00:" + huge + ".00]x\n", u8"lrc").kind, Kind::UnreadableTime);
+    EXPECT_EQ(problemOf("[offset:-" + huge + "]\n[00:01.00]x\n", u8"lrc").kind, Kind::UnreadableTime);
+    EXPECT_EQ(problemOf("[00:0000000060.00]x\n", u8"lrc").kind, Kind::UnreadableTime);
 }
 
 TEST(LyricsImport, LyricsTextStaysLiteral)
