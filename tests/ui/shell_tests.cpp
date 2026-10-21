@@ -12030,16 +12030,32 @@ private slots:
         QVERIFY(!item("audioButtons")->property("togglesFolded").toBool());
         QVERIFY(item("audioAutoScroll")->isVisible());
         QVERIFY(!item("audioMore")->isVisible());
+        // the Karaoke row's fold order at a width that has room for its
+        // switches, Auto split and Tap whatever the system's font (the
+        // default 640 px panel has a few pixels to spare, the zoom readout's
+        // width is the font's)
+        auto *dock = item<QObject>("audioDock");
+        dock->setProperty("isFloating", true);
+        QTRY_VERIFY(item("audioPanel")->window() != window);
+        QQuickWindow *floating = item("audioPanel")->window();
+        floating->resize(680, 300);
+        QTRY_VERIFY(item("audioButtons")->width() > 650 && item("audioButtons")->width() < 685);
         click(item("audioKaraoke"));
         QVERIFY(audio.karaoke());
-        QVERIFY(split->isVisible());
+        const auto rowWidths = [&] {
+            return QStringLiteral("row %1, zoom %2, switches %3")
+                .arg(item("audioButtons")->width())
+                .arg(item("audioZoom")->implicitWidth())
+                .arg(item("audioSwitches")->property("modesWidth").toDouble());
+        };
+        QVERIFY2(split->isVisible(), qPrintable(rowWidths()));
         QVERIFY(tap->isVisible());
         QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
-        // KA2-karaoke-row-fold: with Tap the three toggles go into ⋯ first, at
-        // the default 640 px; the switches, Auto split and Tap stay
-        QVERIFY(!item("audioButtons")->property("folded").toBool());
-        QVERIFY(item("audioButtons")->property("togglesFolded").toBool());
+        // KA2-karaoke-row-fold: with Tap the three toggles go into ⋯ first;
+        // the switches, Auto split and Tap stay
+        QVERIFY2(!item("audioButtons")->property("folded").toBool(), qPrintable(rowWidths()));
+        QVERIFY2(item("audioButtons")->property("togglesFolded").toBool(), qPrintable(rowWidths()));
         QVERIFY(item("audioSwitches")->isVisible());
         QVERIFY(!item("audioAutoScroll")->isVisible());
         QVERIFY(!item("audioSyncVideo")->isVisible());
@@ -12086,10 +12102,6 @@ private slots:
         QVERIFY(!row->property("folded").toBool());
         QVERIFY(item("audioSwitches")->isVisible());
         QVERIFY(!item("audioMore")->isVisible());
-        auto *dock = item<QObject>("audioDock");
-        dock->setProperty("isFloating", true);
-        QTRY_VERIFY(item("audioPanel")->window() != window);
-        QQuickWindow *floating = item("audioPanel")->window();
         floating->resize(440, 300);
         QTRY_VERIFY(row->property("folded").toBool());
         QVERIFY(!item("audioSwitches")->isVisible());
