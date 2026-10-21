@@ -6251,38 +6251,160 @@ private slots:
         application->editor().discard();
     }
 
-    // P8: Help > About and Credits show the legacy notices with this build's version.
+    // P8, DG1 (#222): Help > About shows this build's version (copied by its
+    // button), the author and the GPL notice, with no legacy attribution
+    // (DG1-about-layout); Credits the Qt rewrite's people and the components
+    // it is built with (DG1-credits-rewrite). Both are windows of their own
+    // on the dialog frame, modeless.
     void aboutAndCreditsShowTheNotices()
     {
         auto *root = engine->rootObjects().first();
-        auto *about = root->findChild<QObject *>(QStringLiteral("aboutDialog"));
+        auto *about = root->findChild<QQuickWindow *>(QStringLiteral("aboutDialog"));
+        QVERIFY(about);
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutMenuItem"))->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(about->property("visible").toBool());
-        const QString text = dialogItem("aboutDialog", "aboutText")->property("text").toString();
-        QVERIFY2(text.contains(QStringLiteral("version %1").arg(application->updates().version())), qPrintable(text));
-        QVERIFY(text.contains(QStringLiteral("Based on Kainote by Marcin Drob")));
-        QVERIFY(text.contains(QStringLiteral("Libass - Copyright")));
-        QVERIFY(text.contains(QStringLiteral("Hunspell - Copyright"))); // F3: linked again (R2-hunspell)
-        // W2: the CSRI line where the CSRI adapter is built (Windows); the
-        // VSFilter line only where VSFilterMod, a VSFilter derivative, is in
-        // the Csri folder (the package; xy-VSFilter is not shipped).
+        QTRY_VERIFY(about->isVisible());
+        QCOMPARE(about->modality(), Qt::NonModal);
+        QCOMPARE(about->transientParent(), qobject_cast<QWindow *>(root));
+        const QString version = dialogItem("aboutDialog", "aboutVersion")->property("text").toString();
+        QVERIFY2(version.contains(application->updates().versionLabel()), qPrintable(version));
+        QCOMPARE(dialogItem("aboutDialog", "aboutAuthor")->property("text").toString(), QStringLiteral("Subtitle editor by altqx."));
+        QVERIFY(dialogItem("aboutDialog", "aboutLicence")->property("text").toString().contains(QStringLiteral("GNU General Public License, version 3")));
+        for (QQuickItem *label : about->contentItem()->findChildren<QQuickItem *>()) {
+            const QString text = label->property("text").toString();
+            QVERIFY2(!text.contains(QStringLiteral("Kainote")) && !text.contains(QStringLiteral("Bjakja")), qPrintable(text));
+        }
+        QGuiApplication::clipboard()->clear();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("aboutDialog", "aboutCopyVersion"), "click"));
+        QTRY_COMPARE(QGuiApplication::clipboard()->text(), application->updates().versionLabel());
+        QVERIFY(QMetaObject::invokeMethod(about, "close"));
+        QTRY_VERIFY(!about->isVisible());
+
+        auto *credits = root->findChild<QQuickWindow *>(QStringLiteral("creditsDialog"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(credits->isVisible());
+        QCOMPARE(credits->modality(), Qt::NonModal);
+        QStringList names;
+        for (const QVariant &row : credits->property("components").toList())
+            names << row.toList().value(0).toString();
+        for (const char *name : {"Qt", "KDDockWidgets", "FFmpeg", "FFMS2", "libass", "Hunspell", "LuaJIT", "ICU", "Boost"})
+            QVERIFY2(names.contains(QLatin1String(name)), name);
+        QVERIFY(!names.contains(QStringLiteral("Aegisub")));
+        // W2: CSRI where the CSRI adapter is built (Windows); VSFilter only
+        // where VSFilterMod, a VSFilter derivative, is in the Csri folder (the
+        // package; xy-VSFilter is not shipped).
 #ifdef _WIN32
-        QVERIFY(text.contains(QStringLiteral("CSRI - Copyright © David Lamparter (BSD licence).")));
+        QVERIFY(names.contains(QStringLiteral("CSRI")));
 #else
-        QVERIFY(!text.contains(QStringLiteral("CSRI")));
+        QVERIFY(!names.contains(QStringLiteral("CSRI")));
 #endif
-        QCOMPARE(text.contains(QStringLiteral("Vsfilter - Copyright © Gabest (GNU GPL 2 or later).")),
-                 application->property("includesVsfilter").toBool());
+        QCOMPARE(names.contains(QStringLiteral("VSFilter")), application->property("includesVsfilter").toBool());
 #ifdef HIKARI_WITH_VSFILTERMOD
         QVERIFY(application->property("includesVsfilter").toBool());
-#else
-        QVERIFY(!text.contains(QStringLiteral("Vsfilter")));
 #endif
+        QCOMPARE(dialogItem("creditsDialog", "creditsDevelopment")->property("name").toString(), QStringLiteral("altqx"));
+        QCOMPARE(dialogItem("creditsDialog", "creditsTranslation")->property("name").toString(), QStringLiteral("altqx"));
+        // The components one under another, each as tall as its row: more
+        // than the list shows, so it scrolls.
+        QQuickItem *list = dialogItem("creditsDialog", "creditsComponents");
+        QVERIFY(list);
+        QQuickItem *first = nullptr;
+        QQuickItem *second = nullptr;
+        QVERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, first), Q_ARG(int, 0)));
+        QVERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, second), Q_ARG(int, 1)));
+        QVERIFY(first && second);
+        QVERIFY(first->height() > 0);
+        QCOMPARE(first->height(), first->implicitHeight());
+        QCOMPARE(second->y(), first->y() + first->height());
+        QVERIFY(list->property("contentHeight").toReal() > list->height());
+        // Both at once: modeless windows of their own.
+        QVERIFY(QMetaObject::invokeMethod(about, "open"));
+        QTRY_VERIFY(about->isVisible());
+        QVERIFY(credits->isVisible());
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
-        auto *credits = root->findChild<QObject *>(QStringLiteral("creditsDialog"));
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(credits->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(credits, "close"));
+        QTRY_VERIFY(!credits->isVisible());
+    }
+
+    // P8, ADR 0019, DG1 (#222): the update check's results and notices open
+    // on the dialog frame, modeless: the check's messages titled "Check for
+    // updates" (a failure with the warning glyph), the installer's "Update";
+    // a newer release in the resizable notice with its notes, or in the AUR
+    // notice for an AUR copy.
+    void updateNoticesOpenOnTheDialogFrame()
+    {
+        // Keys sent before a new window has taken its first show (its
+        // content still 0 × 0) are lost: wait for that, and the keyboard.
+        const auto settled = [](QQuickWindow *window) {
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            QTRY_VERIFY(window->contentItem()->width() > 0);
+            QVERIFY(QTest::qWaitForWindowActive(window));
+        };
+        auto *root = engine->rootObjects().first();
+        auto &updates = application->updates();
+        auto *message = root->findChild<QQuickWindow *>(QStringLiteral("updateMessage"));
+        QVERIFY(message);
+        const auto shows = [&](const QString &title, const QString &text, bool warning) {
+            QTRY_VERIFY(message->isVisible());
+            QCOMPARE(message->title(), title);
+            QCOMPARE(dialogItem("updateMessage", "updateMessageText")->property("text").toString(), text);
+            QCOMPARE(dialogItem("updateMessage", "updateMessageIcon")->property("iconRole").toString(),
+                     warning ? QStringLiteral("notice-warning") : QStringLiteral("about"));
+            QCOMPARE(message->modality(), Qt::NonModal);
+            settled(message);
+            QTest::keyClick(message, Qt::Key_Escape);
+            QTRY_VERIFY(!message->isVisible());
+        };
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("current")),
+                                          Q_ARG(QVariantMap, {}), Q_ARG(bool, true)));
+        shows(QStringLiteral("Check for updates"), QStringLiteral("You already have the latest version"), false);
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("failed")),
+                                          Q_ARG(QVariantMap, {}), Q_ARG(bool, true)));
+        shows(QStringLiteral("Check for updates"), QStringLiteral("Cannot check for updates"), true);
+        QVERIFY(QMetaObject::invokeMethod(&updates, "notice", Q_ARG(QString, QStringLiteral("The update was put back."))));
+        shows(QStringLiteral("Update"), QStringLiteral("The update was put back."), true);
+
+        auto *available = root->findChild<QQuickWindow *>(QStringLiteral("updateAvailable"));
+        const QVariantMap release{{QStringLiteral("name"), QStringLiteral("HikariSub 9.0.0")},
+                                  {QStringLiteral("tag"), QStringLiteral("v9.0.0")},
+                                  {QStringLiteral("version"), QStringLiteral("9.0.0")},
+                                  {QStringLiteral("notes"), QStringLiteral("New\n- everything")},
+                                  {QStringLiteral("offer"), QStringLiteral("page")}};
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, false)));
+        QTRY_VERIFY(available->isVisible());
+        QVERIFY(available->property("resizable").toBool());
+        QCOMPARE(dialogItem("updateAvailable", "updateName")->property("text").toString(), QStringLiteral("HikariSub 9.0.0"));
+        QCOMPARE(dialogItem("updateAvailable", "updateNotes")->property("text").toString(), QStringLiteral("New\n- everything"));
+        QVERIFY(dialogItem("updateAvailable", "updateOffer")->isVisible());
+        QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateOffer"));
+        QVERIFY(!dialogItem("updateAvailable", "updateRequirement")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(available, "close"));
+        QTRY_VERIFY(!available->isVisible());
+        // A package this system cannot run: the requirement, no offer, Close the default.
+        QVariantMap needs = release;
+        needs.insert(QStringLiteral("offer"), QStringLiteral("requirement"));
+        needs.insert(QStringLiteral("requirement"), QStringLiteral("2.99"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, needs), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QTRY_VERIFY(dialogItem("updateAvailable", "updateRequirement")->isVisible());
+        QVERIFY(!dialogItem("updateAvailable", "updateOffer")->isVisible());
+        QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateClose"));
+        settled(available);
+        QTest::keyClick(available, Qt::Key_Escape);
+        QTRY_VERIFY(!available->isVisible());
+
+        auto *aur = root->findChild<QQuickWindow *>(QStringLiteral("updateAurNotice"));
+        QVariantMap fromAur = release;
+        fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
+        QTRY_VERIFY(aur->isVisible());
+        QVERIFY(dialogItem("updateAurNotice", "updateAurText")->property("text").toString().contains(QStringLiteral("yay -Syu")));
+        QVERIFY(!available->isVisible());
+        settled(aur);
+        QTest::keyClick(aur, Qt::Key_Escape);
+        QTRY_VERIFY(!aur->isVisible());
     }
 
     // P7: the legacy Save routes: the video name, the extension, Save
@@ -9415,7 +9537,8 @@ private slots:
             {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
             {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
             {{"saveTag", Accept}, {"cancelTag", Reject}},
-            {{"updateRemind", No}, {"Open the download page", Accept}, {"Close", Reject}},
+            {{"updateOffer", Accept}, {"updateClose", Reject}}, // DG1: Remind me in a week at the leading edge
+            {{"updateAurRemind", No}, {"updateAurClose", Reject}},
             {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
             {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
              {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
@@ -22140,6 +22263,84 @@ private slots:
             QVERIFY(shoot(about, QStringLiteral("about") + suffix));
         }
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
+    }
+
+    // DG1 (#222) screenshots for review (HIKARI_DIALOG_SHOT_DIR; skipped
+    // without it): About, Credits, the update check's warning, a newer
+    // release and the AUR notice in the four themes on HikariSub's title bar
+    // (where the platform has one: X11, Wayland, Windows), then About and the
+    // warning with "Use system title bar".
+    void dialogFrameScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_DIALOG_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_DIALOG_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        auto &updates = application->updates();
+        const QVariantMap release{{QStringLiteral("name"), QStringLiteral("HikariSub 1.4.0")},
+                                  {QStringLiteral("tag"), QStringLiteral("v1.4.0")},
+                                  {QStringLiteral("version"), QStringLiteral("1.4.0")},
+                                  {QStringLiteral("notes"), QStringLiteral("New\n- Dialogs are windows of their own, with the title bar of the main "
+                                                                           "window.\n- About and Credits stay open beside the editor.\n\nFixed\n"
+                                                                           "- The update notice remembers its size.")},
+                                  {QStringLiteral("offer"), QStringLiteral("page")}};
+        QVariantMap fromAur = release;
+        fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
+        // Each opener leaves its dialog shown; the name is its window's.
+        const std::vector<std::pair<QString, std::function<void()>>> dialogs{
+            {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutDialog")), "open"); }},
+            {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsDialog")), "open"); }},
+            {QStringLiteral("updateMessage"), [&] {
+                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("failed")), Q_ARG(QVariantMap, {}), Q_ARG(bool, true));
+             }},
+            {QStringLiteral("updateAvailable"), [&] {
+                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, release), Q_ARG(bool, true));
+             }},
+            {QStringLiteral("updateAurNotice"), [&] {
+                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true));
+             }},
+        };
+        const auto shoot = [&](const QString &name, const QString &file) {
+            auto *window = root->findChild<QQuickWindow *>(name);
+            QVERIFY(window);
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QLatin1Char('/') + file));
+            QVERIFY(window->close());
+            QTRY_VERIFY(!window->isVisible());
+        };
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            for (const auto &[name, open] : dialogs) {
+                open();
+                shoot(name, QStringLiteral("dg1-%1-%2.png").arg(name, code));
+            }
+        }
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("system"));
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark")}) {
+            setTheme(code);
+            for (const auto &[name, open] : dialogs) {
+                if (name != QLatin1String("aboutDialog") && name != QLatin1String("updateMessage"))
+                    continue;
+                open();
+                shoot(name, QStringLiteral("dg1-%1-system-%2.png").arg(name, code));
+            }
+        }
     }
 
     void theReferenceIsNeverEdited()

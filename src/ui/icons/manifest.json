@@ -1536,6 +1536,17 @@
    ]
   },
   {
+   "role": "notice-warning",
+   "file": "notice-warning.svg",
+   "label": "Warning",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dialogs"
+   ]
+  },
+  {
    "role": "tool-crosshair",
    "file": "tool-crosshair.svg",
    "label": "Position pointer",
