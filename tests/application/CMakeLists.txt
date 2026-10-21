@@ -107,6 +107,9 @@ target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
 # A3: the audio box's timing.
 hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# KA2 (#277): the tap state machine and the latency calibration's maths.
+hikari_add_gtest(hikari_application_karaoke_tap_tests SOURCES karaoke_tap_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # A5: the audio box's karaoke mode, with the legacy probe's observations.
 hikari_add_gtest(hikari_application_audio_karaoke_tests SOURCES audio_karaoke_tests.cpp
     LIBRARIES hikari_application Qt6::Core LABELS application)

@@ -6323,6 +6323,7 @@ private slots:
         for (const char *name : {"Qt", "KDDockWidgets", "FFmpeg", "FFMS2", "libass", "Hunspell", "LuaJIT", "ICU", "Boost"})
             QVERIFY2(names.contains(QLatin1String(name)), name);
         QVERIFY(!names.contains(QStringLiteral("Aegisub")));
+        QVERIFY(names.contains(QStringLiteral("SoundTouch"))); // KA2-slowed-playback
         // W2: CSRI where the CSRI adapter is built (Windows); VSFilter only
         // where VSFilterMod, a VSFilter derivative, is in the Csri folder (the
         // package; xy-VSFilter is not shipped).
@@ -12159,7 +12160,8 @@ private slots:
     // marks on the face, the zoom and speaker popovers hold the slider
     // column, the Back to line chip shows only while the Line is out of
     // view, Auto split only in Karaoke mode, and a narrow panel folds the
-    // switches into ⋯.
+    // switches into ⋯. KA2 (#277): Tap beside Auto split, and Karaoke mode
+    // folds the toggles into ⋯ one step earlier (KA2-karaoke-row-fold).
     void audioPanelRowFoldsItsControls()
     {
         // it plays: without a device (Windows CI) the playback's failure
@@ -12345,30 +12347,80 @@ private slots:
         QCOMPARE(audio.lineOutOfView(), 0);
         audio.setHorizontalZoom(50);
 
-        // Auto split: shown in Karaoke mode only
+        // Auto split and KA2's Tap: shown in Karaoke mode only
         auto *split = item("audioKaraokeSplit");
+        auto *tap = item("audioTap");
         QVERIFY(!split->isVisible());
+        QVERIFY(!tap->isVisible());
         QVERIFY(item<QObject>("audioLineMode")->property("checked").toBool());
+        // Line mode: the default 640 px panel holds the whole row
+        QVERIFY(!item("audioButtons")->property("togglesFolded").toBool());
+        QVERIFY(item("audioAutoScroll")->isVisible());
+        QVERIFY(!item("audioMore")->isVisible());
+        // the Karaoke row's fold order at a width that has room for its
+        // switches, Auto split and Tap whatever the system's font (the
+        // default 640 px panel has a few pixels to spare, the zoom readout's
+        // width is the font's)
+        auto *dock = item<QObject>("audioDock");
+        dock->setProperty("isFloating", true);
+        QTRY_VERIFY(item("audioPanel")->window() != window);
+        QQuickWindow *floating = item("audioPanel")->window();
+        floating->resize(680, 300);
+        QTRY_VERIFY(item("audioButtons")->width() > 650 && item("audioButtons")->width() < 685);
         click(item("audioKaraoke"));
         QVERIFY(audio.karaoke());
-        // AU2 (#268): with the Customise gear the default 640 px panel no
-        // longer holds Karaoke mode's row: Auto split goes into ⋯ with the
-        // switches (Line mode still holds it all)
-        QVERIFY(item("audioButtons")->property("folded").toBool());
-        QVERIFY(!split->isVisible());
-        auto *moreMenu = named("audioMoreMenu");
-        QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, item("audioMore")), Q_ARG(qreal, 0),
-                                          Q_ARG(qreal, item("audioMore")->height())));
-        QTRY_VERIFY(moreMenu->property("opened").toBool());
-        QVERIFY(named("audioMoreKaraokeSplit")->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
-        QTRY_VERIFY(!moreMenu->property("visible").toBool());
+        const auto rowWidths = [&] {
+            return QStringLiteral("row %1, zoom %2, switches %3")
+                .arg(item("audioButtons")->width())
+                .arg(item("audioZoom")->implicitWidth())
+                .arg(item("audioSwitches")->property("modesWidth").toDouble());
+        };
+        QVERIFY2(split->isVisible(), qPrintable(rowWidths()));
+        QVERIFY(tap->isVisible());
         QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
+        // KA2-karaoke-row-fold: with Tap the three toggles go into ⋯ first;
+        // the switches, Auto split and Tap stay
+        QVERIFY2(!item("audioButtons")->property("folded").toBool(), qPrintable(rowWidths()));
+        QVERIFY2(item("audioButtons")->property("togglesFolded").toBool(), qPrintable(rowWidths()));
+        QVERIFY(item("audioSwitches")->isVisible());
+        QVERIFY(!item("audioAutoScroll")->isVisible());
+        QVERIFY(!item("audioSyncVideo")->isVisible());
+        QVERIFY(!item("audioSpectrumNonLinear")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
+        QVERIFY(speaker->mapToItem(item("audioPanel"), QPointF(speaker->width(), 0)).x() <= item("audioPanel")->width() + 0.5);
+        // ⋯ holds the toggles alone (the switches' items hidden)
+        auto *moreMenu = named("audioMoreMenu");
+        const auto openMore = [&] {
+            QQuickItem *anchor = item("audioMore");
+            QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, anchor), Q_ARG(qreal, 0),
+                                              Q_ARG(qreal, anchor->height())));
+            QTRY_VERIFY(moreMenu->property("opened").toBool());
+        };
+        const auto closeMore = [&] {
+            QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
+            QTRY_VERIFY(!moreMenu->property("visible").toBool());
+        };
+        openMore();
+        QVERIFY(item("audioMoreAutoScroll")->isVisible());
+        QVERIFY(!item("audioMoreKaraoke")->isVisible());
+        QVERIFY(!item("audioMoreTap")->isVisible());
+        QVERIFY(!item("audioMoreTapOptions")->isVisible());
+        closeMore();
+        auto *moreAutoScroll = item<QObject>("audioMoreAutoScroll");
+        QVERIFY(moreAutoScroll->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(moreAutoScroll, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(moreAutoScroll, "toggled"));
+        QVERIFY(!audio.autoScroll());
+        audio.setAutoScroll(true);
         click(item("audioLineMode"));
         QVERIFY(!audio.karaoke());
         QTRY_VERIFY(!item("audioButtons")->property("folded").toBool());
         QVERIFY(!split->isVisible());
+        QVERIFY(!tap->isVisible());
+        QVERIFY(!item("audioButtons")->property("togglesFolded").toBool());
+        QVERIFY(item("audioAutoScroll")->isVisible());
+        QVERIFY(!item("audioMore")->isVisible());
         click(item("audioWaveformMode")); // the chosen segment again: nothing
         QVERIFY(!audio.spectrumOn());
 
@@ -12377,10 +12429,6 @@ private slots:
         QVERIFY(!row->property("folded").toBool());
         QVERIFY(item("audioSwitches")->isVisible());
         QVERIFY(!item("audioMore")->isVisible());
-        auto *dock = item<QObject>("audioDock");
-        dock->setProperty("isFloating", true);
-        QTRY_VERIFY(item("audioPanel")->window() != window);
-        QQuickWindow *floating = item("audioPanel")->window();
         floating->resize(440, 300);
         QTRY_VERIFY(row->property("folded").toBool());
         QVERIFY(!item("audioSwitches")->isVisible());
@@ -12390,6 +12438,21 @@ private slots:
         QVERIFY(speaker->mapToItem(panel, QPointF(speaker->width(), 0)).x() <= panel->width() + 0.5);
         QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraoke"), "triggered"));
         QVERIFY(audio.karaoke());
+        // folded in Karaoke mode, ⋯ holds Tap too
+        QVERIFY(!tap->isVisible());
+        openMore();
+        QVERIFY(item("audioMoreKaraoke")->isVisible());
+        QVERIFY(item("audioMoreTap")->isVisible());
+        QVERIFY(item("audioMoreTapOptions")->isVisible());
+        closeMore();
+        // Tap options opens the Tap menu at ⋯: Hold or Press, the speed, the latency
+        auto *tapMenu = named("audioTapMenu");
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreTapOptions"), "triggered"));
+        QTRY_VERIFY(tapMenu->property("opened").toBool());
+        QVERIFY(named("audioTapPress")->property("visible").toBool());
+        QVERIFY(named("audioTapCalibrate")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(tapMenu, "close"));
+        QTRY_VERIFY(!tapMenu->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("audioMoreSpectrum"), "triggered"));
         QVERIFY(audio.spectrumOn());
         audio.toggleKaraoke();
@@ -12821,6 +12884,124 @@ private slots:
             dock->setProperty("isFloating", false);
             QTRY_VERIFY(panel->window() == window);
             QTRY_VERIFY(!item("audioButtons")->property("folded").toBool());
+        }
+    }
+
+
+    // KA2 (#277): tap-to-time's states, the Tap menu, the speaker with Speed
+    // and the latency calibration in the four themes, for review: written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (audio-panel-<state>-<theme>.png),
+    // on Lines inside the fixture's 2 s, one of one syllable first.
+    void audioTapScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        window->resize(1280, 800);
+        const QString karaoke = writeFile(dir, "tap-shots.ass",
+                                          "Dialogue: 0,0:00:00.10,0:00:00.40,Default,,0,0,0,,hibiku\n"
+                                          "Dialogue: 0,0:00:00.50,0:00:01.40,Default,,0,0,0,,"
+                                          "{\\k20}ki{\\k20}mi{\\k15}no{\\k15}na{\\k20}mae\n"
+                                          "Dialogue: 0,0:00:01.40,0:00:01.90,Default,,0,0,0,,{\\k25}ko{\\k25}ro\n");
+        QVERIFY(application->openFile(karaoke));
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QTest::mouseMove(window, QPoint(1, 1));
+        auto *root = engine->rootObjects().first();
+        auto *panel = item("audioPanel");
+        const auto popupAndShot = [&](const QString &state, const QString &theme, const char *menu, const char *button) {
+            QObject *popup = menu ? named(menu) : nullptr;
+            if (popup) {
+                QQuickItem *anchor = item(button);
+                QVERIFY(QMetaObject::invokeMethod(popup, "popup", Q_ARG(QQuickItem *, anchor), Q_ARG(qreal, 0),
+                                                  Q_ARG(qreal, anchor->height())));
+                QTRY_VERIFY(popup->property("opened").toBool());
+            }
+            QTest::qWait(300);
+            const qreal dpr = window->effectiveDevicePixelRatio();
+            QRectF r = panel->mapRectToScene(QRectF(0, -36, panel->width(), panel->height() + 36 + 300));
+            r = r.intersected(QRectF(0, 0, window->width(), window->height()));
+            const QImage image = window->grabWindow().copy(QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect());
+            QVERIFY(image.save(out + QStringLiteral("/audio-panel-") + state + QLatin1Char('-') + theme + QStringLiteral(".png")));
+            if (popup) {
+                QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+                QTRY_VERIFY(!popup->property("visible").toBool());
+            }
+        };
+        const auto space = [&](bool down) {
+            if (down)
+                QTest::keyPress(window, Qt::Key_Space);
+            else
+                QTest::keyRelease(window, Qt::Key_Space);
+            QCoreApplication::processEvents();
+        };
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            audio.setHorizontalZoom(50);
+            if (!audio.karaoke())
+                audio.toggleKaraoke();
+            if (audio.karaokeSplitMode())
+                audio.toggleKaraokeSplitMode();
+            audio.goToSelection();
+            // the Tap menu, the speed at 50%
+            audio.setSpeedPercent(50);
+            popupAndShot(QStringLiteral("tap-menu"), theme, "audioTapMenu", "audioTap");
+            popupAndShot(QStringLiteral("speaker-speed"), theme, "audioOutputMenu", "audioOutputButton");
+            audio.setSpeedPercent(100);
+            // the one-syllable Line waits for Auto split
+            audio.toggleTap();
+            QVERIFY(audio.tapNeedsSplit());
+            popupAndShot(QStringLiteral("tap-needs-split"), theme, nullptr, nullptr);
+            audio.toggleTap();
+            audio.nextLine(); // the five-syllable Line
+            QTest::mouseMove(window, QPoint(1, 1));
+            // tapping: ki and mi tapped, a gap, no held
+            audio.toggleTap();
+            QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+            QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+            QTest::qWait(500);
+            space(true);
+            QTest::qWait(120);
+            space(false);
+            space(true);
+            QTest::qWait(120);
+            space(false);
+            QTest::qWait(80);
+            space(true);
+            QTest::qWait(60);
+            popupAndShot(QStringLiteral("tap-tapping"), theme, nullptr, nullptr);
+            space(false);
+            // stopped
+            audio.tapStop();
+            popupAndShot(QStringLiteral("tap-stopped"), theme, nullptr, nullptr);
+            audio.toggleTap();
+            QVERIFY(!audio.tapOn());
+            // the latency calibration, a few beeps in
+            QVERIFY(QMetaObject::invokeMethod(named("audioTapCalibrate"), "triggered"));
+            auto *calibration = qobject_cast<QQuickWindow *>(named("tapCalibrationWindow"));
+            QTRY_VERIFY(calibration && calibration->isVisible());
+            for (int beat = 0; beat < 9; beat++) {
+                QTRY_VERIFY_WITH_TIMEOUT(audio.calibrationBeat() > beat, 3000);
+                QTest::qWait(70 + 7 * (beat % 3));
+                audio.calibrationPress();
+            }
+            QTest::qWait(300);
+            QVERIFY(calibration->grabWindow().save(out + QStringLiteral("/audio-panel-tap-calibration-") + theme
+                                                   + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(calibration, "close"));
+            QTRY_VERIFY(!calibration->isVisible());
+            audio.toggleKaraoke();
+            audio.previousLine();
         }
     }
 
@@ -13466,8 +13647,9 @@ private slots:
         // window" retired, never listed; WS3: the five View arrangements and
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
-        // "Translation mode" and VT2's eleven visual tools listed.
-        QCOMPARE(hotkeyRows().size(), 233);
+        // "Translation mode" and VT2's eleven visual tools listed; KA2's Tap
+        // to time, Slower and Faster.
+        QCOMPARE(hotkeyRows().size(), 236);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -13502,7 +13684,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(settings.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-K")));
-        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 23);
+        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 26); // KA2: with AUDIO_TAP and the speeds
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+K"));
         // The shell's table (every Global binding, the menus' too) follows.
         QVERIFY(application->hotkeys().globalShortcuts().contains(
@@ -15647,12 +15829,12 @@ private slots:
         h.select(hotkeyPosition(QStringLiteral("Audio Scroll left")));      // AUDIO_SCROLL_RIGHT, A
         h.optionsMap(QStringLiteral("K"), 4, QStringLiteral("cancel"));
         h.select(hotkeyPosition(QStringLiteral("Audio Play line alt")));    // R
-        h.optionsMap(QStringLiteral("Y"), 4, QStringLiteral("cancel"));
+        h.optionsMap(QStringLiteral("U"), 4, QStringLiteral("cancel")); // (KA2: Y is Tap to time)
         h.select(hotkeyPosition(QStringLiteral("Audio Commit")));           // Enter
         h.optionsMap(QStringLiteral("J"), 4, QStringLiteral("cancel"));
         h.commitOptions();
         QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("K"));
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("Y"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("U"));
         QCOMPARE(h.accelOf(QStringLiteral("AUDIO_COMMIT"), 4), QStringLiteral("J"));
         QVERIFY(application->settingsStore()->list("shortcuts.audioHotkeys").contains(QStringLiteral("AUDIO_SCROLL_RIGHT A=K")));
 
@@ -15673,18 +15855,18 @@ private slots:
         press(Qt::Key_A);
         QCOMPARE(view.position(), at - 100);
 
-        // Y plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
+        // U plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
         using application::PlayRange;
         auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
         item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_R);
         QVERIFY(!audio.lastPlayRange());
-        press(Qt::Key_Y);
+        press(Qt::Key_U);
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         press(Qt::Key_H);
         // from the Grid, the display takes the focus (the play handlers' SetFocus)
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Y);
+        press(Qt::Key_U);
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
         press(Qt::Key_H);
@@ -15911,6 +16093,500 @@ private slots:
         QVERIFY(!store->boolean("audio.karaoke"));
         QCOMPARE(store->integer("audio.horizontalZoom"), 50);
         press(Qt::Key_H);
+    }
+
+    // KA2 (#277, KA2-tap-to-time): tap-to-time in Karaoke mode with the real
+    // keys, the output without a device playing in real time. Tap plays from
+    // before the Line; Space held for each syllable (a release well before
+    // the next press leaves an empty syllable, a shorter one joins it); the
+    // last release commits the Line as one "Tap timing" step and the next
+    // Line goes on tapping. Backspace undoes a syllable, Esc stops (Resume,
+    // Revert Line), Esc again leaves tap mode; a play hotkey does not
+    // restart the playing while tapping; a Line of one syllable waits for
+    // Auto split.
+    void audioTapToTime()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        window->resize(1280, 800);
+        const QString path = writeFile(dir, "tap.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k30}ki{\\k30}mi{\\k40}no\n"
+                                       "Dialogue: 0,0:00:02.50,0:00:03.50,Default,,0,0,0,,{\\k50}ko{\\k50}ro\n"
+                                       "Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,hibiku\n");
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        editor.setShowTags(true);
+        audio.openDummy(); // silence, long enough to tap every Line in one play
+        QVERIFY(audio.ready());
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QTest::mouseMove(window, kOverNoPanel);
+        if (audio.karaokeSplitMode())
+            audio.toggleKaraokeSplitMode(); // at the tags only: "hibiku" stays one syllable
+        audio.toggleKaraoke();
+        QVERIFY(audio.karaoke());
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        auto *bar = item("audioTapBar");
+        QVERIFY(!bar->isVisible());
+        const auto steps = editor.history().size();
+        const auto text = [&](const char *name) { return visualItem(name)->property("text").toString(); };
+        const auto syllableState = [&](int i) {
+            return audio.tapSyllables().value(i).toMap().value(QStringLiteral("state")).toInt();
+        };
+        const auto key = [&](Qt::Key k, bool down) {
+            if (down)
+                QTest::keyPress(window, k);
+            else
+                QTest::keyRelease(window, k);
+            QCoreApplication::processEvents();
+        };
+        using application::PlayRange;
+        auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
+
+        // Tap's face: tap mode on, the Line playing from 1 s before it
+        auto *face = item("audioTap");
+        QVERIFY(face->isVisible());
+        QVERIFY(!face->property("checked").toBool());
+        QCOMPARE(face->property("tip").toString(), QStringLiteral("Tap to time"));
+        QCOMPARE(named("audioTapStart")->property("text").toString(), QStringLiteral("Start tapping\tY"));
+        QVERIFY(QMetaObject::invokeMethod(face, "clicked"));
+        QVERIFY(audio.tapOn());
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QVERIFY(audio.playing());
+        QVERIFY(face->property("checked").toBool());
+        QCOMPARE(named("audioTapStart")->property("text").toString(), QStringLiteral("Stop tapping\tY"));
+        QTRY_VERIFY(bar->isVisible());
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        QCOMPARE(text("audioTapState"), QStringLiteral("Tapping"));
+        QCOMPARE(text("audioTapLine"), QStringLiteral("Line 1"));
+        QCOMPARE(text("audioTapSyllable0"), QStringLiteral("ki"));
+        QCOMPARE(text("audioTapSyllable2"), QStringLiteral("no"));
+        QCOMPARE(text("audioTapNext"), QStringLiteral("› koro"));
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        QVERIFY(visualItem("audioTapLane")->isVisible());
+
+        // Hold: ki, a gap, mi and no back to back; Space reaches tap mode,
+        // not the video's play (VIDEO_PLAY_PAUSE)
+        key(Qt::Key_Space, true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        QTRY_COMPARE(audio.tapSpans().size(), 1);
+        QTest::qWait(150);
+        key(Qt::Key_Space, false);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        QCOMPARE(syllableState(1), int(ui::AudioController::TapSyllableNext));
+        QTest::qWait(100); // a gap
+        key(Qt::Key_Space, true);
+        QTest::qWait(150);
+        key(Qt::Key_Space, false);
+        key(Qt::Key_Space, true); // no gap
+        QTest::qWait(150);
+        QCOMPARE(audio.tapSpans().size(), 3);
+        QVERIFY(visualItem("audioTapSpan2"));
+        // the Line's text shows as itself, never as markup (an <img> in a Line
+        // would be fetched): the bar's syllables and next Line, the lane's
+        for (const char *name : {"audioTapSyllable0", "audioTapNext", "audioTapSpanText"})
+            QVERIFY2(visualItem(name)->property("textFormat").toInt() == int(Qt::PlainText), name);
+        key(Qt::Key_Space, false); // the last release: the Line is done
+        // one step, the Line's new times with an empty syllable for the gap
+        QCOMPARE(editor.history().size(), steps + 1);
+        QVERIFY2(editor.history().last().startsWith(QStringLiteral("Tap timing")), qPrintable(editor.history().last()));
+        const QString tapped = documentLineText(targetSession(), 0);
+        static const QRegularExpression timed(QStringLiteral(R"(^\{\\k\d+\}ki\{\\k\d+\}\{\\k\d+\}mi\{\\k\d+\}no$)"));
+        QVERIFY2(timed.match(tapped).hasMatch(), qPrintable(tapped));
+        // the next Line is active and tapping goes on, still playing
+        QCOMPARE(editor.text(), QStringLiteral("{\\k50}ko{\\k50}ro"));
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QCOMPARE(audio.tapLine(), 2);
+        QVERIFY(audio.playing());
+        QCOMPARE(text("audioTapLine"), QStringLiteral("Line 2"));
+        QCOMPARE(text("audioTapSyllable0"), QStringLiteral("ko"));
+        QCOMPARE(text("audioTapNext"), QStringLiteral("› hibiku"));
+        QVERIFY(audio.tapMessage().isEmpty());
+        QCOMPARE(audio.tapSpans().size(), 0);
+
+        // Backspace takes "ko" back, with a note, and plays again from before it
+        key(Qt::Key_Space, true);
+        QTest::qWait(100);
+        key(Qt::Key_Space, false);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        press(Qt::Key_Backspace);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        QCOMPARE(text("audioTapMessage"), QStringLiteral("Undid “ko”"));
+        QVERIFY(audio.playing());
+        QCOMPARE(editor.history().size(), steps + 1);
+
+        // the focus leaving the panel mid-hold ends the held syllable (its
+        // release goes elsewhere)
+        key(Qt::Key_Space, true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        QTest::qWait(100);
+        item("editingGrid")->forceActiveFocus();
+        QTRY_COMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        key(Qt::Key_Space, false);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        press(Qt::Key_Backspace);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+
+        // Esc stops: Resume and Revert Line instead of the keys. The tapping's
+        // audio stops even with a video playing meanwhile (a stopped audio
+        // box otherwise pauses the video and plays on)
+        key(Qt::Key_Space, true);
+        QTest::qWait(100);
+        key(Qt::Key_Space, false);
+        bool videoPaused = false;
+        audio.setVideoPlayback([] { return true; }, [&] { videoPaused = true; });
+        press(Qt::Key_Escape);
+        auto &video = application->video();
+        audio.setVideoPlayback([&video] { return video.playing(); }, [&video] { video.pause(); });
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapStopped));
+        QVERIFY(!audio.playing());
+        QVERIFY(!videoPaused);
+        QCOMPARE(text("audioTapState"), QStringLiteral("Stopped"));
+        QCOMPARE(text("audioTapMessage"), QStringLiteral("1 of 2 tapped"));
+        QVERIFY(visualItem("audioTapResume")->isVisible());
+        QVERIFY(visualItem("audioTapRevert")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(visualItem("audioTapResume"), "clicked"));
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QVERIFY(audio.playing());
+        QVERIFY(!visualItem("audioTapResume")->isVisible());
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped)); // kept
+        // another Line chosen while tapping: tapping starts on it, playing
+        // from before it (not on from where Line 2's playing was)
+        QTest::qWait(400);
+        const int before = audio.tapSongNow();
+        item("editingGrid")->forceActiveFocus(); // as a click in the grid leaves it
+        application->selectLine(targetSession()->document().lines()[0]->id.value);
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus()); // the keys reach tap mode again
+        QCOMPARE(audio.tapLine(), 1);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        QVERIFY(audio.playing());
+        // Line 1 (tapped near the start) plays again from its pre-roll, near 0
+        QVERIFY2(audio.tapSongNow() + 200 < before, qPrintable(QStringLiteral("%1 %2").arg(audio.tapSongNow()).arg(before)));
+        application->selectLine(targetSession()->document().lines()[1]->id.value);
+        QCOMPARE(audio.tapLine(), 2);
+        key(Qt::Key_Space, true);
+        QTest::qWait(100);
+        key(Qt::Key_Space, false);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        press(Qt::Key_Escape);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("audioTapRevert"), "clicked"));
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapReady));
+        QCOMPARE(text("audioTapState"), QStringLiteral("Ready"));
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k50}ko{\\k50}ro"));
+        // Esc again: tap mode off
+        press(Qt::Key_Escape);
+        QVERIFY(!audio.tapOn());
+        QTRY_VERIFY(!bar->isVisible());
+        QVERIFY(!face->property("checked").toBool());
+        QCOMPARE(editor.history().size(), steps + 1);
+
+        // AUDIO_TAP (Y) turns it on again; while tapping a play hotkey does
+        // not restart the playing
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_Y);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QVERIFY(audio.playing());
+        const PlayRange tapPlay = range();
+        press(Qt::Key_Up); // AUDIO_PLAY_LINE
+        QCOMPARE(range(), tapPlay);
+        press(Qt::Key_Q); // AUDIO_PLAY_500MS_BEFORE
+        QCOMPARE(range(), tapPlay);
+        QVERIFY(audio.playing());
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+
+        // tap the Line through: the next one has one syllable and waits for Auto split
+        for (int i = 0; i < 2; i++) {
+            key(Qt::Key_Space, true);
+            QTest::qWait(100);
+            key(Qt::Key_Space, false);
+        }
+        QCOMPARE(editor.history().size(), steps + 2);
+        QVERIFY(editor.history().last().startsWith(QStringLiteral("Tap timing")));
+        QCOMPARE(editor.text(), QStringLiteral("hibiku"));
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapReady));
+        QVERIFY(audio.tapNeedsSplit());
+        QVERIFY(!audio.playing());
+        QCOMPARE(text("audioTapLine"), QStringLiteral("Line 3"));
+        QCOMPARE(text("audioTapMessage"), QStringLiteral("This Line is one syllable. Split it first, then tap."));
+        QVERIFY(visualItem("audioTapAutoSplit")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(visualItem("audioTapAutoSplit"), "clicked"));
+        QVERIFY(audio.karaokeSplitMode());
+        QVERIFY(!audio.tapNeedsSplit());
+        QVERIFY(audio.karaokeModel().count() > 1);
+        QVERIFY(!visualItem("audioTapAutoSplit")->isVisible());
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapReady));
+        // Space starts it
+        key(Qt::Key_Space, true);
+        key(Qt::Key_Space, false);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QVERIFY(audio.playing());
+
+        // a Line the session refuses to change (a margin out of range in its
+        // draft): no step, no "every Line is tapped", the Line stays
+        auto *session = targetSession();
+        application::DraftChange invalid;
+        invalid.marginLeft = 10000;
+        QVERIFY(session->editDraft(*session->selection().active, invalid));
+        const auto syllables = audio.tapSyllables().size();
+        for (qsizetype i = 0; i < syllables; i++) {
+            key(Qt::Key_Space, true);
+            QTest::qWait(60);
+            key(Qt::Key_Space, false);
+        }
+        QCOMPARE(editor.history().size(), steps + 2);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapReady));
+        QCOMPARE(audio.tapLine(), 3);
+        QCOMPARE(audio.tapMessage(), QStringLiteral("Not applied: the Line cannot take these times as it is."));
+        QVERIFY(!audio.playing());
+        session->discardDraft();
+        press(Qt::Key_Escape);
+        QVERIFY(!audio.tapOn());
+
+        // tap mode belongs to the audio: closed while tapping, it is off,
+        // and the next audio starts without it
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_Y);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        // the playing stopping by itself: a held syllable ends at the audio's
+        // end, but is dropped (as by Esc) when the player stopped before it
+        // (a failed output), not stretched to the end
+        struct ScriptedPlayer final : application::AudioPlayerPort {
+            bool on = false;
+            std::int64_t start = 0, end = 0, at = 0;
+            void play(std::int64_t from, std::int64_t count) override { on = true, start = at = from, end = from + count; }
+            void stop() override { on = false; }
+            bool playing() const override { return on; }
+            std::int64_t position() const override { return on ? at : 0; }
+            std::int64_t startPosition() const override { return start; }
+            std::int64_t endPosition() const override { return end; }
+            void setEndPosition(std::int64_t to) override { end = to; }
+            void setVolume(double) override {}
+        } scripted;
+        audio.tapStop();
+        audio.setPlayer(&scripted);
+        audio.tapResume();
+        QVERIFY(scripted.on);
+        scripted.at = scripted.start + 44100;
+        key(Qt::Key_Space, true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        scripted.on = false; // the output failed
+        QTRY_COMPARE(audio.tapState(), int(ui::AudioController::TapStopped));
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        QCOMPARE(audio.tapMessage(), QStringLiteral("0 of %1 tapped").arg(audio.tapSyllables().size()));
+        key(Qt::Key_Space, false);
+        audio.tapResume();
+        QVERIFY(scripted.on);
+        scripted.at = scripted.start + 44100;
+        key(Qt::Key_Space, true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        scripted.at = scripted.end + 10000; // past the end: the box stops it
+        QTRY_COMPARE(audio.tapState(), int(ui::AudioController::TapStopped));
+        QVERIFY(!scripted.on);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        QCOMPARE(syllableState(1), int(ui::AudioController::TapSyllableNext));
+        key(Qt::Key_Space, false);
+        audio.setPlayer(&application->audioPlayer());
+        audio.tapRevert();
+        audio.tapResume();
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        // Press mode's started syllable is dropped by a switch to Hold, so
+        // the next press starts it again
+        audio.setTapHold(false);
+        press(Qt::Key_Space);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        audio.setTapHold(true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        key(Qt::Key_Space, true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        key(Qt::Key_Space, false);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        // the panel's Commit, Previous / Next line and lead buttons wait while
+        // tapping, as their hotkeys do: the Line and its taps stay
+        const int tappedLine = audio.tapLine();
+        const auto stepsWhileTapping = editor.history().size();
+        for (const char *name : {"audioCommit", "audioPrevious", "audioNext", "audioLeadIn", "audioLeadOut"})
+            QVERIFY2(QMetaObject::invokeMethod(item(name), "clicked"), name);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QCOMPARE(audio.tapLine(), tappedLine);
+        QCOMPARE(editor.history().size(), stepsWhileTapping);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        audio.closeAudio();
+        QVERIFY(!audio.tapOn());
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapOff));
+        audio.openDummy();
+        QTRY_VERIFY(audio.ready());
+        QVERIFY(!audio.tapOn());
+        QVERIFY(!audio.playing());
+        audio.toggleKaraoke();
+    }
+
+    // KA2-slowed-playback: the speaker popover's Speed row sets the speed
+    // (pitch kept), [ and ] step it, and the speaker shows it while it is
+    // not 100% (its mark and its tooltip); the Tap menu's Speed too.
+    void audioSpeedInTheSpeakerPopover()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QCOMPARE(audio.speedPercent(), 100);
+        auto *speaker = item("audioOutputButton");
+        auto *mark = visualItem("audioSpeedMark");
+        QVERIFY(mark);
+        QVERIFY(!mark->isVisible());
+        QVERIFY(!speaker->property("tip").toString().contains(QStringLiteral("Speed")));
+
+        auto *menu = named("audioOutputMenu");
+        QVERIFY(QMetaObject::invokeMethod(speaker, "clicked"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        // (the presets are a Repeater's: the open popover's items)
+        QVERIFY(visualItem("audioSpeed") && visualItem("audioSpeed")->isVisible());
+        QVERIFY(visualItem("audioSpeedHint")->isVisible());
+        QVERIFY(visualItem("audioSpeed100")->property("checked").toBool());
+        QCOMPARE(visualItem("audioSpeed33")->property("text").toString(), QStringLiteral("33%"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("audioSpeed50"), "clicked"));
+        QCOMPARE(audio.speedPercent(), 50);
+        QCOMPARE(settings.integer("audio.speedPercent"), 50);
+        QVERIFY(visualItem("audioSpeed50")->property("checked").toBool());
+        QVERIFY(!visualItem("audioSpeed100")->property("checked").toBool());
+        // the devices still come after the volume, the speed and its hint
+        QVERIFY(named("audioOutputSettings"));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QVERIFY(mark->isVisible());
+        QCOMPARE(mark->property("glyph").toString(), QStringLiteral("50"));
+        QVERIFY2(speaker->property("tip").toString().contains(QStringLiteral("\nSpeed: 50%")),
+                 qPrintable(speaker->property("tip").toString()));
+
+        // AUDIO_SPEED_UP "]" and AUDIO_SPEED_DOWN "[" step through the presets
+        QTest::mouseMove(window, kOverNoPanel);
+        item("audioDisplay")->forceActiveFocus();
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        press(Qt::Key_BracketRight);
+        QCOMPARE(audio.speedPercent(), 75);
+        press(Qt::Key_BracketRight);
+        QCOMPARE(audio.speedPercent(), 100);
+        QVERIFY(!mark->isVisible());
+        press(Qt::Key_BracketRight); // the fastest already
+        QCOMPARE(audio.speedPercent(), 100);
+        press(Qt::Key_BracketLeft);
+        QCOMPARE(audio.speedPercent(), 75);
+        QCOMPARE(mark->property("glyph").toString(), QStringLiteral("75"));
+        QCOMPARE(settings.integer("audio.speedPercent"), 75);
+
+        // the Tap menu's Speed submenu (Karaoke mode), the speed on its item
+        audio.toggleKaraoke();
+        auto *speedMenu = named("audioTapSpeedMenu");
+        QVERIFY(speedMenu->property("title").toString().endsWith(QStringLiteral("\t75%")));
+        QVERIFY(named("audioTapSpeed75")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("audioTapSpeed33"), "triggered"));
+        QCOMPARE(audio.speedPercent(), 33);
+        QVERIFY(named("audioTapSpeed33")->property("checked").toBool());
+        QVERIFY(!named("audioTapSpeed75")->property("checked").toBool());
+        QVERIFY(speedMenu->property("title").toString().endsWith(QStringLiteral("\t33%")));
+        audio.toggleKaraoke();
+        audio.setSpeedPercent(100);
+        QVERIFY(!mark->isVisible());
+    }
+
+    // KA2-tap-to-time: Calibrate latency… from the Tap menu opens its window,
+    // which plays the beeps (the output without a device, in real time);
+    // Space presses after the beeps are counted and the latency takes their
+    // median; Apply sets audio.tapLatency, Cancel and Esc leave it.
+    void audioTapCalibration()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode));
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        audio.toggleKaraoke();
+        auto *calibrate = named("audioTapCalibrate");
+        QCOMPARE(calibrate->property("text").toString(), QStringLiteral("Calibrate latency…\t0 ms"));
+        QCOMPARE(audio.tapLatency(), 0);
+        QVERIFY(QMetaObject::invokeMethod(calibrate, "triggered"));
+        auto *calibration = qobject_cast<QQuickWindow *>(named("tapCalibrationWindow"));
+        QVERIFY(calibration);
+        QTRY_VERIFY(calibration->isVisible());
+        QCOMPARE(calibration->title(), QStringLiteral("Calibrate tap latency"));
+        QVERIFY(audio.calibrating());
+        auto *latency = calibration->findChild<QQuickItem *>(QStringLiteral("tapCalibrationLatency"));
+        QVERIFY(latency);
+        QCOMPARE(latency->property("value").toInt(), 0);
+        // the field cannot take Space from the beeps while they play
+        QVERIFY(!latency->isEnabled());
+        // a press 80 ms after each beep (later by the polling, more so on a
+        // loaded runner): twelve counted after the practice, a few to spare
+        for (int beat = 0; beat < application::kCalibrationBeats; beat++) {
+            QTRY_VERIFY_WITH_TIMEOUT(audio.calibrationBeat() > beat, 3000);
+            QTest::qWait(80);
+            QTest::keyClick(calibration, Qt::Key_Space);
+        }
+        const auto delays = [&] {
+            QStringList ms;
+            for (const QVariant &d : audio.calibrationDelays())
+                ms << QString::number(d.toDouble(), 'f', 0);
+            return QStringLiteral("counted %1: %2").arg(audio.calibrationCounted()).arg(ms.join(u' '));
+        };
+        QTRY_VERIFY2(audio.calibrationEnough(), qPrintable(delays()));
+        QVERIFY2(audio.calibrationCounted() >= 6, qPrintable(delays()));
+        const int measured = audio.calibrationLatency();
+        QVERIFY2(measured >= 60 && measured <= 250, qPrintable(delays()));
+        QCOMPARE(latency->property("value").toInt(), measured);
+        auto *result = calibration->findChild<QQuickItem *>(QStringLiteral("tapCalibrationResult"));
+        QVERIFY2(result->property("text").toString().contains(QStringLiteral("of 12 counted beeps")),
+                 qPrintable(result->property("text").toString()));
+        QVERIFY(QMetaObject::invokeMethod(calibration->findChild<QQuickItem *>(QStringLiteral("tapCalibrationApply")), "clicked"));
+        QTRY_VERIFY(!calibration->isVisible());
+        QVERIFY(!audio.calibrating());
+        QCOMPARE(audio.tapLatency(), measured);
+        QCOMPARE(settings.integer("audio.tapLatency"), measured);
+        QCOMPARE(calibrate->property("text").toString(), QStringLiteral("Calibrate latency…\t%1 ms").arg(measured));
+
+        // Cancel leaves the latency as it was, a value typed or not
+        QVERIFY(QMetaObject::invokeMethod(calibrate, "triggered"));
+        QTRY_VERIFY(calibration->isVisible());
+        QVERIFY(audio.calibrating());
+        QCOMPARE(latency->property("value").toInt(), measured);
+        latency->setProperty("value", 300);
+        QVERIFY(QMetaObject::invokeMethod(calibration->findChild<QQuickItem *>(QStringLiteral("tapCalibrationCancel")), "clicked"));
+        QTRY_VERIFY(!calibration->isVisible());
+        QVERIFY(!audio.calibrating());
+        QCOMPARE(audio.tapLatency(), measured);
+        // and Esc
+        QVERIFY(QMetaObject::invokeMethod(calibrate, "triggered"));
+        QTRY_VERIFY(calibration->isVisible());
+        QTest::keyClick(calibration, Qt::Key_Escape);
+        QTRY_VERIFY(!calibration->isVisible());
+        QVERIFY(!audio.calibrating());
+        QCOMPARE(audio.tapLatency(), measured);
+        // once the beeps are over a latency typed in the field and Enter there
+        // apply it
+        QVERIFY(QMetaObject::invokeMethod(calibrate, "triggered"));
+        QTRY_VERIFY(calibration->isVisible());
+        audio.stopCalibration();
+        QTRY_VERIFY(latency->isEnabled());
+        latency->forceActiveFocus();
+        QTRY_VERIFY(latency->hasActiveFocus());
+        QTest::keyClick(calibration, Qt::Key_A, Qt::ControlModifier);
+        for (const Qt::Key digit : {Qt::Key_1, Qt::Key_2, Qt::Key_0})
+            QTest::keyClick(calibration, digit);
+        QTest::keyClick(calibration, Qt::Key_Return);
+        QTRY_VERIFY(!calibration->isVisible());
+        QCOMPARE(audio.tapLatency(), 120);
+        audio.setTapLatency(0);
+        audio.toggleKaraoke();
     }
 
     void audioAutoCommitReachesTheVideo()

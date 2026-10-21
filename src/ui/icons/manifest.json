@@ -2647,6 +2647,39 @@
    ]
   },
   {
+   "role": "karaoke-tap",
+   "file": "karaoke-tap.svg",
+   "label": "Tap to time",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "tap-calibrate",
+   "file": "tap-calibrate.svg",
+   "label": "Calibrate tap latency",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "playback-speed",
+   "file": "playback-speed.svg",
+   "label": "Playback speed",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
    "role": "autosave",
    "file": "autosave.svg",
    "label": "Open auto save",
