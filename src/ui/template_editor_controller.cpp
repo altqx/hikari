@@ -995,7 +995,8 @@ void TemplateEditorController::runChain(std::uint64_t generation)
         const auto whole = application::macroSnapshotOf(*document(), selection);
         m_templater->preview(whole, [self, generation, whole, source,
                                      unmarked](application::KaraokeTemplaterPort::Preview p) {
-            if (!self)
+            // Another tab or a newer chain since: its Line ids are not ours.
+            if (!self || generation != self->m_generation)
                 return;
             self->m_matched[source] = unmarked;
             self->m_replaced.erase(source);
@@ -1009,8 +1010,7 @@ void TemplateEditorController::runChain(std::uint64_t generation)
                         gone.insert(core::LineId{d.id});
                 self->m_replaced[source] = std::move(gone);
             }
-            if (generation == self->m_generation)
-                self->runChain(generation);
+            self->runChain(generation);
         });
         return;
     }

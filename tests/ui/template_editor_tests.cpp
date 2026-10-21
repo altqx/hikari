@@ -94,8 +94,14 @@ public:
     void preview(const application::MacroSnapshot &snapshot, PreviewDone done) override
     {
         ++previews;
+        sizes.push_back(snapshot.dialogues.size());
         if (dropPreviews > 0) { // as a run cancelled by a newer one: no answer
             --dropPreviews;
+            return;
+        }
+        if (holdPreviews > 0) { // answered when the test says
+            --holdPreviews;
+            held.emplace_back(snapshot, std::move(done));
             return;
         }
         runner.run(snapshot, std::move(done));
@@ -129,6 +135,9 @@ public:
     std::string report;
     int previews = 0;
     int dropPreviews = 0;
+    int holdPreviews = 0;
+    std::vector<std::pair<application::MacroSnapshot, PreviewDone>> held;
+    std::vector<std::size_t> sizes; // each run's Lines
     int applies = 0;
     bool lastSelectedOnly = false;
 
@@ -579,6 +588,37 @@ private slots:
         QVERIFY(QTest::qWaitFor(
             [&] { return settled() && previewTexts().join(QString()).contains(QStringLiteral("bord3")); }, 20'000));
         QCOMPARE(fileLines(*source), kept);
+    }
+
+    // A matching run that answers after another tab is chosen is that
+    // tab's no more: the new one matches for itself.
+    void aMatchFromAnotherTabIsDropped()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        activate(*firstKaraoke());
+        templater->holdPreviews = 1; // the matching run
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
+        // The same file in another tab, not trusted yet: nothing new runs.
+        auto first = std::move(session);
+        session = std::make_unique<application::EditSession>(loadFile(QStringLiteral("stock-tutorials.out.ass")));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        auto [snapshot, done] = std::move(templater->held.front());
+        templater->held.clear();
+        bool answered = false;
+        templater->runner.run(snapshot, [&, done](application::KaraokeTemplaterPort::Preview p) {
+            answered = true;
+            done(std::move(p));
+        });
+        QVERIFY(QTest::qWaitFor([&] { return answered; }, 20'000));
+        const std::size_t before = templater->sizes.size();
+        activate(*firstKaraoke());
+        editor->trustDocument();
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        const std::size_t whole = session->document().lines().size();
+        QVERIFY(std::ranges::any_of(templater->sizes.begin() + static_cast<std::ptrdiff_t>(before),
+                                    templater->sizes.end(), [&](std::size_t n) { return n == whole; }));
     }
 
     void anUndoneApplyMatchesAgain()
