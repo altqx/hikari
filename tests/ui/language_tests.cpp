@@ -665,9 +665,11 @@ private slots:
         // The History list shows the edits' own names (edit_session.cpp's
         // "Open" for the opening state), never catalog strings, though "Open"
         // is also a key.
-        const auto inHistory = [](QObject *o) {
+        // The inspector bar's unseen copies of every family's groups, which
+        // it only measures (VT1), are never shown.
+        const auto unshown = [](QObject *o) {
             for (auto *i = qobject_cast<QQuickItem *>(o); i; i = i->parentItem())
-                if (i->objectName() == u"historyList")
+                if (i->objectName() == u"historyList" || i->objectName() == u"visualToolMeasure")
                     return true;
             return false;
         };
@@ -677,7 +679,7 @@ private slots:
             // (hotkeys.cpp's legacy names: "Left" for Previous frame), never
             // a catalog string, though "Left" and "Right" are also Grid
             // headings since they took legacy's translations (keys.ts).
-            if (sources.contains(text) && !allowed.contains(text) && o && o->objectName() != u"menuItemKeys" && !inHistory(o))
+            if (sources.contains(text) && !allowed.contains(text) && o && o->objectName() != u"menuItemKeys" && !unshown(o))
             {
                 QString chain;
                 for (QObject *p = o; p; p = p->parent())

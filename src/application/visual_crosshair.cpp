@@ -87,8 +87,13 @@ void CrosshairTool::computeCoefficients(const VisualHost &host)
 
 void CrosshairTool::reset(VisualHost &host)
 {
-    // Cross::SetCurVisual (VisualCross.cpp:244-282): hidden until the next move.
+    // Cross::SetCurVisual (VisualCross.cpp:244-282): hidden until the next
+    // move. VT1: the bar's readout and Copy with it, as the view the
+    // position was taken in may be gone (leaving the video keeps them).
     m_cross = false;
+    m_x.clear();
+    m_y.clear();
+    m_coords.clear();
     computeCoefficients(host);
     host.toolChanged();
 }
@@ -120,7 +125,9 @@ void CrosshairTool::pointer(const Pointer &event, VisualHost &host)
     const PointF script = crossScriptPoint(host.view(), m_coeffX, m_coeffY, x, y);
     const int posx = static_cast<int>(script.x);
     const int posy = static_cast<int>(script.y);
-    m_coords = number(posx) + u", " + number(posy);
+    m_x = number(posx);
+    m_y = number(posy);
+    m_coords = m_x + u", " + m_y;
     drawLines(x, y, host);
     host.toolChanged();
 
@@ -215,8 +222,23 @@ Overlay CrosshairTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> CrosshairTool::values(const VisualHost &host) const
 {
+    // The label's position, read-only (VT1: one value per axis).
     (void)host;
-    return {{"position", u"Position", m_coords, false}};
+    return {{"x", u"X", m_x, false}, {"y", u"Y", m_y, false}};
+}
+
+std::vector<ToolOption> CrosshairTool::options(const VisualHost &host) const
+{
+    // VT1: VIDEO_COPY_COORDS for the shown position (the context menu and
+    // the hotkey copy the one under the pointer).
+    (void)host;
+    ToolOption copy;
+    copy.name = "copyPosition";
+    copy.kind = ToolOption::Kind::Action;
+    copy.iconRole = "copy-position";
+    copy.tooltip = u"Copy video position";
+    copy.enabled = !m_x.empty();
+    return {copy};
 }
 
 } // namespace hikari::application::visual

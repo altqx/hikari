@@ -557,6 +557,21 @@ ApplicationWindow {
                       iconRole: "import", run: () => legacyHotkeysDialog.open() }]
         return []
     }
+    // VF1 (#288): a panel's own submenus, after its own items: an item's
+    // `items` are radio choices, its `iconRole` the submenu's. The Video
+    // panel's "Seek on" and "Then play" (legacy VideoToolbar's two lists,
+    // which left the panel).
+    readonly property VideoFollowChoices videoFollow: VideoFollowChoices { settings: root.app.settings }
+    function panelOwnMenus(dock) {
+        if (dock === videoDock)
+            return [{ name: "videoSeekOn", text: root.videoFollow.seekName, iconRole: "video-to-start-time",
+                      items: root.videoFollow.seekChoices.map((text, i) => ({
+                          text: text, checked: () => root.videoFollow.seek === i, run: () => root.videoFollow.setSeek(i) })) },
+                    { name: "videoThenPlay", text: root.videoFollow.playName, iconRole: "play-line",
+                      items: root.videoFollow.playChoices.map((text, i) => ({
+                          text: text, checked: () => root.videoFollow.play === i, run: () => root.videoFollow.setPlay(i) })) }]
+        return []
+    }
     function closePanel(dock) {
         if (dock === referenceDock)
             root.app.closeReference()
@@ -576,6 +591,7 @@ ApplicationWindow {
         objectName: "panelOptionsMenu"
         property var dock: null
         readonly property var ownItems: dock ? root.panelOwnItems(dock) : []
+        readonly property var ownMenus: dock ? root.panelOwnMenus(dock) : []
         readonly property bool closable: dock !== null
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotClosable) === 0
         readonly property bool dockable: dock !== null
@@ -617,9 +633,40 @@ ApplicationWindow {
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
+        Instantiator {
+            model: panelOptionsMenu.ownMenus
+            delegate: ShellMenu {
+                id: ownMenu
+                required property var modelData
+                objectName: "panelOptions_" + modelData.name
+                iconRole: modelData.iconRole
+                title: modelData.text
+                Instantiator {
+                    model: ownMenu.modelData.items
+                    delegate: ShellMenuItem {
+                        required property var modelData
+                        required property int index
+                        objectName: ownMenu.objectName + "_" + index
+                        text: modelData.text
+                        checkable: true
+                        checked: modelData.checked()
+                        keepsMenuOpen: false // a choice among items closes the menu (ITEM_RADIO)
+                        onTriggered: {
+                            modelData.run()
+                            checked = Qt.binding(() => modelData.checked())
+                        }
+                    }
+                    onObjectAdded: (index, object) => ownMenu.insertItem(index, object)
+                    onObjectRemoved: (index, object) => ownMenu.removeItem(object)
+                }
+            }
+            // After the own items, whichever Instantiator fills first.
+            onObjectAdded: (index, object) => panelOptionsMenu.insertMenu(panelOptionsMenu.ownItems.length + index, object)
+            onObjectRemoved: (index, object) => panelOptionsMenu.removeMenu(object)
+        }
         MenuSeparator {
             objectName: "panelOptionsSeparator"
-            visible: panelOptionsMenu.ownItems.length > 0
+            visible: panelOptionsMenu.ownItems.length + panelOptionsMenu.ownMenus.length > 0
             height: visible ? implicitHeight : 0
         }
         ShellMenuItem {
@@ -2529,10 +2576,33 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "videoPanel"
                 dockName: "Video"
-                // The controls below the video at their narrowest (the
-                // follow choices wrap), above two rail buttons' height.
-                minimumBodySize: Qt.size(Math.max(videoTransport.implicitWidth, videoFollow.minimumWidth),
-                                         videoControls.implicitHeight + 72)
+                // The controls below the video at their narrowest, above
+                // two rail buttons' height. The
+                // inspector bar counts with its tool's own lines; what it
+                // holds for a taller tool comes out of the height above that
+                // (VT1), so the minimum does not grow with it.
+                minimumBodySize: Qt.size(videoTransport.implicitWidth, controlsOwnHeight + 72)
+                // Measured, not bound (the held height follows the room this
+                // leaves), whenever the column's height or the held height
+                // changes: a switch to a tool with more lines can leave the
+                // column as tall, holding less (Codex on #293). The bar's
+                // layout and the column are laid out first, so the two
+                // numbers are of one layout.
+                property real controlsOwnHeight: 0
+                function measureControls() {
+                    videoToolBar.contentItem.ensurePolished()
+                    videoControls.ensurePolished()
+                    controlsOwnHeight = videoControls.implicitHeight - videoToolBar.held
+                }
+                Connections {
+                    target: videoControls
+                    function onImplicitHeightChanged() { Qt.callLater(videoPanel.measureControls) }
+                }
+                Connections {
+                    target: videoToolBar
+                    function onHeldChanged() { Qt.callLater(videoPanel.measureControls) }
+                }
+                Component.onCompleted: measureControls()
                 title: qsTranslate("HikariSub.Video", "Video")
                 // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
                 // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
@@ -2691,8 +2761,11 @@ ApplicationWindow {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
-                VisualToolValues { // T1-T4: the family's options, values and batch picker
+                VisualToolBar { // VT1: the tool, its options and values, the batch picker
+                    id: videoToolBar
                     Layout.fillWidth: true
+                    dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
+                    room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
                     // push Next frame out of the panel.
@@ -2742,9 +2815,7 @@ ApplicationWindow {
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
                     }
-                    VisualToolReadout { tools: root.visualTools } // T1: the tool's read-only values
                 }
-                VideoFollowChoices { id: videoFollow; Layout.fillWidth: true; settings: root.app.settings } // V6
                 RowLayout {
                     id: videoTransport
                     Layout.fillWidth: true
@@ -3844,6 +3915,19 @@ ApplicationWindow {
                                 onTriggered: {
                                     root.audio.setTapHold(false)
                                     checked = Qt.binding(() => !root.audio.tapHold)
+                                }
+                            }
+                            MenuSeparator {}
+                            // KA5 (#280, KA5-onset-snap): dragged and tapped
+                            // boundaries snap to vocal onsets
+                            ShellMenuItem {
+                                objectName: "audioOnsetSnap"
+                                text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
+                                checkable: true
+                                checked: root.audio.onsetSnap
+                                onToggled: {
+                                    root.audio.setOnsetSnap(checked)
+                                    checked = Qt.binding(() => root.audio.onsetSnap)
                                 }
                             }
                             MenuSeparator {}

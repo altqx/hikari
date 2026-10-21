@@ -139,19 +139,40 @@ struct Overlay {
     bool empty() const { return lines.empty() && circles.empty() && texts.empty() && polygons.empty(); }
 };
 
-// A numeric value a tool shows below the canvas (the rail's keyboard and
-// numeric alternative). Editable ones are set through VisualTool::setValue.
+// A numeric value a tool shows in the inspector bar below the canvas (VT1,
+// the handles' keyboard and numeric alternative). Editable ones are set
+// through VisualTool::setValue, typed (Enter) or scrubbed (a drag on the
+// label, `step` per pixel). Values of one group (Move's Start and End, the
+// rotations' Origin) sit together after its label; `unit` follows the
+// number in its field.
 struct ToolValue {
     std::string name;
     std::u16string label;
     std::u16string text;
     bool editable = false;
+    std::u16string group;
+    std::u16string unit;
+    double step = 1;
 };
 
-// A tool's own option on the rail's second row (legacy VideoToolbar's
+// A value's text as a number (a plain decimal, spaces around it and a
+// leading '+' allowed, at most kValueLimit either way); false for anything
+// else.
+inline constexpr double kValueLimit = 1e8;
+bool parseValue(const std::u16string &text, double &out);
+
+// VT1: how VisualTool::setValue applies a value. Commit stages it and
+// commits one history step (a typed value, a scrub's release); Sample stages
+// it on the gesture a scrub's first sample opens, which the next Commit
+// commits and Esc drops (the host's cancel).
+enum class ValueEdit { Commit, Sample };
+
+// A tool's own option in the inspector bar (legacy VideoToolbar's
 // VisualItem for the family, T2-T6): a toggle with its icon role, a choice,
 // or (T4) an action button. setOption takes 0/1 for a toggle, the index for
-// a choice and 1 for an action.
+// a choice and 1 for an action. VT1: options of one group sit together
+// after its label (Scale's Rectangle and Tags); a choice in a group shows
+// its current entry as text.
 struct ToolOption {
     enum class Kind { Toggle, Choice, Action };
     std::string name;
@@ -165,6 +186,7 @@ struct ToolOption {
     // T5: legacy's shape list: the first entry is "no choice" and the last
     // an action ("Edit"); the row's menu puts it after a separator.
     bool listEnds = false;
+    std::u16string group;
 };
 
 // One gesture's edit (docs/qt/proposals/edit-transactions.md, accepted on
@@ -370,11 +392,16 @@ public:
         (void)host;
         return {};
     }
-    virtual bool setValue(const std::string &name, const std::u16string &text, VisualHost &host)
+    // An editable value set (VT1): true when it was staged (Sample) or
+    // committed (Commit). A gesture the tool's pointer or keys opened
+    // refuses it.
+    virtual bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                          ValueEdit edit = ValueEdit::Commit)
     {
         (void)name;
         (void)text;
         (void)host;
+        (void)edit;
         return false;
     }
     // Legacy Visuals::Draw skipped these tools' warning (VisualCross overrides

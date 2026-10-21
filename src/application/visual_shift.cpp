@@ -190,6 +190,7 @@ std::vector<ToolOption> PositionShifterTool::options(const VisualHost &host) con
         o.iconRole = items()[i].icon;
         o.tooltip = items()[i].tooltip;
         o.checked = m_toggled[i];
+        o.group = u"Move"; // VT1: the bar's group
         out.push_back(std::move(o));
     }
     return out;
