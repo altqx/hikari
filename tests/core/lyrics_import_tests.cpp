@@ -455,6 +455,16 @@ TEST(LyricsImport, TtmlHeadNamesShareTheBudget)
         head += "</name></agent>";
     EXPECT_EQ(problemOf("<tt><head>" + head + "</head><body><p begin=\"1\" end=\"2\">x</p></body></tt>", u8"ttml").kind,
               Kind::TooLarge);
+    // Lyric text is paid for before it is made: escaped ("{" becomes three
+    // bytes) and copied into a Line, entity text is refused past the budget.
+    const std::string braces = "<!DOCTYPE tt [<!ENTITY a0 '" + std::string(1000, '{') +
+                               "'><!ENTITY a1 '&a0;&a0;&a0;&a0;&a0;&a0;&a0;&a0;&a0;&a0;'>"
+                               "<!ENTITY a2 '&a1;&a1;&a1;&a1;&a1;&a1;&a1;&a1;&a1;&a1;'>]>";
+    EXPECT_EQ(problemOf(braces + "<tt><body><p begin=\"1\" end=\"2\">&a2;&a2;</p></body></tt>", u8"ttml").kind, Kind::TooLarge);
+    EXPECT_EQ(problemOf(braces + "<tt><body><p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\">&a2;&a2;</span></p></body></tt>",
+                        u8"ttml")
+                  .kind,
+              Kind::TooLarge);
     // One such name is read.
     const auto one = importTtml(bytes("<tt><head><ttm:agent xml:id=\"v1\"><ttm:name>" + std::string(200000, 'n') +
                                       "</ttm:name></ttm:agent></head><body><p begin=\"1\" end=\"2\" ttm:agent=\"v1\">x</p></body></tt>"));
@@ -894,7 +904,7 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
         return problemOf("<!DOCTYPE tt [" + std::string(subset) + "]>\n<tt><body>\n" + std::string(body) + "</body></tt>", u8"ttml");
     };
     const std::string p = "<p begin=\"1\" end=\"2\">x &e;</p>";
-    EXPECT_EQ(problem("<!ENTITY e '&f;'><!ENTITY f '&e;'>", p), (LyricsProblem{Kind::NotWellFormed, 3, u8"&e;</p>"}));
+    EXPECT_EQ(problem("<!ENTITY e '&f;'><!ENTITY f '&e;'>", p), (LyricsProblem{Kind::NotWellFormed, 1, u8"<!DOCTYPE tt [<!ENTITY e '&f;'>"}));
     for (const char *subset : {"<!ENTITY e SYSTEM 'e.xml'>", "<!ENTITY e '<span>'>", "<!ENTITY e '</p><p>'>", "<!ENTITY e '<?xml version=\"1.0\"?>'>"})
         EXPECT_EQ(problem(subset, p).kind, Kind::NotWellFormed) << subset;
     EXPECT_EQ(problem("<!ENTITY e '<span>'>", "<p begin=\"1\" end=\"2\">\n&e;</span></p>"), (LyricsProblem{Kind::NotWellFormed, 4, u8"&e;</span>"}));
@@ -906,6 +916,33 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
     for (const char *subset : {"<!ENTITY % r '&#37;r;'>%r;", "<!ENTITY % half \"<!ENTITY e \">%half; 'a'>",
                                "<!ENTITY % close ']>'>%close;", "<!ENTITY % pi '<?xml version=\"1.0\"?>'>%pi;"})
         EXPECT_EQ(problem(subset, p).kind, Kind::NotWellFormed) << subset;
+    // Entities naming themselves are refused though the file never uses
+    // them, directly or through others, general or parameter; one named
+    // twice on a path is no loop.
+    const std::string unused = "<p begin=\"1\" end=\"2\">x</p>";
+    for (const char *subset : {"<!ENTITY loop '&loop;'>", "<!ENTITY loop '&#38; &loop;'>", "<!ENTITY a 'x&b;'><!ENTITY b '&c;y'><!ENTITY c '<s>&a;</s>'>",
+                               "<!ENTITY % loop '&#37;loop;'>", "<!ENTITY % a '&#37;b;'><!ENTITY % b '&#37;a;'>"})
+        EXPECT_EQ(problem(subset, unused).kind, Kind::NotWellFormed) << subset;
+    EXPECT_EQ(read("<!ENTITY a '&b;&c;'><!ENTITY b '&c;'><!ENTITY c 'x'><!ENTITY % a '&#37;b;&#37;b;'><!ENTITY % b ''>",
+                   "<p begin=\"1\" end=\"2\">&a;</p>"),
+              (std::vector<Row>{{1000, 2000, "", "xx"}}));
+    // The five predefined entities may be declared only as what they are:
+    // "<" and "&" escaped, the others escaped or not.
+    for (const char *subset : {"<!ENTITY amp 'wrong'>", "<!ENTITY lt '<'>", "<!ENTITY amp '&#38;'>", "<!ENTITY gt '&#60;'>",
+                               "<!ENTITY quot SYSTEM 'q.xml'>", "<!ENTITY apos ''>"})
+        EXPECT_EQ(problem(subset, unused).kind, Kind::NotWellFormed) << subset;
+    EXPECT_EQ(read("<!ENTITY lt '&#38;#60;'><!ENTITY amp '&#38;#x26;'><!ENTITY gt '>'><!ENTITY quot '&#34;'><!ENTITY apos \"'\">",
+                   "<p begin=\"1\" end=\"2\">&lt;&amp;&gt;&quot;&apos;</p>"),
+              (std::vector<Row>{{1000, 2000, "", "<&>\"'"}}));
+    // Names in declarations are XML names with at most one colon, and none
+    // at all where the namespaces spec says NCName: entities, notations,
+    // processing instruction targets.
+    for (const char *subset : {"<!ATTLIST p a:b:c CDATA 'x'>", "<!ATTLIST a:b:c x CDATA 'x'>", "<!ATTLIST p :x CDATA 'x'>",
+                               "<!ELEMENT a:b:c ANY>", "<!ELEMENT p (a:b:c)*>", "<!ENTITY a:b 'x'>", "<!ENTITY % a:b 'x'>",
+                               "<!NOTATION a:b SYSTEM 'x'>", "<?a:b x?>", "<!ENTITY e SYSTEM 'e' NDATA a:b>"})
+        EXPECT_EQ(problem(subset, unused).kind, Kind::NotWellFormed) << subset;
+    EXPECT_EQ(read("<!ELEMENT tt:p (a:b)*><!ATTLIST q a:b CDATA 'x'><!NOTATION n SYSTEM 'n'>", unused),
+              (std::vector<Row>{{1000, 2000, "", "x"}}));
     // Entities naming entities stop at the budget, in text and attributes.
     std::string laughs = "<!ENTITY a0 '0123456789'>";
     for (int i = 1; i <= 9; ++i) {

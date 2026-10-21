@@ -471,7 +471,7 @@ private:
         const bool first = m_pos == m_start && m_inputs.empty();
         advance(2);
         const auto target = name();
-        if (!target)
+        if (!target || target->find(u8':') != std::u8string::npos) // Namespaces in XML: no colon in a target
             return false;
         std::u8string lower = *target;
         for (char8_t &c : lower)
@@ -641,6 +641,7 @@ private:
                             ok = markupDeclaration();
                         }
                     }
+                    ok = ok && !recursive(m_entities, u8'&') && !recursive(m_parameters, u8'%');
                     if (ok)
                         advance(1); // the "]"
                     skipSpace();
@@ -673,15 +674,27 @@ private:
     {
         bool ok = false;
         if (keyword(u8"<!ELEMENT"))
-            ok = space() && name() && space() && contentSpec();
+            ok = space() && qname() && space() && contentSpec();
         else if (keyword(u8"<!ATTLIST"))
             ok = attlistDeclaration();
         else if (keyword(u8"<!ENTITY"))
             ok = entityDeclaration();
         else if (keyword(u8"<!NOTATION"))
-            ok = space() && name() && space() && externalId(true);
+            ok = space() && ncname() && space() && externalId(true);
         skipSpace();
         return ok && keyword(u8">");
+    }
+    // Names in declarations by Namespaces in XML: an element's or an
+    // attribute's a QName, an entity's or a notation's no colon at all.
+    bool qname()
+    {
+        const auto n = name();
+        return n && qualifiedName(*n);
+    }
+    bool ncname()
+    {
+        const auto n = name();
+        return n && n->find(u8':') == std::u8string::npos;
     }
 
     bool keyword(u8sv word)
@@ -760,7 +773,7 @@ private:
         bool names = false;
         for (skipSpace(); keyword(u8"|"); skipSpace(), names = true) {
             skipSpace();
-            if (!name())
+            if (!qname())
                 return false;
         }
         if (!keyword(u8")"))
@@ -780,7 +793,7 @@ private:
                 skipSpace();
                 if (!contentGroup(depth + 1))
                     return false;
-            } else if (!name()) {
+            } else if (!qname()) {
                 return false;
             } else {
                 occurrence();
@@ -812,14 +825,14 @@ private:
         if (!space())
             return false;
         const auto element = name();
-        if (!element)
+        if (!element || !qualifiedName(*element))
             return false;
         for (;;) {
             const bool spaced = space();
             if (at(u8">"))
                 return true;
             const auto attribute = spaced ? name() : std::nullopt;
-            if (!attribute || !space())
+            if (!attribute || !qualifiedName(*attribute) || !space())
                 return false;
             const bool tokenized = !at(u8"CDATA");
             if (!attributeType() || !space())
@@ -858,7 +871,7 @@ private:
         // An Enumeration of name tokens, or a NotationType of names.
         for (;;) {
             skipSpace();
-            if (notation ? !name() : !nmtoken())
+            if (notation ? !ncname() : !nmtoken())
                 return false;
             skipSpace();
             if (keyword(u8")"))
@@ -879,28 +892,42 @@ private:
         if (parameter && !space())
             return false;
         auto entity = name();
-        if (!entity || !space())
+        if (!entity || entity->find(u8':') != std::u8string::npos || !space())
             return false;
+        // The predefined five may be declared only as XML 1.0 (section 4.6)
+        // writes them, and keep their meaning.
+        const std::optional<char32_t> predefined = parameter          ? std::nullopt
+                                                   : *entity == u8"lt"   ? std::optional(U'<')
+                                                   : *entity == u8"amp"  ? std::optional(U'&')
+                                                   : *entity == u8"gt"   ? std::optional(U'>')
+                                                   : *entity == u8"apos" ? std::optional(U'\'')
+                                                   : *entity == u8"quot" ? std::optional(U'"')
+                                                                         : std::nullopt;
         auto declare = [&](std::optional<std::u8string> text) {
-            static constexpr u8sv kPredefined[] = {u8"lt", u8"gt", u8"amp", u8"apos", u8"quot"};
+            if (predefined) {
+                // lt and amp as a character reference to the character, the
+                // others as it or one.
+                const u8sv r = text ? u8sv(*text) : u8sv();
+                const bool reference = r.starts_with(u8"&#") && r.ends_with(u8';') &&
+                                       characterReference(r.substr(1, r.size() - 2)) == std::optional<std::uint32_t>(*predefined);
+                return reference || (*predefined != U'<' && *predefined != U'&' && r.size() == 1 && r[0] == *predefined);
+            }
             if (!m_declarations)
-                return;
+                return true;
             if (parameter)
                 m_parameters.try_emplace(std::move(*entity), std::move(text));
-            else if (std::ranges::find(kPredefined, u8sv(*entity)) == std::end(kPredefined))
+            else
                 m_entities.try_emplace(std::move(*entity), std::move(text));
+            return true;
         };
         const std::size_t literal = m_pos;
-        if (quoted(Literal::EntityValue)) {
-            declare(replacementText(m_s.substr(literal + 1, m_pos - literal - 2)));
-            return true;
-        }
-        if (!externalId(false))
+        if (quoted(Literal::EntityValue))
+            return declare(replacementText(m_s.substr(literal + 1, m_pos - literal - 2)));
+        if (!externalId(false) || !declare(std::nullopt))
             return false;
-        declare(std::nullopt);
         const auto mark = std::pair{m_pos, m_line};
         if (!parameter && space() && keyword(u8"NDATA"))
-            return space() && name();
+            return space() && ncname();
         std::tie(m_pos, m_line) = mark;
         return true;
     }
@@ -967,6 +994,51 @@ private:
             i = semi + 1;
         }
         return out;
+    }
+
+    using Entities = std::map<std::u8string, std::optional<std::u8string>, std::less<>>;
+
+    // Whether an entity names itself, directly or through others, whether
+    // or not the file uses it (XML's "No Recursion"): a general entity by
+    // "&name;" in its text, a parameter entity by "%name;" (`sign`). Depth
+    // first without recursion, each text read once.
+    static bool recursive(const Entities &entities, char8_t sign)
+    {
+        enum : std::uint8_t { Unseen, OnPath, Done };
+        std::map<u8sv, std::uint8_t, std::less<>> state;
+        for (const auto &[root, rootText] : entities) {
+            if (state[root] != Unseen)
+                continue;
+            state[root] = OnPath;
+            std::vector<std::pair<u8sv, std::size_t>> path{{root, 0}}; // each entity and where in its text
+            while (!path.empty()) {
+                const auto [entity, at] = path.back();
+                const auto &text = entities.find(entity)->second;
+                const u8sv t = text ? u8sv(*text) : u8sv();
+                const std::size_t i = t.find(sign, at);
+                const std::size_t semi = i == u8sv::npos ? u8sv::npos : t.find(u8';', i);
+                if (semi == u8sv::npos) {
+                    state[entity] = Done;
+                    path.pop_back();
+                    continue;
+                }
+                const std::size_t again = t.find(sign, i + 1); // a lone sign names nothing
+                path.back().second = again < semi ? again : semi + 1;
+                if (again < semi)
+                    continue;
+                const auto next = entities.find(t.substr(i + 1, semi - i - 1));
+                if (next == entities.end())
+                    continue;
+                std::uint8_t &seen = state[next->first];
+                if (seen == OnPath)
+                    return true;
+                if (seen == Unseen) {
+                    seen = OnPath;
+                    path.emplace_back(next->first, 0);
+                }
+            }
+        }
+        return false;
     }
 
     // An entity's text read: back after its reference.
@@ -1326,8 +1398,8 @@ private:
     bool m_declarations = true; // false past a parameter-entity reference (unless standalone)
     // The general entities the internal subset declares: each one's
     // replacement text, none for an external one.
-    std::map<std::u8string, std::optional<std::u8string>, std::less<>> m_entities;
-    std::map<std::u8string, std::optional<std::u8string>, std::less<>> m_parameters; // the parameter entities
+    Entities m_entities;
+    Entities m_parameters; // the parameter entities
     // Per element, its attributes by name, the first declaration of each.
     std::map<std::u8string, std::map<std::u8string, AttributeDeclaration, std::less<>>, std::less<>> m_attributes;
     std::vector<Input> m_inputs; // the entities being read, innermost last
@@ -1540,17 +1612,43 @@ private:
     using Backgrounds = std::vector<Background>;
 
     // The text of a head element (a title, an agent's name); a <br/> is a space.
-    static std::u8string allText(const XmlNode &node)
+    std::u8string allText(const XmlNode &node)
     {
         std::u8string out;
         for (const XmlNode &child : node.children)
-            if (child.isText())
-                out += child.text;
-            else if (isTtml(child, u8"br"))
+            if (child.isText()) {
+                if (charge(child.text.size(), child.line))
+                    out += child.text;
+            } else if (isTtml(child, u8"br")) {
                 out += u8' ';
-            else if (!foreign(child) && !attribute(child, u8"role", Namespace::TtmlMetadata))
-                out += allText(child); // another namespace's element holds no text of TTML's
+            } else if (!foreign(child) && !attribute(child, u8"role", Namespace::TtmlMetadata)) {
+                const std::u8string inner = allText(child); // another namespace's element holds no text of TTML's
+                if (charge(inner.size(), child.line))
+                    out += inner;
+            }
         return out;
+    }
+
+    // Takes text about to be made from the Lines' budget, before it is
+    // made; once the budget is gone nothing more is made and the read ends
+    // as TooLarge, at the line of the text that ran past it (m_overAt).
+    bool charge(std::size_t bytes, std::size_t line)
+    {
+        m_sheet.spent += bytes;
+        if (!m_overAt && m_sheet.spent > m_sheet.budget)
+            m_overAt = line;
+        return !m_overAt;
+    }
+    LyricsProblem overBudget() const { return LyricsProblem{Kind::TooLarge, m_overAt.value_or(0), {}}; }
+
+    // A text node's lyric text (lyricText), paid for first at its most, 4
+    // bytes for each of the node's (a "\\" gains a word joiner), and for
+    // the `copies` the caller makes of it.
+    std::u8string lyric(const XmlNode &text, bool preserve, std::size_t copies)
+    {
+        if (!charge((1 + copies) * (4 * text.text.size() + 2), text.line))
+            return {};
+        return lyricText(text.text, preserve);
     }
 
     // Text appended with whitespace collapsed across the join too: TTML's
@@ -1565,17 +1663,20 @@ private:
 
     // A timed span's word: its text, literal, with a <br/> inside it a line
     // break as under the paragraph.
-    static std::u8string spanText(const XmlNode &node, bool preserve)
+    std::u8string spanText(const XmlNode &node, bool preserve)
     {
         preserve = preserves(node, preserve);
         std::u8string out;
         for (const XmlNode &child : node.children)
-            if (child.isText())
-                append(out, lyricText(child.text, preserve), preserve);
-            else if (isTtml(child, u8"br"))
+            if (child.isText()) {
+                append(out, lyric(child, preserve, 1), preserve);
+            } else if (isTtml(child, u8"br")) {
                 out += u8"\\N";
-            else if (!foreign(child) && !attribute(child, u8"role", Namespace::TtmlMetadata))
-                append(out, spanText(child, preserve), preserves(child, preserve));
+            } else if (!foreign(child) && !attribute(child, u8"role", Namespace::TtmlMetadata)) {
+                const std::u8string inner = spanText(child, preserve);
+                if (charge(inner.size(), child.line))
+                    append(out, inner, preserves(child, preserve));
+            }
         return out;
     }
 
@@ -1585,13 +1686,9 @@ private:
     std::expected<void, LyricsProblem> readHead(const XmlNode &root)
     {
         std::optional<std::u8string> musicName;
-        std::optional<std::size_t> overAt; // the line where the budget ran out
         auto textOf = [&](const XmlNode &node) {
-            std::u8string text = overAt ? std::u8string() : allText(node);
-            m_sheet.spent += text.size() + 64;
-            if (!overAt && m_sheet.spent > m_sheet.budget)
-                overAt = node.line;
-            return overAt ? std::u8string() : text;
+            std::u8string text = m_overAt ? std::u8string() : allText(node);
+            return charge(text.size() + 64, node.line) ? text : std::u8string();
         };
         // TTML's metadata (ttm:title, ttm:agent, ttm:name), or the same
         // names with no namespace or TTML's, as such files write them;
@@ -1626,8 +1723,8 @@ private:
         for (const XmlNode &child : root.children)
             if (isTtml(child, u8"head"))
                 visit(visit, child);
-        if (overAt)
-            return std::unexpected(LyricsProblem{Kind::TooLarge, *overAt, {}});
+        if (m_overAt)
+            return std::unexpected(overBudget());
         if (!m_sheet.title && musicName)
             m_sheet.title = musicName;
         return {};
@@ -1761,7 +1858,9 @@ private:
             if (foreign(child))
                 continue; // not TTML's: no text, times or words
             if (child.isText()) {
-                const std::u8string text = lyricText(child.text, preserve);
+                const std::u8string text = this->lyric(child, preserve, 2); // into the plain text and a word
+                if (m_overAt)
+                    return std::unexpected(overBudget());
                 const u8sv lyric = trimBlankLeft(text);
                 // Blank text, and the span's text going on through untimed
                 // elements ("hel<span>lo</span>"), stay with the word before.
@@ -1812,6 +1911,8 @@ private:
                     begin = std::max(begin, into.ends.back().value_or(into.words.back().begin));
                 const bool kept = preserves(child, preserve);
                 const std::u8string text = spanText(child, preserve);
+                if (!charge(2 * text.size(), child.line)) // into the plain text and a word
+                    return std::unexpected(overBudget());
                 const u8sv word = trimBlankLeft(text);
                 // Spaces before a word stay with the text before it, kept
                 // ones as whichever scope inside the span kept them.
@@ -2029,6 +2130,7 @@ private:
 
     detail::LyricSheet m_sheet;
     std::map<std::u8string, std::u8string> m_agents;
+    std::optional<std::size_t> m_overAt; // where the Lines' budget ran out (charge)
 };
 
 } // namespace
