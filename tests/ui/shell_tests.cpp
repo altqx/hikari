@@ -10304,12 +10304,16 @@ private slots:
         QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\an8\\i1}Wall {\\b1}high"));
         QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\an8\\i1}X"));
         QCOMPARE(translated->property("text").toString(), QStringLiteral("X"));
-        // Off, the Translated field holds the whole translation.
+        // Off, the Translated field holds the whole translation; the caret
+        // keeps its place in the text either way.
+        translated->setProperty("cursorPosition", 1);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\an8\\i1}X"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 10);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("X"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 1);
     }
 
     // TM1: the Original's runs are placed on the translation's words: Alt+1

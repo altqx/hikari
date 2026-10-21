@@ -2014,7 +2014,15 @@ ApplicationWindow {
             if (text === shown)
                 return
             syncing = true
-            const caret = cursorPosition
+            let caret = cursorPosition
+            // TM1: the carried tags shown or left out around the same text
+            // (Tags from original switched): the caret keeps its place in it.
+            const added = text.length > 0 ? shown.indexOf(text) : -1
+            const removed = shown.length > 0 ? text.indexOf(shown) : -1
+            if (added > 0)
+                caret += added
+            else if (removed > 0)
+                caret = Math.max(0, caret - removed)
             text = shown
             cursorPosition = Math.min(caret, length)
             syncing = false
