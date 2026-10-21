@@ -2469,6 +2469,8 @@ bool Application::applySelection(application::Selection next)
     session->setSelection(std::move(next));
     m_shell->setSelection(session->selection());
     m_editor->selectionChanged(); // LE4: the mixed position
+    if (m_templateEditor)
+        m_templateEditor->refresh(); // KE2: the preview follows the active karaoke Line
     refreshVideo();
     followEditingLine(); // R2
     return true;

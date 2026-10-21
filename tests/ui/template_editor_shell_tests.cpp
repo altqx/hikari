@@ -261,6 +261,29 @@ private slots:
         QTRY_VERIFY(editor().trusted());
     }
 
+    // A karaoke Line clicked in the Grid is the one previewed, the video
+    // playing too.
+    void thePreviewFollowsTheLineClicked()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", true));
+        showPanel("templateDock");
+        QTRY_VERIFY_WITH_TIMEOUT(editor().source() != 0, 20'000);
+        const auto first = editor().source();
+        // The test's first playback opens the player and may end there.
+        application->video().loopRange(editor().sourceStartMs(), editor().sourceEndMs());
+        QTest::qWait(500);
+        application->video().pause();
+        application->video().loopRange(editor().sourceStartMs(), editor().sourceEndMs());
+        QTRY_VERIFY(application->video().playing());
+        for (const auto *l : session()->document().lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l) && l->id.value != first) {
+                application->clickLine(l->id.value, 0);
+                QTRY_COMPARE(editor().source(), l->id.value);
+                return;
+            }
+        QFAIL("no second karaoke Line");
+    }
+
     // A reload from the file is new content: a trusted Document asks again,
     // one without templates before too.
     void aReloadedFileAsksAgain()
