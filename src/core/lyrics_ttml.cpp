@@ -448,7 +448,10 @@ private:
 
     // The rest of an XML declaration after "<?xml": version="1.n", then
     // optionally encoding="name" and standalone="yes" or "no", each after
-    // whitespace and in that order, then "?>".
+    // whitespace and in that order, then "?>". This reader is an XML 1.0
+    // processor, and XML 1.0 (section 2.8) has one read a 1.n document as
+    // 1.0: it is accepted when it uses nothing 1.0 lacks, so a reference
+    // such as "&#1;", which only XML 1.1 allows, is still broken XML here.
     bool xmlDeclaration()
     {
         // A field: absent (0, nothing read), well formed (1, `value` set)

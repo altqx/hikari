@@ -550,6 +550,9 @@ TEST(LyricsImport, TtmlPrologIsChecked)
     // An XML declaration: version 1.n, then an encoding name and standalone,
     // in that order.
     EXPECT_TRUE(imports("<?xml version='1.1' encoding=\"utf-8\" standalone='no' ?>"));
+    // A 1.1 document is read as XML 1.0, so what only 1.1 allows is broken.
+    EXPECT_EQ(problemOf("<?xml version=\"1.1\"?><tt><body><p begin=\"1\" end=\"2\">&#1;</p></body></tt>", u8"ttml").kind,
+              Kind::NotWellFormed);
     for (const char *bad : {"<?xml?>", "<?xml garbage?>", "<?xml version=\"2.0\"?>", "<?xml version=\"1.\"?>",
                             "<?xml encoding=\"UTF-8\" version=\"1.0\"?>", "<?xml version=\"1.0\" standalone=\"maybe\"?>",
                             "<?xml version=\"1.0\" encoding=\"8bit\"?>", "<?xml version=\"1.0\"encoding=\"UTF-8\"?>",
