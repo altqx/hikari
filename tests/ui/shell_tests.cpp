@@ -10523,6 +10523,42 @@ private slots:
         QTRY_COMPARE(runText(), QStringLiteral("C"));
     }
 
+    // TM1: formatting of the translator's own over a placed run (Ctrl+B
+    // where the Original has no bold run) goes into the translation's text;
+    // the run stays placed, its tags written around it again.
+    void tagsFromOriginalOwnFormattingKeepsThePlacedRun()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-own.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Wall {\\i1}high\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Mur wysoki\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QVERIFY(application->editor().placeRun(1, 4, 10));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("Mur {\\i1}wysoki"));
+        QVERIFY(application->editor().toggleTagIn(1, QStringLiteral("b"), 4, 10));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("Mur {\\b1}{\\i1}wysoki{\\i}{\\b0}"));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("start").toInt(), 4);
+        // The Original's run turns underlined: the placed run follows, the
+        // bold stays.
+        application->editor().setShowTags(true);
+        application->editor().textEdited(QStringLiteral("Wall {\\u1}high"), 14);
+        const auto followed = q8(session->draftRecord()->translation);
+        QVERIFY2(followed.contains(QStringLiteral("\\u1")) && !followed.contains(QStringLiteral("\\i1")) &&
+                     followed.contains(QStringLiteral("\\b1")),
+                 qPrintable(followed));
+    }
+
     // TM1: two runs of the same formatting are told apart by where the
     // translator placed them; Escape puts back the committed placements'
     // numbers with their text, even where the text reads the same.

@@ -528,6 +528,10 @@ private:
     // `orderBefore`: the Line's run order before this step, when the caller
     // composed the new one already (saveTranslationDraft).
     bool setRaw(int role, std::u8string raw, const std::optional<RunOrder> *orderBefore = nullptr);
+    // editRaw's change on the draft's body when the Translated field has
+    // placed runs; false to edit the raw text instead.
+    bool editPlacedBody(int selectionStart, int selectionEnd,
+                        const std::function<core::legacy::EditorText(core::legacy::EditorText)> &change);
     // A legacy text command on the raw text of `role`, mapped through the
     // hidden-tag projection; the result's selection is requested in QML.
     bool editRaw(int role, int selectionStart, int selectionEnd,

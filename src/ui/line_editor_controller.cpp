@@ -1236,6 +1236,8 @@ bool LineEditorController::editRaw(int role, int selectionStart, int selectionEn
     const auto r = record();
     if (!r)
         return false;
+    if (role == 1 && editPlacedBody(selectionStart, selectionEnd, change))
+        return true;
     const std::u16string raw = core::toUtf16(roleText(*r, role));
     long from = selectionStart, to = selectionEnd;
     std::optional<core::Projection> projection;
@@ -1259,6 +1261,56 @@ bool LineEditorController::editRaw(int role, int selectionStart, int selectionEn
         m_selectionEnd = static_cast<int>(core::displayOffset(after, static_cast<std::size_t>(result.selectionEnd)));
     }
     m_selectionRole = role;
+    emit selectionRequested();
+    return true;
+}
+
+// TM1: a tag edit in a Translated field with placed runs goes to the draft's
+// body, the translator's own text, and the placements stay where their text
+// is: the run tags around it are written again, not edited as raw text,
+// which would no longer read as the Original's runs.
+bool LineEditorController::editPlacedBody(int selectionStart, int selectionEnd,
+                                          const std::function<core::legacy::EditorText(core::legacy::EditorText)> &change)
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!tags || !real || real->translation.empty())
+        return false;
+    auto draft = translationDraft(*tags, *real);
+    if (!draft.carried || draft.placements.empty())
+        return false;
+    // The field's selection as visible-text offsets, the same in the field
+    // and in the body (placeRun).
+    const auto inner = core::toUtf16(record()->translation);
+    const auto shown = core::project(inner);
+    auto displayed = [&](int at) {
+        const auto x = static_cast<std::size_t>(std::max(at, 0));
+        return m_showTags ? core::displayOffset(shown, std::min(x, inner.size())) : std::min(x, shown.text.size());
+    };
+    const auto fromShown = displayed(selectionStart), toShown = displayed(selectionEnd);
+    const auto before = core::project(draft.body);
+    std::vector<std::pair<std::size_t, std::size_t>> placed;
+    for (const auto &p : draft.placements)
+        placed.emplace_back(core::displayOffset(before, p.start), core::displayOffset(before, p.end));
+    const long from = static_cast<long>(core::rawOffset(before, fromShown, true));
+    const long to = selectionStart == selectionEnd ? from : static_cast<long>(core::rawOffset(before, toShown, false));
+    const core::legacy::EditorText result = change({draft.body, from, to});
+    const auto after = core::project(result.text);
+    if (after.text != before.text)
+        return false; // the edit changed the text itself: as raw text
+    draft.body = result.text;
+    for (std::size_t i = 0; i < placed.size(); ++i) {
+        draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
+        draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
+    }
+    if (!saveTranslationDraft(*tags, std::move(draft)))
+        return false;
+    const auto selStart = core::displayOffset(after, static_cast<std::size_t>(result.selectionStart));
+    const auto selEnd = core::displayOffset(after, static_cast<std::size_t>(result.selectionEnd));
+    const auto field = core::project(core::toUtf16(record()->translation));
+    m_selectionStart = static_cast<int>(m_showTags ? core::rawOffset(field, selStart, true) : selStart);
+    m_selectionEnd = static_cast<int>(m_showTags ? core::rawOffset(field, selEnd, false) : selEnd);
+    m_selectionRole = 1;
     emit selectionRequested();
     return true;
 }
