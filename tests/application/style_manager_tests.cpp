@@ -128,7 +128,29 @@ TEST(StyleLists, TransferWithClashChoices)
     StyleList kept{named(u8"A")};
     EXPECT_TRUE(transferStyles(kept, {named(u8"A", u8"Times")}, ClashChoices{}).empty());
     EXPECT_EQ(kept[0].fontname, u8"Arial");
-    EXPECT_EQ(freeStyleName({named(u8"X"), named(u8"X (2)")}, u8"X"), u8"X (3)");
+    EXPECT_EQ(freeStyleName(StyleList{named(u8"X"), named(u8"X (2)")}, u8"X"), u8"X (3)");
+}
+
+// PK1 (#301, Codex security review): a file with X, X (2)... X (n) and many
+// more X rows renamed onto X takes one pass over the names, not a scan of
+// the list for every suffix of every row (n * n * list size, a freeze).
+TEST(StyleLists, FreeNamesForAHostileListAreFound)
+{
+    constexpr int kCount = 3000;
+    StyleList into{named(u8"X")};
+    StyleList styles;
+    for (int i = 2; i <= kCount; ++i) {
+        const auto n = std::to_string(i);
+        into.push_back(named(u8"X (" + std::u8string(n.begin(), n.end()) + u8")"));
+    }
+    for (int i = 0; i < kCount; ++i)
+        styles.push_back(named(u8"X", u8"Times"));
+    const StyleNames taken = namesOf(into);
+    EXPECT_EQ(freeStyleName(taken, u8"X"), u8"X (3001)");
+    const auto rows = transferStyles(into, styles, ClashChoices{{u8"X", {ClashAction::Rename, u8"X"}}});
+    ASSERT_EQ(rows.size(), std::size_t(kCount));
+    EXPECT_EQ(into.back().name, u8"X (6000)");
+    EXPECT_EQ(namesOf(into).size(), into.size()); // every name once
 }
 
 TEST(StyleLists, CommitRefusesTakenNamesAndAppliesMultiEdit)

@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cstring>
+#include <unordered_map>
 
 namespace hikari::app {
 
@@ -150,25 +151,31 @@ application::ClashChoices choicesOf(const QVariantList &choices)
 // The clashes a transfer has, for the clash review: each name already present
 // (or added earlier in the same transfer), the fields that differ from the
 // Style of that name, whether none does, and a free name to rename it to.
-QVariantList clashesOf(StyleList into, const StyleList &styles)
+// Lookups, not scans: a file can list thousands of Styles of one name
+// (Codex security review).
+QVariantList clashesOf(const StyleList &into, const StyleList &styles)
 {
     QVariantList out;
-    const StyleList all = [&] {
-        StyleList l = into;
-        l.insert(l.end(), styles.begin(), styles.end());
-        return l;
-    }();
+    std::unordered_map<std::u8string, const core::StyleValues *> first;
+    for (auto it = into.rbegin(); it != into.rend(); ++it)
+        first[it->name] = &*it;
+    application::StyleNames all = application::namesOf(into);
+    for (const auto &s : styles)
+        all.insert(s.name);
+    // One suggestion per name: the rows of a name share its choice.
+    std::unordered_map<std::u8string, QString> suggested;
     for (const auto &s : styles) {
-        const auto found = std::find_if(into.begin(), into.end(), [&](const auto &e) { return e.name == s.name; });
-        if (found == into.end()) {
-            into.push_back(s);
+        const auto found = first.try_emplace(s.name, &s);
+        if (found.second)
             continue;
-        }
-        const int fields = application::compareStyles(*found, s);
+        const int fields = application::compareStyles(*found.first->second, s);
+        auto suggestion = suggested.find(s.name);
+        if (suggestion == suggested.end())
+            suggestion = suggested.emplace(s.name, qs(application::freeStyleName(all, s.name))).first;
         out << QVariantMap{{QStringLiteral("name"), qs(s.name)},
                            {QStringLiteral("fields"), fields},
                            {QStringLiteral("same"), fields == 0},
-                           {QStringLiteral("suggestion"), qs(application::freeStyleName(all, s.name))}};
+                           {QStringLiteral("suggestion"), suggestion->second}};
     }
     return out;
 }

@@ -15,6 +15,7 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 namespace hikari::application {
@@ -65,6 +66,11 @@ using ClashChoices = std::map<std::u8string, ClashChoice>;
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices);
 // "<name> (2)", "<name> (3)"... the first that names no Style of `styles`.
 std::u8string freeStyleName(const StyleList &styles, std::u8string_view name);
+// The same against a set of names made once (namesOf), for many names:
+// each candidate is a lookup, not a scan of the list.
+using StyleNames = std::unordered_set<std::u8string>;
+StyleNames namesOf(const StyleList &styles);
+std::u8string freeStyleName(const StyleNames &names, std::u8string_view name);
 
 enum class StyleMove { ToStart, Up, Down, ToEnd };
 // OnStyleMove: the selected rows (ascending) move together, clamped at the
