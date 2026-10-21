@@ -215,15 +215,22 @@ EffectWords splitEffect(const QString &effect)
     out.kind = words.takeFirst();
     const QString kind = out.kind.toLower();
     const QStringList &classes = kind == QLatin1String("code") ? codeClasses() : templateClasses();
-    if (!words.isEmpty() && classes.contains(words.front().toLower())) {
-        out.classWords << words.takeFirst();
-        const QString cls = out.classWords.front().toLower();
-        if (kind == QLatin1String("template") && (cls == QLatin1String("line") || cls == QLatin1String("pre-line")) &&
-            !words.isEmpty() && !modifierWords().contains(words.front().toLower()) &&
-            !templateClasses().contains(words.front().toLower()))
-            out.classWords << words.takeFirst();
+    // The first class word wherever it is, as the stock parser reads the
+    // words in turn; a modifier's argument is none.
+    for (qsizetype i = 0; i < words.size(); ++i) {
+        const QString word = words[i].toLower();
+        if (out.classWords.isEmpty() && classes.contains(word)) {
+            out.classWords << words[i];
+            const bool lineClass = word == QLatin1String("line") || word == QLatin1String("pre-line");
+            if (kind == QLatin1String("template") && lineClass && i + 1 < words.size() &&
+                !modifierWords().contains(words[i + 1].toLower()) && !templateClasses().contains(words[i + 1].toLower()))
+                out.classWords << words[++i];
+        } else {
+            out.modifiers << words[i];
+            if (takesArgument(word) && i + 1 < words.size())
+                out.modifiers << words[++i];
+        }
     }
-    out.modifiers = words;
     return out;
 }
 

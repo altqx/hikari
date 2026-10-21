@@ -900,6 +900,20 @@ private slots:
                  QStringLiteral("code once all"));
         QCOMPARE(e.effectParts(QStringLiteral("template line named")).value(QStringLiteral("name")).toString(),
                  QStringLiteral("named"));
+        // The class may come after modifiers, as the stock parser reads it,
+        // but not as a modifier's argument.
+        const QVariantMap late = e.effectParts(QStringLiteral("template noblank line named"));
+        QCOMPARE(late.value(QStringLiteral("className")).toString(), QStringLiteral("line"));
+        QCOMPARE(late.value(QStringLiteral("name")).toString(), QStringLiteral("named"));
+        QCOMPARE(late.value(QStringLiteral("modifiers")).toStringList(), (QStringList{QStringLiteral("noblank")}));
+        QCOMPARE(e.effectParts(QStringLiteral("code all syl")).value(QStringLiteral("className")).toString(),
+                 QStringLiteral("syl"));
+        QCOMPARE(e.effectWithClass(QStringLiteral("template noblank line"), QStringLiteral("syl")),
+                 QStringLiteral("template syl noblank"));
+        const QVariantMap argument = e.effectParts(QStringLiteral("template fx line char"));
+        QCOMPARE(argument.value(QStringLiteral("className")).toString(), QStringLiteral("char"));
+        QCOMPARE(argument.value(QStringLiteral("modifiers")).toStringList(),
+                 (QStringList{QStringLiteral("fx"), QStringLiteral("line")}));
     }
 
     // A file's templates and code run Lua: nothing of them runs until the
