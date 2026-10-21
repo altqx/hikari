@@ -901,6 +901,52 @@ private slots:
         QVERIFY(previewCame());
     }
 
+    // Template or code Lines that come another way than New (a paste, an
+    // import) are Lua the user did not write: the panel asks before it runs
+    // them, on the user's own file and on one already previewed.
+    void templatesPastedInAskFirst()
+    {
+        const core::Document file = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::vector<core::LineRecord> pasted;
+        for (const auto *l : file.lines())
+            if (application::templateKindOf(*l))
+                pasted.push_back(*l);
+        QVERIFY(!pasted.empty());
+        const auto paste = [&] {
+            return change([&](core::Document &doc) {
+                for (const auto &l : pasted)
+                    if (!doc.appendLine(l))
+                        return false;
+                return true;
+            });
+        };
+        core::Document plain = file;
+        plain.removeLinesIf([](const core::LineRecord &l) { return application::templateKindOf(l).has_value(); });
+        openDocument(std::move(plain), false);
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(paste());
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, 0);
+        QVERIFY(!editor->hasPreview());
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+        QVERIFY(previewCame());
+        // Previewed once; more pasted in asks again.
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500); // the run marking the current template's own Lines
+        const int before = templater->previews;
+        QVERIFY(paste());
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, before);
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));

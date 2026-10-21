@@ -369,7 +369,7 @@ void TemplateEditorController::refresh()
                                         std::ranges::none_of(doc.lines(), [](const core::LineRecord *l) {
                                             return application::templateKindOf(*l).has_value();
                                         }))
-        m_trusted.insert(key);
+        m_trusted[key] = {};
     // The current template follows the active Line when that is one.
     const auto active = s->selection().active;
     if (const auto *l = active ? line(*active) : nullptr; l && application::templateKindOf(*l) && active != m_current)
@@ -722,15 +722,29 @@ TemplateEditorController::DocumentKey TemplateEditorController::documentKey() co
                          : DocumentKey{static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(session())), 0};
 }
 
+std::set<core::LineId> TemplateEditorController::templateLines() const
+{
+    std::set<core::LineId> out;
+    if (const auto *doc = document())
+        for (const auto *l : doc->lines())
+            if (application::templateKindOf(*l))
+                out.insert(l->id);
+    return out;
+}
+
 bool TemplateEditorController::trusted() const
 {
-    return session() && m_trusted.contains(documentKey());
+    // A template or code Line come since another way (a paste, an import)
+    // is Lua the user has not chosen to run.
+    const auto it = session() ? m_trusted.find(documentKey()) : m_trusted.end();
+    return it != m_trusted.end() && std::ranges::includes(it->second, templateLines());
 }
 
 void TemplateEditorController::trustDocument()
 {
-    if (!session() || !m_trusted.insert(documentKey()).second)
+    if (!session() || trusted())
         return;
+    m_trusted[documentKey()] = templateLines();
     m_previewSnapshotKey.clear();
     emit changed();
     schedulePreview();
@@ -872,7 +886,7 @@ void TemplateEditorController::applied(const std::string &report)
                    {QStringLiteral("seconds"), o.value(QLatin1String("seconds")).toDouble()},
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
     takeBaseline();
-    m_trusted.insert(documentKey()); // the user ran them
+    m_trusted[documentKey()] = templateLines(); // the user ran them
     // A file's unmarked Lines are marked now; an Undo that brings them back
     // matches again.
     m_replaced.clear();
@@ -912,6 +926,8 @@ bool TemplateEditorController::insertTemplate(const QString &effect)
     };
     if (!s->run(command) || !added)
         return false;
+    if (const auto it = m_trusted.find(documentKey()); it != m_trusted.end())
+        it->second.insert(*added); // the user's own
     m_seenRevision = s->revision();
     m_current = *added;
     emit documentEdited();

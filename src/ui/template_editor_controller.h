@@ -249,10 +249,14 @@ private:
     void stopRuns();
 
     DocumentKey documentKey() const;
+    // The Document's template and code Lines.
+    std::set<core::LineId> templateLines() const;
 
     SessionSource m_sessionSource;
     DocumentKeySource m_documentKey;
-    std::set<DocumentKey> m_trusted;
+    // The template and code Lines the user chose to run, per Document: those
+    // there when the user previewed or applied, and those made with New.
+    std::map<DocumentKey, std::set<core::LineId>> m_trusted;
     std::set<DocumentKey> m_seenDocuments;
     application::KaraokeTemplaterPort *m_templater = nullptr;
     bool m_editable = false;
