@@ -209,7 +209,8 @@ std::expected<void, MacroApplyFailure> applyMacroResult(EditSession &session, co
             continue;
         }
         kept.insert(d.id);
-        if (!sameFields(d, *before[d.id]) || snapshot.dialogues[i].id != d.id)
+        // Lines inserted before a kept Line push it past the snapshot's end.
+        if (!sameFields(d, *before[d.id]) || i >= snapshot.dialogues.size() || snapshot.dialogues[i].id != d.id)
             changed = true;
     }
 
