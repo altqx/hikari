@@ -71,6 +71,7 @@ ScrollView {
                         objectName: "releaseName"
                         Layout.fillWidth: true
                         text: version.modelData.name
+                        textFormat: Text.PlainText // GitHub's text, never markup
                         font.weight: Font.DemiBold
                         wrapMode: Text.Wrap
                     }

@@ -47,6 +47,7 @@ DialogWindow {
             Label {
                 objectName: "updateName"
                 text: available.release.name || ""
+                textFormat: Text.PlainText // GitHub's text, never markup
                 font: available.fontAt(18, Font.DemiBold)
                 elide: Text.ElideRight
                 Layout.fillWidth: true

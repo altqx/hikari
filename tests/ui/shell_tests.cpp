@@ -6499,6 +6499,8 @@ private slots:
         QQuickItem *newest = findItem(card, QStringLiteral("releaseNotes0"));
         QVERIFY(newest);
         QCOMPARE(findItem(newest, QStringLiteral("releaseName"))->property("text").toString(), QStringLiteral("HikariSub 0.1.3"));
+        // A release's name is GitHub's text: never read as markup.
+        QCOMPARE(findItem(newest, QStringLiteral("releaseName"))->property("textFormat").toInt(), int(Qt::PlainText));
         QQuickItem *older = findItem(card, QStringLiteral("releaseNotes1"));
         QVERIFY(older);
         QCOMPARE(findItem(older, QStringLiteral("releaseName"))->property("text").toString(), QStringLiteral("HikariSub 0.1.2"));
@@ -6593,6 +6595,7 @@ private slots:
         QTRY_VERIFY(available->isVisible());
         QVERIFY(available->property("resizable").toBool());
         QCOMPARE(dialogItem("updateAvailable", "updateName")->property("text").toString(), QStringLiteral("HikariSub 9.0.0"));
+        QCOMPARE(dialogItem("updateAvailable", "updateName")->property("textFormat").toInt(), int(Qt::PlainText));
         // SH3: the notes as plain rich text, the Markdown gone.
         auto *notes = dialogItem("updateAvailable", "updateNotes");
         QCOMPARE(notes->property("notes").toString(), QStringLiteral("## New\n- everything"));
