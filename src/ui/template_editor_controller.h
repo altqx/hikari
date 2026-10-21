@@ -297,8 +297,8 @@ private:
     // in every form the user chose: as they were when the user previewed or
     // applied, as New made them and as the panel's edits left them (an Undo
     // goes back to one).
-    // With them, the Actor and Style values there when the user previewed or
-    // applied.
+    // With them, each runnable Line's Style and Actor, as a pair, there when
+    // the user previewed or applied.
     struct Trust {
         std::map<core::LineId, std::set<std::string>> lines;
         std::set<std::string> fields;

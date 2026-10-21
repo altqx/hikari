@@ -1357,6 +1357,39 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // A Style picks the templates an Actor goes into: a runnable Line pairing
+    // a trusted Actor with another trusted Style asks first.
+    void aNewPairingOfActorAndStyleAsksFirst()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::vector<core::LineId> karaoke;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                karaoke.push_back(l->id);
+        QVERIFY(karaoke.size() >= 2);
+        QVERIFY(doc.editLine(karaoke[0], [](core::LineRecord &l) {
+            l.style = u8"T1a";
+            l.actor = u8"!_G.marker = 1!";
+        }));
+        QVERIFY(doc.editLine(karaoke[1], [](core::LineRecord &l) {
+            l.style = u8"T1b";
+            l.actor = u8"plain";
+        }));
+        core::LineRecord pairing;
+        for (const auto *l : doc.lines())
+            if (l->id == karaoke[1])
+                pairing = *l;
+        openDocument(std::move(doc), true);
+        activate(karaoke[1]);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(editor->trusted());
+        pairing.actor = u8"!_G.marker = 1!"; // T1b's templates with T1a's Actor
+        QVERIFY(change([&](core::Document &d) { return d.appendLine(pairing).has_value(); }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));

@@ -859,10 +859,11 @@ std::set<std::string> TemplateEditorController::sourceFields() const
     if (const auto *doc = document())
         for (const auto *l : doc->lines())
             if (application::isKaraokeLine(*l) && !application::templateKindOf(*l)) {
-                // A value in its role: a Style's name is no trusted Actor.
+                // The pairing: the Style picks the templates the Actor goes
+                // into ($actor), so a trusted Actor under another Style, or a
+                // Style's name as an Actor, is new.
                 const auto m = application::macroLineOf(*l);
-                out.insert("actor\x1f" + m.actor);
-                out.insert("style\x1f" + m.style);
+                out.insert(std::to_string(m.style.size()) + ':' + m.style + m.actor);
             }
     return out;
 }
