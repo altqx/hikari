@@ -393,6 +393,51 @@ TEST(TagTransfer, AFlagOutOfRangeIsTheActiveStyles)
     EXPECT_EQ(u8(tags.runs[0].text), "b");
 }
 
+TEST(TagTransfer, SignedNumbersReadAsTheRendererReadsThem)
+{
+    // strtol and strtod take a '+'; -0 is 0.
+    EXPECT_TRUE(readOriginalTags(u"a{\\frz-0}b").runs.empty());
+    EXPECT_TRUE(readOriginalTags(u"a{\\frz+0}b").runs.empty());
+    const auto drawing = readOriginalTags(u"{\\p-0}a {\\i1}b{\\i0}");
+    EXPECT_FALSE(drawing.drawing);
+    EXPECT_EQ(drawing.runs.size(), 1u);
+    const auto plus = readOriginalTags(u"a {\\i+1}b{\\i0} c");
+    ASSERT_EQ(plus.runs.size(), 1u);
+    EXPECT_EQ(u8(plus.runs[0].text), "b");
+}
+
+TEST(TagTransfer, ARunOpensWithEveryTransformStillRunning)
+{
+    const auto tags = readOriginalTags(u"a {\\t(\\fs20)}b {\\t(\\bord2)}c{\\r} d");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    EXPECT_EQ(u8(tags.runs[1].text), "c");
+    const auto d = draft(u"x y z", {{2, 3, 2}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "x {\\t(\\fs20)\\t(\\bord2)}y{\\r} z");
+    expectRoundTrip(tags, d);
+}
+
+TEST(TagTransfer, ARelativeSizeOpensAsTheSizeItGives)
+{
+    StyleValues style;
+    style.name = u8"Default";
+    style.fontsize = u8"20";
+    const std::vector<StyleValues> styles{style};
+    // \fs+5 scales 30 by 1.5 (libass): the run on c is 45 from the base.
+    const auto tags = readOriginalTags(u"a {\\fs30}b {\\fs+5}c{\\fs20} d", &style, styles);
+    ASSERT_EQ(tags.runs.size(), 2u);
+    EXPECT_EQ(u8(tags.runs[1].text), "c");
+    const auto d = draft(u"x y z", {{2, 3, 2}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "x {\\fs45}y{\\fs20} z");
+    expectRoundTrip(tags, d);
+}
+
+TEST(TagTransfer, NoSuggestionAcrossTheTranslatorsOwnTags)
+{
+    const auto tags = readOriginalTags(u"I {\\i1}Tokyo{\\i0} x");
+    EXPECT_TRUE(suggestPlacements(tags, draft(u"To{\\b1}ky{\\b0}o")).empty());
+    EXPECT_EQ(suggestPlacements(tags, draft(u"{\\b1}Tokyo{\\b0}")).size(), 1u);
+}
+
 TEST(TagTransfer, ManyTransformsStayCheapAndTooManyTagsCarryNothing)
 {
     std::u16string many = u"{\\an8}a";
@@ -401,7 +446,9 @@ TEST(TagTransfer, ManyTransformsStayCheapAndTooManyTagsCarryNothing)
     many += u"{\\r}c"; // what ends them
     const auto tags = readOriginalTags(many);
     ASSERT_FALSE(tags.malformed);
-    EXPECT_EQ(tags.runs.size(), 400u);
+    // A run opens with every transform still running; one whose 14-unit
+    // transforms take more than 1024 units is not offered.
+    EXPECT_EQ(tags.runs.size(), 1024u / 14u);
     for (const auto &run : tags.runs)
         for (const auto &[component, value] : run.differs)
             EXPECT_LT(value.size(), 64u) << u8(component);

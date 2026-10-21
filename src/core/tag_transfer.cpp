@@ -251,6 +251,13 @@ std::u16string hex(unsigned long value, int digits)
     return ascii(buf);
 }
 
+// Where a number's digits start, past a '+' (strtol and strtod, which libass
+// reads numbers with, take one; from_chars does not).
+const char *digitsFrom(const char *first, const char *last)
+{
+    return last - first > 1 && *first == '+' && first[1] != '-' && first[1] != '+' ? first + 1 : first;
+}
+
 // Equal values compare equal however they are spelled.
 std::u16string normalised(Kind kind, std::u16string_view arg)
 {
@@ -263,7 +270,7 @@ std::u16string normalised(Kind kind, std::u16string_view arg)
     case Kind::Flag:
     case Kind::Bold: {
         long n = 0;
-        if (std::from_chars(first, last, n).ec != std::errc{})
+        if (std::from_chars(digitsFrom(first, last), last, n).ec != std::errc{})
             return value;
         if (kind == Kind::Flag || n == 0 || n == 1)
             return n != 0 ? u"1" : u"0";
@@ -280,8 +287,10 @@ std::u16string normalised(Kind kind, std::u16string_view arg)
     }
     case Kind::Number: {
         double n = 0;
-        if (std::from_chars(first, last, n).ec != std::errc{})
+        if (std::from_chars(digitsFrom(first, last), last, n).ec != std::errc{})
             return value;
+        if (n == 0)
+            n = 0; // -0 is 0
         char buf[32];
         const auto r = std::to_chars(buf, buf + sizeof buf, n);
         return ascii(std::string(buf, r.ptr));
@@ -302,7 +311,7 @@ bool isStyleValue(Kind kind, std::u16string_view arg)
     std::string s;
     long n = 0;
     if ((kind != Kind::Flag && kind != Kind::Bold) || !narrow(value, s)
-        || std::from_chars(s.data(), s.data() + s.size(), n).ec != std::errc{})
+        || std::from_chars(digitsFrom(s.data(), s.data() + s.size()), s.data() + s.size(), n).ec != std::errc{})
         return false;
     return n != 0 && n != 1 && (kind == Kind::Flag || n < 100);
 }
@@ -318,11 +327,9 @@ std::optional<double> numberIn(std::u16string_view text)
     std::string s;
     if (!narrow(trimmed(text), s))
         return std::nullopt;
-    const char *first = s.data(), *last = s.data() + s.size();
-    if (first != last && *first == '+')
-        ++first;
+    const char *last = s.data() + s.size();
     double n = 0;
-    if (std::from_chars(first, last, n).ec != std::errc{})
+    if (std::from_chars(digitsFrom(s.data(), last), last, n).ec != std::errc{})
         return std::nullopt;
     return n;
 }
@@ -615,6 +622,29 @@ TagSetter lastSetter(const History &history, const std::u16string &component, st
     return {};
 }
 
+// What a run's \t opening replays at most, in UTF-16 units; a run that
+// needs more is not offered. With at most kMaxTagTransferTags runs this
+// keeps every opening within kMaxTagTransferWork.
+constexpr std::size_t kMaxTransformOpening = 1024;
+
+// The \t tags from the `from`th to `last`, since the last reset: what puts
+// back the transforms running after `last`.
+TagSetter transformsTo(const History &history, const TagSetter &last, std::size_t from)
+{
+    const auto it = history.find(u"t");
+    if (last.tag.empty() || it == history.end())
+        return last;
+    const auto &assignments = it->second;
+    const auto end = std::ranges::upper_bound(assignments, last.order, {}, &Assignment::order);
+    auto begin = end;
+    while (begin != assignments.begin() && std::prev(begin)->order >= from && std::prev(begin)->tag.starts_with(u"\\t"))
+        --begin;
+    std::u16string tags;
+    for (auto a = begin; a != end && tags.size() <= kMaxTransformOpening; ++a)
+        tags += a->tag;
+    return {last.order, std::move(tags)};
+}
+
 // The first tag from the `from`th on to give `component` the value.
 TagSetter firstSetter(const History &history, const std::u16string &component, std::size_t from,
                       const std::u16string &value)
@@ -767,7 +797,21 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         run.text = projection.text.substr(start, end - start);
         bool closable = true;
         for (const auto &[component, value] : run.differs) {
-            run.opens[component] = lastSetter(history, component, firstSegment.order, value);
+            auto open = lastSetter(history, component, firstSegment.order, value);
+            if (component == u"t") {
+                // The transforms are all those still running, after any the
+                // leading block carries: the last alone is another state.
+                const auto leadingT = leadingSetters.find(component);
+                open = transformsTo(history, open, leadingT != leadingSetters.end() ? leadingT->second.order + 1 : 0);
+                closable = closable && open.tag.size() <= kMaxTransformOpening;
+            } else if (component == u"fs" && open.tag.starts_with(u"\\fs")) {
+                // A relative size scales the current one: from the base it
+                // would be another.
+                const auto args = trimmed(std::u16string_view(open.tag).substr(3));
+                if (!args.empty() && (args.front() == u'+' || args.front() == u'-'))
+                    open.tag = u"\\fs" + value;
+            }
+            run.opens[component] = std::move(open);
             const auto baseValue = valueIn(out.base, component);
             TagSetter close = firstSetter(history, component, lastSegment.order, baseValue);
             if (close.tag.empty()) {
@@ -1089,7 +1133,10 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
             continue;
         const RunPlacement p{rawOffset(projection, found, true), rawOffset(projection, found + run.text.size(), false),
                              run.number};
-        if (p.start < p.end && !overlaps(draft.placements, p) && !overlaps(out, p))
+        // Text across the translator's own tags is in more than one state,
+        // which no one run can be read back over.
+        const bool crossesTags = p.start < p.end && draft.body.find(u'{', p.start) < p.end;
+        if (p.start < p.end && !crossesTags && !overlaps(draft.placements, p) && !overlaps(out, p))
             out.push_back(p);
     }
     std::ranges::sort(out, {}, &RunPlacement::start);
