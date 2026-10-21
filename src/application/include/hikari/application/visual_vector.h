@@ -24,10 +24,10 @@
 
 namespace hikari::application::visual {
 
-// The keys the vector editor and the clips take (Qt::Key values; the
-// application layer does not link Qt).
+// The keys the vector editor and the clips take besides the arrows
+// (visual_tools.h; Qt::Key values, the application layer does not link Qt).
 namespace keys {
-inline constexpr int A = 0x41, D = 0x44, S = 0x53, W = 0x57;
+inline constexpr int A = 0x41; // Ctrl+A selects every point
 inline constexpr int Delete = 0x01000007;
 } // namespace keys
 

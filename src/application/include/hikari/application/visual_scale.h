@@ -9,7 +9,8 @@
 // rectangle for the current scale"); "Change all scale tags" multiplies
 // every \fscx/\fscy of the Line; "Preserve proportions" also moves the
 // several targets' positions and clips about the active Line's position.
-// W/A/S/D nudge the arrows (Shift: a tenth), each press its own step.
+// The arrow keys nudge the arrows (Shift: a tenth; VT2-arrow-nudge, legacy's
+// W/A/S/D), each press its own step.
 
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_transform.h"
@@ -26,6 +27,7 @@ public:
     bool keepsStateAfterCommit() const override { return true; }
     void selected(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
+    bool takesKey(const Key &event) const override;
     bool key(const Key &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolValue> values(const VisualHost &host) const override;
