@@ -91,6 +91,7 @@ struct ReleaseEntry {
     std::string tag, name, url, notes; // the reader gives a release without a name its tag
     bool draft = false, prerelease = false;
     std::vector<ReleaseAsset> assets;
+    std::string published; // GitHub's published_at ("2026-10-21T09:00:00Z"), or empty
 };
 // The releases that are no drafts, have a SemVer tag, are newer than
 // `current` and fit the channel: highest version first, one per version
@@ -104,6 +105,29 @@ std::optional<ReleaseEntry> findNewerRelease(const std::vector<ReleaseEntry> &re
                                              bool stableOnly);
 // A prerelease by GitHub's flag or by its tag.
 bool isPrerelease(const ReleaseEntry &release);
+
+// SH3 (#223, owner-approved 2026-10-21): What's new. The releases whose
+// notes show for `installed` after `since`, the version that ran before it:
+// no drafts, the rewrite's only (0.1.0 on), newer than `since` and up to
+// `installed`, on every channel, highest first, one per version (the first
+// listed wins). A `since` that is no version, the legacy app's or not below
+// `installed` (a first start, a downgrade) gives `installed` alone.
+std::vector<ReleaseEntry> whatsNewReleases(const std::vector<ReleaseEntry> &releases, std::string_view since,
+                                           std::string_view installed);
+// At most this many versions show; the rest are counted.
+inline constexpr std::size_t kMaxWhatsNew = 10;
+struct WhatsNewShown {
+    std::vector<ReleaseEntry> releases;
+    std::size_t more = 0;
+};
+// What shows of whatsNewReleases on the update checker's channel: "stable
+// only" (stableOnlyFor) leaves pre-releases out on a stable build; a
+// pre-release build shows them, as its check offers it the next one.
+WhatsNewShown whatsNewShown(const std::vector<ReleaseEntry> &releases, std::string_view installed, bool stableOnly);
+// The version that ran before `installed`, recorded at each start: the one
+// that ran last when it differs (an update; none on the first start ever),
+// else `storedSince`, kept until the next update.
+std::string whatsNewSince(std::string_view lastRun, std::string_view storedSince, std::string_view installed);
 
 // The update manifest, hikarisub-update.json.
 inline constexpr std::string_view kManifestAsset = "hikarisub-update.json";

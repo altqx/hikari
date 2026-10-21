@@ -387,6 +387,59 @@ bool isAllowedDownloadHost(std::string_view host)
     return false;
 }
 
+std::vector<ReleaseEntry> whatsNewReleases(const std::vector<ReleaseEntry> &releases, std::string_view since,
+                                           std::string_view installed)
+{
+    const auto top = parseSemVer(installed);
+    if (!top)
+        return {};
+    auto after = parseSemVer(since);
+    if (after && (codebaseOfVersion(since) != Codebase::Qt || compareSemVer(*after, *top) >= 0))
+        after.reset(); // a first start, a downgrade, the legacy app: the installed version alone
+    std::vector<std::pair<SemVer, const ReleaseEntry *>> found;
+    for (const auto &release : releases) {
+        if (release.draft)
+            continue;
+        const auto version = candidateVersion(release.tag);
+        if (!version || codebaseOfVersion(withoutV(release.tag)) != Codebase::Qt)
+            continue;
+        const int toTop = compareSemVer(*version, *top);
+        if (toTop > 0 || (after ? compareSemVer(*version, *after) <= 0 : toTop != 0))
+            continue;
+        const bool seen = std::any_of(found.begin(), found.end(),
+                                      [&](const auto &f) { return compareSemVer(f.first, *version) == 0; });
+        if (!seen)
+            found.emplace_back(*version, &release);
+    }
+    std::stable_sort(found.begin(), found.end(),
+                     [](const auto &a, const auto &b) { return compareSemVer(a.first, b.first) > 0; });
+    std::vector<ReleaseEntry> out;
+    for (const auto &f : found)
+        out.push_back(*f.second);
+    return out;
+}
+
+WhatsNewShown whatsNewShown(const std::vector<ReleaseEntry> &releases, std::string_view installed, bool stableOnly)
+{
+    // As updateCandidates: "stable only" holds on a stable build.
+    const bool skipPrereleases = stableOnly && !isPrereleaseTag(installed);
+    WhatsNewShown shown;
+    for (const auto &release : releases) {
+        if (skipPrereleases && isPrerelease(release))
+            continue;
+        if (shown.releases.size() < kMaxWhatsNew)
+            shown.releases.push_back(release);
+        else
+            ++shown.more;
+    }
+    return shown;
+}
+
+std::string whatsNewSince(std::string_view lastRun, std::string_view storedSince, std::string_view installed)
+{
+    return std::string(lastRun == installed ? storedSince : lastRun);
+}
+
 bool isPrerelease(const ReleaseEntry &release)
 {
     return release.prerelease || isPrereleaseTag(release.tag);
