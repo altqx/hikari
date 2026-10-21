@@ -14,6 +14,8 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
 
+#include "legacy_visual_keys.h"
+
 #include <gtest/gtest.h>
 
 #include <QFile>
@@ -356,11 +358,9 @@ struct Replay {
             in >> k;
             while (in >> f)
                 flags += f + " ";
-            Key key;
-            key.key = k == "Delete" ? keys::Delete : k[0];
-            key.control = flags.find("ctrl") != std::string::npos;
-            key.shift = flags.find("shift") != std::string::npos;
-            key.alt = flags.find("alt") != std::string::npos;
+            Key key = legacy_keys::legacyKey(k, flags.find("shift") != std::string::npos,
+                                         flags.find("ctrl") != std::string::npos,
+                                         flags.find("alt") != std::string::npos, tool().family());
             tool().key(key, host);
             key.release = true; // the nudge commits on the key's release
             tool().key(key, host);
@@ -681,7 +681,7 @@ TEST(ClipGesture, KeyNudgeCommitsOnReleaseOncePerPress)
     tool.reset(host);
     const std::size_t steps = host.s->historySize();
     Key d;
-    d.key = keys::D;
+    d.key = keys::Right; // VT2-arrow-nudge: legacy's D
     EXPECT_TRUE(tool.key(d, host));
     // Qt's auto-repeat: a release and a press each time, both auto-repeat.
     for (int i = 0; i < 2; ++i) {
@@ -699,6 +699,45 @@ TEST(ClipGesture, KeyNudgeCommitsOnReleaseOncePerPress)
     // The pending draft first (its own step), then the nudge as one step.
     EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(30,30,303,300)}first");
     EXPECT_EQ(host.s->historySize(), steps + 2);
+}
+
+// VT2-arrow-nudge: the arrows move the selected points (legacy W/A/S/D).
+// The clip is written in whole units, so Shift moves them a whole unit too
+// (VisualClips.cpp:1173, a tenth only in a drawing). Ctrl+arrows and
+// Alt+arrows are not the tool's.
+TEST(ClipGesture, TheArrowsMoveTheSelectedPoints)
+{
+    TestHost host;
+    setUp(host);
+    const auto id = ids(*host.s)[0];
+    VectorClipTool tool;
+    host.tool = &tool;
+    tool.editor().mode = VectorEditor::Drag;
+    tool.reset(host);
+    Key all;
+    all.key = keys::A;
+    all.control = true;
+    EXPECT_TRUE(tool.key(all, host));
+    const auto press = [&](int k, bool shift, bool control = false, bool alt = false) {
+        Key key;
+        key.key = k;
+        key.shift = shift;
+        key.control = control;
+        key.alt = alt;
+        const bool taken = tool.takesKey(key);
+        EXPECT_EQ(tool.key(key, host), taken);
+        key.release = true;
+        (void)tool.key(key, host);
+        return taken;
+    };
+    EXPECT_TRUE(press(keys::Right, false));
+    EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 1 0 l 301 0 301 300)}first");
+    EXPECT_TRUE(press(keys::Down, true));
+    EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 1 1 l 301 1 301 301)}first");
+    EXPECT_FALSE(press(keys::Left, false, true));
+    EXPECT_FALSE(press(keys::Left, false, false, true));
+    EXPECT_FALSE(press(int('D'), false));
+    EXPECT_EQ(line(*host.s, id)->text, u8"{\\clip(m 1 1 l 301 1 301 301)}first");
 }
 
 // Removing the last point in an add mode (1-3). Legacy's RemovePoints ends in
