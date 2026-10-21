@@ -2931,22 +2931,29 @@ ApplicationWindow {
                         property string tip
                         property string menuTip
                         property Menu menu
+                        // KA1: a face that toggles (Auto split), and a narrower arrow
+                        property string faceText: tip
+                        property real arrowWidth: 13
+                        property alias checkable: splitFace.checkable
+                        property alias checked: splitFace.checked
                         default property alias marks: splitFace.data
                         signal run()
+                        signal toggled()
                         AudioButton {
                             id: splitFace
                             objectName: split.name
-                            text: split.tip
+                            text: split.faceText
                             iconRole: split.iconRole
                             symbol: split.symbol
                             altSymbol: split.altSymbol
                             tip: split.tip
                             onRun: split.run()
+                            onToggled: split.toggled()
                         }
                         ToolButton {
                             objectName: split.name + "Arrow"
                             focusPolicy: Qt.NoFocus
-                            implicitWidth: 13
+                            implicitWidth: split.arrowWidth
                             implicitHeight: 26
                             padding: 0
                             down: split.menu !== null && split.menu.visible
@@ -3174,7 +3181,7 @@ ApplicationWindow {
                         spacing: 2
                         // two switches, a separator and three toggles, and
                         // Auto split in Karaoke mode
-                        readonly property real fullWidth: 2 * 54 + 5 + 3 * 26 + (root.audio.karaoke ? 26 + 7 * spacing : 6 * spacing)
+                        readonly property real fullWidth: 2 * 54 + 5 + 3 * 26 + (root.audio.karaoke ? 26 + 9 + 7 * spacing : 6 * spacing)
                         // A5: legacy AudioBox's KaraSwitch, as a switch
                         AudioSwitch {
                             AudioSegment {
@@ -3195,18 +3202,41 @@ ApplicationWindow {
                                 onRun: if (!root.audio.karaoke) root.audio.toggleKaraoke()
                             }
                         }
-                        // A5: KaraMode, in Karaoke mode only
-                        AudioButton {
-                            objectName: "audioKaraokeSplit"
+                        // A5: KaraMode, in Karaoke mode only; KA1 (#276, owner
+                        // 2026-10-21): its arrow holds the split at the cursor
+                        // and the \k and \kf switch
+                        AudioSplitButton {
+                            name: "audioKaraokeSplit"
                             visible: root.audio.karaoke
                             iconRole: "karaoke-split"
-                            text: qsTranslate("HikariSub.Audio", "Auto split")
+                            faceText: qsTranslate("HikariSub.Audio", "Auto split")
                             checkable: true
                             checked: root.audio.karaokeSplitMode
                             tip: qsTranslate("HikariSub.Audio", "Enable / Disable automatic splitting of syllables")
+                            menuTip: qsTranslate("HikariSub.Audio", "Syllable commands")
+                            menu: audioKaraokeMenu
+                            arrowWidth: 9 // the default panel still holds the row (owner, 2026-10-21)
                             onToggled: {
                                 root.audio.toggleKaraokeSplitMode()
                                 checked = Qt.binding(() => root.audio.karaokeSplitMode)
+                            }
+                        }
+                        ShellMenu {
+                            id: audioKaraokeMenu
+                            objectName: "audioKaraokeMenu"
+                            ShellMenuItem {
+                                objectName: "audioKaraokeSplitAtCursor"
+                                iconRole: "karaoke-split"
+                                text: qsTranslate("HikariSub.Audio", "Split syllable at the cursor") + "\t"
+                                      + root.boundKeys("AUDIO_KARAOKE_SPLIT", 4)
+                                onTriggered: root.audio.splitSyllableAtCursor()
+                            }
+                            ShellMenuItem {
+                                objectName: "audioKaraokeKf"
+                                iconRole: "karaoke"
+                                text: qsTranslate("HikariSub.Audio", "Switch long syllables between %1 and %2").arg("\\k").arg("\\kf") + "\t"
+                                      + root.boundKeys("AUDIO_KARAOKE_KF", 4)
+                                onTriggered: root.audio.switchLongSyllablesToKf()
                             }
                         }
                         // A2: SpectrumMode, as a switch
@@ -3315,6 +3345,25 @@ ApplicationWindow {
                                         checked = Qt.binding(() => root.audio.karaokeSplitMode)
                                         root.audio.toggleKaraokeSplitMode()
                                     }
+                                }
+                                // KA1 (#276)
+                                ShellMenuItem {
+                                    objectName: "audioMoreKaraokeSplitAtCursor"
+                                    visible: root.audio.karaoke
+                                    height: visible ? implicitHeight : 0
+                                    iconRole: "karaoke-split"
+                                    text: qsTranslate("HikariSub.Audio", "Split syllable at the cursor") + "\t"
+                                          + root.boundKeys("AUDIO_KARAOKE_SPLIT", 4)
+                                    onTriggered: root.audio.splitSyllableAtCursor()
+                                }
+                                ShellMenuItem {
+                                    objectName: "audioMoreKaraokeKf"
+                                    visible: root.audio.karaoke
+                                    height: visible ? implicitHeight : 0
+                                    iconRole: "karaoke"
+                                    text: qsTranslate("HikariSub.Audio", "Switch long syllables between %1 and %2").arg("\\k").arg("\\kf") + "\t"
+                                          + root.boundKeys("AUDIO_KARAOKE_KF", 4)
+                                    onTriggered: root.audio.switchLongSyllablesToKf()
                                 }
                                 MenuSeparator {}
                                 ShellMenuItem {

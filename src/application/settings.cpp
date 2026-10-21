@@ -272,6 +272,12 @@ const std::vector<SettingDefinition> &definitions()
         // shows and a click repeats, the last one chosen from its menu (an
         // AUDIO_HOTKEY symbol). Starts on 500 ms before the start.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
+        // KA1 (#276): Karaoke's Auto split gives a double consonant a
+        // syllable of its own (so|ma|t|ta; off: so|mat|ta, KM's script).
+        {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
+        // KA1: how long a syllable is (in centiseconds) for the \k and \kf
+        // switch to take it (owner 2026-10-21: KM's 100).
+        {"audio.karaokeKfThreshold", "", Int, Profile, Mapped, false, std::int64_t{100}},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other

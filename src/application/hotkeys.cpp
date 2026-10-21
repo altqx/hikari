@@ -259,6 +259,11 @@ constexpr HotkeyAction kActions[] = {
         // unused in its windows' ranges (listed among their neighbours).
         // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
+        // KA1 (#276): Karaoke mode's split at the waveform cursor and the
+        // \k and \kf switch for long syllables, past AUDIO_LEAD_OUT (the
+        // unused 1005-1009 would run their id + 10, as the _ALT ids do).
+        {"AUDIO_KARAOKE_SPLIT", 1028},
+        {"AUDIO_KARAOKE_KF", 1029},
 };
 
 struct NameRow {
@@ -493,6 +498,9 @@ constexpr NameRow kNames[] = {
         {2001, "Stop"}, // VIDEO_STOP
         // The rewrite's own (LE3-tags-shown).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
+        // KA1 (#276)
+        {1028, "Split syllable at the cursor"}, // AUDIO_KARAOKE_SPLIT
+        {1029, "Switch long syllables between \\k and \\kf"}, // AUDIO_KARAOKE_KF
 };
 
 struct DefaultRow {
@@ -591,6 +599,9 @@ constexpr DefaultRow kAudioDefaults[] = {
         {1022, AudioHotkey, "Play to the end", "T"}, // AUDIO_PLAY_TO_END
         {1026, AudioHotkey, "Add lead-in", "C"}, // AUDIO_LEAD_IN
         {1027, AudioHotkey, "Add lead-out", "V"}, // AUDIO_LEAD_OUT
+        // KA1 (#276, owner 2026-10-21)
+        {1028, AudioHotkey, "Split syllable at the cursor", "K"}, // AUDIO_KARAOKE_SPLIT
+        {1029, AudioHotkey, "Switch long syllables between \\k and \\kf", "Shift-K"}, // AUDIO_KARAOKE_KF
 };
 
 constexpr std::string_view kWindowNames[] = {"Global", "Subtitles", "Editor", "Video", "Audio"};

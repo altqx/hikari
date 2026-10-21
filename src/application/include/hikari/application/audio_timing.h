@@ -101,6 +101,9 @@ struct AudioMouseResult {
     std::optional<std::pair<int, int>> playMs;
     bool keepCursor = false;
     bool hideCursor = false;
+    // KA1: a split on the letters leaves the view where it is (the commit
+    // does not bring the current syllable into view).
+    bool keepView = false;
 };
 
 // A5: karaoke mode's part of the mouse (legacy hasKara with its Karaoke).
@@ -156,6 +159,10 @@ private:
     std::int64_t m_selStart = 0, m_selEnd = 0, m_selMark = 0;
     std::int64_t m_lastX = 0, m_lastDragX = 0;
     int m_grabbed = -1; // A5
+    // KA1-lead-in-keeps-syllables: where a start drag began, and whether it
+    // takes the syllables along (the right button)
+    int m_startOrigin = 0;
+    bool m_startCarries = false;
 };
 
 // Legacy AudioDisplay::CommitChanges: the selection goes into the editor's

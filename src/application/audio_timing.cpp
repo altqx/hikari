@@ -241,8 +241,11 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
             } else if (std::abs(x - m_selStart) < 6) {
                 result.sizeCursor = true;
                 m_defCursor = false;
-                if (buttonDown)
+                if (buttonDown) {
                     m_hold = 1;
+                    m_startOrigin = selection.startMs;
+                    m_startCarries = rightDown;
+                }
             } else if (hasKara && y > 20) {
                 // A5: the syllables' boundaries (legacy's "yellow lines of karaoke")
                 m_grabbed = karaoke->boundaryAt(static_cast<int>(x), view);
@@ -297,6 +300,7 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                         // a click splits the syllable before the letter
                         karaoke->current = karaoke->hover;
                         result.commit = false; // Commit()
+                        result.keepView = true; // KA1-split-keeps-view
                     }
                     if (!m_defCursor) {
                         result.sizeCursor = false;
@@ -354,6 +358,10 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                     times[static_cast<std::size_t>(m_grabbed)] = std::max(prev, std::min(newpos, next));
                     karaoke->current = m_grabbed;
                 }
+                // KA1-lead-in-keeps-syllables: the start dragged with the left
+                // button leaves the syllables at their times
+                if (m_hold == 1 && hasKara && !m_startCarries)
+                    karaoke->moveStart(m_startOrigin, selection.startMs);
                 if (m_hold != 4)
                     result.commit = m_hold == 2;
                 m_hold = 0;
@@ -546,6 +554,17 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
             fields.translation = core::toUtf8(*request.karaokeText);
         else
             fields.text = core::toUtf8(*request.karaokeText);
+    } else if (fields.start && session.selection().selected.size() < 2) {
+        // KA1-lead-in-keeps-syllables: a start the panel moves (Line mode,
+        // or Add lead-in) leaves the \k syllables at their audio times; with
+        // several Lines selected each would take this one's text, so they
+        // keep theirs (legacy)
+        const auto from = static_cast<int>(current.start.value.microseconds() / 1000);
+        const auto to = static_cast<int>(start.microseconds() / 1000);
+        if (const auto kept = karaokeKeepSyllables(core::toUtf16(current.text), from, to))
+            fields.text = core::toUtf8(*kept);
+        if (const auto kept = karaokeKeepSyllables(core::toUtf16(current.translation), from, to))
+            fields.translation = core::toUtf8(*kept);
     }
     if ((fields.start || fields.end || fields.startFrame || fields.endFrame || fields.text || fields.translation) &&
         !session.editDraft(*active, fields))

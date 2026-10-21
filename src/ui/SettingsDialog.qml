@@ -764,6 +764,9 @@ Dialog {
                     SettingCheck { setting: "audio.dontPlayWhenLineChanges"; text: qsTr("Do not play audio after changing the line") }
                     SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge all the \"n\" with the previous syllable") }
                     SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move syllable line after click") }
+                    // KA1 (#276)
+                    SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
+                    SettingNumber { setting: "audio.karaokeKfThreshold"; text: qsTr("Syllables this long switch to %1 (centiseconds)").arg("\\kf"); from: 10; to: 10000 }
                     SettingCheck { setting: "audio.ramCache"; text: qsTr("Load audio into RAM") }
                     // H2-output-device: the device both the audio box and
                     // video playback play through (System default follows

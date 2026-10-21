@@ -10,8 +10,15 @@
 // every position counts UTF-16 units as legacy's did.
 //
 // Legacy quirks kept: see audio_karaoke.cpp and the A5 coverage row.
+//
+// KA1 (#276): Auto split by language (karaoke_split.h); new syllables take
+// time by character; letters are graphemes; a syllable splits at a time
+// (the waveform cursor) too; a Line's \k text comes back as it was read
+// but for the times that changed; moving the start keeps the syllables at
+// their audio times; long syllables switch between \k and \kf in one step.
 
 #include "hikari/application/audio_display.h"
+#include "hikari/application/karaoke_split.h"
 
 #include <functional>
 #include <optional>
@@ -57,28 +64,48 @@ public:
     };
 
     // Legacy Split: with \k tags in an override block (the regex
-    // {([^}]*)\\kf?o?[0-9]([^}]*)} on the lower-cased text) the tags' times;
-    // otherwise split automatically (AUDIO_KARAOKE_SPLIT_MODE, `autoSplit`:
-    // after a vowel, n, space or punctuation not followed by space or
-    // punctuation, with AUDIO_MERGE_EVERY_N_WITH_SYLLABLE's `everyN`) or at
-    // spaces and \N \h \n, the Line's duration shared out. A5-auto-unclosed:
-    // what an unclosed "{" kept from the last split stays in the last syllable.
-    void split(const Line &line, bool autoSplit, bool everyN, const KaraokeCharClass &classes = KaraokeCharClass::ascii());
+    // {([^}]*)\\kf?o?[0-9]([^}]*)} on the lower-cased text) the tags' times
+    // (\kt is no syllable, KA1-kt-tag); otherwise split automatically
+    // (AUDIO_KARAOKE_SPLIT_MODE, `autoSplit`: KA1-auto-split-language,
+    // karaokeAutoSplit with `rules`) or at spaces and \N \h \n, the Line's
+    // duration shared out by character (KA1-time-by-character).
+    void split(const Line &line, bool autoSplit, const KaraokeSplitRules &rules,
+               const KaraokeCharClass &classes = KaraokeCharClass::ascii());
     void clear();
     // Legacy GetText: each syllable with its \k tag (the time from the
     // previous syllable's end, or from `curStartMs`, in centiseconds).
+    // KA1-k-round-trip: each tag goes back where Split read it (a tag before
+    // it in its block stays before it, a block of its own stays its own),
+    // with the number as it was written while its time is the same.
     std::u16string text(int curStartMs) const;
     // Legacy Join: syllable `i` takes the next one's text (every "{}" in the
     // result removed), its end and keeps its own tag. False (nothing done)
     // for the last syllable (A5-join-last).
     bool join(int i);
     // Legacy SplitSyl: syllable `i` split before its `letters`th visible
-    // character, the new boundary half way (ZEROIT), the second half a \k.
+    // character, the second part a \k; KA1-time-by-character: the new
+    // boundary divides the time by the parts' characters (ZEROIT).
     bool splitSyllable(int i, int letters, int curStartMs);
+    // KA1: syllable `i` split at `ms` (the waveform cursor), its text at the
+    // letter that share of its characters gives (all of it to one part at
+    // either end, which leaves the other empty). False when `ms` is not
+    // inside it.
+    bool splitAt(int i, int ms, int curStartMs);
     // Legacy GetLetters (A5-split-last-letter: after the last letter the split
     // is right after it, not at the raw position) and GetTextStripped.
+    // KA1-grapheme-letters: a letter is a grapheme, never half of one.
     std::pair<std::u16string, std::u16string> letters(int i, int letters) const;
     std::u16string stripped(int i) const;
+    // KA1-lead-in-keeps-syllables: the Line's start moved from `oldStartMs`
+    // to `newStartMs` with the syllables staying at their audio times. An
+    // earlier start puts the time before the first syllable into an empty
+    // lead syllable (a new one, or the one there); a later one cuts the
+    // syllables it passes to nothing and drops a lead syllable it empties.
+    void moveStart(int oldStartMs, int newStartMs);
+    // KA1-kf-switch: every \k syllable at least `thresholdMs` long becomes
+    // \kf; with none left as \k, those long ones go back to \k. False when
+    // no syllable is that long.
+    bool switchLongToKf(int thresholdMs, int curStartMs);
 
     // Legacy GetSylTimes and GetSylVisibleTimes.
     std::pair<int, int> syllableTimes(int i, int curStartMs) const;
@@ -87,8 +114,8 @@ public:
     int boundaryAt(int x, const AudioView &view) const;
     // Legacy GetSylAtX: the syllable under x (2 columns of slack; -1: none).
     int syllableAt(int x, const AudioView &view, int curStartMs) const;
-    // Legacy GetLetterAtX: the syllable under x and the letter of its
-    // stripped text before which x falls (its length past the last one).
+    // Legacy GetLetterAtX: the syllable under x and the letter (grapheme) of
+    // its stripped text before which x falls (their count past the last one).
     std::optional<std::pair<int, int>> letterAt(int x, const AudioView &view, int curStartMs,
                                                 const KaraokeMeasure &measure) const;
 
@@ -104,10 +131,34 @@ public:
     int character = -1;
 
 private:
+    // KA1-k-round-trip: where a syllable's tag goes back. `at` counts from
+    // the syllable's text (past its end: into the next one's, for two tags
+    // in one block); `number` is the time as written and `cs` its value,
+    // kept while the time is the same (none for a new syllable).
+    struct Place {
+        std::size_t at = 0;
+        std::u16string number;
+        std::optional<int> cs;
+    };
+    static Place newPlace(const std::u16string &syl);
+    void insertSyllable(int at, std::u16string text, int endMs);
+    void eraseSyllable(int at);
+    void cutSyllable(int i, std::u16string first, std::u16string second, int boundary);
+
     std::vector<std::u16string> m_syls;
     std::vector<std::u16string> m_tags;
     std::vector<int> m_times; // each syllable's end, in ms
+    std::vector<Place> m_places;
+    KaraokeCharClass m_classes = KaraokeCharClass::ascii();
 };
+
+// KA1-lead-in-keeps-syllables over a Line's text: with \k tags, the text as
+// moveStart leaves it for the start moved from `oldStartMs` to
+// `newStartMs`; none without tags or without a move.
+std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs);
+
+// The UTF-16 length of the first `graphemes` graphemes of `text`.
+std::size_t karaokeGraphemePrefix(std::u16string_view text, int graphemes);
 
 // Legacy AudioBox::OnKaraoke's zoom: switching on remembers the slider
 // (lastHorizontalZoom) and zooms in by 20 (not below 30); switching off goes

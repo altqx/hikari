@@ -5,6 +5,7 @@
 
 #include <QCoreApplication>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QTimer>
 
@@ -272,9 +273,9 @@ void AudioController::reselect()
 }
 
 // Legacy Update: with auto-scroll the Line is made visible.
-void AudioController::update(bool moveToEnd)
+void AudioController::update(bool moveToEnd, bool scroll)
 {
-    if (autoScrollSetting())
+    if (scroll && autoScrollSetting())
         makeDialogueVisible(false, moveToEnd);
     redraw();
 }
@@ -300,6 +301,20 @@ std::pair<int, int> AudioController::timesSelection(bool rangeEnd, bool ignoreKa
     return {m_startMs, m_endMs};
 }
 
+// KA1: the English hyphenation Auto split uses: LibreOffice's
+// hyph_en_US.dic (BSD-style, src/ui/hyphenation/README_hyph_en_US.txt).
+static const application::Hyphenation &karaokeHyphenation()
+{
+    static const application::Hyphenation patterns = [] {
+        QFile file(QStringLiteral(":/hikari/ui/hyphenation/hyph_en_US.dic"));
+        if (!file.open(QIODevice::ReadOnly))
+            return application::Hyphenation();
+        const QByteArray bytes = file.readAll();
+        return application::Hyphenation::fromPatterns(std::string_view(bytes.constData(), std::size_t(bytes.size())));
+    }();
+    return patterns;
+}
+
 // Legacy Karaoke::Split over the active Line (the edit box's): its text or
 // translation and its own times, with AUDIO_MERGE_EVERY_N_WITH_SYLLABLE read now.
 void AudioController::splitKaraoke()
@@ -309,8 +324,58 @@ void AudioController::splitKaraoke()
         return;
     }
     const auto &line = m_lines[static_cast<std::size_t>(m_active)];
-    const bool everyN = m_store && m_store->boolean("audio.mergeEveryNWithSyllable");
-    m_karaoke.split({m_activeText, line.startMs, line.endMs}, m_karaAuto, everyN, m_classes);
+    application::KaraokeSplitRules rules;
+    rules.everyN = m_store && m_store->boolean("audio.mergeEveryNWithSyllable");
+    rules.doubleConsonantApart = m_store && m_store->boolean("audio.karaokeDoubleConsonantApart"); // KA1
+    rules.hyphenation = &karaokeHyphenation();
+    m_karaoke.split({m_activeText, line.startMs, line.endMs}, m_karaAuto, rules, m_classes);
+}
+
+// KA1: as legacy Commit(false) after a split on the letters:
+// CommitChanges(false, AUDIO_AUTO_COMMIT) with the syllables' text, the
+// view left where it is.
+void AudioController::commitKaraoke()
+{
+    commitChanges(false, timingOptions().autoCommit, false, application::AudioAdjacent::None,
+                  m_karaoke.text(m_startMs), false);
+}
+
+void AudioController::splitSyllableAtCursor()
+{
+    if (!m_hasKara || !loaded() || !m_karaoke.count())
+        return;
+    auto &k = m_karaoke;
+    bool split = false;
+    if (k.hover >= 0 && k.character >= 0 && k.hover < k.count()) {
+        // the hovered letter, as a click on it
+        split = k.splitSyllable(k.hover, k.character, m_startMs);
+        if (split)
+            k.current = k.hover;
+    } else if (m_cursor && m_view.hasSource()) {
+        // the syllable under the waveform cursor, at its time
+        const int ms = m_view.msAtX(static_cast<std::int64_t>(*m_cursor));
+        for (int i = 0; i < k.count() && !split; i++) {
+            const auto [start, end] = k.syllableTimes(i, m_startMs);
+            if (ms > start && ms < end && (split = k.splitAt(i, ms, m_startMs)))
+                k.current = i + 1;
+        }
+    } else {
+        const int i = std::clamp(k.current, 0, k.count() - 1);
+        const auto [start, end] = k.syllableTimes(i, m_startMs);
+        if ((split = k.splitAt(i, start + (end - start) / 2, m_startMs)))
+            k.current = i + 1;
+    }
+    if (split)
+        commitKaraoke();
+}
+
+void AudioController::switchLongSyllablesToKf()
+{
+    if (!m_hasKara || !loaded() || !m_karaoke.count())
+        return;
+    const int threshold = m_store ? static_cast<int>(m_store->integer("audio.karaokeKfThreshold")) : 100;
+    if (m_karaoke.switchLongToKf(threshold * 10, m_startMs))
+        commitKaraoke();
 }
 
 // Legacy AudioBox::OnKaraoke.
@@ -842,6 +907,8 @@ bool AudioController::runHotkey(const QString &symbol)
         {QStringLiteral("AUDIO_GOTO"), [](AudioController &c) { c.goToSelection(); }},
         {QStringLiteral("AUDIO_LEAD_IN"), [](AudioController &c) { c.leadIn(); }},
         {QStringLiteral("AUDIO_LEAD_OUT"), [](AudioController &c) { c.leadOut(); }},
+        {QStringLiteral("AUDIO_KARAOKE_SPLIT"), [](AudioController &c) { c.splitSyllableAtCursor(); }}, // KA1
+        {QStringLiteral("AUDIO_KARAOKE_KF"), [](AudioController &c) { c.switchLongSyllablesToKf(); }},  // KA1
         {QStringLiteral("AUDIO_SCROLL_LEFT"), [](AudioController &c) { c.scrollRight(); }},
         {QStringLiteral("AUDIO_SCROLL_RIGHT"), [](AudioController &c) { c.scrollLeft(); }},
     };
@@ -947,7 +1014,7 @@ application::AudioSnapContext AudioController::snapContext() const
 // Legacy CommitChanges: the times go into the editor's fields and, with
 // `save`, to the Line (EditBox::Send); then Update(moveToEnd).
 void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent,
-                                    std::optional<std::u16string> karaokeText)
+                                    std::optional<std::u16string> karaokeText, bool scroll)
 {
     if (!loaded())
         return;
@@ -955,7 +1022,7 @@ void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, ap
         m_needCommit = false;
     if (m_hooks.commit)
         m_hooks.commit({m_startMs, m_endMs, save, nextLine, m_timing.hold() != 0, adjacent, std::move(karaokeText)});
-    update(moveToEnd);
+    update(moveToEnd, scroll);
 }
 
 // AudioBox::OnCommit: CommitChanges(true), so the next Line follows whatever
@@ -1071,8 +1138,17 @@ void AudioController::addLead(bool in, bool out)
     if (!loaded())
         return;
     const auto options = timingOptions();
+    const int startBefore = m_startMs;
     std::tie(m_startMs, m_endMs) =
         application::legacyAddLead(m_startMs, m_endMs, in, out, options.leadIn, options.leadOut);
+    // KA1-lead-in-keeps-syllables: in Karaoke mode the syllables stay at
+    // their times and their text goes into the editor with the times (in
+    // Line mode the commit keeps the text's syllables in place)
+    std::optional<std::u16string> karaokeText;
+    if (m_hasKara && m_karaoke.count() && m_startMs != startBefore) {
+        m_karaoke.moveStart(startBefore, m_startMs);
+        karaokeText = m_karaoke.text(m_startMs);
+    }
     if (m_hooks.commit)
         m_hooks.commit({.startMs = m_startMs,
                         .endMs = m_endMs,
@@ -1080,6 +1156,7 @@ void AudioController::addLead(bool in, bool out)
                         .nextLine = false,
                         .holding = m_timing.hold() != 0,
                         .adjacent = application::AudioAdjacent::None,
+                        .karaokeText = std::move(karaokeText),
                         .duration = false}); // UpdateTimeEditCtrls: Start and End
     m_needCommit = true;
     if (options.autoCommit)
@@ -1145,7 +1222,7 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
     // editor, then CommitChanges(false, AUDIO_AUTO_COMMIT, moveToEnd)
     if (result.commit)
         commitChanges(false, timingOptions().autoCommit, *result.commit, result.adjacent,
-                      m_hasKara ? std::optional(m_karaoke.text(m_startMs)) : std::nullopt);
+                      m_hasKara ? std::optional(m_karaoke.text(m_startMs)) : std::nullopt, !result.keepView);
     else if (result.redraw)
         redraw();
     return result;

@@ -128,6 +128,10 @@ constexpr OptionsBinding kBindings[] = {
     // WS2: the panel layout in the subtitle file ([Hikari]), on the
     // Subtitle properties page with the other things a save writes there.
     {"subtitles.layoutInFile", Check, SubtitleProperties},
+    // KA1: Auto split's double consonants and the \k and \kf switch's long
+    // syllable, on the Audio page after the karaoke options.
+    {"audio.karaokeDoubleConsonantApart", Check, Audio},
+    {"audio.karaokeKfThreshold", Number, Audio, 10, 10000},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.

@@ -247,6 +247,14 @@ public:
     bool karaokeSplitMode() const { return m_karaAuto; }
     Q_INVOKABLE void toggleKaraoke();
     Q_INVOKABLE void toggleKaraokeSplitMode();
+    // KA1 (#276), Karaoke mode: AUDIO_KARAOKE_SPLIT splits a syllable at the
+    // hovered letter, else at the waveform cursor (the pointer's line, or the
+    // playing position), else the current syllable in the middle;
+    // AUDIO_KARAOKE_KF switches the long syllables between \k and \kf
+    // (audio.karaokeKfThreshold). Each commits as a click on the letters
+    // does, and the view stays where it is.
+    Q_INVOKABLE void splitSyllableAtCursor();
+    Q_INVOKABLE void switchLongSyllablesToKf();
     const application::AudioKaraoke &karaokeModel() const { return m_karaoke; }
     int currentSyllable() const { return m_karaoke.current; }
     // The active Line's text as legacy's SetDialogue read it (the edit box's
@@ -351,14 +359,16 @@ private:
     void boxChanged();
     void newView();
     void reselect();     // legacy SetDialogue
-    void update(bool moveToEnd = false); // legacy Update: follow the Line, then redraw
+    // legacy Update: follow the Line (KA1: not with `scroll` false), then redraw
+    void update(bool moveToEnd = false, bool scroll = true);
     void redraw();
     // A3
     application::AudioTimingOptions timingOptions() const;
     application::AudioSnapContext snapContext() const;
     void commitChanges(bool nextLine, bool save, bool moveToEnd,
                        application::AudioAdjacent adjacent = application::AudioAdjacent::None,
-                       std::optional<std::u16string> karaokeText = std::nullopt);
+                       std::optional<std::u16string> karaokeText = std::nullopt, bool scroll = true);
+    void commitKaraoke(); // KA1: the syllables' text committed as a split on the letters is
     void makeDialogueVisible(bool force = false, bool moveToEnd = false); // legacy MakeDialogueVisible
     void splitKaraoke();                                                   // legacy Karaoke::Split
     void changeLine(int delta);

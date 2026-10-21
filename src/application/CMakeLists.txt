@@ -11,6 +11,8 @@ target_sources(hikari_application PRIVATE audio_devices.cpp include/hikari/appli
 target_sources(hikari_application PRIVATE audio_playback.cpp)
 # A5: the audio box's karaoke mode.
 target_sources(hikari_application PRIVATE audio_karaoke.cpp)
+# KA1 (#276): Karaoke's language-aware Auto split.
+target_sources(hikari_application PRIVATE karaoke_split.cpp include/hikari/application/karaoke_split.h)
 target_include_directories(hikari_application PUBLIC include)
 # V1: player frames off the GUI thread (latest wins, pooled buffers, the
 # overlay on a worker) and the Y'CbCr rows to BGRA the CPU paths share.

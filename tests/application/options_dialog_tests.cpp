@@ -155,8 +155,8 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     // boxes on the Editor page, H2-output-device's device choice on the Audio
     // page, LE2's Times/Frames and LE3's hidden-tag check boxes on the Editor
     // page, WS2's panel layout in the file on the Subtitle properties page,
-    // then (Windows) A4-wasapi-default's output host API and W1's video
-    // player.
+    // KA1's double consonants and \\kf length on the Audio page, then
+    // (Windows) A4-wasapi-default's output host API and W1's video player.
     ASSERT_GT(all.size(), std::size(kLegacy) + 5);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
@@ -186,9 +186,19 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(layout.page, OptionsPage::SubtitleProperties);
     ASSERT_NE(findSetting("subtitles.layoutInFile"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("subtitles.layoutInFile")->defaultValue), true);
+    const auto &consonants = all[std::size(kLegacy) + 6];
+    EXPECT_EQ(consonants.setting, "audio.karaokeDoubleConsonantApart");
+    EXPECT_EQ(consonants.control, OptionsControl::Check);
+    EXPECT_EQ(consonants.page, OptionsPage::Audio);
+    const auto &kf = all[std::size(kLegacy) + 7];
+    EXPECT_EQ(kf.setting, "audio.karaokeKfThreshold");
+    EXPECT_EQ(kf.control, OptionsControl::Number);
+    EXPECT_EQ(kf.page, OptionsPage::Audio);
+    EXPECT_EQ(kf.min, 10);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("audio.karaokeKfThreshold")->defaultValue), 100);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 8);
-    const auto &hostApi = all[std::size(kLegacy) + 6];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 10);
+    const auto &hostApi = all[std::size(kLegacy) + 8];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -199,7 +209,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 6);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 8);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));
