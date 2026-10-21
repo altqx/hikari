@@ -98,6 +98,7 @@ KE2 ([#284](https://github.com/altqx/hikari/issues/284)) adds the Template edito
 - **The Effect's picker** writes stock syntax: what the template runs for (Line before its syllables, Line, syllable, character, furigana syllable; for a code Line once, Line, syllable, furigana syllable) and the modifiers in plain words. The field takes stock syntax as typed too, the class after modifiers included (`template noblank line`), as the stock parser reads it.
 - **New** inserts a template or code Line of the stock kinds (furigana ones included) above the first karaoke Line, with that Line's Style, as one undo step.
 - **Apply** runs "Apply karaoke template" as the Automation menu does: the same macro, undo step, report and log. Its arrow offers "Apply to the selected Lines" (KE1's regenerate-selected). A shortcut for either is the macro's own, set in the Automation panel. After Apply the footer says how many Lines it wrote from how many karaoke Lines and in what time, until an Undo or another edit changes the Document.
+- A Line's fields (template text, Effect, Style, Actor values, the preview's text, the templater's messages) show as plain text, never markup: an `<img>` in a file fetches nothing.
 - At its minimum width (360 px) the fields stack and the preview folds into one row that unfolds on a click.
 
 The reduced snapshot leaves out the karaoke Lines before the current one, so state a code Line carries from Line to Line (a counter, a `remember`) starts afresh in the preview. Apply runs every Line and is unaffected.
