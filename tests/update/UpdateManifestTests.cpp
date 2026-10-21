@@ -1146,6 +1146,39 @@ TEST(update_walk_goes_on_for_offers)
 	CHECK(walk.Found());
 }
 
+TEST(update_walk_after_a_rewrite_update_keeps_only_newer_offers)
+{
+	// A rewrite release that is the update (offer_to naming legacy): past
+	// it, only a newer rewrite release can carry an offer worth showing.
+	std::vector<Release> releases = {
+		Release{ "v0.3.0", false, false },
+		Release{ "v0.2.0", false, false },
+		Release{ "v0.1.0", false, false },
+		Release{ "v0.0.3", false, false },
+	};
+	CandidateWalk walk(releases, ListCandidates(releases, "0.0.2", false));
+	CHECK(walk.Current() == 0);
+	walk.Skip();
+	CHECK(walk.Current() == 1);
+	walk.Take();
+	CHECK(walk.Found());
+	CHECK(walk.Current() == -1);
+
+	// A newer prerelease that "stable versions only" kept out is still
+	// looked at, for its offer.
+	releases = {
+		Release{ "v0.2.0", false, false },
+		Release{ "v0.3.0-beta.1", false, true },
+		Release{ "v0.1.0", false, false },
+	};
+	CandidateWalk stable(releases, ListCandidates(releases, "0.0.2", true));
+	CHECK(stable.Current() == 0);
+	stable.Take();
+	CHECK(stable.Current() == 1);
+	stable.Skip();
+	CHECK(stable.Current() == -1);
+}
+
 TEST(update_walk_finds_a_legacy_update_past_newer_rewrite_releases)
 {
 	// The update is looked for among legacy releases and the offer among
@@ -1229,6 +1262,12 @@ TEST(update_offer_try_it_follows_the_package_kind)
 	}
 	CHECK(!TryOpensBeside(Kind::Deb));
 	CHECK(!TryOpensBeside(Kind::NsisUser));
+	// Only a download stays in the window; a package this system is too
+	// old for gets the release page too, as the update's window gives it.
+	CHECK(!TryOpensReleasePage(OfferType::Install));
+	CHECK(TryOpensReleasePage(OfferType::Notify));
+	CHECK(TryOpensReleasePage(OfferType::NotifyRequirement));
+	CHECK(TryOpensReleasePage(OfferType::AurNotice));
 
 	// AUR installs get no offer: each AUR package moves on its own.
 	CHECK(!GetsOffers(Kind::Arch));

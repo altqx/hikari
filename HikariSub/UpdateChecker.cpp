@@ -438,6 +438,8 @@ namespace
 			: HikariDialog(parent, -1, _("The new HikariSub"))
 			, frame(parent)
 			, manifest(manifest)
+			, tryOffer(update_manifest::TryOffer(update_installer::Kind(), update_installer::CanInstall(),
+				manifest, update_installer::GetSystemInfo()))
 		{
 			const update_manifest::Pitch &pitch = update_manifest::PitchFor(*manifest.offer,
 				Options.GetString(PROGRAM_LANGUAGE).utf8_string());
@@ -464,6 +466,12 @@ namespace
 				sizer->Add(new HikariStaticText(this, -1,
 					Wrap(_("Try it opens the release page. Unpack the new HikariSub into a folder of its own, beside this copy, which stays as it is."))),
 					0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			}
+			if (tryOffer.type == update_manifest::OfferType::NotifyRequirement) {
+				sizer->AddSpacer(6);
+				sizer->Add(new HikariStaticText(this, -1,
+					Wrap(wxString::Format(_("It needs %s or newer, so it cannot be installed here."),
+						FromUtf8(tryOffer.requirement)))), 0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
 			}
 			if (manifest.offer->legacySupportEnded) {
 				sizer->AddSpacer(6);
@@ -521,24 +529,13 @@ namespace
 	private:
 		void TryIt()
 		{
-			update_manifest::Offer offer = update_manifest::TryOffer(update_installer::Kind(),
-				update_installer::CanInstall(), manifest, update_installer::GetSystemInfo());
-			switch (offer.type) {
-			case update_manifest::OfferType::Install:
-				StartDownload(offer.package);
-				return;
 			// An AUR install gets no offer (GetsOffers()).
-			case update_manifest::OfferType::AurNotice:
-			case update_manifest::OfferType::Notify:
+			if (update_manifest::TryOpensReleasePage(tryOffer.type)) {
 				OpenReleasePage(update_installer::ReleasePage(L"v" + FromUtf8(manifest.version)));
 				EndModal(kTriedId);
 				return;
-			case update_manifest::OfferType::NotifyRequirement:
-				tryIt->Hide();
-				ShowProgress(wxString::Format(_("It needs %s or newer, so it cannot be installed here."),
-					FromUtf8(offer.requirement)));
-				return;
 			}
+			StartDownload(tryOffer.package);
 		}
 
 		void ShowProgress(const wxString &text)
@@ -585,6 +582,8 @@ namespace
 
 		wxWindow *frame;
 		update_manifest::Manifest manifest;
+		// What Try it does here.
+		update_manifest::Offer tryOffer;
 		HikariStaticText *progress;
 		MappedButton *tryIt;
 		MappedButton *remindLater;
@@ -738,7 +737,7 @@ namespace
 				// took in of the reply is not kept meanwhile.
 				body.clear();
 				body.shrink_to_fit();
-				if (Finish(WalkEnding(update_policy::Ending::TimedOut)))
+				if (Finish(update_policy::Ending::TimedOut))
 					Release();
 				break;
 			}
@@ -782,7 +781,7 @@ namespace
 			if (phase == Phase::Manifests) {
 				if (ending == update_policy::Ending::TimedOut) {
 					run.Finish();
-					Finish(WalkEnding(ending));
+					Finish(ending);
 					Release();
 					return;
 				}
@@ -798,7 +797,7 @@ namespace
 				if (Walk())
 					return;
 				run.Finish();
-				Finish(WalkEnding(timedOut ? update_policy::Ending::TimedOut : update_policy::Ending::Answered));
+				Finish(timedOut ? update_policy::Ending::TimedOut : update_policy::Ending::Answered);
 				Release();
 				return;
 			}
@@ -835,20 +834,17 @@ namespace
 					ending = update_policy::Ending::TimedOut;
 			}
 			run.Finish();
-			Finish(WalkEnding(ending));
+			Finish(ending);
 			// Last, as nothing of this object may be used after it.
 			Release();
 		}
 
-		// How the check ends, stopped as ending: a found update stands
-		// against the deadline (update_manifest::WalkEnding()) in a check
-		// that shows it. One for the offer, from Help or for a reminder
-		// with the automatic checks off, still says it could not check.
-		update_policy::Ending WalkEnding(update_policy::Ending ending) const
+		// How the check ends for the update, stopped as ending: a found
+		// update stands against the deadline (update_manifest::WalkEnding()).
+		// The offer's is ending, as the walk for it did not end.
+		update_policy::Ending UpdateEnding(update_policy::Ending ending) const
 		{
-			bool showsUpdate = (asksUpdates || (atStartup && !offerOnly)) && !asksOffer;
-			return update_manifest::WalkEnding(ending,
-				showsUpdate && phase == Phase::Manifests && walk && walk->Found());
+			return update_manifest::WalkEnding(ending, phase == Phase::Manifests && walk && walk->Found());
 		}
 
 		bool SeesPrereleases() const
@@ -861,10 +857,12 @@ namespace
 		// kept when it is the highest so far.
 		void Consider(update_manifest::Considered considered)
 		{
-			// AUR installs get none.
-			if (update_manifest::GetsOffers(update_installer::Kind()))
+			// AUR installs get none, and the release that is the update
+			// offers nothing besides it.
+			bool isUpdate = considered.update && !walk->Found();
+			if (!isUpdate && update_manifest::GetsOffers(update_installer::Kind()))
 				offers.Take(std::move(considered.offer));
-			if (!considered.update || walk->Found()) {
+			if (!isUpdate) {
 				walk->Skip();
 				return;
 			}
@@ -922,7 +920,7 @@ namespace
 			// No check joins it from here (CheckTracker::Begin()).
 			if (runningCheck == this)
 				runningCheck = nullptr;
-			tracker.End(Now(), ending);
+			tracker.End(Now(), UpdateEnding(ending));
 			run.ReportBegins();
 			if (IsParentOpen())
 				Report(ending);
@@ -980,9 +978,10 @@ namespace
 		{
 			// A legacy update comes first, then the offer asked for from
 			// Help, if both were.
-			bool shown = (asksUpdates || (atStartup && !offerOnly)) && ReportUpdate(ending, asksUpdates);
+			update_policy::Ending updateEnding = UpdateEnding(ending);
+			bool shown = (asksUpdates || (atStartup && !offerOnly)) && ReportUpdate(updateEnding, asksUpdates);
 			if (asksOffer)
-				ReportOffer(ending, !asksUpdates);
+				ReportOffer(ending, !asksUpdates || updateEnding != ending);
 			if (!atStartup || ending != update_policy::Ending::Answered)
 				return;
 			// A legacy update comes first, the one shown now or the one

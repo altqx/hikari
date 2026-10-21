@@ -849,8 +849,9 @@ namespace update_manifest
 	// The releases a check looks at, in order: the candidates that fit the
 	// channel, then those "stable versions only" kept out, kMaxCandidates
 	// legacy releases and as many of the rewrite's. The first that Admit()
-	// takes is the update. Past it, only the rewrite's are left,
-	// for the offers they may carry.
+	// takes is the update. Past it, only the rewrite's are left, for the
+	// offers they may carry: those newer than the update, when it is the
+	// rewrite's itself.
 	class CandidateWalk
 	{
 	public:
@@ -868,7 +869,7 @@ namespace update_manifest
 					size_t &count = legacy ? legacyCount : rewriteCount;
 					if (count < update_policy::kMaxCandidates) {
 						count++;
-						order.push_back({ index, skipped, legacy });
+						order.push_back({ index, skipped, legacy, version });
 					}
 				}
 			}
@@ -891,6 +892,8 @@ namespace update_manifest
 			if (Current() < 0)
 				return;
 			found = true;
+			if (!order[next].legacy)
+				foundRewrite = order[next].version;
 			Advance();
 		}
 
@@ -902,19 +905,28 @@ namespace update_manifest
 			int index;
 			bool skipped;
 			bool legacy;
+			std::optional<SemVer> version;
 		};
+
+		// Whether an entry is done with once the update is found.
+		bool Passed(const Entry &entry) const
+		{
+			return entry.legacy || (foundRewrite && (!entry.version || CompareSemVer(*entry.version, *foundRewrite) <= 0));
+		}
 
 		void Advance()
 		{
 			if (next < order.size())
 				next++;
-			while (found && next < order.size() && order[next].legacy)
+			while (found && next < order.size() && Passed(order[next]))
 				next++;
 		}
 
 		std::vector<Entry> order;
 		size_t next = 0;
 		bool found = false;
+		// The update, when it is the rewrite's.
+		std::optional<SemVer> foundRewrite;
 	};
 
 	// What the system is, for a package's min_os and min_glibc.
@@ -1004,6 +1016,14 @@ namespace update_manifest
 	constexpr bool TryOpensBeside(Kind kind)
 	{
 		return package_kind::FlowOf(kind) == package_kind::Flow::Notify;
+	}
+
+	// Whether Try it opens the release page, which ends the offer's
+	// window as tried, rather than download: also when the package needs
+	// a newer system, which the window then says.
+	constexpr bool TryOpensReleasePage(OfferType type)
+	{
+		return type != OfferType::Install;
 	}
 
 	// Whether a release is a prerelease, by GitHub's flag or its tag, for
