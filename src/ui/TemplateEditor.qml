@@ -934,9 +934,11 @@ Pane {
                 { effect: "template line", text: qsTr("Template for each Line") },
                 { effect: "template pre-line", text: qsTr("Template before each Line") },
                 { effect: "template char", text: qsTr("Template for each character") },
+                { effect: "template furi", text: qsTr("Template for each furigana syllable") },
                 { effect: "code once", code: true, text: qsTr("Code run once") },
                 { effect: "code line", code: true, text: qsTr("Code for each Line") },
-                { effect: "code syl", code: true, text: qsTr("Code for each syllable") }
+                { effect: "code syl", code: true, text: qsTr("Code for each syllable") },
+                { effect: "code furi", code: true, text: qsTr("Code for each furigana syllable") }
             ]
             delegate: ShellMenuItem {
                 required property var modelData

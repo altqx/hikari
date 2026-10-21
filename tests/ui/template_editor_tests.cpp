@@ -1025,6 +1025,15 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(first, "triggered"));
         QCOMPARE(editor->templateCount(), count + 1);
         QCOMPARE(editor->effect(), QStringLiteral("template syl"));
+        // Every stock kind, the furigana ones too.
+        QStringList effects;
+        for (int i = 0; auto *o = object(QStringLiteral("templateNew_%1").arg(i)); ++i)
+            effects << o->property("text").toString().section(QLatin1Char('\t'), 1);
+        QCOMPARE(effects, (QStringList{QStringLiteral("template syl"), QStringLiteral("template line"),
+                                       QStringLiteral("template pre-line"), QStringLiteral("template char"),
+                                       QStringLiteral("template furi"), QStringLiteral("code once"),
+                                       QStringLiteral("code line"), QStringLiteral("code syl"),
+                                       QStringLiteral("code furi")}));
     }
 };
 
