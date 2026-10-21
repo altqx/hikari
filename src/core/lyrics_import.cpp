@@ -45,6 +45,17 @@ std::u8string field(std::u8string_view text, bool name)
     return out;
 }
 
+// A title as one line of words: each run of whitespace one space, as the
+// TTML reader reads its head's names, so "[ti:  My   Song ]" is "My Song".
+std::u8string titleField(std::u8string_view text)
+{
+    std::u8string words;
+    for (char8_t c : text)
+        if (!isSpace(c) || (!words.empty() && words.back() != u8' '))
+            words += isSpace(c) ? u8' ' : c;
+    return field(words, false);
+}
+
 } // namespace
 
 std::u8string literalText(std::u8string_view text)
@@ -101,7 +112,7 @@ LoadResult lyricsDocument(LyricSheet sheet)
     std::u8string script =
         u8"[Script Info]\r\n"
         u8"Title: " +
-        (sheet.title && !field(*sheet.title, false).empty() ? field(*sheet.title, false) : u8"HikariSub Ass File") +
+        (sheet.title && !titleField(*sheet.title).empty() ? titleField(*sheet.title) : u8"HikariSub Ass File") +
         u8"\r\n"
         u8"PlayResX: 1280\r\n"
         u8"PlayResY: 720\r\n"

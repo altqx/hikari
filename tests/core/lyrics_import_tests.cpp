@@ -98,6 +98,10 @@ TEST(LyricsImport, EnhancedLrcBecomesKaraokeLines)
     ASSERT_TRUE(result.has_value()) << int(result.error().kind) << " line " << result.error().line;
     EXPECT_EQ(result->document.format(), SubtitleFormat::Ass);
     EXPECT_EQ(result->document.scriptInfo(u8"Title"), u8"Twinkle, Twinkle, Little Star");
+    // A title's whitespace runs become one space, as a TTML title's do.
+    const auto spaced = importLrc(bytes("[ti:  My \t  Song ]\n[00:01.00]x\n"));
+    ASSERT_TRUE(spaced.has_value());
+    EXPECT_EQ(spaced->document.scriptInfo(u8"Title"), u8"My Song");
     const std::vector<Row> expected{
         // The first stamp comes 20 cs after the line time: a pause first.
         {1000, 4000, "", "{\\k20}{\\k70}Twinkle, {\\k70}twinkle, {\\k50}little {\\k90}star"},
@@ -502,6 +506,14 @@ TEST(LyricsImport, TtmlPrologIsChecked)
     EXPECT_EQ(problemOf("<!DOCTYPE tt []]>" + root, u8"ttml").kind, Kind::NotWellFormed);
     EXPECT_EQ(problemOf("<!DOCTYPE tt [] x>" + root, u8"ttml").kind, Kind::NotWellFormed);
     EXPECT_EQ(problemOf("<!DOCTYPE tt [][]>" + root, u8"ttml").kind, Kind::NotWellFormed);
+    // The subset holds markup declarations, PIs, comments, parameter-entity
+    // references and whitespace, nothing else.
+    EXPECT_TRUE(imports("<!DOCTYPE tt [\n <!ELEMENT tt ANY>\n <!ATTLIST p begin CDATA #IMPLIED>\n"
+                        " <!ENTITY % e \"<x>\"> %e; <!NOTATION n SYSTEM 'n'> <?pi x?> <!-- c -->\n]>"));
+    for (const char *bad : {"<!DOCTYPE tt [garbage]>", "<!DOCTYPE tt [<!ELEMENT>]>", "<!DOCTYPE tt [<!ELEMENTtt ANY>]>",
+                            "<!DOCTYPE tt [<!ELEMENT tt <x>>]>", "<!DOCTYPE tt [%e]>", "<!DOCTYPE tt [<!FOO x>]>",
+                            "<!DOCTYPE tt [<!ENTITY a 'x'>"})
+        EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
     // A DOCTYPE needs the root's name, comes once and only before the root.
     EXPECT_EQ(problemOf("<!DOCTYPE>" + root, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 1, u8"<!DOCTYPE>"}));
     EXPECT_EQ(problemOf("<!DOCTYPEtt>" + root, u8"ttml").kind, Kind::NotWellFormed);
@@ -539,6 +551,10 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     EXPECT_EQ(timed("<p begin=\"1\" end=\"4\"><span dur=\"1\">a</span></p>"), (std::vector<Row>{{1000, 4000, "", "{\\k100}a{\\k200}"}}));
     EXPECT_EQ(timed("<p begin=\"1\" end=\"4\"><span begin=\"1\" end=\"2\">a</span><span end=\"3\">b</span></p>"),
               (std::vector<Row>{{1000, 4000, "", "{\\k100}a{\\k100}b{\\k100}"}}));
+    // A span around timed spans with only an end starts at the begin it
+    // inherits, so its own text is a word from there.
+    EXPECT_EQ(timed("<p begin=\"0\" end=\"4\"><span end=\"3\">hello <span begin=\"2\" end=\"3\">world</span></span></p>"),
+              (std::vector<Row>{{0, 4000, "", "{\\k200}hello {\\k100}world{\\k100}"}}));
     // With an end too, the earlier of the two ends it.
     EXPECT_EQ(timed("<p begin=\"1\" end=\"5\" dur=\"2\">x</p>"), (std::vector<Row>{{1000, 3000, "", "x"}}));
     EXPECT_EQ(timed("<p begin=\"1\" end=\"2\" dur=\"5\">x</p>"), (std::vector<Row>{{1000, 2000, "", "x"}}));

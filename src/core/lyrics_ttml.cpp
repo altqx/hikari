@@ -403,26 +403,55 @@ private:
                     }
                     skipSpace();
                 }
+                // The subset (XML's intSubset): markup declarations, PIs,
+                // comments, parameter-entity references and whitespace. A
+                // declaration ("<!ELEMENT", "<!ATTLIST", "<!ENTITY" or
+                // "<!NOTATION", then whitespace) runs to its ">", quoted
+                // literals included; its content is not read further.
+                auto declaration = [&] {
+                    for (u8sv keyword : {u8sv(u8"<!ELEMENT"), u8sv(u8"<!ATTLIST"), u8sv(u8"<!ENTITY"), u8sv(u8"<!NOTATION")}) {
+                        if (!at(keyword))
+                            continue;
+                        advance(keyword.size());
+                        if (!space() || done() || m_s[m_pos] == u8'>')
+                            return false;
+                        while (!done() && m_s[m_pos] != u8'>') {
+                            if (m_s[m_pos] == u8'"' || m_s[m_pos] == u8'\'') {
+                                if (!literal())
+                                    return false;
+                            } else if (m_s[m_pos] == u8'<') {
+                                return false;
+                            } else {
+                                advance(1);
+                            }
+                        }
+                        if (done())
+                            return false;
+                        advance(1);
+                        return true;
+                    }
+                    return false;
+                };
                 if (ok && at(u8"[")) {
                     advance(1);
-                    for (;;) {
+                    for (skipSpace(); ok && !at(u8"]"); skipSpace()) {
                         if (done()) {
                             ok = false;
-                            break;
-                        }
-                        const char8_t c = m_s[m_pos];
-                        if (c == u8'"' || c == u8'\'') {
-                            if (!(ok = literal()))
-                                break;
                         } else if (at(u8"<!--")) {
-                            if (!(ok = skipComment()))
-                                break;
-                        } else {
+                            ok = skipComment();
+                        } else if (at(u8"<?")) {
+                            ok = skipPi();
+                        } else if (at(u8"%")) { // a parameter-entity reference, "%name;"
                             advance(1);
-                            if (c == u8']')
-                                break;
+                            ok = name().has_value() && at(u8";");
+                            if (ok)
+                                advance(1);
+                        } else {
+                            ok = declaration();
                         }
                     }
+                    if (ok)
+                        advance(1); // the "]"
                     skipSpace();
                 }
                 ok = ok && at(u8">");
@@ -1122,9 +1151,11 @@ private:
                 const auto t = times(child, inheritedBegin);
                 if (!t)
                     return std::unexpected(t.error());
-                if (t->first) {
+                // Without a begin of its own the span starts at the begin it
+                // inherits, so its own text is a word from there.
+                if (const auto begin = t->first ? t->first : inheritedBegin) {
                     innerSpan = &child;
-                    innerBegin = t->first;
+                    innerBegin = begin;
                 }
                 if (t->second)
                     innerEnd = t->second;
