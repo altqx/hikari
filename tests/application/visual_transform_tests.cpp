@@ -1827,6 +1827,35 @@ TEST(VisualTransformValues, ChangeAllFromAZeroScaleIsRefused)
     EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
 }
 
+// VT1 (Codex on #293): from a scale too small for the ratio (a tiny \fscx
+// in the text), "Change all scale tags" refuses a large value rather than
+// writing inf.
+TEST(VisualTransformValues, ChangeAllRefusesARatioThatOverflows)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    const core::LineId active = *host.activeLine();
+    ASSERT_TRUE(host.s->editDraft(
+        active, DraftChange{.text = u8"{\\fscx0.0000000000000000000000000000000000001\\fscy100}x"}));
+    ASSERT_TRUE(host.s->commitDraft());
+    ScaleTool tool;
+    tool.setToggled(6 | 32);
+    tool.selected(host);
+    tool.reset(host);
+    const auto textOf = [&] {
+        const std::u8string &t = lineOf(*host.s, active)->text;
+        return std::string(t.begin(), t.end());
+    };
+    const std::size_t steps = host.s->historySize();
+    EXPECT_FALSE(tool.setValue("fscx", u"100000000", host));
+    EXPECT_FALSE(tool.setValue("fscx", u"100000000", host, ValueEdit::Sample));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(host.s->historySize(), steps);
+    EXPECT_EQ(textOf().find("inf"), std::string::npos) << textOf();
+    EXPECT_TRUE(tool.setValue("fscy", u"120", host));
+    EXPECT_EQ(textOf().find("inf"), std::string::npos) << textOf();
+}
+
 // VT1 (Codex on #293): with "change all" on and the active Line alone, each
 // scrub sample is written from the text the gesture started with, not the
 // last sample's, so the release writes the value it shows.

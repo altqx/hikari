@@ -905,29 +905,33 @@ bool ScaleTool::setValue(const std::string &name, const std::u16string &text, Vi
     takeView(host.view());
     const bool first = !host.gesture();
     const bool x = name == "fscx";
-    // "Change all scale tags" multiplies each tag by the new scale over the
-    // press's: from a zero scale there is no ratio (legacy's would write
-    // nan), so an axis written from zero is refused while it is on.
     const PointF baseline = first ? m_scale : m_lastScale;
-    if (m_changeAllTags && (((m_preserveProportions || x) && baseline.x == 0) ||
-                            ((m_preserveProportions || !x) && baseline.y == 0)))
+    const float scale = static_cast<float>(value / 100);
+    PointF next = m_scale;
+    if (m_preserveProportions) {
+        // In proportion to the press's scale, not the last sample's: a scrub
+        // through zero comes back in proportion (Codex on #293).
+        const float pressed = x ? baseline.x : baseline.y;
+        const float ratio = pressed != 0 ? scale / pressed : 1.f;
+        next = x ? PointF{scale, baseline.y * ratio} : PointF{baseline.x * ratio, scale};
+    } else {
+        (x ? next.x : next.y) = scale;
+    }
+    // A scale that is no number is refused: "Change all scale tags"
+    // multiplies each tag by the new scale over the press's, and from a zero
+    // scale there is no ratio (legacy's would write nan), from a tiny one it
+    // overflows (Codex on #293: inf).
+    const bool changesX = m_preserveProportions || x, changesY = m_preserveProportions || !x;
+    if (!std::isfinite(next.x) || !std::isfinite(next.y) ||
+        (m_changeAllTags && ((changesX && !std::isfinite(next.x / baseline.x)) ||
+                             (changesY && !std::isfinite(next.y / baseline.y)))))
         return false;
     if (!beginEdit(host))
         return false;
     if (first)
         m_lastScale = m_scale;
-    const float scale = static_cast<float>(value / 100);
-    if (m_preserveProportions) {
-        // In proportion to the press's scale, not the last sample's: a scrub
-        // through zero comes back in proportion (Codex on #293).
-        const float pressed = x ? m_lastScale.x : m_lastScale.y;
-        const float ratio = pressed != 0 ? scale / pressed : 1.f;
-        m_type = 2;
-        m_scale = x ? PointF{scale, m_lastScale.y * ratio} : PointF{m_lastScale.x * ratio, scale};
-    } else {
-        m_type = x ? 0 : 1;
-        (x ? m_scale.x : m_scale.y) = scale;
-    }
+    m_type = m_preserveProportions ? 2 : x ? 0 : 1;
+    m_scale = next;
     m_to.x = m_from.x + (m_scale.x * m_arrowLengths.x);
     m_to.y = m_from.y + (m_scale.y * m_arrowLengths.y);
     m_valueRatios = true;
