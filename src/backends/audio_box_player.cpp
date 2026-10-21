@@ -526,6 +526,10 @@ void AudioBoxPlayer::fill()
     const double step = double(m_srcFormat.sampleRate) / double(std::max(1, m_outFormat.sampleRate));
     const auto ahead = static_cast<std::int64_t>(kAheadSeconds * m_outFormat.sampleRate);
     auto &converted = m_converted;
+    // At most `ahead` frames a call: a stream that takes frames faster than
+    // they are made (the null PCM has no clock) would otherwise keep the fill
+    // here, holding the lock, so that a stop never gets it.
+    const std::int64_t writtenBefore = m_written;
     while (m_playing) {
         if (!m_pending.empty()) {
             const std::size_t accepted = output().write(m_pending);
@@ -534,7 +538,7 @@ void AudioBoxPlayer::fill()
             if (!m_pending.empty())
                 break;
         }
-        if (m_written - consumed() >= ahead)
+        if (m_written - consumed() >= ahead || m_written - writtenBefore >= ahead)
             break;
         const std::int64_t n = kChunkFrames;
         m_frames.assign(static_cast<std::size_t>(n * srcChannels), 0);
