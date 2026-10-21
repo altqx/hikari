@@ -272,6 +272,11 @@ const std::vector<SettingDefinition> &definitions()
         // shows and a click repeats, the last one chosen from its menu (an
         // AUDIO_HOTKEY symbol). Starts on 500 ms before the start.
         {"audio.playAround", "", String, Profile, Mapped, false, std::string("AUDIO_PLAY_500MS_BEFORE")},
+        // AU2 (#268): the audio panel's Customise menu: the controls AU1
+        // folded that the row shows ("playAround", the plays, "autoCommit",
+        // "nextCommit", "goto", "sliders"). Starts on AU1's row; legacy has
+        // no such option, so an import leaves it as it is.
+        {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
         // KA1 (#276): Karaoke's Auto split gives a double consonant a
         // syllable of its own (so|ma|t|ta; off: so|mat|ta, KM's script).
         {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
@@ -309,12 +314,19 @@ const std::vector<SettingDefinition> &definitions()
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
+        // FS1-bar-mode (owner, 2026-10-20): the fullscreen bar's mode, 0 Auto
+        // (default), 1 Always (legacy's "Show toolbar", never saved there),
+        // 2 Never; VIDEO_FULLSCREEN_BAR and the bar's mode menu set it.
+        {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // WS2 (owner decision 2026-10-18, #216): "Save panel layout in
         // subtitle files": an ASS file keeps its Document tab's panel
         // arrangement in a [Hikari] section, written at each save and taken
         // when the file opens. Off, the section is neither read nor written
         // (an existing one is kept as it is).
         {"subtitles.layoutInFile", "", Bool, Profile, Mapped, false, true},
+        // KE1-render-cost-overlay: what the frame's subtitles cost to draw,
+        // over the video (GLOBAL_VIDEO_RENDER_COST).
+        {"video.renderCost", "", Bool, Profile, Mapped, false, false},
     };
     return table;
 }

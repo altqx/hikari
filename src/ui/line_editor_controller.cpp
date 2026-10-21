@@ -1,6 +1,7 @@
 #include "line_editor_controller.h"
 
 #include "hikari/application/translation_mode.h"
+#include "hikari/application/video_fullscreen.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/checked.h"
 #include "hikari/core/editor_font_colour.h"
@@ -267,6 +268,59 @@ bool LineEditorController::translationMode() const
 {
     auto *s = session();
     return s && s->document().scriptInfo(u8"TLMode") == u8"Yes";
+}
+
+std::pair<const core::LineRecord *, const application::DraftChange *> LineEditorController::videoLine() const
+{
+    // The active Line as Application::showVideoSubtitles renders it: the
+    // committed Line, with the pending draft's changes when live editing is
+    // on (not E5's split, which is shown only until an edit makes it the
+    // draft). Both in place, so a Line of megabytes is never copied for FS1.
+    auto *s = session();
+    if (!s || !s->selection().active)
+        return {};
+    for (const auto *line : s->document().lines())
+        if (line->id == *s->selection().active)
+            return {line, options().liveEditing && s->draftLine() == line->id ? s->draftChangeView() : nullptr};
+    return {};
+}
+
+QString LineEditorController::videoTimes() const
+{
+    const auto [line, change] = videoLine();
+    if (!line)
+        return {};
+    core::LineRecord r; // the times only
+    r.start = line->start;
+    r.end = line->end;
+    r.startFrame = line->startFrame;
+    r.endFrame = line->endFrame;
+    if (change) {
+        if (change->start)
+            r.start.value = *change->start;
+        if (change->end)
+            r.end.value = *change->end;
+        if (change->startFrame)
+            r.startFrame = *change->startFrame;
+        if (change->endFrame)
+            r.endFrame = *change->endFrame;
+    }
+    const auto times = application::editorTimeTexts(r, session()->document().format(), frameTimebase());
+    return times.end.empty() ? qs(times.start) : qs(times.start) + QStringLiteral(" – ") + qs(times.end);
+}
+
+QString LineEditorController::videoText() const
+{
+    const auto [line, change] = videoLine();
+    if (!line)
+        return {};
+    const std::u8string &original = change && change->text ? *change->text : line->text;
+    const std::u8string &translation = change && change->translation ? *change->translation : line->translation;
+    const std::u8string &text = translationMode() && !translation.empty() ? translation : original;
+    // Only the part FS1's label reads, cut before the conversion.
+    const std::string_view cut =
+        application::fullscreenLineInput(std::string_view(reinterpret_cast<const char *>(text.data()), text.size()));
+    return QString::fromUtf8(cut.data(), qsizetype(cut.size()));
 }
 
 void LineEditorController::refresh()

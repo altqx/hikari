@@ -1088,7 +1088,8 @@ Dialog {
 
     FolderDialog {
         id: fontsFolderDialog
-        title: qsTr("Choose choose external font folder")
+        objectName: "fontsFolderDialog"
+        title: qsTr("Choose external font folder") // TI1-fonts-folder-title
         onAccepted: {
             const path = dialog.app.settingsFolderPath(selectedFolder)
             fontsFolder.text = path

@@ -140,6 +140,17 @@ target_compile_definitions(hikari_backends_lua_helper_tests PRIVATE
     HIKARI_CAPTURE_PROBE="${PROJECT_SOURCE_DIR}/tools/legacy-capture/automation/capture-probe.lua")
 add_dependencies(hikari_backends_lua_helper_tests hikari_lua_helper hikari_automation_stage)
 
+# KE1: the bundled karaoke templater against the template corpus, byte for
+# byte against the unchanged script Aegisub 3.2.2 shipped.
+hikari_add_gtest(hikari_backends_karaoke_templater_tests SOURCES karaoke_templater_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_karaoke_templater_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
+    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
+    HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus")
+add_dependencies(hikari_backends_karaoke_templater_tests hikari_lua_helper hikari_automation_stage)
+
 # L6: representative third-party scripts (tests/fixtures/automation-thirdparty).
 # The stage test verifies the manifest's sha256s, fetches the projects that are
 # not committed (offline they are skipped with the reason) and stages the

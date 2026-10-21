@@ -7,6 +7,7 @@
 
 #include "hikari/application/playback_pipeline.h"
 #include "hikari/backends/libass_renderer.h"
+#include "hikari/backends/subtitle_renderer_selection.h"
 #include "hikari/core/ass_attachments.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
@@ -870,4 +871,106 @@ TEST(LibassRenderer, ParsesWhileTheShownTrackRenders)
     const auto after = renderer.render(core::DocumentTime(10'500'000), 96, 64);
     ASSERT_TRUE(after.has_value());
     EXPECT_FALSE(after->empty); // the new script is shown
+}
+
+// KE1-render-cost-overlay: a frame says what libass drew for it: the events
+// shown at its time, the bitmaps and their area, and how many of the shown
+// events use blur or a drawing clip. An unchanged frame handed out again
+// counts as the first did.
+TEST(LibassRenderer, FramesCountWhatTheirSubtitlesCost)
+{
+    backends::LibassRenderer renderer;
+    renderer.countCost(true); // the overlay is shown
+    ASSERT_TRUE(renderer.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,10)}Hi\n"
+                                          "Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,30)\\blur2}Blur\n"
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,"
+                                          "{\\pos(40,10)\\clip(m 0 0 l 50 0 50 50 0 50)}Clip\n"
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,30)\\clip(0,0,90,60)}Box\n"
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(40,50)\\iclip(1,m 0 0 l 9 9)}I\n"
+                                          // A drawing may start with n, the move that leaves the shape open.
+                                          "Dialogue: 0,0:00:02.00,0:00:03.00,D,,0,0,0,,{\\pos(70,50)\\clip(n 0 0 l 9 0 9 9)}N\n"
+                                          // Tags outside an override block are text, and \blur0 or \be0 do not blur.
+                                          "Dialogue: 0,0:00:04.00,0:00:05.00,D,,0,0,0,,"
+                                          "{\\pos(10,10)}a \\blur2 \\be1 \\clip(m 0 0 l 9 9)\n"
+                                          "Dialogue: 0,0:00:04.00,0:00:05.00,D,,0,0,0,,{\\pos(10,30)\\blur0\\be0\\bord2}Zero\n")));
+    const auto none = renderer.render(core::DocumentTime(500'000), 96, 64);
+    ASSERT_TRUE(none);
+    EXPECT_TRUE(none->cost.counted);
+    EXPECT_EQ(none->cost.events, 0);
+    EXPECT_EQ(none->cost.images, 0);
+    EXPECT_EQ(none->cost.area, 0);
+
+    const auto two = renderer.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(two);
+    EXPECT_EQ(two->cost.events, 2);
+    EXPECT_EQ(two->cost.blurred, 1);
+    EXPECT_EQ(two->cost.vectorClips, 0);
+    EXPECT_GT(two->cost.images, 0);
+    EXPECT_GT(two->cost.area, 0);
+
+    const auto six = renderer.render(core::DocumentTime(2'500'000), 96, 64);
+    ASSERT_TRUE(six);
+    EXPECT_EQ(six->cost.events, 6);
+    EXPECT_EQ(six->cost.blurred, 1);
+    EXPECT_EQ(six->cost.vectorClips, 3) << "a rectangle \\clip is not a vector clip";
+
+    const auto text = renderer.render(core::DocumentTime(4'500'000), 96, 64);
+    ASSERT_TRUE(text);
+    EXPECT_EQ(text->cost.events, 2);
+    EXPECT_EQ(text->cost.blurred, 0);
+    EXPECT_EQ(text->cost.vectorClips, 0);
+
+    // A frame handed out again unchanged counts as the first one did.
+    backends::LibassRenderer plain;
+    plain.countCost(true);
+    ASSERT_TRUE(plain.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,{\\pos(10,10)}Hi\n")));
+    const auto first = plain.render(core::DocumentTime(1'500'000), 96, 64);
+    const auto again = plain.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(first && again);
+    EXPECT_TRUE(again->changed.empty());
+    EXPECT_EQ(again->cost.events, 1);
+    EXPECT_GT(again->cost.images, 0);
+    EXPECT_EQ(again->cost.images, first->cost.images);
+    EXPECT_EQ(again->cost.area, first->cost.area);
+}
+
+// Counting reads each tag once: a block of 64,000 unclosed \clip( tags, which
+// took seconds while every tag's test read the rest of the block, counts in
+// one pass.
+TEST(LibassRenderer, ALongMalformedBlockCountsInOnePass)
+{
+    std::string event = "Dialogue: 0,0:00:01.00,0:00:02.00,D,,0,0,0,,{";
+    for (int i = 0; i < 64'000; ++i)
+        event += "\\clip(";
+    event += "}Hi\n";
+    backends::LibassRenderer renderer;
+    renderer.countCost(true);
+    ASSERT_TRUE(renderer.prepare(snapshot(event)));
+    const auto frame = renderer.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(frame);
+    EXPECT_EQ(frame->cost.events, 1);
+    EXPECT_EQ(frame->cost.vectorClips, 0);
+    EXPECT_LT(frame->cost.countMilliseconds, 250.0);
+}
+
+// The renderer selection times each render, whichever renderer draws.
+TEST(LibassRenderer, TheSelectionTimesEveryRender)
+{
+    backends::SubtitleRendererSelection selection;
+    ASSERT_TRUE(selection.prepare(snapshot("Dialogue: 0,0:00:01.00,0:00:03.00,D,,0,0,0,,{\\pos(10,10)\\blur3}Hi\n")));
+    // Without the overlay libass only draws: the track is not walked.
+    const auto drawn = selection.render(core::DocumentTime(1'500'000), 96, 64);
+    ASSERT_TRUE(drawn);
+    EXPECT_GT(drawn->cost.milliseconds, 0.0);
+    EXPECT_FALSE(drawn->cost.counted);
+    EXPECT_EQ(drawn->cost.events, 0);
+    EXPECT_EQ(drawn->cost.countMilliseconds, 0.0);
+    // With it, the counts too (their time is taken off the drawing's).
+    selection.countCost(true);
+    const auto frame = selection.render(core::DocumentTime(1'600'000), 96, 64);
+    ASSERT_TRUE(frame);
+    EXPECT_GT(frame->cost.milliseconds, 0.0);
+    EXPECT_TRUE(frame->cost.counted);
+    EXPECT_EQ(frame->cost.events, 1);
+    EXPECT_EQ(frame->cost.blurred, 1);
 }

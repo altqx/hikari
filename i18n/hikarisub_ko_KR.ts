@@ -33,11 +33,11 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation type="vanished">가로 확대/축소</translation>
+        <translation>가로 확대/축소</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation type="vanished">세로 확대/축소</translation>
+        <translation>세로 확대/축소</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -229,6 +229,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Auto-commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Line</source>
         <translation type="unfinished"></translation>
     </message>
@@ -320,6 +328,34 @@ Output device: %2</source>
     </message>
     <message>
         <source>Volume: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Customise the audio panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on the panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to the next line after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom and volume sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Classic arrangement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default arrangement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4249,6 +4285,34 @@ great help testing HikariSub on a slow computer)
         <source>Installing update...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Application menu</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4271,6 +4335,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Cancel</source>
         <translation>취소</translation>
+    </message>
+    <message>
+        <source>Load subtitles from an MKV/OGM file</source>
+        <translation type="unfinished">MKV / OGM 파일 자막 불러오기</translation>
     </message>
     <message>
         <source>The file does not contain any subtitle tracks.</source>
@@ -4492,6 +4560,18 @@ when find results window is open</source>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use system title bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4913,6 +4993,10 @@ after switching from full screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
         <translation type="vanished">마우스 오버시 소리 활성화</translation>
     </message>
@@ -5136,7 +5220,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Choose choose external font folder</source>
-        <translation>외부 글꼴 폴더 선택</translation>
+        <translation type="vanished">외부 글꼴 폴더 선택</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -5461,7 +5545,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation>저장 폴더 선택</translation>
+        <translation type="vanished">저장 폴더 선택</translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5586,6 +5670,10 @@ and will be changed to the default</source>
     <message>
         <source>Replace</source>
         <translation>교체</translation>
+    </message>
+    <message>
+        <source>Choose subtitle search folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
@@ -7954,6 +8042,10 @@ Foreign language text will be deleted.</source>
         <translation>다음 파일</translation>
     </message>
     <message>
+        <source>Choose keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Warning</source>
         <translation>경고</translation>
     </message>
@@ -7967,7 +8059,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Choose video file</source>
-        <translation>영상 파일 선택</translation>
+        <translation type="vanished">영상 파일 선택</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

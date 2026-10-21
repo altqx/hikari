@@ -38,7 +38,8 @@ VideoViewController::VideoViewController(VideoController &video, VisualToolsCont
         if (id == QLatin1String("video.volume")) {
             applyVolume();
             emit changed();
-        } else if (id == QLatin1String("video.progressBar") || id == QLatin1String("video.pauseOnClick")) {
+        } else if (id == QLatin1String("video.progressBar") || id == QLatin1String("video.pauseOnClick") ||
+                   id == QLatin1String("video.renderCost")) {
             emit changed();
         }
     });
@@ -52,9 +53,9 @@ void VideoViewController::setPlayer(application::GeneralPlayerPort *player)
 
 void VideoViewController::applyVolume()
 {
-    // VideoBox::OnVolume / OpenVideo: SetVolume(-(pos * pos)).
+    // VideoBox::OnVolume / OpenVideo: SetVolume(-(pos * pos)); FS1: silent while muted.
     if (m_player)
-        m_player->setVolume(application::videoVolumeGain(volume()));
+        m_player->setVolume(m_muted ? 0.0 : application::videoVolumeGain(volume()));
 }
 
 bool VideoViewController::zoomMode() const
@@ -100,6 +101,11 @@ int VideoViewController::volume() const
 bool VideoViewController::progressBar() const
 {
     return m_settings.boolean("video.progressBar");
+}
+
+bool VideoViewController::renderCost() const
+{
+    return m_settings.boolean("video.renderCost");
 }
 
 bool VideoViewController::pauseOnClick() const
@@ -184,7 +190,7 @@ int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int but
     }
     if (view.zoomMode()) {
         zoomPointer(kind, view.toDevice(x), view.toDevice(y), button, buttons, wheelSteps);
-        return NoRequest;
+        return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest; // FS1: it wakes the bar too
     }
     if (kind == Wheel && wheelSteps != 0) {
         // Ctrl+wheel resized legacy's video window (TabPanel::SetVideoWindowSizes);
@@ -202,9 +208,10 @@ int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int but
         }
     }
     m_tools.pointer(kind, x, y, button, buttons, modifiers, wheelSteps);
-    // Only the crosshair leaves the other clicks to the video.
+    // Only the crosshair leaves the other clicks to the video; FS1: every
+    // tool's moves wake the fullscreen bar.
     if (m_tools.hasNonDefaultTool())
-        return NoRequest;
+        return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest;
     if (kind == Release && button == Qt::RightButton)
         return ContextMenuRequest; // ContextMenu(event.GetPosition())
     // V5: LeftDClick with no modifier, SetFullscreen() (VideoBox.cpp:554-569).
@@ -213,7 +220,7 @@ int VideoViewController::pointer(int kind, qreal x, qreal y, int button, int but
         return FullScreenRequest;
     if (pauseOnClick() && kind == Release && button == Qt::LeftButton && !control)
         m_video.togglePlay(); // VideoBox::Pause
-    return kind == Move ? MovedOverVideo : NoRequest;
+    return kind == Move && buttons == 0 ? MovedOverVideo : NoRequest;
 }
 
 void VideoViewController::setFullscreen(bool on)
@@ -237,6 +244,13 @@ void VideoViewController::panelWheel(int steps, int modifiers)
     // nothing below the video (VideoBox.cpp:508-518); in fullscreen the
     // panel's wheel is the volume's with or without Ctrl.
     if ((modifiers & Qt::ControlModifier) != 0 && !m_fullscreen)
+        return;
+    volumeWheel(steps);
+}
+
+void VideoViewController::volumeWheel(int steps)
+{
+    if (!m_video.hasVideo() || steps == 0)
         return;
     if (const auto v = application::videoVolumeWheelStep(volume(), steps))
         setVolume(*v);
@@ -272,9 +286,20 @@ bool VideoViewController::stepVolume(bool up)
 
 void VideoViewController::setVolume(int volume)
 {
-    if (volume == this->volume())
-        return;
-    m_settings.set("video.volume", volume); // applied through the store's change
+    if (volume != this->volume())
+        m_settings.set("video.volume", volume); // applied through the store's change (silent while muted)
+    if (m_muted) { // FS1: a new volume is heard, at its level, never the old one first
+        m_muted = false;
+        applyVolume();
+        emit changed();
+    }
+}
+
+void VideoViewController::toggleMute()
+{
+    m_muted = !m_muted;
+    applyVolume();
+    emit changed();
 }
 
 int VideoViewController::aspectSliderValue() const
@@ -306,6 +331,14 @@ bool VideoViewController::toggleProgressBar()
     if (!m_video.hasVideo())
         return false;
     m_settings.set("video.progressBar", !progressBar());
+    return true;
+}
+
+bool VideoViewController::toggleRenderCost()
+{
+    if (!m_video.hasVideo())
+        return false;
+    m_settings.set("video.renderCost", !renderCost());
     return true;
 }
 

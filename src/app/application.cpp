@@ -571,6 +571,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     }
     connect(m_settings.get(), &ui::SettingsStore::changed, this, &Application::settingChanged);
     m_renderer.select(m_settings->text("video.subtitleProvider").toStdString()); // W2
+    m_renderer.countCost(m_settings->boolean("video.renderCost")); // KE1-render-cost-overlay
     // K2: the theme layer follows this profile's appearance (the controls'
     // palette, the icons and the owner-drawn items).
     ui::theme::useSettings(m_settings.get());
@@ -661,7 +662,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // general player takes the video volume.
     m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
     m_videoView->setPlayer(m_generalPlayer.get());
-    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*m_video, *m_videoView); // V5
+    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*m_video, *m_videoView, *m_settings); // V5, FS1
     // W1: the player video.playbackPlayer chooses (the general player but on
     // Windows with DirectShow chosen).
     choosePlayer();
@@ -688,7 +689,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
     // S4: validation errors go to the log window; the script editor setting.
-    m_automation->setLog([this](const QString &line) { m_log->log(line); });
+    m_automation->setLog([this](const QString &line, bool silent) { m_log->log(line, silent); });
     m_automation->setSettings(m_settings.get());
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
     // O2: legacy LoadHkeys at startup, then SetAccels.
@@ -5004,6 +5005,13 @@ void Application::settingChanged(const QString &id)
         m_fontCollector->setDisplayRenderer(QString::fromStdString(m_renderer.provider()));
         m_videoRevision.reset();
         m_videoScript.clear(); // E4: the same script goes to the new renderer too
+        refreshVideo();
+    } else if (id == QLatin1String("video.renderCost")) {
+        // KE1-render-cost-overlay: libass counts only while the overlay is
+        // shown; the frame is drawn again so it shows the counts at once.
+        m_renderer.countCost(m_settings->boolean("video.renderCost"));
+        m_videoRevision.reset();
+        m_videoScript.clear();
         refreshVideo();
     }
 }

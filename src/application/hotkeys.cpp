@@ -259,6 +259,10 @@ constexpr HotkeyAction kActions[] = {
         // unused in its windows' ranges (listed among their neighbours).
         // LE3-tags-shown: the Line editor's hidden-tag view (editor.hideTags).
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
+        // KE1-render-cost-overlay: the subtitles' render cost over the video.
+        {"GLOBAL_VIDEO_RENDER_COST", 5170},
+        // FS1-bar-mode: the fullscreen bar's Auto / Always / Never (video.fullscreenBar).
+        {"VIDEO_FULLSCREEN_BAR", 2021},
         // KA1 (#276): Karaoke mode's split at the waveform cursor and the
         // \k and \kf switch for long syllables, past AUDIO_LEAD_OUT (the
         // unused 1005-1009 would run their id + 10, as the _ALT ids do).
@@ -496,8 +500,10 @@ constexpr NameRow kNames[] = {
         {2007, "Volume down"}, // VIDEO_VOLUME_MINUS
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
-        // The rewrite's own (LE3-tags-shown).
+        // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay, FS1-bar-mode).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
+        {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
+        {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
         // KA1 (#276)
         {1028, "Split syllable at the cursor"}, // AUDIO_KARAOKE_SPLIT
         {1029, "Switch long syllables between \\k and \\kf"}, // AUDIO_KARAOKE_KF
@@ -563,6 +569,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {2006, VideoHotkey, "Volume up", "Num ."}, // VIDEO_VOLUME_PLUS
         {2007, VideoHotkey, "Volume down", "Num 0"}, // VIDEO_VOLUME_MINUS
         {2011, VideoHotkey, "Next chapter", "M"}, // VIDEO_NEXT_CHAPTER
+        {2021, VideoHotkey, "Full screen bar: Auto / Always / Never", "Tab"}, // VIDEO_FULLSCREEN_BAR (FS1-bar-mode)
         {2010, VideoHotkey, "Previous chapter", "N"}, // VIDEO_PREVIOUS_CHAPTER
         {3012, EditorHotkey, "Add bold", "Ctrl-B"}, // EDITBOX_INSERT_BOLD
         {3013, EditorHotkey, "Add italic", "Ctrl-I"}, // EDITBOX_INSERT_ITALIC
