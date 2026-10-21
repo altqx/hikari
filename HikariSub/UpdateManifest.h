@@ -697,6 +697,61 @@ namespace update_manifest
 		return declined;
 	}
 
+	// How the offer's window was left: Try it, Don't offer again, or
+	// Remind me later, as any other way of closing it is.
+	enum class OfferAnswer
+	{
+		Tried,
+		NoOffer,
+		Later,
+	};
+
+	// What the offer's window leaves recorded: the decline, and when the
+	// reminder comes (0 for none).
+	struct OfferRecord
+	{
+		DeclinedOffer declined;
+		long long remindAt = 0;
+	};
+
+	// The record after answer, at now, on the offer of version. Remind me
+	// later is the later choice than a decline, as when Help showed an
+	// offer declined before, so the offer comes back at the reminder.
+	inline OfferRecord RecordAfter(OfferAnswer answer, std::string_view version, bool ended,
+		const DeclinedOffer &declined, long long now)
+	{
+		switch (answer) {
+		case OfferAnswer::Tried:
+			return { TriedAfter(version, ended, declined), 0 };
+		case OfferAnswer::NoOffer:
+			return { DeclinedAfter(version, ended, declined), 0 };
+		case OfferAnswer::Later:
+			break;
+		}
+		return { {}, OfferRemindAt(now) };
+	}
+
+	// What the check at startup looks for.
+	enum class StartCheck
+	{
+		None,
+		// The updates and the offer.
+		Full,
+		// The offer only: a reminder came with the automatic checks off,
+		// which show no update.
+		OfferOnly,
+	};
+
+	// The check at startup, with autoCheck the automatic checks, checkDue
+	// once a day is over since the last, and reminderDue once a reminder
+	// of the offer has come (OfferReminderDue()).
+	constexpr StartCheck CheckAtStart(bool autoCheck, bool checkDue, bool reminderDue)
+	{
+		if (!autoCheck)
+			return reminderDue ? StartCheck::OfferOnly : StartCheck::None;
+		return checkDue || reminderDue ? StartCheck::Full : StartCheck::None;
+	}
+
 	// The releases a check looks at, in order: the candidates that fit the
 	// channel, then those "stable versions only" kept out, kMaxCandidates
 	// legacy releases and as many of the rewrite's. The first that Admit()

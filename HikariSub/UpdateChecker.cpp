@@ -542,20 +542,12 @@ namespace
 		{
 			if (downloading)
 				result = kTriedId;
-			bool ended = manifest.offer->legacySupportEnded;
-			switch (result) {
-			case kTriedId:
-				SetOfferDeclined(update_manifest::TriedAfter(manifest.version, ended, LoadOfferDeclined()));
-				SetOfferRemind(0);
-				break;
-			case kNoOfferId:
-				SetOfferDeclined(update_manifest::DeclinedAfter(manifest.version, ended, LoadOfferDeclined()));
-				SetOfferRemind(0);
-				break;
-			default:
-				SetOfferRemind(update_manifest::OfferRemindAt(Now()));
-				break;
-			}
+			update_manifest::OfferAnswer answer = result == kTriedId ? update_manifest::OfferAnswer::Tried :
+				result == kNoOfferId ? update_manifest::OfferAnswer::NoOffer : update_manifest::OfferAnswer::Later;
+			update_manifest::OfferRecord record = update_manifest::RecordAfter(answer, manifest.version,
+				manifest.offer->legacySupportEnded, LoadOfferDeclined(), Now());
+			SetOfferDeclined(record.declined);
+			SetOfferRemind(record.remindAt);
 			Options.SaveOptions(true, false);
 		}
 
@@ -644,12 +636,14 @@ namespace
 
 	// What a check was asked for from the menu: the updates, or the offer
 	// of the rewrite. One at startup asks for neither, and shows only what
-	// it finds to show.
+	// it finds to show; with the automatic checks off, it comes for a
+	// reminder of the offer and shows no update.
 	enum class Ask
 	{
 		Nothing,
 		Updates,
 		Offer,
+		Reminder,
 	};
 
 	class UpdateRequest;
@@ -696,8 +690,10 @@ namespace
 				asksUpdates = true;
 			else if (ask == Ask::Offer)
 				asksOffer = true;
-			else
+			else {
 				atStartup = true;
+				offerOnly = ask == Ask::Reminder;
+			}
 		}
 
 		// Asks for a page of the release list, from 1.
@@ -1006,7 +1002,7 @@ namespace
 		{
 			// A legacy update comes first, then the offer asked for from
 			// Help, if both were.
-			bool shown = (asksUpdates || atStartup) && ReportUpdate(ending, asksUpdates);
+			bool shown = (asksUpdates || (atStartup && !offerOnly)) && ReportUpdate(ending, asksUpdates);
 			if (asksOffer)
 				ReportOffer(ending, !asksUpdates);
 			if (!atStartup || ending != update_policy::Ending::Answered)
@@ -1129,6 +1125,7 @@ namespace
 		bool asksUpdates = false;
 		bool asksOffer = false;
 		bool atStartup = false;
+		bool offerOnly = false;
 		bool timedOut = false;
 		// Stopped by its destructor, so it never fires at a deleted check.
 		wxTimer deadline;
@@ -1137,7 +1134,7 @@ namespace
 
 	void Check(wxWindow *parent, Ask ask)
 	{
-		switch (tracker.Begin(Now(), ask != Ask::Nothing)) {
+		switch (tracker.Begin(Now(), ask == Ask::Updates || ask == Ask::Offer)) {
 		case update_policy::Start::Ignored:
 			return;
 		case update_policy::Start::Joined:
@@ -1164,17 +1161,21 @@ namespace
 
 void UpdateChecker::CheckOnStartup(wxWindow *parent)
 {
-	if (!Options.GetBool(UPDATER_AUTO_CHECK))
-		return;
 	// A reminder of the offer that has come shows it at this start, even
-	// within a day of the last check.
-	if (!update_policy::IsCheckDue(Now(), LoadNextCheck()) &&
-		!update_manifest::OfferReminderDue(LoadOfferRemind(), Now()))
+	// within a day of the last check or with the automatic checks off.
+	switch (update_manifest::CheckAtStart(Options.GetBool(UPDATER_AUTO_CHECK),
+		update_policy::IsCheckDue(Now(), LoadNextCheck()),
+		update_manifest::OfferReminderDue(LoadOfferRemind(), Now())))
 	{
+	case update_manifest::StartCheck::None:
+		return;
+	case update_manifest::StartCheck::Full:
+		Check(parent, Ask::Nothing);
+		return;
+	case update_manifest::StartCheck::OfferOnly:
+		Check(parent, Ask::Reminder);
 		return;
 	}
-
-	Check(parent, Ask::Nothing);
 }
 
 void UpdateChecker::CheckNow(wxWindow *parent)

@@ -1000,6 +1000,40 @@ TEST(update_offer_at_start_honours_the_choices)
 	CHECK(OfferReminderDue(remind, now - kDay));
 }
 
+TEST(update_offer_remind_me_later_replaces_a_decline)
+{
+	using update_policy::kDay;
+	long long now = 1800000000;
+	// Help shows the offer even after Don't offer again; Remind me later
+	// there is the later choice, and the offer comes back at the reminder.
+	OfferRecord record = RecordAfter(OfferAnswer::Later, "0.1.0", false, { "0.1.0", false }, now);
+	CHECK(record.declined.version.empty());
+	CHECK(record.remindAt == now + 3 * kDay);
+	CHECK(!ShowsOfferAtStart("0.1.0", false, record.declined, record.remindAt, now + kDay));
+	CHECK(ShowsOfferAtStart("0.1.0", false, record.declined, record.remindAt, now + 3 * kDay));
+	// Don't offer again and Try it end a reminder.
+	record = RecordAfter(OfferAnswer::NoOffer, "0.1.0", false, record.declined, now);
+	CHECK(record.declined.version == "0.1.0" && !record.declined.ended && record.remindAt == 0);
+	record = RecordAfter(OfferAnswer::Tried, "0.1.0", true, { "0.1.0", false }, now);
+	CHECK(record.declined.version == "0.1.0" && record.declined.ended && record.remindAt == 0);
+	record = RecordAfter(OfferAnswer::Tried, "0.1.0", false, {}, now);
+	CHECK(record.declined.version.empty() && record.remindAt == 0);
+}
+
+TEST(update_reminder_checks_at_start_with_automatic_checks_off)
+{
+	// The automatic checks: at a start once the day is over, and with a
+	// reminder that has come, also within the day.
+	CHECK(CheckAtStart(true, true, false) == StartCheck::Full);
+	CHECK(CheckAtStart(true, false, true) == StartCheck::Full);
+	CHECK(CheckAtStart(true, false, false) == StartCheck::None);
+	// Off: none, but a reminder the user asked for still comes, and the
+	// check looks for the offer only.
+	CHECK(CheckAtStart(false, true, false) == StartCheck::None);
+	CHECK(CheckAtStart(false, false, true) == StartCheck::OfferOnly);
+	CHECK(CheckAtStart(false, true, true) == StartCheck::OfferOnly);
+}
+
 TEST(update_offer_declined_shows_once_more_when_legacy_support_ends)
 {
 	long long now = 1800000000;
