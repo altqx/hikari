@@ -69,12 +69,12 @@ bool isCode(const QTextBlock &block, const QTextCharFormat &format)
 }
 
 // Raw HTML goes, outside code (with MarkdownNoHTML md4c keeps it as text):
-// tags, with their text between them kept; comments, scripts and styles
+// tags (a quoted value may hold ">"), with their text between them kept; comments, scripts and styles
 // whole, over code and paragraphs too. A paragraph left empty goes. An
 // entity ("&lt;b&gt;") reads as what it stands for, so it goes too.
 void dropHtml(QTextDocument &doc)
 {
-    static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s[^>]*)?/?>"),
+    static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s(?:[^>\"']|\"[^\"]*\"|'[^']*')*)?/?>"),
                                         QRegularExpression::UseUnicodePropertiesOption);
     static const QRegularExpression dropped(QStringLiteral("<!--|<(script|style)(?=[\\s>/]|$)"),
                                             QRegularExpression::CaseInsensitiveOption |

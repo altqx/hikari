@@ -565,6 +565,12 @@ private slots:
             QStringLiteral("Before <script\ntype=\"x\">hidden()</script> after"), muted, link, code);
         QVERIFY2(!split.contains(QStringLiteral("hidden()")), qPrintable(split));
         QVERIFY(split.contains(QStringLiteral("after")));
+        // A quoted attribute value may hold ">": the tag ends after it.
+        const QString quoted = copy->whatsNew->render(
+            QStringLiteral("A <span title=\"1 > 0\" data-x='a>b'>kept</span> B"), muted, link, code);
+        QVERIFY2(quoted.contains(QStringLiteral("A kept B")), qPrintable(quoted));
+        QVERIFY(!quoted.contains(QStringLiteral("1 &gt; 0")));
+        QVERIFY(!quoted.contains(QStringLiteral("a&gt;b")));
         QVERIFY(!html.contains(QStringLiteral("&lt;img"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("javascript:"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("file:///etc/passwd")));
