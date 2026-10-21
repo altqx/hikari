@@ -883,11 +883,13 @@ Pane {
         objectName: "templateApplyMenu"
         ShellMenuItem {
             objectName: "templateApplyAll"
+            iconRole: "karaoke"
             text: qsTr("Apply to every karaoke Line")
             onTriggered: root.controller.apply(false)
         }
         ShellMenuItem {
             objectName: "templateApplySelected"
+            iconRole: "select-lines"
             text: qsTr("Apply to the selected Lines")
             help: qsTr("KE1's regenerate-selected: the other Lines' output stays as it is.")
             onTriggered: root.controller.apply(true)
@@ -913,6 +915,7 @@ Pane {
                 required property var modelData
                 required property int index
                 objectName: "templateNew_" + index
+                iconRole: modelData.effect.startsWith("code") ? "run-script" : "template-editor"
                 text: modelData.text + "\t" + modelData.effect
                 onTriggered: root.controller.insertTemplate(modelData.effect)
             }
