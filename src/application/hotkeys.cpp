@@ -263,6 +263,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_VIDEO_RENDER_COST", 5170},
         // FS1-bar-mode: the fullscreen bar's Auto / Always / Never (video.fullscreenBar).
         {"VIDEO_FULLSCREEN_BAR", 2021},
+        // TM1: Translation mode for the editing target (Subtitles menu).
+        {"GLOBAL_TRANSLATION_MODE", 5171},
         // VT2 (#270): a Video command per visual tool, in the rail's order.
         {"VIDEO_TOOL_CROSSHAIR", 2022},
         {"VIDEO_TOOL_POSITION", 2023},
@@ -513,6 +515,7 @@ constexpr NameRow kNames[] = {
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
         {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
         {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
+        {5171, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
         {2022, "Position pointer"}, // VIDEO_TOOL_CROSSHAIR
         {2023, "Text positioning"}, // VIDEO_TOOL_POSITION
         {2024, "Text moving"}, // VIDEO_TOOL_MOVE

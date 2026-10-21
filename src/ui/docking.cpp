@@ -942,6 +942,14 @@ void Docking::setPanelHeader(const QString &uniqueName, bool horizontal, QQuickI
     emit headersChanged();
 }
 
+bool Docking::hasPlace(const QString &uniqueName) const
+{
+    if (!KDDockWidgets::Core::Platform::instance())
+        return false;
+    const auto *dock = KDDockWidgets::DockRegistry::self()->dockByName(uniqueName);
+    return dock && (dock->isOpen() || dock->hasPreviousDockedLocation());
+}
+
 bool Docking::isHorizontal(const QString &uniqueName) const
 {
     return m_headers.value(uniqueName).horizontal;

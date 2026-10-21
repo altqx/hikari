@@ -3181,24 +3181,24 @@ def free_part(ctl):
     return (m["x"] - 16, TITLE_BAR // 2) if m else (900, TITLE_BAR // 2)
 
 
-def system_frame():
-    """Whether the window system frames the main window (a title bar or
-    border of its own), and what says so."""
+def system_frame(title="HikariSub"):
+    """Whether the window system frames the window TITLE (the main window by
+    default; a title bar or border of its own), and what says so."""
     if B.name == "kwin":
-        r = B.client_rect("HikariSub")
-        line = next((l for l in B.windows().splitlines() if "HikariSub" in l), "")
+        r = B.client_rect(title)
+        line = next((l for l in B.windows().splitlines() if f'"{title}"' in l or (title == "HikariSub" and "HikariSub" in l)), "")
         m = re.match(r'\S+ "(.*)" (-?[\d.]+),(-?[\d.]+) (\d+)x(\d+)', line)
-        fr = frames().get("HikariSub")
+        fr = frames().get(title)
         if m and fr:
             return int(m.group(5)) - fr["h"] > 0, f"KWin frame {m.group(4)}x{m.group(5)}, client {fr['w']}x{fr['h']}"
         return None, f"no KWin window ({r})"
     if B.name in ("sway", "sway-activate"):
         tree = B.windows()
-        line = next((l for l in tree.splitlines() if "HikariSub" in l), "")
+        line = next((l for l in tree.splitlines() if title in l), "")
         border = json.loads(B.msg("-t", "get_tree") or "{}")
 
         def find(n):
-            if (n.get("name") or "").endswith("HikariSub"):
+            if (n.get("name") or "").endswith(title):
                 return n
             for c in n.get("nodes", []) + n.get("floating_nodes", []):
                 hit = find(c)
@@ -3208,7 +3208,7 @@ def system_frame():
         node = find(border) or {}
         return node.get("border") not in ("csd", "none"), f"sway border {node.get('border')!r}: {line}"
     if B.name == "x11":
-        w = sh("xdotool search --onlyvisible --name 'HikariSub$'").split()
+        w = sh(f"xdotool search --onlyvisible --name '{'HikariSub$' if title == 'HikariSub' else '^' + title + '$'}'").split()
         ext = sh(["xprop", "-id", w[0], "_NET_FRAME_EXTENTS"]).strip() if w else ""
         nums = [int(n) for n in re.findall(r"\d+", ext.split("=")[-1])] if "=" in ext else []
         return any(nums), f"_NET_FRAME_EXTENTS {ext or 'unset'}"
@@ -3545,10 +3545,127 @@ def step_gtk_bridge():
     app("kill")
 
 
+# DG1 (#222): the dialog frame on the session's window system.
+ABOUT = "About HikariSub"
+
+
+def help_item(name, title, by_click=False):
+    """Help > NAME from the keyboard; the dialog TITLE's frame once it shows,
+    or None. BY_CLICK: the main window takes the focus from a click on its
+    empty middle (as a user leaves a dialog), else from the compositor."""
+    rm = origin("HikariSub") if by_click else None
+    if rm:
+        click(rm[0] + rm[2] // 2, rm[1] + rm[3] - 60)
+        time.sleep(0.6)
+        log("active after the click:", [f["id"] for f in atspi()["frames"] if f.get("active")])
+    else:
+        focus_main_compositor()
+    park_pointer()
+    B.keys("alt+h", 0.6)
+    try:
+        menus = json.loads(sh(["python3", f"{GATE}/atspi_tool.py", "menu"]) or "[]")
+    except ValueError:
+        menus = []
+    enabled = [i["name"].replace("&", "") for i in (menus[-1] if menus else []) if i["enabled"]]
+    at = next((i for i, n in enumerate(enabled) if n.startswith(name)), None)
+    if at is None:
+        log(f"help_item: no {name!r} in {enabled}")
+        B.keys("escape", 0.3)
+        return None
+    B.keys(*(["down"] * (at + 1)), "return", delay=0.3)
+    st = wait_for(lambda s: title in frames(s), timeout=6)
+    return frames(st).get(title)
+
+
+def step_dialog_frame():
+    """DG1 (#222) on the session's window system: About is a window of its
+    own on HikariSub's frame (no frame of the window system's; Close, no
+    Minimise or Maximise on a fixed-size dialog); on X11 centred on the main
+    window 20 lower, moved by its title bar and opened there again (on
+    Wayland the compositor places it and only the size is kept); About and
+    Credits open at once; Esc closes; the window system's frame with "Use
+    system title bar"; the four themes."""
+    title_bar_start("custom")
+    about = help_item("About", ABOUT)
+    ev0, _ = B.snap("dialogs-0-about")
+    if not about:
+        verdict("dialog-frame-window", "failed", "About did not open as a window of its own", ev0)
+        app("kill")
+        return
+    own = {n: bool(where("button", n, ABOUT)) for n in ("Close", "Maximise", "Minimise")}
+    framed, why = system_frame(ABOUT)
+    verdict("dialog-frame-window", "observed" if own["Close"] and not own["Maximise"] and not own["Minimise"]
+            and framed is not True else "failed",
+            f"{B.name}: About {about['w']}x{about['h']} with its own buttons {own}; window system frame {framed} ({why})",
+            ev0)
+
+    rm, ra = origin("HikariSub"), origin(ABOUT)
+    if B.name == "x11" and rm and ra:
+        dx = rm[0] + rm[2] // 2 - (ra[0] + ra[2] // 2)
+        dy = rm[1] + rm[3] // 2 + 20 - (ra[1] + ra[3] // 2)
+        verdict("dialog-frame-centred", "observed" if abs(dx) <= 10 and abs(dy) <= 10 else "failed",
+                f"About {ra[:4]} on the main window {rm[:4]}: its centre off the main window's + (0, 20) by ({dx}, {dy})",
+                ev0)
+    else:
+        verdict("dialog-frame-centred", "not-observable",
+                f"{B.name}: a Wayland client cannot place its windows; the compositor put About at {ra and ra[:4]} "
+                f"(main window {rm and rm[:4]})", ev0)
+
+    close = where("button", "Close", ABOUT)
+    if B.name != "mutter" and ra and close:
+        sx, sy = ra[0] + close[0]["x"] - 40, ra[1] + 16
+        drag(sx, sy, sx - 80, sy + 50, steps=drag_steps(80, 50))
+        time.sleep(1.0)
+        moved = origin(ABOUT)
+        B.keys("escape", 1.0)
+        gone = ABOUT not in frames()
+        help_item("About", ABOUT)
+        time.sleep(0.8)
+        again = origin(ABOUT)
+        ev1, _ = B.snap("dialogs-1-moved-reopened")
+        dragged = moved is not None and abs(moved[0] - ra[0] + 80) <= 12 and abs(moved[1] - ra[1] - 50) <= 12
+        kept = again is not None and moved is not None and again[:2] == moved[:2]
+        verdict("dialog-frame-move", "observed" if dragged and gone else "failed",
+                f"title bar dragged by (-80,+50): {ra[:4]} -> {moved and moved[:4]}; Esc closed it: {gone}", ev1)
+        verdict("dialog-frame-remembered", ("observed" if kept else "failed") if B.name == "x11" else "not-observable",
+                f"opened again at {again and again[:4]} (left at {moved and moved[:4]})"
+                + ("" if B.name == "x11" else "; on Wayland only the size is kept, the compositor places it"), ev1)
+    else:
+        verdict("dialog-frame-move", "not-observable", f"{B.name}: no window position published or no Close")
+
+    # Back to the main window with a click (mutter: no window position; its
+    # focus helper clicks the main window's title bar), then Help > Credits.
+    help_item("Credits", "Credits", by_click=B.name != "mutter")
+    st = atspi()
+    both = ABOUT in frames(st) and "Credits" in frames(st)
+    ev2, _ = B.snap("dialogs-2-about-and-credits")
+    verdict("dialog-frame-modeless", "observed" if both else "failed",
+            f"About open, a click on the main window, Help > Credits: both open {both} "
+            f"(windows {sorted(frames(st))}, active {[f['id'] for f in st['frames'] if f.get('active')]})", ev2)
+
+    title_bar_start("system")
+    help_item("About", ABOUT)
+    ev3, _ = B.snap("dialogs-3-system-title-bar")
+    framed, why = system_frame(ABOUT)
+    drawn = [n for n in ("Close", "Maximise") if where("button", n, ABOUT)]
+    verdict("dialog-frame-system", "observed" if not drawn and framed is not False else "failed",
+            f"About with the system's title bar: HikariSub's drawn buttons {drawn}; window system frame {framed} ({why})",
+            ev3)
+
+    shots = []
+    for theme in ("light", "dark", "highContrastWhite", "highContrastBlack"):
+        title_bar_start("custom", theme)
+        help_item("About", ABOUT)
+        ev, _ = B.snap(f"dialogs-4-theme-{theme}")
+        shots += ev
+    verdict("dialog-frame-themes", "observed", "About on HikariSub's frame in the four themes (screenshots)", shots)
+    app("kill")
+
+
 SWEEP_STEPS = {"tagspeech": step_tag_list_speech, "statusspeech": step_status_bar_speech,
                "refspeech": step_reference_speech, "icons": step_icon_names, "ime": step_ime,
                "scheme": step_follow_system, "dropper": step_screen_dropper, "edgetile": step_edge_tiling,
-               "titlebar": step_title_bar, "gtkbridge": step_gtk_bridge}
+               "titlebar": step_title_bar, "gtkbridge": step_gtk_bridge, "dialogframe": step_dialog_frame}
 
 
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,

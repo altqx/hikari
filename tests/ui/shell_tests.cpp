@@ -514,6 +514,37 @@ class ShellTest : public QObject {
                 return found;
         return nullptr;
     }
+    // TM1: the Original text panel closed by hand puts the Original text back
+    // in the Line editor, above the Translated text (legacy's EditBox). The
+    // engine shares the panel's room out; the Audio panel above takes back
+    // the Editing preset's 170 px box from the Line editor (fitAudioBox).
+    void closeTheOriginalTextPanel()
+    {
+        auto *dock = item<QObject>("originalDock");
+        QVERIFY(dock);
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(item("lineTextSlot")->isVisible());
+        QTRY_COMPARE(item("lineText")->parentItem(), item("lineTextSlot"));
+        auto *audio = item("audioPanel");
+        const int deficit = qRound(170 - audio->property("bodyHeight").toReal());
+        if (deficit != 0)
+            QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Audio"), 0, 0, 0, deficit));
+        QTRY_VERIFY(std::abs(audio->property("bodyHeight").toReal() - 170) <= 1);
+    }
+    // The Line editor's dock 20 px over its minimum (the tag buttons and a
+    // line of each text field), so the Line's fields are past its fold
+    // whatever room the fonts and the title bar leave the Editing layout.
+    // Its top edge moves down by no more than it has to give: a move past
+    // that goes on to the next separator out and gives the room back.
+    void foldTheLineEditor()
+    {
+        auto *panel = item("editorPanel");
+        const int target = int(std::ceil(panel->property("minimumSize").toSizeF().height())) + 20;
+        if (panel->height() > target)
+            QVERIFY(ui::Docking().resizeInLayout(QStringLiteral("Editor"), 0, target - int(panel->height()), 0, 0));
+        QTRY_VERIFY(panel->height() <= target + 1);
+    }
     // Repeater delegates are not QObject children of the window: walk the items.
     static QQuickItem *findItem(QQuickItem *from, const QString &name)
     {
@@ -5115,7 +5146,7 @@ private slots:
         QVERIFY(panelBox && kindBox && targetBox);
         panelBox->setProperty("currentIndex", 1);  // Audio
         kindBox->setProperty("currentIndex", 1);   // Left of
-        targetBox->setProperty("currentIndex", 3); // Grid
+        targetBox->setProperty("currentIndex", 4); // Grid (after TM1's Original text)
         QVERIFY(QMetaObject::invokeMethod(findItem(placement->contentItem(), QStringLiteral("placementMove")), "click"));
         // Audio sits left of the Grid, in the Grid's row.
         auto *audio = item("audioPanel");
@@ -5224,15 +5255,18 @@ private slots:
         auto *targetBox = findItem(placement->contentItem(), QStringLiteral("placementTarget"));
         QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Grid"));
         QCOMPARE(kindBox->property("displayText").toString(), QStringLiteral("Tab with"));
-        QCOMPARE(targetBox->property("currentIndex").toInt(), 3);
+        QCOMPARE(targetBox->property("currentIndex").toInt(), 4);
         QCOMPARE(targetBox->property("displayText").toString(), QStringLiteral("Grid"));
-        // Panel: Up twice from the Grid is Audio; Next to: Down from the Grid is the Reference.
+        // Panel: Up three times from the Grid is Audio (past TM1's Original
+        // text); Next to: Down from the Grid is the Reference.
         QVERIFY(QTest::qWaitForWindowExposed(placement));
         placement->requestActivate();
         QTRY_COMPARE(QGuiApplication::focusWindow(), placement);
         panelBox->forceActiveFocus();
         QTest::keyClick(placement, Qt::Key_Up);
         QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Line editor"));
+        QTest::keyClick(placement, Qt::Key_Up);
+        QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Original text"));
         QTest::keyClick(placement, Qt::Key_Up);
         QCOMPARE(panelBox->property("currentIndex").toInt(), 1);
         QCOMPARE(panelBox->property("displayText").toString(), QStringLiteral("Audio"));
@@ -6251,38 +6285,160 @@ private slots:
         application->editor().discard();
     }
 
-    // P8: Help > About and Credits show the legacy notices with this build's version.
+    // P8, DG1 (#222): Help > About shows this build's version (copied by its
+    // button), the author and the GPL notice, with no legacy attribution
+    // (DG1-about-layout); Credits the Qt rewrite's people and the components
+    // it is built with (DG1-credits-rewrite). Both are windows of their own
+    // on the dialog frame, modeless.
     void aboutAndCreditsShowTheNotices()
     {
         auto *root = engine->rootObjects().first();
-        auto *about = root->findChild<QObject *>(QStringLiteral("aboutDialog"));
+        auto *about = root->findChild<QQuickWindow *>(QStringLiteral("aboutDialog"));
+        QVERIFY(about);
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutMenuItem"))->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(about->property("visible").toBool());
-        const QString text = dialogItem("aboutDialog", "aboutText")->property("text").toString();
-        QVERIFY2(text.contains(QStringLiteral("version %1").arg(application->updates().version())), qPrintable(text));
-        QVERIFY(text.contains(QStringLiteral("Based on Kainote by Marcin Drob")));
-        QVERIFY(text.contains(QStringLiteral("Libass - Copyright")));
-        QVERIFY(text.contains(QStringLiteral("Hunspell - Copyright"))); // F3: linked again (R2-hunspell)
-        // W2: the CSRI line where the CSRI adapter is built (Windows); the
-        // VSFilter line only where VSFilterMod, a VSFilter derivative, is in
-        // the Csri folder (the package; xy-VSFilter is not shipped).
+        QTRY_VERIFY(about->isVisible());
+        QCOMPARE(about->modality(), Qt::NonModal);
+        QCOMPARE(about->transientParent(), qobject_cast<QWindow *>(root));
+        const QString version = dialogItem("aboutDialog", "aboutVersion")->property("text").toString();
+        QVERIFY2(version.contains(application->updates().versionLabel()), qPrintable(version));
+        QCOMPARE(dialogItem("aboutDialog", "aboutAuthor")->property("text").toString(), QStringLiteral("Subtitle editor by altqx."));
+        QVERIFY(dialogItem("aboutDialog", "aboutLicence")->property("text").toString().contains(QStringLiteral("GNU General Public License, version 3")));
+        for (QQuickItem *label : about->contentItem()->findChildren<QQuickItem *>()) {
+            const QString text = label->property("text").toString();
+            QVERIFY2(!text.contains(QStringLiteral("Kainote")) && !text.contains(QStringLiteral("Bjakja")), qPrintable(text));
+        }
+        QGuiApplication::clipboard()->clear();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("aboutDialog", "aboutCopyVersion"), "click"));
+        QTRY_COMPARE(QGuiApplication::clipboard()->text(), application->updates().versionLabel());
+        QVERIFY(QMetaObject::invokeMethod(about, "close"));
+        QTRY_VERIFY(!about->isVisible());
+
+        auto *credits = root->findChild<QQuickWindow *>(QStringLiteral("creditsDialog"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
+        QTRY_VERIFY(credits->isVisible());
+        QCOMPARE(credits->modality(), Qt::NonModal);
+        QStringList names;
+        for (const QVariant &row : credits->property("components").toList())
+            names << row.toList().value(0).toString();
+        for (const char *name : {"Qt", "KDDockWidgets", "FFmpeg", "FFMS2", "libass", "Hunspell", "LuaJIT", "ICU", "Boost"})
+            QVERIFY2(names.contains(QLatin1String(name)), name);
+        QVERIFY(!names.contains(QStringLiteral("Aegisub")));
+        // W2: CSRI where the CSRI adapter is built (Windows); VSFilter only
+        // where VSFilterMod, a VSFilter derivative, is in the Csri folder (the
+        // package; xy-VSFilter is not shipped).
 #ifdef _WIN32
-        QVERIFY(text.contains(QStringLiteral("CSRI - Copyright © David Lamparter (BSD licence).")));
+        QVERIFY(names.contains(QStringLiteral("CSRI")));
 #else
-        QVERIFY(!text.contains(QStringLiteral("CSRI")));
+        QVERIFY(!names.contains(QStringLiteral("CSRI")));
 #endif
-        QCOMPARE(text.contains(QStringLiteral("Vsfilter - Copyright © Gabest (GNU GPL 2 or later).")),
-                 application->property("includesVsfilter").toBool());
+        QCOMPARE(names.contains(QStringLiteral("VSFilter")), application->property("includesVsfilter").toBool());
 #ifdef HIKARI_WITH_VSFILTERMOD
         QVERIFY(application->property("includesVsfilter").toBool());
-#else
-        QVERIFY(!text.contains(QStringLiteral("Vsfilter")));
 #endif
+        QCOMPARE(dialogItem("creditsDialog", "creditsDevelopment")->property("name").toString(), QStringLiteral("altqx"));
+        QCOMPARE(dialogItem("creditsDialog", "creditsTranslation")->property("name").toString(), QStringLiteral("altqx"));
+        // The components one under another, each as tall as its row: more
+        // than the list shows, so it scrolls.
+        QQuickItem *list = dialogItem("creditsDialog", "creditsComponents");
+        QVERIFY(list);
+        QQuickItem *first = nullptr;
+        QQuickItem *second = nullptr;
+        QVERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, first), Q_ARG(int, 0)));
+        QVERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, second), Q_ARG(int, 1)));
+        QVERIFY(first && second);
+        QVERIFY(first->height() > 0);
+        QCOMPARE(first->height(), first->implicitHeight());
+        QCOMPARE(second->y(), first->y() + first->height());
+        QVERIFY(list->property("contentHeight").toReal() > list->height());
+        // Both at once: modeless windows of their own.
+        QVERIFY(QMetaObject::invokeMethod(about, "open"));
+        QTRY_VERIFY(about->isVisible());
+        QVERIFY(credits->isVisible());
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
-        auto *credits = root->findChild<QObject *>(QStringLiteral("creditsDialog"));
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsMenuItem"))->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(credits->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(credits, "close"));
+        QTRY_VERIFY(!credits->isVisible());
+    }
+
+    // P8, ADR 0019, DG1 (#222): the update check's results and notices open
+    // on the dialog frame, modeless: the check's messages titled "Check for
+    // updates" (a failure with the warning glyph), the installer's "Update";
+    // a newer release in the resizable notice with its notes, or in the AUR
+    // notice for an AUR copy.
+    void updateNoticesOpenOnTheDialogFrame()
+    {
+        // Keys sent before a new window has taken its first show (its
+        // content still 0 × 0) are lost: wait for that, and the keyboard.
+        const auto settled = [](QQuickWindow *window) {
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            QTRY_VERIFY(window->contentItem()->width() > 0);
+            QVERIFY(QTest::qWaitForWindowActive(window));
+        };
+        auto *root = engine->rootObjects().first();
+        auto &updates = application->updates();
+        auto *message = root->findChild<QQuickWindow *>(QStringLiteral("updateMessage"));
+        QVERIFY(message);
+        const auto shows = [&](const QString &title, const QString &text, bool warning) {
+            QTRY_VERIFY(message->isVisible());
+            QCOMPARE(message->title(), title);
+            QCOMPARE(dialogItem("updateMessage", "updateMessageText")->property("text").toString(), text);
+            QCOMPARE(dialogItem("updateMessage", "updateMessageIcon")->property("iconRole").toString(),
+                     warning ? QStringLiteral("notice-warning") : QStringLiteral("about"));
+            QCOMPARE(message->modality(), Qt::NonModal);
+            settled(message);
+            QTest::keyClick(message, Qt::Key_Escape);
+            QTRY_VERIFY(!message->isVisible());
+        };
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("current")),
+                                          Q_ARG(QVariantMap, {}), Q_ARG(bool, true)));
+        shows(QStringLiteral("Check for updates"), QStringLiteral("You already have the latest version"), false);
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("failed")),
+                                          Q_ARG(QVariantMap, {}), Q_ARG(bool, true)));
+        shows(QStringLiteral("Check for updates"), QStringLiteral("Cannot check for updates"), true);
+        QVERIFY(QMetaObject::invokeMethod(&updates, "notice", Q_ARG(QString, QStringLiteral("The update was put back."))));
+        shows(QStringLiteral("Update"), QStringLiteral("The update was put back."), true);
+
+        auto *available = root->findChild<QQuickWindow *>(QStringLiteral("updateAvailable"));
+        const QVariantMap release{{QStringLiteral("name"), QStringLiteral("HikariSub 9.0.0")},
+                                  {QStringLiteral("tag"), QStringLiteral("v9.0.0")},
+                                  {QStringLiteral("version"), QStringLiteral("9.0.0")},
+                                  {QStringLiteral("notes"), QStringLiteral("New\n- everything")},
+                                  {QStringLiteral("offer"), QStringLiteral("page")}};
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, false)));
+        QTRY_VERIFY(available->isVisible());
+        QVERIFY(available->property("resizable").toBool());
+        QCOMPARE(dialogItem("updateAvailable", "updateName")->property("text").toString(), QStringLiteral("HikariSub 9.0.0"));
+        QCOMPARE(dialogItem("updateAvailable", "updateNotes")->property("text").toString(), QStringLiteral("New\n- everything"));
+        QVERIFY(dialogItem("updateAvailable", "updateOffer")->isVisible());
+        QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateOffer"));
+        QVERIFY(!dialogItem("updateAvailable", "updateRequirement")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(available, "close"));
+        QTRY_VERIFY(!available->isVisible());
+        // A package this system cannot run: the requirement, no offer, Close the default.
+        QVariantMap needs = release;
+        needs.insert(QStringLiteral("offer"), QStringLiteral("requirement"));
+        needs.insert(QStringLiteral("requirement"), QStringLiteral("2.99"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, needs), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QTRY_VERIFY(dialogItem("updateAvailable", "updateRequirement")->isVisible());
+        QVERIFY(!dialogItem("updateAvailable", "updateOffer")->isVisible());
+        QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateClose"));
+        settled(available);
+        QTest::keyClick(available, Qt::Key_Escape);
+        QTRY_VERIFY(!available->isVisible());
+
+        auto *aur = root->findChild<QQuickWindow *>(QStringLiteral("updateAurNotice"));
+        QVariantMap fromAur = release;
+        fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
+        QTRY_VERIFY(aur->isVisible());
+        QVERIFY(dialogItem("updateAurNotice", "updateAurText")->property("text").toString().contains(QStringLiteral("yay -Syu")));
+        QVERIFY(!available->isVisible());
+        settled(aur);
+        QTest::keyClick(aur, Qt::Key_Escape);
+        QTRY_VERIFY(!aur->isVisible());
     }
 
     // P7: the legacy Save routes: the video name, the extension, Save
@@ -8382,8 +8538,10 @@ private slots:
         menu = field->findChild<QObject *>(QStringLiteral("lineTextMenu"));
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("wrold"));
         // D3: the Line editor grows to its translation-mode minimum (its
-        // rows laid out) before the field is clicked where it ends up.
-        QTRY_VERIFY(item("translationText")->y() > field->y());
+        // rows laid out) before the field is clicked where it ends up: in
+        // the Original text panel above it (TM1).
+        QTRY_VERIFY(field->parentItem() == item("originalSlot"));
+        QTRY_VERIFY(item("translationText")->mapToScene(QPointF()).y() > field->mapToScene(QPointF()).y());
         QTRY_VERIFY(item("editorPanel")->height() >= item("editorPanel")->property("minimumSize").toSizeF().height());
         rightClick(fieldPoint(field, 1));
         QTRY_VERIFY(menu->property("visible").toBool());
@@ -9415,7 +9573,8 @@ private slots:
             {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
             {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
             {{"saveTag", Accept}, {"cancelTag", Reject}},
-            {{"updateRemind", No}, {"Open the download page", Accept}, {"Close", Reject}},
+            {{"updateOffer", Accept}, {"updateClose", Reject}}, // DG1: Remind me in a week at the leading edge
+            {{"updateAurRemind", No}, {"updateAurClose", Reject}},
             {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
             {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
              {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
@@ -9729,7 +9888,8 @@ private slots:
         auto *translated = item("translationText");
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Gate"));
         QVERIFY(translated->isVisible());
-        QTRY_VERIFY(original->y() < translated->y()); // Original above Translated, once laid out
+        // TM1: the Original text panel above the Line editor's Translated text, once laid out.
+        QTRY_VERIFY(original->mapToScene(QPointF()).y() < translated->mapToScene(QPointF()).y());
         translated->forceActiveFocus();
         for (char c : std::string("Brama"))
             QTest::keyClick(window, c);
@@ -9747,7 +9907,8 @@ private slots:
                  bytes.constData());
     }
 
-    // #101: the legacy translation-mode buttons.
+    // #101: the legacy translation-mode buttons, in the Original text
+    // panel's header (TM1).
     void translationButtonsFollowTheLegacyEditBox()
     {
         const QString path = dir.filePath(QStringLiteral("tl-buttons.ass"));
@@ -9775,14 +9936,15 @@ private slots:
         // Paste the selected: the Original's selection goes in at the Translated caret.
         QMetaObject::invokeMethod(original, "select", Q_ARG(int, 5), Q_ARG(int, 11));
         translated->forceActiveFocus();
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("pasteSelectionToTranslation"), "clicked"));
+        QTRY_VERIFY(item("originalPasteSelection") && item("originalPasteSelection")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("originalPasteSelection"), "clicked"));
         QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("keeper"));
         QCOMPARE(translated->property("cursorPosition").toInt(), 6);
         // Paste all: the Original's raw text, tags included.
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("pasteAllToTranslation"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("originalPasteAll"), "clicked"));
         QTRY_COMPARE(raw(true), QStringLiteral("Gate {\\i1}keeper"));
         // Comment out original wraps the raw Original in braces.
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("commentOutOriginal"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("originalCommentOut"), "clicked"));
         QTRY_COMPARE(raw(false), QStringLiteral("{Gate {\\i1}keeper}"));
     }
 
@@ -9848,60 +10010,72 @@ private slots:
         return QString::fromUtf8(reinterpret_cast<const char *>(s.data()), qsizetype(s.size()));
     }
 
-    // E5: the editor's "Translator mode" check box (EditBox::OnTlMode,
-    // SubsGrid::SetTlMode): one step each way, the turn-off asked first with
-    // No as the default, and one Undo per switch.
+    // TM1: Subtitles > Translation mode (GLOBAL_TRANSLATION_MODE), which
+    // replaced the editor's "Translator mode" check box (EditBox::OnTlMode,
+    // SubsGrid::SetTlMode).
+    QObject *translationModeAction()
+    {
+        auto *menuItem = item<QObject>("translationModeMenuItem");
+        return menuItem ? menuItem->property("action").value<QObject *>() : nullptr;
+    }
+
+    // E5: Translation mode switches with one step each way, the turn-off
+    // asked first with No as the default, and one Undo per switch.
     void translatorModeSwitchesWithOneStepEach()
     {
-        auto *check = item("translatorMode");
-        QVERIFY(check);
-        QVERIFY(!check->isEnabled()); // no Document
+        auto *action = translationModeAction();
+        QVERIFY(action);
+        QVERIFY(!item<QObject>("translatorMode")); // TM1-translator-check-removed
+        QVERIFY(!action->property("enabled").toBool()); // no Document
         QVERIFY(application->openFile(writeTranslationFile("e5-switch.ass", false)));
-        QTRY_VERIFY(check->isEnabled());
+        QTRY_VERIFY(action->property("enabled").toBool());
         auto *session = application->files().session(*application->workspace().editingTarget());
-        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(!action->property("checked").toBool());
         QVERIFY(!item("translationText")->isVisible());
-        QVERIFY(!item("notConfirmed")->isVisible());
+        // The Original text panel's header: not in any window until its dock
+        // first opens.
+        const auto *notConfirmed = item("originalNotConfirmed");
+        QVERIFY(!notConfirmed || !notConfirmed->isVisible());
         const auto steps = session->historySize();
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(application->editor().translationMode());
         QCOMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Turning on translator mode"));
         QCOMPARE(session->document().scriptInfo(u8"TLMode Style"), std::optional<std::u8string>(u8"TLmode"));
-        QVERIFY(check->property("checked").toBool());
+        QVERIFY(action->property("checked").toBool());
         QTRY_VERIFY(item("translationText")->isVisible());
-        QVERIFY(item("notConfirmed")->isVisible());
-        QVERIFY(item("movingTags")->isVisible());
+        QTRY_VERIFY(item("originalNotConfirmed") && item("originalNotConfirmed")->isVisible());
+        QVERIFY(item("originalMovingTags")->isVisible());
 
         // Turning it off asks; No, the focused default, keeps it on.
         auto *confirm = item<QObject>("translatorModeOffConfirm");
         QVERIFY(confirm);
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(confirm->property("opened").toBool());
-        QVERIFY(check->property("checked").toBool()); // still checked while it asks
+        QVERIFY(action->property("checked").toBool()); // still checked while it asks
         press(Qt::Key_Space); // the focused No
         QTRY_VERIFY(!confirm->property("visible").toBool());
         QVERIFY(application->editor().translationMode());
         QCOMPARE(session->historySize(), steps + 1);
         // Yes turns it off as one step.
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(confirm->property("opened").toBool());
         QVERIFY(QMetaObject::invokeMethod(confirm, "accept"));
         QTRY_VERIFY(!application->editor().translationMode());
         QCOMPARE(session->historySize(), steps + 2);
         QCOMPARE(session->history().back().name, std::string("Turning off translator mode"));
-        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(!action->property("checked").toBool());
         QTRY_VERIFY(!item("translationText")->isVisible());
         // One Undo per switch.
         QVERIFY(application->editor().undo());
         QTRY_VERIFY(application->editor().translationMode());
-        QVERIFY(check->property("checked").toBool());
+        QVERIFY(action->property("checked").toBool());
         QVERIFY(application->editor().undo());
         QTRY_VERIFY(!application->editor().translationMode());
-        QVERIFY(!check->property("checked").toBool());
+        QVERIFY(!action->property("checked").toBool());
     }
 
-    // E5: legacy enables the check box for ASS only.
+    // E5: legacy enables the mode for ASS only.
     void translatorModeIsForAssOnly()
     {
         const QString path = dir.filePath(QStringLiteral("e5.srt"));
@@ -9911,14 +10085,14 @@ private slots:
             f.write("1\n00:00:01,000 --> 00:00:02,000\nA\n\n");
         }
         QVERIFY(application->openFile(path));
-        QVERIFY(!item("translatorMode")->isEnabled());
+        QVERIFY(!translationModeAction()->property("enabled").toBool());
         QVERIFY(!application->turnOnTranslationMode());
     }
 
     // E5-tlmode-needs-script-info: an ASS file without a [Script Info]
     // section turns the mode on and saves the section at the top (legacy
-    // AddSInfo and SaveFile's header); a plain-text Document leaves the check
-    // box and Paste translation disabled, and both say why.
+    // AddSInfo and SaveFile's header); a plain-text Document leaves the
+    // command and Paste translation disabled, and both say why.
     void translatorModeNeedsScriptInfo()
     {
         const QString ass = dir.filePath(QStringLiteral("e5-sectionless.ass"));
@@ -9930,14 +10104,18 @@ private slots:
             f.write(body);
         }
         QVERIFY(application->openFile(ass));
-        auto *check = item("translatorMode");
-        QTRY_VERIFY(check->isEnabled());
+        // The tab's external-change check (Qt.callLater) runs before the save
+        // below, as it does when the user reaches the menu.
+        QCoreApplication::processEvents();
+        auto *action = translationModeAction();
+        auto *menuItem = item<QObject>("translationModeMenuItem");
+        QTRY_VERIFY(action->property("enabled").toBool());
         QVERIFY(application->translationHint().isEmpty());
-        QCOMPARE(QQmlProperty(check, QStringLiteral("ToolTip.text"), qmlContext(check)).read().toString(),
+        QCOMPARE(menuItem->property("help").toString(),
                  QStringLiteral("Translator mode displays and saves both foreign text and translation text"));
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(check));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(application->editor().translationMode());
-        QVERIFY(check->property("checked").toBool());
+        QVERIFY(action->property("checked").toBool());
         QVERIFY(application->editor().save());
         application->waitForWrites();
         QFile saved(ass);
@@ -9960,22 +10138,12 @@ private slots:
         QVERIFY(application->openFile(text));
         auto *session = targetSession();
         QCOMPARE(session->document().format(), core::SubtitleFormat::PlainText);
-        QTRY_VERIFY(!check->isEnabled());
+        QTRY_VERIFY(!action->property("enabled").toBool());
         QVERIFY(!application->translatorModeAvailable());
         QVERIFY(!application->turnOnTranslationMode());
         const QString hint = application->translationHint();
         QCOMPARE(hint, QStringLiteral("Translation needs an ASS file: plain text cannot store it."));
-        QCOMPARE(QQmlProperty(check, QStringLiteral("ToolTip.text"), qmlContext(check)).read().toString(), hint);
-        // The hint shows over the disabled box.
-        const QQmlProperty tipVisible(check, QStringLiteral("ToolTip.visible"), qmlContext(check));
-        const QPoint away(window->width() - 5, window->height() - 5);
-        QTest::mouseMove(window, away);
-        QTRY_VERIFY(!tipVisible.read().toBool());
-        QTest::mouseMove(window, centreOf(check) - QPoint(0, 1));
-        QTest::mouseMove(window, centreOf(check));
-        QTRY_VERIFY(tipVisible.read().toBool());
-        QTest::mouseMove(window, away);
-        QTRY_VERIFY(!tipVisible.read().toBool());
+        QCOMPARE(menuItem->property("help").toString(), hint); // the status bar's text over it
         QVERIFY(!application->canPasteTranslation());
         auto *grid = item("editingGrid");
         grid->forceActiveFocus();
@@ -9993,7 +10161,7 @@ private slots:
     }
 
     // E5: an ASS Document needs a file too (HikariSubFrame.cpp:2401,
-    // SubsPath != ""): an Untitled one leaves the check box disabled.
+    // SubsPath != ""): an Untitled one leaves the command disabled.
     void translatorModeNeedsAFile()
     {
         application->addPage();
@@ -10001,12 +10169,12 @@ private slots:
         QVERIFY(session);
         QCOMPARE(session->document().format(), core::SubtitleFormat::Ass);
         QVERIFY(!application->translatorModeAvailable());
-        QVERIFY(!item("translatorMode")->isEnabled());
+        QVERIFY(!translationModeAction()->property("enabled").toBool());
         QVERIFY(!application->turnOnTranslationMode());
         QVERIFY(!session->document().scriptInfo(u8"TLMode"));
         // The same text with a file enables it.
         QVERIFY(application->openFile(writeTranslationFile("e5-file.ass", false)));
-        QTRY_VERIFY(item("translatorMode")->isEnabled());
+        QTRY_VERIFY(translationModeAction()->property("enabled").toBool());
     }
 
     // E5: the Grid's Moving translation text entries do nothing while the
@@ -10065,6 +10233,8 @@ private slots:
         QVERIFY(application->openFile(writeTranslationFile("e5-overflow.ass")));
         QTRY_VERIFY(application->editor().translationMode());
         QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        closeTheOriginalTextPanel();
+        foldTheLineEditor();
         auto *panel = item("editorPanel");
         auto *view = item("editorScroll");
         auto *content = item("editorContent");
@@ -10073,8 +10243,6 @@ private slots:
         QVERIFY(panel->mapRectToScene(panel->boundingRect()).contains(view->mapRectToScene(view->boundingRect())));
         QCOMPARE(view->property("contentY").toReal(), 0.0);
         QTRY_VERIFY(!inTheEditorView(item("startField"))); // below the fold, once laid out
-        const qreal audioBody = item("audioPanel")->property("bodyHeight").toReal();
-        QVERIFY2(std::abs(audioBody - 170) <= 1, qPrintable(QString::number(audioBody)));
 
         // The wheel brings every control into view.
         QList<QQuickItem *> controls;
@@ -10089,8 +10257,9 @@ private slots:
             }
         };
         collect(content);
-        // (LE2 and LE3 took the Times/Frames radios and Hide tags out.)
-        QVERIFY2(controls.size() >= 22, qPrintable(QString::number(controls.size())));
+        // (LE2 and LE3 took the Times/Frames radios and Hide tags out; TM1
+        // the Translator mode row.)
+        QVERIFY2(controls.size() >= 20, qPrintable(QString::number(controls.size())));
         for (QQuickItem *control : std::as_const(controls))
             scrollTheEditorTo(control);
         scrollTheEditorTo(controls.first()); // and back up
@@ -10143,7 +10312,10 @@ private slots:
         const qreal before = panel->height();
         QVERIFY2(minimum > 90 && minimum < before, qPrintable(QString::number(minimum)));
         ui::Docking docking;
-        QVERIFY(docking.resizeInLayout(QStringLiteral("Editor"), 0, 40 - int(before), 0, 0));
+        // Squeezed to its minimum and no further: a move past it goes on to
+        // the next separator out (the engine grows the top row), and the
+        // editor gets that room back.
+        QVERIFY(docking.resizeInLayout(QStringLiteral("Editor"), 0, minimum - int(before), 0, 0));
         QTRY_VERIFY(panel->height() < before);
         QVERIFY2(panel->height() >= minimum, qPrintable(QStringLiteral("%1 < %2").arg(panel->height()).arg(minimum)));
         view->setProperty("contentY", 0);
@@ -10164,6 +10336,8 @@ private slots:
         // A fold to scroll past: the Editing layout (WS1: not the Translation
         // preset the file's tab starts with).
         QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        closeTheOriginalTextPanel(); // the two fields in the Line editor (translation_preset_tests: across panels)
+        foldTheLineEditor();
         auto *original = item("lineText");
         auto *translated = item("translationText");
         auto *layer = item("layerField");
@@ -10272,11 +10446,13 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Home);
-        auto *button = item("notConfirmed");
+        // TM1: in the Original text panel's header, in a window once the
+        // panel opens.
+        QTRY_VERIFY(item("originalNotConfirmed") && item("originalNotConfirmed")->isVisible());
+        auto *button = item("originalNotConfirmed");
         QTRY_VERIFY(button->property("checked").toBool()); // the "\fD" pair loads Unconfirmed
         press(Qt::Key_A, Qt::ControlModifier);
         QTRY_COMPARE(session->selection().selected.size(), std::size_t(3));
-        scrollTheEditorTo(button);
         const auto steps = session->historySize();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(button));
         QTRY_COMPARE(session->historySize(), steps + 1);
@@ -10331,9 +10507,11 @@ private slots:
         QVERIFY(application->openFile(writeTranslationFile("e5-moving.ass")));
         auto *session = application->files().session(*application->workspace().editingTarget());
         application->editor().setShowTags(true);
-        auto *moving = item("movingTags");
+        // TM1: in the Original text panel's header, in a window once the
+        // panel opens.
+        QTRY_VERIFY(item("originalMovingTags") && item("originalMovingTags")->isVisible());
+        auto *moving = item("originalMovingTags");
         QVERIFY(!moving->property("checked").toBool());
-        scrollTheEditorTo(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QVERIFY(moving->property("checked").toBool());
@@ -10374,7 +10552,6 @@ private slots:
         // Undo takes the edit back; turning Moving tags off shows the Line whole.
         QVERIFY(application->editor().undo());
         QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
-        scrollTheEditorTo(moving);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
@@ -13138,9 +13315,9 @@ private slots:
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
-        // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR and VT2's
-        // eleven visual tools listed.
-        QCOMPARE(hotkeyRows().size(), 232);
+        // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
+        // "Translation mode" and VT2's eleven visual tools listed.
+        QCOMPARE(hotkeyRows().size(), 233);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -22326,6 +22503,84 @@ private slots:
             QVERIFY(shoot(about, QStringLiteral("about") + suffix));
         }
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
+    }
+
+    // DG1 (#222) screenshots for review (HIKARI_DIALOG_SHOT_DIR; skipped
+    // without it): About, Credits, the update check's warning, a newer
+    // release and the AUR notice in the four themes on HikariSub's title bar
+    // (where the platform has one: X11, Wayland, Windows), then About and the
+    // warning with "Use system title bar".
+    void dialogFrameScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_DIALOG_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_DIALOG_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        auto &updates = application->updates();
+        const QVariantMap release{{QStringLiteral("name"), QStringLiteral("HikariSub 1.4.0")},
+                                  {QStringLiteral("tag"), QStringLiteral("v1.4.0")},
+                                  {QStringLiteral("version"), QStringLiteral("1.4.0")},
+                                  {QStringLiteral("notes"), QStringLiteral("New\n- Dialogs are windows of their own, with the title bar of the main "
+                                                                           "window.\n- About and Credits stay open beside the editor.\n\nFixed\n"
+                                                                           "- The update notice remembers its size.")},
+                                  {QStringLiteral("offer"), QStringLiteral("page")}};
+        QVariantMap fromAur = release;
+        fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
+        // Each opener leaves its dialog shown; the name is its window's.
+        const std::vector<std::pair<QString, std::function<void()>>> dialogs{
+            {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutDialog")), "open"); }},
+            {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsDialog")), "open"); }},
+            {QStringLiteral("updateMessage"), [&] {
+                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("failed")), Q_ARG(QVariantMap, {}), Q_ARG(bool, true));
+             }},
+            {QStringLiteral("updateAvailable"), [&] {
+                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, release), Q_ARG(bool, true));
+             }},
+            {QStringLiteral("updateAurNotice"), [&] {
+                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true));
+             }},
+        };
+        const auto shoot = [&](const QString &name, const QString &file) {
+            auto *window = root->findChild<QQuickWindow *>(name);
+            QVERIFY(window);
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QLatin1Char('/') + file));
+            QVERIFY(window->close());
+            QTRY_VERIFY(!window->isVisible());
+        };
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            for (const auto &[name, open] : dialogs) {
+                open();
+                shoot(name, QStringLiteral("dg1-%1-%2.png").arg(name, code));
+            }
+        }
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("system"));
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark")}) {
+            setTheme(code);
+            for (const auto &[name, open] : dialogs) {
+                if (name != QLatin1String("aboutDialog") && name != QLatin1String("updateMessage"))
+                    continue;
+                open();
+                shoot(name, QStringLiteral("dg1-%1-system-%2.png").arg(name, code));
+            }
+        }
     }
 
     void theReferenceIsNeverEdited()
