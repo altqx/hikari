@@ -278,9 +278,9 @@ void dropHtml(QTextDocument &doc)
     static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s(?:[^>\"']|\"[^\"]*\"|'[^']*')*)?/?>"),
                                         QRegularExpression::UseUnicodePropertiesOption);
     // What goes whole, to its closer: a comment, a processing instruction,
-    // CDATA, a declaration, a script, a style.
+    // CDATA, a declaration, a script, a style ("<script/>" is a tag as any).
     static const QRegularExpression dropped(
-        QStringLiteral("<!--|<\\?|<!\\[CDATA\\[|<![A-Za-z]|<(script|style)(?=[\\s>/]|$)"),
+        QStringLiteral("<!--|<\\?|<!\\[CDATA\\[|<![A-Za-z]|<(script|style)(?=[\\s>]|$)"),
         QRegularExpression::CaseInsensitiveOption | QRegularExpression::UseUnicodePropertiesOption);
     struct Range {
         int from, to;

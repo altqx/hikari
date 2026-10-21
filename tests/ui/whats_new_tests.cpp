@@ -580,6 +580,11 @@ private slots:
             QStringLiteral("Before <script\ntype=\"x\">hidden()</script> after"), muted, link, code);
         QVERIFY2(!split.contains(QStringLiteral("hidden()")), qPrintable(split));
         QVERIFY(split.contains(QStringLiteral("after")));
+        // "<script/>" is a tag like any: what follows it stays.
+        const QString selfClosed = copy->whatsNew->render(
+            QStringLiteral("Before <script/> after\n\nNext paragraph"), muted, link, code);
+        QVERIFY2(selfClosed.contains(QStringLiteral("Before  after")), qPrintable(selfClosed));
+        QVERIFY(selfClosed.contains(QStringLiteral("Next paragraph")));
         // Markup written escaped is text, in prose as in code; raw HTML
         // beside it still goes, and an escaped ">" closes nothing.
         const QString escaped = copy->whatsNew->render(
