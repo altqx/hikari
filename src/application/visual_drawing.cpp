@@ -899,14 +899,18 @@ void DrawingTool::pointer(const Pointer &event, VisualHost &host)
     host.toolChanged();
 }
 
+bool DrawingTool::takesKey(const Key &event) const
+{
+    return nudgeDirection(event).has_value();
+}
+
 bool DrawingTool::key(const Key &event, VisualHost &host)
 {
     // DrawingAndClip::OnKeyPress (Shapes does not override it: the keys move
     // the Line's points, and the edit writes GetVisual, the shape's while
     // one is chosen).
     syncMove(host);
-    const bool nudge = event.key == keys::W || event.key == keys::S || event.key == keys::A ||
-                       event.key == keys::D || event.key == keys::Delete;
+    const bool nudge = isArrowKey(event.key) || event.key == keys::Delete;
     if (event.release) {
         if (!nudge || !m_keyCommit)
             return false;
@@ -1188,13 +1192,15 @@ std::vector<ToolOption> DrawingTool::options(const VisualHost &host) const
         mode.tooltip = modes[i].label;
         mode.checked = m_shapeSelection == 0 && m_editor.mode == i;
         mode.enabled = m_shapeSelection == 0;
+        mode.group = u"Points"; // VT1: the bar's groups
         out.push_back(std::move(mode));
     }
     ToolOption shapes;
     shapes.name = "shape";
     shapes.kind = ToolOption::Kind::Choice;
-    shapes.iconRole = "shape-presets"; // the row shows the list as an icon with its menu
+    shapes.iconRole = "shape-presets";
     shapes.listEnds = true;
+    shapes.group = u"Shape"; // VT1: the bar shows the chosen entry as text
     shapes.tooltip = u"List of ASS drawings with edit option.\nAfter choose drawing from list just set cursor i n "
                      u"place\nof start of drawing and click left mouse button and drag.";
     static const std::vector<ShapePreset> none;

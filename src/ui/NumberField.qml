@@ -59,12 +59,16 @@ TextField {
         onPressed: mouse => {
             field.rightHeld = true
             field.forceActiveFocus(Qt.MouseFocusReason)
-            field.drag = {value: field.numValue, x: mouse.x, y: mouse.y}
+            // The pointer's travel in the window, as TimeField's drag: a
+            // field the layout moves under it has not been dragged.
+            const at = mapToItem(null, mouse.x, mouse.y)
+            field.drag = {value: field.numValue, x: at.x, y: at.y}
         }
         onPositionChanged: mouse => {
             if (field.drag.value === undefined)
                 return
-            const moved = NumberFieldMouse.dragMove(field.drag, mouse.x, mouse.y, field.from, field.to)
+            const at = mapToItem(null, mouse.x, mouse.y)
+            const moved = NumberFieldMouse.dragMove(field.drag, at.x, at.y, field.from, field.to)
             field.drag = moved.drag
             if (moved.text.length > 0) {
                 field.numValue = moved.drag.value

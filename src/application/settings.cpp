@@ -257,6 +257,11 @@ const std::vector<SettingDefinition> &definitions()
         // DG1 (#222): where each dialog was left and how big, one
         // "<id>\t<x>,<y>,<width>,<height>" row per dialog (dialog_placement.h).
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        // PK1 (#301): "Show notices as toasts" (off: notices go only to the
+        // Log), and the questions hidden by "Don't ask again" that have no
+        // setting of their own (Settings > General > Ask again clears them).
+        {"notices.toasts", "", Bool, Profile, Mapped, false, true},
+        {"notices.hiddenQuestions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).
@@ -280,6 +285,15 @@ const std::vector<SettingDefinition> &definitions()
         // "nextCommit", "goto", "sliders"). Starts on AU1's row; legacy has
         // no such option, so an import leaves it as it is.
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
+        // KA2 (#277): the audio box's playback speed in percent (25, 33, 50,
+        // 75 or 100), pitch kept (KA2-slowed-playback); tap-to-time's Hold or
+        // Press and the calibrated latency in ms (KA2-tap-to-time).
+        {"audio.speedPercent", "", Int, Profile, Mapped, false, std::int64_t{100}},
+        {"audio.tapHold", "", Bool, Profile, Mapped, false, true},
+        {"audio.tapLatency", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // KA5 (#280): Karaoke mode's syllable boundaries snap to vocal onsets
+        // (KA5-onset-snap), off by default.
+        {"audio.onsetSnap", "", Bool, Profile, Mapped, false, false},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other

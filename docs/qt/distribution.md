@@ -73,11 +73,11 @@ A portable copy keeps the Automation folder beside the program, as legacy does. 
 
 Legacy stays at 0.0.x and the rewrite starts at 0.1.0; `HIKARI_VERSION_SUFFIX` adds a prerelease (`0.1.0-beta.2`). deb and rpm versions put `~` before the prerelease inside the package (`0.1.0~beta.2-1`), never in the file name. Moving from legacy to the rewrite is an ordinary upgrade of one package (`hikarisub`, or `hikarisub-stable-bin` and `hikarisub-beta-bin` on the AUR, whose `pkgver` is the version without its `-`: `0.1.0-beta.2` is `0.1.0beta.2`, which vercmp sorts above every legacy 0.0.x and below `0.1.0`) or one installation.
 
-A rewrite release names `"offer_to": ["qt"]` until the owner sets `HIKARISUB_OFFER_QT_TO_LEGACY`; then `["qt", "legacy"]`. Legacy 0.0.1 knows nothing of manifests and offers the highest stable SemVer release it finds, so no stable rewrite release is published before the rewrite is meant for every legacy user.
+A rewrite release always names `"offer_to": ["qt"]`. Legacy users are offered it only through its manifest's optional `offer` member, which legacy 0.0.2 and later read and which never downloads anything before the user accepts ([ADR-0021](../adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md)). On the AUR, `hikarisub-beta-bin` follows the rewrite from 0.1.0-beta.1, and `hikarisub-stable-bin` follows it from the first stable rewrite release. Legacy 0.0.1 reads no manifest and reports the highest stable release, so the first stable rewrite release's notes open by saying that moving is optional.
 
 ## Payload and licences
 
-Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter, dictionaries, translations, helpers). Qt is linked dynamically and shipped with its licence notices; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs; deb and rpm declare their host dependencies.
+Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter and SoundTouch (LGPL-2.1-or-later, static), dictionaries, translations, helpers). Qt is linked dynamically and shipped with its licence notices; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs; deb and rpm declare their host dependencies.
 
 ## Testing an update
 

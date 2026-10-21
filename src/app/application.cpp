@@ -1092,11 +1092,23 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     {
         ui::AudioController::TimingHooks hooks;
-        hooks.commit = [this](const application::AudioCommitRequest &request) { commitAudioTimes(request); };
+        hooks.commit = [this](const application::AudioCommitRequest &request) { return commitAudioTimes(request); };
         hooks.setActive = [this](int key) { setAudioActive(key); };
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
         m_audio->setTimingHooks(std::move(hooks));
     }
+    // KA2-tap-to-time: the tap bar's next Line (keys as refreshAudio gives them)
+    m_audio->setLineText([this](int key) -> QString {
+        const auto target = m_workspace.editingTarget();
+        auto *session = target ? m_files->session(*target) : nullptr;
+        if (!session)
+            return {};
+        const auto &lines = session->document().lines();
+        if (key < 0 || key >= static_cast<int>(lines.size()))
+            return {};
+        const auto *line = lines[static_cast<std::size_t>(key)];
+        return QString::fromStdU16String(core::toUtf16(line->translation.empty() ? line->text : line->translation));
+    });
     m_audio->setFollowAudio([this](int ms) { showVideoAtAudio(ms); }); // AV2
     // Legacy RendererFFMS2::OpenFile: a file with audio and no video goes to
     // the audio box (as audio from video: SetRecent, the box's own provider),
@@ -1275,11 +1287,11 @@ void Application::rememberRecentAudio(const QString &path)
 }
 
 // A3: legacy AudioDisplay::CommitChanges' edit-box part.
-void Application::commitAudioTimes(const application::AudioCommitRequest &request)
+bool Application::commitAudioTimes(const application::AudioCommitRequest &request)
 {
     auto *session = targetSession();
     if (!session || !m_editor->editable())
-        return;
+        return false;
     const bool before = std::exchange(m_audioCommitting, true);
     // E4: StartEdit/EndEdit/DurEdit->SetTime(time, true): the warning colour
     // on each field whose time changes; Send (with `save`) clears it again.
@@ -1298,6 +1310,7 @@ void Application::commitAudioTimes(const application::AudioCommitRequest &reques
         applySelection(gridSelection().plain(session->selection(), *outcome->next));
         m_lineChangeOrigin.reset();
     }
+    return outcome.has_value();
 }
 
 // A3: legacy SubsGrid::SetActive from the box (AUDIO_NEXT / AUDIO_PREVIOUS).
@@ -2801,6 +2814,20 @@ QStringList Application::styleNames() const
     if (auto *session = targetSession())
         for (const auto &style : core::decodeStyles(session->document()))
             out << QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), static_cast<qsizetype>(style.name.size()));
+    return out;
+}
+
+QVariantMap Application::styleLineCounts() const
+{
+    QVariantMap out;
+    if (auto *session = targetSession()) {
+        for (const auto &style : core::decodeStyles(session->document()))
+            out.insert(QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), static_cast<qsizetype>(style.name.size())), 0);
+        for (const auto *line : session->document().lines()) {
+            const QString name = QString::fromUtf8(reinterpret_cast<const char *>(line->style.data()), static_cast<qsizetype>(line->style.size()));
+            out.insert(name, out.value(name).toInt() + 1);
+        }
+    }
     return out;
 }
 
@@ -5267,6 +5294,9 @@ QVariantMap Application::openSettingsDialog()
         warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "style"));
     auto values = toVariant(open.state);
     addAppearance(values);
+    // PK1 (#301): the questions hidden with "Don't ask again", which the
+    // Editor page's Ask again empties.
+    values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     // W2: the renderers as the choice shows them; VSFilterMod says what it
     // is for (user 2026-10-13: slow, only for its own tags).
     QStringList rendererLabels;
@@ -5355,6 +5385,12 @@ void Application::applySettings(const QVariantMap &values)
         if (found == values.cend() || !validAppearance(id, *found) || *found == m_settings->value(qs(id)))
             continue;
         m_settings->setValue(qs(id), *found);
+    }
+    // PK1 (#301): Ask again, saved by OK or Apply like the options.
+    if (const auto hidden = values.constFind(QStringLiteral("notices.hiddenQuestions")); hidden != values.cend()) {
+        const QStringList list = hidden->toStringList();
+        if (list != m_settings->list("notices.hiddenQuestions"))
+            m_settings->setValue(QStringLiteral("notices.hiddenQuestions"), list);
     }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).

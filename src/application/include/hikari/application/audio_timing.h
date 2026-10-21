@@ -108,6 +108,11 @@ struct AudioKaraokeMouse {
     AudioKaraoke *karaoke = nullptr;
     bool moveOnClick = false; // AUDIO_KARAOKE_MOVE_ON_CLICK
     KaraokeMeasure measure;   // the label font (GetTextExtentPixel)
+    // KA5-onset-snap: with snapping on, the vocal onsets found (ascending);
+    // empty, nothing snaps. Only a boundary dragged snaps (to the nearest
+    // within kOnsetSnapWindowMs and 16 columns, between its neighbours), not
+    // one clicked or moved by a click.
+    std::span<const int> onsetsMs;
 };
 
 // Legacy AudioDisplay's timing state (hold, holding, selStart/selEnd, the
@@ -156,6 +161,10 @@ private:
     std::int64_t m_selStart = 0, m_selEnd = 0, m_selMark = 0;
     std::int64_t m_lastX = 0, m_lastDragX = 0;
     int m_grabbed = -1; // A5
+    // KA5-onset-snap: where the button went down, and whether the mouse has
+    // moved from there since.
+    std::int64_t m_pressX = 0;
+    bool m_dragged = false;
 };
 
 // Legacy AudioDisplay::CommitChanges: the selection goes into the editor's
@@ -182,6 +191,12 @@ struct AudioCommitRequest {
     // E4: the editor's Duration field takes the times too (CommitChanges);
     // AddLead's UpdateTimeEditCtrls sets Start and End only.
     bool duration = true;
+    // KA2-tap-to-time: the history step's name ("Tap timing"); otherwise
+    // legacy's "Changing time on audio spectrum".
+    const char *stepName = nullptr;
+    // KA2-tap-to-time: the active Line alone takes the times and text, however
+    // many are selected (a tapped Line's syllables are its own).
+    bool activeOnly = false;
 };
 struct AudioCommitOutcome {
     bool stepped = false;              // a history step was recorded

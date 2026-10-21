@@ -190,6 +190,7 @@ std::vector<ToolOption> PositionShifterTool::options(const VisualHost &host) con
         o.iconRole = items()[i].icon;
         o.tooltip = items()[i].tooltip;
         o.checked = m_toggled[i];
+        o.group = u"Move"; // VT1: the bar's group
         out.push_back(std::move(o));
     }
     return out;
@@ -533,23 +534,25 @@ void PositionShifterTool::pointer(const Pointer &event, VisualHost &host)
     host.toolChanged();
 }
 
+bool PositionShifterTool::takesKey(const Key &event) const
+{
+    return nudgeDirection(event).has_value();
+}
+
 bool PositionShifterTool::key(const Key &event, VisualHost &host)
 {
-    // MoveAll::OnKeyPress (VisualMoveAll.cpp:559-595): A/D/W/S move every
-    // element of the chosen kinds one script pixel (Shift: a tenth) unless
-    // Alt alone is held; each press is its own step.
+    // MoveAll::OnKeyPress (VisualMoveAll.cpp:559-595): a nudge moves every
+    // element of the chosen kinds one script pixel (Shift: a tenth);
+    // VT2-arrow-nudge: the arrows, for legacy's A/D/W/S. Each press is its
+    // own step.
     if (event.release)
         return false;
-    const bool left = event.key == 'A';
-    const bool right = event.key == 'D';
-    const bool up = event.key == 'W';
-    const bool down = event.key == 'S';
-    const bool altOnly = event.alt && !event.control && !event.shift;
-    if (!((left || right || up || down) && !altOnly))
+    const auto direction = nudgeDirection(event);
+    if (!direction)
         return false;
     takeView(host.view());
-    float directionX = (left) ? -1 : (right) ? 1 : 0;
-    float directionY = (up) ? -1 : (down) ? 1 : 0;
+    float directionX = direction->x;
+    float directionY = direction->y;
     if (event.shift) {
         directionX /= 10.f;
         directionY /= 10.f;

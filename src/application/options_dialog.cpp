@@ -128,6 +128,14 @@ constexpr OptionsBinding kBindings[] = {
     // WS2: the panel layout in the subtitle file ([Hikari]), on the
     // Subtitle properties page with the other things a save writes there.
     {"subtitles.layoutInFile", Check, SubtitleProperties},
+    // VF1: legacy VideoToolbar's two lists (MOVE_VIDEO_TO_ACTIVE_LINE,
+    // VIDEO_PLAY_AFTER_SELECTION), which left the Video panel for its menu
+    // and the Video page.
+    {"video.moveToActiveLine", IndexChoice, Video, 0, 0, 6},
+    {"video.playAfterSelection", IndexChoice, Video, 0, 0, 4},
+    // PK1 (#301): notices as toasts, or in the Log only, on the Editor page's
+    // Notices group.
+    {"notices.toasts", Check, Editor},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
@@ -534,8 +542,11 @@ OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const Opti
             break;
         case IndexChoice:
             // SetSelection(FindString(GetString(option))): the option's digits
-            // name no entry, so the choice shows nothing (-1).
-            state[id] = std::int64_t{-1};
+            // name no entry, so the choice shows nothing (-1). VF1's lists
+            // were never on legacy's dialog: they show their default.
+            state[id] = id == "video.moveToActiveLine" || id == "video.playAfterSelection"
+                            ? SettingValue(settings.integer(id))
+                            : SettingValue(std::int64_t{-1});
             break;
         case Font:
             state[id] = settings.text(id);

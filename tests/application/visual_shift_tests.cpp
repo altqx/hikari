@@ -19,6 +19,8 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
 
+#include "legacy_visual_keys.h"
+
 #include <gtest/gtest.h>
 
 #include <QFile>
@@ -1154,14 +1156,14 @@ TEST(VisualCapture, ReplaysTheLegacyT6Probe)
             } else if (kind == "key") {
                 std::string k;
                 in >> k;
-                Key key;
-                key.key = k[0];
+                bool shift = false, control = false, alt = false;
                 std::string word;
                 while (in >> word) {
-                    key.shift = key.shift || word == "shift";
-                    key.alt = key.alt || word == "alt";
-                    key.control = key.control || word == "ctrl";
+                    shift = shift || word == "shift";
+                    alt = alt || word == "alt";
+                    control = control || word == "ctrl";
                 }
+                const Key key = legacy_keys::legacyKey(k, shift, control, alt, tool->family());
                 (void)tool->key(key, host);
             } else if (kind == "draw") {
                 drawn = tool->overlay(host);

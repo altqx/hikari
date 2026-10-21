@@ -943,7 +943,9 @@ Rectangle {
             QStringLiteral("select-visible"), QStringLiteral("translation-shift"), QStringLiteral("ui-colours"),
             QStringLiteral("layout-restore"), QStringLiteral("restore-default"),
             // TM1's text-line icon and its moving arrow
-            QStringLiteral("translation-mode"), QStringLiteral("comment-original"), QStringLiteral("moving-tags")};
+            QStringLiteral("translation-mode"), QStringLiteral("comment-original"), QStringLiteral("moving-tags"),
+            // PK1's arrows: the date picker's previous and next month, the Details disclosure
+            QStringLiteral("chevron-left"), QStringLiteral("chevron-right")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();

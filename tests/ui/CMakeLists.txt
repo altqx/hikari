@@ -400,6 +400,11 @@ hikari_add_qttest(hikari_ui_window_frame_tests SOURCES window_frame_tests.cpp LI
 # modality and closing with the opener.
 hikari_add_qttest(hikari_ui_dialog_frame_tests SOURCES dialog_frame_tests.cpp
     LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
+# PK1: the popup kit (MessageBox, Popover, ToastStack, InlineBar and the
+# forms on them: clash review, Choose styles, hotkey capture, list chooser,
+# date picker).
+hikari_add_qttest(hikari_ui_popup_kit_tests SOURCES popup_kit_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2 Qt6::QuickTest)
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")

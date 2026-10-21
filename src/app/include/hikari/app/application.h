@@ -411,6 +411,9 @@ public:
     Q_INVOKABLE bool toggleHiddenBlock(int documentRow);
     // The editing target's Style names, for "Hide lines with styles".
     Q_INVOKABLE QStringList styleNames() const;
+    // PK1's Choose styles: the lines that use each style (by name), the
+    // target's styles first at 0.
+    Q_INVOKABLE QVariantMap styleLineCounts() const;
     // P3: autosave recovery. Bundles left by a session that ended without
     // closing cleanly: {key, title, original, written, generations:[{generation, written}]}.
     Q_INVOKABLE QVariantList recoveryBundles() const;
@@ -1354,7 +1357,7 @@ private:
     // CommitChanges through the edit box and grid); while one runs the box
     // keeps its selection for the same Line (no SetDialogue).
     bool m_audioCommitting = false;
-    void commitAudioTimes(const application::AudioCommitRequest &request);
+    bool commitAudioTimes(const application::AudioCommitRequest &request);
     // K2: the Options dialog's Appearance page settings.
     void addAppearance(QVariantMap &values) const;
     void setAudioActive(int key);

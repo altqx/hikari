@@ -22,6 +22,13 @@
 // moved on by the time since that callback less the time until its first
 // frame is heard (the clock estimate's DAC time), mapped back to the
 // audio's rate. Before the output reports it is the start.
+//
+// KA2-slowed-playback: below speed 1 the frames go through SoundTouch, which
+// stretches them in time with the pitch kept, before any resampling. It runs
+// on the fill thread, never in the output's callback. Each output frame then
+// stands for `speed` of the audio's frames, less the time SoundTouch's
+// overlapping sequences bring a sound forward (kStretchLead). At speed 1 the
+// frames are not touched.
 
 #include "hikari/application/audio_display.h"
 #include "hikari/application/audio_output.h"
@@ -38,6 +45,10 @@
 #include <mutex>
 #include <thread>
 #include <vector>
+
+namespace soundtouch {
+class SoundTouch;
+}
 
 namespace hikari::backends {
 
@@ -94,6 +105,7 @@ public:
     void reopenOutput();
 
     void play(std::int64_t start, std::int64_t count) override;
+    bool playClip(std::shared_ptr<const application::DisplayAudio> clip) override;
     void stop() override;
     bool playing() const override { return m_playing.load(); }
     std::int64_t position() const override;
@@ -102,6 +114,17 @@ public:
     void setEndPosition(std::int64_t end) override;
     void setVolume(double volume) override;
     double volume() const;
+    void setSpeed(double speed) override;
+    double speed() const;
+    // How far SoundTouch at `speed` brings a sound's onset forward, in ms of
+    // the audio (measured on decaying tone bursts with kStretch* settings;
+    // linear between the measured speeds, 0 at speed 1).
+    static double stretchLeadMs(double speed);
+    // SoundTouch's speech tuning (its README): short sequences keep onsets
+    // within a few ms of where the position puts them.
+    static constexpr int kStretchSequenceMs = 40;
+    static constexpr int kStretchSeekWindowMs = 15;
+    static constexpr int kStretchOverlapMs = 8;
 
     // The opened output's format and the source format it plays.
     application::OutputFormat outputFormat() const;
@@ -123,6 +146,12 @@ private:
     std::expected<application::OutputFormat, application::OutputError> openDevice(application::OutputFormat want);
     std::int64_t clockFrames(const application::ClockEstimate &clock) const;
     std::int64_t heardLocked() const; // the frame being heard, for a reopen
+    std::int64_t sourceFrames(std::int64_t outputFrames) const; // heard output frames as the audio's
+    void restartLocked(std::int64_t frame); // the same output, from `frame` (a speed change)
+    void resetStretch();
+    void playAudio(std::shared_ptr<const application::DisplayAudio> clip, std::int64_t start, std::int64_t count);
+    double playSpeed() const { return m_clipping ? 1.0 : m_speed; }
+    void stretch(std::vector<float> &frames, int channels); // SoundTouch's frames for these
     void resumeLocked(std::int64_t frame); // reopen and go on from `frame`
     void lostLocked();                     // the device went away
     void retry();                          // owner thread
@@ -167,7 +196,11 @@ private:
     bool m_primed = false;
     std::vector<float> m_previous;
     std::vector<std::int16_t> m_frames; // a chunk read from the cache
+    std::vector<float> m_source;         // the chunk as float frames of the output's channels
     std::vector<float> m_converted;      // the chunk as output samples
+    double m_speed = 1.0;
+    std::unique_ptr<soundtouch::SoundTouch> m_stretch; // below speed 1
+    bool m_clipping = false; // playClip's audio plays
     // the fill thread
     mutable std::mutex m_lock;
     std::condition_variable m_wake;

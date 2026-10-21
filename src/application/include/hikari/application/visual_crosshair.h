@@ -35,6 +35,10 @@ public:
     void pointer(const Pointer &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolValue> values(const VisualHost &host) const override;
+    // VT1: the bar's Copy video position, the shown position in
+    // VIDEO_COPY_COORDS' text form (the host copies it).
+    std::vector<ToolOption> options(const VisualHost &host) const override;
+    std::u16string copyText() const { return m_x.empty() ? std::u16string() : m_x + u"," + m_y; }
 
     // Cross's state, as the legacy probe records it.
     bool shown() const { return m_cross && m_onVideo; } // Cross::Draw's condition
@@ -53,6 +57,7 @@ private:
     std::array<PointF, 4> m_vectors{};
     IntRect m_crossRect;
     std::u16string m_coords;
+    std::u16string m_x, m_y; // the label's two numbers (VT1's read-only values)
     bool m_cross = false;
     float m_coeffX = 0, m_coeffY = 0;
     int m_diffX = 0, m_diffY = 0;

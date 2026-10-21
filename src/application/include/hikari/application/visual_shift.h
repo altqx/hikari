@@ -3,7 +3,7 @@
 // T6: the Position shifter (legacy MoveAll, HikariSub/VisualMoveAll.cpp at
 // 20d647c4, and its toolbar item MoveAllItem, VideoToolbar.cpp:354-414). The
 // active Line's \pos, \move points, clip, drawing and \org are shown as
-// handles; dragging one (or A/D/W/S, Shift a tenth) moves every element of
+// handles; dragging one (or the arrow keys, Shift a tenth) moves every element of
 // the toggled kinds in every target Line by the same amount, one history
 // step ("Position shifter") a release or a key. The toolbar's six toggles
 // choose the kinds: position points, \move starting points, \move ending
@@ -32,6 +32,7 @@ public:
     void reset(VisualHost &host) override;
     void selected(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
+    bool takesKey(const Key &event) const override;
     bool key(const Key &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolOption> options(const VisualHost &host) const override;

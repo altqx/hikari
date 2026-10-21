@@ -263,8 +263,24 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_VIDEO_RENDER_COST", 5170},
         // FS1-bar-mode: the fullscreen bar's Auto / Always / Never (video.fullscreenBar).
         {"VIDEO_FULLSCREEN_BAR", 2021},
+        // KA2-tap-to-time and KA2-slowed-playback: tap mode and the speed.
+        {"AUDIO_TAP", 1030},
+        {"AUDIO_SPEED_DOWN", 1031},
+        {"AUDIO_SPEED_UP", 1032},
         // TM1: Translation mode for the editing target (Subtitles menu).
         {"GLOBAL_TRANSLATION_MODE", 5171},
+        // VT2 (#270): a Video command per visual tool, in the rail's order.
+        {"VIDEO_TOOL_CROSSHAIR", 2022},
+        {"VIDEO_TOOL_POSITION", 2023},
+        {"VIDEO_TOOL_MOVE", 2024},
+        {"VIDEO_TOOL_SCALE", 2025},
+        {"VIDEO_TOOL_ROTATION_Z", 2026},
+        {"VIDEO_TOOL_ROTATION_XY", 2027},
+        {"VIDEO_TOOL_RECTANGLE_CLIP", 2028},
+        {"VIDEO_TOOL_VECTOR_CLIP", 2029},
+        {"VIDEO_TOOL_DRAWING", 2030},
+        {"VIDEO_TOOL_POSITION_SHIFTER", 2031},
+        {"VIDEO_TOOL_HYDRA", 2032},
         // KA7: the Karaoke check window.
         {"GLOBAL_CHECK_KARAOKE", 5172},
 };
@@ -500,11 +516,26 @@ constexpr NameRow kNames[] = {
         {2007, "Volume down"}, // VIDEO_VOLUME_MINUS
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
-        // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay, FS1-bar-mode, KA7).
+        // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay, FS1-bar-mode,
+        // VT2: the visual tools as the rail names them, KA7).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
         {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
         {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
+        {1030, "Tap to time"}, // AUDIO_TAP (KA2)
+        {1031, "Slower"}, // AUDIO_SPEED_DOWN (KA2)
+        {1032, "Faster"}, // AUDIO_SPEED_UP (KA2)
         {5171, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
+        {2022, "Position pointer"}, // VIDEO_TOOL_CROSSHAIR
+        {2023, "Text positioning"}, // VIDEO_TOOL_POSITION
+        {2024, "Text moving"}, // VIDEO_TOOL_MOVE
+        {2025, "Text scaling"}, // VIDEO_TOOL_SCALE
+        {2026, "Text Z rotation"}, // VIDEO_TOOL_ROTATION_Z
+        {2027, "Text X / Y rotation"}, // VIDEO_TOOL_ROTATION_XY
+        {2028, "Rectangle clipping"}, // VIDEO_TOOL_RECTANGLE_CLIP
+        {2029, "Vector clipping"}, // VIDEO_TOOL_VECTOR_CLIP
+        {2030, "Vector drawing"}, // VIDEO_TOOL_DRAWING
+        {2031, "Position shifter"}, // VIDEO_TOOL_POSITION_SHIFTER
+        {2032, "Hydra"}, // VIDEO_TOOL_HYDRA
         {5172, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
 };
 
@@ -570,6 +601,18 @@ constexpr DefaultRow kMainDefaults[] = {
         {2011, VideoHotkey, "Next chapter", "M"}, // VIDEO_NEXT_CHAPTER
         {2021, VideoHotkey, "Full screen bar: Auto / Always / Never", "Tab"}, // VIDEO_FULLSCREEN_BAR (FS1-bar-mode)
         {2010, VideoHotkey, "Previous chapter", "N"}, // VIDEO_PREVIOUS_CHAPTER
+        // VT2's audit (docs/qt/visual-tools.md): keys no Video or Global binding has.
+        {2022, VideoHotkey, "Position pointer", "X"}, // VIDEO_TOOL_CROSSHAIR
+        {2023, VideoHotkey, "Text positioning", "P"}, // VIDEO_TOOL_POSITION
+        {2024, VideoHotkey, "Text moving", "G"}, // VIDEO_TOOL_MOVE
+        {2025, VideoHotkey, "Text scaling", "S"}, // VIDEO_TOOL_SCALE
+        {2026, VideoHotkey, "Text Z rotation", "R"}, // VIDEO_TOOL_ROTATION_Z
+        {2027, VideoHotkey, "Text X / Y rotation", "T"}, // VIDEO_TOOL_ROTATION_XY
+        {2028, VideoHotkey, "Rectangle clipping", "C"}, // VIDEO_TOOL_RECTANGLE_CLIP
+        {2029, VideoHotkey, "Vector clipping", "V"}, // VIDEO_TOOL_VECTOR_CLIP
+        {2030, VideoHotkey, "Vector drawing", "D"}, // VIDEO_TOOL_DRAWING
+        {2031, VideoHotkey, "Position shifter", "A"}, // VIDEO_TOOL_POSITION_SHIFTER
+        {2032, VideoHotkey, "Hydra", "H"}, // VIDEO_TOOL_HYDRA
         {3012, EditorHotkey, "Add bold", "Ctrl-B"}, // EDITBOX_INSERT_BOLD
         {3013, EditorHotkey, "Add italic", "Ctrl-I"}, // EDITBOX_INSERT_ITALIC
         {3014, EditorHotkey, "Add line wrap", "Shift-Enter"}, // EDITBOX_SPLIT_LINE
@@ -605,6 +648,9 @@ constexpr DefaultRow kAudioDefaults[] = {
         {1022, AudioHotkey, "Play to the end", "T"}, // AUDIO_PLAY_TO_END
         {1026, AudioHotkey, "Add lead-in", "C"}, // AUDIO_LEAD_IN
         {1027, AudioHotkey, "Add lead-out", "V"}, // AUDIO_LEAD_OUT
+        {1030, AudioHotkey, "Tap to time", "Y"}, // AUDIO_TAP (KA2)
+        {1031, AudioHotkey, "Slower", "["}, // AUDIO_SPEED_DOWN (KA2)
+        {1032, AudioHotkey, "Faster", "]"}, // AUDIO_SPEED_UP (KA2)
 };
 
 constexpr std::string_view kWindowNames[] = {"Global", "Subtitles", "Editor", "Video", "Audio"};
@@ -729,6 +775,7 @@ std::string reportName(const HotkeyId &key, const Hotkey &hotkey)
 struct ConflictScan {
     bool doubled = false;
     std::string names;
+    std::vector<std::string> commands; // the commands' names alone (PK1's hotkey capture)
     bool audioNamed = false;
 };
 
@@ -1410,6 +1457,7 @@ HotkeyConflict question(const ConflictScan &scan, std::size_t count)
     HotkeyConflict c;
     c.doubled = scan.doubled;
     c.count = count;
+    c.commands = scan.commands;
     if (scan.doubled) {
         c.message = "This hotkey already exists for \"" + scan.names + "\".\nWhat to do?";
         c.canSwitch = true;
@@ -1427,6 +1475,7 @@ void addName(ConflictScan &scan, const HotkeyId &key, const Hotkey &hotkey)
     if (!scan.names.empty())
         scan.names += ", ";
     scan.names += std::string(hotkeyWindowName(key.type)) + " " + reportName(key, hotkey);
+    scan.commands.push_back(reportName(key, hotkey));
 }
 
 } // namespace
@@ -1447,6 +1496,7 @@ std::optional<HotkeyConflict> HotkeyList::mapConflict(int index, const std::stri
             ((inVideoPlayRange(id) || inVideoPlayRange(k.id)) && (k.type >= GridHotkey || type >= GridHotkey))) {
             scan.doubled = true;
             scan.names = reportName(k, m_copy.at(k));
+            scan.commands = {scan.names};
             break;
         }
         addName(scan, k, m_copy.at(k));
@@ -1587,6 +1637,7 @@ ConflictScan scanNow(const HotkeyMap &live, const std::vector<HotkeyId> &found, 
         if (k.type == type) {
             scan.doubled = true;
             scan.names = reportName(k, live.at(k));
+            scan.commands = {scan.names};
             break;
         }
         addName(scan, k, live.at(k));

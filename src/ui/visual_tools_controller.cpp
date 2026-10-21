@@ -23,6 +23,7 @@
 #include <QVariantMap>
 
 #include <cmath>
+#include <utility>
 
 namespace hikari::ui {
 
@@ -116,6 +117,7 @@ QVariantList VisualToolsController::families() const
     for (const FamilyInfo &f : application::visual::families())
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromLatin1(f.tooltip.data(), f.tooltip.size())},
                                {QStringLiteral("icon"), QString::fromLatin1(f.icon.data(), f.icon.size())},
+                               {QStringLiteral("hotkey"), QString::fromLatin1(f.hotkey.data(), f.hotkey.size())},
                                {QStringLiteral("available"),
                                 m_tools[static_cast<std::size_t>(f.family)] != nullptr}});
     return out;
@@ -197,6 +199,8 @@ void VisualToolsController::refresh()
         (void)escape();
         reset = true;
     }
+    if (id != m_seenSession || active != m_seenActive)
+        ++m_editTarget;
     m_seenSession = id;
     m_seenRevision = revision;
     m_seenActive = active;
@@ -287,6 +291,7 @@ std::expected<void, application::CommandRefusal> VisualToolsController::commitGe
 
 bool VisualToolsController::escape()
 {
+    m_valueScrub = false;
     if (!m_gesture) {
         // T3: with no gesture open Esc drops a tool's pending step (the
         // first of RotationZ's two points, the card's evidence on #178).
@@ -578,29 +583,46 @@ void VisualToolsController::refreshOptions()
     // Its own signal, only when the options change: the row is not rebuilt
     // on every pointer move.
     QVariantList out;
-    if (const auto *t = tool()) {
-        for (const ToolOption &o : t->options(*this)) {
-            QStringList choices;
-            for (const auto &c : o.choices)
-                choices.append(qs(c));
-            const QString kind = o.kind == ToolOption::Kind::Choice   ? QStringLiteral("choice")
-                                 : o.kind == ToolOption::Kind::Action ? QStringLiteral("action")
-                                                                      : QStringLiteral("toggle");
-            out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
-                                   {QStringLiteral("kind"), kind},
-                                   {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
-                                   {QStringLiteral("tooltip"), qs(o.tooltip)},
-                                   {QStringLiteral("checked"), o.checked},
-                                   {QStringLiteral("enabled"), o.enabled && m_railEnabled},
-                                   {QStringLiteral("choices"), choices},
-                                   {QStringLiteral("index"), o.index},
-                                   {QStringLiteral("listEnds"), o.listEnds}});
-        }
-    }
+    if (const auto *t = tool())
+        out = optionMaps(*t);
     if (out == m_options)
         return;
     m_options = std::move(out);
     emit optionsChanged();
+}
+
+QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
+{
+    QVariantList out;
+    for (const ToolOption &o : t.options(*this)) {
+        QStringList choices;
+        for (const auto &c : o.choices)
+            choices.append(qs(c));
+        const QString kind = o.kind == ToolOption::Kind::Choice   ? QStringLiteral("choice")
+                             : o.kind == ToolOption::Kind::Action ? QStringLiteral("action")
+                                                                  : QStringLiteral("toggle");
+        out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
+                               {QStringLiteral("kind"), kind},
+                               {QStringLiteral("iconRole"), QString::fromStdString(o.iconRole)},
+                               {QStringLiteral("tooltip"), qs(o.tooltip)},
+                               {QStringLiteral("checked"), o.checked},
+                               {QStringLiteral("enabled"), o.enabled && m_railEnabled},
+                               {QStringLiteral("choices"), choices},
+                               {QStringLiteral("index"), o.index},
+                               {QStringLiteral("listEnds"), o.listEnds},
+                               {QStringLiteral("group"), qs(o.group)}});
+    }
+    return out;
+}
+
+QVariantList VisualToolsController::familyLayouts() const
+{
+    QVariantList out;
+    for (const auto &t : m_tools)
+        out.append(t ? QVariantMap{{QStringLiteral("options"), optionMaps(*t)},
+                                   {QStringLiteral("values"), valueMaps(*t)}}
+                     : QVariantMap{});
+    return out;
 }
 
 bool VisualToolsController::setOption(const QString &name, int value)
@@ -618,6 +640,18 @@ bool VisualToolsController::setOption(const QString &name, int value)
         openShapeEditor();
         refreshOptions();
         emit optionsChanged(); // the list shows the selection again
+        return true;
+    }
+    if (m_family == Family::Crosshair && name == QStringLiteral("copyPosition")) {
+        // VT1: the bar's Copy video position, the shown position in
+        // VIDEO_COPY_COORDS' text form.
+        const auto *cross = dynamic_cast<const CrosshairTool *>(t);
+        if (!cross || cross->copyText().empty())
+            return false;
+        m_copied = qs(cross->copyText());
+        if (auto *clipboard = QGuiApplication::clipboard())
+            clipboard->setText(m_copied);
+        emit changed();
         return true;
     }
     if (m_family == Family::Hydra && name == QStringLiteral("edit")) {
@@ -760,6 +794,20 @@ void VisualToolsController::pointer(int kind, qreal x, qreal y, int button, int 
     emit changed();
 }
 
+namespace {
+
+Key keyOf(int key, int modifiers)
+{
+    Key k;
+    k.key = key;
+    k.control = (modifiers & Qt::ControlModifier) != 0;
+    k.shift = (modifiers & Qt::ShiftModifier) != 0;
+    k.alt = (modifiers & Qt::AltModifier) != 0;
+    return k;
+}
+
+} // namespace
+
 bool VisualToolsController::key(int key, int modifiers, bool release, bool autoRepeat)
 {
     auto *t = tool();
@@ -767,14 +815,27 @@ bool VisualToolsController::key(int key, int modifiers, bool release, bool autoR
         return false;
     // VideoBox::OnKeyPress hands the keys to the tool whether or not its
     // events are blocked (VideoBox.cpp:666-668; blockevents is the pointer's).
-    Key k;
-    k.key = key;
+    Key k = keyOf(key, modifiers);
     k.release = release;
     k.autoRepeat = autoRepeat;
-    k.control = (modifiers & Qt::ControlModifier) != 0;
-    k.shift = (modifiers & Qt::ShiftModifier) != 0;
-    k.alt = (modifiers & Qt::AltModifier) != 0;
     return t->key(k, *this);
+}
+
+bool VisualToolsController::takesKey(int key, int modifiers) const
+{
+    const auto *t = tool();
+    return t && m_view.hasVideo() && t->takesKey(keyOf(key, modifiers));
+}
+
+bool VisualToolsController::runHotkey(const QString &action)
+{
+    const auto family = application::visual::familyOfHotkey(action.toStdString());
+    if (!family)
+        return false;
+    // VT2: the command toggles as the rail does, so the on tool's key goes
+    // back to the crosshair (the crosshair's stays on it).
+    selectFamily(static_cast<int>(*family));
+    return true;
 }
 
 void VisualToolsController::selectFamily(int family)
@@ -821,13 +882,48 @@ QString VisualToolsController::copyCoordinatesAtCursor(QQuickItem *area)
     return copyCoordinates(at.x(), at.y());
 }
 
+bool VisualToolsController::editValue(VisualTool &t, const QString &name, const QString &text, ValueEdit edit)
+{
+    // VT1: a value step the session refuses (a blocked draft, a read-only
+    // Document), at the first sample or the release, leaves no gesture: the
+    // tool reads its Lines again, its handles and fields back at the text's.
+    const auto refusedBefore = std::exchange(m_lastRefusal, std::nullopt);
+    const bool done = t.setValue(name.toStdString(), text.toStdU16String(), *this, edit);
+    if (!done && m_lastRefusal && !m_gesture && t.family() != Family::Crosshair)
+        resetTool();
+    if (!m_lastRefusal)
+        m_lastRefusal = refusedBefore;
+    return done;
+}
+
 bool VisualToolsController::setValue(const QString &name, const QString &text)
 {
+    // VT1: a typed value (Enter) or a scrub's release: one history step.
     auto *t = tool();
-    if (!t)
+    if (!t || !m_railEnabled)
         return false;
-    const bool done = t->setValue(name.toStdString(), text.toStdU16String(), *this);
+    const bool done = editValue(*t, name, text, ValueEdit::Commit);
+    // A scrub's release the tool refuses (a value out of its range) leaves
+    // nothing staged behind: its gesture is dropped, as by Esc.
+    const bool scrubbed = std::exchange(m_valueScrub, false);
+    if (!done && scrubbed && m_gesture)
+        escape();
     emit changed();
+    emit overlayChanged();
+    return done;
+}
+
+bool VisualToolsController::scrubValue(const QString &name, const QString &text)
+{
+    // VT1: a scrub's sample, staged on the gesture its first sample opens
+    // (shown on the video); the release commits it, Esc drops it.
+    auto *t = tool();
+    if (!t || !m_railEnabled)
+        return false;
+    const bool done = editValue(*t, name, text, ValueEdit::Sample);
+    m_valueScrub = m_valueScrub || (done && m_gesture);
+    emit changed();
+    emit overlayChanged();
     return done;
 }
 
@@ -841,12 +937,14 @@ void VisualToolsController::pickBatch()
         if (s->selection().selected.contains(line->id))
             picked.push_back(line->id);
     m_picker.pick(std::move(picked));
+    ++m_editTarget;
     emit changed();
 }
 
 void VisualToolsController::clearBatch()
 {
     m_picker.clear();
+    ++m_editTarget;
     emit changed();
 }
 
@@ -983,15 +1081,21 @@ QVariantList VisualToolsController::overlay() const
 
 QVariantList VisualToolsController::values() const
 {
-    QVariantList out;
     const auto *t = tool();
-    if (!t)
-        return out;
-    for (const ToolValue &v : t->values(*this))
+    return t ? valueMaps(*t) : QVariantList();
+}
+
+QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
+{
+    QVariantList out;
+    for (const ToolValue &v : t.values(*this))
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(v.name)},
                                {QStringLiteral("label"), qs(v.label)},
                                {QStringLiteral("text"), qs(v.text)},
-                               {QStringLiteral("editable"), v.editable}});
+                               {QStringLiteral("editable"), v.editable},
+                               {QStringLiteral("group"), qs(v.group)},
+                               {QStringLiteral("unit"), qs(v.unit)},
+                               {QStringLiteral("step"), v.step}});
     return out;
 }
 

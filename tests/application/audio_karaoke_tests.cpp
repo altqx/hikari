@@ -598,13 +598,14 @@ struct KaraokeMouseTest : ::testing::Test {
     AudioKaraoke karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3000, 6000);
     bool on = true;
     bool moveOnClick = false;
+    std::vector<int> onsets; // KA5: snapping on with these onsets
 
     void SetUp() override { timing.drawn(view, selection); }
     AudioMouseResult send(const AudioMouse &event)
     {
         AudioKaraokeMouse kara;
         if (on)
-            kara = {&karaoke, moveOnClick, sevenPixels()};
+            kara = {&karaoke, moveOnClick, sevenPixels(), onsets};
         auto result = timing.mouse(event, view, selection, snap, options, 16, kara);
         timing.drawn(view, selection);
         return result;
@@ -805,6 +806,78 @@ TEST_F(KaraokeMouseTest, AStaleGrabKeepsTheSelectionAsItIs)
     send(drag(-10));
     send(release(-10));
     EXPECT_EQ(selection.startMs, 0);
+}
+
+// KA5-onset-snap: with snapping on, the boundary being dragged lands on the
+// nearest vocal onset within 100 ms; the others stay where they are.
+TEST_F(KaraokeMouseTest, ADraggedBoundarySnapsToTheNearestOnset)
+{
+    onsets = {3870, 4530, 5000};
+    send(press(121));
+    auto r = send(drag(130)); // 3900
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3870, 4500, 6000}));
+    EXPECT_EQ(r.playEnd, std::optional<std::int64_t>(3870 * 48));
+    send(drag(132)); // 3960: still within 100 ms of it
+    EXPECT_EQ(karaoke.times()[0], 3870);
+    send(drag(136)); // 4080: none near enough, so where the mouse is
+    EXPECT_EQ(karaoke.times()[0], 4080);
+    r = send(release(132)); // 3960
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3870, 4500, 6000}));
+    EXPECT_EQ(r.commit, std::optional(false));
+    EXPECT_EQ(s(karaoke.text(3000)), "{\\k87}ka{\\k63}ra{\\k150}oke");
+}
+
+// A click on a boundary, or a move-on-click, places it without snapping.
+TEST_F(KaraokeMouseTest, AClickedBoundaryDoesNotSnap)
+{
+    onsets = {3650, 4020};
+    send(press(120));
+    send(release(120));
+    EXPECT_EQ(karaoke.times()[0], 3600);
+    moveOnClick = true;
+    send(press(135)); // ra, next to ka (current): the boundary after ka moves here
+    EXPECT_EQ(timing.grabbed(), 0);
+    EXPECT_EQ(karaoke.times()[0], 4050);
+    send(release(135));
+    EXPECT_EQ(karaoke.times()[0], 4050);
+}
+
+// The onset must lie between the boundary's neighbours, and the last
+// boundary takes the end with it.
+TEST_F(KaraokeMouseTest, SnappingKeepsBetweenTheNeighbours)
+{
+    onsets = {4520};
+    send(press(121));
+    send(drag(149)); // 4470: the onset is past ra's end
+    EXPECT_EQ(karaoke.times()[0], 4470);
+    send(release(149));
+    EXPECT_EQ(karaoke.times()[0], 4470);
+    onsets = {6280};
+    send(press(200));
+    send(drag(210)); // 6300
+    EXPECT_EQ(karaoke.times()[2], 6280);
+    EXPECT_EQ(selection.endMs, 6280);
+    send(release(210));
+    EXPECT_EQ(karaoke.times()[2], 6280);
+}
+
+// With the right button the later syllables (all but the last) move by the
+// snapped amount, and are not snapped themselves.
+TEST_F(KaraokeMouseTest, TheRightButtonMovesTheLaterOnesByTheSnap)
+{
+    onsets = {3700, 4620};
+    send(press(120, 50, AudioMouse::Button::Right));
+    send(drag(123, AudioMouse::Button::Right)); // 3690
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3700, 4600, 6000}));
+}
+
+// Snapping off (no onsets): the boundary goes where the mouse does.
+TEST_F(KaraokeMouseTest, WithoutOnsetsNothingSnaps)
+{
+    send(press(121));
+    send(drag(130));
+    send(release(131));
+    EXPECT_EQ(karaoke.times()[0], 3930);
 }
 
 // ---- the commit --------------------------------------------------------------

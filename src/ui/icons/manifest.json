@@ -421,7 +421,8 @@
     "videoonstime.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "panel-menu"
    ]
   },
   {
@@ -546,7 +547,8 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen",
-    "audio-box"
+    "audio-box",
+    "panel-menu"
    ]
   },
   {
@@ -1442,6 +1444,74 @@
    ]
   },
   {
+   "role": "notice-warning",
+   "file": "notice-warning.svg",
+   "label": "Warning",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dialogs"
+   ]
+  },
+  {
+   "role": "notice-error",
+   "file": "notice-error.svg",
+   "label": "Error",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dialogs",
+    "notices"
+   ]
+  },
+  {
+   "role": "calendar",
+   "file": "calendar.svg",
+   "label": "Choose a date",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "date-picker"
+   ]
+  },
+  {
+   "role": "chevron-left",
+   "file": "chevron-left.svg",
+   "label": "Previous",
+   "accent": false,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "date-picker"
+   ]
+  },
+  {
+   "role": "chevron-right",
+   "file": "chevron-right.svg",
+   "label": "Next",
+   "accent": false,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "date-picker",
+    "dialogs"
+   ]
+  },
+  {
+   "role": "chevron-down",
+   "file": "chevron-down.svg",
+   "label": "Expanded",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dialogs"
+   ]
+  },
+  {
    "role": "layout",
    "file": "layout.svg",
    "label": "Layout",
@@ -1533,17 +1603,6 @@
    "legacy": [],
    "surfaces": [
     "title-bar"
-   ]
-  },
-  {
-   "role": "notice-warning",
-   "file": "notice-warning.svg",
-   "label": "Warning",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "dialogs"
    ]
   },
   {
@@ -2635,6 +2694,39 @@
    ]
   },
   {
+   "role": "karaoke-tap",
+   "file": "karaoke-tap.svg",
+   "label": "Tap to time",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "tap-calibrate",
+   "file": "tap-calibrate.svg",
+   "label": "Calibrate tap latency",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
+   "role": "playback-speed",
+   "file": "playback-speed.svg",
+   "label": "Playback speed",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "audio-box"
+   ]
+  },
+  {
    "role": "autosave",
    "file": "autosave.svg",
    "label": "Open auto save",
@@ -2754,7 +2846,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "video-context-menu"
+    "video-context-menu",
+    "visual-tools"
    ]
   },
   {
