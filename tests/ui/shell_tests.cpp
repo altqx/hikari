@@ -15992,6 +15992,17 @@ private slots:
         item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_Y);
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        // Press mode's started syllable is dropped by a switch to Hold, so
+        // the next press starts it again
+        audio.setTapHold(false);
+        press(Qt::Key_Space);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        audio.setTapHold(true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        key(Qt::Key_Space, true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        key(Qt::Key_Space, false);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
         audio.closeAudio();
         QVERIFY(!audio.tapOn());
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapOff));

@@ -85,7 +85,9 @@ public:
 
     // A Line to tap, starting at `lineStartMs` before any tap.
     void begin(std::vector<Syllable> syllables, int lineStartMs);
-    void setMode(Mode mode) { m_mode = mode; }
+    // Changing the mode drops a held syllable: the key that would end it
+    // means something else in the other mode.
+    void setMode(Mode mode);
     Mode mode() const { return m_mode; }
 
     // Key events at song times (tapSongMs). A tap before the last boundary
@@ -102,6 +104,9 @@ public:
     int undoLine();
     // Esc: a held syllable is dropped, the tapped ones kept.
     void stop();
+    // The playing reached its end at `songMs`: a held syllable (the last
+    // press's in Press mode) ends there.
+    Event finish(int songMs);
     // Where Resume plays from: kRewindMs before the end of the last tapped
     // syllable, or kPrerollMs before the Line.
     int resumeMs() const;

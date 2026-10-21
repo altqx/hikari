@@ -158,6 +158,55 @@ TEST(KaraokeTap, StopResumeAndRevert)
     EXPECT_EQ(tap.resumeMs(), 4000);
 }
 
+// The playing's end ends a held syllable there (Hold's key still down, or
+// Press mode's last press); with nothing held it changes nothing.
+TEST(KaraokeTap, ThePlayingsEndEndsTheHeldSyllable)
+{
+    Tap tap;
+    tap.begin(kimi(), 5000);
+    EXPECT_EQ(tap.finish(5050), Tap::Event::None);
+    tap.press(kSpace, 5100);
+    tap.release(kSpace, 5400);
+    tap.press(kSpace, 5500);
+    EXPECT_EQ(tap.finish(5800), Tap::Event::Ended);
+    EXPECT_FALSE(tap.holding());
+    EXPECT_EQ(tap.tapped(), 2);
+    EXPECT_EQ(tap.spans(0).back(), (Tap::Span{5500, 5800}));
+    EXPECT_EQ(tap.release(kSpace, 5900), Tap::Event::None);
+
+    tap.begin(kimi(), 5000);
+    tap.setMode(Tap::Mode::Press);
+    tap.press(kSpace, 5100);
+    tap.press(kSpace, 5400);
+    tap.press(kSpace, 5700);
+    EXPECT_EQ(tap.finish(6000), Tap::Event::LineDone);
+    EXPECT_TRUE(tap.done());
+    EXPECT_EQ(tap.result().endMs, 6000);
+}
+
+// A mode change drops a held syllable, so the next press starts it again
+// rather than counting as the key still held (or ending a span that ran on
+// while the menu was open).
+TEST(KaraokeTap, ChangingTheModeDropsTheHeldSyllable)
+{
+    Tap tap;
+    tap.begin(kimi(), 5000);
+    tap.setMode(Tap::Mode::Press);
+    tap.press(kSpace, 5100);
+    tap.press(kSpace, 5400);
+    ASSERT_TRUE(tap.holding());
+    tap.setMode(Tap::Mode::Hold);
+    EXPECT_FALSE(tap.holding());
+    EXPECT_EQ(tap.tapped(), 1);
+    EXPECT_EQ(tap.press(kSpace, 9000), Tap::Event::Started);
+    EXPECT_EQ(tap.release(kSpace, 9300), Tap::Event::Ended);
+    EXPECT_EQ(tap.spans(0).back(), (Tap::Span{9000, 9300}));
+    tap.setMode(Tap::Mode::Hold); // no change: nothing dropped
+    tap.press(kSpace, 9400);
+    tap.setMode(Tap::Mode::Hold);
+    EXPECT_TRUE(tap.holding());
+}
+
 // The syllables to tap: earlier gaps (empty syllables) are dropped, blank
 // ones join the syllable before; a Line of one syllable needs splitting.
 TEST(KaraokeTap, TargetsFromTheKaraokeModel)

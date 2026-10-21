@@ -933,10 +933,8 @@ void AudioController::tick()
     if (!m_playback->timerRunning() || !playing())
         m_playTimer.stop();
     if (m_tapState == TapTapping) {
-        if (!playing()) { // the audio's end
-            m_tap.stop();
-            setTapState(TapStopped);
-        }
+        if (!playing()) // the audio's end
+            tapPlayingEnded();
         emit tapSpansChanged();
     }
     playbackStateChanged();
@@ -1370,10 +1368,12 @@ void AudioController::toggleTap()
 
 void AudioController::setTapHold(bool hold)
 {
+    // a held syllable is dropped (see KaraokeTap::setMode)
     m_tap.setMode(hold ? application::KaraokeTap::Mode::Hold : application::KaraokeTap::Mode::Press);
     if (m_store)
         m_store->set("audio.tapHold", hold);
     emit tapChanged();
+    emit tapSpansChanged();
 }
 
 void AudioController::setTapLatency(int ms)
@@ -1473,6 +1473,22 @@ void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
         m_tap.press(*carryKey, carryMs);
     emit tapChanged();
     emit tapSpansChanged();
+}
+
+// The tap playing ran to the audio's end: a held syllable (the last press's
+// in Press mode) ends there, and it may finish the Line; then tapping stops.
+void AudioController::tapPlayingEnded()
+{
+    const auto *audio = m_box.audio();
+    const int endMs = audio && m_player && audio->sampleRate() > 0
+                          ? static_cast<int>(m_player->endPosition() * 1000 / audio->sampleRate())
+                          : tapSongNow();
+    if (m_tap.finish(endMs) == application::KaraokeTap::Event::LineDone)
+        finishTapLine(std::nullopt, endMs);
+    if (m_tapState != TapTapping)
+        return;
+    m_tap.stop();
+    setTapState(TapStopped);
 }
 
 void AudioController::tapStop()

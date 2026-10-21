@@ -473,6 +473,7 @@ private:
     void setTapState(TapState state);
     void stopBoxPlayback(); // the box's playing, whatever the video does
     void leaveTapMode();
+    void tapPlayingEnded();
     double positionMs() const;
     void calibrationTick();
     void stopFollowingVideo();

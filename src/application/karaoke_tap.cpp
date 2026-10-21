@@ -114,6 +114,13 @@ void KaraokeTap::begin(std::vector<Syllable> syllables, int lineStartMs)
     revert();
 }
 
+void KaraokeTap::setMode(Mode mode)
+{
+    if (mode != m_mode)
+        m_held.reset();
+    m_mode = mode;
+}
+
 void KaraokeTap::revert()
 {
     m_spans.clear();
@@ -204,6 +211,14 @@ int KaraokeTap::undoLine()
 void KaraokeTap::stop()
 {
     m_held.reset();
+}
+
+KaraokeTap::Event KaraokeTap::finish(int songMs)
+{
+    if (!m_held)
+        return Event::None;
+    finishHeld(std::max(songMs, *m_held));
+    return m_done ? Event::LineDone : Event::Ended;
 }
 
 int KaraokeTap::resumeMs() const
