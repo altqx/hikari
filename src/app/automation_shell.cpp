@@ -662,7 +662,8 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     // HikariSubFrame::OnRunScript and GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT);
     // S4-run-validation: the macros of the scripts it depends on validate
     // before it, on the same snapshot, and no other macro does.
-    Run started{*target, std::move(*snapshot), path, macro, ordinal, origin};
+    Run started{*target, std::move(*snapshot), 0, path, macro, ordinal, origin};
+    started.generation = m_files.generation(*target);
     started.validations = application::dependencyValidations(m_manager.scripts(), path);
     if (!startStep(started)) {
         s->setReadOnly(false);
@@ -782,8 +783,13 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     Run run = std::move(*m_run);
     m_run.reset();
     auto *s = session(run.target);
+    // The file reloaded while the macro ran: its result belongs to the old
+    // content and is not applied to the new one.
+    const bool reloaded = s && m_files.generation(run.target) != run.generation;
     if (s)
         s->setReadOnly(false);
+    if (reloaded)
+        s = nullptr;
     m_router.withdraw();
     m_dialogs.withdraw();
     // Y4-playres-ask: the resolution set while the macro ran is its own undo
@@ -806,6 +812,9 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     switch (outcome) {
     case Outcome::Ok: {
         const auto *host = m_manager.host(run.path);
+        if (reloaded)
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "The subtitles were reloaded while the macro ran; nothing was changed.");
         if (s && host && host->lastResult()) {
             const auto applied = application::applyMacroResult(*s, run.snapshot, *host->lastResult(), run.macro);
             ok = applied.has_value();

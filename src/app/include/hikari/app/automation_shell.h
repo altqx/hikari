@@ -179,6 +179,9 @@ private:
     struct Run {
         application::DocumentId target;
         application::MacroSnapshot snapshot;
+        // The target's load the run started on: a reload meanwhile is new
+        // content the result was not made from (set by run()).
+        std::uint64_t generation = 0;
         std::string path, macro;
         int ordinal = 0;
         RunOrigin origin = RunOrigin::Menu;

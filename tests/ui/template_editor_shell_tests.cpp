@@ -330,6 +330,27 @@ private slots:
         QVERIFY(!editor().hasPreview());
     }
 
+    // An Apply still running when the file is reloaded belongs to the old
+    // content: its result is not written into the new one, which stays
+    // untrusted.
+    void anApplyAcrossAReloadIsRefused()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", false, false));
+        showPanel("templateDock");
+        const std::size_t lines = session()->document().lines().size();
+        auto *apply = item(QStringLiteral("templateApply"));
+        QTRY_VERIFY_WITH_TIMEOUT(apply->isEnabled(), 20'000);
+        QSignalSpy done(&application->automation(), &app::AutomationShell::runCompleted);
+        click(apply);
+        QVERIFY(application->automation().running());
+        QVERIFY(application->reloadTarget());
+        QVERIFY(done.wait(30'000));
+        QVERIFY(!done.first().at(0).toBool());
+        QCOMPARE(session()->document().lines().size(), lines);
+        QVERIFY(!editor().trusted());
+        QVERIFY(editor().lastApply().isEmpty());
+    }
+
     // Apply's report belongs to the Document it ran on: a tab chosen while
     // the run goes on shows no Apply of its own.
     void applyOnAnotherTabLeavesThisTabsSummary()
