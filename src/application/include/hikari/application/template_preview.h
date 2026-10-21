@@ -49,11 +49,17 @@ std::optional<MacroSnapshot> templateOwnersSnapshot(const core::Document &doc);
 std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, const MacroResult &result);
 
 // The snapshot a preview runs on: the Script Info, the Styles, the template
-// and code Lines and `source`, which is selected and active. `texts` gives
+// and code Lines and `source`, which is selected and active; every other Line
+// before `source` but the generated ones (a whole run deletes those first) is
+// a templatePlaceholder, so `source` keeps its script index. `texts` gives
 // template or code Lines text not yet in the Document. Nothing when `source`
 // is not one of the Document's Lines.
 std::optional<MacroSnapshot> templatePreviewSnapshot(const core::Document &doc, core::LineId source,
                                                      const std::map<core::LineId, std::u8string> &texts = {});
+
+// An empty Comment of no Line, which the templater passes over: it holds a
+// left-out Line's place so the Lines after it keep their script indices.
+MacroDialogueLine templatePlaceholder();
 
 // The Lines the run generated from `source`, in order.
 std::vector<core::LineRecord> templatePreviewLines(const MacroResult &result, core::LineId source);

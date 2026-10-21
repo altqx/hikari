@@ -1257,14 +1257,7 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
         finishChain(generation);
         return;
     }
-    const int sourceAt = without.active;
-    const int removed = static_cast<int>(without.info.size() + without.styles.size()) + 1 +
-                        static_cast<int>(at - without.dialogues.begin());
-    without.dialogues.erase(at);
-    if (removed < sourceAt) {
-        without.active = sourceAt - 1;
-        without.selected = {without.active};
-    }
+    *at = application::templatePlaceholder(); // the source keeps its index
     QPointer<TemplateEditorController> self = this;
     m_templater->preview(without, [self, generation](application::KaraokeTemplaterPort::Preview other) {
         if (self && generation == self->m_generation)
@@ -1328,10 +1321,11 @@ void TemplateEditorController::runValues(std::uint64_t generation)
             probe.text += kValueSeparator;
         probe.text += std::string("$") + v.name;
     }
-    const auto sourceLine = application::macroLineOf(*source);
-    snapshot->dialogues = {probe, sourceLine};
-    snapshot->active = static_cast<int>(snapshot->info.size() + snapshot->styles.size()) + 1 + 1;
-    snapshot->selected = {snapshot->active};
+    // The templates' places stay, so the source keeps its index ($li).
+    for (auto &d : snapshot->dialogues)
+        if (d.id != m_source->value)
+            d = application::templatePlaceholder();
+    snapshot->dialogues.push_back(probe);
     QPointer<TemplateEditorController> self = this;
     const core::LineId id = *m_source;
     m_running = true;

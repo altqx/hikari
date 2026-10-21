@@ -127,18 +127,27 @@ TEST_F(TemplatePreview, TheSnapshotHoldsTheTemplatesAndTheSourceOnly)
     ASSERT_EQ(s->info.size(), 2u);
     ASSERT_EQ(s->styles.size(), 2u);
     EXPECT_EQ(s->styles[1].fields.front(), "Kanji");
-    // Code and template Lines, then the source; the Dialogue named template
-    // and every other Line stay out.
-    ASSERT_EQ(s->dialogues.size(), 3u);
+    // Code and template Lines, then the source; every other Line before it
+    // is an empty Comment, so the source keeps the script index a whole run
+    // gives it ($li), the generated Lines gone; those after it stay out.
+    ASSERT_EQ(s->dialogues.size(), 6u);
     EXPECT_EQ(s->dialogues[0].id, ids[0].value);
     EXPECT_EQ(s->dialogues[1].id, ids[1].value);
     EXPECT_EQ(s->dialogues[1].text, "{\\pos($x,$bottom)}") << "the text not yet in the Document";
-    EXPECT_EQ(s->dialogues[2].id, ids[7].value);
-    EXPECT_EQ(s->selected, (std::vector<int>{5 + 2}));
-    EXPECT_EQ(s->active, 5 + 2);
+    for (std::size_t i : {2u, 3u, 4u}) {
+        EXPECT_EQ(s->dialogues[i], templatePlaceholder());
+        EXPECT_EQ(s->dialogues[i].id, 0u);
+        EXPECT_TRUE(s->dialogues[i].comment);
+        EXPECT_TRUE(s->dialogues[i].effect.empty());
+        EXPECT_TRUE(s->dialogues[i].text.empty());
+    }
+    EXPECT_EQ(s->dialogues[5].id, ids[7].value);
+    EXPECT_EQ(s->selected, (std::vector<int>{5 + 5}));
+    EXPECT_EQ(s->active, 5 + 5);
     EXPECT_EQ(templatePreviewLineOf(*s, 2), ids[1]);
-    EXPECT_EQ(templatePreviewLineOf(*s, 3), ids[7]);
-    EXPECT_EQ(templatePreviewLineOf(*s, 4), std::nullopt);
+    EXPECT_EQ(templatePreviewLineOf(*s, 3), std::nullopt) << "a placeholder";
+    EXPECT_EQ(templatePreviewLineOf(*s, 6), ids[7]);
+    EXPECT_EQ(templatePreviewLineOf(*s, 7), std::nullopt);
     EXPECT_EQ(templatePreviewLineOf(*s, 0), std::nullopt);
     EXPECT_FALSE(templatePreviewSnapshot(doc, core::LineId{999'999}));
 }
@@ -150,7 +159,7 @@ TEST_F(TemplatePreview, ATranslatedTemplatesTextStandsForItsTranslation)
     ASSERT_TRUE(doc.editLine(ids[1], [](core::LineRecord &l) { l.translation = u8"{\\pos(1,1)}"; }));
     const auto s = templatePreviewSnapshot(doc, ids[7], {{ids[1], u8"{\\pos(2,2)}"}});
     ASSERT_TRUE(s);
-    ASSERT_EQ(s->dialogues.size(), 3u);
+    ASSERT_EQ(s->dialogues.size(), 6u);
     EXPECT_EQ(s->dialogues[1].text, "{\\pos(2,2)}");
     EXPECT_EQ(s->dialogues[1].translation, "{\\pos($x,$y)}") << "the original";
 }
@@ -209,10 +218,10 @@ TEST_F(TemplatePreview, TheSnapshotKeepsTheSourcesPlaceAmongTheTemplates)
     ASSERT_TRUE(doc.moveLine(ids[1], std::nullopt));
     const auto s = templatePreviewSnapshot(doc, ids[7]);
     ASSERT_TRUE(s);
-    ASSERT_EQ(s->dialogues.size(), 3u);
-    EXPECT_EQ(s->dialogues[1].id, ids[7].value);
-    EXPECT_EQ(s->dialogues[2].id, ids[1].value);
-    EXPECT_EQ(s->selected, (std::vector<int>{5 + 1}));
+    ASSERT_EQ(s->dialogues.size(), 6u);
+    EXPECT_EQ(s->dialogues[4].id, ids[7].value);
+    EXPECT_EQ(s->dialogues[5].id, ids[1].value);
+    EXPECT_EQ(s->selected, (std::vector<int>{5 + 4}));
 }
 
 TEST_F(TemplatePreview, ThePreviewIsWhatTheRunGeneratedFromTheSource)

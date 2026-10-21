@@ -145,6 +145,13 @@ std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, c
     return owners;
 }
 
+MacroDialogueLine templatePlaceholder()
+{
+    core::LineRecord l;
+    l.comment = true;
+    return macroLineOf(l);
+}
+
 std::optional<MacroSnapshot> templatePreviewSnapshot(const core::Document &doc, core::LineId source,
                                                      const std::map<core::LineId, std::u8string> &texts)
 {
@@ -167,6 +174,8 @@ std::optional<MacroSnapshot> templatePreviewSnapshot(const core::Document &doc, 
             } else {
                 s.dialogues.push_back(macroLineOf(*l));
             }
+        } else if (!found && !isGeneratedLine(*l)) {
+            s.dialogues.push_back(templatePlaceholder()); // $li as a whole run gives it
         }
     }
     if (!found)

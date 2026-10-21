@@ -406,6 +406,52 @@ private slots:
         QVERIFY(editor->previewMs() >= 0);
     }
 
+    // A later Line's index ($li) is the one a whole run gives it, the Lines
+    // before it left out of the preview's run.
+    void aLaterLinesIndexIsTheWholeRunsOne()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> last;
+        for (const auto *l : session->document().lines())
+            if (application::isKaraokeLine(*l))
+                last = l->id;
+        QVERIFY(last && last != firstKaraoke());
+        activate(*last);
+        editor->setShown(true);
+        QVERIFY(previewCame());
+        QCOMPARE(editor->source(), last->value);
+        // A template for the Line's Style.
+        std::u8string style;
+        for (const auto *l : session->document().lines())
+            if (l->id == *last)
+                style = l->style;
+        for (const auto *l : session->document().lines())
+            if (application::templateKindOf(*l) == application::TemplateKind::Template && l->style == style)
+                editor->setCurrent(l->id.value);
+        editor->setText(QStringLiteral("{$li}") + editor->text());
+        editor->commit();
+        QVERIFY(QTest::qWaitFor(
+            [&] { return settled() && previewTexts().join(QString()).contains(QStringLiteral("{$li}")) == false; },
+            20'000));
+        application::EditSession copy(session->document());
+        Templater whole(copy);
+        QVERIFY(QTest::qWaitFor([&] { return whole.available(); }, 20'000));
+        QVERIFY(whole.apply(false));
+        QStringList applied;
+        for (const auto *l : copy.document().lines())
+            if (l->generatedFrom == *last)
+                applied << QString::fromStdString(lineText(*l)).section(QLatin1Char(','), 9);
+        QVERIFY(!applied.isEmpty());
+        QCOMPARE(previewTexts(), applied);
+        editor->requestValues();
+        QVERIFY(QTest::qWaitFor([&] { return !editor->values().isEmpty(); }, 20'000));
+        const QString li = editor->values().value(QStringLiteral("li")).toString();
+        QVERIFY(!li.isEmpty());
+        QVERIFY(std::ranges::any_of(applied, [&](const QString &t) {
+            return t.startsWith(QLatin1Char('{') + li + QLatin1Char('}'));
+        }));
+    }
+
     void problemsArePlacedInTheTextAndKeepTheLastPreview()
     {
         open(QStringLiteral("stock-tutorials.ass"));
