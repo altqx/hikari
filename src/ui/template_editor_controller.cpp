@@ -940,6 +940,16 @@ void TemplateEditorController::schedulePreview()
 
 void TemplateEditorController::runPreview()
 {
+    if (m_preview && templateCount() == 0) {
+        // The last template went: its preview and the run making one too.
+        stopRuns();
+        m_preview.reset();
+        m_own.clear();
+        m_previewKept = false;
+        m_previewSnapshotKey.clear();
+        emit previewChanged();
+        emit videoChanged();
+    }
     if (!m_shown || !available() || !m_source || templateCount() == 0 || !trusted()) {
         m_running = false;
         m_previewing = false;

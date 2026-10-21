@@ -666,6 +666,38 @@ private slots:
         QVERIFY(!editor->previewPending());
     }
 
+    // With the last template gone the preview goes, the one running too.
+    void noTemplatesLeftClearsThePreview()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto source = firstKaraoke();
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500); // the run marking the current template's own Lines
+        QVERIFY(editor->videoPreview());
+        templater->holdPreviews = 1;
+        QVERIFY(change([&](core::Document &doc) {
+            return doc.editLine(*source, [](core::LineRecord &l) { l.text += u8"{\\bord3}"; });
+        }));
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
+        QVERIFY(change([](core::Document &doc) {
+            return doc.removeLinesIf([](const core::LineRecord &l) {
+                       return application::templateKindOf(l).has_value();
+                   }) > 0;
+        }));
+        editor->refresh();
+        QTest::qWait(100);
+        QCOMPARE(editor->templateCount(), 0);
+        QVERIFY(!editor->hasPreview());
+        QVERIFY(!editor->videoPreview());
+        QVERIFY(answerHeld());
+        QTest::qWait(100);
+        QVERIFY(!editor->hasPreview());
+        QVERIFY(!editor->previewPending());
+    }
+
     void anUndoneApplyMatchesAgain()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
