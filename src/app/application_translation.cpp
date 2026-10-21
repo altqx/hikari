@@ -5,6 +5,7 @@
 
 #include "hikari/app/application.h"
 
+#include "hikari/application/grid_clipboard.h"
 #include "hikari/core/ass_save.h"
 
 #include <QCoreApplication>
@@ -95,6 +96,20 @@ bool Application::turnOnTranslationMode()
     m_editor->reloadFromSession(); // OnTlMode: SetLine(currentLine)
     refreshViews();
     return true;
+}
+
+bool Application::translationQuestionDue() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto *session = target ? m_files->session(*target) : nullptr;
+    return session && translatorModeAvailable() && !application::translationMode(*session) &&
+           !m_translationDeclined.contains(target->value);
+}
+
+void Application::declineTranslationMode()
+{
+    if (const auto target = m_workspace.editingTarget())
+        m_translationDeclined.insert(target->value);
 }
 
 void Application::setMoveTags(bool on)

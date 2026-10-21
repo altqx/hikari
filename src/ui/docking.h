@@ -191,6 +191,10 @@ public:
     // shown in the slot right of the tabs while the panel is the current tab.
     Q_INVOKABLE void setPanelHeader(const QString &uniqueName, bool horizontal, QQuickItem *toolbar);
     Q_INVOKABLE bool isHorizontal(const QString &uniqueName) const;
+    // TM1: whether the panel is shown or the arrangement keeps a place for
+    // it (open() puts it back there); one an older arrangement never had
+    // would float.
+    Q_INVOKABLE bool hasPlace(const QString &uniqueName) const;
     Q_INVOKABLE QQuickItem *toolbar(const QString &uniqueName) const;
     // The header's "⋯" button (or a right click on it) asks for panel
     // `uniqueName`'s menu, below `anchor`; Main.qml owns the menu.

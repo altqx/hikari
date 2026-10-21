@@ -264,9 +264,11 @@ constexpr HotkeyAction kActions[] = {
         // FS1-bar-mode: the fullscreen bar's Auto / Always / Never (video.fullscreenBar).
         {"VIDEO_FULLSCREEN_BAR", 2021},
         // KA2-tap-to-time and KA2-slowed-playback: tap mode and the speed.
-        {"AUDIO_TAP", 1028},
-        {"AUDIO_SPEED_DOWN", 1029},
-        {"AUDIO_SPEED_UP", 1030},
+        {"AUDIO_TAP", 1030},
+        {"AUDIO_SPEED_DOWN", 1031},
+        {"AUDIO_SPEED_UP", 1032},
+        // TM1: Translation mode for the editing target (Subtitles menu).
+        {"GLOBAL_TRANSLATION_MODE", 5171},
 };
 
 struct NameRow {
@@ -504,9 +506,10 @@ constexpr NameRow kNames[] = {
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
         {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
         {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
-        {1028, "Tap to time"}, // AUDIO_TAP (KA2)
-        {1029, "Slower"}, // AUDIO_SPEED_DOWN (KA2)
-        {1030, "Faster"}, // AUDIO_SPEED_UP (KA2)
+        {1030, "Tap to time"}, // AUDIO_TAP (KA2)
+        {1031, "Slower"}, // AUDIO_SPEED_DOWN (KA2)
+        {1032, "Faster"}, // AUDIO_SPEED_UP (KA2)
+        {5171, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
 };
 
 struct DefaultRow {
@@ -606,9 +609,9 @@ constexpr DefaultRow kAudioDefaults[] = {
         {1022, AudioHotkey, "Play to the end", "T"}, // AUDIO_PLAY_TO_END
         {1026, AudioHotkey, "Add lead-in", "C"}, // AUDIO_LEAD_IN
         {1027, AudioHotkey, "Add lead-out", "V"}, // AUDIO_LEAD_OUT
-        {1028, AudioHotkey, "Tap to time", "Y"}, // AUDIO_TAP (KA2)
-        {1029, AudioHotkey, "Slower", "["}, // AUDIO_SPEED_DOWN (KA2)
-        {1030, AudioHotkey, "Faster", "]"}, // AUDIO_SPEED_UP (KA2)
+        {1030, AudioHotkey, "Tap to time", "Y"}, // AUDIO_TAP (KA2)
+        {1031, AudioHotkey, "Slower", "["}, // AUDIO_SPEED_DOWN (KA2)
+        {1032, AudioHotkey, "Faster", "]"}, // AUDIO_SPEED_UP (KA2)
 };
 
 constexpr std::string_view kWindowNames[] = {"Global", "Subtitles", "Editor", "Video", "Audio"};
