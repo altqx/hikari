@@ -62,7 +62,8 @@ TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, s
 
 // The Document the video draws: Lines generated from `source`, and the
 // Lines in `replaced` (a file's unmarked generated Lines found to be its),
-// left out; `preview` put in; only the Lines over `window` kept.
+// left out, and the source itself when `preview` has Lines (Apply comments
+// it out then); `preview` put in; only the Lines over `window` kept.
 core::Document templatePreviewDocument(const core::Document &doc, core::LineId source,
                                        const std::vector<core::LineRecord> &preview,
                                        const std::set<core::LineId> &replaced, TemplatePreviewWindow window);

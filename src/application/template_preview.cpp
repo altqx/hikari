@@ -143,8 +143,12 @@ core::Document templatePreviewDocument(const core::Document &doc, core::LineId s
                                        const std::set<core::LineId> &replaced, TemplatePreviewWindow window)
 {
     core::Document out = doc;
+    // The source too when its templates make Lines: Apply turns it into a
+    // Comment then.
+    const bool sourceGoes = !preview.empty();
     out.removeLinesIf([&](const core::LineRecord &l) {
-        return l.comment || l.generatedFrom == source || replaced.contains(l.id) || !over(l, window);
+        return l.comment || l.generatedFrom == source || replaced.contains(l.id) || !over(l, window) ||
+               (sourceGoes && l.id == source);
     });
     for (const auto &l : preview)
         if (!l.comment && over(l, window))

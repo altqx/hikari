@@ -207,6 +207,21 @@ TEST_F(TemplatePreview, TheVideoDrawsThePreviewInPlaceOfTheSourcesLines)
     EXPECT_EQ(doc.lines().size(), 11u) << "the Document itself is untouched";
 }
 
+// The source not applied yet (a Dialogue): Apply turns it into a Comment when
+// its templates make Lines, so the frame does not draw it under them.
+TEST_F(TemplatePreview, TheSourceIsLeftOutWhenItsTemplatesMakeLines)
+{
+    core::LineRecord a;
+    a.text = u8"{\\pos(9,9)}ka";
+    a.start = {u8"0:00:04.00", core::DocumentTime(4'000'000)};
+    a.end = {u8"0:00:05.00", core::DocumentTime(5'000'000)};
+    const auto out = templatePreviewDocument(doc, ids[7], {a}, {}, {4500, 4500});
+    EXPECT_EQ(textsOf(out), (std::vector<std::u8string>{u8"{\\pos(9,9)}ka"}));
+    const auto none = templatePreviewDocument(doc, ids[7], {}, {}, {4500, 4500});
+    EXPECT_EQ(textsOf(none), (std::vector<std::u8string>{u8"{\\k50}ka{\\k50}ze"}))
+        << "no template made a Line for it: Apply leaves it as it is";
+}
+
 TEST_F(TemplatePreview, UnmarkedLinesFoundToBeTheSourcesAreLeftOutToo)
 {
     // A file opened without marks: the Lines a matching run found are left out.
