@@ -16,6 +16,7 @@ DialogWindow {
     objectName: "whatsNewDialog"
     required property var whatsNew // WhatsNew
     readonly property string state: whatsNew.state
+    readonly property bool failed: state === "failed"
     dialogId: "whatsNew"
     resizable: true
     title: qsTr("What's new")
@@ -61,9 +62,9 @@ DialogWindow {
             Icon {
                 Layout.alignment: Qt.AlignHCenter
                 visible: dialog.state !== "fetching"
-                iconRole: dialog.state === "failed" ? "notice-warning" : "whats-new"
-                color: dialog.state === "failed" ? Theme.warning : IconTheme.normal
-                accentColor: dialog.state === "failed" ? Theme.warning : IconTheme.accent
+                iconRole: dialog.failed ? "notice-warning" : "whats-new"
+                color: dialog.failed ? Theme.warning : IconTheme.normal
+                accentColor: dialog.failed ? Theme.warning : IconTheme.accent
                 size: 32
             }
             Label {
