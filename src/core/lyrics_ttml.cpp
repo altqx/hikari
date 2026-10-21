@@ -1172,7 +1172,9 @@ private:
                             if (attribute.tokenized)
                                 it->second = tokens(it->second);
                         } else if (attribute.value) {
-                            if (!spend(attribute.value->size()))
+                            // All it takes: its name, its value and its entries.
+                            if (!spend(attribute.name.size() + attribute.value->size() + sizeof(XmlNode::Attribute) +
+                                       sizeof(std::size_t) + sizeof(Namespace)))
                                 return std::unexpected(tooLarge());
                             node.attributes.emplace_back(attribute.name, *attribute.value);
                             node.attributeLines.push_back(line);

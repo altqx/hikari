@@ -876,6 +876,15 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
         parameters += "'>";
     }
     EXPECT_EQ(problem(parameters + "%p9;", "<p begin=\"1\" end=\"2\">x</p>").kind, Kind::TooLarge);
+    // Defaults count all they take, a long name too.
+    std::string defaults = "<!ATTLIST br";
+    for (int i = 0; i < 100; ++i)
+        defaults += " n" + std::to_string(i) + std::string(8000, 'a') + " CDATA ''";
+    defaults += ">";
+    std::string breaks = "<p begin=\"1\" end=\"2\">x";
+    for (int i = 0; i < 30000; ++i)
+        breaks += "<br/>";
+    EXPECT_EQ(problem(defaults, breaks + "</p>").kind, Kind::TooLarge);
 }
 
 TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
