@@ -261,6 +261,8 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_EDITOR_HIDE_TAGS", 5169},
         // KE1-render-cost-overlay: the subtitles' render cost over the video.
         {"GLOBAL_VIDEO_RENDER_COST", 5170},
+        // FS1-bar-mode: the fullscreen bar's Auto / Always / Never (video.fullscreenBar).
+        {"VIDEO_FULLSCREEN_BAR", 2021},
         // KA2-tap-to-time and KA2-slowed-playback: tap mode and the speed.
         {"AUDIO_TAP", 1028},
         {"AUDIO_SPEED_DOWN", 1029},
@@ -497,9 +499,10 @@ constexpr NameRow kNames[] = {
         {2007, "Volume down"}, // VIDEO_VOLUME_MINUS
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
-        // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay).
+        // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay, FS1-bar-mode).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
         {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
+        {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
         {1028, "Tap to time"}, // AUDIO_TAP (KA2)
         {1029, "Slower"}, // AUDIO_SPEED_DOWN (KA2)
         {1030, "Faster"}, // AUDIO_SPEED_UP (KA2)
@@ -565,6 +568,7 @@ constexpr DefaultRow kMainDefaults[] = {
         {2006, VideoHotkey, "Volume up", "Num ."}, // VIDEO_VOLUME_PLUS
         {2007, VideoHotkey, "Volume down", "Num 0"}, // VIDEO_VOLUME_MINUS
         {2011, VideoHotkey, "Next chapter", "M"}, // VIDEO_NEXT_CHAPTER
+        {2021, VideoHotkey, "Full screen bar: Auto / Always / Never", "Tab"}, // VIDEO_FULLSCREEN_BAR (FS1-bar-mode)
         {2010, VideoHotkey, "Previous chapter", "N"}, // VIDEO_PREVIOUS_CHAPTER
         {3012, EditorHotkey, "Add bold", "Ctrl-B"}, // EDITBOX_INSERT_BOLD
         {3013, EditorHotkey, "Add italic", "Ctrl-I"}, // EDITBOX_INSERT_ITALIC

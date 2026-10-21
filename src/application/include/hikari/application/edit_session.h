@@ -128,6 +128,9 @@ public:
     {
         return m_draft ? std::optional(std::pair(m_draft->line, m_draft->change)) : std::nullopt;
     }
+    // The pending draft's changes in place, no copy (FS1: a Line's times
+    // without its text); null without a draft.
+    const DraftChange *draftChangeView() const { return m_draft ? &m_draft->change : nullptr; }
     std::optional<DraftProblem> draftProblem() const;
     bool commitDraft(); // one history step; false when there is no draft or it is blocked
     // The same step under another name (F3: legacy EditBox::Send with an
