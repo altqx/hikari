@@ -26,9 +26,6 @@ namespace {
 
 namespace a = application;
 
-// The cache is the program's own file; one past this is not read.
-constexpr qint64 kMaxCacheBytes = 4 * 1024 * 1024;
-
 QString qs(const std::string &s)
 {
     return QString::fromStdString(s);
@@ -224,24 +221,49 @@ bool WhatsNew::loadCache()
     return true;
 }
 
+QByteArray WhatsNew::cacheContent(const QString &installed, const QString &since,
+                                  const std::vector<a::ReleaseEntry> &releases, qint64 limit)
+{
+    QJsonArray entries;
+    for (const auto &release : releases)
+        entries.append(QJsonObject{{QStringLiteral("tag"), qs(release.tag)},
+                                   {QStringLiteral("name"), qs(release.name)},
+                                   {QStringLiteral("published"), qs(release.published)},
+                                   {QStringLiteral("prerelease"), release.prerelease},
+                                   {QStringLiteral("notes"), qs(release.notes)}});
+    const auto content = [&] {
+        return QJsonDocument(QJsonObject{{QStringLiteral("installed"), installed},
+                                         {QStringLiteral("since"), since},
+                                         {QStringLiteral("releases"), entries}})
+            .toJson(QJsonDocument::Compact);
+    };
+    QByteArray bytes = content();
+    while (bytes.size() > limit && !entries.isEmpty()) {
+        // Each entry's share is itself and its comma: the lowest go until
+        // that much is gone, then the content is measured again.
+        qint64 over = bytes.size() - limit;
+        while (over > 0 && !entries.isEmpty()) {
+            over -= QJsonDocument(entries.last().toObject()).toJson(QJsonDocument::Compact).size() + 1;
+            entries.removeLast();
+        }
+        bytes = content();
+    }
+    return bytes.size() <= limit ? bytes : QByteArray();
+}
+
 void WhatsNew::saveCache() const
 {
     if (m_cacheFile.isEmpty())
         return;
-    QJsonArray releases;
-    for (const auto &release : m_between)
-        releases.append(QJsonObject{{QStringLiteral("tag"), qs(release.tag)},
-                                    {QStringLiteral("name"), qs(release.name)},
-                                    {QStringLiteral("published"), qs(release.published)},
-                                    {QStringLiteral("prerelease"), release.prerelease},
-                                    {QStringLiteral("notes"), qs(release.notes)}});
-    const QJsonObject cache{{QStringLiteral("installed"), m_updates.version()},
-                            {QStringLiteral("since"), m_since},
-                            {QStringLiteral("releases"), releases}};
+    const QByteArray content = cacheContent(m_updates.version(), m_since, m_between, kMaxCacheBytes);
+    if (content.isEmpty()) {
+        QFile::remove(m_cacheFile);
+        return;
+    }
     QDir().mkpath(QFileInfo(m_cacheFile).absolutePath());
     QSaveFile file(m_cacheFile);
     if (file.open(QIODevice::WriteOnly)) {
-        file.write(QJsonDocument(cache).toJson(QJsonDocument::Compact));
+        file.write(content);
         file.commit();
     }
 }

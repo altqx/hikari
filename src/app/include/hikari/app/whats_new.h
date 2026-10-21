@@ -14,6 +14,7 @@
 #include "hikari/app/update_checker.h"
 #include "hikari/application/update_check.h"
 
+#include <QByteArray>
 #include <QColor>
 #include <QObject>
 #include <QString>
@@ -70,6 +71,13 @@ public:
     // The cache file's name in the update cache, per copy (the update
     // installer's copy key).
     static QString cacheFileIn(const UpdateEnvironment &environment);
+    // The most of a cache file the reader takes.
+    static constexpr qint64 kMaxCacheBytes = 4 * 1024 * 1024;
+    // The cache file's content for `releases` (highest first) between
+    // `since` and `installed`: past `limit` the lowest go, as the list's
+    // pages are capped one by one; empty when not even none fit.
+    static QByteArray cacheContent(const QString &installed, const QString &since,
+                                   const std::vector<application::ReleaseEntry> &releases, qint64 limit);
 
 signals:
     void changed();

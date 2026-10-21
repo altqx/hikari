@@ -252,6 +252,40 @@ private slots:
         QCOMPARE(versions(*copy->whatsNew), QStringList{QStringLiteral("0.1.3")});
     }
 
+    // The cache holds what its reader takes: past the limit, the lowest
+    // versions go (the list's pages are capped one by one, so the range can
+    // be larger than one cache).
+    void theCacheStaysWithinWhatItsReaderTakes()
+    {
+        std::vector<hikari::application::ReleaseEntry> releases;
+        for (const char *tag : {"v0.1.3", "v0.1.2", "v0.1.1"}) {
+            hikari::application::ReleaseEntry release;
+            release.tag = tag;
+            release.name = std::string("HikariSub ") + (tag + 1);
+            release.notes = std::string(1000, 'x');
+            releases.push_back(release);
+        }
+        const auto tags = [](const QByteArray &content) {
+            QStringList out;
+            for (const QJsonValue &r : QJsonDocument::fromJson(content).object().value(QStringLiteral("releases")).toArray())
+                out << r.toObject().value(QStringLiteral("tag")).toString();
+            return out;
+        };
+        const QString installed = QStringLiteral("0.1.3");
+        const QString since = QStringLiteral("0.1.0");
+        const QByteArray all = WhatsNew::cacheContent(installed, since, releases, WhatsNew::kMaxCacheBytes);
+        QCOMPARE(tags(all), (QStringList{QStringLiteral("v0.1.3"), QStringLiteral("v0.1.2"), QStringLiteral("v0.1.1")}));
+        const QByteArray two = WhatsNew::cacheContent(installed, since, releases, all.size() - 1);
+        QVERIFY(two.size() <= all.size() - 1);
+        QCOMPARE(tags(two), (QStringList{QStringLiteral("v0.1.3"), QStringLiteral("v0.1.2")}));
+        const QByteArray one = WhatsNew::cacheContent(installed, since, releases, 1500);
+        QVERIFY(one.size() <= 1500);
+        QCOMPARE(tags(one), QStringList{QStringLiteral("v0.1.3")});
+        QCOMPARE(QJsonDocument::fromJson(one).object().value(QStringLiteral("since")).toString(), since);
+        // Not even the header: nothing to write.
+        QVERIFY(WhatsNew::cacheContent(installed, since, releases, 10).isEmpty());
+    }
+
     // The automatic update check at start reads the list once for both; a
     // menu check during What's new's own read still reports.
     void theUpdateCheckAndWhatsNewShareTheList()
