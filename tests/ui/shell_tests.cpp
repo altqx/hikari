@@ -7926,6 +7926,11 @@ private slots:
         QTRY_COMPARE(list->property("count").toInt(), 2);
         QCOMPARE(dialog->property("problems").toList().at(1).toMap().value(QStringLiteral("number")).toInt(), 5);
         QVERIFY(session->document().lines()[4]->text == u8"{\\k100}fixed");
+        // A draft the editor cannot commit keeps its Line: the row is refused.
+        QVERIFY(session->editDraft(lines[4]->id, application::DraftChange{.start = core::DocumentTime(5'000'000),
+                                                                          .end = core::DocumentTime(1'000'000)}));
+        QVERIFY(!application->showKaraokeLine(document, first.value));
+        QCOMPARE(session->selection().active, std::optional(lines[4]->id));
         application->editor().discard();
         QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());

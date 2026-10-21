@@ -29,8 +29,9 @@ Dialog {
         problemList.forceActiveFocus()
     }
     // A row's Line, selected as a click in the Grid selects it. When the
-    // editing target is another Document now, or the Line has gone since the
-    // check, the window checks again instead.
+    // editing target is another Document now, the Line has gone since the
+    // check, or the editor keeps its Line (a draft it cannot commit, which
+    // it reports), the window checks again instead.
     function choose(index) {
         if (index < 0 || index >= problems.length)
             return

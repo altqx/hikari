@@ -85,8 +85,8 @@ bool Application::showKaraokeLine(qulonglong document, qulonglong line)
     const auto lines = session->document().lines();
     if (std::ranges::none_of(lines, [line](const core::LineRecord *record) { return record->id.value == line; }))
         return false;
-    selectLine(line);
-    return true;
+    // Refused when the editor cannot leave its Line (a draft it cannot commit).
+    return applySelection(gridSelection().plain(session->selection(), core::LineId{line}));
 }
 
 } // namespace hikari::app

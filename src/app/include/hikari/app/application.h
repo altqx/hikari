@@ -574,7 +574,8 @@ public:
     // row each: {document and line (ids), number
     // (the Grid's 1-based row), check, detail}. showKaraokeLine selects a
     // row's Line; false when the editing target is another Document now or
-    // no longer has the Line (Line ids are only unique within a Document).
+    // no longer has the Line (Line ids are only unique within a Document),
+    // or when the editor refuses to leave its Line (a draft it cannot commit).
     Q_INVOKABLE QVariantList checkKaraoke() const;
     Q_INVOKABLE bool showKaraokeLine(qulonglong document, qulonglong line);
     // F1: GLOBAL_SEARCH, GLOBAL_FIND_REPLACE and GLOBAL_FIND_NEXT. A tab of
