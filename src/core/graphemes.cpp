@@ -3,6 +3,7 @@
 #define PCRE2_CODE_UNIT_WIDTH 16
 #include <pcre2.h>
 
+#include <algorithm>
 #include <memory>
 
 namespace hikari::core {
@@ -34,13 +35,19 @@ std::size_t graphemeEnd(std::u16string_view text, std::size_t at)
     const pcre2_code *code = graphemePattern();
     thread_local const std::unique_ptr<pcre2_match_data, MatchDataFree> data(
         code ? pcre2_match_data_create_from_pattern(code, nullptr) : nullptr);
-    if (code && data &&
-        pcre2_match(code, reinterpret_cast<PCRE2_SPTR>(text.data()), text.size(), at, 0, data.get(), nullptr) > 0) {
+    if (!code || !data)
+        return at + 1;
+    // pcre2_match reads the whole subject's UTF-16 first, so it gets a window
+    // from `at`, wider while the grapheme reaches its end (long Lines stay linear)
+    const std::size_t rest = text.size() - at;
+    for (std::size_t window = 64;; window *= 2) {
+        const std::size_t length = std::min(rest, window);
+        if (pcre2_match(code, reinterpret_cast<PCRE2_SPTR>(text.data() + at), length, 0, 0, data.get(), nullptr) <= 0)
+            return at + 1;
         const PCRE2_SIZE end = pcre2_get_ovector_pointer(data.get())[1];
-        if (end > at)
-            return end;
+        if (end < length || length == rest)
+            return at + std::max<std::size_t>(end, 1);
     }
-    return at + 1;
 }
 
 } // namespace hikari::core

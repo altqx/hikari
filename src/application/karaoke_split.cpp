@@ -109,7 +109,8 @@ std::vector<Unit> units(u16v text, const KaraokeCharClass &classes)
         }
         unit.cp = codePointAt(text, i, unit.len);
         // the whole grapheme (KA1-grapheme-letters), up to a block
-        unit.len = std::max(unit.len, std::min(core::graphemeEnd(text, i), text.find(u'{', i + 1)) - i);
+        const auto end = text.begin() + static_cast<std::ptrdiff_t>(core::graphemeEnd(text, i));
+        unit.len = std::max(unit.len, static_cast<std::size_t>(std::find(text.begin() + i + 1, end, u'{') - text.begin()) - i);
         const char32_t c = unit.cp;
         const bool bmp = c < 0x10000;
         if (bmp && classes.space && classes.space(static_cast<char16_t>(c)))

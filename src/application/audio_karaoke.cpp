@@ -105,7 +105,9 @@ std::size_t letterEnd(std::u16string_view text, std::size_t at)
 {
     if (text[at] == u'\\' && at + 1 < text.size() && (text[at + 1] == u'N' || text[at + 1] == u'n' || text[at + 1] == u'h'))
         return at + 2;
-    return std::min(core::graphemeEnd(text, at), std::max(text.find(u'{', at + 1), at + 1));
+    // (a block's "{" ends it; searched only within it, to keep long Lines linear)
+    const std::size_t end = core::graphemeEnd(text, at);
+    return static_cast<std::size_t>(std::find(text.begin() + at + 1, text.begin() + end, u'{') - text.begin());
 }
 
 // The letters of a stripped text, each one's [begin, end).
@@ -350,15 +352,23 @@ std::u16string AudioKaraoke::text(int curStartMs) const
         all += m_syls[i];
     }
     std::ranges::stable_sort(tags, {}, &std::pair<std::size_t, u16>::first);
+    // the last "{" and "}" before each place, read in one pass (Codex: a
+    // search for each tag made long blocks of tags quadratic)
+    std::vector<std::size_t> opens(all.size() + 1, u16::npos), shuts(all.size() + 1, u16::npos);
+    for (std::size_t p = 0; p < all.size(); p++) {
+        opens[p + 1] = all[p] == u'{' ? p : opens[p];
+        shuts[p + 1] = all[p] == u'}' ? p : shuts[p];
+    }
+    const std::size_t lastShut = shuts[all.size()];
     u16 text;
     std::size_t from = 0;
     for (auto &[wanted, tag] : tags) {
         std::size_t at = std::clamp(wanted, from, all.size());
         // into the block it is in, else a block of its own
-        const auto open = at == 0 ? u16::npos : all.find_last_of(u'{', at - 1);
-        const auto shut = at == 0 ? u16::npos : all.find_last_of(u'}', at - 1);
+        const auto open = opens[at];
+        const auto shut = shuts[at];
         bool inside = open != u16::npos && (shut == u16::npos || shut < open);
-        if (inside && all.find(u'}', at) == u16::npos) {
+        if (inside && (lastShut == u16::npos || lastShut < at)) {
             inside = false; // an unclosed "{" is text: the tag goes before it (A5-kara-unclosed)
             at = std::max(open, from);
         }

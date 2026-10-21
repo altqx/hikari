@@ -238,6 +238,10 @@ TEST(KaraokeGraphemes, ALetterIsNeverHalfACharacter)
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\U0001F1EF\U0001F1F5", 2));
     EXPECT_FALSE(karaokeContinuesGrapheme(u"\U0001F1EF\U0001F1F5\U0001F1F0\U0001F1F7", 4));
     EXPECT_FALSE(karaokeContinuesGrapheme(u"\u0915\u0916", 1));
+    // a letter with more marks than the first window PCRE2 reads is still one
+    const std::u16string marked = u"a" + std::u16string(200, u'\u0301') + u"b";
+    EXPECT_EQ(karaokeGraphemePrefix(marked, 1), 201u);
+    EXPECT_EQ(karaokeGraphemePrefix(marked, 2), 202u);
     EXPECT_EQ(karaokeGraphemePrefix(u"\U00020BB7a", 1), 2u);
     EXPECT_EQ(karaokeGraphemePrefix(u"éx", 1), 2u);
 
@@ -390,6 +394,27 @@ TEST(KaraokeMoveStart, TheLinesTextKeepsItsSyllables)
     const auto began = std::chrono::steady_clock::now();
     EXPECT_EQ(karaokeKeepSyllables(unclosed, 1000, 800), std::nullopt);
     EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(1));
+}
+
+TEST(KaraokeRoundTrip, LongLinesAreReadAndWrittenInOnePass)
+{
+    // Codex security: 20 000 tags in one block came back with a search for
+    // each tag, and each letter looked to the Line's end for a "{"
+    std::string block = "{";
+    for (int i = 0; i < 20000; i++)
+        block += "\\k0\\bord1";
+    block += "}x";
+    auto began = std::chrono::steady_clock::now();
+    auto tags = kara(block, 0, 1000);
+    EXPECT_EQ(s(tags.text(0)), block);
+    EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(2));
+
+    const std::string letters(200000, 'a');
+    began = std::chrono::steady_clock::now();
+    auto plain = kara("{\\k100}" + letters, 0, 1000);
+    EXPECT_EQ(plain.letters(0, 100000).second.size(), 100000u);
+    EXPECT_EQ(karaokeWeight(u(letters), KaraokeCharClass::ascii()), 200000);
+    EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(2));
 }
 
 // ---- \k and \kf (KA1-kf-switch) ---------------------------------------------------
