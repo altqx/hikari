@@ -58,9 +58,10 @@ struct ClashChoice {
     ClashAction action = ClashAction::Skip;
     std::u8string newName;
 };
-// The clash review's answers, per clash: its name and which clash of that
-// name it is in the Styles transferred (0 the first), so that several
-// Styles of one name are answered apart.
+// The clash review's answers, per clash: its name and which Style of that
+// name it is among the Styles transferred (0 the first, clash or not), so
+// that several Styles of one name are answered apart, and one review holds
+// for Documents with other names (every ASS Document).
 using ClashKey = std::pair<std::u8string, int>;
 using ClashChoices = std::map<ClashKey, ClashChoice>;
 // Each Style is added; one whose name is taken (in `into`, or earlier in

@@ -147,6 +147,15 @@ TEST(StyleLists, TransferWithClashChoices)
     transferStyles(onto, {named(u8"A", u8"Times"), named(u8"B")},
                    ClashChoices{{{u8"A", 0}, {ClashAction::Rename, u8"B"}}});
     EXPECT_EQ(names(onto), (std::vector<std::u8string>{u8"A", u8"B (2)", u8"B"}));
+    // A choice belongs to its source row (Codex review): the review made
+    // where A is taken lists both A rows; where A is new the first is
+    // added and the second still takes its own answer, not the first's.
+    const ClashChoices pair{{{u8"A", 0}, {ClashAction::Replace, {}}}, {{u8"A", 1}, {ClashAction::Rename, u8"A2"}}};
+    StyleList without{named(u8"Z")};
+    transferStyles(without, {named(u8"A", u8"One"), named(u8"A", u8"Two")}, pair);
+    EXPECT_EQ(names(without), (std::vector<std::u8string>{u8"Z", u8"A", u8"A2"}));
+    EXPECT_EQ(without[1].fontname, u8"One");
+    EXPECT_EQ(without[2].fontname, u8"Two");
 }
 
 // PK1 (#301, Codex security review): a file with X, X (2)... X (n) and many

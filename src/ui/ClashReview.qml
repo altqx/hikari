@@ -10,8 +10,8 @@ pragma Translator: "HikariSub.MainWindow"
 // button says what will be written.
 //
 // review(options, done): title, text, detail, rows ([{name, occurrence,
-// difference, suggestion}]: occurrence, which clash of that name the row
-// is), canRename (default true), action (each row's first, default
+// difference, suggestion}]: occurrence, which of the Styles of that name
+// sent the row is), canRename (default true), action (each row's first, default
 // "replace"), acceptText(count of rows written, added) and added;
 // done([{name, occurrence, action, newName}]), or done(null) when cancelled.
 import QtQuick

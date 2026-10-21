@@ -164,10 +164,12 @@ QVariantList clashesOf(const StyleList &into, const StyleList &styles)
     application::StyleNames all = application::namesOf(into);
     for (const auto &s : styles)
         all.insert(s.name);
-    // Per name: the clashes so far, and the next suffix to try (the ones
-    // below it are taken or offered already).
-    std::unordered_map<std::u8string, int> clashes, next;
+    // Per name: the incoming rows so far (a clash is known by its source
+    // row, as transferStyles reads it), and the next suffix to try (the
+    // ones below it are taken or offered already).
+    std::unordered_map<std::u8string, int> seen, next;
     for (const auto &s : styles) {
+        const int occurrence = seen[s.name]++;
         const auto found = first.try_emplace(s.name, &s);
         if (found.second)
             continue;
@@ -181,7 +183,7 @@ QVariantList clashesOf(const StyleList &into, const StyleList &styles)
                 break;
         }
         out << QVariantMap{{QStringLiteral("name"), qs(s.name)},
-                           {QStringLiteral("occurrence"), clashes[s.name]++},
+                           {QStringLiteral("occurrence"), occurrence},
                            {QStringLiteral("fields"), fields},
                            {QStringLiteral("same"), fields == 0},
                            {QStringLiteral("suggestion"), qs(suggestion)}};

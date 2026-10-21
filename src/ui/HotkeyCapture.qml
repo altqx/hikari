@@ -212,8 +212,10 @@ Item {
             Accessible.description: form.host.keys.length > 0 ? form.host.keys : qsTr("Press the keys")
             // Every key is the capture's, the application's shortcuts included.
             Keys.onShortcutOverride: event => event.accepted = true
+            // Tab is a hotkey too (legacy took every key but Esc); it
+            // moves to the question's buttons only while they show.
             Keys.onPressed: event => {
-                if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                if ((event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) && form.host.conflict !== null) {
                     event.accepted = false
                     return
                 }

@@ -152,7 +152,9 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
     for (const auto &style : styles)
         taken.insert(style.name);
     std::unordered_map<u8, int> next;
-    std::unordered_map<u8, int> clashes; // per name, the clashes so far
+    // Per name, the incoming rows so far: a choice belongs to its source
+    // row, so the same answers fit Documents that hold other names.
+    std::unordered_map<u8, int> seen;
     const auto add = [&](core::StyleValues style) {
         first.try_emplace(style.name, into.size());
         taken.insert(style.name);
@@ -160,12 +162,13 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
         rows.push_back(into.size() - 1);
     };
     for (const auto &style : styles) {
+        const int occurrence = seen[style.name]++;
         const auto found = first.find(style.name);
         if (found == first.end()) {
             add(style);
             continue;
         }
-        const auto choice = choices.find({style.name, clashes[style.name]++});
+        const auto choice = choices.find({style.name, occurrence});
         if (choice == choices.end() || choice->second.action == ClashAction::Skip)
             continue;
         if (choice->second.action == ClashAction::Replace) {

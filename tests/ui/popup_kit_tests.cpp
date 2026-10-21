@@ -99,6 +99,8 @@ Window {
                     return { result: "refused", message: "F1 is Help" }
                 if (key === Qt.Key_Control || key === Qt.Key_Shift)
                     return { result: "waiting" }
+                if (key === Qt.Key_Tab || key === Qt.Key_Backtab)
+                    return { result: "accepted", accel: "Tab", keys: "Tab" }
                 return { result: "accepted", accel: "Ctrl-K", keys: "Ctrl+K" }
             }
         })
@@ -366,6 +368,16 @@ private slots:
         QVERIFY(toast);
         click(findItem(toast, QStringLiteral("toastDismiss")));
         QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 2);
+        // A folded notice stays counted when the ones showing are
+        // dismissed (Codex review): only the Log or clear() lets it go.
+        run(QStringLiteral("toasts.clear()"));
+        for (const char *title : {"W1", "W2", "W3", "W4"})
+            post("warning", title);
+        QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 1);
+        run(QStringLiteral("toasts.entries.map(e => e.id).forEach(id => toasts.dismiss(id))"));
+        QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 0);
+        QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 1);
+        QTRY_VERIFY(findIn(root.get(), "toastMore")->isVisible());
         // Details opens the Log.
         run(QStringLiteral("toasts.clear()"));
         const int detailed = run(QStringLiteral("toasts.post('error', 'Failed', 'Could not save', { details: 'disk full' })")).toInt();
@@ -537,6 +549,10 @@ private slots:
         QCOMPARE(findIn(root.get(), "hotkeySwitch")->property("text").toString(), QStringLiteral("Swap with Open"));
         QCOMPARE(findIn(root.get(), "hotkeyDelete")->property("text").toString(), QStringLiteral("Take it from Open"));
         QCOMPARE(findIn(root.get(), "hotkeySetAnyway")->property("text").toString(), QStringLiteral("Keep both"));
+        // While the question shows, Tab moves to its buttons.
+        QTest::keyClick(root.get(), Qt::Key_Tab);
+        QTRY_VERIFY(!findIn(root.get(), "hotkeyMappingKeys")->hasActiveFocus());
+        QVERIFY(run(QStringLiteral("capture.conflict !== null")).toBool());
         click(findIn(root.get(), "hotkeySwitch"));
         QCOMPARE(notes().last(), QStringLiteral("answer:switch"));
         QTRY_VERIFY(!run(QStringLiteral("capture.opened")).toBool());
@@ -557,6 +573,12 @@ private slots:
         QTest::keyClick(compact, Qt::Key_K, Qt::ControlModifier);
         QTRY_VERIFY(!compact->isVisible());
         QCOMPARE(notes(), QStringList{QStringLiteral("Ctrl-K@2")});
+        // Tab is a hotkey like any other (Codex review).
+        run(QStringLiteral("capture.capture('Save', 2, false, (accel, window) => root.note(accel + '@' + window))"));
+        QVERIFY(QTest::qWaitForWindowFocused(compact));
+        QTest::keyClick(compact, Qt::Key_Tab);
+        QTRY_VERIFY(!compact->isVisible());
+        QCOMPARE(notes().last(), QStringLiteral("Tab@2"));
     }
 
     void listChooserTakesARowOrNone()

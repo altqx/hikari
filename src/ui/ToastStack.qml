@@ -7,7 +7,7 @@ pragma Translator: "HikariSub.MainWindow"
 // * "warning" and "error" stay until their × is pressed;
 // * a fourth makes the oldest information toast go, or, with three
 //   warnings showing, folds the oldest into a "1 more notice" line that
-//   opens the Log;
+//   opens the Log (it stays when the toasts showing are dismissed);
 // * Details (when the notice has more to say) opens the Log.
 // Every notice goes to the Log too (silently: the Log window does not pop
 // up). With "Show notices as toasts" off (notices.toasts) they go only to
@@ -74,10 +74,9 @@ Item {
         entries = list
         return entry.id
     }
+    // The folded count stays: only the Log (or clear()) lets those go.
     function dismiss(id) {
         entries = entries.filter(e => e.id !== id)
-        if (entries.length === 0)
-            folded = 0
     }
     function clear() {
         entries = []
