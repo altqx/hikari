@@ -71,6 +71,12 @@ public:
     // duration shared out by character (KA1-time-by-character).
     void split(const Line &line, bool autoSplit, const KaraokeSplitRules &rules,
                const KaraokeCharClass &classes = KaraokeCharClass::ascii());
+    // split() of a text with \k tags, read as tagged whether or not this
+    // part of it has one (karaokeKeepSyllables reads a Line in pieces).
+    // `carried`: the tag letters read past the previous piece's syllables
+    // (legacy reads a "k" in a tag's number as another tag), taken first;
+    // this piece's own are left there.
+    void splitTags(const Line &line, std::vector<std::u16string> *carried = nullptr);
     void clear();
     // Legacy GetText: each syllable with its \k tag (the time from the
     // previous syllable's end, or from `curStartMs`, in centiseconds).
@@ -155,7 +161,9 @@ private:
 // KA1-lead-in-keeps-syllables over a Line's text: with \k tags, the text as
 // moveStart leaves it for the start moved from `oldStartMs` to
 // `newStartMs`; none without tags or without a move.
-std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs);
+// `pieceTags`: how many \k tags it reads at a time (tests take a few).
+std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs,
+                                                   int pieceTags = 1024);
 
 // The UTF-16 length of the first `graphemes` graphemes of `text`.
 std::size_t karaokeGraphemePrefix(std::u16string_view text, int graphemes);

@@ -9,6 +9,7 @@
 #include <cmath>
 #include <cstdint>
 #include <iterator>
+#include <utility>
 #include <vector>
 
 namespace hikari::application {
@@ -244,92 +245,11 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, const KaraokeSplitRul
 {
     clear();
     m_classes = classes;
-    u16 Text = line.text;
-    const int len = static_cast<int>(Text.size());
-    int stime = line.startMs;
+    const u16 &Text = line.text;
     const u16 textlow = lowered(Text, classes);
 
-    // A5-kara-unclosed (R3, approved): a text ending inside a \k tag left
-    // legacy with fewer times (and tags) than syllables, which GetText, the
-    // drawing and the mouse then read past; the missing ones end at the
-    // Line's end, as a \k.
-    auto pad = [&] {
-        while (m_times.size() < m_syls.size())
-            m_times.push_back(line.endMs);
-        while (m_tags.size() < m_syls.size())
-            m_tags.push_back(u"k");
-        while (m_places.size() < m_syls.size())
-            m_places.push_back(newPlace(m_syls[m_places.size()]));
-        m_places.resize(m_syls.size());
-    };
-
     if (hasKaraokeTag(textlow)) {
-        Text += u'{'; // the last character's next one
-        bool inBrackets = false;
-        std::size_t lastStartBracket = 0;
-        bool kpart = false;
-        u16 res, kres;
-        for (int i = 0; i < len; i++) {
-            const char16_t ch = Text[static_cast<std::size_t>(i)];
-            const char16_t nch = Text[static_cast<std::size_t>(i) + 1];
-            if (i == len - 1) {
-                res += ch;
-                m_syls.push_back(res);
-                if (m_times.empty()) {
-                    m_times.push_back(line.endMs);
-                    m_tags.push_back(u"k");
-                }
-                pad();
-                return;
-            }
-            if (ch == u'{')
-                inBrackets = true;
-            else if (ch == u'}')
-                inBrackets = false;
-
-            // KA1-kt-tag: \kt (an absolute start) is no syllable; legacy read it as \k0
-            const bool kt = nch == u'k' && static_cast<std::size_t>(i) + 2 < Text.size() &&
-                            Text[static_cast<std::size_t>(i) + 2] == u't';
-            if (inBrackets && ch == u'\\' && (nch == u'k' || nch == u'K') && !kt) {
-                if (!m_tags.empty()) {
-                    m_syls.push_back(wxMid(res, 0, lastStartBracket));
-                    res = wxMid(res, lastStartBracket);
-                    lastStartBracket = 0;
-                }
-                // KA1-k-round-trip: the tag goes back here
-                Place place;
-                place.at = res.size();
-                m_places.push_back(std::move(place));
-                kpart = true;
-                continue;
-            } else if (kpart) {
-                if ((nch == u'o' || nch == u'f') && ch == u'k') {
-                    m_tags.push_back(u16(u"k") + nch);
-                    continue;
-                } else if (ch == u'k' || ch == u'K') {
-                    m_tags.push_back(u16(1, ch));
-                }
-                if (nch == u'}' || nch == u'\\') {
-                    // legacy int arithmetic (wraps like the 32-bit original)
-                    stime = static_cast<int>(static_cast<std::uint32_t>(stime) +
-                                             static_cast<std::uint32_t>(legacyAtoi(kres)) * 10u);
-                    m_times.push_back(stime);
-                    if (!m_places.empty()) {
-                        m_places.back().number = kres;
-                        m_places.back().cs = legacyAtoi(kres);
-                    }
-                    kres.clear();
-                    kpart = false;
-                    continue;
-                }
-                kres += nch;
-            } else {
-                res += ch;
-                if (nch == u'{')
-                    lastStartBracket = res.size();
-            }
-        }
-        pad();
+        splitTags(line);
         return;
     }
 
@@ -380,6 +300,108 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, const KaraokeSplitRul
         before += weights[s];
         m_times.push_back(legacyZeroIt(static_cast<int>(line.startMs + dur * before / total)));
     }
+}
+
+void AudioKaraoke::splitTags(const Line &line, std::vector<std::u16string> *carried)
+{
+    clear();
+    if (carried)
+        m_tags = std::exchange(*carried, {});
+    u16 Text = line.text;
+    const int len = static_cast<int>(Text.size());
+    int stime = line.startMs;
+
+    // A5-kara-unclosed (R3, approved): a text ending inside a \k tag left
+    // legacy with fewer times (and tags) than syllables, which GetText, the
+    // drawing and the mouse then read past; the missing ones end at the
+    // Line's end, as a \k.
+    auto pad = [&] {
+        while (m_times.size() < m_syls.size())
+            m_times.push_back(line.endMs);
+        while (m_tags.size() < m_syls.size())
+            m_tags.push_back(u"k");
+        while (m_places.size() < m_syls.size())
+            m_places.push_back(newPlace(m_syls[m_places.size()]));
+        m_places.resize(m_syls.size());
+    };
+    auto carry = [&] {
+        if (carried && m_tags.size() > m_syls.size()) {
+            carried->assign(std::make_move_iterator(m_tags.begin() + static_cast<std::ptrdiff_t>(m_syls.size())),
+                            std::make_move_iterator(m_tags.end()));
+            m_tags.resize(m_syls.size());
+        }
+    };
+
+    Text += u'{'; // the last character's next one
+    bool inBrackets = false;
+    std::size_t lastStartBracket = 0;
+    bool kpart = false;
+    bool tagged = false; // a tag read (legacy: tags read; some may be carried in)
+    u16 res, kres;
+    for (int i = 0; i < len; i++) {
+        const char16_t ch = Text[static_cast<std::size_t>(i)];
+        const char16_t nch = Text[static_cast<std::size_t>(i) + 1];
+        if (i == len - 1) {
+            res += ch;
+            m_syls.push_back(res);
+            if (m_times.empty()) {
+                m_times.push_back(line.endMs);
+                m_tags.push_back(u"k");
+            }
+            pad();
+            carry();
+            return;
+        }
+        if (ch == u'{')
+            inBrackets = true;
+        else if (ch == u'}')
+            inBrackets = false;
+
+        // KA1-kt-tag: \kt (an absolute start) is no syllable; legacy read it as \k0
+        const bool kt = nch == u'k' && static_cast<std::size_t>(i) + 2 < Text.size() &&
+                        Text[static_cast<std::size_t>(i) + 2] == u't';
+        if (inBrackets && ch == u'\\' && (nch == u'k' || nch == u'K') && !kt) {
+            if (tagged) {
+                m_syls.push_back(wxMid(res, 0, lastStartBracket));
+                res = wxMid(res, lastStartBracket);
+                lastStartBracket = 0;
+            }
+            tagged = true;
+            // KA1-k-round-trip: the tag goes back here
+            Place place;
+            place.at = res.size();
+            m_places.push_back(std::move(place));
+            kpart = true;
+            continue;
+        } else if (kpart) {
+            if ((nch == u'o' || nch == u'f') && ch == u'k') {
+                m_tags.push_back(u16(u"k") + nch);
+                continue;
+            } else if (ch == u'k' || ch == u'K') {
+                m_tags.push_back(u16(1, ch));
+            }
+            if (nch == u'}' || nch == u'\\') {
+                // legacy int arithmetic (wraps like the 32-bit original)
+                stime = static_cast<int>(static_cast<std::uint32_t>(stime) +
+                                         static_cast<std::uint32_t>(legacyAtoi(kres)) * 10u);
+                m_times.push_back(stime);
+                if (!m_places.empty()) {
+                    m_places.back().number = kres;
+                    m_places.back().cs = legacyAtoi(kres);
+                }
+                kres.clear();
+                kpart = false;
+                continue;
+            }
+            kres += nch;
+        } else {
+            res += ch;
+            if (nch == u'{')
+                lastStartBracket = res.size();
+        }
+    }
+    pad();
+    carry();
 }
 
 std::u16string AudioKaraoke::text(int curStartMs) const
@@ -694,14 +716,66 @@ std::size_t karaokeGraphemePrefix(std::u16string_view text, int graphemes)
     return at;
 }
 
-std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs)
+namespace {
+
+// Where a piece of a Line's text from `from` ends: past `tags` \k tags,
+// at the next "{" outside blocks that a \k tag opens, where splitTags parts
+// the syllables (the tag read as it does); else at the text's end.
+std::size_t karaokePieceEnd(std::u16string_view text, std::size_t from, int tags)
+{
+    const auto tagAt = [&](std::size_t i) { // a "\k" or "\K", not "\kt"
+        return i + 1 < text.size() && text[i] == u'\\' && (text[i + 1] == u'k' || text[i + 1] == u'K') &&
+               !(text[i + 1] == u'k' && i + 2 < text.size() && text[i + 2] == u't');
+    };
+    bool inBrackets = false;
+    int seen = 0;
+    for (std::size_t i = from; i < text.size(); i++) {
+        if (text[i] == u'{') {
+            if (!inBrackets && i > from && seen >= tags && tagAt(i + 1))
+                return i;
+            inBrackets = true;
+        } else if (text[i] == u'}') {
+            inBrackets = false;
+        } else if (inBrackets && tagAt(i)) {
+            ++seen;
+        }
+    }
+    return text.size();
+}
+
+} // namespace
+
+std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs,
+                                                   int pieceTags)
 {
     if (oldStartMs == newStartMs || !hasKaraokeTag(lowered(u16(text), KaraokeCharClass::ascii())))
         return std::nullopt;
-    AudioKaraoke karaoke;
-    karaoke.split({u16(text), oldStartMs, oldStartMs}, false, {});
-    karaoke.moveStart(oldStartMs, newStartMs);
-    return karaoke.text(newStartMs);
+    // Codex: the text is read a few syllables at a time, each piece's model
+    // dropped before the next, so a Line of millions of \k tags takes about
+    // its text's memory. The syllables part where the pieces do, and each
+    // syllable's \k is its time less the one before it, so the pieces'
+    // texts in a row are the whole Line's.
+    pieceTags = std::max(pieceTags, 2); // the first piece's lead syllable is never its only one
+    std::u16string out;
+    out.reserve(text.size());
+    int read = oldStartMs;     // where the piece's syllables start, as read
+    int written = newStartMs;  // and as written
+    std::vector<u16> carried;
+    for (std::size_t from = 0; from < text.size();) {
+        const std::size_t to = karaokePieceEnd(text, from, pieceTags);
+        AudioKaraoke karaoke;
+        karaoke.splitTags({u16(text.substr(from, to - from)), read, oldStartMs}, &carried);
+        read = karaoke.times().back();
+        if (from == 0)
+            karaoke.moveStart(oldStartMs, newStartMs); // the lead syllable is the first piece's
+        else
+            for (auto &time : karaoke.times())
+                time = std::max(time, newStartMs);
+        out += karaoke.text(written);
+        written = karaoke.times().back();
+        from = to;
+    }
+    return out;
 }
 
 int legacyKaraokeZoom(bool on, int slider, int &lastHorizontalZoom)

@@ -11,7 +11,9 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <climits>
 #include <fstream>
+#include <random>
 #include <sstream>
 #include <string>
 #include <string_view>
@@ -403,6 +405,31 @@ TEST(KaraokeMoveStart, ALaterStartCutsTheSyllablesItPasses)
     auto lead = kara("{\\k30}{\\k50}ka", 1000, 2000);
     lead.moveStart(1000, 1100);
     EXPECT_EQ(s(lead.text(1100)), "{\\k20}{\\k50}ka");
+}
+
+// Codex: a Line is read a few tags at a time; the pieces' texts in a row
+// are the whole Line's, whatever the blocks, tags and starts.
+TEST(KaraokeMoveStart, ALineReadInPiecesIsTheWholeLine)
+{
+    const std::vector<std::u16string> parts{
+        u"{\\k10}", u"{\\K25}", u"{\\kf7}", u"{\\ko0}", u"{\\k0}", u"{\\b1}", u"{\\b1\\k12}", u"{\\k3\\i1}",
+        u"{\\kt50}", u"{\\k}", u"{\\kx}", u"{\\k5\\k6}", u"ka", u"ra", u" ", u"{", u"}", u"\\k5", u"\\N", u"o\u0301"};
+    const std::vector<std::pair<int, int>> starts{{1000, 800}, {1000, 1010}, {1000, 1500}, {1000, 995}, {1000, 3000}};
+    std::mt19937 random(276);
+    for (int n = 0; n < 4000; n++) {
+        std::u16string text = u"{\\k20}";
+        const int count = static_cast<int>(random() % 24);
+        for (int i = 0; i < count; i++)
+            text += parts[random() % parts.size()];
+        const auto [from, to] = starts[random() % starts.size()];
+        EXPECT_EQ(karaokeKeepSyllables(text, from, to, 2), karaokeKeepSyllables(text, from, to, INT_MAX))
+            << s(text) << " " << from << "->" << to;
+    }
+    std::u16string text = u"{\\b1}";
+    for (int i = 0; i < 3000; i++)
+        text += i % 3 ? u"{\\k0}" : u"{\\k2}ka";
+    for (const auto &[from, to] : starts)
+        EXPECT_EQ(karaokeKeepSyllables(text, from, to), karaokeKeepSyllables(text, from, to, INT_MAX));
 }
 
 TEST(KaraokeMoveStart, TheLinesTextKeepsItsSyllables)
