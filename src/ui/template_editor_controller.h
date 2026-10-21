@@ -26,6 +26,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <utility>
 #include <string>
 #include <vector>
 
@@ -102,14 +103,16 @@ class TemplateEditorController : public QObject {
 
 public:
     using SessionSource = std::function<application::EditSession *()>;
-    // Which Document the session is (the app's DocumentId; never reused).
-    using DocumentKey = std::function<std::uint64_t()>;
+    // Which Document the session is and which load of it: the app's
+    // DocumentId (never reused) and its generation (a reload is a new one).
+    using DocumentKey = std::pair<std::uint64_t, std::uint64_t>;
+    using DocumentKeySource = std::function<DocumentKey()>;
 
     explicit TemplateEditorController(QObject *parent = nullptr);
     ~TemplateEditorController() override;
 
     void setSessionSource(SessionSource source);
-    void setDocumentKey(DocumentKey key);
+    void setDocumentKey(DocumentKeySource key);
     void setTemplater(application::KaraokeTemplaterPort *templater);
     void setEditable(bool editable);
     // The Document, its selection or the editing target changed.
@@ -243,12 +246,12 @@ private:
     std::string keyOf(const core::LineRecord &line) const;
     void updateSource();
 
-    std::uint64_t documentKey() const;
+    DocumentKey documentKey() const;
 
     SessionSource m_sessionSource;
-    DocumentKey m_documentKey;
-    std::set<std::uint64_t> m_trusted;
-    std::set<std::uint64_t> m_seenDocuments;
+    DocumentKeySource m_documentKey;
+    std::set<DocumentKey> m_trusted;
+    std::set<DocumentKey> m_seenDocuments;
     application::KaraokeTemplaterPort *m_templater = nullptr;
     bool m_editable = false;
     bool m_shown = false;

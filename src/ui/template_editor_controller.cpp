@@ -254,7 +254,7 @@ void TemplateEditorController::setSessionSource(SessionSource source)
     refresh();
 }
 
-void TemplateEditorController::setDocumentKey(DocumentKey key)
+void TemplateEditorController::setDocumentKey(DocumentKeySource key)
 {
     m_documentKey = std::move(key);
 }
@@ -708,9 +708,10 @@ bool TemplateEditorController::previewPending() const
     return m_shown && trusted() && (m_previewTimer.isActive() || m_previewing);
 }
 
-std::uint64_t TemplateEditorController::documentKey() const
+TemplateEditorController::DocumentKey TemplateEditorController::documentKey() const
 {
-    return m_documentKey ? m_documentKey() : static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(session()));
+    return m_documentKey ? m_documentKey()
+                         : DocumentKey{static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(session())), 0};
 }
 
 bool TemplateEditorController::trusted() const

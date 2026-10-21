@@ -527,9 +527,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // KE2: the Template editor edits the editing target; its preview runs on
     // the shell's templater and shows on the video.
     m_templateEditor = std::make_unique<ui::TemplateEditorController>();
-    m_templateEditor->setDocumentKey([this]() -> std::uint64_t {
+    // A reload is new content: the user's trust in the old one does not
+    // carry over (KE2-preview-trust).
+    m_templateEditor->setDocumentKey([this]() -> ui::TemplateEditorController::DocumentKey {
         const auto target = m_workspace.editingTarget();
-        return target ? target->value : 0;
+        return target ? ui::TemplateEditorController::DocumentKey{target->value, m_files->generation(*target)}
+                      : ui::TemplateEditorController::DocumentKey{};
     });
     m_templateEditor->setSessionSource([this]() -> application::EditSession * {
         const auto target = m_workspace.editingTarget();

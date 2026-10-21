@@ -261,6 +261,20 @@ private slots:
         QTRY_VERIFY(editor().trusted());
     }
 
+    // A reload from the file is new content: a trusted Document asks again,
+    // one without templates before too.
+    void aReloadedFileAsksAgain()
+    {
+        showPanel("templateDock");
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        QVERIFY(editor().trusted());
+        QTRY_VERIFY_WITH_TIMEOUT(editor().hasPreview(), 20'000);
+        QVERIFY(application->reloadTarget());
+        QTRY_VERIFY(!editor().trusted());
+        QTest::qWait(300);
+        QVERIFY(!editor().hasPreview());
+    }
+
     // Apply's report belongs to the Document it ran on: a tab chosen while
     // the run goes on shows no Apply of its own.
     void applyOnAnotherTabLeavesThisTabsSummary()
