@@ -161,6 +161,7 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
     // more syllables; legacy then read and wrote past the syllable times.
     // Such an index reads and moves nothing.
     auto validGrab = [&] { return hasKara && m_grabbed >= 0 && m_grabbed < karaoke->count(); };
+    const auto fieldTime = [&](int ms) { return kara.fieldTime ? kara.fieldTime(ms) : ms; };
 
     // Is inside? (AUDIO_AUTO_FOCUS and the cursor are the display's)
     bool onScale = false;
@@ -361,7 +362,7 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 // KA1-lead-in-keeps-syllables: the start dragged with the left
                 // button leaves the syllables at their times
                 if (m_hold == 1 && hasKara && !m_startCarries)
-                    karaoke->moveStart(m_startOrigin, selection.startMs);
+                    karaoke->moveStart(fieldTime(m_startOrigin), fieldTime(selection.startMs));
                 if (m_hold != 4)
                     result.commit = m_hold == 2;
                 m_hold = 0;
@@ -397,7 +398,7 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 if (hasKara && (event.rightHeld || rightDown)) {
                     auto &times = karaoke->times();
                     const int sizes = karaoke->count() - 1;
-                    const int addtime = snapped - selection.startMs;
+                    const int addtime = fieldTime(snapped) - fieldTime(selection.startMs);
                     for (int i = 0; i < sizes; i++) {
                         auto &t = times[static_cast<std::size_t>(i)];
                         t = legacyZeroIt(t + addtime);

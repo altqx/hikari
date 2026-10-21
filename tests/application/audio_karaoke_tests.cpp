@@ -12,6 +12,8 @@
 
 #include <gtest/gtest.h>
 
+#include <functional>
+
 #include <QByteArray>
 #include <QFile>
 #include <QJsonArray>
@@ -644,13 +646,14 @@ struct KaraokeMouseTest : ::testing::Test {
     AudioKaraoke karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3000, 6000);
     bool on = true;
     bool moveOnClick = false;
+    std::function<int(int)> fieldTime;
 
     void SetUp() override { timing.drawn(view, selection); }
     AudioMouseResult send(const AudioMouse &event)
     {
         AudioKaraokeMouse kara;
         if (on)
-            kara = {&karaoke, moveOnClick, sevenPixels()};
+            kara = {&karaoke, moveOnClick, sevenPixels(), fieldTime};
         auto result = timing.mouse(event, view, selection, snap, options, 16, kara);
         timing.drawn(view, selection);
         return result;
@@ -838,6 +841,34 @@ TEST_F(KaraokeMouseTest, TheRightButtonCarriesTheSyllablesWithTheStart)
     EXPECT_EQ(selection.startMs, 2700);
     EXPECT_EQ(karaoke.count(), 3); // no lead syllable: they moved with it
     EXPECT_EQ(karaoke.times(), (std::vector<int>{3300, 4200, 6000}));
+}
+
+// KA1: the syllables move by the start the field commits, not by the
+// dragged one (here a field of whole seconds, and one of tenths).
+TEST_F(KaraokeMouseTest, TheSyllablesMoveByTheCommittedStart)
+{
+    fieldTime = [](int ms) { return ms / 1000 * 1000; };
+    send(press(100));
+    send(drag(132));
+    send(release(132));
+    EXPECT_EQ(selection.startMs, 3960); // committed as 3000: the syllables stay
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3600, 4500, 6000}));
+    EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))), "{\\k60}ka{\\k90}ra{\\k150}oke");
+    send(press(132));
+    send(drag(140));
+    send(release(140));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{4000, 4500, 6000})); // committed as 4000
+    fieldTime = [](int ms) { return ms / 100 * 100; };
+    karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3000, 6000);
+    selection.startMs = 3000;
+    timing.drawn(view, selection);
+    send(press(100, 50, AudioMouse::Button::Right));
+    send(drag(101, AudioMouse::Button::Right)); // 3030, committed as 3000
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3600, 4500, 6000}));
+    send(drag(104, AudioMouse::Button::Right)); // 3120, committed as 3100
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3700, 4600, 6000}));
+    send(release(104, AudioMouse::Button::Right));
+    EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))), "{\\k60}ka{\\k90}ra{\\k140}oke");
 }
 
 TEST_F(KaraokeMouseTest, AStaleGrabKeepsTheSelectionAsItIs)

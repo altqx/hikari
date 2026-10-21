@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <optional>
 #include <span>
 
@@ -111,6 +112,9 @@ struct AudioKaraokeMouse {
     AudioKaraoke *karaoke = nullptr;
     bool moveOnClick = false; // AUDIO_KARAOKE_MOVE_ON_CLICK
     KaraokeMeasure measure;   // the label font (GetTextExtentPixel)
+    // KA1: a start as the field commits it (committedAudioTime); a dragged
+    // start moves the syllables by that, not by the dragged time
+    std::function<int(int)> fieldTime;
 };
 
 // Legacy AudioDisplay's timing state (hold, holding, selStart/selEnd, the

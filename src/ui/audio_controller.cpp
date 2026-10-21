@@ -1224,6 +1224,7 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
         karaoke.karaoke = &m_karaoke;
         karaoke.moveOnClick = m_store && m_store->boolean("audio.karaokeMoveOnClick");
         karaoke.measure = m_measure;
+        karaoke.fieldTime = m_hooks.fieldTime;
     }
     const auto hover = std::tuple(m_karaoke.hover, m_karaoke.character, m_karaoke.current);
     auto result =
