@@ -64,7 +64,7 @@ install_base() {
             libxcb-glx0 libxcb-present0 libxcb-sync1 libxcb-randr0 libxcb-shape0 \
             dejavu-fonts binutils shadow which findutils >/dev/null ;;
     arch)
-        pacman -Sy --noconfirm --needed -q \
+        pacman -Syu --noconfirm --needed -q \
             xorg-server-xvfb xorg-xauth libglvnd mesa libx11 libxcb \
             fontconfig freetype2 alsa-lib libpulse dbus systemd-libs wayland \
             libsm libice zlib expat libdrm libxshmfence ttf-dejavu binutils \
