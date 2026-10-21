@@ -159,19 +159,30 @@ RowLayout {
         // and Esc, and the standard copy, paste and undo.
         Keys.onShortcutOverride: event => {
             const plain = (event.modifiers & (Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
-            event.accepted = (plain && ([Qt.Key_Escape, Qt.Key_Left, Qt.Key_Right, Qt.Key_Home, Qt.Key_End,
+            // Esc is the field's while it has something to put back, else the
+            // tool's (a pending point or step) when it has one (Codex on #293).
+            if (event.key === Qt.Key_Escape) {
+                event.accepted = plain && (input.editing || scrub.active || field.tools.escapable)
+                return
+            }
+            event.accepted = (plain && ([Qt.Key_Left, Qt.Key_Right, Qt.Key_Home, Qt.Key_End,
                                          Qt.Key_Backspace, Qt.Key_Delete, Qt.Key_Return, Qt.Key_Enter].includes(event.key)
                                         || (event.text.length > 0 && event.text >= " ")))
                 || [StandardKey.Copy, StandardKey.Cut, StandardKey.Paste, StandardKey.Undo, StandardKey.Redo,
                     StandardKey.SelectAll].some(k => event.matches(k))
         }
         Keys.onEscapePressed: event => {
-            if (scrub.active && !scrub.cancelled) {
-                scrub.cancelled = true
-                field.tools.escape()
+            if (scrub.active || input.editing) {
+                if (scrub.active && !scrub.cancelled) {
+                    scrub.cancelled = true
+                    field.tools.escape()
+                }
+                field.restore()
+                event.accepted = true
+                return
             }
-            field.restore()
-            event.accepted = true
+            // Nothing typed or scrubbed: the tool's Esc, as over the video.
+            event.accepted = field.tools.escape()
         }
         onActiveFocusChanged: if (!activeFocus) field.restore()
         Label {

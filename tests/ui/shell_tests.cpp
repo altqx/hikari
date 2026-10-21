@@ -18001,6 +18001,25 @@ private slots:
         QTRY_VERIFY(!rz->visibility()[0]);
         QVERIFY(!tools.escapable());
         QCOMPARE(session->historySize(), before);
+        // From a value field in the bar too (Codex on #293): Esc is the
+        // field's while it has typed text to put back, then the tool's.
+        {
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
+            QTRY_VERIFY(rz->visibility()[0]);
+            QQuickItem *frz = visualItem("visualValue_frz");
+            QVERIFY(frz);
+            const QString shown = frz->property("text").toString();
+            frz->forceActiveFocus();
+            QTRY_VERIFY(frz->hasActiveFocus());
+            QTest::keyClick(window, Qt::Key_5);
+            QTest::keyClick(window, Qt::Key_Escape); // the typing goes
+            QTRY_COMPARE(frz->property("text").toString(), shown);
+            QVERIFY(rz->visibility()[0]);
+            QTest::keyClick(window, Qt::Key_Escape); // then the pending point
+            QTRY_VERIFY(!rz->visibility()[0]);
+            QVERIFY(!tools.escapable());
+            QCOMPARE(session->historySize(), before);
+        }
         // Two clicks: the angle of the line through them, one step.
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, a);
         QTRY_VERIFY(rz->visibility()[0]);
