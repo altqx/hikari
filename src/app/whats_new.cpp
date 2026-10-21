@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QFile>
 #include <QFileInfo>
+#include <QHash>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -68,10 +69,166 @@ bool isCode(const QTextBlock &block, const QTextCharFormat &format)
            block.blockFormat().hasProperty(QTextFormat::BlockCodeFence) || format.fontFixedPitch();
 }
 
+// Source spellings md4c would read wrong, marked before parsing with a
+// private-use character the note does not hold and put back once the raw
+// HTML went: in code as written, elsewhere as meant.
+// - A bracket written escaped ("\\<", "&lt;", "&#62;") is text, but md4c
+//   hands it over as the raw one: the marker stands for it.
+// - A linked image ("[![alt](badge.svg)](url)") loses its link in Qt's
+//   import: it is read as "[alt](url)" after its marker. On one line and
+//   without a backtick it is all code or none.
+class SourceMarks
+{
+public:
+    QString mark(const QString &markdown)
+    {
+        // The private-use characters the note holds are no markers.
+        m_byMarker.assign(kLast - kFirst + 1, -1);
+        for (const QChar c : markdown)
+            if (c.unicode() >= kFirst && c.unicode() <= kLast)
+                m_byMarker[c.unicode() - kFirst] = kHeld;
+        static const QRegularExpression linkedImage = [] {
+            // A destination, bare or in <>, and a quoted title; no backtick.
+            const QString destination = QStringLiteral(
+                "\\s*(?:<[^<>`\\n]*>|[^\\s()<>`]*)(?:\\s+(?:\"[^\"`\\n]*\"|'[^'`\\n]*'))?\\s*");
+            return QRegularExpression(QStringLiteral("\\[!\\[((?:[^\\[\\]\\\\`\\n]|\\\\[^`\\n])*)\\]\\(") + destination +
+                                      QStringLiteral("\\)\\](\\(") + destination + QStringLiteral("\\))"));
+        }();
+        QString linked;
+        qsizetype at = 0;
+        for (auto m = linkedImage.globalMatch(markdown); m.hasNext();) {
+            const QRegularExpressionMatch found = m.next();
+            const QString shown = QLatin1Char('[') + found.captured(1) + QLatin1Char(']') + found.captured(2);
+            const QChar marker = markerFor(found.captured(), shown, QString());
+            linked += QStringView(markdown).sliced(at, found.capturedStart() - at);
+            linked += marker.isNull() ? found.captured() : marker + shown;
+            at = found.capturedEnd();
+        }
+        linked += QStringView(markdown).sliced(at);
+        // A backslash takes any punctuation ("\\\\<" is a backslash, then
+        // "<"), so all are matched and only brackets are marked.
+        static const QRegularExpression escaped(
+            QStringLiteral("\\\\[!-/:-@\\[-`{-~]|&(?:lt|LT|gt|GT|#0*6[02]|#[xX]0*3[cCeE]);"));
+        static const QRegularExpression less(QStringLiteral("^(?:\\\\<|&(?:lt|LT|#0*60|#[xX]0*3[cC]);)$"));
+        QString out;
+        out.reserve(linked.size());
+        at = 0;
+        for (auto m = escaped.globalMatch(linked); m.hasNext();) {
+            const QRegularExpressionMatch found = m.next();
+            const QString written = found.captured();
+            if (written.size() == 2 && written[1] != u'<' && written[1] != u'>')
+                continue;
+            const QChar marker =
+                markerFor(written, QString(), less.match(written).hasMatch() ? QStringLiteral("<") : QStringLiteral(">"));
+            if (marker.isNull())
+                continue; // no marker left: read as md4c reads it
+            out += QStringView(linked).sliced(at, found.capturedStart() - at);
+            out += marker;
+            at = found.capturedEnd();
+        }
+        out += QStringView(linked).sliced(at);
+        return out;
+    }
+
+    void restore(QTextDocument &doc) const
+    {
+        if (m_marks.empty())
+            return;
+        // Link addresses take the brackets.
+        forEachFragment(doc, [&](const QTextBlock &, const QString &, const QTextFragment &fragment,
+                                 std::vector<Change> &changes) {
+            QTextCharFormat format = fragment.charFormat();
+            if (!format.isAnchor())
+                return;
+            QString href = format.anchorHref();
+            for (const Mark &mark : m_marks)
+                href.replace(mark.marker, mark.meant);
+            if (href == format.anchorHref())
+                return;
+            format.setAnchorHref(href);
+            changes.push_back({fragment.position(), fragment.length(), fragment.text(), format});
+        });
+        // The escapes, then the linked images (in code their text holds the
+        // escapes as written).
+        for (const bool linked : {false, true}) {
+            forEachFragment(doc, [&](const QTextBlock &block, const QString &text, const QTextFragment &fragment,
+                                     std::vector<Change> &changes) {
+                const bool code = isCode(block, fragment.charFormat());
+                const int from = fragment.position() - block.position();
+                for (int i = from; i < from + fragment.length(); ++i) {
+                    const Mark *mark = find(text[i]);
+                    if (!mark || mark->shown.isEmpty() == linked)
+                        continue;
+                    const bool asRead = linked && code && QStringView(text).sliced(i + 1).startsWith(mark->shown);
+                    const QString with = linked ? (asRead ? mark->written : QString())
+                                                : (code ? mark->written : mark->meant);
+                    changes.push_back({block.position() + i, asRead ? 1 + int(mark->shown.size()) : 1, with,
+                                       fragment.charFormat()});
+                }
+            });
+        }
+    }
+
+private:
+    struct Change {
+        int position, length;
+        QString text;
+        QTextCharFormat format;
+    };
+    // Changes gathered over the document, then made last to first.
+    template<typename Gather>
+    static void forEachFragment(QTextDocument &doc, Gather gather)
+    {
+        std::vector<Change> changes;
+        for (QTextBlock block = doc.begin(); block.isValid(); block = block.next()) {
+            const QString text = block.text();
+            for (auto it = block.begin(); !it.atEnd(); ++it)
+                gather(block, text, it.fragment(), changes);
+        }
+        QTextCursor cursor(&doc);
+        for (auto it = changes.rbegin(); it != changes.rend(); ++it) {
+            cursor.setPosition(it->position);
+            cursor.setPosition(it->position + it->length, QTextCursor::KeepAnchor);
+            cursor.insertText(it->text, it->format);
+        }
+    }
+    static constexpr char16_t kFirst = 0xE000, kLast = 0xF8FF;
+    static constexpr int kHeld = -2;
+    struct Mark {
+        QChar marker;
+        QString written; // in the source
+        QString shown;   // a linked image: what md4c reads after the marker
+        QString meant;   // an escape: the bracket
+    };
+    QChar markerFor(const QString &written, const QString &shown, const QString &meant)
+    {
+        if (const auto known = m_byWritten.constFind(written); known != m_byWritten.cend())
+            return m_marks[*known].marker;
+        while (m_next <= kLast && m_byMarker[m_next - kFirst] != -1)
+            ++m_next;
+        if (m_next > kLast)
+            return {};
+        m_byMarker[m_next - kFirst] = int(m_marks.size());
+        m_byWritten.insert(written, int(m_marks.size()));
+        m_marks.push_back({QChar(m_next++), written, shown, meant});
+        return m_marks.back().marker;
+    }
+    const Mark *find(QChar c) const
+    {
+        if (c.unicode() < kFirst || c.unicode() > kLast || m_byMarker[c.unicode() - kFirst] < 0)
+            return nullptr;
+        return &m_marks[m_byMarker[c.unicode() - kFirst]];
+    }
+    std::vector<Mark> m_marks;
+    std::vector<int> m_byMarker; // a mark's index, -1 free, kHeld in the note
+    QHash<QString, int> m_byWritten;
+    char16_t m_next = kFirst;
+};
+
 // Raw HTML goes, outside code (with MarkdownNoHTML md4c keeps it as text):
-// tags (a quoted value may hold ">"), with their text between them kept; comments, scripts and styles
-// whole, over code and paragraphs too. A paragraph left empty goes. An
-// entity ("&lt;b&gt;") reads as what it stands for, so it goes too.
+// tags (a quoted value may hold ">"), with their text between them kept;
+// comments, scripts and styles whole, over code and paragraphs too. A
+// paragraph left empty goes. Escaped brackets are markers here (SourceMarks).
 void dropHtml(QTextDocument &doc)
 {
     static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s(?:[^>\"']|\"[^\"]*\"|'[^']*')*)?/?>"),
@@ -201,10 +358,11 @@ qsizetype urlEnd(QStringView url)
     return end;
 }
 
-// A bare http(s) URL outside code and links becomes a link, all of it.
+// A bare http(s) URL outside code and links becomes a link, all of it; an
+// escaped bracket (a marker) ends it, as "<" does.
 void linkUrls(QTextDocument &doc)
 {
-    static const QRegularExpression url(QStringLiteral("(?<![\\w/])https?://[^\\s<>`]+"),
+    static const QRegularExpression url(QStringLiteral("(?<![\\w/])https?://[^\\s<>`\\x{E000}-\\x{F8FF}]+"),
                                         QRegularExpression::UseUnicodePropertiesOption);
     struct Link {
         int from, to;
@@ -474,6 +632,7 @@ QString WhatsNew::render(const QString &markdown, const QColor &muted, const QCo
         cursor.setPosition(it->position + it->length, QTextCursor::KeepAnchor);
         cursor.insertText(it->alt, QTextCharFormat());
     }
+    marks.restore(doc);
     for (QTextBlock block = doc.begin(); block.isValid(); block = block.next()) {
         // A heading is a section label: the body's size, semibold, muted.
         if (block.blockFormat().headingLevel() > 0) {

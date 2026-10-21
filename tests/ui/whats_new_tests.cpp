@@ -574,6 +574,33 @@ private slots:
             QStringLiteral("Before <script\ntype=\"x\">hidden()</script> after"), muted, link, code);
         QVERIFY2(!split.contains(QStringLiteral("hidden()")), qPrintable(split));
         QVERIFY(split.contains(QStringLiteral("after")));
+        // Markup written escaped is text, in prose as in code; raw HTML
+        // beside it still goes, and an escaped ">" closes nothing.
+        const QString escaped = copy->whatsNew->render(
+            QStringLiteral("Use \\<video\\> or &lt;audio&gt; or &#60;x&#x3E; but <b>gone</b>, \\\\<i>y</i>\n\n"
+                           "`\\<v\\> &lt;a&gt;` <!-- a --\\> b --> after"),
+            muted, link, code);
+        QVERIFY2(escaped.contains(QStringLiteral("Use &lt;video&gt; or &lt;audio&gt; or &lt;x&gt; but gone, \\y")),
+                 qPrintable(escaped));
+        QVERIFY(escaped.contains(QStringLiteral("\\&lt;v\\&gt; &amp;lt;a&amp;gt;")));
+        QVERIFY(escaped.contains(QStringLiteral("after")));
+        QVERIFY(!escaped.contains(QStringLiteral(" b ")));
+        // A linked image's alt text keeps the link.
+        const QString badge = copy->whatsNew->render(
+            QStringLiteral("[![Build status](badge.svg)](https://example.com/build)"), muted, link, code);
+        QVERIFY2(badge.contains(QStringLiteral("href=\"https://example.com/build\"")), qPrintable(badge));
+        QVERIFY(badge.contains(QStringLiteral("Build status")));
+        const QString badges = copy->whatsNew->render(
+            QStringLiteral("[![Use \\<x\\>](b.svg \"t\")](<https://example.com/y> 'u') and "
+                           "`[![a](b.svg)](https://example.com/c)`\n\n"
+                           "```\n[![d](e.svg)](https://example.com/f) \\<g\\>\n```\n"),
+            muted, link, code);
+        QVERIFY2(badges.contains(QStringLiteral("href=\"https://example.com/y\"")), qPrintable(badges));
+        QVERIFY(badges.contains(QStringLiteral("Use &lt;x&gt;")));
+        QVERIFY(badges.contains(QStringLiteral("[![a](b.svg)](https://example.com/c)")));
+        QVERIFY(!badges.contains(QStringLiteral("href=\"https://example.com/c")));
+        QVERIFY(badges.contains(QStringLiteral("[![d](e.svg)](https://example.com/f) \\&lt;g\\&gt;")));
+        QVERIFY(!badges.contains(QStringLiteral("href=\"https://example.com/f")));
         // An image's alt text is text, escaped markup in it too.
         const QString alts = copy->whatsNew->render(
             QStringLiteral("Before ![Use \\<video\\>](a.png) mid ![x \\<script\\>](b.png) after\n\nNext"),
