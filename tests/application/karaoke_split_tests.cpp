@@ -142,6 +142,7 @@ TEST(KaraokeAutoSplit, KanaSplitsByMora)
 
 TEST(KaraokeAutoSplit, KanjiAndHangulOneCharacterEach)
 {
+    EXPECT_EQ(syllables("\xF0\xB1\x8D\x90\xF0\xB1\x8D\x91"), "\xF0\xB1\x8D\x90|\xF0\xB1\x8D\x91"); // Extension H (Codex)
     EXPECT_EQ(syllables("\xE6\x9D\xB1\xE4\xBA\xAC"), "\xE6\x9D\xB1|\xE4\xBA\xAC"); // 東京
     EXPECT_EQ(syllables("\xEC\x82\xAC\xEB\x9E\x91\xED\x95\xB4"), "\xEC\x82\xAC|\xEB\x9E\x91|\xED\x95\xB4"); // 사랑해
     // 君の名は: kanji and kana in one word
@@ -211,6 +212,12 @@ TEST(KaraokeAutoSplit, SpacesPunctuationAndBlocks)
     // digits and symbols open the syllable after them
     EXPECT_EQ(syllables("2kara"), "2ka|ra");
     EXPECT_EQ(syllables("ka$ra"), "ka|$ra"); // symbols too, not the punctuation they are to legacy (Codex)
+    // punctuation past the BMP is read by its code point (Codex): U+10100
+    auto classes = KaraokeCharClass::ascii();
+    classes.punct = [](char32_t c) { return c == 0x10100 || KaraokeCharClass::ascii().punct(c); };
+    const std::u16string aegean = u"ka\U00010100 ra";
+    EXPECT_EQ(karaokeAutoSplit(aegean, {}, classes), (std::vector<std::size_t>{0, 5}));
+    EXPECT_EQ(karaokeWeight(aegean, classes), 4);
 }
 
 // KA1-auto-split-most (Codex security): a Line of more visible characters
@@ -450,14 +457,14 @@ TEST(KaraokeMoveStart, ALineReadInPiecesIsTheWholeLine)
         for (int i = 0; i < count; i++)
             text += parts[random() % parts.size()];
         const auto [from, to] = starts[random() % starts.size()];
-        EXPECT_EQ(karaokeKeepSyllables(text, from, to, 2), karaokeKeepSyllables(text, from, to, INT_MAX))
+        EXPECT_EQ(karaokeKeepSyllables(text, from, to, 9000, 2), karaokeKeepSyllables(text, from, to, 9000, INT_MAX))
             << s(text) << " " << from << "->" << to;
     }
     std::u16string text = u"{\\b1}";
     for (int i = 0; i < 3000; i++)
         text += i % 3 ? u"{\\k0}" : u"{\\k2}ka";
     for (const auto &[from, to] : starts)
-        EXPECT_EQ(karaokeKeepSyllables(text, from, to), karaokeKeepSyllables(text, from, to, INT_MAX));
+        EXPECT_EQ(karaokeKeepSyllables(text, from, to, 9000), karaokeKeepSyllables(text, from, to, 9000, INT_MAX));
 }
 
 // Codex: a piece ends only between blocks, so one block of more tags than a
@@ -468,35 +475,39 @@ TEST(KaraokeMoveStart, OneHugeBlockLeavesTheTextAsItIs)
     for (int i = 0; i < 16 * 1024; i++)
         fits += u"\\k0";
     fits += u"}x";
-    EXPECT_NE(karaokeKeepSyllables(fits, 1000, 800), std::nullopt);
+    EXPECT_NE(karaokeKeepSyllables(fits, 1000, 800, 9000), std::nullopt);
     std::u16string block = u"{";
     for (int i = 0; i < 1000000; i++)
         block += u"\\k0";
     block += u"}x";
     const auto began = std::chrono::steady_clock::now();
-    EXPECT_EQ(karaokeKeepSyllables(block, 1000, 800), std::nullopt);
-    EXPECT_EQ(karaokeKeepSyllables(block, 1000, 800, 2), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(block, 1000, 800, 9000), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(block, 1000, 800, 9000, 2), std::nullopt);
     EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(1));
 }
 
 TEST(KaraokeMoveStart, TheLinesTextKeepsItsSyllables)
 {
-    EXPECT_EQ(karaokeKeepSyllables(u"{\\k50}ka{\\k50}ra", 1000, 800),
+    EXPECT_EQ(karaokeKeepSyllables(u"{\\k50}ka{\\k50}ra", 1000, 800, 9000),
               std::optional<std::u16string>(u"{\\k20}{\\k50}ka{\\k50}ra"));
-    EXPECT_EQ(karaokeKeepSyllables(u"{\\b1}ka{\\k50}ra", 1000, 800),
+    EXPECT_EQ(karaokeKeepSyllables(u"{\\b1}ka{\\k50}ra", 1000, 800, 9000),
               std::optional<std::u16string>(u"{\\k20}{\\b1}ka{\\k50}ra"));
-    EXPECT_EQ(karaokeKeepSyllables(u"karaoke", 1000, 800), std::nullopt); // no tags
-    EXPECT_EQ(karaokeKeepSyllables(u"{\\k50}ka", 1000, 1000), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(u"karaoke", 1000, 800, 9000), std::nullopt); // no tags
+    EXPECT_EQ(karaokeKeepSyllables(u"{\\k50}ka", 1000, 1000, 9000), std::nullopt);
     // tags outside a block, or in one never closed, are no \k syllables
-    EXPECT_EQ(karaokeKeepSyllables(u"\\k50 ka{\\b1}", 1000, 800), std::nullopt);
-    EXPECT_EQ(karaokeKeepSyllables(u"{\\b1}{\\k50 ka", 1000, 800), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(u"\\k50 ka{\\b1}", 1000, 800, 9000), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(u"{\\b1}{\\k50 ka", 1000, 800, 9000), std::nullopt);
+    // a last tag never closed: the text as it is (Codex), not read half as a tag
+    EXPECT_EQ(karaokeKeepSyllables(u"{\\k20}ka{\\k30", 1000, 800, 2000), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(u"{\\k20}ka{\\k30", 1000, 1300, 2000), std::nullopt);
+    EXPECT_NE(karaokeKeepSyllables(u"{\\k20}ka{\\k30}ra{", 1000, 800, 2000), std::nullopt); // no tag in it
     // a long unclosed block of \k tags is read in one pass (Codex: the
     // backward searches were quadratic, seconds for 300 KB)
     std::u16string unclosed = u"{";
     for (int i = 0; i < 100000; i++)
         unclosed += u"\\k0";
     const auto began = std::chrono::steady_clock::now();
-    EXPECT_EQ(karaokeKeepSyllables(unclosed, 1000, 800), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(unclosed, 1000, 800, 9000), std::nullopt);
     EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(1));
 }
 

@@ -39,8 +39,8 @@ namespace hikari::application {
 // < = > ^ ` | ~, Unicode's symbol categories), read as digits are.
 struct KaraokeCharClass {
     std::function<bool(char16_t)> space;
-    std::function<bool(char16_t)> punct;
-    std::function<bool(char16_t)> symbol;
+    std::function<bool(char32_t)> punct; // a code point (Auto split reads past the BMP)
+    std::function<bool(char32_t)> symbol;
     std::function<char16_t(char16_t)> lower;
     static KaraokeCharClass ascii();
 };
@@ -166,11 +166,13 @@ private:
 
 // KA1-lead-in-keeps-syllables over a Line's text: with \k tags, the text as
 // moveStart leaves it for the start moved from `oldStartMs` to
-// `newStartMs`; none without tags or without a move, or with one block of
-// more \k tags than 16 × max(pieceTags, 1024) (its text left as it is).
-// `pieceTags`: how many \k tags it reads at a time (tests take a few).
+// `newStartMs` (the Line ending at `endMs`, which a last tag left unfinished
+// ends at, as when the panel reads it); none without tags or without a move,
+// with a last block never closed that holds a \k tag, or with one block of
+// more \k tags than 16 × max(pieceTags, 1024) (its text left as it is). `pieceTags`: how many \k tags it reads at a time (tests
+// take a few).
 std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs,
-                                                   int pieceTags = 1024);
+                                                   int endMs, int pieceTags = 1024);
 
 // The UTF-16 length of the first `graphemes` graphemes of `text`.
 std::size_t karaokeGraphemePrefix(std::u16string_view text, int graphemes);

@@ -402,6 +402,18 @@ TEST(AudioKaraoke, JoinTakesTheNextSyllableAndDropsEmptyBlocks)
 
 // KA2's taps replace the syllables: their tags go in their own places,
 // not where the Line's read ones were (KA1-k-round-trip)
+// Codex: a hovered letter is the reading's it was found in; another Line's
+// (or the same Line read again) has none until the pointer moves
+TEST(AudioKaraoke, ANewReadingHasNoHoveredLetter)
+{
+    auto k = split("{\\k30}hana{\\k20}ka", 1000, 2000);
+    k.hover = 0;
+    k.character = 1;
+    k.split({u"{\\k30}h{\\k20}ana", 1000, 2000}, false, {});
+    EXPECT_EQ(k.hover, -1);
+    EXPECT_EQ(k.character, -1);
+}
+
 TEST(AudioKaraoke, AssignedSyllablesTakeTheirOwnPlaces)
 {
     AudioKaraoke k;

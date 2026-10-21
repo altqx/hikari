@@ -186,10 +186,10 @@ KaraokeCharClass KaraokeCharClass::ascii()
 {
     KaraokeCharClass classes;
     classes.space = [](char16_t c) { return c == u' ' || (c >= 9 && c <= 13); };
-    classes.punct = [](char16_t c) {
+    classes.punct = [](char32_t c) {
         return c > 32 && c < 127 && !(c >= u'0' && c <= u'9') && !(c >= u'a' && c <= u'z') && !(c >= u'A' && c <= u'Z');
     };
-    classes.symbol = [](char16_t c) { return std::u16string_view(u"$+<=>^`|~").find(c) != std::u16string_view::npos; };
+    classes.symbol = [](char32_t c) { return std::u32string_view(U"$+<=>^`|~").find(c) != std::u32string_view::npos; };
     classes.lower = lowerAscii;
     return classes;
 }
@@ -234,6 +234,9 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, const KaraokeSplitRul
 {
     clear();
     m_classes = classes;
+    // the hovered letter was another reading's: none until the pointer moves (Codex)
+    hover = -1;
+    character = -1;
     const u16 &Text = line.text;
     const u16 textlow = lowered(Text, classes);
 
@@ -775,10 +778,18 @@ std::optional<std::size_t> karaokePieceEnd(std::u16string_view text, std::size_t
 } // namespace
 
 std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs,
-                                                   int pieceTags)
+                                                   int endMs, int pieceTags)
 {
     if (oldStartMs == newStartMs || !hasKaraokeTag(lowered(u16(text), KaraokeCharClass::ascii())))
         return std::nullopt;
+    // a last block never closed with a \k tag in it (`{\k20}ka{\k30`) is
+    // read half as a tag: its text stays as it is (Codex)
+    if (const auto open = text.rfind(u'{'); open != std::u16string_view::npos && text.find(u'}', open) == text.npos) {
+        const std::u16string_view rest = text.substr(open);
+        for (std::size_t i = rest.find(u'\\'); i != rest.npos; i = rest.find(u'\\', i + 1))
+            if (i + 1 < rest.size() && (rest[i + 1] == u'k' || rest[i + 1] == u'K'))
+                return std::nullopt;
+    }
     // Codex: the text is read a few syllables at a time, each piece's model
     // dropped before the next, so a Line of millions of \k tags takes about
     // its text's memory. The syllables part where the pieces do, and each
@@ -799,7 +810,7 @@ std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int
             return std::nullopt;
         const std::size_t to = *end;
         AudioKaraoke karaoke;
-        karaoke.splitTags({u16(text.substr(from, to - from)), read, oldStartMs}, &carried);
+        karaoke.splitTags({u16(text.substr(from, to - from)), read, endMs}, &carried);
         read = karaoke.times().back();
         if (from == 0)
             karaoke.moveStart(oldStartMs, newStartMs); // the lead syllable is the first piece's

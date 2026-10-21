@@ -52,7 +52,7 @@ bool isKana(char32_t c)
 bool isHan(char32_t c)
 {
     return c == 0x3005 || c == 0x3007 || c == 0x303B || inRange(c, 0x3400, 0x4DBF) || inRange(c, 0x4E00, 0x9FFF) ||
-           inRange(c, 0xF900, 0xFAFF) || inRange(c, 0x20000, 0x3134F);
+           inRange(c, 0xF900, 0xFAFF) || inRange(c, 0x20000, 0x323AF); // through Extension H (Codex)
 }
 
 bool isHangul(char32_t c)
@@ -151,9 +151,9 @@ void eachUnit(u16v text, const KaraokeCharClass &classes, Take take)
             unit.kind = Kind::Han;
         else if (isHangul(c))
             unit.kind = Kind::Hangul;
-        else if (bmp && classes.symbol && classes.symbol(static_cast<char16_t>(c)))
+        else if (classes.symbol && classes.symbol(c))
             unit.kind = Kind::Other; // legacy's punctuation, but a symbol opens what follows (Codex)
-        else if (bmp && classes.punct && classes.punct(static_cast<char16_t>(c)))
+        else if (classes.punct && classes.punct(c)) // past the BMP too (Codex)
             unit.kind = Kind::Punct;
         else if (isLatin(c))
             unit.kind = Kind::Latin;

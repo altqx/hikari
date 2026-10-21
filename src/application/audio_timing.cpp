@@ -588,9 +588,10 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         // keep theirs (legacy)
         const auto from = static_cast<int>(current.start.value.microseconds() / 1000);
         const auto to = static_cast<int>(start.microseconds() / 1000);
-        if (const auto kept = karaokeKeepSyllables(core::toUtf16(current.text), from, to))
+        const auto endMs = static_cast<int>(current.end.value.microseconds() / 1000);
+        if (const auto kept = karaokeKeepSyllables(core::toUtf16(current.text), from, to, endMs))
             fields.text = core::toUtf8(*kept);
-        if (const auto kept = karaokeKeepSyllables(core::toUtf16(current.translation), from, to))
+        if (const auto kept = karaokeKeepSyllables(core::toUtf16(current.translation), from, to, endMs))
             fields.translation = core::toUtf8(*kept);
     }
     if ((fields.start || fields.end || fields.startFrame || fields.endFrame || fields.text || fields.translation) &&

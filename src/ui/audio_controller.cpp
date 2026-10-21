@@ -407,6 +407,10 @@ void AudioController::splitSyllableAtCursor()
         split = k.splitSyllable(k.hover, k.character, m_startMs);
         if (split)
             k.current = k.hover;
+        // the letters moved under the pointer: none is hovered until it
+        // moves again (Codex)
+        k.hover = -1;
+        k.character = -1;
     } else if (under >= 0) {
         // that syllable, at the cursor's time
         if ((split = k.splitAt(under, ms, m_startMs)))
