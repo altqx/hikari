@@ -43,8 +43,17 @@ struct KaraokeProblem {
     bool operator==(const KaraokeProblem &) const = default;
 };
 
-// Every problem of every karaoke Line, in Line order, and for each Line in
-// the order of Kind.
-std::vector<KaraokeProblem> checkKaraoke(const Document &document);
+// A check lists at most this many problems; a Document of millions of bad
+// Lines still makes a short list, and says how many more it has.
+inline constexpr std::size_t kListedProblems = 1000;
+
+struct KaraokeCheck {
+    std::vector<KaraokeProblem> problems; // the first `limit`
+    std::size_t unlisted = 0;             // how many more there are
+};
+
+// The problems of every karaoke Line, in Line order, and for each Line in
+// the order of Kind; the first `limit` are listed, the rest counted.
+KaraokeCheck checkKaraoke(const Document &document, std::size_t limit = kListedProblems);
 
 } // namespace hikari::core

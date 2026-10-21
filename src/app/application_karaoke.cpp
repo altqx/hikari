@@ -37,18 +37,19 @@ QString syllables(const core::KaraokeProblem &problem)
 
 } // namespace
 
-QVariantList Application::checkKaraoke() const
+QVariantMap Application::checkKaraoke() const
 {
     QVariantList rows;
     const auto target = m_workspace.editingTarget();
     const auto *session = target ? m_files->session(*target) : nullptr;
     if (!session)
-        return rows;
+        return {{QStringLiteral("rows"), rows}, {QStringLiteral("unlisted"), 0}};
     using Kind = core::KaraokeProblem::Kind;
     // The editor's pending draft counts, as it shows on the video: the
     // Document with the draft applied (a draft is not committed for this).
     const auto draft = m_editorDocument == target ? m_editor->draftDocument() : std::nullopt;
-    for (const core::KaraokeProblem &problem : core::checkKaraoke(draft ? *draft : session->document())) {
+    const core::KaraokeCheck checked = core::checkKaraoke(draft ? *draft : session->document());
+    for (const core::KaraokeProblem &problem : checked.problems) {
         QString check, detail;
         switch (problem.kind) {
         case Kind::Unclosed:
@@ -81,7 +82,7 @@ QVariantList Application::checkKaraoke() const
                             {QStringLiteral("check"), check},
                             {QStringLiteral("detail"), detail}};
     }
-    return rows;
+    return {{QStringLiteral("rows"), rows}, {QStringLiteral("unlisted"), QVariant::fromValue<qulonglong>(checked.unlisted)}};
 }
 
 bool Application::showKaraokeLine(qulonglong document, qulonglong line)

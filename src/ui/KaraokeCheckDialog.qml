@@ -2,8 +2,8 @@
 // GLOBAL_CHECK_KARAOKE), modeless like the Spellchecker. It lists the editing
 // target's karaoke problems (Application::checkKaraoke): unclosed syllables,
 // syllables that don't add up to the Line's duration, zero-length syllables
-// and syllables outside the Line. Choosing a row selects its Line; Re-check
-// reads the Document again.
+// and syllables outside the Line, the first thousand and how many more.
+// Choosing a row selects its Line; Re-check reads the Document again.
 pragma Translator: "HikariSub.Karaoke"
 import QtQuick
 import QtQuick.Controls
@@ -18,9 +18,12 @@ Dialog {
     header: IconDialogHeader { objectName: "karaokeCheckDialogTitle"; iconRole: "karaoke"; text: dialog.title }
     modal: false
     property var problems: []
+    property real unlisted: 0
 
     function recheck() {
-        problems = app.checkKaraoke()
+        const checked = app.checkKaraoke()
+        problems = checked.rows
+        unlisted = checked.unlisted
         problemList.currentIndex = -1
     }
     function openDialog() {
@@ -102,7 +105,16 @@ Dialog {
             }
         }
         RowLayout {
-            Layout.alignment: Qt.AlignRight
+            Label {
+                objectName: "karaokeUnlisted"
+                visible: dialog.unlisted > 0
+                color: Theme.muted
+                text: dialog.unlisted === 1 ? qsTr("1 more problem not listed; fix these and check again")
+                                            : qsTr("%n more problems not listed; fix these and check again", "", dialog.unlisted)
+                Layout.fillWidth: true
+                elide: Text.ElideRight
+            }
+            Item { Layout.fillWidth: true; visible: dialog.unlisted === 0 }
             Button { objectName: "karaokeRecheck"; text: qsTr("Re-check"); onClicked: dialog.recheck() }
             Button { objectName: "karaokeClose"; text: qsTr("Close"); onClicked: dialog.close() }
         }

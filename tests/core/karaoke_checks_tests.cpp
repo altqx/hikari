@@ -65,7 +65,7 @@ std::vector<Found> found(const Document &document)
 {
     std::vector<Found> out;
     const auto lines = document.lines();
-    for (const KaraokeProblem &p : checkKaraoke(document)) {
+    for (const KaraokeProblem &p : checkKaraoke(document).problems) {
         EXPECT_EQ(p.line, lines.at(p.row)->id);
         out.push_back({p.row, p.kind, p.totalMs, p.durationMs, p.syllables});
     }
@@ -93,16 +93,16 @@ TEST(KaraokeChecks, EachCheckFindsItsLineInTheSample)
 TEST(KaraokeChecks, TemplateCodeAndMixinLinesAreSkipped)
 {
     for (const char *effect : {"template line", "Template pre-line all", "code once", "mixin syl", "  template"})
-        EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k0}", effect)).empty()) << effect;
+        EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k0}", effect)).problems.empty()) << effect;
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k0}{\\k100}", "karaoke")),
               (std::vector<Found>{{0, Kind::ZeroLength, 0, 0, {1}}}));
 }
 
 TEST(KaraokeChecks, OnlyKaraokeLinesAreChecked)
 {
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\i1 no karaoke here")).empty());
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "plain \\k50 outside a block")).empty());
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\kt50}absolute time only")).empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\i1 no karaoke here")).problems.empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "plain \\k50 outside a block")).problems.empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\kt50}absolute time only")).problems.empty());
     // An unclosed "{" after the syllables: its \k is literal text.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}one {\\k20 two")),
               (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
@@ -111,7 +111,7 @@ TEST(KaraokeChecks, OnlyKaraokeLinesAreChecked)
 TEST(KaraokeChecks, SyllablesAddUpInCentiseconds)
 {
     // Several tags in one block are each a syllable.
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.50", "{\\k50\\k50}a{\\kf50}b")).empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.50", "{\\k50\\k50}a{\\kf50}b")).problems.empty());
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.50", "{\\k50}a{\\k50}b")),
               (std::vector<Found>{{0, Kind::TotalNotDuration, 1000, 1500, {}}}));
     // A syllable ending exactly at the Line's end is inside; a zero-length
@@ -144,7 +144,7 @@ TEST(KaraokeChecks, ALineOfManySyllablesListsTheFirstOnes)
     std::string text;
     for (int i = 0; i < 200'000; ++i)
         text += "{\\k0}x";
-    const auto problems = checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text.c_str()));
+    const auto problems = checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text.c_str())).problems;
     ASSERT_EQ(problems.size(), 2u);
     EXPECT_EQ(problems[0].kind, Kind::TotalNotDuration);
     EXPECT_EQ(problems[1].kind, Kind::ZeroLength);
@@ -152,6 +152,22 @@ TEST(KaraokeChecks, ALineOfManySyllablesListsTheFirstOnes)
     EXPECT_EQ(problems[1].syllables.front(), 1u);
     EXPECT_EQ(problems[1].syllables.back(), kListedSyllables);
     EXPECT_EQ(problems[1].syllableCount, 200'000u);
+}
+
+TEST(KaraokeChecks, ADocumentOfManyBadLinesListsTheFirstProblems)
+{
+    // The first kListedProblems are listed and the rest counted, so a
+    // Document of a great many bad Lines makes a short list.
+    std::string ass = "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
+    for (int i = 0; i < 3'000; ++i)
+        ass += "Dialogue: 0,0:00:00.00,0:00:01.00,Default,,0,0,0,,{\\k0}a\n"; // two problems each
+    const KaraokeCheck check = checkKaraoke(loadAss(bytes(ass)).document);
+    ASSERT_EQ(check.problems.size(), kListedProblems);
+    EXPECT_EQ(check.unlisted, 6'000u - kListedProblems);
+    EXPECT_EQ(check.problems.back().row, kListedProblems / 2 - 1);
+    const KaraokeCheck all = checkKaraoke(loadAss(bytes(ass)).document, 10'000);
+    EXPECT_EQ(all.problems.size(), 6'000u);
+    EXPECT_EQ(all.unlisted, 0u);
 }
 
 TEST(KaraokeChecks, SignedAndOversizedValuesRead)
@@ -180,9 +196,9 @@ TEST(KaraokeChecks, SignedAndOversizedValuesRead)
               (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
     // Other tags that start with k are not karaoke; a bare "\\k" or "\\ko" is
     // one with no number.
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep}text {\\kfoo\\Kx}more")).empty());
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k50\\keep}a{\\k50}b")).empty());
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep unclosed")).empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep}text {\\kfoo\\Kx}more")).problems.empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k50\\keep}a{\\k50}b")).problems.empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep unclosed")).problems.empty());
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\ko\\i1}b")),
               (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
 }
@@ -192,11 +208,11 @@ TEST(KaraokeChecks, LinesTheAudioEditorCannotReadAreFlagged)
     // The audio editor reads a Line as karaoke when one tag's number follows
     // it at once, in any case; it then reads every tag.
     for (const char *text : {"{\\k(50)}a{\\k50}b", "{\\k+50}a{\\K50}b", "{\\K(50)}a{\\kf50}b", "{\\i1\\ko50}a{\\k(50)}b"})
-        EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text)).empty()) << text;
+        EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text)).problems.empty()) << text;
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k+1}a{\\k(99)}b")),
               (std::vector<Found>{{0, Kind::NotForAudioEditor, 0, 0, {}}}));
     // A Line with no karaoke tag is not one the editor should read.
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\i1}plain")).empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\i1}plain")).problems.empty());
 }
 
 TEST(KaraokeChecks, TranslatedLinesAreCheckedOnTheirTranslation)

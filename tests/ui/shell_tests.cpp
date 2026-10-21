@@ -7853,6 +7853,19 @@ private slots:
         QVERIFY(list);
         QTRY_COMPARE(list->property("count").toInt(), 4);
         QVERIFY(!dialogItem("karaokeCheckDialog", "karaokeCheckEmpty")->isVisible());
+        QVERIFY(!dialogItem("karaokeCheckDialog", "karaokeUnlisted")->isVisible());
+        // Past core::kListedProblems the window says how many more there are.
+        const QVariantMap checked = application->checkKaraoke();
+        QCOMPARE(checked.value(QStringLiteral("unlisted")).toULongLong(), 0ull);
+        dialog->setProperty("unlisted", 1234);
+        QTRY_VERIFY(dialogItem("karaokeCheckDialog", "karaokeUnlisted")->isVisible());
+        QCOMPARE(dialogItem("karaokeCheckDialog", "karaokeUnlisted")->property("text").toString(),
+                 QStringLiteral("1234 more problems not listed; fix these and check again"));
+        dialog->setProperty("unlisted", 1);
+        QCOMPARE(dialogItem("karaokeCheckDialog", "karaokeUnlisted")->property("text").toString(),
+                 QStringLiteral("1 more problem not listed; fix these and check again"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeRecheck"), "click"));
+        QTRY_VERIFY(!dialogItem("karaokeCheckDialog", "karaokeUnlisted")->isVisible());
 
         struct Expected {
             int number;

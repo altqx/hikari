@@ -151,10 +151,17 @@ bool syllablesOf(u8sv text, Each each)
 
 } // namespace
 
-std::vector<KaraokeProblem> checkKaraoke(const Document &document)
+KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
 {
     using Kind = KaraokeProblem::Kind;
-    std::vector<KaraokeProblem> problems;
+    KaraokeCheck check;
+    // Past the limit a problem is only counted.
+    auto add = [&](KaraokeProblem &&p) {
+        if (check.problems.size() < limit)
+            check.problems.push_back(std::move(p));
+        else
+            ++check.unlisted;
+    };
     const auto lines = document.lines();
     for (std::size_t row = 0; row < lines.size(); ++row) {
         const LineRecord &line = *lines[row];
@@ -193,21 +200,21 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
         if (count == 0 && !unclosed)
             continue;
         if (unclosed)
-            problems.push_back(problem(Kind::Unclosed));
+            add(problem(Kind::Unclosed));
         if (count > 0 && !audioEditorReads(text))
-            problems.push_back(problem(Kind::NotForAudioEditor));
+            add(problem(Kind::NotForAudioEditor));
         if (count > 0 && total != duration) {
             KaraokeProblem p = problem(Kind::TotalNotDuration);
             p.totalMs = total;
             p.durationMs = duration;
-            problems.push_back(std::move(p));
+            add(std::move(p));
         }
         if (zero.syllableCount > 0)
-            problems.push_back(std::move(zero));
+            add(std::move(zero));
         if (outside.syllableCount > 0)
-            problems.push_back(std::move(outside));
+            add(std::move(outside));
     }
-    return problems;
+    return check;
 }
 
 } // namespace hikari::core
