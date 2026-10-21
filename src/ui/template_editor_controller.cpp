@@ -259,6 +259,11 @@ void TemplateEditorController::setDocumentKey(DocumentKeySource key)
     m_documentKey = std::move(key);
 }
 
+void TemplateEditorController::setSessionOf(SessionOf sessionOf)
+{
+    m_sessionOf = std::move(sessionOf);
+}
+
 void TemplateEditorController::setTemplater(application::KaraokeTemplaterPort *templater)
 {
     m_templater = templater;
@@ -306,18 +311,31 @@ std::optional<core::LineRecord> TemplateEditorController::currentRecord() const
     const auto *l = m_current ? line(*m_current) : nullptr;
     if (!l)
         return std::nullopt;
-    core::LineRecord r = *l;
-    if (m_pending && m_pending->line == r.id) {
-        if (m_pending->text)
-            r.text = *m_pending->text;
-        if (m_pending->effect)
-            r.effect = *m_pending->effect;
-        if (m_pending->style)
-            r.style = *m_pending->style;
-        if (m_pending->layer)
-            r.layer.value = *m_pending->layer;
-    }
-    return r;
+    if (m_pending && m_pending->line == l->id && m_pending->document == documentKey())
+        return edited(*l, *m_pending);
+    return *l;
+}
+
+core::LineRecord TemplateEditorController::edited(core::LineRecord line, const Pending &pending)
+{
+    if (pending.text)
+        line.text = *pending.text;
+    if (pending.effect)
+        line.effect = *pending.effect;
+    if (pending.style)
+        line.style = *pending.style;
+    if (pending.layer)
+        line.layer = core::IntField{u8(QString::number(*pending.layer)), *pending.layer};
+    return line;
+}
+
+application::EditSession *TemplateEditorController::pendingSession() const
+{
+    if (!m_pending)
+        return nullptr;
+    if (m_pending->document == documentKey())
+        return session();
+    return m_sessionOf ? m_sessionOf(m_pending->document) : nullptr;
 }
 
 std::string TemplateEditorController::keyOf(const core::LineRecord &l) const
@@ -339,6 +357,7 @@ void TemplateEditorController::refresh()
 {
     const auto *s = session();
     if (s != m_seenSession) {
+        commit(); // to the Document it was typed for, while that is open
         m_seenSession = s;
         m_pending.reset();
         m_commitTimer.stop();
@@ -727,11 +746,15 @@ TemplateEditorController::TemplateLines TemplateEditorController::templateLines(
     TemplateLines out;
     if (const auto *doc = document())
         for (const auto *l : doc->lines())
-            if (application::templateKindOf(*l)) {
-                const auto m = application::macroLineOf(*l);
-                out[l->id] = m.effect + '\n' + m.text;
-            }
+            if (application::templateKindOf(*l))
+                out[l->id] = formOf(*l);
     return out;
+}
+
+std::string TemplateEditorController::formOf(const core::LineRecord &line)
+{
+    const auto m = application::macroLineOf(line);
+    return m.effect + '\n' + m.text;
 }
 
 std::set<std::string> TemplateEditorController::sourceFields() const
@@ -803,8 +826,8 @@ void TemplateEditorController::edit(const Pending &change)
 {
     if (!m_editable || !m_current || !line(*m_current))
         return;
-    if (!m_pending || m_pending->line != *m_current)
-        m_pending = Pending{*m_current, {}, {}, {}, {}};
+    if (!m_pending || m_pending->line != *m_current || m_pending->document != documentKey())
+        m_pending = Pending{*m_current, {}, {}, {}, {}, documentKey()};
     if (change.text)
         m_pending->text = change.text;
     if (change.effect)
@@ -851,34 +874,31 @@ void TemplateEditorController::commit()
 {
     if (!m_pending)
         return;
-    auto *s = session();
-    if (!s || !line(m_pending->line)) {
+    auto *s = pendingSession();
+    const core::LineRecord *was = nullptr;
+    if (s)
+        for (const auto *l : s->document().lines())
+            if (l->id == m_pending->line)
+                was = l;
+    const Pending change = *m_pending;
+    if (!was) {
+        // Its Document closed.
         m_pending.reset();
+        m_commitTimer.stop();
+        emit changed();
         return;
     }
-    const Pending change = *m_pending;
     // The user's edit of a form they chose to run is theirs to run too.
-    const auto lines = templateLines();
-    const auto was = lines.find(change.line);
-    const auto key = m_trusted.find(documentKey());
-    const bool trustedForm = was != lines.end() && key != m_trusted.end() &&
+    const auto key = m_trusted.find(change.document);
+    const bool trustedForm = application::templateKindOf(*was) && key != m_trusted.end() &&
                              key->second.lines.contains(change.line) &&
-                             key->second.lines.at(change.line).contains(was->second);
+                             key->second.lines.at(change.line).contains(formOf(*was));
     application::Command command;
     command.name = "Edit template";
     command.expectedRevision = s->revision();
     command.touches = {change.line};
     command.apply = [change](core::Document &doc) {
-        return doc.editLine(change.line, [&](core::LineRecord &l) {
-            if (change.text)
-                l.text = *change.text;
-            if (change.effect)
-                l.effect = *change.effect;
-            if (change.style)
-                l.style = *change.style;
-            if (change.layer)
-                l.layer = core::IntField{u8(QString::number(*change.layer)), *change.layer};
-        });
+        return doc.editLine(change.line, [&](core::LineRecord &l) { l = edited(l, change); });
     };
     if (!s->run(command)) {
         // A macro owns the Document: try again after it.
@@ -887,11 +907,18 @@ void TemplateEditorController::commit()
     }
     m_pending.reset();
     m_commitTimer.stop();
-    m_seenRevision = s->revision();
     if (trustedForm)
-        if (const auto now = templateLines(); now.contains(change.line))
-            trust({{change.line, now.at(change.line)}});
-    emit documentEdited();
+        for (const auto *l : s->document().lines())
+            if (l->id == change.line && application::templateKindOf(*l))
+                key->second.lines[change.line].insert(formOf(*l));
+    if (s == session()) {
+        m_seenRevision = s->revision();
+        emit documentEdited();
+    } else {
+        // Another tab's, while the views change to this one: they show it
+        // after.
+        QMetaObject::invokeMethod(this, &TemplateEditorController::documentEdited, Qt::QueuedConnection);
+    }
     emit changed();
 }
 
@@ -982,7 +1009,7 @@ bool TemplateEditorController::insertTemplate(const QString &effect)
 std::map<core::LineId, std::u8string> TemplateEditorController::pendingTexts() const
 {
     std::map<core::LineId, std::u8string> out;
-    if (m_pending && m_pending->text)
+    if (m_pending && m_pending->text && m_pending->document == documentKey())
         out[m_pending->line] = *m_pending->text;
     return out;
 }
@@ -1018,7 +1045,8 @@ void TemplateEditorController::runPreview()
     // The pending Effect, Style and Layer reach the run through the record.
     const auto *doc = document();
     core::Document seen = *doc;
-    if (m_pending && (m_pending->effect || m_pending->style || m_pending->layer)) {
+    if (m_pending && m_pending->document == documentKey() &&
+        (m_pending->effect || m_pending->style || m_pending->layer)) {
         const auto r = currentRecord();
         seen.editLine(r->id, [&](core::LineRecord &l) { l = *r; }, core::ChangeMark::Kept);
     }

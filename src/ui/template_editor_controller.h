@@ -107,12 +107,17 @@ public:
     // DocumentId (never reused) and its generation (a reload is a new one).
     using DocumentKey = std::pair<std::uint64_t, std::uint64_t>;
     using DocumentKeySource = std::function<DocumentKey()>;
+    // The session of a Document still open in that load (null once closed
+    // or reloaded): an edit typed for it commits there after another tab is
+    // chosen.
+    using SessionOf = std::function<application::EditSession *(DocumentKey)>;
 
     explicit TemplateEditorController(QObject *parent = nullptr);
     ~TemplateEditorController() override;
 
     void setSessionSource(SessionSource source);
     void setDocumentKey(DocumentKeySource key);
+    void setSessionOf(SessionOf sessionOf);
     void setTemplater(application::KaraokeTemplaterPort *templater);
     void setEditable(bool editable);
     // The Document, its selection or the editing target changed.
@@ -216,6 +221,7 @@ private:
         core::LineId line;
         std::optional<std::u8string> text, effect, style;
         std::optional<std::int64_t> layer;
+        DocumentKey document{}; // the Document it was typed for
     };
     struct Stats {
         int generated = 0;
@@ -232,6 +238,10 @@ private:
     const core::LineRecord *line(core::LineId id) const;
     // The current Line with the pending edit.
     std::optional<core::LineRecord> currentRecord() const;
+    // `line` with `pending` put in.
+    static core::LineRecord edited(core::LineRecord line, const Pending &pending);
+    // The session the pending edit was typed for, while it is open.
+    application::EditSession *pendingSession() const;
     void edit(const Pending &change);
     std::map<core::LineId, std::u8string> pendingTexts() const;
     void schedulePreview();
@@ -253,6 +263,8 @@ private:
     // runs of it (its Effect and the text it reads).
     using TemplateLines = std::map<core::LineId, std::string>;
     TemplateLines templateLines() const;
+    // What the templater runs of a template or code Line.
+    static std::string formOf(const core::LineRecord &line);
     // The Actor and Style values of the Lines the templater reads, which it
     // puts into templates ($actor, $style) before it runs their !expressions!.
     std::set<std::string> sourceFields() const;
@@ -262,6 +274,7 @@ private:
 
     SessionSource m_sessionSource;
     DocumentKeySource m_documentKey;
+    SessionOf m_sessionOf;
     // The template and code Lines the user chose to run, per Document, each
     // in every form the user chose: as they were when the user previewed or
     // applied, as New made them and as the panel's edits left them (an Undo

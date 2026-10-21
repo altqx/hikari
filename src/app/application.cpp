@@ -538,6 +538,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         const auto target = m_workspace.editingTarget();
         return target ? m_files->session(*target) : nullptr;
     });
+    m_templateEditor->setSessionOf([this](ui::TemplateEditorController::DocumentKey key) -> application::EditSession * {
+        const application::DocumentId id{key.first};
+        auto *session = m_files->session(id);
+        return session && m_files->generation(id) == key.second ? session : nullptr;
+    });
     m_templateEditor->setTemplater(&m_automation->templater());
     // A shortcut's or the menu's macro starts from the template just typed.
     m_automation->setBeforeRun([this] { m_templateEditor->commit(); });
@@ -1842,6 +1847,8 @@ void Application::endFindOpen(bool opened)
 
 QVariantList Application::reviewClose(const QString &then)
 {
+    if (m_templateEditor)
+        m_templateEditor->commit(); // KE2: the template just typed is reviewed with the rest
     endFindOpen(false); // another review replaces the file result's
     const bool quitReplaced = m_closeThen == QLatin1String("quit");
     m_closeThen = then;

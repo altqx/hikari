@@ -243,6 +243,34 @@ private slots:
         QCOMPARE(session()->document().lines().size(), lines);
     }
 
+    // A template typed just before another tab is chosen, or before the tab
+    // is closed, is kept: in its own Document, and the close asks to save it.
+    void aTemplateTypedBeforeATabChangeIsKept()
+    {
+        QVERIFY(openSong("km-minimal.ass", false));
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        application->selectTab(1);
+        showPanel("templateDock");
+        QTRY_VERIFY_WITH_TIMEOUT(!editor().text().isEmpty(), 20'000);
+        application::EditSession *typed = session();
+        const core::LineId id{editor().current()};
+        const auto textOfTyped = [&] {
+            for (const auto *l : typed->document().lines())
+                if (l->id == id)
+                    return std::u8string(l->text);
+            return std::u8string();
+        };
+        editor().setText(editor().text() + QStringLiteral("{\\bord7}"));
+        application->selectTab(0);
+        QVERIFY(std::u8string_view(textOfTyped()).ends_with(u8"{\\bord7}"));
+        QVERIFY(typed->isDirty());
+        // Tab 0, untouched until now: closing it asks to save the edit.
+        QVERIFY(!session()->isDirty());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor().text().isEmpty(), 20'000);
+        editor().setText(editor().text() + QStringLiteral("{\\bord8}"));
+        QCOMPARE(application->reviewCloseTab(0).size(), qsizetype(1));
+    }
+
     // A macro run another way than the panel's (a shortcut, the Automation
     // menu) starts from the template edit just typed, committed first.
     void aShortcutsRunSeesTheEditJustTyped()
