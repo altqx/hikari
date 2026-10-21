@@ -35,6 +35,8 @@ public:
     Q_INVOKABLE void log(const QString &text, bool silent = false);
     // File > "Show / Hide log window" (LogHandler::ShowLogWindow).
     Q_INVOKABLE void toggleWindow();
+    // PK1: a toast's Details and "Open the Log" show the whole log.
+    Q_INVOKABLE void showAll();
     Q_INVOKABLE void close();
     // Tests: the clock that stamps messages.
     void setClock(std::function<QString()> clock) { m_clock = std::move(clock); }

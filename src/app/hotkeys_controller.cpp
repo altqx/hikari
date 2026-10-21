@@ -62,7 +62,8 @@ QVariantMap conflictMap(const std::optional<application::HotkeyConflict> &c)
     return {{QStringLiteral("doubled"), c->doubled},
             {QStringLiteral("message"), qs(c->message)},
             {QStringLiteral("canSwitch"), c->canSwitch},
-            {QStringLiteral("canSetAnyway"), c->canSetAnyway}};
+            {QStringLiteral("canSetAnyway"), c->canSetAnyway},
+            {QStringLiteral("commands"), qLines(c->commands)}};
 }
 
 // US-layout base keys of shifted punctuation: wx reports the unshifted key

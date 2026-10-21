@@ -36,6 +36,15 @@ void LogController::toggleWindow()
     emit changed();
 }
 
+void LogController::showAll()
+{
+    if (m_shown && m_full)
+        return;
+    m_full = true;
+    m_shown = true;
+    emit changed();
+}
+
 void LogController::close()
 {
     if (!m_shown)

@@ -415,6 +415,9 @@ public:
     Q_INVOKABLE bool toggleHiddenBlock(int documentRow);
     // The editing target's Style names, for "Hide lines with styles".
     Q_INVOKABLE QStringList styleNames() const;
+    // PK1's Choose styles: the lines that use each style (by name), the
+    // target's styles first at 0.
+    Q_INVOKABLE QVariantMap styleLineCounts() const;
     // P3: autosave recovery. Bundles left by a session that ended without
     // closing cleanly: {key, title, original, written, generations:[{generation, written}]}.
     Q_INVOKABLE QVariantList recoveryBundles() const;
