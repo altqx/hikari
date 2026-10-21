@@ -151,17 +151,19 @@ Dialog {
     // O2: OnMapHkey for the selected row: the mapping window, then the
     // question when the keys are taken (ItemHotkey::OnMapHotkey).
     readonly property color warningColour: Theme.warning // WINDOW_WARNING_ELEMENTS
-    function mapHotkey() {
+    // PK1: the capture as a popover under the row (or under `from`).
+    function mapHotkey(from) {
         const target = hotkeys.mapTarget()
         if (target.name === undefined || hotkeys.mapProblem.length > 0)
             return
+        const row = hotkeyList.itemAtIndex(hotkeyList.selectedRow)
         settingsHotkeyMapping.capture(target.name, target.type, target.windows, (accel, window) => {
             const conflict = hotkeys.optionsConflict(accel, window)
             if (conflict.message === undefined)
                 hotkeys.optionsMap(accel, window, "cancel")
             else
                 settingsHotkeyMapping.ask(conflict, answer => hotkeys.optionsMap(accel, window, answer))
-        })
+        }, { anchor: row && row.visible ? row : from, clear: () => hotkeys.optionsDelete() })
     }
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)
@@ -398,6 +400,33 @@ Dialog {
                             displayText: currentIndex >= 0 ? currentText
                                        : count > 0 ? qsTr("None chosen") : qsTr("No dictionaries found")
                             Accessible.name: qsTr("Spell checker language (\"Dictionary\" folder)")
+                        }
+                    }
+                    // PK1 (#301): notices as toasts or in the Log only, and
+                    // the questions hidden with "Don't ask again" back.
+                    GroupBox {
+                        objectName: "settingsNoticesGroup"
+                        title: qsTr("Notices")
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            SettingCheck { setting: "notices.toasts"; text: qsTr("Show notices as toasts (off: in the Log only)") }
+                            RowLayout {
+                                spacing: 8
+                                Button {
+                                    objectName: "settingsAskAgain"
+                                    text: qsTr("Ask again")
+                                    enabled: (dialog.values["notices.hiddenQuestions"] || []).length > 0
+                                    onClicked: dialog.put("notices.hiddenQuestions", [])
+                                }
+                                Label {
+                                    text: qsTr("Brings back the questions hidden with \"Don't ask again\".")
+                                    color: Theme.muted
+                                    wrapMode: Text.Wrap
+                                    Layout.fillWidth: true
+                                }
+                            }
                         }
                     }
                     SettingCheck { setting: "grid.loadSortedSubs"; text: qsTr("Open sorted subtitles") }
@@ -947,7 +976,7 @@ Dialog {
                         }
                         onDoubleClicked: {
                             dialog.hotkeys.select(index)
-                            dialog.mapHotkey()
+                            dialog.mapHotkey(hotkeyRow)
                         }
                         // AM1: a macro's row names its script and macro, and
                         // says in the warning colour why its keys do not run it.
@@ -1037,11 +1066,12 @@ Dialog {
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
                     Button {
+                        id: hotkeyMapButton
                         objectName: "hotkeyMap"
                         text: qsTr("Map hotkey")
                         // The row's note says why (AM1: a name two loaded scripts share).
                         enabled: dialog.hotkeys.mapProblem.length === 0
-                        onClicked: dialog.mapHotkey()
+                        onClicked: dialog.mapHotkey(hotkeyMapButton)
                     }
                     Button {
                         objectName: "hotkeyRestore"
@@ -1136,10 +1166,11 @@ Dialog {
         picker: dialog.colourPicker
     }
 
-    HotkeyMapping {
+    HotkeyCapture {
         id: settingsHotkeyMapping
         objectName: "settingsHotkeyMapping"
         hotkeys: dialog.hotkeys
+        settings: dialog.app ? dialog.app.settings : null
     }
 
     Dialog {

@@ -137,6 +137,42 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
     return rows;
 }
 
+std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices)
+{
+    std::vector<std::size_t> rows;
+    for (const auto &style : styles) {
+        const auto found = firstNamed(into, style.name);
+        if (!found) {
+            into.push_back(style);
+            rows.push_back(into.size() - 1);
+            continue;
+        }
+        const auto choice = choices.find(style.name);
+        if (choice == choices.end() || choice->second.action == ClashAction::Skip)
+            continue;
+        if (choice->second.action == ClashAction::Replace) {
+            into[*found] = style;
+            rows.push_back(*found);
+            continue;
+        }
+        auto renamed = style;
+        renamed.name = firstNamed(into, choice->second.newName) ? freeStyleName(into, choice->second.newName)
+                                                                : choice->second.newName;
+        into.push_back(std::move(renamed));
+        rows.push_back(into.size() - 1);
+    }
+    return rows;
+}
+
+std::u8string freeStyleName(const StyleList &styles, std::u8string_view name)
+{
+    for (int count = 2;; ++count) {
+        u8 candidate = u8(name) + u8" (" + fromString(std::to_string(count)) + u8")";
+        if (!firstNamed(styles, candidate))
+            return candidate;
+    }
+}
+
 std::vector<std::size_t> moveStyles(StyleList &styles, std::vector<std::size_t> rows, StyleMove move)
 {
     const long size = static_cast<long>(styles.size());

@@ -128,6 +128,9 @@ constexpr OptionsBinding kBindings[] = {
     // WS2: the panel layout in the subtitle file ([Hikari]), on the
     // Subtitle properties page with the other things a save writes there.
     {"subtitles.layoutInFile", Check, SubtitleProperties},
+    // PK1 (#301): notices as toasts, or in the Log only, on the Editor page's
+    // Notices group.
+    {"notices.toasts", Check, Editor},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.

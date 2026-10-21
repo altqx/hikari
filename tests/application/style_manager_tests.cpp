@@ -105,6 +105,32 @@ TEST(StyleLists, NewNamesTransferMoveAndSort)
     EXPECT_EQ(names(m), (std::vector<std::u8string>{u8"a", u8"b", u8"c", u8"d"}));
 }
 
+// PK1 (#301): the clash review's answers, one per clashing name.
+TEST(StyleLists, TransferWithClashChoices)
+{
+    StyleList into{named(u8"A"), named(u8"B"), named(u8"C"), named(u8"B (2)")};
+    ClashChoices choices{{u8"A", {ClashAction::Replace, {}}},
+                         {u8"B", {ClashAction::Rename, u8"B (2)"}},
+                         {u8"C", {ClashAction::Skip, {}}}};
+    const auto rows = transferStyles(
+        into, {named(u8"A", u8"Times"), named(u8"B", u8"Times"), named(u8"C", u8"Times"), named(u8"D"),
+               named(u8"E", u8"Times")},
+        choices);
+    // A replaced; B added under the first free name from its new one (B (2)
+    // is taken too); C skipped; D new; E has no choice (none listed: same
+    // both sides or not asked) but is new here, so added.
+    EXPECT_EQ(names(into), (std::vector<std::u8string>{u8"A", u8"B", u8"C", u8"B (2)", u8"B (2) (2)", u8"D", u8"E"}));
+    EXPECT_EQ(rows, (std::vector<std::size_t>{0, 4, 5, 6}));
+    EXPECT_EQ(into[0].fontname, u8"Times");
+    EXPECT_EQ(into[2].fontname, u8"Arial");
+    EXPECT_EQ(into[4].fontname, u8"Times");
+    // A clash without a choice is left out.
+    StyleList kept{named(u8"A")};
+    EXPECT_TRUE(transferStyles(kept, {named(u8"A", u8"Times")}, ClashChoices{}).empty());
+    EXPECT_EQ(kept[0].fontname, u8"Arial");
+    EXPECT_EQ(freeStyleName({named(u8"X"), named(u8"X (2)")}, u8"X"), u8"X (3)");
+}
+
 TEST(StyleLists, CommitRefusesTakenNamesAndAppliesMultiEdit)
 {
     StyleList l{named(u8"A"), named(u8"B"), named(u8"C")};

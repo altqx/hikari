@@ -239,7 +239,9 @@ Item {
                         objectName: "shiftStylesPick"
                         iconRole: "add"
                         text: qsTr("Select a style from the list")
-                        onClicked: stylesPopup.openWith(panel.app.styleNames())
+                        onClicked: stylesPopup.openFor(stylesPick, panel.app.styleNames(),
+                                                       (panel.settings.styles || "").split(",").map(n => n.trim()),
+                                                       { counts: panel.app.styleLineCounts() })
                     }
                     TextField {
                         id: shiftStyles
@@ -493,74 +495,19 @@ Item {
         }
     }
 
-    // Legacy GetCheckedElements (Stylelistbox.cpp:72): the Document's styles,
-    // none checked; OK puts the checked ones in the field, joined by commas,
-    // and a non-empty list shifts by styles (ShiftTimes::OnAddStyles). Cancel
-    // empties the field, as legacy's empty result did (the Search tool keeps
-    // the same quirk).
-    Popup {
+    // Legacy GetCheckedElements (Stylelistbox.cpp:72), now PK1's Choose
+    // styles popover: the ticks go into the field at once, joined by commas,
+    // and shift by styles (ShiftTimes::OnAddStyles); Esc puts the field back
+    // (approved PK1-choose-styles-live: legacy's Cancel emptied it).
+    ChooseStyles {
         id: stylesPopup
         objectName: "shiftStylesPopup"
-        parent: stylesPick
-        y: stylesPick.height + 2
-        modal: true
-        focus: true
-        margins: 8
-        padding: 8
-        closePolicy: Popup.CloseOnEscape
-        property var names: []
-        property var checkedNames: []
-        property bool accepted: false
-        function openWith(list) {
-            names = [] // new check boxes, none checked, even for the same styles
-            names = list
-            checkedNames = []
-            accepted = false
-            open()
-        }
-        function finish(ok) {
-            accepted = ok
-            close()
-        }
-        onClosed: {
-            const text = accepted ? names.filter(n => checkedNames.indexOf(n) >= 0).join(",") : ""
+        onChanged: names => {
             const next = Object.assign({}, panel.settings)
-            next.styles = text
-            if (text.length > 0)
+            next.styles = names.join(",")
+            if (next.styles.length > 0)
                 next.whichLines = 5
             panel.shiftTimes.settings = next
-        }
-        contentItem: ColumnLayout {
-            spacing: 8
-            ScrollView {
-                Layout.fillWidth: true
-                Layout.preferredHeight: Math.min(styleList.implicitHeight, 300)
-                Layout.preferredWidth: Math.max(200, styleList.implicitWidth)
-                clip: true
-                ColumnLayout {
-                    id: styleList
-                    spacing: 0
-                    Repeater {
-                        model: stylesPopup.names
-                        CheckBox {
-                            required property string modelData
-                            text: modelData
-                            onToggled: {
-                                const list = stylesPopup.checkedNames.filter(n => n !== modelData)
-                                if (checked)
-                                    list.push(modelData)
-                                stylesPopup.checkedNames = list
-                            }
-                        }
-                    }
-                }
-            }
-            DialogButtonBox {
-                Layout.fillWidth: true
-                standardButtons: DialogButtonBox.Ok | DialogButtonBox.Cancel
-                onAccepted: stylesPopup.finish(true)
-                onRejected: stylesPopup.finish(false)
-            }
         }
     }
 }

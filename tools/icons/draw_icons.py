@@ -515,6 +515,21 @@ icon("about", "About", ["About.png"], [HELP, "about", "translation-matching"],
 icon("credits", "Credits", ["Helpers.png"], [HELP, "credits"],
      circle(6, 5, 2.5) + stroke("M1.5 13.5a4.5 4.5 0 0 1 9 0") + accent(circle(11.5, 5.5, 2), stroke("M12 9.5a3 3 0 0 1 2.5 3")))
 
+# Notices (DG1 #222 and PK1 #301: the message box, toasts and the inline bar):
+# the severity in the accent layer, which the notice draws in the warning or
+# danger colour. The popup kit's own controls: the date picker's calendar and
+# the month arrows, and the Details disclosure.
+icon("notice-warning", "Warning", [], ["dialogs"],
+     stroke("M8 2l6.5 11.5h-13z") + accent(stroke("M8 6.5v3.5"), dot(8, 11.75, 0.75)))
+icon("notice-error", "Error", [], ["dialogs", "notices"],
+     stroke("M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z") + accent(stroke("M8 4.75v4"), dot(8, 11.25, 0.75)))
+icon("calendar", "Choose a date", [], ["date-picker"],
+     rect(1.5, 2.5, 13, 12, 1) + stroke("M1.5 6h13M5 1v3M11 1v3")
+     + accent(stroke("M4.5 9h1M7.5 9h1M10.5 9h1M4.5 11.5h1M7.5 11.5h1")))
+icon("chevron-left", "Previous", [], ["date-picker"], stroke("M9.5 4.5L6 8l3.5 3.5"), mirror=True)
+icon("chevron-right", "Next", [], ["date-picker", "dialogs"], stroke("M6.5 4.5L10 8l-3.5 3.5"), mirror=True)
+icon("chevron-down", "Expanded", [], ["dialogs"], stroke("M4.5 6.5L8 10l3.5-3.5"))
+
 # Layouts (WS3 #217: the layout switcher and View > Layout, which replace
 # legacy's View arrangements; their icons were retired with them). The cut
 # window and the refresh badge are IC1's (#226) for the same commands.
@@ -922,7 +937,7 @@ icon("split-wraps", "Split lines by wraps", [], [GRIDMENU],
 icon("select-visible", "Select all lines visible on video", [], [GRIDMENU],
      rect(1.5, 1.5, 13, 8, 1) + triangle(6.5, 3.5, 3, 4) + stroke("M5.5 12h9M5.5 14.5h6")
      + accent(frect(1.5, 11.25, 2.5, 1.5), frect(1.5, 13.75, 2.5, 1.5)), mirror=True)
-icon("paste-translation", "Paste translation text", [], [GRIDMENU],
+icon("paste-translation", "Paste translation text", [], [GRIDMENU, "original-panel"],
      stroke("M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h5M10.5 2.5h2a1 1 0 0 1 1 1v5") + rect(5.5, 1.5, 5, 2, 0.5)
      + stroke("M5.5 7.5h5M5.5 10h2.5") + accent(stroke("M10 10.5h4.5M12.25 10.5v4")))
 icon("translation-shift", "Dialogue shifting window", [], [GRIDMENU],
@@ -970,6 +985,28 @@ icon("ui-colours", "UI colors", [], ["settings-dialog"],
      + accent(frect(2, 3, 3, 3), frect(2, 10, 3, 3)), mirror=True)
 icon("restore-default", "Restore default", [], ["settings-dialog"],
      stroke("M2.5 8a5.5 5.5 0 1 0 1.75-4") + stroke("M2.5 1.5v3h3") + accent(dot(8, 8, 1.5)), mirror=True)
+
+# Translation mode (TM1 #232): the Original text panel's actions and the
+# Subtitles menu's switch. Drawn by hand for TM1 and brought into the set
+# here, so that running this script keeps them.
+icon("paste-selection-translation", "Paste the selected", [], ["original-panel"],
+     stroke("M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-10a1 1 0 0 0-1-1h-2")
+     + rect(5.5, 1.5, 5, 2, 0.5) + stroke("M5.5 7.5h5M5.5 12.5h3") + accent(frect(5, 9, 6, 2.25)))
+icon("comment-original", "Comment out original", [], ["original-panel"],
+     stroke("M5 2.5c-1 0-1.5.5-1.5 1.5v2.5c0 .75-.5 1.5-1.5 1.5 1 0 1.5.75 1.5 1.5v2.5c0 1 .5 1.5 1.5 1.5"
+            "M11 2.5c1 0 1.5.5 1.5 1.5v2.5c0 .75.5 1.5 1.5 1.5-1 0-1.5.75-1.5 1.5v2.5c0 1-.5 1.5-1.5 1.5")
+     + accent(stroke("M6 6.5h4M6 9.5h3")), mirror=True)
+icon("unconfirmed", "Not confirmed", [], ["original-panel"],
+     stroke("M3.5 14.5v-13M3.5 2.5h9l-2 3 2 3h-9")
+     + accent(stroke("M6.5 4.25a1.5 1.5 0 1 1 2 1.25c-.5.25-.5.5-.5 1"),
+              '<circle cx="8" cy="7.75" r="0.25" fill="currentColor"/>'))
+icon("moving-tags", "Moving tags", [], ["original-panel"],
+     stroke("M3.5 3.5c-1 0-1.5.5-1.5 1.5v1c0 .75-.5 1-1 1 .5 0 1 .25 1 1v1c0 1 .5 1.5 1.5 1.5"
+            "M6.5 3.5c1 0 1.5.5 1.5 1.5v1c0 .75.5 1 1 1-.5 0-1 .25-1 1v1c0 1-.5 1.5-1.5 1.5")
+     + accent(stroke("M10.5 7h4M12.5 5l2 2-2 2")), mirror=True)
+icon("translation-mode", "Translation mode", [], [SUBS],
+     stroke("M1.5 3.5h8M1.5 6h5") + accent(stroke("M1.5 10.5h8M1.5 13h5M12.5 3v9M11 10.5l1.5 1.5 1.5-1.5")),
+     mirror=True)
 
 # The legacy bitmaps the set does not replace, and why (the card's Excluded:
 # the application and file-type icons stay, and controls Qt draws itself).

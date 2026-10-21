@@ -726,6 +726,7 @@ std::string reportName(const HotkeyId &key, const Hotkey &hotkey)
 struct ConflictScan {
     bool doubled = false;
     std::string names;
+    std::vector<std::string> commands; // the commands' names alone (PK1's hotkey capture)
     bool audioNamed = false;
 };
 
@@ -1407,6 +1408,7 @@ HotkeyConflict question(const ConflictScan &scan, std::size_t count)
     HotkeyConflict c;
     c.doubled = scan.doubled;
     c.count = count;
+    c.commands = scan.commands;
     if (scan.doubled) {
         c.message = "This hotkey already exists for \"" + scan.names + "\".\nWhat to do?";
         c.canSwitch = true;
@@ -1424,6 +1426,7 @@ void addName(ConflictScan &scan, const HotkeyId &key, const Hotkey &hotkey)
     if (!scan.names.empty())
         scan.names += ", ";
     scan.names += std::string(hotkeyWindowName(key.type)) + " " + reportName(key, hotkey);
+    scan.commands.push_back(reportName(key, hotkey));
 }
 
 } // namespace
@@ -1444,6 +1447,7 @@ std::optional<HotkeyConflict> HotkeyList::mapConflict(int index, const std::stri
             ((inVideoPlayRange(id) || inVideoPlayRange(k.id)) && (k.type >= GridHotkey || type >= GridHotkey))) {
             scan.doubled = true;
             scan.names = reportName(k, m_copy.at(k));
+            scan.commands = {scan.names};
             break;
         }
         addName(scan, k, m_copy.at(k));
@@ -1584,6 +1588,7 @@ ConflictScan scanNow(const HotkeyMap &live, const std::vector<HotkeyId> &found, 
         if (k.type == type) {
             scan.doubled = true;
             scan.names = reportName(k, live.at(k));
+            scan.commands = {scan.names};
             break;
         }
         addName(scan, k, live.at(k));

@@ -11,6 +11,7 @@
 #include <expected>
 #include <filesystem>
 #include <functional>
+#include <map>
 #include <optional>
 #include <string>
 #include <string_view>
@@ -48,6 +49,22 @@ using AskReplace = std::function<Replace(const std::u8string &name)>;
 // Returns the rows of the Styles added or replaced (the legacy selection).
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const AskReplace &ask,
                                         bool cancelStops = true);
+
+// PK1 (#301): the clash review's answer for each name already present.
+enum class ClashAction { Replace, Rename, Skip };
+struct ClashChoice {
+    ClashAction action = ClashAction::Skip;
+    std::u8string newName;
+};
+using ClashChoices = std::map<std::u8string, ClashChoice>;
+// Each Style is added; one whose name is taken (in `into`, or earlier in
+// `styles`) replaces the first of that name, is added under its new name
+// (the first free one from it, "<new> (2)"..., when that is taken too) or is
+// left out, as `choices` say; without a choice it is left out. Returns the
+// rows of the Styles added or replaced.
+std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices);
+// "<name> (2)", "<name> (3)"... the first that names no Style of `styles`.
+std::u8string freeStyleName(const StyleList &styles, std::u8string_view name);
 
 enum class StyleMove { ToStart, Up, Down, ToEnd };
 // OnStyleMove: the selected rows (ascending) move together, clamped at the

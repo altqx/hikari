@@ -15,7 +15,6 @@ namespace hikari::app {
 
 namespace {
 
-using application::Replace;
 using application::StyleList;
 
 QString qs(const std::u8string &s)
@@ -129,29 +128,47 @@ QVariantList listOf(const std::vector<std::size_t> &rows)
     return out;
 }
 
-// The answers QML collected, in the order the transfer asks.
-application::AskReplace answering(const QStringList &answers)
+// The clash review's answers ([{name, action, newName}]).
+application::ClashChoices choicesOf(const QVariantList &choices)
 {
-    auto next = std::make_shared<int>(0);
-    return [answers, next](const std::u8string &) {
-        const QString a = *next < answers.size() ? answers[(*next)++] : QStringLiteral("no");
-        return a == QLatin1String("yes")        ? Replace::Yes
-               : a == QLatin1String("yesToAll") ? Replace::YesToAll
-               : a == QLatin1String("cancel")   ? Replace::Cancel
-                                                : Replace::No;
-    };
+    application::ClashChoices out;
+    for (const auto &v : choices) {
+        const auto m = v.toMap();
+        const QString action = m.value(QStringLiteral("action")).toString();
+        application::ClashChoice c;
+        c.action = action == QLatin1String("replace")  ? application::ClashAction::Replace
+                   : action == QLatin1String("rename") ? application::ClashAction::Rename
+                                                       : application::ClashAction::Skip;
+        c.newName = u8(m.value(QStringLiteral("newName")).toString().trimmed());
+        if (c.action == application::ClashAction::Rename && c.newName.empty())
+            c.action = application::ClashAction::Skip;
+        out[u8(m.value(QStringLiteral("name")).toString())] = std::move(c);
+    }
+    return out;
 }
 
-// The names a transfer would ask about: those already present (or added
-// earlier in the same transfer).
-QStringList conflictsOf(StyleList into, const StyleList &styles)
+// The clashes a transfer has, for the clash review: each name already present
+// (or added earlier in the same transfer), the fields that differ from the
+// Style of that name, whether none does, and a free name to rename it to.
+QVariantList clashesOf(StyleList into, const StyleList &styles)
 {
-    QStringList out;
+    QVariantList out;
+    const StyleList all = [&] {
+        StyleList l = into;
+        l.insert(l.end(), styles.begin(), styles.end());
+        return l;
+    }();
     for (const auto &s : styles) {
-        if (std::any_of(into.begin(), into.end(), [&](const auto &e) { return e.name == s.name; }))
-            out << qs(s.name);
-        else
+        const auto found = std::find_if(into.begin(), into.end(), [&](const auto &e) { return e.name == s.name; });
+        if (found == into.end()) {
             into.push_back(s);
+            continue;
+        }
+        const int fields = application::compareStyles(*found, s);
+        out << QVariantMap{{QStringLiteral("name"), qs(s.name)},
+                           {QStringLiteral("fields"), fields},
+                           {QStringLiteral("same"), fields == 0},
+                           {QStringLiteral("suggestion"), qs(application::freeStyleName(all, s.name))}};
     }
     return out;
 }
@@ -366,7 +383,7 @@ void StyleManagerController::endEdit()
     m_edit.reset();
 }
 
-QStringList StyleManagerController::transferConflicts(bool toStore, const QVariantList &rows) const
+QVariantList StyleManagerController::transferClashes(bool toStore, const QVariantList &rows) const
 {
     std::optional<StyleList> doc;
     auto *from = const_cast<StyleManagerController *>(this)->list(!toStore, doc);
@@ -378,10 +395,10 @@ QStringList StyleManagerController::transferConflicts(bool toStore, const QVaria
     for (const auto r : rowsOf(rows))
         if (r < from->size())
             chosen.push_back((*from)[r]);
-    return conflictsOf(*into, chosen);
+    return clashesOf(*into, chosen);
 }
 
-QVariantList StyleManagerController::addToStore(const QVariantList &rows, const QStringList &answers)
+QVariantList StyleManagerController::addToStore(const QVariantList &rows, const QVariantList &choices)
 {
     std::optional<StyleList> doc;
     const auto *from = list(false, doc);
@@ -391,13 +408,13 @@ QVariantList StyleManagerController::addToStore(const QVariantList &rows, const 
     for (const auto r : rowsOf(rows))
         if (r < from->size())
             chosen.push_back((*from)[r]);
-    const auto added = application::transferStyles(m_catalogs.styles(), chosen, answering(answers));
+    const auto added = application::transferStyles(m_catalogs.styles(), chosen, choicesOf(choices));
     m_catalogs.markChanged();
     emit changed();
     return listOf(added);
 }
 
-QVariantList StyleManagerController::addToDocument(const QVariantList &rows, const QStringList &answers)
+QVariantList StyleManagerController::addToDocument(const QVariantList &rows, const QVariantList &choices)
 {
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;
     auto styles = session ? application::documentStyles(*session) : std::nullopt;
@@ -408,7 +425,7 @@ QVariantList StyleManagerController::addToDocument(const QVariantList &rows, con
         if (r < m_catalogs.styles().size())
             chosen.push_back(m_catalogs.styles()[r]);
     const std::size_t before = styles->size();
-    const auto added = application::transferStyles(*styles, chosen, answering(answers));
+    const auto added = application::transferStyles(*styles, chosen, choicesOf(choices));
     std::vector<std::optional<std::size_t>> origin;
     for (std::size_t i = 0; i < styles->size(); ++i)
         origin.push_back(i < before ? std::optional(i) : std::nullopt);
@@ -416,27 +433,21 @@ QVariantList StyleManagerController::addToDocument(const QVariantList &rows, con
     return listOf(added);
 }
 
-void StyleManagerController::addToAllDocuments(const QVariantList &rows, const QStringList &answers)
+void StyleManagerController::addToAllDocuments(const QVariantList &rows, const QVariantList &choices)
 {
     StyleList chosen;
     for (const auto r : rowsOf(rows))
         if (r < m_catalogs.styles().size())
             chosen.push_back(m_catalogs.styles()[r]);
-    // One run of answers over every ASS Document (legacy keeps its prompt across tabs).
-    const auto ask = answering(answers);
-    std::optional<Replace> sticky;
-    const application::AskReplace shared = [&](const std::u8string &name) {
-        if (sticky == Replace::YesToAll || sticky == Replace::Cancel)
-            return *sticky;
-        sticky = ask(name);
-        return *sticky;
-    };
+    // The active Document's review stands for every ASS Document (legacy
+    // keeps its prompt across tabs); a name it did not list is left out.
+    const auto shared = choicesOf(choices);
     for (auto *session : m_hooks.documents ? m_hooks.documents() : std::vector<application::EditSession *>{}) {
         auto styles = application::documentStyles(*session);
         if (!styles)
             continue;
         const std::size_t before = styles->size();
-        application::transferStyles(*styles, chosen, shared, false);
+        application::transferStyles(*styles, chosen, shared);
         std::vector<std::optional<std::size_t>> origin;
         for (std::size_t i = 0; i < styles->size(); ++i)
             origin.push_back(i < before ? std::optional(i) : std::nullopt);
@@ -455,7 +466,7 @@ QStringList StyleManagerController::fileStyles(const QUrl &file)
     return out;
 }
 
-QStringList StyleManagerController::fileConflicts(bool toStore, const QUrl &file, const QStringList &names) const
+QVariantList StyleManagerController::fileClashes(bool toStore, const QUrl &file, const QStringList &names) const
 {
     std::optional<StyleList> doc;
     auto *into = const_cast<StyleManagerController *>(this)->list(toStore, doc);
@@ -465,17 +476,17 @@ QStringList StyleManagerController::fileConflicts(bool toStore, const QUrl &file
     for (const auto &s : stylesInFile(file))
         if (names.contains(qs(s.name)))
             chosen.push_back(s);
-    return conflictsOf(*into, chosen);
+    return clashesOf(*into, chosen);
 }
 
-void StyleManagerController::loadFromFile(bool toStore, const QUrl &file, const QStringList &names, const QStringList &answers)
+void StyleManagerController::loadFromFile(bool toStore, const QUrl &file, const QStringList &names, const QVariantList &choices)
 {
     StyleList chosen;
     for (const auto &s : stylesInFile(file))
         if (names.contains(qs(s.name)))
             chosen.push_back(s);
     if (toStore) {
-        application::transferStyles(m_catalogs.styles(), chosen, answering(answers), false);
+        application::transferStyles(m_catalogs.styles(), chosen, choicesOf(choices));
         m_catalogs.markChanged();
         emit changed();
         return;
@@ -485,7 +496,7 @@ void StyleManagerController::loadFromFile(bool toStore, const QUrl &file, const 
     if (!styles)
         return;
     const std::size_t before = styles->size();
-    application::transferStyles(*styles, chosen, answering(answers), false);
+    application::transferStyles(*styles, chosen, choicesOf(choices));
     std::vector<std::optional<std::size_t>> origin;
     for (std::size_t i = 0; i < styles->size(); ++i)
         origin.push_back(i < before ? std::optional(i) : std::nullopt);

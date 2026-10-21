@@ -5036,6 +5036,72 @@ private slots:
         QVERIFY(files > 1);
     }
 
+    // PK1 (#301): no in-window popup (a Controls Dialog or a MessageDialog)
+    // but the ones tests/ui/in_window_popups.txt lists, which the PU cards
+    // move onto the kit; a listed one that is gone fails too, so the list
+    // only shrinks. A popup is named by its file and its id.
+    void popupsAreOnTheKit()
+    {
+        static const QRegularExpression opening(QStringLiteral(R"re((?:^|[^\w.])(?:Dialog|MessageDialog)\s*\{)re"));
+        static const QRegularExpression idLine(QStringLiteral(R"re(^\s*id:\s*(\w+))re"));
+        QFile listFile(QStringLiteral(HIKARI_UI_SOURCE_DIR "/../../tests/ui/in_window_popups.txt"));
+        QVERIFY(listFile.open(QIODevice::ReadOnly));
+        QStringList listed;
+        for (const QString &line : QString::fromUtf8(listFile.readAll()).split(QLatin1Char('\n'))) {
+            const QString entry = line.trimmed();
+            if (!entry.isEmpty() && !entry.startsWith(QLatin1Char('#')))
+                listed << entry;
+        }
+        QStringList found;
+        QStringList problems;
+        QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files);
+        while (it.hasNext()) {
+            const QString path = it.next();
+            const QString name = QFileInfo(path).fileName();
+            QFile file(path);
+            QVERIFY(file.open(QIODevice::ReadOnly));
+            const QStringList lines = QString::fromUtf8(file.readAll()).split(QLatin1Char('\n'));
+            for (int i = 0; i < lines.size(); ++i) {
+                if (lines[i].trimmed().startsWith(QLatin1String("//")) || !opening.match(lines[i]).hasMatch())
+                    continue;
+                QString id;
+                for (int j = i + 1; j < qMin(i + 12, int(lines.size())) && id.isEmpty(); ++j)
+                    id = idLine.match(lines[j]).captured(1);
+                const QString entry = name + QLatin1Char(':') + id;
+                found << entry;
+                if (id.isEmpty() || !listed.contains(entry))
+                    problems << QStringLiteral("%1:%2: an in-window popup; use the popup kit").arg(name).arg(i + 1);
+            }
+        }
+        for (const QString &entry : std::as_const(listed))
+            if (!found.contains(entry))
+                problems << QStringLiteral("%1: listed in in_window_popups.txt but gone; take it off the list").arg(entry);
+        QVERIFY(found.size() > 1);
+        if (!problems.isEmpty())
+            QFAIL(qPrintable(problems.join(QLatin1Char('\n'))));
+    }
+
+    // PK1: Remove temporary files' age is a date field with its calendar
+    // (legacy's day, month and year boxes), a month before today when it
+    // opens (legacy's default); the cutoff is the day picked.
+    void temporaryFilesTakeTheirAgeFromADatePicker()
+    {
+        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("temporaryFilesWindow"));
+        QVERIFY(window);
+        QVERIFY(QMetaObject::invokeMethod(window, "showFiles"));
+        auto close = qScopeGuard([&] { window->close(); });
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        auto *picker = findItem(window->contentItem(), QStringLiteral("olderDate"));
+        QVERIFY(picker);
+        QDate monthAgo = QDate::currentDate().addMonths(-1);
+        QCOMPARE(picker->property("date").toDateTime().date(), monthAgo);
+        QVERIFY(QMetaObject::invokeMethod(picker, "setDate", Q_ARG(QVariant, QDateTime(QDate(2026, 3, 4), QTime(15, 30)))));
+        QVariant cutoff;
+        QVERIFY(QMetaObject::invokeMethod(window, "cutoff", Q_RETURN_ARG(QVariant, cutoff)));
+        QCOMPARE(cutoff.toDateTime(), QDateTime(QDate(2026, 3, 4), QTime(0, 0)));
+        QVERIFY(findItem(window->contentItem(), QStringLiteral("datePickerOpen")));
+    }
+
     // IC1 (#226): every menu and context-menu item that runs a command shows
     // an icon of the set: an iconRole on the item, or on the submenu it
     // opens. A check item needs none: its check mark stands in the icon's
@@ -6168,15 +6234,26 @@ private slots:
         // Into the catalog and back: Title is copied to a new catalog, then Clear
         // removes the unused Default from the Document.
         QVERIFY(styles.createCatalog(QStringLiteral("Show")));
-        QCOMPARE(styles.transferConflicts(true, {1}), QStringList());
+        QCOMPARE(styles.transferClashes(true, {1}), QVariantList());
         QCOMPARE(styles.addToStore({1}, {}), QVariantList{0});
         QCOMPARE(styles.storeStyles(), QStringList{QStringLiteral("Title")});
         QVERIFY(styles.cleanStyles().contains(QStringLiteral("Styles deleted:\nDefault\n")));
         QCOMPARE(styles.documentStyles(), QStringList{QStringLiteral("Title")});
-        // Adding it back asks; "no" keeps the Document's.
-        QCOMPARE(styles.transferConflicts(false, {0}), QStringList{QStringLiteral("Title")});
-        styles.addToDocument({0}, {QStringLiteral("no")});
+        // Adding it back is a clash (PK1's clash review): the same on both
+        // sides, with a free name offered. Skip keeps the Document's; Rename
+        // adds it under the new name.
+        const QVariantList clashes = styles.transferClashes(false, {0});
+        QCOMPARE(clashes.size(), 1);
+        QCOMPARE(clashes[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Title"));
+        QCOMPARE(clashes[0].toMap().value(QStringLiteral("same")).toBool(), true);
+        QCOMPARE(clashes[0].toMap().value(QStringLiteral("suggestion")).toString(), QStringLiteral("Title (2)"));
+        styles.addToDocument({0}, {QVariantMap{{QStringLiteral("name"), QStringLiteral("Title")},
+                                               {QStringLiteral("action"), QStringLiteral("skip")}}});
         QCOMPARE(styles.documentStyles(), QStringList{QStringLiteral("Title")});
+        styles.addToDocument({0}, {QVariantMap{{QStringLiteral("name"), QStringLiteral("Title")},
+                                               {QStringLiteral("action"), QStringLiteral("rename")},
+                                               {QStringLiteral("newName"), QStringLiteral("Title (2)")}}});
+        QCOMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Title"), QStringLiteral("Title (2)")}));
         // The preview renders the edited values through libass.
         styles.beginEdit(false, 0);
         styles.renderPreview(styles.beginEdit(false, 0), 200, 80, QStringLiteral("Preview"));
@@ -6868,11 +6945,11 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
         QTRY_VERIFY(question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
-        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
-        QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose subtitle track"));
-        QCOMPARE(chooser->property("labels").toStringList(),
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose the subtitle track"));
+        QCOMPARE(chooser->property("rows").toStringList(),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
-        QVERIFY(QMetaObject::invokeMethod(chooser, "reject"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(target(), before);
         QVERIFY(application->files().session(before)->isDirty());
@@ -6890,8 +6967,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
         QTRY_VERIFY(question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveYes"), "click"));
-        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != before, 20000);
         application->waitForWrites();
         {
@@ -6936,9 +7013,9 @@ private slots:
         QVERIFY(handled.toBool());
         QTRY_VERIFY(question->property("visible").toBool()); // the loaded Document is unsaved
         QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
-        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
-        named("mkvTrackList")->setProperty("currentIndex", 1);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        chooser->setProperty("current", 1);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != ass, 20000);
         auto *srt = application->files().session(target());
         QCOMPARE(srt->document().format(), core::SubtitleFormat::Srt);
@@ -6999,11 +7076,11 @@ private slots:
         QVERIFY(application->targetUntitled());
         QCOMPARE(tabs(), std::size_t(1));
         QVERIFY(choose(mkv));
-        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(!question->property("visible").toBool());
-        QCOMPARE(chooser->property("labels").toStringList(),
+        QCOMPARE(chooser->property("rows").toStringList(),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
-        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target().has_value() && application->workspace().title(*target()) &&
                                      *application->workspace().title(*target()) == "mkvextract.ass",
                                  20000);
@@ -7025,9 +7102,9 @@ private slots:
         const QString upper = dir.filePath(QStringLiteral("SHOUT.MKV"));
         QVERIFY(QFile::copy(mkv, upper));
         QVERIFY(choose(upper));
-        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(!question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(chooser, "reject"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(target(), first);
         QCOMPARE(tabs(), std::size_t(1));
@@ -7042,9 +7119,9 @@ private slots:
         const auto file = *target();
         QCOMPARE(QString::fromStdString(*application->workspace().title(file)), QStringLiteral("mkvopen.ass"));
         QVERIFY(choose(upper));
-        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
-        named("mkvTrackList")->setProperty("currentIndex", 1);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        chooser->setProperty("current", 1);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != file, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(tabs(), before + 1);
@@ -7073,8 +7150,8 @@ private slots:
         QVERIFY(choose(mkv));
         QTRY_VERIFY(question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
-        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("visible").toBool(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(chooser, "accept"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != untitled, 20000);
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(tabs(), count);
@@ -7768,7 +7845,12 @@ private slots:
         {
             QFile f(path);
             QVERIFY(f.open(QIODevice::WriteOnly));
-            f.write("[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+            f.write("[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, "
+                    "Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+                    "MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+                    "Style: Sign,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
                     "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Alpha\n"
                     "Dialogue: 0,0:00:03.00,0:00:04.00,Sign,,0,0,0,,beta\n"
                     "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,ALPHABET\n");
@@ -7792,11 +7874,17 @@ private slots:
         QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id}));
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
         QCOMPARE(dialog->property("recent").toStringList(), QStringList{QStringLiteral("alpha")});
-        // F2-style-cancel: Cancel in "Choose styles" leaves the search as it is.
+        // PK1: "Choose styles" is a popover whose ticks fill in the Styles
+        // pattern at once. F2-style-cancel: Esc leaves the search as it was.
         QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectChooseStyles"), "click"));
-        auto *styles = root->findChild<QObject *>(QStringLiteral("selectStylesDialog"));
-        QTRY_VERIFY(styles->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(styles, "reject"));
+        auto *styles = root->findChild<QObject *>(QStringLiteral("selectStylesChooser"));
+        QTRY_VERIFY(styles->property("opened").toBool());
+        const QStringList names = styles->property("names").toStringList();
+        QVERIFY(!names.isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
+        QVERIFY(find->property("editText").toString() != QStringLiteral("alpha"));
+        QVERIFY(dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(styles, "revert"));
         QTRY_VERIFY(!styles->property("visible").toBool());
         QCOMPARE(find->property("editText").toString(), QStringLiteral("alpha"));
         QVERIFY(!dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
@@ -8222,14 +8310,13 @@ private slots:
         }
         // The Find folder button is named for the picker it opens.
         QCOMPARE(find("findChooseFolder")->property("text").toString(), QStringLiteral("Choose subtitle search folder"));
-        // The refusal of each mapping window (Settings' and the shell's).
-        QList<QQuickWindow *> refusals;
+        // PK1: the hotkey capture (Settings' and the shell's) says why keys
+        // are refused on its own form, under its title naming the command.
+        QList<QQuickWindow *> captures;
         for (QWindow *w : QGuiApplication::allWindows())
-            if (w->objectName() == QLatin1String("hotkeyRefusal"))
-                refusals << qobject_cast<QQuickWindow *>(w);
-        QCOMPARE(refusals.size(), 2);
-        for (QQuickWindow *refusal : refusals)
-            QCOMPARE(refusal->title(), QStringLiteral("Warning"));
+            if (w->objectName() == QLatin1String("hotkeyCaptureWindow"))
+                captures << qobject_cast<QQuickWindow *>(w);
+        QCOMPARE(captures.size(), 2);
 
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
         if (out.isEmpty())
@@ -8293,12 +8380,16 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(popup, "close"));
             QTRY_VERIFY(!popup->property("visible").toBool());
         }
-        QQuickWindow *refusal = refusals.first();
-        refusal->setProperty("text", QStringLiteral("You cannot use the program exit shortcut."));
-        refusal->show();
+        QObject *capture = find("hotkeyMapping");
+        QVERIFY(QMetaObject::invokeMethod(capture, "capture", Q_ARG(QVariant, QStringLiteral("Exit")), Q_ARG(QVariant, 0),
+                                          Q_ARG(QVariant, true), Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
+        capture->setProperty("refusal", QStringLiteral("You cannot use the program exit shortcut."));
+        auto *refusal = capture->property("compactWindow").value<QQuickWindow *>();
         QVERIFY(QTest::qWaitForWindowExposed(refusal));
+        QCOMPARE(refusal->title(), QStringLiteral("Keys for \"Exit\""));
         save("hotkeyRefusal", refusal, true);
-        refusal->close();
+        QVERIFY(QMetaObject::invokeMethod(capture, "cancel", Q_ARG(QVariant, false)));
+        QTRY_VERIFY(!refusal->isVisible());
     }
 
     // F3: without a spelling backend there is no spell checker: no notice,
@@ -8515,12 +8606,14 @@ private slots:
         application->setSuggestionsOnDoubleClick(true);
         QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, fieldPoint(field, 13));
         auto *fix = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("fixSuggestions"));
-        QTRY_VERIFY(fix->property("visible").toBool());
-        QCOMPARE(fix->property("suggestions").toStringList().first(), QStringLiteral("The"));
+        // PK1: a popover at the word.
+        QTRY_VERIFY(fix->property("opened").toBool());
+        QVERIFY(fix->property("inPopover").toBool());
+        QCOMPARE(fix->property("rows").toStringList().first(), QStringLiteral("The"));
         QCOMPARE(field->property("selectedText").toString(), QString());
-        QVERIFY(QMetaObject::invokeMethod(fix, "accept"));
+        QVERIFY(QMetaObject::invokeMethod(fix, "take", Q_ARG(QVariant, 0)));
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("Hello world The"));
-        QTRY_VERIFY(!fix->property("visible").toBool());
+        QTRY_VERIFY(!fix->property("opened").toBool());
         application->setSuggestionsOnDoubleClick(false);
 
         // Translation mode: the Original field has neither entry.
@@ -9230,8 +9323,11 @@ private slots:
     }
 
     // TS1: legacy's "+" beside the styles (ShiftTimes::OnAddStyles,
-    // GetCheckedElements): the Document's styles, none checked; OK puts the
-    // checked ones in the field and shifts by styles, Cancel empties it.
+    // GetCheckedElements): the Document's styles; the checked ones go in
+    // the field and shift by styles. PK1 (approved PK1-choose-styles-live):
+    // the Choose styles popover, the field's styles checked when it opens,
+    // each tick applied at once, and Esc puts the field back (legacy's
+    // Cancel emptied it).
     void timingPanelPicksStylesFromTheDocument()
     {
         const QString path = dir.filePath(QStringLiteral("styles.ass"));
@@ -9257,35 +9353,42 @@ private slots:
         setShift("whichLines", 5);
         QTRY_VERIFY(item("shiftStylesPick")->isVisible());
         auto *popup = item<QObject>("shiftStylesPopup");
-        const auto choose = [&](const QStringList &names, bool ok) {
+        const auto open = [&](const QStringList &checked) {
             QVERIFY(QMetaObject::invokeMethod(item("shiftStylesPick"), "click"));
             QTRY_VERIFY(popup->property("opened").toBool());
             QCOMPARE(popup->property("names").toStringList(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
-            auto *content = popup->property("contentItem").value<QQuickItem *>();
-            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
-                if (from->inherits("QQuickCheckBox")) {
-                    QVERIFY(!from->property("checked").toBool()); // none checked
-                    if (names.contains(from->property("text").toString()))
-                        QVERIFY(QMetaObject::invokeMethod(from, "click"));
-                }
-                for (QQuickItem *child : from->childItems())
-                    walk(child);
-            };
-            walk(content);
-            QVERIFY(QMetaObject::invokeMethod(popup, "finish", Q_ARG(QVariant, ok)));
-            QTRY_VERIFY(!popup->property("visible").toBool());
+            QCOMPARE(popup->property("checkedNames").toStringList(), checked);
         };
-        choose({QStringLiteral("Sign")}, true);
-        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string(u8"Sign"));
-        QCOMPARE(item("shiftStyles")->property("text").toString(), QStringLiteral("Sign"));
-        choose({QStringLiteral("Default"), QStringLiteral("Sign")}, true);
-        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string(u8"Default,Sign"));
-        choose({QStringLiteral("Default")}, false);
-        QCOMPARE(application->shiftTimesSettings().settings().styles, std::u8string());
+        const auto tick = [&](const QString &name) {
+            QVERIFY(QMetaObject::invokeMethod(popup, "toggle", Q_ARG(QVariant, name)));
+        };
+        const auto styles = [&] { return application->shiftTimesSettings().settings().styles; };
+        open({});
+        tick(QStringLiteral("Sign"));
+        QCOMPARE(styles(), std::u8string(u8"Sign"));
+        QTRY_COMPARE(item("shiftStyles")->property("text").toString(), QStringLiteral("Sign"));
+        QVERIFY(QMetaObject::invokeMethod(popup, "keep"));
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(styles(), std::u8string(u8"Sign"));
+        // The field's styles are checked; a tick is applied, Esc takes it back.
+        open({QStringLiteral("Sign")});
+        tick(QStringLiteral("Default"));
+        QCOMPARE(styles(), std::u8string(u8"Default,Sign"));
+        QVERIFY(QMetaObject::invokeMethod(popup, "revert"));
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(styles(), std::u8string(u8"Sign"));
+        // None checked empties the field; it still shifts by styles.
+        open({QStringLiteral("Sign")});
+        tick(QStringLiteral("Sign"));
+        QVERIFY(QMetaObject::invokeMethod(popup, "keep"));
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(styles(), std::u8string());
         QCOMPARE(application->shiftTimesSettings().settings().whichLines, 5);
-        // OK with a style switches to shifting by styles (legacy SetSelection(5)).
+        // A style checked switches to shifting by styles (legacy SetSelection(5)).
         setShift("whichLines", 5);
-        choose({QStringLiteral("Sign")}, true);
+        open({});
+        tick(QStringLiteral("Sign"));
+        QVERIFY(QMetaObject::invokeMethod(popup, "keep"));
         QCOMPARE(application->shiftTimesSettings().settings().whichLines, 5);
         // The shift moves only that style's Line.
         setShift("forward", true);
@@ -9567,7 +9670,6 @@ private slots:
             {{"reloadYes", Yes}, {"reloadNo", No}},
             {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
              {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
-            {{"hotkeySwitch", Accept}, {"hotkeyDelete", Destructive}, {"hotkeySetAnyway", Action}, {"hotkeyCancel", Reject}},
             {{"conversionAccept", Accept}, {"Cancel", Reject}},
             {{"resampleOk", Accept}, {"Cancel", Reject}},
             {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
@@ -9580,7 +9682,8 @@ private slots:
              {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
             {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
             {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
-            {{"replaceYesToAll", Yes}, {"replaceYes", Yes}, {"replaceNo", No}, {"Cancel", Reject}},
+            {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}}, // PK1
+            {{"listChooserTake", Accept}, {"listChooserCancel", Reject}}, // PK1
             {{"styleCreateYes", Accept}, {"styleCreateCancel", Reject}}, // LE6
         };
         // The find question lives in the Search tool's dock: open it. The
@@ -10956,6 +11059,7 @@ private slots:
             {"settingsPageEditor",
              {{"program.language", nullptr},
               {"editor.dictionaryLanguage", nullptr},
+              {"notices.toasts", "Show notices as toasts (off: in the Log only)"}, // PK1
               {"grid.loadSortedSubs", "Open sorted subtitles"},
               {"editor.spellchecker", "Turn spell checking"},
               {"grid.autoSelectLinesFromLastTab", "Select the line with the time line\nof the previous active tab"},
@@ -11102,6 +11206,8 @@ private slots:
         for (const auto &s : application::settingDefinitions())
             if (s.id.starts_with("appearance."))
                 bound.insert(std::string(s.id));
+        // and PK1's questions hidden with "Don't ask again" (Ask again).
+        bound.insert("notices.hiddenQuestions");
 #ifndef HIKARI_WITH_VSFILTERMOD
         // W2: "Subtitle display filter" holds a value only when it is offered
         // (a CSRI renderer besides libass); its control stays in the page.
@@ -11109,6 +11215,32 @@ private slots:
 #endif
         QCOMPARE(held, bound);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+    }
+
+    // PK1 (#301): Ask again brings back the questions hidden with "Don't
+    // ask again" when OK or Apply saves it; Cancel keeps them hidden.
+    void settingsAskAgainBringsBackHiddenQuestions()
+    {
+        auto &settings = *application->settingsStore();
+        const QStringList hidden{QStringLiteral("translationModeOff")};
+        settings.set("notices.hiddenQuestions", hidden);
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *askAgain = dialogItem("settingsDialog", "settingsAskAgain");
+        QVERIFY(askAgain);
+        QVERIFY(askAgain->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(askAgain, "click"));
+        QVERIFY(!askAgain->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QCOMPARE(settings.list("notices.hiddenQuestions"), hidden);
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        askAgain = dialogItem("settingsDialog", "settingsAskAgain");
+        QVERIFY(askAgain->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(askAgain, "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QCOMPARE(settings.list("notices.hiddenQuestions"), QStringList());
     }
 
     // O1: legacy defects the dialog reproduces, and what it leaves alone.
@@ -12987,10 +13119,11 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(audio.trackChoices(), (QStringList{QStringLiteral("1: Main [eng] (pcm_s16le)"),
                                                     QStringLiteral("2: Commentary [jpn] (pcm_s16le)")}));
-        auto *list = item<QObject>("audioTrackList");
-        QCOMPARE(list->property("currentIndex").toInt(), 0); // legacy SetSelection(0)
-        list->setProperty("currentIndex", 1);
-        QMetaObject::invokeMethod(chooser, "accept");
+        // PK1's list chooser, in its compact window (opened by no control).
+        QVERIFY(!chooser->property("inPopover").toBool());
+        QCOMPARE(chooser->property("current").toInt(), 0); // legacy SetSelection(0)
+        chooser->setProperty("current", 1);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, 1)));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QCOMPARE(audio.box().track(), 2);
         QCOMPARE(audio.box().audio()->peaks() != nullptr, true);
@@ -13005,7 +13138,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(video.session().state(), application::VideoSession::State::Ready);
         QCOMPARE(QString::fromStdString(video.session().path()), nativeFixture("cfr.mkv"));
-        QMetaObject::invokeMethod(chooser, "reject");
+        QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
         QTRY_VERIFY(!chooser->property("opened").toBool());
         QVERIFY(audio.trackChoices().isEmpty());
         QTest::qWait(200);
@@ -13014,8 +13147,7 @@ private slots:
         // the chosen track goes to the video, its playback and the box
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        list->setProperty("currentIndex", 1);
-        QMetaObject::invokeMethod(chooser, "accept");
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, 1)));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), nativeFixture("tracks.mkv"), 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         QCOMPARE(video.session().audioTrack(), 2);
@@ -13283,6 +13415,40 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(b, "clicked"));
         QCoreApplication::processEvents();
     }
+private:
+    // PK1: a hotkey capture (HotkeyCapture.qml) by its objectName: its form
+    // in the popover at the control that opened it, else in its compact
+    // window; the refusal and the question are on the form.
+    struct CaptureForm {
+        QObject *capture = nullptr;
+        QObject *popover() const { return capture->findChild<QObject *>(QStringLiteral("hotkeyCapturePopover")); }
+        QQuickWindow *window() const { return capture->property("compactWindow").value<QQuickWindow *>(); }
+        bool isVisible() const { return capture->property("opened").toBool(); }
+        bool inPopover() const { return popover()->property("visible").toBool(); }
+        QString title() const { return capture->property("title").toString(); }
+        QQuickItem *host() const
+        {
+            return inPopover() ? popover()->property("contentItem").value<QQuickItem *>() : window()->contentItem();
+        }
+    };
+    mutable std::map<std::string, CaptureForm> captureForms;
+    const CaptureForm *captureForm(const char *name) const
+    {
+        auto *capture = engine->rootObjects().first()->findChild<QObject *>(QLatin1String(name));
+        if (!capture)
+            return nullptr;
+        captureForms[name] = CaptureForm{capture};
+        return &captureForms[name];
+    }
+    QQuickItem *in(const CaptureForm *f, const char *name) const { return findItem(f->host(), QLatin1String(name)); }
+    void clickButton(const CaptureForm *f, const char *name)
+    {
+        auto *b = in(f, name);
+        QVERIFY2(b && b->isVisible(), name);
+        QVERIFY(QMetaObject::invokeMethod(b, "clicked"));
+        QCoreApplication::processEvents();
+    }
+private slots:
     void clickWith(QQuickItem *target, Qt::KeyboardModifiers mods)
     {
         const QPoint at = target->mapToScene(QPointF(target->width() / 2, target->height() / 2)).toPoint();
@@ -13330,11 +13496,10 @@ private slots:
         // Map hotkey on Global History: the mapping window with the window choice.
         application->hotkeys().select(hotkeyPosition(QStringLiteral("Global History")));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyMap"), "clicked"));
-        auto *mapping = mappingWindow("settingsHotkeyMapping");
+        auto *mapping = captureForm("settingsHotkeyMapping");
         QVERIFY(mapping);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"History\"."));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"History\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 0);
         // A lone modifier waits; Ctrl+Shift+K is taken.
@@ -13374,64 +13539,64 @@ private slots:
         QCOMPARE(again.accelOf(QStringLiteral("AUDIO_COMMIT"), 4), QStringLiteral("Enter"));
     }
 
-    // HkeysDialog's refusals keep the window open; taken keys ask first
-    // (ItemHotkey::OnMapHotkey), per window.
+    // HkeysDialog's refusals keep the capture open; taken keys ask first
+    // (ItemHotkey::OnMapHotkey), per window. PK1: the capture is a popover
+    // at the list's row, saying why on its own form, and the question is on
+    // the form too, its buttons named for the command holding the keys.
     void hotkeysMappingRefusesAndAsks()
     {
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        auto *mapping = mappingWindow("settingsHotkeyMapping");
-        auto *keys = in(mapping, "hotkeyMappingKeys");
-        auto *refusal = mapping->findChild<QQuickWindow *>(QStringLiteral("hotkeyRefusal"));
-        auto *question = mapping->findChild<QQuickWindow *>(QStringLiteral("hotkeyQuestion"));
-        QVERIFY(refusal && question);
+        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 7); // Hotkeys
+        auto *mapping = captureForm("settingsHotkeyMapping");
+        QVERIFY(mapping);
         const auto map = [&](const QString &text) {
             application->hotkeys().select(hotkeyPosition(text));
             QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyMap"), "clicked"));
             QTRY_VERIFY(mapping->isVisible());
+            QVERIFY(mapping->inPopover());
         };
+        const auto keys = [&] { return in(mapping, "hotkeyMappingKeys"); };
+        const auto refusal = [&] { return in(mapping, "hotkeyRefusalText")->property("text").toString(); };
+        const auto question = [&] { return in(mapping, "hotkeyQuestionText"); };
         map(QStringLiteral("Global History"));
-        keyTo(keys, Qt::Key_K); // a Global key without modifiers
-        QTRY_VERIFY(refusal->isVisible());
-        QCOMPARE(in(refusal, "hotkeyRefusalText")->property("text").toString(),
-                 QStringLiteral("Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt)."));
+        keyTo(keys(), Qt::Key_K); // a Global key without modifiers
+        QTRY_VERIFY(in(mapping, "hotkeyRefusalText")->isVisible());
+        QCOMPARE(refusal(), QStringLiteral("Global and editor shortcuts must include modifiers (e.g. Shift, Ctrl, Alt)."));
         QVERIFY(mapping->isVisible());
-        clickButton(refusal, "hotkeyRefusalOk");
-        keyTo(keys, Qt::Key_V, Qt::ControlModifier);
-        QCOMPARE(in(refusal, "hotkeyRefusalText")->property("text").toString(),
-                 QStringLiteral("You cannot use shortcuts for copying, cutting, and pasting."));
-        clickButton(refusal, "hotkeyRefusalOk");
-        keyTo(keys, Qt::Key_F4, Qt::AltModifier);
-        QCOMPARE(in(refusal, "hotkeyRefusalText")->property("text").toString(),
-                 QStringLiteral("You cannot use the program exit shortcut."));
-        clickButton(refusal, "hotkeyRefusalOk");
-        // Ctrl+S is Save's: the same window asks, without "Set anyway".
-        keyTo(keys, Qt::Key_S, Qt::ControlModifier);
-        QTRY_VERIFY(question->isVisible());
-        QVERIFY(!mapping->isVisible());
-        QCOMPARE(in(question, "hotkeyQuestionText")->property("text").toString(),
-                 QStringLiteral("This hotkey already exists for \"Save\".\nWhat to do?"));
-        QVERIFY(in(question, "hotkeySwitch")->isVisible());
-        QVERIFY(!in(question, "hotkeySetAnyway")->isVisible());
-        clickButton(question, "hotkeyCancel");
+        keyTo(keys(), Qt::Key_V, Qt::ControlModifier);
+        QCOMPARE(refusal(), QStringLiteral("You cannot use shortcuts for copying, cutting, and pasting."));
+        keyTo(keys(), Qt::Key_F4, Qt::AltModifier);
+        QCOMPARE(refusal(), QStringLiteral("You cannot use the program exit shortcut."));
+        // Ctrl+S is Save's: the form asks, without "Keep both".
+        keyTo(keys(), Qt::Key_S, Qt::ControlModifier);
+        QTRY_VERIFY(question()->isVisible());
+        QVERIFY(mapping->isVisible());
+        QVERIFY(!in(mapping, "hotkeyRefusalText")->isVisible());
+        QCOMPARE(question()->property("text").toString(), QStringLiteral("Ctrl+S is already used by Save."));
+        QCOMPARE(in(mapping, "hotkeySwitch")->property("text").toString(), QStringLiteral("Swap with Save"));
+        QCOMPARE(in(mapping, "hotkeyDelete")->property("text").toString(), QStringLiteral("Take it from Save"));
+        QVERIFY(!in(mapping, "hotkeySetAnyway")->isVisible());
+        clickButton(mapping, "hotkeyCancel");
+        QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
         map(QStringLiteral("Global History"));
-        keyTo(keys, Qt::Key_S, Qt::ControlModifier);
-        QTRY_VERIFY(question->isVisible());
-        clickButton(question, "hotkeySwitch");
+        keyTo(keys(), Qt::Key_S, Qt::ControlModifier);
+        QTRY_VERIFY(question()->isVisible());
+        clickButton(mapping, "hotkeySwitch");
+        QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-S"));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-Shift-H"));
         // Another window: Subtitles Duplicate lines with the Editor's Ctrl+R.
         map(QStringLiteral("Subtitles Duplicate lines"));
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 1);
-        keyTo(keys, Qt::Key_R, Qt::ControlModifier);
-        QTRY_VERIFY(question->isVisible());
-        QCOMPARE(in(question, "hotkeyQuestionText")->property("text").toString(),
-                 QStringLiteral("This shortcut already exists in another window as a shortcut for \"Editor Next "
-                                "untranslated line\".\nWhat would you like to do?"));
-        QVERIFY(in(question, "hotkeySetAnyway")->isVisible());
-        clickButton(question, "hotkeySetAnyway");
+        keyTo(keys(), Qt::Key_R, Qt::ControlModifier);
+        QTRY_VERIFY(question()->isVisible());
+        QCOMPARE(question()->property("text").toString(), QStringLiteral("Ctrl+R is already used by Next untranslated line."));
+        QVERIFY(in(mapping, "hotkeySetAnyway")->isVisible());
+        clickButton(mapping, "hotkeySetAnyway");
+        QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(hotkeyRow(QStringLiteral("Subtitles Duplicate lines")).value(QStringLiteral("accel")).toString(),
                  QStringLiteral("Ctrl-R"));
         QCOMPARE(hotkeyRow(QStringLiteral("Editor Next untranslated line")).value(QStringLiteral("accel")).toString(),
@@ -13439,7 +13604,7 @@ private slots:
         // The window choice: Save as a Video hotkey adds a row at the end.
         map(QStringLiteral("Global Save"));
         in(mapping, "hotkeyWindowChoice")->setProperty("currentIndex", 3);
-        keyTo(keys, Qt::Key_F6);
+        keyTo(keys(), Qt::Key_F6);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(hotkeyRows().last().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Video Save"));
         QCOMPARE(application->hotkeys().selected(), -1);
@@ -13456,7 +13621,7 @@ private slots:
         QCOMPARE(hotkeyRow(QStringLiteral("Global History")).value(QStringLiteral("accel")).toString(), QString());
         // Escape closes the mapping window without a binding.
         map(QStringLiteral("Global Find"));
-        keyTo(keys, Qt::Key_Escape);
+        keyTo(keys(), Qt::Key_Escape);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(hotkeyRow(QStringLiteral("Global Find")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-F"));
         // Cancel: nothing installed or stored.
@@ -13543,11 +13708,10 @@ private slots:
         auto *bold = visualItem("tag_b");
         QVERIFY(bold);
         clickWith(bold, Qt::ShiftModifier);
-        auto *mapping = mappingWindow("hotkeyMapping");
+        auto *mapping = captureForm("hotkeyMapping");
         QVERIFY(mapping);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Add bold\"."));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Add bold\""));
         QVERIFY(!in(mapping, "hotkeyWindowChoice")->isVisible());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_B, Qt::ControlModifier | Qt::ShiftModifier);
         QTRY_VERIFY(!mapping->isVisible());
@@ -13603,12 +13767,11 @@ private slots:
         clickWith(duplicate, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_D, Qt::ControlModifier | Qt::ShiftModifier);
-        auto *question = mapping->findChild<QQuickWindow *>(QStringLiteral("hotkeyQuestion"));
-        QVERIFY(question);
-        QTRY_VERIFY(question->isVisible());
-        QCOMPARE(in(question, "hotkeyQuestionText")->property("text").toString(),
-                 QStringLiteral("This hotkey already exists for \"Duplicate lines\".\nWhat to do?"));
-        clickButton(question, "hotkeyCancel");
+        QTRY_VERIFY(in(mapping, "hotkeyQuestionText")->isVisible());
+        QCOMPARE(in(mapping, "hotkeyQuestionText")->property("text").toString(),
+                 QStringLiteral("Ctrl+Shift+D is already used by Duplicate lines."));
+        clickButton(mapping, "hotkeyCancel");
+        QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("GRID_DUPLICATE_LINES"), 1), QStringLiteral("Ctrl-Shift-D"));
         // In the Grid the new keys duplicate.
         QTRY_VERIFY(window->isActive()); // the question gave the activation back
@@ -13915,7 +14078,7 @@ private slots:
     {
         QVERIFY(application->openFile(episode));
         auto &h = application->hotkeys();
-        auto *mapping = mappingWindow("hotkeyMapping");
+        auto *mapping = captureForm("hotkeyMapping");
         QVERIFY(mapping);
         auto *root = engine->rootObjects().first();
         // Subtitles > Style manager: Shift+click maps GLOBAL_OPEN_STYLE_MANAGER.
@@ -13927,8 +14090,7 @@ private slots:
         QTRY_VERIFY(styleItem->isVisible() && styleItem->width() > 0);
         clickWith(styleItem, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Style manager\"."));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Style manager\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         auto *styles = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
         QVERIFY(!styles->isVisible());
@@ -13967,7 +14129,7 @@ private slots:
     {
         QVERIFY(application->openFile(episode));
         auto &h = application->hotkeys();
-        auto *mapping = mappingWindow("hotkeyMapping");
+        auto *mapping = captureForm("hotkeyMapping");
         auto *grid = item("editingGrid");
         // Stop: its tooltip names the binding (none by default); Shift+click
         // maps VIDEO_STOP with the window choice.
@@ -13983,8 +14145,7 @@ private slots:
         QTRY_VERIFY(!mismatch->property("visible").toBool());
         clickWith(stop, Qt::ShiftModifier | Qt::ControlModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Stop\"."));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Stop\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_K);
@@ -14091,14 +14252,13 @@ private slots:
         // Ctrl+click on Play line (AUDIO_PLAY_LINE / AUDIO_PLAY_LINE_ALT) maps
         // the second hotkey (O2-second-hotkey).
         const QString mainBefore = h.accelOf(QStringLiteral("AUDIO_PLAY_LINE"), 4);
-        auto *mapping = mappingWindow("hotkeyMapping");
+        auto *mapping = captureForm("hotkeyMapping");
         auto *playLine = visualItem("audioPlayLine");
         QVERIFY(playLine);
         QTRY_VERIFY(playLine->isVisible());
         clickWith(playLine, Qt::ControlModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Play line alt\"."));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Play line alt\""));
         QVERIFY(!in(mapping, "hotkeyWindowChoice")->isVisible());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
         QTRY_VERIFY(!mapping->isVisible());
@@ -14123,7 +14283,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("automationMenu"), "open"));
         QTRY_VERIFY(macro->isVisible() && macro->width() > 0 && macro->isEnabled());
         clickWith(macro, Qt::ShiftModifier);
-        QVERIFY(!mappingWindow("hotkeyMapping")->isVisible());
+        QVERIFY(!captureForm("hotkeyMapping")->isVisible());
         QTRY_VERIFY(item<QObject>("automationDock")->property("isOpen").toBool());
         QCOMPARE(named("automationTool")->property("recording").toString(), QStringLiteral("Script shell-fixture.lua-0"));
         auto *recorder = visualItem("automationRecorder");
@@ -23261,7 +23421,7 @@ private slots:
         QVERIFY(video.streams()[1].toMap().value(QStringLiteral("checked")).toBool());
         QTRY_VERIFY(!context->property("visible").toBool());
         {
-            auto *mapping = mappingWindow("hotkeyMapping");
+            auto *mapping = captureForm("hotkeyMapping");
             clickApart();
             QVERIFY(QMetaObject::invokeMethod(context, "openAt", Q_ARG(QVariant, QPointF(20, 20))));
             QTRY_VERIFY(context->property("opened").toBool());
@@ -23269,8 +23429,7 @@ private slots:
             QTRY_VERIFY(placed("videoMenuUnloadVideo", "videoMenuCopyFrame"));
             clickWith(unload, Qt::ShiftModifier);
             QTRY_VERIFY(mapping->isVisible());
-            QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                     QStringLiteral("Please enter a hotkey for \"Unload video\"."));
+            QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Unload video\""));
             QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
             keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_Escape);
             QTRY_VERIFY(!mapping->isVisible());
@@ -23944,15 +24103,14 @@ private slots:
         // Shift+click maps the item's Video window hotkey, with the window
         // choice, instead of running it; the shortcut editor lists it.
         auto &h = application->hotkeys();
-        auto *mapping = mappingWindow("hotkeyMapping");
+        auto *mapping = captureForm("hotkeyMapping");
         QTest::mouseClick(window, Qt::RightButton, Qt::NoModifier, c);
         QTRY_VERIFY(menu->property("opened").toBool());
         auto *aspectItem = qobject_cast<QQuickItem *>(named("videoMenuAspectRatio"));
         QTRY_VERIFY(aspectItem->isVisible() && aspectItem->width() > 0);
         clickWith(aspectItem, Qt::ShiftModifier);
         QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Change aspect ratio\"."));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Change aspect ratio\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
         QVERIFY(!named("aspectRatioDialog")->property("visible").toBool());
@@ -25172,12 +25330,11 @@ private slots:
         QVERIFY(application->video().play());
         QTRY_VERIFY(application->video().playing());
         clickWith(fullscreenItem("fullscreenStop"), Qt::ShiftModifier);
-        auto *mapping = mappingWindow("hotkeyMapping");
+        auto *mapping = captureForm("hotkeyMapping");
         QVERIFY(mapping);
         QTRY_VERIFY(mapping->isVisible());
         QVERIFY(application->video().playing());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Stop\"."));
+        QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Stop\""));
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_F12, Qt::ControlModifier | Qt::ShiftModifier);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("Ctrl-Shift-F12"));
