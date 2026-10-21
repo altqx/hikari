@@ -10773,6 +10773,66 @@ private slots:
         QTRY_COMPARE(runText(), QStringLiteral("C"));
     }
 
+    // TM1: with the tags shown, deleting a placed run's text takes its tags
+    // along as with them hidden, closed or not: no empty wrapper is left,
+    // and no open one for the next text typed to take.
+    void tagsFromOriginalShownDeletingARunTakesItsTags()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-shown.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\b1}B{\\b0} C\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("x y z"), 5);
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        application->editor().setShowTags(true);
+        auto *translated = item("translationText");
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("x {\\b1}y{\\b0} z"));
+        application->editor().translationEdited(QStringLiteral("x {\\b1}{\\b0} z"), 7);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x  z"));
+        QVERIFY(!application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("x  z"));
+        // Typing next to a shown tag is raw text, on the side it was typed.
+        application->editor().translationEdited(QStringLiteral("x y z"), 3);
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        application->editor().translationEdited(QStringLiteral("x {\\b1}yy{\\b0} z"), 9);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x {\\b1}yy{\\b0} z"));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+    }
+
+    // TM1: as above for a run left open: deleting its text leaves no open
+    // tag for the next text typed to take.
+    void tagsFromOriginalShownDeletingAnOpenRunTakesItsTags()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-shown-open.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Wall high"));
+        application->editor().translationEdited(QStringLiteral("Mur wysoki"), 10);
+        QVERIFY(application->editor().placeRun(1, 4, 10));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wysoki"));
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(item("translationText")->property("text").toString(), QStringLiteral("Mur {\\b1}wysoki"));
+        application->editor().translationEdited(QStringLiteral("Mur {\\b1}"), 9);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur "));
+        QVERIFY(!application->editor().tagRuns()[0].toMap().value("placed").toBool());
+    }
+
     // TM1: formatting of the translator's own over a placed run (Ctrl+B
     // where the Original has no bold run) goes into the translation's text;
     // the run stays placed, its tags written around it again.

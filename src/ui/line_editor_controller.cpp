@@ -798,31 +798,61 @@ void LineEditorController::edit(int role, const QString &newText, int cursor)
     const auto start = static_cast<std::size_t>(prefix);
     const auto end = static_cast<std::size_t>(old.size() - suffix);
 
-    if (m_showTags) {
-        setRaw(role, u8(newText));
-        return;
-    }
-    std::vector<std::size_t> bounds{0};
-    QTextBoundaryFinder finder(QTextBoundaryFinder::Grapheme, old);
-    for (qsizetype b; (b = finder.toNextBoundary()) >= 0;)
-        bounds.push_back(static_cast<std::size_t>(b));
+    auto graphemes = [](const QString &text) {
+        std::vector<std::size_t> bounds{0};
+        QTextBoundaryFinder finder(QTextBoundaryFinder::Grapheme, text);
+        for (qsizetype b; (b = finder.toNextBoundary()) >= 0;)
+            bounds.push_back(static_cast<std::size_t>(b));
+        return bounds;
+    };
     // TM1: with the Original's runs placed, the edit goes to the draft's body
     // (the field's text without the runs' tags) and the placements move with
-    // it, so a run whose text is deleted takes its tags along.
-    if (const auto tags = role == 1 ? runTags() : std::nullopt; tags && !tags->runs.empty()) {
+    // it, so a run whose text is deleted takes its tags along. `from` and `to`
+    // are visible-text offsets, the same in the field and in the body.
+    const auto tags = role == 1 ? runTags() : std::nullopt;
+    auto editDraft = [&](std::size_t from, std::size_t to, const std::vector<std::size_t> &bounds) {
         auto draft = translationDraft(*tags, *sessionRecord());
-        const auto result = core::mappedReplace(draft.body, start, end, u16(inserted), bounds);
+        const auto result = core::mappedReplace(draft.body, from, to, u16(inserted), bounds);
         if (!result) {
             refresh();
             fail(refusalText(result.error()), newText);
-            return;
+            return false;
         }
         const auto body = core::project(draft.body);
-        const auto rawStart = core::rawOffset(body, start, true);
-        const auto rawEnd = std::max(rawStart, core::rawOffset(body, end, false));
+        const auto rawStart = core::rawOffset(body, from, true);
+        const auto rawEnd = std::max(rawStart, core::rawOffset(body, to, false));
         core::shiftPlacements(draft.placements, rawStart, rawEnd, result->size() + (rawEnd - rawStart) - draft.body.size());
         draft.body = *result;
-        saveTranslationDraft(*tags, std::move(draft));
+        return saveTranslationDraft(*tags, std::move(draft));
+    };
+    if (m_showTags) {
+        // With the tags shown, an edit that removes visible text only (no
+        // tag in what it takes or types) goes to the draft as above, so a
+        // placed run's emptied wrapper goes too. Any other edit, and typing
+        // on either side of a tag, is raw text.
+        const auto shown = core::project(u16(old));
+        const auto from = core::displayOffset(shown, start), to = core::displayOffset(shown, end);
+        const auto real = sessionRecord();
+        const bool placed = tags && real && !real->translation.empty() && [&] {
+            const auto draft = translationDraft(*tags, *real);
+            return draft.carried && !draft.placements.empty();
+        }();
+        if (placed && end > start && to - from == end - start && !inserted.contains(u'{') && !inserted.contains(u'}')) {
+            if (editDraft(from, to, graphemes(QString::fromStdU16String(shown.text)))) {
+                const auto field = core::project(core::toUtf16(record()->translation));
+                m_selectionStart = m_selectionEnd =
+                    static_cast<int>(core::rawOffset(field, from + static_cast<std::size_t>(inserted.size()), false));
+                m_selectionRole = 1;
+                emit selectionRequested();
+            }
+            return;
+        }
+        setRaw(role, u8(newText));
+        return;
+    }
+    const auto bounds = graphemes(old);
+    if (tags && !tags->runs.empty()) {
+        editDraft(start, end, bounds);
         return;
     }
     const auto raw = core::toUtf16(roleText(*record(), role));
