@@ -242,6 +242,8 @@ private:
     static core::LineRecord edited(core::LineRecord line, const Pending &pending);
     // The session the pending edit was typed for, while it is open.
     application::EditSession *pendingSession() const;
+    // The preview and the run making one go.
+    void clearPreview();
     void edit(const Pending &change);
     std::map<core::LineId, std::u8string> pendingTexts() const;
     void schedulePreview();

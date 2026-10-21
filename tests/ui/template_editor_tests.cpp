@@ -1017,6 +1017,35 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
+    // A preview made before trust went is not this file's result: it goes
+    // with the run making one.
+    void revokedTrustTakesThePreviewAway()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto source = firstKaraoke();
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(editor->videoPreview());
+        templater->holdPreviews = 1;
+        QVERIFY(change([&](core::Document &doc) {
+            return doc.editLine(*source, [](core::LineRecord &l) { l.text += u8"{\\bord3}"; });
+        }));
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
+        QVERIFY(change([&](core::Document &doc) {
+            return doc.editLine(core::LineId{editor->current()},
+                                [](core::LineRecord &l) { l.text += u8"!_G.marker = 1!"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QVERIFY(!editor->hasPreview());
+        QVERIFY(!editor->videoPreview());
+        QVERIFY(answerHeld());
+        QTest::qWait(100);
+        QVERIFY(!editor->hasPreview());
+    }
+
     // Typing that ends where it began changes nothing: no step, no save
     // question.
     void anEditBackToTheStartIsNoStep()

@@ -416,6 +416,8 @@ void TemplateEditorController::refresh()
     m_wasAvailable = ready;
     if (becameReady)
         m_previewSnapshotKey.clear(); // a reloaded script may write otherwise
+    if (!trusted() && (m_preview || m_previewing))
+        clearPreview(); // made before trust went: not this file's result
     if (s->revision() != m_seenRevision || becameReady) {
         m_seenRevision = s->revision();
         if (s->revision() != m_applyRevision)
@@ -446,6 +448,17 @@ void TemplateEditorController::updateSource()
     emit valuesChanged();
     emit videoChanged();
     schedulePreview();
+}
+
+void TemplateEditorController::clearPreview()
+{
+    stopRuns();
+    m_preview.reset();
+    m_own.clear();
+    m_previewKept = false;
+    m_previewSnapshotKey.clear();
+    emit previewChanged();
+    emit videoChanged();
 }
 
 void TemplateEditorController::stopRuns()
