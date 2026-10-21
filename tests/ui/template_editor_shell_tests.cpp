@@ -271,6 +271,28 @@ private slots:
         QCOMPARE(application->reviewCloseTab(0).size(), qsizetype(1));
     }
 
+    // The Line editor's own moves (Enter, Ctrl+D) take the preview to the
+    // karaoke Line they reach, as a Grid click does.
+    void thePreviewFollowsTheLineEditorsMoves()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        showPanel("templateDock");
+        const auto first = session()->selection().active;
+        QVERIFY(first);
+        QTRY_COMPARE_WITH_TIMEOUT(editor().source(), first->value, 20'000);
+        std::optional<core::LineId> reached;
+        for (int k = 0; k < 20 && !reached; ++k) {
+            QVERIFY(application->editor().nextLine(1));
+            const auto active = session()->selection().active;
+            for (const auto *l : session()->document().lines())
+                if (active && l->id == *active && application::isKaraokeLine(*l) &&
+                    !application::templateKindOf(*l) && *active != *first)
+                    reached = active;
+        }
+        QVERIFY(reached);
+        QCOMPARE(editor().source(), reached->value);
+    }
+
     // A macro run another way than the panel's (a shortcut, the Automation
     // menu) starts from the template edit just typed, committed first.
     void aShortcutsRunSeesTheEditJustTyped()

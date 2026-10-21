@@ -1012,6 +1012,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_shell->setSelection(session->selection());
         m_editor->selectionChanged(); // LE4: no longer mixed
         followEditingLine(); // R2: the editor's own move (E4 sends the draft before it)
+        if (m_templateEditor)
+            m_templateEditor->refresh(); // KE2: the preview follows the active karaoke Line
     });
     // The editor's Start/End difference measures from the frame the Video
     // panel reports: the player's while playing (legacy EditBox::
