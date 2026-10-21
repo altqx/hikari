@@ -948,7 +948,11 @@ void TemplateEditorController::runPreview()
     auto snapshot = application::templatePreviewSnapshot(seen, *m_source, pendingTexts());
     if (!snapshot)
         return;
+    // What the run reads: Script Info (meta, karaskel's resolution), the
+    // styles and the Lines.
     std::string key;
+    for (const auto &i : snapshot->info)
+        key += i.key + ':' + i.value + '\n';
     for (const auto &d : snapshot->dialogues)
         key += d.raw + '\n' + d.text + '\n';
     for (const auto &st : snapshot->styles)

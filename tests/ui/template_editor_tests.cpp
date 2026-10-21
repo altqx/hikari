@@ -8,6 +8,7 @@
 
 #include "hikari/application/edit_session.h"
 #include "hikari/application/macro_transaction.h"
+#include "hikari/application/script_resolution.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/backends/karaoke_preview_runner.h"
 #include "hikari/backends/lua_script_host.h"
@@ -417,6 +418,24 @@ private slots:
         QVERIFY(editor->templates().front().toMap().value(QStringLiteral("generated")).toInt() >= 0);
         QVERIFY(session->undo());
         QCOMPARE(bytesOf(session->document()), before);
+    }
+
+    // Script Info is part of what the templates read (meta, karaskel's
+    // resolution): a change of it previews again.
+    void aScriptInfoChangePreviewsAgain()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500); // the run marking the current template's own Lines
+        const int before = templater->previews;
+        editor->refresh();
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, before); // nothing changed: no run
+        QVERIFY(application::setScriptResolution(*session, {1920, 1080}).has_value());
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return templater->previews > before && settled(); }, 20'000));
     }
 
     // Apply waits for the preview of the last edit: a problem typed just
