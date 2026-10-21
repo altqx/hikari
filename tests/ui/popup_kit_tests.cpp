@@ -510,6 +510,15 @@ private slots:
         QTest::keyClick(root.get(), Qt::Key_Return);
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         QCOMPARE(notes().last(), QStringLiteral("acted:Default"));
+        // And in the list, after Down and Space (Codex review).
+        run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign'], [], { actionText: 'Load' })"));
+        QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
+        QTRY_VERIFY(findIn(root.get(), "chooseStylesSearch")->hasActiveFocus());
+        QTest::keyClick(root.get(), Qt::Key_Down);
+        QTest::keyClick(root.get(), Qt::Key_Space);
+        QTest::keyClick(root.get(), Qt::Key_Return);
+        QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
+        QCOMPARE(notes().last(), QStringLiteral("acted:Default"));
         // A popover's anchor with no `pressed` (a text field) keeps the
         // record of the press that closed it, so that press opens nothing.
         run(QStringLiteral("styles.pressedAnchor = date.field; styles.keepPressedAnchor()"));

@@ -9,7 +9,8 @@ pragma Translator: "HikariSub.MainWindow"
 // it opened with back (`changed` again with them, `reverted` true: an
 // opener may put back more than the ticks), and a press outside or
 // Enter keeps them. With `actionText` ("Load") the ticks are only applied
-// by that button (`acted`), which Enter in the search field presses.
+// by that button (`acted`), which Enter in the search field or the list
+// presses.
 //
 // openFor(anchor, names, checked, options): options.counts ({name: lines}),
 // options.actionText.
@@ -114,6 +115,8 @@ Popover {
             Accessible.name: chooser.title
             ScrollBar.vertical: ScrollBar { policy: styleList.contentHeight > styleList.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded }
             Keys.onSpacePressed: if (currentIndex >= 0) chooser.toggle(chooser.shown[currentIndex])
+            Keys.onReturnPressed: chooser.confirm()
+            Keys.onEnterPressed: chooser.confirm()
             delegate: ItemDelegate {
                 id: row
                 required property string modelData
