@@ -1695,6 +1695,25 @@ private slots:
         QTRY_COMPARE(textOf(QStringLiteral("templateEffect")), editor->effect());
     }
 
+    // A template's Layer may be negative, as the Line editor's may.
+    void theLayerFieldTakesANegativeLayer()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> tl;
+        for (const auto *l : doc.lines())
+            if (!tl && application::templateKindOf(*l))
+                tl = l->id;
+        QVERIFY(tl);
+        QVERIFY(doc.editLine(*tl, [](core::LineRecord &l) { l.layer.value = -3; }));
+        openDocument(std::move(doc), true);
+        editor->setCurrent(tl->value);
+        showPanel();
+        auto *layer = item(QStringLiteral("templateLayer"));
+        QTRY_COMPARE(layer->property("value").toInt(), -3);
+        QVERIFY(layer->property("from").toInt() <= -10'000'000);
+        QCOMPARE(layer->property("to").toInt(), 10'000'000);
+    }
+
     void applyFromThePanelIsOneStepAndSaysWhatItWrote()
     {
         open(QStringLiteral("stock-tutorials.ass"));

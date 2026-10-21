@@ -446,8 +446,9 @@ Pane {
                             Layout.preferredWidth: 80
                             enabled: root.controller.editable
                             editable: true
-                            from: 0
-                            to: 2147483647
+                            // The Line editor's range: a Layer may be negative.
+                            from: -10000000
+                            to: 10000000
                             value: root.controller.layer
                             onValueModified: root.controller.setLayer(value)
                             Accessible.name: qsTr("Layer")
