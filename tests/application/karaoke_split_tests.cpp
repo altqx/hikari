@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <fstream>
 #include <sstream>
 #include <string>
@@ -367,6 +368,17 @@ TEST(KaraokeMoveStart, TheLinesTextKeepsItsSyllables)
               std::optional<std::u16string>(u"{\\k20}{\\b1}ka{\\k50}ra"));
     EXPECT_EQ(karaokeKeepSyllables(u"karaoke", 1000, 800), std::nullopt); // no tags
     EXPECT_EQ(karaokeKeepSyllables(u"{\\k50}ka", 1000, 1000), std::nullopt);
+    // tags outside a block, or in one never closed, are no \k syllables
+    EXPECT_EQ(karaokeKeepSyllables(u"\\k50 ka{\\b1}", 1000, 800), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(u"{\\b1}{\\k50 ka", 1000, 800), std::nullopt);
+    // a long unclosed block of \k tags is read in one pass (Codex: the
+    // backward searches were quadratic, seconds for 300 KB)
+    std::u16string unclosed = u"{";
+    for (int i = 0; i < 100000; i++)
+        unclosed += u"\\k0";
+    const auto began = std::chrono::steady_clock::now();
+    EXPECT_EQ(karaokeKeepSyllables(unclosed, 1000, 800), std::nullopt);
+    EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(1));
 }
 
 // ---- \k and \kf (KA1-kf-switch) ---------------------------------------------------

@@ -47,19 +47,25 @@ u16 lowered(u16 s, const KaraokeCharClass &classes)
 // block that opens before it (any "{" with no "}" between) and closes after.
 bool hasKaraokeTag(const u16 &low)
 {
-    for (std::size_t q = low.find(u"\\k"); q != u16::npos; q = low.find(u"\\k", q + 1)) {
+    // one pass (KA1: a long unclosed block made the backward searches
+    // quadratic): whether a "{" is open here, and where the last "}" is
+    const std::size_t lastClose = low.find_last_of(u'}');
+    if (lastClose == u16::npos)
+        return false;
+    bool open = false;
+    for (std::size_t q = 0; q < low.size(); q++) {
+        if (low[q] == u'{')
+            open = true;
+        else if (low[q] == u'}')
+            open = false;
+        if (!open || low[q] != u'\\' || q + 1 >= low.size() || low[q + 1] != u'k')
+            continue;
         std::size_t r = q + 2;
         if (r < low.size() && low[r] == u'f')
             ++r;
         if (r < low.size() && low[r] == u'o')
             ++r;
-        if (r >= low.size() || low[r] < u'0' || low[r] > u'9')
-            continue;
-        const std::size_t open = q == 0 ? u16::npos : low.find_last_of(u'{', q - 1);
-        const std::size_t close = q == 0 ? u16::npos : low.find_last_of(u'}', q - 1);
-        if (open == u16::npos || (close != u16::npos && close > open))
-            continue;
-        if (low.find(u'}', r + 1) != u16::npos)
+        if (r < low.size() && low[r] >= u'0' && low[r] <= u'9' && lastClose > r)
             return true;
     }
     return false;
