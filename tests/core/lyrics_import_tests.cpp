@@ -637,6 +637,27 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     EXPECT_EQ(timed("<p begin=\"0\" end=\"6\"><span begin=\"0\" end=\"3\">a <span begin=\"1\" dur=\"9\"><span begin=\"1\">b</span>"
                     "</span></span></p>"),
               (std::vector<Row>{{0, 6000, "", "{\\k100}a {\\k200}b{\\k300}"}}));
+    // So does a word's, and a begin before the one it inherits starts there.
+    EXPECT_EQ(timed("<p begin=\"0\" end=\"4\"><span begin=\"3\" end=\"8\">x</span></p>"),
+              (std::vector<Row>{{0, 4000, "", "{\\k300}{\\k100}x"}}));
+    EXPECT_EQ(timed("<p begin=\"2\" end=\"4\"><span begin=\"1\" end=\"3\">x</span></p>"),
+              (std::vector<Row>{{2000, 4000, "", "{\\k100}x{\\k100}"}}));
+    EXPECT_EQ(timed("<div begin=\"2\" end=\"4\"><p begin=\"1\" end=\"3\">x</p></div>"), (std::vector<Row>{{2000, 3000, "", "x"}}));
+    // One wholly outside the times it inherits is wrong, at its begin or end.
+    EXPECT_EQ(problemOf("<tt><body><p begin=\"0\" end=\"4\"><span begin=\"5\" end=\"6\">x</span></p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::EndBeforeBegin, 1, u8"5"}));
+    EXPECT_EQ(problemOf("<tt><body><p begin=\"2\" end=\"4\"><span begin=\"0\" end=\"1\">x</span></p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::EndBeforeBegin, 1, u8"1"}));
+    EXPECT_EQ(problemOf("<tt><body><p begin=\"0\" end=\"4\"><span begin=\"5\" end=\"6\">a<span begin=\"5\">b</span></span>"
+                        "</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::EndBeforeBegin, 1, u8"5"}));
+    EXPECT_EQ(problemOf("<tt><body><div begin=\"0\" end=\"2\">\n<div begin=\"3\"><p>x</p></div></div></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::EndBeforeBegin, 2, u8"3"}));
+    // Background vocals keep their own times, as AMLL writes them over their
+    // main Line, starting before it or ending after it.
+    EXPECT_EQ(timed("<p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"3\">a</span><span ttm:role=\"x-bg\" begin=\"0.5\" "
+                    "end=\"3.5\"><span begin=\"0.5\" end=\"3.5\">b</span></span></p>"),
+              (std::vector<Row>{{1000, 3000, "", "{\\k200}a"}, {500, 3500, "", "{\\k300}b"}}));
     // A word-timed Line spans its words; the ancestor ends its last word.
     EXPECT_EQ(timed("<div begin=\"0\" end=\"4\"><p><span begin=\"1\" end=\"2\">a</span> <span begin=\"2\">b</span></p></div>"),
               (std::vector<Row>{{1000, 4000, "", "{\\k100}a {\\k200}b"}}));
@@ -853,7 +874,7 @@ TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)
     EXPECT_EQ(actors(" ttm:agent=\"v2\""), (std::vector<std::string>{"Lead", "Choir"}));
     EXPECT_EQ(actors(""), (std::vector<std::string>{"Lead", "Lead"}));
     // A background vocal inside a word's span is a Line of its own too.
-    const auto nested = importTtml(bytes("<tt><body><p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"2\">lead"
+    const auto nested = importTtml(bytes("<tt><body><p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"3\">lead"
                                          "<span ttm:role=\"x-bg\"><span begin=\"2\" end=\"3\">back</span></span></span>"
                                          "</p></body></tt>"));
     ASSERT_TRUE(nested.has_value());

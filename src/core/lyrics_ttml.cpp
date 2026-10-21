@@ -1308,6 +1308,26 @@ private:
         return own && inherited ? std::min(*own, *inherited) : own ? own : inherited;
     }
 
+    // An element's begin and end within the ones it inherits, as a child's
+    // interval lies within its parent's: its own begin no earlier than the
+    // inherited one, its own end no later. EndBeforeBegin, at its begin or
+    // its end, when it lies wholly outside them.
+    static std::expected<std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>>, LyricsProblem>
+    within(const XmlNode &node, std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>> own,
+           std::optional<std::int64_t> begin, std::optional<std::int64_t> end)
+    {
+        const auto from = own.first && begin ? std::max(*own.first, *begin) : own.first ? own.first : begin;
+        const auto to = endWithin(own.second, end);
+        if (from && to && *to < *from) {
+            // Its own begin after the end it inherits, or its own end before
+            // the begin it inherits.
+            const u8sv which = own.first && *from == *own.first ? u8"begin" : attribute(node, u8"end") ? u8"end" : u8"dur";
+            return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, attributeLine(node, which),
+                                                 std::u8string(attribute(node, which).value_or(u8""))});
+        }
+        return std::pair{from, to};
+    }
+
     // Whether an element has times of its own: a begin, or an end or dur
     // (counted from the begin it inherits).
     static bool timed(const XmlNode &node)
@@ -1401,13 +1421,16 @@ private:
             const auto inheritedBegin = spanBegin ? spanBegin : into.lineBegin;
             if (isTtml(child, u8"span") && (attribute(child, u8"begin") || (timed(child) && inheritedBegin)) &&
                 !hasTimedSpan(child)) {
-                const auto t = times(child, inheritedBegin);
+                const auto own = times(child, inheritedBegin);
+                if (!own)
+                    return std::unexpected(own.error());
+                const auto t = within(child, *own, inheritedBegin, spanEnd);
                 if (!t)
                     return std::unexpected(t.error());
                 // Without a begin of its own a word starts at the begin it
                 // inherits, or where the word before it ends if that is later.
-                std::int64_t begin = t->first ? *t->first : *inheritedBegin;
-                if (!t->first && !into.words.empty())
+                std::int64_t begin = *t->first;
+                if (!own->first && !into.words.empty())
                     begin = std::max(begin, into.ends.back().value_or(into.words.back().begin));
                 const bool kept = preserves(child, preserve);
                 const std::u8string text = spanText(child, preserve);
@@ -1416,15 +1439,15 @@ private:
                 // ones as whichever scope inside the span kept them.
                 if (word.size() < text.size())
                     addText(into, u8sv(text).substr(0, text.size() - word.size()), false);
-                backgroundsIn(child, backgrounds, kept, begin, t->second ? t->second : spanEnd);
+                backgroundsIn(child, backgrounds, kept, begin, t->second);
                 if (word.empty())
                     continue; // a timed span with no lyric is no word; the gaps come from the words
-                if (t->first && into.timedBegin && begin < *into.timedBegin)
+                if (own->first && into.timedBegin && begin < *into.timedBegin)
                     return std::unexpected(LyricsProblem{Kind::TimeGoesBack, attributeLine(child, u8"begin"),
                                                          std::u8string(*attribute(child, u8"begin"))});
                 append(into.plain, word, kept);
                 into.words.push_back(LyricWord{begin, 0, std::u8string(word)});
-                into.ends.push_back(t->second ? t->second : spanEnd);
+                into.ends.push_back(t->second);
                 into.lines.push_back(child.line);
                 into.own.push_back(false);
                 into.timedBegin = begin;
@@ -1434,16 +1457,19 @@ private:
             const XmlNode *innerSpan = span;
             std::optional<std::int64_t> innerBegin = spanBegin, innerEnd = spanEnd;
             if (timed(child)) {
-                const auto t = times(child, inheritedBegin);
+                const auto own = times(child, inheritedBegin);
+                if (!own)
+                    return std::unexpected(own.error());
+                const auto t = within(child, *own, inheritedBegin, spanEnd);
                 if (!t)
                     return std::unexpected(t.error());
                 // Without a begin of its own the span starts at the begin it
                 // inherits, so its own text is a word from there.
-                if (const auto begin = t->first ? t->first : inheritedBegin) {
+                if (t->first) {
                     innerSpan = &child;
-                    innerBegin = begin;
+                    innerBegin = t->first;
                 }
-                innerEnd = endWithin(t->second, spanEnd);
+                innerEnd = t->second;
             }
             if (auto ok = collect(child, into, backgrounds, preserves(child, preserve), innerSpan, innerBegin, innerEnd); !ok)
                 return ok;
@@ -1498,20 +1524,24 @@ private:
     }
 
     // A <p>, or an x-bg span, as Lines. `begin` and `end` are its nearest
-    // timed ancestor's: they time a plain paragraph without times of its own
-    // and end its last word, but a word-timed Line still spans its words.
-    // `inherited`: whether its parent keeps whitespace (xml:space).
+    // timed ancestor's: they time a plain paragraph without times of its own,
+    // and its own times and its words' lie within them. `inherited`: whether
+    // its parent keeps whitespace (xml:space). `background`: an x-bg span,
+    // whose own times stand, as AMLL writes background vocals over their
+    // main Line, starting before it or ending after it.
     std::expected<void, LyricsProblem> line(const XmlNode &node, std::optional<std::int64_t> begin,
-                                            std::optional<std::int64_t> end, const std::u8string &actor, bool inherited)
+                                            std::optional<std::int64_t> end, const std::u8string &actor, bool inherited,
+                                            bool background = false)
     {
         const auto own = times(node, begin);
         if (!own)
             return std::unexpected(own.error());
-        begin = own->first ? own->first : begin;
-        end = endWithin(own->second, end);
-        if (begin && end && *end < *begin) // its own begin after the end it inherits
-            return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, attributeLine(node, u8"begin"),
-                                                 std::u8string(attribute(node, u8"begin").value_or(u8""))});
+        const auto t = background ? within(node, *own, own->first ? std::nullopt : begin, own->second ? std::nullopt : end)
+                                  : within(node, *own, begin, end);
+        if (!t)
+            return std::unexpected(t.error());
+        begin = t->first;
+        end = t->second;
         Words words;
         words.lineBegin = begin;
         Backgrounds backgrounds;
@@ -1519,8 +1549,7 @@ private:
         // A paragraph with timed words times its own text as a span does:
         // "hello <span>world</span>" sings hello from the paragraph's begin.
         const bool spans = begin && hasTimedSpan(node);
-        if (auto ok = collect(node, words, backgrounds, preserve, spans ? &node : nullptr, spans ? begin : std::nullopt,
-                              spans ? end : std::nullopt);
+        if (auto ok = collect(node, words, backgrounds, preserve, spans ? &node : nullptr, spans ? begin : std::nullopt, end);
             !ok)
             return ok;
         joinUntimed(words, end);
@@ -1551,7 +1580,7 @@ private:
             words.words.front().text.insert(0, words.leading);
             for (std::size_t i = 0; i < words.words.size(); ++i)
                 words.words[i].text = finished(words.words[i].text, i == 0, i + 1 == words.words.size());
-            out.start = std::min(own->first.value_or(words.words.front().begin), words.words.front().begin);
+            out.start = own->first ? std::min(*begin, words.words.front().begin) : words.words.front().begin;
             // Its own end, cut at the one it inherits, if the words end before it.
             out.end = own->second ? std::max(*end, words.words.back().end) : words.words.back().end;
             out.words = std::move(words.words);
@@ -1560,7 +1589,8 @@ private:
         }
         for (const Background &background : backgrounds)
             if (auto ok = line(*background.node, background.begin ? background.begin : begin,
-                               background.end ? background.end : end, actorOf(*background.node, actor), background.preserve);
+                               background.end ? background.end : end, actorOf(*background.node, actor), background.preserve,
+                               true);
                 !ok)
                 return ok;
         return {};
@@ -1599,8 +1629,11 @@ private:
         const auto own = times(node, begin);
         if (!own)
             return std::unexpected(own.error());
-        begin = own->first ? own->first : begin;
-        end = endWithin(own->second, end);
+        const auto t = within(node, *own, begin, end);
+        if (!t)
+            return std::unexpected(t.error());
+        begin = t->first;
+        end = t->second;
         for (const XmlNode &child : node.children) {
             if (child.isText())
                 continue;
