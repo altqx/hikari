@@ -907,15 +907,15 @@ Pane {
                 { effect: "template line", text: qsTr("Template for each Line") },
                 { effect: "template pre-line", text: qsTr("Template before each Line") },
                 { effect: "template char", text: qsTr("Template for each character") },
-                { effect: "code once", text: qsTr("Code run once") },
-                { effect: "code line", text: qsTr("Code for each Line") },
-                { effect: "code syl", text: qsTr("Code for each syllable") }
+                { effect: "code once", code: true, text: qsTr("Code run once") },
+                { effect: "code line", code: true, text: qsTr("Code for each Line") },
+                { effect: "code syl", code: true, text: qsTr("Code for each syllable") }
             ]
             delegate: ShellMenuItem {
                 required property var modelData
                 required property int index
                 objectName: "templateNew_" + index
-                iconRole: modelData.effect.startsWith("code") ? "run-script" : "template-editor"
+                iconRole: modelData.code ? "run-script" : "template-editor"
                 text: modelData.text + "\t" + modelData.effect
                 onTriggered: root.controller.insertTemplate(modelData.effect)
             }
