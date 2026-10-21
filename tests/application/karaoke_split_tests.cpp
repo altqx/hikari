@@ -165,6 +165,8 @@ TEST(KaraokeAutoSplit, EnglishByHyphenation)
     // in an English Line, words that would read as romaji are English too
     EXPECT_EQ(syllables("Take me home tonight"), "Take |me |home |tonight");
     EXPECT_EQ(syllables("happy story"), "hap|py |sto|ry"); // two letters at least either side
+    // a ligature is a letter of its word, as the patterns read it (Codex)
+    EXPECT_EQ(syllables("a\xEF\xAC\x83nity"), "a\xEF\xAC\x83n|i|ty");
     // without patterns a word is one syllable
     EXPECT_EQ(syllables("beautiful", {.hyphenate = false}), "beautiful");
 }
@@ -208,6 +210,7 @@ TEST(KaraokeAutoSplit, SpacesPunctuationAndBlocks)
     EXPECT_EQ(syllables("kara{ke"), "ka|ra{ke");
     // digits and symbols open the syllable after them
     EXPECT_EQ(syllables("2kara"), "2ka|ra");
+    EXPECT_EQ(syllables("ka$ra"), "ka|$ra"); // symbols too, not the punctuation they are to legacy (Codex)
 }
 
 // KA1-auto-split-most (Codex security): a Line of more visible characters
@@ -241,6 +244,7 @@ TEST(KaraokeWeight, VisibleCharactersOnly)
     EXPECT_EQ(karaokeWeight(u"ka\\Nra\\h", ascii), 4);
     EXPECT_EQ(karaokeWeight(u"don't", ascii), 5); // an apostrophe in a word is a letter of it
     EXPECT_EQ(karaokeWeight(u"'ka'", ascii), 2);
+    EXPECT_EQ(karaokeWeight(u"ka$", ascii), 3); // a symbol is visible
     EXPECT_EQ(karaokeWeight(u(" \xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD" "a"), ascii), 2); // 👍🏽 is one
     EXPECT_EQ(karaokeWeight(u"é", ascii), 1);                                    // e and a combining acute
 }

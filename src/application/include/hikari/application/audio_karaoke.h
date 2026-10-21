@@ -34,10 +34,13 @@ namespace hikari::application {
 // characters past Latin-1), and the lower case Split compares (legacy
 // wxString::Lower; U1-unicode-case: every letter by Unicode, one UTF-16 unit
 // to one). The default answers ASCII only; the UI gives Unicode's space,
-// punctuation and symbol categories and its lower case.
+// punctuation and symbol categories and its lower case. `symbol` (Auto
+// split's, KA1-auto-split-language): which of those are symbols (ASCII's $ +
+// < = > ^ ` | ~, Unicode's symbol categories), read as digits are.
 struct KaraokeCharClass {
     std::function<bool(char16_t)> space;
     std::function<bool(char16_t)> punct;
+    std::function<bool(char16_t)> symbol;
     std::function<char16_t(char16_t)> lower;
     static KaraokeCharClass ascii();
 };

@@ -64,7 +64,8 @@ bool isHangul(char32_t c)
 bool isLatin(char32_t c)
 {
     return inRange(c, U'a', U'z') || inRange(c, U'A', U'Z') ||
-           (inRange(c, 0x00C0, 0x024F) && c != 0x00D7 && c != 0x00F7) || inRange(c, 0x1E00, 0x1EFF);
+           (inRange(c, 0x00C0, 0x024F) && c != 0x00D7 && c != 0x00F7) || inRange(c, 0x1E00, 0x1EFF) ||
+           inRange(c, 0xFB00, 0xFB06); // the ligatures (ﬁ, ﬃ), which the patterns know (Codex)
 }
 
 bool isApostrophe(char32_t c)
@@ -150,6 +151,8 @@ void eachUnit(u16v text, const KaraokeCharClass &classes, Take take)
             unit.kind = Kind::Han;
         else if (isHangul(c))
             unit.kind = Kind::Hangul;
+        else if (bmp && classes.symbol && classes.symbol(static_cast<char16_t>(c)))
+            unit.kind = Kind::Other; // legacy's punctuation, but a symbol opens what follows (Codex)
         else if (bmp && classes.punct && classes.punct(static_cast<char16_t>(c)))
             unit.kind = Kind::Punct;
         else if (isLatin(c))

@@ -290,6 +290,7 @@ application::KaraokeCharClass karaokeCharClass()
         const QChar ch(c);
         return ch.isPunct() || ch.isSymbol();
     };
+    classes.symbol = [ascii](char16_t c) { return c < 128 ? ascii.symbol(c) : QChar(c).isSymbol(); };
     // U1-unicode-case: Unicode's lower case (one unit to one, as wx's Lower)
     classes.lower = [](char16_t c) { return static_cast<char16_t>(QChar(c).toLower().unicode()); };
     return classes;

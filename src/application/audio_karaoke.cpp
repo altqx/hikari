@@ -189,6 +189,7 @@ KaraokeCharClass KaraokeCharClass::ascii()
     classes.punct = [](char16_t c) {
         return c > 32 && c < 127 && !(c >= u'0' && c <= u'9') && !(c >= u'a' && c <= u'z') && !(c >= u'A' && c <= u'Z');
     };
+    classes.symbol = [](char16_t c) { return std::u16string_view(u"$+<=>^`|~").find(c) != std::u16string_view::npos; };
     classes.lower = lowerAscii;
     return classes;
 }
