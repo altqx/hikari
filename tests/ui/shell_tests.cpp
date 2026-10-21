@@ -21000,7 +21000,8 @@ private slots:
         // The right button: the caret to the column and the focus, then the drag.
         // The context menus shown: a field's own (Fusion's
         // TextEditingContextMenu, a Popup.Window outside the overlay) and any
-        // in the window's overlay.
+        // in the window's overlay. A ToolTip there is none: the field the
+        // press leaves the pointer over shows its own after 500 ms.
         const auto menusOf = [](QQuickItem *field) {
             QList<QObject *> menus;
             for (auto *popup : field->findChildren<QObject *>())
@@ -21015,7 +21016,7 @@ private slots:
             for (auto *layer : window->contentItem()->childItems())
                 if (QByteArray(layer->metaObject()->className()) == "QQuickOverlay")
                     for (auto *child : layer->childItems())
-                        n += child->isVisible();
+                        n += child->isVisible() && !(child->parent() && child->parent()->inherits("QQuickToolTip"));
             return n;
         };
         const auto closeMenus = [&](QQuickItem *field) {
