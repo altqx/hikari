@@ -6247,6 +6247,7 @@ private slots:
         QCOMPARE(clashes[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("Title"));
         QCOMPARE(clashes[0].toMap().value(QStringLiteral("same")).toBool(), true);
         QCOMPARE(clashes[0].toMap().value(QStringLiteral("suggestion")).toString(), QStringLiteral("Title (2)"));
+        QCOMPARE(clashes[0].toMap().value(QStringLiteral("occurrence")).toInt(), 0);
         styles.addToDocument({0}, {QVariantMap{{QStringLiteral("name"), QStringLiteral("Title")},
                                                {QStringLiteral("action"), QStringLiteral("skip")}}});
         QCOMPARE(styles.documentStyles(), QStringList{QStringLiteral("Title")});

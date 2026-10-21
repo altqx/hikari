@@ -156,18 +156,27 @@ DialogWindow {
             visible: box.showDetails
             color: Theme.field
             border.color: Theme.line
-            implicitHeight: detailsText.implicitHeight + 16
+            // Long details (a stack trace) scroll: the answers stay on screen.
+            implicitHeight: Math.min(detailsText.implicitHeight + 16, 220)
             Layout.fillWidth: true
-            Label {
-                id: detailsText
-                objectName: "messageBoxDetails"
-                x: 10
-                y: 8
-                width: parent.width - 48
-                text: box.details
-                font.family: "monospace"
-                wrapMode: Text.WrapAnywhere
-                textFormat: Text.PlainText
+            ScrollView {
+                id: detailsScroll
+                objectName: "messageBoxDetailsScroll"
+                anchors.fill: parent
+                anchors.leftMargin: 10
+                anchors.topMargin: 8
+                anchors.bottomMargin: 8
+                anchors.rightMargin: 38
+                contentWidth: availableWidth
+                Label {
+                    id: detailsText
+                    objectName: "messageBoxDetails"
+                    width: detailsScroll.availableWidth
+                    text: box.details
+                    font.family: "monospace"
+                    wrapMode: Text.WrapAnywhere
+                    textFormat: Text.PlainText
+                }
             }
             IconToolButton {
                 objectName: "messageBoxCopyDetails"

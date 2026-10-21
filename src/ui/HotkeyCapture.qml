@@ -120,6 +120,22 @@ Item {
         if (compactWindow && compactWindow.visible && closing !== true)
             compactWindow.close()
     }
+    // The key caps of a portable key text: its modifiers, then the key.
+    // "+" both joins them and is a key ("Ctrl++", "Num++").
+    function keyParts(text) {
+        const modifiers = ["Ctrl", "Shift", "Alt", "Meta", "Num"]
+        const parts = []
+        let rest = text
+        for (;;) {
+            const at = rest.indexOf("+")
+            if (at <= 0 || at === rest.length - 1 || modifiers.indexOf(rest.slice(0, at)) < 0)
+                break
+            parts.push(rest.slice(0, at))
+            rest = rest.slice(at + 1)
+        }
+        parts.push(rest)
+        return parts
+    }
     function press(event) {
         event.accepted = true
         const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
@@ -215,7 +231,7 @@ Item {
                 spacing: 6
                 visible: form.host.keys.length > 0
                 Repeater {
-                    model: form.host.keys.length > 0 ? form.host.keys.split("+") : []
+                    model: form.host.keys.length > 0 ? form.host.keyParts(form.host.keys) : []
                     Row {
                         id: cap
                         required property string modelData

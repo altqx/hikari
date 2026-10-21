@@ -129,8 +129,10 @@ Popup {
             Qt.callLater(keepPressedAnchor)
         }
     }
+    // An anchor with no `pressed` (a text field) keeps the record for the
+    // press's second (openAt): only a button that is up drops it.
     function keepPressedAnchor() {
-        if (pressedAnchor && !pressedAnchor.pressed)
+        if (pressedAnchor && pressedAnchor.pressed === false)
             pressedAnchor = null
     }
     property Item pressedAnchor: null

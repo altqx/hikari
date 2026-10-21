@@ -148,6 +148,7 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
         first[into[i].name] = i;
     StyleNames taken = namesOf(into);
     std::unordered_map<u8, int> next;
+    std::unordered_map<u8, int> clashes; // per name, the clashes so far
     const auto add = [&](core::StyleValues style) {
         first.try_emplace(style.name, into.size());
         taken.insert(style.name);
@@ -160,7 +161,7 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
             add(style);
             continue;
         }
-        const auto choice = choices.find(style.name);
+        const auto choice = choices.find({style.name, clashes[style.name]++});
         if (choice == choices.end() || choice->second.action == ClashAction::Skip)
             continue;
         if (choice->second.action == ClashAction::Replace) {

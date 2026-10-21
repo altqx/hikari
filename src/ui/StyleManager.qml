@@ -130,7 +130,7 @@ Window {
             title: qsTr("Copy styles"),
             text: qsTr("%1 of %2 styles already exist in %3.").arg(listed.length).arg(total).arg(into),
             detail: same > 0 ? qsTr("%n more are the same as the ones there and are left as they are.", "", same) : "",
-            rows: listed.map(c => ({ name: c.name, difference: manager.fieldNames(c.fields), suggestion: c.suggestion })),
+            rows: listed.map(c => ({ name: c.name, occurrence: c.occurrence, difference: manager.fieldNames(c.fields), suggestion: c.suggestion })),
             added: total - clashes.length,
             acceptText: count => qsTr("Copy %n style(s)", "", count)
         }, results => { if (results) done(results) })

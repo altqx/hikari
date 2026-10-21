@@ -44,10 +44,16 @@ RowLayout {
         const d = Date.fromLocaleDateString(locale, text.trim(), shortFormat)
         return isNaN(d.getTime()) ? null : d
     }
-    function back(s) {
-        const d = day(new Date())
-        if (s.months)
+    // `s` before `from` (default today). A month back from the 31st is the
+    // last day of a shorter month, not a day of this one.
+    function back(s, from) {
+        const d = day(from || new Date())
+        if (s.months) {
+            const dayOf = d.getDate()
+            d.setDate(1)
             d.setMonth(d.getMonth() - s.months)
+            d.setDate(Math.min(dayOf, new Date(d.getFullYear(), d.getMonth() + 1, 0).getDate()))
+        }
         if (s.days)
             d.setDate(d.getDate() - s.days)
         return d

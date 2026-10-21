@@ -297,7 +297,7 @@ Popup {
         }
     }
     function keepPressedAnchor() {
-        if (pressedAnchor && !pressedAnchor.pressed)
+        if (pressedAnchor && pressedAnchor.pressed === false) // as Popover's
             pressedAnchor = null
     }
     property Item pressedAnchor: null

@@ -129,7 +129,7 @@ QVariantList listOf(const std::vector<std::size_t> &rows)
     return out;
 }
 
-// The clash review's answers ([{name, action, newName}]).
+// The clash review's answers ([{name, occurrence, action, newName}]).
 application::ClashChoices choicesOf(const QVariantList &choices)
 {
     application::ClashChoices out;
@@ -143,14 +143,16 @@ application::ClashChoices choicesOf(const QVariantList &choices)
         c.newName = u8(m.value(QStringLiteral("newName")).toString().trimmed());
         if (c.action == application::ClashAction::Rename && c.newName.empty())
             c.action = application::ClashAction::Skip;
-        out[u8(m.value(QStringLiteral("name")).toString())] = std::move(c);
+        out[{u8(m.value(QStringLiteral("name")).toString()), m.value(QStringLiteral("occurrence")).toInt()}] = std::move(c);
     }
     return out;
 }
 
 // The clashes a transfer has, for the clash review: each name already present
-// (or added earlier in the same transfer), the fields that differ from the
-// Style of that name, whether none does, and a free name to rename it to.
+// (or added earlier in the same transfer), which clash of that name it is,
+// the fields that differ from the Style of that name, whether none does, and
+// a free name to rename it to (the rows of one name are offered different
+// ones).
 // Lookups, not scans: a file can list thousands of Styles of one name
 // (Codex security review).
 QVariantList clashesOf(const StyleList &into, const StyleList &styles)
@@ -162,20 +164,27 @@ QVariantList clashesOf(const StyleList &into, const StyleList &styles)
     application::StyleNames all = application::namesOf(into);
     for (const auto &s : styles)
         all.insert(s.name);
-    // One suggestion per name: the rows of a name share its choice.
-    std::unordered_map<std::u8string, QString> suggested;
+    // Per name: the clashes so far, and the next suffix to try (the ones
+    // below it are taken or offered already).
+    std::unordered_map<std::u8string, int> clashes, next;
     for (const auto &s : styles) {
         const auto found = first.try_emplace(s.name, &s);
         if (found.second)
             continue;
         const int fields = application::compareStyles(*found.first->second, s);
-        auto suggestion = suggested.find(s.name);
-        if (suggestion == suggested.end())
-            suggestion = suggested.emplace(s.name, qs(application::freeStyleName(all, s.name))).first;
+        int &count = next.try_emplace(s.name, 2).first->second;
+        std::u8string suggestion;
+        for (;; ++count) {
+            const auto n = std::to_string(count);
+            suggestion = s.name + u8" (" + std::u8string(n.begin(), n.end()) + u8")";
+            if (all.insert(suggestion).second)
+                break;
+        }
         out << QVariantMap{{QStringLiteral("name"), qs(s.name)},
+                           {QStringLiteral("occurrence"), clashes[s.name]++},
                            {QStringLiteral("fields"), fields},
                            {QStringLiteral("same"), fields == 0},
-                           {QStringLiteral("suggestion"), suggestion->second}};
+                           {QStringLiteral("suggestion"), qs(suggestion)}};
     }
     return out;
 }

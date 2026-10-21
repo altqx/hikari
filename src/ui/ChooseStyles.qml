@@ -8,7 +8,7 @@ pragma Translator: "HikariSub.MainWindow"
 // Live by default: each tick goes to `changed` at once; Esc puts the ticks
 // it opened with back (`changed` again with them), and a press outside or
 // Enter keeps them. With `actionText` ("Load") the ticks are only applied
-// by that button (`acted`).
+// by that button (`acted`), which Enter in the search field presses.
 //
 // openFor(anchor, names, checked, options): options.counts ({name: lines}),
 // options.actionText.
@@ -53,6 +53,12 @@ Popover {
         if (actionText.length === 0)
             changed(checkedNames)
     }
+    function confirm() {
+        if (actionText.length === 0)
+            keep()
+        else if (act.enabled)
+            act.clicked()
+    }
     function toggle(name) {
         setChecked(checkedNames.indexOf(name) >= 0 ? checkedNames.filter(n => n !== name) : checkedNames.concat([name]))
     }
@@ -66,6 +72,9 @@ Popover {
         Layout.fillWidth: true
         Layout.preferredWidth: 236
         leftPadding: 28
+        // The field takes Enter itself: as the popover's Enter, it keeps the
+        // ticks, or with an action presses it.
+        onAccepted: chooser.confirm()
         Icon {
             iconRole: "search"
             color: Theme.muted
@@ -179,6 +188,7 @@ Popover {
         }
     }
     PrimaryButton {
+        id: act
         objectName: "chooseStylesAct"
         visible: chooser.actionText.length > 0
         enabled: chooser.checkedNames.length > 0

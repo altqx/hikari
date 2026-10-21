@@ -253,6 +253,20 @@ private slots:
         QVERIFY(QTest::qWaitForWindowFocused(box));
         QTest::keyClick(box, Qt::Key_Return);
         QTRY_COMPARE(notes().last(), QStringLiteral("ok:ok"));
+
+        // Long details (a stack trace) scroll: the answers stay in the window.
+        run(QStringLiteral("box.ask({ title: 'Crash', text: 'It stopped', severity: 'error',"
+                           " details: Array.from({ length: 300 }, (_, i) => 'frame ' + i).join('\\n') }, null)"));
+        QVERIFY(QTest::qWaitForWindowFocused(box));
+        click(findIn(box, "messageBoxDisclosure"));
+        QTRY_VERIFY(findIn(box, "messageBoxDetails")->isVisible());
+        QVERIFY(QQuickTest::qWaitForPolish(box));
+        QVERIFY(findIn(box, "messageBoxDetailsScroll")->height() <= 220);
+        QQuickItem *ok = box->property("defaultButton").value<QQuickItem *>();
+        QVERIFY(ok);
+        QVERIFY(ok->mapToScene(QPointF(0, ok->height())).y() <= box->height());
+        QTest::keyClick(box, Qt::Key_Escape);
+        QTRY_VERIFY(!box->isVisible());
     }
 
     void popoverKeepsOnEnterAndOutsideAndRevertsOnEsc()
@@ -415,7 +429,10 @@ private slots:
         QVERIFY(!findIn(review, "clashReviewApply")->isEnabled());
         run(QStringLiteral("clashes.setName(1, 'Sign alt')"));
         QVERIFY(findIn(review, "clashReviewApply")->isEnabled());
-        click(findIn(review, "clashReviewApply"));
+        // Enter in the name field writes, as the window's default (the field
+        // takes Enter itself).
+        findIn(review, "clashName1")->forceActiveFocus();
+        QTest::keyClick(review, Qt::Key_Return);
         QTRY_VERIFY(!review->isVisible());
         QCOMPARE(notes(), QStringList{QStringLiteral("Default=skip:Default (2);Sign=rename:Sign alt")});
         // Cancel writes nothing.
@@ -456,6 +473,12 @@ private slots:
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         QCOMPARE(notes().last(), QStringLiteral("changed:Sign"));
 
+        // Enter in the search field keeps the ticks, as the popover's Enter.
+        run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign'], ['Sign'])"));
+        QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
+        QTRY_VERIFY(findIn(root.get(), "chooseStylesSearch")->hasActiveFocus());
+        QTest::keyClick(root.get(), Qt::Key_Return);
+        QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         // With an action: nothing until it is pressed.
         root->setProperty("log", QVariantList());
         run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign'], [], { actionText: 'Load' })"));
@@ -468,10 +491,30 @@ private slots:
         click(act);
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         QCOMPARE(notes(), QStringList{QStringLiteral("acted:Sign")});
+        // There Enter in the search presses it.
+        run(QStringLiteral("styles.openFor(anchorButton, ['Default', 'Sign'], ['Default'], { actionText: 'Load' })"));
+        QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
+        QTRY_VERIFY(findIn(root.get(), "chooseStylesSearch")->hasActiveFocus());
+        QTest::keyClick(root.get(), Qt::Key_Return);
+        QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
+        QCOMPARE(notes().last(), QStringLiteral("acted:Default"));
+        // A popover's anchor with no `pressed` (a text field) keeps the
+        // record of the press that closed it, so that press opens nothing.
+        run(QStringLiteral("styles.pressedAnchor = date.field; styles.keepPressedAnchor()"));
+        QVERIFY(run(QStringLiteral("styles.pressedAnchor === date.field")).toBool());
+        run(QStringLiteral("styles.pressedAnchor = anchorButton; styles.keepPressedAnchor()"));
+        QVERIFY(run(QStringLiteral("styles.pressedAnchor === null")).toBool());
     }
 
     void hotkeyCaptureSaysWhyAndAsksOnTheForm()
     {
+        // "+" joins the caps and is a key too.
+        QCOMPARE(run(QStringLiteral("capture.keyParts('Ctrl++')")).toStringList(), (QStringList{"Ctrl", "+"}));
+        QCOMPARE(run(QStringLiteral("capture.keyParts('Num++')")).toStringList(), (QStringList{"Num", "+"}));
+        QCOMPARE(run(QStringLiteral("capture.keyParts('Ctrl+Shift+Num++')")).toStringList(),
+                 (QStringList{"Ctrl", "Shift", "Num", "+"}));
+        QCOMPARE(run(QStringLiteral("capture.keyParts('Ctrl+Shift+J')")).toStringList(), (QStringList{"Ctrl", "Shift", "J"}));
+        QCOMPARE(run(QStringLiteral("capture.keyParts('+')")).toStringList(), QStringList{"+"});
         // At a control: a popover; refused keys say why and it keeps waiting.
         run(QStringLiteral("capture.capture('Save', 0, true, (accel, window) => {"
                            "    root.note(accel + '@' + window);"
@@ -629,6 +672,21 @@ private slots:
         typeText(root.get(), QStringLiteral("not a date"));
         QTest::keyClick(root.get(), Qt::Key_Return);
         QCOMPARE(field->property("text").toString(), shortDate(QDate(2025, 3, 4)));
+        // A month back from the 31st is the last day of a shorter month.
+        const auto ymd = [&](const char *expression) { return run(QString::fromLatin1(expression)).toInt(); };
+        QCOMPARE(ymd("(d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate())"
+                     "(date.back({ months: 1 }, new Date(2026, 2, 31)))"),
+                 20260228);
+        QCOMPARE(ymd("(d => d.getFullYear() * 10000 + (d.getMonth() + 1) * 100 + d.getDate())"
+                     "(date.back({ months: 1 }, new Date(2026, 4, 15)))"),
+                 20260415);
+        // The heading names the month the grid shows (QML's Locale counts
+        // months from 0, as Date does): January in January.
+        run(QStringLiteral("date.openCalendar(); date.show(new Date(2026, 0, 15))"));
+        QTRY_VERIFY(findIn(root.get(), "datePickerMonth"));
+        QCOMPARE(findIn(root.get(), "datePickerMonth")->property("text").toString(),
+                 QLocale().standaloneMonthName(1) + QStringLiteral(" 2026"));
+        QTest::keyClick(root.get(), Qt::Key_Escape);
     }
 
     // The kit in the four themes, for review: written to

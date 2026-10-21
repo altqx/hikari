@@ -16,6 +16,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace hikari::application {
@@ -57,12 +58,16 @@ struct ClashChoice {
     ClashAction action = ClashAction::Skip;
     std::u8string newName;
 };
-using ClashChoices = std::map<std::u8string, ClashChoice>;
+// The clash review's answers, per clash: its name and which clash of that
+// name it is in the Styles transferred (0 the first), so that several
+// Styles of one name are answered apart.
+using ClashKey = std::pair<std::u8string, int>;
+using ClashChoices = std::map<ClashKey, ClashChoice>;
 // Each Style is added; one whose name is taken (in `into`, or earlier in
 // `styles`) replaces the first of that name, is added under its new name
 // (the first free one from it, "<new> (2)"..., when that is taken too) or is
-// left out, as `choices` say; without a choice it is left out. Returns the
-// rows of the Styles added or replaced.
+// left out, as its clash's choice says; without a choice it is left out.
+// Returns the rows of the Styles added or replaced.
 std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices);
 // "<name> (2)", "<name> (3)"... the first that names no Style of `styles`.
 std::u8string freeStyleName(const StyleList &styles, std::u8string_view name);

@@ -9,10 +9,11 @@ pragma Translator: "HikariSub.MainWindow"
 // sides are left out (the caller counts them in the detail). The accept
 // button says what will be written.
 //
-// review(options, done): title, text, detail, rows ([{name, difference,
-// suggestion}]), canRename (default true), action (each row's first,
-// default "replace"), acceptText(count of rows written, added) and added;
-// done([{name, action, newName}]), or done(null) when cancelled.
+// review(options, done): title, text, detail, rows ([{name, occurrence,
+// difference, suggestion}]: occurrence, which clash of that name the row
+// is), canRename (default true), action (each row's first, default
+// "replace"), acceptText(count of rows written, added) and added;
+// done([{name, occurrence, action, newName}]), or done(null) when cancelled.
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
@@ -75,7 +76,7 @@ DialogWindow {
         else
             reject()
         if (callback)
-            callback(ok ? rows.map((r, i) => ({ name: r.name, action: actions[i], newName: names[i] })) : null)
+            callback(ok ? rows.map((r, i) => ({ name: r.name, occurrence: r.occurrence || 0, action: actions[i], newName: names[i] })) : null)
     }
     onRejected: {
         if (done !== null) {
@@ -196,6 +197,8 @@ DialogWindow {
                         Layout.fillWidth: true
                         Layout.minimumWidth: 120
                         onTextEdited: review.setName(clash.index, text)
+                        // The field takes Enter itself: Enter writes, as the window's default.
+                        onAccepted: if (review.complete) review.finish(true)
                     }
                     Item { visible: review.actions[clash.index] !== "rename"; Layout.fillWidth: true }
                 }
