@@ -1,0 +1,213 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#FFFFFF;color:#000000;font:13px 'Liberation Sans',Arial,sans-serif;padding:24px;width:1328px}
+.acc{color:#0037B3}
+.ic{display:block;flex:none}
+h1{font-size:18px;font-weight:600;margin:0 0 8px}
+h2{font-size:13px;font-weight:650;margin:28px 0 10px}
+p.note{color:#1A1A1A;font-size:12px;margin:0 0 8px;max-width:1280px;line-height:1.45}
+.cap{font-size:11px;color:#1A1A1A;margin:8px 0 0;max-width:520px;line-height:1.4}
+.row{display:flex;gap:28px;align-items:flex-start;flex-wrap:wrap}
+.col{display:flex;flex-direction:column}
+.notes{background:#EBEBEB;outline:1px solid #000000;padding:12px 16px;width:1280px;line-height:1.5}
+.notes td{padding:3px 14px 3px 0;vertical-align:top}
+.notes td:first-child{font-weight:650;white-space:nowrap}
+
+/* main window backdrop */
+.app{position:relative;width:1280px;height:800px;background:url(shots/body-highContrastWhite.png) 0 0 no-repeat;outline:1px solid #000000;margin-top:12px}
+.barslot{position:absolute;left:0;top:64px;width:1280px}
+.stack{position:absolute;right:12px;bottom:34px;width:360px;display:flex;flex-direction:column;gap:8px}
+
+/* DG1 window */
+.dlg{background:#FFFFFF;color:#000000;display:flex;flex-direction:column;outline:1px solid #000000;
+     box-shadow:0 8px 28px rgba(0,0,0,.28)}
+.dtb{display:flex;align-items:center;height:32px;flex:none;background:#FFFFFF;box-shadow:inset 0 -1px #000000}
+.dtitle{flex:1;min-width:0;padding-left:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.wbs{display:flex;margin-left:auto;flex:none}
+.wb{display:flex;align-items:center;justify-content:center;width:46px;height:32px;color:#000000}
+.dbody{padding:12px 24px 0;display:flex;flex-direction:column}
+.dfoot{display:flex;gap:8px;justify-content:flex-end;padding:24px}
+.dfoot .lead,.pfoot .lead{margin-right:auto}
+
+/* controls */
+.b{display:inline-flex;align-items:center;justify-content:center;min-width:80px;height:30px;padding:0 10px;border-radius:1px;
+   background:#EBEBEB;border:1px solid #000000;color:#000000;white-space:nowrap;flex:none}
+.b.sm{min-width:0;height:26px;padding:0 10px}
+.b.on{background:#C9DAF8;border-color:#0037B3}
+.b.flat{background:none;border-color:transparent;color:#0037B3;padding:0 6px;height:24px}
+.b.pri{background:#0037B3;border-color:#0037B3;color:#FFFFFF;font-weight:650}
+.b.dng{color:#A00000;border-color:#A00000}
+.ring{outline:1px solid #000000;outline-offset:1px}
+.qb{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:1px;color:#000000}
+.cb{display:flex;align-items:center;gap:8px;height:24px}
+.box{width:16px;height:16px;border:1px solid #000000;background:#FFFFFF;border-radius:1px;display:flex;
+     align-items:center;justify-content:center;flex:none}
+.box.on{background:#0037B3;border-color:#0037B3;color:#FFFFFF}
+.fld{display:inline-flex;align-items:center;gap:6px;height:28px;padding:0 8px;background:#FFFFFF;border:1px solid #000000;
+     border-radius:1px;color:#000000;min-width:0}
+.fld.wide{display:flex;width:100%}
+.fld.focus{border-color:#000000;box-shadow:inset 0 0 0 1px #000000}
+.fld.ph .ftext{color:#1A1A1A}
+.ftext{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.fic,.ftail{color:#1A1A1A}
+.ftail{display:flex;margin-left:auto}
+.frow{display:flex;align-items:center;gap:8px;margin:6px 0}
+.flabel{width:56px;color:#000000;flex:none}
+.seg{display:inline-flex;border:1px solid #000000;border-radius:1px;overflow:hidden;flex:none}
+.seg span{padding:0 10px;height:26px;display:flex;align-items:center;background:#EBEBEB;border-left:1px solid #000000}
+.seg span:first-child{border-left:none}
+.seg span.on{background:#C9DAF8;color:#000000;box-shadow:inset 0 -2px #0037B3;font-weight:650}
+.seg.sm span{height:24px;padding:0 8px}
+.sbar{position:absolute;right:3px;width:4px;border-radius:2px;background:#000000;opacity:.8}
+.big{color:#000000}
+.warn,.warn .acc{color:#6B4500}
+.err,.err .acc{color:#A00000}
+.lnk2{color:#0037B3;cursor:pointer}
+
+/* message box */
+.mb{display:flex;gap:16px;align-items:flex-start;margin-top:8px}
+.mbtext{display:flex;flex-direction:column;gap:6px;padding-top:4px;min-width:0}
+.mbmain{font-size:14px;font-weight:650;line-height:1.4}
+.mbdetail{color:#1A1A1A;line-height:1.45}
+.mbcheck{margin-top:8px}
+.disc{display:flex;align-items:center;gap:4px;margin:14px 0 0 48px;color:#000000}
+.dets{position:relative;margin:6px 0 0 48px;background:#FFFFFF;outline:1px solid #000000;padding:8px 34px 8px 10px}
+.dets pre{font:12px 'Liberation Mono',Consolas,monospace;color:#000000;white-space:pre-wrap}
+.dets .qb{position:absolute;right:6px;top:6px}
+
+/* notices */
+.toast{display:flex;gap:10px;align-items:flex-start;padding:10px 8px 10px 12px;background:#FFFFFF;outline:1px solid #000000;
+       border-radius:4px;box-shadow:0 6px 20px rgba(0,0,0,.28);color:#000000}
+.toast.hover{background:#EBEBEB}
+.toast>.ic{margin-top:1px}
+.tt{flex:1;min-width:0;display:flex;flex-direction:column;gap:3px}
+.ttitle{font-weight:650;line-height:1.35}
+.ttext{color:#1A1A1A;line-height:1.4}
+.tacts{display:flex;gap:4px;margin:4px 0 0 -6px}
+.tx{display:flex;align-items:center;justify-content:center;width:22px;height:22px;color:#1A1A1A;flex:none}
+.ibar{display:flex;align-items:center;gap:8px;height:38px;padding:0 6px 0 10px;background:#EBEBEB;
+      box-shadow:inset 0 -1px #000000,inset 0 1px #000000;color:#000000}
+.ibt{flex:1}
+
+/* popover */
+.pop{position:relative;background:#FFFFFF;outline:1px solid #000000;border-radius:4px;padding:12px;
+     box-shadow:0 6px 22px rgba(0,0,0,.28);color:#000000;z-index:2}
+.ptitle{font-weight:650;margin-bottom:8px}
+.pfoot{display:flex;gap:6px;justify-content:flex-end;margin-top:10px}
+.pfoot.wrap{flex-wrap:wrap;justify-content:flex-start}
+.anchorbox{position:relative}
+
+/* clash review */
+.allrow{display:flex;align-items:center;gap:10px;margin-top:14px}
+.ctable{margin-top:10px;outline:1px solid #000000;background:#FFFFFF}
+.chead,.crow2{display:flex;align-items:center;gap:10px;padding:0 10px;min-height:38px}
+.chead{min-height:28px;color:#1A1A1A;font-size:12px;box-shadow:inset 0 -1px #000000;background:#EBEBEB}
+.crow2+.crow2{box-shadow:inset 0 1px #000000}
+.crow2 .cname{font-weight:650}
+.cname{width:110px;flex:none}
+.cdiff{width:170px;flex:none;color:#1A1A1A}
+.cact{flex:1;display:flex;gap:8px;align-items:center}
+
+/* choose styles */
+.slist{position:relative;margin-top:8px;height:186px;overflow:hidden;outline:1px solid #000000;background:#FFFFFF;padding:2px 0}
+.srow{display:flex;align-items:center;gap:8px;height:22px;padding:0 14px 0 8px}
+.srow.cur{background:#C9DAF8}
+.sname{flex:1}
+.scount{color:#1A1A1A;font-size:12px}
+.sfoot{display:flex;gap:14px;align-items:center;margin-top:10px}
+
+/* hotkeys */
+.htable{outline:1px solid #000000;background:#FFFFFF}
+.hhead,.hrow{display:grid;grid-template-columns:1fr 130px;padding:0 10px;height:26px;align-items:center}
+.hhead{color:#1A1A1A;font-size:12px;background:#EBEBEB;box-shadow:inset 0 -1px #000000}
+.hrow.sel{background:#C9DAF8}
+.keys{color:#1A1A1A}
+.capture{display:flex;align-items:center;justify-content:center;gap:6px;height:48px;background:#FFFFFF;
+         border:1px solid #000000;border-radius:1px}
+.capture.focus{border-color:#000000;box-shadow:inset 0 0 0 1px #000000}
+.wait{color:#1A1A1A}
+.kc{display:inline-flex;align-items:center;height:28px;padding:0 10px;border:1px solid #000000;border-bottom-width:2px;
+    border-radius:3px;background:#EBEBEB;font-weight:650}
+.plus{color:#1A1A1A}
+.conf{display:flex;gap:8px;align-items:flex-start;margin-top:10px;line-height:1.4}
+
+/* lists */
+.llist{margin-top:10px;outline:1px solid #000000;background:#FFFFFF;padding:2px 0}
+.llist.pl{margin-top:0}
+.lrow{display:flex;gap:10px;align-items:center;height:28px;padding:0 10px}
+.lrow.cur{background:#C9DAF8;box-shadow:inset 2px 0 #0037B3}
+.lnum{color:#1A1A1A;width:12px}
+.lmeta{color:#1A1A1A;margin-left:auto}
+.editor{height:30px;display:flex;align-items:center;padding:0 10px;background:#FFFFFF;border:1px solid #000000}
+.miss{text-decoration:underline wavy #A00000;text-underline-offset:3px;background:#C9DAF8}
+
+/* calendar */
+.calhead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.calm{font-weight:650}
+.cal{display:grid;grid-template-columns:repeat(7,32px);row-gap:2px}
+.dh{height:24px;display:flex;align-items:center;justify-content:center;color:#1A1A1A;font-size:11px}
+.dd{height:28px;display:flex;align-items:center;justify-content:center;border-radius:1px}
+.dd.out{color:#6E6E6E}
+.dd.sel{background:#0037B3;color:#FFFFFF;font-weight:650;outline:1px solid #000000;outline-offset:1px}
+
+.mono,.mono2{font-family:'Liberation Mono',Consolas,monospace}
+.mono2{font-size:11px;color:#1A1A1A}
+.notes tr:first-child td{color:#1A1A1A;font-weight:650;font-size:12px}
+.notes td:first-child{font-weight:650}
+.hlist{outline:1px solid #000000;background:#FFFFFF;padding:2px 0;height:300px;overflow:hidden}
+.hst{display:flex;align-items:center;gap:10px;height:24px;padding:0 10px}
+.hst.sel{background:#C9DAF8;box-shadow:inset 2px 0 #0037B3}
+.hst.undone .ht,.hst.undone .hn{color:#6E6E6E}
+.hn{width:18px;color:#1A1A1A;text-align:right;font-size:12px}
+.ht{flex:1}
+.bold{font-weight:650}
+.tag{font-size:11px;padding:1px 6px;border:1px solid #0037B3;color:#0037B3;border-radius:3px}
+.help{background:#EBEBEB;outline:1px solid #000000;padding:8px 10px;line-height:1.45;display:flex;
+      flex-direction:column;gap:4px;margin:2px 0 12px}
+.tmgrid{display:grid;grid-template-columns:1fr 1fr;column-gap:20px;row-gap:12px}
+.tmhead{font-weight:650;color:#1A1A1A;font-size:12px;box-shadow:inset 0 -1px #000000;padding-bottom:4px}
+.tmc{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.tmc .b{min-width:96px}
+.tmh{color:#1A1A1A;font-size:12px;line-height:1.4}
+.cgrid{display:grid;grid-template-columns:1fr 1fr;grid-auto-flow:column;grid-template-rows:repeat(6,auto);column-gap:16px;outline:1px solid #000000;background:#FFFFFF;
+       padding:6px 10px}
+.mgrid{outline:1px solid #000000;background:#FFFFFF;font-size:12px}
+.ghead,.grow{display:flex;align-items:center;height:24px;padding:0 6px;gap:8px}
+.ghead{background:#EBEBEB;color:#1A1A1A;box-shadow:inset 0 -1px #000000}
+.grow.grp{background:#EBEBEB}
+.grow.sel{background:#C9DAF8;outline:1px solid #0037B3;outline-offset:-1px}
+.gn{width:22px;color:#1A1A1A;display:flex}
+.gt{width:78px}.gs{width:84px}.gx{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.gcount{color:#1A1A1A;margin-left:8px;font-size:11px}
+.dock{background:#FFFFFF;outline:1px solid #000000;display:flex;flex-direction:column}
+.dkh{position:relative;height:35px;display:flex;align-items:center;padding:0 6px 0 12px;box-shadow:inset 0 -1px #000000;flex:none}
+.dkt{font-weight:700;flex:1}
+.fmark{position:absolute;right:0;top:0;border-top:8px solid #0037B3;border-left:8px solid transparent}
+.dkb{flex:1;display:flex;flex-direction:column;padding:8px 12px 12px;min-height:0}
+.strip{display:flex;align-items:center;gap:2px;margin:6px 0 4px}
+.qb.qon{background:#C9DAF8}
+.sep{width:1px;height:18px;background:#000000;margin:0 4px}
+.rlist{outline:1px solid #000000;background:#FFFFFF}
+.rhead,.rrow{display:flex;align-items:center;gap:8px;height:26px;padding:0 8px}
+.rhead{height:24px;background:#EBEBEB;color:#1A1A1A;font-size:12px;box-shadow:inset 0 -1px #000000}
+.rrow.sel{background:#C9DAF8;box-shadow:inset 2px 0 #0037B3}
+.rc{width:16px;flex:none}.rd{width:178px;flex:none;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.rf{flex:1;font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#1A1A1A}
+.vsp{color:#6E6E6E}
+.arr{margin:0 6px;color:#000000;font-family:'Liberation Sans',Arial,sans-serif}
+.disc2{display:flex;align-items:center;gap:4px;margin:12px 0 4px;height:22px}
+.runbar{display:flex;align-items:center;gap:6px;margin-top:10px}
+.xsect{flex:1;display:flex;flex-direction:column;margin-top:12px;box-shadow:inset 0 1px #000000;padding-top:10px;min-height:0}
+.xhead{display:flex;align-items:center;gap:10px;margin-bottom:6px}
+.xlist{flex:1;outline:1px solid #000000;background:#FFFFFF;padding:2px 0;overflow:hidden}
+.xrow{display:flex;align-items:center;gap:8px;height:24px;padding:0 8px;font-size:12px}
+.xrow.xh{background:#EBEBEB;font-size:12px}
+.xrow.cur{background:#C9DAF8}
+.xpath{flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-weight:650}
+.xl{color:#1A1A1A;width:46px;flex:none;margin-left:18px}
+.xt{flex:1;white-space:pre;overflow:hidden;text-overflow:ellipsis}
+mark .vsp{color:inherit}
+mark{background:#0037B3;color:#FFFFFF;border-radius:1px}
+.part{width:8px;height:2px;background:#FFFFFF}
+.stack2{width:360px;display:flex;flex-direction:column;gap:8px}
+</style></head><body><svg width="0" height="0" style="position:absolute"><defs><symbol id="i-notice-error" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 1.5h5l4 4v5l-4 4h-5l-4-4v-5z"/><g class="acc"><path d="M8 4.75v4"/><circle cx="8" cy="11.25" r=".75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-calendar" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="12" rx="1"/><path d="M1.5 6h13M5 1v3M11 1v3"/><g class="acc"><path d="M4.5 9h1M7.5 9h1M10.5 9h1M4.5 11.5h1M7.5 11.5h1"/></g></g></symbol><symbol id="i-chevron-down" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 6.5l3.5 3.5 3.5-3.5"/></g></symbol><symbol id="i-chevron-right" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 4.5l3.5 3.5-3.5 3.5"/></g></symbol><symbol id="i-chevron-left" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 4.5l-3.5 3.5 3.5 3.5"/></g></symbol><symbol id="i-check" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 8.5l3 3 6-7"/></g></symbol><symbol id="i-about" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.75" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-notice-warning" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g class="acc"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-search" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></g></symbol><symbol id="i-tab-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4.5 4.5l7 7M11.5 4.5l-7 7"/></g></symbol><symbol id="i-log" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="2.5" width="13" height="11" rx="1"/><path d="M7 5.5h5M7 8h4M7 10.5h5"/><g class="acc"><path d="M4 5.5h1.5M4 8h1.5M4 10.5h1.5"/></g></g></symbol><symbol id="i-styles" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 1.5a6.5 6.5 0 1 0 0 13c1 0 1.5-.75 1.5-1.5s-.5-1-.5-1.75.75-1.25 1.5-1.25H12a2.5 2.5 0 0 0 2.5-2.5C14.5 4 11.5 1.5 8 1.5z"/><g class="acc"><circle cx="4.75" cy="7.5" r="1" fill="currentColor" stroke="none"/><circle cx="6.75" cy="4.5" r="1" fill="currentColor" stroke="none"/><circle cx="10" cy="4.5" r="1" fill="currentColor" stroke="none"/></g></g></symbol><symbol id="i-hotkeys" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="3.5" width="13" height="9" rx="1"/><path d="M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1"/><g class="acc"><path d="M6.5 9.5h3"/></g></g></symbol><symbol id="i-open-audio" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M6.5 11.5V2.5l4 1.5"/><circle cx="4.5" cy="11.5" r="2" fill="currentColor" stroke="none"/><g class="acc"><path d="M12 9.5v5M9.5 12h5"/></g></g></symbol><symbol id="i-spellchecker" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M1.5 7h6"/><g class="acc"><path d="M1.5 11l1.5-1.5 1.5 1.5 1.5-1.5L7.5 11"/></g><path d="M8.5 11l2 2 4-4.5"/></g></symbol><symbol id="i-remove-temporary" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h9M4.5 3.5V2h3v1.5"/><path d="M2.5 4.5l.75 9a1 1 0 0 0 1 1H8M9.5 4.5l-.25 3.5"/><path d="M5 6.5v5M7 6.5v3"/><g class="acc"><circle cx="12" cy="12" r="3"/><path d="M12 10.5V12l1 1"/></g></g></symbol><symbol id="i-check-updates" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M13.5 8a5.5 5.5 0 1 1-1.75-4"/><path d="M13.5 1.5v3h-3"/><g class="acc"><path d="M8 5v5.5M6 8.5l2 2 2-2"/></g></g></symbol><symbol id="i-window-close" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 3.5l9 9M12.5 3.5l-9 9"/></g></symbol><symbol id="i-window-maximize" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="3.5" width="9" height="9" rx="0.5"/></g></symbol><symbol id="i-edit-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/></g></symbol><symbol id="i-save" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 2.5h9l2 2v9h-11z"/><path d="M5.5 2.5v3h5v-3"/><path d="M4.5 13.5v-4h7v4"/></g></symbol><symbol id="i-menu-more" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 3.5l4 3.5 4-3.5M4 8.5l4 3.5 4-3.5"/></g></symbol><symbol id="i-history" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 8a5.5 5.5 0 1 0 1.75-4"/><path d="M2.5 1.5v3h3"/><path d="M8 5v3.5l2.5 1.5"/></g></symbol><symbol id="i-select-lines" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 4h7M7.5 8h7M7.5 12h7"/><g class="acc"><rect x="2" y="3" width="3" height="2" fill="currentColor" stroke="none"/><rect x="2" y="11" width="3" height="2" fill="currentColor" stroke="none"/></g><rect x="2.5" y="7" width="2" height="2" rx="0"/></g></symbol><symbol id="i-multireplace" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 2.5h11M1.5 6h8M1.5 9.5h5"/><g class="acc"><path d="M8.5 9h6M12.75 7.25L14.5 9l-1.75 1.75"/><path d="M14.5 13h-6M10.25 11.25L8.5 13l1.75 1.75"/></g></g></symbol><symbol id="i-add" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7.5 2.5v10M2.5 7.5h10"/></g></symbol><symbol id="i-edit" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11 2l3 3-8.5 8.5-3.5 1 1-3.5z"/><g class="acc"><path d="M9.5 3.5l3 3"/></g></g></symbol><symbol id="i-delete" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M2.5 4h11M6 4V2.5h4V4"/><path d="M4 4.5l.75 9a1 1 0 0 0 1 1h4.5a1 1 0 0 0 1-1l.75-9"/><path d="M6.75 7v5M9.25 7v5"/></g></symbol><symbol id="i-translation-shift" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h7M1.5 8h7M1.5 12.5h7"/><g class="acc"><path d="M11.5 3v10M10 4.5l1.5-1.5L13 4.5M10 11.5l1.5 1.5 1.5-1.5"/></g></g></symbol><symbol id="i-columns-copy" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2"/><rect x="2.5" y="4.5" width="8" height="10" rx="1"/><g class="acc"><path d="M5.5 4.5v10M7.5 4.5v10"/></g></g></symbol><symbol id="i-columns-paste" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 2.5h-2a1 1 0 0 0-1 1v10a1 1 0 0 0 1 1h9a1 1 0 0 0 1-1v-10a1 1 0 0 0-1-1h-2"/><rect x="5.5" y="1.5" width="5" height="2" rx="0.5"/><g class="acc"><path d="M6.5 6v6.5M9.5 6v6.5"/></g></g></symbol><symbol id="i-panel-menu" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="3.5" cy="8" r="1.25" fill="currentColor" stroke="none"/><circle cx="8" cy="8" r="1.25" fill="currentColor" stroke="none"/><circle cx="12.5" cy="8" r="1.25" fill="currentColor" stroke="none"/></g></symbol><symbol id="i-find-replace" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6" cy="6" r="4"/><path d="M8.75 8.75l2 2"/><g class="acc"><path d="M8.5 12.5h6M12.5 10.5l2 2-2 2"/></g></g></symbol><symbol id="i-find-in-files" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 13.5h-6a1 1 0 0 1-1-1v-9a1 1 0 0 1 1-1h3.5l1.5 1.5h6a1 1 0 0 1 1 1v4"/><path d="M1.5 6h13"/><g class="acc"><circle cx="11.5" cy="11.5" r="2"/><path d="M13 13l1.5 1.5"/></g></g></symbol><symbol id="i-make-tree" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 3.5h8M7 8h7.5M7 12.5h7.5"/><g class="acc"><path d="M3.5 5.5v7h2M3.5 8h2"/></g></g></symbol><symbol id="i-undo" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 3.5l-3 3 3 3"/><path d="M2.5 6.5h7a3.5 3.5 0 0 1 0 7h-3"/></g></symbol><symbol id="i-redo" viewBox="0 0 16 16"><g fill="none" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M10.5 3.5l3 3-3 3"/><path d="M13.5 6.5h-7a3.5 3.5 0 0 0 0 7h3"/></g></symbol></defs></svg><h1>PU2 Lines and edit popups: windows and small forms (High contrast white)</h1><div class="notes"><table><tr><td>Popup</td><td>Opened from</td><td>Kind</td><td>Today</td></tr><tr><td>History</td><td>Edit › History, Ctrl+Shift+H</td><td>Window, resizable, modeless</td><td class="mono2">Main.qml historyWindow</td></tr><tr><td>Select lines</td><td>Edit › Select lines</td><td>Window, modeless; the count a toast; Choose styles popover</td><td class="mono2">SelectLinesDialog.qml dialog, result</td></tr><tr><td>Fix minor errors + Search results</td><td>Edit › Fix minor errors</td><td>One dock panel</td><td class="mono2">MisspellReplacerDialog.qml dialog, results</td></tr><tr><td>Copy columns / Paste columns</td><td>Grid menu, Ctrl+Shift+C / V</td><td>Compact window</td><td class="mono2">Main.qml columnsWindow</td></tr><tr><td>Tree description</td><td>Line group row › Change description</td><td>Popover at the row</td><td class="mono2">Main.qml groupDescriptionDialog</td></tr><tr><td>Line group</td><td>A command that would break a group</td><td>Message box; toast without a description</td><td class="mono2">Main.qml groupBreakDialog</td></tr><tr><td>Translation matching options</td><td>Grid menu › Dialogue shifting window</td><td>Compact window, modeless</td><td class="mono2">Main.qml translationShiftWindow</td></tr><tr><td>Find and replace questions (5 kinds)</td><td>Find, Replace, Replace in subtitles</td><td>4 message boxes + toasts</td><td class="mono2">SearchTool.qml question</td></tr><tr><td>Translation mode off / on</td><td>Subtitles › Translation mode, Translation preset</td><td>Message boxes</td><td class="mono2">TranslationModeOffConfirm.qml, TranslationModeQuestion.qml</td></tr></table></div><p class="note" style="margin-top:8px">Every window is on DG1’s frame (title = the command, Esc closes, first open centred on the main window, then where it was left). The five in-window popups leave PK1’s allow-list (7 lines). Lines, files, styles and rules are examples.</p><div class="row" style="gap:28px;margin-top:8px"><div class="col"><div class="dlg" style="width:500px;"><div class="dtb"><span class="dtitle">Select lines</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="frow" style=""><span class="flabel" style="width:72px;">Find</span><span class="seg sm"><span class="on">With</span><span class="">Without</span></span><span class="fld focus" style="width:214px;"><span class="ftext">station</span><span class="ftail"><svg class="ic " width="14" height="14"><use href="#i-chevron-down"/></svg></span></span><span class="b sm" title="Choose styles" style="padding:0 5px"><svg class="ic " width="16" height="16"><use href="#i-styles"/></svg></span></div><div class="frow" style=""><span class="flabel" style="width:72px;"></span><div class="cb"><span class="box"></span><span class="cbt">Match case</span></div><span style="width:18px"></span><div class="cb"><span class="box"></span><span class="cbt">Regular expressions</span></div></div><div class="frow" style=""><span class="flabel" style="width:72px;">In</span><span class="seg sm"><span class="on">Text</span><span class="">Styles</span><span class="">Actor</span><span class="">Effect</span><span class="">Start time</span><span class="">End time</span></span></div><div class="frow" style=""><span class="flabel" style="width:72px;">Lines</span><div class="cb"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="cbt">Dialogue</span></div><span style="width:18px"></span><div class="cb"><span class="box"></span><span class="cbt">Comments</span></div></div><div class="frow" style=""><span class="flabel" style="width:72px;">Selection</span><span class="seg sm"><span class="on">Select</span><span class="">Add to selection</span><span class="">Deselect</span></span></div><div class="frow" style=""><span class="flabel" style="width:72px;">Then</span><span class="fld" style="width:214px;"><span class="ftext">Do nothing</span><span class="ftail"><svg class="ic " width="14" height="14"><use href="#i-chevron-down"/></svg></span></span></div></div><div class="dfoot "><span class="b lead">Select in all tabs</span><span class="b pri">Select</span><span class="b">Close</span></div></div><p class="cap" style="max-width:500px">Select lines: a modeless window of its own (it can leave the main window). Short labels instead of five group boxes: field, case and regex; which field; Dialogue / Comments; the selection; then an action (the seven legacy actions in a list). The styles button opens PK1’s Choose styles popover. Select stays open and posts the count as a toast (legacy asked “Close / OK”). Enter in the field selects.</p></div><div class="col"><div class="dlg" style="width:380px;"><div class="dtb"><span class="dtitle">History</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-maximize"/></svg></span><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mbdetail" style="margin:2px 0 8px">12 steps. Steps after the current one can be redone.</div><div class="hlist"><div class="hst"><span class="hn">1</span><span class="ht">Open subtitles</span></div><div class="hst"><span class="hn">2</span><span class="ht">Change text</span></div><div class="hst"><span class="hn">3</span><span class="ht">Change start time</span></div><div class="hst"><span class="hn">4</span><span class="ht">Shift times</span></div><div class="hst"><span class="hn">5</span><span class="ht">Join lines</span></div><div class="hst"><span class="hn">6</span><span class="ht">Change style</span></div><div class="hst sel"><span class="hn">7</span><span class="ht">Paste lines</span></div><div class="hst"><span class="hn">8</span><span class="ht">Change text</span></div><div class="hst"><span class="hn">9</span><span class="ht bold">Set as comment</span><span class="tag">Current</span></div><div class="hst undone"><span class="hn">10</span><span class="ht">Delete lines</span></div><div class="hst undone"><span class="hn">11</span><span class="ht">Change end time</span></div><div class="hst undone"><span class="hn">12</span><span class="ht">Split line</span></div></div></div><div class="dfoot "><span class="b pri ring">Go to step</span><span class="b">Close</span></div></div><p class="cap" style="max-width:380px">History: a resizable window, modeless, so the grid stays usable. The current step is bold and marked; undone steps are muted. Go to step (Enter, or a double-click) jumps there and stays open; Close or Esc closes. Legacy’s Set / OK / Cancel and the count in the title go.</p></div></div><div class="row" style="gap:28px;margin-top:28px"><div class="col"><div class="dlg" style="width:560px;"><div class="dtb"><span class="dtitle">Translation matching options</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="help"><div><b>Original</b>: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</div><div><b>Translation</b>: the text pasted in, moved line by line until each one sits beside its original.</div></div><div class="tmgrid"><div class="tmhead">Original</div><div class="tmhead">Translation</div><div class="tmc"><span class="b sm">Add line</span><span class="tmh">A blank line before the selected one; the original moves down. Time the new line.</span></div><div class="tmc"><span class="b sm">Add line</span><span class="tmh">A blank line before the selected one; the translation moves down.</span></div><div class="tmc"><span class="b sm">Join lines</span><span class="tmh">Joins the selected line with the next one; the original moves up.</span></div><div class="tmc"><span class="b sm">Join lines</span><span class="tmh">Joins the selected line with the next one; the translation moves up.</span></div><div class="tmc"><span class="b sm">Delete line</span><span class="tmh">Deletes the selected line; the original moves up.</span></div><div class="tmc"><span class="b sm">Delete line</span><span class="tmh">Deletes the selected line; the translation moves up.</span></div></div></div><div class="dfoot "><span class="b pri">Close</span></div></div><p class="cap" style="max-width:560px">Translation matching options: a compact modeless window, as today. The help that sat in the Description button’s tooltip is visible text, and each button says what it moves under it. Grid menu › Dialogue shifting window or its hotkey.</p></div><div class="col"><div class="dlg" style="width:400px;"><div class="dtb"><span class="dtitle">Copy columns</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mbdetail" style="color:inherit;margin:2px 0 8px">Copy these columns of the 4 selected lines:</div><div class="cgrid"><div><div class="cb"><span class="box"></span><span class="cbt">Layer</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Start time</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">End time</span></div></div><div><div class="cb"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="cbt">Actor</span></div></div><div><div class="cb"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="cbt">Styles</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Left margin</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Right margin</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Vertical margin</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Effect</span></div></div><div><div class="cb"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="cbt">Text</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Text without tags</span></div></div></div><div class="sfoot" style="margin-top:8px"><span class="lnk2">Select all</span><span class="lnk2">None</span></div></div><div class="dfoot "><span class="b pri ring">Copy</span><span class="b">Cancel</span></div></div><p class="cap" style="max-width:400px">Copy columns (Ctrl+Shift+C): a compact window, as it opens from the Grid menu or a hotkey. The verb button replaces OK; Select all / None added.</p></div></div><div class="row" style="gap:28px;margin-top:28px"><div class="col"><div class="dlg" style="width:400px;"><div class="dtb"><span class="dtitle">Paste columns</span><span class="wbs"><span class="wb"><svg class="ic " width="16" height="16"><use href="#i-window-close"/></svg></span></span></div><div class="dbody"><div class="mbdetail" style="color:inherit;margin:2px 0 8px">Paste the clipboard into these columns of the 4 selected lines:</div><div class="cgrid"><div><div class="cb"><span class="box"></span><span class="cbt">Layer</span></div></div><div><div class="cb"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="cbt">Start time</span></div></div><div><div class="cb"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="cbt">End time</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Actor</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Styles</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Left margin</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Right margin</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Vertical margin</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Effect</span></div></div><div><div class="cb"><span class="box"></span><span class="cbt">Text into original</span></div></div><div><div class="cb"><span class="box on"><svg width=12 height=12 viewBox="0 0 12 12"><path d="M2.5 6.5l2.5 2.5 4.5-5.5" fill=none stroke=currentColor stroke-width=1.5 stroke-linecap=round stroke-linejoin=round /></svg></span><span class="cbt">Text into translation</span></div></div></div><div class="sfoot" style="margin-top:8px"><span class="lnk2">Select all</span><span class="lnk2">None</span></div></div><div class="dfoot "><span class="b pri ring">Paste</span><span class="b">Cancel</span></div></div><p class="cap" style="max-width:400px">Paste columns (Ctrl+Shift+V), in translation mode: the two Text rows go into the original or the translation.</p></div><div class="col"><div class="anchorbox" style="width:520px;height:270px"><div class="mgrid"><div class="ghead"><span class="gn">#</span><span class="gt">Start</span><span class="gs">Styles</span><span class="gx">Text</span></div><div class="grow"><span class="gn">1</span><span class="gt">0:00:01.20</span><span class="gs">Default</span><span class="gx">Is this the last train tonight?</span></div><div class="grow"><span class="gn">2</span><span class="gt">0:00:04.10</span><span class="gs">Default</span><span class="gx">I think so. We should hurry.</span></div><div class="grow grp sel"><span class="gn"><svg class="ic " width="14" height="14"><use href="#i-chevron-down"/></svg></span><span class="gx"><b>Opening song</b><span class="gcount">3 lines</span></span></div><div class="grow"><span class="gn">3</span><span class="gt">0:01:30.00</span><span class="gs">Song romaji</span><span class="gx" style="padding-left:14px">Hashiridasu kono michi no saki</span></div><div class="grow"><span class="gn">4</span><span class="gt">0:01:34.20</span><span class="gs">Song romaji</span><span class="gx" style="padding-left:14px">Kimi no koe ga kikoeta</span></div><div class="grow"><span class="gn">5</span><span class="gt">0:01:38.80</span><span class="gs">Song romaji</span><span class="gx" style="padding-left:14px">Mada owaranai</span></div><div class="grow"><span class="gn">6</span><span class="gt">0:02:10.00</span><span class="gs">Default</span><span class="gx">That song again?</span></div></div><div class="pop " style="width:296px;position:absolute;left:46px;top:100px"><div class="ptitle">Line group description</div><span class="fld focus" style="width:268px;"><span class="ftext">Opening song – TV size</span></span><div class="pfoot"><span class="b pri sm">Rename</span></div></div></div><p class="cap" style="max-width:520px">Tree description becomes a popover at the line group’s row (opened from its menu’s Change description), like PK1’s spelling suggestions at the word. Enter or Rename keeps it, Esc puts it back. “Add description” when the group has none (legacy “Set tree name” / “Change tree name”).</p></div></div></body></html>
