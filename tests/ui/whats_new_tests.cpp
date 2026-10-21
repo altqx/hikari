@@ -252,9 +252,9 @@ private slots:
         QCOMPARE(versions(*copy->whatsNew), QStringList{QStringLiteral("0.1.3")});
     }
 
-    // The cache holds what its reader takes: past the limit, the lowest
-    // versions go (the list's pages are capped one by one, so the range can
-    // be larger than one cache).
+    // The cache holds what its reader takes: past the limit the lowest
+    // versions' notes go first (they are past the ten shown, and kept they
+    // still count in "And N earlier versions"), then the lowest versions.
     void theCacheStaysWithinWhatItsReaderTakes()
     {
         std::vector<hikari::application::ReleaseEntry> releases;
@@ -265,25 +265,61 @@ private slots:
             release.notes = std::string(1000, 'x');
             releases.push_back(release);
         }
-        const auto tags = [](const QByteArray &content) {
+        // tag: notes length, highest first.
+        const auto entries = [](const QByteArray &content) {
             QStringList out;
             for (const QJsonValue &r : QJsonDocument::fromJson(content).object().value(QStringLiteral("releases")).toArray())
-                out << r.toObject().value(QStringLiteral("tag")).toString();
+                out << r.toObject().value(QStringLiteral("tag")).toString() + QLatin1Char(':') +
+                           QString::number(r.toObject().value(QStringLiteral("notes")).toString().size());
             return out;
         };
         const QString installed = QStringLiteral("0.1.3");
         const QString since = QStringLiteral("0.1.0");
         const QByteArray all = WhatsNew::cacheContent(installed, since, releases, WhatsNew::kMaxCacheBytes);
-        QCOMPARE(tags(all), (QStringList{QStringLiteral("v0.1.3"), QStringLiteral("v0.1.2"), QStringLiteral("v0.1.1")}));
+        QCOMPARE(entries(all), (QStringList{QStringLiteral("v0.1.3:1000"), QStringLiteral("v0.1.2:1000"), QStringLiteral("v0.1.1:1000")}));
         const QByteArray two = WhatsNew::cacheContent(installed, since, releases, all.size() - 1);
         QVERIFY(two.size() <= all.size() - 1);
-        QCOMPARE(tags(two), (QStringList{QStringLiteral("v0.1.3"), QStringLiteral("v0.1.2")}));
+        QCOMPARE(entries(two), (QStringList{QStringLiteral("v0.1.3:1000"), QStringLiteral("v0.1.2:1000"), QStringLiteral("v0.1.1:0")}));
         const QByteArray one = WhatsNew::cacheContent(installed, since, releases, 1500);
         QVERIFY(one.size() <= 1500);
-        QCOMPARE(tags(one), QStringList{QStringLiteral("v0.1.3")});
+        QCOMPARE(entries(one), (QStringList{QStringLiteral("v0.1.3:1000"), QStringLiteral("v0.1.2:0"), QStringLiteral("v0.1.1:0")}));
         QCOMPARE(QJsonDocument::fromJson(one).object().value(QStringLiteral("since")).toString(), since);
+        // No notes at all fit: then versions go too.
+        const QByteArray none = WhatsNew::cacheContent(installed, since, releases, 200);
+        QVERIFY(none.size() <= 200);
+        QVERIFY(entries(none).size() < 3);
         // Not even the header: nothing to write.
         QVERIFY(WhatsNew::cacheContent(installed, since, releases, 10).isEmpty());
+    }
+
+    // A cache whose lowest versions lost their notes still counts them in
+    // "And N earlier versions", offline too.
+    void aTrimmedCacheKeepsTheEarlierVersionsCount()
+    {
+        auto copy = start(QStringLiteral("trimmed"), QStringLiteral("0.1.13"), true, false, QStringLiteral("0.1.0"));
+        QVERIFY(copy);
+        QVERIFY(settled(*copy->whatsNew));
+        std::vector<hikari::application::ReleaseEntry> releases;
+        for (int patch = 13; patch >= 1; --patch) {
+            hikari::application::ReleaseEntry release;
+            release.tag = "v0.1." + std::to_string(patch);
+            release.notes = std::string(1000, 'x');
+            releases.push_back(release);
+        }
+        const QByteArray full = WhatsNew::cacheContent(QStringLiteral("0.1.13"), QStringLiteral("0.1.0"), releases,
+                                                       WhatsNew::kMaxCacheBytes);
+        // Room for the ten shown with their notes, not for the three past them.
+        const QByteArray trimmed = WhatsNew::cacheContent(QStringLiteral("0.1.13"), QStringLiteral("0.1.0"), releases,
+                                                          full.size() - 2000);
+        QFile cache(copy->root + QStringLiteral("/cache/whats-new.json"));
+        QVERIFY(QDir().mkpath(copy->root + QStringLiteral("/cache")));
+        QVERIFY(cache.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        cache.write(trimmed);
+        cache.close();
+        copy = restart(std::move(copy), QStringLiteral("0.1.13"), false);
+        QCOMPARE(copy->whatsNew->state(), QStringLiteral("ready"));
+        QCOMPARE(copy->whatsNew->releases().size(), 10);
+        QCOMPARE(copy->whatsNew->more(), 3);
     }
 
     // The automatic update check at start reads the list once for both; a

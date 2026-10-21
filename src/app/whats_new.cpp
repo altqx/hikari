@@ -246,13 +246,28 @@ QByteArray WhatsNew::cacheContent(const QString &installed, const QString &since
                                          {QStringLiteral("releases"), entries}})
             .toJson(QJsonDocument::Compact);
     };
+    // Each entry's share is itself and its comma. Past the limit, the
+    // lowest versions' notes go first: those are past the ten shown, and
+    // kept they still count in "And N earlier versions". Then, when that is
+    // not enough, the lowest versions. Each pass removes about what is over
+    // and measures again.
     QByteArray bytes = content();
+    const auto share = [&](qsizetype i) {
+        return QJsonDocument(entries.at(i).toObject()).toJson(QJsonDocument::Compact).size() + 1;
+    };
+    qsizetype noted = entries.size(); // entries [noted, size) have lost their notes
+    while (bytes.size() > limit && noted > 0) {
+        for (qint64 over = bytes.size() - limit; over > 0 && noted > 0;) {
+            QJsonObject entry = entries.at(--noted).toObject();
+            over -= entry.value(QStringLiteral("notes")).toString().toUtf8().size();
+            entry.insert(QStringLiteral("notes"), QString());
+            entries.replace(noted, entry);
+        }
+        bytes = content();
+    }
     while (bytes.size() > limit && !entries.isEmpty()) {
-        // Each entry's share is itself and its comma: the lowest go until
-        // that much is gone, then the content is measured again.
-        qint64 over = bytes.size() - limit;
-        while (over > 0 && !entries.isEmpty()) {
-            over -= QJsonDocument(entries.last().toObject()).toJson(QJsonDocument::Compact).size() + 1;
+        for (qint64 over = bytes.size() - limit; over > 0 && !entries.isEmpty();) {
+            over -= share(entries.size() - 1);
             entries.removeLast();
         }
         bytes = content();
