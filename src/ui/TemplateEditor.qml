@@ -454,12 +454,16 @@ Pane {
                             // The controller's text, put in only when it is not
                             // what the field holds (the cursor stays).
                             property bool loading: false
+                            // The text last seen: the highlighter's formatting
+                            // notifies the same text again, later.
+                            property string seen: ""
                             function load() {
                                 if (text === root.controller.text)
                                     return
                                 loading = true
                                 const at = cursorPosition
                                 text = root.controller.text
+                                seen = text
                                 cursorPosition = Math.min(at, length)
                                 loading = false
                             }
@@ -469,8 +473,9 @@ Pane {
                                 function onChanged() { textField.load() }
                             }
                             onTextChanged: {
-                                if (loading)
+                                if (loading || text === seen)
                                     return
+                                seen = text
                                 root.controller.setText(text)
                                 completion.update()
                             }
@@ -592,6 +597,12 @@ Pane {
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
                             textFormat: Text.StyledText
+                            // The templater's whole message on hover.
+                            ToolTip.text: root.controller.problem
+                            ToolTip.visible: problemHover.hovered && root.controller.problem.indexOf("\n") >= 0
+                            HoverHandler {
+                                id: problemHover
+                            }
                             text: {
                                 const escape = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
                                 const range = root.controller.problemRange
@@ -599,9 +610,11 @@ Pane {
                                 const line = (root.controller.currentIsCode ? qsTr("Code Line: %1") : qsTr("Template Line: %1"))
                                              .arg(root.controller.currentNumber)
                                 //: A template's problem: "Template Line: 3, in !math.rnd(1,5)!: attempt to call a nil value"
+                                // Its first line, without Lua's chunk name ([string "…"]:1:).
+                                const said = root.controller.problem.split("\n")[0].replace(/\[string ".*?"\]:\d+: /, "")
                                 return where !== "" ? qsTr("%1, in %2: %3").arg("<b>" + line + "</b>")
-                                                          .arg("<tt>" + escape(where) + "</tt>").arg(escape(root.controller.problem))
-                                                    : "<b>" + line + "</b>: " + escape(root.controller.problem)
+                                                          .arg("<tt>" + escape(where) + "</tt>").arg(escape(said))
+                                                    : "<b>" + line + "</b>: " + escape(said)
                             }
                         }
                     }
@@ -839,6 +852,7 @@ Pane {
                     Accessible.description: qsTr("Apply to every karaoke Line")
                 }
                 Button {
+                    id: applyArrow
                     objectName: "templateApplyArrow"
                     implicitWidth: 20
                     implicitHeight: applyButton.implicitHeight
@@ -856,7 +870,7 @@ Pane {
                         text: "⌄"
                         horizontalAlignment: Text.AlignHCenter
                         verticalAlignment: Text.AlignVCenter
-                        color: parent.enabled ? Theme.onAccent : Theme.disabled
+                        color: applyArrow.palette.buttonText
                     }
                     onClicked: applyMenu.popup(applyButton, 0, applyButton.height)
                 }
@@ -1142,8 +1156,12 @@ Pane {
                     implicitHeight: 26
                     leftPadding: 10
                     rightPadding: 10
-                    highlighted: index === completion.chosen
                     onClicked: completion.insert(index)
+                    // The chosen one as the list's current row.
+                    background: Rectangle {
+                        color: entryRow.index === completion.chosen ? Theme.select
+                               : entryRow.hovered ? Theme.raised : "transparent"
+                    }
                     contentItem: RowLayout {
                         spacing: 10
                         Label {

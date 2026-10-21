@@ -729,6 +729,13 @@ private slots:
         QTest::keyClick(view.get(), Qt::Key_Escape);
         QTRY_VERIFY(!list->property("opened").toBool());
         QVERIFY(editor->text().startsWith(QStringLiteral("{\\pos(") + second + QStringLiteral(",$")));
+        // Text put in from elsewhere (another template, an undo) opens nothing,
+        // the cursor inside an expression or not.
+        text->setProperty("cursorPosition", 3);
+        editor->setText(QStringLiteral("!ret!{\\b1}"));
+        QTest::qWait(200);
+        QCOMPARE(text->property("text").toString(), QStringLiteral("!ret!{\\b1}"));
+        QVERIFY(!list->property("opened").toBool());
     }
 
     void theEffectPickerWritesTheEffectField()

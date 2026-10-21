@@ -321,13 +321,16 @@ private slots:
         QTest::qWait(300);
         shoot(QStringLiteral("variables"));
         QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!list->property("opened").toBool());
+        editor().setText(text);
+        editor().commit();
         // Floating at its minimum width: the fields stacked, the preview folded.
         auto *dock = object(QStringLiteral("templateDock"));
         dock->setProperty("isFloating", true);
         auto *panel = item(QStringLiteral("templatePanel"));
         QTRY_VERIFY(panel && panel->window() != window);
         QQuickWindow *floating = panel->window();
-        floating->resize(380, 760);
+        floating->resize(400, 760);
         QTest::qWait(500);
         for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
             settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
