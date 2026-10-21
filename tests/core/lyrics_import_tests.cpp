@@ -530,6 +530,21 @@ TEST(LyricsImport, TtmlPrologIsChecked)
                             "<!DOCTYPE tt [<!ELEMENT tt <x>>]>", "<!DOCTYPE tt [%e]>", "<!DOCTYPE tt [<!FOO x>]>",
                             "<!DOCTYPE tt [<!ENTITY a 'x'>"})
         EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
+    // Each declaration by its production.
+    EXPECT_TRUE(imports("<!DOCTYPE tt [<!ELEMENT tt (head?, body)> <!ELEMENT p (#PCDATA | span | br)*>"
+                        " <!ELEMENT x (#PCDATA)> <!ELEMENT y ((a | b)+, c*)> <!ELEMENT z EMPTY>"
+                        " <!ATTLIST p begin CDATA #IMPLIED end CDATA #REQUIRED role (a|b) 'a' n NOTATION (x) #FIXED \"x\">"
+                        " <!ATTLIST q>"
+                        " <!ENTITY e 'v'> <!ENTITY f SYSTEM 'f.xml'> <!ENTITY g PUBLIC 'id' 'g.png' NDATA png>"
+                        " <!ENTITY % p PUBLIC 'id' 'p.dtd'> <!NOTATION png PUBLIC 'image/png'> <!NOTATION j SYSTEM 'j'>]>"));
+    for (const char *bad : {"<!DOCTYPE tt [<!ELEMENT tt ???>]>", "<!DOCTYPE tt [<!ELEMENT tt (a | b, c)>]>",
+                            "<!DOCTYPE tt [<!ELEMENT tt (#PCDATA | a)>]>", "<!DOCTYPE tt [<!ELEMENT tt (a>]>",
+                            "<!DOCTYPE tt [<!ELEMENT tt ()>]>", "<!DOCTYPE tt [<!ATTLIST p begin STRING #IMPLIED>]>",
+                            "<!DOCTYPE tt [<!ATTLIST p begin CDATA>]>", "<!DOCTYPE tt [<!ATTLIST p a CDATA '<'>]>",
+                            "<!DOCTYPE tt [<!ENTITY e>]>", "<!DOCTYPE tt [<!ENTITY e junk>]>",
+                            "<!DOCTYPE tt [<!ENTITY % p 'v' NDATA x>]>", "<!DOCTYPE tt [<!NOTATION n>]>",
+                            "<!DOCTYPE tt [<!NOTATION n FOO 'x'>]>"})
+        EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
     // A DOCTYPE needs the root's name, comes once and only before the root.
     EXPECT_EQ(problemOf("<!DOCTYPE>" + root, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 1, u8"<!DOCTYPE>"}));
     EXPECT_EQ(problemOf("<!DOCTYPEtt>" + root, u8"ttml").kind, Kind::NotWellFormed);
@@ -559,6 +574,12 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     // A dur without a begin of its own counts from the begin it inherits.
     EXPECT_EQ(timed("<div begin=\"1\" end=\"10\"><p dur=\"2\">x</p></div>"), (std::vector<Row>{{1000, 3000, "", "x"}}));
     EXPECT_EQ(timed("<div begin=\"1\"><div dur=\"3\"><p>y</p></div></div>"), (std::vector<Row>{{1000, 4000, "", "y"}}));
+    // Another namespace's element gives no text, times or words.
+    EXPECT_EQ(timed("<p begin=\"0\" end=\"4\">a <f:span xmlns:f=\"urn:other\" begin=\"1\" end=\"2\">x</f:span></p>"),
+              (std::vector<Row>{{0, 4000, "", "a"}}));
+    EXPECT_EQ(timed("<p begin=\"0\" end=\"4\"><span begin=\"0\" end=\"1\">a<f:i xmlns:f=\"urn:o\">x</f:i></span>"
+                    "<span begin=\"1\" end=\"4\">b</span></p>"),
+              (std::vector<Row>{{0, 4000, "", "{\\k100}a{\\k300}b"}}));
     // A dur is read even with no begin to count from.
     EXPECT_EQ(problemOf("<tt><body dur=\"bogus\"><p begin=\"1\" end=\"2\">x</p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::UnreadableTime, 1, u8"bogus"}));
@@ -735,6 +756,15 @@ TEST(LyricsImport, TtmlAttributesAreReadByNamespace)
     for (int i = 0; i < 8'000; ++i)
         many += " n:a" + std::to_string(i) + "=\"\"";
     EXPECT_EQ(lines(many + ">x</p></body></tt>"), (std::vector<Row>{{1000, 2000, "", "x"}}));
+    // Nor is every declaration searched for each one: thousands of prefixes
+    // on tens of thousands of attributes read at once.
+    std::string declared = "<tt";
+    for (int i = 0; i < 2'000; ++i)
+        declared += " xmlns:n" + std::to_string(i) + "=\"urn:" + std::to_string(i) + "\"";
+    declared += "><body><p begin=\"1\" end=\"2\"";
+    for (int i = 0; i < 30'000; ++i)
+        declared += " n" + std::to_string(i % 2'000) + ":a" + std::to_string(i) + "=\"\"";
+    EXPECT_EQ(lines(declared + ">x</p></body></tt>"), (std::vector<Row>{{1000, 2000, "", "x"}}));
 }
 
 TEST(LyricsImport, TtmlBackgroundVocalsNameTheirOwnAgent)

@@ -20,8 +20,10 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <functional>
 #include <map>
 #include <optional>
+#include <unordered_map>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -97,27 +99,6 @@ std::size_t attributeLine(const XmlNode &node, u8sv local, Namespace ns = Namesp
     return i ? node.attributeLines[*i] : node.line;
 }
 
-// The URI a prefix is declared for (Namespaces in XML): by the nearest
-// xmlns:prefix on the element or an ancestor (`open`); the default
-// namespace's, by xmlns, for an empty prefix. Null when none declares it.
-const std::u8string *declaredUri(u8sv prefix, const XmlNode &node, const std::vector<XmlNode> &open)
-{
-    auto declared = [&](const XmlNode &element) -> const std::u8string * {
-        for (const auto &[key, value] : element.attributes) {
-            const u8sv k = key;
-            if (prefix.empty() ? k == u8"xmlns" : k.starts_with(u8"xmlns:") && k.substr(6) == prefix)
-                return &value;
-        }
-        return nullptr;
-    };
-    if (const auto *uri = declared(node))
-        return uri;
-    for (auto it = open.rbegin(); it != open.rend(); ++it)
-        if (const auto *uri = declared(*it))
-            return uri;
-    return nullptr;
-}
-
 Namespace knownNamespace(u8sv uri)
 {
     return uri.empty()                ? Namespace::None
@@ -128,28 +109,90 @@ Namespace knownNamespace(u8sv uri)
                                       : Namespace::Other;
 }
 
-// The namespace a name is in (Namespaces in XML): xml and xmlns their own,
-// another prefix the one declared for it. An unprefixed attribute is in
-// none; an unprefixed element in the default namespace, if one is
-// declared. A ttm: no one declares is TTML's metadata namespace, as such
-// files mean; another undeclared prefix names a namespace no lookup asks for.
-Namespace namespaceOf(u8sv name, const XmlNode &node, const std::vector<XmlNode> &open, bool element)
-{
-    const std::size_t colon = name.find(u8':');
-    if (colon == u8sv::npos) {
-        if (!element)
-            return Namespace::None;
-        const auto *uri = declaredUri({}, node, open);
-        return uri ? knownNamespace(*uri) : Namespace::None;
+// The namespace declarations in scope while reading (Namespaces in XML):
+// each prefix ("" for the default namespace) to the URIs the open elements
+// declare for it, innermost last, so resolving a name is one lookup however
+// many declarations and attributes a file has. Each URI is kept once, by
+// number.
+class NamespaceScope {
+public:
+    // Where a name is: its namespace and, for another one, its URI's number
+    // (kUndeclared for a prefix no one declares).
+    struct Place {
+        Namespace ns = Namespace::None;
+        std::uint32_t uri = 0;
+    };
+    static constexpr std::uint32_t kUndeclared = UINT32_MAX;
+
+    // An element's xmlns and xmlns:prefix attributes come into scope.
+    void enter(const XmlNode &node)
+    {
+        for (const auto &[key, value] : node.attributes)
+            if (const auto prefix = declares(key)) {
+                auto [uri, added] = m_uris.try_emplace(value, static_cast<std::uint32_t>(m_kinds.size()));
+                if (added)
+                    m_kinds.push_back(knownNamespace(value));
+                auto it = m_declared.find(*prefix);
+                if (it == m_declared.end())
+                    it = m_declared.try_emplace(std::u8string(*prefix)).first;
+                it->second.push_back(uri->second);
+            }
     }
-    const u8sv prefix = name.substr(0, colon);
-    if (prefix == u8"xml")
-        return Namespace::Xml;
-    if (prefix == u8"xmlns")
-        return Namespace::Xmlns;
-    if (const auto *uri = declaredUri(prefix, node, open))
-        return knownNamespace(*uri);
-    return prefix == u8"ttm" ? Namespace::TtmlMetadata : Namespace::Other;
+    // ...and leave it with the element.
+    void leave(const XmlNode &node)
+    {
+        for (const auto &[key, value] : node.attributes)
+            if (const auto prefix = declares(key))
+                m_declared.find(*prefix)->second.pop_back();
+    }
+
+    // xml and xmlns are their own; another prefix is in the namespace
+    // declared for it. An unprefixed attribute is in none; an unprefixed
+    // element in the default namespace, if one is declared. A ttm: no one
+    // declares is TTML's metadata namespace, as such files mean; another
+    // undeclared prefix names a namespace no lookup asks for.
+    Place of(u8sv name, bool element) const
+    {
+        const std::size_t colon = name.find(u8':');
+        if (colon == u8sv::npos && !element)
+            return {};
+        const u8sv prefix = colon == u8sv::npos ? u8sv() : name.substr(0, colon);
+        if (prefix == u8"xml")
+            return {Namespace::Xml};
+        if (prefix == u8"xmlns")
+            return {Namespace::Xmlns};
+        if (const auto it = m_declared.find(prefix); it != m_declared.end() && !it->second.empty())
+            return {m_kinds[it->second.back()], it->second.back()};
+        if (prefix.empty())
+            return {};
+        return prefix == u8"ttm" ? Place{Namespace::TtmlMetadata} : Place{Namespace::Other, kUndeclared};
+    }
+
+private:
+    // The prefix an attribute declares, "" for the default namespace.
+    static std::optional<u8sv> declares(u8sv key)
+    {
+        if (key == u8"xmlns")
+            return u8sv();
+        if (key.starts_with(u8"xmlns:"))
+            return key.substr(6);
+        return std::nullopt;
+    }
+
+    struct Hash {
+        using is_transparent = void;
+        std::size_t operator()(u8sv s) const { return std::hash<u8sv>{}(s); }
+    };
+    std::unordered_map<std::u8string, std::vector<std::uint32_t>, Hash, std::equal_to<>> m_declared;
+    std::unordered_map<std::u8string, std::uint32_t, Hash, std::equal_to<>> m_uris;
+    std::vector<Namespace> m_kinds; // each URI's, by number
+};
+
+// Whether a node is another namespace's element, which TTML's content
+// leaves out with all it holds: its text, its times and its spans.
+bool foreign(const XmlNode &node)
+{
+    return !node.isText() && node.ns != Namespace::Ttml && node.ns != Namespace::None;
 }
 
 // Whether an element is TTML's `local`: in TTML's namespace, or in none
@@ -409,59 +452,13 @@ private:
                 // PUBLIC "id" "uri"), an internal subset in "[ ]", and ">".
                 // Quoted literals (entity values) and comments in the subset
                 // may hold "]" and ">".
-                auto literal = [&] {
-                    if (done() || (m_s[m_pos] != u8'"' && m_s[m_pos] != u8'\''))
-                        return false;
-                    const std::size_t close = m_s.find(m_s[m_pos], m_pos + 1);
-                    if (close == u8sv::npos)
-                        return false;
-                    advance(close + 1 - m_pos);
-                    return true;
-                };
-                auto space = [&] {
-                    const bool any = !done() && isSpace(m_s[m_pos]);
-                    skipSpace();
-                    return any;
-                };
                 if (ok && space()) {
-                    if (at(u8"SYSTEM")) {
-                        advance(6);
-                        ok = space() && literal();
-                    } else if (at(u8"PUBLIC")) {
-                        advance(6);
-                        ok = space() && literal() && space() && literal();
-                    }
+                    if (at(u8"SYSTEM") || at(u8"PUBLIC"))
+                        ok = externalId(false);
                     skipSpace();
                 }
                 // The subset (XML's intSubset): markup declarations, PIs,
-                // comments, parameter-entity references and whitespace. A
-                // declaration ("<!ELEMENT", "<!ATTLIST", "<!ENTITY" or
-                // "<!NOTATION", then whitespace) runs to its ">", quoted
-                // literals included; its content is not read further.
-                auto declaration = [&] {
-                    for (u8sv keyword : {u8sv(u8"<!ELEMENT"), u8sv(u8"<!ATTLIST"), u8sv(u8"<!ENTITY"), u8sv(u8"<!NOTATION")}) {
-                        if (!at(keyword))
-                            continue;
-                        advance(keyword.size());
-                        if (!space() || done() || m_s[m_pos] == u8'>')
-                            return false;
-                        while (!done() && m_s[m_pos] != u8'>') {
-                            if (m_s[m_pos] == u8'"' || m_s[m_pos] == u8'\'') {
-                                if (!literal())
-                                    return false;
-                            } else if (m_s[m_pos] == u8'<') {
-                                return false;
-                            } else {
-                                advance(1);
-                            }
-                        }
-                        if (done())
-                            return false;
-                        advance(1);
-                        return true;
-                    }
-                    return false;
-                };
+                // comments, parameter-entity references and whitespace.
                 if (ok && at(u8"[")) {
                     advance(1);
                     for (skipSpace(); ok && !at(u8"]"); skipSpace()) {
@@ -477,7 +474,7 @@ private:
                             if (ok)
                                 advance(1);
                         } else {
-                            ok = declaration();
+                            ok = markupDeclaration();
                         }
                     }
                     if (ok)
@@ -498,6 +495,194 @@ private:
 
     // A name, by XML's grammar: a NameStartChar, then NameChars. What
     // follows it is the caller's to check ("<a$>" is broken there).
+    // The internal subset's markup declarations, each read by its
+    // production in XML 1.0 (elementdecl, AttlistDecl, EntityDecl,
+    // NotationDecl), so a malformed one is not well-formed XML. They are
+    // checked, never used: entities are not expanded.
+    bool markupDeclaration()
+    {
+        bool ok = false;
+        if (keyword(u8"<!ELEMENT"))
+            ok = space() && name() && space() && contentSpec();
+        else if (keyword(u8"<!ATTLIST"))
+            ok = attlistDeclaration();
+        else if (keyword(u8"<!ENTITY"))
+            ok = entityDeclaration();
+        else if (keyword(u8"<!NOTATION"))
+            ok = space() && name() && space() && externalId(true);
+        skipSpace();
+        return ok && keyword(u8">");
+    }
+
+    bool keyword(u8sv word)
+    {
+        if (!at(word))
+            return false;
+        advance(word.size());
+        return true;
+    }
+    // Required whitespace (S), all of it.
+    bool space()
+    {
+        const bool any = !done() && isSpace(m_s[m_pos]);
+        skipSpace();
+        return any;
+    }
+    // A quoted literal; an attribute value (AttValue) holds no "<".
+    bool quoted(bool attributeValue = false)
+    {
+        if (done() || (m_s[m_pos] != u8'"' && m_s[m_pos] != u8'\''))
+            return false;
+        const std::size_t close = m_s.find(m_s[m_pos], m_pos + 1);
+        if (close == u8sv::npos || (attributeValue && m_s.substr(m_pos, close - m_pos).find(u8'<') != u8sv::npos))
+            return false;
+        advance(close + 1 - m_pos);
+        return true;
+    }
+    bool nmtoken()
+    {
+        const std::size_t from = m_pos;
+        while (!done()) {
+            const auto [cp, length] = codePointAt(m_s, m_pos);
+            if (!nameChar(cp))
+                break;
+            advance(length);
+        }
+        return m_pos != from;
+    }
+    // ExternalID: SYSTEM "uri", or PUBLIC "id" "uri"; a notation's PUBLIC
+    // "id" alone (PublicID) with `notation`.
+    bool externalId(bool notation)
+    {
+        if (keyword(u8"SYSTEM"))
+            return space() && quoted();
+        if (!keyword(u8"PUBLIC") || !space() || !quoted())
+            return false;
+        const auto mark = std::pair{m_pos, m_line};
+        if (space() && quoted())
+            return true;
+        std::tie(m_pos, m_line) = mark;
+        return notation;
+    }
+    // contentspec: EMPTY, ANY, Mixed ("(#PCDATA|a|b)*") or children.
+    bool contentSpec()
+    {
+        if (keyword(u8"EMPTY") || keyword(u8"ANY"))
+            return true;
+        if (!keyword(u8"("))
+            return false;
+        skipSpace();
+        if (!keyword(u8"#PCDATA"))
+            return contentGroup(1);
+        bool names = false;
+        for (skipSpace(); keyword(u8"|"); skipSpace(), names = true) {
+            skipSpace();
+            if (!name())
+                return false;
+        }
+        if (!keyword(u8")"))
+            return false;
+        return keyword(u8"*") || !names;
+    }
+    // A choice or seq after its "(": content particles split by "|" or by
+    // ",", not both, then ")" and an optional "?", "*" or "+". Nested no
+    // deeper than elements may be.
+    bool contentGroup(std::size_t depth)
+    {
+        if (depth > kMaxTtmlDepth)
+            return false;
+        char8_t separator = 0;
+        for (;;) {
+            if (keyword(u8"(")) {
+                skipSpace();
+                if (!contentGroup(depth + 1))
+                    return false;
+            } else if (!name()) {
+                return false;
+            } else {
+                occurrence();
+            }
+            skipSpace();
+            if (keyword(u8")"))
+                break;
+            const char8_t c = done() ? char8_t(0) : m_s[m_pos];
+            if ((c != u8'|' && c != u8',') || (separator != 0 && c != separator))
+                return false;
+            separator = c;
+            advance(1);
+            skipSpace();
+        }
+        occurrence();
+        return true;
+    }
+    void occurrence()
+    {
+        if (!done() && (m_s[m_pos] == u8'?' || m_s[m_pos] == u8'*' || m_s[m_pos] == u8'+'))
+            advance(1);
+    }
+    // AttlistDecl after its keyword: the element's name, then each AttDef
+    // (a name, an AttType and a DefaultDecl).
+    bool attlistDeclaration()
+    {
+        if (!space() || !name())
+            return false;
+        for (;;) {
+            const bool spaced = space();
+            if (at(u8">"))
+                return true;
+            if (!spaced || !name() || !space() || !attributeType() || !space())
+                return false;
+            if (keyword(u8"#REQUIRED") || keyword(u8"#IMPLIED"))
+                continue;
+            if (keyword(u8"#FIXED") && !space())
+                return false;
+            if (!quoted(true))
+                return false;
+        }
+    }
+    bool attributeType()
+    {
+        for (u8sv type : {u8sv(u8"CDATA"), u8sv(u8"IDREFS"), u8sv(u8"IDREF"), u8sv(u8"ID"), u8sv(u8"ENTITY"),
+                          u8sv(u8"ENTITIES"), u8sv(u8"NMTOKENS"), u8sv(u8"NMTOKEN")})
+            if (keyword(type))
+                return true;
+        const bool notation = keyword(u8"NOTATION");
+        if (notation && !space())
+            return false;
+        if (!keyword(u8"("))
+            return false;
+        // An Enumeration of name tokens, or a NotationType of names.
+        for (;;) {
+            skipSpace();
+            if (notation ? !name() : !nmtoken())
+                return false;
+            skipSpace();
+            if (keyword(u8")"))
+                return true;
+            if (!keyword(u8"|"))
+                return false;
+        }
+    }
+    // EntityDecl after its keyword: a general entity's name and value or
+    // external id (NDATA too), or "%", a parameter entity's.
+    bool entityDeclaration()
+    {
+        if (!space())
+            return false;
+        const bool parameter = keyword(u8"%");
+        if ((parameter && !space()) || !name() || !space())
+            return false;
+        if (quoted())
+            return true;
+        if (!externalId(false))
+            return false;
+        const auto mark = std::pair{m_pos, m_line};
+        if (!parameter && space() && keyword(u8"NDATA"))
+            return space() && name();
+        std::tie(m_pos, m_line) = mark;
+        return true;
+    }
+
     std::optional<std::u8string> name()
     {
         const std::size_t from = m_pos;
@@ -582,6 +767,7 @@ private:
                     return std::unexpected(broken());
                 }
                 advance(1);
+                m_scope.leave(open.back());
                 XmlNode node = std::move(open.back());
                 open.pop_back();
                 if (open.empty()) {
@@ -686,27 +872,25 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken()); // an attribute given twice
                 }
-                for (const auto &[key, value] : node.attributes)
-                    node.attributeNamespaces.push_back(namespaceOf(key, node, open, false));
-                node.ns = namespaceOf(node.name, node, open, true);
+                m_scope.enter(node);
                 // Nor twice by expanded name, the namespace and the local
-                // name, as a:role and b:role with one namespace are.
-                std::vector<std::tuple<Namespace, u8sv, u8sv>> expanded;
-                for (std::size_t i = 0; i < node.attributes.size(); ++i) {
-                    const u8sv key = node.attributes[i].first;
-                    u8sv uri;
-                    if (node.attributeNamespaces[i] == Namespace::Other) {
-                        const std::size_t colon = key.find(u8':');
-                        const auto *declared = declaredUri(key.substr(0, colon), node, open);
-                        uri = declared ? u8sv(*declared) : key.substr(0, colon + 1); // "p:" for an undeclared p
-                    }
-                    expanded.emplace_back(node.attributeNamespaces[i], uri, localName(key));
+                // name, as a:role and b:role with one namespace are (an
+                // undeclared prefix is a namespace of its own).
+                std::vector<std::tuple<Namespace, std::uint32_t, u8sv, u8sv>> expanded;
+                for (const auto &[key, value] : node.attributes) {
+                    const auto place = m_scope.of(key, false);
+                    node.attributeNamespaces.push_back(place.ns);
+                    const u8sv undeclared = place.uri == NamespaceScope::kUndeclared ? u8sv(key).substr(0, key.find(u8':')) : u8sv();
+                    expanded.emplace_back(place.ns, place.ns == Namespace::Other ? place.uri : 0, undeclared, localName(key));
                 }
+                node.ns = m_scope.of(node.name, true).ns;
                 std::ranges::sort(expanded);
                 if (std::ranges::adjacent_find(expanded) != expanded.end()) {
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken()); // an attribute given twice
                 }
+                if (empty)
+                    m_scope.leave(node);
                 if (!empty) {
                     open.push_back(std::move(node));
                 } else if (open.empty()) {
@@ -763,6 +947,7 @@ private:
     std::size_t m_start = 0; // after the byte order mark
     bool m_doctype = false;
     std::optional<std::u8string> m_doctypeName; // the root the DOCTYPE names
+    NamespaceScope m_scope;
 };
 
 // A TTML time: clock time ("hh:mm:ss.fff", and the "mm:ss.fff" and
@@ -998,7 +1183,7 @@ private:
                 append(out, lyricText(child.text, preserve), preserve);
             else if (isTtml(child, u8"br"))
                 out += u8"\\N";
-            else if (!attribute(child, u8"role", Namespace::TtmlMetadata))
+            else if (!foreign(child) && !attribute(child, u8"role", Namespace::TtmlMetadata))
                 append(out, spanText(child, preserve), preserves(child, preserve));
         return out;
     }
@@ -1089,7 +1274,7 @@ private:
     static bool hasTimedSpan(const XmlNode &node)
     {
         for (const XmlNode &child : node.children)
-            if (!child.isText() && !attribute(child, u8"role", Namespace::TtmlMetadata) &&
+            if (!child.isText() && !foreign(child) && !attribute(child, u8"role", Namespace::TtmlMetadata) &&
                 (timed(child) || hasTimedSpan(child)))
                 return true;
         return false;
@@ -1101,7 +1286,7 @@ private:
                               std::optional<std::int64_t> begin, std::optional<std::int64_t> end)
     {
         for (const XmlNode &child : node.children) {
-            if (child.isText())
+            if (child.isText() || foreign(child))
                 continue;
             const auto role = attribute(child, u8"role", Namespace::TtmlMetadata);
             if (role == u8sv(u8"x-bg"))
@@ -1131,6 +1316,8 @@ private:
                                                std::optional<std::int64_t> spanEnd)
     {
         for (const XmlNode &child : node.children) {
+            if (foreign(child))
+                continue; // not TTML's: no text, times or words
             if (child.isText()) {
                 const std::u8string text = lyricText(child.text, preserve);
                 const u8sv lyric = trimBlankLeft(text);
@@ -1321,7 +1508,7 @@ private:
             if (isTtml(child, u8"p")) {
                 if (auto ok = line(child, begin, end, actorOf(child, {}), preserve); !ok)
                     return ok;
-            } else if (child.ns != Namespace::Ttml && child.ns != Namespace::None) {
+            } else if (foreign(child)) {
                 continue; // another namespace's element is not TTML's, nor what it holds
             } else if (auto ok = paragraphs(child, begin, end, preserve); !ok) {
                 return ok;
