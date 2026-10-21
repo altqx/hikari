@@ -133,6 +133,7 @@ target_sources(hikari_ui PRIVATE video_fullscreen_controller.cpp video_fullscree
 qt_target_qml_sources(hikari_ui QML_FILES VideoFullscreen.qml)
 qt_target_qml_sources(hikari_ui QML_FILES VideoContextMenu.qml AspectRatioDialog.qml VideoZoomFrame.qml
     VideoRenderCost.qml # KE1-render-cost-overlay
+    VideoTemplateBadge.qml # KE2: the Template editor's preview on the video
     VideoVolumeSlider.qml)
 # V6: the video toolbar's seek-after and play-after lists.
 qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)

@@ -27,6 +27,7 @@ ApplicationWindow {
     required property var app
     required property var automation
     required property AutomationManagerController automationManager
+    required property TemplateEditorController templateEditor
     required property AutomationDialogController automationDialogs
     required property AutomationFilePickerController automationPicker
     required property ScriptResolutionPromptController automationResolution
@@ -249,9 +250,12 @@ ApplicationWindow {
         // Automation tab with the editor.
         editorDock.addDockWidgetAsTab(timingDock)
         editorDock.addDockWidgetAsTab(automationDock)
+        // KE2: the Template editor tabs with the editor too.
+        editorDock.addDockWidgetAsTab(templateDock)
         editorDock.setAsCurrentTab()
         timingDock.close()
         automationDock.close()
+        templateDock.close()
     }
     Connections {
         target: root.shell
@@ -277,10 +281,10 @@ ApplicationWindow {
 
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel, timingPanel,
-                                          searchPanel, automationPanel]
+                                          searchPanel, automationPanel, templatePanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock,
-                                     automationDock]
+                                     automationDock, templateDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -2483,11 +2487,21 @@ ApplicationWindow {
                     anchors.fill: presenter
                     view: root.videoView
                 }
-                // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
+                // KE2: the Template editor's preview on the frame.
+                VideoTemplateBadge {
+                    id: templateBadge
+                    x: presenter.x + 8
+                    y: presenter.y + 8
+                    visible: root.templateEditor.videoPreview && root.video.hasVideo
+                    controller: root.templateEditor
+                }
+                // KE1-render-cost-overlay: what the frame's subtitles cost to
+                // draw; below the preview badge when it shows.
                 VideoRenderCost {
                     anchors.fill: presenter
                     visible: root.videoView.renderCost && root.video.hasVideo
                     cost: presenter.renderCost
+                    textTop: templateBadge.visible ? templateBadge.height + 12 : 8
                 }
                 }
                 VideoContextMenu {
@@ -4910,12 +4924,43 @@ ApplicationWindow {
             }
         }
 
+        // KE2: the Template editor (docs/qt/karaoke-templater.md, "The
+        // template editor"). Its previews run, and the video draws them, only
+        // while it shows: open, and the current tab of its group.
+        KDDW.DockWidget {
+            id: templateDock
+            objectName: "templateDock"
+            uniqueName: "Template"
+            title: qsTranslate("HikariSub.TemplateEditor", "Template editor")
+            Binding {
+                target: root.templateEditor
+                property: "shown"
+                value: templateDock.isOpen && templatePanel.visible
+            }
+            Panel {
+                id: templatePanel
+                objectName: "templatePanel"
+                dockName: "Template"
+                minimumBodySize: templateTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.TemplateEditor", "Template editor")
+                TemplateEditor {
+                    id: templateTool
+                    objectName: "templateTool"
+                    anchors.fill: parent
+                    controller: root.templateEditor
+                    video: root.video
+                }
+            }
+        }
+
         Component.onCompleted: {
             // D3: the horizontal panels keep a one-tab header even alone;
             // the Reference tray's toolbar sits in its header.
             Docking.setPanelHeader("Grid", true, null)
             Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
             Docking.setPanelHeader("Search", true, null)
+            Docking.setPanelHeader("Template", false, templateTool.toolbar)
             root.defaultLayout()
         }
     }

@@ -1,0 +1,344 @@
+// KE2: the Template editor in the shell: a panel tabbed with the Line editor,
+// closed by default and listed under View › Panels; its previews run only
+// while it shows; the video draws the preview with a badge saying so, the
+// render cost below it; Apply is the Automation menu's run of the bundled
+// karaoke templater, its report in the panel, one undo step. With
+// HIKARI_TEMPLATE_SHOT_DIR set, the panel in the four themes for review.
+
+#include "hikari/app/application.h"
+#include "docking.h"
+#include "template_editor_controller.h"
+#include "video_view_controller.h"
+
+#include <QDeadlineTimer>
+#include <QDir>
+#include <QFile>
+#include <QQmlApplicationEngine>
+#include <QQuickItem>
+#include <QQuickWindow>
+#include <QSignalSpy>
+#include <QTemporaryDir>
+#include <QtQml/qqmlextensionplugin.h>
+#include <QtTest>
+
+#include <algorithm>
+
+Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
+
+using namespace hikari;
+
+namespace {
+
+QObject *findIn(QQuickItem *at, const QString &name)
+{
+    if (!at)
+        return nullptr;
+    if (at->objectName() == name)
+        return at;
+    if (QObject *o = at->findChild<QObject *>(name, Qt::FindDirectChildrenOnly))
+        return o;
+    for (QQuickItem *child : at->childItems())
+        if (QObject *found = findIn(child, name))
+            return found;
+    return nullptr;
+}
+
+} // namespace
+
+class TemplateEditorShellTests : public QObject {
+    Q_OBJECT
+
+    QTemporaryDir dir;
+    app::Application *application = nullptr;
+    QQmlApplicationEngine *engine = nullptr;
+    QQuickWindow *window = nullptr;
+
+    QObject *root() const { return engine->rootObjects().first(); }
+    QObject *object(const QString &name) const
+    {
+        if (QObject *o = root()->findChild<QObject *>(name))
+            return o;
+        for (QWindow *w : QGuiApplication::topLevelWindows())
+            if (auto *q = qobject_cast<QQuickWindow *>(w))
+                if (QObject *o = findIn(q->contentItem(), name))
+                    return o;
+        return nullptr;
+    }
+    QQuickItem *item(const QString &name) const { return qobject_cast<QQuickItem *>(object(name)); }
+    QString textOf(const QString &name) const
+    {
+        const QObject *o = object(name);
+        return o ? o->property("text").toString() : QString();
+    }
+    ui::TemplateEditorController &editor() { return application->templateEditor(); }
+    application::EditSession *session()
+    {
+        const auto target = application->workspace().editingTarget();
+        return target ? application->files().session(*target) : nullptr;
+    }
+    void showPanel(const char *dock)
+    {
+        QVERIFY(QMetaObject::invokeMethod(root(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(object(QLatin1String(dock))))));
+        QTRY_VERIFY(object(QLatin1String(dock))->property("isOpen").toBool());
+    }
+    void click(QQuickItem *at)
+    {
+        QVERIFY(at);
+        QTest::mouseClick(at->window(), Qt::LeftButton, {},
+                          at->mapToScene(QPointF(at->width() / 2, at->height() / 2)).toPoint());
+    }
+
+    bool loadTemplater()
+    {
+        application->automation().load(HIKARI_KARAOKE_TEMPLATER);
+        QDeadlineTimer deadline(30'000);
+        while (!deadline.hasExpired()) {
+            const auto scripts = application->automation().scripts();
+            if (std::ranges::any_of(scripts, [](const auto &s) { return s.path == HIKARI_KARAOKE_TEMPLATER; }) &&
+                std::ranges::none_of(scripts, [](const auto &s) {
+                    return s.state == application::ScriptStatus::State::Loading;
+                }))
+                return true;
+            QCoreApplication::processEvents(QEventLoop::AllEvents, 50);
+        }
+        return false;
+    }
+    // A copy of a corpus song open, the templater loaded, its first karaoke
+    // Line active; with `video`, a dummy video of the song's size.
+    bool openSong(const char *name, bool video)
+    {
+        const QString path = dir.filePath(QLatin1String(name));
+        QFile::remove(path);
+        if (!QFile::copy(QStringLiteral(HIKARI_KARAOKE_CORPUS "/") + QLatin1String(name), path))
+            return false;
+        QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+        return openPath(path, video);
+    }
+    bool openPath(const QString &path, bool video)
+    {
+        if (!application->openFile(path) || !loadTemplater())
+            return false;
+        if (video) {
+            application->video().openVideo(QStringLiteral("?dummy:23.976000:1000:1280:720:28:30:64:"));
+            if (!QTest::qWaitFor([&] { return application->video().session().shownFrame().value_or(-1) >= 0; }, 20'000))
+                return false;
+        }
+        for (const auto *l : session()->document().lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l)) {
+                application->clickLine(l->id.value, 0);
+                return true;
+            }
+        return false;
+    }
+
+private slots:
+    void init()
+    {
+        QVERIFY(dir.isValid());
+        app::Application::Options options;
+        options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
+        options.playbackAudio = false;
+        application = new app::Application(options);
+        // No dictionary here: legacy's notice would pop up over the panel.
+        application->settingsStore()->setValue(QStringLiteral("editor.spellchecker"), false);
+        engine = new QQmlApplicationEngine;
+        ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(root());
+        QVERIFY(window);
+        window->resize(1280, 800);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+    }
+    void cleanup()
+    {
+        delete engine;
+        delete application;
+        engine = nullptr;
+        application = nullptr;
+    }
+
+    // A tab beside the Line editor, closed until opened (View › Panels
+    // lists it), its previews only while it is the tab shown.
+    void itIsATabBesideTheLineEditorAndPreviewsOnlyWhileShown()
+    {
+        auto *dock = object(QStringLiteral("templateDock"));
+        QVERIFY(dock);
+        QVERIFY(!dock->property("isOpen").toBool());
+        QCOMPARE(dock->property("title").toString(), QStringLiteral("Template editor"));
+        QVERIFY(object(QStringLiteral("panelMenuTemplate")));
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        QVERIFY(!editor().shown());
+        showPanel("templateDock");
+        QTRY_VERIFY(editor().shown());
+        auto *docking = engine->singletonInstance<QObject *>("Hikari.Ui", "Docking");
+        QVERIFY(docking);
+        int tabs = 0, editorTabs = 0;
+        QVERIFY(QMetaObject::invokeMethod(docking, "tabCount", Q_RETURN_ARG(int, tabs), Q_ARG(QString, QStringLiteral("Template"))));
+        QVERIFY(QMetaObject::invokeMethod(docking, "tabCount", Q_RETURN_ARG(int, editorTabs), Q_ARG(QString, QStringLiteral("Editor"))));
+        QVERIFY(tabs >= 2);
+        QCOMPARE(tabs, editorTabs);
+        // The header holds its tools while it is the current tab.
+        auto *eye = item(QStringLiteral("templatePreviewOnVideo"));
+        QVERIFY(eye);
+        QTRY_VERIFY(eye->isVisible());
+        QCOMPARE(eye->window(), window);
+        QTRY_VERIFY2_WITH_TIMEOUT(editor().hasPreview(),
+                                  qPrintable(QStringLiteral("available %1 source %2 shown %3 problems %4: %5")
+                                                 .arg(editor().available()).arg(editor().source())
+                                                 .arg(editor().shown()).arg(editor().hasProblems())
+                                                 .arg(editor().problem())),
+                                  20'000);
+        showPanel("editorDock");
+        QTRY_VERIFY(!editor().shown());
+        QTRY_VERIFY(!eye->isVisible());
+        showPanel("templateDock");
+        QTRY_VERIFY(editor().shown());
+    }
+
+    // The video draws the preview with the badge; the render cost moves
+    // below it; the eye turns it off.
+    void theVideoShowsThePreviewWithABadge()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", true));
+        showPanel("templateDock");
+        QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview(), 20'000);
+        auto *badge = item(QStringLiteral("videoTemplateBadge"));
+        QVERIFY(badge);
+        QTRY_VERIFY(badge->isVisible());
+        QCOMPARE(textOf(QStringLiteral("videoTemplateBadgeText")),
+                 QStringLiteral("<b>Preview</b> · Line %1 · not applied").arg(editor().sourceNumber()));
+        QVERIFY(application->videoView().toggleRenderCost());
+        auto *cost = item(QStringLiteral("videoRenderCost"));
+        QTRY_VERIFY(cost->isVisible());
+        QVERIFY(cost->property("textTop").toReal() >= badge->height() + 8);
+        click(item(QStringLiteral("templatePreviewOnVideo")));
+        QTRY_VERIFY(!editor().previewOnVideo());
+        QTRY_VERIFY(!badge->isVisible());
+        QCOMPARE(cost->property("textTop").toReal(), 8.0);
+        QVERIFY(application->videoView().toggleRenderCost());
+    }
+
+    // Apply is the Automation menu's run: one undo step, its report in the
+    // panel's footer.
+    void applyIsTheShellsRunAndOneUndoStep()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        showPanel("templateDock");
+        const std::size_t lines = session()->document().lines().size();
+        auto *apply = item(QStringLiteral("templateApply"));
+        QTRY_VERIFY_WITH_TIMEOUT(apply->isEnabled(), 20'000);
+        QSignalSpy done(&application->automation(), &app::AutomationShell::runCompleted);
+        click(apply);
+        QVERIFY(done.wait(30'000));
+        QVERIFY(done.first().at(0).toBool());
+        QVERIFY(session()->document().lines().size() > lines);
+        QTRY_VERIFY(textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied: ")));
+        QVERIFY(session()->undo());
+        QCOMPARE(session()->document().lines().size(), lines);
+    }
+
+    // For review: the panel beside the video in the four themes; a problem;
+    // the variables list; the narrow fold.
+    void screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_TEMPLATE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_TEMPLATE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        window->resize(1600, 1000);
+        // The design's song: a code Line, a Line, syllable and line template,
+        // and karaoke Lines in two Styles.
+        const QString path = dir.filePath(QStringLiteral("song.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\nWrapStyle: 0\n\n"
+                "[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, "
+                "BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, "
+                "Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: T1a,Noto Sans,72,&H00FFFFFF,&H00B469FF,&H00301018,&H80000000,-1,0,0,0,100,100,0,0,1,3,0,8,10,10,"
+                "40,1\n"
+                "Style: T2a,Noto Sans,44,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,0,2,10,10,"
+                "70,1\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Comment: 0,0:00:00.00,0:00:00.00,T1a,,0,0,0,code once,function fade_in(t) return t * 2 end\n"
+                "Comment: 0,0:00:00.00,0:00:00.00,T1a,,0,0,0,template pre-line,"
+                "{\\an8\\pos($center,$top)\\fad(300,200)\\1a&H80&}\n"
+                "Comment: 1,0:00:00.00,0:00:00.00,T1a,,0,0,0,template syl noblank,"
+                "!retime(\"syl\",-200,0)!{\\an5\\pos($scenter,$smiddle)\\fad(150,0)\\t(200,!200+$sdur!,"
+                "\\fscx125\\fscy125\\1c&HB469FF&)\\t(!200+$sdur!,!400+$sdur!,\\fscx100\\fscy100)}\n"
+                "Comment: 0,0:00:00.00,0:00:00.00,T2a,,0,0,0,template line keeptags,{\\an2\\fad(200,200)}\n"
+                "Dialogue: 0,0:00:01.00,0:00:04.50,T1a,,0,0,0,,{\\k32}ki {\\k28}mi {\\k41}no {\\k25}na {\\k60}mae\n"
+                "Dialogue: 0,0:00:04.60,0:00:08.00,T1a,,0,0,0,,{\\k30}ha{\\k30}ru {\\k40}no {\\k30}ka{\\k40}ze\n"
+                "Dialogue: 0,0:00:01.00,0:00:08.00,T2a,,0,0,0,,{\\k60}Your {\\k60}name, {\\k60}carried {\\k40}on "
+                "{\\k40}the {\\k60}spring {\\k80}wind\n");
+        f.close();
+        QVERIFY(openPath(path, true));
+        // The panel its whole height beside the video (no audio here).
+        QVERIFY(QMetaObject::invokeMethod(object(QStringLiteral("audioDock")), "close"));
+        showPanel("templateDock");
+        QTRY_VERIFY_WITH_TIMEOUT(editor().videoPreview(), 20'000);
+        // The syllable template current; the frame on its third syllable.
+        for (const QVariant &v : editor().templates())
+            if (v.toMap().value(QStringLiteral("effect")).toString().startsWith(QStringLiteral("template syl"))) {
+                editor().setCurrent(v.toMap().value(QStringLiteral("id")).toULongLong());
+                break;
+            }
+        application->video().showFrameAt(qRound(1.75 * 23.976));
+        QTest::qWait(1500);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto shoot = [&](const QString &name) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                QTest::qWait(400);
+                QImage shot;
+                QTRY_VERIFY((shot = window->grabWindow(), !shot.isNull() && shot.width() > 0));
+                QVERIFY(shot.save(out + QStringLiteral("/template-") + name + QLatin1Char('-') + QLatin1String(code) +
+                                  QStringLiteral(".png")));
+            }
+        };
+        shoot(QStringLiteral("editor"));
+        // A problem in the current template.
+        const QString text = editor().text();
+        editor().setText(QStringLiteral("{\\fscx!math.rnd(1,5)!}") + text);
+        QTRY_VERIFY_WITH_TIMEOUT(editor().hasProblems(), 20'000);
+        QTest::qWait(500);
+        shoot(QStringLiteral("problem"));
+        editor().setText(text);
+        QTRY_VERIFY_WITH_TIMEOUT(!editor().hasProblems(), 20'000);
+        // `$` typed: the variables with their values.
+        auto *field = item(QStringLiteral("templateText"));
+        field->forceActiveFocus();
+        field->setProperty("cursorPosition", 0);
+        for (const char c : QByteArray("{\\pos($s"))
+            QTest::keyClick(window, c);
+        auto *list = object(QStringLiteral("templateCompletion"));
+        QTRY_VERIFY(list->property("opened").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(!editor().values().isEmpty(), 20'000);
+        QTest::qWait(300);
+        shoot(QStringLiteral("variables"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        // Floating at its minimum width: the fields stacked, the preview folded.
+        auto *dock = object(QStringLiteral("templateDock"));
+        dock->setProperty("isFloating", true);
+        auto *panel = item(QStringLiteral("templatePanel"));
+        QTRY_VERIFY(panel && panel->window() != window);
+        QQuickWindow *floating = panel->window();
+        floating->resize(380, 760);
+        QTest::qWait(500);
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            QTest::qWait(400);
+            QImage shot;
+            QTRY_VERIFY((shot = floating->grabWindow(), !shot.isNull() && shot.width() > 0));
+            QVERIFY(shot.save(out + QStringLiteral("/template-narrow-") + QLatin1String(code) + QStringLiteral(".png")));
+        }
+        dock->setProperty("isFloating", false);
+    }
+};
+
+QTEST_MAIN(TemplateEditorShellTests)
+#include "template_editor_shell_tests.moc"
