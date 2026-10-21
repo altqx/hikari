@@ -590,8 +590,10 @@ private:
                 // Quoted literals (entity values) and comments in the subset
                 // may hold "]" and ">".
                 if (ok && space()) {
-                    if (at(u8"SYSTEM") || at(u8"PUBLIC"))
+                    if (at(u8"SYSTEM") || at(u8"PUBLIC")) {
                         ok = externalId(false);
+                        m_complete = false;
+                    }
                     skipSpace();
                 }
                 // The subset (XML's intSubset): markup declarations, PIs,
@@ -624,6 +626,7 @@ private:
                             advance(1);
                             const u8sv entity = m_s.substr(from, m_pos - 1 - from);
                             const auto found = m_parameters.find(entity);
+                            m_complete = false;
                             if (m_standalone && found == m_parameters.end()) {
                                 ok = false; // a standalone file declares each entity it names
                             } else if (!m_declarations || found == m_parameters.end() || !found->second) {
@@ -646,6 +649,11 @@ private:
                         }
                     }
                     ok = ok && !recursive(m_entities, u8'&') && !recursive(m_parameters, u8'%');
+                    // XML's "Entity Declared": where the subset is all there
+                    // is to read, or the file is standalone, each entity an
+                    // entity names is declared, whether or not it is used.
+                    if (m_complete || m_standalone)
+                        ok = ok && !undeclared(m_entities, u8'&') && (!m_standalone || !undeclared(m_parameters, u8'%'));
                     if (ok)
                         advance(1); // the "]"
                     skipSpace();
@@ -1045,6 +1053,29 @@ private:
         return false;
     }
 
+    // Whether an entity's text names an entity no declaration gives (but
+    // the five predefined ones, and character references).
+    static bool undeclared(const Entities &entities, char8_t sign)
+    {
+        for (const auto &[name, text] : entities) {
+            const u8sv t = text ? u8sv(*text) : u8sv();
+            for (std::size_t i = t.find(sign); i != u8sv::npos; i = t.find(sign, i + 1)) {
+                const std::size_t semi = t.find(u8';', i);
+                if (semi == u8sv::npos)
+                    break;
+                const u8sv entity = t.substr(i + 1, semi - i - 1);
+                if (entity.find(sign) != u8sv::npos || entity.starts_with(u8'#'))
+                    continue; // a lone sign, or a character reference
+                const bool predefined = sign == u8'&' && (entity == u8"lt" || entity == u8"gt" || entity == u8"amp" ||
+                                                          entity == u8"quot" || entity == u8"apos");
+                if (!predefined && !entities.contains(entity))
+                    return true;
+                i = semi;
+            }
+        }
+        return false;
+    }
+
     // An entity's text read: back after its reference.
     void leaveEntity()
     {
@@ -1400,6 +1431,7 @@ private:
     bool m_otherEncoding = false; // the XML declaration names an encoding but UTF-8
     bool m_standalone = false;
     bool m_declarations = true; // false past a parameter-entity reference (unless standalone)
+    bool m_complete = true;     // no external subset nor parameter-entity reference: the subset declares all
     // The general entities the internal subset declares: each one's
     // replacement text, none for an external one.
     Entities m_entities;
@@ -1585,7 +1617,7 @@ public:
             return std::unexpected(head.error());
         for (const XmlNode &child : root.children)
             if (isTtml(child, u8"body"))
-                if (auto ok = paragraphs(child, std::nullopt, std::nullopt, preserves(root, false)); !ok)
+                if (auto ok = paragraphs(child, 0, std::nullopt, preserves(root, false)); !ok) // the body starts at the document's origin
                     return std::unexpected(ok.error());
         if (m_sheet.lines.empty())
             return std::unexpected(LyricsProblem{Kind::NoLyrics, 0, {}});

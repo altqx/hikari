@@ -661,7 +661,7 @@ TEST(LyricsImport, TtmlPrologIsChecked)
         EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
     // Literals by their grammar: references in entity and attribute values
     // as XML writes them, a public id of PubidChars; ENTITIES is a type.
-    EXPECT_TRUE(imports("<!DOCTYPE tt [<!ENTITY e 'a &amp; &#x41; &#65; &f; b'> <!ATTLIST p a CDATA 'a %b &amp; &#9;'>"
+    EXPECT_TRUE(imports("<!DOCTYPE tt [<!ENTITY e 'a &amp; &#x41; &#65; &g; b'> <!ATTLIST p a CDATA 'a %b &amp; &#9;'>"
                         " <!ATTLIST p refs ENTITIES #IMPLIED ref ENTITY #IMPLIED> <!ENTITY g PUBLIC '-//W3C//x (1) +:=?;!*#@$_%' 'u'>]>"));
     for (const char *bad : {"<!DOCTYPE tt [<!ENTITY e '&broken'>]>", "<!DOCTYPE tt [<!ENTITY e 'a & b'>]>",
                             "<!DOCTYPE tt [<!ENTITY e '%p'>]>", "<!DOCTYPE tt [<!ENTITY e '50%'>]>",
@@ -768,6 +768,11 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     EXPECT_EQ(problemOf("<tt><body>\n<div begin=\"1\" end=\"3\">\n<p begin=\"5\">x</p></div></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::OutsideParent, 3, u8"5"}));
     EXPECT_EQ(problemOf("<tt><body><div><p>x</p></div></body></tt>", u8"ttml").kind, Kind::MissingTime);
+    // A body without a begin starts at the document's beginning (TTML2's
+    // body), so a dur or an end alone times what it holds.
+    EXPECT_EQ(rows(*importTtml(bytes("<tt><body dur=\"2s\"><p>x</p></body></tt>"))), (std::vector<Row>{{0, 2000, "", "x"}}));
+    EXPECT_EQ(rows(*importTtml(bytes("<tt><body><div end=\"3\"><p>x</p><p end=\"1\">y</p></div></body></tt>"))),
+              (std::vector<Row>{{0, 3000, "", "x"}, {0, 1000, "", "y"}}));
 }
 
 TEST(LyricsImport, TtmlTextBeforeTheFirstWordJoinsItAsWritten)
@@ -944,6 +949,29 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
     for (const char *subset : {"<!ENTITY loop '&loop;'>", "<!ENTITY loop '&#38; &loop;'>", "<!ENTITY a 'x&b;'><!ENTITY b '&c;y'><!ENTITY c '<s>&a;</s>'>",
                                "<!ENTITY % loop '&#37;loop;'>", "<!ENTITY % a '&#37;b;'><!ENTITY % b '&#37;a;'>"})
         EXPECT_EQ(problem(subset, unused).kind, Kind::NotWellFormed) << subset;
+    // An entity naming one no declaration gives is malformed, used or not,
+    // where the subset is all there is (or the file is standalone); past an
+    // external subset or a parameter-entity reference it may be declared
+    // there. Declared later in the subset is declared.
+    for (const char *subset : {"<!ENTITY a '&missing;'>", "<!ENTITY a 'x'><!ENTITY b '&#38;missing;'>"})
+        EXPECT_EQ(problem(subset, unused).kind, Kind::NotWellFormed) << subset;
+    EXPECT_EQ(problemOf("<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE tt SYSTEM 'tt.dtd' [<!ENTITY a '&missing;'>]>"
+                        "<tt><body><p begin=\"1\" end=\"2\">x</p></body></tt>",
+                        u8"ttml")
+                  .kind,
+              Kind::NotWellFormed);
+    EXPECT_EQ(problemOf("<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE tt [<!ENTITY % a '&#37;missing;'>]>"
+                        "<tt><body><p begin=\"1\" end=\"2\">x</p></body></tt>",
+                        u8"ttml")
+                  .kind,
+              Kind::NotWellFormed);
+    for (const char *doctype : {"<!DOCTYPE tt SYSTEM 'tt.dtd' [<!ENTITY a '&missing;'>]>",
+                                "<!DOCTYPE tt [<!ENTITY % p SYSTEM 'p.dtd'>%p;<!ENTITY a '&missing;'>]>",
+                                "<!DOCTYPE tt [<!ENTITY % p ''>%p;<!ENTITY a '&missing;'>]>",
+                                "<!DOCTYPE tt [<!ENTITY a '&b; &lt;&gt;&amp;&quot;&apos; &#38;#60;'><!ENTITY b 'x'>]>",
+                                "<!DOCTYPE tt [<!ENTITY % a '&#37;missing;'>]>"})
+        EXPECT_TRUE(importTtml(bytes(std::string(doctype) + "<tt><body><p begin=\"1\" end=\"2\">x</p></body></tt>")).has_value())
+            << doctype;
     EXPECT_EQ(read("<!ENTITY a '&b;&c;'><!ENTITY b '&c;'><!ENTITY c 'x'><!ENTITY % a '&#37;b;&#37;b;'><!ENTITY % b ''>",
                    "<p begin=\"1\" end=\"2\">&a;</p>"),
               (std::vector<Row>{{1000, 2000, "", "xx"}}));
