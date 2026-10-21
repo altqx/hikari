@@ -772,8 +772,25 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Karaoke template: %n Line(s) generated from %1 karaoke Line(s) in %2.</source>
+        <source>Karaoke template: %n line(s) generated from %1 karaoke line(s) in %2.</source>
         <extracomment>Status bar after applying karaoke templates; %n is the number of Lines generated, %1 the number of karaoke Lines templated, %2 the time the run took</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Measuring the karaoke lines: %1</source>
+        <extracomment>In the karaoke template report; %1 is the time karaskel took to measure the karaoke lines</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code line %1 (%2, %3): %4</source>
+        <extracomment>In the karaoke template report: a code Line&apos;s number, its effect and style, and the time it took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Template line %1 (%2, %3): %4, %n line(s) generated</source>
+        <extracomment>In the karaoke template report: a template Line&apos;s number, its effect and style, the time it took and %n the number of Lines it generated</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
@@ -781,23 +798,6 @@ Output device: %2</source>
     <message numerus="yes">
         <source>%n template problem(s): see the log.</source>
         <extracomment>After the karaoke template status; %n is the number of template problems the log lists</extracomment>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
-    </message>
-    <message>
-        <source>Measuring the karaoke Lines: %1</source>
-        <extracomment>In the karaoke template report; %1 is the time karaskel took to measure the karaoke Lines</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Code Line %1 (%2, %3): %4</source>
-        <extracomment>In the karaoke template report: a code Line&apos;s number, its effect and style, and the time it took</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>Template Line %1 (%2, %3): %4, %n Line(s) generated</source>
-        <extracomment>In the karaoke template report: a template Line&apos;s number, its effect and style, the time it took and %n the number of Lines it generated</extracomment>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
