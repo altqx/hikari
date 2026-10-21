@@ -256,7 +256,7 @@ The user's rule of 2026-10-05: HikariSub looks like professional software, not "
 
 **Menus.** Every menu item keeps a check gutter and an icon gutter, so labels line up whether or not an item has an icon or a check, and shows its key binding right-aligned in the muted colour, in one notation ("Ctrl+Shift+O"): the menu bar's from the Global bindings, the context menus' from legacy's tab-separated text.
 
-Dock chrome (headers, tab bars) follows MuseScore 4 under D3 ([#207](https://github.com/altqx/hikari/issues/207), [musescore-docking.md](../../research/musescore-docking.md), [docking.md](../docking.md#chrome)) and is not redesigned by these rules. Its "⋯" button (K1's panel-menu, three dots) is the one menu icon in a header; the panel's name is its tooltip and accessible name ("<panel> options"). A panel reports the smallest size its content takes unclipped, and the docking engine keeps it at least that big; a row too wide for a narrow panel wraps (the Video panel's follow choices, the Line inspector's fields) rather than be cut off.
+Dock chrome (headers, tab bars) follows MuseScore 4 under D3 ([#207](https://github.com/altqx/hikari/issues/207), [musescore-docking.md](../../research/musescore-docking.md), [docking.md](../docking.md#chrome)) and is not redesigned by these rules. Its "⋯" button (K1's panel-menu, three dots) is the one menu icon in a header; the panel's name is its tooltip and accessible name ("<panel> options"). A panel reports the smallest size its content takes unclipped, and the docking engine keeps it at least that big; a row too wide for a narrow panel wraps (the Line inspector's fields) rather than be cut off.
 
 ## Qt Quick responsibilities and remaining verification
 
