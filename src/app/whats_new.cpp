@@ -60,9 +60,11 @@ QVariantMap shownRelease(const a::ReleaseEntry &release)
 //   lines read ".../compare/v0.1.2...v0.1.3". Not in a link's own syntax;
 //   trailing punctuation stays outside, as on GitHub.
 // Code as CommonMark has it: a fence closes on a line of its own character
-// at least as long as the opening one; a span runs from a run of backticks
-// to the next run of as many, over line breaks but not a blank line, and a
-// run with none is plain backticks.
+// at least as long as the opening one; a block indented four columns after
+// a blank line is code (eight under a list item, whose text is indented
+// four); a span runs from a run of backticks to the next run of as many,
+// over line breaks but not a blank line, and a run with none is plain
+// backticks.
 QString prepareMarkdown(const QString &markdown)
 {
     static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s[^>]*)?/?>"));
@@ -73,12 +75,27 @@ QString prepareMarkdown(const QString &markdown)
                                             QRegularExpression::CaseInsensitiveOption);
     static const QRegularExpression fence(QStringLiteral("^ {0,3}(`{3,}|~{3,})"));
     static const QRegularExpression blankLine(QStringLiteral("\n[ \t]*\n"));
+    static const QRegularExpression listItem(QStringLiteral("^( {0,3}(?:[-*+]|\\d{1,9}[.)]))( {1,4}|$)"));
     const auto text = [](QString part) { return part.remove(tag).replace(url, QStringLiteral("\\1<\\2>")); };
     const QString &md = markdown;
     const auto lineEnd = [&](qsizetype from) {
         const qsizetype end = md.indexOf(QLatin1Char('\n'), from);
         return end < 0 ? md.size() : end;
     };
+    // Columns of leading space (a tab to the next multiple of four).
+    const auto indentOf = [](const QString &line) {
+        qsizetype columns = 0;
+        for (const QChar c : line) {
+            if (c == QLatin1Char(' '))
+                ++columns;
+            else if (c == QLatin1Char('\t'))
+                columns += 4 - columns % 4;
+            else
+                break;
+        }
+        return columns;
+    };
+    const auto blank = [](const QString &line) { return line.trimmed().isEmpty(); };
     const auto runAt = [&](qsizetype from, QChar c) {
         qsizetype end = from;
         while (end < md.size() && md.at(end) == c)
@@ -88,6 +105,8 @@ QString prepareMarkdown(const QString &markdown)
     QString kept;
     QRegularExpression closer; // empty while nothing is being dropped
     bool lineStart = true;
+    bool afterBlank = true; // the line before was blank (or there was none)
+    qsizetype listText = -1; // the last list item's text column; -1: no list
     qsizetype at = 0;
     while (at < md.size()) {
         if (!closer.pattern().isEmpty()) {
@@ -101,7 +120,34 @@ QString prepareMarkdown(const QString &markdown)
         }
         if (lineStart) {
             const qsizetype end = lineEnd(at);
-            const QRegularExpressionMatch open = fence.match(md.mid(at, end - at));
+            const QString line = md.mid(at, end - at);
+            const bool wasAfterBlank = afterBlank;
+            afterBlank = blank(line);
+            const qsizetype indent = indentOf(line);
+            const qsizetype codeIndent = (listText >= 0 ? listText : 0) + 4;
+            if (!afterBlank && wasAfterBlank && indent >= codeIndent) {
+                // An indented code block: verbatim while its lines are blank
+                // or as indented.
+                qsizetype stop = end;
+                while (stop < md.size()) {
+                    const qsizetype next = lineEnd(stop + 1);
+                    const QString following = md.mid(stop + 1, next - stop - 1);
+                    if (!blank(following) && indentOf(following) < codeIndent)
+                        break;
+                    stop = next;
+                }
+                kept += md.mid(at, stop - at);
+                at = stop; // at the line break: an empty line, no paragraph
+                continue;
+            }
+            if (!afterBlank) {
+                const QRegularExpressionMatch item = listItem.match(line);
+                if (item.hasMatch())
+                    listText = item.capturedLength(1) + std::max<qsizetype>(item.capturedLength(2), 1);
+                else if (wasAfterBlank && listText >= 0 && indent < listText)
+                    listText = -1; // a paragraph after the list
+            }
+            const QRegularExpressionMatch open = fence.match(line);
             if (open.hasMatch()) {
                 // Verbatim to the closing fence's line (or the end).
                 const QChar c = open.captured(1).at(0);
@@ -128,7 +174,9 @@ QString prepareMarkdown(const QString &markdown)
         while (stop < md.size() && md.at(stop) != QLatin1Char('`') && md.at(stop) != QLatin1Char('\n'))
             ++stop;
         const QString part = md.mid(at, stop - at);
-        const QRegularExpressionMatch open = dropped.match(part);
+        // The line's end can end a tag's name (<script, then its attributes).
+        const bool lineEnds = stop >= md.size() || md.at(stop) == QLatin1Char('\n');
+        const QRegularExpressionMatch open = dropped.match(lineEnds ? part + QLatin1Char('\n') : part);
         if (open.hasMatch()) {
             kept += text(part.left(open.capturedStart()));
             closer = open.captured(1).isEmpty()

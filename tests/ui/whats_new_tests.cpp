@@ -508,6 +508,20 @@ private slots:
         QVERIFY(fenced.contains(QStringLiteral("gone")));
         QVERIFY(!fenced.contains(QStringLiteral("&lt;q&gt;")));
         QVERIFY(fenced.contains(QStringLiteral("dropped")));
+        // An indented code block is code; text indented under a list item
+        // after a blank line is the item's, not code.
+        const QString indented = copy->whatsNew->render(
+            QStringLiteral("Run:\n\n    <b>literal</b> https://example.com/x\n\n- item\n\n    more <i>of it</i>\n"),
+            muted, link, code);
+        QVERIFY2(indented.contains(QStringLiteral("&lt;b&gt;literal&lt;/b&gt;")), qPrintable(indented));
+        QVERIFY(!indented.contains(QStringLiteral("href=\"https://example.com/x")));
+        QVERIFY(!indented.contains(QStringLiteral("&lt;i&gt;")));
+        QVERIFY(indented.contains(QStringLiteral("of it")));
+        // A script whose name ends the line.
+        const QString split = copy->whatsNew->render(
+            QStringLiteral("Before <script\ntype=\"x\">hidden()</script> after"), muted, link, code);
+        QVERIFY2(!split.contains(QStringLiteral("hidden()")), qPrintable(split));
+        QVERIFY(split.contains(QStringLiteral("after")));
         QVERIFY(!html.contains(QStringLiteral("&lt;img"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("javascript:"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("file:///etc/passwd")));
