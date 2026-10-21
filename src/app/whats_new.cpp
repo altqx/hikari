@@ -80,34 +80,43 @@ QString prepareMarkdown(const QString &markdown)
         }
         if (fenced)
             continue;
-        // Between backticks is code: every other part.
-        QStringList parts = line.split(QLatin1Char('`'));
-        for (qsizetype i = 0; i < parts.size(); i += 2) {
-            QString &part = parts[i];
-            QString kept;
-            qsizetype at = 0;
-            while (at < part.size()) {
-                if (!closer.pattern().isEmpty()) {
-                    const QRegularExpressionMatch end = closer.match(part, at);
-                    if (!end.hasMatch())
-                        break;
-                    closer = QRegularExpression();
-                    at = end.capturedEnd();
-                    continue;
-                }
-                const QRegularExpressionMatch open = dropped.match(part, at);
-                kept += part.mid(at, open.hasMatch() ? open.capturedStart() - at : -1);
-                if (!open.hasMatch())
+        // Left to right: what is being dropped runs to its end whatever it
+        // holds, backticks too; outside it, between backticks is code.
+        const auto text = [](QString part) { return part.remove(tag).replace(url, QStringLiteral("\\1<\\2>")); };
+        QString kept;
+        qsizetype at = 0;
+        while (at < line.size()) {
+            if (!closer.pattern().isEmpty()) {
+                const QRegularExpressionMatch end = closer.match(line, at);
+                if (!end.hasMatch())
                     break;
+                closer = QRegularExpression();
+                at = end.capturedEnd();
+                continue;
+            }
+            const qsizetype tick = line.indexOf(QLatin1Char('`'), at);
+            const QString part = line.mid(at, tick < 0 ? -1 : tick - at);
+            const QRegularExpressionMatch open = dropped.match(part);
+            if (open.hasMatch()) {
+                kept += text(part.left(open.capturedStart()));
                 closer = open.captured(1).isEmpty()
                              ? QRegularExpression(QStringLiteral("-->"))
                              : QRegularExpression(QStringLiteral("</%1\\s*>").arg(open.captured(1)),
                                                   QRegularExpression::CaseInsensitiveOption);
-                at = open.capturedEnd();
+                at += open.capturedEnd();
+                continue;
             }
-            part = kept.remove(tag).replace(url, QStringLiteral("\\1<\\2>"));
+            kept += text(part);
+            if (tick < 0)
+                break;
+            // Code to the next backtick (with none, the rest as it is).
+            const qsizetype close = line.indexOf(QLatin1Char('`'), tick + 1);
+            kept += line.mid(tick, close < 0 ? -1 : close - tick + 1);
+            if (close < 0)
+                break;
+            at = close + 1;
         }
-        line = parts.join(QLatin1Char('`'));
+        line = kept;
     }
     return lines.join(QLatin1Char('\n'));
 }

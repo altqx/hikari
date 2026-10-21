@@ -373,6 +373,15 @@ private slots:
         QVERIFY(scripted.contains(QStringLiteral("and this")));
         QVERIFY(!scripted.contains(QStringLiteral("gone()")));
         QVERIFY(!scripted.contains(QStringLiteral("color: red")));
+        // Code inside what goes goes with it.
+        const QString ticked = copy->whatsNew->render(
+            QStringLiteral("A <!-- run `foo` before publishing --> B\n<script>x = `bar`\n`baz`</script> C `kept`"),
+            muted, link, code);
+        QVERIFY2(!ticked.contains(QStringLiteral("foo")), qPrintable(ticked));
+        QVERIFY(!ticked.contains(QStringLiteral("bar")));
+        QVERIFY(!ticked.contains(QStringLiteral("baz")));
+        QVERIFY(ticked.contains(QStringLiteral("kept")));
+        QVERIFY(ticked.contains(QStringLiteral("C")));
         QVERIFY(!html.contains(QStringLiteral("&lt;img"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("javascript:"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("file:///etc/passwd")));
