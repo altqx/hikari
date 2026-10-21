@@ -9,7 +9,9 @@
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <string>
 #include <string_view>
+#include <vector>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -152,6 +154,32 @@ TEST_F(MacroTest, InsertedLinesTakeTheStagedFieldsAndPosition)
     EXPECT_EQ(l.marginLeft.value, 12);
     EXPECT_EQ(l.effect, u8"fx");
     EXPECT_EQ(lines[1]->id, l1); // existing Lines keep their identity
+}
+
+// A Line replaced in place by two new ones, as a karaoke templater's
+// regenerate-selected does, pushes the Line after it to just past the
+// snapshot's end. It keeps its identity and order, and the result is
+// compared with the snapshot without reading past its end
+// (KaraokeTemplater's SelectingEveryLineGivesTheWholeRun crashed on Windows
+// reading there; ASan reports the read as a heap-buffer-overflow).
+TEST_F(MacroTest, LinesAfterAReplacementKeepTheirPlaceAndIdentity)
+{
+    const auto s = snapshot();
+    MacroResult r = unchanged(s);
+    std::vector<MacroDialogueLine> fresh(2, r.dialogues[1]);
+    for (std::size_t i = 0; i < fresh.size(); ++i) {
+        fresh[i].id = 0;
+        fresh[i].text = "two " + std::to_string(i + 1);
+    }
+    r.dialogues.erase(r.dialogues.begin() + 1);
+    r.dialogues.insert(r.dialogues.begin() + 1, fresh.begin(), fresh.end());
+    ASSERT_TRUE(applyMacroResult(session, s, r, "Regenerate"));
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"one", "two 1", "two 2", "three"}));
+    const auto lines = session.document().lines();
+    EXPECT_EQ(lines.front()->id, l1);
+    EXPECT_EQ(lines.back()->id, l3);
+    ASSERT_TRUE(session.undo());
+    EXPECT_EQ(texts(session), (std::vector<std::string>{"one", "two", "three"}));
 }
 
 TEST_F(MacroTest, AnUnchangedResultAddsNoStep)

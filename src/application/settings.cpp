@@ -254,6 +254,9 @@ const std::vector<SettingDefinition> &definitions()
         // SH1 (#220): "Use system title bar" ("system" or "custom"; "auto"
         // is the desktop's default, the system's on tiling window managers).
         {"appearance.titleBar", "", String, Profile, Mapped, false, std::string("auto")},
+        // DG1 (#222): where each dialog was left and how big, one
+        // "<id>\t<x>,<y>,<width>,<height>" row per dialog (dialog_placement.h).
+        {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).

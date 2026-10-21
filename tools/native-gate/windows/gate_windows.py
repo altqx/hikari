@@ -2983,13 +2983,221 @@ def step_title_bar():
         log("displays restored:", [(m["device"], m["w"], m["h"], m["dpi"]) for m in r.get("monitors") or []])
 
 
+# DG1 (#222): the dialog frame on Windows.
+WS_CAPTION, WS_SYSMENU, WS_THICKFRAME, WS_MINIMIZEBOX, WS_MAXIMIZEBOX = 0xC00000, 0x80000, 0x40000, 0x20000, 0x10000
+DIALOG_TITLES = {"About": "About HikariSub", "Credits": "Credits"}
+
+
+def help_item(name):
+    """Help > NAME from the keyboard (Alt+H, Down to the item, Return); the
+    dialog's window, or None."""
+    focus_main_compositor()
+    park_pointer()
+    keys("alt+h", 0.8)
+    st = uia()
+    els = st.get("elements") or []
+    items = [e["n"].replace("&", "") for e in els if e["t"] == "MenuItem" and not e["off"] and e["en"]
+             and not any(a["t"] in ("MenuBar", "TitleBar") for a in ancestors(els, e))]
+    at = next((i for i, n in enumerate(items) if n.startswith(name)), None)
+    if at is None:
+        log(f"help_item: no {name!r} in {items}")
+        keys("escape", 0.4)
+        return None
+    keys(*(["down"] * (at + 1)), "return", delay=0.3)
+    st = wait_for(lambda s: DIALOG_TITLES[name] in frames(s), timeout=6)
+    return frames(st).get(DIALOG_TITLES[name])
+
+
+def dialog_controls(st, title):
+    """The dialog's controls by accessible name (Windows' own caption buttons left out)."""
+    els = st.get("elements") or []
+    return {e["n"]: e for e in els if e["win"] == title and not e["off"] and e["n"]
+            and not any(a["t"] == "TitleBar" and a["id"] == "TitleBar" for a in ancestors(els, e))}
+
+
+def caption_buttons(st, title):
+    """Windows' own caption buttons of the dialog (with the system's title bar)."""
+    els = st.get("elements") or []
+    return sorted({e["n"] for e in els if e["win"] == title and not e["off"] and e["t"] == "Button"
+                   and any(a["t"] == "TitleBar" and a["id"] == "TitleBar" for a in ancestors(els, e))})
+
+
+def window_style(st, f):
+    info = next((w for w in st.get("windowInfo") or [] if w.get("hwnd") == (f or {}).get("hwnd")), {})
+    return info.get("style") or 0
+
+
+def rect(f):
+    return (f["x"], f["y"], f["w"], f["h"]) if f else None
+
+
+def step_dialog_frame():
+    """DG1 (#222) on Windows 11: About and Credits are windows of their own
+    on HikariSub's frame, transient for the main window: the title, Close
+    and no Minimise or Maximise on a fixed-size dialog, in the window style
+    too (caption and system menu kept, no minimise box, maximise box or
+    sizing frame), so the system menu offers Move and Close and Win+Up
+    leaves the dialog its size; centred on the main window 20 lower on the
+    first open; moved by its title bar and opened there again; both open at
+    once (modeless); Esc closes; Windows' title bar with "Use system title
+    bar"; the four themes."""
+    mons = monitors()
+    title_bar_start("auto")
+    place_on_primary()
+    time.sleep(1.0)
+    st = uia()
+    main = frames(st).get(MAIN)
+    about = help_item("About")
+    st = uia(dpi=True)
+    about = frames(st).get(DIALOG_TITLES["About"])
+    ev0, _ = snap("dialogs-0-about")
+    if not about or not main:
+        verdict("dialog-frame-window", "failed", f"About did not open as a window of its own (main {rect(main)})", ev0)
+        return
+    ctl = dialog_controls(st, about["name"] if "name" in about else DIALOG_TITLES["About"])
+    style = window_style(st, about)
+    has = {n: n in ctl for n in ("Close", "Minimise", "Maximise")}
+    style_ok = bool(style & WS_CAPTION == WS_CAPTION and style & WS_SYSMENU) and not style & (WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_THICKFRAME)
+    top_gap = None
+    if ctl.get("Close"):
+        top_gap = ctl["Close"]["y"] - about["y"]
+    verdict("dialog-frame-window", "observed" if has["Close"] and not has["Minimise"] and not has["Maximise"]
+            and style_ok and top_gap is not None and 0 <= top_gap <= 2 else "failed",
+            f"About {rect(about)} beside the main window {rect(main)}: its own buttons {has} (Close only on a "
+            f"fixed-size dialog), Close {top_gap} px below the window's top (no caption of Windows' above the bar); "
+            f"window style {hex(style)} (WS_CAPTION and WS_SYSMENU kept, no WS_MINIMIZEBOX, WS_MAXIMIZEBOX or "
+            f"WS_THICKFRAME: {style_ok})", ev0)
+    # Centred on the main window, 20 lower (the frame's margins aside: a few pixels).
+    cx = main["x"] + main["w"] // 2 - (about["x"] + about["w"] // 2)
+    cy = main["y"] + main["h"] // 2 + 20 - (about["y"] + about["h"] // 2)
+    verdict("dialog-frame-centred", "observed" if abs(cx) <= 10 and abs(cy) <= 10 else "failed",
+            f"About's centre off the main window's centre + (0, 20) by ({cx}, {cy})", ev0)
+
+    # The system menu: a right click on the title bar's free part.
+    fp = (ctl["Close"]["x"] - 40, ctl["Close"]["y"] + ctl["Close"]["h"] // 2) if ctl.get("Close") else None
+    items, enabled = [], set()
+    if fp:
+        pointer([fp], button="right")
+        time.sleep(1.0)
+        ev1, st = snap("dialogs-1-system-menu")
+        items = [i.replace("&", "") for i in st["popupMenuItems"]]
+        # Windows greys what the window's style rules out (no sizing frame, no
+        # minimise or maximise box); the items stay listed.
+        enabled = {e["n"].replace("&", "") for e in st.get("elements") or []
+                   if e["t"] == "MenuItem" and not e["off"] and e["en"] and e["n"].replace("&", "") in items}
+        keys("escape", 0.6)
+    else:
+        ev1 = []
+    sizing = {"Restore", "Size", "Minimize", "Maximize"}
+    verdict("dialog-frame-system-menu", "observed" if {"Move", "Close"} <= enabled and not enabled & sizing
+            else "failed",
+            f"Windows' system menu from a right click on the title bar: {items}, enabled {sorted(enabled)} (Move and "
+            f"Close; Restore, Size, Minimize and Maximize greyed on a fixed-size dialog)", ev1)
+
+    # Win+Up does not maximise a fixed-size dialog.
+    W.ui("focus", pid=APP["pid"], window=f"hwnd:{about['hwnd']}")
+    time.sleep(0.6)
+    r0 = rect(frames(uia()).get(DIALOG_TITLES["About"]))
+    combo("win", "up")
+    time.sleep(1.2)
+    st = uia()
+    r1 = rect(frames(st).get(DIALOG_TITLES["About"]))
+    ev2, _ = snap("dialogs-2-win-up")
+    verdict("dialog-frame-no-maximise", "observed" if r0 and r1 and r1[2:] == r0[2:] else "failed",
+            f"Win+Up on About: {r0} -> {r1} (its size kept)", ev2)
+
+    # Moved by its title bar, then opened there again.
+    st = uia()
+    about = frames(st).get(DIALOG_TITLES["About"])
+    ctl = dialog_controls(st, DIALOG_TITLES["About"])
+    moved = reopened = None
+    if about and ctl.get("Close"):
+        sx, sy = ctl["Close"]["x"] - 40, ctl["Close"]["y"] + ctl["Close"]["h"] // 2
+        try:
+            pointer([(sx, sy)], hold=True)
+            time.sleep(0.25)
+            pointer([(sx, sy), (sx - 60, sy + 40)], button="none", steps=20, delayMs=30)
+            time.sleep(0.4)
+        finally:
+            release()
+            time.sleep(1.0)
+        moved = rect(frames(uia()).get(DIALOG_TITLES["About"]))
+        keys("escape", 1.0)
+        after = uia()
+        gone = DIALOG_TITLES["About"] not in frames(after)
+        # The keyboard back on the main window, which comes forward again.
+        fg = (after.get("foreground") or {}).get("title") or ""
+        back = active_frames(after)
+        verdict("dialog-frame-focus-back",
+                "observed" if gone and back and "HikariSub" in fg and fg not in DIALOG_TITLES.values() else "failed",
+                f"Esc on About: the foreground window {fg!r}, active {back}, focus {after.get('focus')}")
+        help_item("About")
+        time.sleep(0.8)
+        reopened = rect(frames(uia()).get(DIALOG_TITLES["About"]))
+        ev3, _ = snap("dialogs-3-moved-reopened")
+        ok = moved and abs(moved[0] - about["x"] + 60) <= 8 and abs(moved[1] - about["y"] - 40) <= 8 \
+            and reopened == moved and gone
+        verdict("dialog-frame-move-remembered", "observed" if ok else "failed",
+                f"title bar dragged by (-60,+40): {rect(about)} -> {moved}; Esc closed it: {gone}; "
+                f"opened again at {reopened}", ev3)
+    else:
+        verdict("dialog-frame-move-remembered", "failed", "no About or no Close")
+
+    # Credits beside About: modeless.
+    credits = help_item("Credits")
+    st = uia()
+    both = DIALOG_TITLES["About"] in frames(st) and DIALOG_TITLES["Credits"] in frames(st)
+    ev4, _ = snap("dialogs-4-about-and-credits")
+    verdict("dialog-frame-modeless", "observed" if both else "failed",
+            f"About and Credits open at once: {both} (Credits {rect(credits)})", ev4)
+    for t in DIALOG_TITLES.values():
+        if t in frames(uia()):
+            close_window(t)
+
+    # Windows' title bar with "Use system title bar".
+    title_bar_start("system")
+    place_on_primary()
+    time.sleep(1.0)
+    help_item("About")
+    st = uia(dpi=True)
+    about = frames(st).get(DIALOG_TITLES["About"])
+    ev5, _ = snap("dialogs-5-system-title-bar")
+    ctl = dialog_controls(st, DIALOG_TITLES["About"])
+    caps = caption_buttons(st, DIALOG_TITLES["About"])
+    verdict("dialog-frame-system", "observed" if about and "Close" in caps and "Minimise" not in ctl
+            and not any(n in ctl for n in ("Close", "Maximise")) else "failed",
+            f"About with the system's title bar: Windows' caption buttons {caps}, HikariSub's drawn buttons "
+            f"{[n for n in ('Close', 'Maximise', 'Minimise') if n in ctl]}", ev5)
+
+    # The four themes.
+    shots, wrong = [], []
+    for theme, colour in THEME_PANEL.items():
+        title_bar_start("custom", theme)
+        place_on_primary()
+        time.sleep(1.0)
+        help_item("About")
+        time.sleep(0.8)
+        st = uia()
+        about = frames(st).get(DIALOG_TITLES["About"])
+        ev, _ = snap(f"dialogs-6-theme-{theme}")
+        shots += ev
+        ctl = dialog_controls(st, DIALOG_TITLES["About"])
+        got = colour_at(ev[0], ctl["Close"]["x"] - 40, ctl["Close"]["y"] + 4, mons) if ctl.get("Close") else None
+        if got != colour:
+            wrong.append(f"{theme}: title bar {got} (expected {colour})")
+    verdict("dialog-frame-themes", "observed" if not wrong else "failed",
+            "About's title bar in each theme's panel colour" + (f": {wrong}" if wrong else ""), shots)
+    app_kill()
+
+
 STEPS = {"default": step_default, "kbd": step_keyboard_float_dock, "f6": step_f6_floating, "move": step_move_panel,
          "pointer": step_pointer, "video": step_video, "persist": step_persistence, "fullscreen": step_fullscreen,
          "outputs": step_outputs, "nvda": step_nvda, "menutext": step_menu_from_text,
          "tests": step_test_executables, "a11y": step_a11y, "header": step_header, "dpi": step_dpi, "dark": step_dark,
          "layouts": step_layouts, "tabs": step_tabs, "videofs": step_video_fullscreen,
          "snap": step_snap, "tags": step_tags, "statusbar": step_statusbar, "dialogs": step_dialogs,
-         "reference": step_reference, "titlebar": step_title_bar}
+         "reference": step_reference, "titlebar": step_title_bar,
+         "dialogframe": step_dialog_frame}
 
 
 def main():

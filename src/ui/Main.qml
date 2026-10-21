@@ -6138,178 +6138,53 @@ ApplicationWindow {
         target: root.updates
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
-                if (release.offer === "aur") {
-                    updateAurNotice.show(release)
-                } else {
-                    updateAvailable.release = release
-                    updateAvailable.open()
-                }
+                // The automatic check's notice takes no keyboard (DG1).
+                if (release.offer === "aur")
+                    updateAurNotice.showRelease(release, !interactive)
+                else
+                    updateAvailable.showRelease(release, !interactive)
             } else {
-                updateMessage.text = outcome === "current" ? qsTr("You already have the latest version")
-                                                          : qsTr("Cannot check for updates")
-                updateMessage.open()
+                // DG1: titled with the command that gave it (DG1-update-titles).
+                updateMessage.showMessage(qsTr("Check for updates"),
+                                   outcome === "current" ? qsTr("You already have the latest version")
+                                                         : qsTr("Cannot check for updates"),
+                                   outcome !== "current")
             }
         }
         function onNotice(message) {
-            updateMessage.text = message
-            updateMessage.open()
+            updateMessage.showMessage(qsTr("Update"), message, true)
         }
     }
     Connections {
         target: root.updates.installer
         function onReady() { updateAvailable.close() }
     }
-    Dialog {
+    // DG1 (#222): About, Credits and the update notices are windows of their
+    // own on the dialog frame (DialogWindow.qml), modeless.
+    UpdateMessage {
         id: updateMessage
-        objectName: "updateMessage"
-        property alias text: updateMessageLabel.text
-        title: qsTr("Update")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { id: updateMessageLabel; wrapMode: Text.WordWrap; width: Math.min(implicitWidth, 520) }
+        settings: root.app.settings
     }
     UpdateAurNotice {
         id: updateAurNotice
         updates: root.updates
-        anchors.centerIn: parent
+        settings: root.app.settings
     }
-    Dialog {
+    UpdateAvailable {
         id: updateAvailable
-        objectName: "updateAvailable"
-        property var release: ({})
-        readonly property bool installs: release.offer === "install" && root.updates.autoInstall
-        readonly property bool downloading: root.updates.installer.state === "downloading"
-        title: qsTr("A new version is available")
-        modal: true
-        anchors.centerIn: parent
-        ColumnLayout {
-            anchors.fill: parent
-            Label { text: updateAvailable.release.name || ""; font.bold: true }
-            Label { text: qsTr("You have version %1; version %2 is available").arg(root.updates.version).arg(updateAvailable.release.tag || "") }
-            ScrollView {
-                Layout.preferredWidth: 460
-                Layout.preferredHeight: 220
-                TextArea { objectName: "updateNotes"; text: updateAvailable.release.notes || ""; readOnly: true; wrapMode: TextEdit.Wrap }
-            }
-            // A package this system cannot run: the release page only.
-            Label {
-                objectName: "updateRequirement"
-                visible: updateAvailable.release.offer === "requirement"
-                wrapMode: Text.WordWrap
-                Layout.preferredWidth: 460
-                text: updateAvailable.release.requirementIsOs
-                      ? qsTr("This version needs Windows %1 or later.").arg(updateAvailable.release.requirement || "")
-                      : qsTr("This version needs glibc %1 or later.").arg(updateAvailable.release.requirement || "")
-            }
-            // The download in place of the button that started it.
-            RowLayout {
-                visible: updateAvailable.downloading
-                Layout.fillWidth: true
-                ProgressBar {
-                    objectName: "updateProgress"
-                    Layout.fillWidth: true
-                    value: root.updates.installer.progress
-                }
-                Label { text: qsTr("Downloading...") }
-            }
-            CheckBox {
-                objectName: "updateAutoCheck"
-                text: qsTr("Check for updates automatically")
-                checked: root.updates.autoCheck
-                onToggled: root.updates.autoCheck = checked
-            }
-            CheckBox {
-                objectName: "updateStableOnly"
-                visible: root.updates.stableOnlyOption
-                text: qsTr("Stable versions only")
-                checked: root.updates.stableOnly
-                onToggled: root.updates.stableOnly = checked
-            }
-            CheckBox {
-                objectName: "updateAutoInstall"
-                visible: root.updates.installsUpdates
-                text: qsTr("Install updates automatically")
-                checked: root.updates.autoInstall
-                onToggled: root.updates.autoInstall = checked
-            }
-            WindowFooter {
-                Button {
-                    visible: !updateAvailable.downloading
-                    text: updateAvailable.installs ? qsTr("Download and install") : qsTr("Open the download page")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        if (updateAvailable.installs)
-                            root.updates.downloadOffer()
-                        else
-                            root.updates.openReleasePage(updateAvailable.release.url || "")
-                    }
-                }
-                Button { objectName: "updateRemind"; text: qsTr("Remind me in a week"); DialogButtonBox.buttonRole: DialogButtonBox.NoRole; onClicked: { root.updates.remindInAWeek(); updateAvailable.close() } }
-                Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: updateAvailable.close() }
-            }
-        }
+        updates: root.updates
+        settings: root.app.settings
     }
-    Dialog {
+    AboutDialog {
         id: aboutDialog
-        objectName: "aboutDialog"
-        title: qsTr("About HikariSub")
-        header: IconDialogHeader { objectName: "aboutDialogTitle"; iconRole: "about"; text: aboutDialog.title }
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label {
-            objectName: "aboutText"
-            text: qsTr("HikariSub subtitle editor by altqx,\nversion %1").arg(root.updates.versionLabel) + " \n\n" +
-                  qsTr("Based on Kainote by Marcin Drob aka Bakura or Bjakja.\n\n") +
-                  qsTr("If you have noticed any bugs or have any suggestions for changes or new features,\nopen an issue at https://github.com/altqx/hikari/issues.\n\n") +
-                  qsTr("HikariSub includes parts of the following projects:\n") +
-                  "Qt - Copyright © The Qt Company Ltd. and other contributors.\n" +
-                  "KDDockWidgets - Copyright © Klarälvdalens Datakonsult AB (KDAB).\n" +
-                  qsTr("Color picker, audio box, audio player, automation,\nand several other individual features taken from Aegisub -\n") +
-                  "Copyright © Rodrigo Braz Monteiro.\n" +
-                  "Hunspell - Copyright © Kevin Hendricks.\n" +
-                  // W2: legacy's two lines (HikariSubFrame.cpp:1123-1124), with their licences.
-                  (root.app.includesCsri ? "CSRI - Copyright © David Lamparter (BSD licence).\n" : "") +
-                  (root.app.includesVsfilter ? "Vsfilter - Copyright © Gabest (GNU GPL 2 or later).\n" : "") +
-                  "FFMPEGSource2 - Copyright © Fredrik Mellbin.\n" +
-                  "FFmpeg - Copyright © the FFmpeg developers.\n" +
-                  "LuaJIT - Copyright © Mike Pall.\n" +
-                  // KA2-slowed-playback: the slowed audio box keeps its pitch through SoundTouch.
-                  "SoundTouch - Copyright © Olli Parviainen (GNU LGPL 2.1 or later).\n" +
-                  "ICU - Copyright © 1995-2016 International Business Machines Corporation and others.\n" +
-                  "Boost - Copyright © Joe Coder 2004 - 2006.\n" +
-                  "FreeType2 - Copyright © 2006-2019 David Turner, Robert Wilhelm, and Werner Lemberg.\n" +
-                  "Fribidi - Copyright © 1991, 1999 Free Software Foundation, Inc.\n" +
-                  "Libass - Copyright © 2006-2016 libass contributors.\n"
-        }
+        app: root.app
+        updates: root.updates
+        settings: root.app.settings
     }
-    Dialog {
+    CreditsDialog {
         id: creditsDialog
-        objectName: "creditsDialog"
-        title: qsTr("Credits")
-        header: IconDialogHeader { objectName: "creditsDialogTitle"; iconRole: "credits"; text: creditsDialog.title }
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label {
-            text: qsTr("Graphical help: (buttons, help pictures etc.)\n") +
-                  qsTr("- Xandros (new video buttons).\n") +
-                  qsTr("- Devilkan (menu and toolbar buttons)\n") +
-                  qsTr("- Zły Los (icons for file associations and menu).\n") +
-                  qsTr("Testers:\n") +
-                  qsTr("- Sacredus (first translator using translator mode,\ngreat help testing HikariSub on a slow computer)\n") +
-                  qsTr("- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot\n") +
-                  qsTr("helped with typesetting tools and came up with many more improvements).\n") +
-                  qsTr("- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).\n") +
-                  qsTr("- mas1904 (found some errors and helping with crash debuging).\n") +
-                  qsTr("- Senami (made new themes and found some bugs).\n") +
-                  qsTr("- altinat (Thai translation).\n") +
-                  qsTr("- labrie75 (Korean translation).\n") +
-                  qsTr("- Niskala5570 (Malay translation).\n") +
-                  qsTr("Thanks to other HikariSub users who reported bugs:\n") +
-                  "SoheiMajin, BadRequest, Ognisty321, ZlyLos, Thomas Leigh, TomBit."
-        }
+        app: root.app
+        settings: root.app.settings
     }
     // Y5: conversion with the approved loss preview (C02-loss-preview): the
     // legacy CONVERT_* options, then what the conversion removes or

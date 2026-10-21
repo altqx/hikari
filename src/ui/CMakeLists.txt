@@ -10,7 +10,7 @@ qt_add_library(hikari_ui STATIC line_table_model.cpp line_table_model.h line_gri
     colour_picker_controller.cpp colour_picker_controller.h docking.cpp docking.h
     workspace_layout.cpp workspace_layout.h controls_style.h shell_menus.h shift_times_controller.cpp shift_times_controller.h
     spelling_text.cpp spelling_text.h editor_highlighter.cpp editor_highlighter.h
-    settings_store.cpp settings_store.h
+    settings_store.cpp settings_store.h dialog_placement.cpp dialog_placement.h
     audio_controller.cpp audio_controller.h audio_display_item.cpp audio_display_item.h
     visual_tools_controller.cpp visual_tools_controller.h shape_editor.cpp shape_editor.h
     tag_list_controller.cpp tag_list_controller.h
@@ -201,7 +201,11 @@ if(UNIX AND NOT APPLE)
     find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS WaylandClientPrivate)
     target_link_libraries(hikari_ui PRIVATE Qt6::WaylandClientPrivate ${CMAKE_DL_LIBS})
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml TitleBarMenus.qml TitleBarMenuItem.qml)
+qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml TitleBarMenus.qml TitleBarMenuItem.qml
+    TitleBarMoveArea.qml TitleBarButton.qml)
+# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update notices on it.
+qt_target_qml_sources(hikari_ui QML_FILES DialogWindow.qml DialogTitleBar.qml AboutDialog.qml CreditsDialog.qml
+    UpdateMessage.qml UpdateAvailable.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")
