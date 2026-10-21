@@ -33,11 +33,11 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation type="vanished">கிடைமட்ட நீட்சி</translation>
+        <translation>கிடைமட்ட நீட்சி</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation type="vanished">செங்குத்து நீட்சி</translation>
+        <translation>செங்குத்து நீட்சி</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -229,6 +229,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Auto-commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Line</source>
         <translation type="unfinished"></translation>
     </message>
@@ -308,6 +316,34 @@ Output device: %2</source>
     </message>
     <message>
         <source>Volume: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Customise the audio panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on the panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to the next line after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom and volume sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Classic arrangement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default arrangement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

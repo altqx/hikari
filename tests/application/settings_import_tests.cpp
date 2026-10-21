@@ -1013,6 +1013,24 @@ TEST(SettingsImport, CurrentChoicesAreKeptUnlessChosen)
     EXPECT_EQ(applyPlan(plan, proposedRows(plan), d).values.at("grid.font"), SettingValue(std::string("Mine")));
 }
 
+// AU2 (#268): the audio panel's Customise choice is the rewrite's own
+// (no legacy key): an import, even of an AudioConfig.txt that resets the
+// audio options, has no row for it and leaves it as it is.
+TEST(SettingsImport, TheAudioPanelArrangementIsLeftAsItIs)
+{
+    Destination d = linuxHost();
+    const SettingValue mine = std::vector<std::string>{"goto", "sliders"};
+    d.values["audio.panelControls"] = mine;
+    const Plan plan = buildPlan({config(padding() + "AUDIO_DELAY=40\r\n"),
+                                 audioConfig(padding() + "AUDIO_VOLUME=20\r\n", "[HikariSub v0.0.0]\r\n")},
+                                d, readBy(ReadBy::Windows));
+    for (const auto &row : plan.rows)
+        EXPECT_EQ(row.id.find("audio.panelControls"), std::string::npos) << row.id;
+    const Profile imported = applyPlan(plan, proposedRows(plan), d);
+    EXPECT_EQ(imported.values.at("audio.volume"), SettingValue(std::int64_t{20}));
+    EXPECT_EQ(imported.values.at("audio.panelControls"), mine);
+}
+
 TEST(SettingsImport, RepeatedImportIsANoOpAndLaterEditsAreKept)
 {
     const std::vector<SourceFile> sources = {
