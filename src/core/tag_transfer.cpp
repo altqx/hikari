@@ -8,9 +8,11 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdio>
+#include <functional>
 #include <optional>
 #include <ranges>
 #include <set>
+#include <tuple>
 
 namespace hikari::core {
 
@@ -287,11 +289,12 @@ std::u16string normalised(Kind kind, std::u16string_view arg)
     }
     case Kind::Colour:
     case Kind::Alpha: {
-        while (first != last && (*first == '&' || *first == 'H' || *first == 'h'))
+        // As libass's parse_color_tag: past '&' and an uppercase 'H' only,
+        // and no digits is 0 (black, opaque).
+        while (first != last && (*first == '&' || *first == 'H'))
             ++first;
         unsigned long n = 0;
-        if (std::from_chars(first, last, n, 16).ec != std::errc{})
-            return value;
+        std::from_chars(first, last, n, 16);
         return kind == Kind::Colour ? hex(n & 0xFFFFFF, 6) : hex(n & 0xFF, 2);
     }
     case Kind::Integer: {
@@ -467,6 +470,12 @@ struct Budget {
     }
 };
 
+// A \t with no override tag in it, which libass skips.
+bool isEmptyTransform(const Tag &tag)
+{
+    return tag.name == u"t" && tag.args.find(u'\\') == std::u16string::npos;
+}
+
 // Applies `tag`, appending what it set to `history` when given. Returns the
 // units it copied.
 std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
@@ -492,6 +501,8 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
         break;
     }
     case Kind::Transform: {
+        if (isEmptyTransform(tag))
+            return 0;
         // The transforms so far as a count and a hash of their spellings: a
         // fixed size however many there are (each history entry copies it).
         auto &t = state[u"t"];
@@ -560,6 +571,9 @@ struct Segment {
     std::size_t order = 0; // tags before it
     TagState differs;
     bool visible = false;
+    // The tags before it went through another state and back ("\i0\i1"):
+    // two runs alike, one after the other.
+    bool afterBoundary = false;
 };
 
 // Consecutive segments that differ from the base in the same way.
@@ -574,7 +588,7 @@ std::vector<Group> groupsOf(const std::vector<Segment> &segments)
     for (std::size_t i = 0; i < segments.size(); ++i) {
         if (segments[i].differs.empty()) {
             open = false;
-        } else if (open && segments[groups.back().last].differs == segments[i].differs) {
+        } else if (open && !segments[i].afterBoundary && segments[groups.back().last].differs == segments[i].differs) {
             groups.back().last = i;
         } else {
             groups.push_back({i, i});
@@ -595,8 +609,9 @@ const TagRun *runAt(const OriginalTags &tags, int number)
 }
 
 // The tags that change the formatting from run `from` to run `to` (0 is the
-// base), in the order the Original text wrote them. At the body's end only
-// the closings the Original wrote are kept: the others change no glyph.
+// base): the resets, then the closings, then the openings, each in the order
+// the Original text wrote them. At the body's end only the closings the
+// Original wrote are kept: the others change no glyph.
 std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd = false)
 {
     const TagRun *f = runAt(tags, from), *t = runAt(tags, to);
@@ -611,29 +626,46 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
                 return it->second;
         return valueIn(tags.base, component);
     };
-    std::vector<TagSetter> parts;
+    struct Part {
+        int rank; // 0 a reset, 1 a closing, 2 an opening
+        TagSetter setter;
+    };
+    std::vector<Part> parts;
+    const auto isReset = [](const TagSetter &s) { return s.tag.size() > 1 && tagName(s.tag.substr(1)) == u"r"; };
+    auto add = [&](const TagSetter &s, bool opening) {
+        if (!s.tag.empty())
+            parts.push_back({isReset(s) ? 0 : opening ? 2 : 1, s});
+    };
     for (const auto &component : components) {
         if (valueOf(f, component) == valueOf(t, component))
             continue;
-        const auto &setters = t && t->differs.contains(component) ? t->opens : f->closes;
-        if (const auto it = setters.find(component);
-            it != setters.end() && !it->second.tag.empty() && (it->second.written || !atEnd))
-            parts.push_back(it->second);
+        const bool opening = t && t->differs.contains(component);
+        const auto &setters = opening ? t->opens : f->closes;
+        if (const auto it = setters.find(component); it != setters.end() && (it->second.written || !atEnd))
+            add(it->second, opening);
     }
-    // A reset undoes every value: it goes first, and the target's values it
-    // undoes too are set again after it.
-    const auto isReset = [](const TagSetter &s) { return s.tag.size() > 1 && tagName(s.tag.substr(1)) == u"r"; };
-    if (t && std::ranges::any_of(parts, isReset))
+    // Two runs alike, one after the other: closed and opened again, or they
+    // would read back as one.
+    if (f && t && from != to && parts.empty()) {
+        for (const auto &[component, close] : f->closes)
+            add(close, false);
         for (const auto &[component, open] : t->opens)
-            if (valueOf(f, component) == valueOf(t, component) && !open.tag.empty())
-                parts.push_back(open);
-    std::ranges::stable_sort(parts, {}, &TagSetter::order);
-    std::ranges::stable_partition(parts, isReset);
+            add(open, true);
+    }
+    // A reset undoes every value: the target's values it undoes too are set
+    // again after it.
+    if (t && std::ranges::any_of(parts, [](const Part &p) { return p.rank == 0; }))
+        for (const auto &[component, open] : t->opens)
+            if (valueOf(f, component) == valueOf(t, component))
+                add(open, true);
+    std::ranges::stable_sort(parts, [](const Part &a, const Part &b) {
+        return std::tie(a.rank, a.setter.order) < std::tie(b.rank, b.setter.order);
+    });
     std::u16string out;
     std::set<std::u16string> written;
     for (const auto &part : parts)
-        if (written.insert(part.tag).second)
-            out += part.tag;
+        if (written.insert(part.setter.tag).second)
+            out += part.setter.tag;
     return out;
 }
 
@@ -711,6 +743,34 @@ TagSetter firstSetter(const History &history, const std::u16string &component, s
 
 } // namespace
 
+// `setter`, or the tag for `component` alone where `setter` sets more than
+// it (\bord, \shad, \alpha, \fsc) and would give another of them a value
+// other than `expected(other)`: "\ybord5" for "\bord5" on a run whose
+// \xbord is the base's.
+TagSetter alone(TagSetter setter, const std::u16string &component, const std::u16string &value,
+                const std::function<std::u16string(const std::u16string &)> &expected)
+{
+    const std::u16string_view tag = setter.tag;
+    const auto nameAt = tag.find_first_not_of(u" \t", 1);
+    if (nameAt == std::u16string_view::npos)
+        return setter;
+    const auto name = tagName(tag.substr(nameAt));
+    const auto effect = effectOf(name);
+    if (effect.components.size() < 2)
+        return setter;
+    // \fsc gives the Style's scales, \bord and the rest one value to each.
+    const bool one = name != u"fsc";
+    for (const auto &other : effect.components) {
+        if (other != component && (!one || expected(other) != value)) {
+            // (No value is the Style's: "\1a" alone.)
+            const auto spelled = effect.kind == Kind::Alpha && !value.empty() ? u"&H" + value + u"&" : value;
+            setter.tag = u"\\" + component + spelled;
+            return setter;
+        }
+    }
+    return setter;
+}
+
 OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *style,
                               std::span<const StyleValues> styles)
 {
@@ -771,6 +831,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
     std::u16string leading, hoisted, trailing, trailingDone;
     std::vector<Segment> segments;
     std::size_t tagsSeen = 0;
+    bool deviated = false; // since the last segment
     for (std::size_t i = 0; i < tokens.pieces.size(); ++i) {
         const auto &piece = tokens.pieces[i];
         const bool isLeading = i < first, isTrailing = first < tokens.pieces.size() && i > last;
@@ -791,13 +852,14 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             if (!isLeading && !isTrailing && !out.karaoke) {
                 if (!budget.spend(unitsOf(state)))
                     return tooMuch();
-                segments.push_back({piece.rawStart, piece.rawEnd, tagsSeen, state, hasVisible(original, piece)});
+                segments.push_back({piece.rawStart, piece.rawEnd, tagsSeen, state, hasVisible(original, piece), deviated});
+                deviated = false;
             }
             continue;
         }
         tagsSeen += piece.tags.size();
         for (const auto &tag : piece.tags) {
-            if (isKaraoke(tag.name))
+            if (isKaraoke(tag.name) || isEmptyTransform(tag))
                 continue;
             if (isLineWide(tag.name)) {
                 (isLeading ? leading : hoisted) += tag.text;
@@ -816,6 +878,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             }
             if (!budget.spend(apply(state, tag, out.defaults, out.named, &history)))
                 return tooMuch();
+            // (The segments hold their whole state until read.)
+            deviated = deviated || (!segments.empty() && state != segments.back().differs);
             // A leading reset sets every value of the state it gives (a
             // named one another Style's): it is what restores them after a
             // run, and what a trailing reset undoes.
@@ -873,7 +937,10 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                 if (!args.empty() && (args.front() == u'+' || args.front() == u'-'))
                     open.tag = u"\\fs" + value;
             }
-            run.opens[component] = std::move(open);
+            run.opens[component] = alone(std::move(open), component, value, [&](const std::u16string &other) {
+                const auto it = run.differs.find(other);
+                return it != run.differs.end() ? it->second : valueIn(out.base, other);
+            });
             const auto baseValue = valueIn(out.base, component);
             TagSetter close = firstSetter(history, component, lastSegment.order, baseValue);
             if (close.tag.empty()) {
@@ -883,7 +950,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                     close = {lastSegment.order, u"\\" + component, false};
             }
             closable = closable && !close.tag.empty();
-            run.closes[component] = close;
+            run.closes[component] = alone(std::move(close), component, baseValue,
+                                          [&](const std::u16string &other) { return valueIn(out.base, other); });
         }
         // A run nothing can end (a \t the Original never resets) would go on
         // past the text it is placed on: it is not offered.
@@ -976,16 +1044,21 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
 
     // The translation's own formatting, matched to the runs.
     std::vector<Segment> segments;
-    TagState state = tags.base;
+    TagState state = tags.base, atText = state;
+    bool deviated = false; // since the last segment, as the Original's are read
     Budget budget;
     for (const auto &piece : tokens.pieces) {
         if (piece.block) {
-            for (const auto &tag : piece.tags)
+            for (const auto &tag : piece.tags) {
                 if (!budget.spend(apply(state, tag, tags.defaults, tags.named, nullptr)))
                     return plain;
+                deviated = deviated || (!segments.empty() && state != atText);
+            }
         } else {
-            segments.push_back({piece.rawStart, piece.rawEnd, 0, differences(state, tags.base), true});
-            if (!budget.spend(unitsOf(segments.back().differs)))
+            segments.push_back({piece.rawStart, piece.rawEnd, 0, differences(state, tags.base), true, deviated});
+            deviated = false;
+            atText = state;
+            if (!budget.spend(unitsOf(segments.back().differs) + unitsOf(state)))
                 return plain;
         }
     }

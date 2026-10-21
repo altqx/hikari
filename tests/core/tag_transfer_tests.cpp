@@ -89,9 +89,9 @@ TEST(TagTransfer, RunsAreComposedInAnyOrderWithTheOriginalsSpellings)
     // "A B C D": run 2 (bold) on B, run 1 (italic) on D.
     EXPECT_EQ(u8(composeTranslation(tags, draft(u"A B C D", {{2, 3, 2}, {6, 7, 1}}))),
               "A {\\b1}B{\\b0} C {\\i1}D{\\i0}");
-    // Adjacent runs share one block, as in the original.
+    // Adjacent runs share one block, as in the original, the closing first.
     EXPECT_EQ(u8(composeTranslation(tags, draft(u"XY", {{0, 1, 1}, {1, 2, 2}}))), "{\\i1}X{\\i0\\b1}Y{\\b0}");
-    EXPECT_EQ(u8(composeTranslation(tags, draft(u"XY", {{0, 1, 2}, {1, 2, 1}}))), "{\\b1}X{\\i1\\b0}Y{\\i0}");
+    EXPECT_EQ(u8(composeTranslation(tags, draft(u"XY", {{0, 1, 2}, {1, 2, 1}}))), "{\\b1}X{\\b0\\i1}Y{\\i0}");
 }
 
 TEST(TagTransfer, ComposingSaysWhereEachRunLanded)
@@ -515,6 +515,55 @@ TEST(TagTransfer, SpacesAfterATrailingTagStayAfterIt)
     EXPECT_EQ(u8(composeTranslation(two, draft(u"b"))), "{\\i1\\b1}b{\\i0}\\N{\\b0} ");
     // Spaces before the trailing block are the body's, as before.
     EXPECT_EQ(u8(readOriginalTags(u"{\\i1}a\\h{\\i0}").trailing), "{\\i0}");
+}
+
+TEST(TagTransfer, ATransformWithNoTagIsNoRun)
+{
+    // libass skips a \t with no override tag in it.
+    EXPECT_TRUE(readOriginalTags(u"a {\\t()}b{\\r} c").runs.empty());
+    EXPECT_TRUE(readOriginalTags(u"a {\\t(0,10,1)}b{\\r} c").runs.empty());
+}
+
+TEST(TagTransfer, AColourTakesOnlyAnUppercaseH)
+{
+    StyleValues style;
+    style.name = u8"Default";
+    style.primary = {255, 255, 255, 0};
+    const std::vector<StyleValues> styles{style};
+    // libass reads past '&' and 'H' only: "&hFFFFFF&" has no digits, black.
+    const auto tags = readOriginalTags(u"a {\\c&hFFFFFF&}b{\\c&HFFFFFF&} c", &style, styles);
+    ASSERT_EQ(tags.runs.size(), 1u);
+    EXPECT_EQ(u8(tags.runs[0].differs.at(u"1c")), "000000");
+}
+
+TEST(TagTransfer, TwoRunsAlikeSideBySideStayTwo)
+{
+    const auto tags = readOriginalTags(u"Say {\\i1}one{\\i0} and {\\i1}two{\\i0}");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    const auto d = draft(u"xy z", {{0, 1, 1}, {1, 2, 2}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "{\\i1}x{\\i0\\i1}y{\\i0} z");
+    expectRoundTrip(tags, d);
+    // As in an Original: a tag through another state and back parts them.
+    EXPECT_EQ(readOriginalTags(u"a {\\i1}b{\\i0\\i1}c{\\i0} d").runs.size(), 2u);
+    EXPECT_EQ(readOriginalTags(u"a {\\i1}b{\\i1}c{\\i0} d").runs.size(), 1u);
+}
+
+TEST(TagTransfer, AScaleForTwoOpensTheOneARunChanges)
+{
+    StyleValues style;
+    style.name = u8"Default";
+    style.outlineWidth = u8"0";
+    const std::vector<StyleValues> styles{style};
+    // B is the base's in \xbord: its \bord5 opens as \ybord5 alone.
+    const auto tags = readOriginalTags(u"a {\\bord5}A{\\xbord0}B{\\bord0} c", &style, styles);
+    ASSERT_EQ(tags.runs.size(), 2u);
+    EXPECT_EQ(u8(tags.runs[1].text), "B");
+    const auto d = draft(u"x y z", {{2, 3, 2}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "x {\\ybord5}y{\\bord0} z");
+    expectRoundTrip(tags, d);
+    // Both runs, one after the other: the closing comes first.
+    expectRoundTrip(tags, draft(u"x yw z", {{2, 3, 1}, {3, 4, 2}}));
+    expectRoundTrip(tags, draft(u"x yw z", {{2, 3, 2}, {3, 4, 1}}));
 }
 
 TEST(TagTransfer, ARunOfSpacesAloneIsNoRun)
