@@ -10,6 +10,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <chrono>
 #include <climits>
 #include <fstream>
@@ -209,6 +210,27 @@ TEST(KaraokeAutoSplit, SpacesPunctuationAndBlocks)
     EXPECT_EQ(syllables("2kara"), "2ka|ra");
 }
 
+// KA1-auto-split-most (Codex security): a Line of more visible characters
+// than the bound is read as with Auto split off, at its spaces
+TEST(KaraokeAutoSplit, ALongerLineSplitsAtSpaces)
+{
+    std::string most = "{\\b1}";
+    for (std::size_t i = 0; i < kKaraokeAutoSplitMost / 2; i++)
+        most += "ka";
+    const auto split = syllables(most);
+    EXPECT_EQ(std::count(split.begin(), split.end(), '|'), long(kKaraokeAutoSplitMost / 2 - 1));
+    EXPECT_EQ(syllables(most + "k"), "");
+    std::string longer(4'000'000, 'a');
+    longer += " kara";
+    const auto began = std::chrono::steady_clock::now();
+    EXPECT_EQ(syllables(longer), "");
+    AudioKaraoke k;
+    k.split({u(longer), 0, 1000}, true, {});
+    EXPECT_EQ(k.count(), 2);
+    EXPECT_EQ(s(k.syllables()[1]), "kara");
+    EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(2));
+}
+
 // ---- time by character (KA1-time-by-character) ---------------------------------
 
 TEST(KaraokeWeight, VisibleCharactersOnly)
@@ -217,6 +239,8 @@ TEST(KaraokeWeight, VisibleCharactersOnly)
     EXPECT_EQ(karaokeWeight(u"ka, ra", ascii), 4);
     EXPECT_EQ(karaokeWeight(u"{\\b1}ka", ascii), 2);
     EXPECT_EQ(karaokeWeight(u"ka\\Nra\\h", ascii), 4);
+    EXPECT_EQ(karaokeWeight(u"don't", ascii), 5); // an apostrophe in a word is a letter of it
+    EXPECT_EQ(karaokeWeight(u"'ka'", ascii), 2);
     EXPECT_EQ(karaokeWeight(u(" \xF0\x9F\x91\x8D\xF0\x9F\x8F\xBD" "a"), ascii), 2); // 👍🏽 is one
     EXPECT_EQ(karaokeWeight(u"é", ascii), 1);                                    // e and a combining acute
 }
@@ -430,6 +454,25 @@ TEST(KaraokeMoveStart, ALineReadInPiecesIsTheWholeLine)
         text += i % 3 ? u"{\\k0}" : u"{\\k2}ka";
     for (const auto &[from, to] : starts)
         EXPECT_EQ(karaokeKeepSyllables(text, from, to), karaokeKeepSyllables(text, from, to, INT_MAX));
+}
+
+// Codex: a piece ends only between blocks, so one block of more tags than a
+// piece may hold leaves the Line's text as it is, in about its length's time
+TEST(KaraokeMoveStart, OneHugeBlockLeavesTheTextAsItIs)
+{
+    std::u16string fits = u"{";
+    for (int i = 0; i < 16 * 1024; i++)
+        fits += u"\\k0";
+    fits += u"}x";
+    EXPECT_NE(karaokeKeepSyllables(fits, 1000, 800), std::nullopt);
+    std::u16string block = u"{";
+    for (int i = 0; i < 1000000; i++)
+        block += u"\\k0";
+    block += u"}x";
+    const auto began = std::chrono::steady_clock::now();
+    EXPECT_EQ(karaokeKeepSyllables(block, 1000, 800), std::nullopt);
+    EXPECT_EQ(karaokeKeepSyllables(block, 1000, 800, 2), std::nullopt);
+    EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(1));
 }
 
 TEST(KaraokeMoveStart, TheLinesTextKeepsItsSyllables)

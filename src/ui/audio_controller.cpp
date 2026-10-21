@@ -380,7 +380,7 @@ std::u16string AudioController::committedKaraokeText()
 
 void AudioController::splitSyllableAtCursor()
 {
-    if (!m_hasKara || !loaded() || !m_karaoke.count())
+    if (!m_hasKara || !loaded() || !m_karaoke.count() || tapBusy()) // the taps hold the syllables (Codex)
         return;
     auto &k = m_karaoke;
     bool split = false;
@@ -417,7 +417,7 @@ void AudioController::splitSyllableAtCursor()
 
 void AudioController::switchLongSyllablesToKf()
 {
-    if (!m_hasKara || !loaded() || !m_karaoke.count())
+    if (!m_hasKara || !loaded() || !m_karaoke.count() || tapBusy())
         return;
     const int threshold = m_store ? static_cast<int>(m_store->integer("audio.karaokeKfThreshold")) : 100;
     if (m_karaoke.switchLongToKf(threshold * 10, m_startMs))
@@ -1286,6 +1286,18 @@ void AudioController::showTime(int ms, bool mark)
     samplepos = (samplepos / m_view.samples()) - (m_view.width() / 2);
     m_view.updatePosition(samplepos, false, m_scrollbarThickness);
     redraw();
+}
+
+// KA1: a start drag cut short keeps the syllables at their times, as its
+// release does (Codex)
+void AudioController::lostCapture()
+{
+    application::AudioKaraokeMouse karaoke;
+    if (m_hasKara) {
+        karaoke.karaoke = &m_karaoke;
+        karaoke.fieldTime = m_hooks.fieldTime;
+    }
+    m_timing.lostCapture(m_startMs, karaoke);
 }
 
 application::AudioMouseResult AudioController::mouse(const application::AudioMouse &event)

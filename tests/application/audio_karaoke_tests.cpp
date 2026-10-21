@@ -881,6 +881,20 @@ TEST_F(KaraokeMouseTest, TheSyllablesMoveByTheCommittedStart)
     EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))), "{\\k60}ka{\\k90}ra{\\k140}oke");
 }
 
+// KA1 (Codex): a start drag cut short (the capture lost) leaves the
+// syllables at their times, as its release does
+TEST_F(KaraokeMouseTest, ALostCaptureKeepsTheSyllablesAsAReleaseDoes)
+{
+    send(press(102));
+    send(drag(130));
+    EXPECT_EQ(selection.startMs, 3900);
+    EXPECT_EQ(karaoke.times()[0], 3600);
+    timing.lostCapture(selection.startMs, {&karaoke, moveOnClick, sevenPixels(), fieldTime});
+    EXPECT_EQ(timing.hold(), 0);
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3900, 4500, 6000}));
+    EXPECT_EQ(s(karaoke.text(selection.startMs)), "{\\k0}ka{\\k60}ra{\\k150}oke");
+}
+
 TEST_F(KaraokeMouseTest, AStaleGrabKeepsTheSelectionAsItIs)
 {
     send(drag(150, AudioMouse::Button::None)); // over boundary 1

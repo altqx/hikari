@@ -50,7 +50,10 @@ struct KaraokeSplitRules {
 // then each later start in increasing order. Override blocks and an
 // unclosed "{" to the end are not text; \N \n \h are spaces. Spaces and
 // punctuation end the syllable before them, but for punctuation after the
-// last space, which opens the next word.
+// last space, which opens the next word. None (an empty list) for a Line of
+// more than kKaraokeAutoSplitMost visible characters (Codex security: no
+// karaoke has one; it is split as with Auto split off).
+inline constexpr std::size_t kKaraokeAutoSplitMost = 4096;
 std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const KaraokeSplitRules &rules,
                                           const KaraokeCharClass &classes);
 

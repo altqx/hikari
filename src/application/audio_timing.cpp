@@ -140,8 +140,12 @@ bool AudioTiming::setMark(int ms)
     return !std::exchange(m_hasMark, true);
 }
 
-void AudioTiming::lostCapture()
+void AudioTiming::lostCapture(int startMs, const AudioKaraokeMouse &kara)
 {
+    if (m_hold == 1 && kara.karaoke && !m_startCarries) {
+        const auto fieldTime = [&](int ms) { return kara.fieldTime ? kara.fieldTime(ms) : ms; };
+        kara.karaoke->moveStart(fieldTime(m_startOrigin), fieldTime(startMs));
+    }
     m_hold = 0;
     m_holding = false;
 }

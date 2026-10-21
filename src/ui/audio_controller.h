@@ -430,7 +430,7 @@ public:
     void showTime(int ms, bool mark);
     // The display's mouse (OnMouseEvent's timing) and lost capture.
     application::AudioMouseResult mouse(const application::AudioMouse &event);
-    void lostCapture() { m_timing.lostCapture(); }
+    void lostCapture();
     // The label font's text height, which places the mark's time.
     void setMarkTextHeight(int height) { m_markTextHeight = height; }
 

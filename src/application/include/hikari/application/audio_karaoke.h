@@ -163,7 +163,8 @@ private:
 
 // KA1-lead-in-keeps-syllables over a Line's text: with \k tags, the text as
 // moveStart leaves it for the start moved from `oldStartMs` to
-// `newStartMs`; none without tags or without a move.
+// `newStartMs`; none without tags or without a move, or with one block of
+// more \k tags than 16 × max(pieceTags, 1024) (its text left as it is).
 // `pieceTags`: how many \k tags it reads at a time (tests take a few).
 std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int oldStartMs, int newStartMs,
                                                    int pieceTags = 1024);

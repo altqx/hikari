@@ -16196,6 +16196,12 @@ private slots:
         QCOMPARE(text("audioTapNext"), QStringLiteral("› koro"));
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
         QVERIFY(visualItem("audioTapLane")->isVisible());
+        // KA1: the syllable commands' menu items wait while tapping, as their
+        // keys do (Codex)
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeKf"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(editor.history().size(), steps);
 
         // Hold: ki, a gap, mi and no back to back; Space reaches tap mode,
         // not the video's play (VIDEO_PLAY_PAUSE)

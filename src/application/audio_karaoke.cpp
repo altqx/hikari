@@ -156,18 +156,6 @@ std::size_t letterEnd(std::u16string_view text, std::size_t at)
     return end;
 }
 
-// The letters of a stripped text, each one's [begin, end).
-std::vector<std::pair<std::size_t, std::size_t>> letterSpans(std::u16string_view text)
-{
-    std::vector<std::pair<std::size_t, std::size_t>> out;
-    for (std::size_t i = 0; i < text.size();) {
-        const std::size_t end = letterEnd(text, i);
-        out.emplace_back(i, end);
-        i = end;
-    }
-    return out;
-}
-
 } // namespace
 
 AudioKaraoke::Place AudioKaraoke::newPlace(const std::u16string &syl)
@@ -253,9 +241,9 @@ void AudioKaraoke::split(const Line &line, bool autoSplit, const KaraokeSplitRul
         return;
     }
 
-    if (autoSplit) {
-        // KA1-auto-split-language
-        const auto starts = karaokeAutoSplit(Text, rules, classes);
+    // KA1-auto-split-language (KA1-auto-split-most: past its bound, as without it)
+    const auto starts = autoSplit ? karaokeAutoSplit(Text, rules, classes) : std::vector<std::size_t>();
+    if (!starts.empty()) {
         for (std::size_t s = 0; s < starts.size(); s++)
             m_syls.push_back(Text.substr(starts[s], s + 1 < starts.size() ? starts[s + 1] - starts[s] : u16::npos));
     } else {
@@ -424,51 +412,67 @@ std::u16string AudioKaraoke::text(int curStartMs) const
 {
     // KA1-k-round-trip: the syllables' texts in a row, each tag put back
     // where it was read (legacy: always first in the syllable's first block)
-    u16 all;
-    std::vector<std::pair<std::size_t, u16>> tags;
-    for (std::size_t i = 0; i < m_syls.size(); i++) {
+    const auto placeOf = [&](std::size_t i) {
+        return i < m_places.size() ? m_places[i] : newPlace(m_syls[i]);
+    };
+    const auto placeAt = [&](std::size_t i) { return i < m_places.size() ? m_places[i].at : newPlace(m_syls[i]).at; };
+    const auto tagOf = [&](std::size_t i) {
         int time = i == 0 ? m_times[i] - curStartMs : m_times[i] - m_times[i - 1];
         time /= 10;
-        const Place place = i < m_places.size() ? m_places[i] : newPlace(m_syls[i]);
-        tags.emplace_back(all.size() + place.at,
-                          u"\\" + m_tags[i] + (place.cs == time && !place.number.empty() ? place.number : number(time)));
+        const Place place = placeOf(i);
+        return u"\\" + m_tags[i] + (place.cs == time && !place.number.empty() ? place.number : number(time));
+    };
+    // the tags in their places' order (Codex security: made one at a time,
+    // and no list of them when the places are in order, as they are but
+    // for a legacy read of a few tags in one block)
+    u16 all;
+    std::vector<std::pair<std::size_t, std::size_t>> order; // place, syllable
+    bool ordered = true;
+    for (std::size_t i = 0, last = 0; i < m_syls.size(); i++) {
+        const std::size_t wanted = all.size() + placeAt(i);
+        ordered = ordered && wanted >= last;
+        last = wanted;
         all += m_syls[i];
     }
-    std::ranges::stable_sort(tags, {}, &std::pair<std::size_t, u16>::first);
-    // where the "{" and "}" are, read in one pass: the last of each before a
-    // place is a binary search (Codex: a search for each tag made long
-    // blocks of tags quadratic, and a table for every unit cost memory)
-    std::vector<std::size_t> opens, shuts;
-    for (std::size_t p = 0; p < all.size(); p++)
-        if (all[p] == u'{')
-            opens.push_back(p);
-        else if (all[p] == u'}')
-            shuts.push_back(p);
-    const auto lastBefore = [](const std::vector<std::size_t> &at, std::size_t place) {
-        const auto it = std::ranges::lower_bound(at, place);
-        return it == at.begin() ? u16::npos : *std::prev(it);
+    if (!ordered) {
+        for (std::size_t i = 0, base = 0; i < m_syls.size(); base += m_syls[i++].size())
+            order.emplace_back(base + placeAt(i), i);
+        std::ranges::stable_sort(order, {}, &std::pair<std::size_t, std::size_t>::first);
+    }
+    // the last "{" and "}" before a place, read once as the places go on
+    // (Codex: a search for each tag made long blocks of tags quadratic)
+    std::size_t scanned = 0, open = u16::npos, shut = u16::npos;
+    const auto scanTo = [&](std::size_t at) {
+        for (; scanned < at; scanned++)
+            if (all[scanned] == u'{')
+                open = scanned;
+            else if (all[scanned] == u'}')
+                shut = scanned;
     };
-    const std::size_t lastShut = shuts.empty() ? u16::npos : shuts.back();
+    const std::size_t lastShut = all.rfind(u'}');
     u16 text;
-    std::size_t from = 0;
-    for (auto &[wanted, tag] : tags) {
+    std::size_t from = 0, base = 0;
+    for (std::size_t k = 0; k < m_syls.size(); k++) {
+        const std::size_t i = ordered ? k : order[k].second;
+        const std::size_t wanted = ordered ? base + placeAt(i) : order[k].first;
+        base += m_syls[k].size();
+        const u16 tag = tagOf(i);
         std::size_t at = std::clamp(wanted, from, all.size());
         // into the block it is in, else a block of its own
-        const auto open = lastBefore(opens, at);
-        const auto shut = lastBefore(shuts, at);
+        scanTo(at);
         bool inside = open != u16::npos && (shut == u16::npos || shut < open);
         if (inside && (lastShut == u16::npos || lastShut < at)) {
             inside = false; // an unclosed "{" is text: the tag goes before it (A5-kara-unclosed)
             at = std::max(open, from);
         }
-        text += all.substr(from, at - from);
+        text.append(all, from, at - from);
         if (inside)
             text += tag;
         else
             text += u"{" + tag + u"}";
         from = at;
     }
-    text += all.substr(from);
+    text.append(all, from);
     return text;
 }
 
@@ -600,25 +604,27 @@ bool AudioKaraoke::splitAt(int i, int ms, int curStartMs)
         return false;
     // the letter: the share of its characters (spaces and punctuation stay
     // with the letter before them)
+    // (the letters read twice, none kept: Codex security)
     const u16 text = stripped(i);
-    const auto spans = letterSpans(text);
-    std::vector<int> weights;
-    int total = 0;
-    for (const auto &[from, to] : spans) {
-        weights.push_back(karaokeWeight(std::u16string_view(text).substr(from, to - from), m_classes) > 0 ? 1 : 0);
-        total += weights.back();
-    }
+    std::size_t at = 0, next = 0;
+    const auto weighs = [&] { // the letter at `at`, ending at `next`
+        next = letterEnd(text, at);
+        return karaokeWeight(std::u16string_view(text).substr(at, next - at), m_classes) > 0 ? 1 : 0;
+    };
+    int count = 0, total = 0;
+    for (; at < text.size(); at = next, count++)
+        total += weighs();
     const auto target =
         static_cast<int>((std::int64_t(total) * (boundary - start) * 2 + (std::int64_t(end) - start)) /
                          ((std::int64_t(end) - start) * 2)); // rounded
     int nletters = 0;
     if (target >= total) {
-        nletters = static_cast<int>(spans.size());
+        nletters = count;
     } else if (target > 0) {
         int seen = 0;
-        while (nletters < static_cast<int>(spans.size()) && seen < target)
-            seen += weights[static_cast<std::size_t>(nletters++)];
-        while (nletters < static_cast<int>(spans.size()) && weights[static_cast<std::size_t>(nletters)] == 0)
+        for (at = 0; nletters < count && seen < target; at = next, nletters++)
+            seen += weighs();
+        for (; nletters < count && weighs() == 0; at = next)
             ++nletters;
     }
     auto [first, second] = letters(i, nletters);
@@ -707,16 +713,19 @@ std::optional<std::pair<int, int>> AudioKaraoke::letterAt(int x, const AudioView
     start = static_cast<int>(view.xAtMs(start));
     end = static_cast<int>(view.xAtMs(end));
     int center = start + (((end - start) - tw) / 2);
-    // KA1-grapheme-letters: legacy measured each UTF-16 unit
-    const auto spans = letterSpans(text);
-    for (std::size_t i = 0; i < spans.size(); i++) {
-        tw = legacyTextExtent(measure, std::u16string_view(text).substr(spans[i].first, spans[i].second - spans[i].first));
+    // KA1-grapheme-letters: legacy measured each UTF-16 unit (read up to the
+    // pointer's, none kept: Codex security)
+    int letter = 0;
+    for (std::size_t at = 0; at < text.size(); letter++) {
+        const std::size_t end = letterEnd(text, at);
+        tw = legacyTextExtent(measure, std::u16string_view(text).substr(at, end - at));
         center += tw / 2;
         if (x < center)
-            return std::pair(syl, static_cast<int>(i));
+            return std::pair(syl, letter);
         center += tw / 2;
+        at = end;
     }
-    return std::pair(syl, static_cast<int>(spans.size()));
+    return std::pair(syl, letter);
 }
 
 std::size_t karaokeLetterEnd(std::u16string_view text, std::size_t at)
@@ -736,15 +745,17 @@ namespace {
 
 // Where a piece of a Line's text from `from` ends: past `tags` \k tags,
 // at the next "{" outside blocks that a \k tag opens, where splitTags parts
-// the syllables (the tag read as it does); else at the text's end.
-std::size_t karaokePieceEnd(std::u16string_view text, std::size_t from, int tags)
+// the syllables (the tag read as it does); else at the text's end. None when
+// the piece would hold more than `most` tags (one block of them: a piece
+// cannot end inside a block).
+std::optional<std::size_t> karaokePieceEnd(std::u16string_view text, std::size_t from, int tags, std::int64_t most)
 {
     const auto tagAt = [&](std::size_t i) { // a "\k" or "\K", not "\kt"
         return i + 1 < text.size() && text[i] == u'\\' && (text[i + 1] == u'k' || text[i + 1] == u'K') &&
                !(text[i + 1] == u'k' && i + 2 < text.size() && text[i + 2] == u't');
     };
     bool inBrackets = false;
-    int seen = 0;
+    std::int64_t seen = 0;
     for (std::size_t i = from; i < text.size(); i++) {
         if (text[i] == u'{') {
             if (!inBrackets && i > from && seen >= tags && tagAt(i + 1))
@@ -753,7 +764,8 @@ std::size_t karaokePieceEnd(std::u16string_view text, std::size_t from, int tags
         } else if (text[i] == u'}') {
             inBrackets = false;
         } else if (inBrackets && tagAt(i)) {
-            ++seen;
+            if (++seen > most)
+                return std::nullopt;
         }
     }
     return text.size();
@@ -772,13 +784,19 @@ std::optional<std::u16string> karaokeKeepSyllables(std::u16string_view text, int
     // syllable's \k is its time less the one before it, so the pieces'
     // texts in a row are the whole Line's.
     pieceTags = std::max(pieceTags, 2); // the first piece's lead syllable is never its only one
+    // Codex: a block of more tags than this (no karaoke has one) leaves the
+    // text as it is, the start moving as legacy's did
+    const std::int64_t most = std::int64_t(std::max(pieceTags, 1024)) * 16;
     std::u16string out;
     out.reserve(text.size());
     int read = oldStartMs;     // where the piece's syllables start, as read
     int written = newStartMs;  // and as written
     std::vector<u16> carried;
     for (std::size_t from = 0; from < text.size();) {
-        const std::size_t to = karaokePieceEnd(text, from, pieceTags);
+        const auto end = karaokePieceEnd(text, from, pieceTags, most);
+        if (!end)
+            return std::nullopt;
+        const std::size_t to = *end;
         AudioKaraoke karaoke;
         karaoke.splitTags({u16(text.substr(from, to - from)), read, oldStartMs}, &carried);
         read = karaoke.times().back();

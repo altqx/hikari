@@ -83,11 +83,27 @@ char32_t codePointAt(u16v text, std::size_t at, std::size_t &len)
     return c;
 }
 
-// The visible characters of a Line, as Auto split reads them: override
-// blocks (and an unclosed "{" to the end) skipped, \N \n \h one space each.
-std::vector<Unit> units(u16v text, const KaraokeCharClass &classes)
+// The visible characters of a Line in turn, as Auto split reads them:
+// override blocks (and an unclosed "{" to the end) skipped, \N \n \h one
+// space each. Each goes to `take` once the one after it is read, which
+// stops them by returning false.
+template <class Take>
+void eachUnit(u16v text, const KaraokeCharClass &classes, Take take)
 {
-    std::vector<Unit> out;
+    // an apostrophe between two Latin letters is part of the word (don't,
+    // n'yo), with a block beside it too (don'{\i1}t reads as don't)
+    std::optional<Unit> held;
+    std::optional<Kind> before; // the kind of the one before it
+    const auto hand = [&](const Unit &unit) {
+        if (held && before == Kind::Latin && held->kind == Kind::Punct && isApostrophe(held->cp) &&
+            unit.kind == Kind::Latin)
+            held->kind = Kind::Latin;
+        if (held && !take(*held))
+            return false;
+        before = held ? std::optional(held->kind) : std::nullopt;
+        held = unit;
+        return true;
+    };
     std::size_t i = 0;
     while (i < text.size()) {
         if (text[i] == u'{') {
@@ -104,7 +120,8 @@ std::vector<Unit> units(u16v text, const KaraokeCharClass &classes)
             unit.len = 2;
             unit.cp = u' ';
             unit.kind = Kind::Space;
-            out.push_back(unit);
+            if (!hand(unit))
+                return;
             i += 2;
             continue;
         }
@@ -139,15 +156,23 @@ std::vector<Unit> units(u16v text, const KaraokeCharClass &classes)
             unit.kind = Kind::Latin;
         else
             unit.kind = Kind::Other;
-        out.push_back(unit);
+        if (!hand(unit))
+            return;
         i += unit.len;
     }
-    // an apostrophe between two Latin letters is part of the word (don't,
-    // n'yo), with a block beside it too (don'{\i1}t reads as don't)
-    for (std::size_t k = 1; k + 1 < out.size(); k++)
-        if (out[k].kind == Kind::Punct && isApostrophe(out[k].cp) && out[k - 1].kind == Kind::Latin &&
-            out[k + 1].kind == Kind::Latin)
-            out[k].kind = Kind::Latin;
+    if (held)
+        take(*held);
+}
+
+// The first `most` + 1 of them at most (Codex security: past `most`, a
+// Line's Auto split is none).
+std::vector<Unit> units(u16v text, const KaraokeCharClass &classes, std::size_t most)
+{
+    std::vector<Unit> out;
+    eachUnit(text, classes, [&](const Unit &unit) {
+        out.push_back(unit);
+        return out.size() <= most;
+    });
     return out;
 }
 
@@ -466,17 +491,20 @@ bool karaokeContinuesGrapheme(std::u16string_view text, std::size_t at)
 
 int karaokeWeight(std::u16string_view text, const KaraokeCharClass &classes)
 {
-    int weight = 0;
-    for (const auto &unit : units(text, classes))
-        if (isWord(unit.kind))
-            ++weight;
+    int weight = 0; // (none kept: Codex security)
+    eachUnit(text, classes, [&](const Unit &unit) {
+        weight += isWord(unit.kind) ? 1 : 0;
+        return true;
+    });
     return weight;
 }
 
 std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const KaraokeSplitRules &rules,
                                           const KaraokeCharClass &classes)
 {
-    const auto all = units(text, classes);
+    const auto all = units(text, classes, kKaraokeAutoSplitMost);
+    if (all.size() > kKaraokeAutoSplitMost)
+        return {};
     const bool english = englishLine(all, classes);
     std::vector<std::size_t> startUnits; // the units that open a syllable, after the first
     std::size_t wordEnd = 0;             // past the last word
