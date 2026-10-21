@@ -2103,6 +2103,23 @@ ApplicationWindow {
                     root.focusPanel(field, Qt.OtherFocusReason)
             }
         }
+        // The rows of text from the rectangle of one position to another's,
+        // each {x, y, width} with y at its foot: an underline on each.
+        function underlineRows(first, last) {
+            const right = width - rightPadding
+            if (last.y <= first.y)
+                return [{x: first.x, y: first.y + first.height, width: last.x - first.x}]
+            const out = [{x: first.x, y: first.y + first.height, width: right - first.x}]
+            for (let y = first.y + first.height; out.length < 1000;) {
+                const row = positionToRectangle(positionAt(leftPadding, y + 1))
+                if (row.y >= last.y || row.y < y - 1 || row.height <= 0)
+                    break
+                out.push({x: leftPadding, y: row.y + row.height, width: right - leftPadding})
+                y = row.y + row.height
+            }
+            out.push({x: leftPadding, y: last.y + last.height, width: last.x - leftPadding})
+            return out
+        }
         // TM1: the Original's runs (editor.tagRuns): a numbered badge where
         // each starts in the Original text, and in the Translated text a
         // badge and an underline under the text it is placed on, or a dotted
@@ -2116,27 +2133,24 @@ ApplicationWindow {
                 anchors.fill: parent
                 z: 2
                 // Every suggestion Tab would place is shown, a wrapped one
-                // over two rows as a placed run's underline is.
+                // on every row as a placed run's underline is.
                 Item {
                     id: suggestion
                     readonly property int from: field.role === 1 ? run.modelData.suggestedStart : -1
                     readonly property int to: field.role === 1 ? run.modelData.suggestedEnd : -1
                     readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
                     readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
-                    readonly property bool wraps: last.y > first.y
                     objectName: field.objectName + "Run" + run.modelData.number + "Suggestion"
                     visible: from >= 0 && to > from && to <= field.length
                     anchors.fill: parent
-                    SuggestionDots {
-                        x: suggestion.first.x
-                        y: suggestion.first.y + suggestion.first.height - 1
-                        width: (suggestion.wraps ? field.width - field.rightPadding : suggestion.last.x) - suggestion.first.x
-                    }
-                    SuggestionDots {
-                        visible: suggestion.wraps
-                        x: field.leftPadding
-                        y: suggestion.last.y + suggestion.last.height - 1
-                        width: suggestion.last.x - field.leftPadding
+                    Repeater {
+                        model: field.underlineRows(suggestion.first, suggestion.last)
+                        SuggestionDots {
+                            required property var modelData
+                            x: modelData.x
+                            y: modelData.y - 1
+                            width: modelData.width
+                        }
                     }
                 }
                 Item {
@@ -2165,22 +2179,19 @@ ApplicationWindow {
                             color: Theme.onAccent
                         }
                     }
-                    // The underline, over two rows at most (a wrapped run).
-                    Rectangle {
-                        visible: field.role === 1
-                        x: mark.first.x
-                        y: mark.first.y + mark.first.height - 1
-                        width: (mark.last.y === mark.first.y ? mark.last.x : field.width - field.rightPadding) - mark.first.x
-                        height: 2
-                        color: Theme.accent
-                    }
-                    Rectangle {
-                        visible: field.role === 1 && mark.last.y > mark.first.y
-                        x: field.leftPadding
-                        y: mark.last.y + mark.last.height - 1
-                        width: mark.last.x - field.leftPadding
-                        height: 2
-                        color: Theme.accent
+                    // The underline, on every row a wrapped run takes.
+                    Repeater {
+                        model: field.role === 1 ? field.underlineRows(mark.first, mark.last) : []
+                        Rectangle {
+                            required property var modelData
+                            required property int index
+                            objectName: mark.objectName + "Underline" + index
+                            x: modelData.x
+                            y: modelData.y - 1
+                            width: modelData.width
+                            height: 2
+                            color: Theme.accent
+                        }
                     }
                 }
             }

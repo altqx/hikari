@@ -10616,6 +10616,34 @@ private slots:
         QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
     }
 
+    // TM1: a placed run wrapped over several rows is underlined on each.
+    void tagsFromOriginalUnderlineEveryRowOfAWrappedRun()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-wrapped.ass")));
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        const QString words = QStringLiteral("wysoki ").repeated(60).trimmed();
+        application->editor().translationEdited(words, words.size());
+        QVERIFY(application->editor().placeRun(1, 0, words.size()));
+        QTRY_VERIFY(visualItem("translationTextRun1") && visualItem("translationTextRun1")->isVisible());
+        QRectF first, last;
+        QMetaObject::invokeMethod(translated, "positionToRectangle", Q_RETURN_ARG(QRectF, first), Q_ARG(int, 0));
+        QMetaObject::invokeMethod(translated, "positionToRectangle", Q_RETURN_ARG(QRectF, last), Q_ARG(int, words.size()));
+        const int rows = qRound((last.y() - first.y()) / first.height()) + 1;
+        QVERIFY2(rows >= 3, qPrintable(QString::number(rows)));
+        for (int i = 0; i < rows; ++i) {
+            const QByteArray name = "translationTextRun1Underline" + QByteArray::number(i);
+            QTRY_VERIFY2(visualItem(name.constData()), name.constData());
+            QVERIFY(qAbs(visualItem(name.constData())->y() + 1 - (first.y() + first.height() * (i + 1))) < 1);
+        }
+        QVERIFY(!visualItem(("translationTextRun1Underline" + QByteArray::number(rows)).constData()));
+        application->editor().discard();
+    }
+
     // TM1: a run whose text comes back unchanged is suggested (a dotted
     // underline): Tab places it, Escape dismisses it, and without
     // suggestions both keys do what they always do.
@@ -10807,6 +10835,10 @@ private slots:
         QVERIFY(application->editor().placeRun(1, 2, 3));
         application->editor().translationEdited(QStringLiteral("x {\\b1}yy{\\b0} z"), 9);
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x {\\b1}yy{\\b0} z"));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        // So is typing a line break over visible text.
+        application->editor().translationEdited(QStringLiteral("x {\\b1}yy{\\b0} \\N"), 17);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x {\\b1}yy{\\b0} \\N"));
         QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
     }
 

@@ -894,8 +894,8 @@ void LineEditorController::edit(int role, const QString &newText, int cursor)
     if (m_showTags) {
         // With the tags shown, an edit that removes visible text only (no
         // tag in what it takes or types) goes to the draft as above, so a
-        // placed run's emptied wrapper goes too. Any other edit, and typing
-        // on either side of a tag, is raw text.
+        // placed run's emptied wrapper goes too. Any other edit (one typing
+        // a \N among them), and typing on either side of a tag, is raw text.
         const auto shown = core::project(u16(old));
         const auto from = core::displayOffset(shown, start), to = core::displayOffset(shown, end);
         const auto real = sessionRecord();
@@ -903,7 +903,8 @@ void LineEditorController::edit(int role, const QString &newText, int cursor)
             const auto draft = translationDraft(*tags, *real);
             return draft.carried && !draft.placements.empty();
         }();
-        if (placed && end > start && to - from == end - start && !inserted.contains(u'{') && !inserted.contains(u'}')) {
+        if (placed && end > start && to - from == end - start && !inserted.contains(u'{') && !inserted.contains(u'}')
+            && !inserted.contains(u'\\')) {
             if (editDraft(from, to, graphemes(QString::fromStdU16String(shown.text)))) {
                 const auto field = core::project(core::toUtf16(record()->translation));
                 m_selectionStart = m_selectionEnd =
