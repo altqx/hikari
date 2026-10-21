@@ -18669,6 +18669,37 @@ private slots:
                  QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
         QCOMPARE(session->historySize(), refused);
         QVERIFY(!QGuiApplication::modalWindow()); // in the window: nothing an offscreen run cannot close
+        // One box, in the window showing the tools (Codex on #293: the Video
+        // panel's bar and fullscreen's share the controller): fullscreen
+        // takes the open notice and gives it back as it closes.
+        {
+            const auto notices = [&] {
+                QList<QObject *> out;
+                for (QObject *o : engine->rootObjects().first()->findChildren<QObject *>())
+                    if (o->objectName() == QLatin1String("visualNotice"))
+                        out << o;
+                return out;
+            };
+            const auto noticeWindow = [&]() -> QQuickWindow * {
+                const auto all = notices();
+                auto *item = all.size() == 1 ? qvariant_cast<QQuickItem *>(all.front()->property("parent")) : nullptr;
+                return item ? item->window() : nullptr;
+            };
+            QCOMPARE(notices().size(), 1);
+            QCOMPARE(noticeWindow(), window);
+            auto &fs = application->videoFullscreen();
+            QVERIFY(fs.toggle(0));
+            QTRY_VERIFY(fullscreenWindow()->isExposed());
+            QTRY_COMPARE(noticeWindow(), fullscreenWindow());
+            QTRY_VERIFY(notices().front()->property("visible").toBool());
+            QCOMPARE(tools.notice(), QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
+            QVERIFY(fs.leave());
+            QTRY_VERIFY(!fullscreenWindow()->isVisible());
+            QTRY_COMPARE(noticeWindow(), window);
+            box = notices().front();
+            QTRY_VERIFY(box->property("visible").toBool());
+            QCOMPARE(tools.notice(), QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
+        }
         QVERIFY(QMetaObject::invokeMethod(box, "accept"));
         QTRY_VERIFY(!box->property("visible").toBool());
         QCOMPARE(tools.notice(), QString());

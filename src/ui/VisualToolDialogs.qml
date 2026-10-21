@@ -14,6 +14,8 @@ Item {
     required property VisualToolsController tools
     width: 0
     height: 0
+    property bool leaving: false
+    Component.onDestruction: leaving = true
 
     Dialog {
         id: noticeBox
@@ -37,7 +39,9 @@ Item {
             Accessible.role: Accessible.AlertMessage
             Accessible.name: text
         }
-        onClosed: dialogs.tools.dismissNotice()
+        // Not as its bar's dialogs go (fullscreen opening or closing): the
+        // other bar's box shows the notice then.
+        onClosed: if (!dialogs.leaving) dialogs.tools.dismissNotice()
     }
     // T5: the shape list's "Edit".
     ShapesEditionDialog {
@@ -49,27 +53,36 @@ Item {
         id: tagsDialog
         editor: dialogs.tools.tagsEditor
     }
+    function syncNotice() {
+        if (dialogs.tools.notice.length > 0 && !noticeBox.visible) {
+            noticeText.text = dialogs.tools.notice
+            noticeBox.open()
+        }
+        else if (dialogs.tools.notice.length === 0 && noticeBox.visible)
+            noticeBox.close()
+    }
+    function syncShapes() {
+        if (dialogs.tools.shapeEditor)
+            shapesDialog.open()
+        else if (shapesDialog.visible)
+            shapesDialog.close()
+    }
+    function syncTags() {
+        if (dialogs.tools.tagsEditor)
+            tagsDialog.open()
+        else if (tagsDialog.visible)
+            tagsDialog.close()
+    }
     Connections {
         target: dialogs.tools
-        function onChanged() {
-            if (dialogs.tools.notice.length > 0 && !noticeBox.visible) {
-                noticeText.text = dialogs.tools.notice
-                noticeBox.open()
-            }
-            else if (dialogs.tools.notice.length === 0 && noticeBox.visible)
-                noticeBox.close()
-        }
-        function onShapeEditorChanged() {
-            if (dialogs.tools.shapeEditor)
-                shapesDialog.open()
-            else if (shapesDialog.visible)
-                shapesDialog.close()
-        }
-        function onTagsEditorChanged() {
-            if (dialogs.tools.tagsEditor)
-                tagsDialog.open()
-            else if (tagsDialog.visible)
-                tagsDialog.close()
-        }
+        function onChanged() { dialogs.syncNotice() }
+        function onShapeEditorChanged() { dialogs.syncShapes() }
+        function onTagsEditorChanged() { dialogs.syncTags() }
+    }
+    // Made as fullscreen opens or closes: what is open moves with it.
+    Component.onCompleted: {
+        syncNotice()
+        syncShapes()
+        syncTags()
     }
 }

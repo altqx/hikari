@@ -311,7 +311,16 @@ Control {
             }
         }
     }
-    VisualToolDialogs {
-        tools: bar.tools
+    // The dialogs a tool opens (its notice, the shape and tag editors), in
+    // the window showing them: the Video panel's bar and fullscreen's share
+    // one controller, so one bar's at a time (Codex on #293).
+    property bool dialogs: true
+    Loader {
+        active: bar.dialogs
+        sourceComponent: Component {
+            VisualToolDialogs {
+                tools: bar.tools
+            }
+        }
     }
 }

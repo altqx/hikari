@@ -2543,6 +2543,7 @@ ApplicationWindow {
                 VisualToolBar { // VT1: the tool, its options and values, the batch picker
                     id: videoToolBar
                     Layout.fillWidth: true
+                    dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
                     room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not

@@ -366,6 +366,7 @@ Window {
                         Layout.minimumWidth: 0
                         tools: fs.shell.visualTools
                         background: null
+                        dialogs: fs.visible // the Video panel's bar has them otherwise
                     }
                 }
                 Slider {
