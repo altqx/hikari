@@ -387,11 +387,6 @@ void TemplateEditorController::refresh()
         return;
     }
     const auto &doc = s->document();
-    if (const auto key = documentKey(); m_seenDocuments.insert(key).second &&
-                                        std::ranges::none_of(doc.lines(), [](const core::LineRecord *l) {
-                                            return application::templateKindOf(*l).has_value();
-                                        }))
-        m_trusted[key] = {{}, sourceFields()};
     // The current template follows the active Line when that is one.
     const auto active = s->selection().active;
     if (const auto *l = active ? line(*active) : nullptr; l && application::templateKindOf(*l) && active != m_current)

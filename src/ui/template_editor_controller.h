@@ -85,10 +85,10 @@ class TemplateEditorController : public QObject {
     Q_PROPERTY(bool videoPreview READ videoPreview NOTIFY previewChanged)
     Q_PROPERTY(bool canApply READ canApply NOTIFY changed)
     // The Document's templates and code may run for previews: the user chose
-    // to preview them or applied them, or the Document had none when the
-    // panel first saw it (what came later the user wrote). A file's code is
-    // Lua with the helper's rights; it runs only when the user asks, as the
-    // Automation menu runs it.
+    // to preview them or applied them, and nothing they read has come since
+    // another way. A file's code, and its Actor and Style values the
+    // templates take in, are Lua with the helper's rights; they run only
+    // when the user asks, as the Automation menu runs them.
     Q_PROPERTY(bool trusted READ trusted NOTIFY changed)
     // Template and code Lines changed since the last Apply: the first one's
     // number and how many.
@@ -288,7 +288,6 @@ private:
         std::set<std::string> fields;
     };
     std::map<DocumentKey, Trust> m_trusted;
-    std::set<DocumentKey> m_seenDocuments;
     application::KaraokeTemplaterPort *m_templater = nullptr;
     bool m_editable = false;
     bool m_shown = false;

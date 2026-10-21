@@ -885,25 +885,38 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
-    // A file without templates when it opened: what the panel shows later
-    // the user wrote.
-    void aFileWithoutTemplatesIsTheUsers()
+    // A file without templates runs no code of its own, but its Actor and
+    // Style values reach the templates the user writes ($actor, $style, the
+    // values probe): those run only once the user previews them.
+    void aFileWithoutTemplatesAsksBeforeItsValuesRun()
     {
         core::Document plain = loadFile(QStringLiteral("stock-tutorials.ass"));
         plain.removeLinesIf([](const core::LineRecord &l) { return application::templateKindOf(l).has_value(); });
+        for (const auto *l : plain.lines())
+            if (application::isKaraokeLine(*l)) {
+                plain.editLine(l->id, [](core::LineRecord &r) { r.actor = u8"!_G.marker = 1!"; });
+                break;
+            }
         openDocument(std::move(plain), false);
         editor->refresh();
-        QVERIFY(editor->trusted());
         activate(*firstKaraoke());
         editor->setShown(true);
+        QVERIFY(!editor->trusted());
         QVERIFY(editor->insertTemplate(QStringLiteral("template syl")));
-        editor->setText(QStringLiteral("{\\bord2}"));
-        QVERIFY(previewCame());
+        editor->setText(QStringLiteral("{\\bord2}$actor"));
+        editor->requestValues();
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, 0);
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+        // Asked, it runs (the Actor is no expression the templater can
+        // evaluate: a problem, no preview).
+        QVERIFY(QTest::qWaitFor([&] { return templater->previews > 0 && !editor->previewPending(); }, 20'000));
     }
 
     // Template or code Lines that come another way than New (a paste, an
     // import) are Lua the user did not write: the panel asks before it runs
-    // them, on the user's own file and on one already previewed.
+    // them, on a file without templates the user previewed, and again after.
     void templatesPastedInAskFirst()
     {
         const core::Document file = loadFile(QStringLiteral("stock-tutorials.ass"));
@@ -922,7 +935,7 @@ private slots:
         };
         core::Document plain = file;
         plain.removeLinesIf([](const core::LineRecord &l) { return application::templateKindOf(l).has_value(); });
-        openDocument(std::move(plain), false);
+        openDocument(std::move(plain), true);
         editor->refresh();
         QVERIFY(editor->trusted());
         activate(*firstKaraoke());
