@@ -16,6 +16,8 @@ public:
     std::vector<std::pair<int, int>> ranges;
     QColor colour;
     std::vector<std::tuple<int, int, QColor>> runs; // [start, end) in a colour
+    std::vector<std::pair<int, int>> underlines;
+    QColor underlineColour;
 
 protected:
     void highlightBlock(const QString &text) override
@@ -36,6 +38,15 @@ protected:
             for (int i = s; i < e; ++i) {
                 QTextCharFormat format = this->format(i - from);
                 format.setBackground(colour);
+                setFormat(i - from, 1, format);
+            }
+        }
+        for (const auto &[start, end] : underlines) {
+            const int s = std::max(start, from), e = std::min(end, to);
+            for (int i = s; i < e; ++i) {
+                QTextCharFormat format = this->format(i - from);
+                format.setUnderlineStyle(QTextCharFormat::WaveUnderline);
+                format.setUnderlineColor(underlineColour);
                 setFormat(i - from, 1, format);
             }
         }
@@ -97,6 +108,24 @@ void EditorHighlighter::setColours(const QVariantList &colours)
     emit coloursChanged();
 }
 
+void EditorHighlighter::setUnderlines(const QVariantList &underlines)
+{
+    if (underlines == m_underlines)
+        return;
+    m_underlines = underlines;
+    rehighlightLater();
+    emit underlinesChanged();
+}
+
+void EditorHighlighter::setUnderlineColour(const QColor &colour)
+{
+    if (colour == m_underlineColour)
+        return;
+    m_underlineColour = colour;
+    rehighlightLater();
+    emit underlinesChanged();
+}
+
 void EditorHighlighter::rehighlight()
 {
     apply();
@@ -128,6 +157,10 @@ void EditorHighlighter::apply()
     m_highlighter->ranges.clear();
     for (qsizetype i = 0; i + 1 < m_ranges.size(); i += 2)
         m_highlighter->ranges.emplace_back(m_ranges[i].toInt(), m_ranges[i + 1].toInt());
+    m_highlighter->underlines.clear();
+    for (qsizetype i = 0; i + 1 < m_underlines.size(); i += 2)
+        m_highlighter->underlines.emplace_back(m_underlines[i].toInt(), m_underlines[i + 1].toInt());
+    m_highlighter->underlineColour = m_underlineColour;
     m_highlighter->runs.clear();
     for (qsizetype i = 0; i + 2 < m_runs.size(); i += 3) {
         const int role = m_runs[i + 2].toInt();
@@ -149,6 +182,23 @@ QVariantList EditorHighlighter::appliedRanges() const
             if (range.format.background().style() != Qt::NoBrush && range.format.background().color() == m_colour) {
                 const int start = block.position() + range.start, end = start + range.length;
                 // The marks are set one character at a time: report each run once.
+                if (!out.isEmpty() && out.last().toInt() == start)
+                    out.last() = end;
+                else
+                    out << start << end;
+            }
+    return out;
+}
+
+QVariantList EditorHighlighter::appliedUnderlines() const
+{
+    QVariantList out;
+    if (!m_document || !m_document->textDocument())
+        return out;
+    for (QTextBlock block = m_document->textDocument()->begin(); block.isValid(); block = block.next())
+        for (const QTextLayout::FormatRange &range : block.layout()->formats())
+            if (range.format.underlineStyle() == QTextCharFormat::WaveUnderline) {
+                const int start = block.position() + range.start, end = start + range.length;
                 if (!out.isEmpty() && out.last().toInt() == start)
                     out.last() = end;
                 else
