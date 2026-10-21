@@ -56,6 +56,7 @@ The templater attaches a JSON report to its result (version 1):
 - `mode` is `all` or `selected`.
 - `prepare_seconds` is karaskel's measuring of the karaoke Lines.
 - `line` is the template or code Line's number in the Grid after the run. A named line template made of several Lines is one template, listed under its first Line.
+- `issues` (KE2) lists each problem once, however many syllables or Lines ran into it, up to 100: `{"line":3,"kind":"template","message":"Unknown variable name: …","start":10,"length":10}`. `message` is 2.1.7's, without the Line's number. `start` and `length` give the variable or expression in that Line's own text, in bytes from 1; `start` is 0 for a problem without a place there, such as a code Line's or an unknown modifier. A named line template's problem is placed in the Line it is in.
 
 Times come from a steady clock in the helper, so they include waits for the host's text measurements. A selected-Lines run counts the selected Lines' work only.
 
