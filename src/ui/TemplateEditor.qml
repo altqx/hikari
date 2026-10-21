@@ -131,6 +131,7 @@ Pane {
         Label {
             Layout.fillWidth: true
             text: sectionTitle.note
+            textFormat: Text.PlainText // a Line's fields: no <img> fetched
             color: Theme.muted
             elide: Text.ElideRight
         }
@@ -331,6 +332,7 @@ Pane {
                                             Layout.preferredWidth: 44
                                             elide: Text.ElideRight
                                             text: templateRow.modelData.style
+                                            textFormat: Text.PlainText
                                         }
                                         Label {
                                             visible: !root.narrow
@@ -339,6 +341,7 @@ Pane {
                                             font: root.monoFont
                                             color: Theme.muted
                                             text: templateRow.modelData.text
+                                            textFormat: Text.PlainText
                                         }
                                         Label {
                                             objectName: "templateRowStatus_" + templateRow.index
@@ -434,6 +437,17 @@ Pane {
                             model: root.controller.styles
                             currentIndex: root.controller.styles.indexOf(root.controller.style)
                             displayText: root.controller.style
+                            delegate: ItemDelegate {
+                                required property string modelData
+                                required property int index
+                                width: styleBox.width
+                                highlighted: styleBox.highlightedIndex === index
+                                contentItem: Label {
+                                    text: parent.modelData
+                                    textFormat: Text.PlainText // a Style's name
+                                    elide: Text.ElideRight
+                                }
+                            }
                             onActivated: index => root.controller.setStyle(textAt(index))
                             Accessible.name: qsTr("Style")
                         }
@@ -618,11 +632,21 @@ Pane {
                             Layout.fillWidth: true
                             wrapMode: Text.Wrap
                             textFormat: Text.StyledText
-                            // The templater's whole message on hover.
-                            ToolTip.text: root.controller.problem
-                            ToolTip.visible: problemHover.hovered && root.controller.problem.indexOf("\n") >= 0
                             HoverHandler {
                                 id: problemHover
+                            }
+                            // The templater's whole message on hover, as text:
+                            // it quotes the template.
+                            ToolTip {
+                                id: problemTip
+                                objectName: "templateProblemToolTip"
+                                visible: problemHover.hovered && root.controller.problem.indexOf("\n") >= 0
+                                text: root.controller.problem
+                                contentItem: Label {
+                                    text: problemTip.text
+                                    textFormat: Text.PlainText
+                                    wrapMode: Text.Wrap
+                                }
                             }
                             text: {
                                 const escape = s => s.replace(/&/g, "&amp;").replace(/</g, "&lt;")
@@ -829,6 +853,7 @@ Pane {
                                             font: root.monoFont
                                             color: Theme.muted
                                             text: previewRow.modelData.text
+                                            textFormat: Text.PlainText
                                         }
                                     }
                                 }
@@ -1234,6 +1259,7 @@ Pane {
                             Layout.preferredWidth: 48
                             horizontalAlignment: Text.AlignRight
                             text: root.controller.values[entryRow.modelData.name.slice(1)] ?? ""
+                            textFormat: Text.PlainText // e.g. $actor's value
                             font.bold: true
                             elide: Text.ElideRight
                         }

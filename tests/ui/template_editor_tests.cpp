@@ -24,6 +24,7 @@
 #include <QtTest>
 
 #include <cstring>
+#include <functional>
 #include <memory>
 #include <optional>
 
@@ -1730,6 +1731,77 @@ private slots:
         QVERIFY(!editor->hasPreview());
         QTRY_VERIFY(!textOf(QStringLiteral("templatePreviewEmpty")).startsWith(QStringLiteral("Running")));
         QVERIFY(textOf(QStringLiteral("templatePreviewEmpty")).contains(QStringLiteral("problem")));
+    }
+
+    // Markup in a Line's fields is text: as rich text an <img> would be
+    // fetched (from a server, on Windows a share) before the user previews.
+    void markupInTheFileIsShownAsText()
+    {
+        const std::u8string img = u8"<img src=\"http://127.0.0.1:9/x\">";
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> tl, source;
+        for (const auto *l : doc.lines()) {
+            if (!tl && application::templateKindOf(*l) == application::TemplateKind::Template)
+                tl = l->id;
+            if (!source && application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                source = l->id;
+        }
+        QVERIFY(tl && source);
+        QVERIFY(doc.editLine(*tl, [&](core::LineRecord &l) {
+            l.effect += u8" " + img;
+            l.text += img;
+        }));
+        QVERIFY(doc.editLine(*source, [&](core::LineRecord &l) {
+            l.text += img;
+            l.actor = img;
+        }));
+        openDocument(std::move(doc), true);
+        editor->setCurrent(tl->value);
+        activate(*source);
+        editor->setShown(true);
+        showPanel(900);
+        QVERIFY(QTest::qWaitFor([&] { return !editor->previewPending(); }, 20'000));
+        editor->requestValues();
+        QTest::qWait(500);
+        int seen = 0;
+        const std::function<void(QQuickItem *)> walk = [&](QQuickItem *at) {
+            for (QQuickItem *child : at->childItems()) {
+                const QString text = child->property("text").toString();
+                if (child->inherits("QQuickText") && text.contains(QLatin1String("<img"))) {
+                    ++seen;
+                    QCOMPARE(child->property("textFormat").toInt(), int(Qt::PlainText));
+                }
+                walk(child);
+            }
+        };
+        walk(view->rootObject());
+        QVERIFY(seen >= 3); // the row's text, the source note, the Effect note
+        // The Style list's names too.
+        auto *popup = item(QStringLiteral("templateStyle"))->property("popup").value<QObject *>();
+        QVERIFY(popup);
+        QMetaObject::invokeMethod(popup, "open");
+        QTRY_VERIFY(popup->property("opened").toBool());
+        int names = 0;
+        const std::function<void(QQuickItem *)> walkNames = [&](QQuickItem *at) {
+            for (QQuickItem *child : at->childItems()) {
+                if (child->inherits("QQuickText") && !child->property("text").toString().isEmpty() &&
+                    child->parentItem() && child->parentItem()->inherits("QQuickItemDelegate")) {
+                    ++names;
+                    QCOMPARE(child->property("textFormat").toInt(), int(Qt::PlainText));
+                }
+                walkNames(child);
+            }
+        };
+        walkNames(popup->property("contentItem").value<QQuickItem *>());
+        QVERIFY(names > 0);
+        QMetaObject::invokeMethod(popup, "close");
+        for (const char *name : {"templateProblemToolTip"}) {
+            auto *tip = object(QString::fromLatin1(name));
+            QVERIFY2(tip, name);
+            auto *content = tip->property("contentItem").value<QQuickItem *>();
+            QVERIFY(content);
+            QCOMPARE(content->property("textFormat").toInt(), int(Qt::PlainText));
+        }
     }
 
     void applyFromThePanelIsOneStepAndSaysWhatItWrote()
