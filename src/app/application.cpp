@@ -2748,6 +2748,20 @@ QStringList Application::styleNames() const
     return out;
 }
 
+QVariantMap Application::styleLineCounts() const
+{
+    QVariantMap out;
+    if (auto *session = targetSession()) {
+        for (const auto &style : core::decodeStyles(session->document()))
+            out.insert(QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), static_cast<qsizetype>(style.name.size())), 0);
+        for (const auto *line : session->document().lines()) {
+            const QString name = QString::fromUtf8(reinterpret_cast<const char *>(line->style.data()), static_cast<qsizetype>(line->style.size()));
+            out.insert(name, out.value(name).toInt() + 1);
+        }
+    }
+    return out;
+}
+
 std::string Application::recoveryKey(application::DocumentId document) const
 {
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
@@ -5211,6 +5225,9 @@ QVariantMap Application::openSettingsDialog()
         warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "style"));
     auto values = toVariant(open.state);
     addAppearance(values);
+    // PK1 (#301): the questions hidden with "Don't ask again", which the
+    // Editor page's Ask again empties.
+    values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     // W2: the renderers as the choice shows them; VSFilterMod says what it
     // is for (user 2026-10-13: slow, only for its own tags).
     QStringList rendererLabels;
@@ -5299,6 +5316,12 @@ void Application::applySettings(const QVariantMap &values)
         if (found == values.cend() || !validAppearance(id, *found) || *found == m_settings->value(qs(id)))
             continue;
         m_settings->setValue(qs(id), *found);
+    }
+    // PK1 (#301): Ask again, saved by OK or Apply like the options.
+    if (const auto hidden = values.constFind(QStringLiteral("notices.hiddenQuestions")); hidden != values.cend()) {
+        const QStringList list = hidden->toStringList();
+        if (list != m_settings->list("notices.hiddenQuestions"))
+            m_settings->setValue(QStringLiteral("notices.hiddenQuestions"), list);
     }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).

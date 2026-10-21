@@ -102,47 +102,47 @@ Window {
     }
     function sorted(list) { return list.slice().sort((a, b) => a - b) }
 
-    // --- Conflict questions, asked one after another --------------------
-    property var pendingNames: []
-    property var pendingAnswers: []
-    property var pendingDone: null
-    function askReplace(names, done) {
-        pendingNames = names
-        pendingAnswers = []
-        pendingDone = done
-        nextQuestion()
+    // --- Clashes: PK1's clash review (it replaces legacy's chained
+    // "Style named \"%s\" already exists. Replace?" Yes to all / Yes / No /
+    // Cancel). The clashes that are the same both sides are left out and
+    // counted; Cancel transfers nothing.
+    function fieldNames(fields) {
+        const groups = [
+            [1, qsTr("font")], [2, qsTr("size")], [4 | 8 | 16 | 32, qsTr("bold, italic, underline or strikeout")],
+            [64 | 128 | 256 | 512, qsTr("colours")], [1024 | 65536, qsTr("outline")], [2048, qsTr("shadow")],
+            [4096 | 8192, qsTr("scale")], [16384, qsTr("angle")], [32768, qsTr("spacing")],
+            [131072, qsTr("alignment")], [262144 | 524288 | 1048576, qsTr("margins")], [2097152, qsTr("encoding")]]
+        const names = groups.filter(g => (fields & g[0]) !== 0).map(g => g[1])
+        const text = names.join(", ")
+        return text.length > 0 ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : ""
     }
-    function nextQuestion() {
-        const last = pendingAnswers.length > 0 ? pendingAnswers[pendingAnswers.length - 1] : ""
-        if (pendingAnswers.length >= pendingNames.length || last === "yesToAll" || last === "cancel") {
-            const done = pendingDone
-            pendingDone = null
-            done(pendingAnswers)
+    // `clashes` from the controller (transferClashes, fileClashes); `total`
+    // the Styles transferred; `into` names where they go. done(choices).
+    function reviewClashes(clashes, total, into, done) {
+        const listed = clashes.filter(c => !c.same)
+        const same = clashes.length - listed.length
+        if (listed.length === 0) {
+            done([])
             return
         }
-        replaceQuestion.name = pendingNames[pendingAnswers.length]
-        replaceQuestion.open()
+        clashReviewLoader.active = true
+        clashReviewLoader.item.review({
+            title: qsTr("Copy styles"),
+            text: qsTr("%1 of %2 styles already exist in %3.").arg(listed.length).arg(total).arg(into),
+            detail: same > 0 ? qsTr("%n more are the same as the ones there and are left as they are.", "", same) : "",
+            rows: listed.map(c => ({ name: c.name, occurrence: c.occurrence, difference: manager.fieldNames(c.fields), suggestion: c.suggestion })),
+            added: total - clashes.length,
+            acceptText: count => qsTr("Copy %n style(s)", "", count)
+        }, results => { if (results) done(results) })
     }
-    function answer(a) {
-        replaceQuestion.close()
-        pendingAnswers = pendingAnswers.concat([a])
-        // After the click: the question's button box closes the dialog
-        // too (each answer has a role), which would close the next one.
-        Qt.callLater(nextQuestion)
-    }
-    Dialog {
-        id: replaceQuestion
-        objectName: "styleReplaceQuestion"
-        property string name: ""
-        title: qsTr("Confirmation")
-        modal: true
-        anchors.centerIn: parent
-        Label { text: qsTr("Style named \"%1\" already exists. Replace?").arg(replaceQuestion.name) }
-        footer: DialogButtonBox {
-            Button { objectName: "replaceYesToAll"; text: qsTr("Yes to all"); DialogButtonBox.buttonRole: DialogButtonBox.YesRole; onClicked: manager.answer("yesToAll") }
-            Button { objectName: "replaceYes"; text: qsTr("Yes"); DialogButtonBox.buttonRole: DialogButtonBox.YesRole; onClicked: manager.answer("yes") }
-            Button { objectName: "replaceNo"; text: qsTr("No"); DialogButtonBox.buttonRole: DialogButtonBox.NoRole; onClicked: manager.answer("no") }
-            Button { text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: manager.answer("cancel") }
+    // PK1: made at the first clash (a window made at the start costs it).
+    Loader {
+        id: clashReviewLoader
+        active: false
+        sourceComponent: ClashReview {
+            objectName: "styleClashReview"
+            dialogId: "styleClashes"
+            settings: manager.app.settings
         }
     }
     Dialog {
@@ -406,7 +406,7 @@ Window {
                         IconToolButton { padding: 3; objectName: "storeNew"; iconRole: "add"; text: qsTr("New"); tip: qsTr("Create new style in storage"); onClicked: manager.beginEditing(manager.styles.beginNew(true), true) }
                         IconToolButton { padding: 3; objectName: "storeCopy"; iconRole: "duplicate"; text: qsTr("Copy"); tip: qsTr("Copy the selected style"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(true, manager.storeSelected[0]), true) }
                         IconToolButton { padding: 3; objectName: "storeEdit"; iconRole: "edit"; text: qsTr("Edit"); tip: qsTr("Edit the selected style"); enabled: manager.storeSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginEdit(true, manager.storeSelected[0]), true) }
-                        IconToolButton { padding: 3; iconRole: "import"; text: qsTr("Load"); tip: qsTr("Load style from external ASS file to storage"); onClicked: { loadDialog.toStore = true; loadDialog.open() } }
+                        IconToolButton { id: loadToStore; objectName: "loadToStore"; padding: 3; iconRole: "import"; text: qsTr("Load"); tip: qsTr("Load style from external ASS file to storage"); onClicked: { loadDialog.toStore = true; loadDialog.anchor = loadToStore; loadDialog.open() } }
                         IconToolButton { padding: 3; objectName: "storeDelete"; iconRole: "delete"; text: qsTr("Delete"); tip: qsTr("Delete the selected styles"); enabled: manager.storeSelected.length > 0; onClicked: manager.storeSelected = manager.styles.removeStyles(true, manager.storeSelected) }
                         IconToolButton { padding: 3; iconRole: "sort"; text: qsTr("Sort"); tip: qsTr("Sort the styles by name"); onClicked: { manager.styles.sortStyles(true); manager.storeSelected = [0] } }
                         moves: [
@@ -427,8 +427,8 @@ Window {
                     enabled: manager.assSelected.length > 0
                     onClicked: {
                         const rows = manager.assSelected
-                        manager.askReplace(manager.styles.transferConflicts(true, rows), function(answers) {
-                            manager.storeSelected = manager.styles.addToStore(rows, answers)
+                        manager.reviewClashes(manager.styles.transferClashes(true, rows), rows.length, qsTr("the storage"), function(choices) {
+                            manager.storeSelected = manager.styles.addToStore(rows, choices)
                         })
                     }
                 }
@@ -440,8 +440,8 @@ Window {
                     enabled: manager.storeSelected.length > 0 && manager.styles.available
                     onClicked: {
                         const rows = manager.storeSelected
-                        manager.askReplace(manager.styles.transferConflicts(false, rows), function(answers) {
-                            manager.assSelected = manager.styles.addToDocument(rows, answers)
+                        manager.reviewClashes(manager.styles.transferClashes(false, rows), rows.length, qsTr("the ASS file"), function(choices) {
+                            manager.assSelected = manager.styles.addToDocument(rows, choices)
                         })
                     }
                 }
@@ -454,9 +454,9 @@ Window {
                     onClicked: {
                         const rows = manager.storeSelected
                         // Legacy asks once per conflicting name in each Document; the
-                        // active Document's questions stand for all (its answers are reused).
-                        manager.askReplace(manager.styles.transferConflicts(false, rows), function(answers) {
-                            manager.styles.addToAllDocuments(rows, answers)
+                        // active Document's review stands for all.
+                        manager.reviewClashes(manager.styles.transferClashes(false, rows), rows.length, qsTr("the ASS file"), function(choices) {
+                            manager.styles.addToAllDocuments(rows, choices)
                         })
                     }
                 }
@@ -486,7 +486,7 @@ Window {
                         IconToolButton { padding: 3; objectName: "assNew"; iconRole: "add"; text: qsTr("New"); tip: qsTr("Create new ASS style"); onClicked: manager.beginEditing(manager.styles.beginNew(false), false) }
                         IconToolButton { padding: 3; objectName: "assCopy"; iconRole: "duplicate"; text: qsTr("Copy"); tip: qsTr("Copy the selected style"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginCopy(false, manager.assSelected[0]), false) }
                         IconToolButton { padding: 3; objectName: "assEdit"; iconRole: "edit"; text: qsTr("Edit"); tip: qsTr("Edit the selected style"); enabled: manager.assSelected.length > 0; onClicked: manager.beginEditing(manager.styles.beginEdit(false, manager.assSelected[0]), false) }
-                        IconToolButton { padding: 3; iconRole: "import"; text: qsTr("Load"); tip: qsTr("Load style from external ASS file"); onClicked: { loadDialog.toStore = false; loadDialog.open() } }
+                        IconToolButton { id: loadToAss; objectName: "loadToAss"; padding: 3; iconRole: "import"; text: qsTr("Load"); tip: qsTr("Load style from external ASS file"); onClicked: { loadDialog.toStore = false; loadDialog.anchor = loadToAss; loadDialog.open() } }
                         IconToolButton { padding: 3; objectName: "assDelete"; iconRole: "delete"; text: qsTr("Delete"); tip: qsTr("Delete the selected styles"); enabled: manager.assSelected.length > 0; onClicked: manager.assSelected = manager.styles.removeStyles(false, manager.assSelected) }
                         IconToolButton { padding: 3; iconRole: "sort"; text: qsTr("Sort"); tip: qsTr("Sort the styles by name"); onClicked: { manager.styles.sortStyles(false); manager.assSelected = [0] } }
                         IconToolButton {
@@ -954,40 +954,29 @@ Window {
         Label { text: qsTr("Do you really want to delete the catalog named \"%1\"?").arg(manager.styles.catalog) }
         onAccepted: manager.styles.deleteCatalog(manager.styles.catalog)
     }
-    // LoadStylesS: "Choose ASS file", then the Styles to load.
+    // LoadStylesS: "Choose ASS file", then the Styles to load (PK1's Choose
+    // styles popover, at the Load button), then the clash review.
     FileDialog {
         id: loadDialog
         property bool toStore: false
+        property Item anchor: null
         title: qsTr("Choose ASS file")
         nameFilters: [qsTr("ASS subtitle files(*.ass)") + " (*.ass)"]
-        onAccepted: { chooseLoaded.file = selectedFile; chooseLoaded.names = manager.styles.fileStyles(selectedFile); chooseLoaded.checkedNames = []; chooseLoaded.open() }
+        onAccepted: {
+            chooseLoaded.file = selectedFile
+            chooseLoaded.openFor(anchor, manager.styles.fileStyles(selectedFile), [], { actionText: qsTr("Load") })
+        }
     }
-    Dialog {
+    ChooseStyles {
         id: chooseLoaded
         objectName: "chooseLoadedStyles"
         property url file
-        property var names: []
-        property var checkedNames: []
-        title: qsTr("Choose styles")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        ColumnLayout {
-            Repeater {
-                model: chooseLoaded.names
-                CheckBox {
-                    required property string modelData
-                    text: modelData
-                    onToggled: chooseLoaded.checkedNames = checked ? chooseLoaded.checkedNames.concat([modelData])
-                                                                   : chooseLoaded.checkedNames.filter(n => n !== modelData)
-                }
-            }
-        }
-        onAccepted: {
-            const names = chooseLoaded.names.filter(n => chooseLoaded.checkedNames.indexOf(n) >= 0)
+        onActed: names => {
             const toStore = loadDialog.toStore
-            manager.askReplace(manager.styles.fileConflicts(toStore, chooseLoaded.file, names), function(answers) {
-                manager.styles.loadFromFile(toStore, chooseLoaded.file, names, answers)
+            const file = chooseLoaded.file
+            manager.reviewClashes(manager.styles.fileClashes(toStore, file, names), names.length,
+                                  toStore ? qsTr("the storage") : qsTr("the ASS file"), function(choices) {
+                manager.styles.loadFromFile(toStore, file, names, choices)
             })
         }
     }

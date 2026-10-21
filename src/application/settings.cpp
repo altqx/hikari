@@ -257,6 +257,11 @@ const std::vector<SettingDefinition> &definitions()
         // DG1 (#222): where each dialog was left and how big, one
         // "<id>\t<x>,<y>,<width>,<height>" row per dialog (dialog_placement.h).
         {"workspace.dialogGeometry", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        // PK1 (#301): "Show notices as toasts" (off: notices go only to the
+        // Log), and the questions hidden by "Don't ask again" that have no
+        // setting of their own (Settings > General > Ask again clears them).
+        {"notices.toasts", "", Bool, Profile, Mapped, false, true},
+        {"notices.hiddenQuestions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).

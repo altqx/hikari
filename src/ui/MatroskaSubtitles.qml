@@ -10,6 +10,7 @@ pragma Translator: "HikariSub.Matroska"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import Hikari.Ui
 
 Item {
     id: flow
@@ -17,6 +18,7 @@ Item {
     // The shell's Save (HikariSubFrame::Save(false)); returns true when it
     // opened the Save dialog, whose end the shell reports with saveDone().
     required property var save
+    property SettingsStore settings: null
     property bool waitingForSave: false
 
     // SubsGrid::OnMkvSubs (SubsGrid.cpp:1134-1146).
@@ -109,36 +111,24 @@ Item {
         Label { text: qsTr("The file does not contain any subtitle tracks.") }
     }
 
-    Dialog {
+    // Legacy's "Choose subtitle track" list, on PK1's list chooser in its
+    // compact window: the first row chosen, Open or a double click takes it.
+    ListChooser {
         id: trackChooser
         objectName: "mkvTrackChooser"
-        title: qsTr("Choose subtitle track")
-        modal: true
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        closePolicy: Popup.CloseOnEscape
-        property var labels: []
-        ListView {
-            id: trackList
-            objectName: "mkvTrackList"
-            implicitWidth: 220
-            implicitHeight: 160
-            clip: true
-            model: trackChooser.labels
-            currentIndex: 0
-            delegate: ItemDelegate {
-                required property string modelData
-                required property int index
-                width: ListView.view.width
-                text: modelData
-                highlighted: ListView.isCurrentItem
-                onClicked: trackList.currentIndex = index
-                onDoubleClicked: trackChooser.accept()
-            }
+        settings: flow.settings
+        function ask(labels) {
+            choose({
+                title: qsTr("Choose the subtitle track"),
+                rows: labels,
+                acceptText: qsTr("Open")
+            }, row => {
+                if (row >= 0)
+                    flow.matroska.choose(row)
+                else
+                    flow.matroska.cancel()
+            })
         }
-        onAccepted: flow.matroska.choose(Math.max(0, trackList.currentIndex))
-        onRejected: flow.matroska.cancel()
     }
 
     Dialog {
@@ -179,10 +169,6 @@ Item {
     Connections {
         target: flow.matroska
         function onNoTracks() { noTracksMessage.open() }
-        function onChooseTrack(labels) {
-            trackChooser.labels = labels
-            trackList.currentIndex = 0
-            trackChooser.open()
-        }
+        function onChooseTrack(labels) { trackChooser.ask(labels) }
     }
 }

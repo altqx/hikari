@@ -72,17 +72,19 @@ public:
                                    bool renameLines);
     Q_INVOKABLE void endEdit();
 
-    // Conflicts a transfer would ask about, in order (names already there).
-    Q_INVOKABLE QStringList transferConflicts(bool toStore, const QVariantList &rows) const;
-    // answers: one of "yes", "yesToAll", "no", "cancel" per question asked.
-    // Returns the rows to select in the receiving list.
-    Q_INVOKABLE QVariantList addToStore(const QVariantList &rows, const QStringList &answers);
-    Q_INVOKABLE QVariantList addToDocument(const QVariantList &rows, const QStringList &answers);
-    Q_INVOKABLE void addToAllDocuments(const QVariantList &rows, const QStringList &answers);
+    // PK1's clash review: the clashes a transfer has, in order
+    // ([{name, fields (the style_field flags that differ), same, suggestion}]).
+    Q_INVOKABLE QVariantList transferClashes(bool toStore, const QVariantList &rows) const;
+    // choices: the review's [{name, action ("replace", "rename", "skip"),
+    // newName}]; a clash without one is skipped. Returns the rows to select
+    // in the receiving list.
+    Q_INVOKABLE QVariantList addToStore(const QVariantList &rows, const QVariantList &choices);
+    Q_INVOKABLE QVariantList addToDocument(const QVariantList &rows, const QVariantList &choices);
+    Q_INVOKABLE void addToAllDocuments(const QVariantList &rows, const QVariantList &choices);
     // LoadStylesS: the Styles of an ASS file, then the chosen ones transferred.
     Q_INVOKABLE QStringList fileStyles(const QUrl &file);
-    Q_INVOKABLE QStringList fileConflicts(bool toStore, const QUrl &file, const QStringList &names) const;
-    Q_INVOKABLE void loadFromFile(bool toStore, const QUrl &file, const QStringList &names, const QStringList &answers);
+    Q_INVOKABLE QVariantList fileClashes(bool toStore, const QUrl &file, const QStringList &names) const;
+    Q_INVOKABLE void loadFromFile(bool toStore, const QUrl &file, const QStringList &names, const QVariantList &choices);
 
     Q_INVOKABLE QVariantList removeStyles(bool store, const QVariantList &rows);
     Q_INVOKABLE void sortStyles(bool store);
