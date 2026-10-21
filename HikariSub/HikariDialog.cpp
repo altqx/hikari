@@ -169,6 +169,13 @@ bool HikariDialog::Show(bool show)
 	if (!show){
 		return Hide();
 	}
+	else if (showInactive){
+		// Focus would activate it. wxGTK's comes back here through Show(),
+		// once the flag is down.
+		showInactive = false;
+		wxTopLevelWindow::ShowWithoutActivating();
+		return true;
+	}
 	else{
 		wxWindow *win = FindWindow((setEscapeIdWithFocus) ? escapeId : enterId);
 		bool wasShown = wxTopLevelWindow::Show();

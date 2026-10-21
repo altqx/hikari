@@ -742,6 +742,8 @@ bool hikarisubApp::OnInit()
 			}
 		}
 #endif
+		// The last-session and crash prompts are closed.
+		Frame->StartUpdater();
 		if (loadSession){
 			debugtimer.SetOwner(this, 2299);
 			debugtimer.Start(100, true);

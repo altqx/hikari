@@ -159,6 +159,7 @@ void HotkeysNaming::CreateNamesMap()
 	names[GRID_SPLIT_BY_WRAPS] = _("Split lines by wraps");
 	names[GLOBAL_OPEN_ASS_PROPERTIES] = _("ASS file properties");
 	names[GLOBAL_CHECK_FOR_UPDATES] = _("Check for updates");
+	names[GLOBAL_TRY_NEW_HIKARISUB] = _("Try the new HikariSub");
 	names[GLOBAL_ABOUT] = _("About");
 	names[GLOBAL_ANSI] = _("Report an issue");
 	names[GLOBAL_CONVERT_TO_ASS] = _("Convert to ASS");

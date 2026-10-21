@@ -59,6 +59,8 @@ public:
 	void SetSizerAndFit1(wxSizer *sizer, bool deleteOld = true);
 	void SetLabel(const wxString &text);
 	bool SetFont(const wxFont &font);
+	// The next Show(), ShowModal()'s too, leaves the active window active.
+	void ShowWithoutActivatingNext() { showInactive = true; }
 	enum {
 		ID_NEXT_CONTROL = 4567,
 		ID_PREV_CONTROL,
@@ -90,6 +92,7 @@ private:
 	bool pushed;
 	bool isActive;
 	bool setEscapeIdWithFocus = false;
+	bool showInactive = false;
 	wxModalEventLoop *loop;
 	wxDECLARE_ABSTRACT_CLASS(HikariDialog);
 };

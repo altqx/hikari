@@ -19,6 +19,7 @@
 // AppImage, deb or rpm copy downloads and installs it (UpdateInstaller); an
 // AUR copy is told to update with its package manager; a portable copy, or
 // one with "Install updates automatically" off, is shown the release page.
+// A rewrite release can also carry an opt-in offer to try the rewrite.
 
 #pragma once
 
@@ -38,4 +39,9 @@ public:
 	// date and any failure. While a check runs, it has that one report
 	// instead of starting another.
 	static void CheckNow(wxWindow *parent);
+
+	// Help, "Try the new HikariSub...": checks for the rewrite's offer
+	// (ADR-0021) and shows it, whatever was chosen of it before, or says
+	// there is none.
+	static void OfferNow(wxWindow *parent);
 };

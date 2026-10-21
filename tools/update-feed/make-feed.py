@@ -18,6 +18,10 @@
 # digests, --bad-sha256 NAME gives a package a wrong hash in its manifest,
 # --bad-sums V lists wrong digests in a release's SHA256SUMS,
 # --offer-to V=legacy,qt sets offer_to, --draft V marks a release a draft.
+# --offer V=prerelease or V=stable, with ":ended" for legacy_support ended,
+# gives a rewrite release the offer member of ADR-0021, its pitch from
+# --pitch FILE (a JSON object keyed by language) or a sample in English and
+# Polish; --bad-offer V gives it one that breaks a rule (a title too long).
 
 import argparse
 import hashlib
@@ -33,6 +37,25 @@ MANIFEST = "hikarisub-update.json"
 SUMS = "SHA256SUMS"
 MIN_OS = "10.0.17763"
 MIN_GLIBC = {"legacy": "2.35", "qt": "2.34"}
+SAMPLE_PITCH = {
+    "en": {
+        "title": "Try the new HikariSub",
+        "highlights": [
+            "Dock the video, audio and grid where you want them",
+            "Faster with long scripts and large videos",
+            "Your settings come along; going back to 0.0.x keeps them",
+        ],
+        "note": "This is a test offer from make-feed.py.",
+    },
+    "pl": {
+        "title": "Wypróbuj nowy HikariSub",
+        "highlights": [
+            "Wideo, audio i siatkę zadokujesz, gdzie chcesz",
+            "Szybszy przy długich skryptach i dużych plikach wideo",
+        ],
+        "note": "To testowa propozycja z make-feed.py.",
+    },
+}
 VERSION = r"(\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?)"
 KINDS = {
     "nsis": re.compile(rf"^HikariSub-{VERSION}-windows-x64-setup\.exe$"),
@@ -88,6 +111,11 @@ def build(source, out, args):
         sys.exit(f"make-feed: no package with a release asset name is in {source}")
 
     offer_to = pairs(args.offer_to, "offer-to")
+    offers = pairs(args.offer, "offer")
+    pitch = SAMPLE_PITCH
+    if args.pitch:
+        with open(args.pitch, encoding="utf-8") as file:
+            pitch = json.load(file)
     if os.path.isdir(out):
         for entry in ("releases.json", "download", "releases"):
             path = os.path.join(out, entry)
@@ -137,9 +165,17 @@ def build(source, out, args):
                 "published": published,
                 "packages": packages,
             }
+            if version in offers or version in args.bad_offer:
+                channel, _, support = offers.get(version, "stable").partition(":")
+                offer = {"to": "legacy", "channel": channel,
+                         "legacy_support": "ended" if support == "ended" else "continues",
+                         "pitch": json.loads(json.dumps(pitch))}
+                if version in args.bad_offer:
+                    offer["pitch"]["en"]["title"] = "x" * 81
+                manifest["offer"] = offer
             path = os.path.join(folder, MANIFEST)
             with open(path, "w", encoding="utf-8") as file:
-                file.write(json.dumps(manifest, indent=2) + "\n")
+                file.write(json.dumps(manifest, indent=2, ensure_ascii=False) + "\n")
             assets.append({"name": MANIFEST, "size": os.path.getsize(path), "digest": f"sha256:{sha256_of(path)}"})
         tag = f"v{version}"
         listing.append({
@@ -205,6 +241,11 @@ def main():
     parser.add_argument("--offer-to", action="append", default=[], metavar="V=LIST",
                         help="the offer_to of version V, a comma list from legacy and qt")
     parser.add_argument("--draft", action="append", default=[], metavar="V", help="mark version V a draft")
+    parser.add_argument("--offer", action="append", default=[], metavar="V=CHANNEL[:ended]",
+                        help="give rewrite version V an offer to legacy on channel prerelease or stable")
+    parser.add_argument("--bad-offer", action="append", default=[], metavar="V",
+                        help="give version V an offer that breaks a rule, which legacy ignores")
+    parser.add_argument("--pitch", metavar="FILE", help="the offers' pitch, a JSON object keyed by language")
     args = parser.parse_args()
     out = os.path.abspath(args.out)
     build(os.path.abspath(args.source), out, args)

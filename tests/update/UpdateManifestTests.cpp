@@ -474,7 +474,7 @@ TEST(update_walk_offers_the_first_admitted_candidate)
 		WithAssets("v0.0.2", false, {}),
 	};
 	std::string qtOnly = ManifestJson("0.1.0", "qt", "[\"qt\"]");
-	CandidateWalk walk(ListCandidates(releases, "0.0.1", true));
+	CandidateWalk walk(releases, ListCandidates(releases, "0.0.1", true));
 	CHECK(walk.Current() == 0);
 	CHECK(!walk.CurrentIsSkipped());
 	CHECK(!Admit(releases[0], &qtOnly));
@@ -487,7 +487,7 @@ TEST(update_walk_offers_the_first_admitted_candidate)
 
 	// The prereleases kept out come after the others, within the budget.
 	std::vector<Release> pre = { Release{ "v0.0.3-rc.1", false, true }, Release{ "v0.0.2", false, false } };
-	CandidateWalk preWalk(ListCandidates(pre, "0.0.1", true));
+	CandidateWalk preWalk(pre, ListCandidates(pre, "0.0.1", true));
 	CHECK(preWalk.Current() == 1);
 	preWalk.Skip();
 	CHECK(preWalk.Current() == 0);
@@ -500,7 +500,7 @@ TEST(update_walk_offers_the_first_admitted_candidate)
 	for (int i = 2; i < 12; i++)
 		many.push_back(Release{ "v0.0." + std::to_string(i) + "-rc.1", false, true });
 	many.push_back(Release{ "v0.0.2", false, false });
-	CandidateWalk capped(ListCandidates(many, "0.0.1", true));
+	CandidateWalk capped(many, ListCandidates(many, "0.0.1", true));
 	int looked = 0;
 	while (capped.Current() >= 0) {
 		looked++;
@@ -741,4 +741,365 @@ TEST(update_further_request_of_a_check_takes_data_again)
 	run.NextRequest();
 	CHECK(!run.AsksNextPage());
 	CHECK(run.PageEnded(update_policy::RequestEnd::Cancelled) == update_policy::Ending::TimedOut);
+}
+
+namespace {
+
+// The offer member of ADR-0021, with pitch as its JSON value.
+std::string OfferJson(const std::string &channel = "prerelease", const std::string &support = "continues",
+	const std::string &pitch = "{\"en\": {\"title\": \"Try the new HikariSub\", \"highlights\": [\"Faster\", "
+		"\"Docks\"], \"note\": \"This is a beta.\"}}")
+{
+	return ", \"offer\": {\"to\": \"legacy\", \"channel\": \"" + channel + "\", \"legacy_support\": \"" + support +
+		"\", \"pitch\": " + pitch + "}";
+}
+
+// A rewrite manifest of version, offered to Qt only, with an offer member
+// (offer, as OfferJson gives it, or "" for none).
+std::string RewriteJson(const std::string &version, const std::string &offer = OfferJson(),
+	const std::string &offerTo = "[\"qt\"]")
+{
+	return "{\"schema\": 1, \"version\": \"" + version + "\", \"codebase\": \"qt\", \"offer_to\": " + offerTo +
+		", \"packages\": {\"deb\": {\"name\": \"hikarisub-" + version + "-linux-amd64.deb\", \"size\": 1000, "
+		"\"sha256\": \"" + kHashA + "\"}}" + offer + "}";
+}
+
+Release RewriteRelease(const std::string &version, bool prerelease)
+{
+	return WithAssets(("v" + version).c_str(), prerelease, { Asset("hikarisub-update.json", 50, ""),
+		Asset("hikarisub-" + version + "-linux-amd64.deb", 1000, kHashA) });
+}
+
+// The offer a manifest's text holds, as legacy reads it.
+std::optional<RewriteOffer> OfferOf(const std::string &json, const std::string &version)
+{
+	Manifest manifest;
+	if (Read(json, version, &manifest) != ManifestRead::Valid)
+		return std::nullopt;
+	return manifest.offer;
+}
+
+} // namespace
+
+TEST(update_offer_reads_the_member)
+{
+	std::optional<RewriteOffer> offer = OfferOf(RewriteJson("0.1.0-beta.1", OfferJson("prerelease", "continues",
+		"{\"en\": {\"title\": \"Try the new HikariSub\", \"highlights\": [\"Faster\", \"Docks\"], "
+		"\"note\": \"This is a beta.\", \"later\": 1}, \"pl\": {\"title\": \"Wypr\xC3\xB3""buj\", "
+		"\"highlights\": [\"Szybszy\"]}}")), "0.1.0-beta.1");
+	CHECK(offer.has_value());
+	if (!offer)
+		return;
+	CHECK(offer->channel == OfferChannel::Prerelease);
+	CHECK(!offer->legacySupportEnded);
+	CHECK(offer->pitch.size() == 2);
+	const Pitch &en = offer->pitch.at("en");
+	CHECK(en.title == "Try the new HikariSub");
+	CHECK(en.highlights == (std::vector<std::string>{ "Faster", "Docks" }));
+	CHECK(en.note == "This is a beta.");
+	CHECK(offer->pitch.at("pl").note.empty());
+
+	std::optional<RewriteOffer> ended = OfferOf(RewriteJson("0.1.0", OfferJson("stable", "ended")), "0.1.0");
+	CHECK(ended && ended->channel == OfferChannel::Stable && ended->legacySupportEnded);
+
+	// No member, no offer; and a legacy manifest's is not read.
+	CHECK(!OfferOf(RewriteJson("0.1.0", ""), "0.1.0"));
+	CHECK(!OfferOf(ManifestJson("0.0.3", "legacy", "[\"legacy\"]", kHashA, "") + "", "0.0.3"));
+	std::string legacyWithOffer = ManifestJson("0.0.3", "legacy", "[\"legacy\"]");
+	legacyWithOffer.insert(legacyWithOffer.size() - 1, OfferJson());
+	Manifest legacy;
+	CHECK(Read(legacyWithOffer, "0.0.3", &legacy) == ManifestRead::Valid);
+	CHECK(!legacy.offer);
+}
+
+TEST(update_offer_that_breaks_the_rules_is_ignored)
+{
+	auto pitch = [](const std::string &en) { return "{\"en\": " + en + "}"; };
+	auto entry = [](const std::string &title, const std::string &highlights, const std::string &note = "") {
+		return "{\"title\": " + title + ", \"highlights\": " + highlights + note + "}";
+	};
+	std::string title = "\"Try it\"";
+	std::string one = "[\"Faster\"]";
+	std::vector<std::string> broken = {
+		// to, channel and legacy_support.
+		", \"offer\": {\"to\": \"qt\", \"channel\": \"stable\", \"legacy_support\": \"continues\", \"pitch\": " +
+			pitch(entry(title, one)) + "}",
+		", \"offer\": {\"channel\": \"stable\", \"legacy_support\": \"continues\", \"pitch\": " +
+			pitch(entry(title, one)) + "}",
+		OfferJson("beta", "continues", pitch(entry(title, one))),
+		OfferJson("stable", "maybe", pitch(entry(title, one))),
+		", \"offer\": {\"to\": \"legacy\", \"channel\": \"stable\", \"pitch\": " + pitch(entry(title, one)) + "}",
+		", \"offer\": \"yes\"",
+		// The pitch: en is required, and each language holds to the rules.
+		OfferJson("stable", "continues", "{\"pl\": " + entry(title, one) + "}"),
+		OfferJson("stable", "continues", "[]"),
+		OfferJson("stable", "continues", "{\"en\": " + entry(title, one) + ", \"pl\": " + entry(title, "[]") + "}"),
+		OfferJson("stable", "continues", pitch(entry("\"\"", one))),
+		OfferJson("stable", "continues", pitch(entry("1", one))),
+		OfferJson("stable", "continues", pitch(entry("\"" + std::string(81, 'x') + "\"", one))),
+		OfferJson("stable", "continues", pitch(entry(title, "[]"))),
+		OfferJson("stable", "continues", pitch(entry(title, "\"Faster\""))),
+		OfferJson("stable", "continues", pitch(entry(title, "[\"a\", \"b\", \"c\", \"d\", \"e\", \"f\"]"))),
+		OfferJson("stable", "continues", pitch(entry(title, "[\"" + std::string(121, 'x') + "\"]"))),
+		OfferJson("stable", "continues", pitch(entry(title, "[\"\"]"))),
+		OfferJson("stable", "continues", pitch(entry(title, "[2]"))),
+		OfferJson("stable", "continues", pitch(entry(title, one, ", \"note\": \"" + std::string(201, 'x') + "\""))),
+		OfferJson("stable", "continues", pitch(entry(title, one, ", \"note\": 5"))),
+		OfferJson("stable", "continues", pitch("\"Try it\"")),
+	};
+	for (const std::string &offer : broken) {
+		Manifest manifest;
+		// The rest of the manifest still counts.
+		CHECK(Read(RewriteJson("0.1.0", offer), "0.1.0", &manifest) == ManifestRead::Valid);
+		CHECK(!manifest.offer);
+		CHECK(manifest.packages.count("deb") == 1);
+	}
+
+	// The limits count characters, not bytes: 80 two-byte characters fit.
+	std::string wide;
+	for (int i = 0; i < 80; i++)
+		wide += "\xC3\xA9";
+	CHECK(OfferOf(RewriteJson("0.1.0", OfferJson("stable", "continues", pitch(entry("\"" + wide + "\"", one)))),
+		"0.1.0"));
+	CHECK(!OfferOf(RewriteJson("0.1.0", OfferJson("stable", "continues",
+		pitch(entry("\"" + wide + "\xC3\xA9\"", one)))), "0.1.0"));
+	// Five highlights of 120 and a note of 200 are the most.
+	std::string five = "[";
+	for (int i = 0; i < 5; i++)
+		five += std::string(i ? ", " : "") + "\"" + std::string(120, 'x') + "\"";
+	five += "]";
+	CHECK(OfferOf(RewriteJson("0.1.0", OfferJson("stable", "continues",
+		pitch(entry(title, five, ", \"note\": \"" + std::string(200, 'x') + "\"")))), "0.1.0"));
+}
+
+TEST(update_offer_follows_the_channel)
+{
+	Release beta = RewriteRelease("0.1.0-beta.1", true);
+	std::string prerelease = RewriteJson("0.1.0-beta.1", OfferJson("prerelease"));
+	std::string stable = RewriteJson("0.1.0-beta.1", OfferJson("stable"));
+	// Seen by those who see prereleases only.
+	CHECK(Consider(beta, &prerelease, true).offer.has_value());
+	CHECK(!Consider(beta, &prerelease, false).offer);
+	// Stable: by everyone.
+	CHECK(Consider(beta, &stable, false).offer.has_value());
+	CHECK(Consider(beta, &stable, true).offer.has_value());
+	// Who sees prereleases: "Stable versions only" off, or an rc build.
+	CHECK(SeesPrereleases(false, "0.0.2"));
+	CHECK(!SeesPrereleases(true, "0.0.2"));
+	CHECK(SeesPrereleases(true, "0.0.2-rc.5"));
+
+	// The offer carries its release's packages, cross-checked as an
+	// update's are, and is no update.
+	Considered considered = Consider(beta, &stable, false);
+	CHECK(!considered.update);
+	CHECK(considered.offer && considered.offer->version == "0.1.0-beta.1");
+	CHECK(considered.offer && considered.offer->packages.count("deb") == 1);
+	Release disagrees = WithAssets("v0.1.0-beta.1", true, { Asset("hikarisub-update.json", 50, ""),
+		Asset("hikarisub-0.1.0-beta.1-linux-amd64.deb", 999, kHashA) });
+	considered = Consider(disagrees, &stable, false);
+	CHECK(considered.offer && considered.offer->packages.empty());
+
+	// A Qt client is offered nothing.
+	CHECK(!Consider(beta, &stable, true, Codebase::Qt).offer);
+	// Nor is a manifest that failed to come, or a release without one.
+	CHECK(!Consider(beta, nullptr, true).offer);
+	CHECK(!Consider(WithAssets("v0.1.0", false, {}), nullptr, true).offer);
+}
+
+TEST(update_offer_to_legacy_in_offer_to_is_still_an_update)
+{
+	Release release = RewriteRelease("0.1.0", false);
+	std::string both = RewriteJson("0.1.0", OfferJson("stable"), "[\"qt\", \"legacy\"]");
+	Considered considered = Consider(release, &both, false);
+	CHECK(considered.update.has_value());
+	CHECK(considered.update && considered.update->packages.count("deb") == 1);
+	// Admit is unchanged.
+	CHECK(Admit(release, &both).has_value());
+	std::string qtOnly = RewriteJson("0.1.0", OfferJson("stable"));
+	CHECK(!Admit(release, &qtOnly));
+}
+
+TEST(update_offer_takes_the_highest)
+{
+	OfferChoice choice;
+	CHECK(!choice.Get());
+	Release beta1 = RewriteRelease("0.1.0-beta.1", true);
+	Release beta2 = RewriteRelease("0.1.0-beta.2", true);
+	Release stable = RewriteRelease("0.1.0", false);
+	std::string beta1Json = RewriteJson("0.1.0-beta.1", OfferJson("stable"));
+	std::string beta2Json = RewriteJson("0.1.0-beta.2", OfferJson("prerelease"));
+	std::string stableJson = RewriteJson("0.1.0", OfferJson("stable"));
+	// Whatever order they come in.
+	choice.Take(Consider(beta1, &beta1Json, true).offer);
+	choice.Take(Consider(stable, &stableJson, true).offer);
+	choice.Take(Consider(beta2, &beta2Json, true).offer);
+	choice.Take(std::nullopt);
+	CHECK(choice.Get() && choice.Get()->version == "0.1.0");
+
+	// Of those that apply: beta.2 is for prerelease users only.
+	OfferChoice stableUser;
+	stableUser.Take(Consider(beta2, &beta2Json, false).offer);
+	stableUser.Take(Consider(beta1, &beta1Json, false).offer);
+	CHECK(stableUser.Get() && stableUser.Get()->version == "0.1.0-beta.1");
+}
+
+TEST(update_offer_pitch_in_the_interface_language)
+{
+	RewriteOffer offer;
+	offer.pitch["en"].title = "English";
+	offer.pitch["pl"].title = "Polski";
+	offer.pitch["ko-KR"].title = "Korean";
+	offer.pitch["th"].title = "Thai";
+	CHECK(PitchFor(offer, "pl").title == "Polski");
+	// As Config.txt names a language, and in any case.
+	CHECK(PitchFor(offer, "ko_KR").title == "Korean");
+	CHECK(PitchFor(offer, "KO-kr").title == "Korean");
+	// A region the pitch has not falls back to the language.
+	CHECK(PitchFor(offer, "th_TH").title == "Thai");
+	CHECK(PitchFor(offer, "pl_PL").title == "Polski");
+	// Else English, the interface's own included.
+	CHECK(PitchFor(offer, "ta").title == "English");
+	CHECK(PitchFor(offer, "").title == "English");
+	CHECK(PitchFor(offer, "en").title == "English");
+	// A pitch of the language in another region stands in too.
+	RewriteOffer regional;
+	regional.pitch["en"].title = "English";
+	regional.pitch["pt-BR"].title = "Portuguese";
+	CHECK(PitchFor(regional, "pt").title == "Portuguese");
+	CHECK(PitchFor(regional, "pt_PT").title == "Portuguese");
+}
+
+TEST(update_offer_at_start_honours_the_choices)
+{
+	using update_policy::kDay;
+	long long now = 1800000000;
+	// Never chosen.
+	CHECK(ShowsOfferAtStart("0.1.0-beta.1", false, {}, 0, now));
+	// Remind me later: not before 3 days, then at the first start after.
+	long long remind = OfferRemindAt(now);
+	CHECK(remind == now + 3 * kDay);
+	CHECK(!ShowsOfferAtStart("0.1.0-beta.1", false, {}, remind, now));
+	CHECK(!ShowsOfferAtStart("0.1.0-beta.1", false, {}, remind, now + 3 * kDay - 1));
+	CHECK(ShowsOfferAtStart("0.1.0-beta.1", false, {}, remind, now + 3 * kDay));
+	CHECK(ShowsOfferAtStart("0.1.0-beta.1", false, {}, remind, now + 30 * kDay));
+	// A reminder further off than 3 days was set before the clock went
+	// back, and is due.
+	CHECK(ShowsOfferAtStart("0.1.0-beta.1", false, {}, remind, now - kDay));
+	// Don't offer again: until a higher version carries an offer.
+	CHECK(!ShowsOfferAtStart("0.1.0-beta.1", false, { "0.1.0-beta.1", false }, 0, now));
+	CHECK(!ShowsOfferAtStart("0.1.0-beta.1", false, { "0.1.0-beta.2", false }, 0, now));
+	CHECK(ShowsOfferAtStart("0.1.0-beta.2", false, { "0.1.0-beta.1", false }, 0, now));
+	CHECK(ShowsOfferAtStart("0.1.0", false, { "0.1.0-beta.2", false }, 0, now));
+	CHECK(!ShowsOfferAtStart("0.1.0-beta.1", false, { "0.1.0-beta.1", false }, remind, now + 3 * kDay));
+
+	// A due reminder makes the startup check due, so the first start after
+	// it shows the offer even within a day of the last check.
+	CHECK(!OfferReminderDue(0, now));
+	CHECK(!OfferReminderDue(remind, now));
+	CHECK(OfferReminderDue(remind, now + 3 * kDay));
+	CHECK(OfferReminderDue(remind, now - kDay));
+}
+
+TEST(update_offer_declined_shows_once_more_when_legacy_support_ends)
+{
+	long long now = 1800000000;
+	// Declined while legacy support continued: the same version, or a
+	// lower one, saying it has ended shows once more.
+	DeclinedOffer continued{ "0.1.0", false };
+	CHECK(!ShowsOfferAtStart("0.1.0", false, continued, 0, now));
+	CHECK(ShowsOfferAtStart("0.1.0", true, continued, 0, now));
+	CHECK(ShowsOfferAtStart("0.1.0-beta.2", true, continued, 0, now));
+	// Declined again once it said so: it holds, until a higher version.
+	DeclinedOffer ended{ "0.1.0", true };
+	CHECK(!ShowsOfferAtStart("0.1.0", true, ended, 0, now));
+	CHECK(!ShowsOfferAtStart("0.1.0-beta.2", false, ended, 0, now));
+	CHECK(ShowsOfferAtStart("0.1.1", true, ended, 0, now));
+	// Remind me later on the one shown once more still reminds.
+	long long remind = OfferRemindAt(now);
+	CHECK(!ShowsOfferAtStart("0.1.0", true, continued, remind, now));
+	CHECK(ShowsOfferAtStart("0.1.0", true, continued, remind, now + kOfferRemindDelay));
+
+	// Try it on an offer that was declined spends the lift too; on one
+	// that was not, the decline stays as it was.
+	CHECK(TriedAfter("0.1.0", true, continued).ended);
+	CHECK(TriedAfter("0.1.0", true, continued).version == "0.1.0");
+	DeclinedOffer older{ "0.1.0-beta.1", false };
+	CHECK(!TriedAfter("0.1.0", true, older).ended);
+	CHECK(TriedAfter("0.1.0", true, older).version == "0.1.0-beta.1");
+	CHECK(TriedAfter("0.1.0", true, {}).version.empty());
+}
+
+TEST(update_walk_goes_on_for_offers)
+{
+	// A legacy update is found; for the offers only, the walk goes on
+	// through the rewrite releases after it, and the legacy ones are done.
+	std::vector<Release> releases = {
+		Release{ "v0.0.3", false, false },
+		Release{ "v0.1.0-beta.1", false, true },
+		Release{ "v0.0.4-rc.1", false, true },
+		Release{ "v0.1.0-beta.2", false, true },
+	};
+	CandidateWalk walk(releases, ListCandidates(releases, "0.0.2", true));
+	CHECK(walk.Current() == 0);
+	walk.Take();
+	CHECK(walk.Found());
+	CHECK(walk.Current() == 3);
+	CHECK(walk.CurrentIsSkipped());
+	walk.Skip();
+	CHECK(walk.Current() == 1);
+	walk.Skip();
+	CHECK(walk.Current() == -1);
+	CHECK(walk.Found());
+}
+
+TEST(update_walk_finds_a_legacy_update_past_newer_rewrite_releases)
+{
+	// The update is looked for among legacy releases and the offer among
+	// the rewrite's, kMaxCandidates of each: more newer rewrite releases
+	// than that never hide a legacy update.
+	std::vector<Release> releases;
+	for (int i = 0; i < 7; i++)
+		releases.push_back(RewriteRelease("0.1." + std::to_string(i), false));
+	releases.push_back(WithAssets("v0.0.3", false, { Asset("hikarisub-0.0.3-linux-amd64.deb", 10, kHashA) }));
+	Candidates candidates = ListCandidates(releases, "0.0.2", true);
+	CHECK(candidates.offer == (std::vector<int>{ 6, 5, 4, 3, 2, 7 }));
+
+	CandidateWalk walk(releases, candidates);
+	std::optional<Manifest> update;
+	OfferChoice offers;
+	int looked = 0;
+	while (walk.Current() >= 0) {
+		looked++;
+		const Release &release = releases[walk.Current()];
+		std::string version = update_policy::CandidateVersion(release.tag);
+		std::string manifest = RewriteJson(version, OfferJson("stable"));
+		Considered considered = Consider(release, HasManifest(release) ? &manifest : nullptr, false);
+		offers.Take(std::move(considered.offer));
+		if (considered.update && !walk.Found()) {
+			update = considered.update;
+			walk.Take();
+		}
+		else {
+			walk.Skip();
+		}
+	}
+	CHECK(looked == int(update_policy::kMaxCandidates) + 1);
+	CHECK(update && update->version == "0.0.3");
+	CHECK(offers.Get() && offers.Get()->version == "0.1.6");
+
+	// Each codebase has its own budget, the prereleases kept out within it.
+	std::vector<Release> many;
+	for (int i = 3; i < 10; i++) {
+		many.push_back(Release{ "v0.0." + std::to_string(i) + "-rc.1", false, true });
+		many.push_back(Release{ "v0.1." + std::to_string(i), false, false });
+	}
+	many.push_back(Release{ "v0.0.3", false, false });
+	CandidateWalk capped(many, ListCandidates(many, "0.0.2", true));
+	int legacy = 0, rewrite = 0;
+	while (capped.Current() >= 0) {
+		(many[capped.Current()].tag.rfind("v0.0.", 0) == 0 ? legacy : rewrite)++;
+		capped.Skip();
+	}
+	CHECK(legacy == int(update_policy::kMaxCandidates));
+	CHECK(rewrite == int(update_policy::kMaxCandidates));
 }

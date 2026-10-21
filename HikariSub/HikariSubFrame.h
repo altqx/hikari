@@ -80,6 +80,9 @@ public:
 	wxArrayString keyframesRecent;
 	void OnMenuSelected(wxCommandEvent& event);
 	void OnMenuSelected1(wxCommandEvent& event);
+	// Once the startup prompts are closed: the updater's start, whose
+	// windows would otherwise come up over them.
+	void StartUpdater();
 	void OnRecent(wxCommandEvent& event);
 	void OnUseWindowHotkey(wxCommandEvent& event);
 	TabPanel* GetTab();
