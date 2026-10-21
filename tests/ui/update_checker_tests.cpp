@@ -176,6 +176,11 @@ private slots:
         QCOMPARE(malformedDone.at(0).at(0).toString(), QStringLiteral("current"));
         QCOMPARE(malformedListed.count(), 1);
         QCOMPARE(malformedListed.at(0).at(0).toBool(), false);
+        UpdateChecker untagged({}, feed("[{\"tag_name\": \"\"}]", QStringLiteral("untagged")), QStringLiteral("0.1.0"));
+        QSignalSpy untaggedListed(&untagged, &UpdateChecker::releasesRead);
+        untagged.checkNow();
+        QVERIFY(untaggedListed.wait(5000));
+        QCOMPARE(untaggedListed.at(0).at(0).toBool(), false);
     }
 
     void automaticCheckFollowsTheOptionAndTheSchedule()

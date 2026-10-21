@@ -55,7 +55,7 @@ std::vector<a::ReleaseEntry> releaseList(const QJsonArray &list, bool &unreadabl
     std::vector<a::ReleaseEntry> out;
     for (const QJsonValue &value : list) {
         const QJsonObject r = value.toObject();
-        if (!value.isObject() || !r.value(QStringLiteral("tag_name")).isString()) {
+        if (!value.isObject() || r.value(QStringLiteral("tag_name")).toString().isEmpty()) {
             unreadable = true;
             continue;
         }
