@@ -16017,6 +16017,10 @@ private slots:
         QTest::qWait(150);
         QCOMPARE(audio.tapSpans().size(), 3);
         QVERIFY(visualItem("audioTapSpan2"));
+        // the Line's text shows as itself, never as markup (an <img> in a Line
+        // would be fetched): the bar's syllables and next Line, the lane's
+        for (const char *name : {"audioTapSyllable0", "audioTapNext", "audioTapSpanText"})
+            QVERIFY2(visualItem(name)->property("textFormat").toInt() == int(Qt::PlainText), name);
         key(Qt::Key_Space, false); // the last release: the Line is done
         // one step, the Line's new times with an empty syllable for the gap
         QCOMPARE(editor.history().size(), steps + 1);

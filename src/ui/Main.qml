@@ -2910,11 +2910,13 @@ ApplicationWindow {
                                 border.color: Theme.accent
                             }
                             Label {
+                                objectName: "audioTapSpanText"
                                 anchors.centerIn: parent
                                 width: Math.min(implicitWidth, parent.width - 2)
                                 horizontalAlignment: Text.AlignHCenter
                                 elide: Text.ElideRight
                                 text: span.modelData.text
+                                textFormat: Text.PlainText // a Line's text, never markup (no <img> fetched)
                                 font.bold: true
                                 color: span.modelData.held ? Theme.onAccent : Theme.text
                             }

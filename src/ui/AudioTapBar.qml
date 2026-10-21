@@ -157,6 +157,7 @@ Rectangle {
                         readonly property bool isNext: modelData.state === AudioController.TapSyllableNext
                         objectName: "audioTapSyllable" + index
                         text: modelData.text
+                        textFormat: Text.PlainText // a Line's text, never markup (no <img> fetched)
                         leftPadding: 5
                         rightPadding: 5
                         topPadding: 1
@@ -176,6 +177,7 @@ Rectangle {
                     objectName: "audioTapNext"
                     visible: bar.audio.tapNextText.length > 0 && !bar.stopped && !bar.needsSplit
                     text: "› " + bar.audio.tapNextText
+                    textFormat: Text.PlainText // a Line's text, never markup
                     color: Theme.muted
                     leftPadding: 6
                     elide: Text.ElideRight
