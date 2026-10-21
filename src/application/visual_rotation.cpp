@@ -22,6 +22,14 @@ std::u8string u8(const std::u16string &text)
 
 // The legacy tools' In and Out conversions with the coefficients and zoom of
 // their last SizeChanged / SetZoom (Visuals.h:139-154).
+// VT1: a typed angle as the tools hold one, in 0-360 for any number of
+// turns (legacy's +360 then fmod covers one negative turn).
+float turn(double degrees)
+{
+    const double t = std::fmod(degrees, 360.);
+    return static_cast<float>(t < 0 ? t + 360. : t);
+}
+
 PointF inPos(PointF p, float coeffW, float coeffH, PointF zm, PointF zs)
 {
     return {((p.x / coeffW) - zm.x) * zs.x, ((p.y / coeffH) - zm.y) * zs.y};
@@ -96,6 +104,8 @@ std::vector<ToolOption> RotationZTool::options(const VisualHost &host) const
         o.tooltip = info.tooltip;
         o.checked = m_toggle[static_cast<std::size_t>(elem)];
         o.enabled = !(elem == 1 && m_toggle[2]);
+        if (elem > 0)
+            o.group = u"Tags"; // VT1: the bar's groups
         out.push_back(std::move(o));
     }
     return out;
@@ -139,6 +149,13 @@ void RotationZTool::takeView(const VideoView &view)
 
 void RotationZTool::reset(VisualHost &host)
 {
+    // VT1: Esc dropped a scrubbed value's gesture: the origin it moved is
+    // not held by a drag.
+    if (m_valueEdit) {
+        m_valueEdit = false;
+        m_isOrg = false;
+    }
+    m_typedAngle.reset();
     // Visuals::SetVisual(dial, tool) (Visuals.cpp:256-283).
     takeView(host.view());
     const Context ctx = context(host);
@@ -299,7 +316,9 @@ float RotationZTool::currentAngle() const
 {
     // VisualRotationZ.cpp:307-315.
     float angle;
-    if (m_hasTwoPoints) {
+    if (m_typedAngle) {
+        angle = *m_typedAngle; // VT1: a typed or scrubbed angle
+    } else if (m_hasTwoPoints) {
         angle = std::atan2((m_twoPoints[0].y - m_twoPoints[1].y), (m_twoPoints[0].x - m_twoPoints[1].x)) * kDegrees;
         angle = -angle + 180;
     } else {
@@ -311,7 +330,7 @@ float RotationZTool::currentAngle() const
 void RotationZTool::changeVisualLine(std::u16string &text, const core::LineRecord &dial, const Context &ctx)
 {
     // RotationZ::ChangeVisual(txt, dial, numOfSelections) (VisualRotationZ.cpp:296-370).
-    if (m_hasTwoPoints && (!m_visibility[0] || !m_visibility[1]))
+    if (m_hasTwoPoints && !m_typedAngle && !m_isOrg && (!m_visibility[0] || !m_visibility[1]))
         return;
     if (m_isOrg) {
         const PointF d = orgOffset(m_org, m_lastOrg, m_coeffW, m_coeffH, m_zoomScale);
@@ -368,7 +387,7 @@ void RotationZTool::changeVisualLine(std::u16string &text, const core::LineRecor
 std::pair<long, long> RotationZTool::changeVisualEditor(std::u16string &text)
 {
     // RotationZ::ChangeVisual(txt) (VisualRotationZ.cpp:372-420).
-    if (m_hasTwoPoints && (!m_visibility[0] || !m_visibility[1]))
+    if (m_hasTwoPoints && !m_typedAngle && !m_isOrg && (!m_visibility[0] || !m_visibility[1]))
         return {0, 0};
     if (m_isOrg) {
         m_find.findTag(u"org\\(([^\\)]+)\\)", text, 1);
@@ -580,10 +599,68 @@ Overlay RotationZTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> RotationZTool::values(const VisualHost &host) const
 {
+    // VT1: editable, the angle in degrees and \org in script coordinates.
     (void)host;
     const PointF o = outPos(m_org, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
-    return {{"frz", u"Z rotation", getfloat(m_lastmove.y), false},
-            {"org", u"Origin", getfloat(o.x) + u"," + getfloat(o.y), false}};
+    return {{"frz", u"Z", getfloat(m_lastmove.y), true, {}, u"\u00b0"},
+            {"orgx", u"X", getfloat(o.x), true, u"Origin"},
+            {"orgy", u"Y", getfloat(o.y), true, u"Origin"}};
+}
+
+bool RotationZTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
+{
+    // VT1: a typed or scrubbed angle, written as a drag around the ring
+    // writes it (with "Changing all Z-rotation tags" each tag turned by the
+    // difference), or \org moved as a drag of its cross moves it. The first
+    // sample is the press.
+    double value = 0;
+    if (!host.gesture()) {
+        m_valueEdit = false;
+        m_typedAngle.reset();
+    }
+    if ((name != "frz" && name != "orgx" && name != "orgy") || !parseValue(text, value) ||
+        (host.gesture() && !m_valueEdit))
+        return false;
+    takeView(host.view());
+    const bool first = !host.gesture();
+    if (!beginEdit(host))
+        return false;
+    if (name == "frz") {
+        if (first) {
+            m_isOrg = false;
+            if (m_changeAllTags)
+                m_lastAngle = m_lastmove.y;
+        }
+        m_isfirst = true;
+        m_typedAngle = turn(value);
+    } else {
+        if (first) {
+            m_isOrg = true;
+            m_lastOrg = m_org;
+        }
+        PointF o = outPos(m_org, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
+        (name == "orgx" ? o.x : o.y) = static_cast<float>(value);
+        m_org = inPos(o, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
+    }
+    setVisual(true, host);
+    if (edit == ValueEdit::Sample)
+        return m_valueEdit = host.gesture() != nullptr;
+    // The release (OnMouseEvent's buttonUp): the angle handle back on \org.
+    m_valueEdit = false;
+    const std::uint64_t before = host.session() ? host.session()->revision() : 0;
+    setVisual(false, host);
+    m_typedAngle.reset();
+    m_to = m_org;
+    m_isOrg = false;
+    // Several Lines: the batch's first target set the angle the tool holds;
+    // the fields and the next edit start from the active Line's as written.
+    if (host.batchTargets().size() > 1) {
+        const auto points = m_visibility;
+        reset(host);
+        m_visibility = points;
+    }
+    host.toolChanged();
+    return host.session() && host.session()->revision() != before;
 }
 
 // --------------------------------------------------------------- RotationXY
@@ -604,6 +681,7 @@ std::vector<ToolOption> RotationXYTool::options(const VisualHost &host) const
     o.iconRole = "tool-scale-rotation";
     o.tooltip = u"Changing all X/Y-rotation tags";
     o.checked = m_toggled == 0;
+    o.group = u"Tags";
     return {o};
 }
 
@@ -634,6 +712,12 @@ void RotationXYTool::takeView(const VideoView &view)
 
 void RotationXYTool::reset(VisualHost &host)
 {
+    // VT1: Esc dropped a scrubbed value's gesture: the origin it moved is
+    // not held by a drag.
+    if (m_valueEdit) {
+        m_valueEdit = false;
+        m_isOrg = false;
+    }
     takeView(host.view());
     const Context ctx = context(host);
     if (ctx.active) {
@@ -959,14 +1043,72 @@ Overlay RotationXYTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> RotationXYTool::values(const VisualHost &host) const
 {
+    // VT1: editable, the angles in degrees and \org in script coordinates.
     (void)host;
     const PointF o = outPos(m_org, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
-    return {{"frx", u"X rotation", getfloat(m_angle.y), false},
-            {"fry", u"Y rotation", getfloat(m_angle.x), false},
-            {"org", u"Origin", getfloat(o.x) + u"," + getfloat(o.y), false}};
+    return {{"frx", u"X", getfloat(m_angle.y), true, {}, u"\u00b0"},
+            {"fry", u"Y", getfloat(m_angle.x), true, {}, u"\u00b0"},
+            {"orgx", u"X", getfloat(o.x), true, u"Origin"},
+            {"orgy", u"Y", getfloat(o.y), true, u"Origin"}};
 }
 
-// --------------------------------------------------------- the 3D overlay
+bool RotationXYTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
+{
+    // VT1: a typed or scrubbed angle, written as a drag writes it (the
+    // pointer's offset from the press is the angle's change: \fry from the
+    // left button's horizontal drag, \frx from the right's vertical one), or
+    // \org moved as a drag of its cross moves it. The first sample is the
+    // press.
+    double value = 0;
+    if (!host.gesture())
+        m_valueEdit = false;
+    if ((name != "frx" && name != "fry" && name != "orgx" && name != "orgy") || !parseValue(text, value) ||
+        (host.gesture() && !m_valueEdit))
+        return false;
+    takeView(host.view());
+    const bool first = !host.gesture();
+    if (!beginEdit(host))
+        return false;
+    const float v = static_cast<float>(value);
+    if (name == "fry" || name == "frx") {
+        if (first) {
+            m_isOrg = false;
+            m_firstmove = m_to;
+        }
+        const float angle = turn(value);
+        if (name == "fry") {
+            m_type = 0;
+            m_to.x = m_firstmove.x + (angle - m_oldAngle.x);
+        } else {
+            m_type = 1;
+            m_to.y = m_firstmove.y + (m_oldAngle.y - angle);
+        }
+    } else {
+        if (first) {
+            m_isOrg = true;
+            m_lastOrg = m_org;
+        }
+        PointF o = outPos(m_org, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
+        (name == "orgx" ? o.x : o.y) = v;
+        m_org = inPos(o, m_coeffW, m_coeffH, m_zoomMove, m_zoomScale);
+    }
+    setVisual(true, host);
+    if (edit == ValueEdit::Sample)
+        return m_valueEdit = host.gesture() != nullptr;
+    // The release (OnMouseEvent's buttonUp).
+    m_valueEdit = false;
+    const std::uint64_t before = host.session() ? host.session()->revision() : 0;
+    setVisual(false, host);
+    m_oldAngle = m_angle;
+    m_isOrg = false;
+    // Several Lines: m_angle is the last target's; the fields and the next
+    // edit start from the active Line's as written.
+    if (host.batchTargets().size() > 1)
+        reset(host);
+    host.toolChanged();
+    return host.session() && host.session()->revision() != before;
+}
+
 
 namespace {
 
