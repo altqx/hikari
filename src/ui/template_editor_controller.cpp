@@ -254,6 +254,11 @@ void TemplateEditorController::setSessionSource(SessionSource source)
     refresh();
 }
 
+void TemplateEditorController::setDocumentKey(DocumentKey key)
+{
+    m_documentKey = std::move(key);
+}
+
 void TemplateEditorController::setTemplater(application::KaraokeTemplaterPort *templater)
 {
     m_templater = templater;
@@ -360,6 +365,11 @@ void TemplateEditorController::refresh()
         return;
     }
     const auto &doc = s->document();
+    if (const auto key = documentKey(); m_seenDocuments.insert(key).second &&
+                                        std::ranges::none_of(doc.lines(), [](const core::LineRecord *l) {
+                                            return application::templateKindOf(*l).has_value();
+                                        }))
+        m_trusted.insert(key);
     // The current template follows the active Line when that is one.
     const auto active = s->selection().active;
     if (const auto *l = active ? line(*active) : nullptr; l && application::templateKindOf(*l) && active != m_current)
@@ -695,7 +705,26 @@ bool TemplateEditorController::canApply() const
 
 bool TemplateEditorController::previewPending() const
 {
-    return m_shown && (m_previewTimer.isActive() || m_previewing);
+    return m_shown && trusted() && (m_previewTimer.isActive() || m_previewing);
+}
+
+std::uint64_t TemplateEditorController::documentKey() const
+{
+    return m_documentKey ? m_documentKey() : static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(session()));
+}
+
+bool TemplateEditorController::trusted() const
+{
+    return session() && m_trusted.contains(documentKey());
+}
+
+void TemplateEditorController::trustDocument()
+{
+    if (!session() || !m_trusted.insert(documentKey()).second)
+        return;
+    m_previewSnapshotKey.clear();
+    emit changed();
+    schedulePreview();
 }
 
 int TemplateEditorController::changedNumber() const
@@ -834,6 +863,7 @@ void TemplateEditorController::applied(const std::string &report)
                    {QStringLiteral("seconds"), o.value(QLatin1String("seconds")).toDouble()},
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
     takeBaseline();
+    m_trusted.insert(documentKey()); // the user ran them
     // A file's unmarked Lines are marked now; an Undo that brings them back
     // matches again.
     m_replaced.clear();
@@ -891,7 +921,7 @@ std::map<core::LineId, std::u8string> TemplateEditorController::pendingTexts() c
 
 void TemplateEditorController::schedulePreview()
 {
-    if (!m_shown || !m_templater)
+    if (!m_shown || !m_templater || !trusted())
         return;
     const bool was = previewPending();
     m_previewTimer.start();
@@ -901,7 +931,7 @@ void TemplateEditorController::schedulePreview()
 
 void TemplateEditorController::runPreview()
 {
-    if (!m_shown || !available() || !m_source || templateCount() == 0) {
+    if (!m_shown || !available() || !m_source || templateCount() == 0 || !trusted()) {
         m_running = false;
         m_previewing = false;
         emit changed(); // canApply
@@ -1090,7 +1120,7 @@ void TemplateEditorController::runValues(std::uint64_t generation)
     // m_wantValues stays until the answer comes: a preview that replaces
     // this run asks again when its chain ends.
     const auto *doc = document();
-    if (!doc || !m_source || !available())
+    if (!doc || !m_source || !available() || !trusted())
         return;
     auto snapshot = application::templatePreviewSnapshot(*doc, *m_source);
     const auto *source = line(*m_source);

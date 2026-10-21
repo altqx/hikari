@@ -686,9 +686,36 @@ Pane {
                             onTapped: root.previewUnfolded = !root.previewUnfolded
                         }
                     }
+                    // A file's templates and code are Lua with the user's
+                    // rights: they run for previews only once the user says so
+                    // (Apply runs them too, as the Automation menu does).
+                    RowLayout {
+                        id: trustRow
+                        objectName: "templatePreviewTrust"
+                        visible: !previewSection.folded && !root.controller.trusted && root.controller.source !== 0
+                                 && root.controller.templateCount > 0
+                        Layout.fillWidth: true
+                        spacing: 8
+                        Label {
+                            objectName: "templatePreviewTrustText"
+                            Layout.fillWidth: true
+                            wrapMode: Text.Wrap
+                            color: Theme.muted
+                            text: qsTr("This file's templates run Lua code with your rights. Preview them if you trust the file.")
+                        }
+                        Button {
+                            objectName: "templatePreviewTrustButton"
+                            text: qsTr("Preview")
+                            icon.source: IconTheme.image("play-line", enabled ? IconTheme.normal : IconTheme.disabled,
+                                                         enabled ? IconTheme.accent : IconTheme.disabled, false)
+                            icon.color: "transparent"
+                            onClicked: root.controller.trustDocument()
+                        }
+                    }
                     Label {
                         objectName: "templatePreviewEmpty"
-                        visible: !previewSection.folded && (root.controller.source === 0 || !root.controller.hasPreview)
+                        visible: !previewSection.folded && !trustRow.visible
+                                 && (root.controller.source === 0 || !root.controller.hasPreview)
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         color: Theme.muted

@@ -145,12 +145,14 @@ class TemplateEditorTests : public QObject {
     std::unique_ptr<TemplateEditorController> editor;
     std::unique_ptr<QQuickView> view;
 
-    void open(const QString &name)
+    // `trust`: the user chose to preview this file's templates (most tests).
+    void open(const QString &name, bool trust = true) { openDocument(loadFile(name), trust); }
+    void openDocument(core::Document doc, bool trust)
     {
         view.reset();
         editor.reset();
         templater.reset();
-        session = std::make_unique<application::EditSession>(loadFile(name));
+        session = std::make_unique<application::EditSession>(std::move(doc));
         templater = std::make_unique<Templater>(*session);
         QVERIFY(QTest::qWaitFor([&] { return templater->available(); }, 20'000));
         editor = std::make_unique<TemplateEditorController>();
@@ -160,6 +162,8 @@ class TemplateEditorTests : public QObject {
         editor->setSessionSource([this] { return session.get(); });
         QObject::connect(editor.get(), &TemplateEditorController::documentEdited, editor.get(),
                          [this] { editor->refresh(); });
+        if (trust)
+            editor->trustDocument();
     }
 
     const core::LineRecord *lineAt(std::size_t i) const { return session->document().lines()[i]; }
@@ -646,6 +650,51 @@ private slots:
                  QStringLiteral("named"));
     }
 
+    // A file's templates and code run Lua: nothing of them runs until the
+    // user previews the file or applies it, as the Automation menu runs
+    // them only when asked.
+    void aFilesTemplatesRunOnlyOnceTheUserPreviewsIt()
+    {
+        open(QStringLiteral("stock-tutorials.ass"), false);
+        activate(*firstKaraoke());
+        QVERIFY(!editor->trusted());
+        editor->setShown(true);
+        editor->requestValues();
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, 0);
+        QVERIFY(!editor->hasPreview());
+        QVERIFY(!editor->previewPending());
+        QVERIFY(editor->canApply()); // Apply is the user's to run, as in the Automation menu
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+        QVERIFY(previewCame());
+    }
+
+    void applyTrustsTheFile()
+    {
+        open(QStringLiteral("stock-tutorials.ass"), false);
+        editor->setShown(true);
+        QVERIFY(editor->apply(false));
+        editor->applied(templater->report);
+        QVERIFY(editor->trusted());
+    }
+
+    // A file without templates when it opened: what the panel shows later
+    // the user wrote.
+    void aFileWithoutTemplatesIsTheUsers()
+    {
+        core::Document plain = loadFile(QStringLiteral("stock-tutorials.ass"));
+        plain.removeLinesIf([](const core::LineRecord &l) { return application::templateKindOf(l).has_value(); });
+        openDocument(std::move(plain), false);
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(editor->insertTemplate(QStringLiteral("template syl")));
+        editor->setText(QStringLiteral("{\\bord2}"));
+        QVERIFY(previewCame());
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -693,6 +742,7 @@ private slots:
         editor->setEditable(true);
         editor->setTemplater(templater.get());
         editor->setSessionSource([this] { return session.get(); });
+        editor->trustDocument();
         QVERIFY(!templater->available());
         activate(*firstKaraoke());
         editor->setShown(true);
@@ -791,6 +841,24 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(!item(QStringLiteral("templateProblem"))->isVisible(), 20'000);
         QTRY_VERIFY(wave->property("segments").toList().isEmpty());
         QTRY_VERIFY(item(QStringLiteral("templateApply"))->isEnabled());
+    }
+
+    // Until the user previews a file, the panel says why nothing runs and
+    // offers to.
+    void thePanelAsksBeforeRunningAFilesTemplates()
+    {
+        open(QStringLiteral("stock-tutorials.ass"), false);
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        showPanel();
+        auto *notice = item(QStringLiteral("templatePreviewTrust"));
+        QTRY_VERIFY(notice->isVisible());
+        QVERIFY(!item(QStringLiteral("templatePreviewEmpty"))->isVisible());
+        QCOMPARE(templater->previews, 0);
+        click(item(QStringLiteral("templatePreviewTrustButton")));
+        QVERIFY(editor->trusted());
+        QVERIFY(previewCame());
+        QTRY_VERIFY(!notice->isVisible());
     }
 
     void thePreviewListsTheLinesApplyWouldWrite()

@@ -105,19 +105,22 @@ class TemplateEditorShellTests : public QObject {
     }
     // A copy of a corpus song open, the templater loaded, its first karaoke
     // Line active; with `video`, a dummy video of the song's size.
-    bool openSong(const char *name, bool video)
+    // `trust`: the user chose to preview the song's templates.
+    bool openSong(const char *name, bool video, bool trust = true)
     {
         const QString path = dir.filePath(QLatin1String(name));
         QFile::remove(path);
         if (!QFile::copy(QStringLiteral(HIKARI_KARAOKE_CORPUS "/") + QLatin1String(name), path))
             return false;
         QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
-        return openPath(path, video);
+        return openPath(path, video, trust);
     }
-    bool openPath(const QString &path, bool video)
+    bool openPath(const QString &path, bool video, bool trust = true)
     {
         if (!application->openFile(path) || !loadTemplater())
             return false;
+        if (trust)
+            editor().trustDocument();
         if (video) {
             application->video().openVideo(QStringLiteral("?dummy:23.976000:1000:1280:720:28:30:64:"));
             if (!QTest::qWaitFor([&] { return application->video().session().shownFrame().value_or(-1) >= 0; }, 20'000))
@@ -238,6 +241,24 @@ private slots:
         QTRY_VERIFY(textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied: ")));
         QVERIFY(session()->undo());
         QCOMPARE(session()->document().lines().size(), lines);
+    }
+
+    // A file opened while the panel shows runs none of its templates or
+    // code until the user previews it; a second file asks again.
+    void aFileRunsNoCodeUntilTheUserPreviewsIt()
+    {
+        showPanel("templateDock");
+        QVERIFY(openSong("stock-tutorials.ass", false, false));
+        QTest::qWait(500);
+        QVERIFY(!editor().trusted());
+        QVERIFY(!editor().hasPreview());
+        editor().trustDocument();
+        QTRY_VERIFY_WITH_TIMEOUT(editor().hasPreview(), 20'000);
+        QVERIFY(openSong("km-minimal.ass", false, false));
+        application->selectTab(1);
+        QTRY_VERIFY(!editor().trusted());
+        application->selectTab(0);
+        QTRY_VERIFY(editor().trusted());
     }
 
     // Apply's report belongs to the Document it ran on: a tab chosen while

@@ -83,6 +83,12 @@ class TemplateEditorController : public QObject {
     Q_PROPERTY(bool previewOnVideo READ previewOnVideo WRITE setPreviewOnVideo NOTIFY changed)
     Q_PROPERTY(bool videoPreview READ videoPreview NOTIFY previewChanged)
     Q_PROPERTY(bool canApply READ canApply NOTIFY changed)
+    // The Document's templates and code may run for previews: the user chose
+    // to preview them or applied them, or the Document had none when the
+    // panel first saw it (what came later the user wrote). A file's code is
+    // Lua with the helper's rights; it runs only when the user asks, as the
+    // Automation menu runs it.
+    Q_PROPERTY(bool trusted READ trusted NOTIFY changed)
     // Template and code Lines changed since the last Apply: the first one's
     // number and how many.
     Q_PROPERTY(int changedNumber READ changedNumber NOTIFY changed)
@@ -96,11 +102,14 @@ class TemplateEditorController : public QObject {
 
 public:
     using SessionSource = std::function<application::EditSession *()>;
+    // Which Document the session is (the app's DocumentId; never reused).
+    using DocumentKey = std::function<std::uint64_t()>;
 
     explicit TemplateEditorController(QObject *parent = nullptr);
     ~TemplateEditorController() override;
 
     void setSessionSource(SessionSource source);
+    void setDocumentKey(DocumentKey key);
     void setTemplater(application::KaraokeTemplaterPort *templater);
     void setEditable(bool editable);
     // The Document, its selection or the editing target changed.
@@ -152,6 +161,8 @@ public:
     void setPreviewOnVideo(bool on);
     bool videoPreview() const;
     bool canApply() const;
+    bool trusted() const;
+    Q_INVOKABLE void trustDocument();
     // The current text's preview has not come yet (waiting or running).
     bool previewPending() const;
     int changedNumber() const;
@@ -232,7 +243,12 @@ private:
     std::string keyOf(const core::LineRecord &line) const;
     void updateSource();
 
+    std::uint64_t documentKey() const;
+
     SessionSource m_sessionSource;
+    DocumentKey m_documentKey;
+    std::set<std::uint64_t> m_trusted;
+    std::set<std::uint64_t> m_seenDocuments;
     application::KaraokeTemplaterPort *m_templater = nullptr;
     bool m_editable = false;
     bool m_shown = false;
