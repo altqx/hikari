@@ -4325,6 +4325,10 @@ great help testing HikariSub on a slow computer)
         <translation>취소</translation>
     </message>
     <message>
+        <source>Load subtitles from an MKV/OGM file</source>
+        <translation type="unfinished">MKV / OGM 파일 자막 불러오기</translation>
+    </message>
+    <message>
         <source>The file does not contain any subtitle tracks.</source>
         <translation>파일에 자막이 없습니다.</translation>
     </message>
@@ -4977,6 +4981,10 @@ after switching from full screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
         <translation type="vanished">마우스 오버시 소리 활성화</translation>
     </message>
@@ -5192,7 +5200,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Choose choose external font folder</source>
-        <translation>외부 글꼴 폴더 선택</translation>
+        <translation type="vanished">외부 글꼴 폴더 선택</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -5517,7 +5525,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation>저장 폴더 선택</translation>
+        <translation type="vanished">저장 폴더 선택</translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5642,6 +5650,10 @@ and will be changed to the default</source>
     <message>
         <source>Replace</source>
         <translation>교체</translation>
+    </message>
+    <message>
+        <source>Choose subtitle search folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
@@ -8010,6 +8022,10 @@ Foreign language text will be deleted.</source>
         <translation>다음 파일</translation>
     </message>
     <message>
+        <source>Choose keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Warning</source>
         <translation>경고</translation>
     </message>
@@ -8023,7 +8039,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Choose video file</source>
-        <translation>영상 파일 선택</translation>
+        <translation type="vanished">영상 파일 선택</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>

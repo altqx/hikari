@@ -24,7 +24,7 @@ Item {
     property VideoViewController view: null
     // V5: fullscreen's pointer (VideoBox::OnMouseEvent's fullscreen part):
     // each move reported, and the cursor it asks for over the video (-1: the
-    // tool's).
+    // tool's; FS1: before the zoom mode's, the hidden pointer).
     property int cursorOverride: -1
     signal contextMenuRequested(real x, real y)
     signal fullScreenRequested()
@@ -88,9 +88,9 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.MiddleButton | Qt.RightButton
-        cursorShape: overlayItem.view && overlayItem.view.zoomMode
+        cursorShape: overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
+                     : overlayItem.view && overlayItem.view.zoomMode
                      ? [Qt.ArrowCursor, Qt.SizeHorCursor, Qt.SizeVerCursor][overlayItem.view.zoomCursor]
-                     : overlayItem.cursorOverride >= 0 ? overlayItem.cursorOverride
                      : overlayItem.tools.hideCursor ? Qt.BlankCursor
                      : overlayItem.tools.pointerShape
         onEntered: overlayItem.route(0, mouseX, mouseY, Qt.NoButton, pressedButtons, 0)

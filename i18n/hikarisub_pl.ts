@@ -4350,6 +4350,10 @@ great help testing HikariSub on a slow computer)
         <translation>Anuluj</translation>
     </message>
     <message>
+        <source>Load subtitles from an MKV/OGM file</source>
+        <translation type="unfinished">Wczytaj napisy z pliku MKV / OGM</translation>
+    </message>
+    <message>
         <source>The file does not contain any subtitle tracks.</source>
         <translation>Plik nie ma żadnej ścieżki z napisami.</translation>
     </message>
@@ -5006,6 +5010,10 @@ po wyjściu z pełnego ekranu</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
         <translation type="vanished">Aktywuj okno audio po najechaniu</translation>
     </message>
@@ -5221,7 +5229,7 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>
-        <translation>Wybierz zewnętrzny folder czcionek</translation>
+        <translation type="vanished">Wybierz zewnętrzny folder czcionek</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -5546,7 +5554,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation>Wybierz folder zapisu</translation>
+        <translation type="vanished">Wybierz folder zapisu</translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5671,6 +5679,10 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>Replace</source>
         <translation>Zamień</translation>
+    </message>
+    <message>
+        <source>Choose subtitle search folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
@@ -8041,6 +8053,10 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation>Następny plik</translation>
     </message>
     <message>
+        <source>Choose keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Warning</source>
         <translation>Uwaga</translation>
     </message>
@@ -8054,7 +8070,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Choose video file</source>
-        <translation>Wybierz plik wideo</translation>
+        <translation type="vanished">Wybierz plik wideo</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
