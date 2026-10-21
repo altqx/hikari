@@ -891,8 +891,9 @@ bool AudioController::runHotkey(const QString &symbol)
     const auto found = actions.find(symbol);
     if (found == actions.end())
         return false;
-    // KA2-tap-to-time: while tapping the other audio hotkeys wait; Stop stops tapping
-    if (m_tapState == TapTapping) {
+    // KA2-tap-to-time: while tapping the other audio hotkeys wait (their
+    // buttons too: see tapBusy); Stop stops tapping
+    if (tapBusy()) {
         if (symbol == QLatin1String("AUDIO_STOP"))
             tapStop();
         else if (symbol == QLatin1String("AUDIO_TAP") || symbol.startsWith(QLatin1String("AUDIO_SPEED_")))
@@ -1029,6 +1030,8 @@ bool AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, ap
 // AUDIO_NEXT_LINE_ON_COMMIT says (legacy never reads it).
 void AudioController::commit()
 {
+    if (tapBusy())
+        return;
     emit focusRequested();
     commitChanges(true, true, false);
 }
@@ -1057,6 +1060,8 @@ void AudioController::changeLine(int delta)
 // next Line's first.
 void AudioController::nextLine()
 {
+    if (tapBusy())
+        return;
     const bool play = !timingOptions().dontPlayWhenLineChanges;
     if (play)
         emit focusRequested();
@@ -1081,6 +1086,8 @@ void AudioController::nextLine()
 // otherwise the previous Line.
 void AudioController::previousLine()
 {
+    if (tapBusy())
+        return;
     const bool play = !timingOptions().dontPlayWhenLineChanges;
     if (play)
         emit focusRequested();
@@ -1134,6 +1141,8 @@ void AudioController::goToSelection()
 // the selection is modified, and AUDIO_AUTO_COMMIT commits it.
 void AudioController::addLead(bool in, bool out)
 {
+    if (tapBusy())
+        return;
     emit focusRequested();
     if (!loaded())
         return;

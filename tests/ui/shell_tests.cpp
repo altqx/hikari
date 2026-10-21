@@ -16234,6 +16234,16 @@ private slots:
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
         key(Qt::Key_Space, false);
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        // the panel's Commit, Previous / Next line and lead buttons wait while
+        // tapping, as their hotkeys do: the Line and its taps stay
+        const int tappedLine = audio.tapLine();
+        const auto stepsWhileTapping = editor.history().size();
+        for (const char *name : {"audioCommit", "audioPrevious", "audioNext", "audioLeadIn", "audioLeadOut"})
+            QVERIFY2(QMetaObject::invokeMethod(item(name), "clicked"), name);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QCOMPARE(audio.tapLine(), tappedLine);
+        QCOMPARE(editor.history().size(), stepsWhileTapping);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
         audio.closeAudio();
         QVERIFY(!audio.tapOn());
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapOff));

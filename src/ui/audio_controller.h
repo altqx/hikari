@@ -399,6 +399,10 @@ public:
     int selectionEnd() const { return m_endMs; }
     int lineOutOfView() const;
     const application::AudioTiming &timing() const { return m_timing; }
+    // KA2-tap-to-time: while tapping, Commit, Previous / Next line and the
+    // leads wait, from their buttons as from their hotkeys (they would change
+    // or move the Line being tapped and lose its taps).
+    bool tapBusy() const { return m_tapState == TapTapping; }
     // AUDIO_COMMIT and AUDIO_COMMIT_ALT (AudioBox::OnCommit: CommitChanges(true)).
     Q_INVOKABLE void commit();
     // AUDIO_NEXT(_ALT), AUDIO_PREVIOUS(_ALT) (AudioBox::OnNext/OnPrev).
