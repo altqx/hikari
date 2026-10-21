@@ -10914,6 +10914,136 @@ private slots:
         QCOMPARE(start(2), 6);
     }
 
+    // TM1: the run numbers of equal runs follow the translator where the
+    // text stays the same: the other equal run placed on the same text is a
+    // step of its own, and an undone Original edit gives the placed run its
+    // number back.
+    void tagsFromOriginalEqualRunNumbersOnTheSameText()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-same.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,o {\\i1}a{\\i0} b {\\i1}c{\\i0} d\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,w x y z\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        const auto placed = [&](int run) { return application->editor().tagRuns()[run - 1].toMap().value("placed").toBool(); };
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QVERIFY(application->editor().commit());
+        const auto text = q8(session->document().lines()[0]->translation);
+        QCOMPARE(text, QStringLiteral("w {\\i1}x{\\i0} y z"));
+        // Run 2 over run 1's text: the same text, the other number.
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        QTRY_VERIFY(placed(2));
+        QVERIFY(!placed(1));
+        QVERIFY(application->editor().undo());
+        QTRY_VERIFY(placed(1));
+        QVERIFY(!placed(2));
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        QTRY_VERIFY(placed(2));
+        application->editor().discard();
+        QTRY_VERIFY(placed(1));
+        QVERIFY(!placed(2));
+
+        // Run 2 placed, then a run put in before it in the Original (run 3
+        // now); the Original edit undone, the placed run is run 2 again.
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        application->editor().commit(); // the same text: no draft to commit
+        QVERIFY(placed(2));
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("o {\\i1}a{\\i0} b {\\i1}c{\\i0} d"));
+        application->editor().textEdited(QStringLiteral("o {\\u1}n{\\u0} {\\i1}a{\\i0} b {\\i1}c{\\i0} d"), 13);
+        QVERIFY(application->editor().commit());
+        QTRY_COMPARE(application->editor().tagRuns().size(), 3);
+        QVERIFY(application->editor().tagRuns()[2].toMap().value("placed").toBool());
+        QCOMPARE(q8(session->document().lines()[0]->translation), text);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        QVERIFY(placed(2));
+        QVERIFY(!placed(1));
+    }
+
+    // TM1: a Style edited in the Style manager reads its Lines' runs again:
+    // a placed run is read as it was composed, and one the Style no longer
+    // has is not placed, not taken for another run on other text.
+    void tagsFromOriginalFollowAStyleEdit()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-restyle.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n"
+                "Style: O,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,"
+                "10,10,10,1\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a {\\b1}b{\\b0} c\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x y z\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("x {\\b1}y{\\b0} z"));
+        // The Line's Style turns bold: the Original's one run is "c", not
+        // bold, and the translation's "z" is not taken for it.
+        QCOMPARE(q8(session->document().lines()[0]->style), QStringLiteral("Default"));
+        auto &styles = application->styleManager();
+        auto values = styles.beginEdit(false, 0);
+        QCOMPARE(values.value(QStringLiteral("name")).toString(), QStringLiteral("Default"));
+        values.insert(QStringLiteral("bold"), true);
+        QCOMPARE(styles.commitEdit(values, {0}, false, false), QString());
+        styles.endEdit();
+        const auto run = [&] {
+            const auto runs = application->editor().tagRuns();
+            return runs.size() == 1 ? runs[0].toMap() : QVariantMap();
+        };
+        QTRY_COMPARE(run().value("text").toString(), QStringLiteral("c"));
+        QVERIFY(!run().value("placed").toBool());
+    }
+
+    // TM1: a run is not placed over text across the translator's own tags,
+    // which no one run reads back over.
+    void tagsFromOriginalNoRunAcrossOwnTags()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-across.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,I {\\i1}Tokyo{\\i0} x\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,To{\\b1}ky{\\b0}o\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QVERIFY(!application->editor().placeRun(1, 0, 5));
+        QCOMPARE(q8(session->draftRecord() ? session->draftRecord()->translation
+                                           : session->document().lines()[0]->translation),
+                 QStringLiteral("To{\\b1}ky{\\b0}o"));
+        QVERIFY(application->editor().placeRun(1, 2, 4)); // inside the bold: one state
+    }
+
     // TM1: with several Lines selected, an Original edit goes to each
     // selected Line's text (SubsGrid::ChangeLine) and each translation
     // follows its own Original: the edited Line's is not copied over the

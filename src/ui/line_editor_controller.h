@@ -29,6 +29,7 @@
 
 #include <functional>
 #include <map>
+#include <memory>
 #include <tuple>
 #include <utility>
 #include <optional>
@@ -499,7 +500,8 @@ private:
     // The Line's translation as a draft of `tags`, its equal runs named as
     // the translator last placed them (m_runOrders).
     core::TranslationDraft translationDraft(const core::OriginalTags &tags, const core::LineRecord &line) const;
-    // The draft composed without the carried tags; notes its run order.
+    // The draft composed without the carried tags; notes its run order
+    // (m_runOrders).
     std::u8string composedBody(const core::OriginalTags &tags, core::TranslationDraft draft, core::LineId line);
     // composedBody through setRaw(1) for the active Line.
     bool saveTranslationDraft(const core::OriginalTags &tags, core::TranslationDraft draft);
@@ -524,17 +526,23 @@ private:
     std::set<int> m_dismissedRuns;
     // TM1: each Line's placed run numbers in text order (core::relabelRuns),
     // by Document and Line (each Document numbers its own Lines), with the
-    // body they were composed into: a translation put back by Escape or an
-    // undo is another body, read without them.
+    // translation they were composed into and the runs they were composed
+    // with, the latest first. A translation is read with the entry of its
+    // text and runs; with runs that changed under it (a Style edited, an
+    // Original edit undone) as it was composed, each placement given to the
+    // run it became; another translation without them.
     using RunOrderKey = std::pair<std::uint64_t, std::uint64_t>;
     RunOrderKey runOrderKey(core::LineId line) const { return {m_document ? m_document->value : 0, line.value}; }
     struct RunOrder {
-        std::u8string body;
+        std::u8string translation;
         std::vector<int> order;
+        std::shared_ptr<const core::OriginalTags> tags;
     };
-    std::map<RunOrderKey, RunOrder> m_runOrders;
+    static constexpr std::size_t kRunOrderHistory = 16; // entries kept per Line
+    std::map<RunOrderKey, std::vector<RunOrder>> m_runOrders;
     std::optional<RunOrder> runOrderOf(core::LineId line) const;
     void setRunOrder(core::LineId line, std::optional<RunOrder> order);
+    void noteRunOrder(core::LineId line, RunOrder order);
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
     // `orderBefore`: the Line's run order before this step, when the caller

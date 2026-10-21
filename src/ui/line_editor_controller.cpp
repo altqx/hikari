@@ -157,18 +157,51 @@ std::optional<core::OriginalTags> LineEditorController::runTags() const
     return c ? std::optional(std::move(c->tags)) : std::nullopt;
 }
 
+namespace {
+
+// Whether two readings have the same runs: the same formatting on the same
+// text, in the same order.
+bool sameRuns(const core::OriginalTags &a, const core::OriginalTags &b)
+{
+    return std::ranges::equal(a.runs, b.runs, [](const core::TagRun &x, const core::TagRun &y) {
+        return x.differs == y.differs && x.text == y.text;
+    });
+}
+
+} // namespace
+
 core::TranslationDraft LineEditorController::translationDraft(const core::OriginalTags &tags,
                                                               const core::LineRecord &line) const
 {
-    auto draft = core::readTranslation(tags, core::toUtf16(line.translation));
+    const auto translation = core::toUtf16(line.translation);
+    auto draft = core::readTranslation(tags, translation);
     const auto it = m_runOrders.find(runOrderKey(line.id));
     if (it == m_runOrders.end())
         return draft;
-    auto bare = draft;
-    bare.carried = false; // as composedBody composed it
-    if (core::toUtf8(core::composeTranslation(tags, bare)) == it->second.body)
-        core::relabelRuns(tags, draft, it->second.order);
-    return draft;
+    const RunOrder *composed = nullptr;
+    for (const auto &entry : it->second) {
+        if (entry.translation != line.translation)
+            continue;
+        if (sameRuns(*entry.tags, tags)) {
+            core::relabelRuns(tags, draft, entry.order);
+            return draft;
+        }
+        if (!composed)
+            composed = &entry;
+    }
+    if (!composed)
+        return draft;
+    // The runs changed under the translation: its placements as composed,
+    // each given to the run it became (recarried), one gone dropped.
+    auto was = core::readTranslation(*composed->tags, translation);
+    if (!was.carried)
+        return draft;
+    core::relabelRuns(*composed->tags, was, composed->order);
+    const auto became = core::matchRuns(*composed->tags, tags);
+    for (auto &p : was.placements)
+        p.run = p.run >= 1 && p.run <= static_cast<int>(became.size()) ? became[p.run - 1] : 0;
+    std::erase_if(was.placements, [](const core::RunPlacement &p) { return p.run == 0; });
+    return was;
 }
 
 std::u8string LineEditorController::composedBody(const core::OriginalTags &tags, core::TranslationDraft draft,
@@ -177,7 +210,9 @@ std::u8string LineEditorController::composedBody(const core::OriginalTags &tags,
     draft.carried = false; // carried() adds the carried tags
     std::vector<core::RunPlacement> placed;
     auto body = core::toUtf8(core::composeTranslation(tags, draft, &placed));
-    m_runOrders[runOrderKey(line)] = {body, core::runOrder(placed)};
+    auto translation = body.empty() ? body : core::toUtf8(tags.leading) + body + core::toUtf8(tags.trailing);
+    noteRunOrder(line, RunOrder{std::move(translation), core::runOrder(placed),
+                                std::make_shared<const core::OriginalTags>(tags)});
     return body;
 }
 
@@ -198,15 +233,29 @@ bool LineEditorController::saveTranslationDraft(const core::OriginalTags &tags, 
 std::optional<LineEditorController::RunOrder> LineEditorController::runOrderOf(core::LineId line) const
 {
     const auto it = m_runOrders.find(runOrderKey(line));
-    return it == m_runOrders.end() ? std::nullopt : std::optional(it->second);
+    return it == m_runOrders.end() || it->second.empty() ? std::nullopt : std::optional(it->second.front());
 }
 
+// The latest entry (runOrderOf) becomes `order`; nullopt drops it.
 void LineEditorController::setRunOrder(core::LineId line, std::optional<RunOrder> order)
 {
+    auto &entries = m_runOrders[runOrderKey(line)];
+    if (!entries.empty())
+        entries.erase(entries.begin());
     if (order)
-        m_runOrders[runOrderKey(line)] = std::move(*order);
-    else
-        m_runOrders.erase(runOrderKey(line));
+        noteRunOrder(line, std::move(*order));
+}
+
+// `order` the latest entry, in place of one of the same translation and runs.
+void LineEditorController::noteRunOrder(core::LineId line, RunOrder order)
+{
+    auto &entries = m_runOrders[runOrderKey(line)];
+    std::erase_if(entries, [&](const RunOrder &e) {
+        return e.translation == order.translation && sameRuns(*e.tags, *order.tags);
+    });
+    entries.insert(entries.begin(), std::move(order));
+    if (entries.size() > kRunOrderHistory)
+        entries.resize(kRunOrderHistory);
 }
 
 std::u8string LineEditorController::recarried(const core::LineRecord &before, const Carry &now)
@@ -380,7 +429,12 @@ bool LineEditorController::placeRun(int number, int selectionStart, int selectio
     if (number < 1 || number > static_cast<int>(tags->runs.size()))
         return false;
     const auto body = core::project(draft.body);
-    if (!core::placeRun(draft.placements, core::rawOffset(body, from, true), core::rawOffset(body, to, false), number))
+    const auto start = core::rawOffset(body, from, true), end = core::rawOffset(body, to, false);
+    // Text across the translator's own tags is in more than one state, which
+    // no one run reads back over (as core::suggestPlacements).
+    if (draft.body.find(u'{', start) < end)
+        return false;
+    if (!core::placeRun(draft.placements, start, end, number))
         return false;
     if (!saveTranslationDraft(*tags, std::move(draft)))
         return false;
@@ -734,8 +788,20 @@ bool LineEditorController::setRaw(int role, std::u8string raw, const std::option
     const auto r = record();
     if (!s || !r || !m_editable)
         return false;
-    if (raw == roleText(*r, role))
+    if (raw == roleText(*r, role)) {
+        // TM1: another of two equal runs placed on the same text changes
+        // only the run order: a step of its own, for Escape and Undo.
+        const auto now = runOrderOf(r->id);
+        if (orderBefore && (orderBefore->has_value() != now.has_value() ||
+                            (now && ((*orderBefore)->order != now->order || (*orderBefore)->translation != now->translation)))) {
+            const auto real = sessionRecord();
+            m_draftUndo.push_back({real->text, real->translation, translationTyped(), *orderBefore});
+            m_draftRedo.clear();
+            m_attempted.clear();
+            refresh();
+        }
         return true;
+    }
     auto order = orderBefore ? *orderBefore : runOrderOf(r->id);
     const auto real = sessionRecord();
     const auto c = carry(*real);
@@ -1119,8 +1185,11 @@ int shownAlignment(const core::LineRecord &line, const std::vector<core::StyleVa
 void LineEditorController::discard()
 {
     auto *s = session();
-    // TM1: the run order goes back with the text, to the draft's first step's.
-    if (const auto line = s ? s->draftLine() : std::nullopt; line && !m_draftUndo.empty())
+    // TM1: the run order goes back with the text, to the draft's first
+    // step's (a step that changed only the order leaves no draft).
+    const auto active = s ? record() : std::nullopt;
+    if (const auto line = s && s->draftLine() ? s->draftLine() : active ? std::optional(active->id) : std::nullopt;
+        line && !m_draftUndo.empty())
         setRunOrder(*line, m_draftUndo.front().order);
     if (s)
         s->discardDraft();
