@@ -388,6 +388,7 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
     const QPointF p = event->position();
     const int h = m_controller->view().height();
     const bool over = p.x() >= 0 && p.y() >= 0 && p.x() < width() && p.y() < h;
+    m_controller->setPointerOver(over);
     const auto result = timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
     // A5: in karaoke mode legacy can return before the cursor is drawn, and
     // draws none over the syllables' letters
@@ -401,8 +402,10 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
 
 void AudioDisplayItem::hoverLeaveEvent(QHoverEvent *)
 {
-    if (m_controller)
+    if (m_controller) {
+        m_controller->setPointerOver(false);
         m_controller->setCursor(std::nullopt);
+    }
 }
 
 // Any button takes focus and hides the cursor (timing clicks are A3's).

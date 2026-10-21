@@ -15147,6 +15147,52 @@ private slots:
         QVERIFY(editor.undo());
         QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
 
+        // at the default zoom: K over a letter splits before it, as a click
+        audio.setHorizontalZoom(50);
+        display->forceActiveFocus();
+        press(Qt::Key_B);
+        const auto middle = [&](int i) {
+            const auto [from, to] = audio.karaokeModel().syllableTimes(i, audio.selectionStart());
+            return application::legacyZeroIt(from + (to - from) / 2);
+        };
+        int letter = -1;
+        for (int lx = std::max(int(view.xAtMs(600)), 1); lx < std::min(int(view.xAtMs(1800)), view.width()) && letter < 0;
+             lx++) {
+            QTest::mouseMove(window, at(lx, 8));
+            if (audio.karaokeModel().hover == 1 && audio.karaokeModel().character == 1)
+                letter = lx;
+        }
+        QVERIFY(letter > 0);
+        press(Qt::Key_K);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k30}h{\\k90}ana"));
+        QVERIFY(editor.undo());
+        // a letter the mouse has left: the current syllable's middle
+        QTest::mouseMove(window, at(letter - 1, 8));
+        QTest::mouseMove(window, at(letter, 8));
+        QCOMPARE(audio.karaokeModel().hover, 1);
+        QTest::mouseMove(window, kOverNoPanel);
+        int current = audio.currentSyllable();
+        int expected = middle(current);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[current], expected);
+        QVERIFY(editor.undo());
+        // a cursor past the Line's syllables: the current syllable's middle too
+        const int past = int(view.xAtMs(2200));
+        QVERIFY(past > 0 && past < view.width());
+        QTest::mouseMove(window, at(past - 1, 30));
+        QTest::mouseMove(window, at(past, 30));
+        QVERIFY(audio.cursor());
+        display->forceActiveFocus();
+        current = audio.currentSyllable();
+        expected = middle(current);
+        press(Qt::Key_K);
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[current], expected);
+        QVERIFY(editor.undo());
+        QTest::mouseMove(window, kOverNoPanel);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+
         // AUDIO_LEAD_IN (200 ms): the time before the syllables is a lead syllable
         QCOMPARE(audio.karaokeModel().count(), 2);
         display->forceActiveFocus();

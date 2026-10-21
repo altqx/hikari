@@ -346,20 +346,28 @@ void AudioController::splitSyllableAtCursor()
         return;
     auto &k = m_karaoke;
     bool split = false;
-    if (k.hover >= 0 && k.character >= 0 && k.hover < k.count()) {
-        // the hovered letter, as a click on it
+    // the syllable under the waveform cursor
+    int under = -1, ms = 0;
+    if (m_cursor && m_view.hasSource()) {
+        ms = m_view.msAtX(static_cast<std::int64_t>(*m_cursor));
+        for (int i = 0; i < k.count() && under < 0; i++) {
+            const auto [start, end] = k.syllableTimes(i, m_startMs);
+            if (ms > start && ms < end)
+                under = i;
+        }
+    }
+    if (m_pointerOver && k.hover >= 0 && k.character >= 0 && k.hover < k.count()) {
+        // the hovered letter, as a click on it (a letter the pointer has
+        // left is no longer hovered, though its mark stays drawn)
         split = k.splitSyllable(k.hover, k.character, m_startMs);
         if (split)
             k.current = k.hover;
-    } else if (m_cursor && m_view.hasSource()) {
-        // the syllable under the waveform cursor, at its time
-        const int ms = m_view.msAtX(static_cast<std::int64_t>(*m_cursor));
-        for (int i = 0; i < k.count() && !split; i++) {
-            const auto [start, end] = k.syllableTimes(i, m_startMs);
-            if (ms > start && ms < end && (split = k.splitAt(i, ms, m_startMs)))
-                k.current = i + 1;
-        }
+    } else if (under >= 0) {
+        // that syllable, at the cursor's time
+        if ((split = k.splitAt(under, ms, m_startMs)))
+            k.current = under + 1;
     } else {
+        // no cursor, or none over a syllable
         const int i = std::clamp(k.current, 0, k.count() - 1);
         const auto [start, end] = k.syllableTimes(i, m_startMs);
         if ((split = k.splitAt(i, start + (end - start) / 2, m_startMs)))
@@ -500,6 +508,11 @@ void AudioController::resize(int width, int height, int timelineHeight, int scro
     m_scrollbarThickness = scrollbarThickness;
     m_view.resize(width, height, timelineHeight, scrollbarThickness);
     redraw();
+}
+
+void AudioController::setPointerOver(bool over)
+{
+    m_pointerOver = over;
 }
 
 void AudioController::setCursor(std::optional<float> x)

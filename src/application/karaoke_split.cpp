@@ -55,7 +55,25 @@ bool isHan(char32_t c)
 
 bool isHangul(char32_t c)
 {
-    return inRange(c, 0xAC00, 0xD7A3) || inRange(c, 0x1100, 0x11FF) || inRange(c, 0x3130, 0x318F);
+    return inRange(c, 0xAC00, 0xD7A3) || inRange(c, 0x1100, 0x11FF) || inRange(c, 0x3130, 0x318F) ||
+           inRange(c, 0xA960, 0xA97C) || inRange(c, 0xD7B0, 0xD7FB);
+}
+
+// Hangul's grapheme parts (UAX #29): leading consonants L, vowels V,
+// trailing consonants T, and the precomposed LV and LVT syllables.
+enum class Jamo { None, L, V, T, LV, LVT };
+
+Jamo jamo(char16_t c)
+{
+    if (inRange(c, 0x1100, 0x115F) || inRange(c, 0xA960, 0xA97C))
+        return Jamo::L;
+    if (inRange(c, 0x1160, 0x11A7) || inRange(c, 0xD7B0, 0xD7C6))
+        return Jamo::V;
+    if (inRange(c, 0x11A8, 0x11FF) || inRange(c, 0xD7CB, 0xD7FB))
+        return Jamo::T;
+    if (inRange(c, 0xAC00, 0xD7A3))
+        return (c - 0xAC00) % 28 ? Jamo::LVT : Jamo::LV;
+    return Jamo::None;
 }
 
 bool isLatin(char32_t c)
@@ -444,6 +462,12 @@ bool karaokeContinuesGrapheme(std::u16string_view text, std::size_t at)
     if (c >= 0xDC00 && c <= 0xDFFF && before >= 0xD800 && before <= 0xDBFF)
         return true;
     if (before == 0x200D) // what a zero width joiner joins
+        return true;
+    // a Hangul syllable written in jamo (NFD): L × L V LV LVT, LV V × V T, LVT T × T
+    const Jamo was = jamo(before), is = jamo(c);
+    if ((was == Jamo::L && is != Jamo::None && is != Jamo::T) ||
+        ((was == Jamo::LV || was == Jamo::V) && (is == Jamo::V || is == Jamo::T)) ||
+        ((was == Jamo::LVT || was == Jamo::T) && is == Jamo::T))
         return true;
     if (inRange(c, 0x0300, 0x036F) || inRange(c, 0x1AB0, 0x1AFF) || inRange(c, 0x1DC0, 0x1DFF) ||
         inRange(c, 0x20D0, 0x20FF) || inRange(c, 0xFE00, 0xFE0F) || inRange(c, 0xFE20, 0xFE2F) ||

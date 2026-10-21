@@ -145,6 +145,9 @@ TEST(KaraokeAutoSplit, KanjiAndHangulOneCharacterEach)
               "\xE5\x90\x9B|\xE3\x81\xAE|\xE5\x90\x8D|\xE3\x81\xAF");
     // 𠮷 is two UTF-16 units, one character
     EXPECT_EQ(syllables("\xF0\xA0\xAE\xB7\xE9\x87\x8E"), "\xF0\xA0\xAE\xB7|\xE9\x87\x8E"); // 𠮷野
+    // 사랑 in jamo (NFD): one syllable per written syllable
+    EXPECT_EQ(syllables("\xE1\x84\x89\xE1\x85\xA1\xE1\x84\x85\xE1\x85\xA1\xE1\x86\xBC"),
+              "\xE1\x84\x89\xE1\x85\xA1|\xE1\x84\x85\xE1\x85\xA1\xE1\x86\xBC");
 }
 
 TEST(KaraokeAutoSplit, EnglishByHyphenation)
@@ -221,6 +224,12 @@ TEST(KaraokeGraphemes, ALetterIsNeverHalfACharacter)
     EXPECT_TRUE(karaokeContinuesGrapheme(u"❤️", 1));       // a variation selector
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\U0001F468‍\U0001F469", 3)); // what a ZWJ joins
     EXPECT_FALSE(karaokeContinuesGrapheme(u"ab", 1));
+    // Hangul jamo: 한 is ᄒ ᅡ ᆫ; 하 + ᆫ too; a new L starts the next one
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"\u1112\u1161\u11AB", 1));
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"\u1112\u1161\u11AB", 2));
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"\uD558\u11AB", 1));
+    EXPECT_FALSE(karaokeContinuesGrapheme(u"\uD55C\u1161", 1)); // LVT × V breaks
+    EXPECT_FALSE(karaokeContinuesGrapheme(u"\u11AB\u1112", 1));
     EXPECT_EQ(karaokeGraphemePrefix(u"\U00020BB7a", 1), 2u);
     EXPECT_EQ(karaokeGraphemePrefix(u"éx", 1), 2u);
 
@@ -228,6 +237,10 @@ TEST(KaraokeGraphemes, ALetterIsNeverHalfACharacter)
     EXPECT_EQ(k.letters(0, 1), std::pair(u("{}\xF0\xA0\xAE\xB7"), u("\xE9\x87\x8E")));
     ASSERT_TRUE(k.splitSyllable(0, 1, 0));
     EXPECT_EQ(s(k.text(0)), "{\\k10}\xF0\xA0\xAE\xB7{\\k10}\xE9\x87\x8E");
+    // a click inside a syllable written in jamo splits after it: 한국 in NFD
+    auto jamo = kara("{\\k20}\xE1\x84\x92\xE1\x85\xA1\xE1\x86\xAB\xE1\x84\x80\xE1\x85\xAE\xE1\x86\xA8", 0, 1000);
+    EXPECT_EQ(jamo.letters(0, 1), std::pair(u("{}\xE1\x84\x92\xE1\x85\xA1\xE1\x86\xAB"),
+                                            u("\xE1\x84\x80\xE1\x85\xAE\xE1\x86\xA8")));
     // \N is one letter
     auto breaks = kara("{\\k20}a\\Nb", 0, 1000);
     EXPECT_EQ(breaks.letters(0, 2), std::pair(std::u16string(u"{}a\\N"), std::u16string(u"b")));

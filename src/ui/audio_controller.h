@@ -143,6 +143,7 @@ public:
     // The display item: its size, the mouse cursor, focus and the wheel.
     void resize(int width, int height, int timelineHeight, int scrollbarThickness);
     void setCursor(std::optional<float> x); // the mouse's; not while playing (A4)
+    void setPointerOver(bool over);         // KA1: the mouse is over the display
     std::optional<float> cursor() const { return m_cursor; }
     void setFocused(bool focused);
     // Legacy OnMouseEvent's wheel (`rotation` in eighths of a degree, 120 a
@@ -396,6 +397,7 @@ private:
     std::vector<int> m_keyframes;
     std::optional<int> m_videoMs;
     std::optional<float> m_cursor;
+    bool m_pointerOver = false; // KA1: a hovered letter counts while the mouse is over the display
     bool m_focused = false;
     bool m_fresh = true; // no audio loaded since the view was made
     int m_scrollbarThickness = 0;
