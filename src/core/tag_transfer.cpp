@@ -91,8 +91,12 @@ std::vector<Tag> parseBlock(std::u16string_view content, std::size_t &order)
     for (auto i = content.find(u'\\'); i != std::u16string_view::npos;) {
         Tag tag;
         tag.order = order++;
-        tag.name = tagName(content.substr(i + 1));
-        const std::size_t argsStart = i + 1 + tag.name.size();
+        // libass skips spaces between the backslash and the name.
+        std::size_t nameStart = i + 1;
+        while (nameStart < content.size() && (content[nameStart] == u' ' || content[nameStart] == u'\t'))
+            ++nameStart;
+        tag.name = tagName(content.substr(nameStart));
+        const std::size_t argsStart = nameStart + tag.name.size();
         std::size_t end = argsStart;
         if (end < content.size() && content[end] == u'(') {
             int depth = 0;
@@ -180,7 +184,7 @@ bool isKaraoke(std::u16string_view name)
 
 // ---- Formatting state ------------------------------------------------------
 
-enum class Kind { None, Flag, Bold, Colour, Alpha, Number, Text, Transform, Reset };
+enum class Kind { None, Flag, Bold, Colour, Alpha, Number, Integer, Text, Transform, Reset };
 
 struct Effect {
     Kind kind = Kind::None;
@@ -212,7 +216,9 @@ Effect effectOf(std::u16string_view name)
         return {Kind::Number, {u"xshad", u"yshad"}};
     if (n == u"fsc") // both scales back to the Style's, whatever follows
         return {Kind::Number, {u"fscx", u"fscy"}};
-    for (const auto number : {u"fs", u"fscx", u"fscy", u"fsp", u"frx", u"fry", u"fax", u"fay", u"be", u"blur", u"fe",
+    if (n == u"fe") // a whole number (argtoi32)
+        return {Kind::Integer, {n}};
+    for (const auto number : {u"fs", u"fscx", u"fscy", u"fsp", u"frx", u"fry", u"fax", u"fay", u"be", u"blur",
                               u"xbord", u"ybord", u"xshad", u"yshad"})
         if (n == number)
             return {Kind::Number, {n}};
@@ -287,6 +293,12 @@ std::u16string normalised(Kind kind, std::u16string_view arg)
         if (std::from_chars(first, last, n, 16).ec != std::errc{})
             return value;
         return kind == Kind::Colour ? hex(n & 0xFFFFFF, 6) : hex(n & 0xFF, 2);
+    }
+    case Kind::Integer: {
+        long n = 0;
+        if (std::from_chars(digitsFrom(first, last), last, n).ec != std::errc{})
+            return value;
+        return ascii(std::to_string(n));
     }
     case Kind::Number: {
         double n = 0;
@@ -418,7 +430,7 @@ TagState defaultsFor(const StyleValues *style)
             d[component] = normalised(field.kind, toUtf16(*value));
     }
     if (!style->encoding.empty()) // \fe's base
-        d[u"fe"] = normalised(Kind::Number, toUtf16(style->encoding));
+        d[u"fe"] = normalised(Kind::Integer, toUtf16(style->encoding));
     return d;
 }
 
@@ -756,7 +768,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
     bool baseSet = false;
     History history;
     std::map<std::u16string, TagSetter> leadingSetters;
-    std::u16string leading, hoisted, trailing;
+    std::u16string leading, hoisted, trailing, trailingDone;
     std::vector<Segment> segments;
     std::size_t tagsSeen = 0;
     for (std::size_t i = 0; i < tokens.pieces.size(); ++i) {
@@ -767,6 +779,15 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             baseSet = true;
         }
         if (!piece.block) {
+            // Spaces after a trailing tag stay after it (a \h at the base
+            // size, a \N's row after a reset).
+            if (isTrailing && (!trailing.empty() || !trailingDone.empty())) {
+                const auto spaces = original.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
+                trailingDone += braced(trailing);
+                trailingDone += spaces;
+                out.trailingSpaces += spaces.size();
+                trailing.clear();
+            }
             if (!isLeading && !isTrailing && !out.karaoke) {
                 if (!budget.spend(unitsOf(state)))
                     return tooMuch();
@@ -809,7 +830,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
     if (!baseSet)
         out.base = state;
     out.leading = braced(leading + hoisted);
-    out.trailing = braced(trailing);
+    out.trailing = trailingDone + braced(trailing);
 
     for (auto &segment : segments)
         segment.differs = differences(segment.differs, out.base);
@@ -890,6 +911,7 @@ TranslationDraft draftOfOriginal(std::u16string_view original, const OriginalTag
         draft.body += original.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
         ends[piece.rawEnd] = draft.body.size();
     }
+    draft.body.resize(draft.body.size() - std::min(tags.trailingSpaces, draft.body.size())); // carried
     for (const auto &run : tags.runs)
         if (starts.contains(run.rawStart) && ends.contains(run.rawEnd))
             draft.placements.push_back({starts[run.rawStart], ends[run.rawEnd], run.number});
@@ -1146,7 +1168,9 @@ int runWithProperty(const OriginalTags &tags, std::span<const RunPlacement> plac
 std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const TranslationDraft &draft)
 {
     std::vector<RunPlacement> out;
-    if (draft.body.size() > kMaxTagTransferUnits) // as readTranslation: no runs past it
+    // As readTranslation: no runs past the bound, or in a text whose braces
+    // don't close (a placement there would not read back).
+    if (draft.body.size() > kMaxTagTransferUnits || tokenize(draft.body).malformed)
         return out;
     const auto projection = project(draft.body);
     const std::u16string_view text = projection.text;

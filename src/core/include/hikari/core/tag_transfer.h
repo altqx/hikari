@@ -56,6 +56,9 @@ struct TagRun {
 
 struct OriginalTags {
     std::u16string leading, trailing; // "{...}" or empty
+    // Units at the text's end (spaces, a \h, a \N) after a trailing tag:
+    // the trailing block carries them, where they were among its tags.
+    std::size_t trailingSpaces = 0;
     std::vector<TagRun> runs;
     TagState defaults; // the Style's values, and the renderer's where it has none
     TagState base;     // the state at the first visible character

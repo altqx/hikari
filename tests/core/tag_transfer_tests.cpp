@@ -471,6 +471,52 @@ TEST(TagTransfer, ADrawingScaleBelowOneIsText)
     EXPECT_TRUE(readOriginalTags(u"{\\p1}m 0 0 l 1 1").drawing);
 }
 
+TEST(TagTransfer, SpacesAfterTheBackslashAreSkipped)
+{
+    // libass (ass_parse.c) skips them before the name.
+    const auto tags = readOriginalTags(u"a {\\ i1}b{\\i0} c");
+    ASSERT_EQ(tags.runs.size(), 1u);
+    EXPECT_EQ(u8(tags.runs[0].text), "b");
+    EXPECT_EQ(u8(readOriginalTags(u"a {\\\t pos(1,2)}b").leading), "{\\\t pos(1,2)}");
+}
+
+TEST(TagTransfer, TheEncodingIsAWholeNumber)
+{
+    StyleValues style;
+    style.name = u8"Default";
+    style.encoding = u8"1";
+    const std::vector<StyleValues> styles{style};
+    // libass reads \fe with argtoi32: \fe1.5 is the Style's 1.
+    EXPECT_TRUE(readOriginalTags(u"a {\\fe1.5}b{\\fe1} c", &style, styles).runs.empty());
+    EXPECT_EQ(readOriginalTags(u"a {\\fe2}b{\\fe1} c", &style, styles).runs.size(), 1u);
+}
+
+TEST(TagTransfer, NoSuggestionInATextWhoseBracesDontClose)
+{
+    const auto tags = readOriginalTags(u"I {\\i1}Tokyo{\\i0} x");
+    EXPECT_TRUE(suggestPlacements(tags, draft(u"Tokyo {")).empty());
+    EXPECT_TRUE(suggestPlacements(tags, draft(u"Tokyo }")).empty());
+    EXPECT_EQ(suggestPlacements(tags, draft(u"Tokyo {}")).size(), 1u);
+}
+
+TEST(TagTransfer, SpacesAfterATrailingTagStayAfterIt)
+{
+    // The \h after the reset is at the base size: Paste all keeps it there.
+    const std::u16string original = u"{\\fs40}a{\\r}\\h";
+    const auto tags = readOriginalTags(original);
+    EXPECT_EQ(u8(tags.trailing), "{\\r}\\h");
+    const auto pasted = draftOfOriginal(original, tags);
+    EXPECT_EQ(u8(pasted.body), "a");
+    EXPECT_EQ(u8(composeTranslation(tags, pasted)), u8(original));
+    expectRoundTrip(tags, draft(u"b"));
+    // Between two trailing blocks too, in their order.
+    const auto two = readOriginalTags(u"{\\i1\\b1}a{\\i0}\\N{\\b0} ");
+    EXPECT_EQ(u8(two.trailing), "{\\i0}\\N{\\b0} ");
+    EXPECT_EQ(u8(composeTranslation(two, draft(u"b"))), "{\\i1\\b1}b{\\i0}\\N{\\b0} ");
+    // Spaces before the trailing block are the body's, as before.
+    EXPECT_EQ(u8(readOriginalTags(u"{\\i1}a\\h{\\i0}").trailing), "{\\i0}");
+}
+
 TEST(TagTransfer, ARunOfSpacesAloneIsNoRun)
 {
     // A non-breaking space is no space to hasVisible, but trimmed like one.
