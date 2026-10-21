@@ -411,6 +411,7 @@ void TemplateEditorController::updateSource()
     m_source = source;
     if (source)
         m_lastSource = source;
+    stopRuns(); // their answers are another Line's
     m_preview.reset();
     m_own.clear();
     m_previewKept = false;
@@ -421,6 +422,15 @@ void TemplateEditorController::updateSource()
     emit valuesChanged();
     emit videoChanged();
     schedulePreview();
+}
+
+void TemplateEditorController::stopRuns()
+{
+    ++m_generation;
+    m_running = false;
+    m_previewing = false;
+    if (m_templater)
+        m_templater->cancelPreview();
 }
 
 void TemplateEditorController::setShown(bool shown)
@@ -435,11 +445,7 @@ void TemplateEditorController::setShown(bool shown)
     } else {
         commit();
         m_previewTimer.stop();
-        ++m_generation;
-        m_running = false;
-        m_previewing = false;
-        if (m_templater)
-            m_templater->cancelPreview();
+        stopRuns();
     }
     emit changed();
     emit previewChanged();

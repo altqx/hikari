@@ -187,6 +187,28 @@ class TemplateEditorTests : public QObject {
         return std::nullopt;
     }
 
+    // One step on the session, as the Grid or another panel makes it.
+    bool change(std::function<bool(core::Document &)> apply)
+    {
+        application::Command command;
+        command.name = "Edit";
+        command.expectedRevision = session->revision();
+        command.apply = std::move(apply);
+        return session->run(command).has_value();
+    }
+    // Answers the run held first, as its runner would.
+    bool answerHeld()
+    {
+        auto [snapshot, done] = std::move(templater->held.front());
+        templater->held.erase(templater->held.begin());
+        bool answered = false;
+        templater->runner.run(snapshot, [&, done](application::KaraokeTemplaterPort::Preview p) {
+            answered = true;
+            done(std::move(p));
+        });
+        return QTest::qWaitFor([&] { return answered; }, 20'000);
+    }
+
     void activate(core::LineId id)
     {
         application::Selection s;
@@ -620,6 +642,28 @@ private slots:
         const std::size_t whole = session->document().lines().size();
         QVERIFY(std::ranges::any_of(templater->sizes.begin() + static_cast<std::ptrdiff_t>(before),
                                     templater->sizes.end(), [&](std::size_t n) { return n == whole; }));
+    }
+
+    // A run that answers after the last karaoke Line went shows nothing:
+    // its Line is no source any more.
+    void aRunForALineGoneIsDropped()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        templater->holdPreviews = 1;
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
+        QVERIFY(change([](core::Document &doc) {
+            return doc.removeLinesIf([](const core::LineRecord &l) {
+                       return application::isKaraokeLine(l) && !application::templateKindOf(l);
+                   }) > 0;
+        }));
+        editor->refresh();
+        QVERIFY(!firstKaraoke());
+        QVERIFY(answerHeld());
+        QTest::qWait(100);
+        QVERIFY(!editor->hasPreview());
+        QVERIFY(!editor->previewPending());
     }
 
     void anUndoneApplyMatchesAgain()

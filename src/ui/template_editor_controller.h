@@ -245,6 +245,8 @@ private:
     void takeBaseline();
     std::string keyOf(const core::LineRecord &line) const;
     void updateSource();
+    // Every run going on answers to nothing more.
+    void stopRuns();
 
     DocumentKey documentKey() const;
 
