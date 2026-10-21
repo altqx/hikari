@@ -1,6 +1,7 @@
 #include "hikari/application/audio_karaoke.h"
 
 #include "hikari/application/audio_timing.h"
+#include "hikari/core/graphemes.h"
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
@@ -104,10 +105,7 @@ std::size_t letterEnd(std::u16string_view text, std::size_t at)
 {
     if (text[at] == u'\\' && at + 1 < text.size() && (text[at + 1] == u'N' || text[at + 1] == u'n' || text[at + 1] == u'h'))
         return at + 2;
-    std::size_t end = at + 1;
-    while (end < text.size() && text[end] != u'{' && karaokeContinuesGrapheme(text, end))
-        ++end;
-    return end;
+    return std::min(core::graphemeEnd(text, at), std::max(text.find(u'{', at + 1), at + 1));
 }
 
 // The letters of a stripped text, each one's [begin, end).

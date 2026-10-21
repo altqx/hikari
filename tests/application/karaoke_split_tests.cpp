@@ -231,6 +231,13 @@ TEST(KaraokeGraphemes, ALetterIsNeverHalfACharacter)
     EXPECT_TRUE(karaokeContinuesGrapheme(u"\uD558\u11AB", 1));
     EXPECT_FALSE(karaokeContinuesGrapheme(u"\uD55C\u1161", 1)); // LVT × V breaks
     EXPECT_FALSE(karaokeContinuesGrapheme(u"\u11AB\u1112", 1));
+    // spacing marks (Codex): Devanagari का, Tamil கொ; a flag's two regional
+    // indicators (🇯🇵), and the next flag starts a new one (🇯🇵🇰🇷)
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"\u0915\u093E", 1));
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"\u0B95\u0BCA", 1));
+    EXPECT_TRUE(karaokeContinuesGrapheme(u"\U0001F1EF\U0001F1F5", 2));
+    EXPECT_FALSE(karaokeContinuesGrapheme(u"\U0001F1EF\U0001F1F5\U0001F1F0\U0001F1F7", 4));
+    EXPECT_FALSE(karaokeContinuesGrapheme(u"\u0915\u0916", 1));
     EXPECT_EQ(karaokeGraphemePrefix(u"\U00020BB7a", 1), 2u);
     EXPECT_EQ(karaokeGraphemePrefix(u"éx", 1), 2u);
 
@@ -242,6 +249,10 @@ TEST(KaraokeGraphemes, ALetterIsNeverHalfACharacter)
     auto jamo = kara("{\\k20}\xE1\x84\x92\xE1\x85\xA1\xE1\x86\xAB\xE1\x84\x80\xE1\x85\xAE\xE1\x86\xA8", 0, 1000);
     EXPECT_EQ(jamo.letters(0, 1), std::pair(u("{}\xE1\x84\x92\xE1\x85\xA1\xE1\x86\xAB"),
                                             u("\xE1\x84\x80\xE1\x85\xAE\xE1\x86\xA8")));
+    // नमस्ते: न, म and the conjunct स्ते are its letters; a click after the first
+    auto hindi = kara("{\\k30}\xE0\xA4\xA8\xE0\xA4\xAE\xE0\xA4\xB8\xE0\xA5\x8D\xE0\xA4\xA4\xE0\xA5\x87", 0, 1000);
+    EXPECT_EQ(hindi.letters(0, 1), std::pair(u("{}\xE0\xA4\xA8"), u("\xE0\xA4\xAE\xE0\xA4\xB8\xE0\xA5\x8D\xE0\xA4\xA4\xE0\xA5\x87")));
+    EXPECT_EQ(hindi.letters(0, 2).first, u("{}\xE0\xA4\xA8\xE0\xA4\xAE"));
     // \N is one letter
     auto breaks = kara("{\\k20}a\\Nb", 0, 1000);
     EXPECT_EQ(breaks.letters(0, 2), std::pair(std::u16string(u"{}a\\N"), std::u16string(u"b")));

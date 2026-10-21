@@ -58,9 +58,10 @@ std::vector<std::size_t> karaokeAutoSplit(std::u16string_view text, const Karaok
 // blocks that are neither space (\N \n \h too) nor punctuation.
 int karaokeWeight(std::u16string_view text, const KaraokeCharClass &classes);
 
-// Whether the UTF-16 unit at `at` continues the grapheme before it (a low
-// surrogate, a combining mark, a variation selector, an emoji modifier or
-// what a zero width joiner joins).
+// Whether the UTF-16 unit at `at` continues the grapheme before it: an
+// extended grapheme cluster (UAX #29, core::graphemeEnd) such as a
+// surrogate pair, a letter and its marks (spacing ones too, as Devanagari's
+// vowel signs), a Hangul syllable in jamo, an emoji sequence or a flag.
 bool karaokeContinuesGrapheme(std::u16string_view text, std::size_t at);
 
 } // namespace hikari::application

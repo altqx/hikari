@@ -1,6 +1,7 @@
 #include "hikari/application/karaoke_split.h"
 
 #include "hikari/application/audio_karaoke.h"
+#include "hikari/core/graphemes.h"
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
@@ -59,23 +60,6 @@ bool isHangul(char32_t c)
            inRange(c, 0xA960, 0xA97C) || inRange(c, 0xD7B0, 0xD7FB);
 }
 
-// Hangul's grapheme parts (UAX #29): leading consonants L, vowels V,
-// trailing consonants T, and the precomposed LV and LVT syllables.
-enum class Jamo { None, L, V, T, LV, LVT };
-
-Jamo jamo(char16_t c)
-{
-    if (inRange(c, 0x1100, 0x115F) || inRange(c, 0xA960, 0xA97C))
-        return Jamo::L;
-    if (inRange(c, 0x1160, 0x11A7) || inRange(c, 0xD7B0, 0xD7C6))
-        return Jamo::V;
-    if (inRange(c, 0x11A8, 0x11FF) || inRange(c, 0xD7CB, 0xD7FB))
-        return Jamo::T;
-    if (inRange(c, 0xAC00, 0xD7A3))
-        return (c - 0xAC00) % 28 ? Jamo::LVT : Jamo::LV;
-    return Jamo::None;
-}
-
 bool isLatin(char32_t c)
 {
     return inRange(c, U'a', U'z') || inRange(c, U'A', U'Z') ||
@@ -124,8 +108,8 @@ std::vector<Unit> units(u16v text, const KaraokeCharClass &classes)
             continue;
         }
         unit.cp = codePointAt(text, i, unit.len);
-        while (i + unit.len < text.size() && text[i + unit.len] != u'{' && karaokeContinuesGrapheme(text, i + unit.len))
-            ++unit.len;
+        // the whole grapheme (KA1-grapheme-letters), up to a block
+        unit.len = std::max(unit.len, std::min(core::graphemeEnd(text, i), text.find(u'{', i + 1)) - i);
         const char32_t c = unit.cp;
         const bool bmp = c < 0x10000;
         if (bmp && classes.space && classes.space(static_cast<char16_t>(c)))
@@ -458,29 +442,10 @@ bool karaokeContinuesGrapheme(std::u16string_view text, std::size_t at)
 {
     if (at == 0 || at >= text.size())
         return false;
-    const char16_t c = text[at], before = text[at - 1];
-    if (c >= 0xDC00 && c <= 0xDFFF && before >= 0xD800 && before <= 0xDBFF)
-        return true;
-    if (before == 0x200D) // what a zero width joiner joins
-        return true;
-    // a Hangul syllable written in jamo (NFD): L × L V LV LVT, LV V × V T, LVT T × T
-    const Jamo was = jamo(before), is = jamo(c);
-    if ((was == Jamo::L && is != Jamo::None && is != Jamo::T) ||
-        ((was == Jamo::LV || was == Jamo::V) && (is == Jamo::V || is == Jamo::T)) ||
-        ((was == Jamo::LVT || was == Jamo::T) && is == Jamo::T))
-        return true;
-    if (inRange(c, 0x0300, 0x036F) || inRange(c, 0x1AB0, 0x1AFF) || inRange(c, 0x1DC0, 0x1DFF) ||
-        inRange(c, 0x20D0, 0x20FF) || inRange(c, 0xFE00, 0xFE0F) || inRange(c, 0xFE20, 0xFE2F) ||
-        inRange(c, 0x3099, 0x309A) || c == 0x200D)
-        return true;
-    if (at + 1 < text.size()) {
-        std::size_t len = 0;
-        const char32_t cp = codePointAt(text, at, len);
-        // emoji modifiers and the supplementary variation selectors
-        if (len == 2 && (inRange(cp, 0x1F3FB, 0x1F3FF) || inRange(cp, 0xE0100, 0xE01EF)))
-            return true;
-    }
-    return false;
+    std::size_t start = 0;
+    while (start < at)
+        start = core::graphemeEnd(text, start);
+    return start != at;
 }
 
 int karaokeWeight(std::u16string_view text, const KaraokeCharClass &classes)
