@@ -33,6 +33,7 @@
 #include <QString>
 
 #include <functional>
+#include <set>
 #include <memory>
 #include <optional>
 
@@ -46,6 +47,11 @@ class AutomationShell : public QObject, public application::AutomationServicePor
     Q_PROPERTY(double progress READ progress NOTIFY progressChanged)
     Q_PROPERTY(QString log READ log NOTIFY progressChanged)
     Q_PROPERTY(QString lastMessage READ lastMessage NOTIFY progressChanged)
+    // How the last run ended (AM1, the panel's run status): "applied",
+    // "refused", "failed", "invalid" (validation answered no or raised),
+    // "cancelled", "declined" (the script resolution question declined),
+    // "lost", "stopped"; empty while one runs or before any.
+    Q_PROPERTY(QString lastOutcome READ lastOutcome NOTIFY progressChanged)
     Q_PROPERTY(bool forceStopOffered READ forceStopOffered NOTIFY progressChanged)
     Q_PROPERTY(bool canRerun READ canRerun NOTIFY progressChanged)
     // KE1-template-problems: the run ended well but its log names template
@@ -107,6 +113,12 @@ public:
     // S4, legacy Automation::AddFromSubs: the scripts the editing target's
     // Script Info names ("Automation Scripts") load.
     Q_INVOKABLE void addFromDocument();
+    // AM1: what addFromDocument would load now: the paths the editing
+    // target's Script Info names that are not listed, until that value has
+    // been read. The panel offers them; loading a script runs its code, so it
+    // waits for the user. Nothing here touches the file system: a named path
+    // (a UNC one on Windows, too) is first opened on Load.
+    Q_INVOKABLE QStringList documentScriptsToLoad();
     // The Automation menu opens (legacy BuildMenu): with a Document open, its
     // scripts load and every script whose file changed reloads.
     Q_INVOKABLE void menuOpened();
@@ -129,6 +141,7 @@ public:
     double progress() const { return m_progress; }
     QString log() const { return m_log; }
     QString lastMessage() const { return m_lastMessage; }
+    QString lastOutcome() const { return m_lastOutcome; }
     bool forceStopOffered() const;
     bool canRerun() const { return m_last.has_value() && !m_run; }
     bool keepLog() const { return m_keepLog; }
@@ -203,10 +216,11 @@ private:
     std::optional<Run> m_run;
     std::optional<std::pair<std::string, int>> m_last;
     application::DocumentScripts m_documentScripts;
+    std::set<std::string> m_readScriptInfo; // the values addFromDocument read
     std::optional<std::string> m_pendingLast; // waiting for this script to load
     std::function<void(const QString &, bool)> m_logLine;
     ui::SettingsStore *m_settings = nullptr;
-    QString m_title, m_task, m_log, m_lastMessage;
+    QString m_title, m_task, m_log, m_lastMessage, m_lastOutcome;
     double m_progress = 0;
     bool m_keepLog = false;
     std::uint64_t m_statusSerial = 0;

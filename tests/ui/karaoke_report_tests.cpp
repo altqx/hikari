@@ -99,14 +99,14 @@ private slots:
         QCOMPARE(r->templates[1].generated, 24);
 
         QCOMPARE(ui::karaokeReportSummary(*r),
-                 QStringLiteral("Karaoke template: 30 Line(s) generated from 2 karaoke Line(s) in 1.50 s. "
+                 QStringLiteral("Karaoke template: 30 line(s) generated from 2 karaoke line(s) in 1.50 s. "
                                 "1 template problem(s): see the log."));
         // The slowest template first.
         QCOMPARE(ui::karaokeReportDetails(*r).split(QLatin1Char('\n')),
-                 (QStringList{ui::karaokeReportSummary(*r), QStringLiteral("Measuring the karaoke Lines: 250 ms"),
-                              QStringLiteral("Template Line 3 (template line, Romaji): 1.25 s, 6 Line(s) generated"),
-                              QStringLiteral("Template Line 2 (template syl, Romaji): 750 ms, 24 Line(s) generated"),
-                              QStringLiteral("Code Line 1 (code once, Default): 0.4 ms")}));
+                 (QStringList{ui::karaokeReportSummary(*r), QStringLiteral("Measuring the karaoke lines: 250 ms"),
+                              QStringLiteral("Template line 3 (template line, Romaji): 1.25 s, 6 line(s) generated"),
+                              QStringLiteral("Template line 2 (template syl, Romaji): 750 ms, 24 line(s) generated"),
+                              QStringLiteral("Code line 1 (code once, Default): 0.4 ms")}));
     }
 
     void wholeRunReportsToTheStatusBarAndTheLog()
@@ -117,9 +117,9 @@ private slots:
         for (const auto *l : a.files().session(*a.workspace().editingTarget())->document().lines())
             generated += l->effect == u8"fx";
         QVERIFY(a.shell().statusText().startsWith(
-            QStringLiteral("Karaoke template: %1 Line(s) generated from 6 karaoke Line(s) in ").arg(generated)));
-        QVERIFY(a.log().history().contains(QStringLiteral("Template Line 5 (template syl, T2c): ")));
-        QVERIFY(a.log().history().contains(QStringLiteral("Measuring the karaoke Lines: ")));
+            QStringLiteral("Karaoke template: %1 line(s) generated from 6 karaoke line(s) in ").arg(generated)));
+        QVERIFY(a.log().history().contains(QStringLiteral("Template line 5 (template syl, T2c): ")));
+        QVERIFY(a.log().history().contains(QStringLiteral("Measuring the karaoke lines: ")));
         QVERIFY(!a.log().shown()); // silent
         QVERIFY(!a.automation().keepLog());
     }
