@@ -108,7 +108,7 @@ Window {
     // counted; Cancel transfers nothing.
     function fieldNames(fields) {
         const groups = [
-            [1, qsTr("font")], [2, qsTr("size")], [4 | 8 | 16 | 32, qsTr("bold, italic or underline")],
+            [1, qsTr("font")], [2, qsTr("size")], [4 | 8 | 16 | 32, qsTr("bold, italic, underline or strikeout")],
             [64 | 128 | 256 | 512, qsTr("colours")], [1024 | 65536, qsTr("outline")], [2048, qsTr("shadow")],
             [4096 | 8192, qsTr("scale")], [16384, qsTr("angle")], [32768, qsTr("spacing")],
             [131072, qsTr("alignment")], [262144 | 524288 | 1048576, qsTr("margins")], [2097152, qsTr("encoding")]]

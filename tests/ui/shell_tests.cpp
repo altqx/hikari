@@ -7885,6 +7885,9 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
         QVERIFY(find->property("editText").toString() != QStringLiteral("alpha"));
         QVERIFY(dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
+        // No ticks left is a choice too (Codex review): no style, "^$".
+        QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
+        QCOMPARE(find->property("editText").toString(), QStringLiteral("^$"));
         QVERIFY(QMetaObject::invokeMethod(styles, "revert"));
         QTRY_VERIFY(!styles->property("visible").toBool());
         QCOMPARE(find->property("editText").toString(), QStringLiteral("alpha"));

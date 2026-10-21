@@ -168,22 +168,23 @@ Dialog {
     }
 
     // Legacy Stylelistbox "Choose styles", now PK1's Choose styles popover:
-    // the ticks make the checked styles a Styles regular expression at once;
-    // Esc puts the search as it was (approved F2-style-cancel, 2026-10-04:
-    // cancelling changes nothing; legacy filled in "^$").
+    // the ticks make the checked styles a Styles regular expression at once
+    // (no ticks: "^$", as legacy's empty choice); Esc puts the search as it
+    // was (approved F2-style-cancel, 2026-10-04: cancelling changes
+    // nothing; legacy filled in "^$").
     ChooseStyles {
         id: stylesChooser
         objectName: "selectStylesChooser"
         property var before: null
-        onChanged: names => {
-            if (names.length > 0) {
-                findText.editText = dialog.app.selectStylesPattern(names)
-                fields.itemAt(1).checked = true
-                regex.checked = true
-            } else if (before) {
+        onChanged: (names, reverted) => {
+            if (reverted && before) {
                 findText.editText = before.text
                 fields.itemAt(1).checked = before.field
                 regex.checked = before.regex
+            } else {
+                findText.editText = dialog.app.selectStylesPattern(names)
+                fields.itemAt(1).checked = true
+                regex.checked = true
             }
         }
     }

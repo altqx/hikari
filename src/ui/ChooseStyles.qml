@@ -6,7 +6,8 @@ pragma Translator: "HikariSub.MainWindow"
 // each, Select all and None (on the rows shown) and the count.
 //
 // Live by default: each tick goes to `changed` at once; Esc puts the ticks
-// it opened with back (`changed` again with them), and a press outside or
+// it opened with back (`changed` again with them, `reverted` true: an
+// opener may put back more than the ticks), and a press outside or
 // Enter keeps them. With `actionText` ("Load") the ticks are only applied
 // by that button (`acted`), which Enter in the search field presses.
 //
@@ -32,7 +33,7 @@ Popover {
         return f.length === 0 ? names : names.filter(n => n.toLowerCase().indexOf(f) >= 0)
     }
 
-    signal changed(var names)
+    signal changed(var names, bool reverted)
     signal acted(var names)
 
     function openFor(anchorItem, list, checked, options) {
@@ -51,7 +52,7 @@ Popover {
     function setChecked(list) {
         checkedNames = ordered(list)
         if (actionText.length === 0)
-            changed(checkedNames)
+            changed(checkedNames, false)
     }
     function confirm() {
         if (actionText.length === 0)
@@ -62,7 +63,7 @@ Popover {
     function toggle(name) {
         setChecked(checkedNames.indexOf(name) >= 0 ? checkedNames.filter(n => n !== name) : checkedNames.concat([name]))
     }
-    onReverted: if (actionText.length === 0) changed(original)
+    onReverted: if (actionText.length === 0) changed(original, true)
 
     TextField {
         id: search

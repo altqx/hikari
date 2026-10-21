@@ -7055,7 +7055,7 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>bold, italic or underline</source>
+        <source>bold, italic, underline or strikeout</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
