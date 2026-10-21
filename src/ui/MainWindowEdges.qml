@@ -8,6 +8,8 @@ import Hikari.Ui
 // or full screen. There is no drawn shadow: it would need a see-through
 // window, blended over the video on every frame. Windows resizes from the
 // native frame and draws its own boundary and shadow (WindowFrame.nativeResize).
+// DG1: a dialog's window (DialogFrame) has the boundary too, and the band
+// only while it can be resized.
 Item {
     id: root
     objectName: "mainWindowEdges"
@@ -29,6 +31,7 @@ Item {
 
     component ResizeEdge: MouseArea {
         required property int edges
+        visible: root.frame.resizable
         cursorShape: {
             const horizontal = (edges & (Qt.LeftEdge | Qt.RightEdge)) !== 0
             const vertical = (edges & (Qt.TopEdge | Qt.BottomEdge)) !== 0
