@@ -117,6 +117,44 @@ QString writeFile(const QTemporaryDir &dir, const char *name, const char *events
     return path;
 }
 
+// KA5 (#280): a 48 kHz mono WAV of sung notes (harmonics of each pitch, a
+// 10 ms attack and 30 ms release) starting at `notes`' {start ms, length
+// ms, pitch}, silent between them.
+QString writeSungWav(const QTemporaryDir &dir, const char *name, int ms, std::initializer_list<std::array<int, 3>> notes)
+{
+    constexpr int rate = 48000;
+    std::vector<double> samples(std::size_t(std::int64_t(ms) * rate / 1000));
+    for (const auto &[start, length, pitch] : notes) {
+        const std::int64_t first = std::int64_t(start) * rate / 1000, count = std::int64_t(length) * rate / 1000;
+        for (std::int64_t i = 0; i < count && first + i < std::int64_t(samples.size()); ++i) {
+            const double t = double(i) / rate;
+            double v = 0;
+            for (int k = 1; k <= 12; ++k)
+                v += std::sin(2 * 3.14159265358979 * pitch * k * t) / k;
+            const double envelope = std::min({1.0, i / (0.01 * rate), (count - i) / (0.03 * rate)});
+            samples[std::size_t(first + i)] += 0.1 * envelope * v;
+        }
+    }
+    QByteArray pcm;
+    for (const double v : samples) {
+        const auto sample = static_cast<std::int16_t>(std::lround(std::clamp(v, -1.0, 1.0) * 32767));
+        pcm.append(char(sample & 0xFF)).append(char((sample >> 8) & 0xFF));
+    }
+    auto le = [](std::uint32_t v, int bytes) {
+        QByteArray out;
+        for (int i = 0; i < bytes; ++i)
+            out.append(char((v >> (8 * i)) & 0xFF));
+        return out;
+    };
+    QByteArray wav = "RIFF" + le(36 + std::uint32_t(pcm.size()), 4) + "WAVEfmt " + le(16, 4) + le(1, 2) + le(1, 2) +
+                     le(rate, 4) + le(rate * 2, 4) + le(2, 2) + le(16, 2) + "data" + le(std::uint32_t(pcm.size()), 4) + pcm;
+    const QString path = dir.filePath(QLatin1String(name));
+    QFile f(path);
+    f.open(QIODevice::WriteOnly);
+    f.write(wav);
+    return path;
+}
+
 // A media fixture's name as Open video hands it on: in the platform's form
 // (VideoController::openVideo; legacy's wxFileName paths were native).
 QString nativeFixture(const char *name)
@@ -16345,6 +16383,140 @@ private slots:
         audio.toggleKaraoke();
         audio.setSpeedPercent(100);
         QVERIFY(!mark->isVisible());
+    }
+
+    // KA5 (#280, KA5-onset-snap): Snap to vocal onsets in the Tap menu, off
+    // by default. On in Karaoke mode, the loaded audio's onsets are found off
+    // the UI thread and kept for the file; the Line's boundaries stay where
+    // they are; a boundary dragged with the real mouse lands on the onset
+    // near it (off, where the mouse leaves it); and a tap's press does too.
+    void audioOnsetSnap()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        window->resize(1280, 800);
+        const QString path = writeFile(dir, "onsets.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,{\\k50}ka{\\k50}ra{\\k100}oke\n"
+                                       "Dialogue: 0,0:00:03.50,0:00:03.90,Default,,0,0,0,,next\n");
+        const QString sung = writeSungWav(dir, "sung.wav", 4000, {{1000, 400, 220}, {1630, 300, 262}, {2140, 600, 196}});
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        auto *store = application->settingsStore();
+        editor.setShowTags(true);
+        QVERIFY(!store->boolean("audio.onsetSnap"));
+        QVERIFY(!audio.onsetSnap());
+        auto *snapItem = named("audioOnsetSnap");
+        QVERIFY(snapItem);
+        QCOMPARE(snapItem->property("text").toString(), QStringLiteral("Snap to vocal onsets"));
+        QVERIFY(snapItem->property("checkable").toBool());
+        QVERIFY(!snapItem->property("checked").toBool());
+        audio.openAudio(sung);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QTest::mouseMove(window, kOverNoPanel);
+        if (audio.karaokeSplitMode())
+            audio.toggleKaraokeSplitMode();
+        audio.toggleKaraoke();
+        QVERIFY(audio.karaoke());
+        QVERIFY(audio.karaokeModel().times() == (std::vector<int>{1500, 2000, 3000}));
+        QCOMPARE(audio.onsetDetections(), 0); // off: nothing is looked for
+
+        // on: found off the UI thread, the boundaries left as they are
+        QVERIFY(QMetaObject::invokeMethod(snapItem, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(snapItem, "toggled"));
+        QVERIFY(audio.onsetSnap());
+        QVERIFY(store->boolean("audio.onsetSnap"));
+        QVERIFY(snapItem->property("checked").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(audio.onsetsFound(), 10000);
+        QCOMPARE(audio.onsetDetections(), 1);
+        const std::vector<int> onsets(audio.snapOnsets().begin(), audio.snapOnsets().end());
+        QCOMPARE(onsets.size(), std::size_t(3));
+        for (const auto &[found, at] : {std::pair(onsets[0], 1000), std::pair(onsets[1], 1630), std::pair(onsets[2], 2140)})
+            QVERIFY2(std::abs(found - at) <= 10, qPrintable(QStringLiteral("%1 for %2").arg(found).arg(at)));
+        QVERIFY(audio.karaokeModel().times() == (std::vector<int>{1500, 2000, 3000}));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k50}ka{\\k50}ra{\\k100}oke"));
+
+        // the first boundary dragged to 30 ms before the second onset lands on it
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x) { return display->mapToScene(QPointF(x, 30)).toPoint(); };
+        // where the mouse leaves the boundary (-1: the press did not grab it)
+        auto drag = [&](int fromMs, int toMs) -> int {
+            const int x0 = int(view.xAtMs(fromMs)), x1 = int(view.xAtMs(toMs));
+            QTest::mouseMove(window, at(x0 - 1));
+            QTest::mouseMove(window, at(x0));
+            QTest::mousePress(window, Qt::LeftButton, {}, at(x0));
+            if (audio.timing().hold() != 5)
+                return -1;
+            QTest::mouseMove(window, at(x1));
+            QTest::mouseRelease(window, Qt::LeftButton, {}, at(x1));
+            return application::legacyZeroIt(view.msAtX(x1));
+        };
+        QVERIFY(view.xAtMs(3000) < view.width());
+        const int raw = drag(1500, onsets[1] - 30);
+        QVERIFY(raw > 0 && raw != onsets[1]);
+        QCOMPARE(audio.karaokeModel().times()[0], onsets[1]);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k%1}ka{\\k%2}ra{\\k100}oke").arg((onsets[1] - 1000) / 10).arg((2000 - onsets[1]) / 10));
+        // off: the second boundary goes where the mouse leaves it
+        QVERIFY(QMetaObject::invokeMethod(snapItem, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(snapItem, "toggled"));
+        QVERIFY(!audio.onsetSnap());
+        QVERIFY(audio.snapOnsets().empty());
+        const int free = drag(2000, onsets[2] - 30);
+        QVERIFY(free > 0);
+        QCOMPARE(audio.karaokeModel().times()[1], free);
+        QTest::mouseMove(window, kOverNoPanel);
+
+        // kept per file: other audio is looked at, this file again is not
+        QVERIFY(QMetaObject::invokeMethod(snapItem, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(snapItem, "toggled"));
+        audio.openDummy();
+        QTRY_VERIFY_WITH_TIMEOUT(audio.onsetsFound(), 10000);
+        QCOMPARE(audio.onsetDetections(), 2);
+        QVERIFY(audio.snapOnsets().empty()); // silence
+        audio.openAudio(sung);
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(audio.onsetsFound());
+        QCOMPARE(audio.onsetDetections(), 2);
+        QVERIFY(std::ranges::equal(audio.snapOnsets(), onsets));
+
+        // tapping (Hold): each press near an onset lands on it
+        application->selectLine(targetSession()->document().lines()[0]->id.value);
+        audio.setTapHold(true);
+        audio.toggleTap();
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus());
+        const auto key = [&](bool down) {
+            if (down)
+                QTest::keyPress(window, Qt::Key_Space);
+            else
+                QTest::keyRelease(window, Qt::Key_Space);
+            QCoreApplication::processEvents();
+        };
+        for (const int onset : onsets) {
+            QTRY_VERIFY_WITH_TIMEOUT(audio.tapSongNow() >= onset - 60, 10000);
+            key(true);
+            QTest::qWait(150);
+            key(false);
+        }
+        QCOMPARE(audio.tapLine(), 2); // Line 1 is done
+        const auto &line = *targetSession()->document().lines()[0];
+        const auto lexeme = [](int ms) { return QString::asprintf("0:00:%02d.%02d", ms / 1000, ms % 1000 / 10); };
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(line.start.lexeme.c_str())), lexeme(onsets[0]));
+        // each syllable with text starts at its onset (an empty one is a gap)
+        static const QRegularExpression syllable(QStringLiteral(R"(\{\\k(\d+)\}([^{]*))"));
+        std::vector<int> starts;
+        int t = onsets[0];
+        for (auto it = syllable.globalMatch(documentLineText(targetSession(), 0)); it.hasNext();) {
+            const auto m = it.next();
+            if (!m.captured(2).isEmpty())
+                starts.push_back(t);
+            t += m.captured(1).toInt() * 10;
+        }
+        QVERIFY2(starts == onsets, qPrintable(documentLineText(targetSession(), 0)));
+        audio.toggleTap();
+        audio.setOnsetSnap(false);
+        audio.toggleKaraoke();
     }
 
     // KA2-tap-to-time: Calibrate latency… from the Tap menu opens its window,

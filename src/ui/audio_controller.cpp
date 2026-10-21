@@ -223,6 +223,11 @@ void AudioController::closeAudio()
     redraw();
 }
 
+AudioController::~AudioController()
+{
+    stopFindingOnsets();
+}
+
 void AudioController::boxChanged()
 {
     if (m_player && m_box.serial() != m_playedSerial)
@@ -258,6 +263,7 @@ void AudioController::boxChanged()
     }
     if (m_trimPending && state != AudioBox::State::Opening)
         trimCache();
+    findOnsets(); // KA5
     emit changed();
     redraw();
 }
@@ -353,6 +359,7 @@ void AudioController::toggleKaraoke()
     }
     if (m_view.hasSource())
         makeDialogueVisible();
+    findOnsets(); // KA5: snapping is Karaoke mode's
     emit boxControlsChanged();
     redraw();
 }
@@ -557,6 +564,7 @@ void AudioController::loadBoxControls()
         m_tap.setMode(m_store->boolean("audio.tapHold") ? application::KaraokeTap::Mode::Hold
                                                          : application::KaraokeTap::Mode::Press);
         m_tapLatency = std::clamp(m_store->integer("audio.tapLatency"), -200, 500); // as setTapLatency
+        m_onsetSnap = m_store->boolean("audio.onsetSnap"); // KA5
     }
     m_view.setSamplesPercent(zoom, false);
     m_horizontalZoom = std::clamp(zoom, 0, 100);
@@ -1192,6 +1200,7 @@ application::AudioMouseResult AudioController::mouse(const application::AudioMou
         karaoke.karaoke = &m_karaoke;
         karaoke.moveOnClick = m_store && m_store->boolean("audio.karaokeMoveOnClick");
         karaoke.measure = m_measure;
+        karaoke.onsetsMs = snapOnsets(); // KA5
     }
     const auto hover = std::tuple(m_karaoke.hover, m_karaoke.character, m_karaoke.current);
     auto result =
@@ -1389,6 +1398,84 @@ void AudioController::setTapHold(bool hold)
     emit tapSpansChanged();
 }
 
+void AudioController::setOnsetSnap(bool on)
+{
+    if (m_onsetSnap == on)
+        return;
+    m_onsetSnap = on;
+    if (m_store)
+        m_store->set("audio.onsetSnap", on);
+    findOnsets();
+    emit boxControlsChanged();
+}
+
+std::span<const int> AudioController::snapOnsets() const
+{
+    if (!m_onsetSnap || !m_hasKara || !onsetsFound())
+        return {};
+    return *m_onsets;
+}
+
+std::string AudioController::onsetKey() const
+{
+    const auto *audio = m_box.audio();
+    return m_box.path() + '\n' + std::to_string(m_box.track()) + '\n' + std::to_string(m_box.delayFrames()) + '\n' +
+           std::to_string(audio ? audio->sampleCount() : 0);
+}
+
+// KA5-onset-snap: the open audio's onsets, from this session's cache or found
+// by a worker over the loaded audio, while snapping is on in Karaoke mode.
+// A worker for audio since closed is cancelled; one finished for the same
+// file is kept for when it opens again.
+void AudioController::findOnsets()
+{
+    if (m_onsetsSerial != m_box.serial()) {
+        stopFindingOnsets();
+        m_onsets.reset();
+        m_onsetsSerial = m_box.serial();
+    }
+    if (!m_onsetSnap || !m_hasKara || !ready() || m_onsets || m_onsetCancel)
+        return;
+    const std::string key = onsetKey();
+    if (const auto it = m_onsetCache.find(key); it != m_onsetCache.end()) {
+        m_onsets = it->second;
+        emit onsetsChanged();
+        return;
+    }
+    auto cancel = std::make_shared<std::atomic<bool>>(false);
+    m_onsetCancel = cancel;
+    ++m_onsetDetections;
+    m_onsetWorker = std::thread([this, audio = m_box.sharedAudio(), cancel, key, serial = m_onsetsSerial] {
+        auto found = application::detectVocalOnsets(*audio, cancel.get());
+        if (!found)
+            return;
+        auto onsets = std::make_shared<const std::vector<int>>(std::move(*found));
+        QMetaObject::invokeMethod(
+            this,
+            [this, cancel, key, serial, onsets] {
+                if (cancel->load())
+                    return; // stopFindingOnsets has joined it
+                m_onsetWorker.join();
+                m_onsetCancel.reset();
+                m_onsetCache[key] = onsets;
+                if (serial != m_box.serial())
+                    return;
+                m_onsets = onsets;
+                emit onsetsChanged();
+            },
+            Qt::QueuedConnection);
+    });
+}
+
+void AudioController::stopFindingOnsets()
+{
+    if (m_onsetCancel)
+        *m_onsetCancel = true;
+    if (m_onsetWorker.joinable())
+        m_onsetWorker.join();
+    m_onsetCancel.reset();
+}
+
 void AudioController::setTapLatency(int ms)
 {
     m_tapLatency = std::clamp(ms, -200, 500);
@@ -1425,7 +1512,12 @@ bool AudioController::tapKey(int key, bool pressed, bool autoRepeat, bool shift)
             tapResume();
         return true;
     }
-    const int songMs = tapSongNow();
+    int songMs = tapSongNow();
+    // KA5-onset-snap: a press (a syllable's start, or Press mode's boundary)
+    // lands on the nearest onset from the last boundary on; a release stays
+    if (pressed)
+        songMs =
+            application::snapToOnset(snapOnsets(), songMs, application::kOnsetSnapWindowMs, m_tap.lastBoundary());
     const Event event = pressed ? m_tap.press(key, songMs) : m_tap.release(key, songMs);
     if (event == Event::LineDone)
         finishTapLine(pressed ? std::optional(key) : std::nullopt, songMs);

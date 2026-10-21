@@ -15,6 +15,7 @@
 #include "hikari/application/audio_timing.h"
 #include "hikari/application/audio_playback.h"
 #include "hikari/application/karaoke_tap.h"
+#include "hikari/application/vocal_onsets.h"
 
 #include <QObject>
 #include <QPointer>
@@ -25,9 +26,14 @@
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
+#include <atomic>
 #include <functional>
+#include <map>
 #include <memory>
 #include <optional>
+#include <span>
+#include <string>
+#include <thread>
 #include <vector>
 
 namespace hikari::ui {
@@ -93,6 +99,9 @@ class AudioController : public QObject {
     Q_PROPERTY(QString tapNextText READ tapNextText NOTIFY tapChanged)
     Q_PROPERTY(QString tapMessage READ tapMessage NOTIFY tapChanged)
     Q_PROPERTY(bool tapNeedsSplit READ tapNeedsSplit NOTIFY tapChanged)
+    // KA5 (#280, KA5-onset-snap): Karaoke mode's boundaries snap to vocal
+    // onsets (audio.onsetSnap, off by default).
+    Q_PROPERTY(bool onsetSnap READ onsetSnap NOTIFY boxControlsChanged)
     // The tapped syllables on the display ({x1, x2, text, held}, columns),
     // each tick while tapping.
     Q_PROPERTY(QVariantList tapSpans READ tapSpans NOTIFY tapSpansChanged)
@@ -112,6 +121,7 @@ public:
     Q_ENUM(TapSyllable)
     static constexpr int kSpeeds[] = {25, 33, 50, 75, 100};
     explicit AudioController(application::DisplayAudioPort &own, QObject *parent = nullptr);
+    ~AudioController() override;
 
     application::AudioBox &box() { return m_box; }
     const application::AudioView &view() const { return m_view; }
@@ -369,6 +379,19 @@ public:
     // The song time a tap at this moment stands for (tapSongMs).
     int tapSongNow() const;
 
+    // KA5-onset-snap: on in Karaoke mode, the audio's vocal onsets are found
+    // off the UI thread once it is loaded (kept per audio file for the
+    // session), then a dragged syllable boundary and a tap's press (a
+    // syllable's start) snap to the nearest. Boundaries already placed stay.
+    bool onsetSnap() const { return m_onsetSnap; }
+    Q_INVOKABLE void setOnsetSnap(bool on);
+    // The onsets snapping uses: the open audio's once found, while snapping
+    // is on in Karaoke mode; else none.
+    std::span<const int> snapOnsets() const;
+    bool onsetsFound() const { return m_onsets && m_onsetsSerial == m_box.serial(); }
+    // Detections run so far (each audio file once, unless it changed).
+    int onsetDetections() const { return m_onsetDetections; }
+
     // The latency calibration (Calibrate latency…): kCalibrationBeats beeps
     // played through the box's output, a press each (calibrationPress, the
     // Window's Space), the result after each; Apply sets audio.tapLatency.
@@ -442,6 +465,7 @@ signals:
     void playingChanged();
     void tapChanged();
     void tapSpansChanged();
+    void onsetsChanged(); // KA5: the open audio's onsets were found
     void calibrationChanged();
 
 private:
@@ -482,6 +506,10 @@ private:
     void calibrationTick();
     void stopFollowingVideo();
     void releasePlayer(); // legacy SetFile's unload: Stop, then the player goes
+    // KA5
+    void findOnsets();
+    void stopFindingOnsets();
+    std::string onsetKey() const;
 
     application::AudioBox m_box;
     std::function<void()> m_beforeOpen;
@@ -573,6 +601,15 @@ private:
     application::LatencyCalibration m_calibration;
     QTimer m_calibrationTimer;
     int m_speedBeforeCalibration = 100;
+    // KA5: the onsets of each audio file (path, track and delay) found this
+    // session, the open audio's, and the worker finding them
+    bool m_onsetSnap = false;
+    std::map<std::string, std::shared_ptr<const std::vector<int>>> m_onsetCache;
+    std::shared_ptr<const std::vector<int>> m_onsets;
+    std::uint64_t m_onsetsSerial = 0; // the box's audio m_onsets (or the worker) is for
+    std::thread m_onsetWorker;
+    std::shared_ptr<std::atomic<bool>> m_onsetCancel;
+    int m_onsetDetections = 0;
 };
 
 } // namespace hikari::ui
