@@ -231,4 +231,19 @@ TEST_F(TemplatePreview, PlayingTheLineKeepsOneTrack)
     EXPECT_EQ(elsewhere.toMs, std::numeric_limits<std::int64_t>::max()) << "every Line not over yet";
 }
 
+TEST_F(TemplatePreview, PreviewRunsOnlyReadFromTheHost)
+{
+    for (const auto service : {HostService::TextExtents, HostService::FrameFromMs, HostService::MsFromFrame,
+                               HostService::VideoSize, HostService::Keyframes, HostService::ProjectProperties,
+                               HostService::AudioSelection, HostService::DecodePath, HostService::FileName,
+                               HostService::Gettext})
+        EXPECT_TRUE(isPreviewService(service)) << static_cast<int>(service);
+    for (const auto service : {HostService::ClipboardGet, HostService::ClipboardSet, HostService::OpenFiles,
+                               HostService::SaveFile, HostService::StatusText, HostService::EditorCursor,
+                               HostService::SetEditorCursor, HostService::EditorSelection,
+                               HostService::SetEditorSelection, HostService::EditorModified, HostService::Frame,
+                               HostService::FrequencyPeaks, HostService::ScriptResolution})
+        EXPECT_FALSE(isPreviewService(service)) << static_cast<int>(service);
+}
+
 } // namespace

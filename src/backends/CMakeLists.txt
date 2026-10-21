@@ -18,7 +18,7 @@ add_library(hikari_backends STATIC module.cpp libass_renderer.cpp overlay_blend.
     video_frame_bgra.cpp include/hikari/backends/video_frame_bgra.h
     libass_font_service.cpp line_audition.cpp include/hikari/backends/line_audition.h
     transport_coordinator.cpp include/hikari/backends/transport_coordinator.h
-    automation_manager.cpp include/hikari/backends/automation_manager.h process_metrics.cpp
+    automation_manager.cpp include/hikari/backends/automation_manager.h karaoke_preview_runner.cpp include/hikari/backends/karaoke_preview_runner.h process_metrics.cpp
     legacy_text_file.cpp include/hikari/backends/legacy_text_file.h
     include/hikari/backends/lua_script_host.h include/hikari/backends/qt_general_player.h
     include/hikari/backends/ffms_indexed_source.h

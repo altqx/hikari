@@ -11,6 +11,7 @@
 #include "hikari/core/document.h"
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <optional>
 #include <set>
@@ -65,5 +66,37 @@ TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, s
 core::Document templatePreviewDocument(const core::Document &doc, core::LineId source,
                                        const std::vector<core::LineRecord> &preview,
                                        const std::set<core::LineId> &replaced, TemplatePreviewWindow window);
+
+// The host services a preview run may use: the ones that only read (text
+// extents, frame times, the video's size, the project's properties).
+// Templates run on every edit, so a preview never writes the clipboard, the
+// status bar or the editor, and never opens a picker or a prompt.
+bool isPreviewService(HostService service);
+
+// The karaoke templater as the template editor uses it: previews in a
+// helper of its own, and Apply through the automation shell.
+class KaraokeTemplaterPort {
+public:
+    virtual ~KaraokeTemplaterPort() = default;
+    // How a preview run ended: the result when it ran to the end, otherwise
+    // what stopped it.
+    struct Preview {
+        std::optional<MacroResult> result;
+        std::string error;
+    };
+    using PreviewDone = std::function<void(Preview)>;
+
+    // A templater script is loaded, so previews and Apply can run.
+    virtual bool available() const = 0;
+    // Runs "Apply karaoke template to selected lines" on `snapshot` without
+    // applying it. A newer preview replaces one not finished, whose `done`
+    // is never called.
+    virtual void preview(const MacroSnapshot &snapshot, PreviewDone done) = 0;
+    virtual void cancelPreview() = 0;
+    // Runs the stock macro on the editing target as the Automation menu does
+    // (every karaoke Line, or with `selectedOnly` the selected Lines); false
+    // when it cannot start.
+    virtual bool apply(bool selectedOnly) = 0;
+};
 
 } // namespace hikari::application

@@ -152,4 +152,23 @@ core::Document templatePreviewDocument(const core::Document &doc, core::LineId s
     return out;
 }
 
+bool isPreviewService(HostService service)
+{
+    switch (service) {
+    case HostService::TextExtents:
+    case HostService::FrameFromMs:
+    case HostService::MsFromFrame:
+    case HostService::VideoSize:
+    case HostService::Keyframes:
+    case HostService::ProjectProperties:
+    case HostService::AudioSelection:
+    case HostService::DecodePath:
+    case HostService::FileName:
+    case HostService::Gettext:
+        return true;
+    default:
+        return false;
+    }
+}
+
 } // namespace hikari::application
