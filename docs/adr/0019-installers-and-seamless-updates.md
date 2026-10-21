@@ -14,3 +14,5 @@ On 2026-10-13 altqx decided how HikariSub is installed and updated, for the lega
 - **The rewrite replaces legacy** under the same identity: install folder, Uninstall key, package names and desktop id `io.github.altqx.HikariSub`. Every rewrite version is 0.1.0 or later and every legacy version 0.0.x, and each release's `hikarisub-update.json` names the codebases it may be offered to, so a rewrite release reaches legacy users only when the owner opens that gate.
 
 Nothing is code-signed; SHA-256 from GitHub over HTTPS is the only integrity check. This records the decision; installers, packages and the update flows still need their release tests on every claimed platform.
+
+Amended by [ADR-0021](0021-opt-in-offer-of-the-rewrite-to-legacy.md): no rewrite release names `legacy` in `offer_to`; legacy users are offered the rewrite opt-in through the manifest's `offer` member.

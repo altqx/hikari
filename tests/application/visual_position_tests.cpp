@@ -1133,7 +1133,7 @@ TEST(VisualMoveTimes, MoveKeepsAnUntimedMoveUntimedOverRepeatedReads)
     EXPECT_EQ(tool.moveEnd(), 3000);
     auto values = tool.values(host);
     ASSERT_EQ(values.size(), 6u);
-    EXPECT_EQ(values[4].text, u"0");
+    EXPECT_EQ(values[2].text, u"0");
     EXPECT_EQ(values[5].text, u"0");
     // Drag the start (view 10,20) twice.
     tool.pointer(at(Pointer::Kind::Press, 10, 20, Pointer::Button::Left, true), host);
@@ -1200,12 +1200,157 @@ TEST(VisualMoveValues, TypedPointsWriteTheMove)
     const auto values = tool.values(host);
     ASSERT_EQ(values.size(), 6u);
     EXPECT_EQ(values[0].text, u"30");
-    EXPECT_EQ(values[2].text, u"90");
-    EXPECT_EQ(values[4].text, u"0");
+    EXPECT_EQ(values[3].text, u"90");
+    EXPECT_EQ(values[2].text, u"0");
     EXPECT_EQ(values[5].text, u"2000");
-    EXPECT_FALSE(values[4].editable);
+    // VT1: the times are editable too, from the Line's start in ms.
+    EXPECT_TRUE(values[2].editable);
+    EXPECT_EQ(values[2].unit, u"ms");
+    EXPECT_EQ(values[0].group, u"Start");
+    EXPECT_EQ(values[5].group, u"End");
     EXPECT_TRUE(tool.setValue("x2", u"600", host));
     EXPECT_EQ(text(host, 1), u8"{\\move(30,60,600,120,0,2000)}y");
+    EXPECT_TRUE(tool.setValue("t1", u"100", host));
+    EXPECT_EQ(text(host, 1), u8"{\\move(30,60,600,120,100,2000)}y");
+    EXPECT_TRUE(tool.setValue("t2", u"1500", host));
+    EXPECT_EQ(text(host, 1), u8"{\\move(30,60,600,120,100,1500)}y");
+    EXPECT_EQ(tool.values(host)[5].text, u"1500");
+}
+
+// VT1 (Codex on #293): a typed time is whole milliseconds, kept exactly
+// past a float's 2^24 in the field and in the tag.
+TEST(VisualMoveValues, LargeTypedTimesAreKeptExactly)
+{
+    TestHost host;
+    standard(host, 1);
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t2", u"16777217", host));
+    EXPECT_EQ(text(host, 1), u8"{\\move(30,60,90,120,0,16777217)}y");
+    EXPECT_EQ(tool.values(host)[5].text, u"16777217");
+}
+
+// The \move's two times of a Line's text ("t1,t2"), or empty.
+std::u8string moveTimesOf(const std::u8string &t)
+{
+    const auto open = t.find(u8"\\move(");
+    if (open == std::u8string::npos)
+        return {};
+    const auto close = t.find(u8')', open);
+    std::u8string args = t.substr(open + 6, close - open - 6);
+    for (int i = 0; i < 4; i++)
+        args.erase(0, args.find(u8',') + 1);
+    return args;
+}
+
+// VT1 (Codex on #293): with several Lines a typed time goes into every
+// target, each from its own start, not only the Line it was read from.
+TEST(VisualMoveValues, TypedTimesGoIntoEveryPickedLine)
+{
+    TestHost host;
+    standard(host, 1);
+    host.picker.pick({ids(*host.s)[1], ids(*host.s)[2]});
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    // Codex on #293: the points stay where they were (the press's places
+    // are the handles', not the tool's zeroes).
+    EXPECT_TRUE(tool.setValue("t1", u"100", host));
+    EXPECT_EQ(text(host, 1), u8"{\\move(30,60,90,120,100,2000)}y");
+    EXPECT_EQ(moveTimesOf(text(host, 2)).substr(0, 4), u8"100,");
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t2", u"1500", host));
+    EXPECT_EQ(moveTimesOf(text(host, 1)), u8"100,1500");
+    EXPECT_EQ(moveTimesOf(text(host, 2)), u8"100,1500");
+    // The edit over, a point's drag keeps each Line's own times.
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("x1", u"60", host));
+    EXPECT_EQ(text(host, 1), u8"{\\move(60,60,90,120,100,1500)}y");
+}
+
+// VT1 (Codex on #293): over several Lines a typed time leaves the other
+// one as the tag wrote it (a drag writes wxAtoi's whole part, as legacy).
+TEST(VisualMoveValues, ATypedTimeKeepsTheOtherTimesText)
+{
+    TestHost host;
+    standard(host, 1);
+    std::string script(kScript);
+    const std::string plain = ",,plain\n";
+    script.replace(script.find(plain), plain.size(), ",,{\\move(30,60,90,120,100.5,200.5)}z\n");
+    host.s = std::make_unique<EditSession>(load(script));
+    const core::LineId active = ids(*host.s)[1];
+    host.s->setSelection({active, {active}, active, std::nullopt});
+    host.picker.pick({ids(*host.s)[1], ids(*host.s)[2]});
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t1", u"100", host));
+    EXPECT_EQ(moveTimesOf(text(host, 2)), u8"100,200.5");
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t2", u"1500", host));
+    EXPECT_EQ(moveTimesOf(text(host, 2)), u8"100,1500");
+}
+
+// VT1 (Codex on #293): the times are read and written from the start the
+// Line editor holds (its pending draft's), as the tag is.
+TEST(VisualMoveValues, TypedTimesAreFromTheDraftsStart)
+{
+    TestHost host;
+    standard(host, 1);
+    const core::LineId active = ids(*host.s)[1];
+    ASSERT_TRUE(host.s->editDraft(active, DraftChange{.start = core::DocumentTime(1'500'000)}));
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t1", u"100", host));
+    const auto draft = host.s->draftRecord();
+    const std::u8string written = draft && draft->id == active ? draft->text : text(host, 1);
+    EXPECT_EQ(moveTimesOf(written), u8"100,2000");
+}
+
+// VT1: a scrub's samples stage on one gesture (the Document waits), its
+// release commits them as one step; Esc drops them.
+TEST(VisualPositionValues, AScrubIsOneStepAndEscDropsIt)
+{
+    TestHost host;
+    standard(host);
+    PositionTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    const auto before = host.s->history().size();
+    EXPECT_TRUE(tool.setValue("x", u"310", host, ValueEdit::Sample));
+    ASSERT_TRUE(host.g);
+    EXPECT_TRUE(tool.setValue("x", u"320", host, ValueEdit::Sample));
+    EXPECT_EQ(text(host, 0), u8"{\\pos(300,300)}x");
+    EXPECT_EQ(*host.g->staged(ids(*host.s)[0]), u8"{\\pos(320,300)}x");
+    EXPECT_EQ(host.s->history().size(), before);
+    EXPECT_TRUE(tool.setValue("x", u"320", host, ValueEdit::Commit));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(text(host, 0), u8"{\\pos(320,300)}x");
+    ASSERT_EQ(host.s->history().size(), before + 1);
+    EXPECT_EQ(host.s->history().back().name, "Visual positioning tool");
+    // Esc mid-scrub: nothing written; the next typed value works.
+    EXPECT_TRUE(tool.setValue("y", u"280", host, ValueEdit::Sample));
+    ASSERT_TRUE(host.g);
+    host.escape();
+    EXPECT_EQ(text(host, 0), u8"{\\pos(320,300)}x");
+    EXPECT_EQ(host.s->history().size(), before + 1);
+    EXPECT_EQ(tool.values(host)[1].text, u"300");
+    EXPECT_TRUE(tool.setValue("y", u"290", host));
+    EXPECT_EQ(text(host, 0), u8"{\\pos(320,290)}x");
+    EXPECT_EQ(host.s->history().size(), before + 2);
+    // A pointer's gesture is not a value's: a sample is refused during it.
+    tool.pointer(at(Pointer::Kind::Press, 100, 100, Pointer::Button::Left, true), host);
+    tool.pointer(at(Pointer::Kind::Move, 110, 105, Pointer::Button::None, true), host);
+    ASSERT_TRUE(host.g);
+    EXPECT_FALSE(tool.setValue("x", u"10", host, ValueEdit::Sample));
+    host.escape();
 }
 
 TEST(VisualPositionWarning, OnlyWhileNoneOfItsLinesIsVisible)
