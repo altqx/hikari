@@ -416,7 +416,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         const PlanRow &row = rowOf(plan, rowId);
         EXPECT_EQ(row.binding, (HotkeyId{id, type})) << symbol;
         EXPECT_EQ(row.destination, symbol + " (" + std::string(hotkeyWindowName(type)) + ")");
-        if (isRetiredHotkey(id)) { // V3, AV3 and WS3
+        if (isRetiredHotkey(id)) { // V3, AM1, AV3 and WS3
             EXPECT_EQ(row.disposition, Disposition::Retired) << symbol;
             EXPECT_FALSE(row.selectable);
         } else {
@@ -426,7 +426,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         }
     }
     // Imported, the bindings are SaveHkeys lines in the registry; the retired
-    // action keeps no binding from the file.
+    // actions keep no binding from the file.
     const Profile profile = applyPlan(plan, proposedRows(plan), linuxHost());
     HotkeyMap map;
     readHotkeyLines(map, std::get<std::vector<std::string>>(profile.values.at(std::string(kHotkeysSetting))));
@@ -441,7 +441,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 238); // 243 less V3's GLOBAL_VIDEO_INDEXING, AV3's GLOBAL_OPEN_DUMMY_AUDIO and WS3's five View arrangements and editor switch, plus LE3's GLOBAL_EDITOR_HIDE_TAGS, KE1's GLOBAL_VIDEO_RENDER_COST and FS1's VIDEO_FULLSCREEN_BAR
+    EXPECT_EQ(bound, 237); // 243 less V3's GLOBAL_VIDEO_INDEXING, AM1's GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AV3's GLOBAL_OPEN_DUMMY_AUDIO and WS3's five View arrangements and editor switch, plus LE3's GLOBAL_EDITOR_HIDE_TAGS, KE1's GLOBAL_VIDEO_RENDER_COST and FS1's VIDEO_FULLSCREEN_BAR
 }
 
 // ---- Config.txt / AudioConfig.txt readings
@@ -662,6 +662,7 @@ TEST(SettingsImport, RetiredOptionsAndActionsAreDroppedWithANotice)
 {
     const Plan plan = buildPlan({config(padding() + "TOOLBAR_IDS={\n\tGLOBAL_SAVE_SUBS\n}\r\nTOOLBAR_ALIGNMENT=2\r\n"),
                                  hotkeys("GLOBAL_VIDEO_INDEXING G=Ctrl-Alt-I\r\n5015 S=Ctrl-Alt-J\r\n"
+                                         "GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW G=Ctrl-Shift-H\r\n"
                                          "GLOBAL_OPEN_DUMMY_AUDIO G=Ctrl-Alt-B\r\n")},
                                 linuxHost(), readBy(ReadBy::Windows));
     for (const auto *key : {"TOOLBAR_IDS", "TOOLBAR_ALIGNMENT"}) {
@@ -670,7 +671,8 @@ TEST(SettingsImport, RetiredOptionsAndActionsAreDroppedWithANotice)
         EXPECT_FALSE(row.selectable);
     }
     // By symbol and by number (Hotkeys.cpp:300-301).
-    for (const auto *id : {"shortcut:GLOBAL_VIDEO_INDEXING:G", "shortcut:GLOBAL_VIDEO_INDEXING:S"}) {
+    for (const auto *id : {"shortcut:GLOBAL_VIDEO_INDEXING:G", "shortcut:GLOBAL_VIDEO_INDEXING:S",
+                           "shortcut:GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW:G"}) {
         EXPECT_EQ(rowOf(plan, id).disposition, Disposition::Retired) << id;
         EXPECT_NE(rowOf(plan, id).reason.find("retired"), std::string::npos);
     }
@@ -1011,6 +1013,24 @@ TEST(SettingsImport, CurrentChoicesAreKeptUnlessChosen)
     chosen.insert("setting:grid.font");
     EXPECT_EQ(applyPlan(plan, chosen, d).values.at("grid.font"), SettingValue(std::string("Arial")));
     EXPECT_EQ(applyPlan(plan, proposedRows(plan), d).values.at("grid.font"), SettingValue(std::string("Mine")));
+}
+
+// AU2 (#268): the audio panel's Customise choice is the rewrite's own
+// (no legacy key): an import, even of an AudioConfig.txt that resets the
+// audio options, has no row for it and leaves it as it is.
+TEST(SettingsImport, TheAudioPanelArrangementIsLeftAsItIs)
+{
+    Destination d = linuxHost();
+    const SettingValue mine = std::vector<std::string>{"goto", "sliders"};
+    d.values["audio.panelControls"] = mine;
+    const Plan plan = buildPlan({config(padding() + "AUDIO_DELAY=40\r\n"),
+                                 audioConfig(padding() + "AUDIO_VOLUME=20\r\n", "[HikariSub v0.0.0]\r\n")},
+                                d, readBy(ReadBy::Windows));
+    for (const auto &row : plan.rows)
+        EXPECT_EQ(row.id.find("audio.panelControls"), std::string::npos) << row.id;
+    const Profile imported = applyPlan(plan, proposedRows(plan), d);
+    EXPECT_EQ(imported.values.at("audio.volume"), SettingValue(std::int64_t{20}));
+    EXPECT_EQ(imported.values.at("audio.panelControls"), mine);
 }
 
 TEST(SettingsImport, RepeatedImportIsANoOpAndLaterEditsAreKept)

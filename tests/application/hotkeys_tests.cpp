@@ -125,6 +125,9 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     // never listed; VIDEO_DELETE_FILE is "Unload video".
     EXPECT_EQ(legacy.at(ids().at("GLOBAL_VIDEO_INDEXING")), "Open video with FFMS2");
     legacy.erase(ids().at("GLOBAL_VIDEO_INDEXING"));
+    // AM1-hotkeys-window-retired: so is the automation hotkeys window's.
+    EXPECT_EQ(legacy.at(ids().at("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW")), "Open shortcut mapping window");
+    legacy.erase(ids().at("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"));
     // WS3-view-arrangements-retired (2026-10-18): the View arrangements and
     // the editor switch are retired and never listed.
     for (const auto &[symbol, name] : std::initializer_list<std::pair<const char *, const char *>>{
@@ -349,9 +352,10 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     auto live = defaultHotkeys();
     list.build(live);
     // The names table from the highest id down; no GLOBAL_QUIT.
-    // V3: no "Open video with FFMS2" row; WS3: none for the five View
-    // arrangements and the editor switch; LE3's, KE1's and FS1's commands have their own.
-    ASSERT_EQ(list.rowCount(), 222u);
+    // V3, AM1: no "Open video with FFMS2" or "Open shortcut mapping window"
+    // row; WS3: none for the five View arrangements and the editor switch;
+    // LE3's, KE1's and FS1's commands have their own.
+    ASSERT_EQ(list.rowCount(), 221u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -377,7 +381,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     live[HotkeyId{kSave, GridHotkey}] = Hotkey{"Save", "F7"};
     HotkeyList more(copy);
     more.build(live);
-    ASSERT_EQ(more.rowCount(), 224u); // 222 named rows and these two
+    ASSERT_EQ(more.rowCount(), 223u); // V3, AM1, WS3: 221 named rows and these two
     const int script = more.find("Global Script a.lua-1");
     const int copied = more.find("Subtitles Save");
     ASSERT_GE(script, 0);
@@ -393,7 +397,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     fewer.erase(HotkeyId{kAudioCommitAlt, AudioHotkey});
     HotkeyList cut(copy);
     cut.build(fewer);
-    EXPECT_EQ(cut.rowCount(), 221u); // 222 named rows less Commit alt
+    EXPECT_EQ(cut.rowCount(), 220u); // V3, AM1, WS3: 221 named rows less Commit alt
     EXPECT_EQ(cut.find("Audio Commit alt"), -1);
     // A binding in a window legacy cannot name (-1) is never listed, and so
     // the list never ends early.
@@ -401,7 +405,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     odd[HotkeyId{5001, -1}] = Hotkey{"", "F1"};
     HotkeyList whole(copy);
     whole.build(odd);
-    EXPECT_EQ(whole.rowCount(), 222u);
+    EXPECT_EQ(whole.rowCount(), 221u);
 }
 
 TEST(Hotkeys, FilterModesAndSelection)
@@ -430,7 +434,7 @@ TEST(Hotkeys, FilterModesAndSelection)
     list.filter(1);
     EXPECT_EQ(list.shown().size(), 83u);
     list.filter(0);
-    EXPECT_EQ(list.shown().size(), 222u);
+    EXPECT_EQ(list.shown().size(), 221u);
 }
 
 TEST(Hotkeys, MapSetsTheBindingAndCommitWritesTheCopy)
@@ -566,8 +570,8 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     const int save = list.find("Global Save");
     list.map(save, "F7", VideoHotkey, HotkeyAnswer::Cancel, live);
     EXPECT_EQ(list.row(save).accel, "Ctrl-S"); // the Global row keeps its keys
-    ASSERT_EQ(list.rowCount(), 223u);
-    const auto &added = list.row(222);
+    ASSERT_EQ(list.rowCount(), 222u);
+    const auto &added = list.row(221);
     EXPECT_EQ(added.text, "Video Save");
     EXPECT_EQ((added.key), (HotkeyId{kSave, VideoHotkey}));
     EXPECT_EQ(added.accel, "F7");
@@ -575,9 +579,9 @@ TEST(Hotkeys, MapToAnotherWindowAddsOrUpdatesItsRow)
     EXPECT_EQ(copy.at(HotkeyId{kSave, VideoHotkey}).accel, "F7");
     // Again: that row changes and is selected.
     list.map(save, "F6", VideoHotkey, HotkeyAnswer::Cancel, live);
-    EXPECT_EQ(list.rowCount(), 223u);
-    EXPECT_EQ(list.row(222).accel, "F6");
-    EXPECT_EQ(list.selection(), 222);
+    EXPECT_EQ(list.rowCount(), 222u);
+    EXPECT_EQ(list.row(221).accel, "F6");
+    EXPECT_EQ(list.selection(), 221);
 }
 
 TEST(Hotkeys, ResetDeleteUndoRedo)
@@ -669,7 +673,7 @@ TEST(Hotkeys, TheCopyOutlivesTheDialogAndSetDefault)
     auto reset = defaultHotkeys();
     third.clear();
     third.build(reset);
-    EXPECT_EQ(third.shown().size(), 222u); // every row shown, the filter choice as it was
+    EXPECT_EQ(third.shown().size(), 221u); // every row shown, the filter choice as it was
     EXPECT_EQ(third.filterMode(), 2);
     EXPECT_EQ(rowNamed(third, "Global Open subtitles").accel, "Ctrl-O");
     EXPECT_TRUE(third.modified());
@@ -876,6 +880,28 @@ TEST(Hotkeys, RetiredIndexingBindingsAreDropped)
     // nothing writes it back
     for (const auto &line : hotkeyLines(map, false))
         EXPECT_EQ(line.find("GLOBAL_VIDEO_INDEXING"), std::string::npos);
+}
+
+// AM1-hotkeys-window-retired: the Automation hotkeys window and its command
+// are gone; a stored binding of GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW is
+// recognised and dropped, and the command is never listed.
+TEST(Hotkeys, RetiredAutomationHotkeysWindowBindingsAreDropped)
+{
+    HotkeyMap map;
+    readHotkeyLines(map, {"GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW G=Ctrl-Shift-H", "GLOBAL_SAVE_SUBS G=Ctrl-S"});
+    const int window = ids().at("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW");
+    EXPECT_TRUE(map.contains(HotkeyId{window, GlobalHotkey}));
+    EXPECT_TRUE(isRetiredHotkey(window));
+    EXPECT_FALSE(isRetiredHotkey(ids().at("GLOBAL_AUTOMATION_LOAD_SCRIPT")));
+    const auto dropped = dropRetiredHotkeys(map);
+    ASSERT_EQ(dropped.size(), 1u);
+    EXPECT_EQ(dropped[0].second.accel, "Ctrl-Shift-H");
+    EXPECT_EQ(map.size(), 1u);
+    EXPECT_EQ(hotkeyName(window), "");
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    list.build(defaultHotkeys());
+    EXPECT_EQ(list.find("Global Open shortcut mapping window"), -1);
 }
 
 // WS3-view-arrangements-retired: stored bindings of the View arrangements

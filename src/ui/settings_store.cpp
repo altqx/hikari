@@ -1,5 +1,6 @@
 #include "settings_store.h"
 
+#include <QJSValue>
 #include <QSettings>
 
 namespace hikari::ui {
@@ -120,6 +121,10 @@ QVariant SettingsStore::toVariant(const SettingValue &value)
 
 SettingValue SettingsStore::fromVariant(const QVariant &value)
 {
+    // A JavaScript array from QML (AU2's audio.panelControls) comes as a
+    // QJSValue: its list, not its text.
+    if (value.metaType() == QMetaType::fromType<QJSValue>())
+        return fromVariant(value.value<QJSValue>().toVariant());
     switch (value.typeId()) {
     case QMetaType::Bool:
         return value.toBool();

@@ -16,8 +16,9 @@
 //
 // It stands aside while a text field has focus (typing is never redirected
 // by hover), while a control the keyboard moved to has focus (it keeps its
-// own Space and arrows), inside a popup and in any window that holds no
-// registered panel.
+// own Space and arrows), while a shortcut recorder records (its
+// `recordsKeys` property is true), inside a popup and in any window that
+// holds no registered panel.
 
 #include <QJSValue>
 #include <QObject>
