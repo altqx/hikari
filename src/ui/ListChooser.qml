@@ -123,6 +123,10 @@ Item {
         id: frame
         required property Item host
         property bool framed: false
+        // Eight rows show; more scroll, with the bar beside the rows (not
+        // over their details). The rows' count decides, not the heights,
+        // which settle a frame apart and flashed the bar at the opening.
+        readonly property bool scrolls: list.count > 8
         color: framed ? Theme.field : "transparent"
         border.width: framed ? 1 : 0
         border.color: list.activeFocus && framed ? Theme.focus : Theme.line
@@ -141,7 +145,7 @@ Item {
             activeFocusOnTab: true
             Accessible.role: Accessible.List
             Accessible.name: frame.host.title
-            ScrollBar.vertical: ScrollBar { policy: list.contentHeight > list.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded }
+            ScrollBar.vertical: ScrollBar { objectName: "listChooserScrollBar"; policy: frame.scrolls ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff }
             onCurrentIndexChanged: frame.host.current = currentIndex
             Keys.onReturnPressed: frame.host.take(currentIndex)
             Keys.onEnterPressed: frame.host.take(currentIndex)
@@ -150,7 +154,7 @@ Item {
                 required property var modelData
                 required property int index
                 objectName: "listChooserRow" + index
-                width: ListView.view.width
+                width: ListView.view.width - (frame.scrolls ? ListView.view.ScrollBar.vertical.width : 0)
                 implicitHeight: 28
                 highlighted: ListView.isCurrentItem
                 focusPolicy: Qt.NoFocus

@@ -8332,18 +8332,6 @@ after the end time in milliseconds</source>
         <translation>Wybierz plik napisów</translation>
     </message>
     <message>
-        <source>Translation mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original text</source>
-        <translation type="unfinished">Tekst oryginalny</translation>
-    </message>
-    <message>
-        <source>Original text: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8450,27 +8438,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected Lines for review</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on Translation mode for this file?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Not now</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

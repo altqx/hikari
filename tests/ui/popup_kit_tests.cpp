@@ -553,10 +553,27 @@ private slots:
         QVERIFY(QTest::qWaitForWindowFocused(compact));
         QCOMPARE(findIn(compact, "listChooserTake")->property("text").toString(), QStringLiteral("Open"));
         QCOMPARE(findIn(compact, "listChooserText")->property("text").toString(), QStringLiteral("The file has 2 audio tracks"));
+        // Two rows fit: the whole list shows, with no scroll bar over the details.
+        QVERIFY(QQuickTest::qWaitForPolish(compact));
+        auto *list = findIn(compact, "listChooserList");
+        QVERIFY(list->height() >= list->property("contentHeight").toReal());
+        auto *bar = findIn(compact, "listChooserScrollBar");
+        QVERIFY(bar);
+        QVERIFY(!bar->isVisible() || bar->opacity() == 0);
         QTest::keyClick(compact, Qt::Key_Down);
         QTest::keyClick(compact, Qt::Key_Return);
         QTRY_VERIFY(!compact->isVisible());
         QCOMPARE(notes(), QStringList{QStringLiteral("row:1")});
+        // More than eight rows scroll, the bar beside the rows.
+        run(QStringLiteral("chooser.choose({ title: 'Choose', rows: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10'] },"
+                           " row => root.note('row:' + row))"));
+        QVERIFY(QTest::qWaitForWindowFocused(compact));
+        QVERIFY(QQuickTest::qWaitForPolish(compact));
+        QVERIFY(bar->isVisible());
+        QVERIFY(list->height() < list->property("contentHeight").toReal());
+        QVERIFY(findIn(compact, "listChooserRow0")->width() + bar->width() <= list->width());
+        QTest::keyClick(compact, Qt::Key_Escape);
+        QTRY_VERIFY(!compact->isVisible());
         run(QStringLiteral("chooser.choose({ title: 'Choose', rows: ['x'] }, row => root.note('row:' + row))"));
         QVERIFY(QTest::qWaitForWindowFocused(compact));
         QTest::keyClick(compact, Qt::Key_Escape);

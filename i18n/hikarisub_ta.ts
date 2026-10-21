@@ -8311,18 +8311,6 @@ after the end time in milliseconds</source>
         <translation>வசன வரிகளைத் தேர்வுசெய்க</translation>
     </message>
     <message>
-        <source>Translation mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original text</source>
-        <translation type="unfinished">அசல் உரை</translation>
-    </message>
-    <message>
-        <source>Original text: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8429,27 +8417,7 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected Lines for review</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on Translation mode for this file?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Not now</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
