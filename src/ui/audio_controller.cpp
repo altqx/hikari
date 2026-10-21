@@ -1272,6 +1272,12 @@ void AudioController::addLead(bool in, bool out)
     if (m_hasKara && m_karaoke.count() && m_startMs != startBefore && !several) {
         m_karaoke.moveStart(startBefore, committedStart());
         karaokeText = m_karaoke.text(committedStart());
+    } else if (m_hasKara && m_karaoke.count() && m_startMs != startBefore) {
+        // the text's \k tags stay, now from the new start: the syllables
+        // move with it, as the text will read (Codex)
+        const int by = committedStart() - (m_hooks.fieldTime ? m_hooks.fieldTime(startBefore) : startBefore);
+        for (auto &time : m_karaoke.times())
+            time += by;
     }
     if (m_hooks.commit)
         m_hooks.commit({.startMs = m_startMs,

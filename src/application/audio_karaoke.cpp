@@ -355,7 +355,9 @@ void AudioKaraoke::splitTags(const Line &line, std::vector<std::u16string> *carr
         if (inBrackets && ch == u'\\' && (nch == u'k' || nch == u'K') && !kt) {
             if (tagged) {
                 m_syls.push_back(wxMid(res, 0, lastStartBracket));
-                res = wxMid(res, lastStartBracket);
+                // what is left, in place (Codex security: a copy of it for
+                // each tag of one block after a long text was quadratic)
+                res.erase(0, std::min(lastStartBracket, res.size()));
                 lastStartBracket = 0;
             }
             tagged = true;

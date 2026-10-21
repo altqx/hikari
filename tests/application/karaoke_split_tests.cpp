@@ -519,6 +519,17 @@ TEST(KaraokeMoveStart, TheLinesTextKeepsItsSyllables)
 
 TEST(KaraokeRoundTrip, LongLinesAreReadAndWrittenInOnePass)
 {
+    // Codex security: a long text before one block of tags was copied for
+    // each tag
+    std::u16string prefixed(2'000'000, u'a');
+    prefixed += u"{";
+    for (int i = 0; i < 16384; i++)
+        prefixed += u"\\k0";
+    prefixed += u"}x";
+    const auto start = std::chrono::steady_clock::now();
+    EXPECT_NE(karaokeKeepSyllables(prefixed, 1000, 800, 9000), std::nullopt);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(2));
+
     // Codex security: 20 000 tags in one block came back with a search for
     // each tag, and each letter looked to the Line's end for a "{"
     std::string block = "{";

@@ -16192,6 +16192,8 @@ private slots:
         application->editor().reloadFromSession();
         QTRY_COMPARE(audio.karaokeModel().count(), 2);
         audio.leadIn();
+        // the panel's syllables as the kept text reads from the new start (Codex)
+        QCOMPARE(audio.karaokeModel().times(), (std::vector<int>{500, 800}));
         audio.commit();
         const auto after = session->document().lines();
         QCOMPARE(after[0]->text, std::u8string(u8"{\\k30}sa{\\k30}ku"));
