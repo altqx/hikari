@@ -1103,3 +1103,44 @@ TEST(update_walk_finds_a_legacy_update_past_newer_rewrite_releases)
 	CHECK(legacy == int(update_policy::kMaxCandidates));
 	CHECK(rewrite == int(update_policy::kMaxCandidates));
 }
+
+TEST(update_offer_try_it_follows_the_package_kind)
+{
+	using package_kind::Kind;
+	Manifest manifest;
+	CHECK(Read(RewriteJson("0.1.0-beta.1"), "0.1.0-beta.1", &manifest) == ManifestRead::Valid);
+	Package nsis;
+	nsis.name = "HikariSub-0.1.0-beta.1-windows-x64-setup.exe";
+	nsis.size = 1000;
+	nsis.sha256 = kHashA;
+	manifest.packages["nsis"] = nsis;
+	SystemInfo system;
+
+	// Installed kinds download it, check it and offer Update ready: Try it
+	// is the user's choice, whatever "Install updates automatically" says.
+	for (Kind kind : { Kind::NsisUser, Kind::NsisMachine, Kind::Deb }) {
+		Offer offer = TryOffer(kind, true, manifest, system);
+		CHECK(offer.type == OfferType::Install);
+		CHECK(offer.package.name == manifest.packages[std::string(package_kind::PackageKey(kind))].name);
+	}
+	// One that cannot replace itself, or has no package of its kind, gets
+	// the release page.
+	CHECK(TryOffer(Kind::Deb, false, manifest, system).type == OfferType::Notify);
+	CHECK(TryOffer(Kind::AppImage, true, manifest, system).type == OfferType::Notify);
+	// A portable copy gets the release page, and the note to unpack the
+	// rewrite beside it.
+	for (Kind kind : { Kind::PortableWindows, Kind::PortableLinux }) {
+		CHECK(TryOffer(kind, false, manifest, system).type == OfferType::Notify);
+		CHECK(TryOpensBeside(kind));
+	}
+	CHECK(!TryOpensBeside(Kind::Deb));
+	CHECK(!TryOpensBeside(Kind::NsisUser));
+
+	// AUR installs get no offer: each AUR package moves on its own.
+	CHECK(!GetsOffers(Kind::Arch));
+	for (Kind kind : { Kind::NsisUser, Kind::NsisMachine, Kind::AppImage, Kind::Deb, Kind::Rpm,
+		Kind::PortableWindows, Kind::PortableLinux })
+	{
+		CHECK(GetsOffers(kind));
+	}
+}

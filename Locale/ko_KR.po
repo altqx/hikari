@@ -7,7 +7,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-21 20:12+0700\n"
+"POT-Creation-Date: 2026-10-21 21:31+0700\n"
 "PO-Revision-Date: 2026-09-26 19:00+0700\n"
 "Last-Translator: altqx <al@altqx.com>\n"
 "Language-Team: Korean\n"
@@ -643,8 +643,8 @@ msgstr "계속 설정"
 #: HikariSub/FontCollector.cpp:217 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
-#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:239
-#: HikariSub/UpdateChecker.cpp:317 HikariSub/UpdateChecker.cpp:428
+#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:251
+#: HikariSub/UpdateChecker.cpp:329 HikariSub/UpdateChecker.cpp:438
 #: HikariSub/UpdateInstaller.cpp:280 HikariSub/stylestore.cpp:172
 msgid "Close"
 msgstr "닫기"
@@ -4151,7 +4151,7 @@ msgstr "맞춤법 검사 (\"Dictionary\" 폴더)"
 msgid "Updates"
 msgstr "업데이트"
 
-#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:298
+#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:310
 msgid "Check for updates automatically"
 msgstr "자동으로 업데이트 확인"
 
@@ -4159,7 +4159,7 @@ msgstr "자동으로 업데이트 확인"
 msgid "When the program starts: once a day, or an hour after a check that failed"
 msgstr "프로그램 시작 시: 하루에 한 번, 또는 확인에 실패한 경우 1시간 후"
 
-#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:302
+#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:314
 msgid "Stable versions only"
 msgstr "안정 버전만"
 
@@ -7118,108 +7118,112 @@ msgstr "위로"
 msgid "Toolbar alignment"
 msgstr "도구 모음 정렬"
 
-#: HikariSub/UpdateChecker.cpp:236
+#: HikariSub/UpdateChecker.cpp:248
 #, c-format
 msgid "You have the latest stable version. A newer prerelease, %s, is available."
 msgstr "최신 안정 버전을 사용 중입니다. 더 새로운 시험판 %s을(를) 사용할 수 있습니다."
 
-#: HikariSub/UpdateChecker.cpp:237 HikariSub/UpdateInstaller.cpp:271
+#: HikariSub/UpdateChecker.cpp:249 HikariSub/UpdateInstaller.cpp:271
 #: HikariSub/UpdateInstaller.cpp:840 HikariSub/UpdateInstaller.cpp:1060
 #: HikariSub/UpdateInstaller.cpp:1345
 msgid "Update"
 msgstr "업데이트"
 
-#: HikariSub/UpdateChecker.cpp:238 HikariSub/UpdateChecker.cpp:315
+#: HikariSub/UpdateChecker.cpp:250 HikariSub/UpdateChecker.cpp:327
 msgid "Open the download page"
 msgstr "다운로드 페이지 열기"
 
-#: HikariSub/UpdateChecker.cpp:268 HikariSub/UpdateChecker.cpp:409
-#: HikariSub/UpdateChecker.cpp:413
+#: HikariSub/UpdateChecker.cpp:280 HikariSub/UpdateChecker.cpp:420
+#: HikariSub/UpdateChecker.cpp:424
 msgid "A new version is available"
 msgstr "새 버전을 사용할 수 있습니다"
 
-#: HikariSub/UpdateChecker.cpp:280
+#: HikariSub/UpdateChecker.cpp:292
 #, c-format
 msgid "You have version %s; version %s is available"
 msgstr "현재 버전은 %s이며, %s 버전을 사용할 수 있습니다"
 
-#: HikariSub/UpdateChecker.cpp:285 HikariSub/UpdateChecker.cpp:553
+#: HikariSub/UpdateChecker.cpp:297 HikariSub/UpdateChecker.cpp:579
 #, c-format
 msgid "It needs %s or newer, so it cannot be installed here."
 msgstr "이 버전은 %s 이상이 필요하므로 이 시스템에 설치할 수 없습니다."
 
-#: HikariSub/UpdateChecker.cpp:315
+#: HikariSub/UpdateChecker.cpp:327
 msgid "Download and install"
 msgstr "다운로드 및 설치"
 
-#: HikariSub/UpdateChecker.cpp:316 HikariSub/UpdateChecker.cpp:427
+#: HikariSub/UpdateChecker.cpp:328 HikariSub/UpdateChecker.cpp:437
 msgid "Remind me in a week"
 msgstr "1주일 후에 다시 알림"
 
-#: HikariSub/UpdateChecker.cpp:365 HikariSub/UpdateChecker.cpp:574
+#: HikariSub/UpdateChecker.cpp:377 HikariSub/UpdateChecker.cpp:598
 msgid "Downloading..."
 msgstr "다운로드 중..."
 
-#: HikariSub/UpdateChecker.cpp:371 HikariSub/UpdateChecker.cpp:578
+#: HikariSub/UpdateChecker.cpp:383 HikariSub/UpdateChecker.cpp:602
 #, c-format
 msgid "Downloading... %d%%"
 msgstr "다운로드 중... %d%%"
 
-#: HikariSub/UpdateChecker.cpp:381 HikariSub/UpdateChecker.cpp:588
+#: HikariSub/UpdateChecker.cpp:393 HikariSub/UpdateChecker.cpp:612
 #: HikariSub/UpdateInstaller.cpp:415 HikariSub/UpdateInstaller.cpp:420
 #: HikariSub/UpdateInstaller.cpp:569
 msgid "Cannot download the update"
 msgstr "업데이트를 다운로드할 수 없음"
 
-#: HikariSub/UpdateChecker.cpp:418
+#: HikariSub/UpdateChecker.cpp:429
 #, c-format
 msgid "HikariSub %s is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page."
 msgstr "HikariSub %s은(는) 시험판입니다. AUR 패키지는 안정 버전만 제공합니다. 사용해 보려면 릴리스 페이지의 AppImage를 이용하십시오."
 
-#: HikariSub/UpdateChecker.cpp:420
+#: HikariSub/UpdateChecker.cpp:431
 #, c-format
 msgid "HikariSub %s is available; you have %s. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu."
 msgstr "HikariSub %s을(를) 사용할 수 있습니다. 현재 버전은 %s입니다. HikariSub를 AUR에서 설치했으므로 패키지 관리자나 AUR 도우미로 업데이트하십시오(예: yay -Syu 또는 paru -Syu)."
 
-#: HikariSub/UpdateChecker.cpp:425 HikariSub/UpdateInstaller.cpp:331
+#: HikariSub/UpdateChecker.cpp:436 HikariSub/UpdateInstaller.cpp:331
 msgid "What's new"
 msgstr "새로운 기능"
 
-#: HikariSub/UpdateChecker.cpp:461
+#: HikariSub/UpdateChecker.cpp:471
 msgid "The new HikariSub"
 msgstr "새 HikariSub"
 
-#: HikariSub/UpdateChecker.cpp:473
+#: HikariSub/UpdateChecker.cpp:483
 #, c-format
 msgid "Version %s. You have HikariSub %s."
 msgstr "버전 %s입니다. 현재 HikariSub %s을(를) 사용 중입니다."
 
-#: HikariSub/UpdateChecker.cpp:485
+#: HikariSub/UpdateChecker.cpp:498
+msgid "Try it opens the release page. Unpack the new HikariSub into a folder of its own, beside this copy, which stays as it is."
+msgstr "사용해 보기를 누르면 릴리스 페이지가 열립니다. 새 HikariSub는 이 사본 옆의 별도 폴더에 압축을 푸세요. 이 사본은 그대로 남습니다."
+
+#: HikariSub/UpdateChecker.cpp:504
 msgid "This version of HikariSub gets no further updates. It keeps working, and moving to the new HikariSub is up to you."
 msgstr "이 버전의 HikariSub는 더 이상 업데이트되지 않습니다. 계속 사용할 수 있으며, 새 HikariSub로 옮길지는 사용자가 결정합니다."
 
-#: HikariSub/UpdateChecker.cpp:495
+#: HikariSub/UpdateChecker.cpp:514
 msgid "Try it"
 msgstr "사용해 보기"
 
-#: HikariSub/UpdateChecker.cpp:497
+#: HikariSub/UpdateChecker.cpp:516
 msgid "Remind me later"
 msgstr "나중에 다시 알림"
 
-#: HikariSub/UpdateChecker.cpp:498
+#: HikariSub/UpdateChecker.cpp:518
 msgid "Don't offer again"
 msgstr "다시 제안하지 않음"
 
-#: HikariSub/UpdateChecker.cpp:1020 HikariSub/UpdateChecker.cpp:1034
-#: HikariSub/UpdateChecker.cpp:1132
+#: HikariSub/UpdateChecker.cpp:1042 HikariSub/UpdateChecker.cpp:1056
+#: HikariSub/UpdateChecker.cpp:1155
 msgid "Cannot check for updates"
 msgstr "업데이트를 확인할 수 없음"
 
-#: HikariSub/UpdateChecker.cpp:1026
+#: HikariSub/UpdateChecker.cpp:1048
 msgid "There is no new HikariSub to try at the moment."
 msgstr "지금은 사용해 볼 새 HikariSub가 없습니다."
 
-#: HikariSub/UpdateChecker.cpp:1041
+#: HikariSub/UpdateChecker.cpp:1063
 msgid "You already have the latest version"
 msgstr "이미 최신 버전을 사용 중입니다"
 

@@ -61,7 +61,6 @@ namespace
 	// Tried: downloaded, or its page opened.
 	constexpr int kTriedId = 20008;
 	// Tried by an AUR install, which is told to use its package manager.
-	constexpr int kTriedAurId = 20009;
 
 	struct ReleaseInfo
 	{
@@ -416,9 +415,8 @@ namespace
 	{
 	public:
 		// notCarried: a prerelease that the install's AUR package does not
-		// carry (only hikarisub-beta-bin carries prereleases). rewrite: the
-		// rewrite that the user chose to try, which has no reminder.
-		AurNoticeDialog(wxWindow *parent, const ReleaseInfo &release, bool notCarried, bool rewrite = false)
+		// carry (only hikarisub-beta-bin carries prereleases).
+		AurNoticeDialog(wxWindow *parent, const ReleaseInfo &release, bool notCarried)
 			: HikariDialog(parent, -1, _("A new version is available"))
 			, tag(release.tag)
 		{
@@ -436,8 +434,7 @@ namespace
 
 			wxBoxSizer *buttons = new wxBoxSizer(wxHORIZONTAL);
 			buttons->Add(new MappedButton(this, kOpenId, _("What's new")), 1, wxALL, 2);
-			if (!rewrite)
-				buttons->Add(new MappedButton(this, kRemindId, _("Remind me in a week")), 1, wxALL, 2);
+			buttons->Add(new MappedButton(this, kRemindId, _("Remind me in a week")), 1, wxALL, 2);
 			buttons->Add(new MappedButton(this, wxID_CLOSE, _("Close")), 1, wxALL, 2);
 			sizer->Add(buttons, 0, wxEXPAND | wxALL, 2);
 
@@ -495,6 +492,12 @@ namespace
 				sizer->Add(new HikariStaticText(this, -1, Wrap(FromUtf8(pitch.note))), 0,
 					wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
 			}
+			if (update_manifest::TryOpensBeside(update_installer::Kind())) {
+				sizer->AddSpacer(6);
+				sizer->Add(new HikariStaticText(this, -1,
+					Wrap(_("Try it opens the release page. Unpack the new HikariSub into a folder of its own, beside this copy, which stays as it is."))),
+					0, wxEXPAND | wxLEFT | wxRIGHT | wxBOTTOM, 6);
+			}
 			if (manifest.offer->legacySupportEnded) {
 				sizer->AddSpacer(6);
 				HikariStaticText *ended = new HikariStaticText(this, -1,
@@ -542,7 +545,6 @@ namespace
 			bool ended = manifest.offer->legacySupportEnded;
 			switch (result) {
 			case kTriedId:
-			case kTriedAurId:
 				SetOfferDeclined(update_manifest::TriedAfter(manifest.version, ended, LoadOfferDeclined()));
 				SetOfferRemind(0);
 				break;
@@ -560,13 +562,14 @@ namespace
 	private:
 		void TryIt()
 		{
-			bool autoInstall = Options.GetBool(UPDATER_AUTO_INSTALL) && update_installer::CanInstall();
-			update_manifest::Offer offer = update_manifest::Decide(update_installer::Kind(), autoInstall, manifest,
-				update_installer::GetSystemInfo());
+			update_manifest::Offer offer = update_manifest::TryOffer(update_installer::Kind(),
+				update_installer::CanInstall(), manifest, update_installer::GetSystemInfo());
 			switch (offer.type) {
 			case update_manifest::OfferType::Install:
 				StartDownload(offer.package);
 				return;
+			// An AUR install gets no offer (GetsOffers()).
+			case update_manifest::OfferType::AurNotice:
 			case update_manifest::OfferType::Notify:
 				OpenReleasePage(update_installer::ReleasePage(L"v" + FromUtf8(manifest.version)));
 				EndModal(kTriedId);
@@ -575,9 +578,6 @@ namespace
 				tryIt->Hide();
 				ShowProgress(wxString::Format(_("It needs %s or newer, so it cannot be installed here."),
 					FromUtf8(offer.requirement)));
-				return;
-			case update_manifest::OfferType::AurNotice:
-				EndModal(kTriedAurId);
 				return;
 			}
 		}
@@ -634,26 +634,12 @@ namespace
 		bool downloading = false;
 	};
 
-	// Shows the offer, and saves the user's choice. An AUR install that
-	// tries it is told about the package manager, as for an update.
+	// Shows the offer, and saves the user's choice.
 	void ShowOffer(wxWindow *parent, const update_manifest::Manifest &manifest)
 	{
 		OfferDialog dialog(parent, manifest);
 		update_installer::Present(&dialog, parent);
-		int result = dialog.ShowModal();
-		dialog.SaveChoices(result);
-		if (result != kTriedAurId)
-			return;
-		ReleaseInfo info;
-		info.tag = L"v" + FromUtf8(manifest.version);
-		info.name = info.tag;
-		info.url = update_installer::ReleasePage(info.tag);
-		std::optional<SemVer> version = ParseSemVer(manifest.version);
-		bool prerelease = version && !version->prerelease.empty();
-		AurNoticeDialog notice(parent, info,
-			!package_kind::AurCarries(prerelease, update_installer::AurChannel()), true);
-		update_installer::Present(&notice, parent);
-		notice.ShowModal();
+		dialog.SaveChoices(dialog.ShowModal());
 	}
 
 	// What a check was asked for from the menu: the updates, or the offer
@@ -901,7 +887,9 @@ namespace
 		// kept when it is the highest so far.
 		void Consider(update_manifest::Considered considered)
 		{
-			offers.Take(std::move(considered.offer));
+			// AUR installs get none.
+			if (update_manifest::GetsOffers(update_installer::Kind()))
+				offers.Take(std::move(considered.offer));
 			if (!considered.update || walk->Found()) {
 				walk->Skip();
 				return;

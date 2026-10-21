@@ -822,6 +822,29 @@ namespace update_manifest
 		return offer;
 	}
 
+	// AUR installs get no offer of the rewrite: each AUR package moves to
+	// it on its own (ADR-0021).
+	constexpr bool GetsOffers(Kind kind)
+	{
+		return package_kind::FlowOf(kind) != package_kind::Flow::AurNotice;
+	}
+
+	// What Try it on the offer does: an installed kind downloads it, as
+	// the user asked, whatever "Install updates automatically" says;
+	// canInstall is whether this copy can replace itself. A portable copy,
+	// or one that cannot, gets the release page.
+	inline Offer TryOffer(Kind kind, bool canInstall, const Manifest &manifest, const SystemInfo &system)
+	{
+		return Decide(kind, canInstall, manifest, system);
+	}
+
+	// Whether Try it leads to a package to unpack beside this copy: a
+	// portable one's.
+	constexpr bool TryOpensBeside(Kind kind)
+	{
+		return package_kind::FlowOf(kind) == package_kind::Flow::Notify;
+	}
+
 	// Whether a release is a prerelease, by GitHub's flag or its tag, for
 	// the AUR notice's wording (4.5).
 	inline bool IsPrerelease(const Release &release)

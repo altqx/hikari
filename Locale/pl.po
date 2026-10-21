@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-21 20:12+0700\n"
+"POT-Creation-Date: 2026-10-21 21:31+0700\n"
 "PO-Revision-Date: 2026-09-26 19:00+0700\n"
 "Last-Translator: altqx <al@altqx.com>\n"
 "Language-Team: Polish\n"
@@ -620,8 +620,8 @@ msgstr "Ustaw mimo to"
 #: HikariSub/FontCollector.cpp:217 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
-#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:239
-#: HikariSub/UpdateChecker.cpp:317 HikariSub/UpdateChecker.cpp:428
+#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:251
+#: HikariSub/UpdateChecker.cpp:329 HikariSub/UpdateChecker.cpp:438
 #: HikariSub/UpdateInstaller.cpp:280 HikariSub/stylestore.cpp:172
 msgid "Close"
 msgstr "Zamknij"
@@ -4140,7 +4140,7 @@ msgstr "Język sprawdzania pisowni (folder \"Dictionary\")"
 msgid "Updates"
 msgstr "Aktualizacje"
 
-#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:298
+#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:310
 msgid "Check for updates automatically"
 msgstr "Automatycznie sprawdzaj aktualizacje"
 
@@ -4148,7 +4148,7 @@ msgstr "Automatycznie sprawdzaj aktualizacje"
 msgid "When the program starts: once a day, or an hour after a check that failed"
 msgstr "Przy uruchomieniu programu: raz dziennie lub godzinę po nieudanym sprawdzeniu"
 
-#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:302
+#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:314
 msgid "Stable versions only"
 msgstr "Tylko wersje stabilne"
 
@@ -7128,108 +7128,112 @@ msgstr "U góry"
 msgid "Toolbar alignment"
 msgstr "Pozycja paska narzędzi"
 
-#: HikariSub/UpdateChecker.cpp:236
+#: HikariSub/UpdateChecker.cpp:248
 #, c-format
 msgid "You have the latest stable version. A newer prerelease, %s, is available."
 msgstr "Masz najnowszą wersję stabilną. Dostępna jest nowsza wersja przedpremierowa: %s."
 
-#: HikariSub/UpdateChecker.cpp:237 HikariSub/UpdateInstaller.cpp:271
+#: HikariSub/UpdateChecker.cpp:249 HikariSub/UpdateInstaller.cpp:271
 #: HikariSub/UpdateInstaller.cpp:840 HikariSub/UpdateInstaller.cpp:1060
 #: HikariSub/UpdateInstaller.cpp:1345
 msgid "Update"
 msgstr "Aktualizacja"
 
-#: HikariSub/UpdateChecker.cpp:238 HikariSub/UpdateChecker.cpp:315
+#: HikariSub/UpdateChecker.cpp:250 HikariSub/UpdateChecker.cpp:327
 msgid "Open the download page"
 msgstr "Otwórz stronę pobierania"
 
-#: HikariSub/UpdateChecker.cpp:268 HikariSub/UpdateChecker.cpp:409
-#: HikariSub/UpdateChecker.cpp:413
+#: HikariSub/UpdateChecker.cpp:280 HikariSub/UpdateChecker.cpp:420
+#: HikariSub/UpdateChecker.cpp:424
 msgid "A new version is available"
 msgstr "Dostępna jest nowa wersja"
 
-#: HikariSub/UpdateChecker.cpp:280
+#: HikariSub/UpdateChecker.cpp:292
 #, c-format
 msgid "You have version %s; version %s is available"
 msgstr "Masz wersję %s; dostępna jest wersja %s"
 
-#: HikariSub/UpdateChecker.cpp:285 HikariSub/UpdateChecker.cpp:553
+#: HikariSub/UpdateChecker.cpp:297 HikariSub/UpdateChecker.cpp:579
 #, c-format
 msgid "It needs %s or newer, so it cannot be installed here."
 msgstr "Wymaga %s lub nowszej wersji, więc nie można jej tu zainstalować."
 
-#: HikariSub/UpdateChecker.cpp:315
+#: HikariSub/UpdateChecker.cpp:327
 msgid "Download and install"
 msgstr "Pobierz i zainstaluj"
 
-#: HikariSub/UpdateChecker.cpp:316 HikariSub/UpdateChecker.cpp:427
+#: HikariSub/UpdateChecker.cpp:328 HikariSub/UpdateChecker.cpp:437
 msgid "Remind me in a week"
 msgstr "Przypomnij za tydzień"
 
-#: HikariSub/UpdateChecker.cpp:365 HikariSub/UpdateChecker.cpp:574
+#: HikariSub/UpdateChecker.cpp:377 HikariSub/UpdateChecker.cpp:598
 msgid "Downloading..."
 msgstr "Pobieranie..."
 
-#: HikariSub/UpdateChecker.cpp:371 HikariSub/UpdateChecker.cpp:578
+#: HikariSub/UpdateChecker.cpp:383 HikariSub/UpdateChecker.cpp:602
 #, c-format
 msgid "Downloading... %d%%"
 msgstr "Pobieranie... %d%%"
 
-#: HikariSub/UpdateChecker.cpp:381 HikariSub/UpdateChecker.cpp:588
+#: HikariSub/UpdateChecker.cpp:393 HikariSub/UpdateChecker.cpp:612
 #: HikariSub/UpdateInstaller.cpp:415 HikariSub/UpdateInstaller.cpp:420
 #: HikariSub/UpdateInstaller.cpp:569
 msgid "Cannot download the update"
 msgstr "Nie można pobrać aktualizacji"
 
-#: HikariSub/UpdateChecker.cpp:418
+#: HikariSub/UpdateChecker.cpp:429
 #, c-format
 msgid "HikariSub %s is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page."
 msgstr "HikariSub %s jest wersją przedpremierową. Pakiet AUR dostarcza tylko wersje stabilne. Aby ją wypróbować, użyj pliku AppImage ze strony wydania."
 
-#: HikariSub/UpdateChecker.cpp:420
+#: HikariSub/UpdateChecker.cpp:431
 #, c-format
 msgid "HikariSub %s is available; you have %s. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu."
 msgstr "Dostępny jest HikariSub %s; masz %s. HikariSub został zainstalowany z AUR, więc zaktualizuj go menedżerem pakietów lub pomocnikiem AUR, na przykład yay -Syu lub paru -Syu."
 
-#: HikariSub/UpdateChecker.cpp:425 HikariSub/UpdateInstaller.cpp:331
+#: HikariSub/UpdateChecker.cpp:436 HikariSub/UpdateInstaller.cpp:331
 msgid "What's new"
 msgstr "Co nowego"
 
-#: HikariSub/UpdateChecker.cpp:461
+#: HikariSub/UpdateChecker.cpp:471
 msgid "The new HikariSub"
 msgstr "Nowy HikariSub"
 
-#: HikariSub/UpdateChecker.cpp:473
+#: HikariSub/UpdateChecker.cpp:483
 #, c-format
 msgid "Version %s. You have HikariSub %s."
 msgstr "Wersja %s. Masz HikariSub %s."
 
-#: HikariSub/UpdateChecker.cpp:485
+#: HikariSub/UpdateChecker.cpp:498
+msgid "Try it opens the release page. Unpack the new HikariSub into a folder of its own, beside this copy, which stays as it is."
+msgstr "Wypróbuj otwiera stronę wydania. Rozpakuj nowy HikariSub do osobnego folderu obok tej kopii, która pozostanie bez zmian."
+
+#: HikariSub/UpdateChecker.cpp:504
 msgid "This version of HikariSub gets no further updates. It keeps working, and moving to the new HikariSub is up to you."
 msgstr "Ta wersja HikariSub nie będzie już aktualizowana. Nadal działa, a przejście na nowy HikariSub zależy od Ciebie."
 
-#: HikariSub/UpdateChecker.cpp:495
+#: HikariSub/UpdateChecker.cpp:514
 msgid "Try it"
 msgstr "Wypróbuj"
 
-#: HikariSub/UpdateChecker.cpp:497
+#: HikariSub/UpdateChecker.cpp:516
 msgid "Remind me later"
 msgstr "Przypomnij później"
 
-#: HikariSub/UpdateChecker.cpp:498
+#: HikariSub/UpdateChecker.cpp:518
 msgid "Don't offer again"
 msgstr "Nie proponuj ponownie"
 
-#: HikariSub/UpdateChecker.cpp:1020 HikariSub/UpdateChecker.cpp:1034
-#: HikariSub/UpdateChecker.cpp:1132
+#: HikariSub/UpdateChecker.cpp:1042 HikariSub/UpdateChecker.cpp:1056
+#: HikariSub/UpdateChecker.cpp:1155
 msgid "Cannot check for updates"
 msgstr "Nie można sprawdzić aktualizacji"
 
-#: HikariSub/UpdateChecker.cpp:1026
+#: HikariSub/UpdateChecker.cpp:1048
 msgid "There is no new HikariSub to try at the moment."
 msgstr "Obecnie nie ma nowego HikariSub do wypróbowania."
 
-#: HikariSub/UpdateChecker.cpp:1041
+#: HikariSub/UpdateChecker.cpp:1063
 msgid "You already have the latest version"
 msgstr "Masz już najnowszą wersję"
 

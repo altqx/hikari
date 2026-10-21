@@ -10,7 +10,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: HikariSub\n"
 "Report-Msgid-Bugs-To: https://github.com/altqx/hikari/issues\n"
-"POT-Creation-Date: 2026-10-21 20:12+0700\n"
+"POT-Creation-Date: 2026-10-21 21:31+0700\n"
 "PO-Revision-Date: 2026-09-26 19:00+0700\n"
 "Last-Translator: altqx <al@altqx.com>\n"
 "Language-Team: Tamil\n"
@@ -646,8 +646,8 @@ msgstr "இன்னும் அமைக்கவும்"
 #: HikariSub/FontCollector.cpp:217 HikariSub/LogHandler.cpp:50
 #: HikariSub/Notebook.cpp:719 HikariSub/SelectLines.cpp:142
 #: HikariSub/SelectLines.cpp:237 HikariSub/SelectLines.cpp:279
-#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:239
-#: HikariSub/UpdateChecker.cpp:317 HikariSub/UpdateChecker.cpp:428
+#: HikariSub/SpellCheckerDialog.cpp:64 HikariSub/UpdateChecker.cpp:251
+#: HikariSub/UpdateChecker.cpp:329 HikariSub/UpdateChecker.cpp:438
 #: HikariSub/UpdateInstaller.cpp:280 HikariSub/stylestore.cpp:172
 msgid "Close"
 msgstr "மூடு"
@@ -4164,7 +4164,7 @@ msgstr "எழுத்துப்பிழை சரிபார்ப்ப�
 msgid "Updates"
 msgstr "புதுப்பிப்புகள்"
 
-#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:298
+#: HikariSub/OptionsDialog.cpp:375 HikariSub/UpdateChecker.cpp:310
 msgid "Check for updates automatically"
 msgstr "புதுப்பிப்புகளைத் தானாகச் சரிபார்க்கவும்"
 
@@ -4172,7 +4172,7 @@ msgstr "புதுப்பிப்புகளைத் தானாகச�
 msgid "When the program starts: once a day, or an hour after a check that failed"
 msgstr "நிரல் தொடங்கும்போது: நாளுக்கு ஒருமுறை, அல்லது தோல்வியடைந்த சரிபார்ப்புக்கு ஒரு மணி நேரம் கழித்து"
 
-#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:302
+#: HikariSub/OptionsDialog.cpp:383 HikariSub/UpdateChecker.cpp:314
 msgid "Stable versions only"
 msgstr "நிலையான பதிப்புகள் மட்டும்"
 
@@ -7143,108 +7143,112 @@ msgstr "மேலே"
 msgid "Toolbar alignment"
 msgstr "கருவிப்பட்டி சீரமைப்பு"
 
-#: HikariSub/UpdateChecker.cpp:236
+#: HikariSub/UpdateChecker.cpp:248
 #, c-format
 msgid "You have the latest stable version. A newer prerelease, %s, is available."
 msgstr "உங்களிடம் சமீபத்திய நிலையான பதிப்பு உள்ளது. புதிய முன்வெளியீடு %s கிடைக்கிறது."
 
-#: HikariSub/UpdateChecker.cpp:237 HikariSub/UpdateInstaller.cpp:271
+#: HikariSub/UpdateChecker.cpp:249 HikariSub/UpdateInstaller.cpp:271
 #: HikariSub/UpdateInstaller.cpp:840 HikariSub/UpdateInstaller.cpp:1060
 #: HikariSub/UpdateInstaller.cpp:1345
 msgid "Update"
 msgstr "புதுப்பிப்பு"
 
-#: HikariSub/UpdateChecker.cpp:238 HikariSub/UpdateChecker.cpp:315
+#: HikariSub/UpdateChecker.cpp:250 HikariSub/UpdateChecker.cpp:327
 msgid "Open the download page"
 msgstr "பதிவிறக்கப் பக்கத்தைத் திற"
 
-#: HikariSub/UpdateChecker.cpp:268 HikariSub/UpdateChecker.cpp:409
-#: HikariSub/UpdateChecker.cpp:413
+#: HikariSub/UpdateChecker.cpp:280 HikariSub/UpdateChecker.cpp:420
+#: HikariSub/UpdateChecker.cpp:424
 msgid "A new version is available"
 msgstr "புதிய பதிப்பு கிடைக்கிறது"
 
-#: HikariSub/UpdateChecker.cpp:280
+#: HikariSub/UpdateChecker.cpp:292
 #, c-format
 msgid "You have version %s; version %s is available"
 msgstr "உங்களிடம் பதிப்பு %s உள்ளது; பதிப்பு %s கிடைக்கிறது"
 
-#: HikariSub/UpdateChecker.cpp:285 HikariSub/UpdateChecker.cpp:553
+#: HikariSub/UpdateChecker.cpp:297 HikariSub/UpdateChecker.cpp:579
 #, c-format
 msgid "It needs %s or newer, so it cannot be installed here."
 msgstr "இதற்கு %s அல்லது அதற்குப் புதியது தேவை, எனவே இதை இங்கே நிறுவ முடியாது."
 
-#: HikariSub/UpdateChecker.cpp:315
+#: HikariSub/UpdateChecker.cpp:327
 msgid "Download and install"
 msgstr "பதிவிறக்கி நிறுவு"
 
-#: HikariSub/UpdateChecker.cpp:316 HikariSub/UpdateChecker.cpp:427
+#: HikariSub/UpdateChecker.cpp:328 HikariSub/UpdateChecker.cpp:437
 msgid "Remind me in a week"
 msgstr "ஒரு வாரம் கழித்து நினைவூட்டு"
 
-#: HikariSub/UpdateChecker.cpp:365 HikariSub/UpdateChecker.cpp:574
+#: HikariSub/UpdateChecker.cpp:377 HikariSub/UpdateChecker.cpp:598
 msgid "Downloading..."
 msgstr "பதிவிறக்குகிறது..."
 
-#: HikariSub/UpdateChecker.cpp:371 HikariSub/UpdateChecker.cpp:578
+#: HikariSub/UpdateChecker.cpp:383 HikariSub/UpdateChecker.cpp:602
 #, c-format
 msgid "Downloading... %d%%"
 msgstr "பதிவிறக்குகிறது... %d%%"
 
-#: HikariSub/UpdateChecker.cpp:381 HikariSub/UpdateChecker.cpp:588
+#: HikariSub/UpdateChecker.cpp:393 HikariSub/UpdateChecker.cpp:612
 #: HikariSub/UpdateInstaller.cpp:415 HikariSub/UpdateInstaller.cpp:420
 #: HikariSub/UpdateInstaller.cpp:569
 msgid "Cannot download the update"
 msgstr "புதுப்பிப்பைப் பதிவிறக்க முடியாது"
 
-#: HikariSub/UpdateChecker.cpp:418
+#: HikariSub/UpdateChecker.cpp:429
 #, c-format
 msgid "HikariSub %s is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page."
 msgstr "HikariSub %s ஒரு முன்வெளியீடு. AUR தொகுப்பு நிலையான பதிப்புகளை மட்டுமே வழங்குகிறது. இதை முயற்சிக்க, வெளியீட்டுப் பக்கத்திலிருந்து AppImage-ஐப் பயன்படுத்தவும்."
 
-#: HikariSub/UpdateChecker.cpp:420
+#: HikariSub/UpdateChecker.cpp:431
 #, c-format
 msgid "HikariSub %s is available; you have %s. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu."
 msgstr "HikariSub %s கிடைக்கிறது; உங்களிடம் %s உள்ளது. நீங்கள் HikariSub-ஐ AUR-இலிருந்து நிறுவியதால், உங்கள் தொகுப்பு மேலாளர் அல்லது AUR உதவியாளர் மூலம் புதுப்பிக்கவும், எடுத்துக்காட்டாக yay -Syu அல்லது paru -Syu."
 
-#: HikariSub/UpdateChecker.cpp:425 HikariSub/UpdateInstaller.cpp:331
+#: HikariSub/UpdateChecker.cpp:436 HikariSub/UpdateInstaller.cpp:331
 msgid "What's new"
 msgstr "புதியவை என்ன"
 
-#: HikariSub/UpdateChecker.cpp:461
+#: HikariSub/UpdateChecker.cpp:471
 msgid "The new HikariSub"
 msgstr "புதிய HikariSub"
 
-#: HikariSub/UpdateChecker.cpp:473
+#: HikariSub/UpdateChecker.cpp:483
 #, c-format
 msgid "Version %s. You have HikariSub %s."
 msgstr "பதிப்பு %s. உங்களிடம் HikariSub %s உள்ளது."
 
-#: HikariSub/UpdateChecker.cpp:485
+#: HikariSub/UpdateChecker.cpp:498
+msgid "Try it opens the release page. Unpack the new HikariSub into a folder of its own, beside this copy, which stays as it is."
+msgstr "முயன்று பார் வெளியீட்டுப் பக்கத்தைத் திறக்கும். புதிய HikariSub-ஐ இந்த நகலுக்கு அருகில் தனிக் கோப்புறையில் பிரித்தெடுக்கவும்; இந்த நகல் அப்படியே இருக்கும்."
+
+#: HikariSub/UpdateChecker.cpp:504
 msgid "This version of HikariSub gets no further updates. It keeps working, and moving to the new HikariSub is up to you."
 msgstr "HikariSub-இன் இந்தப் பதிப்புக்கு இனி புதுப்பிப்புகள் வராது. இது தொடர்ந்து வேலை செய்யும்; புதிய HikariSub-க்கு மாறுவது உங்கள் விருப்பம்."
 
-#: HikariSub/UpdateChecker.cpp:495
+#: HikariSub/UpdateChecker.cpp:514
 msgid "Try it"
 msgstr "முயன்று பார்"
 
-#: HikariSub/UpdateChecker.cpp:497
+#: HikariSub/UpdateChecker.cpp:516
 msgid "Remind me later"
 msgstr "பிறகு நினைவூட்டு"
 
-#: HikariSub/UpdateChecker.cpp:498
+#: HikariSub/UpdateChecker.cpp:518
 msgid "Don't offer again"
 msgstr "மீண்டும் பரிந்துரைக்காதே"
 
-#: HikariSub/UpdateChecker.cpp:1020 HikariSub/UpdateChecker.cpp:1034
-#: HikariSub/UpdateChecker.cpp:1132
+#: HikariSub/UpdateChecker.cpp:1042 HikariSub/UpdateChecker.cpp:1056
+#: HikariSub/UpdateChecker.cpp:1155
 msgid "Cannot check for updates"
 msgstr "புதுப்பிப்புகளைச் சரிபார்க்க முடியாது"
 
-#: HikariSub/UpdateChecker.cpp:1026
+#: HikariSub/UpdateChecker.cpp:1048
 msgid "There is no new HikariSub to try at the moment."
 msgstr "தற்போது முயன்று பார்க்க புதிய HikariSub எதுவும் இல்லை."
 
-#: HikariSub/UpdateChecker.cpp:1041
+#: HikariSub/UpdateChecker.cpp:1063
 msgid "You already have the latest version"
 msgstr "உங்களிடம் ஏற்கனவே சமீபத்திய பதிப்பு உள்ளது"
 
