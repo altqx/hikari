@@ -1032,6 +1032,39 @@ private slots:
         QVERIFY(!session->isDirty());
     }
 
+    // In TLMode the templater reads a Line's translation: the panel shows
+    // and edits that, and the preview runs it.
+    void aTranslatedTemplateEditsItsTranslation()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> tl;
+        std::u8string original;
+        for (const auto *l : doc.lines())
+            if (!tl && application::templateKindOf(*l)) {
+                tl = l->id;
+                original = l->text;
+            }
+        QVERIFY(tl);
+        doc.editLine(*tl, [](core::LineRecord &l) { l.translation = l.text + u8"{\\bord4}"; });
+        openDocument(std::move(doc), true);
+        editor->setCurrent(tl->value);
+        QVERIFY(editor->text().endsWith(QStringLiteral("{\\bord4}")));
+        activate(*firstKaraoke());
+        editor->setDelays(10, 60'000);
+        editor->setShown(true);
+        editor->setText(editor->text() + QStringLiteral("{\\bord5}"));
+        QVERIFY(QTest::qWaitFor(
+            [&] { return settled() && previewTexts().join(QString()).contains(QStringLiteral("bord5")); }, 20'000));
+        editor->commit();
+        const core::LineRecord *l = nullptr;
+        for (const auto *x : session->document().lines())
+            if (x->id == *tl)
+                l = x;
+        QVERIFY(l);
+        QVERIFY(l->text == original);
+        QVERIFY(std::u8string_view(l->translation).ends_with(u8"{\\bord4}{\\bord5}"));
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));

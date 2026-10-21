@@ -99,7 +99,8 @@ std::optional<MacroSnapshot> templatePreviewSnapshot(const core::Document &doc, 
         } else if (templateKindOf(*l)) {
             if (const auto text = texts.find(l->id); text != texts.end()) {
                 core::LineRecord edited = *l;
-                edited.text = text->second;
+                // In TLMode the script reads the translation (macroLineOf).
+                (edited.translation.empty() ? edited.text : edited.translation) = text->second;
                 s.dialogues.push_back(macroLineOf(edited));
             } else {
                 s.dialogues.push_back(macroLineOf(*l));

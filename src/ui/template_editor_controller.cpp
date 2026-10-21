@@ -318,8 +318,10 @@ std::optional<core::LineRecord> TemplateEditorController::currentRecord() const
 
 core::LineRecord TemplateEditorController::edited(core::LineRecord line, const Pending &pending)
 {
+    // In TLMode the templater reads the translation (macroLineOf): the panel
+    // edits that.
     if (pending.text)
-        line.text = *pending.text;
+        (line.translation.empty() ? line.text : line.translation) = *pending.text;
     if (pending.effect)
         line.effect = *pending.effect;
     if (pending.style)
@@ -341,7 +343,8 @@ application::EditSession *TemplateEditorController::pendingSession() const
 std::string TemplateEditorController::keyOf(const core::LineRecord &l) const
 {
     const auto join = [](const std::u8string &s) { return std::string(s.begin(), s.end()); };
-    return join(l.effect) + '\x1f' + join(l.style) + '\x1f' + std::to_string(l.layer.value) + '\x1f' + join(l.text);
+    return join(l.effect) + '\x1f' + join(l.style) + '\x1f' + std::to_string(l.layer.value) + '\x1f' + join(l.text) +
+           '\x1f' + join(l.translation);
 }
 
 void TemplateEditorController::takeBaseline()
@@ -587,8 +590,9 @@ int TemplateEditorController::layer() const
 
 QString TemplateEditorController::text() const
 {
+    // The text the templater reads: the translation in TLMode.
     const auto r = currentRecord();
-    return r ? qs(r->text) : QString();
+    return r ? qs(line(r->id)->translation.empty() ? r->text : r->translation) : QString();
 }
 
 QStringList TemplateEditorController::styles() const

@@ -143,6 +143,18 @@ TEST_F(TemplatePreview, TheSnapshotHoldsTheTemplatesAndTheSourceOnly)
     EXPECT_FALSE(templatePreviewSnapshot(doc, core::LineId{999'999}));
 }
 
+// In TLMode the script reads a Line's translation: the text not yet in the
+// Document stands for that, and the original stays.
+TEST_F(TemplatePreview, ATranslatedTemplatesTextStandsForItsTranslation)
+{
+    ASSERT_TRUE(doc.editLine(ids[1], [](core::LineRecord &l) { l.translation = u8"{\\pos(1,1)}"; }));
+    const auto s = templatePreviewSnapshot(doc, ids[7], {{ids[1], u8"{\\pos(2,2)}"}});
+    ASSERT_TRUE(s);
+    ASSERT_EQ(s->dialogues.size(), 3u);
+    EXPECT_EQ(s->dialogues[1].text, "{\\pos(2,2)}");
+    EXPECT_EQ(s->dialogues[1].translation, "{\\pos($x,$y)}") << "the original";
+}
+
 TEST_F(TemplatePreview, TheSnapshotKeepsTheSourcesPlaceAmongTheTemplates)
 {
     // A template after the source stays after it, as the whole run sees it.
