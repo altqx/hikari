@@ -125,7 +125,8 @@ Window {
             done([])
             return
         }
-        clashReview.review({
+        clashReviewLoader.active = true
+        clashReviewLoader.item.review({
             title: qsTr("Copy styles"),
             text: qsTr("%1 of %2 styles already exist in %3.").arg(listed.length).arg(total).arg(into),
             detail: same > 0 ? qsTr("%n more are the same as the ones there and are left as they are.", "", same) : "",
@@ -134,11 +135,15 @@ Window {
             acceptText: count => qsTr("Copy %n style(s)", "", count)
         }, results => { if (results) done(results) })
     }
-    ClashReview {
-        id: clashReview
-        objectName: "styleClashReview"
-        dialogId: "styleClashes"
-        settings: manager.app.settings
+    // PK1: made at the first clash (a window made at the start costs it).
+    Loader {
+        id: clashReviewLoader
+        active: false
+        sourceComponent: ClashReview {
+            objectName: "styleClashReview"
+            dialogId: "styleClashes"
+            settings: manager.app.settings
+        }
     }
     Dialog {
         id: message

@@ -72,8 +72,10 @@ RowLayout {
     }
     function openCalendar() {
         show(date)
+        // Made before the popover measures its content.
+        gridLoader.active = true
         calendar.openAt(dateField)
-        grid.forceActiveFocus()
+        gridLoader.item.forceActiveFocus()
     }
     onDateChanged: if (!dateField.activeFocus) dateField.text = format(date)
 
@@ -151,62 +153,69 @@ RowLayout {
                 font.pixelSize: Math.round(Qt.application.font.pixelSize * 11 / 13)
             }
         }
-        MonthGrid {
-            id: grid
-            objectName: "datePickerGrid"
-            month: picker.shownMonth
-            year: picker.shownYear
-            locale: picker.locale
-            focus: true
+        // The month's days are made at the first opening: each is a label
+        // with its date written out for screen readers, and a date picker
+        // made with its window would cost the program's start.
+        Loader {
+            id: gridLoader
+            active: false
             Layout.fillWidth: true
             Layout.preferredWidth: 7 * 32
-            Accessible.role: Accessible.Table
-            Accessible.name: calendar.title
-            Keys.onLeftPressed: picker.moveDays(LayoutMirroring.enabled ? 1 : -1)
-            Keys.onRightPressed: picker.moveDays(LayoutMirroring.enabled ? -1 : 1)
-            Keys.onUpPressed: picker.moveDays(-7)
-            Keys.onDownPressed: picker.moveDays(7)
-            Keys.onPressed: event => {
-                if (event.key === Qt.Key_PageUp)
-                    picker.moveMonths(-1)
-                else if (event.key === Qt.Key_PageDown)
-                    picker.moveMonths(1)
-                else
-                    return
-                event.accepted = true
-            }
-            Keys.onReturnPressed: event => { event.accepted = true; picker.take(picker.pending) }
-            Keys.onEnterPressed: event => { event.accepted = true; picker.take(picker.pending) }
-            onClicked: d => picker.take(d)
-            delegate: Label {
-                id: cell
-                required property var model
-                readonly property bool chosen: model.year === picker.pending.getFullYear()
-                                               && model.month === picker.pending.getMonth()
-                                               && model.day === picker.pending.getDate()
-                text: model.day
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                topPadding: 6
-                bottomPadding: 6
-                color: cell.chosen ? Theme.onAccent : model.month === grid.month ? Theme.text : Theme.disabled
-                font.weight: cell.chosen ? Font.DemiBold : Font.Normal
-                Accessible.role: Accessible.Cell
-                Accessible.name: model.date.toLocaleDateString(picker.locale, Locale.LongFormat)
-                Accessible.selected: cell.chosen
-                background: Rectangle {
-                    color: cell.chosen ? Theme.accent : "transparent"
-                    border.width: model.today ? 1 : 0
-                    border.color: Theme.line
-                    radius: 1
-                    // The keyboard's day: the focus ring around it.
-                    Rectangle {
-                        visible: cell.chosen && grid.activeFocus
-                        anchors.fill: parent
-                        anchors.margins: -2
-                        color: "transparent"
-                        border.color: Theme.focus
-                        radius: 2
+            sourceComponent: MonthGrid {
+                id: grid
+                objectName: "datePickerGrid"
+                month: picker.shownMonth
+                year: picker.shownYear
+                locale: picker.locale
+                focus: true
+                Accessible.role: Accessible.Table
+                Accessible.name: calendar.title
+                Keys.onLeftPressed: picker.moveDays(LayoutMirroring.enabled ? 1 : -1)
+                Keys.onRightPressed: picker.moveDays(LayoutMirroring.enabled ? -1 : 1)
+                Keys.onUpPressed: picker.moveDays(-7)
+                Keys.onDownPressed: picker.moveDays(7)
+                Keys.onPressed: event => {
+                    if (event.key === Qt.Key_PageUp)
+                        picker.moveMonths(-1)
+                    else if (event.key === Qt.Key_PageDown)
+                        picker.moveMonths(1)
+                    else
+                        return
+                    event.accepted = true
+                }
+                Keys.onReturnPressed: event => { event.accepted = true; picker.take(picker.pending) }
+                Keys.onEnterPressed: event => { event.accepted = true; picker.take(picker.pending) }
+                onClicked: d => picker.take(d)
+                delegate: Label {
+                    id: cell
+                    required property var model
+                    readonly property bool chosen: model.year === picker.pending.getFullYear()
+                                                   && model.month === picker.pending.getMonth()
+                                                   && model.day === picker.pending.getDate()
+                    text: model.day
+                    horizontalAlignment: Text.AlignHCenter
+                    verticalAlignment: Text.AlignVCenter
+                    topPadding: 6
+                    bottomPadding: 6
+                    color: cell.chosen ? Theme.onAccent : model.month === grid.month ? Theme.text : Theme.disabled
+                    font.weight: cell.chosen ? Font.DemiBold : Font.Normal
+                    Accessible.role: Accessible.Cell
+                    Accessible.name: model.date.toLocaleDateString(picker.locale, Locale.LongFormat)
+                    Accessible.selected: cell.chosen
+                    background: Rectangle {
+                        color: cell.chosen ? Theme.accent : "transparent"
+                        border.width: model.today ? 1 : 0
+                        border.color: Theme.line
+                        radius: 1
+                        // The keyboard's day: the focus ring around it.
+                        Rectangle {
+                            visible: cell.chosen && grid.activeFocus
+                            anchors.fill: parent
+                            anchors.margins: -2
+                            color: "transparent"
+                            border.color: Theme.focus
+                            radius: 2
+                        }
                     }
                 }
             }

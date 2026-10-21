@@ -40,8 +40,10 @@ Item {
     property var conflict: null
     property var answerDone: null
     property bool asking: false
-    readonly property bool opened: popover.visible || compact.visible
-    readonly property alias compactWindow: compact
+    readonly property bool opened: popover.visible || (compactWindow !== null && compactWindow.visible)
+    // The compact window, made at its first opening (null till then), as
+    // ListChooser's: a window made at the start costs the start.
+    readonly property DialogWindow compactWindow: compactLoader.item
     readonly property string title: qsTr("Keys for \"%1\"").arg(name)
     readonly property var windowNames: [qsTr("Global hotkey"), qsTr("Subtitle grid hotkey"), qsTr("Edit box hotkey"),
                                         qsTr("Video hotkey"), qsTr("Audio hotkey")]
@@ -60,13 +62,16 @@ Item {
         conflict = null
         answerDone = null
         if (o.anchor && o.anchor.visible) {
-            if (compact.visible)
-                compact.close()
+            if (compactWindow && compactWindow.visible)
+                compactWindow.close()
+            // The form is made before the popover measures it.
+            popoverForm.active = true
             popover.openAt(o.anchor)
-            popoverForm.focusKeys()
+            popoverForm.item.focusKeys()
         } else {
-            compact.open()
-            compactForm.focusKeys()
+            compactLoader.active = true
+            compactWindow.open()
+            compactWindow.focusKeys()
         }
     }
     function ask(c, callback) {
@@ -112,8 +117,8 @@ Item {
     function end(closing) {
         if (popover.visible)
             popover.keep()
-        if (compact.visible && closing !== true)
-            compact.close()
+        if (compactWindow && compactWindow.visible && closing !== true)
+            compactWindow.close()
     }
     function press(event) {
         event.accepted = true
@@ -144,17 +149,31 @@ Item {
         onReverted: capture.cancel()
         // A press outside cancels too.
         onKept: if (capture.done !== null || capture.answerDone !== null) capture.cancel()
-        HotkeyForm { id: popoverForm; host: capture; Layout.preferredWidth: 288 }
+        // Made at the first opening, as the compact window.
+        Loader {
+            id: popoverForm
+            active: false
+            Layout.preferredWidth: 288
+            sourceComponent: HotkeyForm { host: capture }
+        }
     }
-    DialogWindow {
-        id: compact
-        objectName: "hotkeyCaptureWindow"
-        dialogId: "hotkeyCapture"
-        settings: capture.settings
-        modal: true
-        title: capture.title
-        onRejected: capture.cancel(true)
-        HotkeyForm { id: compactForm; host: capture; Layout.preferredWidth: 340 }
+    Loader {
+        id: compactLoader
+        active: false
+        sourceComponent: compactComponent
+    }
+    Component {
+        id: compactComponent
+        DialogWindow {
+            objectName: "hotkeyCaptureWindow"
+            dialogId: "hotkeyCapture"
+            settings: capture.settings
+            modal: true
+            title: capture.title
+            onRejected: capture.cancel(true)
+            function focusKeys() { compactForm.focusKeys() }
+            HotkeyForm { id: compactForm; host: capture; Layout.preferredWidth: 340 }
+        }
     }
 
     component HotkeyForm: ColumnLayout {

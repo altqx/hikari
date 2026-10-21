@@ -28,9 +28,12 @@ Item {
     property int current: 0
     property string acceptText: ""
     property var done: null
-    readonly property bool opened: popover.visible || compact.visible
+    readonly property bool opened: popover.visible || (compactWindow !== null && compactWindow.visible)
     readonly property bool inPopover: popover.visible
-    readonly property alias compactWindow: compact
+    // The compact window, made at its first opening (null till then): the
+    // program holds a chooser for each use, and every window made at the
+    // start costs it (on Windows a native event filter apiece).
+    readonly property DialogWindow compactWindow: compactLoader.item
     visible: false
 
     function choose(options, callback) {
@@ -45,8 +48,9 @@ Item {
             popover.openAt(o.anchor, null, o.at)
             popoverList.focusList()
         } else {
-            compact.open()
-            compactList.focusList()
+            compactLoader.active = true
+            compactWindow.open()
+            compactWindow.focusList()
         }
     }
     function take(row) {
@@ -54,8 +58,8 @@ Item {
         done = null
         if (popover.visible)
             popover.keep()
-        if (compact.visible)
-            compact.accept()
+        if (compactWindow && compactWindow.visible)
+            compactWindow.accept()
         if (callback)
             callback(row)
     }
@@ -64,8 +68,8 @@ Item {
         done = null
         if (popover.visible)
             popover.keep()
-        if (compact.visible && closing !== true)
-            compact.close()
+        if (compactWindow && compactWindow.visible && closing !== true)
+            compactWindow.close()
         if (callback)
             callback(-1)
     }
@@ -82,41 +86,50 @@ Item {
         onKept: if (chooser.done !== null) chooser.none()
         ChoiceList { id: popoverList; host: chooser; Layout.preferredWidth: 200 }
     }
-    DialogWindow {
-        id: compact
-        objectName: "listChooserWindow"
-        dialogId: "listChooser"
-        settings: chooser.settings
-        modal: true
-        title: chooser.title
-        defaultButton: takeButton
-        onRejected: chooser.none(true)
-        Label {
-            objectName: "listChooserText"
-            visible: chooser.text.length > 0
-            text: chooser.text
-            font: compact.fontAt(14, Font.DemiBold)
-            wrapMode: Text.Wrap
-            Layout.fillWidth: true
-            Layout.topMargin: 4
-        }
-        ChoiceList { id: compactList; host: chooser; framed: true; Layout.preferredWidth: 352 }
-        buttons: [
-            PrimaryButton {
-                id: takeButton
-                objectName: "listChooserTake"
-                text: chooser.acceptText
-                enabled: chooser.current >= 0
-                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                onClicked: chooser.take(chooser.current)
-            },
-            Button {
-                objectName: "listChooserCancel"
-                text: qsTr("Cancel")
-                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                onClicked: chooser.none()
+    Loader {
+        id: compactLoader
+        active: false
+        sourceComponent: compactComponent
+    }
+    Component {
+        id: compactComponent
+        DialogWindow {
+            id: compact
+            objectName: "listChooserWindow"
+            dialogId: "listChooser"
+            settings: chooser.settings
+            modal: true
+            title: chooser.title
+            defaultButton: takeButton
+            onRejected: chooser.none(true)
+            function focusList() { compactList.focusList() }
+            Label {
+                objectName: "listChooserText"
+                visible: chooser.text.length > 0
+                text: chooser.text
+                font: compact.fontAt(14, Font.DemiBold)
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
+                Layout.topMargin: 4
             }
-        ]
+            ChoiceList { id: compactList; host: chooser; framed: true; Layout.preferredWidth: 352 }
+            buttons: [
+                PrimaryButton {
+                    id: takeButton
+                    objectName: "listChooserTake"
+                    text: chooser.acceptText
+                    enabled: chooser.current >= 0
+                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                    onClicked: chooser.take(chooser.current)
+                },
+                Button {
+                    objectName: "listChooserCancel"
+                    text: qsTr("Cancel")
+                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                    onClicked: chooser.none()
+                }
+            ]
+        }
     }
 
     component ChoiceList: Rectangle {

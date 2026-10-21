@@ -8310,13 +8310,24 @@ private slots:
         }
         // The Find folder button is named for the picker it opens.
         QCOMPARE(find("findChooseFolder")->property("text").toString(), QStringLiteral("Choose subtitle search folder"));
-        // PK1: the hotkey capture (Settings' and the shell's) says why keys
-        // are refused on its own form, under its title naming the command.
-        QList<QQuickWindow *> captures;
-        for (QWindow *w : QGuiApplication::allWindows())
-            if (w->objectName() == QLatin1String("hotkeyCaptureWindow"))
-                captures << qobject_cast<QQuickWindow *>(w);
-        QCOMPARE(captures.size(), 2);
+        // PK1: the hotkey captures (Settings' and the shell's) make their
+        // compact window at its first opening, titled for the command.
+        for (const char *name : {"hotkeyMapping", "settingsHotkeyMapping"}) {
+            QObject *capture = find(name);
+            QVERIFY2(capture, name);
+            QVERIFY2(!capture->property("compactWindow").value<QObject *>(), name);
+        }
+        {
+            QObject *capture = find("hotkeyMapping");
+            QVERIFY(QMetaObject::invokeMethod(capture, "capture", Q_ARG(QVariant, QStringLiteral("Exit")), Q_ARG(QVariant, 0),
+                                              Q_ARG(QVariant, true), Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
+            auto *made = capture->property("compactWindow").value<QQuickWindow *>();
+            QVERIFY(made);
+            QCOMPARE(made->objectName(), QStringLiteral("hotkeyCaptureWindow"));
+            QCOMPARE(made->title(), QStringLiteral("Keys for \"Exit\""));
+            QVERIFY(QMetaObject::invokeMethod(capture, "cancel", Q_ARG(QVariant, false)));
+            QTRY_VERIFY(!made->isVisible());
+        }
 
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
         if (out.isEmpty())
@@ -9695,6 +9706,20 @@ private slots:
         QObject *reassign = item<QObject>("automationReassign");
         QVERIFY(reassign && QMetaObject::invokeMethod(reassign, "open"));
         QTRY_VERIFY(reassign->property("opened").toBool());
+        // PK1's list chooser and clash review make their windows at the
+        // first opening: open them.
+        QObject *chooser = named("audioTrackChooser");
+        const QVariantMap track{{QStringLiteral("title"), QStringLiteral("Track")},
+                                {QStringLiteral("rows"), QStringList{QStringLiteral("1")}}};
+        QVERIFY(QMetaObject::invokeMethod(chooser, "choose", Q_ARG(QVariant, track), Q_ARG(QVariant, QVariant())));
+        const QVariantList clash{QVariantMap{{QStringLiteral("name"), QStringLiteral("Default")},
+                                             {QStringLiteral("same"), false},
+                                             {QStringLiteral("fields"), QVariantList()},
+                                             {QStringLiteral("suggestion"), QStringLiteral("Default (2)")}}};
+        QVERIFY(QMetaObject::invokeMethod(named("styleManager"), "reviewClashes", Q_ARG(QVariant, clash), Q_ARG(QVariant, 1),
+                                          Q_ARG(QVariant, QStringLiteral("Default.sty")), Q_ARG(QVariant, QVariant())));
+        auto *clashes = qobject_cast<QWindow *>(named("styleClashReview"));
+        QVERIFY(clashes);
         for (const Buttons &buttons : footers) {
             const char *first = buttons.front().first;
             QObject *found = named(first);
@@ -9717,6 +9742,9 @@ private slots:
             }
         }
         QVERIFY(QMetaObject::invokeMethod(reassign, "close"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, QVariant())));
+        clashes->close();
+        QTRY_VERIFY(!clashes->isVisible());
 
         // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
         auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
