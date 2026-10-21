@@ -947,6 +947,37 @@ private slots:
         QCOMPARE(templater->previews, before);
     }
 
+    // A template Line keeps its id when another way changes its Lua (a
+    // translation pasted over it): the panel asks before it runs the new
+    // text. The user's own edits and their Undo stay trusted.
+    void aTemplateRewrittenElsewhereAsksFirst()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500); // the run marking the current template's own Lines
+        // The panel's edit, committed, and its Undo.
+        editor->setText(editor->text() + QStringLiteral("{\\bord3}"));
+        editor->commit();
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        QVERIFY(session->undo());
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500);
+        const int before = templater->previews;
+        const auto code = core::LineId{editor->current()};
+        QVERIFY(change([&](core::Document &doc) {
+            return doc.editLine(code, [](core::LineRecord &l) { l.text += u8"!_G.marker = 1!"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, before);
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));

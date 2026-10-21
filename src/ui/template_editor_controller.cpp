@@ -722,29 +722,44 @@ TemplateEditorController::DocumentKey TemplateEditorController::documentKey() co
                          : DocumentKey{static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(session())), 0};
 }
 
-std::set<core::LineId> TemplateEditorController::templateLines() const
+TemplateEditorController::TemplateLines TemplateEditorController::templateLines() const
 {
-    std::set<core::LineId> out;
+    TemplateLines out;
     if (const auto *doc = document())
         for (const auto *l : doc->lines())
-            if (application::templateKindOf(*l))
-                out.insert(l->id);
+            if (application::templateKindOf(*l)) {
+                const auto m = application::macroLineOf(*l);
+                out[l->id] = m.effect + '\n' + m.text;
+            }
     return out;
+}
+
+void TemplateEditorController::trust(const TemplateLines &lines)
+{
+    auto &trusted = m_trusted[documentKey()];
+    for (const auto &[id, runs] : lines)
+        trusted[id].insert(runs);
 }
 
 bool TemplateEditorController::trusted() const
 {
-    // A template or code Line come since another way (a paste, an import)
-    // is Lua the user has not chosen to run.
+    // A template or code Line come or changed since another way (a paste,
+    // an import, a translation pasted over it) is Lua the user has not
+    // chosen to run.
     const auto it = session() ? m_trusted.find(documentKey()) : m_trusted.end();
-    return it != m_trusted.end() && std::ranges::includes(it->second, templateLines());
+    if (it == m_trusted.end())
+        return false;
+    return std::ranges::all_of(templateLines(), [&](const auto &line) {
+        const auto forms = it->second.find(line.first);
+        return forms != it->second.end() && forms->second.contains(line.second);
+    });
 }
 
 void TemplateEditorController::trustDocument()
 {
     if (!session() || trusted())
         return;
-    m_trusted[documentKey()] = templateLines();
+    trust(templateLines());
     m_previewSnapshotKey.clear();
     emit changed();
     schedulePreview();
@@ -824,6 +839,12 @@ void TemplateEditorController::commit()
         return;
     }
     const Pending change = *m_pending;
+    // The user's edit of a form they chose to run is theirs to run too.
+    const auto lines = templateLines();
+    const auto was = lines.find(change.line);
+    const auto key = m_trusted.find(documentKey());
+    const bool trustedForm = was != lines.end() && key != m_trusted.end() &&
+                             key->second.contains(change.line) && key->second.at(change.line).contains(was->second);
     application::Command command;
     command.name = "Edit template";
     command.expectedRevision = s->revision();
@@ -848,6 +869,9 @@ void TemplateEditorController::commit()
     m_pending.reset();
     m_commitTimer.stop();
     m_seenRevision = s->revision();
+    if (trustedForm)
+        if (const auto now = templateLines(); now.contains(change.line))
+            trust({{change.line, now.at(change.line)}});
     emit documentEdited();
     emit changed();
 }
@@ -886,7 +910,7 @@ void TemplateEditorController::applied(const std::string &report)
                    {QStringLiteral("seconds"), o.value(QLatin1String("seconds")).toDouble()},
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
     takeBaseline();
-    m_trusted[documentKey()] = templateLines(); // the user ran them
+    trust(templateLines()); // the user ran them
     // A file's unmarked Lines are marked now; an Undo that brings them back
     // matches again.
     m_replaced.clear();
@@ -926,8 +950,8 @@ bool TemplateEditorController::insertTemplate(const QString &effect)
     };
     if (!s->run(command) || !added)
         return false;
-    if (const auto it = m_trusted.find(documentKey()); it != m_trusted.end())
-        it->second.insert(*added); // the user's own
+    if (const auto lines = templateLines(); m_trusted.contains(documentKey()) && lines.contains(*added))
+        trust({{*added, lines.at(*added)}}); // the user's own
     m_seenRevision = s->revision();
     m_current = *added;
     emit documentEdited();
