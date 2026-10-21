@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 
 namespace hikari::app {
 
@@ -47,13 +48,10 @@ std::optional<std::string> text(const QJsonValue &v)
 
 // The release list as legacy FindNewerRelease reads it; anything but an
 // array gives no releases.
-std::vector<a::ReleaseEntry> releaseList(const QByteArray &body)
+std::vector<a::ReleaseEntry> releaseList(const QJsonArray &list)
 {
     std::vector<a::ReleaseEntry> out;
-    const QJsonDocument json = QJsonDocument::fromJson(body);
-    if (!json.isArray())
-        return out;
-    for (const QJsonValue &value : json.array()) {
+    for (const QJsonValue &value : list) {
         const QJsonObject r = value.toObject();
         a::ReleaseEntry entry;
         entry.tag = r.value(QStringLiteral("tag_name")).toString().toStdString();
@@ -144,7 +142,10 @@ QString origin(const QUrl &url)
 struct UpdateChecker::Run {
     bool interactive = false;
     bool listOnly = false; // SH3: What's new's read of the list, no check
-    bool listRead = false; // SH3: past the list (m_releases is this run's)
+    // SH3: whether the list was read (m_releases is this run's), or a page
+    // was no list (an error object, say); unset while it is being read.
+    std::optional<bool> listRead;
+    bool unreadable = false;
     int page = 0;
     std::vector<a::ReleaseEntry> releases;
     std::vector<a::ReleaseEntry> candidates;
@@ -294,8 +295,8 @@ void UpdateChecker::readReleases()
 {
     if (!m_run)
         start(true, false);
-    else if (m_run->listRead) // checking manifests: the list is read
-        emit releasesRead(true);
+    else if (m_run->listRead) // checking manifests: past the list
+        emit releasesRead(*m_run->listRead);
 }
 
 bool UpdateChecker::checkOnStartup()
@@ -438,7 +439,11 @@ void UpdateChecker::pageFinished()
         emit releasesRead(false);
         return;
     }
-    auto page = releaseList(body);
+    // Legacy: a page that is no array lists nothing, and the check goes on;
+    // but the list counts as not read (What's new takes none of it).
+    const QJsonDocument json = QJsonDocument::fromJson(body);
+    m_run->unreadable = m_run->unreadable || !json.isArray();
+    auto page = releaseList(json.array());
     const bool full = page.size() >= std::size_t(kReleasesPerPage);
     m_run->releases.insert(m_run->releases.end(), std::make_move_iterator(page.begin()),
                            std::make_move_iterator(page.end()));
@@ -446,14 +451,16 @@ void UpdateChecker::pageFinished()
         requestPage(m_run->page + 1);
         return;
     }
-    m_releases = m_run->releases;
-    m_run->listRead = true;
+    const bool read = !m_run->unreadable;
+    if (read)
+        m_releases = m_run->releases;
+    m_run->listRead = read;
     if (m_run->listOnly) {
         end(QString());
-        emit releasesRead(true);
+        emit releasesRead(read);
         return;
     }
-    emit releasesRead(true);
+    emit releasesRead(read);
     m_run->candidates = a::updateCandidates(m_run->releases, m_version.toStdString(), stableOnlyApplied());
     if (m_run->candidates.size() > a::kMaxCandidates)
         m_run->candidates.resize(a::kMaxCandidates);

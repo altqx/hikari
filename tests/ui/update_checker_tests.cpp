@@ -158,9 +158,13 @@ private slots:
         QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("failed"));
         UpdateChecker garbage({}, feed("{\"message\": \"rate limited\"}", QStringLiteral("garbage")), QStringLiteral("0.1.0"));
         QSignalSpy none(&garbage, &UpdateChecker::finished);
+        QSignalSpy listed(&garbage, &UpdateChecker::releasesRead);
         garbage.checkNow();
         QVERIFY(none.wait(5000));
         QCOMPARE(none.at(0).at(0).toString(), QStringLiteral("current")); // legacy: no array, nothing newer
+        // SH3: but the list was not read (What's new does not take it).
+        QCOMPARE(listed.count(), 1);
+        QCOMPARE(listed.at(0).at(0).toBool(), false);
     }
 
     void automaticCheckFollowsTheOptionAndTheSchedule()
