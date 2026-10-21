@@ -392,6 +392,8 @@ void TemplateEditorController::refresh()
     const bool ready = available();
     const bool becameReady = ready && !m_wasAvailable;
     m_wasAvailable = ready;
+    if (becameReady)
+        m_previewSnapshotKey.clear(); // a reloaded script may write otherwise
     if (s->revision() != m_seenRevision || becameReady) {
         m_seenRevision = s->revision();
         schedulePreview();

@@ -90,7 +90,7 @@ public:
         runner.setServiceHandler(services);
         runner.setScript(QStringLiteral(HIKARI_KARAOKE_TEMPLATER));
     }
-    bool available() const override { return runner.ready(); }
+    bool available() const override { return !down && runner.ready(); }
     void preview(const application::MacroSnapshot &snapshot, PreviewDone done) override
     {
         ++previews;
@@ -136,6 +136,7 @@ public:
     int previews = 0;
     int dropPreviews = 0;
     int holdPreviews = 0;
+    bool down = false; // as while the script reloads
     std::vector<std::pair<application::MacroSnapshot, PreviewDone>> held;
     std::vector<std::size_t> sizes; // each run's Lines
     int applies = 0;
@@ -664,6 +665,22 @@ private slots:
         QVERIFY(other);
         editor->setCurrent(other);
         QVERIFY(QTest::qWaitFor([&] { return settled() && own() != first && own().contains(true); }, 20'000));
+    }
+
+    // A reloaded templater may write otherwise: the preview runs again.
+    void aReloadedTemplaterPreviewsAgain()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500);
+        const int before = templater->previews;
+        templater->down = true;
+        editor->refresh();
+        templater->down = false;
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return templater->previews > before && settled(); }, 20'000));
     }
 
     void theCurrentTemplatesOwnLinesAreMarked()
