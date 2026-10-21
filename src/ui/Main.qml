@@ -38,6 +38,7 @@ ApplicationWindow {
     required property GridFilterController gridFilter
     required property var automationHotkeys
     required property var updates
+    required property var whatsNew // SH3: WhatsNew
     required property var styleManager
     required property var fontCollector // Y8: FontCollectorController
     required property var fontCatalogs // Y6: FontCatalogsController
@@ -1989,6 +1990,17 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
                 }
             }
+            // SH3 (#223): the release notes since the version used before; no hotkey.
+            ShellMenuItem {
+                help: qsTr("Shows the release notes of the versions since the one you used before")
+                iconRole: "whats-new"
+                objectName: "whatsNewMenuItem"
+                action: Action {
+                    id: whatsNewAction
+                    text: qsTr("What's &new")
+                    onTriggered: whatsNewDialog.open()
+                }
+            }
             ShellMenuItem {
                 help: qsTr("Shows program info") // HikariSubFrame.cpp:366
                 iconRole: "about"
@@ -2470,10 +2482,19 @@ ApplicationWindow {
         onOpenRequested: openAction.trigger()
         onOpenVideoRequested: openVideoAction.trigger()
         onRestoreRequested: sessionWindows.load()
+        // SH3: What's new, while there are notes to show.
+        whatsNew: root.whatsNew.releases.length > 0 ? whatsNewCard : null
         // P9: Ctrl+click shows the file in its folder, as in File > Recent.
         onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
         onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
         Component.onCompleted: if (visible) Qt.callLater(takeFocus)
+    }
+    Component {
+        id: whatsNewCard
+        WhatsNewCard {
+            whatsNew: root.whatsNew
+            smallFont: homePage.smallFont
+        }
     }
     // The first Document opened from Home: the focus, left nowhere when the
     // page went, goes to the Grid (else the first shown panel), unless the
@@ -6116,6 +6137,12 @@ ApplicationWindow {
     UpdateAvailable {
         id: updateAvailable
         updates: root.updates
+        whatsNew: root.whatsNew
+        settings: root.app.settings
+    }
+    WhatsNewDialog {
+        id: whatsNewDialog
+        whatsNew: root.whatsNew
         settings: root.app.settings
     }
     AboutDialog {

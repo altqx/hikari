@@ -205,6 +205,8 @@ qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml T
 # DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update notices on it.
 qt_target_qml_sources(hikari_ui QML_FILES DialogWindow.qml DialogTitleBar.qml AboutDialog.qml CreditsDialog.qml
     UpdateMessage.qml UpdateAvailable.qml)
+# SH3: What's new from the release notes, on the Home page and in Help > What's new.
+qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml WhatsNewCard.qml WhatsNewDialog.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")

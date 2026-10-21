@@ -6,7 +6,7 @@ import QtQuick.Layouts
 import Hikari.Ui
 
 // P8, ADR 0019, DG1 (#222): a newer release, on the dialog frame: its name
-// and the version this is, its notes (plain text; SH3 renders them), the
+// and the version this is, its notes (SH3: as plain rich text), the
 // requirement of a package this system cannot run, the download's progress
 // in place of the button that started it, and the update options. Remind me
 // in a week at the leading edge; Download and install (or Open the download
@@ -18,6 +18,7 @@ DialogWindow {
     id: available
     objectName: "updateAvailable"
     required property var updates // UpdateChecker
+    property var whatsNew: null // SH3: WhatsNew, which renders the notes
     property var release: ({})
     readonly property bool installs: release.offer === "install" && updates.autoInstall
     readonly property bool downloading: updates.installer.state === "downloading"
@@ -66,9 +67,13 @@ DialogWindow {
         Layout.minimumHeight: 96
         TextArea {
             objectName: "updateNotes"
-            text: available.release.notes || ""
+            readonly property string notes: available.release.notes || ""
+            textFormat: available.whatsNew ? TextEdit.RichText : TextEdit.PlainText
+            text: available.whatsNew ? available.whatsNew.render(notes, Theme.muted, Theme.accent, Theme.raised) : notes
             readOnly: true
             wrapMode: TextEdit.Wrap
+            onLinkActivated: link => available.whatsNew.openLink(link)
+            HoverHandler { cursorShape: parent.hoveredLink ? Qt.PointingHandCursor : Qt.IBeamCursor }
             background: Rectangle {
                 color: Theme.field
                 border.width: 1
