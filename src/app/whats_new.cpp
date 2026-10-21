@@ -110,13 +110,10 @@ void dropHtml(QTextDocument &doc)
         }
         const int before = int(gone.size());
         for (const Run &run : runs) {
-            if (run.code) {
-                if (!closer.pattern().isEmpty())
-                    drop(run.position, run.position + int(run.text.size()));
-                continue;
-            }
             qsizetype at = 0;
             while (at < run.text.size()) {
+                // What is dropped ends at its closer, in code too (md4c
+                // read its backticks), as the raw HTML would.
                 if (!closer.pattern().isEmpty()) {
                     const QRegularExpressionMatch end = closer.match(run.text, at);
                     const qsizetype to = end.hasMatch() ? end.capturedEnd() : run.text.size();
@@ -126,6 +123,8 @@ void dropHtml(QTextDocument &doc)
                     at = to;
                     continue;
                 }
+                if (run.code)
+                    break;
                 const QRegularExpressionMatch open = dropped.match(run.text, at);
                 const QRegularExpressionMatch element = tag.match(run.text, at);
                 if (open.hasMatch() && (!element.hasMatch() || open.capturedStart() <= element.capturedStart())) {

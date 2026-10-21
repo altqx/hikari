@@ -565,6 +565,17 @@ private slots:
             QStringLiteral("Before <script\ntype=\"x\">hidden()</script> after"), muted, link, code);
         QVERIFY2(!split.contains(QStringLiteral("hidden()")), qPrintable(split));
         QVERIFY(split.contains(QStringLiteral("after")));
+        // What is dropped ends at its closer in code too; what follows stays.
+        const QString closed = copy->whatsNew->render(
+            QStringLiteral("<script>const x = `</script>` kept\n\nNext paragraph\n\n"
+                           "<!-- note `-->` after\n\nLast paragraph"),
+            muted, link, code);
+        QVERIFY2(closed.contains(QStringLiteral("Next paragraph")), qPrintable(closed));
+        QVERIFY(closed.contains(QStringLiteral("Last paragraph")));
+        QVERIFY(closed.contains(QStringLiteral("kept")));
+        QVERIFY(closed.contains(QStringLiteral("after")));
+        QVERIFY(!closed.contains(QStringLiteral("const x")));
+        QVERIFY(!closed.contains(QStringLiteral("note")));
         // A quoted attribute value may hold ">": the tag ends after it.
         const QString quoted = copy->whatsNew->render(
             QStringLiteral("A <span title=\"1 > 0\" data-x='a>b'>kept</span> B"), muted, link, code);
