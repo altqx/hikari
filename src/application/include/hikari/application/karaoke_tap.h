@@ -126,11 +126,13 @@ public:
     std::vector<Span> spans(int nowMs) const;
     // The finished Line (done()).
     Result result() const;
+    // The last boundary kept (the held syllable's start, else the last tapped
+    // one's end; 0 before any): a press lands there or later.
+    int lastBoundary() const;
 
 private:
     void startNext(int songMs);
     void finishHeld(int songMs);
-    int lastBoundary() const;
 
     Mode m_mode = Mode::Hold;
     std::vector<Syllable> m_syllables;

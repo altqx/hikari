@@ -83,12 +83,17 @@ TextField {
             const column = field.positionAt(mouse.x, mouse.y, TextInput.CursorOnCharacter)
             field.forceActiveFocus(Qt.MouseFocusReason)
             field.select(column, column)
-            field.drag = TimeFieldMask.dragBegin(field.mouseForm, field.frames, field.text, column, mouse.x, mouse.y)
+            // The drag is the pointer's travel in the window: a field the
+            // layout moves under it (the Line editor's "End is before
+            // Start." showing below) has not been dragged.
+            const at = mapToItem(null, mouse.x, mouse.y)
+            field.drag = TimeFieldMask.dragBegin(field.mouseForm, field.frames, field.text, column, at.x, at.y)
         }
         onPositionChanged: mouse => {
             if (!field.drag.step)
                 return
-            const moved = TimeFieldMask.dragMove(field.mouseForm, field.frames, field.drag, mouse.x, mouse.y)
+            const at = mapToItem(null, mouse.x, mouse.y)
+            const moved = TimeFieldMask.dragMove(field.mouseForm, field.frames, field.drag, at.x, at.y)
             field.drag = moved.drag
             field.step(moved.text)
         }

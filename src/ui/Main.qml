@@ -3897,6 +3897,19 @@ ApplicationWindow {
                                 }
                             }
                             MenuSeparator {}
+                            // KA5 (#280, KA5-onset-snap): dragged and tapped
+                            // boundaries snap to vocal onsets
+                            ShellMenuItem {
+                                objectName: "audioOnsetSnap"
+                                text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
+                                checkable: true
+                                checked: root.audio.onsetSnap
+                                onToggled: {
+                                    root.audio.setOnsetSnap(checked)
+                                    checked = Qt.binding(() => root.audio.onsetSnap)
+                                }
+                            }
+                            MenuSeparator {}
                             ShellMenu {
                                 id: audioTapSpeedMenu
                                 objectName: "audioTapSpeedMenu"
