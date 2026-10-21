@@ -662,7 +662,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // general player takes the video volume.
     m_videoView = std::make_unique<ui::VideoViewController>(*m_video, *m_visualTools, *m_settings);
     m_videoView->setPlayer(m_generalPlayer.get());
-    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*m_video, *m_videoView); // V5
+    m_videoFullscreen = std::make_unique<ui::VideoFullscreenController>(*m_video, *m_videoView, *m_settings); // V5, FS1
     // W1: the player video.playbackPlayer chooses (the general player but on
     // Windows with DirectShow chosen).
     choosePlayer();

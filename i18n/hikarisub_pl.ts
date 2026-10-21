@@ -4397,6 +4397,34 @@ great help testing HikariSub on a slow computer)
         <source>Installing update...</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window menu</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More menus</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximise</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Application menu</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4419,6 +4447,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>Load subtitles from an MKV/OGM file</source>
+        <translation type="unfinished">Wczytaj napisy z pliku MKV / OGM</translation>
     </message>
     <message>
         <source>The file does not contain any subtitle tracks.</source>
@@ -4644,6 +4676,18 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Window</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use system title bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5065,6 +5109,10 @@ po wyjściu z pełnego ekranu</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
         <translation type="vanished">Aktywuj okno audio po najechaniu</translation>
     </message>
@@ -5280,7 +5328,7 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>
-        <translation>Wybierz zewnętrzny folder czcionek</translation>
+        <translation type="vanished">Wybierz zewnętrzny folder czcionek</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -5605,7 +5653,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation>Wybierz folder zapisu</translation>
+        <translation type="vanished">Wybierz folder zapisu</translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5730,6 +5778,10 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>Replace</source>
         <translation>Zamień</translation>
+    </message>
+    <message>
+        <source>Choose subtitle search folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
@@ -8100,6 +8152,10 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation>Następny plik</translation>
     </message>
     <message>
+        <source>Choose keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Warning</source>
         <translation>Uwaga</translation>
     </message>
@@ -8113,7 +8169,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Choose video file</source>
-        <translation>Wybierz plik wideo</translation>
+        <translation type="vanished">Wybierz plik wideo</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
