@@ -15516,16 +15516,23 @@ private slots:
         auto *latency = calibration->findChild<QQuickItem *>(QStringLiteral("tapCalibrationLatency"));
         QVERIFY(latency);
         QCOMPARE(latency->property("value").toInt(), 0);
-        // a press 80 ms after each of the first ten beeps: six counted after the practice
-        for (int beat = 0; beat < 10; beat++) {
+        // a press 80 ms after each beep (later by the polling, more so on a
+        // loaded runner): twelve counted after the practice, a few to spare
+        for (int beat = 0; beat < application::kCalibrationBeats; beat++) {
             QTRY_VERIFY_WITH_TIMEOUT(audio.calibrationBeat() > beat, 3000);
             QTest::qWait(80);
             QTest::keyClick(calibration, Qt::Key_Space);
         }
-        QTRY_VERIFY(audio.calibrationEnough());
-        QVERIFY(audio.calibrationCounted() >= 6);
+        const auto delays = [&] {
+            QStringList ms;
+            for (const QVariant &d : audio.calibrationDelays())
+                ms << QString::number(d.toDouble(), 'f', 0);
+            return QStringLiteral("counted %1: %2").arg(audio.calibrationCounted()).arg(ms.join(u' '));
+        };
+        QTRY_VERIFY2(audio.calibrationEnough(), qPrintable(delays()));
+        QVERIFY2(audio.calibrationCounted() >= 6, qPrintable(delays()));
         const int measured = audio.calibrationLatency();
-        QVERIFY2(measured >= 60 && measured <= 200, qPrintable(QString::number(measured)));
+        QVERIFY2(measured >= 60 && measured <= 250, qPrintable(delays()));
         QCOMPARE(latency->property("value").toInt(), measured);
         auto *result = calibration->findChild<QQuickItem *>(QStringLiteral("tapCalibrationResult"));
         QVERIFY2(result->property("text").toString().contains(QStringLiteral("of 12 counted beeps")),
