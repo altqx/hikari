@@ -2,6 +2,9 @@
 // video, press F in the Video panel and see the picture fullscreen on the
 // main window's monitor; Space (the Video window's VIDEO_PLAY_PAUSE) plays
 // and pauses there, Right (the Global GLOBAL_NEXT_FRAME) steps a frame;
+// FS1 (#275): the bar shows on entering (Auto); Tab (VIDEO_FULLSCREEN_BAR)
+// cycles Always, Never (no bar) and Auto; in Auto, playing with the pointer
+// still, the bar and the pointer hide (the idle time shortened to 400 ms).
 // Esc leaves with the main window's geometry, state and keyboard focus as
 // they were. With two monitors (`--monitors 2`), the context menu's "Open in
 // full screen on monitor 2" puts it on the second one at that monitor's own
@@ -128,27 +131,51 @@ protected:
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Right, spix::KeyModifiers::None);
         note(waitFor([&] { return getStringProperty("videoFullscreen/fullscreenTimes", "text") != before; })
                                ? "stepped" : "not stepped"); // 5
+        // FS1-bar-mode: Tab cycles the bar's mode.
+        const auto mode = [&] { return getStringProperty("videoFullscreen/fullscreenBarMode", "text"); };
+        enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
+        note(waitFor([&] { return mode() == "Always"; }) ? "always" : "not always: " + mode()); // 6
+        enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
+        note(waitFor([&] { return mode() == "Never" && !existsAndVisible("videoFullscreen/videoFullscreenPanel"); })
+                 ? "never" : "not never: " + mode()); // 7
+        enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Tab, spix::KeyModifiers::None);
+        note(waitFor([&] { return mode() == "Auto"; }) ? "auto" : "not auto: " + mode()); // 8
+        // FS1-bar-auto-hide, FS1-cursor-hide: playing, nothing moving: the
+        // bar goes and the pointer is hidden over the picture.
+        enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
+        const std::string blank = std::to_string(int(Qt::BlankCursor));
+        note(waitFor([&] {
+            return !existsAndVisible("videoFullscreen/videoFullscreenPanel")
+                   && getStringProperty("videoFullscreen/visualOverlay", "cursorOverride") == blank;
+        }, 15) ? "hidden"
+               : "not hidden: panel " + std::to_string(existsAndVisible("videoFullscreen/videoFullscreenPanel"))
+                     + ", cursor " + getStringProperty("videoFullscreen/visualOverlay", "cursorOverride") + ", "
+                     + getStringProperty("videoFullscreen/fullscreenPlayPause", "text")); // 9
+        takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-idle.png");
+        enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Space, spix::KeyModifiers::None);
+        note(waitFor([&] { return existsAndVisible("videoFullscreen/videoFullscreenPanel"); }) ? "paused, shown"
+                                                                                               : "paused, not shown"); // 10
         enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Escape, spix::KeyModifiers::None);
-        note(waitFor([&] { return changes() >= 2; }) ? "left" : "not left"); // 6
+        note(waitFor([&] { return changes() >= 2; }) ? "left" : "not left"); // 11
         wait(500ms);
         if (monitors > 1) {
             // The context menu's monitor entry (VideoBox.cpp:941-948, 1053-1056).
             mouseClick("mainWindow/visualOverlay", spix::MouseButtons::Right);
             note(waitForItem("mainWindow/videoMenuMonitor1", 3s)
-                                   ? getStringProperty("mainWindow/videoMenuMonitor1", "text") : "no monitor entry"); // 7
+                                   ? getStringProperty("mainWindow/videoMenuMonitor1", "text") : "no monitor entry"); // 12
             invokeMethod("mainWindow/videoMenuMonitor1", "triggered", {});
-            note(waitFor([&] { return changes() >= 3; }) ? "on monitor 2" : "not on monitor 2"); // 8
+            note(waitFor([&] { return changes() >= 3; }) ? "on monitor 2" : "not on monitor 2"); // 13
             wait(800ms);
             takeScreenshot("videoFullscreen", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-monitor2.png");
             // In fullscreen the entry switches (VideoBox.cpp:943-944).
             mouseClick("videoFullscreen/visualOverlay", spix::MouseButtons::Right);
             note(waitForItem("videoFullscreen/fullscreenMenuMonitor1", 3s)
                                    ? getStringProperty("videoFullscreen/fullscreenMenuMonitor1", "text")
-                                   : "no monitor entry"); // 9
+                                   : "no monitor entry"); // 14
             enterKey("videoFullscreen/fullscreenMenuMonitor1", Qt::Key_Escape, spix::KeyModifiers::None); // the menu closes
             wait(300ms);
             enterKey("videoFullscreen/videoFullscreenKeys", Qt::Key_Escape, spix::KeyModifiers::None);
-            note(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left"); // 10
+            note(waitFor([&] { return changes() >= 4; }) ? "left monitor 2" : "not left"); // 15
             wait(500ms);
         }
         takeScreenshot("mainWindow", std::string(HIKARI_TEST_ARTIFACT_DIR) + "/video-fullscreen-after.png");
@@ -240,6 +267,7 @@ int main(int argc, char **argv)
     const int mainVisibility = window->visibility();
 
     auto &fs = application.videoFullscreen();
+    fs.setIdleInterval(400); // FS1: the bar's idle time, shortened for the two-second clip
     // Found while docked: a closed dock's content leaves the window's object tree.
     QPointer<QQuickItem> presenter = window->findChild<QQuickItem *>(QStringLiteral("videoPresenter"));
     expect(presenter != nullptr, "the presenter is there");
@@ -317,20 +345,23 @@ int main(int argc, char **argv)
                wayland ? "the fullscreen window has no parent (Wayland)"
                        : "the fullscreen window is owned by the main window");
     }
-    const std::size_t steps = monitors > 1 ? 11 : 7;
+    const std::size_t steps = monitors > 1 ? 16 : 12;
     expect(o.size() == steps, "every step observed");
     if (o.size() == steps) {
         expect(o[0] == "indexed", "the video is indexed");
         expect(o[1] == "entered", "F shows the video fullscreen");
-        expect(o[2] == "panel", "the panel is shown (Show toolbar)");
+        expect(o[2] == "panel", "the bar is shown on entering (Auto)");
         expect(o[3] == "playing" && o[4] == "paused", "Space plays and pauses in fullscreen");
         expect(o[5] == "stepped", "Right steps a frame in fullscreen");
-        expect(o[6] == "left", "Esc leaves");
+        expect(o[6] == "always" && o[7] == "never" && o[8] == "auto", "Tab cycles Always, Never and Auto");
+        expect(o[9] == "hidden", "playing, the bar and the pointer hide when idle");
+        expect(o[10] == "paused, shown", "paused, the bar is back");
+        expect(o[11] == "left", "Esc leaves");
         if (monitors > 1) {
-            expect(o[7] == "Open in full screen on monitor 2", "the second monitor is offered");
-            expect(o[8] == "on monitor 2", "fullscreen on the second monitor");
-            expect(o[9] == "Switch full screen to monitor 2", "in fullscreen the entry switches the monitor");
-            expect(o[10] == "left monitor 2", "Esc leaves the second monitor");
+            expect(o[12] == "Open in full screen on monitor 2", "the second monitor is offered");
+            expect(o[13] == "on monitor 2", "fullscreen on the second monitor");
+            expect(o[14] == "Switch full screen to monitor 2", "in fullscreen the entry switches the monitor");
+            expect(o[15] == "left monitor 2", "Esc leaves the second monitor");
         }
     }
     expect(changes.size() == (monitors > 1 ? 4u : 2u), "each change seen");

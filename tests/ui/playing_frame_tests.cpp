@@ -279,7 +279,7 @@ private slots:
     void fullscreenSeekBarDragSeeksAtMostEvery50Ms()
     {
         auto &fs = application->videoFullscreen();
-        fs.setShowToolbar(true);
+        fs.setBarMode(1); // Always: the bar stays while the drag plays (FS1-bar-mode)
         QVERIFY(fs.toggle(0));
         auto *fsWindow = qobject_cast<QQuickWindow *>(
             engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("videoFullscreen")));
@@ -291,6 +291,7 @@ private slots:
         QTRY_VERIFY(bar->isVisible() && bar->isEnabled());
         checkDrag(fsWindow, bar, 0.15, 0.75);
         QVERIFY(fs.leave());
+        fs.setBarMode(0);
     }
 
     // Items 35-37 (user decisions 2026-10-14): while playing, a jump goes

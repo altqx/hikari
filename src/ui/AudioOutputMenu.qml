@@ -26,7 +26,9 @@ ShellMenu {
     AudioSliderRow {
         visible: menu.audio !== null
         height: visible ? implicitHeight : 0
-        sliderName: "audioVolume"
+        // Named only where it is the audio box's: FS1's fullscreen speaker
+        // shows this menu too, without `audio`.
+        sliderName: menu.audio !== null ? "audioVolume" : ""
         text: qsTr("Volume")
         from: 1
         to: 100
@@ -35,7 +37,7 @@ ShellMenu {
         onMoved: v => menu.audio.setVolume(v)
     }
     Label {
-        objectName: "audioVolumeLinked"
+        objectName: menu.audio !== null ? "audioVolumeLinked" : ""
         visible: menu.audio !== null && menu.audio.linked
         height: visible ? implicitHeight : 0
         leftPadding: 98

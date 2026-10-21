@@ -33,11 +33,11 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation type="vanished">கிடைமட்ட நீட்சி</translation>
+        <translation>கிடைமட்ட நீட்சி</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation type="vanished">செங்குத்து நீட்சி</translation>
+        <translation>செங்குத்து நீட்சி</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -229,6 +229,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Auto-commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Line</source>
         <translation type="unfinished"></translation>
     </message>
@@ -308,6 +316,34 @@ Output device: %2</source>
     </message>
     <message>
         <source>Volume: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Customise the audio panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on the panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to the next line after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom and volume sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Classic arrangement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default arrangement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4560,6 +4596,10 @@ great help testing HikariSub on a slow computer)
         <translation>ரத்துசெய்</translation>
     </message>
     <message>
+        <source>Load subtitles from an MKV/OGM file</source>
+        <translation type="unfinished">MKV / OGM கோப்பின் வசன வரிகள் ஏற்றவும்</translation>
+    </message>
+    <message>
         <source>The file does not contain any subtitle tracks.</source>
         <translation>கோப்பில் எந்த வசனங்களும் இல்லை.</translation>
     </message>
@@ -5216,6 +5256,10 @@ after switching from full screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
         <translation type="vanished">சுட்டி மேலே இருக்கும்போது ஆடியோவைச் செயல்படுத்தவும்</translation>
     </message>
@@ -5439,7 +5483,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Choose choose external font folder</source>
-        <translation>வெளிப்புற எழுத்துரு கோப்புறையைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">வெளிப்புற எழுத்துரு கோப்புறையைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -5764,7 +5808,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation>சேமி கோப்புறையைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">சேமி கோப்புறையைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5889,6 +5933,10 @@ and will be changed to the default</source>
     <message>
         <source>Replace</source>
         <translation>மாற்று</translation>
+    </message>
+    <message>
+        <source>Choose subtitle search folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
@@ -8258,6 +8306,10 @@ Foreign language text will be deleted.</source>
         <translation>அடுத்த கோப்பு</translation>
     </message>
     <message>
+        <source>Choose keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Warning</source>
         <translation>எச்சரிக்கை</translation>
     </message>
@@ -8271,7 +8323,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Choose video file</source>
-        <translation>வீடியோ கோப்பைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">வீடியோ கோப்பைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -8454,12 +8506,71 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Press Esc to exit full screen</source>
+        <extracomment>Shown for two seconds on entering full screen video</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Previous video file</source>
         <translation>முந்தைய வீடியோ கோப்பு</translation>
     </message>
     <message>
+        <source>Line %1, %2: %3</source>
+        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Visual tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Wheel: volume · Right-click: output device</source>
+        <extracomment>The full screen speaker&apos;s tooltip: %1 is Mute or Unmute</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen bar: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on pointer movement, hide when idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the bar; the picture ends above it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Picture only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show toolbar</source>
-        <translation>கருவிப்பட்டி சின்னங்களைக் காட்டு</translation>
+        <translation type="vanished">கருவிப்பட்டி சின்னங்களைக் காட்டு</translation>
     </message>
     <message>
         <source>Indexing video</source>

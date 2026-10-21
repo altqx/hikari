@@ -33,11 +33,11 @@
     </message>
     <message>
         <source>Horizontal stretching</source>
-        <translation type="vanished">Rozciągnięcie w poziomie</translation>
+        <translation>Rozciągnięcie w poziomie</translation>
     </message>
     <message>
         <source>Vertical stretching</source>
-        <translation type="vanished">Rozciągnięcie w pionie</translation>
+        <translation>Rozciągnięcie w pionie</translation>
     </message>
     <message>
         <source>Volume</source>
@@ -229,6 +229,14 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Auto-commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Line</source>
         <translation type="unfinished"></translation>
     </message>
@@ -308,6 +316,34 @@ Output device: %2</source>
     </message>
     <message>
         <source>Volume: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Customise the audio panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on the panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around button</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to the next line after commit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zoom and volume sliders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Classic arrangement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default arrangement</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4577,6 +4613,10 @@ great help testing HikariSub on a slow computer)
         <translation>Anuluj</translation>
     </message>
     <message>
+        <source>Load subtitles from an MKV/OGM file</source>
+        <translation type="unfinished">Wczytaj napisy z pliku MKV / OGM</translation>
+    </message>
+    <message>
         <source>The file does not contain any subtitle tracks.</source>
         <translation>Plik nie ma żadnej ścieżki z napisami.</translation>
     </message>
@@ -5233,6 +5273,10 @@ po wyjściu z pełnego ekranu</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Choose external font folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Activate the audio when hover</source>
         <translation type="vanished">Aktywuj okno audio po najechaniu</translation>
     </message>
@@ -5456,7 +5500,7 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>
-        <translation>Wybierz zewnętrzny folder czcionek</translation>
+        <translation type="vanished">Wybierz zewnętrzny folder czcionek</translation>
     </message>
     <message>
         <source>Warning</source>
@@ -5781,7 +5825,7 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Choose save folder</source>
-        <translation>Wybierz folder zapisu</translation>
+        <translation type="vanished">Wybierz folder zapisu</translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5906,6 +5950,10 @@ zostanie zmieniony na domyślny</translation>
     <message>
         <source>Replace</source>
         <translation>Zamień</translation>
+    </message>
+    <message>
+        <source>Choose subtitle search folder</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
@@ -8276,6 +8324,10 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation>Następny plik</translation>
     </message>
     <message>
+        <source>Choose keyframes file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Warning</source>
         <translation>Uwaga</translation>
     </message>
@@ -8289,7 +8341,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Choose video file</source>
-        <translation>Wybierz plik wideo</translation>
+        <translation type="vanished">Wybierz plik wideo</translation>
     </message>
     <message>
         <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
@@ -8472,12 +8524,71 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Press Esc to exit full screen</source>
+        <extracomment>Shown for two seconds on entering full screen video</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Previous video file</source>
         <translation>Poprzedni plik wideo</translation>
     </message>
     <message>
+        <source>Line %1, %2: %3</source>
+        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Visual tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Wheel: volume · Right-click: output device</source>
+        <extracomment>The full screen speaker&apos;s tooltip: %1 is Mute or Unmute</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen bar: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on pointer movement, hide when idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the bar; the picture ends above it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Picture only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show toolbar</source>
-        <translation>Pokaż pasek narzędzi</translation>
+        <translation type="vanished">Pokaż pasek narzędzi</translation>
     </message>
     <message>
         <source>Indexing video</source>

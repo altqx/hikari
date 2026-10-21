@@ -30,6 +30,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace hikari::ui {
@@ -47,6 +48,12 @@ class LineEditorController : public QObject {
     // Translation mode (Script Info "TLMode: Yes"): Original above Translated.
     Q_PROPERTY(bool translationMode READ translationMode NOTIFY changed)
     Q_PROPERTY(QString translationText READ translationText NOTIFY changed)
+    // FS1-current-line: the raw text the video shows for the Line, the
+    // draft applied: in translation mode its translation when it has one.
+    Q_PROPERTY(QString videoText READ videoText NOTIFY changed)
+    // Its times as the video has them ("start – end", the start alone
+    // where the format has no end), from the same record as videoText.
+    Q_PROPERTY(QString videoTimes READ videoTimes NOTIFY changed)
     Q_PROPERTY(QString startText READ startText NOTIFY changed)
     Q_PROPERTY(QString endText READ endText NOTIFY changed)
     Q_PROPERTY(QString marginLeftText READ marginLeftText NOTIFY changed)
@@ -158,6 +165,8 @@ public:
     QString text() const { return m_shown[0]; }
     bool translationMode() const;
     QString translationText() const { return m_shown[1]; }
+    QString videoText() const;
+    QString videoTimes() const;
     QString startText() const;
     QString endText() const;
     QString marginLeftText() const;
@@ -426,6 +435,9 @@ private:
     application::EditSession *session() const;
     std::optional<core::LineRecord> record() const; // the active Line, draft applied (and E5's split shown)
     std::optional<core::LineRecord> sessionRecord() const; // the active Line, draft applied
+    // FS1: the active Line as the video shows it: the committed Line and the
+    // draft's changes over it (null without), both in place.
+    std::pair<const core::LineRecord *, const application::DraftChange *> videoLine() const;
     // E5: the split Moving tags shows, for the Line it was made for.
     struct Split {
         core::LineId line;
