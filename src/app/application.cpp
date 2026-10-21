@@ -1099,6 +1099,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             const auto *session = targetSession();
             return session ? application::committedAudioTime(session->document(), ms) : ms;
         };
+        hooks.severalSelected = [this] {
+            const auto *session = targetSession();
+            return session && session->selection().selected.size() > 1;
+        };
         m_audio->setTimingHooks(std::move(hooks));
     }
     // KA2-tap-to-time: the tap bar's next Line (keys as refreshAudio gives them)

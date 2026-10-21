@@ -342,6 +342,9 @@ public:
         // KA1: the start the commit writes (committedAudioTime: 10 ms in
         // ASS, a frame's start in MicroDVD), so the \k text is written against it.
         std::function<int(int ms)> fieldTime;
+        // KA1: whether several Lines are selected (the commit gives them all
+        // the edited fields, so a lead-in writes no \k text then).
+        std::function<bool()> severalSelected;
         // (Playback is the box's own since A4: Play after Next/Previous
         // unless AUDIO_DONT_PLAY_WHEN_LINE_CHANGES, the middle double click's
         // Play and the player's end while a boundary is dragged.)

@@ -1264,9 +1264,12 @@ void AudioController::addLead(bool in, bool out)
         application::legacyAddLead(m_startMs, m_endMs, in, out, options.leadIn, options.leadOut);
     // KA1-lead-in-keeps-syllables: in Karaoke mode the syllables stay at
     // their times and their text goes into the editor with the times (in
-    // Line mode the commit keeps the text's syllables in place)
+    // Line mode the commit keeps the text's syllables in place); with several
+    // Lines selected each would take this one's text, so they keep theirs
+    // (legacy, as in Line mode; Codex)
     std::optional<std::u16string> karaokeText;
-    if (m_hasKara && m_karaoke.count() && m_startMs != startBefore) {
+    const bool several = m_hooks.severalSelected && m_hooks.severalSelected();
+    if (m_hasKara && m_karaoke.count() && m_startMs != startBefore && !several) {
         m_karaoke.moveStart(startBefore, committedStart());
         karaokeText = m_karaoke.text(committedStart());
     }

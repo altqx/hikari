@@ -46,7 +46,10 @@ bool inRange(char32_t c, char32_t from, char32_t to)
 bool isKana(char32_t c)
 {
     return inRange(c, 0x3041, 0x3096) || inRange(c, 0x309D, 0x309F) || inRange(c, 0x30A1, 0x30FA) ||
-           inRange(c, 0x30FC, 0x30FF) || inRange(c, 0x31F0, 0x31FF) || inRange(c, 0xFF66, 0xFF9F);
+           inRange(c, 0x30FC, 0x30FF) || inRange(c, 0x31F0, 0x31FF) || inRange(c, 0xFF66, 0xFF9F) ||
+           // Kana Extended-B, Kana Supplement (hentaigana), Kana Extended-A
+           // and Small Kana Extension (Codex)
+           inRange(c, 0x1AFF0, 0x1AFFF) || inRange(c, 0x1B000, 0x1B16F);
 }
 
 bool isHan(char32_t c)
@@ -199,7 +202,9 @@ bool smallKana(char32_t c)
         U"ぁぃぅぇぉゃゅょゎァィゥェォャュョ"
         U"ヮｧｨｩｪｫｬｭｮﾞﾟ"
         U"ゕゖヵヶ"; // small ka and ke (Codex); between kanji (一ヶ月) a run of their own
-    return set.find(c) != std::u32string_view::npos || inRange(c, 0x31F0, 0x31FF);
+    return set.find(c) != std::u32string_view::npos || inRange(c, 0x31F0, 0x31FF) ||
+           // the Small Kana Extension's (small ko, wi, we, wo, n)
+           c == 0x1B132 || inRange(c, 0x1B150, 0x1B152) || c == 0x1B155 || inRange(c, 0x1B164, 0x1B167);
 }
 
 bool sokuon(char32_t c)

@@ -16171,6 +16171,34 @@ private slots:
         press(Qt::Key_H);
     }
 
+    // KA1 (Codex): Add lead-in in Karaoke mode with several Lines selected
+    // writes no \k text, which the commit would give every selected Line:
+    // each keeps its own (legacy, as Line mode's start moves)
+    void audioKaraokeLeadInSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lead-several.ass",
+                                       "Dialogue: 0,0:00:00.40,0:00:01.00,Default,,0,0,0,,{\\k30}sa{\\k30}ku\n"
+                                       "Dialogue: 0,0:00:01.20,0:00:01.80,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        audio.leadIn();
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->text, std::u8string(u8"{\\k30}sa{\\k30}ku"));
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+        QCOMPARE(after[0]->start.value.microseconds(), 200000);
+    }
+
     // KA2 (#277, KA2-tap-to-time): tap-to-time in Karaoke mode with the real
     // keys, the output without a device playing in real time. Tap plays from
     // before the Line; Space held for each syllable (a release well before
