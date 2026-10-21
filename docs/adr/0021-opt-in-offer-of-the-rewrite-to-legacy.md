@@ -58,7 +58,10 @@ The manifest is uploaded after `SHA256SUMS` is computed. To change a published o
   - **Don't offer again**, which holds until a higher rewrite version carries an offer, or until the offer's `legacy_support` changes to `ended`, which shows it once more.
 - Help has "Try the new HikariSub…", which shows the current offer even after Don't offer again.
 - A legacy update always comes first. The offer waits for a later start.
-- Nothing is downloaded before Try it. After that, the download shows its progress and is checked against its SHA-256, then "Update ready" offers Restart now and Later, as for a legacy update.
+- Nothing is downloaded before Try it. What Try it does depends on the package kind, as for a legacy update:
+  - NSIS, AppImage, deb and rpm: the download shows its progress and is checked against its SHA-256, then "Update ready" offers Restart now and Later.
+  - Portable: the release page, with a note to unpack the rewrite beside the legacy copy.
+- AUR installs get no offer; each AUR package moves as described below.
 - Every updater window is owned by the main window, centred on it and brought to the front. When the app is minimised or in the background, the taskbar button flashes instead. At startup, update windows wait until the last-session and crash prompts are closed.
 
 ## Moving and going back
@@ -75,7 +78,7 @@ There is no AUR package for legacy after that: from the rewrite's first stable r
 
 ## Legacy 0.0.1
 
-0.0.1 reads no manifest. It shows the highest release newer than it that fits its channel, as a notice that leads to the release page: with "Stable versions only" on, the default, that is the highest stable release, and with it off a rewrite prerelease can be shown too. So every rewrite release's notes begin with "Coming from 0.0.x? Moving is optional; legacy keeps getting updates", linking the latest legacy release.
+0.0.1 reads no manifest. It shows the highest release newer than it that fits its channel, as a notice that leads to the release page: with "Stable versions only" on, the default, that is the highest stable release, and with it off a rewrite prerelease can be shown too. So every rewrite release's notes begin with "Coming from 0.0.x? Moving is optional; legacy keeps getting updates", linking the latest legacy release. Once legacy support has ended, the line says instead that legacy keeps working but gets no further updates. Changing an offer to `ended` also updates the notes of the release that carries it.
 
 ## Branches
 

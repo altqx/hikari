@@ -16,6 +16,8 @@ Public beta before full native qualification is accepted only within the checks 
 
 Stable notification remains the default channel. Beta requires opt-in; checks only notify and open a validated page after user action. No automatic install, restart, channel migration or downgrade follows from these labels. A beta's missing full-system evidence is disclosed incompleteness, never a passed or waived stable gate.
 
+Amended by [ADR-0021](../../adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md): when a legacy user picks **Try it** on a beta offer, an installed package downloads the beta and installs it over legacy as an update. Nothing installs, restarts or changes channel without that choice.
+
 ## One candidate, one evidence record
 
 Maintain a candidate manifest keyed to source commit, dependency/artifact locks and final package digests. Expand the [coverage ledger](../coverage.md) into inventory-level capability rows: accepted outcome or named departure, implementation ticket, fixture/command/environment, observation links, and **passed / failed / unexecuted / inconclusive / not applicable with reason**. Approval, code merged, and behavior verified are separate fields. Prototype reactions settle only their recorded UX scope.
