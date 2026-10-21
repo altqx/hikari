@@ -592,7 +592,7 @@ QVariantList TemplateEditorController::templates() const
                                                                                : QStringLiteral("template")},
             {QStringLiteral("effect"), qs(r.effect)},
             {QStringLiteral("style"), qs(r.style)},
-            {QStringLiteral("text"), qs(r.text)},
+            {QStringLiteral("text"), qs(l->translation.empty() ? r.text : r.translation)},
             {QStringLiteral("generated"), stats == m_stats.end() ? -1 : stats->second.generated},
             {QStringLiteral("seconds"), stats == m_stats.end() ? -1.0 : stats->second.seconds},
             {QStringLiteral("changed"), base == m_baseline.end() || base->second != keyOf(r)},

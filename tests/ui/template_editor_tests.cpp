@@ -1117,10 +1117,18 @@ private slots:
         openDocument(std::move(doc), true);
         editor->setCurrent(tl->value);
         QVERIFY(editor->text().endsWith(QStringLiteral("{\\bord4}")));
+        const auto rowText = [&] {
+            for (const QVariant &v : editor->templates())
+                if (v.toMap().value(QStringLiteral("id")).toULongLong() == tl->value)
+                    return v.toMap().value(QStringLiteral("text")).toString();
+            return QString();
+        };
+        QVERIFY(rowText().endsWith(QStringLiteral("{\\bord4}"))); // the list shows it too
         activate(*firstKaraoke());
         editor->setDelays(10, 60'000);
         editor->setShown(true);
         editor->setText(editor->text() + QStringLiteral("{\\bord5}"));
+        QVERIFY(rowText().endsWith(QStringLiteral("{\\bord5}")));
         QVERIFY(QTest::qWaitFor(
             [&] { return settled() && previewTexts().join(QString()).contains(QStringLiteral("bord5")); }, 20'000));
         editor->commit();
