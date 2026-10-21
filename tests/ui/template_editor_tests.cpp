@@ -978,6 +978,45 @@ private slots:
         QCOMPARE(templater->previews, before);
     }
 
+    // The templater puts a Line's Actor and Style into a template before it
+    // runs the template's !expressions!: a Line pasted in with a new one
+    // asks first; one with the values already there does not.
+    void aNewActorOrStyleAsksFirst()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto source = firstKaraoke();
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500); // the run marking the current template's own Lines
+        core::LineRecord row = *lineAt(0);
+        for (const auto *l : session->document().lines())
+            if (l->id == *source)
+                row = *l;
+        QVERIFY(change([&](core::Document &doc) { return doc.appendLine(row).has_value(); }));
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QTest::qWait(500);
+        const int before = templater->previews;
+        row.actor = u8"!_G.marker = 1!";
+        QVERIFY(change([&](core::Document &doc) { return doc.appendLine(row).has_value(); }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        row.actor = (*lineAt(0)).actor;
+        row.style = u8"!_G.marker = 1!";
+        QVERIFY(change([&](core::Document &doc) {
+            return doc.removeLinesIf([](const core::LineRecord &l) { return l.actor == u8"!_G.marker = 1!"; }) == 1 &&
+                   doc.appendLine(row).has_value();
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QTest::qWait(300);
+        QCOMPARE(templater->previews, before);
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));

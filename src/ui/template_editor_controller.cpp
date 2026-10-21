@@ -369,7 +369,7 @@ void TemplateEditorController::refresh()
                                         std::ranges::none_of(doc.lines(), [](const core::LineRecord *l) {
                                             return application::templateKindOf(*l).has_value();
                                         }))
-        m_trusted[key] = {};
+        m_trusted[key] = {{}, sourceFields()};
     // The current template follows the active Line when that is one.
     const auto active = s->selection().active;
     if (const auto *l = active ? line(*active) : nullptr; l && application::templateKindOf(*l) && active != m_current)
@@ -734,32 +734,50 @@ TemplateEditorController::TemplateLines TemplateEditorController::templateLines(
     return out;
 }
 
-void TemplateEditorController::trust(const TemplateLines &lines)
+std::set<std::string> TemplateEditorController::sourceFields() const
+{
+    std::set<std::string> out;
+    if (const auto *doc = document())
+        for (const auto *l : doc->lines())
+            if (!application::templateKindOf(*l) && !application::isGeneratedLine(*l)) {
+                auto m = application::macroLineOf(*l);
+                out.insert(std::move(m.actor));
+                out.insert(std::move(m.style));
+            }
+    return out;
+}
+
+void TemplateEditorController::trust(const TemplateLines &lines, const std::set<std::string> &fields)
 {
     auto &trusted = m_trusted[documentKey()];
     for (const auto &[id, runs] : lines)
-        trusted[id].insert(runs);
+        trusted.lines[id].insert(runs);
+    trusted.fields.insert(fields.begin(), fields.end());
 }
 
 bool TemplateEditorController::trusted() const
 {
     // A template or code Line come or changed since another way (a paste,
     // an import, a translation pasted over it) is Lua the user has not
-    // chosen to run.
+    // chosen to run; so is a new Actor or Style the templates put into
+    // theirs.
     const auto it = session() ? m_trusted.find(documentKey()) : m_trusted.end();
     if (it == m_trusted.end())
         return false;
-    return std::ranges::all_of(templateLines(), [&](const auto &line) {
-        const auto forms = it->second.find(line.first);
-        return forms != it->second.end() && forms->second.contains(line.second);
-    });
+    const auto &lines = it->second.lines;
+    return std::ranges::all_of(templateLines(),
+                               [&](const auto &line) {
+                                   const auto forms = lines.find(line.first);
+                                   return forms != lines.end() && forms->second.contains(line.second);
+                               }) &&
+           std::ranges::includes(it->second.fields, sourceFields());
 }
 
 void TemplateEditorController::trustDocument()
 {
     if (!session() || trusted())
         return;
-    trust(templateLines());
+    trust(templateLines(), sourceFields());
     m_previewSnapshotKey.clear();
     emit changed();
     schedulePreview();
@@ -844,7 +862,8 @@ void TemplateEditorController::commit()
     const auto was = lines.find(change.line);
     const auto key = m_trusted.find(documentKey());
     const bool trustedForm = was != lines.end() && key != m_trusted.end() &&
-                             key->second.contains(change.line) && key->second.at(change.line).contains(was->second);
+                             key->second.lines.contains(change.line) &&
+                             key->second.lines.at(change.line).contains(was->second);
     application::Command command;
     command.name = "Edit template";
     command.expectedRevision = s->revision();
@@ -910,7 +929,7 @@ void TemplateEditorController::applied(const std::string &report)
                    {QStringLiteral("seconds"), o.value(QLatin1String("seconds")).toDouble()},
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
     takeBaseline();
-    trust(templateLines()); // the user ran them
+    trust(templateLines(), sourceFields()); // the user ran them
     // A file's unmarked Lines are marked now; an Undo that brings them back
     // matches again.
     m_replaced.clear();

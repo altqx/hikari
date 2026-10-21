@@ -253,8 +253,12 @@ private:
     // runs of it (its Effect and the text it reads).
     using TemplateLines = std::map<core::LineId, std::string>;
     TemplateLines templateLines() const;
-    // `lines` as the user chose to run them, on top of what they chose before.
-    void trust(const TemplateLines &lines);
+    // The Actor and Style values of the Lines the templater reads, which it
+    // puts into templates ($actor, $style) before it runs their !expressions!.
+    std::set<std::string> sourceFields() const;
+    // `lines` and `fields` as the user chose to run them, on top of what they
+    // chose before.
+    void trust(const TemplateLines &lines, const std::set<std::string> &fields = {});
 
     SessionSource m_sessionSource;
     DocumentKeySource m_documentKey;
@@ -262,7 +266,13 @@ private:
     // in every form the user chose: as they were when the user previewed or
     // applied, as New made them and as the panel's edits left them (an Undo
     // goes back to one).
-    std::map<DocumentKey, std::map<core::LineId, std::set<std::string>>> m_trusted;
+    // With them, the Actor and Style values there when the user previewed or
+    // applied.
+    struct Trust {
+        std::map<core::LineId, std::set<std::string>> lines;
+        std::set<std::string> fields;
+    };
+    std::map<DocumentKey, Trust> m_trusted;
     std::set<DocumentKey> m_seenDocuments;
     application::KaraokeTemplaterPort *m_templater = nullptr;
     bool m_editable = false;
