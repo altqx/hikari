@@ -6,8 +6,8 @@
 #include "text_util.h"
 
 #include <algorithm>
-#include <cstring>
 #include <optional>
+#include <span>
 #include <string>
 #include <vector>
 
@@ -138,9 +138,8 @@ LoadResult lyricsDocument(LyricSheet sheet)
         script += u8"Dialogue: 0," + legacy::assTimeText(line.start) + u8"," + legacy::assTimeText(line.end) +
                   u8",Default," + field(line.actor, true) + u8",0,0,0,," + text + u8"\r\n";
     }
-    std::vector<std::byte> bytes(script.size());
-    std::memcpy(bytes.data(), script.data(), script.size());
-    return loadAss(bytes);
+    sheet.lines = {}; // only the script from here, read in place
+    return loadAss(std::as_bytes(std::span(script)));
 }
 
 } // namespace detail
@@ -276,6 +275,7 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
     std::int64_t offset = 0;
     std::u8string voice;
     std::vector<LrcEntry> entries;
+    std::size_t stamps = 0; // line stamps so far: each a Line, or the end of one
     std::size_t lineNumber = 0;
     for (std::size_t from = 0; from <= all.size();) {
         const auto [newline, next] = detail::lineAt(all, from);
@@ -340,6 +340,9 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
             }
             rest = detail::trimLeft(rest.substr(close + 1));
         }
+        stamps += entry.times.size();
+        if (stamps > detail::kMaxLyricsLines)
+            return std::unexpected(LyricsProblem{Kind::TooLarge, lineNumber, {}});
         if (rest.empty()) {
             if (!entry.times.empty())
                 entries.push_back(std::move(entry)); // a time with no lyrics ends the line before
@@ -399,8 +402,11 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
         }
         if (entry.times.empty() && entry.words.empty())
             continue; // only stamps, no words: nothing to show
-        if (entry.times.empty())
+        if (entry.times.empty()) {
             entry.times.push_back(entry.words.front().begin);
+            if (++stamps > detail::kMaxLyricsLines)
+                return std::unexpected(LyricsProblem{Kind::TooLarge, lineNumber, {}});
+        }
         entries.push_back(std::move(entry));
     }
 
@@ -462,6 +468,9 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
     }
     if (sheet.lines.empty())
         return std::unexpected(LyricsProblem{Kind::NoLyrics, 0, {}});
+    placed = {};
+    nextTimes = {};
+    entries = {};
     return detail::lyricsDocument(std::move(sheet));
 }
 

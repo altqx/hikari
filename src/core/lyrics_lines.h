@@ -43,13 +43,18 @@ inline std::size_t lyricsBudget(std::size_t fileSize)
     return kMaxLyricsGrowth * fileSize + (std::size_t(1) << 20);
 }
 
+// The most Lines a lyrics file may make. A song has hundreds; each Line
+// costs the Document about a kilobyte and a half however short its text, so
+// a file of tiny lines ("[0:0]x" on each) would cost far more than its bytes.
+inline constexpr std::size_t kMaxLyricsLines = 10'000;
+
 // Takes a Line's share of the budget, before the Line is made: its text,
 // actor and words, each word's \k tag and the Dialogue's fields. False when
-// the budget is gone.
+// the budget is gone, or the sheet has all the Lines it may.
 inline bool spend(LyricSheet &sheet, std::size_t textBytes, std::size_t actorBytes, std::size_t words)
 {
     sheet.spent += textBytes + actorBytes + 16 * words + 64;
-    return sheet.spent <= sheet.budget;
+    return sheet.spent <= sheet.budget && sheet.lines.size() < kMaxLyricsLines;
 }
 
 // The latest time either format may give (100 hours), so no arithmetic on

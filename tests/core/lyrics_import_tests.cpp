@@ -440,6 +440,23 @@ TEST(LyricsImport, FilesAndXmlTreesHaveALimit)
         dense += "a<x/>";
     dense += "</p></body></tt>";
     EXPECT_EQ(problemOf(dense, u8"ttml"), (LyricsProblem{Kind::TooLarge, 2, u8""}));
+    // At most 10,000 Lines, each costing the Document far more than its
+    // bytes: LRC line stamps count as they are read (a stamp with no lyrics
+    // too, and a line timed by its first word), TTML Lines as they are made.
+    const auto lines = [](int n, std::string_view each) {
+        std::string out;
+        for (int i = 0; i < n; ++i)
+            out += each;
+        return out;
+    };
+    ASSERT_TRUE(importLrc(bytes(lines(10000, "[0:0]x\n"))).has_value());
+    EXPECT_EQ(problemOf(lines(10001, "[0:0]x\n"), u8"lrc"), (LyricsProblem{Kind::TooLarge, 10001, u8""}));
+    EXPECT_EQ(problemOf(lines(149796, "[0:0]x\n"), u8"lrc"), (LyricsProblem{Kind::TooLarge, 10001, u8""}));
+    EXPECT_EQ(problemOf("[0:0]x\n" + lines(10000, "[0:0]\n"), u8"lrc"), (LyricsProblem{Kind::TooLarge, 10001, u8""}));
+    EXPECT_EQ(problemOf("[0:0][0:1]x\n" + lines(9999, "<0:0>x\n"), u8"lrc"), (LyricsProblem{Kind::TooLarge, 10000, u8""}));
+    const std::string p = "<p begin=\"1\" end=\"2\">x</p>";
+    ASSERT_TRUE(importTtml(bytes("<tt><body>" + lines(10000, p) + "</body></tt>")).has_value());
+    EXPECT_EQ(problemOf("<tt><body>" + lines(10001, p) + "</body></tt>", u8"ttml").kind, Kind::TooLarge);
 }
 
 TEST(LyricsImport, TtmlHeadNamesShareTheBudget)
