@@ -1,0 +1,11 @@
+Test project /home/altq/.t3/worktrees/hikari/w6-au1/out/build/au1
+    Start 1526: hikari_ui_shell_tests.panels.offscreen
+1/1 Test #1526: hikari_ui_shell_tests.panels.offscreen ...   Passed   85.95 sec
+
+100% tests passed out of 1
+
+Label Time Summary:
+offscreen    =  85.95 sec*proc (1 test)
+qttest       =  85.95 sec*proc (1 test)
+
+Total Test time (real) =  86.03 sec
