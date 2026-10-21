@@ -877,23 +877,43 @@ function run_text_template(template, tenv, varctx, where, parts)
 		end
 	end
 	local expanded = res
+	-- Where in the template the character at `pos` of the expanded text was
+	-- written; nil inside a variable's value. Worked out only for a problem.
+	local function written_at(pos)
+		if not varctx then
+			return pos
+		end
+		local from, at = 1, 1
+		for start, varname, after in string.gmatch(template, "()$([%a_]+)()") do
+			if pos < at + start - from then
+				return from + pos - at
+			end
+			at = at + start - from
+			-- var_replacer's result: the value, or the name as written
+			local value = varctx[string.lower(varname)]
+			local length = value and #tostring(value) or #varname + 1
+			if pos < at + length then
+				return not value and start + pos - at or nil
+			end
+			at = at + length
+			from = after
+		end
+		return from + pos - at
+	end
 	
 	-- Function for evaluating expressions
-	local evaluated = 0
 	local function expression_evaluator(pos, expression)
-		evaluated = evaluated + 1
 		local function expression_where()
 			return part_where(parts, where, pos, #expanded, replaced)
 		end
 		-- the same expression in the template as written, before the
-		-- variables changed where it is
+		-- variables changed where it is; none when a variable's value
+		-- brought either of its marks in
 		local function expression_at()
-			local n = 0
-			for start, written in string.gmatch(template, "()!(.-)!") do
-				n = n + 1
-				if n == evaluated then
-					return part_at(parts, start, #written + 2, #template)
-				end
+			local open = written_at(pos)
+			local close = written_at(pos + #expression + 1)
+			if open and close then
+				return part_at(parts, open, close - open + 1, #template)
 			end
 		end
 		f, err = loadstring(string.format("return (%s)", expression))

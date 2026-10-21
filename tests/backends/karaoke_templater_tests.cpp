@@ -1006,6 +1006,33 @@ TEST_F(KaraokeTemplater, NamedTemplateProblemsArePlacedInTheirOwnLine)
     EXPECT_EQ(issues.find(3)->second.length, 14);
 }
 
+// An expression a variable's value brings in is nowhere in the template's
+// text: its problem has no place, and the written one after it keeps its own.
+TEST_F(KaraokeTemplater, AnExpressionFromAVariableHasNoPlaceInTheText)
+{
+    const std::string text =
+        "[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[V4+ Styles]\n"
+        "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, "
+        "Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, "
+        "MarginR, MarginV, Encoding\n"
+        "Style: Err,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1\n\n"
+        "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+        "Comment: 0,0:00:00.00,0:00:05.00,Err,,0,0,0,template line,{$actor\\fscx!nosuch.field!}\n"
+        "Dialogue: 0,0:00:01.00,0:00:03.00,Err,!nosuch.actor!,0,0,0,,{\\k50}ha{\\k50}ru\n";
+    hikari::application::EditSession session(hikari::core::loadAss(bytesOf(text)).document);
+    ASSERT_TRUE(apply(session, bundledScript(), "Apply karaoke template"));
+    const auto issues = issuesOf(report);
+    ASSERT_EQ(issues.count(1), 2u);
+    std::map<QString, Issue> byExpression;
+    for (auto [at, end] = issues.equal_range(1); at != end; ++at)
+        byExpression[at->second.message.section(QLatin1Char('\n'), 1, 1)] = at->second;
+    const Issue injected = byExpression[QStringLiteral("Expression producing error: nosuch.actor")];
+    EXPECT_EQ(injected.start, 0) << "not in the template's text";
+    const Issue written = byExpression[QStringLiteral("Expression producing error: nosuch.field")];
+    EXPECT_EQ(written.start, 13); // {$actor\fscx!nosuch.field!}
+    EXPECT_EQ(written.length, 14);
+}
+
 // A selected-Lines run numbers its problems' Lines as they are after it.
 TEST_F(KaraokeTemplater, SelectedRunPlacesProblemsInTheLinesAfterTheRun)
 {
