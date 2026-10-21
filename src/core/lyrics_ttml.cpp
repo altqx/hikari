@@ -267,6 +267,68 @@ bool nameChar(std::uint32_t cp)
            (cp >= 0x300 && cp <= 0x36F) || (cp >= 0x203F && cp <= 0x2040);
 }
 
+// XML's Name: a NameStartChar, then NameChars.
+bool xmlName(u8sv text)
+{
+    for (std::size_t i = 0; i < text.size();) {
+        const auto [cp, length] = codePointAt(text, i);
+        if (!(i == 0 ? nameStartChar(cp) : nameChar(cp)))
+            return false;
+        i += length;
+    }
+    return !text.empty();
+}
+
+// The character a reference's "#65" or "#x41" names, if it is one XML
+// allows.
+std::optional<std::uint32_t> characterReference(u8sv reference)
+{
+    if (reference.size() < 2 || reference[0] != u8'#')
+        return std::nullopt;
+    const bool hex = reference[1] == u8'x';
+    const u8sv digits = reference.substr(hex ? 2 : 1);
+    if (digits.empty() || digits.size() > 8)
+        return std::nullopt;
+    std::uint32_t cp = 0;
+    for (char8_t c : digits) {
+        const int v = c >= u8'0' && c <= u8'9'           ? c - u8'0'
+                      : hex && c >= u8'a' && c <= u8'f' ? c - u8'a' + 10
+                      : hex && c >= u8'A' && c <= u8'F' ? c - u8'A' + 10
+                                                         : -1;
+        if (v < 0)
+            return std::nullopt;
+        cp = cp * (hex ? 16 : 10) + static_cast<std::uint32_t>(v);
+    }
+    return xmlChar(cp) ? std::optional(cp) : std::nullopt;
+}
+
+// Whether a DTD literal's references follow XML's grammar: each "&" starts
+// "&name;" or a character reference, and with `parameters` (an
+// EntityValue) each "%" starts "%name;". Which entities they name is not
+// checked, as none is ever expanded.
+bool referencesWritten(u8sv text, bool parameters)
+{
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        if (text[i] != u8'&' && !(parameters && text[i] == u8'%'))
+            continue;
+        const std::size_t semi = text.find(u8';', i);
+        if (semi == u8sv::npos)
+            return false;
+        const u8sv reference = text.substr(i + 1, semi - i - 1);
+        if (!(text[i] == u8'&' && reference.starts_with(u8'#') ? characterReference(reference).has_value() : xmlName(reference)))
+            return false;
+        i = semi;
+    }
+    return true;
+}
+
+// XML's PubidChar: what a public identifier may hold.
+bool pubidChar(char8_t c)
+{
+    return c == u8' ' || c == u8'\r' || c == u8'\n' || (c >= u8'a' && c <= u8'z') || (c >= u8'A' && c <= u8'Z') ||
+           (c >= u8'0' && c <= u8'9') || u8sv(u8"-'()+,./:=?;!*#@$_%").find(c) != u8sv::npos;
+}
+
 // "U+0001": a character XML forbids, named for the message.
 std::u8string codePointName(std::uint32_t cp)
 {
@@ -549,12 +611,24 @@ private:
         return any;
     }
     // A quoted literal; an attribute value (AttValue) holds no "<".
-    bool quoted(bool attributeValue = false)
+    // A quoted literal of the DTD, held to its grammar: a SystemLiteral
+    // holds anything, a PubidLiteral only PubidChars, an AttValue no "<"
+    // and only references as "&" starts them, an EntityValue the same with
+    // "%" too.
+    enum class Literal : std::uint8_t { System, Pubid, AttValue, EntityValue };
+    bool quoted(Literal literal)
     {
         if (done() || (m_s[m_pos] != u8'"' && m_s[m_pos] != u8'\''))
             return false;
         const std::size_t close = m_s.find(m_s[m_pos], m_pos + 1);
-        if (close == u8sv::npos || (attributeValue && m_s.substr(m_pos, close - m_pos).find(u8'<') != u8sv::npos))
+        if (close == u8sv::npos)
+            return false;
+        const u8sv text = m_s.substr(m_pos + 1, close - m_pos - 1);
+        const bool written = literal == Literal::Pubid      ? std::ranges::all_of(text, pubidChar)
+                             : literal == Literal::AttValue ? text.find(u8'<') == u8sv::npos && referencesWritten(text, false)
+                             : literal == Literal::EntityValue ? referencesWritten(text, true)
+                                                               : true;
+        if (!written)
             return false;
         advance(close + 1 - m_pos);
         return true;
@@ -575,11 +649,11 @@ private:
     bool externalId(bool notation)
     {
         if (keyword(u8"SYSTEM"))
-            return space() && quoted();
-        if (!keyword(u8"PUBLIC") || !space() || !quoted())
+            return space() && quoted(Literal::System);
+        if (!keyword(u8"PUBLIC") || !space() || !quoted(Literal::Pubid))
             return false;
         const auto mark = std::pair{m_pos, m_line};
-        if (space() && quoted())
+        if (space() && quoted(Literal::System))
             return true;
         std::tie(m_pos, m_line) = mark;
         return notation;
@@ -656,14 +730,16 @@ private:
                 continue;
             if (keyword(u8"#FIXED") && !space())
                 return false;
-            if (!quoted(true))
+            if (!quoted(Literal::AttValue))
                 return false;
         }
     }
     bool attributeType()
     {
-        for (u8sv type : {u8sv(u8"CDATA"), u8sv(u8"IDREFS"), u8sv(u8"IDREF"), u8sv(u8"ID"), u8sv(u8"ENTITY"),
-                          u8sv(u8"ENTITIES"), u8sv(u8"NMTOKENS"), u8sv(u8"NMTOKEN")})
+        // The longer of two names that share a start first (IDREFS before
+        // IDREF before ID, ENTITIES before ENTITY).
+        for (u8sv type : {u8sv(u8"CDATA"), u8sv(u8"IDREFS"), u8sv(u8"IDREF"), u8sv(u8"ID"), u8sv(u8"ENTITIES"),
+                          u8sv(u8"ENTITY"), u8sv(u8"NMTOKENS"), u8sv(u8"NMTOKEN")})
             if (keyword(type))
                 return true;
         const bool notation = keyword(u8"NOTATION");
@@ -692,7 +768,7 @@ private:
         const bool parameter = keyword(u8"%");
         if ((parameter && !space()) || !name() || !space())
             return false;
-        if (quoted())
+        if (quoted(Literal::EntityValue))
             return true;
         if (!externalId(false))
             return false;
@@ -741,25 +817,9 @@ private:
                 out += u8'"';
             else if (entity == u8"apos")
                 out += u8'\'';
-            else if (entity.size() > 1 && entity[0] == u8'#') {
-                const bool hex = entity[1] == u8'x';
-                const u8sv digits = entity.substr(hex ? 2 : 1);
-                std::uint32_t cp = 0;
-                if (digits.empty() || digits.size() > 8)
-                    return std::unexpected(i);
-                for (char8_t c : digits) {
-                    const int v = c >= u8'0' && c <= u8'9' ? c - u8'0'
-                                  : hex && c >= u8'a' && c <= u8'f' ? c - u8'a' + 10
-                                  : hex && c >= u8'A' && c <= u8'F' ? c - u8'A' + 10
-                                                                     : -1;
-                    if (v < 0)
-                        return std::unexpected(i);
-                    cp = cp * (hex ? 16 : 10) + static_cast<std::uint32_t>(v);
-                }
-                if (!xmlChar(cp))
-                    return std::unexpected(i);
-                appendUtf8(out, cp);
-            } else
+            else if (const auto cp = characterReference(entity))
+                appendUtf8(out, *cp);
+            else
                 return std::unexpected(i);
             i = semi + 1;
         }

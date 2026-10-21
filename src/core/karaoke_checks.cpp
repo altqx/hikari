@@ -62,11 +62,9 @@ bool hasKaraokeTag(u8sv block)
     return false;
 }
 
-// Whether the audio editor reads a text as karaoke (AudioKaraoke's
-// hasKaraokeTag, legacy's {([^}]*)\\kf?o?[0-9]([^}]*)} on the lower-cased
-// text): a tag whose number starts at once, in a block that closes. It
-// reads none of "\k+50", "\k(50)" or "\k.5", which the renderers play.
-bool audioEditorReads(u8sv text)
+// The editor's tags: each backslash it reads as karaoke and where its
+// number starts. `stop` is asked of each in turn; true ends the search.
+template <typename Stop> bool audioEditorTags(u8sv text, Stop stop)
 {
     auto lower = [](char8_t c) { return c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c - u8'A' + u8'a') : c; };
     const std::size_t lastClose = text.rfind(u8'}');
@@ -82,11 +80,29 @@ bool audioEditorReads(u8sv text)
                 ++r;
             if (r < text.size() && lower(text[r]) == u8'o')
                 ++r;
-            if (r < text.size() && isDigit(text[r]) && lastClose != u8sv::npos && lastClose > r)
+            if (r < text.size() && isDigit(text[r]) && lastClose != u8sv::npos && lastClose > r && stop(i, r))
                 return true;
         }
     }
     return false;
+}
+
+// Whether the audio editor reads a text as karaoke (AudioKaraoke's
+// hasKaraokeTag, legacy's {([^}]*)\\kf?o?[0-9]([^}]*)} on the lower-cased
+// text): a tag whose number starts at once, in a block that closes. It
+// reads none of "\k+50", "\k(50)" or "\k.5", which the renderers play.
+bool audioEditorReads(u8sv text)
+{
+    return audioEditorTags(text, [](std::size_t, std::size_t) { return true; });
+}
+
+// Whether the editor reads a tag the renderers do not play as karaoke:
+// "\kfo50" (no tag of theirs) or "\KF50" and "\kO50" (the tag parser's
+// names are lower case after k), so the editor splits syllables where
+// playback has none.
+bool audioEditorOnly(u8sv text)
+{
+    return audioEditorTags(text, [text](std::size_t i, std::size_t value) { return karaokeValue(text, i) != value; });
 }
 
 // Longer syllables count as this long (over 115 days, in milliseconds), so
@@ -197,12 +213,15 @@ KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
             if (length < 0 || start < 0 || total < 0 || start > duration || total > duration) // or it runs backward
                 note(outside, count);
         });
-        if (count == 0 && !unclosed)
+        const bool editorOnly = audioEditorOnly(text);
+        if (count == 0 && !unclosed && !editorOnly)
             continue;
         if (unclosed)
             add(problem(Kind::Unclosed));
         if (count > 0 && !audioEditorReads(text))
             add(problem(Kind::NotForAudioEditor));
+        if (editorOnly)
+            add(problem(Kind::EditorOnly));
         if (count > 0 && total != duration) {
             KaraokeProblem p = problem(Kind::TotalNotDuration);
             p.totalMs = total;

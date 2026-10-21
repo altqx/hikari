@@ -317,7 +317,8 @@ std::expected<LoadResult, LyricsProblem> importLrc(std::span<const std::byte> by
                     break;
                 const u8sv key = detail::trim(tag.substr(0, colon));
                 const u8sv value = detail::trim(tag.substr(colon + 1));
-                if (entry.times.empty() && key == u8"ti")
+                // An empty [ti:] keeps the title before it, as an empty TTML title does.
+                if (entry.times.empty() && key == u8"ti" && !detail::titleField(value).empty())
                     sheet.title = std::u8string(value);
                 if (entry.times.empty() && key == u8"offset") {
                     // Milliseconds, signed; positive values show the lyrics

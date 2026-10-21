@@ -3587,6 +3587,14 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Karaoke only in the audio editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio editor reads a tag such as \kfo50 or \KF50 as a syllable, but it plays as none</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Syllables don&apos;t match the line</source>
         <translation type="unfinished"></translation>
     </message>

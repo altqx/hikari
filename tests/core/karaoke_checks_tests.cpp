@@ -209,6 +209,19 @@ TEST(KaraokeChecks, SignedAndOversizedValuesRead)
               (std::vector<Found>{{0, Kind::NotForAudioEditor, 0, 0, {}}}));
 }
 
+TEST(KaraokeChecks, TagsOnlyTheAudioEditorReadsAreFlagged)
+{
+    // The editor reads \\kf?o?[0-9] on the lower-cased text, so "\\kfo50",
+    // "\\KF50" and "\\kO50" are syllables to it; they play as no karaoke.
+    for (const char *text : {"{\\kfo50}x", "{\\KF50}x", "{\\kO50}x", "{\\KFO50}x"})
+        EXPECT_EQ(found(oneLine("0:00:00.00,0:00:00.50", text)), (std::vector<Found>{{0, Kind::EditorOnly, 0, 0, {}}})) << text;
+    // Beside real syllables, the editor splits where playback does not.
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\kfo50}b")), (std::vector<Found>{{0, Kind::EditorOnly, 0, 0, {}}}));
+    // Tags both read, and ones neither reads, are not.
+    for (const char *text : {"{\\k50}a{\\K50}b", "{\\kf50}a{\\ko50}b", "{\\kfoo}x", "{\\kfo}x", "{\\kfo50x"})
+        EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text)).problems.empty()) << text;
+}
+
 TEST(KaraokeChecks, LinesTheAudioEditorCannotReadAreFlagged)
 {
     // The audio editor reads a Line as karaoke when one tag's number follows

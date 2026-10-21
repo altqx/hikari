@@ -102,6 +102,13 @@ TEST(LyricsImport, EnhancedLrcBecomesKaraokeLines)
     const auto spaced = importLrc(bytes("[ti:  My \t  Song ]\n[00:01.00]x\n"));
     ASSERT_TRUE(spaced.has_value());
     EXPECT_EQ(spaced->document.scriptInfo(u8"Title"), u8"My Song");
+    // An empty title keeps the one before it; a later one with words wins.
+    const auto kept = importLrc(bytes("[ti:Song]\n[ti: ]\n[ti:\t]\n[00:01.00]x\n"));
+    ASSERT_TRUE(kept.has_value());
+    EXPECT_EQ(kept->document.scriptInfo(u8"Title"), u8"Song");
+    const auto later = importLrc(bytes("[ti:]\n[ti:First]\n[ti:Second]\n[00:01.00]x\n"));
+    ASSERT_TRUE(later.has_value());
+    EXPECT_EQ(later->document.scriptInfo(u8"Title"), u8"Second");
     const std::vector<Row> expected{
         // The first stamp comes 20 cs after the line time: a pause first.
         {1000, 4000, "", "{\\k20}{\\k70}Twinkle, {\\k70}twinkle, {\\k50}little {\\k90}star"},
@@ -574,6 +581,17 @@ TEST(LyricsImport, TtmlPrologIsChecked)
                             "<!DOCTYPE tt [<!ENTITY e>]>", "<!DOCTYPE tt [<!ENTITY e junk>]>",
                             "<!DOCTYPE tt [<!ENTITY % p 'v' NDATA x>]>", "<!DOCTYPE tt [<!NOTATION n>]>",
                             "<!DOCTYPE tt [<!NOTATION n FOO 'x'>]>"})
+        EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
+    // Literals by their grammar: references in entity and attribute values
+    // as XML writes them, a public id of PubidChars; ENTITIES is a type.
+    EXPECT_TRUE(imports("<!DOCTYPE tt [<!ENTITY e 'a &amp; &#x41; &#65; &f; %p; b'> <!ATTLIST p a CDATA 'a %b &amp; &#9;'>"
+                        " <!ATTLIST p refs ENTITIES #IMPLIED ref ENTITY #IMPLIED> <!ENTITY g PUBLIC '-//W3C//x (1) +:=?;!*#@$_%' 'u'>]>"));
+    for (const char *bad : {"<!DOCTYPE tt [<!ENTITY e '&broken'>]>", "<!DOCTYPE tt [<!ENTITY e 'a & b'>]>",
+                            "<!DOCTYPE tt [<!ENTITY e '%p'>]>", "<!DOCTYPE tt [<!ENTITY e '50%'>]>",
+                            "<!DOCTYPE tt [<!ENTITY e '&#1;'>]>", "<!DOCTYPE tt [<!ENTITY e '&#xZ;'>]>",
+                            "<!DOCTYPE tt [<!ENTITY e '&1a;'>]>", "<!DOCTYPE tt [<!ATTLIST p a CDATA '&x'>]>",
+                            "<!DOCTYPE tt [<!ATTLIST p a CDATA '&#xFFFE;'>]>", "<!DOCTYPE tt [<!ENTITY g PUBLIC 'a{b' 'u'>]>",
+                            "<!DOCTYPE tt [<!NOTATION n PUBLIC 'a\\b'>]>"})
         EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
     // A DOCTYPE needs the root's name, comes once and only before the root.
     EXPECT_EQ(problemOf("<!DOCTYPE>" + root, u8"ttml"), (LyricsProblem{Kind::NotWellFormed, 1, u8"<!DOCTYPE>"}));
