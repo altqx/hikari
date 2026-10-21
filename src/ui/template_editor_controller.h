@@ -174,6 +174,9 @@ public:
     // the template environment's functions. Each entry: name, insert (the
     // text replacing [from, cursor)), from, help, value. Empty otherwise.
     Q_INVOKABLE QVariantList completions(const QString &text, int cursor) const;
+    // The text's colours as the Line editor draws a template or code Line
+    // (E4): flat [start, end, role] triples for EditorHighlighter.
+    Q_INVOKABLE QVariantList colourRuns(const QString &text) const;
     // The stock Effect syntax: kind ("template"/"code"), class ("syl",
     // "line", ...; empty for none) and modifiers (each word after it).
     Q_INVOKABLE QVariantMap effectParts(const QString &effect) const;

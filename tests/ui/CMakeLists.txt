@@ -195,9 +195,9 @@ target_compile_definitions(hikari_ui_automation_document_scripts_tests PRIVATE
 add_dependencies(hikari_ui_automation_document_scripts_tests hikari_lua_helper hikari_automation_stage
     hikari_media_helper hikari_media_fixtures)
 # KE1-template-timing: the karaoke templater's report in the status bar and the log window.
-# KE2: the Template editor's controller over the bundled karaoke templater.
+# KE2: the Template editor's controller over the bundled karaoke templater, and its panel.
 hikari_add_qttest(hikari_ui_template_editor_tests SOURCES template_editor_tests.cpp
-    LIBRARIES hikari_ui hikari_backends)
+    LIBRARIES hikari_ui hikari_uiplugin hikari_backends)
 target_compile_definitions(hikari_ui_template_editor_tests PRIVATE
     HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
     HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"

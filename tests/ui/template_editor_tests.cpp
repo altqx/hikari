@@ -2,7 +2,8 @@
 // Edits go into the template Line, one undo step per pause; each edit
 // previews the templater on the current karaoke Line without changing the
 // Document; problems are placed in the text; Apply is the stock run, one
-// undo step; the video draws the preview in place of the Line's Lines.
+// undo step; the video draws the preview in place of the Line's Lines. The
+// panel (TemplateEditor.qml) shows and edits it.
 #include "template_editor_controller.h"
 
 #include "hikari/application/edit_session.h"
@@ -12,8 +13,12 @@
 #include "hikari/backends/lua_script_host.h"
 #include "hikari/core/ass_load.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/editor_syntax.h"
 
 #include <QFile>
+#include <QQmlExtensionPlugin>
+#include <QQuickItem>
+#include <QQuickView>
 #include <QSignalSpy>
 #include <QtTest>
 
@@ -27,6 +32,8 @@ using application::HostServiceReply;
 using application::HostServiceRequest;
 using backends::LuaScriptHost;
 using ui::TemplateEditorController;
+
+Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 namespace {
 
@@ -91,6 +98,8 @@ public:
     void cancelPreview() override { runner.cancel(); }
     bool apply(bool selectedOnly) override
     {
+        ++applies;
+        lastSelectedOnly = selectedOnly;
         LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_KARAOKE_TEMPLATER),
                            QStringLiteral(HIKARI_LUA_INCLUDE));
         host.setServiceHandler(services);
@@ -114,6 +123,8 @@ public:
     backends::KaraokePreviewRunner runner{QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_LUA_INCLUDE)};
     std::string report;
     int previews = 0;
+    int applies = 0;
+    bool lastSelectedOnly = false;
 
 private:
     application::EditSession &m_session;
@@ -127,9 +138,11 @@ class TemplateEditorTests : public QObject {
     std::unique_ptr<application::EditSession> session;
     std::unique_ptr<Templater> templater;
     std::unique_ptr<TemplateEditorController> editor;
+    std::unique_ptr<QQuickView> view;
 
     void open(const QString &name)
     {
+        view.reset();
         editor.reset();
         templater.reset();
         session = std::make_unique<application::EditSession>(loadFile(name));
@@ -168,6 +181,62 @@ class TemplateEditorTests : public QObject {
         return QTest::qWaitFor([&] { return editor->hasPreview(); }, 20'000);
     }
 
+    // The panel over the editor, `width` wide.
+    void showPanel(int width = 640)
+    {
+        view = std::make_unique<QQuickView>();
+        view->setInitialProperties({{QStringLiteral("controller"), QVariant::fromValue(editor.get())}});
+        view->loadFromModule("Hikari.Ui", "TemplateEditor");
+        QVERIFY(view->rootObject());
+        view->setResizeMode(QQuickView::SizeRootObjectToView);
+        view->resize(width, 1000);
+        view->show();
+        QVERIFY(QTest::qWaitForWindowExposed(view.get()));
+    }
+    // By objectName: declared objects are the root's children, a Repeater's
+    // delegates and a popup's contents are found through the items.
+    static QObject *findIn(QQuickItem *at, const QString &name)
+    {
+        if (!at)
+            return nullptr;
+        if (at->objectName() == name)
+            return at;
+        if (QObject *o = at->findChild<QObject *>(name, Qt::FindDirectChildrenOnly))
+            return o;
+        for (QQuickItem *child : at->childItems())
+            if (QObject *found = findIn(child, name))
+                return found;
+        return nullptr;
+    }
+    QObject *object(const QString &name) const
+    {
+        if (QObject *o = view->rootObject()->findChild<QObject *>(name))
+            return o;
+        return findIn(view->contentItem(), name);
+    }
+    QQuickItem *item(const QString &name) const { return qobject_cast<QQuickItem *>(object(name)); }
+    QQuickItem *row(const char *prefix, qsizetype index) const
+    {
+        return item(QLatin1String(prefix) + QString::number(index));
+    }
+    void click(QQuickItem *at)
+    {
+        QVERIFY(at);
+        QTest::mouseClick(view.get(), Qt::LeftButton, {},
+                          at->mapToScene(QPointF(at->width() / 2, at->height() / 2)).toPoint());
+    }
+    // Types `text` into the focused item, one key at a time.
+    void type(const QString &text)
+    {
+        for (const QChar c : text)
+            QTest::keyClick(view.get(), c.toLatin1());
+    }
+    QString textOf(const QString &name) const
+    {
+        const QObject *o = object(name);
+        return o ? o->property("text").toString() : QString();
+    }
+
     QStringList previewTexts() const
     {
         QStringList out;
@@ -177,6 +246,11 @@ class TemplateEditorTests : public QObject {
     }
 
 private slots:
+    void cleanup()
+    {
+        view.reset();
+    }
+
     void listsTheTemplateAndCodeLinesInGridOrder()
     {
         open(QStringLiteral("stock-tutorials.ass"));
@@ -487,6 +561,231 @@ private slots:
         activate(second);
         QCOMPARE(editor->current(), second.value);
         QCOMPARE(editor->source(), karaoke->value); // editing a template keeps the karaoke Line
+    }
+
+    void colourRunsAreATemplatesOrACodeLines()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto roles = [&](const QString &text) {
+            QList<int> out;
+            const QVariantList runs = editor->colourRuns(text);
+            for (qsizetype i = 2; i < runs.size(); i += 3)
+                out << runs[i].toInt();
+            return out;
+        };
+        const QString text = QStringLiteral("!retime(\"syl\")!{\\pos($x,$y)}");
+        QVERIFY(roles(text).contains(int(core::syntax::Role::TemplateVariables)));
+        QVERIFY(roles(text).contains(int(core::syntax::Role::TemplateCodeMarks)));
+    }
+
+    // The panel: the list, the current Line's fields and text, typed into.
+    void thePanelListsTheTemplatesAndEditsTheOneClicked()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        showPanel();
+        const QVariantList rows = editor->templates();
+        QVERIFY(rows.size() > 1);
+        QTRY_VERIFY(row("templateRow_", rows.size() - 1));
+        QVERIFY(!row("templateRow_", rows.size()));
+        QVERIFY(object(QStringLiteral("templateSummary"))->property("note").toString().contains(
+            QStringLiteral(" karaoke Lines")));
+        click(row("templateRow_", 1));
+        QCOMPARE(editor->current(), rows[1].toMap().value(QStringLiteral("id")).toULongLong());
+        QCOMPARE(object(QStringLiteral("templateLineTitle"))->property("title").toString(),
+                 QStringLiteral("Line %1").arg(rows[1].toMap().value(QStringLiteral("number")).toInt()));
+        auto *text = item(QStringLiteral("templateText"));
+        QTRY_COMPARE(text->property("text").toString(), editor->text());
+        QCOMPARE(textOf(QStringLiteral("templateEffect")), editor->effect());
+        const QString before = editor->text();
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", before.size());
+        type(QStringLiteral("{\\b1}"));
+        QCOMPARE(editor->text(), before + QStringLiteral("{\\b1}"));
+        QTRY_VERIFY(row("templateRowChanged_", 1)->isVisible());
+        // Coloured as the Line editor colours a template.
+        auto *marks = object(QStringLiteral("templateTextHighlighter"));
+        QVERIFY(marks);
+        QVariantList applied;
+        QTRY_VERIFY((QMetaObject::invokeMethod(marks, "appliedColours", Q_RETURN_ARG(QVariantList, applied)),
+                     !applied.isEmpty()));
+        // The edit goes into the Line when the field is left.
+        const std::size_t steps = session->historySize();
+        text->setFocus(false);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+    }
+
+    void aProblemIsUnderlinedWhereItIsAndApplyWaits()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        showPanel();
+        QVERIFY(previewCame());
+        const QString text = editor->text();
+        editor->setText(QStringLiteral("{\\fscx!nosuch.field!}") + text);
+        QVERIFY(QTest::qWaitFor([&] { return editor->hasProblems(); }, 20'000));
+        QTRY_VERIFY(item(QStringLiteral("templateProblem"))->isVisible());
+        const QString problem = textOf(QStringLiteral("templateProblemText"));
+        QVERIFY2(problem.contains(QStringLiteral("Template Line: %1").arg(editor->currentNumber())), qPrintable(problem));
+        QVERIFY2(problem.contains(QStringLiteral("!nosuch.field!")), qPrintable(problem));
+        auto *marks = object(QStringLiteral("templateTextHighlighter"));
+        QVariantList underlined;
+        QTRY_VERIFY((QMetaObject::invokeMethod(marks, "appliedUnderlines", Q_RETURN_ARG(QVariantList, underlined)),
+                     underlined == editor->problemRange()));
+        QVERIFY(!item(QStringLiteral("templateApply"))->isEnabled());
+        QCOMPARE(textOf(QStringLiteral("templateStatus")), QStringLiteral("Apply is off while a template has a problem."));
+        QVERIFY(item(QStringLiteral("templatePreviewKept"))->isVisible());
+        const QVariantList rows = editor->templates();
+        for (qsizetype i = 0; i < rows.size(); ++i)
+            if (rows[i].toMap().value(QStringLiteral("id")).toULongLong() == editor->current()) {
+                QVERIFY(row("templateRowProblem_", i)->isVisible());
+                QCOMPARE(row("templateRowStatus_", i)->property("text").toString(), QStringLiteral("Problem"));
+            }
+        editor->setText(text);
+        QTRY_VERIFY_WITH_TIMEOUT(!item(QStringLiteral("templateProblem"))->isVisible(), 20'000);
+        QVariantList none{0};
+        QTRY_VERIFY((QMetaObject::invokeMethod(marks, "appliedUnderlines", Q_RETURN_ARG(QVariantList, none)),
+                     none.isEmpty()));
+        QTRY_VERIFY(item(QStringLiteral("templateApply"))->isEnabled());
+    }
+
+    void thePreviewListsTheLinesApplyWouldWrite()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        showPanel();
+        QVERIFY(previewCame());
+        const qsizetype n = editor->previewLines().size();
+        QVERIFY(n > 0);
+        QTRY_VERIFY(row("templatePreviewRow_", n - 1));
+        QVERIFY(!row("templatePreviewRow_", n));
+        QCOMPARE(object(QStringLiteral("templatePreviewTitle"))->property("title").toString(),
+                 QStringLiteral("Preview on Line %1").arg(editor->sourceNumber()));
+        QVERIFY(textOf(QStringLiteral("templatePreviewSummary"))
+                    .startsWith(n == 1 ? QStringLiteral("1 Line · ") : QStringLiteral("%1 Lines · ").arg(n)));
+        QVERIFY(item(QStringLiteral("templatePreviewList"))->isVisible());
+        QVERIFY(!item(QStringLiteral("templatePreviewKept"))->isVisible());
+    }
+
+    // `$` lists the variables with their values on the current Line; ↓ and
+    // Enter insert one.
+    void dollarOpensTheVariablesAndEnterInsertsOne()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        showPanel();
+        QVERIFY(previewCame());
+        auto *text = item(QStringLiteral("templateText"));
+        text->forceActiveFocus();
+        text->setProperty("cursorPosition", 0);
+        type(QStringLiteral("{\\pos($s"));
+        auto *list = object(QStringLiteral("templateCompletion"));
+        QVERIFY(list);
+        QTRY_VERIFY(list->property("opened").toBool());
+        const QVariantList entries = list->property("entries").toList();
+        QVERIFY(entries.size() > 5);
+        QTRY_VERIFY(row("templateCompletionValue_", 0) &&
+                    !row("templateCompletionValue_", 0)->property("text").toString().isEmpty());
+        QVERIFY(text->hasActiveFocus()); // the list does not take the keys
+        QTest::keyClick(view.get(), Qt::Key_Down);
+        QTest::keyClick(view.get(), Qt::Key_Return);
+        QTRY_VERIFY2(!list->property("opened").toBool(),
+                     qPrintable(editor->text().left(40) + QLatin1Char('|') + list->property("chosen").toString()));
+        const QString second = entries[1].toMap().value(QStringLiteral("name")).toString();
+        QVERIFY2(editor->text().startsWith(QStringLiteral("{\\pos(") + second), qPrintable(editor->text()));
+        // Esc closes it, the text as typed.
+        type(QStringLiteral(",$"));
+        QTRY_VERIFY(list->property("opened").toBool());
+        QTest::keyClick(view.get(), Qt::Key_Escape);
+        QTRY_VERIFY(!list->property("opened").toBool());
+        QVERIFY(editor->text().startsWith(QStringLiteral("{\\pos(") + second + QStringLiteral(",$")));
+    }
+
+    void theEffectPickerWritesTheEffectField()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        for (const QVariant &v : editor->templates())
+            if (v.toMap().value(QStringLiteral("kind")).toString() == QLatin1String("template")) {
+                editor->setCurrent(v.toMap().value(QStringLiteral("id")).toULongLong());
+                break;
+            }
+        showPanel();
+        click(item(QStringLiteral("templateEffectPicker")));
+        auto *picker = object(QStringLiteral("templateEffectPopover"));
+        QTRY_VERIFY(picker->property("opened").toBool());
+        QTRY_VERIFY(item(QStringLiteral("templateEffectClass_line")));
+        click(item(QStringLiteral("templateEffectClass_line")));
+        QTRY_VERIFY(editor->effect().startsWith(QStringLiteral("template line")));
+        QVERIFY(item(QStringLiteral("templateEffectClass_line"))->property("on").toBool());
+        const bool had = editor->effect().contains(QStringLiteral("noblank"));
+        click(item(QStringLiteral("templateEffectModifier_noblank")));
+        QTRY_COMPARE(editor->effect().contains(QStringLiteral("noblank")), !had);
+        QTRY_COMPARE(textOf(QStringLiteral("templateEffect")), editor->effect());
+    }
+
+    void applyFromThePanelIsOneStepAndSaysWhatItWrote()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        editor->setShown(true);
+        showPanel();
+        const std::string before = bytesOf(session->document());
+        QTRY_VERIFY(item(QStringLiteral("templateApply"))->isEnabled());
+        click(item(QStringLiteral("templateApply")));
+        QCOMPARE(templater->applies, 1);
+        QVERIFY(!templater->lastSelectedOnly);
+        editor->applied(templater->report);
+        editor->refresh();
+        QTRY_VERIFY(textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied: ")));
+        QVERIFY(textOf(QStringLiteral("templateStatus")).endsWith(QStringLiteral("Undo removes them in one step.")));
+        QVERIFY(session->undo());
+        QCOMPARE(bytesOf(session->document()), before);
+        // The arrow: the selected Lines.
+        editor->refresh();
+        click(item(QStringLiteral("templateApplyArrow")));
+        auto *menu = object(QStringLiteral("templateApplyMenu"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(object(QStringLiteral("templateApplySelected")), "triggered"));
+        QCOMPARE(templater->applies, 2);
+        QVERIFY(templater->lastSelectedOnly);
+    }
+
+    // At its minimum width the fields stack and the preview folds into a row
+    // that unfolds on a click.
+    void atItsMinimumWidthThePreviewFolds()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        showPanel(360);
+        QVERIFY(previewCame());
+        QCOMPARE(view->rootObject()->property("minimumSize").toSize().width(), 360);
+        QVERIFY(item(QStringLiteral("templatePreviewFold"))->isVisible());
+        QVERIFY(!item(QStringLiteral("templatePreviewList"))->isVisible());
+        click(item(QStringLiteral("templatePreviewTitle")));
+        QTRY_VERIFY(item(QStringLiteral("templatePreviewList"))->isVisible());
+        // The panel's parts fit its width: nothing reaches past it.
+        auto *text = item(QStringLiteral("templateText"));
+        QVERIFY(text->mapToScene(QPointF(text->width(), 0)).x() <= 360);
+        auto *apply = item(QStringLiteral("templateApplyArrow"));
+        QVERIFY(apply->mapToScene(QPointF(apply->width(), 0)).x() <= 360);
+    }
+
+    void newOffersTheStockKindsAboveTheFirstKaraokeLine()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        showPanel();
+        click(item(QStringLiteral("templateNew")));
+        auto *menu = object(QStringLiteral("templateNewMenu"));
+        QTRY_VERIFY(menu->property("opened").toBool());
+        auto *first = object(QStringLiteral("templateNew_0"));
+        QVERIFY(first);
+        QCOMPARE(first->property("text").toString(), QStringLiteral("Template for each syllable\ttemplate syl"));
+        const int count = editor->templateCount();
+        QVERIFY(QMetaObject::invokeMethod(first, "triggered"));
+        QCOMPARE(editor->templateCount(), count + 1);
+        QCOMPARE(editor->effect(), QStringLiteral("template syl"));
     }
 };
 

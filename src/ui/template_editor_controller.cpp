@@ -2,6 +2,7 @@
 
 #include "hikari/application/macro_transaction.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/editor_syntax.h"
 
 #include <QCoreApplication>
 #include <QJsonArray>
@@ -1124,6 +1125,17 @@ QVariantList TemplateEditorController::completions(const QString &text, int curs
                                    {QStringLiteral("value"), QString()}});
         }
     }
+    return out;
+}
+
+QVariantList TemplateEditorController::colourRuns(const QString &text) const
+{
+    QVariantList out;
+    const auto runs = core::syntax::colourRuns(
+        std::u16string_view(reinterpret_cast<const char16_t *>(text.utf16()), static_cast<std::size_t>(text.size())),
+        currentIsCode() ? core::syntax::TextState::Code : core::syntax::TextState::Template);
+    for (const auto &run : runs)
+        out << static_cast<int>(run.start) << static_cast<int>(run.end) << static_cast<int>(run.role);
     return out;
 }
 
