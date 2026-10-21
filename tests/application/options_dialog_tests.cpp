@@ -155,8 +155,9 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     // boxes on the Editor page, H2-output-device's device choice on the Audio
     // page, LE2's Times/Frames and LE3's hidden-tag check boxes on the Editor
     // page, WS2's panel layout in the file on the Subtitle properties page,
-    // KA1's double consonants and \\kf length on the Audio page, then
-    // (Windows) A4-wasapi-default's output host API and W1's video player.
+    // VF1's two follow lists on the Video page, KA1's double consonants and
+    // \\kf length on the Audio page, then (Windows) A4-wasapi-default's
+    // output host API and W1's video player.
     ASSERT_GT(all.size(), std::size(kLegacy) + 5);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
@@ -186,19 +187,30 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(layout.page, OptionsPage::SubtitleProperties);
     ASSERT_NE(findSetting("subtitles.layoutInFile"), nullptr);
     EXPECT_EQ(std::get<bool>(findSetting("subtitles.layoutInFile")->defaultValue), true);
-    const auto &consonants = all[std::size(kLegacy) + 6];
+    // VF1: the Video panel's two follow lists, on the Video page.
+    const auto &seek = all[std::size(kLegacy) + 6];
+    EXPECT_EQ(seek.setting, "video.moveToActiveLine");
+    EXPECT_EQ(seek.control, OptionsControl::IndexChoice);
+    EXPECT_EQ(seek.page, OptionsPage::Video);
+    EXPECT_EQ(seek.entries, 6);
+    const auto &play = all[std::size(kLegacy) + 7];
+    EXPECT_EQ(play.setting, "video.playAfterSelection");
+    EXPECT_EQ(play.control, OptionsControl::IndexChoice);
+    EXPECT_EQ(play.page, OptionsPage::Video);
+    EXPECT_EQ(play.entries, 4);
+    const auto &consonants = all[std::size(kLegacy) + 8];
     EXPECT_EQ(consonants.setting, "audio.karaokeDoubleConsonantApart");
     EXPECT_EQ(consonants.control, OptionsControl::Check);
     EXPECT_EQ(consonants.page, OptionsPage::Audio);
-    const auto &kf = all[std::size(kLegacy) + 7];
+    const auto &kf = all[std::size(kLegacy) + 9];
     EXPECT_EQ(kf.setting, "audio.karaokeKfThreshold");
     EXPECT_EQ(kf.control, OptionsControl::Number);
     EXPECT_EQ(kf.page, OptionsPage::Audio);
     EXPECT_EQ(kf.min, 10);
     EXPECT_EQ(std::get<std::int64_t>(findSetting("audio.karaokeKfThreshold")->defaultValue), 100);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 10);
-    const auto &hostApi = all[std::size(kLegacy) + 8];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 12);
+    const auto &hostApi = all[std::size(kLegacy) + 10];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -209,7 +221,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 8);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 10);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));
@@ -443,6 +455,34 @@ TEST(OptionsDialog, SetDefaultRefreshesTheControlsAsLegacyDoes)
     EXPECT_FALSE(settings.isSet("convert.styleCatalog")); // "Default" again
     // Reopening fixes the seeking method once more.
     EXPECT_EQ(intOf(openOptionsDialog(settings, l).state, "video.ffms2Seeking"), 2);
+}
+
+// VF1: the follow lists show the stored choice, Set default shows their
+// default (they were never on legacy's dialog, so no FindString quirk), and
+// OK writes only a changed choice.
+TEST(OptionsDialog, TheFollowListsShowAndKeepTheirChoices)
+{
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    const auto l = lists();
+    settings.set("video.moveToActiveLine", std::int64_t{3});
+    settings.set("video.playAfterSelection", std::int64_t{2});
+    auto state = openOptionsDialog(settings, l).state;
+    EXPECT_EQ(intOf(state, "video.moveToActiveLine"), 3);
+    EXPECT_EQ(intOf(state, "video.playAfterSelection"), 2);
+    commitOptionsDialog(settings, l, state);
+    EXPECT_EQ(settings.integer("video.moveToActiveLine"), 3);
+    EXPECT_EQ(settings.integer("video.playAfterSelection"), 2);
+    state["video.playAfterSelection"] = std::int64_t{1};
+    commitOptionsDialog(settings, l, state);
+    EXPECT_EQ(settings.integer("video.playAfterSelection"), 1);
+    settings.resetAll();
+    state = refreshOptionsDialogAfterReset(settings, l, state);
+    EXPECT_EQ(intOf(state, "video.moveToActiveLine"), 0);
+    EXPECT_EQ(intOf(state, "video.playAfterSelection"), 0);
+    commitOptionsDialog(settings, l, state);
+    EXPECT_EQ(settings.integer("video.moveToActiveLine"), 0);
+    EXPECT_EQ(settings.integer("video.playAfterSelection"), 0);
 }
 
 TEST(OptionsDialog, SetDefaultKeepsAChoiceWhoseIndexIsPastItsList)

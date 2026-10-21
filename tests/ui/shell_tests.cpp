@@ -5529,8 +5529,9 @@ private slots:
                  QStringLiteral("panel-menu"));
         // The "⋯" button shows as pressed while its menu is open. The Video
         // panel's own items are LE2's Times/Frames choice, off without a video.
+        // VF1: then its two follow submenus.
         const QStringList videoOwn{QStringLiteral("Show times (off) (on)"), QStringLiteral("Show frames (off)"),
-                                   QStringLiteral("|")};
+                                   QStringLiteral("Seek on"), QStringLiteral("Then play"), QStringLiteral("|")};
         QVERIFY(openPanelMenu(QStringLiteral("Video")));
         QVERIFY(findItem(dockHeader(QStringLiteral("Video")), QStringLiteral("dockMenuButton"))->property("checked").toBool());
         QCOMPARE(panelMenuItems(),
@@ -5972,16 +5973,12 @@ private slots:
         QVERIFY(docking->resizeInLayout(editor->property("dockName").toString(), 0, 60 - int(before), 0, 0));
         QTRY_VERIFY(editor->height() < before || editor->height() <= minimumHeight + 0.5);
         QVERIFY2(editor->height() >= minimumHeight - 0.5, qPrintable(QString::number(editor->height())));
-        // A narrow Video panel: the follow choices on two rows, none cut off.
+        // A narrow Video panel: nothing below the video cut off (VF1: the
+        // follow lists are in its menu, not under the video).
         auto *videoDock = item<QObject>("videoDock");
         application->workspaceLayout().resizePanel(videoDock, 470, application->workspaceLayout().panelSize(videoDock).height());
-        auto *choices = item("videoFollowChoices");
-        QTRY_VERIFY(choices->property("wrapped").toBool());
         QQuickItem *video = item("videoPanel");
         QTRY_VERIFY(video->width() < 520);
-        auto *playAfter = item("videoPlayAfter");
-        QTRY_VERIFY2(playAfter->mapToItem(video, QPointF(playAfter->width(), 0)).x() <= video->width(),
-                     qPrintable(QString::number(playAfter->mapToItem(video, QPointF(playAfter->width(), 0)).x())));
         QVERIFY2(clippedIn(video).isEmpty(), qPrintable(clippedIn(video).join(u"; ")));
     }
 
@@ -11059,6 +11056,8 @@ private slots:
               {"video.pauseOnClick", "Left mouse button pauses video"},
               {"video.openAtActiveLine", "Open video with time of active line"},
               {"video.gpuConversion", "Convert video colours on the GPU (requires reloading)"},
+              {"video.moveToActiveLine", nullptr}, // VF1, the Video panel's Seek on
+              {"video.playAfterSelection", nullptr}, // and Then play
               {"video.acceptedAudioStream", nullptr},
               {"video.ffms2Seeking", nullptr},
               {"video.subtitleProvider", nullptr}, // W2: shown before the zoom, bound last
@@ -22093,6 +22092,93 @@ private slots:
         QVERIFY(!application->snapToKeyframe(false)); // the audio box is gone
     }
 
+    // VF1 (#288): legacy VideoToolbar's two lists left the space under the
+    // video for the Video panel's menu, "Seek on" and "Then play" with their
+    // choices as radio items, and Settings > Video. A stored choice shows in
+    // both; one made in either is stored and shows in the other.
+    void videoFollowChoicesAreInThePanelMenuAndSettings()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        settings.set("video.moveToActiveLine", 3);
+        QVERIFY(!named("videoFollowChoices") || !qobject_cast<QQuickItem *>(named("videoFollowChoices")));
+        QVERIFY(!named("videoSeekAfter"));
+        QVERIFY(!named("videoPlayAfter"));
+        const QStringList seekChoices{"Double-clicking a line (always on)", "Every line change",
+                                      "Clicking a line or editing when paused", "Clicking a line or editing",
+                                      "Editing line when paused", "Editing"};
+        const QStringList playChoices{"Nothing", "Audio to the line end time", "Video and audio to the line end time",
+                                      "Video and audio to the next line start time"};
+        // A submenu's choices as shown, "(on)" after the checked one.
+        const auto choices = [&](const char *name) {
+            QObject *menu = named(name);
+            QStringList out;
+            const int count = menu ? menu->property("count").toInt() : 0;
+            for (int i = 0; i < count; ++i) {
+                QQuickItem *entry = nullptr;
+                QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i));
+                if (entry)
+                    out << entry->property("text").toString()
+                               + (entry->property("checked").toBool() ? QStringLiteral(" (on)") : QString());
+            }
+            return out;
+        };
+        const auto marked = [](QStringList list, int on) {
+            list[on] += QStringLiteral(" (on)");
+            return list;
+        };
+        auto *menu = named("panelOptionsMenu");
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        const QStringList items = panelMenuItems();
+        QVERIFY2(items.indexOf(QStringLiteral("Seek on")) == items.indexOf(QStringLiteral("Show frames (off)")) + 1,
+                 qPrintable(items.join(u", ")));
+        QVERIFY2(items.indexOf(QStringLiteral("Then play")) == items.indexOf(QStringLiteral("Seek on")) + 1,
+                 qPrintable(items.join(u", ")));
+        QCOMPARE(choices("panelOptions_videoSeekOn"), marked(seekChoices, 3));
+        QCOMPARE(choices("panelOptions_videoThenPlay"), marked(playChoices, 0));
+        // A choice in the menu is stored at once.
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_videoThenPlay_2"), "triggered"));
+        QCOMPARE(settings.integer("video.playAfterSelection"), 2);
+        QTRY_COMPARE(choices("panelOptions_videoThenPlay"), marked(playChoices, 2));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+
+        // Settings > Video shows both, as stored.
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *seek = dialogItem("settingsDialog", "setting_video.moveToActiveLine");
+        auto *play = dialogItem("settingsDialog", "setting_video.playAfterSelection");
+        QVERIFY(seek && play);
+        QCOMPARE(seek->property("model").toStringList(), seekChoices);
+        QCOMPARE(play->property("model").toStringList(), playChoices);
+        QCOMPARE(seek->property("currentIndex").toInt(), 3);
+        QCOMPARE(play->property("currentIndex").toInt(), 2);
+        const auto name = [](QObject *o) {
+            QAccessibleInterface *iface = QAccessible::queryAccessibleInterface(o);
+            return iface ? iface->text(QAccessible::Name) : QString();
+        };
+        QCOMPARE(name(seek), QStringLiteral("Move video to selected line on:"));
+        QCOMPARE(name(play), QStringLiteral("On moving to another line play:"));
+        // A choice there is stored by Apply, as the page's others, and the
+        // menu shows it.
+        QVERIFY(QMetaObject::invokeMethod(seek, "activated", Q_ARG(int, 5)));
+        QCOMPARE(settings.integer("video.moveToActiveLine"), 3);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
+        QTRY_COMPARE(settings.integer("video.moveToActiveLine"), 5);
+        QCOMPARE(settings.integer("video.playAfterSelection"), 2);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QCOMPARE(choices("panelOptions_videoSeekOn"), marked(seekChoices, 5));
+        // A choice stored elsewhere (an import) shows at once.
+        settings.set("video.moveToActiveLine", 1);
+        QTRY_COMPARE(choices("panelOptions_videoSeekOn"), marked(seekChoices, 1));
+        QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+        settings.reset("video.moveToActiveLine");
+        settings.reset("video.playAfterSelection");
+    }
+
     // V6: the video toolbar's "Move video to selected line on:"
     // (MOVE_VIDEO_TO_ACTIVE_LINE) and OPEN_VIDEO_AT_ACTIVE_LINE: by legacy's
     // defaults the video opens at its first frame and stays when the active
@@ -22105,16 +22191,6 @@ private slots:
         QCOMPARE(settings.integer("video.moveToActiveLine"), 0);
         QCOMPARE(settings.integer("video.playAfterSelection"), 0);
         QVERIFY(!settings.boolean("video.openAtActiveLine"));
-        auto *seekAfter = item<QObject>("videoSeekAfter");
-        auto *playAfter = item<QObject>("videoPlayAfter");
-        QVERIFY(seekAfter && playAfter);
-        QCOMPARE(seekAfter->property("model").toStringList(),
-                 (QStringList{"Double-clicking a line (always on)", "Every line change",
-                              "Clicking a line or editing when paused", "Clicking a line or editing",
-                              "Editing line when paused", "Editing"}));
-        QCOMPARE(playAfter->property("model").toStringList(),
-                 (QStringList{"Nothing", "Audio to the line end time", "Video and audio to the line end time",
-                              "Video and audio to the next line start time"}));
         const QString path = writeFile(dir, "v6-follow.ass",
                                        "Dialogue: 0,0:00:00.50,0:00:01.00,Default,,0,0,0,,a\n"
                                        "Dialogue: 0,0:00:01.00,0:00:01.50,Default,,0,0,0,,b\n");
@@ -22145,8 +22221,10 @@ private slots:
         QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier,
                            grid->mapToScene(grid->cellRect(1, startColumn).center()).toPoint());
         QTRY_COMPARE(video.frame(), 24);
-        // "Every line change", chosen in the list
-        QVERIFY(QMetaObject::invokeMethod(seekAfter, "activated", Q_ARG(int, 1)));
+        // "Every line change", chosen in the Video panel's "Seek on" (VF1)
+        QVERIFY(openPanelMenu(QStringLiteral("Video")));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptions_videoSeekOn_1"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("panelOptionsMenu"), "close"));
         QCOMPARE(settings.integer("video.moveToActiveLine"), 1);
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_Up); // a: 500 ms is frame 12
@@ -22155,7 +22233,7 @@ private slots:
         QTRY_COMPARE(video.frame(), 24);
         // "Editing line when paused": an edit brings the video to the Line's start
         settings.set("video.moveToActiveLine", 4);
-        QCOMPARE(seekAfter->property("currentIndex").toInt(), 4);
+        QTRY_VERIFY(named("panelOptions_videoSeekOn_4")->property("checked").toBool());
         QVERIFY(video.showFrameAt(40));
         QTRY_COMPARE(video.frame(), 40);
         application->editor().setStartText(QStringLiteral("0:00:01.10"));

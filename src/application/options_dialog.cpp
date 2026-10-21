@@ -128,6 +128,11 @@ constexpr OptionsBinding kBindings[] = {
     // WS2: the panel layout in the subtitle file ([Hikari]), on the
     // Subtitle properties page with the other things a save writes there.
     {"subtitles.layoutInFile", Check, SubtitleProperties},
+    // VF1: legacy VideoToolbar's two lists (MOVE_VIDEO_TO_ACTIVE_LINE,
+    // VIDEO_PLAY_AFTER_SELECTION), which left the Video panel for its menu
+    // and the Video page.
+    {"video.moveToActiveLine", IndexChoice, Video, 0, 0, 6},
+    {"video.playAfterSelection", IndexChoice, Video, 0, 0, 4},
     // KA1: Auto split's double consonants and the \k and \kf switch's long
     // syllable, on the Audio page after the karaoke options.
     {"audio.karaokeDoubleConsonantApart", Check, Audio},
@@ -538,8 +543,11 @@ OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const Opti
             break;
         case IndexChoice:
             // SetSelection(FindString(GetString(option))): the option's digits
-            // name no entry, so the choice shows nothing (-1).
-            state[id] = std::int64_t{-1};
+            // name no entry, so the choice shows nothing (-1). VF1's lists
+            // were never on legacy's dialog: they show their default.
+            state[id] = id == "video.moveToActiveLine" || id == "video.playAfterSelection"
+                            ? SettingValue(settings.integer(id))
+                            : SettingValue(std::int64_t{-1});
             break;
         case Font:
             state[id] = settings.text(id);
