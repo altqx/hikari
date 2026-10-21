@@ -445,6 +445,16 @@ TEST(KaraokeRoundTrip, LongLinesAreReadAndWrittenInOnePass)
     EXPECT_EQ(plain.letters(0, 100000).second.size(), 100000u);
     EXPECT_EQ(karaokeWeight(u(letters), KaraokeCharClass::ascii()), 200000);
     EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(2));
+
+    // a letter cut by a block before each of its marks (Codex security): a
+    // few blocks belong to it, the rest are read once each
+    std::u16string cut = u"a";
+    for (int i = 0; i < 100000; i++)
+        cut += u"{x}\u0301";
+    began = std::chrono::steady_clock::now();
+    EXPECT_GT(karaokeLetterEnd(cut, 0), 4u * 16);
+    EXPECT_GT(karaokeWeight(cut, KaraokeCharClass::ascii()), 0);
+    EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(2));
 }
 
 // ---- \k and \kf (KA1-kf-switch) ---------------------------------------------------

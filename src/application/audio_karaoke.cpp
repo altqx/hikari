@@ -116,15 +116,20 @@ std::size_t letterEnd(std::u16string_view text, std::size_t at)
         begin);
     if (end == text.size() || text[end] != u'{')
         return end;
-    // it goes on past the block when the text after it continues it
+    // it goes on past the block when the text after it continues it, across
+    // a few blocks at most (Codex: each block reads the grapheme again, so a
+    // letter cut by thousands of blocks would take quadratic time; past the
+    // limit the next letter goes on from the block)
+    constexpr int kBlocks = 16;
     u16 seen(text.substr(at, end - at)); // the grapheme so far, without its blocks
     std::size_t window = 64;
+    int blocks = 0;
     while (end < text.size() && text[end] == u'{') {
         std::size_t from = end; // past the block, and any right after it
         while (from < text.size() && text[from] == u'{') {
             const auto shut = text.find(u'}', from + 1);
-            if (shut == u16::npos)
-                return end; // an unclosed "{" is text, and no mark
+            if (shut == u16::npos || ++blocks > kBlocks)
+                return end; // (an unclosed "{" is text, and no mark)
             from = shut + 1;
         }
         // the text after them up to the next block, a window of it at a time,
