@@ -43,6 +43,8 @@ Dialog {
     // icon} each, written on OK or Apply where they differ.
     property var tagButtonList: []
     signal reloaded()
+    // VF1: the follow lists' texts, shared with the Video panel's menu.
+    readonly property VideoFollowChoices follow: VideoFollowChoices { settings: dialog.app.settings }
 
     // `page`: the page list's row to show (AV1's "Audio settings…" asks for
     // Audio); legacy opened on the first. AM1: `filter` is the Hotkeys page's
@@ -715,6 +717,31 @@ Dialog {
                     SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
                     SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video with time of active line") }
                     SettingCheck { setting: "video.gpuConversion"; text: qsTr("Convert video colours on the GPU (requires reloading)") }
+                    // VF1 (#288): the Video panel's two follow lists, also in
+                    // its menu ("Seek on", "Then play"): OK and Apply store
+                    // them as the other pages', and the menu follows.
+                    GroupBox {
+                        title: dialog.follow.seekLabel
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "video.moveToActiveLine"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.follow.seekChoices
+                            Accessible.name: dialog.follow.seekLabel
+                        }
+                    }
+                    GroupBox {
+                        title: dialog.follow.playLabel
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "video.playAfterSelection"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.follow.playChoices
+                            Accessible.name: dialog.follow.playLabel
+                        }
+                    }
                     GroupBox {
                         title: qsTr("Preferred audio (separated by semicolons)")
                         Layout.fillWidth: true

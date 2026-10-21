@@ -1581,3 +1581,416 @@ TEST(VisualTransformPointer, RotationXYDragsShowTheTurnedAxis)
     send(tool, host, "release 330 180 left");
     EXPECT_EQ(host.pointerShape(), PointerShape::Arrow);
 }
+
+// VT1: the inspector bar's values for Scale and the rotations. A typed value
+// is one step; a scrub's samples stage on one gesture its release commits as
+// one step; Esc (the host cancelling the gesture and resetting the tool)
+// drops them, and the values read the text again.
+TEST(VisualTransformValues, TypedAndScrubbedValuesAreOneStepEach)
+{
+    const auto cases = readCases();
+    const auto caseNamed = [&](const char *name) {
+        return *std::find_if(cases.begin(), cases.end(), [&](const Case &k) { return k.name == name; });
+    };
+    const auto textOf = [](const TestHost &host) {
+        const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+        return std::string(t.begin(), t.end());
+    };
+    const auto valueOf = [](const VisualTool &tool, const VisualHost &host, const std::string &name) {
+        for (const auto &v : tool.values(host))
+            if (v.name == name)
+                return v;
+        return ToolValue{};
+    };
+    const auto escape = [](TestHost &host, VisualTool &tool) {
+        host.cancelGesture();
+        tool.reset(host);
+    };
+    {
+        SCOPED_TRACE("scale");
+        TestHost host;
+        setUp(host, caseNamed("scale-width-left-drag"));
+        ScaleTool tool;
+        tool.setToggled(6);
+        tool.selected(host);
+        tool.reset(host);
+        const std::size_t steps = host.s->historySize();
+        const ToolValue x = valueOf(tool, host, "fscx");
+        EXPECT_TRUE(x.editable);
+        EXPECT_EQ(x.label, u"X");
+        EXPECT_EQ(x.unit, u"%");
+        EXPECT_EQ(x.text, u"100");
+        EXPECT_FALSE(tool.setValue("fscx", u"abc", host));
+        // Beyond a value's limit (an infinite scale otherwise), and below
+        // zero, refused without a gesture left open.
+        EXPECT_FALSE(tool.setValue("fscx", u"1e100", host));
+        EXPECT_FALSE(tool.setValue("fscx", u"-5", host, ValueEdit::Sample));
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps);
+        EXPECT_TRUE(tool.setValue("fscx", u"150", host));
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\fscx150"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueOf(tool, host, "fscx").text, u"150");
+        // A scrub of Y.
+        EXPECT_TRUE(tool.setValue("fscy", u"110", host, ValueEdit::Sample));
+        ASSERT_TRUE(host.g);
+        EXPECT_TRUE(tool.setValue("fscy", u"120", host, ValueEdit::Sample));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_EQ(textOf(host).find("\\fscy"), std::string::npos) << textOf(host);
+        EXPECT_TRUE(tool.setValue("fscy", u"120", host, ValueEdit::Commit));
+        EXPECT_FALSE(host.g);
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        EXPECT_NE(textOf(host).find("\\fscy120"), std::string::npos) << textOf(host);
+        EXPECT_NE(textOf(host).find("\\fscx150"), std::string::npos) << textOf(host);
+        // Esc mid-scrub.
+        const std::string before = textOf(host);
+        EXPECT_TRUE(tool.setValue("fscx", u"10", host, ValueEdit::Sample));
+        ASSERT_TRUE(host.g);
+        escape(host, tool);
+        EXPECT_EQ(textOf(host), before);
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        EXPECT_EQ(valueOf(tool, host, "fscx").text, u"150");
+    }
+    {
+        SCOPED_TRACE("rotz");
+        TestHost host;
+        setUp(host, caseNamed("rotz-drag"));
+        RotationZTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        const std::size_t steps = host.s->historySize();
+        EXPECT_EQ(valueOf(tool, host, "frz").unit, u"°");
+        EXPECT_EQ(valueOf(tool, host, "orgx").group, u"Origin");
+        EXPECT_TRUE(tool.setValue("frz", u"30", host));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\frz30"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueOf(tool, host, "frz").text, u"30");
+        // A scrub of the angle, dropped: the angle the text has again.
+        const std::string before = textOf(host);
+        EXPECT_TRUE(tool.setValue("frz", u"45", host, ValueEdit::Sample));
+        ASSERT_TRUE(host.g);
+        escape(host, tool);
+        EXPECT_EQ(textOf(host), before);
+        EXPECT_EQ(valueOf(tool, host, "frz").text, u"30");
+        // The origin, in script coordinates.
+        EXPECT_TRUE(tool.setValue("orgx", u"100", host));
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        EXPECT_NE(textOf(host).find("\\org(100,540)"), std::string::npos) << textOf(host);
+        EXPECT_NE(textOf(host).find("\\frz30"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueOf(tool, host, "orgx").text, u"100");
+        EXPECT_EQ(valueOf(tool, host, "orgy").text, u"540");
+    }
+    {
+        SCOPED_TRACE("rotxy");
+        TestHost host;
+        setUp(host, caseNamed("rotxy-left-right-middle"));
+        RotationXYTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        const std::size_t steps = host.s->historySize();
+        EXPECT_EQ(valueOf(tool, host, "frx").text, u"10");
+        EXPECT_TRUE(tool.setValue("fry", u"20", host));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\fry20"), std::string::npos) << textOf(host);
+        EXPECT_NE(textOf(host).find("\\frx10"), std::string::npos) << textOf(host);
+        EXPECT_TRUE(tool.setValue("frx", u"-15", host, ValueEdit::Sample));
+        ASSERT_TRUE(host.g);
+        EXPECT_TRUE(tool.setValue("frx", u"-15", host, ValueEdit::Commit));
+        EXPECT_EQ(host.s->historySize(), steps + 2);
+        // The tool keeps the angle in 0-360 as its drags do (-15 is 345).
+        EXPECT_NE(textOf(host).find("\\frx345"), std::string::npos) << textOf(host);
+        EXPECT_NE(textOf(host).find("\\fry20"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueOf(tool, host, "frx").text, u"345");
+        EXPECT_EQ(valueOf(tool, host, "fry").text, u"20");
+    }
+}
+
+namespace {
+std::string rowText(const TestHost &host, std::size_t row)
+{
+    const std::u8string &t = lineOf(*host.s, ids(*host.s)[row])->text;
+    return std::string(t.begin(), t.end());
+}
+std::u16string valueText(const VisualTool &tool, const VisualHost &host, const std::string &name)
+{
+    for (const auto &v : tool.values(host))
+        if (v.name == name)
+            return v.text;
+    return {};
+}
+} // namespace
+
+// VT1 (Codex on #293): with "Changing all" tags over several Lines, the
+// fields and the next edit start from the active Line's angle as written,
+// not the batch's first (Z) or last (X/Y) target's.
+TEST(VisualTransformValues, BatchAnglesStartFromTheActiveLine)
+{
+    {
+        SCOPED_TRACE("rotz");
+        TestHost host;
+        setUp(host, caseNamed("rotz-several-preserve"));
+        const auto all = ids(*host.s);
+        host.targets = {all[1], all[0]}; // the active Line not the first
+        RotationZTool tool;
+        tool.setToggled(2);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_EQ(valueText(tool, host, "frz"), u"10");
+        EXPECT_TRUE(tool.setValue("frz", u"20", host));
+        EXPECT_NE(rowText(host, 0).find("\\frz20"), std::string::npos) << rowText(host, 0);
+        EXPECT_NE(rowText(host, 1).find("\\frz55"), std::string::npos) << rowText(host, 1);
+        EXPECT_EQ(valueText(tool, host, "frz"), u"20");
+        EXPECT_TRUE(tool.setValue("frz", u"30", host));
+        EXPECT_NE(rowText(host, 0).find("\\frz30"), std::string::npos) << rowText(host, 0);
+        EXPECT_NE(rowText(host, 1).find("\\frz65"), std::string::npos) << rowText(host, 1);
+    }
+    {
+        SCOPED_TRACE("rotxy");
+        TestHost host;
+        setUp(host, caseNamed("rotxy-several"));
+        const auto all = ids(*host.s);
+        host.targets = {all[0], all[1]}; // the active Line not the last
+        RotationXYTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_EQ(valueText(tool, host, "fry"), u"5");
+        EXPECT_TRUE(tool.setValue("fry", u"15", host));
+        EXPECT_NE(rowText(host, 0).find("\\fry15"), std::string::npos) << rowText(host, 0);
+        EXPECT_NE(rowText(host, 1).find("\\fry50"), std::string::npos) << rowText(host, 1);
+        EXPECT_EQ(valueText(tool, host, "fry"), u"15");
+        EXPECT_TRUE(tool.setValue("fry", u"25", host));
+        EXPECT_NE(rowText(host, 0).find("\\fry25"), std::string::npos) << rowText(host, 0);
+        EXPECT_NE(rowText(host, 1).find("\\fry60"), std::string::npos) << rowText(host, 1);
+    }
+}
+
+// VT1 (Codex on #293): a typed angle of several negative turns is held in
+// 0-360 as one turn's is.
+TEST(VisualTransformValues, AnglesOfSeveralTurnsAreInOneTurn)
+{
+    {
+        TestHost host;
+        setUp(host, caseNamed("rotz-drag"));
+        RotationZTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_TRUE(tool.setValue("frz", u"-721", host));
+        EXPECT_NE(rowText(host, 0).find("\\frz359"), std::string::npos) << rowText(host, 0);
+        EXPECT_EQ(valueText(tool, host, "frz"), u"359");
+    }
+    {
+        TestHost host;
+        setUp(host, caseNamed("rotxy-left-right-middle"));
+        RotationXYTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_TRUE(tool.setValue("frx", u"-735", host));
+        EXPECT_NE(rowText(host, 0).find("\\frx345"), std::string::npos) << rowText(host, 0);
+        EXPECT_TRUE(tool.setValue("fry", u"1090", host));
+        EXPECT_NE(rowText(host, 0).find("\\fry10"), std::string::npos) << rowText(host, 0);
+    }
+}
+
+// VT1 (Codex on #293): with "Change all scale tags" a scale is the tags'
+// multiple of the press's, so a value is refused on an axis at zero (no
+// ratio from it) rather than writing nan; a zero itself is written.
+TEST(VisualTransformValues, ChangeAllFromAZeroScaleIsRefused)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    ScaleTool tool;
+    tool.setToggled(6 | 32);
+    tool.selected(host);
+    tool.reset(host);
+    const auto textOf = [&] {
+        const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+        return std::string(t.begin(), t.end());
+    };
+    const std::size_t steps = host.s->historySize();
+    EXPECT_TRUE(tool.setValue("fscx", u"0", host));
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_NE(textOf().find("\\fscx0"), std::string::npos) << textOf();
+    tool.reset(host);
+    tool.reset(host);
+    EXPECT_FALSE(tool.setValue("fscx", u"150", host));
+    EXPECT_FALSE(tool.setValue("fscx", u"150", host, ValueEdit::Sample));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
+    // Y, at its own scale, is still edited.
+    EXPECT_TRUE(tool.setValue("fscy", u"120", host));
+    EXPECT_EQ(host.s->historySize(), steps + 2);
+    EXPECT_EQ(textOf().find("nan"), std::string::npos) << textOf();
+}
+
+// VT1 (Codex on #293): from a scale too small for the ratio (a tiny \fscx
+// in the text), "Change all scale tags" refuses a large value rather than
+// writing inf.
+TEST(VisualTransformValues, ChangeAllRefusesARatioThatOverflows)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    const core::LineId active = *host.activeLine();
+    ASSERT_TRUE(host.s->editDraft(
+        active, DraftChange{.text = u8"{\\fscx0.0000000000000000000000000000000000001\\fscy100}x"}));
+    ASSERT_TRUE(host.s->commitDraft());
+    ScaleTool tool;
+    tool.setToggled(6 | 32);
+    tool.selected(host);
+    tool.reset(host);
+    const auto textOf = [&] {
+        const std::u8string &t = lineOf(*host.s, active)->text;
+        return std::string(t.begin(), t.end());
+    };
+    const std::size_t steps = host.s->historySize();
+    EXPECT_FALSE(tool.setValue("fscx", u"100000000", host));
+    EXPECT_FALSE(tool.setValue("fscx", u"100000000", host, ValueEdit::Sample));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(host.s->historySize(), steps);
+    EXPECT_EQ(textOf().find("inf"), std::string::npos) << textOf();
+    EXPECT_TRUE(tool.setValue("fscy", u"120", host));
+    EXPECT_EQ(textOf().find("inf"), std::string::npos) << textOf();
+}
+
+// VT1 (Codex on #293): with "change all" on and the active Line alone, each
+// scrub sample is written from the text the gesture started with, not the
+// last sample's, so the release writes the value it shows.
+TEST(VisualTransformValues, ChangeAllScrubsStartFromTheGesturesText)
+{
+    const auto textOf = [](const TestHost &host) {
+        const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+        return std::string(t.begin(), t.end());
+    };
+    {
+        SCOPED_TRACE("scale");
+        TestHost host;
+        setUp(host, caseNamed("scale-width-left-drag"));
+        ScaleTool tool;
+        tool.setToggled(6 | 32);
+        tool.selected(host);
+        tool.reset(host);
+        ASSERT_EQ(valueText(tool, host, "fscx"), u"100");
+        const std::size_t steps = host.s->historySize();
+        EXPECT_TRUE(tool.setValue("fscx", u"110", host, ValueEdit::Sample));
+        EXPECT_TRUE(tool.setValue("fscx", u"120", host, ValueEdit::Sample));
+        EXPECT_TRUE(tool.setValue("fscx", u"120", host, ValueEdit::Commit));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\fscx120"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueText(tool, host, "fscx"), u"120");
+    }
+    {
+        SCOPED_TRACE("rotz");
+        TestHost host;
+        setUp(host, caseNamed("rotz-drag"));
+        RotationZTool tool;
+        tool.setToggled(2);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_TRUE(tool.setValue("frz", u"10", host));
+        const std::size_t steps = host.s->historySize();
+        EXPECT_TRUE(tool.setValue("frz", u"20", host, ValueEdit::Sample));
+        EXPECT_TRUE(tool.setValue("frz", u"30", host, ValueEdit::Sample));
+        EXPECT_TRUE(tool.setValue("frz", u"30", host, ValueEdit::Commit));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\frz30"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueText(tool, host, "frz"), u"30");
+    }
+    {
+        SCOPED_TRACE("rotxy");
+        TestHost host;
+        setUp(host, caseNamed("rotxy-left-right-middle"));
+        RotationXYTool tool;
+        tool.setToggled(0);
+        tool.selected(host);
+        tool.reset(host);
+        EXPECT_TRUE(tool.setValue("fry", u"10", host));
+        const std::size_t steps = host.s->historySize();
+        EXPECT_TRUE(tool.setValue("fry", u"20", host, ValueEdit::Sample));
+        EXPECT_TRUE(tool.setValue("fry", u"30", host, ValueEdit::Sample));
+        EXPECT_TRUE(tool.setValue("fry", u"30", host, ValueEdit::Commit));
+        EXPECT_EQ(host.s->historySize(), steps + 1);
+        EXPECT_NE(textOf(host).find("\\fry30"), std::string::npos) << textOf(host);
+        EXPECT_EQ(valueText(tool, host, "fry"), u"30");
+    }
+}
+
+// VT1 (Codex on #293): over several Lines with "Change all scale tags" a
+// typed or scrubbed value is written as given, each axis by its own ratio.
+// Legacy's drags take the larger ratio for both axes, so a value below the
+// press's would change nothing.
+TEST(VisualTransformValues, BatchScaleValuesTakeTheirOwnAxisRatio)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-several-lines"));
+    const auto all = ids(*host.s);
+    host.targets = {all.begin(), all.end()};
+    ScaleTool tool;
+    tool.setToggled(32);
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_EQ(valueText(tool, host, "fscx"), u"100");
+    const std::size_t steps = host.s->historySize();
+    // X below the press's: halved in every picked Line, Y untouched.
+    EXPECT_TRUE(tool.setValue("fscx", u"50", host));
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(rowText(host, 0), "{\\fscx50\\pos(960,540)}Active");
+    EXPECT_EQ(rowText(host, 1), "{\\fscx75}Second{\\fscx20}x");
+    EXPECT_EQ(rowText(host, 2), "{\\fscx50\\fscy70}Third");
+    EXPECT_EQ(valueText(tool, host, "fscx"), u"50");
+    // Y scrubbed up: X stays where it was typed.
+    EXPECT_TRUE(tool.setValue("fscy", u"120", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscy", u"150", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscy", u"150", host, ValueEdit::Commit));
+    EXPECT_EQ(host.s->historySize(), steps + 2);
+    EXPECT_NE(rowText(host, 0).find("\\fscx50"), std::string::npos) << rowText(host, 0);
+    EXPECT_EQ(rowText(host, 1), "{\\fscy75\\fscx75}Second{\\fscx20}x");
+    EXPECT_NE(rowText(host, 2).find("\\fscx50\\fscy105"), std::string::npos) << rowText(host, 2);
+}
+
+// VT1 (Codex on #293): with "Preserve proportions" each sample is in
+// proportion to the press's scale, so a scrub through zero comes back with
+// both axes.
+TEST(VisualTransformValues, AProportionalScrubThroughZeroKeepsTheProportion)
+{
+    TestHost host;
+    setUp(host, caseNamed("scale-width-left-drag"));
+    ScaleTool tool;
+    tool.setToggled(6 | 64);
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_EQ(valueText(tool, host, "fscy"), u"100");
+    EXPECT_TRUE(tool.setValue("fscx", u"50", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscx", u"0", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscx", u"10", host, ValueEdit::Sample));
+    EXPECT_TRUE(tool.setValue("fscx", u"10", host, ValueEdit::Commit));
+    EXPECT_FALSE(host.g);
+    const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+    const std::string text(t.begin(), t.end());
+    EXPECT_NE(text.find("\\fscx10"), std::string::npos) << text;
+    EXPECT_NE(text.find("\\fscy10"), std::string::npos) << text;
+}
+
+// VT1 (Codex on #293): with "two points" on and its points not both placed,
+// a typed origin still writes \org (only the angle waits for the points).
+TEST(VisualTransformValues, TheOriginIsTypedWithTwoPointsOn)
+{
+    TestHost host;
+    setUp(host, caseNamed("rotz-two-points"));
+    RotationZTool tool;
+    tool.setToggled(1);
+    tool.selected(host);
+    tool.reset(host);
+    ASSERT_TRUE(tool.hasTwoPoints());
+    const std::size_t steps = host.s->historySize();
+    EXPECT_TRUE(tool.setValue("orgx", u"100", host));
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    const std::u8string &t = lineOf(*host.s, *host.activeLine())->text;
+    EXPECT_NE(std::string(t.begin(), t.end()).find("\\org(100,"), std::string::npos) << std::string(t.begin(), t.end());
+}

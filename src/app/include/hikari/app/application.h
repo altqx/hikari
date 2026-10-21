@@ -1339,7 +1339,7 @@ private:
     // CommitChanges through the edit box and grid); while one runs the box
     // keeps its selection for the same Line (no SetDialogue).
     bool m_audioCommitting = false;
-    void commitAudioTimes(const application::AudioCommitRequest &request);
+    bool commitAudioTimes(const application::AudioCommitRequest &request);
     // K2: the Options dialog's Appearance page settings.
     void addAppearance(QVariantMap &values) const;
     void setAudioActive(int key);

@@ -65,4 +65,4 @@ TabCommands.qml:subtitlesPrompt
 TranslationModeOffConfirm.qml:dialog
 TranslationModeQuestion.qml:dialog
 VideoFileQuestion.qml:dialog
-VisualToolOptions.qml:noticeBox
+VisualToolDialogs.qml:noticeBox

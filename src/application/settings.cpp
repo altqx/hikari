@@ -285,6 +285,15 @@ const std::vector<SettingDefinition> &definitions()
         // "nextCommit", "goto", "sliders"). Starts on AU1's row; legacy has
         // no such option, so an import leaves it as it is.
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
+        // KA2 (#277): the audio box's playback speed in percent (25, 33, 50,
+        // 75 or 100), pitch kept (KA2-slowed-playback); tap-to-time's Hold or
+        // Press and the calibrated latency in ms (KA2-tap-to-time).
+        {"audio.speedPercent", "", Int, Profile, Mapped, false, std::int64_t{100}},
+        {"audio.tapHold", "", Bool, Profile, Mapped, false, true},
+        {"audio.tapLatency", "", Int, Profile, Mapped, false, std::int64_t{0}},
+        // KA5 (#280): Karaoke mode's syllable boundaries snap to vocal onsets
+        // (KA5-onset-snap), off by default.
+        {"audio.onsetSnap", "", Bool, Profile, Mapped, false, false},
         // W1: the player that plays video (Windows): 0 the built-in general
         // player, 1 the optional DirectShow adapter (legacy's player when
         // indexing was off). Chosen here only, never as a fallback; other

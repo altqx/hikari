@@ -257,8 +257,26 @@ jobs:
           path: dist
           if-no-files-found: error
 
+  # Whether the root CMakeLists is still the wxWidgets build.  On the Qt
+  # rewrite (its branch, pull requests into it and its v* release tags) the
+  # root is cmake/provision's, which the Linux job's packages cannot configure
+  # and which qt-linux.yml and qt-fedora.yml already build.
+  tree:
+    name: Legacy tree
+    runs-on: ubuntu-24.04
+    outputs:
+      legacy: ${{ steps.check.outputs.legacy }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: cmake/provision
+      - id: check
+        run: echo "legacy=$([[ -e cmake/provision/Provision.cmake ]] && echo false || echo true)" >> "$GITHUB_OUTPUT"
+
   linux:
     name: Linux (${{ matrix.build_type }})
+    needs: tree
+    if: needs.tree.outputs.legacy == 'true'
     runs-on: ubuntu-24.04
     strategy:
       fail-fast: false

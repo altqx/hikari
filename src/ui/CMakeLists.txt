@@ -73,11 +73,11 @@ qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 # E4: the Line editor's metadata fields, counters and \an choice; its masked time fields
 qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
-# T1: the visual tool rail, the overlay over the Video canvas, the tool strip below it and its readout.
-qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml VisualToolReadout.qml)
-# T2-T4: the families' options row (Position, Move, Scale, the rotations, the
-# clips' point modes and Invert clip).
-qt_target_qml_sources(hikari_ui QML_FILES VisualToolOptions.qml)
+# T1: the visual tool rail and the overlay over the Video canvas; VT1: the inspector bar below it and its fields.
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml)
+# T2-T6: the families' options in the bar (Position, Move, Scale, the rotations,
+# the clips' point modes and Invert clip, ...) and the tools' dialogs.
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
 # T5: the drawing's "Vector shape editing" dialog.
 qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml)
 # T6: the all-tags tool's "Tag editing" dialog.
@@ -139,6 +139,9 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml)
 # AU1: the rows of the audio panel's zoom and speaker popovers.
 qt_target_qml_sources(hikari_ui QML_FILES AudioSliderRow.qml)
+# KA2 (#277): the audio panel's tap bar, the latency calibration window and
+# the key caps their hints show.
+qt_target_qml_sources(hikari_ui QML_FILES AudioTapBar.qml TapCalibrationWindow.qml Keycap.qml)
 # E5: the Line editor's Not confirmed and Moving tags buttons. TM1: the
 # Original text panel's toolbar, the Translation preset's question and the
 # turn-off confirmation (the Translator mode check box is gone).

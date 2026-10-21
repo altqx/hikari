@@ -11,6 +11,8 @@
 #include "hikari/application/visual_shift.h"
 
 #include <algorithm>
+#include <charconv>
+#include <cmath>
 #include <set>
 
 namespace hikari::application::visual {
@@ -34,6 +36,30 @@ const core::LineRecord *findLine(const core::Document &document, core::LineId id
 }
 
 } // namespace
+
+// A typed or scrubbed value (VT1, T2's typed point): a plain decimal number,
+// spaces around it and a leading '+' allowed. The limit keeps it a float
+// coordinate and an int of milliseconds (1e100 would be an infinite one).
+bool parseValue(const std::u16string &text, double &out)
+{
+    std::string s;
+    for (const char16_t c : text) {
+        if (c > 0x7F)
+            return false;
+        s += static_cast<char>(c);
+    }
+    std::size_t a = 0, b = s.size();
+    while (a < b && s[a] == ' ')
+        ++a;
+    while (b > a && s[b - 1] == ' ')
+        --b;
+    if (a < b && s[a] == '+')
+        ++a;
+    if (a >= b)
+        return false;
+    const auto [end, ec] = std::from_chars(s.data() + a, s.data() + b, out);
+    return ec == std::errc() && end == s.data() + b && std::abs(out) <= kValueLimit;
+}
 
 const std::array<FamilyInfo, kFamilyCount> &families()
 {
