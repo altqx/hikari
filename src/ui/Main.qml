@@ -557,15 +557,16 @@ ApplicationWindow {
         return []
     }
     // VF1 (#288): a panel's own submenus, after its own items: an item's
-    // `items` are radio choices. The Video panel's "Seek on" and "Then play"
-    // (legacy VideoToolbar's two lists, which left the panel).
+    // `items` are radio choices, its `iconRole` the submenu's. The Video
+    // panel's "Seek on" and "Then play" (legacy VideoToolbar's two lists,
+    // which left the panel).
     readonly property VideoFollowChoices videoFollow: VideoFollowChoices { settings: root.app.settings }
     function panelOwnMenus(dock) {
         if (dock === videoDock)
-            return [{ name: "videoSeekOn", text: root.videoFollow.seekName,
+            return [{ name: "videoSeekOn", text: root.videoFollow.seekName, iconRole: "video-to-start-time",
                       items: root.videoFollow.seekChoices.map((text, i) => ({
                           text: text, checked: () => root.videoFollow.seek === i, run: () => root.videoFollow.setSeek(i) })) },
-                    { name: "videoThenPlay", text: root.videoFollow.playName,
+                    { name: "videoThenPlay", text: root.videoFollow.playName, iconRole: "play-line",
                       items: root.videoFollow.playChoices.map((text, i) => ({
                           text: text, checked: () => root.videoFollow.play === i, run: () => root.videoFollow.setPlay(i) })) }]
         return []
@@ -637,6 +638,7 @@ ApplicationWindow {
                 id: ownMenu
                 required property var modelData
                 objectName: "panelOptions_" + modelData.name
+                iconRole: modelData.iconRole
                 title: modelData.text
                 Instantiator {
                     model: ownMenu.modelData.items

@@ -421,7 +421,8 @@
     "videoonstime.png"
    ],
    "surfaces": [
-    "menu:video"
+    "menu:video",
+    "panel-menu"
    ]
   },
   {
@@ -546,7 +547,8 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen",
-    "audio-box"
+    "audio-box",
+    "panel-menu"
    ]
   },
   {

@@ -11018,6 +11018,8 @@ private slots:
               {"video.pauseOnClick", "Left mouse button pauses video"},
               {"video.openAtActiveLine", "Open video with time of active line"},
               {"video.gpuConversion", "Convert video colours on the GPU (requires reloading)"},
+              {"video.moveToActiveLine", nullptr}, // VF1, the Video panel's Seek on
+              {"video.playAfterSelection", nullptr}, // and Then play
               {"video.acceptedAudioStream", nullptr},
               {"video.ffms2Seeking", nullptr},
               {"video.subtitleProvider", nullptr}, // W2: shown before the zoom, bound last
