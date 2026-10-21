@@ -77,6 +77,10 @@ Window {
         if (opener)
             transientParent = opener
         placement.settle(dialog.contentItem)
+        // Wrapped text's height at the width it opens at: a hidden window
+        // has not sized its content (0 wide before the first open).
+        contentItem.width = Math.min(naturalWidth, placement.room.width)
+        placement.settle(dialog.contentItem)
         placement.place(opener, Qt.size(naturalWidth, naturalHeight))
         // (Not show(): a dialog may name a function of its own so.)
         visible = true

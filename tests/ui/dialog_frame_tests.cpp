@@ -64,6 +64,31 @@ Window {
 }
 )";
 
+// Credits' shape: a column of a set width, in it a row with a label of a
+// set width and one that wraps; nothing holds the column's width but it.
+const QByteArray kWrappingQml = R"(
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Hikari.Ui
+Window {
+    width: 600; height: 400
+    property alias dialog: dialog
+    DialogWindow {
+        id: dialog
+        title: "Wrapping"
+        ColumnLayout {
+            Layout.preferredWidth: 280
+            RowLayout {
+                Layout.fillWidth: true
+                Label { text: "Name"; Layout.preferredWidth: 60 }
+                Label { objectName: "wrapped"; text: "A line of text long enough to wrap in the column of the dialog more than once at its width"; wrapMode: Text.WordWrap; Layout.fillWidth: true }
+            }
+        }
+    }
+}
+)";
+
 QQuickItem *findItem(QQuickItem *root, const QString &name)
 {
     if (!root)
@@ -90,12 +115,12 @@ class DialogFrameTests : public QObject {
 
     std::unique_ptr<ui::SettingsStore> store;
 
-    Shown show(bool openerShown = true)
+    Shown show(bool openerShown = true, const QByteArray &qml = kQml)
     {
         Shown s;
         s.engine = std::make_unique<QQmlEngine>();
         QQmlComponent component(s.engine.get());
-        component.setData(kQml, QUrl(QStringLiteral("qrc:/dg1-test.qml")));
+        component.setData(qml, QUrl(QStringLiteral("qrc:/dg1-test.qml")));
         if (!component.isReady())
             qWarning() << component.errors();
         s.opener.reset(qobject_cast<QQuickWindow *>(component.create()));
@@ -317,6 +342,23 @@ private slots:
         store->setValue(QLatin1String(dp::kSetting), QStringList{QStringLiteral("test\t0,0,30000,20000")});
         QVERIFY(open(s));
         QCOMPARE(s.dialog->size(), s.dialog->screen()->availableGeometry().size());
+    }
+
+    void wrappedTextHasItsHeightOnTheFirstOpen()
+    {
+        Shown s = show(true, kWrappingQml);
+        QVERIFY(s.dialog);
+        QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
+        // Laid out at the width it opens at, not the never-shown window's.
+        QMetaObject::invokeMethod(s.dialog, "open");
+        const int opened = s.dialog->height();
+        const qreal width = s.item("wrapped")->width();
+        QVERIFY(QTest::qWaitForWindowExposed(s.dialog));
+        QTest::qWait(50);
+        QCOMPARE(s.item("wrapped")->width(), width);
+        QVERIFY(s.item("wrapped")->property("lineCount").toInt() > 1);
+        QCOMPARE(s.dialog->property("naturalHeight").toInt(), opened);
+        QCOMPARE(s.dialog->height(), opened);
     }
 
     void aDialogBiggerThanTheScreenFitsIt()
