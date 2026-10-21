@@ -278,6 +278,10 @@ hikari_add_qttest(hikari_ui_file_layouts_tests SOURCES file_layouts_tests.cpp
           bounds=aLayoutLargerThanThePanelsIsRefused tree=aLayoutTheEngineCannotReadIsRefused
           positions=aPanelPositionTheEngineCannotReadIsRefused places=aWindowPlaceNoWindowCanHaveIsRefused recovery=aRecoveredCopyKeepsItsArrangement)
 target_include_directories(hikari_ui_file_layouts_tests PRIVATE "${PROJECT_SOURCE_DIR}/tests/support")
+# TM1 (#232): Translation mode through the Translation preset, the Original
+# text panel and Subtitles > Translation mode.
+hikari_add_qttest(hikari_ui_translation_preset_tests SOURCES translation_preset_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 # WS3 (#217): the layout presets and saved layouts (save, apply, rename,
 # delete, persistence) and the retired View arrangements and editor switch.
 # Every function starts the application and its QML, as D2's suite did, so
@@ -406,6 +410,11 @@ endif()
 # frameless window's hints, its parts as the window system is told of them
 # and Alt alone (window_frame.h).
 hikari_add_qttest(hikari_ui_window_frame_tests SOURCES window_frame_tests.cpp LIBRARIES hikari_ui)
+# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h): the frame's
+# buttons, the first and later places, Esc, Enter, the keyboard's return,
+# modality and closing with the opener.
+hikari_add_qttest(hikari_ui_dialog_frame_tests SOURCES dialog_frame_tests.cpp
+    LIBRARIES hikari_ui hikari_uiplugin Qt6::QuickControls2)
 foreach(scale 150 200)
     math(EXPR whole "${scale} / 100")
     math(EXPR part "${scale} % 100")

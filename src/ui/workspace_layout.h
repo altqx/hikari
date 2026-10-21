@@ -103,11 +103,11 @@ public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    static constexpr int kPanelRegistry = 5; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Template (KE2)
+    static constexpr int kPanelRegistry = 6; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Template (KE2)
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
-    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Template
+    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original, Template
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without
     // settings). The saved layouts are kept beside it, in layouts.json.
@@ -132,6 +132,16 @@ public:
     Q_INVOKABLE bool applyPreset(const QString &name);
     // A preset's name as the user reads it.
     Q_INVOKABLE static QString presetLabel(const QString &name);
+    // TM1 (#232): the mode a preset carries, or empty. Choosing the preset
+    // (applyPreset, or applySavedLayout of a layout that started from it)
+    // starts that mode for the current tab (presetModeChosen); choosing an
+    // arrangement whose preset carries another mode or none afterwards
+    // leaves it (presetModeLeft). What starting and leaving do is the mode's
+    // own: Translation asks to turn the Document's Translation mode on and
+    // stays on when left; KP1's Karaoke puts back the audio mode it replaced.
+    // Showing a tab, opening a file, a Session's arrangement, the backup and
+    // Reset this layout start and leave nothing.
+    Q_INVOKABLE static QString presetMode(const QString &preset);
     // A language switch: layoutLabel reads the new language's preset names.
     void retranslate() { emit changed(); }
     // WS3: the presets' names in every shipped language, refused as saved
@@ -233,9 +243,17 @@ signals:
     // follow the application, such as the Reference tray, back as they must
     // be).
     void arrangementSwapped();
+    // TM1: the user chose an arrangement whose preset carries `mode`, or
+    // left one that did (presetMode).
+    void presetModeChosen(const QString &mode);
+    void presetModeLeft(const QString &mode);
 
 private:
     void checkModal();
+    bool applyPresetArrangement(const QString &name);
+    bool applySavedArrangement(const QString &name);
+    // TM1: the modes of the preset chosen, after `before` was the current one.
+    void choseFrom(const QString &before);
     bool restorePayload(const QByteArray &payload, bool inPlace = false);
     bool restoreSavedFile();
     bool buildPreset(const QString &name, bool inPlace);

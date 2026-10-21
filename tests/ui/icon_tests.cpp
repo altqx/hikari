@@ -941,7 +941,9 @@ Rectangle {
             QStringLiteral("swap-lines"), QStringLiteral("join-lines"), QStringLiteral("join-keep-first"),
             QStringLiteral("join-keep-last"), QStringLiteral("split-words"), QStringLiteral("split-wraps"),
             QStringLiteral("select-visible"), QStringLiteral("translation-shift"), QStringLiteral("ui-colours"),
-            QStringLiteral("layout-restore"), QStringLiteral("restore-default")};
+            QStringLiteral("layout-restore"), QStringLiteral("restore-default"),
+            // TM1's text-line icon and its moving arrow
+            QStringLiteral("translation-mode"), QStringLiteral("comment-original"), QStringLiteral("moving-tags")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();
