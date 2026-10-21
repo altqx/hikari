@@ -114,6 +114,9 @@ public:
     // The Document the video draws instead of `doc` (time and playing state
     // of the frame shown), or nothing when the video shows no preview.
     std::optional<core::Document> videoDocument(const core::Document &doc, std::int64_t timeMs, bool playing) const;
+    // The span of time that Document keeps (templatePreviewWindow): it is
+    // drawn again only when this changes.
+    application::TemplatePreviewWindow videoWindow(std::int64_t timeMs, bool playing) const;
 
     bool shown() const { return m_shown; }
     void setShown(bool shown);

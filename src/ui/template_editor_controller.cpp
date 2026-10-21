@@ -654,22 +654,29 @@ bool TemplateEditorController::videoPreview() const
     return m_shown && m_previewOnVideo && m_source && m_preview && line(*m_source);
 }
 
-std::optional<core::Document> TemplateEditorController::videoDocument(const core::Document &doc, std::int64_t timeMs,
-                                                                      bool playing) const
+application::TemplatePreviewWindow TemplateEditorController::videoWindow(std::int64_t timeMs, bool playing) const
 {
     if (!videoPreview())
-        return std::nullopt;
+        return {};
     const auto *source = line(*m_source);
     std::int64_t from = msOf(source->start), to = msOf(source->end);
     for (const auto &l : *m_preview) {
         from = std::min(from, msOf(l.start));
         to = std::max(to, msOf(l.end));
     }
+    return application::templatePreviewWindow(timeMs, playing, from, to);
+}
+
+std::optional<core::Document> TemplateEditorController::videoDocument(const core::Document &doc, std::int64_t timeMs,
+                                                                      bool playing) const
+{
+    if (!videoPreview())
+        return std::nullopt;
     const auto replaced = m_replaced.find(*m_source);
     return application::templatePreviewDocument(doc, *m_source, *m_preview,
                                                 replaced == m_replaced.end() ? std::set<core::LineId>{}
                                                                              : replaced->second,
-                                                application::templatePreviewWindow(timeMs, playing, from, to));
+                                                videoWindow(timeMs, playing));
 }
 
 bool TemplateEditorController::canApply() const
