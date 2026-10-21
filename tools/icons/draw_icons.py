@@ -360,8 +360,9 @@ icon("media-previous-file", "Previous file", ["backward.png", "backward1.png"], 
 icon("media-next-file", "Next file", ["forward.png", "forward1.png"], [TRANSPORT, FULLSCREEN],
      triangle(2.5, 2.5, 9, 11) + frect(13, 2, 2, 12, 0.5))
 # V5 #184: the fullscreen panel's "Show toolbar" (legacy a check box,
-# VideoFullscreen.cpp:68): the window with its toolbar row.
-icon("show-toolbar", "Show toolbar", [], [FULLSCREEN],
+# VideoFullscreen.cpp:68): the window with its toolbar row. FS1 #275: the
+# bar's mode button (FS1-bar-mode), which took its place.
+icon("show-toolbar", "Full screen bar", [], [FULLSCREEN],
      layout(stroke("M1.5 9.5h13"), frect(3.5, 10.75, 2, 1.5, 0.25), frect(7, 10.75, 2, 1.5, 0.25),
             frect(10.5, 10.75, 2, 1.5, 0.25)))
 
@@ -741,8 +742,11 @@ icon("frame-snapshot", "Save frame as PNG", [], [VIDEOMENU],
      + accent(circle(8, 8.5, 2.5)))
 icon("zoom-reset", "Turn off video zoom", [], [VIDEO],
      magnifier(6.5, 6.5, 4.5, 4) + accent(stroke("M5 5l3 3M8 5L5 8")))
-icon("volume", "Volume", [], [TRANSPORT, AUDIOBOX],
+icon("volume", "Volume", [], [TRANSPORT, FULLSCREEN, AUDIOBOX],
      stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z") + accent(stroke("M10 5.5a3.5 3.5 0 0 1 0 5M12 3.5a6.25 6.25 0 0 1 0 9")))
+# FS1 (#275): the fullscreen speaker while muted (FS1-speaker-gestures).
+icon("volume-muted", "Unmute", [], [FULLSCREEN, TRANSPORT],
+     stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z") + accent(stroke("M10.5 6l4 4M14.5 6l-4 4")))
 
 # Line editor, reference tray, automation
 icon("pick-lines", "Pick selected lines", [], [VISUAL],
@@ -841,6 +845,9 @@ icon("monitor", "Open in full screen on another monitor", [], [VIDEOMENU, FULLSC
      + accent(stroke("M3.5 6v-1.5h2M12.5 6v-1.5h-2M3.5 8v1.5h2M12.5 8v1.5h-2")))
 icon("progress-bar", "Show / hide progress bar", [], [VIDEOMENU, FULLSCREEN],
      rect(1.5, 2.5, 13, 11, 1) + stroke("M9.5 10.5h3") + accent(stroke("M3.5 10.5h4"), dot(8.5, 10.5, 1.25)))
+# KE1-render-cost-overlay: a stopwatch over the picture's subtitles
+icon("render-cost", "Show / hide render cost", [], [VIDEO, VIDEOMENU, FULLSCREEN],
+     circle(8, 9, 5.5) + stroke("M8 3.5V1.5M6.5 1.5h3M12.5 3.5l1 1") + accent(stroke("M8 9l2.5-2.5"), dot(8, 9, 1)))
 icon("aspect-ratio", "Change aspect ratio", [], [VIDEOMENU, FULLSCREEN],
      rect(1.5, 3.5, 13, 9, 1) + accent(stroke("M4 8h8M5.5 6.5L4 8l1.5 1.5M10.5 6.5L12 8l-1.5 1.5")))
 icon("video-filters", "Filters", [], [VIDEOMENU, FULLSCREEN],

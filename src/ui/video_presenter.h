@@ -25,6 +25,7 @@
 #include <QtQml/qqmlregistration.h>
 
 #include <QRect>
+#include <QVariantMap>
 
 #include <atomic>
 #include <memory>
@@ -44,6 +45,10 @@ class VideoPresenter : public QQuickItem, public application::PresenterPort {
     // the frame is fitted at its display aspect.
     Q_PROPERTY(QRectF videoRect READ videoRect WRITE setVideoRect NOTIFY placementChanged)
     Q_PROPERTY(QRectF sourceRect READ sourceRect WRITE setSourceRect NOTIFY placementChanged)
+    // KE1-render-cost-overlay: what the subtitles of the frame last presented
+    // cost to draw (application::RenderCost: milliseconds, counted, events,
+    // images, area, blurred, vectorClips); empty when it had none.
+    Q_PROPERTY(QVariantMap renderCost READ renderCost NOTIFY renderCostChanged)
 public:
     explicit VideoPresenter(QQuickItem *parent = nullptr);
     ~VideoPresenter() override;
@@ -52,6 +57,7 @@ public:
     bool convertsYcbcr() const override { return m_convertsYcbcr.load(); }
 
     quint64 presentedGeneration() const { return m_presentedGeneration; }
+    QVariantMap renderCost() const { return m_renderCost; }
     // Where the frame is drawn, in item coordinates (empty with no frame).
     QRectF frameRect() const;
     QRectF videoRect() const { return m_videoRect; }
@@ -73,6 +79,7 @@ public:
 
 signals:
     void presented();
+    void renderCostChanged();
     void placementChanged();
 
 protected:
@@ -104,6 +111,7 @@ private:
     QMetaObject::Connection m_swapped, m_invalidated;
     QQuickWindow *m_attached = nullptr; // the window whose signals are connected
     quint64 m_presentedGeneration = 0;
+    QVariantMap m_renderCost;
     std::uint64_t m_rejected = 0;
     QRectF m_videoRect, m_sourceRect;
     struct Stats : UploadStats {

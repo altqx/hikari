@@ -1524,6 +1524,16 @@ ApplicationWindow {
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_RESET_VIDEO_ZOOM")) root.videoView.resetZoom()
                 }
             }
+            // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
+            ShellMenuItem {
+                iconRole: "render-cost"
+                objectName: "renderCostMenuItem"
+                action: Action {
+                    id: renderCostAction
+                    text: qsTr("Show / hide render cost"); enabled: root.video.hasVideo
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_VIDEO_RENDER_COST")) root.videoView.toggleRenderCost()
+                }
+            }
         }
         // A1: legacy Audio menu (GLOBAL_OPEN_AUDIO, GLOBAL_RECENT_AUDIO,
         // GLOBAL_AUDIO_FROM_VIDEO, GLOBAL_CLOSE_AUDIO). AV3 (#240) retired
@@ -2343,14 +2353,20 @@ ApplicationWindow {
                 // T1: Esc cancels an open visual gesture first; keys no binding
                 // takes go to the visual tool (a nudge), as VideoBox::OnKeyPress
                 // hands them to the Visuals.
+                // FS1: VIDEO_FULLSCREEN_BAR is the fullscreen window's; here
+                // its key (Tab) keeps moving the keyboard focus.
+                function panelAction(event) {
+                    const action = root.hotkeys.actionFor(3, event.key, event.modifiers)
+                    return action === "VIDEO_FULLSCREEN_BAR" ? "" : action
+                }
                 Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.escapable)
-                                                  || root.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
+                                                  || videoPanel.panelAction(event) !== ""
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
                         event.accepted = true
                         return
                     }
-                    const action = root.hotkeys.actionFor(3, event.key, event.modifiers)
+                    const action = videoPanel.panelAction(event)
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
@@ -2422,10 +2438,9 @@ ApplicationWindow {
                     // In fullscreen the pinned panel (m_PanelOnFullscreen) or none.
                     panelHeight: root.videoFullscreen.active ? videoFullscreenWindow.pinnedPanelHeight : videoControls.height
                     view: root.videoView // V4
-                    // V5: without "Show toolbar" the pointer shows (and after
-                    // a second hides) over the fullscreen picture.
-                    cursorOverride: !root.videoFullscreen.active || root.videoFullscreen.showToolbar ? -1
-                                    : videoFullscreenWindow.cursorHidden ? Qt.BlankCursor : Qt.ArrowCursor
+                    // FS1-cursor-hide: the pointer hides over the fullscreen
+                    // picture while nothing holds the bar.
+                    cursorOverride: root.videoFullscreen.active && videoFullscreenWindow.cursorHidden ? Qt.BlankCursor : -1
                     onContextMenuRequested: (x, y) => {
                         if (root.videoFullscreen.active)
                             videoFullscreenWindow.openMenuAt(Qt.point(x, y))
@@ -2435,13 +2450,19 @@ ApplicationWindow {
                     onFullScreenRequested: root.videoDoubleClick()
                     onPointerMoved: (x, y) => {
                         if (root.videoFullscreen.active)
-                            videoFullscreenWindow.pointerMoved(visualOverlay.mapToItem(null, x, y).y)
+                            videoFullscreenWindow.pointerMoved(visualOverlay.mapToItem(null, x, y))
                     }
                 }
                 // V4: the zoom mode's frame, the context menu and the aspect ratio.
                 VideoZoomFrame {
                     anchors.fill: presenter
                     view: root.videoView
+                }
+                // KE1-render-cost-overlay: what the frame's subtitles cost to draw.
+                VideoRenderCost {
+                    anchors.fill: presenter
+                    visible: root.videoView.renderCost && root.video.hasVideo
+                    cost: presenter.renderCost
                 }
                 }
                 VideoContextMenu {
@@ -4893,12 +4914,15 @@ ApplicationWindow {
         width: 520
         height: 340
         flags: Qt.Dialog
-        // Shown while a macro runs; it stays after a failure so its log can be read.
+        // Shown while a macro runs; it stays after a failure, or a karaoke
+        // template run that named template problems (KE1), so its log can be read.
         property bool keep: false
         visible: root.automation.running || keep
         Connections {
             target: root.automation
-            function onRunCompleted(ok, message) { automationProgress.keep = !ok && message.length > 0 }
+            function onRunCompleted(ok, message) {
+                automationProgress.keep = (!ok && message.length > 0) || root.automation.keepLog
+            }
         }
         ColumnLayout {
             anchors.fill: parent
@@ -4996,6 +5020,11 @@ ApplicationWindow {
         onOpenSubtitlesRequested: openDialog.open()
         onAspectRatioRequested: aspectRatioDialog.openAtCursor()
         onFileQuestionRequested: next => videoFileQuestion.ask(next)
+        // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
+        onAudioSettingsRequested: {
+            root.videoFullscreen.leave()
+            settingsDialog.openDialog(4) // the Audio page
+        }
         Component.onCompleted: {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
@@ -6417,6 +6446,7 @@ ApplicationWindow {
         GLOBAL_GO_TO_NEXT_KEYFRAME: nextKeyframeAction, GLOBAL_GO_TO_PREVIOUS_KEYFRAME: previousKeyframeAction,
         GLOBAL_SET_AUDIO_FROM_VIDEO: setAudioFromVideoAction, GLOBAL_SET_AUDIO_MARK_FROM_VIDEO: setAudioMarkFromVideoAction,
         GLOBAL_VIDEO_ZOOM: videoZoomAction, GLOBAL_RESET_VIDEO_ZOOM: resetVideoZoomAction, // V4
+        GLOBAL_VIDEO_RENDER_COST: renderCostAction, // KE1
         GLOBAL_OPEN_SUBS: openAction, GLOBAL_OPEN_VIDEO: openVideoAction, GLOBAL_OPEN_KEYFRAMES: openKeyframesAction,
         GLOBAL_OPEN_AUTO_SAVE: openAutoSaveAction,
         GLOBAL_OPEN_DUMMY_VIDEO: dummyVideoAction, // V3
@@ -6651,6 +6681,8 @@ ApplicationWindow {
         case "VIDEO_HIDE_PROGRESS_BAR": root.videoView.toggleProgressBar(); return true
         // V5 (VideoBox.cpp:1161-1162): SetFullscreen().
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
+        // FS1-bar-mode: Auto, Always, Never.
+        case "VIDEO_FULLSCREEN_BAR": root.videoFullscreen.cycleBarMode(); return true
         case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":

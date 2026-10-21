@@ -1,5 +1,8 @@
 #include "hikari/application/video_fullscreen.h"
 
+#include "hikari/core/text_projection.h"
+
+#include <algorithm>
 #include <cstdio>
 
 namespace hikari::application {
@@ -35,14 +38,121 @@ int fullscreenMonitorEntries(int monitors)
     return monitors > 1 ? monitors - 1 : 0;
 }
 
-FullscreenPanelChange fullscreenPanelOnPointer(bool pinned, bool shown, int y, int clientHeight, int panelHeight)
+FullscreenBarMode fullscreenBarMode(std::int64_t setting)
 {
-    const bool onFullVideo = y < clientHeight - panelHeight;
-    if (!onFullVideo && !shown)
-        return FullscreenPanelChange::Show;
-    if (onFullVideo && shown && !pinned)
-        return FullscreenPanelChange::Hide;
-    return FullscreenPanelChange::None;
+    switch (setting) {
+    case 1: return FullscreenBarMode::Always;
+    case 2: return FullscreenBarMode::Never;
+    default: return FullscreenBarMode::Auto;
+    }
+}
+
+FullscreenBarMode nextFullscreenBarMode(FullscreenBarMode mode)
+{
+    switch (mode) {
+    case FullscreenBarMode::Auto: return FullscreenBarMode::Always;
+    case FullscreenBarMode::Always: return FullscreenBarMode::Never;
+    case FullscreenBarMode::Never: break;
+    }
+    return FullscreenBarMode::Auto;
+}
+
+bool fullscreenIdle(const FullscreenBarState &state)
+{
+    return !state.awake && state.playing && !state.menuOpen && !state.pointerOverBar;
+}
+
+bool fullscreenBarShown(FullscreenBarMode mode, const FullscreenBarState &state)
+{
+    switch (mode) {
+    case FullscreenBarMode::Always: return true;
+    case FullscreenBarMode::Never: return false;
+    case FullscreenBarMode::Auto: break;
+    }
+    return !fullscreenIdle(state);
+}
+
+std::string fullscreenLineText(std::string_view text)
+{
+    // What the renderer shows, read as the Line editor's hidden-tag view
+    // reads it (core::project): override blocks and drawings (a top-level
+    // \pN only) show nothing, and an unclosed or nested block hides what it
+    // covers. Bounded: core::project makes a span per character, and a
+    // Line's text has no limit.
+    const std::string_view input = fullscreenLineInput(text);
+    const std::u16string raw = core::toUtf16(std::u8string_view(reinterpret_cast<const char8_t *>(input.data()), input.size()));
+    std::u16string out;
+    bool space = false; // white space, then a break, wait for the next shown character
+    bool lineBreak = false;
+    bool full = false;
+    const auto put = [&](char16_t c) {
+        if (out.size() >= kFullscreenLineLabelUnits && (c < 0xDC00 || c > 0xDFFF)) {
+            full = true; // a low surrogate still ends its pair
+            return;
+        }
+        if (!out.empty() && lineBreak)
+            out += u" \u21B5 ";
+        else if (!out.empty() && space)
+            out += u' ';
+        space = lineBreak = false;
+        out += c;
+    };
+    for (const auto &span : core::project(raw).spans) {
+        if (full)
+            break;
+        switch (span.kind) {
+        case core::SpanKind::Text:
+            for (std::size_t i = span.rawStart; i < span.rawEnd && !full; ++i) {
+                const char16_t c = raw[i];
+                // A space, as is any other white space a label would wrap at
+                // (vertical tab, form feed, NEL, line and paragraph separators).
+                if (c == u' ' || c == u'\t' || c == u'\r' || c == u'\n' || c == u'\v' || c == u'\f' ||
+                    c == u'\u0085' || c == u'\u2028' || c == u'\u2029')
+                    space = true;
+                else
+                    put(c);
+            }
+            break;
+        case core::SpanKind::HardBreak:
+        case core::SpanKind::SoftBreak: lineBreak = true; break;
+        case core::SpanKind::HardSpace: space = true; break;
+        case core::SpanKind::HiddenOverride:
+        case core::SpanKind::DrawingPayload:
+        case core::SpanKind::Malformed: break;
+        }
+    }
+    const std::u8string utf8 = core::toUtf8(out);
+    return {reinterpret_cast<const char *>(utf8.data()), utf8.size()};
+}
+
+std::string_view fullscreenLineInput(std::string_view text)
+{
+    std::size_t cut = std::min(text.size(), kFullscreenLineInputBytes);
+    while (cut > 0 && cut < text.size() && (static_cast<unsigned char>(text[cut]) & 0xC0) == 0x80)
+        --cut; // not in a character
+    return text.substr(0, cut);
+}
+
+std::string fullscreenOneRow(std::string_view text)
+{
+    std::string out;
+    out.reserve(text.size());
+    for (std::size_t i = 0; i < text.size(); ++i) {
+        const unsigned char c = static_cast<unsigned char>(text[i]);
+        if (c == '\r' || c == '\n' || c == '\v' || c == '\f') {
+            out += ' ';
+        } else if (c == 0xC2 && i + 1 < text.size() && static_cast<unsigned char>(text[i + 1]) == 0x85) {
+            out += ' '; // NEL
+            ++i;
+        } else if (c == 0xE2 && i + 2 < text.size() && static_cast<unsigned char>(text[i + 1]) == 0x80 &&
+                   (static_cast<unsigned char>(text[i + 2]) == 0xA8 || static_cast<unsigned char>(text[i + 2]) == 0xA9)) {
+            out += ' '; // U+2028, U+2029
+            i += 2;
+        } else {
+            out += static_cast<char>(c);
+        }
+    }
+    return out;
 }
 
 namespace {
