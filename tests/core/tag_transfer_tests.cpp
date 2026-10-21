@@ -438,6 +438,46 @@ TEST(TagTransfer, NoSuggestionAcrossTheTranslatorsOwnTags)
     EXPECT_EQ(suggestPlacements(tags, draft(u"{\\b1}Tokyo{\\b0}")).size(), 1u);
 }
 
+TEST(TagTransfer, NoSuggestionForTextTwoRunsShare)
+{
+    const auto tags = readOriginalTags(u"I {\\i1}Tokyo{\\i0} and {\\b1}Tokyo{\\b0} x");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    EXPECT_TRUE(suggestPlacements(tags, draft(u"Tokyo y")).empty());
+    // With one of them placed, the other is the only one left.
+    EXPECT_EQ(suggestPlacements(tags, draft(u"Tokyo y", {{6, 7, 2}})).size(), 1u);
+}
+
+TEST(TagTransfer, AResetClosesBeforeTheNextRunOpens)
+{
+    // Run 2 placed just before run 1: the \r that ends it comes before the
+    // \u1 that opens run 1, or it would undo it.
+    const auto tags = readOriginalTags(u"x {\\u1}U{\\r} x {\\b1}B{\\r} x");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    const auto d = draft(u"y BU y", {{2, 3, 2}, {3, 4, 1}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "y {\\b1}B{\\r\\u1}U{\\r} y");
+    expectRoundTrip(tags, d);
+    // A value both runs share is set again after the reset.
+    const auto shared = readOriginalTags(u"x {\\i1\\u1}U{\\r} x {\\i1\\b1}B{\\r} x");
+    ASSERT_EQ(shared.runs.size(), 2u);
+    expectRoundTrip(shared, draft(u"y BU y", {{2, 3, 2}, {3, 4, 1}}));
+}
+
+TEST(TagTransfer, ADrawingScaleBelowOneIsText)
+{
+    // libass reads \p as a whole number, 0 and up: \p-1 and \p0.5 draw nothing.
+    EXPECT_FALSE(readOriginalTags(u"{\\p-1}a {\\i1}b{\\i0} c").drawing);
+    EXPECT_EQ(readOriginalTags(u"{\\p-1}a {\\i1}b{\\i0} c").runs.size(), 1u);
+    EXPECT_FALSE(readOriginalTags(u"{\\p0.5}a").drawing);
+    EXPECT_TRUE(readOriginalTags(u"{\\p1}m 0 0 l 1 1").drawing);
+}
+
+TEST(TagTransfer, ARunOfSpacesAloneIsNoRun)
+{
+    // A non-breaking space is no space to hasVisible, but trimmed like one.
+    EXPECT_TRUE(readOriginalTags(u"a{\\i1} {\\i0}b").runs.empty());
+    EXPECT_TRUE(readOriginalTags(u"a {\\i1}   {\\i0} b").runs.empty());
+}
+
 TEST(TagTransfer, ValuesTheRendererClampsOrResetsAreNoRun)
 {
     StyleValues style;

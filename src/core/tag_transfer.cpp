@@ -608,7 +608,15 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
             it != setters.end() && !it->second.tag.empty() && (it->second.written || !atEnd))
             parts.push_back(it->second);
     }
+    // A reset undoes every value: it goes first, and the target's values it
+    // undoes too are set again after it.
+    const auto isReset = [](const TagSetter &s) { return s.tag.size() > 1 && tagName(s.tag.substr(1)) == u"r"; };
+    if (t && std::ranges::any_of(parts, isReset))
+        for (const auto &[component, open] : t->opens)
+            if (valueOf(f, component) == valueOf(t, component) && !open.tag.empty())
+                parts.push_back(open);
     std::ranges::stable_sort(parts, {}, &TagSetter::order);
+    std::ranges::stable_partition(parts, isReset);
     std::u16string out;
     std::set<std::u16string> written;
     for (const auto &part : parts)
@@ -727,7 +735,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                         return tooMuch();
                 }
             }
-            if (tag.name == u"p" && normalised(Kind::Number, tag.args) != u"0" && !trimmed(tag.args).empty()) {
+            // libass reads \p as a whole number and clamps it to 0 and up.
+            if (const auto scale = tag.name == u"p" ? numberIn(tag.args) : std::nullopt; scale && *scale >= 1) {
                 out.drawing = true;
                 return out;
             }
@@ -820,6 +829,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             ++start;
         while (end > start && isDisplaySpace(projection.text[end - 1]))
             --end;
+        if (start == end) // only spaces, a non-breaking one among them
+            continue;
         run.displayStart = start;
         run.displayEnd = end;
         run.rawStart = firstSegment.rawStart;
@@ -1147,7 +1158,9 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
         return !(after < text.size() && isWordUnit(text[after]) && isWordUnit(needle.back()));
     };
     auto overlaps = [](std::span<const RunPlacement> list, const RunPlacement &p) {
-        return std::ranges::any_of(list, [&](const RunPlacement &q) { return p.start < q.end && q.start < p.end; });
+        return std::ranges::any_of(list, [&](const RunPlacement &q) {
+            return p.run != q.run && p.start < q.end && q.start < p.end;
+        });
     };
     for (const auto &run : tags.runs) {
         if (run.text.empty() || isPlaced(draft.placements, run.number))
@@ -1166,9 +1179,13 @@ std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const Tran
         // Text across the translator's own tags is in more than one state,
         // which no one run can be read back over.
         const bool crossesTags = p.start < p.end && draft.body.find(u'{', p.start) < p.end;
-        if (p.start < p.end && !crossesTags && !overlaps(draft.placements, p) && !overlaps(out, p))
+        if (p.start < p.end && !crossesTags && !overlaps(draft.placements, p))
             out.push_back(p);
     }
+    // Text two runs would both go on (the same words in two formats) says
+    // which of them it is no more than for one: neither is suggested.
+    const auto candidates = out;
+    std::erase_if(out, [&](const RunPlacement &p) { return overlaps(candidates, p); });
     std::ranges::sort(out, {}, &RunPlacement::start);
     return out;
 }
