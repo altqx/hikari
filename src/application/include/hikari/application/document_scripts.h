@@ -10,6 +10,7 @@
 #include <functional>
 #include <string>
 #include <string_view>
+#include <unordered_set>
 #include <vector>
 
 namespace hikari::application {
@@ -45,6 +46,7 @@ public:
 
 private:
     std::vector<std::string> m_scripts;
+    std::unordered_set<std::string> m_listed; // m_scripts, for add's check on a long value
     std::string m_lastValue; // legacy Automation::scriptpaths
 };
 

@@ -11,6 +11,9 @@
 #include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 
+#include <functional>
+#include <string>
+
 namespace hikari::ui {
 
 class AutomationManagerController : public QObject {
@@ -18,7 +21,9 @@ class AutomationManagerController : public QObject {
     QML_ELEMENT
     QML_UNCREATABLE("Provided by the application composition")
     // One map per script: path, fileName, name, description, state, error,
-    // generation, macros (maps: ordinal, name, description, alias).
+    // generation, forceStopOffered, inDocument (AM1: one of the Document
+    // scripts, the rest being autoload's), macros (maps: ordinal, name,
+    // description, alias).
     Q_PROPERTY(QVariantList scripts READ scripts NOTIFY changed)
     Q_PROPERTY(bool busy READ busy NOTIFY changed)
 public:
@@ -34,6 +39,10 @@ public:
     Q_INVOKABLE void cancel();
     Q_INVOKABLE bool forceStop(const QString &path);
 
+    // AM1: which loaded scripts are the Document scripts (the Script Info's
+    // "Automation Scripts" and Load script); the panel lists them apart.
+    void setDocumentScript(std::function<bool(const std::string &)> isDocumentScript);
+
 signals:
     void changed();
 
@@ -41,6 +50,7 @@ private:
     void refresh();
 
     application::AutomationServicePort &m_service;
+    std::function<bool(const std::string &)> m_isDocumentScript;
     QVariantList m_scripts;
     bool m_busy = false;
 };

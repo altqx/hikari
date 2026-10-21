@@ -377,6 +377,13 @@ private slots:
         start();
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("c.ass")))));
         float_("audioDock", true);
+        // The arrangement shown: the panels it leaves closed (AM1's
+        // Automation among them), not every panel.
+        int closedShown = 0;
+        for (const char *dock : {"videoDock", "audioDock", "editorDock", "gridDock", "referenceDock", "timingDock",
+                                 "searchDock", "automationDock"})
+            closedShown += isOpen(dock) ? 0 : 1;
+        QVERIFY(closedShown < 8);
         window()->close();
         QTRY_VERIFY(!window()->isVisible());
         const auto session = readSession(application->lastSessionPath());
@@ -384,7 +391,7 @@ private slots:
         QCOMPARE(session.tabs.size(), std::size_t(1));
         const QJsonObject payload = QJsonDocument::fromJson(layoutOf(session.tabs[0]).payload).object();
         QCOMPARE(payload.value(QStringLiteral("floatingWindows")).toArray().size(), 1);
-        QVERIFY(payload.value(QStringLiteral("closedDockWidgets")).toArray().size() < 4);
+        QCOMPARE(payload.value(QStringLiteral("closedDockWidgets")).toArray().size(), closedShown);
         engine.reset();
         application.reset();
     }

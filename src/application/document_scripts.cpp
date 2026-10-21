@@ -44,7 +44,7 @@ std::string scriptInfoWithScript(std::string_view value, std::string_view path)
 bool DocumentScripts::add(const std::string &path)
 {
     // Automation.cpp:1157-1158: a script already in the list is not added again.
-    if (std::ranges::find(m_scripts, path) != m_scripts.end())
+    if (!m_listed.insert(path).second)
         return false;
     m_scripts.push_back(path);
     return true;
@@ -52,7 +52,8 @@ bool DocumentScripts::add(const std::string &path)
 
 void DocumentScripts::remove(const std::string &path)
 {
-    std::erase(m_scripts, path);
+    if (m_listed.erase(path))
+        std::erase(m_scripts, path);
 }
 
 bool DocumentScripts::readScriptInfo(const std::string &value, const std::function<bool(const std::string &)> &isFile,
