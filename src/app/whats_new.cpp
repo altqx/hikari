@@ -55,11 +55,15 @@ QVariantMap shownRelease(const a::ReleaseEntry &release)
 // The notes before md4c reads them, outside code (fences, `spans`):
 // - raw HTML goes, tags and comments alike (with MarkdownNoHTML Qt would
 //   show it as text); its text between tags stays, but a script's or a
-//   style's goes with it;
+//   style's goes with it, code and fences inside it too;
 // - a bare URL becomes an autolink ("<url>"), so all of it is the link:
 //   md4c's own detection stops at "...", and GitHub's "Full Changelog"
 //   lines read ".../compare/v0.1.2...v0.1.3". Not in a link's own syntax;
 //   trailing punctuation stays outside, as on GitHub.
+// Code as CommonMark has it: a fence closes on a line of its own character
+// at least as long as the opening one; a span runs from a run of backticks
+// to the next run of as many, over line breaks but not a blank line, and a
+// run with none is plain backticks.
 QString prepareMarkdown(const QString &markdown)
 {
     static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s[^>]*)?/?>"));
@@ -68,57 +72,104 @@ QString prepareMarkdown(const QString &markdown)
     // What is dropped whole, up to its end, over lines too.
     static const QRegularExpression dropped(QStringLiteral("<!--|<(script|style)(?=[\\s>/])"),
                                             QRegularExpression::CaseInsensitiveOption);
-    QStringList lines = markdown.split(QLatin1Char('\n'));
-    bool fenced = false;
+    static const QRegularExpression fence(QStringLiteral("^ {0,3}(`{3,}|~{3,})"));
+    static const QRegularExpression blankLine(QStringLiteral("\n[ \t]*\n"));
+    const auto text = [](QString part) { return part.remove(tag).replace(url, QStringLiteral("\\1<\\2>")); };
+    const QString &md = markdown;
+    const auto lineEnd = [&](qsizetype from) {
+        const qsizetype end = md.indexOf(QLatin1Char('\n'), from);
+        return end < 0 ? md.size() : end;
+    };
+    const auto runAt = [&](qsizetype from, QChar c) {
+        qsizetype end = from;
+        while (end < md.size() && md.at(end) == c)
+            ++end;
+        return end - from;
+    };
+    QString kept;
     QRegularExpression closer; // empty while nothing is being dropped
-    for (QString &line : lines) {
-        const QString trimmed = line.trimmed();
-        if (closer.pattern().isEmpty() &&
-            (trimmed.startsWith(QLatin1String("```")) || trimmed.startsWith(QLatin1String("~~~")))) {
-            fenced = !fenced;
+    bool lineStart = true;
+    qsizetype at = 0;
+    while (at < md.size()) {
+        if (!closer.pattern().isEmpty()) {
+            const QRegularExpressionMatch end = closer.match(md, at);
+            if (!end.hasMatch())
+                break;
+            closer = QRegularExpression();
+            at = end.capturedEnd();
+            lineStart = false;
             continue;
         }
-        if (fenced)
-            continue;
-        // Left to right: what is being dropped runs to its end whatever it
-        // holds, backticks too; outside it, between backticks is code.
-        const auto text = [](QString part) { return part.remove(tag).replace(url, QStringLiteral("\\1<\\2>")); };
-        QString kept;
-        qsizetype at = 0;
-        while (at < line.size()) {
-            if (!closer.pattern().isEmpty()) {
-                const QRegularExpressionMatch end = closer.match(line, at);
-                if (!end.hasMatch())
-                    break;
-                closer = QRegularExpression();
-                at = end.capturedEnd();
-                continue;
-            }
-            const qsizetype tick = line.indexOf(QLatin1Char('`'), at);
-            const QString part = line.mid(at, tick < 0 ? -1 : tick - at);
-            const QRegularExpressionMatch open = dropped.match(part);
+        if (lineStart) {
+            const qsizetype end = lineEnd(at);
+            const QRegularExpressionMatch open = fence.match(md.mid(at, end - at));
             if (open.hasMatch()) {
-                kept += text(part.left(open.capturedStart()));
-                closer = open.captured(1).isEmpty()
-                             ? QRegularExpression(QStringLiteral("-->"))
-                             : QRegularExpression(QStringLiteral("</%1\\s*>").arg(open.captured(1)),
-                                                  QRegularExpression::CaseInsensitiveOption);
-                at += open.capturedEnd();
-                continue;
+                // Verbatim to the closing fence's line (or the end).
+                const QChar c = open.captured(1).at(0);
+                const qsizetype length = open.capturedLength(1);
+                qsizetype line = end;
+                while (line < md.size()) {
+                    const qsizetype next = line + 1;
+                    const qsizetype stop = lineEnd(next);
+                    qsizetype indent = next;
+                    while (indent < stop && indent - next < 4 && md.at(indent) == QLatin1Char(' '))
+                        ++indent;
+                    const qsizetype run = indent - next < 4 ? runAt(indent, c) : 0;
+                    line = stop;
+                    if (run >= length && md.mid(indent + run, stop - indent - run).trimmed().isEmpty())
+                        break;
+                }
+                kept += md.mid(at, line - at);
+                at = line;
+                continue; // at the line break, or the end
             }
-            kept += text(part);
-            if (tick < 0)
-                break;
-            // Code to the next backtick (with none, the rest as it is).
-            const qsizetype close = line.indexOf(QLatin1Char('`'), tick + 1);
-            kept += line.mid(tick, close < 0 ? -1 : close - tick + 1);
-            if (close < 0)
-                break;
-            at = close + 1;
         }
-        line = kept;
+        // Text to the next backtick or line break.
+        qsizetype stop = at;
+        while (stop < md.size() && md.at(stop) != QLatin1Char('`') && md.at(stop) != QLatin1Char('\n'))
+            ++stop;
+        const QString part = md.mid(at, stop - at);
+        const QRegularExpressionMatch open = dropped.match(part);
+        if (open.hasMatch()) {
+            kept += text(part.left(open.capturedStart()));
+            closer = open.captured(1).isEmpty()
+                         ? QRegularExpression(QStringLiteral("-->"))
+                         : QRegularExpression(QStringLiteral("</%1\\s*>").arg(open.captured(1)),
+                                              QRegularExpression::CaseInsensitiveOption);
+            at += open.capturedEnd();
+            lineStart = false;
+            continue;
+        }
+        kept += text(part);
+        at = stop;
+        if (at >= md.size())
+            break;
+        if (md.at(at) == QLatin1Char('\n')) {
+            kept += QLatin1Char('\n');
+            ++at;
+            lineStart = true;
+            continue;
+        }
+        // A code span: to the next run of as many backticks, within the
+        // paragraph; with none, the run is plain backticks.
+        const qsizetype run = runAt(at, QLatin1Char('`'));
+        const QRegularExpressionMatch paragraph = blankLine.match(md, at);
+        const qsizetype limit = paragraph.hasMatch() ? paragraph.capturedStart() : md.size();
+        qsizetype close = -1;
+        for (qsizetype next = md.indexOf(QLatin1Char('`'), at + run); next >= 0 && next < limit;) {
+            const qsizetype length = runAt(next, QLatin1Char('`'));
+            if (length == run) {
+                close = next;
+                break;
+            }
+            next = md.indexOf(QLatin1Char('`'), next + length);
+        }
+        const qsizetype end = close < 0 ? at + run : close + run;
+        kept += md.mid(at, end - at);
+        at = end;
+        lineStart = false;
     }
-    return lines.join(QLatin1Char('\n'));
+    return kept;
 }
 
 } // namespace

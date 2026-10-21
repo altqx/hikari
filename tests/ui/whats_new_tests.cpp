@@ -418,6 +418,19 @@ private slots:
         QVERIFY(!ticked.contains(QStringLiteral("baz")));
         QVERIFY(ticked.contains(QStringLiteral("kept")));
         QVERIFY(ticked.contains(QStringLiteral("C")));
+        // A fence closes only on its own kind, at least as long; a code
+        // span runs to the next run of as many backticks, over a line break.
+        const QString fenced = copy->whatsNew->render(
+            QStringLiteral("````\n```\n<b>in four</b>\n~~~\n````\n\n"
+                           "Use ``a `<i>tick</i>` here`` and ``two\n<u>lines</u>`` then <s>gone</s> ` lone <q>dropped</q>"),
+            muted, link, code);
+        QVERIFY2(fenced.contains(QStringLiteral("&lt;b&gt;in four&lt;/b&gt;")), qPrintable(fenced));
+        QVERIFY(fenced.contains(QStringLiteral("&lt;i&gt;tick&lt;/i&gt;")));
+        QVERIFY(fenced.contains(QStringLiteral("&lt;u&gt;lines&lt;/u&gt;")));
+        QVERIFY(!fenced.contains(QStringLiteral("&lt;s&gt;")));
+        QVERIFY(fenced.contains(QStringLiteral("gone")));
+        QVERIFY(!fenced.contains(QStringLiteral("&lt;q&gt;")));
+        QVERIFY(fenced.contains(QStringLiteral("dropped")));
         QVERIFY(!html.contains(QStringLiteral("&lt;img"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("javascript:"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("file:///etc/passwd")));
