@@ -1,0 +1,223 @@
+<!doctype html><html><head><meta charset="utf-8"><style>
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #E5E9EC; }
+body { font-family: "Noto Sans", "Segoe UI", sans-serif; font-size: 13px; color: #202832; }
+.ic { display: inline-flex; }
+a.lk { color: #145C4C; text-decoration: underline; cursor: pointer; }
+.win { width: var(--w); height: var(--h); display: flex; flex-direction: column; background: #E5E9EC;
+        overflow: hidden; position: relative; outline: 1px solid #AAB5BE; }
+.titlebar { height: 32px; display: flex; align-items: center; background: #F9FAFB;
+             border-bottom: 1px solid #AAB5BE; flex: none; }
+.titlebar .app { padding: 0 10px 0 10px; display: flex; }
+.titlebar span.m { padding: 3px 8px; }
+.titlebar .wt { flex: 1; text-align: center; color: #526170; }
+.titlebar .wb { width: 46px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.main { flex: 1; overflow: hidden; display: flex; justify-content: center; }
+.page { width: 100%; max-width: 1120px; padding: 24px; display: flex; flex-direction: column; gap: 16px; }
+.actions { display: flex; gap: 8px; align-items: center; }
+.btn { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 12px;
+        border: 1px solid #76828D; border-radius: 1px; background: #EDF0F3; color: #202832; }
+.btn.primary { background: #145C4C; color: #FFFFFF; border-color: #145C4C; }
+.btn.small { height: 24px; padding: 0 8px; font-size: 12px; }
+.cols { flex: 1; display: flex; gap: 16px; min-height: 0; }
+.cols.stack { flex-direction: column; }
+.left { flex: 1; display: flex; flex-direction: column; gap: 16px; min-width: 0; min-height: 0; }
+.box { background: #F9FAFB; border: 1px solid #AAB5BE; border-radius: 1px; }
+.session { display: flex; align-items: center; gap: 12px; padding: 10px 12px; }
+.session .what { flex: 1; min-width: 0; }
+.session .t { font-weight: 600; }
+.session .d { color: #526170; font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.recent { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+.rhead { min-height: 42px; display: flex; align-items: center; gap: 12px; padding: 8px 12px; border-bottom: 1px solid #AAB5BE; }
+.rhead .h { font-weight: 600; flex: 1; }
+.rhead .since { color: #526170; font-size: 12px; }
+.search { width: 220px; height: 26px; display: flex; align-items: center; gap: 6px; padding: 0 8px;
+           background: #FFFFFF; border: 1px solid #76828D; border-radius: 1px; color: #526170; }
+.colhead { display: flex; padding: 4px 12px 4px 15px; font-size: 11px; color: #526170;
+            border-bottom: 1px solid #AAB5BE; }
+.colhead .n { flex: 1; }
+.rows { flex: 1; overflow: hidden; position: relative; }
+.row { display: flex; align-items: center; gap: 12px; padding: 5px 12px 5px 15px; position: relative;
+        border-bottom: 1px solid #EDF0F3; }
+.row .ft { flex: 1; min-width: 0; }
+.row .nm { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .pt { color: #526170; font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row .when { width: 130px; text-align: right; color: #526170; font-size: 12px; white-space: nowrap; }
+.row.sel { background: #D6EBE4; }
+.row.sel::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: #145C4C; }
+.row.missing .nm { color: #526170; font-weight: 400; }
+.badge { font-size: 11px; color: #8A5A00; border: 1px solid #8A5A00; border-radius: 3px;
+          padding: 0 5px; margin-left: 8px; font-weight: 400; }
+.status { height: 24px; background: #F9FAFB; border-top: 1px solid #AAB5BE; flex: none; }
+
+/* What's new: the card */
+.news { width: 320px; display: flex; flex-direction: column; min-height: 0; position: relative; }
+.cols.stack .news { width: auto; flex: 0 0 auto; height: 200px; }
+.news .body { padding: 0 16px 12px; overflow: hidden; flex: 1; position: relative; }
+.news .foot { padding: 8px 16px; border-top: 1px solid #AAB5BE; display: flex; gap: 6px; align-items: center; }
+.sbar { position: absolute; right: 3px; width: 4px; border-radius: 2px; background: #76828D; opacity: .8; }
+
+/* Release notes, wherever they show */
+.ver { padding-top: 12px; }
+.ver + .ver { margin-top: 10px; border-top: 1px solid #EDF0F3; }
+.vh { display: flex; align-items: baseline; gap: 4px 8px; flex-wrap: wrap; }
+.vn { font-weight: 650; white-space: nowrap; }
+.vd { margin-left: auto; color: #526170; font-size: 12px; white-space: nowrap; }
+.pre { font-size: 11px; color: #526170; border: 1px solid #76828D; border-radius: 3px; padding: 0 5px; white-space: nowrap; }
+.md { line-height: 1.45; }
+.md p { margin: 6px 0 0; }
+.md .sec { font-size: 11px; font-weight: 650; color: #526170; margin: 8px 0 2px; letter-spacing: .02em; }
+.md ul { margin: 4px 0 0; padding-left: 18px; }
+.md li { margin: 2px 0; }
+.md code { font: 12px "Noto Sans Mono", Consolas, monospace; background: #EDF0F3; padding: 0 3px;
+           border-radius: 1px;  }
+.more { color: #526170; margin: 14px 0 0; }
+.tip { position: absolute; background: #EDF0F3; border: 1px solid #AAB5BE; padding: 3px 8px;
+        font-size: 12px; z-index: 6; white-space: nowrap; }
+
+/* DG1's dialog frame */
+.dlg { background: #F9FAFB; color: #202832; display: flex; flex-direction: column;
+        outline: 1px solid #AAB5BE; box-shadow: 0 8px 28px rgba(0,0,0,.28); }
+.on-app { position: absolute; }
+.dtb { display: flex; align-items: center; height: 32px; flex: none;  }
+.dtitle { flex: 1; padding-left: 12px; }
+.dtb .wb { width: 46px; height: 32px; display: flex; align-items: center; justify-content: center; }
+.dbody { padding: 12px 24px 0; display: flex; flex-direction: column; flex: 1; min-height: 0; }
+.dfoot { display: flex; gap: 8px; justify-content: flex-end; padding: 24px; flex: none; }
+.dfoot .lead { margin-right: auto; }
+.b { display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-width: 80px; height: 30px;
+      padding: 0 10px; border-radius: 1px; background: #EDF0F3; border: 1px solid #AAB5BE; color: #202832;
+      white-space: nowrap; }
+.b.pri { background: #145C4C; border-color: #145C4C; color: #FFFFFF; font-weight: 650; }
+.ring { outline: 1px solid #202832; outline-offset: 1px; }
+.intro { color: #526170; margin: 4px 0 12px; }
+.dnotes { position: relative; flex: 1; min-height: 0; background: #FFFFFF; outline: 1px solid #AAB5BE;
+           overflow: hidden; padding: 0 20px 12px 16px; }
+.empty { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+          text-align: center; color: #526170; background: #FFFFFF; outline: 1px solid #AAB5BE; padding: 24px; }
+.empty .t { color: #202832; font-weight: 600; }
+.pbar { width: 200px; height: 6px; background: #EDF0F3; outline: 1px solid #AAB5BE; overflow: hidden; }
+.pbar span { display: block; width: 35%; height: 100%; margin-left: 30%; background: #145C4C; }
+
+/* Menu */
+.menu { position: absolute; background: #F9FAFB; border: 1px solid #AAB5BE; border-radius: 5px;
+         box-shadow: 0 10px 30px rgba(0,0,0,.33); padding: 4px 0; min-width: 230px; z-index: 5; }
+.menu .mi { display: flex; align-items: center; gap: 8px; padding: 5px 12px; }
+.menu .mi.on { background: #D6EBE4; }
+.menu .mi .k { margin-left: auto; color: #526170; font-size: 11px; padding-left: 24px; }
+.menu hr { border: 0; border-top: 1px solid #AAB5BE; margin: 4px 0; }
+
+/* Sheets */
+.sheet { padding: 24px; width: max-content; }
+.sheet h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; }
+.sheet h2 { font-size: 13px; font-weight: 650; margin: 26px 0 8px; }
+.sheet .note { color: #526170; font-size: 12px; margin: 0 0 12px; max-width: 1280px; line-height: 1.45; }
+.cap { font-size: 11px; color: #526170; margin: 6px 0 0; max-width: 340px; line-height: 1.4; }
+.srow { display: flex; gap: 28px; align-items: flex-start; }
+.scol { display: flex; flex-direction: column; }
+</style></head><body><div class="sheet"><h1>SH3 states (Light)</h1><p class="note">Card variants on the Home page (320 wide, as SH2 reserved), and the dialog when it has nothing to show. Versions, dates and notes are made up.</p><h2>The card</h2><div class="srow" style="height:560px"><div class="scol" style="height:520px">
+<div class="box news" id="news">
+  <div class="rhead"><span class="h">What's new</span><span class="since">Since 0.1.1</span></div>
+  <div class="body"><div class="ver"><div class="vh"><span class="vn">HikariSub 0.1.3-beta.2</span><span class="pre">Pre-release</span><span class="vd">17 Oct 2026</span></div><div class="md">
+<ul>
+<li>Translation mode's preset opens the original beside the translation.</li>
+<li>Known issue: the karaoke check may skip the last syllable.</li>
+</ul></div></div><div class="ver"><div class="vh"><span class="vn">HikariSub 0.1.2</span><span class="vd">9 Oct 2026</span></div><div class="md">
+<div class="sec">Fixed</div>
+<ul>
+<li>The audio display redraws after a theme change.</li>
+<li>Opening an <code>.srt</code> with a byte order mark no longer adds an empty first Line.</li>
+<li>Dark theme: the Grid's comment rows are readable again.</li>
+</ul></div></div></div>
+  <div class="foot"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#145C4C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>
+</span><a class="lk">All release notes</a></div>
+  
+</div><p class="cap">Beta channel (“Stable versions only” off, or hikarisub-beta-bin): pre-releases in the range show with a Pre-release badge.</p></div><div class="scol" style="height:520px">
+<div class="box news" id="news">
+  <div class="rhead"><span class="h">What's new</span></div>
+  <div class="body"><div class="ver"><div class="vh"><span class="vn">HikariSub 0.1.0</span><span class="vd">1 Oct 2026</span></div><div class="md">
+<p>The first release of the Qt rewrite. Read the <a class="lk" title="https://github.com/altqx/hikari/blob/qt/docs/qt/migration.md">migration notes</a> before replacing HikariSub 0.0.x.</p>
+<div class="sec">Highlights</div>
+<ul>
+<li>Document tabs, each with its own panel layout.</li>
+<li>Panels dock, float and tab; layouts are saved per tab.</li>
+</ul></div></div></div>
+  <div class="foot"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#145C4C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>
+</span><a class="lk">All release notes</a></div>
+  
+</div><p class="cap">First start (no earlier version recorded, or coming from legacy 0.0.x): the installed version only, no “Since”.</p></div><div class="scol" style="height:520px">
+<div class="box news" id="news">
+  <div class="rhead"><span class="h">What's new</span><span class="since">Since 0.0.2</span></div>
+  <div class="body"><div class="ver"><div class="vh"><span class="vn">HikariSub 0.1.2</span><span class="vd">9 Oct 2026</span></div><div class="md">
+<div class="sec">Fixed</div>
+<ul>
+<li>The audio display redraws after a theme change.</li>
+<li>Opening an <code>.srt</code> with a byte order mark no longer adds an empty first Line.</li>
+<li>Dark theme: the Grid's comment rows are readable again.</li>
+</ul></div></div><p class="more">And 4 earlier versions: <a class="lk">all release notes</a></p><span class="sbar" style="bottom:6px;height:22%"></span></div>
+  <div class="foot"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#145C4C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>
+</span><a class="lk">All release notes</a></div>
+  
+</div><p class="cap">More than 10 versions behind, scrolled to the end: the newest 10, then a line that opens all release notes on GitHub.</p></div></div><h2>The dialog with nothing to show (Help › What's new)</h2><div class="srow"><div class="scol"><div class="dlg" style="width:440px;height:340px;"><div class="dtb"><span class="dtitle">What's new</span><span class="wb">▢</span><span class="wb">✕</span></div><div class="dbody"><div class="empty"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2.5h-6v11h9v-6"/><path d="M5.5 9.5h5M5.5 11.5h3"/><g id="accent" stroke="#145C4C"><path d="M12.5 1v4M10.5 3h4"/></g></svg></span><div class="t">No release notes yet</div><div>HikariSub fetches the release notes only while<br>“Check for updates automatically” is on.</div></div></div><div class="dfoot"><span class="b lead"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>
+</span>All release notes</span><span class="b pri ring">Close</span></div></div><p class="cap">Update checks off and nothing fetched before: no request is made.</p></div><div class="scol"><div class="dlg" style="width:440px;height:340px;"><div class="dtb"><span class="dtitle">What's new</span><span class="wb">▢</span><span class="wb">✕</span></div><div class="dbody"><div class="empty"><div class="t">Fetching the release notes…</div><div class="pbar"><span></span></div></div></div><div class="dfoot"><span class="b lead"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>
+</span>All release notes</span><span class="b pri ring">Close</span></div></div><p class="cap">Checks on, nothing cached yet: opening the dialog fetches.</p></div><div class="scol"><div class="dlg" style="width:440px;height:340px;"><div class="dtb"><span class="dtitle">What's new</span><span class="wb">▢</span><span class="wb">✕</span></div><div class="dbody"><div class="empty"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 16 16" fill="none" stroke="#8A5A00" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 2l6.5 11.5h-13z"/><g id="accent" stroke="#8A5A00"><path d="M8 6.5v3.5"/><circle cx="8" cy="11.75" r="0.75" fill="currentColor" stroke="none"/></g></svg>
+</span><div class="t">Cannot fetch the release notes</div><div>HikariSub tries again at the next start.</div></div></div><div class="dfoot"><span class="b lead"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>
+</span>All release notes</span><span class="b pri ring">Close</span></div></div><p class="cap">Checks on, offline, nothing cached. On Home the card stays hidden in all three cases.</p></div></div><h2>Narrow window (900 × 680): the card under the list, 200 high, as SH2</h2>
+<div class="win" style="--w:900px;--h:680px">
+<div class="titlebar"><span class="app"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="8" cy="8" r="6.5"/><path d="M8 7.5v4"/><circle cx="8" cy="5" r="0.75" fill="currentColor" stroke="none"/></svg>
+</span></span><span class="m">File</span><span class="m">Edit</span><span class="m">Automation</span><span class="m">Video</span><span class="m">Audio</span><span class="m">View</span><span class="m">Subtitles</span><span class="m">Help</span><span class="wt">HikariSub</span><span class="wb">—</span><span class="wb"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M3 8h10"/></svg>
+</span></span><span class="wb">✕</span></div>
+<div class="main"><div class="page">
+  <div class="actions">
+    <span class="btn primary"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#FFFFFF" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8 3v10M3 8h10"/></svg>
+</span> New</span>
+    <span class="btn"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5h-5V1.5h6l3 3v4"/><path d="M9.5 1.5v3h3"/><g id="accent" stroke="#145C4C"><path d="M12 9.5v5M9.5 12h5"/></g></svg>
+</span> Open…</span>
+    <span class="btn"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M11.5 8V3.5a1 1 0 0 0-1-1h-8a1 1 0 0 0-1 1V9a1 1 0 0 0 1 1H8.5"/><path d="M4.5 2.5V10M8.5 2.5V10"/><path d="M1.5 5h3M1.5 7.5h3M11.5 5h-3M11.5 7.5h-3"/><g id="accent" stroke="#145C4C"><path d="M12.5 10.5v4M10.5 12.5h4"/></g></svg>
+</span> Open video…</span>
+  </div>
+  <div class="cols stack">
+    <div class="left">
+      <div class="box session"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 16 16" fill="none" stroke="#202832" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M5.5 4.5v-2h9v7h-2"/><rect x="1.5" y="6.5" width="11" height="7" rx="1"/><path d="M1.5 8.5h11"/><g id="accent" stroke="#145C4C"><path d="M5 11.5h4M7.5 10l1.5 1.5L7.5 13"/></g></svg>
+</span>
+        <div class="what"><div class="t">Last session</div>
+        <div class="d">3 documents · Frieren - 27 [1080p].ass, Frieren - 26 [1080p].ass, Frieren - 26 signs.ass</div></div>
+        <span class="btn">Restore</span></div>
+      <div class="box recent">
+        <div class="rhead"><span class="h">Recent files</span>
+          <span class="search"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#526170" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><circle cx="6.5" cy="6.5" r="4.5"/><path d="M9.75 9.75l4 4"/></svg>
+</span> Filter</span></div>
+        <div class="colhead"><span class="n">Name</span><span>Last opened</span></div>
+        <div class="rows"><div class="row"><div class="ft"><div class="nm">Frieren - 27 [1080p].ass</div><div class="pt">~/Subs/Frieren S2/work/Frieren - 27 [1080p].ass</div></div><div class="when">Today 23:41</div></div><div class="row sel"><div class="ft"><div class="nm">Frieren - 26 [1080p].ass</div><div class="pt">~/Subs/Frieren S2/work/Frieren - 26 [1080p].ass</div></div><div class="when">Today 21:07</div></div><div class="row"><div class="ft"><div class="nm">Frieren - 26 signs.ass</div><div class="pt">~/Subs/Frieren S2/typesetting/Frieren - 26 signs.ass</div></div><div class="when">Yesterday 18:52</div></div><div class="row"><div class="ft"><div class="nm">Dandadan OP karaoke.ass</div><div class="pt">~/Subs/Dandadan/karaoke/Dandadan OP karaoke.ass</div></div><div class="when">Yesterday 10:15</div></div><div class="row missing"><div class="ft"><div class="nm">Dandadan - 05.srt<span class="badge">Missing</span></div><div class="pt">/mnt/nas/fansub/Dandadan/raw-tl/Dandadan - 05.srt</div></div><div class="when">16 Oct 2026</div></div><div class="row"><div class="ft"><div class="nm">Blue Box - 12 TL check.ass</div><div class="pt">~/Subs/Blue Box/Blue Box - 12 TL check.ass</div></div><div class="when">14 Oct 2026</div></div><div class="row"><div class="ft"><div class="nm">Blue Box - 11 TL check.ass</div><div class="pt">~/Subs/Blue Box/Blue Box - 11 TL check.ass</div></div><div class="when">11 Oct 2026</div></div><div class="row"><div class="ft"><div class="nm">Kusuriya - 30 [JP-EN].ass</div><div class="pt">~/Fansub/Kusuriya no Hitorigoto/Season 2/Episode 30/final/Kusuriya - 30 [JP-EN].ass</div></div><div class="when">8 Oct 2026</div></div><div class="row missing"><div class="ft"><div class="nm">old project.ssa<span class="badge">Missing</span></div><div class="pt">~/Downloads/old project.ssa</div></div><div class="when">2 Oct 2026</div></div></div>
+      </div>
+    </div>
+    
+<div class="box news" id="news">
+  <div class="rhead"><span class="h">What's new</span><span class="since">Since 0.1.1</span></div>
+  <div class="body"><div class="ver"><div class="vh"><span class="vn">HikariSub 0.1.3</span><span class="vd">21 Oct 2026</span></div><div class="md">
+<div class="sec">New</div>
+<ul>
+<li><b>Translation mode:</b> the original text stays beside the translation, with its own tags.</li>
+<li>Karaoke check steps through the syllables against the audio (<a class="lk" title="https://github.com/altqx/hikari/pull/287">#287</a>).</li>
+<li>Help › What's new shows these notes.</li>
+</ul>
+<div class="sec">Fixed</div>
+<ul>
+<li>The video no longer jumps a frame when a Line is selected during playback.</li>
+<li><code>Shift times</code> keeps the selection after it runs.</li>
+</ul></div></div><div class="ver"><div class="vh"><span class="vn">HikariSub 0.1.2</span><span class="vd">9 Oct 2026</span></div><div class="md">
+<div class="sec">Fixed</div>
+<ul>
+<li>The audio display redraws after a theme change.</li>
+<li>Opening an <code>.srt</code> with a byte order mark no longer adds an empty first Line.</li>
+<li>Dark theme: the Grid's comment rows are readable again.</li>
+</ul></div></div><span class="sbar" style="top:6px;height:46%"></span></div>
+  <div class="foot"><span class="ic"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 16 16" fill="none" stroke="#145C4C" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4.5l1.5-1.5a2.5 2.5 0 0 1 3.5 3.5L10.5 8M9 11.5l-1.5 1.5a2.5 2.5 0 0 1-3.5-3.5L5.5 8"/><path d="M6.5 9.5l3-3"/></svg>
+</span><a class="lk">All release notes</a></div>
+  
+</div>
+  </div>
+</div></div>
+<div class="status"></div>
+
+</div></div></body></html>
