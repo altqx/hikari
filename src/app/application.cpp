@@ -549,8 +549,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         if (m_templateWindow != std::pair(window.fromMs, window.toMs))
             showVideoSubtitles();
     });
+    // The report is the run's Document's: another tab chosen meanwhile
+    // keeps its own.
     connect(m_automation.get(), &AutomationShell::karaokeApplied, this,
-            [this](const QByteArray &report) { m_templateEditor->applied(report.toStdString()); });
+            [this](quint64 document, const QByteArray &report) {
+                const auto target = m_workspace.editingTarget();
+                if (target && target->value == document)
+                    m_templateEditor->applied(report.toStdString());
+            });
     connect(m_automation.get(), &AutomationShell::progressChanged, m_templateEditor.get(),
             [this] { m_templateEditor->refresh(); });
     if (options.autoload)

@@ -240,6 +240,29 @@ private slots:
         QCOMPARE(session()->document().lines().size(), lines);
     }
 
+    // Apply's report belongs to the Document it ran on: a tab chosen while
+    // the run goes on shows no Apply of its own.
+    void applyOnAnotherTabLeavesThisTabsSummary()
+    {
+        QVERIFY(openSong("km-minimal.ass", false));
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        QCOMPARE(application->tabs().size(), qsizetype(2));
+        application->selectTab(1);
+        QCOMPARE(application->currentTab(), 1);
+        showPanel("templateDock");
+        auto *apply = item(QStringLiteral("templateApply"));
+        QTRY_VERIFY_WITH_TIMEOUT(apply->isEnabled(), 20'000);
+        QSignalSpy done(&application->automation(), &app::AutomationShell::runCompleted);
+        click(apply);
+        QVERIFY(application->automation().running());
+        application->selectTab(0);
+        QVERIFY(done.wait(30'000));
+        QVERIFY(done.first().at(0).toBool());
+        QVERIFY(editor().lastApply().isEmpty());
+        QTest::qWait(100);
+        QVERIFY(!textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied: ")));
+    }
+
     // For review: the panel beside the video in the four themes; a problem;
     // the variables list; the narrow fold.
     void screenshots()

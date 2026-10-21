@@ -170,8 +170,9 @@ signals:
     void notice(const QString &title, const QString &text);
     // Legacy "Select a script editor" (a program to open `script` with).
     void chooseScriptEditor(const QString &script);
-    // A karaoke templater run was applied (its report, KE1's JSON).
-    void karaokeApplied(const QByteArray &report);
+    // A karaoke templater run was applied to Document `document` (its
+    // report, KE1's JSON).
+    void karaokeApplied(quint64 document, const QByteArray &report);
 
 private:
     class Templater;

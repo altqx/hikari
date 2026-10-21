@@ -813,7 +813,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                 text = refusalText(applied.error());
             else if (const auto report = ui::readKaraokeReport(host->lastResult()->report)) {
                 karaokeReport(*report);
-                emit karaokeApplied(QByteArray::fromStdString(host->lastResult()->report));
+                emit karaokeApplied(run.target.value, QByteArray::fromStdString(host->lastResult()->report));
             }
         }
         ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
