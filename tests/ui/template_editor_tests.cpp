@@ -1017,6 +1017,21 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
+    // Typing that ends where it began changes nothing: no step, no save
+    // question.
+    void anEditBackToTheStartIsNoStep()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        editor->setDelays(10, 60'000);
+        const std::size_t steps = session->historySize();
+        const QString text = editor->text();
+        editor->setText(text + QStringLiteral("x"));
+        editor->setText(text);
+        editor->commit();
+        QCOMPARE(session->historySize(), steps);
+        QVERIFY(!session->isDirty());
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));

@@ -881,8 +881,8 @@ void TemplateEditorController::commit()
             if (l->id == m_pending->line)
                 was = l;
     const Pending change = *m_pending;
-    if (!was) {
-        // Its Document closed.
+    if (!was || keyOf(edited(*was, change)) == keyOf(*was)) {
+        // Its Document closed, or typing that ended where it began: no step.
         m_pending.reset();
         m_commitTimer.stop();
         emit changed();
