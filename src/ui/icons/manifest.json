@@ -581,7 +581,7 @@
   {
    "role": "show-toolbar",
    "file": "show-toolbar.svg",
-   "label": "Show toolbar",
+   "label": "Full screen bar",
    "accent": false,
    "mirror": false,
    "legacy": [],
@@ -2436,7 +2436,20 @@
    "legacy": [],
    "surfaces": [
     "video-transport",
+    "video-fullscreen",
     "audio-box"
+   ]
+  },
+  {
+   "role": "volume-muted",
+   "file": "volume-muted.svg",
+   "label": "Unmute",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-fullscreen",
+    "video-transport"
    ]
   },
   {

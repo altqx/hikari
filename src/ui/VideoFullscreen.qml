@@ -12,44 +12,57 @@ import Hikari.Ui
 // into `stage` while it is shown (Main's videoStage), so what the panel shows
 // is what fullscreen shows.
 //
-// At the bottom the panel (legacy `panel`): the seek bar across, then the
-// transport (Previous file, Play / Pause, Play the current line, Stop, Next
-// file), "Show toolbar", the times field and the video's file name, and
-// with "Show toolbar" the visual tool row (legacy VideoToolbar). At the
-// row's right the Video panel's volume slider: legacy showed it only for a
-// DirectShow video (VideoFullscreen.cpp:164-168), the rewrite with every
-// player (V5-volume-slider); the wheel over the panel sets the volume too.
-// Icon-only buttons name themselves in a tooltip and to assistive
-// technology. With "Show toolbar" the panel stays and the picture ends above
-// it (m_PanelOnFullscreen); without, the picture takes the whole window, the
-// panel shows when the pointer goes below the picture and hides when it comes
-// back over it, and the pointer hides after a second without moving
-// (VideoBox::OnIdle). With VIDEO_PROGRESS_BAR on, a progress bar with the
-// times is drawn in the top right corner (RendererVideo::DrawProgressBar).
+// FS1 (#275, owner-approved mockup on the card): a player plus the visual
+// tools, after the MuseScore 4 reference and mpv's and VLC's controllers.
+// At the bottom one bar: the seek bar across, then the transport (Previous
+// file, Play / Pause, Play the current line, Stop, Next file), the times
+// field, the current Line's number, times and text (read only,
+// FS1-current-line) with Open editor, then the Visual tools menu, the
+// speaker with the volume slider (FS1-speaker-gestures: a click mutes, the
+// wheel sets the volume, a right click opens AV1's output device menu), the
+// bar's mode and Exit full screen (FS1-exit-button-and-hint). Icon-only
+// buttons name themselves in a tooltip and to assistive technology.
+//
+// The bar's mode (FS1-bar-mode, VIDEO_FULLSCREEN_BAR, Tab by default):
+// Auto shows the bar and a top strip with the video's file name
+// (FS1-file-name-strip) on any pointer movement and fades them out after
+// 1.5 s without one, unless the video is paused or stopped, a menu is open
+// or the pointer is over the bar (FS1-bar-auto-hide); Always keeps the bar
+// and the picture ends above it (legacy "Show toolbar", m_PanelOnFullscreen);
+// Never shows the picture only. The pointer hides over the picture whenever
+// nothing holds the bar (FS1-cursor-hide). While a visual tool other than the
+// crosshair is on, the tool rail shows at the left edge and the bar's top
+// row is the tool's: VT1's inspector bar (#269) takes that row
+// (`inspectorSlot`, FS1-tool-rail-contextual). With VIDEO_PROGRESS_BAR on, a progress bar
+// with the times is drawn in the top right corner (RendererVideo::DrawProgressBar).
 //
 // Keys (Fullscreen::OnKeyPress and its accelerator table, SetAccels): the
 // Video window's bindings, then Esc or B leaves (an open visual gesture is
 // cancelled by Esc first, the accepted T1 policy), F leaves, the menu key
 // opens the context menu, then the zoom mode's keys and the visual tool's;
-// the Global bindings work here as in the main window.
+// the Global bindings work here as in the main window. On entering, a hint
+// names Esc for two seconds.
 Window {
     id: fs
     objectName: "videoFullscreen"
     // Main's root: video, videoView, visualTools, hotkeys, runVideoHotkey,
-    // bitmapTip, hotkeyGesture, app.
+    // bitmapTip, hotkeyGesture, editor, shell, app.
     required property var shell
     required property VideoFullscreenController controller
     readonly property Item stage: stageHolder
     readonly property Item keyTarget: keys
     readonly property alias contextMenu: fullscreenMenu
-    // VideoBox::OnIdle hid the pointer (the picture's cursor follows it).
-    readonly property bool cursorHidden: idle.cursorHidden
-    // The panel's height while it is pinned (the tools' panel height).
-    readonly property real pinnedPanelHeight: controller.showToolbar ? panel.height : 0
+    readonly property bool cursorHidden: controller.cursorHidden
+    // The bar's height while it is pinned (the tools' panel height).
+    readonly property real pinnedPanelHeight: controller.pinned ? bar.height : 0
+    // A visual tool other than the crosshair is on.
+    readonly property bool toolOn: shell.visualTools.railEnabled
+                                   && shell.visualTools.activeFamily > 0
     signal openVideoRequested()
     signal openSubtitlesRequested()
     signal aspectRatioRequested()
     signal fileQuestionRequested(bool next)
+    signal audioSettingsRequested()
 
     // Fullscreen's wxFrame(parent, -1, emptyString, ...): no title of its
     // own (the platform shows the application's name for an empty one).
@@ -77,18 +90,44 @@ Window {
         }
     }
 
-    // A move over the picture: the panel shows or hides (the picture's
-    // coordinates are the window's: without "Show toolbar" it fills it).
-    function pointerMoved(y) {
-        idle.cursorHidden = false
-        if (fs.controller.pointerMoved(y, fs.height, panel.implicitHeight))
-            keys.forceActiveFocus() // panel->Show(false); SetFocus()
-        if (!fs.controller.panelShown && !fullscreenMenu.opened)
-            idle.restart() // idletime.Start(1000, true)
+    // A move over the picture with no button held wakes the bar and the pointer.
+    // `at`: in the window.
+    function pointerMoved(at) {
+        fs.controller.pointerMoved(at)
     }
     function openMenuAt(point) {
         fullscreenMenu.at = point
         fullscreenMenu.popup(stageHolder, point)
+    }
+    // A bar menu opens above its button.
+    // Its rows may come as it shows (the output menu's devices): its
+    // bottom follows the button's top while it is open.
+    function popupAbove(menu, button) {
+        const place = () => {
+            if (menu.visible)
+                menu.y = button.mapToItem(menu.parent, 0, 0).y - menu.height
+        }
+        const done = () => {
+            menu.heightChanged.disconnect(place)
+            menu.closed.disconnect(done)
+        }
+        menu.popup(button, 0, -menu.implicitHeight)
+        menu.heightChanged.connect(place)
+        menu.closed.connect(done)
+        place()
+    }
+
+    Binding {
+        target: fs.controller
+        property: "menuOpen"
+        value: fullscreenMenu.opened || outputMenu.opened || modeMenu.opened || toolsMenu.opened
+    }
+    Connections {
+        target: fs.controller
+        function onActiveChanged() {
+            if (fs.controller.active)
+                hint.show()
+        }
     }
 
     FocusScope {
@@ -135,24 +174,53 @@ Window {
             id: stageHolder
             objectName: "videoFullscreenStage"
             anchors { left: parent.left; right: parent.right; top: parent.top }
-            height: fs.controller.showToolbar ? parent.height - panel.height : parent.height
+            height: fs.controller.pinned ? parent.height - bar.height : parent.height
         }
 
-        // VideoBox::OnIdle: without moving for a second, the pointer hides
-        // over the picture while the panel is hidden.
-        Timer {
-            id: idle
-            property bool cursorHidden: false
-            interval: 1000
-            onTriggered: cursorHidden = !fs.controller.panelShown && !fullscreenMenu.opened
+        // FS1-file-name-strip: the video's file name (legacy's Videolabel),
+        // with the bar in Auto.
+        Rectangle {
+            id: titleStrip
+            objectName: "videoFullscreenTitle"
+            anchors { left: parent.left; right: parent.right; top: parent.top }
+            height: 32
+            z: 3
+            color: Theme.panel
+            opacity: fs.controller.barShown && !fs.controller.pinned ? 1 : 0
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+            // A move over it keeps the bar, as one over the picture does.
+            HoverHandler {
+                cursorShape: Qt.ArrowCursor
+                onPointChanged: if (hovered) fs.pointerMoved(point.scenePosition)
+            }
+            // Its clicks are not the picture's (pause on click, a tool's gesture).
+            MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
+            Rectangle {
+                anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
+                height: 1
+                color: Theme.line
+            }
+            Label {
+                objectName: "fullscreenVideoName"
+                anchors { left: parent.left; right: parent.right; verticalCenter: parent.verticalCenter
+                          leftMargin: 12; rightMargin: 12 }
+                text: fs.controller.videoName
+                textFormat: Text.PlainText // a file's name, never markup
+                maximumLineCount: 1
+                clip: true
+                color: Theme.text
+                elide: Text.ElideMiddle
+            }
         }
 
         // RendererVideo::DrawProgressBar: in the window's corner, over the
-        // picture, drawn in white and black on any video.
+        // picture, drawn in white and black on any video (below the file
+        // name's strip while it shows).
         Item {
             id: progress
             objectName: "videoFullscreenProgress"
-            anchors.fill: parent
+            anchors { fill: parent; topMargin: titleStrip.visible ? titleStrip.height : 0 }
             z: 2
             visible: fs.controller.active && fs.shell.videoView.progressBar && fs.shell.video.hasVideo
             enabled: false
@@ -196,18 +264,82 @@ Window {
             }
         }
 
-        // Legacy Fullscreen's panel.
+        // FS1-tool-rail-contextual: the Video panel's rail, while a tool is on.
+        VisualToolRail {
+            id: rail
+            objectName: "fullscreenToolRail"
+            tools: fs.shell.visualTools
+            visible: fs.toolOn
+            z: 3
+            x: 8
+            y: titleStrip.visible ? titleStrip.height + 8 : 8
+            height: Math.min(implicitHeight, (bar.visible ? bar.y : fs.height) - y - 8)
+            // It stays when the bar hides, and its buttons take the pointer
+            // from the picture (on X11; offscreen the hover goes through): a
+            // move over it wakes the bar as well.
+            HoverHandler {
+                onPointChanged: if (hovered) fs.pointerMoved(point.scenePosition)
+            }
+        }
+
+        // FS1-exit-button-and-hint: the way out, for two seconds after entering.
         Rectangle {
-            id: panel
+            id: hint
+            objectName: "videoFullscreenHint"
+            anchors { horizontalCenter: parent.horizontalCenter; top: parent.top; topMargin: 40 }
+            z: 4
+            width: hintText.implicitWidth + 32
+            height: hintText.implicitHeight + 14
+            radius: height / 2
+            color: Theme.panel
+            border.color: Theme.line
+            opacity: 0
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+            function show() {
+                opacity = 1
+                hintTimer.restart()
+            }
+            Timer {
+                id: hintTimer
+                interval: 2000
+                onTriggered: hint.opacity = 0
+            }
+            Label {
+                id: hintText
+                objectName: "videoFullscreenHintText"
+                anchors.centerIn: parent
+                //: Shown for two seconds on entering full screen video
+                text: qsTr("Press Esc to exit full screen")
+                color: Theme.text
+            }
+        }
+
+        // The bar (legacy Fullscreen's panel).
+        Rectangle {
+            id: bar
             objectName: "videoFullscreenPanel"
             anchors { left: parent.left; right: parent.right; bottom: parent.bottom }
-            implicitHeight: panelColumn.implicitHeight + 8
+            implicitHeight: barColumn.implicitHeight + 10
             height: implicitHeight
-            visible: fs.controller.panelShown
             color: Theme.panel
-            z: 1
-            // The panel takes the pointer: moves over it are not the picture's.
-            HoverHandler { cursorShape: Qt.ArrowCursor }
+            z: 3
+            opacity: fs.controller.barShown ? 1 : 0
+            visible: opacity > 0
+            Behavior on opacity { NumberAnimation { duration: 200 } }
+            Rectangle {
+                anchors { left: parent.left; right: parent.right; top: parent.top }
+                height: 1
+                color: Theme.line
+            }
+            // The bar takes the pointer: moves over it are not the picture's,
+            // and it stays while the pointer is on it.
+            HoverHandler {
+                cursorShape: Qt.ArrowCursor
+                onHoveredChanged: fs.controller.pointerOverBar = hovered
+            }
+            // Clicks between its controls are not the picture's either.
+            MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
             // VideoBox.cpp:519-534: the wheel below the picture is the volume's.
             WheelHandler {
                 acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
@@ -215,9 +347,27 @@ Window {
             }
 
             ColumnLayout {
-                id: panelColumn
-                anchors { left: parent.left; right: parent.right; top: parent.top; margins: 4 }
+                id: barColumn
+                anchors { left: parent.left; right: parent.right; top: parent.top
+                          leftMargin: 8; rightMargin: 8; topMargin: 5 }
                 spacing: 2
+                // The active tool's row: VT1's inspector bar (#269), the
+                // Video panel's (the tool, its options and values, the batch
+                // picker), on the bar's own background.
+                RowLayout {
+                    id: inspectorSlot
+                    objectName: "fullscreenInspectorSlot"
+                    Layout.fillWidth: true
+                    visible: fs.toolOn
+                    VisualToolBar {
+                        id: toolBar
+                        objectName: "fullscreenToolBar"
+                        Layout.fillWidth: true
+                        Layout.minimumWidth: 0
+                        tools: fs.shell.visualTools
+                        background: null
+                    }
+                }
                 Slider {
                     objectName: "fullscreenSlider"
                     id: fullscreenSeekBar
@@ -292,74 +442,139 @@ Window {
                         tip: fs.shell.bitmapTip(qsTr("Next file"), "VIDEO_NEXT_FILE", 3)
                         onClicked: if (!fs.shell.hotkeyGesture("VIDEO_NEXT_FILE", 3, "bitmap")) fs.fileQuestionRequested(true)
                     }
-                    // "Show toolbar" (legacy a check box after the buttons).
-                    IconButton {
-                        objectName: "fullscreenShowToolbar"
-                        iconRole: "show-toolbar"
-                        text: qsTr("Show toolbar")
-                        checkable: true
-                        checked: fs.controller.showToolbar
-                        focusPolicy: Qt.NoFocus
-                        onToggled: fs.controller.showToolbar = checked
-                    }
+                    ToolSeparator {}
                     // The times field (ShowTimes into mstimes): a keyframe in the warning colour.
                     Label {
                         objectName: "fullscreenTimes"
-                        Layout.leftMargin: 8
                         text: fs.shell.video.times
                         color: fs.shell.video.keyframeShown ? Theme.warning : Theme.text
                         Accessible.name: qsTr("Video times")
                     }
-                    // Videolabel: the video's file name.
-                    Label {
-                        objectName: "fullscreenVideoName"
+                    ToolSeparator { visible: currentLine.visible }
+                    // FS1-current-line: the current Line, read only.
+                    RowLayout {
+                        id: currentLine
+                        objectName: "fullscreenLine"
                         Layout.fillWidth: true
-                        Layout.leftMargin: 12
-                        text: fs.controller.videoName
-                        color: Theme.text
-                        elide: Text.ElideMiddle
+                        Layout.minimumWidth: 0
+                        visible: fs.shell.editor.hasLine
+                        spacing: 8
+                        clip: true // a narrow window: the times and the text give way, never the buttons
+                        Accessible.role: Accessible.StaticText
+                        //: The full screen bar's current line: %1 its number, %2 its times, %3 its text
+                        Accessible.name: qsTr("Line %1, %2: %3").arg(lineNumber.text).arg(fs.shell.editor.videoTimes).arg(lineText.text)
+                        Label {
+                            id: lineNumber
+                            objectName: "fullscreenLineNumber"
+                            visible: fs.shell.shell.activeLineNumber > 0
+                            text: fs.shell.shell.activeLineNumber
+                            color: Theme.muted
+                            font.pointSize: Math.max(1, Qt.application.font.pointSize - 1)
+                            leftPadding: 4
+                            rightPadding: 4
+                            background: Rectangle {
+                                color: "transparent"
+                                border.color: Theme.line
+                                radius: 2
+                            }
+                        }
+                        Label {
+                            objectName: "fullscreenLineTimes"
+                            text: fs.shell.editor.videoTimes // the video's: committed without live editing
+                            color: Theme.muted
+                            Layout.minimumWidth: 0
+                            Layout.maximumWidth: implicitWidth
+                            elide: Text.ElideRight
+                        }
+                        Label {
+                            id: lineText
+                            objectName: "fullscreenLineText"
+                            Layout.fillWidth: true
+                            Layout.minimumWidth: 0
+                            text: fs.controller.lineLabel(fs.shell.editor.videoText)
+                            textFormat: Text.PlainText // a Line's text, never markup (no <img> fetched)
+                            color: Theme.text
+                            elide: Text.ElideRight
+                            maximumLineCount: 1
+                        }
                     }
-                    // Legacy volslider at the row's right (asize.x - 110): the Video panel's control.
+                    // V5-open-editor-now: the context menu's Open editor, beside the Line.
+                    IconButton {
+                        objectName: "fullscreenOpenEditor"
+                        iconRole: "editor"
+                        text: qsTr("Open editor")
+                        focusPolicy: Qt.NoFocus
+                        onClicked: fs.shell.openEditorFromFullScreen() // Main's: the Line editor shown too (WS3)
+                    }
+                    Item { Layout.fillWidth: !currentLine.visible }
+                    // FS1-tool-rail-contextual: the eleven tools, by name.
+                    IconButton {
+                        id: toolsButton
+                        objectName: "fullscreenToolsButton"
+                        // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
+                        iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][Math.max(0, fs.shell.visualTools.activeFamily)] ?? ""
+                        text: qsTr("Visual tools")
+                        enabled: fs.shell.visualTools.railEnabled
+                        down: toolsMenu.visible
+                        focusPolicy: Qt.NoFocus
+                        onClicked: fs.popupAbove(toolsMenu, toolsButton)
+                    }
+                    ToolSeparator { visible: toolsButton.visible }
+                    // FS1-speaker-gestures.
+                    IconButton {
+                        id: speaker
+                        objectName: "fullscreenSpeaker"
+                        iconRole: fs.shell.videoView.muted ? "volume-muted" : "volume"
+                        text: fs.shell.videoView.muted ? qsTr("Unmute") : qsTr("Mute")
+                        //: The full screen speaker's tooltip: %1 is Mute or Unmute
+                        tip: qsTr("%1 · Wheel: volume · Right-click: output device").arg(text)
+                        enabled: fs.shell.video.hasVideo
+                        down: outputMenu.visible
+                        focusPolicy: Qt.NoFocus
+                        onClicked: fs.shell.videoView.toggleMute()
+                        // The volume's even in the zoom mode, which takes the bar's wheel.
+                        WheelHandler {
+                            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+                            onWheel: event => fs.shell.videoView.volumeWheel(Math.round(event.angleDelta.y / 120))
+                        }
+                        TapHandler {
+                            acceptedButtons: Qt.RightButton
+                            onTapped: fs.popupAbove(outputMenu, speaker)
+                        }
+                    }
+                    // The Video panel's volume slider (V5-volume-slider).
                     VideoVolumeSlider {
                         sliderName: "fullscreenVolume"
                         view: fs.shell.videoView
                         hasVideo: fs.shell.video.hasVideo
-                    }
-                }
-                // The toolbar row (legacy vToolbar): the visual tool families
-                // and the inspector bar (VT1: the options, the values and the
-                // batch picker).
-                RowLayout {
-                    objectName: "fullscreenToolbar"
-                    Layout.fillWidth: true
-                    visible: fs.controller.showToolbar
-                    spacing: 1
-                    Repeater {
-                        model: fs.shell.visualTools.families
-                        delegate: IconToolButton {
-                            required property var modelData
-                            required property int index
-                            objectName: "fullscreenTool" + index
-                            // In application::visual::Family's order, as the rail's.
-                            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][index] ?? ""
-                            text: modelData.name
-                            checkable: true
-                            checked: fs.shell.visualTools.activeFamily === index
-                            enabled: fs.shell.visualTools.railEnabled
-                            focusPolicy: Qt.NoFocus
-                            onClicked: fs.shell.visualTools.selectFamily(index)
-                        }
+                        showIcon: false
+                        sliderWidth: 80
                     }
                     ToolSeparator {}
-                    // VT1: the Video panel's inspector bar, the families'
-                    // buttons naming the tool before it.
-                    VisualToolBar {
-                        objectName: "fullscreenToolBar"
-                        Layout.fillWidth: true
-                        Layout.minimumWidth: 0
-                        tools: fs.shell.visualTools
-                        showsName: false
-                        background: null
+                    // FS1-bar-mode: the mode, and its menu.
+                    IconTextButton {
+                        id: modeButton
+                        objectName: "fullscreenBarMode"
+                        iconRole: "show-toolbar"
+                        flat: true
+                        text: modeMenu.names[fs.controller.barMode]
+                        tip: fs.shell.bitmapTip(qsTr("Full screen bar"), "VIDEO_FULLSCREEN_BAR", 3)
+                        down: modeMenu.visible
+                        focusPolicy: Qt.NoFocus
+                        Accessible.name: qsTr("Full screen bar: %1").arg(text)
+                        onClicked: if (!fs.shell.hotkeyGesture("VIDEO_FULLSCREEN_BAR", 3, "bitmap")) fs.popupAbove(modeMenu, modeButton)
+                    }
+                    IconButton {
+                        objectName: "fullscreenExit"
+                        iconRole: "fullscreen-exit"
+                        text: qsTr("Exit full screen")
+                        // The context menu's: the binding, else Escape.
+                        tip: {
+                            const key = fs.shell.boundKeys("VIDEO_FULL_SCREEN", 3)
+                            return qsTr("Exit full screen") + " (" + (key.length ? key : qsTr("Escape")) + ")"
+                        }
+                        focusPolicy: Qt.NoFocus
+                        onClicked: fs.controller.leave()
                     }
                 }
             }
@@ -376,6 +591,60 @@ Window {
             onOpenSubtitlesRequested: fs.openSubtitlesRequested()
             onAspectRatioRequested: fs.aspectRatioRequested()
             onClosed: keys.forceActiveFocus()
+        }
+        // AV1's output device menu, from the speaker's right click.
+        AudioOutputMenu {
+            id: outputMenu
+            objectName: "fullscreenAudioOutputMenu"
+            app: fs.shell.app
+            onSettingsRequested: fs.audioSettingsRequested()
+            onClosed: keys.forceActiveFocus()
+        }
+        ShellMenu {
+            id: modeMenu
+            objectName: "fullscreenBarModeMenu"
+            readonly property var names: [qsTr("Auto"), qsTr("Always"), qsTr("Never")]
+            onClosed: keys.forceActiveFocus()
+            Instantiator {
+                model: [qsTr("Show on pointer movement, hide when idle"), qsTr("Keep the bar; the picture ends above it"),
+                        qsTr("Picture only")]
+                delegate: ShellMenuItem {
+                    required property string modelData
+                    required property int index
+                    objectName: "fullscreenBar" + ["Auto", "Always", "Never"][index]
+                    text: modeMenu.names[index]
+                    help: modelData
+                    checkable: true
+                    checked: fs.controller.barMode === index
+                    keepsMenuOpen: false
+                    onTriggered: fs.controller.barMode = index
+                }
+                onObjectAdded: (index, object) => modeMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => modeMenu.removeItem(object)
+            }
+        }
+        ShellMenu {
+            id: toolsMenu
+            objectName: "fullscreenToolsMenu"
+            onClosed: keys.forceActiveFocus()
+            Instantiator {
+                model: fs.shell.visualTools.families
+                delegate: ShellMenuItem {
+                    required property var modelData
+                    required property int index
+                    objectName: "fullscreenTool" + index
+                    // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
+                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][index] ?? ""
+                    text: modelData.name
+                    checkable: true
+                    checked: fs.shell.visualTools.activeFamily === index
+                    keepsMenuOpen: false
+                    // Choosing the on tool again would go back to the crosshair.
+                    onTriggered: if (fs.shell.visualTools.activeFamily !== index) fs.shell.visualTools.selectFamily(index)
+                }
+                onObjectAdded: (index, object) => toolsMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => toolsMenu.removeItem(object)
+            }
         }
     }
 }
