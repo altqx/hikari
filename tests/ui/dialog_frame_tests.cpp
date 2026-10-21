@@ -14,6 +14,7 @@
 #include "settings_store.h"
 #include "window_frame.h"
 
+#include <QFontMetricsF>
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQuickItem>
@@ -371,6 +372,15 @@ private slots:
         QVERIFY(s.dialog);
         s.opener->setProperty("columnWidth", 3000);
         QVERIFY(QTest::qWaitForWindowExposed(s.opener.get()));
+        // Text three times as wide as the screen in the label's own font,
+        // whatever the font and the screen: it wraps in any room.
+        QQuickItem *label = s.item("wrapped");
+        const QFontMetricsF metrics(label->property("font").value<QFont>());
+        const qreal wide = 3.0 * s.opener->screen()->availableGeometry().width();
+        QString text;
+        while (metrics.horizontalAdvance(text) < wide)
+            text += QStringLiteral("wrapping words ");
+        label->setProperty("text", text.trimmed());
         QMetaObject::invokeMethod(s.dialog, "open");
         const int opened = s.dialog->height();
         const qreal width = s.item("wrapped")->width();
