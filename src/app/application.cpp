@@ -544,6 +544,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         return session && m_files->generation(id) == key.second ? session : nullptr;
     });
     m_templateEditor->setTemplater(&m_automation->templater());
+    // The video, keyframes, audio selection and frame shown a preview read:
+    // a change of them, once paused, previews again.
+    m_templateEditor->setHostState([this] { return m_automation->hostState(); });
+    connect(m_video.get(), &ui::VideoController::changed, this, [this] {
+        if (!m_video->playing())
+            m_templateEditor->hostChanged();
+    });
     // A shortcut's or the menu's macro starts from the template just typed.
     m_automation->setBeforeRun([this] { m_templateEditor->commit(); });
     connect(m_templateEditor.get(), &ui::TemplateEditorController::documentEdited, this, [this] { refreshViews(); });
@@ -1127,6 +1134,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, &Application::releaseReadIndexHandoff);
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::changed, this, [this] {
+        if (m_templateEditor && !m_video->playing())
+            m_templateEditor->hostChanged(); // KE2: an audio box opened or closed
+    });
     // A3: the box's timing options from the registry, read when used (legacy
     // Options), and what legacy's AudioDisplay did through the edit box, the
     // grid and the video. Playback (A4) is the box's own.

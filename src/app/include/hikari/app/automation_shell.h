@@ -77,6 +77,9 @@ public:
     // Called before a macro reads the target: a panel's draft is committed
     // first, as the Line editor's is (KE2's Template editor).
     void setBeforeRun(std::function<void()> before) { m_beforeRun = std::move(before); }
+    // KE2: what a preview reads from the host (video, keyframes, audio
+    // selection, frame shown, file), as one value that differs when it does.
+    std::string hostState() const;
     // The audio box whose audio aegisub.get_frequency_peaks reads, and whose
     // presence aegisub.get_audio_selection checks (null: none).
     void setAudioBox(std::function<const application::AudioBox *()> box);

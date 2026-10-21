@@ -158,6 +158,29 @@ public:
             return std::nullopt;
         return box->audio();
     }
+    // KE2: what the preview's services read, as one value. The frame times
+    // change only with the video, so its path and frame count stand for them;
+    // the file's path for its name and ?script.
+    std::string state() const
+    {
+        const auto &s = m_video.session();
+        std::string out = s.path() + '\n' + std::to_string(static_cast<int>(s.state())) + ' ' +
+                          std::to_string(s.frameCount());
+        if (const auto size = videoSize())
+            out += " size " + std::to_string(size->width) + 'x' + std::to_string(size->height);
+        if (const auto frames = keyframes())
+            out += " keyframes " + std::to_string(frames->size()) + ' ' +
+                   std::to_string(std::hash<std::string_view>{}(
+                       std::string_view(reinterpret_cast<const char *>(frames->data()),
+                                        frames->size() * sizeof(std::int64_t))));
+        if (const auto selection = audioSelection())
+            out += " audio " + std::to_string(selection->first) + '-' + std::to_string(selection->second);
+        out += " frame " + std::to_string(project()->videoFrameShown) + '\n';
+        const auto target = m_workspace.editingTarget();
+        if (const auto destination = target ? m_files.destination(*target) : std::nullopt)
+            out += destination->value;
+        return out;
+    }
 
     std::function<const application::AudioBox *()> audioBox;
 
@@ -306,6 +329,11 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_managerController->setDocumentScript([this](const std::string &path) {
         return std::ranges::find(m_documentScripts.scripts(), path) != m_documentScripts.scripts().end();
     });
+}
+
+std::string AutomationShell::hostState() const
+{
+    return static_cast<const MediaAdapter *>(m_media.get())->state();
 }
 
 void AutomationShell::setAudioBox(std::function<const application::AudioBox *()> box)
