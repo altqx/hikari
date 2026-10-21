@@ -619,6 +619,16 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
               (std::vector<Row>{{1000, 9000, "", "{\\k100}a{\\k100}b{\\k600}"}})); // the span ends at 1 + 2 s
     EXPECT_EQ(timed("<div begin=\"1\" end=\"3\"><p begin=\"2\">a</p><p end=\"2\">b</p></div>"),
               (std::vector<Row>{{2000, 3000, "", "a"}, {1000, 2000, "", "b"}}));
+    // A child's end or dur stops at the end it inherits: its interval lies
+    // within its parent's.
+    EXPECT_EQ(timed("<div begin=\"0\" end=\"4\"><p begin=\"3\" dur=\"5\">x</p></div>"), (std::vector<Row>{{3000, 4000, "", "x"}}));
+    EXPECT_EQ(timed("<div begin=\"0\" end=\"4\"><p begin=\"3\" end=\"8\">x</p></div>"), (std::vector<Row>{{3000, 4000, "", "x"}}));
+    EXPECT_EQ(timed("<div begin=\"0\" end=\"4\"><div dur=\"9\"><p>x</p></div></div>"), (std::vector<Row>{{0, 4000, "", "x"}}));
+    EXPECT_EQ(timed("<div begin=\"0\" end=\"4\"><p begin=\"1\" end=\"8\"><span begin=\"1\" end=\"2\">a</span></p></div>"),
+              (std::vector<Row>{{1000, 4000, "", "{\\k100}a{\\k200}"}}));
+    EXPECT_EQ(timed("<p begin=\"0\" end=\"6\"><span begin=\"0\" end=\"3\">a <span begin=\"1\" dur=\"9\"><span begin=\"1\">b</span>"
+                    "</span></span></p>"),
+              (std::vector<Row>{{0, 6000, "", "{\\k100}a {\\k200}b{\\k300}"}}));
     // A word-timed Line spans its words; the ancestor ends its last word.
     EXPECT_EQ(timed("<div begin=\"0\" end=\"4\"><p><span begin=\"1\" end=\"2\">a</span> <span begin=\"2\">b</span></p></div>"),
               (std::vector<Row>{{1000, 4000, "", "{\\k100}a {\\k200}b"}}));
@@ -779,6 +789,26 @@ TEST(LyricsImport, TtmlAttributesAreReadByNamespace)
     EXPECT_EQ(lines("<tt xmlns:foo=\"urn:x\"><body><p begin=\"1\" end=\"2\">a <span foo:role=\"x-translation\">b</span>"
                     "</p></body></tt>"),
               (std::vector<Row>{{1000, 2000, "", "a b"}}));
+    // Namespaces in XML's reserved prefixes: xml only for its own namespace,
+    // never xmlns, neither namespace for another prefix or the default; no
+    // empty namespace for a prefix, no element in the xmlns namespace.
+    for (const char *bad : {" xmlns:xml=\"urn:other\"", " xmlns:xmlns=\"http://www.w3.org/2000/xmlns/\"",
+                            " xmlns:xmlns=\"urn:x\"", " xmlns:x=\"http://www.w3.org/XML/1998/namespace\"",
+                            " xmlns=\"http://www.w3.org/XML/1998/namespace\"", " xmlns:x=\"http://www.w3.org/2000/xmlns/\"",
+                            " xmlns=\"http://www.w3.org/2000/xmlns/\"", " xmlns:x=\"\""}) {
+        EXPECT_EQ(problemOf("<tt><body><p begin=\"1\" end=\"2\"" + std::string(bad) + ">x</p></body></tt>", u8"ttml").kind,
+                  Kind::NotWellFormed)
+            << bad;
+        EXPECT_EQ(problemOf("<tt><body>\n<p begin=\"1\" end=\"2\"" + std::string(bad) + " xml:id=\"a\">x</p></body></tt>",
+                            u8"ttml")
+                      .line,
+                  2u)
+            << bad;
+    }
+    EXPECT_EQ(problemOf("<tt><body><p begin=\"1\" end=\"2\">x<xmlns:a/></p></body></tt>", u8"ttml").kind, Kind::NotWellFormed);
+    EXPECT_EQ(lines("<tt xmlns:xml=\"http://www.w3.org/XML/1998/namespace\" xmlns=\"\"><body><p begin=\"1\" end=\"2\">x</p>"
+                    "</body></tt>"),
+              (std::vector<Row>{{1000, 2000, "", "x"}}));
     // A long namespace on many attributes is not copied for each of them.
     std::string many = "<tt xmlns:n=\"urn:" + std::string(100'000, 'x') + "\"><body><p begin=\"1\" end=\"2\"";
     for (int i = 0; i < 8'000; ++i)

@@ -132,9 +132,20 @@ public:
     };
     static constexpr std::uint32_t kUndeclared = UINT32_MAX;
 
-    // An element's xmlns and xmlns:prefix attributes come into scope.
-    void enter(const XmlNode &node)
+    // An element's xmlns and xmlns:prefix attributes come into scope, if
+    // Namespaces in XML allows them: xml only for its own namespace, never
+    // xmlns, neither namespace for another prefix or the default, and no
+    // empty namespace for a prefix (only XML 1.1 may undeclare one). False,
+    // with nothing changed, when one breaks those rules.
+    bool enter(const XmlNode &node)
     {
+        for (const auto &[key, value] : node.attributes)
+            if (const auto prefix = declares(key)) {
+                const bool reserved = value == kXmlNamespace || value == kXmlnsNamespace;
+                if (*prefix == u8"xml" ? value != kXmlNamespace
+                                       : *prefix == u8"xmlns" || reserved || (!prefix->empty() && value.empty()))
+                    return false;
+            }
         for (const auto &[key, value] : node.attributes)
             if (const auto prefix = declares(key)) {
                 auto [uri, added] = m_uris.try_emplace(value, static_cast<std::uint32_t>(m_kinds.size()));
@@ -145,6 +156,7 @@ public:
                     it = m_declared.try_emplace(std::u8string(*prefix)).first;
                 it->second.push_back(uri->second);
             }
+        return true;
     }
     // ...and leave it with the element.
     void leave(const XmlNode &node)
@@ -880,7 +892,12 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken()); // an attribute given twice
                 }
-                m_scope.enter(node);
+                // Its declarations within Namespaces in XML's rules, and no
+                // element in the xmlns namespace.
+                if (node.name.starts_with(u8"xmlns:") || !m_scope.enter(node)) {
+                    std::tie(m_pos, m_line) = start;
+                    return std::unexpected(broken());
+                }
                 // Nor twice by expanded name, the namespace and the local
                 // name, as a:role and b:role with one namespace are (an
                 // undeclared prefix is a namespace of its own).
@@ -1284,6 +1301,13 @@ private:
         return std::pair{*begin, *end};
     }
 
+    // The end an element ends by: its own, cut at the end it inherits
+    // (a child's interval lies within its parent's), or the inherited one.
+    static std::optional<std::int64_t> endWithin(std::optional<std::int64_t> own, std::optional<std::int64_t> inherited)
+    {
+        return own && inherited ? std::min(*own, *inherited) : own ? own : inherited;
+    }
+
     // Whether an element has times of its own: a begin, or an end or dur
     // (counted from the begin it inherits).
     static bool timed(const XmlNode &node)
@@ -1419,8 +1443,7 @@ private:
                     innerSpan = &child;
                     innerBegin = begin;
                 }
-                if (t->second)
-                    innerEnd = t->second;
+                innerEnd = endWithin(t->second, spanEnd);
             }
             if (auto ok = collect(child, into, backgrounds, preserves(child, preserve), innerSpan, innerBegin, innerEnd); !ok)
                 return ok;
@@ -1485,7 +1508,7 @@ private:
         if (!own)
             return std::unexpected(own.error());
         begin = own->first ? own->first : begin;
-        end = own->second ? own->second : end;
+        end = endWithin(own->second, end);
         if (begin && end && *end < *begin) // its own begin after the end it inherits
             return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, attributeLine(node, u8"begin"),
                                                  std::u8string(attribute(node, u8"begin").value_or(u8""))});
@@ -1529,7 +1552,8 @@ private:
             for (std::size_t i = 0; i < words.words.size(); ++i)
                 words.words[i].text = finished(words.words[i].text, i == 0, i + 1 == words.words.size());
             out.start = std::min(own->first.value_or(words.words.front().begin), words.words.front().begin);
-            out.end = std::max(own->second.value_or(words.words.back().end), words.words.back().end);
+            // Its own end, cut at the one it inherits, if the words end before it.
+            out.end = own->second ? std::max(*end, words.words.back().end) : words.words.back().end;
             out.words = std::move(words.words);
             if (auto ok = add(std::move(out), node.line); !ok)
                 return ok;
@@ -1576,7 +1600,7 @@ private:
         if (!own)
             return std::unexpected(own.error());
         begin = own->first ? own->first : begin;
-        end = own->second ? own->second : end;
+        end = endWithin(own->second, end);
         for (const XmlNode &child : node.children) {
             if (child.isText())
                 continue;
