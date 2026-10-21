@@ -307,6 +307,15 @@ private slots:
         QVERIFY2(!html.contains(QStringLiteral("tracker.gif")), qPrintable(html));
         QVERIFY(!html.contains(QStringLiteral("<script"), Qt::CaseInsensitive));
         QVERIFY2(!html.contains(QStringLiteral("&lt;script"), Qt::CaseInsensitive), qPrintable(html));
+        // A script's or a style's text goes with it, over lines too.
+        QVERIFY2(!html.contains(QStringLiteral("alert(1)")), qPrintable(html));
+        const QString scripted = copy->whatsNew->render(
+            QStringLiteral("Keep <SCRIPT type=\"x\">gone()</script> this\n<style>\np { color: red }\n</style >\nand this"),
+            muted, link, code);
+        QVERIFY2(scripted.contains(QStringLiteral("Keep  this")), qPrintable(scripted));
+        QVERIFY(scripted.contains(QStringLiteral("and this")));
+        QVERIFY(!scripted.contains(QStringLiteral("gone()")));
+        QVERIFY(!scripted.contains(QStringLiteral("color: red")));
         QVERIFY(!html.contains(QStringLiteral("&lt;img"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("javascript:"), Qt::CaseInsensitive));
         QVERIFY(!html.contains(QStringLiteral("file:///etc/passwd")));

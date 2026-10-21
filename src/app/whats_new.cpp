@@ -57,7 +57,8 @@ QVariantMap shownRelease(const a::ReleaseEntry &release)
 
 // The notes before md4c reads them, outside code (fences, `spans`):
 // - raw HTML goes, tags and comments alike (with MarkdownNoHTML Qt would
-//   show it as text); its text between tags stays;
+//   show it as text); its text between tags stays, but a script's or a
+//   style's goes with it;
 // - a bare URL becomes an autolink ("<url>"), so all of it is the link:
 //   md4c's own detection stops at "...", and GitHub's "Full Changelog"
 //   lines read ".../compare/v0.1.2...v0.1.3". Not in a link's own syntax;
@@ -67,12 +68,16 @@ QString prepareMarkdown(const QString &markdown)
     static const QRegularExpression tag(QStringLiteral("</?[A-Za-z][A-Za-z0-9-]*(\\s[^>]*)?/?>"));
     static const QRegularExpression url(
         QStringLiteral("(^|[^(<\\[\\w/\"'=])(https?://[^\\s<>`]*[^\\s<>`.,:;!?'\")\\]*_~])"));
+    // What is dropped whole, up to its end, over lines too.
+    static const QRegularExpression dropped(QStringLiteral("<!--|<(script|style)(?=[\\s>/])"),
+                                            QRegularExpression::CaseInsensitiveOption);
     QStringList lines = markdown.split(QLatin1Char('\n'));
     bool fenced = false;
-    bool comment = false;
+    QRegularExpression closer; // empty while nothing is being dropped
     for (QString &line : lines) {
         const QString trimmed = line.trimmed();
-        if (!comment && (trimmed.startsWith(QLatin1String("```")) || trimmed.startsWith(QLatin1String("~~~")))) {
+        if (closer.pattern().isEmpty() &&
+            (trimmed.startsWith(QLatin1String("```")) || trimmed.startsWith(QLatin1String("~~~")))) {
             fenced = !fenced;
             continue;
         }
@@ -85,22 +90,23 @@ QString prepareMarkdown(const QString &markdown)
             QString kept;
             qsizetype at = 0;
             while (at < part.size()) {
-                if (comment) {
-                    const qsizetype end = part.indexOf(QLatin1String("-->"), at);
-                    if (end < 0) {
-                        at = part.size();
+                if (!closer.pattern().isEmpty()) {
+                    const QRegularExpressionMatch end = closer.match(part, at);
+                    if (!end.hasMatch())
                         break;
-                    }
-                    comment = false;
-                    at = end + 3;
+                    closer = QRegularExpression();
+                    at = end.capturedEnd();
                     continue;
                 }
-                const qsizetype open = part.indexOf(QLatin1String("<!--"), at);
-                kept += part.mid(at, open < 0 ? -1 : open - at);
-                if (open < 0)
+                const QRegularExpressionMatch open = dropped.match(part, at);
+                kept += part.mid(at, open.hasMatch() ? open.capturedStart() - at : -1);
+                if (!open.hasMatch())
                     break;
-                comment = true;
-                at = open + 4;
+                closer = open.captured(1).isEmpty()
+                             ? QRegularExpression(QStringLiteral("-->"))
+                             : QRegularExpression(QStringLiteral("</%1\\s*>").arg(open.captured(1)),
+                                                  QRegularExpression::CaseInsensitiveOption);
+                at = open.capturedEnd();
             }
             part = kept.remove(tag).replace(url, QStringLiteral("\\1<\\2>"));
         }
