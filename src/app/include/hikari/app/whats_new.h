@@ -2,12 +2,13 @@
 
 // SH3 (#223, owner-approved 2026-10-21): What's new from the GitHub release
 // notes, for the Home page's card and Help > What's new (no popup after an
-// update). At each start it records the version that ran before this one
-// (updater.lastVersion, updater.notesSince). While "Check for updates
-// automatically" is on it reads the release list once per installed version
-// (UpdateChecker::readReleases, or the list the start's own check reads),
-// and keeps the notes after that version up to the installed one in a cache
-// file; offline, or with checks off later, the cached notes still show. What
+// update). Its cache file, one per copy of the program, keeps the version
+// that ran last and the one its notes start after; at each start the
+// version that ran before this one comes from there. While "Check for
+// updates automatically" is on it reads the release list once per installed
+// version (UpdateChecker::readReleases, or the list the start's own check
+// reads), and keeps the notes after that version up to the installed one in
+// the cache; offline, or with checks off later, the cached notes still show. What
 // shows follows the update checker's channel (whatsNewShown). The notes are
 // Markdown, rendered as plain rich text by render().
 
@@ -16,16 +17,13 @@
 
 #include <QByteArray>
 #include <QColor>
+#include <QJsonObject>
 #include <QObject>
 #include <QString>
 #include <QUrl>
 #include <QVariantList>
 
 #include <vector>
-
-namespace hikari::ui {
-class SettingsStore;
-}
 
 namespace hikari::app {
 
@@ -42,8 +40,9 @@ class WhatsNew : public QObject {
     // "failed" (not read, none cached) or "off" (checks off, none cached).
     Q_PROPERTY(QString state READ state NOTIFY changed)
 public:
-    // The notes are cached in `cacheFile`; empty: kept in memory only.
-    WhatsNew(ui::SettingsStore &settings, UpdateChecker &updates, QString cacheFile, QObject *parent = nullptr);
+    // The notes and the version run last are kept in `cacheFile`; empty:
+    // in memory only (every start is a first one).
+    WhatsNew(UpdateChecker &updates, QString cacheFile, QObject *parent = nullptr);
 
     // At start, after the update check's: records the version, takes the
     // cache, reads the list when it is due.
@@ -87,10 +86,10 @@ private:
     void read();
     void listRead(bool ok);
     void show();
-    bool loadCache();
+    QJsonObject readCache() const;
+    bool loadCache(const QJsonObject &cache);
     void saveCache() const;
 
-    ui::SettingsStore &m_settings;
     UpdateChecker &m_updates;
     QString m_cacheFile;
     QString m_since;

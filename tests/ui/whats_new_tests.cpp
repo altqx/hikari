@@ -14,12 +14,15 @@
 #include <QColor>
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
 #include <QJsonDocument>
+#include <QJsonObject>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtTest>
 
 #include <memory>
+#include <tuple>
 
 using hikari::app::UpdateChecker;
 using hikari::app::UpdateFeed;
@@ -53,7 +56,8 @@ class WhatsNewTest : public QObject {
     int runs = 0;
 
     // One copy of the program: its settings, its feed (the recorded list,
-    // when `online`) and its cache, in a folder of its own.
+    // when `online`) and its cache (which also keeps the version run last),
+    // in a folder of its own.
     struct Copy {
         QString root;
         std::unique_ptr<SettingsStore> settings;
@@ -76,18 +80,32 @@ class WhatsNewTest : public QObject {
             list.remove();
         }
         copy->settings = std::make_unique<SettingsStore>(copy->root + QStringLiteral("/hikari.ini"));
-        if (!lastVersion.isEmpty() && copy->settings->text("updater.lastVersion").isEmpty())
-            copy->settings->set("updater.lastVersion", lastVersion);
+        if (!lastVersion.isEmpty() && !QFile::exists(cacheOf(copy->root)))
+            setHistory(copy->root, lastVersion, QString());
         copy->settings->set("updater.autoCheck", autoCheck);
         // A day ahead: the start's own update check stays away.
         copy->settings->set("updater.nextCheck", QDateTime::currentSecsSinceEpoch() + 86400);
         const UpdateFeed feed = UpdateFeed::local(QUrl::fromLocalFile(copy->root + QStringLiteral("/feed/")));
         copy->updates = std::make_unique<UpdateChecker>(*copy->settings, feed, version);
-        copy->whatsNew = std::make_unique<WhatsNew>(*copy->settings, *copy->updates,
-                                                    copy->root + QStringLiteral("/cache/whats-new.json"));
+        copy->whatsNew = std::make_unique<WhatsNew>(*copy->updates, cacheOf(copy->root));
         copy->whatsNew->start();
         ++runs;
         return copy;
+    }
+    static QString cacheOf(const QString &root) { return root + QStringLiteral("/cache/whats-new.json"); }
+    static QJsonObject cacheIn(const QString &root)
+    {
+        QFile file(cacheOf(root));
+        return file.open(QIODevice::ReadOnly) ? QJsonDocument::fromJson(file.readAll()).object() : QJsonObject();
+    }
+    // The cache as a run of `installed` left it, its notes from `since`.
+    static void setHistory(const QString &root, const QString &installed, const QString &since)
+    {
+        QDir().mkpath(root + QStringLiteral("/cache"));
+        QFile file(cacheOf(root));
+        if (file.open(QIODevice::WriteOnly | QIODevice::Truncate))
+            file.write(QJsonDocument(QJsonObject{{QStringLiteral("installed"), installed}, {QStringLiteral("since"), since}})
+                           .toJson(QJsonDocument::Compact));
     }
     // The same copy started again, as the next run of `version`.
     std::unique_ptr<Copy> restart(std::unique_ptr<Copy> copy, const QString &version, bool online = true)
@@ -117,11 +135,12 @@ private slots:
         QVERIFY(copy->whatsNew->releases().isEmpty());
         // The version run before is still recorded, for when checks go on.
         QCOMPARE(copy->whatsNew->since(), QStringLiteral("0.1.1"));
-        QCOMPARE(copy->settings->text("updater.lastVersion"), QStringLiteral("0.1.3"));
-        // Help > What's new asks for nothing either.
+        QCOMPARE(cacheIn(copy->root).value(QStringLiteral("installed")).toString(), QStringLiteral("0.1.3"));
+        QCOMPARE(cacheIn(copy->root).value(QStringLiteral("since")).toString(), QStringLiteral("0.1.1"));
+        // Help > What's new asks for nothing either: no notes in the cache.
         copy->whatsNew->fetchIfNeeded();
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("off"));
-        QVERIFY(!QFile::exists(copy->root + QStringLiteral("/cache/whats-new.json")));
+        QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases")));
     }
 
     // The first start ever: the installed version alone.
@@ -193,8 +212,7 @@ private slots:
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
         // A release without a name is named for its version.
         copy->updates->setStableOnly(false);
-        copy->settings->set("updater.lastVersion", QStringLiteral("0.1.0"));
-        copy->settings->set("updater.notesSince", QString());
+        setHistory(copy->root, QStringLiteral("0.1.0"), QString());
         copy = restart(std::move(copy), QStringLiteral("0.1.2"), true);
         // (lastVersion 0.1.0 ran last, so 0.1.2 starts after it.)
         QVERIFY(settled(*copy->whatsNew));
@@ -213,7 +231,7 @@ private slots:
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("failed"));
         QVERIFY(copy->whatsNew->releases().isEmpty());
-        QVERIFY(!QFile::exists(copy->root + QStringLiteral("/cache/whats-new.json")));
+        QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases"))); // the history alone
         // Back online: Help > What's new fetches.
         QFile list(copy->root + QStringLiteral("/feed/releases.json"));
         QVERIFY(list.open(QIODevice::WriteOnly));
@@ -229,7 +247,8 @@ private slots:
     }
 
     // A cache written for another version or another starting point is
-    // not used; one that does not read is ignored.
+    // not used; one that does not read is ignored, the version run before
+    // with it (a first start: the installed version alone).
     void aCacheForAnotherRangeIsNotUsed()
     {
         auto copy = start(QStringLiteral("stale"), QStringLiteral("0.1.2"), true, true, QStringLiteral("0.1.1"));
@@ -248,8 +267,46 @@ private slots:
         cache.close();
         copy = restart(std::move(copy), QStringLiteral("0.1.3"), true);
         QVERIFY(settled(*copy->whatsNew));
-        QCOMPARE(copy->whatsNew->since(), QStringLiteral("0.1.2"));
+        QCOMPARE(copy->whatsNew->since(), QString());
         QCOMPARE(versions(*copy->whatsNew), QStringList{QStringLiteral("0.1.3")});
+    }
+
+    // Two copies sharing the settings (a package and an AppImage) keep each
+    // its own version run before, with its own cache.
+    void eachCopyKeepsItsOwnHistory()
+    {
+        const QString shared = dir.filePath(QStringLiteral("shared.ini"));
+        const auto run = [&](const QString &name, const QString &version, bool online) {
+            const QString root = dir.filePath(name);
+            QDir().mkpath(root + QStringLiteral("/feed"));
+            QFile list(root + QStringLiteral("/feed/releases.json"));
+            if (online && list.open(QIODevice::WriteOnly | QIODevice::Truncate))
+                list.write(recordedList());
+            else if (!online)
+                list.remove();
+            list.close();
+            SettingsStore settings(shared);
+            settings.set("updater.autoCheck", true);
+            settings.set("updater.nextCheck", QDateTime::currentSecsSinceEpoch() + 86400);
+            UpdateChecker updates(settings, UpdateFeed::local(QUrl::fromLocalFile(root + QStringLiteral("/feed/"))), version);
+            WhatsNew whatsNew(updates, cacheOf(root));
+            whatsNew.start();
+            const bool done = settled(whatsNew);
+            return std::make_tuple(done, whatsNew.since(), versions(whatsNew));
+        };
+        setHistory(dir.filePath(QStringLiteral("package")), QStringLiteral("0.1.1"), QString());
+        setHistory(dir.filePath(QStringLiteral("appimage")), QStringLiteral("0.1.1"), QString());
+        const auto package = run(QStringLiteral("package"), QStringLiteral("0.1.3"), true);
+        QVERIFY(std::get<0>(package));
+        QCOMPARE(std::get<1>(package), QStringLiteral("0.1.1"));
+        const auto appImage = run(QStringLiteral("appimage"), QStringLiteral("0.1.2"), true);
+        QVERIFY(std::get<0>(appImage));
+        QCOMPARE(std::get<1>(appImage), QStringLiteral("0.1.1"));
+        QCOMPARE(std::get<2>(appImage), QStringList{QStringLiteral("0.1.2")});
+        // The package again, offline: still since 0.1.1, from its cache.
+        const auto again = run(QStringLiteral("package"), QStringLiteral("0.1.3"), false);
+        QCOMPARE(std::get<1>(again), QStringLiteral("0.1.1"));
+        QCOMPARE(std::get<2>(again), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
     }
 
     // The cache holds what its reader takes: past the limit the lowest

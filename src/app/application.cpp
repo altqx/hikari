@@ -698,7 +698,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_updates = std::make_unique<UpdateChecker>(
         *m_settings, options.updateFeed,
         options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.updateEnvironment);
-    m_whatsNew = std::make_unique<WhatsNew>(*m_settings, *m_updates, WhatsNew::cacheFileIn(options.updateEnvironment));
+    m_whatsNew = std::make_unique<WhatsNew>(*m_updates, WhatsNew::cacheFileIn(options.updateEnvironment));
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
                                    : !m_settingsFile.isEmpty()   ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Catalog")

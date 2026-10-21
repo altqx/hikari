@@ -6376,10 +6376,17 @@ private slots:
         options.playbackAudio = false;
         options.appVersion = QStringLiteral("0.1.3");
         options.updateFeed = app::UpdateFeed::local(QUrl::fromLocalFile(root + QStringLiteral("/feed/")));
+        // The copy's cache: 0.1.1 ran last.
+        options.updateEnvironment.cacheDir = root + QStringLiteral("/cache");
+        QVERIFY(QDir().mkpath(options.updateEnvironment.cacheDir));
+        {
+            QFile cache(app::WhatsNew::cacheFileIn(options.updateEnvironment));
+            QVERIFY(cache.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            cache.write(R"({"installed":"0.1.1","since":""})");
+        }
         restartWith(options);
         auto &settings = *application->settingsStore();
         settings.setValue(QStringLiteral("updater.autoCheck"), false);
-        settings.setValue(QStringLiteral("updater.lastVersion"), QStringLiteral("0.1.1"));
         settings.setValue(QStringLiteral("updater.nextCheck"), QDateTime::currentSecsSinceEpoch() + 86400);
         application->updates().reload();
         auto &whatsNew = application->whatsNew();

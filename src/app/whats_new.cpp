@@ -2,7 +2,6 @@
 
 #include "hikari/app/package_kind.h"
 #include "hikari/backends/desktop_handoff.h"
-#include "settings_store.h"
 
 #include <QDateTime>
 #include <QDir>
@@ -174,8 +173,8 @@ QString prepareMarkdown(const QString &markdown)
 
 } // namespace
 
-WhatsNew::WhatsNew(ui::SettingsStore &settings, UpdateChecker &updates, QString cacheFile, QObject *parent)
-    : QObject(parent), m_settings(settings), m_updates(updates), m_cacheFile(std::move(cacheFile))
+WhatsNew::WhatsNew(UpdateChecker &updates, QString cacheFile, QObject *parent)
+    : QObject(parent), m_updates(updates), m_cacheFile(std::move(cacheFile))
 {
     connect(&m_updates, &UpdateChecker::releasesRead, this, &WhatsNew::listRead);
     // The channel, and whether checks are on ("off" or "failed").
@@ -187,12 +186,16 @@ WhatsNew::WhatsNew(ui::SettingsStore &settings, UpdateChecker &updates, QString 
 
 void WhatsNew::start()
 {
+    // The cache's "installed" ran last, its notes from "since": per copy, as
+    // copies sharing the settings can run different versions.
     const QString installed = m_updates.version();
-    m_since = qs(a::whatsNewSince(m_settings.text("updater.lastVersion").toStdString(),
-                                  m_settings.text("updater.notesSince").toStdString(), installed.toStdString()));
-    m_settings.set("updater.lastVersion", installed);
-    m_settings.set("updater.notesSince", m_since);
-    m_known = loadCache();
+    const QJsonObject cache = readCache();
+    const QString lastRun = cache.value(QStringLiteral("installed")).toString();
+    const QString lastSince = cache.value(QStringLiteral("since")).toString();
+    m_since = qs(a::whatsNewSince(lastRun.toStdString(), lastSince.toStdString(), installed.toStdString()));
+    m_known = loadCache(cache);
+    if (lastRun != installed || lastSince != m_since)
+        saveCache(); // the new range, its notes not read yet
     if (!m_known && m_updates.autoCheck())
         read();
     show();
@@ -252,16 +255,21 @@ void WhatsNew::show()
 }
 
 // {"installed", "since", "releases": [{tag, name, published, prerelease,
-// notes}]}: the releases between the two, every channel's.
-bool WhatsNew::loadCache()
+// notes}]}: the version that ran last, the one its notes start after, and
+// the releases between the two, every channel's (none until read).
+QJsonObject WhatsNew::readCache() const
 {
-    m_between.clear();
     if (m_cacheFile.isEmpty())
-        return false;
+        return {};
     QFile file(m_cacheFile);
     if (!file.open(QIODevice::ReadOnly) || file.size() > kMaxCacheBytes)
-        return false;
-    const QJsonObject cache = QJsonDocument::fromJson(file.readAll()).object();
+        return {};
+    return QJsonDocument::fromJson(file.readAll()).object();
+}
+
+bool WhatsNew::loadCache(const QJsonObject &cache)
+{
+    m_between.clear();
     if (cache.value(QStringLiteral("installed")).toString() != m_updates.version() ||
         !cache.value(QStringLiteral("since")).isString() || cache.value(QStringLiteral("since")).toString() != m_since ||
         !cache.value(QStringLiteral("releases")).isArray())
@@ -330,7 +338,10 @@ void WhatsNew::saveCache() const
 {
     if (m_cacheFile.isEmpty())
         return;
-    const QByteArray content = cacheContent(m_updates.version(), m_since, m_between, kMaxCacheBytes);
+    const QByteArray content =
+        m_known ? cacheContent(m_updates.version(), m_since, m_between, kMaxCacheBytes)
+                : QJsonDocument(QJsonObject{{QStringLiteral("installed"), m_updates.version()}, {QStringLiteral("since"), m_since}})
+                      .toJson(QJsonDocument::Compact);
     if (content.isEmpty()) {
         QFile::remove(m_cacheFile);
         return;
