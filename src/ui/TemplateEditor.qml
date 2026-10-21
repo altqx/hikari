@@ -508,8 +508,69 @@ Pane {
                                     return root.controller.colourRuns(textField.text)
                                 }
                                 colours: Theme.syntax
-                                underlines: root.controller.problemRange
-                                underlineColour: Theme.danger
+                            }
+
+                            // The problem's place: a wavy line under it (Qt
+                            // Quick's text draws no wave underline), one
+                            // segment per row it wraps over.
+                            Canvas {
+                                id: problemWave
+                                objectName: "templateProblemWave"
+                                anchors.fill: parent
+                                // [x, y (the row's bottom), width] per row.
+                                property var segments: []
+                                function measure() {
+                                    const out = []
+                                    const range = root.controller.problemRange
+                                    if (range.length === 2 && range[0] < range[1] && range[1] <= textField.length) {
+                                        let row = null
+                                        for (let i = range[0]; i < range[1]; ++i) {
+                                            const at = textField.positionToRectangle(i)
+                                            const after = textField.positionToRectangle(i + 1)
+                                            // The character's right edge: the next cursor, or a
+                                            // character's width at a row's end.
+                                            const right = after.y === at.y ? after.x : at.x + charWidth.advanceWidth("m")
+                                            if (row && row[1] === at.y + at.height)
+                                                row[2] = right - row[0]
+                                            else
+                                                out.push(row = [at.x, at.y + at.height, right - at.x])
+                                        }
+                                    }
+                                    segments = out
+                                }
+                                FontMetrics {
+                                    id: charWidth
+                                    font: textField.font
+                                }
+                                Connections {
+                                    target: root.controller
+                                    function onPreviewChanged() { Qt.callLater(problemWave.measure) }
+                                }
+                                Connections {
+                                    target: textField
+                                    function onContentHeightChanged() { Qt.callLater(problemWave.measure) }
+                                    function onWidthChanged() { Qt.callLater(problemWave.measure) }
+                                    function onTextChanged() { Qt.callLater(problemWave.measure) }
+                                }
+                                Connections {
+                                    target: Theme
+                                    function onChanged() { problemWave.requestPaint() }
+                                }
+                                onSegmentsChanged: requestPaint()
+                                onPaint: {
+                                    const ctx = getContext("2d")
+                                    ctx.reset()
+                                    ctx.strokeStyle = Theme.danger
+                                    ctx.lineWidth = 1
+                                    for (const s of segments) {
+                                        const y = s[1] - 1
+                                        ctx.beginPath()
+                                        ctx.moveTo(s[0], y)
+                                        for (let x = s[0], up = true; x < s[0] + s[2]; x += 2, up = !up)
+                                            ctx.lineTo(Math.min(x + 2, s[0] + s[2]), up ? y - 2 : y)
+                                        ctx.stroke()
+                                    }
+                                }
                             }
                         }
                     }

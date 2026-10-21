@@ -3,8 +3,7 @@
 // The Line editor's text marks, attached to a TextArea's textDocument:
 // E4's text colours (legacy TextEditor::DrawFieldD2D draws each token in its
 // EDITOR_* colour, core::syntax::colourRuns) and F3's spelling marks (an
-// EDITOR_SPELLCHECKER background behind each TextData error range). KE2:
-// the Template editor's problem, a wavy underline under its place.
+// EDITOR_SPELLCHECKER background behind each TextData error range).
 
 #include <QColor>
 #include <QObject>
@@ -30,9 +29,6 @@ class EditorHighlighter : public QObject {
     // field draws it).
     Q_PROPERTY(QVariantList runs READ runs WRITE setRuns NOTIFY runsChanged)
     Q_PROPERTY(QVariantList colours READ colours WRITE setColours NOTIFY coloursChanged)
-    // Wavy underlines: flat [start, end) pairs, in `underlineColour`.
-    Q_PROPERTY(QVariantList underlines READ underlines WRITE setUnderlines NOTIFY underlinesChanged)
-    Q_PROPERTY(QColor underlineColour READ underlineColour WRITE setUnderlineColour NOTIFY underlinesChanged)
 
 public:
     explicit EditorHighlighter(QObject *parent = nullptr);
@@ -48,10 +44,6 @@ public:
     void setRuns(const QVariantList &runs);
     QVariantList colours() const { return m_colours; }
     void setColours(const QVariantList &colours);
-    QVariantList underlines() const { return m_underlines; }
-    void setUnderlines(const QVariantList &underlines);
-    QColor underlineColour() const { return m_underlineColour; }
-    void setUnderlineColour(const QColor &colour);
 
     // What the document's layout carries now (tests and accessibility
     // checks read it): the spelling marks as flat [start, end) pairs with the
@@ -59,8 +51,6 @@ public:
     // triples.
     Q_INVOKABLE QVariantList appliedRanges() const;
     Q_INVOKABLE QVariantList appliedColours() const;
-    // The wavy underlines as flat [start, end) pairs.
-    Q_INVOKABLE QVariantList appliedUnderlines() const;
 
 signals:
     void documentChanged();
@@ -68,7 +58,6 @@ signals:
     void colourChanged();
     void runsChanged();
     void coloursChanged();
-    void underlinesChanged();
 
 private:
     class Highlighter;
@@ -81,8 +70,6 @@ private:
     QColor m_colour = QColor(0xFF, 0x69, 0x68); // legacy EDITOR_SPELLCHECKER (light)
     QVariantList m_runs;
     QVariantList m_colours;
-    QVariantList m_underlines;
-    QColor m_underlineColour;
     Highlighter *m_highlighter = nullptr;
     bool m_rehighlightPending = false;
 };
