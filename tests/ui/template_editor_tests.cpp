@@ -1421,6 +1421,31 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // `template line karaoke` is a template the stock templater also runs as
+    // a karaoke Line: a new Actor on it asks first too.
+    void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord both;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                both = *l;
+        both.comment = true;
+        both.effect = u8"template line karaoke";
+        both.text = u8"{\\bord2}";
+        both.actor = u8"plain";
+        const auto id = doc.appendLine(both);
+        QVERIFY(id);
+        QVERIFY(application::templateKindOf(both) && application::isKaraokeLine(both));
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*id, [](core::LineRecord &l) { l.actor = u8"!_G.marker = 1!"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));

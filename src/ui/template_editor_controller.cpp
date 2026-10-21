@@ -859,7 +859,7 @@ std::set<std::string> TemplateEditorController::sourceFields() const
     std::set<std::string> out;
     if (const auto *doc = document())
         for (const auto *l : doc->lines())
-            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l)) {
+            if (application::isKaraokeLine(*l)) { // a `template line karaoke` too
                 // The pairing: the Style picks the templates the Actor goes
                 // into ($actor), so a trusted Actor under another Style, or a
                 // Style's name as an Actor, is new.
