@@ -874,50 +874,88 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
         }
         std::fill(labels.begin() + group.first, labels.begin() + group.last + 1, label);
     }
+    // Then a run under the translator's own formatting (Ctrl+B over a placed
+    // italic run): its values among more, the rest staying the body's. Read
+    // without these if they don't come back as the translation.
+    auto under = labels;
+    for (const auto &group : groups) {
+        if (under[group.first] != -1 || segments[group.first].differs.empty())
+            continue;
+        const auto &differs = segments[group.first].differs;
+        for (std::size_t r = 0; r < tags.runs.size(); ++r) {
+            const bool within = std::ranges::all_of(tags.runs[r].differs, [&](const auto &value) {
+                const auto it = differs.find(value.first);
+                return it != differs.end() && it->second == value.second;
+            });
+            if (!used[r] && within) {
+                used[r] = true;
+                std::fill(under.begin() + group.first, under.begin() + group.last + 1, tags.runs[r].number);
+                break;
+            }
+        }
+    }
 
     // Drop each run's tags where the composer would write them, noting where.
-    TranslationDraft draft;
-    std::vector<std::size_t> boundary; // before each segment, and at the end
-    std::vector<const Piece *> pending;
-    auto settle = [&](int before, int after, bool atEnd) {
-        before = std::max(before, 0);
-        after = std::max(after, 0);
-        const auto expected = before != after ? transition(tags, before, after, atEnd) : std::u16string();
-        bool found = expected.empty();
-        std::size_t at = draft.body.size();
-        for (const Piece *block : pending) {
-            const auto raw = inner.substr(block->rawStart, block->rawEnd - block->rawStart);
-            if (!found && raw.substr(1, raw.size() - 2) == expected) {
-                found = true;
-                at = draft.body.size();
+    auto read = [&](const std::vector<int> &runOf) -> std::optional<TranslationDraft> {
+        TranslationDraft draft;
+        std::vector<std::size_t> boundary; // before each segment, and at the end
+        std::vector<const Piece *> pending;
+        auto settle = [&](int before, int after, bool atEnd) {
+            before = std::max(before, 0);
+            after = std::max(after, 0);
+            auto expected = before != after ? transition(tags, before, after, atEnd) : std::u16string();
+            // The composer ends a run at the body's end only past the body's own
+            // last tags: before one of them (\b0 after Ctrl+B) it ends as inside.
+            if (atEnd && before != after) {
+                const auto inside = transition(tags, before, after, false);
+                for (std::size_t i = 0; i + 1 < pending.size(); ++i) {
+                    const auto raw = inner.substr(pending[i]->rawStart, pending[i]->rawEnd - pending[i]->rawStart);
+                    if (raw.substr(1, raw.size() - 2) == inside) {
+                        expected = inside;
+                        break;
+                    }
+                }
+            }
+            bool found = expected.empty();
+            std::size_t at = draft.body.size();
+            for (const Piece *block : pending) {
+                const auto raw = inner.substr(block->rawStart, block->rawEnd - block->rawStart);
+                if (!found && raw.substr(1, raw.size() - 2) == expected) {
+                    found = true;
+                    at = draft.body.size();
+                    continue;
+                }
+                draft.body += raw;
+            }
+            boundary.push_back(at);
+            pending.clear();
+            return found;
+        };
+        int previous = 0;
+        std::size_t s = 0;
+        for (const auto &piece : tokens.pieces) {
+            if (piece.block) {
+                pending.push_back(&piece);
                 continue;
             }
-            draft.body += raw;
+            if (!settle(previous, runOf[s], false))
+                return std::nullopt;
+            draft.body += inner.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
+            previous = runOf[s++];
         }
-        boundary.push_back(at);
-        pending.clear();
-        return found;
+        if (!settle(previous, 0, true))
+            return std::nullopt;
+        for (const auto &group : groups)
+            if (runOf[group.first] > 0)
+                draft.placements.push_back({boundary[group.first], boundary[group.last + 1], runOf[group.first]});
+        if (composeTranslation(tags, draft) != translation)
+            return std::nullopt;
+        return draft;
     };
-    int previous = 0;
-    std::size_t s = 0;
-    for (const auto &piece : tokens.pieces) {
-        if (piece.block) {
-            pending.push_back(&piece);
-            continue;
-        }
-        if (!settle(previous, labels[s], false))
-            return plain;
-        draft.body += inner.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
-        previous = labels[s++];
-    }
-    if (!settle(previous, 0, true))
-        return plain;
-    for (const auto &group : groups)
-        if (labels[group.first] > 0)
-            draft.placements.push_back({boundary[group.first], boundary[group.last + 1], labels[group.first]});
-    if (composeTranslation(tags, draft) != translation)
-        return plain;
-    return draft;
+    if (under != labels)
+        if (auto draft = read(under))
+            return *draft;
+    return read(labels).value_or(plain);
 }
 
 void shiftPlacements(std::vector<RunPlacement> &placements, std::size_t start, std::size_t end,

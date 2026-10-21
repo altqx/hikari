@@ -221,6 +221,23 @@ TEST(TagTransfer, ATranslationWithItsOwnFormattingKeepsIt)
     EXPECT_EQ(u8(composeTranslation(tags, read)), "{\\an8}x {\\u1}y{\\u0}");
 }
 
+TEST(TagTransfer, ARunUnderTheTranslatorsOwnFormattingStaysPlaced)
+{
+    // Ctrl+B over a placed italic run: the bold is the body's, the run stays.
+    const auto open = readOriginalTags(u"Wall {\\i1}high");
+    expectRoundTrip(open, draft(u"Mur {\\b1}wysoki{\\b0}", {{9, 15, 1}}));
+    EXPECT_EQ(u8(composeTranslation(open, draft(u"Mur {\\b1}wysoki{\\b0}", {{9, 15, 1}}))),
+              "Mur {\\b1}{\\i1}wysoki{\\i}{\\b0}");
+    expectRoundTrip(open, draft(u"{\\b1}Mur wysoki{\\b0}", {{9, 15, 1}}));
+    // Tags of the translator's own that aren't the run's: still read, the
+    // other runs placed and that text the body's.
+    const auto tags = readOriginalTags(u"a {\\i1}b{\\i0} c {\\u1}d{\\u0}");
+    const std::u16string own = composeTranslation(tags, draft(u"x y {\\i1\\b1}z{\\i0\\b0}", {{2, 3, 2}}));
+    const auto read = readTranslation(tags, own);
+    EXPECT_EQ(u8(read.body), "x y {\\i1\\b1}z{\\i0\\b0}") << u8(own);
+    EXPECT_EQ(read.placements, (std::vector<RunPlacement>{{2, 3, 2}})) << u8(own);
+}
+
 TEST(TagTransfer, DifferentCarriedTagsAreLeftAlone)
 {
     const auto tags = readOriginalTags(u"{\\an8}Hello");
@@ -340,6 +357,8 @@ TEST(TagTransfer, ANamedResetTakesThatStylesValues)
     EXPECT_EQ(readOriginalTags(u"a{\\rAlt}b{\\b1}c{\\r}d", &plain).runs.size(), 2u);
 }
 
+// A leading named reset gives the Line another Style's values: it is what
+// ends a run inside, and a trailing reset undoes it.
 TEST(TagTransfer, ALeadingNamedResetEndsTheRunsInside)
 {
     StyleValues plain, alt;
