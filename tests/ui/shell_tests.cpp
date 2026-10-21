@@ -17353,6 +17353,24 @@ private slots:
             application->selectLine(third.value);
             QTRY_VERIFY(session->selection().active == third);
         }
+        // With "Change all scale tags" each sample is written from the
+        // text the scrub started with (Codex on #293: not compounded on the
+        // last sample's), and the release writes the value it shows.
+        {
+            tools.setOption(QStringLiteral("changeAll"), 1);
+            QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("110"));
+            steps = session->historySize();
+            QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, y0);
+            QTest::mouseMove(window, y0 + QPoint(10, 0));
+            QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("120"));
+            QTest::mouseMove(window, y0 + QPoint(20, 0));
+            QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("130"));
+            QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, y0 + QPoint(20, 0));
+            QTRY_COMPARE(session->historySize(), steps + 1);
+            QVERIFY2(thirdText().contains(QStringLiteral("\\fscy130")), qPrintable(thirdText()));
+            QTRY_COMPARE(field("fscy")->property("text").toString(), QStringLiteral("130"));
+            tools.setOption(QStringLiteral("changeAll"), 0);
+        }
 
         // A narrow panel wraps the groups onto more lines; the picker stays.
         // (The window is at least 800 wide, the Video panel all of it here:
