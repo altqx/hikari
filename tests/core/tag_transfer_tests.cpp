@@ -340,6 +340,22 @@ TEST(TagTransfer, ANamedResetTakesThatStylesValues)
     EXPECT_EQ(readOriginalTags(u"a{\\rAlt}b{\\b1}c{\\r}d", &plain).runs.size(), 2u);
 }
 
+TEST(TagTransfer, ALeadingNamedResetEndsTheRunsInside)
+{
+    StyleValues plain, alt;
+    plain.name = u8"Default";
+    alt.name = u8"Alt";
+    alt.italic = true;
+    const std::vector<StyleValues> styles{plain, alt};
+    const auto tags = readOriginalTags(u"{\\rAlt}a{\\i0}b", &plain, styles);
+    EXPECT_EQ(u8(tags.leading), "{\\rAlt}");
+    ASSERT_EQ(tags.runs.size(), 1u);
+    EXPECT_EQ(u8(tags.runs[0].text), "b");
+    EXPECT_EQ(u8(composeTranslation(tags, draft(u"x y z", {{2, 3, 1}}))), "{\\rAlt}x {\\i0}y{\\rAlt} z");
+    const auto trailing = readOriginalTags(u"{\\rAlt}a{\\r}", &plain, styles);
+    EXPECT_EQ(u8(trailing.trailing), "{\\r}");
+}
+
 TEST(TagTransfer, ManyTransformsStayCheapAndTooManyTagsCarryNothing)
 {
     std::u16string many = u"{\\an8}a";

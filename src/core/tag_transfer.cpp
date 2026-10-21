@@ -8,6 +8,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <optional>
+#include <ranges>
 #include <set>
 
 namespace hikari::core {
@@ -703,6 +704,15 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             }
             if (!budget.spend(apply(state, tag, out.defaults, out.named, &history)))
                 return tooMuch();
+            // A leading reset sets every value of the state it gives (a
+            // named one another Style's): it is what restores them after a
+            // run, and what a trailing reset undoes.
+            if (isLeading && effect.kind == Kind::Reset) {
+                if (!budget.spend(unitsOf(state)))
+                    return tooMuch();
+                for (const auto &component : state | std::views::keys)
+                    leadingSetters[component] = {tag.order, tag.text};
+            }
         }
     }
     if (!baseSet)
