@@ -93,7 +93,7 @@ ApplicationWindow {
         const b = root.tagButtons.pressed(index)
         if (b.tag === undefined || b.tag.length === 0)
             return false
-        let field = translationText.activeFocus ? translationText : lineText
+        let field = root.editedField()
         if (b.type === 2)
             field = root.editor.translationMode && translationText.text.length > 0 ? translationText : lineText
         return root.editor.applyTagButton(field.role, b.tag, b.type, field.selectionStart, field.selectionEnd)
@@ -242,6 +242,10 @@ ApplicationWindow {
         dockingArea.addDockWidget(videoDock, KDDW.KDDockWidgets.Location_OnTop, gridDock, Qt.size(640, 520))
         dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnRight, videoDock)
         dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 272))
+        // TM1: the Original text panel's place, between the Audio panel and
+        // the Line editor; it shows while the mode is on (placeOriginal).
+        dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
+        originalDock.close()
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
@@ -265,6 +269,44 @@ ApplicationWindow {
         }
     }
 
+    // TM1 (#232): the Original text panel follows the editing target's
+    // Translation mode, as the Reference tray follows the comparison: while
+    // the mode is on it opens where the arrangement keeps its place (above
+    // the Line editor in one that never had it), and it closes when the mode
+    // goes off. Closed by hand, it stays closed until the mode or the
+    // arrangement changes, and the Line editor shows the Original text then.
+    readonly property bool originalShown: root.editor.translationMode && originalDock.isOpen
+    readonly property bool translationMode: root.editor.translationMode
+    onTranslationModeChanged: root.placeOriginal()
+    function placeOriginal() {
+        if (!root.arrangementSettled)
+            return
+        if (!root.editor.translationMode) {
+            if (originalDock.isOpen)
+                originalDock.close()
+        } else if (!originalDock.isOpen) {
+            root.openOriginal()
+        }
+    }
+    function openOriginal() {
+        if (Docking.hasPlace("Original"))
+            originalDock.open()
+        else
+            root.addOriginal()
+    }
+    // Where an arrangement that never had the panel (an older saved layout)
+    // puts it: above the Line editor, in the Line editor's own window when
+    // that floats (placePanel), or on the right without one.
+    function addOriginal() {
+        if (editorDock.isOpen && editorDock.isFloating)
+            editorDock.addDockWidgetToContainingWindow(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock,
+                                                       Qt.size(0, 140))
+        else if (editorDock.isOpen)
+            dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
+        else
+            dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(400, 0))
+    }
+
     // AM1: a macro started while the Automation panel is closed opens it
     // (its run status holds Cancel and the log), without taking the focus.
     readonly property bool automationRunning: root.automation.running
@@ -276,11 +318,11 @@ ApplicationWindow {
     }
 
     // Major panels in F6 order; a hidden panel is skipped.
-    readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel, timingPanel,
-                                          searchPanel, automationPanel]
+    readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
+                                          timingPanel, searchPanel, automationPanel]
     // D1: their docks, in the same order.
-    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock,
-                                     automationDock]
+    readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
+                                     searchDock, automationDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -345,6 +387,16 @@ ApplicationWindow {
                 referenceDock.close()
             if (!videoDock.isOpen && root.video.playing)
                 root.video.pause()
+            // TM1: once the editor is the shown tab's: a tab's arrangement
+            // is swapped in before the editor leaves the tab before.
+            Qt.callLater(root.placeOriginal)
+        }
+        // TM1: a preset that carries a mode (WorkspaceLayoutController::presetMode).
+        // Translation asks to turn the editing target's Translation mode on
+        // and leaves it on when another arrangement is chosen.
+        function onPresetModeChosen(mode) {
+            if (mode === "Translation" && root.app.translationQuestionDue())
+                root.openInMainWindow(translationModeQuestion)
         }
     }
 
@@ -379,12 +431,14 @@ ApplicationWindow {
     function focusedDock() {
         const w = root.workspaceLayout.focusWindow
         const i = panels.findIndex(p => p.activeFocus && p.Window.window === w)
-        return dockList[i >= 0 ? i : 3]
+        return i >= 0 ? dockList[i] : gridDock
     }
 
     // D1 keyboard placement: kind 0 tab with, 1 left of, 2 above, 3 right of,
     // 4 below, 5 float. The moved panel keeps the focus.
     function placePanel(dock, kind, target) {
+        if (!root.panelAvailable(dock))
+            return false
         if (kind === 5) {
             if (!dock.isFloating)
                 root.setPanelFloating(dock, true)
@@ -423,8 +477,18 @@ ApplicationWindow {
         if (root.app.openEditorFromFullScreen())
             root.showPanel(editorDock)
     }
+    // TM1: the Original text panel has no content outside translation mode,
+    // so nothing opens it then.
+    function panelAvailable(dock) {
+        return dock !== originalDock || root.editor.translationMode
+    }
     function showPanel(dock) {
-        dock.open()
+        if (!root.panelAvailable(dock))
+            return
+        if (dock === originalDock)
+            root.openOriginal()
+        else
+            dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
         dock.raise()
         root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
@@ -624,6 +688,30 @@ ApplicationWindow {
 
     // The panel waiting for its window's activation (focusPanel).
     property var pendingFocus: null
+
+    // TM1: a question of the main window's (a dialog in its overlay) asked
+    // from a floating panel's window, the Translation mode hotkey's say: the
+    // main window comes up and is activated first, so the question shows
+    // above that window and takes the keys.
+    function openInMainWindow(dialog) {
+        if (root.workspaceLayout.focusWindow !== root) {
+            root.raise()
+            root.requestActivate()
+        }
+        dialog.open()
+    }
+
+    // TM1: the text field the Line editor's commands act on. With the
+    // Original text panel in a window of its own each window keeps its own
+    // focus item, so the Translated text gets its active focus back whenever
+    // the main window is activated, by a click on a tag button too (an
+    // activation or a popup's closing, as the platform reports it); the
+    // field last focused for any other reason is the one being edited.
+    property Item lastTextField: null
+    function editedField() {
+        return translationText.visible && root.lastTextField === translationText
+               && (lineText.activeFocus || translationText.activeFocus) ? translationText : lineText
+    }
     Connections {
         target: root.workspaceLayout
         function onFocusWindowChanged() {
@@ -653,8 +741,14 @@ ApplicationWindow {
     // Focus a panel, activating its window first when that is not the focus
     // window (a floating panel, or the main window from one). Activation is
     // asynchronous on X11 and Wayland, and the window gives the focus to its
-    // own item when it activates, so the panel takes it again then.
+    // own item when it activates, so the panel takes it again then. A panel
+    // behind another tab of its group (TM1: the Original text and the Line
+    // editor tabbed together) comes to the front first.
     function focusPanel(panel, reason) {
+        const owner = root.panelOf(panel)
+        const dock = owner ? root.dockList[root.panels.indexOf(owner)] : null
+        if (dock && dock.isOpen && !owner.visible)
+            dock.raise()
         const w = panel.Window.window
         root.pendingFocus = null
         if (w && root.workspaceLayout.focusWindow !== w) {
@@ -1675,6 +1769,7 @@ ApplicationWindow {
                             iconRole: "show"
                             objectName: "panelShow" + modelData.uniqueName
                             text: qsTr("Show")
+                            enabled: root.panelAvailable(modelData)
                             onTriggered: root.showPanel(modelData)
                         }
                         ShellMenuItem {
@@ -1805,6 +1900,34 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
+            MenuSeparator {}
+            // TM1 (#232): the editing target's Translation mode, which the
+            // Line editor's "Translator mode" check box switched in legacy
+            // (TM1-translator-check-removed). On is one "Turning on translator
+            // mode" step; off asks first (TranslationModeOffConfirm).
+            ShellMenuItem {
+                help: root.app.translationHint.length > 0 ? root.app.translationHint
+                    : qsTranslate("HikariSub.Translation", "Translator mode displays and saves both foreign text and translation text")
+                iconRole: "translation-mode"
+                objectName: "translationModeMenuItem"
+                action: Action {
+                    id: translationModeAction
+                    text: qsTranslate("HikariSub.Translation", "Translation mode")
+                    checkable: true
+                    checked: root.editor.translationMode
+                    enabled: root.shell.hasEditingTarget && (root.editor.translationMode || root.app.translatorModeAvailable)
+                    onToggled: {
+                        if (!root.hotkeyGesture("GLOBAL_TRANSLATION_MODE")) {
+                            if (checked)
+                                root.app.turnOnTranslationMode()
+                            else
+                                root.openInMainWindow(translationModeOffConfirm)
+                        }
+                        checked = Qt.binding(() => root.editor.translationMode)
+                    }
+                }
+            }
+            MenuSeparator {}
             // E6: legacy SubsMenu's last item, "Hides tags in ASS and MDVD"
             // (HikariSubFrame.cpp:344-345): the Grid's switch.
             ShellMenuItem {
@@ -1896,6 +2019,9 @@ ApplicationWindow {
         id: field
         required property int role
         readonly property string shown: role === 0 ? root.editor.text : root.editor.translationText
+        // TM1: the field Tab or Shift+Tab reaches across panels, when set.
+        property Item tabNext: null
+        property Item tabPrevious: null
         readOnly: !root.editor.editable
         wrapMode: TextEdit.Wrap
         selectByMouse: true
@@ -1938,10 +2064,11 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
-            // E5: Moving tags gives the Translated field the focus.
+            // E5: Moving tags gives the Translated field the focus, in its
+            // window (the Original text panel may float in another).
             function onFieldFocusRequested(role) {
                 if (role === field.role)
-                    field.forceActiveFocus()
+                    root.focusPanel(field, Qt.OtherFocusReason)
             }
         }
         // F3: the spell-checked field (legacy TextEdit: the Translated one in
@@ -2105,7 +2232,12 @@ ApplicationWindow {
         readonly property int compositionKeyWindow: 200
         property double compositionEndedAt: -1
         onInputMethodComposingChanged: compositionEndedAt = inputMethodComposing ? -1 : Date.now()
-        onActiveFocusChanged: if (!activeFocus) compositionEndedAt = -1
+        onActiveFocusChanged: {
+            if (!activeFocus)
+                compositionEndedAt = -1
+            else if (focusReason !== Qt.ActiveWindowFocusReason && focusReason !== Qt.PopupFocusReason)
+                root.lastTextField = field
+        }
         onPressed: compositionEndedAt = -1
         function compositionKey(event) {
             const mods = event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)
@@ -2153,10 +2285,21 @@ ApplicationWindow {
         // focus). Its window change flag (Ctrl) reached EditBox's
         // HikariContainer::OnNavigation first (HikariPanel.cpp:23), which
         // ignores it, so Ctrl+Tab and Ctrl+Shift+Tab move the same way.
+        // TM1: from the Original text panel, Tab goes on to the Translated
+        // text, and Shift+Tab comes back, as in legacy's one EditBox. The
+        // other panel may float in its own window, which focusPanel activates,
+        // or be the hidden tab of the same group, which comes to the front.
         function tabOut(forward) {
+            const reason = forward ? Qt.TabFocusReason : Qt.BacktabFocusReason
+            const linked = forward ? field.tabNext : field.tabPrevious
+            const dock = linked === translationText ? editorDock : linked === lineText ? originalDock : null
+            if (dock && dock.isOpen) {
+                root.focusPanel(linked, reason)
+                return
+            }
             const next = field.nextItemInFocusChain(forward)
             if (next && next !== field)
-                next.forceActiveFocus(forward ? Qt.TabFocusReason : Qt.BacktabFocusReason)
+                next.forceActiveFocus(reason)
         }
         // Undo and Redo go through the draft first (editor-shortcuts.md):
         // the field takes Ctrl+Z, Ctrl+Y and Ctrl+Shift+Z whatever the
@@ -2613,7 +2756,7 @@ ApplicationWindow {
                         onClicked: {
                             if (root.hotkeyGesture("GLOBAL_PLAY_ACTUAL_LINE", 0, "bitmap"))
                                 return
-                            lineText.forceActiveFocus()
+                            root.focusPanel(lineText, Qt.OtherFocusReason) // TM1: maybe in a floating panel
                             root.video.playActualLine()
                         }
                     }
@@ -3975,6 +4118,51 @@ ApplicationWindow {
             }
         }
 
+        // TM1 (#232): the Original text panel. In translation mode the Line's
+        // Original text field (lineText) is here, and the Line editor's field
+        // is the Translated text; the translation buttons and toggles are in
+        // its header (OriginalTextTools). It follows the editing target's
+        // mode (placeOriginal).
+        KDDW.DockWidget {
+            id: originalDock
+            objectName: "originalDock"
+            uniqueName: "Original"
+            title: qsTranslate("HikariSub.Translation", "Original text")
+            Panel {
+                id: originalPanel
+                anchors.fill: parent
+                objectName: "originalPanel"
+                dockName: "Original"
+                title: shell.hasEditingTarget ? qsTranslate("HikariSub.Translation", "Original text: %1").arg(shell.editingTitle)
+                                              : qsTranslate("HikariSub.Translation", "Original text")
+                accessibleName: qsTranslate("HikariSub.Translation", "Original text")
+                minimumBodySize: Qt.size(160, lineText.Layout.minimumHeight)
+                // EditBox's accelerator table covered both text fields: the
+                // Editor bindings the field does not take run here too.
+                Keys.onShortcutOverride: event => event.accepted = editorPanel.panelAction(event) !== ""
+                Keys.onPressed: event => {
+                    const action = editorPanel.panelAction(event)
+                    if (action === "")
+                        return
+                    root.runEditorHotkey(action, lineText)
+                    event.accepted = true
+                }
+                Item {
+                    id: originalSlot
+                    objectName: "originalSlot"
+                    anchors.fill: parent
+                }
+                OriginalTextTools {
+                    id: originalTools
+                    app: root.app
+                    editor: root.editor
+                    shellRoot: root
+                    original: lineText
+                    translated: translationText
+                }
+            }
+        }
+
         KDDW.DockWidget {
             id: editorDock
             objectName: "editorDock"
@@ -3992,7 +4180,8 @@ ApplicationWindow {
                 // the tag buttons and a line of each text field shown: the
                 // rest scrolls.
                 minimumBodySize: Qt.size(Math.max(tagRow.implicitWidth, editorCounters.implicitWidth),
-                                         tagRow.implicitHeight + editorColumn.spacing + lineText.Layout.minimumHeight
+                                         tagRow.implicitHeight
+                                         + (lineTextSlot.visible ? editorColumn.spacing + lineText.Layout.minimumHeight : 0)
                                          + (translationText.visible ? editorColumn.spacing
                                             + translationText.Layout.minimumHeight : 0))
                 title: shell.hasEditingTarget ? qsTranslate("HikariSub.Editor", "Line editor: %1").arg(shell.editingTitle)
@@ -4014,7 +4203,7 @@ ApplicationWindow {
                     const action = panelAction(event)
                     if (action === "")
                         return
-                    root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+                    root.runEditorHotkey(action, root.editedField())
                     event.accepted = true
                 }
                 // A dock shorter than the Line editor's rows (translation mode
@@ -4151,7 +4340,7 @@ ApplicationWindow {
                                     onClicked: {
                                         if (root.hotkeyGesture(modelData.symbol, 2, true))
                                             return
-                                        const field = translationText.activeFocus ? translationText : lineText
+                                        const field = root.editedField()
                                         root.editor.toggleTagIn(field.role, modelData.tag, field.selectionStart, field.selectionEnd)
                                     }
                                 }
@@ -4168,7 +4357,7 @@ ApplicationWindow {
                                 onClicked: {
                                     if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                         return
-                                    const field = translationText.activeFocus ? translationText : lineText
+                                    const field = root.editedField()
                                     fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
                                 }
                             }
@@ -4191,20 +4380,22 @@ ApplicationWindow {
                                     onClicked: {
                                         if (root.hotkeyGesture(modelData.symbol, 2, true))
                                             return
-                                        root.colourClick(modelData.number, true, translationText.activeFocus ? translationText : lineText)
+                                        root.colourClick(modelData.number, true, root.editedField())
                                     }
                                     // Y7: the right click (wxEVT_RIGHT_UP, EditBox.cpp:184-196).
                                     TapHandler {
                                         acceptedButtons: Qt.RightButton
                                         onTapped: if (parent.enabled) root.colourClick(parent.modelData.number, false,
-                                                                                    translationText.activeFocus ? translationText : lineText)
+                                                                                    root.editedField())
                                     }
                                 }
                             }
                             // E4: Text position (legacy Ban, after the colours).
                             AlignmentChoice {
                                 editor: root.editor
-                                onChosen: (root.editor.translationMode && root.editor.translationText.length ? translationText : lineText).forceActiveFocus()
+                                // TM1: the Original text may be in its own panel, floating or a hidden tab.
+                                onChosen: root.focusPanel(root.editor.translationMode && root.editor.translationText.length ? translationText : lineText,
+                                                          Qt.OtherFocusReason)
                             }
                             // E2: custom tag buttons. LE5: a button without a tag
                             // opens its popover; the right click its menu.
@@ -4304,11 +4495,9 @@ ApplicationWindow {
                             // strip for Settings > Editor and GLOBAL_EDITOR_HIDE_TAGS
                             // (Subtitles > "Hide tags in the line editor").
                         }
-                        // E5: legacy BoxSizer5, the row under the tag buttons
-                        // that holds "Translator mode" (EditBox.cpp:233-239, 308).
-                        RowLayout {
-                            TranslatorModeCheck { app: root.app; editor: root.editor }
-                        }
+                        // TM1-translator-check-removed: legacy's "Translator mode"
+                        // check box (BoxSizer5, EditBox.cpp:233-239, 308) is
+                        // Subtitles > Translation mode and the Translation preset.
 
                         // E4: Wraps, characters per second and Time/Frames (legacy BoxSizer5).
                         LineCounters {
@@ -4317,28 +4506,48 @@ ApplicationWindow {
                             Layout.fillWidth: true
                         }
 
-                        RoleField {
-                            id: lineText
-                            objectName: "lineText"
-                            role: 0
-                            focus: true
-                            Accessible.name: root.editor.translationMode ? qsTranslate("HikariSub.Editor", "Original text") : qsTranslate("HikariSub.Editor", "Line text")
+                        // TM1: the Line's text field, the Original text in
+                        // translation mode. While the Original text panel shows,
+                        // the field is there (root.originalShown) and the Line
+                        // editor's text field is the Translated text.
+                        Item {
+                            id: lineTextSlot
+                            objectName: "lineTextSlot"
+                            visible: !root.originalShown
+                            Layout.fillWidth: true
+                            Layout.fillHeight: true
+                            Layout.minimumHeight: lineText.Layout.minimumHeight
+                            implicitWidth: lineText.implicitWidth
+                            implicitHeight: lineText.implicitHeight
+                            RoleField {
+                                id: lineText
+                                objectName: "lineText"
+                                parent: root.originalShown ? originalSlot : lineTextSlot
+                                anchors.fill: parent
+                                role: 0
+                                focus: true
+                                tabNext: root.originalShown ? translationText : null
+                                Accessible.name: root.editor.translationMode ? qsTranslate("HikariSub.Editor", "Original text") : qsTranslate("HikariSub.Editor", "Line text")
+                            }
                         }
                         RoleField {
                             id: translationText
                             objectName: "translationText"
                             role: 1
                             visible: root.editor.translationMode
+                            tabPrevious: root.originalShown ? lineText : null
                             Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
                         }
                         // Legacy translation-mode buttons (EDITBOX_PASTE_*,
                         // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
                         // They wrap: a narrow editor, a larger font or longer
                         // translated labels must not push them past the panel's
-                        // edge, out of reach.
+                        // edge, out of reach. TM1: they are the Original text
+                        // panel's header (OriginalTextTools) while it shows;
+                        // here only while it is closed, with the Original text.
                         Flow {
                             objectName: "translationButtons"
-                            visible: root.editor.translationMode
+                            visible: root.editor.translationMode && !root.originalShown
                             Layout.fillWidth: true
                             spacing: 5
                             Button {
@@ -4916,6 +5125,7 @@ ApplicationWindow {
             Docking.setPanelHeader("Grid", true, null)
             Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
             Docking.setPanelHeader("Search", true, null)
+            Docking.setPanelHeader("Original", true, originalTools) // TM1
             root.defaultLayout()
         }
     }
@@ -4934,6 +5144,7 @@ ApplicationWindow {
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
         root.workspaceLayout.restoreSaved()
+        root.placeOriginal() // TM1: a TLMode file opened before the first frame
         Docking.guardClose(root, root.admitClose)
         // Decision 63: the window is never smaller than the docked layout's
         // minimum, so no docked panel is cut off past its edge.
@@ -5371,6 +5582,16 @@ ApplicationWindow {
         app: root.app
         anchors.centerIn: parent
     }
+    // TM1: the Translation preset's question and Translation mode's turn-off
+    // confirmation (Subtitles > Translation mode).
+    TranslationModeQuestion {
+        id: translationModeQuestion
+        app: root.app
+    }
+    TranslationModeOffConfirm {
+        id: translationModeOffConfirm
+        app: root.app
+    }
 
     // V4: VIDEO_ASPECT_RATIO.
     AspectRatioDialog {
@@ -5672,13 +5893,14 @@ ApplicationWindow {
                 model: root.dockList
                 textRole: "title"
                 displayText: placementWindow.visible && currentIndex >= 0 ? root.dockList[currentIndex].title : ""
-                currentIndex: 3 // the Grid
+                currentIndex: root.dockList.indexOf(gridDock)
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Next to panel")
             }
             Item { Layout.fillWidth: true }
             Button {
                 objectName: "placementMove"
                 text: qsTranslate("HikariSub.Workspace", "Move")
+                enabled: root.panelAvailable(root.dockList[placementPanel.currentIndex])
                 onClicked: {
                     root.placePanel(root.dockList[placementPanel.currentIndex], placementKind.currentIndex,
                                     root.dockList[placementTarget.currentIndex])
@@ -6700,6 +6922,7 @@ ApplicationWindow {
         GLOBAL_ABOUT: aboutAction, GLOBAL_HELPERS: creditsAction, GLOBAL_HELP: websiteAction,
         GLOBAL_ANSI: reportIssueAction, GLOBAL_CHECK_FOR_UPDATES: checkForUpdatesAction,
         GLOBAL_EDITOR_HIDE_TAGS: hideEditorTagsAction, // LE3
+        GLOBAL_TRANSLATION_MODE: translationModeAction, // TM1
         // P6: OnPageClose (the rewrite's File > Close).
         GLOBAL_CLOSE_PAGE: closeAction
     }
@@ -6768,7 +6991,7 @@ ApplicationWindow {
     // HikariSubFrame.cpp:1802-1814). A Global action the rewrite does not
     // have yet still takes its key, as legacy's accelerator does.
     function globalHotkey(symbol) {
-        const field = translationText.activeFocus ? translationText : lineText
+        const field = root.editedField()
         if (symbol.startsWith("AUDIO_"))
             return root.audio.loaded && root.runAudioHotkey(symbol) // only with an audio box
         if (symbol.startsWith("VIDEO_"))
@@ -6815,7 +7038,7 @@ ApplicationWindow {
         case "GLOBAL_QUIT": root.close(); return true
         case "GLOBAL_PLAY_ACTUAL_LINE": // the video panel's "Play the current line"
             if (root.video.hasVideo) {
-                lineText.forceActiveFocus()
+                root.focusPanel(lineText, Qt.OtherFocusReason) // TM1: maybe in a floating panel
                 root.video.playActualLine()
             }
             return true
@@ -6938,7 +7161,7 @@ ApplicationWindow {
             return true
         }
         if (action.startsWith("EDITBOX_"))
-            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+            return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
     // SubsGrid::OnAccelerator; Editor and Video actions bound for the Grid
@@ -7019,7 +7242,7 @@ ApplicationWindow {
         case "GRID_TRANSLATION_DIALOG": if (root.app.canShiftTranslation()) translationShiftWindow.show(); return true
         }
         if (action.startsWith("EDITBOX_"))
-            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+            return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("VIDEO_") && root.runVideoHotkey(action)
     }
     // AudioBox::OnAccelerator; Video, Editor and Grid actions bound for the
@@ -7032,7 +7255,7 @@ ApplicationWindow {
         if (action.startsWith("VIDEO_"))
             return root.runVideoHotkey(action)
         if (action.startsWith("EDITBOX_"))
-            return root.runEditorHotkey(action, translationText.activeFocus ? translationText : lineText)
+            return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
     HotkeyMapping {
