@@ -245,10 +245,13 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        // Tools start closed (docs/qt/ux/workspaces.md); Timing tabs with the editor.
+        // Tools start closed (docs/qt/ux/workspaces.md); Timing and
+        // Automation tab with the editor.
         editorDock.addDockWidgetAsTab(timingDock)
+        editorDock.addDockWidgetAsTab(automationDock)
         editorDock.setAsCurrentTab()
         timingDock.close()
+        automationDock.close()
     }
     Connections {
         target: root.shell
@@ -262,11 +265,22 @@ ApplicationWindow {
         }
     }
 
+    // AM1: a macro started while the Automation panel is closed opens it
+    // (its run status holds Cancel and the log), without taking the focus.
+    readonly property bool automationRunning: root.automation.running
+    onAutomationRunningChanged: {
+        if (root.automationRunning && !automationDock.isOpen) {
+            automationDock.open()
+            root.workspaceLayout.keepFloatingPanelsOnScreen()
+        }
+    }
+
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, editorPanel, gridPanel, referencePanel, timingPanel,
-                                          searchPanel]
+                                          searchPanel, automationPanel]
     // D1: their docks, in the same order.
-    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock]
+    readonly property var dockList: [videoDock, audioDock, editorDock, gridDock, referenceDock, timingDock, searchDock,
+                                     automationDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -462,6 +476,19 @@ ApplicationWindow {
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
                       enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference(), iconRole: "compare" }]
+        // AM1: the Automation menu's commands for scripts, the Hotkeys page
+        // on the macros' shortcuts, and the import of a legacy Hotkeys.txt
+        // (from the retired window).
+        if (dock === automationDock)
+            return [{ name: "automationLoadScript", text: qsTranslate("HikariSub.Automation", "Load script…"), iconRole: "automation",
+                      enabled: () => loadScriptAction.enabled, run: () => loadScriptAction.trigger() },
+                    { name: "automationRefreshAutoload", text: qsTranslate("HikariSub.Automation", "Refresh autoload scripts"),
+                      iconRole: "refresh", enabled: () => reloadAutoloadAction.enabled && !root.automation.running,
+                      run: () => reloadAutoloadAction.trigger() },
+                    { name: "automationShortcutsInSettings", text: qsTranslate("HikariSub.Automation", "Shortcuts in Settings…"),
+                      iconRole: "hotkeys", run: () => settingsDialog.openDialog(7, 7) },
+                    { name: "automationImportLegacy", text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…"),
+                      iconRole: "import", run: () => legacyHotkeysDialog.open() }]
         return []
     }
     function closePanel(dock) {
@@ -1239,17 +1266,9 @@ ApplicationWindow {
             title: qsTr("&Automation")
             // S4: legacy BuildMenu on opening (the Document's scripts, changed files reloaded).
             onAboutToShow: root.automation.menuOpened()
-            Action {
-                id: automationHotkeysAction
-                property string help: qsTr("Open shortcut mapping window") // HikariSubFrame.cpp:355
-                text: qsTr("Open shortcut mapping window")
-                onTriggered: {
-                    if (root.hotkeyGesture("GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW"))
-                        return
-                    root.automationHotkeys.begin()
-                    automationHotkeysWindow.show()
-                }
-            }
+            // AM1: legacy's "Open shortcut mapping window" is gone with its
+            // window (AM1-hotkeys-window-retired); each macro's shortcut is
+            // in the Automation panel and Settings → Hotkeys.
             ShellMenuItem {
                 help: qsTr("Load script") // HikariSubFrame.cpp:349
                 iconRole: "automation"
@@ -1277,8 +1296,9 @@ ApplicationWindow {
                     id: loadLastScriptAction
                     text: qsTr("Run the last loaded script")
                     // Legacy's modal progress dialog blocks it while a macro
-                    // runs; D2: OnMenuOpened disables m_AutoMenu's items.
-                    enabled: !root.automation.running
+                    // runs; D2: OnMenuOpened disables m_AutoMenu's items. AM1:
+                    // off under a modal dialog, as the macros' shortcuts.
+                    enabled: !root.automation.running && !root.workspaceLayout.modalOpen
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT")) root.automation.runLastLoadedScript()
                 }
             }
@@ -1287,7 +1307,7 @@ ApplicationWindow {
                 objectName: "rerunMenuItem"
                 action: Action {
                     text: qsTr("Rerun last macro")
-                    enabled: root.automation.canRerun
+                    enabled: root.automation.canRerun && !root.workspaceLayout.modalOpen
                     onTriggered: root.automation.rerunLast()
                 }
             }
@@ -1295,8 +1315,8 @@ ApplicationWindow {
                 iconRole: "automation-manager"
                 objectName: "automationManagerMenuItem"
                 action: Action {
-                    text: qsTr("Automation &manager")
-                    onTriggered: automationManagerWindow.show()
+                    text: qsTr("Show &panel")
+                    onTriggered: root.showPanel(automationDock)
                 }
             }
             MenuSeparator {}
@@ -1308,14 +1328,19 @@ ApplicationWindow {
                     text: modelData.name
                     enabled: !root.automation.running
                     // Automation.cpp:1376-1379: Shift maps the macro's hotkey
-                    // (OnMapHkey(-1, "Script <file>-<n>"), no window choice).
+                    // (OnMapHkey(-1, "Script <file>-<n>")); AM1: in the
+                    // Automation panel, which records it in place
+                    // (AM1-hotkeys-window-retired).
                     onTriggered: {
-                        const name = root.automationHotkeys.legacyNameFor(modelData.path, modelData.ordinal)
-                        if (!root.hotkeyGesture(name, 0, "macro"))
+                        if (root.hotkeys.shiftClicked(true)) {
+                            root.showPanel(automationDock)
+                            automationTool.record(root.automationHotkeys.legacyNameFor(modelData.path, modelData.ordinal))
+                        } else {
                             root.automationManager.run(modelData.path, modelData.ordinal)
+                        }
                     }
                 }
-                onObjectAdded: (index, object) => automationMenu.insertItem(6 + index, object)
+                onObjectAdded: (index, object) => automationMenu.insertItem(5 + index, object)
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }
@@ -4904,6 +4929,36 @@ ApplicationWindow {
             }
         }
 
+        // AM1: the Automation panel (the persistent manager tool,
+        // docs/qt/automation.md), with its macros' shortcuts.
+        KDDW.DockWidget {
+            id: automationDock
+            objectName: "automationDock"
+            uniqueName: "Automation"
+            title: qsTranslate("HikariSub.Automation", "Automation")
+            Panel {
+                id: automationPanel
+                objectName: "automationPanel"
+                dockName: "Automation"
+                minimumBodySize: automationTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Automation", "Automation")
+                AutomationManager {
+                    id: automationTool
+                    objectName: "automationTool"
+                    anchors.fill: parent
+                    controller: root.automationManager
+                    automation: root.automation
+                    macroHotkeys: root.automationHotkeys
+                    hotkeys: root.hotkeys
+                    loadAction: loadScriptAction
+                    refreshAction: reloadAutoloadAction
+                    documentName: root.shell.editingTitle
+                    documentTab: root.app.currentTab
+                }
+            }
+        }
+
         Component.onCompleted: {
             // D3: the horizontal panels keep a one-tab header even alone;
             // the Reference tray's toolbar sits in its header.
@@ -5332,85 +5387,6 @@ ApplicationWindow {
     }
     AutomationNotices {
         automation: root.automation
-    }
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: automationManagerWindow
-        objectName: "automationManagerWindow"
-        // K1: the set's automation icon as the window's (as legacy's dialogs show theirs, SetIcon).
-        Component.onCompleted: IconTheme.setWindowIcon(automationManagerWindow, "automation")
-        title: qsTranslate("HikariSub.Automation", "Automation manager")
-        width: 560
-        height: 420
-        AutomationManager {
-            anchors.fill: parent
-            controller: root.automationManager
-            loadAction: loadScriptAction
-        }
-    }
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: automationProgress
-        objectName: "automationProgress"
-        title: root.automation.runTitle
-        width: 520
-        height: 340
-        flags: Qt.Dialog
-        // Shown while a macro runs; it stays after a failure, or a karaoke
-        // template run that named template problems (KE1), so its log can be read.
-        property bool keep: false
-        visible: root.automation.running || keep
-        Connections {
-            target: root.automation
-            function onRunCompleted(ok, message) {
-                automationProgress.keep = (!ok && message.length > 0) || root.automation.keepLog
-            }
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                objectName: "automationTask"
-                text: root.automation.task
-                Layout.fillWidth: true
-            }
-            ProgressBar {
-                from: 0
-                to: 100
-                value: root.automation.progress
-                Layout.fillWidth: true
-            }
-            ScrollView {
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                TextArea {
-                    objectName: "automationLog"
-                    readOnly: true
-                    wrapMode: TextEdit.Wrap
-                    text: root.automation.log
-                }
-            }
-            WindowFooter {
-                FooterButton {
-                    objectName: "automationForceStop"
-                    text: qsTranslate("HikariSub.Automation", "Force stop")
-                    visible: root.automation.forceStopOffered
-                    DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
-                    onClicked: root.automation.forceStopRun()
-                }
-                Button {
-                    objectName: "automationCancel"
-                    text: root.automation.running ? qsTranslate("HikariSub.Automation", "Cancel") : qsTranslate("HikariSub.Automation", "Close")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: {
-                        if (root.automation.running)
-                            root.automation.cancelRun()
-                        else
-                            automationProgress.keep = false
-                    }
-                }
-            }
-        }
     }
     FileDialog {
         id: scriptDialog
@@ -6881,7 +6857,7 @@ ApplicationWindow {
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
-        GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW: automationHotkeysAction, GLOBAL_PLAY_PAUSE: playPauseAction,
+        GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
         GLOBAL_SET_START_TIME: setStartTimeAction, GLOBAL_SET_END_TIME: setEndTimeAction, // V6
@@ -7258,112 +7234,23 @@ ApplicationWindow {
                 context: Qt.ApplicationShortcut
                 // The scripts' entries follow the static ones in the frame's
                 // table (map order: ids from 30100), so a static Global
-                // binding of the same keys wins.
-                enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes(modelData.keys)
+                // binding of the same keys wins, as the Video window's
+                // Play / Pause does (KB2: it acts from every panel).
+                // Off under a modal dialog, which keeps the panel's run
+                // controls out of reach.
+                enabled: !root.menuHasKeys && !root.workspaceLayout.modalOpen
+                         && !root.hotkeys.macroTakenSequences.includes(modelData.keys)
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }
     }
 
-    // Legacy AutomationHotkeysDialog ("List of automation shortcuts").
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: automationHotkeysWindow
-        objectName: "automationHotkeysWindow"
-        title: qsTranslate("HikariSub.Automation", "List of automation shortcuts")
-        width: 800
-        height: 360
-        flags: Qt.Dialog
-        property int selected: -1
-        function selectedName() {
-            const rows = root.automationHotkeys.rows
-            return selected >= 0 && selected < rows.length ? rows[selected].legacyName : ""
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            ListView {
-                id: hotkeyList
-                objectName: "automationHotkeyList"
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                model: root.automationHotkeys.rows
-                header: RowLayout {
-                    width: hotkeyList.width
-                    Label { text: qsTranslate("HikariSub.Automation", "Path and script name"); Layout.preferredWidth: hotkeyList.width * 0.5 }
-                    Label { text: qsTranslate("HikariSub.Automation", "Macro"); Layout.preferredWidth: hotkeyList.width * 0.35 }
-                    Label { text: qsTranslate("HikariSub.Automation", "Hotkey"); Layout.fillWidth: true }
-                }
-                delegate: ItemDelegate {
-                    required property var modelData
-                    required property int index
-                    width: hotkeyList.width
-                    highlighted: automationHotkeysWindow.selected === index
-                    onClicked: automationHotkeysWindow.selected = index
-                    onDoubleClicked: {
-                        automationHotkeysWindow.selected = index
-                        hotkeyCapture.capture(modelData.legacyName)
-                    }
-                    Accessible.name: modelData.macro + " " + modelData.keys + " " + modelData.problem
-                    contentItem: RowLayout {
-                        Label { text: modelData.script.length ? modelData.script : modelData.legacyName; elide: Text.ElideMiddle; Layout.preferredWidth: hotkeyList.width * 0.5 }
-                        Label { text: modelData.macro; elide: Text.ElideRight; Layout.preferredWidth: hotkeyList.width * 0.35 }
-                        Label {
-                            text: modelData.problem.length ? modelData.problem : modelData.keys
-                            color: modelData.problem.length ? Theme.warning : palette.windowText
-                            elide: Text.ElideRight
-                            Layout.fillWidth: true
-                        }
-                    }
-                }
-            }
-            WindowFooter {
-                Button {
-                    objectName: "automationHotkeysOk"
-                    text: qsTranslate("HikariSub.Automation", "OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        root.automationHotkeys.commit()
-                        automationHotkeysWindow.close()
-                    }
-                }
-                Button {
-                    objectName: "mapHotkey"
-                    text: qsTranslate("HikariSub.Automation", "Map hotkey")
-                    enabled: automationHotkeysWindow.selectedName().length > 0
-                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                    onClicked: hotkeyCapture.capture(automationHotkeysWindow.selectedName())
-                }
-                Button {
-                    objectName: "deleteHotkey"
-                    text: qsTranslate("HikariSub.Automation", "Delete hotkey")
-                    enabled: automationHotkeysWindow.selectedName().length > 0
-                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                    onClicked: root.automationHotkeys.clearKeys(automationHotkeysWindow.selectedName())
-                }
-                Button {
-                    objectName: "importLegacyHotkeys"
-                    text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…")
-                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                    onClicked: legacyHotkeysDialog.open()
-                }
-                Button {
-                    objectName: "automationHotkeysCancel"
-                    text: qsTranslate("HikariSub.Automation", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: {
-                        root.automationHotkeys.cancel()
-                        automationHotkeysWindow.close()
-                    }
-                }
-            }
-        }
-        FileDialog {
-            id: legacyHotkeysDialog
-            nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
-            onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
-        }
+    // AM1: a legacy Hotkeys.txt's script lines (the Automation panel's menu).
+    FileDialog {
+        id: legacyHotkeysDialog
+        objectName: "legacyHotkeysDialog"
+        nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
+        onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
     }
     // Legacy HkeysDialog ("Hotkey mapping").
     Window {

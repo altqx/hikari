@@ -45,8 +45,10 @@ Dialog {
     signal reloaded()
 
     // `page`: the page list's row to show (AV1's "Audio settings…" asks for
-    // Audio); legacy opened on the first.
-    function openDialog(page) {
+    // Audio); legacy opened on the first. AM1: `filter` is the Hotkeys page's
+    // filter to choose (the Automation panel's "Shortcuts in Settings…",
+    // MuseScore's deep link from a plugin to its shortcut).
+    function openDialog(page, filter) {
         const r = app.openSettingsDialog()
         languages = r.languages
         dictionaries = r.dictionaries
@@ -60,6 +62,10 @@ Dialog {
         reloaded()
         hotkeyFilter.currentIndex = 0 // a new dialog's filter choice
         pageList.currentIndex = page ?? 0 // legacy ChangeSelection(0)
+        if (filter !== undefined) {
+            hotkeyFilter.currentIndex = filter
+            hotkeys.filter(hotkeyFilter.currentIndex)
+        }
         open()
         warnings = r.warnings
         showWarning()
@@ -147,7 +153,7 @@ Dialog {
     readonly property color warningColour: Theme.warning // WINDOW_WARNING_ELEMENTS
     function mapHotkey() {
         const target = hotkeys.mapTarget()
-        if (target.name === undefined)
+        if (target.name === undefined || hotkeys.mapProblem.length > 0)
             return
         settingsHotkeyMapping.capture(target.name, target.type, target.windows, (accel, window) => {
             const conflict = hotkeys.optionsConflict(accel, window)
@@ -884,7 +890,8 @@ Dialog {
                         anchors.left: parent.left
                         anchors.right: parent.right
                         model: [qsTr("All"), qsTr("Set shortcuts"), qsTr("Global shortcuts"), qsTr("Subtitle shortcuts"),
-                                qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio Shortcuts")]
+                                qsTr("Editor shortcuts"), qsTr("Video shortcuts"), qsTr("Audio Shortcuts"),
+                                qsTr("Automation shortcuts")]
                         ToolTip.text: qsTr("Filtering mode:")
                         ToolTip.visible: hovered
                         Accessible.name: qsTr("Choose filtering")
@@ -945,7 +952,11 @@ Dialog {
                             dialog.hotkeys.select(index)
                             dialog.mapHotkey()
                         }
-                        Accessible.name: modelData.text + " " + modelData.accel
+                        // AM1: a macro's row names its script and macro, and
+                        // says in the warning colour why its keys do not run it.
+                        readonly property bool macro: modelData.script !== undefined
+                        Accessible.name: (macro ? modelData.script + " " + modelData.macro : modelData.text) + " " + modelData.accel
+                                         + (macro && modelData.note.length > 0 ? ", " + modelData.note : "")
                         contentItem: RowLayout {
                             Item {
                                 // the block's line beside rows shown from it
@@ -965,7 +976,10 @@ Dialog {
                             Label {
                                 id: hotkeyText
                                 objectName: "hotkeyText"
-                                text: modelData.text
+                                text: hotkeyRow.macro
+                                      ? (modelData.macro.length > 0 ? modelData.script + " › " + modelData.macro
+                                                                    : modelData.script + " › " + qsTr("Missing macro"))
+                                      : modelData.text
                                 // On the selection, the selection's text colour (the
                                 // window text was unreadable on the highlight).
                                 color: hotkeyRow.highlighted ? palette.highlightedText
@@ -974,19 +988,22 @@ Dialog {
                                 Layout.preferredWidth: hotkeyList.width * 0.7
                                 HoverHandler { id: textHover }
                                 ToolTip.visible: textHover.hovered && truncated
-                                ToolTip.text: modelData.text.substring(0, 1000)
+                                ToolTip.text: (hotkeyRow.macro ? hotkeyText.text : modelData.text).substring(0, 1000)
                             }
                             Label {
                                 id: hotkeyKeys
                                 objectName: "hotkeyKeys"
-                                text: modelData.accel
+                                text: hotkeyRow.macro && modelData.note.length > 0
+                                      ? (modelData.accel.length > 0 ? modelData.accel + " · " + modelData.note : modelData.note)
+                                      : modelData.accel
                                 color: hotkeyRow.highlighted ? palette.highlightedText
-                                     : modelData.keyModified ? dialog.warningColour : palette.windowText
+                                     : modelData.keyModified || (hotkeyRow.macro && modelData.note.length > 0) ? dialog.warningColour
+                                     : palette.windowText
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                                 HoverHandler { id: keysHover }
                                 ToolTip.visible: keysHover.hovered && truncated
-                                ToolTip.text: modelData.accel
+                                ToolTip.text: hotkeyKeys.text
                             }
                         }
                         // the box for the gap after this row
@@ -1022,7 +1039,13 @@ Dialog {
                 }
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
-                    Button { objectName: "hotkeyMap"; text: qsTr("Map hotkey"); onClicked: dialog.mapHotkey() }
+                    Button {
+                        objectName: "hotkeyMap"
+                        text: qsTr("Map hotkey")
+                        // The row's note says why (AM1: a name two loaded scripts share).
+                        enabled: dialog.hotkeys.mapProblem.length === 0
+                        onClicked: dialog.mapHotkey()
+                    }
                     Button {
                         objectName: "hotkeyRestore"
                         text: qsTr("Restore default hotkey")
