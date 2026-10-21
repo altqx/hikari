@@ -621,7 +621,7 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     // SubsGrid::ChangeLine: one Line, or every selected Line with several selected
     std::vector<core::LineId> targets;
     const auto &selected = session.selection().selected;
-    if (selected.size() < 2) {
+    if (selected.size() < 2 || request.activeOnly) {
         targets.push_back(*active);
     } else {
         for (const auto *l : lines)

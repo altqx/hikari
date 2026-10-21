@@ -542,7 +542,7 @@ void AudioController::loadBoxControls()
         m_speedPercent = std::clamp(m_store->integer("audio.speedPercent"), 25, 100);
         m_tap.setMode(m_store->boolean("audio.tapHold") ? application::KaraokeTap::Mode::Hold
                                                          : application::KaraokeTap::Mode::Press);
-        m_tapLatency = m_store->integer("audio.tapLatency");
+        m_tapLatency = std::clamp(m_store->integer("audio.tapLatency"), -200, 500); // as setTapLatency
     }
     m_view.setSamplesPercent(zoom, false);
     m_horizontalZoom = std::clamp(zoom, 0, 100);
@@ -984,7 +984,7 @@ application::AudioSnapContext AudioController::snapContext() const
 // Legacy CommitChanges: the times go into the editor's fields and, with
 // `save`, to the Line (EditBox::Send); then Update(moveToEnd).
 void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent,
-                                    std::optional<std::u16string> karaokeText, const char *stepName)
+                                    std::optional<std::u16string> karaokeText, const char *stepName, bool activeOnly)
 {
     if (!loaded())
         return;
@@ -994,6 +994,7 @@ void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, ap
         application::AudioCommitRequest request{m_startMs, m_endMs, save, nextLine, m_timing.hold() != 0, adjacent,
                                                 std::move(karaokeText)};
         request.stepName = stepName;
+        request.activeOnly = activeOnly;
         m_hooks.commit(request);
     }
     update(moveToEnd);
@@ -1304,6 +1305,10 @@ void AudioController::beginTapLine()
         if (playing())
             stopPlayback();
         m_tapState = TapReady;
+    } else if (m_tapState == TapTapping && !m_tapAdvancing) {
+        // another Line chosen while tapping: its taps come from its own
+        // playing, from before it (the playing went on for the old Line)
+        playForTap(m_tap.resumeMs());
     }
     emit tapChanged();
     emit tapSpansChanged();
@@ -1414,8 +1419,10 @@ void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
     m_endMs = result.endMs;
     const int before = m_active;
     const bool hasNext = application::legacyKeyFromPosition(m_lines, m_active, 1) != m_active;
+    m_tapAdvancing = true;
     commitChanges(hasNext, true, false, application::AudioAdjacent::None, m_karaoke.text(m_startMs),
-                  "Tap timing");
+                  "Tap timing", true);
+    m_tapAdvancing = false;
     if (!hasNext || m_active == before) {
         if (playing())
             stopPlayback();

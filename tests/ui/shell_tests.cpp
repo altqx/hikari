@@ -12057,6 +12057,7 @@ private slots:
         QVERIFY(item("audioMoreAutoScroll")->isVisible());
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
+        QVERIFY(!item("audioMoreTapOptions")->isVisible());
         closeMore();
         auto *moreAutoScroll = item<QObject>("audioMoreAutoScroll");
         QVERIFY(moreAutoScroll->property("checked").toBool());
@@ -12098,7 +12099,16 @@ private slots:
         openMore();
         QVERIFY(item("audioMoreKaraoke")->isVisible());
         QVERIFY(item("audioMoreTap")->isVisible());
+        QVERIFY(item("audioMoreTapOptions")->isVisible());
         closeMore();
+        // Tap options opens the Tap menu at ⋯: Hold or Press, the speed, the latency
+        auto *tapMenu = named("audioTapMenu");
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreTapOptions"), "triggered"));
+        QTRY_VERIFY(tapMenu->property("opened").toBool());
+        QVERIFY(named("audioTapPress")->property("visible").toBool());
+        QVERIFY(named("audioTapCalibrate")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(tapMenu, "close"));
+        QTRY_VERIFY(!tapMenu->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("audioMoreSpectrum"), "triggered"));
         QVERIFY(audio.spectrumOn());
         audio.toggleKaraoke();
@@ -15355,6 +15365,23 @@ private slots:
         QVERIFY(audio.playing());
         QVERIFY(!visualItem("audioTapResume")->isVisible());
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped)); // kept
+        // another Line chosen while tapping: tapping starts on it, playing
+        // from before it (not on from where Line 2's playing was)
+        QTest::qWait(400);
+        const int before = audio.tapSongNow();
+        application->selectLine(targetSession()->document().lines()[0]->id.value);
+        QCOMPARE(audio.tapLine(), 1);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        QVERIFY(audio.playing());
+        // Line 1 (tapped near the start) plays again from its pre-roll, near 0
+        QVERIFY2(audio.tapSongNow() + 200 < before, qPrintable(QStringLiteral("%1 %2").arg(audio.tapSongNow()).arg(before)));
+        application->selectLine(targetSession()->document().lines()[1]->id.value);
+        QCOMPARE(audio.tapLine(), 2);
+        key(Qt::Key_Space, true);
+        QTest::qWait(100);
+        key(Qt::Key_Space, false);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
         press(Qt::Key_Escape);
         QVERIFY(QMetaObject::invokeMethod(visualItem("audioTapRevert"), "clicked"));
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapReady));

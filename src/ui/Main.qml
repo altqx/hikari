@@ -3870,6 +3870,16 @@ ApplicationWindow {
                                         root.audio.toggleTap()
                                     }
                                 }
+                                // the Tap button's menu (Hold or Press, the
+                                // speed, the latency), at ⋯ while it is folded
+                                FoldedItem {
+                                    objectName: "audioMoreTapOptions"
+                                    visible: audioButtons.folded && root.audio.karaoke
+                                    checkable: false
+                                    keepsMenuOpen: false
+                                    text: qsTranslate("HikariSub.Audio", "Tap options")
+                                    onTriggered: Qt.callLater(() => audioTapMenu.popup(audioMoreButton, 0, audioMoreButton.height))
+                                }
                                 FoldedSeparator {}
                                 FoldedItem {
                                     iconRole: "audio-waveform"

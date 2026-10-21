@@ -455,7 +455,8 @@ private:
     application::AudioSnapContext snapContext() const;
     void commitChanges(bool nextLine, bool save, bool moveToEnd,
                        application::AudioAdjacent adjacent = application::AudioAdjacent::None,
-                       std::optional<std::u16string> karaokeText = std::nullopt, const char *stepName = nullptr);
+                       std::optional<std::u16string> karaokeText = std::nullopt, const char *stepName = nullptr,
+                       bool activeOnly = false);
     void makeDialogueVisible(bool force = false, bool moveToEnd = false); // legacy MakeDialogueVisible
     void splitKaraoke();                                                   // legacy Karaoke::Split
     void changeLine(int delta);
@@ -556,6 +557,7 @@ private:
     int m_tapLatency = 0;
     QString m_tapMessage;
     bool m_tapPlaying = false; // a play tap mode asked for (other plays wait while tapping)
+    bool m_tapAdvancing = false; // finishTapLine's commit moves to the next Line
     std::function<QString(int)> m_lineText;
     bool m_calibrating = false;
     int m_calibrationBeat = 0;
