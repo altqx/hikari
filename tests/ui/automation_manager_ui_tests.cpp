@@ -1,6 +1,7 @@
-// L1: the automation manager tool in QML over the real manager and helpers:
-// scripts in load order, macros with their legacy aliases, a visible reload,
-// a failed load explained, and one macro at a time.
+// L1, AM1: the Automation panel in QML over the real manager and helpers:
+// scripts in load order, macros with their legacy aliases, a script's state
+// shown only when it is not ready, a visible reload, a failed load explained,
+// and one macro at a time.
 #include "automation_manager_controller.h"
 #include "hikari/backends/automation_manager.h"
 
@@ -71,7 +72,7 @@ private slots:
         QTRY_VERIFY(item(QStringLiteral("macro_0_2")));
         QCOMPARE(item(QStringLiteral("macro_0_2"))->property("text").toString(), QStringLiteral("Count"));
         QCOMPARE(item(QStringLiteral("state_0"))->property("scriptState").toString(), QStringLiteral("ready"));
-        QCOMPARE(item(QStringLiteral("state_0"))->property("text").toString(), QStringLiteral("Ready"));
+        QVERIFY(!item(QStringLiteral("state_0"))->property("visible").toBool()); // AM1: no "Ready" on every row
     }
 
     void aFailedLoadSaysWhy()
@@ -100,14 +101,13 @@ private slots:
         controller->load(path);
         QTRY_COMPARE(scriptState(0), QStringLiteral("ready"));
         QTRY_VERIFY(item(QStringLiteral("macro_0_4")));
-        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("macro_0_4")), "clicked")); // Wait for cancel
+        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("run_0_4")), "clicked")); // Wait for cancel
         QTRY_VERIFY(controller->busy());
-        QTRY_VERIFY(!item(QStringLiteral("macro_0_2"))->property("enabled").toBool());
-        QVERIFY(item(QStringLiteral("cancelRun"))->property("enabled").toBool());
+        QTRY_VERIFY(!item(QStringLiteral("run_0_2"))->property("enabled").toBool());
         QVERIFY(!controller->run(path, 2));
-        QVERIFY(QMetaObject::invokeMethod(item(QStringLiteral("cancelRun")), "clicked"));
+        controller->cancel(); // the shell's run status cancels through AutomationShell (automation_workflow)
         QTRY_VERIFY(!controller->busy());
-        QTRY_VERIFY(item(QStringLiteral("macro_0_2"))->property("enabled").toBool());
+        QTRY_VERIFY(item(QStringLiteral("run_0_2"))->property("enabled").toBool());
     }
 };
 

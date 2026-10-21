@@ -21,6 +21,7 @@
 //   item or a mapped button: it changes the live bindings at once.
 
 #include <cstdint>
+#include <functional>
 #include <map>
 #include <memory>
 #include <optional>
@@ -93,12 +94,15 @@ std::string hotkeyName(int id);
 // decision 2026-10-05): the rewrite always indexes. It keeps its IDS symbol,
 // so stored lines naming it are recognised, but has no name (never listed in
 // the Options page) and its bindings are dropped as the lists are read.
-// AV3 (#240, owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO ("Open blank 2h30m
-// audio") is retired the same way: a dummy video brings its own silent audio.
-// WS3 (#217, owner 2026-10-18): the View arrangements (GLOBAL_VIEW_ALL,
-// GLOBAL_VIEW_VIDEO, GLOBAL_VIEW_AUDIO, GLOBAL_VIEW_ONLY_VIDEO,
-// GLOBAL_VIEW_SUBS) and the editor switch (GLOBAL_EDITOR) are retired the
-// same way: layout presets and saved layouts take their place.
+// AM1: GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW ("Open shortcut mapping window")
+// is retired the same way with its window: each macro's shortcut is in the
+// Automation panel. AV3 (#240, owner 2026-10-18): GLOBAL_OPEN_DUMMY_AUDIO
+// ("Open blank 2h30m audio") is retired the same way: a dummy video brings
+// its own silent audio. WS3 (#217, owner 2026-10-18): the View arrangements
+// (GLOBAL_VIEW_ALL, GLOBAL_VIEW_VIDEO, GLOBAL_VIEW_AUDIO,
+// GLOBAL_VIEW_ONLY_VIDEO, GLOBAL_VIEW_SUBS) and the editor switch
+// (GLOBAL_EDITOR) are retired the same way: layout presets and saved layouts
+// take their place.
 bool isRetiredHotkey(int id);
 // Removes the retired actions' bindings from `map` and returns them, for the
 // notice the reader gives.
@@ -223,6 +227,14 @@ public:
     // ClearList (the list's own history and modified flag are not reset).
     void build(const HotkeyMap &live);
     void clear();
+    // AM1: rows added while the page is open (a macro registered meanwhile),
+    // at the end and in every step of the history, shown as the filter shows
+    // them; the edits, the history and the selection stay.
+    void addRows(const HotkeyMap &more);
+    // ...and the rows `gone` names that no step of the history changed (a
+    // macro unloaded meanwhile), from the list and every step; an edited row
+    // stays, as do the selection and the history.
+    void removeUnchangedRows(const std::function<bool(const Row &)> &gone);
 
     std::size_t rowCount() const { return m_rows.size(); }
     const Row &row(int index) const { return *m_rows[std::size_t(index)]; }
@@ -231,7 +243,8 @@ public:
     bool modified() const { return m_modified; }
     int filterMode() const { return m_filterMode; }
     // FilterList(1, mode): 0 All, 1 Set shortcuts, 2 Global, 3 Subtitles,
-    // 4 Editor, 5 Video, 6 Audio. The selection goes to the first shown row.
+    // 4 Editor, 5 Video, 6 Audio; AM1: 7 Automation (the macros' rows). The
+    // selection goes to the first shown row.
     void filter(int mode);
     // GetSelection: the selected row, or -1.
     int selection() const;

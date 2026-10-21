@@ -65,6 +65,18 @@ Before accepting the complete host, demonstrate unchanged bundled scripts, long-
 
 [Altqx selected the persistent manager tool](https://github.com/altqx/hikari/issues/51#issuecomment-5853291607). Keep script loading, registered macros and run status in a movable/floating workspace tool; script-created option dialogs remain task dialogs. Cancellation escalation, complete dialog compatibility and Document transactions retain their separate decisions. See [reviewed surface layouts](ux/reviewed-surface-layouts.md).
 
+### The Automation panel (AM1, 2026-10-19)
+
+The persistent tool is the **Automation** dock panel ([AM1](https://github.com/altqx/hikari/issues/248), design approved on the card): a panel of the WorkspaceLayout adapter like the others (panel id `Automation`, closed by default and tabbed with the Line editor, saved in each tab's layout). From the top:
+
+- **Tool strip.** A filter over script and macro names, then Load script, Refresh autoload scripts and Rerun last macro as icon buttons named on hover.
+- **Run status.** While a macro runs: its name, progress, task and read-only target, Cancel (Force stop after the grace above) and the log on demand. A failed run keeps it in the danger colour until Close. A macro that starts while the panel is closed opens it (AM1-run-status).
+- **Scripts.** Two collapsible sections with counts: "Subtitle scripts" (the Document scripts, S4: named by a Document's Script Info or added with Load script, one list for the application as legacy's Automation::ASSScripts) and "Autoload". A script row shows its name in bold, its state only when it is not ready, Reload and a menu (Reload, Edit script, Unload; unloading a Document script leaves the Script Info naming it, as legacy's Automation::Remove). A load error shows in two lines with "Show full error".
+- **Macros.** Under their script. Enter or a double click runs one; Run shows on the current row. The shortcut sits at the row's end and is recorded in place: Enter saves, Esc cancels, and a taken shortcut names its holders and asks "Reassign shortcut". A macro's shortcut that a Global command also uses says so ("Save also uses Ctrl+S and takes it.").
+- **Shortcuts for missing macros.** Bindings whose macro is not loaded or has changed, with why, and Remove.
+
+Shortcuts go through the shortcut editor's gesture path, so they are the same bindings Settings → Hotkeys edits under its "Automation shortcuts" filter, and the shortcut audit sees them with the rest. Shift+click on a macro in the Automation menu opens the panel recording that macro's shortcut. The separate hotkeys window and its command are retired (AM1-hotkeys-window-retired). The panel's "⋯" menu adds Load script…, Refresh autoload scripts, Shortcuts in Settings… and Import legacy hotkeys….
+
 ## Accepted cancellation and transaction policy (2026-09-29)
 
 altqx settled the remaining host choices in a live review, closing [Choose how automation dialogs render in QML](https://github.com/altqx/hikari/issues/33).

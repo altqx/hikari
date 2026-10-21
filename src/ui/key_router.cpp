@@ -24,6 +24,13 @@ bool keyboardFocused(const QQuickItem *item)
     return item && item->property("visualFocus").toBool();
 }
 
+// A shortcut recorder while it records (AM1's Automation panel row): it
+// takes every key as the shortcut being set.
+bool recordsKeys(const QQuickItem *item)
+{
+    return item && item->property("recordsKeys").toBool();
+}
+
 bool inPopup(const QQuickItem *item)
 {
     for (const QQuickItem *p = item; p; p = p->parentItem())
@@ -120,7 +127,7 @@ bool KeyRouter::shortcutOverride(QQuickWindow *window, QKeyEvent *event)
     m_routed.reset();
     hoverAtPointer();
     QQuickItem *focus = window->activeFocusItem();
-    if (takesText(focus) || keyboardFocused(focus) || inPopup(focus))
+    if (takesText(focus) || keyboardFocused(focus) || recordsKeys(focus) || inPopup(focus))
         return false;
     const Panel *focused = panelOf(focus);
     const Panel *hovered = nullptr;

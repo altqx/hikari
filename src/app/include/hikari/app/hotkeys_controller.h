@@ -51,6 +51,10 @@ class HotkeysController : public QObject {
     Q_PROPERTY(QVariantList globalShortcuts READ globalShortcuts NOTIFY installedChanged)
     // Their keys (portable text), for other shortcuts to give way to them.
     Q_PROPERTY(QStringList globalSequences READ globalSequences NOTIFY installedChanged)
+    // AM1: the keys a macro's shortcut gives way to: the Global ones and the
+    // Video window's Play / Pause, which KB2's key router takes from every
+    // panel.
+    Q_PROPERTY(QStringList macroTakenSequences READ macroTakenSequences NOTIFY installedChanged)
     // The Options page: the shown rows {row, text, accel, modified}, the
     // selected shown position and the filter mode.
     Q_PROPERTY(QVariantList rows READ rows NOTIFY rowsChanged)
@@ -61,6 +65,9 @@ class HotkeysController : public QObject {
     // carries its own ("block": 0, 1 "+", 2 "-"; "inBlock": shown from one).
     Q_PROPERTY(bool listFiltered READ listFiltered NOTIFY rowsChanged)
     Q_PROPERTY(int topBlock READ topBlock NOTIFY rowsChanged)
+    // AM1: why the selected row cannot be given keys, "" when it can (a macro
+    // name that several loaded scripts share binds none of their macros).
+    Q_PROPERTY(QString mapProblem READ mapProblem NOTIFY rowsChanged)
 public:
     // `log`: HikariLog (the log window), for GetHKey's 'Shortcut "%s" is invalid'.
     HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
@@ -70,6 +77,7 @@ public:
     QVariantMap keys() const;
     QVariantList globalShortcuts() const;
     QStringList globalSequences() const;
+    QStringList macroTakenSequences() const;
     QVariantList rows() const;
     bool listFiltered() const;
     int topBlock() const;
@@ -120,6 +128,7 @@ public:
     // The selected row's "Hotkey mapping" window: {name, windows, type}, or
     // {} without a selection.
     Q_INVOKABLE QVariantMap mapTarget() const;
+    QString mapProblem() const;
     // ItemHotkey::OnMapHotkey: the question first ({} when none: map with
     // any answer), then the answer ("switch", "delete", "anyway", "cancel").
     Q_INVOKABLE QVariantMap optionsConflict(const QString &accel, int type);
@@ -134,7 +143,8 @@ public:
     void resetDefaults();
 
     // HkeysDialog::OnKeyPress for a Qt key press in `window`:
-    // {result: "ignored" | "refused" | "accepted", accel, message}.
+    // {result: "ignored" | "refused" | "accepted", accel, keys (the Qt
+    // portable text), message}.
     Q_INVOKABLE QVariantMap capture(int key, int modifiers, int window) const;
 
     // Hotkeys::OnMapHkey. The last input was a click on a button or menu
@@ -153,6 +163,14 @@ public:
     Q_INVOKABLE QVariantMap gestureConflict(int id, const QString &accel, int type) const;
     Q_INVOKABLE void gestureMap(int id, const QString &name, const QString &accel, int type, const QString &answer);
 
+    // AM1, the Automation panel: the actions other than `id` whose binding
+    // (in any window, the scripts' included) is the legacy accelerator
+    // `accel`, as shown ("Save", "Play line (Audio)", a macro's name); and the
+    // command whose installed Global binding takes the portable `keys` from
+    // a macro ("" when none).
+    Q_INVOKABLE QStringList holdersOf(const QString &accel, int id) const;
+    Q_INVOKABLE QString globalHolder(const QString &keys) const;
+
     // GRID_FILTER_IGNORE_IN_ACTIONS through a hotkey (SubsGrid::OnAccelerator):
     // "ignore filtering" becomes the opposite of the stored option.
     Q_INVOKABLE bool ignoreFilteringFromOption() const;
@@ -170,6 +188,12 @@ private:
     void setAccels();
     void logInvalid() const;
     void split(const application::HotkeyMap &combined);
+    // The Options page's list: bindings() and the loaded macros without one.
+    application::HotkeyMap listed() const;
+    // The page's list follows the registrations while it is open: macros
+    // registered since it was built are added, the unbound rows of macros no
+    // longer registered go unless edited.
+    void relistMacros();
     bool eventFilter(QObject *watched, QEvent *event) override;
 
     AutomationHotkeysController &m_scripts;

@@ -384,10 +384,6 @@ Output device: %2</source>
 <context>
     <name>HikariSub.Automation</name>
     <message>
-        <source>A script is running</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Cancel</source>
         <translation>취소</translation>
     </message>
@@ -408,19 +404,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Ready</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Running</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Failed to load</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unavailable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -431,8 +419,192 @@ Output device: %2</source>
         <source>Force stop</source>
         <translation type="unfinished"></translation>
     </message>
+    <message numerus="yes">
+        <source>This file names scripts: %1 and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>This file names scripts: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>and %n more</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Subtitle scripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autoload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcuts for missing macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rerun last macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 named problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its validation did not let it run; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Progress</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is read-only until the macro ends</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading a script runs its code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load</source>
+        <translation type="unfinished">파일에서</translation>
+    </message>
+    <message>
+        <source>Load the scripts this file names</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No macros match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unfolded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script&apos;s process ended. Reload to start it again; its macro is not rerun.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show less</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show full error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Run (Enter)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcut %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press a shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already assigned to: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 also uses %2 and takes it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit script</source>
+        <translation type="unfinished"></translation>
+    </message>
     <message>
         <source>Unload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set shortcut…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reassign shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is assigned to %2. Assign it to %3 instead?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reassign</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep both</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -456,10 +628,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Automation manager</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Close</source>
         <translation>닫기</translation>
     </message>
@@ -469,42 +637,46 @@ Output device: %2</source>
     </message>
     <message>
         <source>List of automation shortcuts</source>
-        <translation>자동화 스크립트 단축키 목록</translation>
+        <translation type="vanished">자동화 스크립트 단축키 목록</translation>
     </message>
     <message>
         <source>Path and script name</source>
-        <translation>경로 및 스크립트 이름</translation>
+        <translation type="vanished">경로 및 스크립트 이름</translation>
     </message>
     <message>
         <source>Macro</source>
-        <translation>매크로</translation>
+        <translation type="vanished">매크로</translation>
     </message>
     <message>
         <source>Hotkey</source>
-        <translation>단축키</translation>
+        <translation type="vanished">단축키</translation>
     </message>
     <message>
         <source>Map hotkey</source>
-        <translation>단축키 설정</translation>
+        <translation type="vanished">단축키 설정</translation>
     </message>
     <message>
         <source>Delete hotkey</source>
-        <translation>단축키 삭제</translation>
+        <translation type="vanished">단축키 삭제</translation>
+    </message>
+    <message>
+        <source>Refresh autoload scripts</source>
+        <translation type="unfinished">자동 불러오기 스크립트 새로 고침</translation>
+    </message>
+    <message>
+        <source>Shortcuts in Settings…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import legacy hotkeys…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Automation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hotkeys (Hotkeys.txt)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unresolved: the script or its macros changed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unresolved: no loaded script has this macro</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -600,6 +772,71 @@ Output device: %2</source>
     <message>
         <source>Set</source>
         <translation type="unfinished">선택까지 되돌리기</translation>
+    </message>
+    <message>
+        <source>No loaded script has this macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Several loaded scripts have this file name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script has no such macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script or its macro changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not a macro shortcut</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Several loaded scripts have this file name, so a shortcut cannot tell their macros apart.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>A short duration in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <extracomment>A duration in seconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Karaoke template: %n line(s) generated from %1 karaoke line(s) in %2.</source>
+        <extracomment>Status bar after applying karaoke templates; %n is the number of Lines generated, %1 the number of karaoke Lines templated, %2 the time the run took</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Measuring the karaoke lines: %1</source>
+        <extracomment>In the karaoke template report; %1 is the time karaskel took to measure the karaoke lines</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Code line %1 (%2, %3): %4</source>
+        <extracomment>In the karaoke template report: a code Line&apos;s number, its effect and style, and the time it took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Template line %1 (%2, %3): %4, %n line(s) generated</source>
+        <extracomment>In the karaoke template report: a template Line&apos;s number, its effect and style, the time it took and %n the number of Lines it generated</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n template problem(s): see the log.</source>
+        <extracomment>After the karaoke template status; %n is the number of template problems the log lists</extracomment>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -3180,6 +3417,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Exit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;View all&quot; was removed: the View arrangements are retired; choose a layout from the layout switcher instead.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3204,6 +3445,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The shortcut %1 of &quot;Open shortcut mapping window&quot; was removed: the window is gone and each macro&apos;s shortcut is set in the Automation panel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The shortcut %1 of &quot;Open blank 2h30m audio&quot; was removed: the command is retired and a dummy video brings its own silent audio.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -3214,6 +3459,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shortcut &quot;%1&quot; is invalid</source>
         <translation type="unfinished">&quot;%1&quot;키가 유효하지 않음</translation>
+    </message>
+    <message>
+        <source>%1 takes it</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3408,7 +3657,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Open shortcut mapping window</source>
-        <translation>단축키 설정 창 열기</translation>
+        <translation type="vanished">단축키 설정 창 열기</translation>
     </message>
     <message>
         <source>&amp;Load script…</source>
@@ -3420,10 +3669,6 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Rerun last macro</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Automation &amp;manager</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3879,6 +4124,10 @@ Failed to copy %2 fonts.</source>
         <translation>스크립트 불러오기</translation>
     </message>
     <message>
+        <source>Show &amp;panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Go to previous frame</source>
         <translation>이전 프레임으로 이동</translation>
     </message>
@@ -3897,6 +4146,10 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Plays / Pauses video</source>
         <translation>영상 재생 / 일시정지</translation>
+    </message>
+    <message>
+        <source>Show / hide render cost</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Opens audio file</source>
@@ -5123,6 +5376,10 @@ removing audio cache files.</source>
         <translation>소리</translation>
     </message>
     <message>
+        <source>Automation shortcuts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Filtering mode:</source>
         <translation>필터 유형 :</translation>
     </message>
@@ -5141,6 +5398,10 @@ removing audio cache files.</source>
     <message>
         <source>Hotkey</source>
         <translation>단축키</translation>
+    </message>
+    <message>
+        <source>Missing macro</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Map hotkey</source>
@@ -8118,6 +8379,10 @@ Foreign language text will be deleted.</source>
         <translation>진행 표시 줄 보임/ 숨김</translation>
     </message>
     <message>
+        <source>Show / hide render cost</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Change aspect ratio</source>
         <translation>가로/세로 비율 변경</translation>
     </message>
@@ -8218,12 +8483,71 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Press Esc to exit full screen</source>
+        <extracomment>Shown for two seconds on entering full screen video</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Previous video file</source>
         <translation>이전 영상 파일</translation>
     </message>
     <message>
+        <source>Line %1, %2: %3</source>
+        <extracomment>The full screen bar&apos;s current line: %1 its number, %2 its times, %3 its text</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Visual tools</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unmute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Mute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 · Wheel: volume · Right-click: output device</source>
+        <extracomment>The full screen speaker&apos;s tooltip: %1 is Mute or Unmute</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Full screen bar: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Auto</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Always</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show on pointer movement, hide when idle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the bar; the picture ends above it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Picture only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show toolbar</source>
-        <translation>도구 모음 아이콘 표시</translation>
+        <translation type="vanished">도구 모음 아이콘 표시</translation>
     </message>
     <message>
         <source>Indexing video</source>
@@ -8294,6 +8618,25 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Aspect ratio: %1</source>
         <translation type="unfinished">가로 세로 비율: %1</translation>
+    </message>
+    <message>
+        <source>No subtitles on this frame</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles drawn in %1 ms</source>
+        <extracomment>Over the video: how long drawing the frame&apos;s subtitles took</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 event(s), %2 bitmap(s), %3 Mpx</source>
+        <extracomment>Over the video: %1 events shown, %2 bitmaps libass drew, %3 their area in megapixels</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 with blur, %2 with a vector clip</source>
+        <extracomment>Over the video: of the shown events, %1 use <byte value="x8"/>lur or <byte value="x8"/>e and %2 a drawing clip or iclip</extracomment>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

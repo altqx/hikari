@@ -53,7 +53,7 @@ QString karaokeReportSummary(const KaraokeReport &r)
     //: Status bar after applying karaoke templates; %n is the number of Lines generated, %1 the number of karaoke
     //: Lines templated, %2 the time the run took
     QString text = QCoreApplication::translate("HikariSub.Automation",
-                                               "Karaoke template: %n Line(s) generated from %1 karaoke Line(s) in %2.",
+                                               "Karaoke template: %n line(s) generated from %1 karaoke line(s) in %2.",
                                                nullptr, r.generated)
                        .arg(r.karaokeLines)
                        .arg(duration(r.seconds));
@@ -69,22 +69,22 @@ QString karaokeReportDetails(const KaraokeReport &r)
 {
     QStringList lines;
     lines << karaokeReportSummary(r);
-    //: In the karaoke template report; %1 is the time karaskel took to measure the karaoke Lines
-    lines << QCoreApplication::translate("HikariSub.Automation", "Measuring the karaoke Lines: %1")
+    //: In the karaoke template report; %1 is the time karaskel took to measure the karaoke lines
+    lines << QCoreApplication::translate("HikariSub.Automation", "Measuring the karaoke lines: %1")
                  .arg(duration(r.prepareSeconds));
     std::vector<KaraokeReport::Template> slowest = r.templates;
     std::ranges::stable_sort(slowest, [](const auto &a, const auto &b) { return a.seconds > b.seconds; });
     for (const auto &t : slowest) {
         if (t.effect.startsWith(QLatin1String("code"), Qt::CaseInsensitive))
             //: In the karaoke template report: a code Line's number, its effect and style, and the time it took
-            lines << QCoreApplication::translate("HikariSub.Automation", "Code Line %1 (%2, %3): %4")
+            lines << QCoreApplication::translate("HikariSub.Automation", "Code line %1 (%2, %3): %4")
                          .arg(t.line)
                          .arg(t.effect, t.style, duration(t.seconds));
         else
             //: In the karaoke template report: a template Line's number, its effect and style, the time it took and
             //: %n the number of Lines it generated
             lines << QCoreApplication::translate("HikariSub.Automation",
-                                                 "Template Line %1 (%2, %3): %4, %n Line(s) generated", nullptr,
+                                                 "Template line %1 (%2, %3): %4, %n line(s) generated", nullptr,
                                                  t.generated)
                          .arg(t.line)
                          .arg(t.effect, t.style, duration(t.seconds));

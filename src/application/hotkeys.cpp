@@ -399,7 +399,8 @@ constexpr NameRow kNames[] = {
         {5022, "Convert to TMP"}, // GLOBAL_CONVERT_TO_TMP
         {5018, "Open audio from video"}, // GLOBAL_AUDIO_FROM_VIDEO
         {5036, "Load script"}, // GLOBAL_AUTOMATION_LOAD_SCRIPT
-        {5039, "Open shortcut mapping window"}, // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW
+        // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW (5039, "Open shortcut mapping
+        // window") is retired (AM1-hotkeys-window-retired): never listed.
         {5037, "Refresh autoload scripts"}, // GLOBAL_AUTOMATION_RELOAD_AUTOLOAD
         {5030, "Time shift window"}, // GLOBAL_SHOW_SHIFT_TIMES
         {5019, "Close audio"}, // GLOBAL_CLOSE_AUDIO
@@ -772,6 +773,7 @@ const std::map<int, std::string> &hotkeyNames()
 bool isRetiredHotkey(int id)
 {
     return id == 5015 // GLOBAL_VIDEO_INDEXING
+           || id == 5039 // GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW (AM1)
            || id == 5104 // GLOBAL_OPEN_DUMMY_AUDIO (AV3)
            || (id >= 5031 && id <= 5035) // GLOBAL_VIEW_ALL..GLOBAL_VIEW_SUBS (WS3)
            || id == 5109; // GLOBAL_EDITOR (WS3)
@@ -1196,6 +1198,69 @@ std::vector<int> HotkeyList::shown() const
     return out;
 }
 
+namespace {
+
+bool shownByFilter(int mode, const HotkeyList::Row &r)
+{
+    switch (mode) {
+    case 1: return !r.accel.empty();
+    case 2: return r.key.type == GlobalHotkey;
+    case 3: return r.key.type == GridHotkey;
+    case 4: return r.key.type == EditorHotkey;
+    case 5: return r.key.type == VideoHotkey;
+    case 6: return r.key.type == AudioHotkey;
+    case 7: return r.key.id >= kFirstScriptHotkey; // AM1: Automation shortcuts
+    default: return true;
+    }
+}
+
+} // namespace
+
+void HotkeyList::addRows(const HotkeyMap &more)
+{
+    const RowPtr selected = m_sel >= 0 && std::size_t(m_sel) < m_filtered.size() ? m_filtered[std::size_t(m_sel)] : nullptr;
+    for (const auto &[key, hotkey] : more) {
+        auto row = std::make_shared<Row>();
+        row->text = std::string(hotkeyWindowName(key.type)) + " " + hotkey.name;
+        row->name = hotkey.name;
+        row->accel = hotkey.accel;
+        row->key = key;
+        row->visible = shownByFilter(m_filterMode, *row) ? 1 : 0;
+        m_isFiltered = m_isFiltered || !row->visible;
+        m_rows.push_back(row);
+        for (auto &step : m_history)
+            step.push_back(row);
+    }
+    rebuildFiltered();
+    if (selected) {
+        const auto it = std::ranges::find(m_filtered, selected);
+        m_sel = it != m_filtered.end() ? int(it - m_filtered.begin()) : m_sel;
+    }
+}
+
+void HotkeyList::removeUnchangedRows(const std::function<bool(const Row &)> &gone)
+{
+    const RowPtr selected = m_sel >= 0 && std::size_t(m_sel) < m_filtered.size() ? m_filtered[std::size_t(m_sel)] : nullptr;
+    std::vector<RowPtr> dropped;
+    for (const auto &row : m_rows)
+        if (gone(*row) && std::ranges::all_of(m_history, [&](const auto &step) { return std::ranges::find(step, row) != step.end(); }))
+            dropped.push_back(row);
+    if (dropped.empty())
+        return;
+    // Each step loses the same rows, so the rest stay aligned between steps.
+    for (const auto &row : dropped) {
+        std::erase(m_rows, row);
+        for (auto &step : m_history)
+            std::erase(step, row);
+    }
+    rebuildFiltered();
+    const auto it = selected ? std::ranges::find(m_filtered, selected) : m_filtered.end();
+    if (it != m_filtered.end())
+        m_sel = int(it - m_filtered.begin());
+    else if (m_sel >= int(m_filtered.size()))
+        m_sel = int(m_filtered.size()) - 1;
+}
+
 void HotkeyList::filter(int mode)
 {
     // FilterList(1, mode) with ItemHotkey::OnVisibilityChange.
@@ -1203,16 +1268,7 @@ void HotkeyList::filter(int mode)
     m_sel = 0;
     m_isFiltered = false;
     for (auto &r : m_rows) {
-        bool visible = true;
-        switch (mode) {
-        case 1: visible = !r->accel.empty(); break;
-        case 2: visible = r->key.type == GlobalHotkey; break;
-        case 3: visible = r->key.type == GridHotkey; break;
-        case 4: visible = r->key.type == EditorHotkey; break;
-        case 5: visible = r->key.type == VideoHotkey; break;
-        case 6: visible = r->key.type == AudioHotkey; break;
-        default: break;
-        }
+        const bool visible = shownByFilter(mode, *r);
         r->visible = visible ? 1 : 0;
         if (!visible)
             m_isFiltered = true;
