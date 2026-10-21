@@ -255,7 +255,9 @@ private:
     // Unmarked generated Lines found to be each source's (a file opened
     // without KE1's marks), from one matching run per source.
     std::map<core::LineId, std::set<core::LineId>> m_replaced;
-    std::set<core::LineId> m_matched;
+    // The unmarked generated Lines each finished matching run saw: another
+    // set (an Undo, a deletion) matches again.
+    std::map<core::LineId, std::set<core::LineId>> m_matched;
     // The chain of runs for one edit: matching, preview, the preview without
     // the current template (its own Lines), the values.
     std::uint64_t m_generation = 0;

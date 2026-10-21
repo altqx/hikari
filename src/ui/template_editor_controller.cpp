@@ -834,8 +834,11 @@ void TemplateEditorController::applied(const std::string &report)
                    {QStringLiteral("seconds"), o.value(QLatin1String("seconds")).toDouble()},
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
     takeBaseline();
-    // A file's unmarked Lines are marked now: no more matching.
+    // A file's unmarked Lines are marked now; an Undo that brings them back
+    // matches again.
     m_replaced.clear();
+    m_matched.clear();
+    m_previewSnapshotKey.clear();
     emit changed();
 }
 
@@ -939,21 +942,28 @@ void TemplateEditorController::runChain(std::uint64_t generation)
     const core::LineId source = *m_source;
     const auto lines = doc.lines();
     const bool marked = std::ranges::any_of(lines, [&](const core::LineRecord *l) { return l->generatedFrom == source; });
-    const bool unmarked = std::ranges::any_of(lines, [](const core::LineRecord *l) {
-        return application::isGeneratedLine(*l) && l->generatedFrom.value == 0;
-    });
+    std::set<core::LineId> unmarked;
+    for (const auto *l : lines)
+        if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0)
+            unmarked.insert(l->id);
     QPointer<TemplateEditorController> self = this;
-    if (!marked && unmarked && !m_matched.contains(source)) {
+    const auto matched = m_matched.find(source);
+    if (!marked && !unmarked.empty() && (matched == m_matched.end() || matched->second != unmarked)) {
         // A file opened without KE1's marks: the selected-Lines run over the
-        // whole Document finds which generated Lines are the source's.
-        m_matched.insert(source);
+        // whole Document finds which generated Lines are the source's. It
+        // runs without the pending edit (the templates as they made the
+        // file's Lines; KE1 refuses others), and counts once it answers: a
+        // newer edit cancels it unanswered.
         application::Selection selection;
         selection.active = source;
         selection.selected = {source};
-        const auto whole = application::macroSnapshotOf(doc, selection);
-        m_templater->preview(whole, [self, generation, whole, source](application::KaraokeTemplaterPort::Preview p) {
+        const auto whole = application::macroSnapshotOf(*document(), selection);
+        m_templater->preview(whole, [self, generation, whole, source,
+                                     unmarked](application::KaraokeTemplaterPort::Preview p) {
             if (!self)
                 return;
+            self->m_matched[source] = unmarked;
+            self->m_replaced.erase(source);
             if (p.result) {
                 std::set<std::uint64_t> kept;
                 for (const auto &d : p.result->dialogues)

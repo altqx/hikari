@@ -93,6 +93,10 @@ public:
     void preview(const application::MacroSnapshot &snapshot, PreviewDone done) override
     {
         ++previews;
+        if (dropPreviews > 0) { // as a run cancelled by a newer one: no answer
+            --dropPreviews;
+            return;
+        }
         runner.run(snapshot, std::move(done));
     }
     void cancelPreview() override { runner.cancel(); }
@@ -123,6 +127,7 @@ public:
     backends::KaraokePreviewRunner runner{QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_LUA_INCLUDE)};
     std::string report;
     int previews = 0;
+    int dropPreviews = 0;
     int applies = 0;
     bool lastSelectedOnly = false;
 
@@ -179,6 +184,33 @@ class TemplateEditorTests : public QObject {
     bool previewCame()
     {
         return QTest::qWaitFor([&] { return editor->hasPreview(); }, 20'000);
+    }
+    // The current text's preview has come.
+    bool settled() const { return editor->hasPreview() && !editor->previewPending(); }
+    // In the middle of `source`'s time the video holds no second copy of a
+    // preview Line (the file's old Line beside it).
+    bool oneCopyOnTheVideo(core::LineId source)
+    {
+        const core::LineRecord *l = nullptr;
+        for (const auto *x : session->document().lines())
+            if (x->id == source)
+                l = x;
+        if (!l)
+            return false;
+        const std::int64_t mid = (l->start.value.microseconds() + l->end.value.microseconds()) / 2000;
+        const auto shown = editor->videoDocument(session->document(), mid, false);
+        if (!shown)
+            return false;
+        QStringList texts;
+        for (const auto *x : shown->lines())
+            texts << QString::fromStdString(lineText(*x)).section(QLatin1Char(','), 9);
+        const QStringList preview = previewTexts();
+        for (const QString &t : preview)
+            if (texts.count(t) > preview.count(t)) {
+                qWarning() << "on the video" << texts.count(t) << "times:" << t;
+                return false;
+            }
+        return true;
     }
 
     // The panel over the editor, `width` wide.
@@ -482,6 +514,66 @@ private slots:
         for (const QString &t : previewTexts())
             if (texts.contains(t))
                 QCOMPARE(texts.count(t), previewTexts().count(t));
+    }
+
+    // An edit that cancels the matching run, and an Undo that brings the
+    // unmarked Lines back after Apply, match again: the frame never holds the
+    // file's old Lines beside the preview.
+    void anEditDuringTheMatchingRunMatchesAgain()
+    {
+        // The file's generated Lines the frame keeps beside the preview.
+        const auto fileLines = [&](core::LineId source) {
+            const core::LineRecord *l = nullptr;
+            for (const auto *x : session->document().lines())
+                if (x->id == source)
+                    l = x;
+            const std::int64_t mid = (l->start.value.microseconds() + l->end.value.microseconds()) / 2000;
+            const auto shown = editor->videoDocument(session->document(), mid, false);
+            const QStringList preview = previewTexts();
+            QStringList out;
+            for (const auto *x : shown->lines()) {
+                const QString text = QString::fromStdString(lineText(*x)).section(QLatin1Char(','), 9);
+                if (application::isGeneratedLine(*x) && x->generatedFrom.value == 0 && !preview.contains(text))
+                    out << text;
+            }
+            out.sort();
+            return out;
+        };
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        const QStringList kept = fileLines(*firstKaraoke());
+        // Again, the matching run cancelled by an edit still pending.
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        const auto source = firstKaraoke();
+        activate(*source);
+        editor->setDelays(10, 60'000);
+        templater->dropPreviews = 1; // the matching run
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return templater->previews >= 1; }, 20'000));
+        editor->setText(editor->text() + QStringLiteral("{\\bord3}"));
+        QVERIFY(QTest::qWaitFor(
+            [&] { return settled() && previewTexts().join(QString()).contains(QStringLiteral("bord3")); }, 20'000));
+        QCOMPARE(fileLines(*source), kept);
+    }
+
+    void anUndoneApplyMatchesAgain()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        const auto source = firstKaraoke();
+        QVERIFY(source);
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(oneCopyOnTheVideo(*source));
+        QVERIFY(editor->apply(false));
+        editor->applied(templater->report);
+        editor->refresh();
+        QVERIFY(session->undo());
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(oneCopyOnTheVideo(*source));
     }
 
     void theCurrentTemplatesOwnLinesAreMarked()
