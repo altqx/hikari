@@ -372,6 +372,8 @@ void appendUtf8(std::u8string &out, std::uint32_t cp)
 
 // An entity value's replacement text: its character references replaced,
 // its entity references kept for when it is used (XML 1.0 section 4.5).
+// A line end written in it is a line feed, as everywhere in a file (CRLF
+// or a lone CR); a "&#13;" stays a carriage return.
 std::u8string replacementText(u8sv value)
 {
     std::u8string out;
@@ -380,6 +382,9 @@ std::u8string replacementText(u8sv value)
             const std::size_t semi = value.find(u8';', i);
             appendUtf8(out, *characterReference(value.substr(i + 1, semi - i - 1)));
             i = semi + 1;
+        } else if (value[i] == u8'\r') {
+            out += u8'\n';
+            i += value.substr(i).starts_with(u8"\r\n") ? 2 : 1;
         } else {
             out += value[i++];
         }
@@ -515,6 +520,7 @@ private:
         };
         auto letter = [](char8_t c) { return (c >= u8'A' && c <= u8'Z') || (c >= u8'a' && c <= u8'z'); };
         auto digit = [](char8_t c) { return c >= u8'0' && c <= u8'9'; };
+        auto lower = [](char8_t c) { return c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c - u8'A' + u8'a') : c; };
         u8sv value;
         if (field(u8"version", value) != 1 || value.size() < 3 || !value.starts_with(u8"1.") ||
             !std::ranges::all_of(value.substr(2), digit))
@@ -525,6 +531,11 @@ private:
                                             return letter(c) || digit(c) || c == u8'.' || c == u8'_' || c == u8'-';
                                         }))))
             return false;
+        // The file is read as UTF-8, so it may name no other encoding.
+        if (found > 0 && !std::ranges::equal(value, u8sv(u8"utf-8"), {}, [&](char8_t c) { return lower(c); })) {
+            m_otherEncoding = true;
+            return false;
+        }
         found = field(u8"standalone", value);
         if (found < 0 || (found > 0 && value != u8"yes" && value != u8"no"))
             return false;
@@ -609,7 +620,9 @@ private:
                             advance(1);
                             const u8sv entity = m_s.substr(from, m_pos - 1 - from);
                             const auto found = m_parameters.find(entity);
-                            if (!m_declarations || found == m_parameters.end() || !found->second) {
+                            if (m_standalone && found == m_parameters.end()) {
+                                ok = false; // a standalone file declares each entity it names
+                            } else if (!m_declarations || found == m_parameters.end() || !found->second) {
                                 // Never read, so what it declares is unknown: past it,
                                 // unless the file is standalone, declarations are only
                                 // checked (XML 1.0 section 5.1).
@@ -639,6 +652,8 @@ private:
                 return {};
             if (!ok)
                 leaveEntities();
+            if (!ok && m_otherEncoding)
+                return std::unexpected(LyricsProblem{Kind::NotUtf8, start.second, {}});
             if (!ok && m_overBudget)
                 return std::unexpected(tooLarge()); // entities past the budget
             if (!ok) {
@@ -823,11 +838,8 @@ private:
                     value = tokenized ? tokens(*decoded) : *decoded;
                 }
             }
-            if (!m_declarations)
-                continue;
-            auto &declared = m_attributes[*element];
-            if (std::ranges::find(declared, *attribute, &AttributeDeclaration::name) == declared.end())
-                declared.push_back({*attribute, tokenized, std::move(value)});
+            if (m_declarations)
+                m_attributes[*element].try_emplace(*attribute, AttributeDeclaration{tokenized, std::move(value)});
         }
     }
     bool attributeType()
@@ -1164,22 +1176,27 @@ private:
                 }
                 // What the internal subset declares of its attributes: a
                 // tokenized value normalized, a default for one not given.
-                const std::size_t given = node.attributes.size();
-                if (const auto declared = m_attributes.find(node.name); declared != m_attributes.end())
-                    for (const AttributeDeclaration &attribute : declared->second) {
-                        const auto it = std::ranges::find(node.attributes, attribute.name, &XmlNode::Attribute::first);
-                        if (it != node.attributes.end()) {
-                            if (attribute.tokenized)
-                                it->second = tokens(it->second);
-                        } else if (attribute.value) {
-                            // All it takes: its name, its value and its entries.
-                            if (!spend(attribute.name.size() + attribute.value->size() + sizeof(XmlNode::Attribute) +
-                                       sizeof(std::size_t) + sizeof(Namespace)))
-                                return std::unexpected(tooLarge());
-                            node.attributes.emplace_back(attribute.name, *attribute.value);
-                            node.attributeLines.push_back(line);
-                        }
+                // Each declaration looked at is work the budget pays for, so
+                // long lists on many elements cannot run on.
+                if (const auto declared = m_attributes.find(node.name); declared != m_attributes.end()) {
+                    if (!spend(declared->second.size()))
+                        return std::unexpected(tooLarge());
+                    for (auto &[key, value] : node.attributes)
+                        if (const auto it = declared->second.find(key); it != declared->second.end() && it->second.tokenized)
+                            value = tokens(value);
+                    std::vector<const std::pair<const std::u8string, AttributeDeclaration> *> defaults;
+                    for (const auto &attribute : declared->second)
+                        if (attribute.second.value && !std::ranges::binary_search(keys, u8sv(attribute.first)))
+                            defaults.push_back(&attribute);
+                    for (const auto *attribute : defaults) {
+                        // All it takes: its name, its value and its entries.
+                        if (!spend(attribute->first.size() + attribute->second.value->size() + sizeof(XmlNode::Attribute) +
+                                   sizeof(std::size_t) + sizeof(Namespace)))
+                            return std::unexpected(tooLarge());
+                        node.attributes.emplace_back(attribute->first, *attribute->second.value);
+                        node.attributeLines.push_back(line);
                     }
+                }
                 // Its declarations within Namespaces in XML's rules, and no
                 // element in the xmlns namespace.
                 if (node.name.starts_with(u8"xmlns:") || !m_scope.enter(node)) {
@@ -1198,9 +1215,8 @@ private:
                         return std::unexpected(broken()); // a prefix no one declares
                     }
                     node.attributeNamespaces.push_back(place.ns);
-                    if (i < given) // the tag's own (Namespaces in XML, section 6.3)
-                        expanded.emplace_back(place.ns, place.ns == Namespace::Other ? place.uri : 0,
-                                              localName(node.attributes[i].first));
+                    expanded.emplace_back(place.ns, place.ns == Namespace::Other ? place.uri : 0,
+                                          localName(node.attributes[i].first));
                 }
                 const auto place = m_scope.of(node.name, true);
                 if (place.uri == NamespaceScope::kUndeclared) {
@@ -1295,7 +1311,6 @@ private:
     };
     // An attribute the internal subset declares for an element.
     struct AttributeDeclaration {
-        std::u8string name;
         bool tokenized = false;
         std::optional<std::u8string> value; // the default, normalized
     };
@@ -1306,13 +1321,15 @@ private:
     std::size_t m_nodesLeft = 0;
     std::size_t m_expansionLeft = 0;
     bool m_overBudget = false;
+    bool m_otherEncoding = false; // the XML declaration names an encoding but UTF-8
     bool m_standalone = false;
     bool m_declarations = true; // false past a parameter-entity reference (unless standalone)
     // The general entities the internal subset declares: each one's
     // replacement text, none for an external one.
     std::map<std::u8string, std::optional<std::u8string>, std::less<>> m_entities;
     std::map<std::u8string, std::optional<std::u8string>, std::less<>> m_parameters; // the parameter entities
-    std::map<std::u8string, std::vector<AttributeDeclaration>, std::less<>> m_attributes;
+    // Per element, its attributes by name, the first declaration of each.
+    std::map<std::u8string, std::map<std::u8string, AttributeDeclaration, std::less<>>, std::less<>> m_attributes;
     std::vector<Input> m_inputs; // the entities being read, innermost last
     std::size_t m_start = 0; // after the byte order mark
     bool m_doctype = false;

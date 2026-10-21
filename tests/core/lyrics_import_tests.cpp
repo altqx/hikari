@@ -5,6 +5,7 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cstdint>
 #include <fstream>
 #include <iterator>
@@ -558,6 +559,13 @@ TEST(LyricsImport, TtmlPrologIsChecked)
     // An XML declaration: version 1.n, then an encoding name and standalone,
     // in that order.
     EXPECT_TRUE(imports("<?xml version='1.1' encoding=\"utf-8\" standalone='no' ?>"));
+    // The file is read as UTF-8, so a declaration naming another encoding is
+    // not read (in any case, "utf-8" is).
+    EXPECT_TRUE(imports("<?xml version=\"1.0\" encoding=\"Utf-8\"?>"));
+    for (const char *other : {"UTF-16", "ISO-8859-1", "Shift_JIS", "utf8"})
+        EXPECT_EQ(problemOf("<?xml version=\"1.0\" encoding=\"" + std::string(other) + "\"?>" + root, u8"ttml"),
+                  (LyricsProblem{Kind::NotUtf8, 1, u8""}))
+            << other;
     // A 1.1 document is read as XML 1.0, so what only 1.1 allows is broken.
     EXPECT_EQ(problemOf("<?xml version=\"1.1\"?><tt><body><p begin=\"1\" end=\"2\">&#1;</p></body></tt>", u8"ttml").kind,
               Kind::NotWellFormed);
@@ -816,6 +824,12 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
               (std::vector<Row>{{1000, 2000, "", "a  b"}}));
     EXPECT_EQ(problemOf("<!DOCTYPE tt [<!ATTLIST tt xmlns CDATA #FIXED 'urn:other'>]><tt><body/></tt>", u8"ttml").kind,
               Kind::NotTtml); // a default namespace declaration too
+    // A default is an attribute of the element: no two by expanded name.
+    EXPECT_EQ(problemOf("<!DOCTYPE tt [<!ATTLIST p a:x CDATA 'default'>]><tt><body><p begin=\"1\" end=\"2\" "
+                        "xmlns:a=\"urn:x\" xmlns:b=\"urn:x\" b:x=\"given\">x</p></body></tt>",
+                        u8"ttml")
+                  .kind,
+              Kind::NotWellFormed);
     EXPECT_EQ(read("<!ATTLIST p xml:space NMTOKEN #IMPLIED>", "<p begin=\"1\" end=\"2\" xml:space=\" preserve  \">a  b</p>"),
               (std::vector<Row>{{1000, 2000, "", "a  b"}}));
     // An internal parameter entity's declarations are read where it is
@@ -832,10 +846,25 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
     // standalone.
     EXPECT_TRUE(read("<!ENTITY % ext SYSTEM 'x.dtd'>%ext;<!ENTITY e 'a'>", "<p begin=\"1\" end=\"2\">&e;</p>").empty());
     EXPECT_TRUE(read("%p;<!ENTITY e 'a'>", "<p begin=\"1\" end=\"2\">&e;</p>").empty());
-    const auto standalone = importTtml(bytes("<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE tt [%p;<!ENTITY e 'a'>]>"
+    const auto standalone = importTtml(bytes("<?xml version=\"1.0\" standalone=\"yes\"?>"
+                                             "<!DOCTYPE tt [<!ENTITY % p SYSTEM 'p.dtd'>%p;<!ENTITY e 'a'>]>"
                                              "<tt><body><p begin=\"1\" end=\"2\">&e;</p></body></tt>"));
     ASSERT_TRUE(standalone.has_value());
     EXPECT_EQ(rows(*standalone), (std::vector<Row>{{1000, 2000, "", "a"}}));
+    // ...where a parameter entity no declaration names is broken.
+    EXPECT_EQ(problemOf("<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE tt [%missing;<!ENTITY e 'a'>]>"
+                        "<tt><body><p begin=\"1\" end=\"2\">&e;</p></body></tt>",
+                        u8"ttml")
+                  .kind,
+              Kind::NotWellFormed);
+    // A line end written in an entity value is one line feed, in an
+    // attribute value one space; a "&#13;" is a character of its own, so
+    // it and a line end are two spaces.
+    EXPECT_EQ(read("<!ENTITY singer 'Lead\r\nVoice'><!ENTITY two 'Lead&#13;\rVoice'>",
+                   "<p begin=\"1\" end=\"2\" ttm:agent=\"&singer;\">x</p><p begin=\"3\" end=\"4\" ttm:agent=\"&two;\">y</p>"),
+              (std::vector<Row>{{1000, 2000, "Lead Voice", "x"}, {3000, 4000, "Lead  Voice", "y"}}));
+    EXPECT_EQ(read("<!ENTITY e 'a\r\nb'>", "<p begin=\"1\" end=\"2\" xml:space=\"preserve\">&e;</p>"),
+              (std::vector<Row>{{1000, 2000, "", "a\\Nb"}}));
 
     // Refused: an entity naming itself, an external one, one that opens
     // or closes an element it does not close or open, a "<" into an
@@ -885,6 +914,21 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
     for (int i = 0; i < 30000; ++i)
         breaks += "<br/>";
     EXPECT_EQ(problem(defaults, breaks + "</p>").kind, Kind::TooLarge);
+    // Declarations replayed are found by name, and those an element looks
+    // at are paid for too, so neither runs on.
+    std::string list = "<!ENTITY % l '<!ATTLIST p";
+    for (int i = 0; i < 20000; ++i)
+        list += " a" + std::to_string(i) + " CDATA #IMPLIED";
+    list += ">'>";
+    for (int i = 0; i < 17; ++i)
+        list += "%l;";
+    const auto replayed = std::chrono::steady_clock::now();
+    EXPECT_EQ(read(list, "<p begin=\"1\" end=\"2\">x</p>"), (std::vector<Row>{{1000, 2000, "", "x"}}));
+    EXPECT_LT(std::chrono::steady_clock::now() - replayed, std::chrono::seconds(5));
+    std::string many = "<!ATTLIST br";
+    for (int i = 0; i < 20000; ++i)
+        many += " a" + std::to_string(i) + " CDATA #IMPLIED";
+    EXPECT_EQ(problem(many + ">", breaks + "</p>").kind, Kind::TooLarge);
 }
 
 TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
