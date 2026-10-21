@@ -10820,6 +10820,36 @@ private slots:
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an2}MurX"));
     }
 
+    // TM1: a run's text is the subtitle's own, shown as written in its chip
+    // and the chip's hover text: never read as markup, so an <img> in a
+    // subtitle is not fetched when its Line becomes active.
+    void tagsFromOriginalRunTextIsPlainText()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-markup.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}<img src=\"http://127.0.0.1:9/x\">{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(visualItem("runChipText1") && visualItem("runChipText1")->isVisible());
+        const QString markup = QStringLiteral("<img src=\"http://127.0.0.1:9/x\">");
+        auto *label = visualItem("runChipText1");
+        QCOMPARE(label->property("text").toString(), markup);
+        QCOMPARE(label->property("textFormat").toInt(), int(Qt::PlainText));
+        auto *tip = visualItem("runChip1")->findChild<QObject *>(QStringLiteral("runChipToolTip1"));
+        QVERIFY(tip);
+        QVERIFY(tip->property("text").toString().contains(markup));
+        auto *tipText = tip->property("contentItem").value<QQuickItem *>();
+        QVERIFY(tipText);
+        QCOMPARE(tipText->property("textFormat").toInt(), int(Qt::PlainText));
+    }
+
     // E5: the Grid's "Original text" and "Translation" columns (legacy
     // showOriginal: TL_MODE_SHOW_ORIGINAL or "TLMode Showtl" when the file
     // loads; off when translation mode is turned off).
