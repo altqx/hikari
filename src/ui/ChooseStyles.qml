@@ -48,7 +48,8 @@ Popover {
         actionText = o.actionText || ""
         const all = lookup(names)
         checkedNames = (checked || []).filter(n => all[n] === true)
-        original = checkedNames.slice()
+        // Esc gives back what the opener gave, names not listed included.
+        original = (checked || []).slice()
         search.text = ""
         styleList.currentIndex = names.length > 0 ? 0 : -1
         return openAt(anchorItem)

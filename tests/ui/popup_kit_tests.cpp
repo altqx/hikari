@@ -444,10 +444,14 @@ private slots:
         QVERIFY(findIn(review, "clashReviewApply")->isEnabled());
         // Enter in the name field writes, as the window's default (the field
         // takes Enter itself).
+        // A comma is refused, as in the style editor's name (Codex review).
         findIn(review, "clashName1")->forceActiveFocus();
+        QTest::keyClick(review, Qt::Key_End);
+        typeText(review, QStringLiteral(",2"));
+        QCOMPARE(findIn(review, "clashName1")->property("text").toString(), QStringLiteral("Sign alt2"));
         QTest::keyClick(review, Qt::Key_Return);
         QTRY_VERIFY(!review->isVisible());
-        QCOMPARE(notes(), QStringList{QStringLiteral("Default=skip:Default (2);Sign=rename:Sign alt")});
+        QCOMPARE(notes(), QStringList{QStringLiteral("Default=skip:Default (2);Sign=rename:Sign alt2")});
         // Cancel writes nothing.
         run(QStringLiteral("clashes.review({ title: 'Copy', rows: [{ name: 'A' }] },"
                            " results => root.note(results === null ? 'cancel' : 'written'))"));

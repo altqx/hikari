@@ -352,6 +352,7 @@ Item {
                                     text: qsTr("Choose styles")
                                     onClicked: {
                                         search.skipActivation = true
+                                        stylesChooser.before = styles.text
                                         stylesChooser.openFor(findChooseStylesButton, search.app.styleNames(),
                                                               styles.text.split(",").map(n => n.trim()),
                                                               { counts: search.app.styleLineCounts() })
@@ -556,7 +557,9 @@ Item {
     ChooseStyles {
         id: stylesChooser
         objectName: "findStylesChooser"
-        onChanged: names => styles.text = names.join(",")
+        // Esc puts the field back as it was typed (Codex review).
+        property string before: ""
+        onChanged: (names, reverted) => styles.text = reverted ? before : names.join(",")
     }
 
     // HikariMessageBox / HikariMessageDialog, one at a time: the search waits

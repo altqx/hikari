@@ -5,6 +5,7 @@
 #include <QCoreApplication>
 #include <QCollator>
 #include <QQuickImageProvider>
+#include <QSet>
 #include <QFile>
 #include <QUrl>
 
@@ -203,6 +204,18 @@ StyleList stylesInFile(const QUrl &url)
     if (start == std::string::npos || end == std::string::npos || end <= start)
         return {};
     return application::readCatalog(text.substr(start, end - start));
+}
+
+// The file's Styles of the names chosen, by a lookup per row (Codex security
+// review: a file can hold a great many).
+StyleList chosenInFile(const QUrl &url, const QStringList &names)
+{
+    const QSet<QString> wanted(names.begin(), names.end());
+    StyleList chosen;
+    for (auto &s : stylesInFile(url))
+        if (wanted.contains(qs(s.name)))
+            chosen.push_back(std::move(s));
+    return chosen;
 }
 
 } // namespace
@@ -490,19 +503,13 @@ QVariantList StyleManagerController::fileClashes(bool toStore, const QUrl &file,
     auto *into = const_cast<StyleManagerController *>(this)->list(toStore, doc);
     if (!into)
         return {};
-    StyleList chosen;
-    for (const auto &s : stylesInFile(file))
-        if (names.contains(qs(s.name)))
-            chosen.push_back(s);
+    const StyleList chosen = chosenInFile(file, names);
     return clashesOf(*into, chosen);
 }
 
 void StyleManagerController::loadFromFile(bool toStore, const QUrl &file, const QStringList &names, const QVariantList &choices)
 {
-    StyleList chosen;
-    for (const auto &s : stylesInFile(file))
-        if (names.contains(qs(s.name)))
-            chosen.push_back(s);
+    const StyleList chosen = chosenInFile(file, names);
     if (toStore) {
         application::transferStyles(m_catalogs.styles(), chosen, choicesOf(choices));
         m_catalogs.markChanged();

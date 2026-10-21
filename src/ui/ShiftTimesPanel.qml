@@ -239,9 +239,12 @@ Item {
                         objectName: "shiftStylesPick"
                         iconRole: "add"
                         text: qsTr("Select a style from the list")
-                        onClicked: stylesPopup.openFor(stylesPick, panel.app.styleNames(),
-                                                       (panel.settings.styles || "").split(",").map(n => n.trim()),
-                                                       { counts: panel.app.styleLineCounts() })
+                        onClicked: {
+                            stylesPopup.before = panel.settings
+                            stylesPopup.openFor(stylesPick, panel.app.styleNames(),
+                                                (panel.settings.styles || "").split(",").map(n => n.trim()),
+                                                { counts: panel.app.styleLineCounts() })
+                        }
                     }
                     TextField {
                         id: shiftStyles
@@ -502,7 +505,14 @@ Item {
     ChooseStyles {
         id: stylesPopup
         objectName: "shiftStylesPopup"
-        onChanged: names => {
+        // Esc puts the settings back as they were, the lines to shift
+        // included (Codex review).
+        property var before: null
+        onChanged: (names, reverted) => {
+            if (reverted && before) {
+                panel.shiftTimes.settings = before
+                return
+            }
             const next = Object.assign({}, panel.settings)
             next.styles = names.join(",")
             if (next.styles.length > 0)

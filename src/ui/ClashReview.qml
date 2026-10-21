@@ -194,6 +194,9 @@ DialogWindow {
                         visible: review.actions[clash.index] === "rename"
                         text: review.names[clash.index] || ""
                         Accessible.name: qsTr("New name for %1").arg(clash.modelData.name)
+                        // A style name has no comma (legacy excludes it; the
+                        // style editor's name field refuses it too).
+                        validator: RegularExpressionValidator { regularExpression: /[^,]*/ }
                         Layout.fillWidth: true
                         Layout.minimumWidth: 120
                         onTextEdited: review.setName(clash.index, text)

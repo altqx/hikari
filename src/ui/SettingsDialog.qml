@@ -170,7 +170,9 @@ Dialog {
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)
         styles = r.styles
-        values = r.values
+        // Over the staged values: the ones without a control (Ask again's
+        // notices.hiddenQuestions) stay staged (Codex review).
+        values = Object.assign({}, values, r.values)
         reloaded()
     }
 

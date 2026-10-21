@@ -9435,6 +9435,15 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(popup, "revert"));
         QTRY_VERIFY(!popup->property("visible").toBool());
         QCOMPARE(styles(), std::u8string(u8"Sign"));
+        // Esc gives the field back as it was, a style not in the list
+        // included (Codex review).
+        setShift("styles", QStringLiteral("Typed, Sign"));
+        open({QStringLiteral("Sign")});
+        tick(QStringLiteral("Default"));
+        QVERIFY(QMetaObject::invokeMethod(popup, "revert"));
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(styles(), std::u8string(u8"Typed, Sign"));
+        setShift("styles", QStringLiteral("Sign"));
         // None checked empties the field; it still shifts by styles.
         open({QStringLiteral("Sign")});
         tick(QStringLiteral("Sign"));
@@ -11316,6 +11325,9 @@ private slots:
         askAgain = dialogItem("settingsDialog", "settingsAskAgain");
         QVERIFY(askAgain->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(askAgain, "click"));
+        // Choosing a style catalog keeps it staged (Codex review).
+        QVERIFY(QMetaObject::invokeMethod(dialog, "chooseCatalog", Q_ARG(QVariant, 0)));
+        QVERIFY(!dialogItem("settingsDialog", "settingsAskAgain")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QCOMPARE(settings.list("notices.hiddenQuestions"), QStringList());
     }
