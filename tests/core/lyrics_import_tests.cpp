@@ -580,7 +580,7 @@ TEST(LyricsImport, TtmlPrologIsChecked)
     // The subset holds markup declarations, PIs, comments, parameter-entity
     // references and whitespace, nothing else.
     EXPECT_TRUE(imports("<!DOCTYPE tt [\n <!ELEMENT tt ANY>\n <!ATTLIST p begin CDATA #IMPLIED>\n"
-                        " <!ENTITY % e \"<x>\"> %e; <!NOTATION n SYSTEM 'n'> <?pi x?> <!-- c -->\n]>"));
+                        " <!ENTITY % e \"<!-- x -->\"> %e; <!NOTATION n SYSTEM 'n'> <?pi x?> <!-- c -->\n]>"));
     for (const char *bad : {"<!DOCTYPE tt [garbage]>", "<!DOCTYPE tt [<!ELEMENT>]>", "<!DOCTYPE tt [<!ELEMENTtt ANY>]>",
                             "<!DOCTYPE tt [<!ELEMENT tt <x>>]>", "<!DOCTYPE tt [%e]>", "<!DOCTYPE tt [<!FOO x>]>",
                             "<!DOCTYPE tt [<!ENTITY a 'x'>"})
@@ -818,8 +818,19 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
               Kind::NotTtml); // a default namespace declaration too
     EXPECT_EQ(read("<!ATTLIST p xml:space NMTOKEN #IMPLIED>", "<p begin=\"1\" end=\"2\" xml:space=\" preserve  \">a  b</p>"),
               (std::vector<Row>{{1000, 2000, "", "a  b"}}));
-    // Past a parameter-entity reference never read, declarations are only
-    // checked, unless the file is standalone.
+    // An internal parameter entity's declarations are read where it is
+    // referenced, one naming another through a character reference too.
+    EXPECT_EQ(read("<!ENTITY % defs '<!ENTITY lyric \"hello\">'> %defs;", "<p begin=\"1\" end=\"2\">&lyric;</p>"),
+              (std::vector<Row>{{1000, 2000, "", "hello"}}));
+    EXPECT_EQ(read("<!ENTITY % times '<!ATTLIST p begin CDATA \"1s\" end CDATA \"2s\">'>%times;", "<p>x</p>"),
+              (std::vector<Row>{{1000, 2000, "", "x"}}));
+    EXPECT_EQ(read("<!ENTITY % inner '<!ENTITY e \"a\">'><!ENTITY % outer '&#37;inner; <!-- c -->'>%outer;",
+                   "<p begin=\"1\" end=\"2\">&e;</p>"),
+              (std::vector<Row>{{1000, 2000, "", "a"}}));
+    // Past a parameter-entity reference never read (an external or an
+    // undeclared one), declarations are only checked, unless the file is
+    // standalone.
+    EXPECT_TRUE(read("<!ENTITY % ext SYSTEM 'x.dtd'>%ext;<!ENTITY e 'a'>", "<p begin=\"1\" end=\"2\">&e;</p>").empty());
     EXPECT_TRUE(read("%p;<!ENTITY e 'a'>", "<p begin=\"1\" end=\"2\">&e;</p>").empty());
     const auto standalone = importTtml(bytes("<?xml version=\"1.0\" standalone=\"yes\"?><!DOCTYPE tt [%p;<!ENTITY e 'a'>]>"
                                              "<tt><body><p begin=\"1\" end=\"2\">&e;</p></body></tt>"));
@@ -841,6 +852,11 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
     EXPECT_EQ(problem("<!ENTITY e '<'>", "<p begin=\"&e;\" end=\"2\">x</p>").kind, Kind::NotWellFormed);
     EXPECT_EQ(problem("<!ENTITY e '&e;'>", "<p begin=\"&e;\" end=\"2\">x</p>").kind, Kind::NotWellFormed);
     EXPECT_EQ(problem("<!ATTLIST p begin CDATA '&e;'>", "<p end=\"2\">x</p>").kind, Kind::NotWellFormed);
+    // A parameter entity naming itself, holding part of a declaration or
+    // the subset's "]".
+    for (const char *subset : {"<!ENTITY % r '&#37;r;'>%r;", "<!ENTITY % half \"<!ENTITY e \">%half; 'a'>",
+                               "<!ENTITY % close ']>'>%close;", "<!ENTITY % pi '<?xml version=\"1.0\"?>'>%pi;"})
+        EXPECT_EQ(problem(subset, p).kind, Kind::NotWellFormed) << subset;
     // Entities naming entities stop at the budget, in text and attributes.
     std::string laughs = "<!ENTITY a0 '0123456789'>";
     for (int i = 1; i <= 9; ++i) {
@@ -852,6 +868,14 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
     EXPECT_EQ(problem(laughs, "<p begin=\"1\" end=\"2\">&a9;</p>").kind, Kind::TooLarge);
     EXPECT_EQ(problem(laughs, "<p begin=\"1\" end=\"2\" a=\"&a9;\">x</p>").kind, Kind::TooLarge);
     EXPECT_EQ(problem(laughs + "<!ATTLIST p a CDATA '&a9;'>", "<p begin=\"1\" end=\"2\">x</p>").kind, Kind::TooLarge);
+    std::string parameters = "<!ENTITY % p0 '<!-- 0123456789 -->'>";
+    for (int i = 1; i <= 9; ++i) {
+        parameters += "<!ENTITY % p" + std::to_string(i) + " '";
+        for (int j = 0; j < 10; ++j)
+            parameters += "&#37;p" + std::to_string(i - 1) + ";";
+        parameters += "'>";
+    }
+    EXPECT_EQ(problem(parameters + "%p9;", "<p begin=\"1\" end=\"2\">x</p>").kind, Kind::TooLarge);
 }
 
 TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)

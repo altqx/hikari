@@ -580,25 +580,50 @@ private:
                     skipSpace();
                 }
                 // The subset (XML's intSubset): markup declarations, PIs,
-                // comments, parameter-entity references and whitespace.
+                // comments, parameter-entity references and whitespace. An
+                // internal parameter entity's text is read in place of its
+                // reference, whole declarations only (XML's "PE Between
+                // Declarations").
                 if (ok && at(u8"[")) {
                     advance(1);
-                    for (skipSpace(); ok && !at(u8"]"); skipSpace()) {
-                        if (done()) {
+                    for (skipSpace(); ok; skipSpace()) {
+                        if (done() && !m_inputs.empty()) {
+                            leaveEntity();
+                            continue;
+                        }
+                        if (at(u8"]") && m_inputs.empty())
+                            break;
+                        if (done() || at(u8"]")) {
                             ok = false;
                         } else if (at(u8"<!--")) {
                             ok = skipComment();
                         } else if (at(u8"<?")) {
                             ok = skipPi();
                         } else if (at(u8"%")) { // a parameter-entity reference, "%name;"
+                            const std::size_t reference = m_pos;
                             advance(1);
+                            const std::size_t from = m_pos;
                             ok = name().has_value() && at(u8";");
-                            if (ok)
-                                advance(1);
-                            // Never read, so what it declares is unknown: past it,
-                            // unless the file is standalone, declarations are only
-                            // checked (XML 1.0 section 5.1).
-                            m_declarations = m_declarations && m_standalone;
+                            if (!ok)
+                                continue;
+                            advance(1);
+                            const u8sv entity = m_s.substr(from, m_pos - 1 - from);
+                            const auto found = m_parameters.find(entity);
+                            if (!m_declarations || found == m_parameters.end() || !found->second) {
+                                // Never read, so what it declares is unknown: past it,
+                                // unless the file is standalone, declarations are only
+                                // checked (XML 1.0 section 5.1).
+                                m_declarations = m_declarations && m_standalone;
+                            } else if (std::ranges::contains(m_inputs, entity, &Input::entity)) {
+                                ok = false; // an entity naming itself
+                            } else if (m_inputs.size() >= kMaxTtmlDepth || !spend(found->second->size())) {
+                                m_overBudget = true;
+                                ok = false;
+                            } else {
+                                m_inputs.push_back({m_s, reference, m_pos, m_line, 0, entity});
+                                m_s = *found->second;
+                                m_pos = 0;
+                            }
                         } else {
                             ok = markupDeclaration();
                         }
@@ -612,8 +637,10 @@ private:
                     advance(1);
             } else
                 return {};
+            if (!ok)
+                leaveEntities();
             if (!ok && m_overBudget)
-                return std::unexpected(tooLarge()); // an attribute default's entities
+                return std::unexpected(tooLarge()); // entities past the budget
             if (!ok) {
                 std::tie(m_pos, m_line) = start;
                 return std::unexpected(broken());
@@ -829,9 +856,9 @@ private:
         }
     }
     // EntityDecl after its keyword: a general entity's name and value or
-    // external id (NDATA too), or "%", a parameter entity's. A general
-    // entity is kept, the first declaration of a name binding it; an
-    // external one with no text, as it is never read.
+    // external id (NDATA too), or "%", a parameter entity's. Each entity is
+    // kept, the first declaration of a name binding it; an external one
+    // with no text, as it is never read.
     bool entityDeclaration()
     {
         if (!space())
@@ -844,7 +871,11 @@ private:
             return false;
         auto declare = [&](std::optional<std::u8string> text) {
             static constexpr u8sv kPredefined[] = {u8"lt", u8"gt", u8"amp", u8"apos", u8"quot"};
-            if (!parameter && m_declarations && std::ranges::find(kPredefined, u8sv(*entity)) == std::end(kPredefined))
+            if (!m_declarations)
+                return;
+            if (parameter)
+                m_parameters.try_emplace(std::move(*entity), std::move(text));
+            else if (std::ranges::find(kPredefined, u8sv(*entity)) == std::end(kPredefined))
                 m_entities.try_emplace(std::move(*entity), std::move(text));
         };
         const std::size_t literal = m_pos;
@@ -926,6 +957,27 @@ private:
         return out;
     }
 
+    // An entity's text read: back after its reference.
+    void leaveEntity()
+    {
+        const Input outer = m_inputs.back();
+        m_inputs.pop_back();
+        m_s = outer.text;
+        m_pos = outer.resume;
+        m_line = outer.line;
+    }
+    // Back in the file, at the reference of the outermost entity being read.
+    void leaveEntities()
+    {
+        if (m_inputs.empty())
+            return;
+        const Input outer = m_inputs.front();
+        m_inputs.clear();
+        m_s = outer.text;
+        m_pos = outer.reference;
+        m_line = outer.line;
+    }
+
     // The replacement text of a parsed entity the internal subset declares.
     const std::u8string *declared(u8sv entity) const
     {
@@ -969,11 +1021,7 @@ private:
     {
         auto root = elementTree();
         if (!root && !m_inputs.empty()) {
-            const Input outer = m_inputs.front();
-            m_inputs.clear();
-            m_s = outer.text;
-            m_pos = outer.reference;
-            m_line = outer.line;
+            leaveEntities();
             if (root.error().kind != Kind::TooLarge)
                 root.error().excerpt = broken().excerpt;
         }
@@ -990,11 +1038,7 @@ private:
         std::vector<XmlNode> open;
         for (;;) {
             if (done() && !m_inputs.empty() && open.size() == m_inputs.back().depth) {
-                const Input outer = m_inputs.back(); // the entity's text read: back to its reference's
-                m_inputs.pop_back();
-                m_s = outer.text;
-                m_pos = outer.resume;
-                m_line = outer.line;
+                leaveEntity();
                 continue;
             }
             if (done())
@@ -1238,8 +1282,9 @@ private:
     }
     LyricsProblem tooLarge() const { return LyricsProblem{Kind::TooLarge, m_line, {}}; }
 
-    // An entity being read in an element's text: the text around its
-    // reference, where the reference starts and where reading resumes.
+    // An entity being read, in an element's text or the internal subset:
+    // the text around its reference, where the reference starts and where
+    // reading resumes.
     struct Input {
         u8sv text;
         std::size_t reference = 0, resume = 0, line = 0;
@@ -1264,6 +1309,7 @@ private:
     // The general entities the internal subset declares: each one's
     // replacement text, none for an external one.
     std::map<std::u8string, std::optional<std::u8string>, std::less<>> m_entities;
+    std::map<std::u8string, std::optional<std::u8string>, std::less<>> m_parameters; // the parameter entities
     std::map<std::u8string, std::vector<AttributeDeclaration>, std::less<>> m_attributes;
     std::vector<Input> m_inputs; // the entities being read, innermost last
     std::size_t m_start = 0; // after the byte order mark
