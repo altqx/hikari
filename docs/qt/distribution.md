@@ -44,6 +44,8 @@ The check reads GitHub's release list, 50 releases to a page and four pages at m
 
 URLs are built from the tag and the asset name (`https://github.com/altqx/hikari/releases/download/v<V>/<asset>`), never taken from a reply. Downloads may be redirected only to `github.com`, `objects.githubusercontent.com` and `release-assets.githubusercontent.com` over https. The automatic check keeps legacy's schedule (a day after each check, "Remind me in a week").
 
+What's new (SH3, [#223](https://github.com/altqx/hikari/issues/223)) reads the same release list, and only while "Check for updates automatically" is on: once per installed version, at the start after an update (sharing the start's own check when one is due; that read is no check and moves no schedule) or from Help > What's new while nothing is cached. It keeps the notes after the version run before up to the installed one in `whats-new-<copy>.json` in the update cache (4 MiB at most), named for the copy as the pending record is, and shows them from there offline or with checks turned off later. The version run before is `updater.lastVersion` and `updater.notesSince` in the settings. The notes' images and links are never fetched.
+
 What the first passing release offers depends on the package kind:
 
 - **NSIS, AppImage, deb, rpm** with a package for the kind: the download. A package that needs a newer Windows (`min_os`) or glibc (`min_glibc`) than the system has is only named, with the requirement.
