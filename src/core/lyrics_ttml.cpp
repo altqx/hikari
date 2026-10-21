@@ -1505,7 +1505,8 @@ public:
     {
         if (!isTtml(root, u8"tt"))
             return std::unexpected(LyricsProblem{Kind::NotTtml, root.line, u8"<" + root.name + u8">"});
-        readHead(root);
+        if (auto head = readHead(root); !head)
+            return std::unexpected(head.error());
         for (const XmlNode &child : root.children)
             if (isTtml(child, u8"body"))
                 if (auto ok = paragraphs(child, std::nullopt, std::nullopt, preserves(root, false)); !ok)
@@ -1578,9 +1579,20 @@ private:
         return out;
     }
 
-    void readHead(const XmlNode &root)
+    // The title and the agents' names. Each text read for them is taken
+    // from the Lines' budget, so names nested in names (an agent's name
+    // holding agents) cannot copy a large text over and over.
+    std::expected<void, LyricsProblem> readHead(const XmlNode &root)
     {
         std::optional<std::u8string> musicName;
+        std::optional<std::size_t> overAt; // the line where the budget ran out
+        auto textOf = [&](const XmlNode &node) {
+            std::u8string text = overAt ? std::u8string() : allText(node);
+            m_sheet.spent += text.size() + 64;
+            if (!overAt && m_sheet.spent > m_sheet.budget)
+                overAt = node.line;
+            return overAt ? std::u8string() : text;
+        };
         // TTML's metadata (ttm:title, ttm:agent, ttm:name), or the same
         // names with no namespace or TTML's, as such files write them;
         // another namespace's are not, nor what they hold. AMLL's meta is
@@ -1594,7 +1606,7 @@ private:
             // A title counts once it has words: an empty one leaves the
             // next title, or musicName, to name the file.
             if (metadata(node, u8"title") && !m_sheet.title)
-                if (const auto title = collapsed(allText(node)); !detail::trim(title).empty())
+                if (const auto title = collapsed(textOf(node)); !detail::trim(title).empty())
                     m_sheet.title = detail::trim(title);
             if (local == u8"meta" && attribute(node, u8"key") == u8sv(u8"musicName") && !musicName)
                 if (const auto title = collapsed(attribute(node, u8"value").value_or(u8"")); !detail::trim(title).empty())
@@ -1603,7 +1615,7 @@ private:
                 const auto id = attribute(node, u8"id", Namespace::Xml);
                 for (const XmlNode &child : node.children)
                     if (id && metadata(child, u8"name"))
-                        m_agents[std::u8string(*id)] = detail::trim(collapsed(allText(child)));
+                        m_agents[std::u8string(*id)] = detail::trim(collapsed(textOf(child)));
             }
             if (foreign(node))
                 return; // another namespace's element (xml: too): nothing inside it is TTML's
@@ -1614,8 +1626,11 @@ private:
         for (const XmlNode &child : root.children)
             if (isTtml(child, u8"head"))
                 visit(visit, child);
+        if (overAt)
+            return std::unexpected(LyricsProblem{Kind::TooLarge, *overAt, {}});
         if (!m_sheet.title && musicName)
             m_sheet.title = musicName;
+        return {};
     }
 
     // The begin, end or dur of an element, if it has one.

@@ -442,6 +442,26 @@ TEST(LyricsImport, FilesAndXmlTreesHaveALimit)
     EXPECT_EQ(problemOf(dense, u8"ttml"), (LyricsProblem{Kind::TooLarge, 2, u8""}));
 }
 
+TEST(LyricsImport, TtmlHeadNamesShareTheBudget)
+{
+    // Agents nested in agents' names (unprefixed, as some files write
+    // them, so each name holds the ones inside): each name read is taken
+    // from the Lines' budget, so a long name copied for each is refused.
+    std::string head;
+    for (int i = 0; i < 30; ++i)
+        head += "<agent xml:id=\"a" + std::to_string(i) + "\"><name>";
+    head += std::string(200000, 'n');
+    for (int i = 0; i < 30; ++i)
+        head += "</name></agent>";
+    EXPECT_EQ(problemOf("<tt><head>" + head + "</head><body><p begin=\"1\" end=\"2\">x</p></body></tt>", u8"ttml").kind,
+              Kind::TooLarge);
+    // One such name is read.
+    const auto one = importTtml(bytes("<tt><head><ttm:agent xml:id=\"v1\"><ttm:name>" + std::string(200000, 'n') +
+                                      "</ttm:name></ttm:agent></head><body><p begin=\"1\" end=\"2\" ttm:agent=\"v1\">x</p></body></tt>"));
+    ASSERT_TRUE(one.has_value());
+    EXPECT_EQ(rows(*one).front().actor.size(), 200000u);
+}
+
 TEST(LyricsImport, TtmlTimesPast100HoursAreRefused)
 {
     const std::string head = "<tt><body>\n";
