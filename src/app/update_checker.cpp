@@ -48,11 +48,17 @@ std::optional<std::string> text(const QJsonValue &v)
 
 // The release list as legacy FindNewerRelease reads it; anything but an
 // array gives no releases.
-std::vector<a::ReleaseEntry> releaseList(const QJsonArray &list)
+// The page's releases; an entry that is none (no object, no tag name) is
+// left out and makes the page unreadable.
+std::vector<a::ReleaseEntry> releaseList(const QJsonArray &list, bool &unreadable)
 {
     std::vector<a::ReleaseEntry> out;
     for (const QJsonValue &value : list) {
         const QJsonObject r = value.toObject();
+        if (!value.isObject() || !r.value(QStringLiteral("tag_name")).isString()) {
+            unreadable = true;
+            continue;
+        }
         a::ReleaseEntry entry;
         entry.tag = r.value(QStringLiteral("tag_name")).toString().toStdString();
         const QJsonValue name = r.value(QStringLiteral("name"));
@@ -440,11 +446,13 @@ void UpdateChecker::pageFinished()
         return;
     }
     // Legacy: a page that is no array lists nothing, and the check goes on;
-    // but the list counts as not read (What's new takes none of it).
+    // but the list counts as not read (What's new takes none of it), as
+    // does one holding an entry that is no release.
     const QJsonDocument json = QJsonDocument::fromJson(body);
     m_run->unreadable = m_run->unreadable || !json.isArray();
-    auto page = releaseList(json.array());
-    const bool full = page.size() >= std::size_t(kReleasesPerPage);
+    const qsizetype listed = json.array().size();
+    auto page = releaseList(json.array(), m_run->unreadable);
+    const bool full = listed >= kReleasesPerPage;
     m_run->releases.insert(m_run->releases.end(), std::make_move_iterator(page.begin()),
                            std::make_move_iterator(page.end()));
     if (m_feed.paginate && full && m_run->page < kMaxPages) {

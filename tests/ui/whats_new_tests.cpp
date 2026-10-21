@@ -271,6 +271,14 @@ private slots:
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(copy->whatsNew->state(), QStringLiteral("failed"));
         QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases")));
+        // An array whose entries are no releases does not read either.
+        QVERIFY(list.open(QIODevice::WriteOnly | QIODevice::Truncate));
+        list.write("[null]");
+        list.close();
+        copy->whatsNew->fetchIfNeeded();
+        QVERIFY(settled(*copy->whatsNew));
+        QCOMPARE(copy->whatsNew->state(), QStringLiteral("failed"));
+        QVERIFY(!cacheIn(copy->root).contains(QStringLiteral("releases")));
         copy = restart(std::move(copy), QStringLiteral("0.1.3"), true);
         QVERIFY(settled(*copy->whatsNew));
         QCOMPARE(versions(*copy->whatsNew), (QStringList{QStringLiteral("0.1.3"), QStringLiteral("0.1.2")}));
