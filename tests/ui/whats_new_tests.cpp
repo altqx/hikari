@@ -194,6 +194,16 @@ private slots:
         QVERIFY(copy->whatsNew->releases().isEmpty());
     }
 
+    // A downgrade shows the installed version alone, named since none.
+    void aDowngradeNamesNoEarlierVersion()
+    {
+        auto copy = start(QStringLiteral("downgrade"), QStringLiteral("0.1.3"), true, true, QStringLiteral("0.2.0"));
+        QVERIFY(copy);
+        QVERIFY(settled(*copy->whatsNew));
+        QCOMPARE(versions(*copy->whatsNew), QStringList{QStringLiteral("0.1.3")});
+        QCOMPARE(copy->whatsNew->since(), QString());
+    }
+
     // The channel is the update checker's; switching needs no new fetch.
     void theChannelFollowsTheUpdateChecker()
     {

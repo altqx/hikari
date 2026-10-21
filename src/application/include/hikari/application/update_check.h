@@ -126,7 +126,8 @@ struct WhatsNewShown {
 WhatsNewShown whatsNewShown(const std::vector<ReleaseEntry> &releases, std::string_view installed, bool stableOnly);
 // The version that ran before `installed`, recorded at each start: the one
 // that ran last when it differs (an update; none on the first start ever),
-// else `storedSince`, kept until the next update.
+// else `storedSince`, kept until the next update. None where the installed
+// version shows alone: a downgrade, the legacy app, no version.
 std::string whatsNewSince(std::string_view lastRun, std::string_view storedSince, std::string_view installed);
 
 // The update manifest, hikarisub-update.json.

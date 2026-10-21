@@ -124,4 +124,10 @@ TEST(WhatsNew, TheVersionRunBeforeIsKeptUntilTheNextUpdate)
     EXPECT_EQ(whatsNewSince("0.1.1", "0.1.0", "0.1.3"), "0.1.1");
     // A later start of the same version keeps it.
     EXPECT_EQ(whatsNewSince("0.1.3", "0.1.1", "0.1.3"), "0.1.1");
+    // None where the installed version shows alone: a downgrade, the legacy
+    // app, a version that does not read.
+    EXPECT_EQ(whatsNewSince("0.2.0", "0.1.1", "0.1.3"), "");
+    EXPECT_EQ(whatsNewSince("0.1.3", "0.2.0", "0.1.3"), "");
+    EXPECT_EQ(whatsNewSince("0.0.2", "", "0.1.3"), "");
+    EXPECT_EQ(whatsNewSince("not a version", "", "0.1.3"), "");
 }

@@ -437,7 +437,13 @@ WhatsNewShown whatsNewShown(const std::vector<ReleaseEntry> &releases, std::stri
 
 std::string whatsNewSince(std::string_view lastRun, std::string_view storedSince, std::string_view installed)
 {
-    return std::string(lastRun == installed ? storedSince : lastRun);
+    const std::string_view since = lastRun == installed ? storedSince : lastRun;
+    // As whatsNewReleases: a Qt version below the installed one, else none.
+    const auto after = parseSemVer(since);
+    const auto top = parseSemVer(installed);
+    if (!after || !top || codebaseOfVersion(since) != Codebase::Qt || compareSemVer(*after, *top) >= 0)
+        return {};
+    return std::string(since);
 }
 
 bool isPrerelease(const ReleaseEntry &release)
