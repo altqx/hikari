@@ -5824,6 +5824,9 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 horizontalAlignment: Text.AlignHCenter
+                // A message quotes files (a broken lyrics file's excerpt):
+                // never markup, which could fetch an <img> from a server.
+                textFormat: Text.PlainText
                 text: root.log.lastMessage
             }
             ScrollView {
@@ -5833,6 +5836,7 @@ ApplicationWindow {
                 TextArea {
                     objectName: "logHistory"
                     readOnly: true
+                    textFormat: TextEdit.PlainText
                     text: root.log.history
                     Accessible.name: qsTr("Log")
                 }

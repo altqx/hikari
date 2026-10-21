@@ -2656,6 +2656,11 @@ private slots:
         QTRY_VERIFY(logWindow->isVisible());
         QVERIFY(logWindow->findChild<QObject *>(QStringLiteral("logLastMessage"))
                     ->property("text").toString().contains(QStringLiteral("none.ass")));
+        // Messages quote files, so they show as plain text, never markup.
+        QCOMPARE(logWindow->findChild<QObject *>(QStringLiteral("logLastMessage"))->property("textFormat").toInt(),
+                 int(Qt::PlainText));
+        QCOMPARE(logWindow->findChild<QObject *>(QStringLiteral("logHistory"))->property("textFormat").toInt(),
+                 int(Qt::PlainText));
         QVERIFY(QMetaObject::invokeMethod(logWindow->findChild<QObject *>(QStringLiteral("logClose")), "clicked"));
         QTRY_VERIFY(!logWindow->isVisible());
         // File > Show / Hide log window: the whole log.
