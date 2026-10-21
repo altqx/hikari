@@ -4,8 +4,8 @@ import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// V4: VIDEO_ASPECT_RATIO's AspectRatioDialog (VideoBox.cpp:96-125): no
-// title, "Aspect ratio: %5.3f" (width / height) over a 400-pixel slider from
+// V4: VIDEO_ASPECT_RATIO's AspectRatioDialog (VideoBox.cpp:96-125): titled
+// with the command (legacy had none, TI1-popup-titles), "Aspect ratio: %5.3f" (width / height) over a 400-pixel slider from
 // 100000 to 1000000, inverted (a taller picture to the left), opened at the
 // pointer. Dragging, a click beside the thumb or the arrow keys set the
 // video's aspect ratio at once (wxEVT_SCROLL_THUMBTRACK); the wheel does
@@ -14,6 +14,7 @@ import Hikari.Ui
 Dialog {
     id: dialog
     objectName: "aspectRatioDialog"
+    title: qsTr("Change aspect ratio") // TI1-popup-titles: the command's name
     required property VideoViewController view
     property int sliderValue: 0
     modal: true

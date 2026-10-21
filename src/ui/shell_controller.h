@@ -29,6 +29,8 @@ class ShellController : public QObject {
     Q_PROPERTY(QAbstractItemModel *referenceLines READ referenceLines CONSTANT)
     Q_PROPERTY(QString activeLineText READ activeLineText NOTIFY activeLineChanged)
     Q_PROPERTY(QString activeLineStyle READ activeLineStyle NOTIFY activeLineChanged)
+    // FS1: the active Line's number in the Grid's # column (its row + 1); 0 for none.
+    Q_PROPERTY(int activeLineNumber READ activeLineNumber NOTIFY activeLineChanged)
     // "3 Lines selected", with the hidden count when some are hidden (G1).
     Q_PROPERTY(QString selectionStatus READ selectionStatus NOTIFY activeLineChanged)
     // GRID_HIDE_COLUMNS: legacy column bits hidden in both Grids (G7).
@@ -92,6 +94,7 @@ public:
     QAbstractItemModel *referenceLines() { return &m_referenceLines; }
     QString activeLineText() const { return m_activeText; }
     QString activeLineStyle() const { return m_activeStyle; }
+    int activeLineNumber() const { return m_activeNumber; }
     QString selectionStatus() const { return m_selectionStatus; }
     QString statusText() const { return m_statusText; }
     void setStatusText(const QString &text)
@@ -214,6 +217,7 @@ private:
     LineTableModel m_referenceLines;
     QString m_activeText;
     QString m_activeStyle;
+    int m_activeNumber = 0;
     QString m_selectionStatus;
     qsizetype m_selectedCount = 0, m_hiddenCount = 0; // what m_selectionStatus says
     QString m_statusText;

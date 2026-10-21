@@ -491,7 +491,8 @@
     "video-transport",
     "video-fullscreen",
     "menu:video",
-    "video-context-menu"
+    "video-context-menu",
+    "automation-panel"
    ]
   },
   {
@@ -528,7 +529,7 @@
     "video-fullscreen",
     "audio-box",
     "video-context-menu",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -581,7 +582,7 @@
   {
    "role": "show-toolbar",
    "file": "show-toolbar.svg",
-   "label": "Show toolbar",
+   "label": "Full screen bar",
    "accent": false,
    "mirror": false,
    "legacy": [],
@@ -1369,7 +1370,7 @@
    ],
    "surfaces": [
     "menu:automation",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -2175,7 +2176,8 @@
    "legacy": [],
    "surfaces": [
     "shift-times-panel",
-    "line-editor"
+    "line-editor",
+    "automation-panel"
    ]
   },
   {
@@ -2189,7 +2191,8 @@
     "line-editor",
     "style-manager",
     "grid-menu",
-    "visual-tools"
+    "visual-tools",
+    "automation-panel"
    ]
   },
   {
@@ -2238,7 +2241,8 @@
    "surfaces": [
     "style-manager",
     "visual-tools",
-    "grid-menu"
+    "grid-menu",
+    "automation-panel"
    ]
   },
   {
@@ -2250,7 +2254,7 @@
    "legacy": [],
    "surfaces": [
     "font-catalog",
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -2447,7 +2451,20 @@
    "legacy": [],
    "surfaces": [
     "video-transport",
+    "video-fullscreen",
     "audio-box"
+   ]
+  },
+  {
+   "role": "volume-muted",
+   "file": "volume-muted.svg",
+   "label": "Unmute",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "video-fullscreen",
+    "video-transport"
    ]
   },
   {
@@ -2491,7 +2508,7 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "automation-manager"
+    "automation-panel"
    ]
   },
   {
@@ -2502,7 +2519,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "menu:automation"
+    "menu:automation",
+    "automation-panel"
    ]
   },
   {
@@ -2546,7 +2564,8 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "settings-dialog"
+    "settings-dialog",
+    "automation-panel"
    ]
   },
   {
@@ -2684,7 +2703,7 @@
   {
    "role": "automation-manager",
    "file": "automation-manager.svg",
-   "label": "Automation manager",
+   "label": "Show panel",
    "accent": true,
    "mirror": false,
    "legacy": [],

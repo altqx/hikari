@@ -30,6 +30,8 @@
 #include "hikari/application/visual_scale.h"
 #include "hikari/application/visual_shift.h"
 #include "hikari/application/grid_translation.h"
+#include "hikari/application/video_controls.h"
+#include "hikari/application/video_fullscreen.h"
 #include "icon_theme.h"
 #include "all_tags_editor.h"
 #include "shape_editor.h"
@@ -60,6 +62,7 @@
 #include <QTimer>
 #include <QDirIterator>
 #include <QContextMenuEvent>
+#include <QJSValue>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -8150,6 +8153,120 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(notice, "accept"));
     }
 
+    // TI1: each picker and popup says what it is for, where legacy's caption
+    // was wrong or empty (TI1-keyframes-title, TI1-fonts-folder-title,
+    // TI1-find-folder-title, TI1-popup-titles). With HIKARI_SURFACE_SHOT_DIR
+    // each opens in turn and is saved as ti1-<objectName>.png; a window of its
+    // own gets its title written above it, as no window manager draws one
+    // under Xvfb.
+    void popupsAreTitledForWhatTheyShow()
+    {
+        auto *settings = openSettings(); // the fonts folder's picker is in Settings
+        QVERIFY(settings);
+        QTRY_VERIFY(settings->property("visible").toBool());
+        // The Search tool, and its folder's picker, come with its panel.
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
+        QTRY_VERIFY(item<QObject>("searchTool"));
+        const auto find = [&](const char *name) {
+            QObject *found = named(name);
+            return found ? found : item<QObject>(name);
+        };
+        const QList<std::pair<const char *, QString>> titles{
+            {"keyframesDialog", QStringLiteral("Choose keyframes file")},
+            {"fontsFolderDialog", QStringLiteral("Choose external font folder")},
+            {"findFolderDialog", QStringLiteral("Choose subtitle search folder")},
+            {"closeSaveAs", QStringLiteral("Save subtitle file")},
+            {"spellingNotice", QStringLiteral("Spellchecker")},
+            {"mkvNoTracksMessage", QStringLiteral("Load subtitles from an MKV/OGM file")},
+            {"mkvProgress", QStringLiteral("Load subtitles from an MKV/OGM file")},
+            {"aspectRatioDialog", QStringLiteral("Change aspect ratio")},
+        };
+        for (const auto &[name, title] : titles) {
+            QObject *popup = find(name);
+            QVERIFY2(popup, name);
+            QCOMPARE(popup->property("title").toString(), title);
+        }
+        // The Find folder button is named for the picker it opens.
+        QCOMPARE(find("findChooseFolder")->property("text").toString(), QStringLiteral("Choose subtitle search folder"));
+        // The refusal of each mapping window (Settings' and the shell's).
+        QList<QQuickWindow *> refusals;
+        for (QWindow *w : QGuiApplication::allWindows())
+            if (w->objectName() == QLatin1String("hotkeyRefusal"))
+                refusals << qobject_cast<QQuickWindow *>(w);
+        QCOMPARE(refusals.size(), 2);
+        for (QQuickWindow *refusal : refusals)
+            QCOMPARE(refusal->title(), QStringLiteral("Warning"));
+
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            return;
+        QVERIFY(QDir().mkpath(out));
+        // The window a dialog or popup shows in: its first window or item up.
+        const auto windowOf = [](QObject *o) -> QQuickWindow * {
+            for (; o; o = o->parent()) {
+                if (auto *w = qobject_cast<QQuickWindow *>(o))
+                    return w;
+                if (auto *i = qobject_cast<QQuickItem *>(o); i && i->window())
+                    return i->window();
+            }
+            return nullptr;
+        };
+        const auto save = [&](const char *name, QQuickWindow *w, bool ownWindow) {
+            QVERIFY2(w, name);
+            QTest::qWait(300); // the popup's enter transition
+            const QImage shot = w->grabWindow();
+            QImage image = shot;
+            if (ownWindow) {
+                const int bar = 30;
+                image = QImage(shot.width(), shot.height() + bar, QImage::Format_ARGB32);
+                image.fill(Qt::darkGray);
+                QPainter p(&image);
+                p.setPen(Qt::white);
+                p.drawText(QRect(8, 0, shot.width() - 16, bar), Qt::AlignVCenter, QStringLiteral("Window title: ") + w->title());
+                p.drawImage(0, bar, shot);
+            }
+            QVERIFY(image.save(out + QStringLiteral("/ti1-") + QLatin1String(name) + QStringLiteral(".png")));
+        };
+        // The pickers (Qt Quick's own dialogs here) open in a window of their own.
+        const auto shown = [] {
+            QSet<QWindow *> out;
+            for (QWindow *w : QGuiApplication::allWindows())
+                if (w->isVisible())
+                    out << w;
+            return out;
+        };
+        named("closeReview")->setProperty("visible", true);
+        for (const char *name : {"keyframesDialog", "fontsFolderDialog", "findFolderDialog", "closeSaveAs"}) {
+            QObject *dialog = find(name);
+            const QSet<QWindow *> before = shown();
+            QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
+            QTRY_VERIFY2(dialog->property("visible").toBool(), name);
+            QTRY_VERIFY2(!(shown() - before).isEmpty(), name);
+            auto *own = qobject_cast<QQuickWindow *>(*(shown() - before).begin());
+            QVERIFY(QTest::qWaitForWindowExposed(own));
+            save(name, own, true);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+            QTRY_VERIFY(!own->isVisible());
+        }
+        named("closeReview")->setProperty("visible", false);
+        QVERIFY(QMetaObject::invokeMethod(settings, "close"));
+        find("spellingNotice")->setProperty("text", QStringLiteral("Error. Word \"wrold\" was not added."));
+        for (const char *name : {"spellingNotice", "mkvNoTracksMessage", "mkvProgress", "aspectRatioDialog"}) {
+            QObject *popup = find(name);
+            QVERIFY(QMetaObject::invokeMethod(popup, qstrcmp(name, "aspectRatioDialog") == 0 ? "openAtCursor" : "open"));
+            QTRY_VERIFY2(popup->property("opened").toBool(), name);
+            save(name, windowOf(popup), false);
+            QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+        }
+        QQuickWindow *refusal = refusals.first();
+        refusal->setProperty("text", QStringLiteral("You cannot use the program exit shortcut."));
+        refusal->show();
+        QVERIFY(QTest::qWaitForWindowExposed(refusal));
+        save("hotkeyRefusal", refusal, true);
+        refusal->close();
+    }
+
     // F3: without a spelling backend there is no spell checker: no notice,
     // no SPELLCHECKER_ON change, bracket marks only. The bundled Dictionary
     // folder (legacy's, beside the executable) is read after the user's.
@@ -9407,12 +9524,10 @@ private slots:
         const std::vector<Buttons> footers{
             {{"historySet", Apply}, {"historyOk", Accept}, {"historyCancel", Reject}},
             {{"closeSaveAll", Accept}, {"closeDiscardAll", Destructive}, {"closeContinue", Action}, {"closeCancel", Reject}},
-            {{"automationForceStop", Destructive}, {"automationCancel", Reject}},
+            {{"automationReassignOk", Accept}, {"automationReassignKeepBoth", Action}, {"automationReassignCancel", Reject}},
             {{"fpsOk", Accept}, {"fpsCancel", Reject}},
             {{"columnsOk", Accept}, {"columnsCancel", Reject}},
             {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
-            {{"automationHotkeysOk", Accept}, {"mapHotkey", Action}, {"deleteHotkey", Action},
-             {"importLegacyHotkeys", Action}, {"automationHotkeysCancel", Reject}},
             {{"reloadYes", Yes}, {"reloadNo", No}},
             {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
              {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
@@ -9432,9 +9547,15 @@ private slots:
             {{"replaceYesToAll", Yes}, {"replaceYes", Yes}, {"replaceNo", No}, {"Cancel", Reject}},
             {{"styleCreateYes", Accept}, {"styleCreateCancel", Reject}}, // LE6
         };
-        // The find question lives in the Search tool's dock: open it.
+        // The find question lives in the Search tool's dock: open it. The
+        // Automation panel's Reassign question has no items until it opens.
         press(Qt::Key_F, Qt::ControlModifier);
         QTRY_VERIFY(item<QObject>("searchDock")->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("automationDock")))));
+        QTRY_VERIFY(item<QObject>("automationDock")->property("isOpen").toBool());
+        QObject *reassign = item<QObject>("automationReassign");
+        QVERIFY(reassign && QMetaObject::invokeMethod(reassign, "open"));
+        QTRY_VERIFY(reassign->property("opened").toBool());
         for (const Buttons &buttons : footers) {
             const char *first = buttons.front().first;
             QObject *found = named(first);
@@ -9456,6 +9577,7 @@ private slots:
                          qPrintable(QStringLiteral("%1: role %2").arg(name).arg(roleOf(button))));
             }
         }
+        QVERIFY(QMetaObject::invokeMethod(reassign, "close"));
 
         // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
         auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
@@ -10348,8 +10470,10 @@ private slots:
         QCOMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}{\\b1}"));
         QTRY_VERIFY(translated->hasActiveFocus());
         QCOMPARE(translated->property("cursorPosition").toInt(), 5);
-        // Shown only: the Document and the draft are untouched.
+        // Shown only: the Document and the draft are untouched, and the video
+        // (FS1's Line label) still shows the stored text.
         QVERIFY(!session->draftLine());
+        QCOMPARE(application->editor().videoText(), QStringLiteral("{\\i1}Wall {\\b1}high"));
         QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
         // A translated Line is shown whole.
         item("editingGrid")->forceActiveFocus();
@@ -10366,6 +10490,7 @@ private slots:
         QVERIFY(session->draftRecord());
         QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("Wall high"));
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}X{\\b1}"));
+        QCOMPARE(application->editor().videoText(), QStringLiteral("{\\i1}X{\\b1}")); // the draft's translation now
         QVERIFY(application->editor().commit());
         QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("Wall high"));
         QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\i1}X{\\b1}"));
@@ -12022,12 +12147,23 @@ private slots:
         QVERIFY(item<QObject>("audioLineMode")->property("checked").toBool());
         click(item("audioKaraoke"));
         QVERIFY(audio.karaoke());
-        QVERIFY(!item("audioButtons")->property("folded").toBool()); // the default 640 px panel holds it all
-        QVERIFY(split->isVisible());
+        // AU2 (#268): with the Customise gear the default 640 px panel no
+        // longer holds Karaoke mode's row: Auto split goes into ⋯ with the
+        // switches (Line mode still holds it all)
+        QVERIFY(item("audioButtons")->property("folded").toBool());
+        QVERIFY(!split->isVisible());
+        auto *moreMenu = named("audioMoreMenu");
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, item("audioMore")), Q_ARG(qreal, 0),
+                                          Q_ARG(qreal, item("audioMore")->height())));
+        QTRY_VERIFY(moreMenu->property("opened").toBool());
+        QVERIFY(named("audioMoreKaraokeSplit")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
+        QTRY_VERIFY(!moreMenu->property("visible").toBool());
         QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
         click(item("audioLineMode"));
         QVERIFY(!audio.karaoke());
+        QTRY_VERIFY(!item("audioButtons")->property("folded").toBool());
         QVERIFY(!split->isVisible());
         click(item("audioWaveformMode")); // the chosen segment again: nothing
         QVERIFY(!audio.spectrumOn());
@@ -12061,9 +12197,323 @@ private slots:
         QTRY_VERIFY(item("audioPanel")->window() == window);
     }
 
+    // AU2 (#268): Customise shows each control AU1 folded as a button of its
+    // own and hides it again; Classic shows them all with the slider column
+    // and hides Play around, Default goes back to AU1's row. A shown toggle
+    // leaves Commit's face, and a row without room folds the switches into ⋯
+    // first, then the extras from its right end.
+    void audioPanelCustomiseShowsTheFoldedControls()
+    {
+        restartWithoutSound(); // it plays (Windows CI has no device)
+        keysNeverRepeat();
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode)); // 1.00-2.00 and 3.00-4.00
+        auto &audio = application->audio();
+        auto &settings = *application->settingsStore();
+        audio.openDummy();
+        QVERIFY(audio.ready());
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        using application::PlayRange;
+        auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
+        auto click = [&](QObject *control) { QVERIFY(QMetaObject::invokeMethod(control, "clicked")); };
+        auto toggleItem = [&](QObject *menuItem) {
+            QVERIFY(QMetaObject::invokeMethod(menuItem, "toggle"));
+            QVERIFY(QMetaObject::invokeMethod(menuItem, "toggled"));
+        };
+        auto *panel = item("audioPanel");
+        // the extras are Repeater delegates, in whichever window the panel is
+        auto extra = [&](const char *name) { return findItem(panel->window()->contentItem(), QLatin1String(name)); };
+        auto *row = item("audioButtons");
+        auto *transport = item("audioTransport");
+        // the ids of the extras the row keeps (a JS array)
+        auto kept = [&] {
+            QVariant v = row->property("kept");
+            if (v.metaType() == QMetaType::fromType<QJSValue>())
+                v = v.value<QJSValue>().toVariant();
+            return v.toStringList();
+        };
+        auto *content = item("audioDisplay")->parentItem();
+        // the row's own sum of the fixed sizes is the transport's width
+        // (the layout's once it has been polished)
+        auto computedWidth = [&] {
+            QVariant width;
+            QVERIFY(QMetaObject::invokeMethod(row, "transportWidth", Q_RETURN_ARG(QVariant, width),
+                                              Q_ARG(QVariant, row->property("kept"))));
+            QTRY_COMPARE(transport->implicitWidth(), width.toReal());
+        };
+        // what ⋯ lists: its items are visible only while it is open
+        auto *more = named("audioMoreMenu");
+        auto moreLists = [&](const QString &name) -> bool {
+            [&] {
+                QVERIFY(QMetaObject::invokeMethod(more, "popup", Q_ARG(QQuickItem *, item("audioMore")),
+                                                  Q_ARG(qreal, 0), Q_ARG(qreal, item("audioMore")->height())));
+                QTRY_VERIFY(more->property("opened").toBool());
+            }();
+            const bool shown = named(name.toLatin1().constData())->property("visible").toBool();
+            [&] {
+                QVERIFY(QMetaObject::invokeMethod(more, "close"));
+                QTRY_VERIFY(!more->property("visible").toBool());
+            }();
+            return shown;
+        };
+        auto endsInside = [&] {
+            auto *gear = item("audioCustomise");
+            QVERIFY(gear->isVisible());
+            QVERIFY(gear->mapToItem(panel, QPointF(gear->width(), 0)).x() <= panel->width() + 0.5);
+        };
+
+        // the default: AU1's row, the gear at its end
+        QCOMPARE(settings.list("audio.panelControls"), QStringList{QStringLiteral("playAround")});
+        QVERIFY(item("audioPlayAround")->isVisible());
+        QVERIFY(!item("audioSliderColumn")->isVisible());
+        QVERIFY(!row->property("folded").toBool());
+        for (const char *name : {"audioExtraBeforeMark", "audioExtraToEnd", "audioExtraAutoCommit", "audioExtraGoto"})
+            QVERIFY2(!extra(name)->isVisible(), name);
+        computedWidth();
+        endsInside();
+        auto *customise = named("audioCustomiseMenu");
+        click(item("audioCustomise"));
+        QTRY_VERIFY(customise->property("opened").toBool());
+        QVERIFY(item<QObject>("audioCustomisePlayAround")->property("checked").toBool());
+        auto *showGoto = item<QObject>("audioCustomiseGoto");
+        QVERIFY(!showGoto->property("checked").toBool());
+        QVERIFY(showGoto->property("keepsMenuOpen").toBool()); // tick after tick
+        QCOMPARE(item<QObject>("audioCustomiseBefore")->property("text").toString(),
+                 QStringLiteral("Play 500 ms before the start\tQ"));
+
+        // shown from the menu, a play is a button that plays its range
+        toggleItem(item<QObject>("audioCustomiseFirst"));
+        QCOMPARE(settings.list("audio.panelControls"),
+                 (QStringList{QStringLiteral("playAround"), QStringLiteral("first")}));
+        QVERIFY(item<QObject>("audioCustomiseFirst")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(customise, "close"));
+        QTRY_VERIFY(!customise->property("visible").toBool());
+        auto *first = extra("audioExtraFirst");
+        QVERIFY(first->isVisible());
+        QCOMPARE(first->property("tip").toString(), QStringLiteral("Play 500 ms after the start time"));
+        click(first);
+        QCOMPARE(range(), (PlayRange{44100, 22050})); // 1.00 for 500 ms at 44.1 kHz
+        audio.stopPlayback();
+        computedWidth();
+        // and hidden again
+        toggleItem(item<QObject>("audioCustomiseFirst"));
+        QCOMPARE(settings.list("audio.panelControls"), QStringList{QStringLiteral("playAround")});
+        QVERIFY(!first->isVisible());
+
+        // Classic: every extra and the slider column, Play around hidden
+        QVERIFY(QMetaObject::invokeMethod(named("audioCustomiseClassic"), "triggered"));
+        const QStringList classic{"beforeMark", "afterMark", "before", "first", "last", "after", "toEnd",
+                                  "autoCommit", "nextCommit", "goto", "sliders"};
+        QCOMPARE(settings.list("audio.panelControls"), classic);
+        QVERIFY(!item("audioPlayAround")->isVisible());
+        QVERIFY(item("audioSliderColumn")->isVisible());
+        QVERIFY(item<QObject>("audioCustomiseSliders")->property("checked").toBool());
+        QVERIFY(!item<QObject>("audioCustomisePlayAround")->property("checked").toBool());
+        // the display gives the column its room
+        QCOMPARE(item("audioDisplay")->width() + item("audioSliderColumn")->width(), content->width());
+
+        // the default dock has no room for it all: the switches go into ⋯,
+        // then the extras from the right; the row still ends in the panel
+        QVERIFY(row->property("folded").toBool());
+        QVERIFY(item("audioMore")->isVisible());
+        QVERIFY(!item("audioSwitches")->isVisible());
+        const QStringList docked = kept();
+        QVERIFY(docked.size() < 10);
+        QCOMPARE(docked, classic.mid(0, docked.size()));
+        computedWidth();
+        endsInside();
+        for (const QString &id : classic.mid(docked.size(), 10 - docked.size())) {
+            const QString name = QStringLiteral("audioMoreExtra") + id[0].toUpper() + id.mid(1);
+            QVERIFY2(moreLists(name), qPrintable(name));
+        }
+        QVERIFY(!moreLists(QStringLiteral("audioMoreExtraBeforeMark")));
+        // a folded toggle's mark is back on Commit's face; a kept one's is not
+        QVERIFY(settings.boolean("audio.autoCommit") && settings.boolean("audio.nextLineOnCommit"));
+        QCOMPARE(extra("audioNextCommitMark")->isVisible(), !docked.contains(QStringLiteral("nextCommit")));
+        QCOMPARE(extra("audioAutoCommitMark")->isVisible(), !docked.contains(QStringLiteral("autoCommit")));
+        // ⋯'s folded Go acts
+        audio.setHorizontalZoom(10);
+        audio.setScrollPosition(5000);
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreExtraGoto"), "triggered"));
+        QCOMPARE(audio.lineOutOfView(), 0);
+
+        // a wide floating dock holds the whole row
+        auto *dock = item<QObject>("audioDock");
+        dock->setProperty("isFloating", true);
+        QTRY_VERIFY(panel->window() != window);
+        QQuickWindow *floating = panel->window();
+        floating->resize(1100, 300);
+        QTRY_VERIFY(!row->property("folded").toBool());
+        QCOMPARE(kept(), classic.mid(0, 10));
+        QVERIFY(item("audioSwitches")->isVisible());
+        QVERIFY(!item("audioMore")->isVisible());
+        computedWidth();
+        endsInside();
+        // each play button plays its hotkey's range
+        const std::pair<const char *, const char *> plays[] = {
+            {"audioExtraBeforeMark", "AUDIO_PLAY_BEFORE_MARK"}, {"audioExtraAfterMark", "AUDIO_PLAY_AFTER_MARK"},
+            {"audioExtraBefore", "AUDIO_PLAY_500MS_BEFORE"},    {"audioExtraFirst", "AUDIO_PLAY_500MS_FIRST"},
+            {"audioExtraLast", "AUDIO_PLAY_500MS_LAST"},        {"audioExtraAfter", "AUDIO_PLAY_500MS_AFTER"},
+            {"audioExtraToEnd", "AUDIO_PLAY_TO_END"}};
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_LINE")));
+        const PlayRange line = range();
+        audio.stopPlayback();
+        for (const auto &[name, symbol] : plays) {
+            QVERIFY2(extra(name)->isVisible(), name);
+            QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_LINE")));
+            audio.stopPlayback();
+            click(extra(name));
+            const PlayRange clicked = range();
+            audio.stopPlayback();
+            QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_LINE")));
+            audio.stopPlayback();
+            QVERIFY(audio.runHotkey(QString::fromLatin1(symbol)));
+            QVERIFY2(range() == clicked, name);
+            audio.stopPlayback();
+            if (QByteArray(name).contains("Mark"))
+                continue;
+            QVERIFY2(clicked != line, name);
+        }
+        // Commit's options as buttons, their marks off the face
+        QVERIFY(!extra("audioAutoCommitMark")->isVisible());
+        QVERIFY(!extra("audioNextCommitMark")->isVisible());
+        auto *autoButton = extra("audioExtraAutoCommit");
+        QVERIFY(autoButton->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(autoButton, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(autoButton, "toggled"));
+        QVERIFY(!settings.boolean("audio.autoCommit"));
+        QVERIFY(!item<QObject>("audioAutoCommit")->property("checked").toBool()); // Commit's menu follows
+        settings.setValue(QStringLiteral("audio.autoCommit"), true);
+        QVERIFY(autoButton->property("checked").toBool());
+        auto *nextButton = extra("audioExtraNextCommit");
+        QVERIFY(QMetaObject::invokeMethod(nextButton, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(nextButton, "toggled"));
+        QVERIFY(!settings.boolean("audio.nextLineOnCommit"));
+        settings.setValue(QStringLiteral("audio.nextLineOnCommit"), true);
+        // Go: the Back to line chip still shows beside it
+        audio.setScrollPosition(5000);
+        QCOMPARE(audio.lineOutOfView(), -1);
+        QVERIFY(item("audioBackToLine")->isVisible());
+        click(extra("audioExtraGoto"));
+        QCOMPARE(audio.lineOutOfView(), 0);
+        audio.setHorizontalZoom(50);
+
+        // the slider column follows the zoom, the volume and Link both ways
+        auto *horizontal = item("audioColumnHorizontal");
+        auto *vertical = item("audioColumnVertical");
+        auto *volume = item("audioColumnVolume");
+        audio.setHorizontalZoom(40);
+        audio.setVerticalZoom(70);
+        audio.setVolume(30);
+        QCOMPARE(horizontal->property("value").toInt(), 40);
+        QCOMPARE(vertical->property("value").toInt(), 70);
+        QCOMPARE(volume->property("value").toInt(), 30);
+        horizontal->setProperty("value", 20);
+        QVERIFY(QMetaObject::invokeMethod(horizontal, "moved"));
+        QCOMPARE(audio.horizontalZoom(), 20);
+        vertical->setProperty("value", 60);
+        QVERIFY(QMetaObject::invokeMethod(vertical, "moved"));
+        QCOMPARE(audio.verticalZoom(), 60);
+        volume->setProperty("value", 80);
+        QVERIFY(QMetaObject::invokeMethod(volume, "moved"));
+        QCOMPARE(audio.volume(), 80);
+        auto *link = item("audioColumnLink");
+        QVERIFY(!link->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(link, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(link, "toggled"));
+        QVERIFY(audio.linked());
+        audio.setLinked(false);
+        QVERIFY(!link->property("checked").toBool());
+        audio.resetZoom();
+        audio.setVolume(50);
+
+        // narrower: only the extras that fit stay, from the left; ⋯ holds
+        // the rest and plays them
+        floating->resize(700, 300);
+        QTRY_VERIFY(row->property("folded").toBool());
+        const QStringList narrow = kept();
+        QVERIFY(narrow.size() < 10);
+        QCOMPARE(narrow, classic.mid(0, narrow.size()));
+        computedWidth();
+        endsInside();
+        floating->resize(560, 300);
+        QTRY_VERIFY(kept().size() < narrow.size());
+        computedWidth();
+        endsInside();
+        QVERIFY(moreLists(QStringLiteral("audioMoreExtraToEnd")));
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_TO_END")));
+        const PlayRange toEnd = range();
+        audio.stopPlayback();
+        QVERIFY(audio.runHotkey(QStringLiteral("AUDIO_PLAY_LINE")));
+        audio.stopPlayback();
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreExtraToEnd"), "triggered"));
+        QCOMPARE(range(), toEnd);
+        audio.stopPlayback();
+
+        // Default: AU1's row again
+        QVERIFY(QMetaObject::invokeMethod(named("audioCustomiseDefault"), "triggered"));
+        QCOMPARE(settings.list("audio.panelControls"), QStringList{QStringLiteral("playAround")});
+        QVERIFY(!item("audioSliderColumn")->isVisible());
+        QVERIFY(item("audioPlayAround")->isVisible());
+        QCOMPARE(item("audioDisplay")->width(), content->width());
+        computedWidth();
+        // and with nothing between the transport and the timing group, one
+        // separator there, not two
+        toggleItem(item<QObject>("audioCustomisePlayAround"));
+        QCOMPARE(settings.list("audio.panelControls"), QStringList());
+        QVERIFY(!item("audioPlayAround")->isVisible());
+        computedWidth();
+        floating->resize(1100, 300);
+        QTRY_VERIFY(!row->property("folded").toBool());
+        toggleItem(item<QObject>("audioCustomiseLast")); // a time play without Play around
+        computedWidth();
+        toggleItem(item<QObject>("audioCustomiseAfterMark"));
+        computedWidth();
+        dock->setProperty("isFloating", false);
+        QTRY_VERIFY(panel->window() == window);
+    }
+
+    // AU2: the arrangement is a profile setting: it survives a restart,
+    // an empty one too (nothing extra, Play around hidden).
+    void audioPanelArrangementSurvivesARestart()
+    {
+        const QString file = dir.filePath(QStringLiteral("au2/hikari.ini"));
+        app::Application::Options options;
+        options.settingsFile = file;
+        options.playbackAudio = false;
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        application->audio().openDummy();
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("audioCustomiseClassic"), "triggered"));
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        application->audio().openDummy();
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QCOMPARE(application->settingsStore()->list("audio.panelControls").size(), qsizetype(11));
+        QVERIFY(item("audioSliderColumn")->isVisible());
+        QVERIFY(!item("audioPlayAround")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("audioCustomiseDefault"), "triggered"));
+        auto *around = item<QObject>("audioCustomisePlayAround");
+        QVERIFY(QMetaObject::invokeMethod(around, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(around, "toggled"));
+        QCOMPARE(application->settingsStore()->list("audio.panelControls"), QStringList());
+        restartWith(options);
+        QVERIFY(application->openFile(episode));
+        application->audio().openDummy();
+        QTRY_VERIFY(item("audioButtons")->isVisible());
+        QCOMPARE(application->settingsStore()->list("audio.panelControls"), QStringList());
+        QVERIFY(!item("audioPlayAround")->isVisible());
+        QVERIFY(!item("audioSliderColumn")->isVisible());
+        restartWith(app::Application::Options());
+    }
+
     // AU1: the audio panel's states in the four themes, for review: written
     // to HIKARI_SURFACE_SHOT_DIR when it is set (audio-panel-<state>-<theme>.png),
     // the panel with room under it for its menus, at the default 1280 × 800.
+    // AU2: Customise (the whole window: the menu is taller than the room
+    // under the panel), Classic docked and in a wide floating dock.
     void audioPanelScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -12129,11 +12579,30 @@ private slots:
             popupAndShot(QStringLiteral("karaoke-spectrum"), theme, nullptr, nullptr);
             audio.toggleKaraoke();
             audio.setSpectrumOn(false);
-            // floating at 440 px: the switches in ⋯, its menu open
+            auto *customise = named("audioCustomiseMenu");
+            QVERIFY(QMetaObject::invokeMethod(customise, "popup", Q_ARG(QQuickItem *, item("audioCustomise")),
+                                              Q_ARG(qreal, 0), Q_ARG(qreal, item("audioCustomise")->height())));
+            QTRY_VERIFY(customise->property("opened").toBool());
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QStringLiteral("/audio-panel-customise-") + theme + QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(customise, "close"));
+            QTRY_VERIFY(!customise->property("visible").toBool());
+            const QStringList classic{"beforeMark", "afterMark", "before", "first", "last", "after", "toEnd",
+                                      "autoCommit", "nextCommit", "goto", "sliders"};
+            settings.setValue(QStringLiteral("audio.panelControls"), classic);
+            popupAndShot(QStringLiteral("classic"), theme, nullptr, nullptr);
+            popupAndShot(QStringLiteral("classic-more"), theme, "audioMoreMenu", "audioMore");
+            // floating at 440 px: the switches in ⋯, its menu open; before
+            // that, Classic at 1100 px
             auto *dock = item<QObject>("audioDock");
             dock->setProperty("isFloating", true);
             QTRY_VERIFY(panel->window() != window);
             QQuickWindow *floating = panel->window();
+            floating->resize(1100, 300);
+            QTRY_VERIFY(!item("audioButtons")->property("folded").toBool());
+            QTest::qWait(300);
+            QVERIFY(floating->grabWindow().save(out + QStringLiteral("/audio-panel-classic-wide-") + theme + QStringLiteral(".png")));
+            settings.setValue(QStringLiteral("audio.panelControls"), QStringList{QStringLiteral("playAround")});
             floating->resize(440, 560);
             QTRY_VERIFY(item("audioButtons")->property("folded").toBool());
             auto *more = named("audioMoreMenu");
@@ -12789,9 +13258,10 @@ private slots:
         QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Appearance",
                                      "Hotkeys", "Subtitle properties"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
-        // V3: "Open video with FFMS2" retired, never listed; WS3: the five View
-        // arrangements and "Enable / Disable editor" too; LE3's "Hide tags in
-        // the line editor" and KE1's "Show / hide render cost" listed.
+        // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
+        // window" retired, never listed; WS3: the five View arrangements and
+        // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
+        // KE1's "Show / hide render cost" and FS1's VIDEO_FULLSCREEN_BAR listed.
         QCOMPARE(hotkeyRows().size(), 221);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
@@ -13210,15 +13680,15 @@ private slots:
         h.gestureMap(30101, QStringLiteral("Script b.lua-0"), QStringLiteral("Ctrl-Shift-F"), 0, QStringLiteral("switch"));
         QCOMPARE(scripts.committedKeys().at("Script b.lua-0"), std::string("Ctrl+Shift+F"));
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString()); // switched with b's none
-        // The automation window's OK after a change saves and installs the
+        // A change in the Automation panel (AM1) saves and installs the
         // whole map, here the defaults "Set default" left in memory.
         h.resetDefaults();
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
-        scripts.begin();
-        scripts.commit(); // no change: nothing else
+        scripts.clearKeys(QStringLiteral("Script c.lua-0")); // no binding: nothing else
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
-        scripts.setKeys(QStringLiteral("Script c.lua-0"), QStringLiteral("Ctrl+Shift+Y"));
-        scripts.commit();
+        scripts.replaceCommitted({{"Script c.lua-0", "Ctrl+Shift+Y"}}); // in memory only
+        QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QString());
+        scripts.clearKeys(QStringLiteral("Script c.lua-0"));
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SEARCH"), 0), QStringLiteral("Ctrl-F"));
         QVERIFY(application->settingsStore()->list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SEARCH G=Ctrl-F")));
     }
@@ -13586,7 +14056,8 @@ private slots:
     }
 
     // A macro's menu item: Shift maps its hotkey (OnMapHkey(-1, "Script
-    // <file>-<n>"), no window choice), a S2 binding run from the shell.
+    // <file>-<n>")), a S2 binding run from the shell; AM1: in the Automation
+    // panel, which opens recording it.
     void hotkeyGestureOnAMacro()
     {
         QVERIFY(application->openFile(episode));
@@ -13597,15 +14068,529 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("automationMenu"), "open"));
         QTRY_VERIFY(macro->isVisible() && macro->width() > 0 && macro->isEnabled());
         clickWith(macro, Qt::ShiftModifier);
-        auto *mapping = mappingWindow("hotkeyMapping");
-        QTRY_VERIFY(mapping->isVisible());
-        QCOMPARE(in(mapping, "hotkeyMappingText")->property("text").toString(),
-                 QStringLiteral("Please enter a hotkey for \"Script shell-fixture.lua-0\"."));
-        QVERIFY(!in(mapping, "hotkeyWindowChoice")->isVisible());
-        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY(!mapping->isVisible());
+        QVERIFY(!mappingWindow("hotkeyMapping")->isVisible());
+        QTRY_VERIFY(item<QObject>("automationDock")->property("isOpen").toBool());
+        QCOMPARE(named("automationTool")->property("recording").toString(), QStringLiteral("Script shell-fixture.lua-0"));
+        auto *recorder = visualItem("automationRecorder");
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        keyTo(recorder, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        keyTo(recorder, Qt::Key_Return);
         QCOMPARE(application->automationHotkeys().committedKeys().at("Script shell-fixture.lua-0"), std::string("Ctrl+Alt+J"));
         QVERIFY(!application->automation().running());
+    }
+
+    // AM1: the panel offers the Document's scripts (Script Info "Automation
+    // Scripts") as it shows and as the editing target changes while it
+    // shows; loading runs a script's code, so nothing loads before Load.
+    void automationPanelOffersTheDocumentScripts()
+    {
+        QTemporaryDir scripts;
+        const auto document = [&](const QString &name, const QByteArray &more = {}) {
+            const QString script = QDir::toNativeSeparators(scripts.filePath(name + QStringLiteral(".lua")));
+            QFile lua(script);
+            if (!lua.open(QIODevice::WriteOnly))
+                return QString();
+            lua.write("aegisub.register_macro(\"" + name.toUtf8() + "\", \"\", function() end)\n");
+            const QString ass = scripts.filePath(name + QStringLiteral(".ass"));
+            QFile f(ass);
+            if (!f.open(QIODevice::WriteOnly))
+                return QString();
+            f.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: |" + script.toUtf8() + more +
+                    "\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+            return ass;
+        };
+        const auto listed = [&](const char *name) {
+            const auto &all = application->automation().documentScripts().scripts();
+            const std::string script = QDir::toNativeSeparators(scripts.filePath(QLatin1String(name) + ".lua")).toStdString();
+            return std::ranges::find(all, script) != all.end();
+        };
+        const QString first = document(QStringLiteral("First"));
+        // A path that is gone (or on a server, on Windows) is offered by name;
+        // it is first looked at on Load, which skips it silently.
+        const QString gone = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("missing/Gone.lua")));
+        const QString second = document(QStringLiteral("Second"), "|" + gone.toUtf8());
+        QVERIFY(!first.isEmpty() && !second.isEmpty());
+        QVERIFY(application->openFile(first));
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock);
+        QVERIFY(!dock->property("isOpen").toBool());
+        QTest::qWait(100);
+        QVERIFY(!listed("First"));
+        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        auto *offer = visualItem("documentScriptsOffer");
+        QVERIFY(offer);
+        QTRY_VERIFY(offer->isVisible());
+        QCOMPARE(visualItem("documentScriptsOfferText")->property("text").toString(),
+                 QStringLiteral("This file names scripts: First.lua"));
+        QTest::qWait(200);
+        QVERIFY(!listed("First")); // offered, not loaded
+        QVERIFY(std::ranges::none_of(application->automation().scripts(), [&](const auto &script) {
+            return QString::fromStdString(script.path).endsWith(QStringLiteral("First.lua"));
+        }));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("documentScriptsLoad"), "clicked"));
+        QVERIFY(listed("First"));
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_First"), 30000);
+        QTRY_VERIFY(!offer->isVisible());
+        // Another tab while it shows: its Document's scripts are offered as
+        // it becomes the editing target.
+        QVERIFY(application->openFile(second));
+        application->selectTab(1);
+        QTRY_COMPARE(visualItem("automationTool")->property("documentName").toString(), QStringLiteral("Second.ass"));
+        QVERIFY(dock->property("isOpen").toBool());
+        QTRY_COMPARE(visualItem("documentScriptsOfferText")->property("text").toString(),
+                     QStringLiteral("This file names scripts: Second.lua, Gone.lua"));
+        QVERIFY(offer->isVisible());
+        QVERIFY(!listed("Second"));
+        QVERIFY(QMetaObject::invokeMethod(visualItem("documentScriptsLoad"), "clicked"));
+        QVERIFY(listed("Second"));
+        QVERIFY(!listed("missing/Gone"));
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Second"), 30000);
+        QTRY_VERIFY(!offer->isVisible());
+        // Back on the first tab: its script is loaded, nothing is offered.
+        application->selectTab(0);
+        QTRY_COMPARE(visualItem("automationTool")->property("documentName").toString(), QStringLiteral("First.ass"));
+        QTest::qWait(200);
+        QVERIFY(!offer->isVisible());
+        // A path with markup in it is offered as written, the text and its
+        // tooltip plain: as rich text its image would be fetched (from a
+        // server, on Windows) before Load.
+        const QByteArray markup = "<img src=\"file:&#47;&#47;host&#47;share&#47;x\">.lua";
+        const QString third = scripts.filePath(QStringLiteral("Third.ass"));
+        QFile f(third);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: |" + markup +
+                "\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        f.close();
+        QVERIFY(application->openFile(third));
+        application->selectTab(2);
+        QTRY_VERIFY(offer->isVisible());
+        auto *text = visualItem("documentScriptsOfferText");
+        QCOMPARE(text->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(text->property("text").toString().contains(QLatin1String("<img src=")));
+        auto *tip = text->findChild<QObject *>(QStringLiteral("documentScriptsOfferToolTip"));
+        QVERIFY(tip);
+        auto *tipText = tip->property("contentItem").value<QObject *>();
+        QVERIFY(tipText);
+        QCOMPARE(tipText->property("textFormat").toInt(), int(Qt::PlainText));
+        QCOMPARE(tipText->property("text").toString(), QString::fromUtf8(markup));
+        // A field of thousands of paths is offered with the first named and
+        // the rest counted, a path given twice offered once.
+        QByteArray many;
+        for (int i = 0; i < 20000; ++i)
+            many += '|' + QByteArray::number(i).rightJustified(5, '0').prepend("p") + ".lua";
+        many += "|p00000.lua";
+        const QString fourth = scripts.filePath(QStringLiteral("Fourth.ass"));
+        QFile g(fourth);
+        QVERIFY(g.open(QIODevice::WriteOnly));
+        g.write("[Script Info]\nScriptType: v4.00+\nAutomation Scripts: " + many +
+                "\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+        g.close();
+        QVERIFY(application->openFile(fourth));
+        application->selectTab(3);
+        QTRY_COMPARE(text->property("text").toString(),
+                     QStringLiteral("This file names scripts: p00000.lua, p00001.lua, p00002.lua, p00003.lua, "
+                                    "p00004.lua, p00005.lua, p00006.lua, p00007.lua and 19992 more"));
+        const QStringList tipLines = tipText->property("text").toString().split(QLatin1Char('\n'));
+        QCOMPARE(tipLines.size(), 31);
+        QCOMPARE(tipLines.at(29), QStringLiteral("p00029.lua"));
+        QCOMPARE(tipLines.last(), QStringLiteral("and 19970 more"));
+    }
+
+    // AM1: two loaded scripts with the same file name share their macros'
+    // legacy names, which resolve to neither (S44-macro-alias), so recording
+    // one's shortcut is refused and Settings → Hotkeys does not offer it.
+    void automationPanelRefusesAMacroNameTwoScriptsShare()
+    {
+        QVERIFY(application->openFile(episode));
+        QTemporaryDir scripts;
+        for (const char *dir : {"a", "b"}) {
+            QVERIFY(QDir(scripts.path()).mkpath(QLatin1String(dir)));
+            const QString path = scripts.filePath(QLatin1String(dir) + QStringLiteral("/twin.lua"));
+            QFile lua(path);
+            QVERIFY(lua.open(QIODevice::WriteOnly));
+            lua.write("aegisub.register_macro(\"Twin " + QByteArray(dir) + "\", \"\", function() end)\n");
+            lua.close();
+            application->automation().load(QDir::toNativeSeparators(path).toStdString());
+        }
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Twin a") && named("macro_Twin b"), 30000);
+        const QString legacyName = QStringLiteral("Script twin.lua-0");
+        auto &macros = application->automationHotkeys();
+        QVERIFY(!macros.recordingProblem(legacyName).isEmpty());
+        const auto unbound = macros.unboundMacros(); // Settings → Hotkeys' rows for the loaded macros
+        QVERIFY(std::ranges::find(unbound, legacyName.toStdString()) == unbound.end());
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *tool = named("automationTool");
+        auto *recorder = visualItem("automationRecorder");
+        QVERIFY(tool && recorder);
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, legacyName)));
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        QVERIFY(tool->property("refusal").toString().contains(QStringLiteral("Several loaded scripts")));
+        keyTo(recorder, Qt::Key_T, Qt::ControlModifier | Qt::AltModifier);
+        QVERIFY(tool->property("refusal").toString().contains(QStringLiteral("Several loaded scripts")));
+        keyTo(recorder, Qt::Key_Return);
+        QCOMPARE(tool->property("recording").toString(), legacyName); // nothing saved
+        QVERIFY(!macros.committedKeys().contains(legacyName.toStdString()));
+        keyTo(recorder, Qt::Key_Escape);
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        QVERIFY(!macros.committedKeys().contains(legacyName.toStdString()));
+    }
+
+    // AM1 with KB1/KB2's key router: a key being recorded is the recorder's
+    // whichever panel the pointer is over (no Grid binding runs, Space does
+    // not play), and a macro on Play / Pause's keys, which act from every
+    // panel, is named as taken by it and does not run.
+    void automationRecorderKeepsTheKeysFromTheRouter()
+    {
+        QVERIFY(application->openFile(episode));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const std::size_t lineCount = session->document().lines().size();
+        const QString fixture = QStringLiteral(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        application->automation().load(QDir::toNativeSeparators(fixture).toStdString());
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Prefix from dialog"), 30000);
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock && QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *tool = named("automationTool");
+        auto *recorder = visualItem("automationRecorder");
+        QVERIFY(tool && recorder);
+        const auto hover = [&](const char *name) {
+            QQuickItem *over = item(name);
+            QTest::mouseMove(window, over->mapToScene(QPointF(over->width() / 2, over->height() / 2)).toPoint());
+            QCoreApplication::processEvents();
+        };
+        const auto pressedKeys = [&] {
+            return tool->property("pressed").toMap().value(QStringLiteral("keys")).toString();
+        };
+        const QString legacyName = QStringLiteral("Script shell-fixture.lua-0");
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, legacyName)));
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        hover("gridPanel");
+        QCOMPARE(named("keyRouter")->property("hoveredPanel").value<QQuickItem *>(), item("gridPanel"));
+        press(Qt::Key_D, Qt::ControlModifier); // the Grid's GRID_DUPLICATE_LINES
+        QTRY_COMPARE(pressedKeys(), QStringLiteral("Ctrl+D"));
+        QCOMPARE(session->document().lines().size(), lineCount);
+        // KB2's Play / Pause from every panel: the recorder's, which refuses
+        // it (a macro's shortcut needs a modifier, legacy's capture rule).
+        press(Qt::Key_Space);
+        QTRY_VERIFY(tool->property("refusal").toString().contains(QStringLiteral("must include modifiers")));
+        QCOMPARE(tool->property("recording").toString(), legacyName);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        QTest::mouseMove(window, kOverNoPanel);
+        // A macro on Space (a carried-over binding): Play / Pause takes it.
+        auto &macros = application->automationHotkeys();
+        macros.replaceCommitted({{legacyName.toStdString(), "Space"}});
+        macros.install();
+        int script = -1;
+        QTRY_VERIFY([&] {
+            for (int i = 0; i < 10 && script < 0; ++i)
+                if (auto *row = visualItem(qPrintable(QStringLiteral("macro_%1_0").arg(i)));
+                    row && row->property("text").toString() == QStringLiteral("Prefix from dialog"))
+                    script = i;
+            return script >= 0;
+        }());
+        QTRY_COMPARE(visualItem(qPrintable(QStringLiteral("keysNote_%1_0").arg(script)))->property("text").toString(),
+                     QStringLiteral("Play / Pause also uses Space and takes it."));
+        QVERIFY(application->hotkeys().macroTakenSequences().contains(QStringLiteral("Space")));
+        QVERIFY(!application->hotkeys().globalSequences().contains(QStringLiteral("Space")));
+        macros.replaceCommitted({});
+        macros.install();
+    }
+
+    // AM1: the Automation panel, closed by default and opened from
+    // Automation > Show panel. A macro's shortcut is recorded on its row and
+    // applies at once; a taken one asks to reassign; Esc leaves it; a Global
+    // command's keys are named as taking it; a run opens the closed panel on
+    // its run status (AM1-run-status). The shortcut window and its command
+    // are gone (AM1-hotkeys-window-retired).
+    void automationPanelSetsMacroShortcuts()
+    {
+        QVERIFY(application->openFile(episode));
+        QVERIFY(!named("automationHotkeysWindow"));
+        QVERIFY(!named("automationManagerWindow"));
+        QVERIFY(!named("automationProgress"));
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(dock);
+        QVERIFY(!dock->property("isOpen").toBool());
+        const QString fixture = QStringLiteral(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        application->automation().load(QDir::toNativeSeparators(fixture).toStdString()); // as run() names it
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Prefix from dialog"), 30000);
+        auto *show = named("automationManagerMenuItem")->property("action").value<QObject *>();
+        QVERIFY(show && QMetaObject::invokeMethod(show, "trigger"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        // The fixture's rows: its index among the loaded scripts.
+        int script = -1;
+        QTRY_VERIFY([&] {
+            for (int i = 0; i < 10 && script < 0; ++i)
+                if (auto *row = visualItem(qPrintable(QStringLiteral("macro_%1_0").arg(i)));
+                    row && row->property("text").toString() == QStringLiteral("Prefix from dialog"))
+                    script = i;
+            return script >= 0;
+        }());
+        const auto name = [&](const char *what, int ordinal) {
+            return QStringLiteral("%1_%2_%3").arg(QLatin1String(what)).arg(script).arg(ordinal).toLatin1();
+        };
+        auto *recorder = visualItem("automationRecorder");
+        QVERIFY(recorder);
+        const auto record = [&](int ordinal, Qt::Key key, Qt::KeyboardModifiers mods) {
+            auto *keys = visualItem(name("keys", ordinal).constData());
+            QVERIFY(keys);
+            QVERIFY(QMetaObject::invokeMethod(keys, "clicked"));
+            QTRY_VERIFY(recorder->hasActiveFocus());
+            keyTo(recorder, key, mods);
+        };
+        const auto committed = [&](const char *legacyName) {
+            const auto &keys = application->automationHotkeys().committedKeys();
+            const auto it = keys.find(legacyName);
+            return it == keys.end() ? std::string() : it->second;
+        };
+        // Recorded and set at once.
+        record(0, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        keyTo(recorder, Qt::Key_Return);
+        QCOMPARE(committed("Script shell-fixture.lua-0"), std::string("Ctrl+Alt+J"));
+        QTRY_COMPARE(visualItem(name("keys", 0).constData())->property("text").toString(), QStringLiteral("Ctrl+Alt+J"));
+        // Esc leaves the binding as it was.
+        record(0, Qt::Key_K, Qt::ControlModifier | Qt::AltModifier);
+        keyTo(recorder, Qt::Key_Escape);
+        QCOMPARE(committed("Script shell-fixture.lua-0"), std::string("Ctrl+Alt+J"));
+        // A taken shortcut: named while recording, then Reassign moves it.
+        record(1, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_COMPARE(visualItem(name("keysNote", 1).constData())->property("text").toString(),
+                     QStringLiteral("Already assigned to: Prefix from dialog"));
+        keyTo(recorder, Qt::Key_Return);
+        auto *reassign = named("automationReassign");
+        QVERIFY(reassign);
+        QTRY_VERIFY(reassign->property("opened").toBool());
+        QCOMPARE(named("automationReassignText")->property("text").toString(),
+                 QStringLiteral("Ctrl+Alt+J is assigned to Prefix from dialog. Assign it to Wait for cancel instead?"));
+        QVERIFY(QMetaObject::invokeMethod(named("automationReassignOk"), "clicked"));
+        QTRY_VERIFY(!reassign->property("visible").toBool());
+        QCOMPARE(committed("Script shell-fixture.lua-0"), std::string());
+        QCOMPARE(committed("Script shell-fixture.lua-1"), std::string("Ctrl+Alt+J"));
+        // The keys it has already: nothing to ask, the binding kept.
+        auto *tool = named("automationTool");
+        record(1, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QCOMPARE(visualItem(name("keysNote", 1).constData())->property("text").toString(), QString());
+        keyTo(recorder, Qt::Key_Return);
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        QVERIFY(!reassign->property("visible").toBool());
+        QCOMPARE(committed("Script shell-fixture.lua-1"), std::string("Ctrl+Alt+J"));
+        // Escape on the question is its Cancel: the recording ends, nothing moves.
+        record(0, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        keyTo(recorder, Qt::Key_Return);
+        QTRY_VERIFY(reassign->property("opened").toBool());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!reassign->property("visible").toBool());
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        QCOMPARE(committed("Script shell-fixture.lua-0"), std::string());
+        QCOMPARE(committed("Script shell-fixture.lua-1"), std::string("Ctrl+Alt+J"));
+        // A macro the filter hides (Shift+click in the Automation menu):
+        // the filter goes, so the row recording it shows.
+        auto *filter = visualItem("automationFilter");
+        filter->setProperty("text", QStringLiteral("no such macro"));
+        QTRY_VERIFY(!visualItem(name("keys", 0).constData()));
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, QStringLiteral("Script shell-fixture.lua-0"))));
+        QCOMPARE(filter->property("text").toString(), QString());
+        QCOMPARE(tool->property("recording").toString(), QStringLiteral("Script shell-fixture.lua-0"));
+        QTRY_VERIFY(visualItem(name("keys", 0).constData()));
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        keyTo(recorder, Qt::Key_Escape);
+        QTRY_COMPARE(tool->property("recording").toString(), QString());
+        // One no loaded script has: nothing to record.
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, QStringLiteral("Script removed.lua-0"))));
+        QCOMPARE(tool->property("recording").toString(), QString());
+        // A Global command's keys (a carried-over binding: the panel's
+        // Reassign would take them from it): it takes them, the row says so.
+        auto &macros = application->automationHotkeys();
+        macros.replaceCommitted({{"Script shell-fixture.lua-0", "Ctrl+S"}, {"Script shell-fixture.lua-1", "Ctrl+Alt+J"}});
+        macros.install();
+        QTRY_COMPARE(visualItem(name("keysNote", 0).constData())->property("text").toString(),
+                     QStringLiteral("Save also uses Ctrl+S and takes it."));
+        // A run opens the closed panel on its run status; Cancel ends it.
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        QVERIFY(application->automation().run(QDir::toNativeSeparators(fixture).toStdString(), 1));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *run = visualItem("automationRun");
+        QTRY_VERIFY(run && run->isVisible());
+        auto *cancel = visualItem("automationCancel");
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        // What the run said stays until Close (S1's window kept it too).
+        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+                 QStringLiteral("The macro was cancelled; nothing was changed."));
+        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Wait for cancel cancelled"));
+        QCOMPARE(cancel->property("text").toString(), QStringLiteral("Close"));
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+        QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
+        QTRY_VERIFY(run->isVisible());
+        // Enter on a macro row leaves the key alone while a macro runs, as
+        // Run and a double click are off then.
+        auto *list = visualItem("scripts");
+        QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
+        QVERIFY(list->property("currentIndex").toInt() >= 0);
+        QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
+        QCoreApplication::sendEvent(list, &enter);
+        QVERIFY(!enter.isAccepted());
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+        // Off under a modal dialog (Settings), which keeps the run status
+        // out of reach.
+        QVERIFY(!application->workspaceLayout().modalOpen());
+        auto *runLast = named("loadLastScriptMenuItem")->property("action").value<QObject *>();
+        QVERIFY(runLast->property("enabled").toBool());
+        QVERIFY(openSettings());
+        QTRY_VERIFY(application->workspaceLayout().modalOpen());
+        QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTest::qWait(200);
+        QVERIFY(!application->automation().running());
+        // The Global command running the last loaded script too.
+        QVERIFY(!runLast->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(runLast, "trigger"));
+        QTest::qWait(200);
+        QVERIFY(!application->automation().running());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!application->workspaceLayout().modalOpen());
+        QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
+        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
+        QTRY_VERIFY(run->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+        // A macro whose validation does not let it run (from the panel or
+        // the menu, which say nothing else): the run status says so.
+        QTemporaryDir scripts;
+        const QString invalid = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("invalid.lua")));
+        {
+            QFile f(invalid);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("aegisub.register_macro(\"Guarded\", \"\", function() end, function() return false end)\n");
+        }
+        application->automation().load(invalid.toStdString());
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Guarded"), 30000);
+        QVERIFY(application->automation().run(invalid.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QTRY_VERIFY(run->isVisible());
+        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
+        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+                 QStringLiteral("Its validation did not let it run; nothing was changed."));
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+        // KE1-template-problems: a run that applied but whose karaoke report
+        // names template problems stays, its log open to be read.
+        const QString templated = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("templated.lua")));
+        {
+            QFile f(templated);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("aegisub.register_macro(\"Templated\", \"\", function(subs)\n"
+                    "  for i = 1, #subs do\n"
+                    "    local l = subs[i]\n"
+                    "    if l.class == \"dialogue\" then l.text = l.text .. \"x\"; subs[i] = l; break end\n"
+                    "  end\n"
+                    "  aegisub.hikari.report('{\"report\":\"karaoke-templater\",\"version\":1,\"mode\":\"all\",\"seconds\":0.5,'\n"
+                    "    .. '\"prepare_seconds\":0.1,\"karaoke_lines\":1,\"generated\":2,\"problems\":1,\"templates\":['\n"
+                    "    .. '{\"line\":2,\"effect\":\"template syl\",\"style\":\"Default\",\"seconds\":0.4,\"generated\":2}]}')\n"
+                    "end)\n");
+        }
+        application->automation().load(templated.toStdString());
+        QTRY_VERIFY_WITH_TIMEOUT(named("macro_Templated"), 30000);
+        QVERIFY(application->automation().run(templated.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
+        QVERIFY2(application->automation().lastOutcome() == QStringLiteral("applied"),
+                 qPrintable(application->automation().lastMessage()));
+        QVERIFY(application->automation().keepLog());
+        QTRY_VERIFY(run->isVisible());
+        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
+        QCOMPARE(visualItem("automationShowLog")->property("text").toString(), QStringLiteral("Hide log"));
+        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
+        QTRY_VERIFY(!run->isVisible());
+    }
+
+    // AM1: the Automation panel in the four themes, written to
+    // HIKARI_AUTOMATION_SHOT_DIR when it is set (tools/review: the user's
+    // visual review): a Document script and two autoload ones, one failed;
+    // a shortcut, one a Global command takes, one recording on a taken
+    // shortcut, one whose macro is missing (automation-panel-<theme>.png);
+    // a macro running (automation-run-<theme>.png); Settings → Hotkeys
+    // under "Automation shortcuts" (automation-settings-<theme>.png).
+    void automationPanelScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_AUTOMATION_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_AUTOMATION_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        auto &settings = *application->settingsStore();
+        auto &automation = application->automation();
+        QVERIFY(application->openFile(episode));
+        const QString fixture = QStringLiteral(HIKARI_LUA_FIXTURES "/shell-fixture.lua");
+        automation.loadScript(QUrl::fromLocalFile(fixture));
+        automation.load(HIKARI_LUA_FIXTURES "/host-fixture.lua");
+        automation.load(HIKARI_LUA_FIXTURES "/syntax-error.lua");
+        QTRY_VERIFY_WITH_TIMEOUT(automation.scripts().size() == 3 && std::ranges::none_of(automation.scripts(), [](const auto &s) {
+                                     return s.state == application::ScriptStatus::State::Loading;
+                                 }),
+                                 30000);
+        auto &macros = application->automationHotkeys();
+        macros.replaceCommitted({{"Script shell-fixture.lua-0", "Ctrl+Alt+P"},
+                                 {"Script host-fixture.lua-2", "Ctrl+S"},
+                                 {"Script removed.lua-0", "F8"}});
+        macros.install();
+        auto *root = engine->rootObjects().first();
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        dock->setProperty("isFloating", true);
+        auto *panel = item("automationPanel");
+        QTRY_VERIFY(panel && panel->window() != window);
+        QQuickWindow *floating = panel->window();
+        floating->resize(460, 760);
+        auto *tool = item<QObject>("automationTool");
+        QVERIFY(QMetaObject::invokeMethod(tool, "record", Q_ARG(QVariant, QStringLiteral("Script shell-fixture.lua-1"))));
+        auto *recorder = item("automationRecorder");
+        QTRY_VERIFY(recorder->hasActiveFocus());
+        keyTo(recorder, Qt::Key_P, Qt::ControlModifier | Qt::AltModifier);
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto shoot = [&](QQuickWindow *w, const QString &name) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QImage shot;
+                QTRY_VERIFY((shot = w->grabWindow(), !shot.isNull() && shot.width() > 0));
+                QVERIFY(shot.save(out + QStringLiteral("/automation-") + name + QLatin1Char('-') + QLatin1String(code) +
+                                  QStringLiteral(".png")));
+            }
+        };
+        shoot(floating, QStringLiteral("panel"));
+        keyTo(recorder, Qt::Key_Escape);
+        // A macro running: the run status at the top.
+        QVERIFY(automation.run(QDir::toNativeSeparators(fixture).toStdString(), 1));
+        QTRY_VERIFY(item("automationRun")->isVisible());
+        QTest::qWait(500);
+        shoot(floating, QStringLiteral("run"));
+        QVERIFY(QMetaObject::invokeMethod(item("automationCancel"), "clicked"));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        // Settings → Hotkeys, Automation shortcuts: what the panel's menu opens.
+        auto *settingsDialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
+        QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, 7),
+                                          Q_ARG(QVariant, 7)));
+        QTRY_VERIFY(settingsDialog->property("opened").toBool());
+        QCOMPARE(application->hotkeys().filterMode(), 7);
+        shoot(window, QStringLiteral("settings"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        dock->setProperty("isFloating", false);
     }
 
     // S4: Automation > "Run the last loaded script" (HikariSubFrame.cpp:353,
@@ -13753,8 +14738,8 @@ private slots:
         QVERIFY(doc.scriptInfo(u8"PlayResX") == std::u8string(u8"640"));
         QVERIFY(doc.scriptInfo(u8"PlayResY") == std::u8string(u8"480"));
         QVERIFY(!application->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
-        // The progress window closes: nothing to say.
-        QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
+        // The Automation panel's run status goes: nothing to say (AM1).
+        QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
 
         // Return on Cancel, and Escape, stop the macro, quietly.
         application->editor().undo();
@@ -13775,7 +14760,7 @@ private slots:
             const auto &after = application->files().session(*application->workspace().editingTarget())->document();
             QVERIFY(!after.scriptInfo(u8"PlayResX"));
             QVERIFY(after.lines().front()->text == std::u8string(u8"first"));
-            QTRY_VERIFY(!mappingWindow("automationProgress")->isVisible());
+            QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
         }
     }
 
@@ -16213,22 +17198,27 @@ private slots:
         QVERIFY(!viewController.zoomMode());
         QVERIFY(viewController.zoomed());
 
-        // Fullscreen with "Show toolbar" (the panel below the picture),
-        // still zoomed, then the whole frame.
+        // Fullscreen with the bar Always (the bar below the picture),
+        // still zoomed, then the whole frame. The 7:1 picture keeps bars
+        // above and below it on any screen (a 4:3 one fills a 1280x1024
+        // screen's width with 5 px bars beside FS1's one-row bar).
         auto &fs = application->videoFullscreen();
+        fs.setBarMode(1);
+        viewController.setAspectFromSlider(100000);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QVERIFY(fsWindow);
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(fs.showToolbar());
+        QVERIFY(fs.pinned());
         QTRY_COMPARE(overlay->window(), fsWindow);
         shown = fsWindow;
         QTRY_COMPARE(overlay->height(), qreal(fsWindow->height()) - fullscreenItem("videoFullscreenPanel")->height());
+        QTRY_VERIFY2(tools.videoRect().top() >= 8, qPrintable(QDebug::toString(tools.videoRect())));
         crosshairOnlyOverThePicture("fullscreen, zoomed");
         if (QTest::currentTestFailed())
             return;
-        controlsTakeTheArrow({"fullscreenSlider", "fullscreenPlayPause", "fullscreenShowToolbar", "fullscreenVolume",
-                              "fullscreenTool1"},
+        controlsTakeTheArrow({"fullscreenSlider", "fullscreenPlayPause", "fullscreenBarMode", "fullscreenVolume",
+                              "fullscreenSpeaker", "fullscreenToolsButton", "fullscreenExit"},
                              true);
         if (QTest::currentTestFailed())
             return;
@@ -16243,6 +17233,9 @@ private slots:
         QVERIFY(fs.leave());
         QTRY_COMPARE(overlay->window(), window);
         shown = window;
+        viewController.setAspectFromSlider(525000);
+        QTRY_COMPARE(tools.videoView().aspectRatio(), 0.75f);
+        fs.setBarMode(0);
 
         QTRY_VERIFY(visualItem("visualToolRail")->isVisible());
         QTRY_COMPARE_WITH_TIMEOUT(cursorAt(tools.videoRect().center()), Qt::BlankCursor, 2000);
@@ -18544,7 +19537,7 @@ private slots:
         QCOMPARE(titleIcon->property("iconRole").toString(), QStringLiteral("settings"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         // The windows' icons.
-        for (const char *w : {"historyWindow", "styleManager", "automationManagerWindow"}) {
+        for (const char *w : {"historyWindow", "styleManager"}) {
             auto *shown = root->findChild<QQuickWindow *>(QLatin1String(w));
             QVERIFY2(shown && !shown->icon().isNull(), w);
         }
@@ -23257,14 +24250,23 @@ private slots:
         QVERIFY(application->video().stepFrames(12));
         QTRY_VERIFY(presented.count() > 0);
         QTRY_VERIFY(fsWindow->grabWindow().copy(picture) != before);
-        // An indexed video: "Show toolbar" on, the panel stays and the
-        // picture ends above it (m_PanelOnFullscreen).
+        // FS1: the bar in Auto (the default) shows on entering, over the
+        // picture, which takes the whole window; the hint names Esc, and the
+        // file name's strip is up with the bar.
         auto *panel = fullscreenItem("videoFullscreenPanel");
-        QVERIFY(panel && panel->isVisible());
-        QVERIFY(fullscreenItem("fullscreenShowToolbar")->property("checked").toBool());
-        QVERIFY(fullscreenItem("fullscreenToolbar")->isVisible());
-        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
+        QCOMPARE(fs.barMode(), 0);
+        QVERIFY(!fs.pinned());
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(panel && panel->isVisible());
+        QTRY_VERIFY(fullscreenItem("videoFullscreenHint")->isVisible());
+        QCOMPARE(fullscreenItem("videoFullscreenHintText")->property("text").toString(),
+                 QStringLiteral("Press Esc to exit full screen"));
+        QTRY_VERIFY(fullscreenItem("videoFullscreenTitle")->isVisible());
+        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
         QCOMPARE(presenter->width(), qreal(fsWindow->width()));
+        // No tool on: no rail, no tool row.
+        QVERIFY(!fullscreenItem("fullscreenToolRail")->isVisible());
+        QVERIFY(!fullscreenItem("fullscreenInspectorSlot")->isVisible());
         // The 4:3 picture fills the stage's width or height, centred.
         const QRectF shownRect = application->visualTools().videoRect();
         QVERIFY(qAbs(shownRect.width() - presenter->width()) <= 1 || qAbs(shownRect.height() - presenter->height()) <= 1);
@@ -23272,14 +24274,37 @@ private slots:
         QVERIFY(qAbs(shownRect.center().y() - presenter->height() / 2) <= 1);
         // The transport's icon-only buttons name themselves.
         for (const char *name : {"fullscreenPreviousFile", "fullscreenPlayPause", "fullscreenPlayLine", "fullscreenStop",
-                                 "fullscreenNextFile", "fullscreenShowToolbar"}) {
+                                 "fullscreenNextFile", "fullscreenOpenEditor", "fullscreenToolsButton", "fullscreenSpeaker",
+                                 "fullscreenExit"}) {
             auto *button = fullscreenItem(name);
-            QVERIFY2(button, name);
+            QVERIFY2(button && button->isVisible(), name);
             QCOMPARE(button->property("display").toInt(), 0); // AbstractButton.IconOnly
             QVERIFY2(!QAccessible::queryAccessibleInterface(button)->text(QAccessible::Name).isEmpty(), name);
+            QVERIFY2(!button->property("tip").toString().isEmpty(), name);
         }
-        QCOMPARE(fullscreenItem("fullscreenShowToolbar")->property("tip").toString(), QStringLiteral("Show toolbar"));
+        QCOMPARE(fullscreenItem("fullscreenExit")->property("tip").toString(), QStringLiteral("Exit full screen (Escape)"));
+        // The mode button names the mode; its tooltip the binding (Tab).
+        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Auto"));
+        QVERIFY(fullscreenItem("fullscreenBarMode")->property("tip").toString().startsWith(QStringLiteral("Full screen bar (Tab)")));
         QCOMPARE(fullscreenItem("fullscreenVideoName")->property("text").toString(), QStringLiteral("clip.mkv"));
+        // FS1-current-line: the first Line, read only.
+        QTRY_VERIFY(fullscreenItem("fullscreenLine")->isVisible());
+        QCOMPARE(fullscreenItem("fullscreenLineNumber")->property("text").toString(), QStringLiteral("1"));
+        QCOMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
+        QCOMPARE(fullscreenItem("fullscreenLineTimes")->property("text").toString(),
+                 application->editor().startText() + QStringLiteral(" – ") + application->editor().endText());
+        // The Line editor's draft, as the video shows it, not the stored text.
+        application->editor().textEdited(QStringLiteral("{\\i1}draft\\Nnow"), 5);
+        QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("draft \u21B5 now"));
+        // Markup in a Line (and a file's name) is text: nothing parsed, no
+        // <img> fetched.
+        const QString markup = QStringLiteral("<img src=\"http://127.0.0.1:9/x\"><b>bold</b>");
+        application->editor().textEdited(markup, int(markup.size()));
+        QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), markup);
+        QCOMPARE(fullscreenItem("fullscreenLineText")->property("textFormat").toInt(), int(Qt::PlainText));
+        QCOMPARE(fullscreenItem("fullscreenVideoName")->property("textFormat").toInt(), int(Qt::PlainText));
+        application->editor().discard();
+        QTRY_COMPARE(fullscreenItem("fullscreenLineText")->property("text").toString(), QStringLiteral("first"));
         // The progress bar's times (VIDEO_PROGRESS_BAR is on by default).
         auto *progress = fullscreenItem("videoFullscreenProgress");
         QVERIFY(progress->isVisible());
@@ -23482,57 +24507,201 @@ private slots:
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
     }
 
-    // "Show toolbar" off: the picture takes the whole window, the panel shows
-    // when the pointer goes below the picture and hides over it (the picture
-    // then has the keyboard), and the pointer hides after a second.
-    void videoFullscreenPanelFollowsThePointer()
+    // FS1-bar-auto-hide, FS1-bar-mode and FS1-cursor-hide: in Auto the bar
+    // and the file name's strip hide with the pointer once nothing holds
+    // them (a movement, a pause, an open menu, the pointer over the bar);
+    // Tab (VIDEO_FULLSCREEN_BAR) cycles Auto, Always (the picture ends above
+    // the bar) and Never, and the mode stays for the next time; in the Video
+    // panel Tab stays the keyboard focus's.
+    void videoFullscreenBarModesAndAutoHide()
     {
         restartWithoutSound();
         QTemporaryDir &folder = testFolder();
         QVERIFY(v5Open(folder));
+        keysNeverRepeat();
         auto &fs = application->videoFullscreen();
+        auto &settings = *application->settingsStore();
+        auto &video = application->video();
+        fs.setIdleInterval(300);
         QVERIFY(fs.toggle(0));
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
+        QVERIFY(becomesFocusWindow(fsWindow));
         auto *panel = fullscreenItem("videoFullscreenPanel");
+        auto *title = fullscreenItem("videoFullscreenTitle");
+        auto *overlay = item("visualOverlay");
         auto *presenter = item("videoPresenter");
-        auto *showToolbar = fullscreenItem("fullscreenShowToolbar");
-        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier,
-                          showToolbar->mapToScene(QPointF(showToolbar->width() / 2, showToolbar->height() / 2)).toPoint());
-        QVERIFY(!fs.showToolbar());
-        QVERIFY(!showToolbar->property("checked").toBool());
-        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
-        QVERIFY(!fullscreenItem("fullscreenToolbar")->isVisible());
-        QVERIFY(panel->isVisible()); // still under the pointer
-        QCOMPARE(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::ArrowCursor));
-        // Over the picture: hidden, the keyboard to the picture.
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() / 3));
+        const auto cursor = [&] { return overlay->property("cursorOverride").toInt(); };
+        // The clip lasts two seconds: each check plays it from its start.
+        const auto playFromStart = [&] {
+            QVERIFY(video.showFrameAt(0));
+            QTRY_COMPARE(video.session().shownFrame().value_or(-1), 0);
+            QVERIFY(video.play());
+            QTRY_VERIFY(video.playing());
+        };
+        const auto pause = [&] {
+            if (video.playing())
+                QVERIFY(video.pause());
+            QTRY_VERIFY(!video.playing());
+        };
+        const QPoint picture(fsWindow->width() / 2, fsWindow->height() / 3);
+        QTest::mouseMove(fsWindow, picture);
+        // Paused: the bar stays past the idle time, and the pointer.
+        QTest::qWait(600);
+        QVERIFY(fs.barShown());
+        QVERIFY(panel->isVisible());
+        QVERIFY(title->isVisible());
+        QCOMPARE(cursor(), -1);
+        // Playing with nothing holding it: the bar, the strip and the pointer go.
+        playFromStart();
+        QTRY_VERIFY(!fs.barShown());
         QTRY_VERIFY(!panel->isVisible());
-        QVERIFY(!fs.panelShown());
+        QTRY_VERIFY(!title->isVisible());
+        QCOMPARE(cursor(), int(Qt::BlankCursor));
         QVERIFY(fullscreenItem("videoFullscreenKeys")->hasActiveFocus());
-        // A second without moving hides the pointer.
-        QTRY_COMPARE_WITH_TIMEOUT(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::BlankCursor), 3000);
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() / 3 + 10));
-        QTRY_COMPARE(item("visualOverlay")->property("cursorOverride").toInt(), int(Qt::ArrowCursor));
-        // Below the picture: shown again.
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
+        // A hover where the pointer already is, as Qt Quick sends a still
+        // pointer each frame the picture changes, is no move.
+        QTest::mouseMove(fsWindow, picture);
+        QTest::qWait(50);
+        QVERIFY(!fs.barShown());
+        QCOMPARE(cursor(), int(Qt::BlankCursor));
+        // Out of the window (to another monitor) and back at the same point:
+        // a move. (QGuiApplication drops a test move to the last position, so
+        // the window's points are given to the controller here.)
+        const QPointF at(picture.x() + 0.5, picture.y() + 0.5);
+        fs.pointerMoved(at);
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        fs.pointerMoved(at);
+        QVERIFY(!fs.barShown()); // the same point: no move
+        QEvent leave(QEvent::Leave);
+        QCoreApplication::sendEvent(fsWindow, &leave);
+        fs.pointerMoved(at);
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        // A move brings them back for a while.
+        QTest::mouseMove(fsWindow, picture + QPoint(10, 0));
+        QVERIFY(fs.barShown());
+        QCOMPARE(cursor(), -1);
         QTRY_VERIFY(panel->isVisible());
-        // Left out, the choice stays for the next time (the cached frame's check).
+        QTRY_VERIFY(!fs.barShown());
+        // In the zoom mode as well, which takes the pointer's other events.
+        auto &view = application->videoView();
+        QVERIFY(view.toggleZoom());
+        QVERIFY(view.zoomMode());
+        QTest::mouseMove(fsWindow, picture + QPoint(20, 0));
+        QVERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        // The pointer hides with it there too (before the zoom mode's shape).
+        QCOMPARE(cursor(), int(Qt::BlankCursor));
+        QTRY_COMPARE(fsWindow->cursor().shape(), Qt::BlankCursor);
+        QVERIFY(view.toggleZoom());
+        QVERIFY(!view.zoomMode());
+        QVERIFY(view.resetZoom());
+        // The tool rail stays when the bar hides; a move over it wakes the bar.
+        auto &tools = application->visualTools();
+        const qreal barHeight = panel->height();
+        tools.selectFamily(3);
+        auto *rail = fullscreenItem("fullscreenToolRail");
+        QTRY_VERIFY(rail->isVisible());
+        pause();
+        playFromStart();
+        QTRY_VERIFY(!fs.barShown());
+        QVERIFY(rail->isVisible());
+        auto *railTool = findItem(rail, QStringLiteral("visualTool3"));
+        QVERIFY(railTool && railTool->isVisible());
+        const QPoint onRail = railTool->mapToScene(QPointF(railTool->width() / 2, railTool->height() / 2)).toPoint();
+        QTest::mouseMove(fsWindow, onRail);
+        QTRY_VERIFY(fs.barShown());
+        QTRY_VERIFY(!fs.barShown());
+        QTest::mouseMove(fsWindow, onRail + QPoint(0, 2));
+        QTRY_VERIFY(fs.barShown());
+        // Moves over the file name's strip keep the bar as well.
+        pause();
+        playFromStart();
+        QTRY_VERIFY(title->isVisible());
+        const QPoint onTitle = title->mapToScene(QPointF(title->width() / 2, title->height() / 2)).toPoint();
+        for (int i = 0; i < 5; ++i) {
+            QTest::mouseMove(fsWindow, onTitle + QPoint(4 * i, 0));
+            QTest::qWait(150);
+            QVERIFY2(fs.barShown(), qPrintable(QString::number(i)));
+        }
+        tools.selectFamily(0);
+        QTRY_VERIFY(!rail->isVisible());
+        QTRY_COMPARE(panel->height(), barHeight); // without the tool's row again
+        pause();
+        QVERIFY(fs.barShown()); // paused again
+        // The pointer over the bar holds it.
+        QTRY_VERIFY(panel->isVisible());
+        const QPoint onBar = panel->mapToScene(QPointF(panel->width() / 2, 4)).toPoint();
+        QTest::mouseMove(fsWindow, onBar);
+        QTRY_VERIFY(fs.pointerOverBar());
+        playFromStart();
+        QTest::qWait(600);
+        QVERIFY(fs.barShown());
+        QTest::mouseMove(fsWindow, picture);
+        QTRY_VERIFY(!fs.pointerOverBar());
+        QTRY_VERIFY(!fs.barShown());
+        pause();
+        // An open menu holds it.
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, picture);
+        auto *fsMenu = named("videoFullscreenMenu");
+        QTRY_VERIFY(fsMenu->property("opened").toBool());
+        QVERIFY(fs.menuOpen());
+        playFromStart();
+        QTest::qWait(600);
+        QVERIFY(fs.barShown());
+        QMetaObject::invokeMethod(fsMenu, "close");
+        QTRY_VERIFY(!fs.menuOpen());
+        QTRY_VERIFY(!fs.barShown());
+        pause();
+        // Tab: Always, the picture above the bar, which stays while playing;
+        // the pointer still hides.
+        QCOMPARE(application->hotkeys().accelOf(QStringLiteral("VIDEO_FULLSCREEN_BAR"), 3), QStringLiteral("Tab"));
+        QTest::keyClick(fsWindow, Qt::Key_Tab);
+        QCOMPARE(fs.barMode(), 1);
+        QCOMPARE(settings.integer("video.fullscreenBar"), 1);
+        QVERIFY(fs.pinned());
+        QTRY_VERIFY(panel->isVisible());
+        QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
+        QTRY_VERIFY(!title->isVisible()); // after its fade
+        QCOMPARE(fullscreenItem("fullscreenBarMode")->property("text").toString(), QStringLiteral("Always"));
+        playFromStart();
+        QTRY_COMPARE(cursor(), int(Qt::BlankCursor));
+        QVERIFY(fs.barShown());
+        QVERIFY(panel->isVisible());
+        pause();
+        // Tab: Never, the picture only, even when the pointer moves.
+        QTest::keyClick(fsWindow, Qt::Key_Tab);
+        QCOMPARE(fs.barMode(), 2);
+        QTRY_VERIFY(!panel->isVisible());
+        QTRY_COMPARE(presenter->height(), qreal(fsWindow->height()));
+        QTest::mouseMove(fsWindow, picture + QPoint(0, 10));
+        QTest::qWait(50);
+        QVERIFY(!fs.barShown());
+        QVERIFY(!title->isVisible());
+        QCOMPARE(cursor(), -1);
+        // Tab: Auto again.
+        QTest::keyClick(fsWindow, Qt::Key_Tab);
+        QCOMPARE(fs.barMode(), 0);
+        QTest::mouseMove(fsWindow, picture);
+        QTRY_VERIFY(panel->isVisible());
+        // The mode button's menu names the three and chooses one.
+        clickWith(fullscreenItem("fullscreenBarMode"), Qt::NoModifier);
+        auto *modeMenu = named("fullscreenBarModeMenu");
+        QTRY_VERIFY(modeMenu->property("opened").toBool());
+        QCOMPARE(named("fullscreenBarAuto")->property("checked").toBool(), true);
+        QCOMPARE(named("fullscreenBarNever")->property("text").toString(), QStringLiteral("Never"));
+        QVERIFY(QMetaObject::invokeMethod(named("fullscreenBarAlways"), "triggered"));
+        QCOMPARE(fs.barMode(), 1);
+        QTRY_VERIFY(!modeMenu->property("visible").toBool());
+        // Left and shown again: the mode stays (the setting).
         QVERIFY(fs.leave());
         QVERIFY(fs.toggle(0));
         QTRY_VERIFY(fsWindow->isExposed());
-        QVERIFY(!fs.showToolbar());
-        QVERIFY(!panel->isVisible()); // `if (!m_PanelOnFullscreen) panel->Hide()`
-        // Pinned again: the picture ends above the panel.
-        fs.setShowToolbar(true);
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
-        QTRY_VERIFY(panel->isVisible());
+        QVERIFY(fs.pinned());
         QTRY_COMPARE(presenter->height(), fsWindow->height() - panel->height());
-        QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, 20));
-        QTest::qWait(50);
-        QVERIFY(panel->isVisible()); // pinned: the pointer never hides it
-        QCOMPARE(item("visualOverlay")->property("cursorOverride").toInt(), -1); // the tool's cursor
-        // The wheel over the panel is the volume's, Ctrl held or not (in
+        // The wheel over the bar is the volume's, Ctrl held or not (in
         // fullscreen; the docked panel ignores Ctrl+wheel, V4-ctrl-wheel).
         const int volume = application->videoView().volume();
         const QPoint below = panel->mapToScene(QPointF(panel->width() / 2, panel->height() / 2)).toPoint();
@@ -23540,6 +24709,120 @@ private slots:
                           Qt::ControlModifier, Qt::NoScrollPhase, false);
         QCoreApplication::sendEvent(fsWindow, &wheel);
         QTRY_COMPARE(application->videoView().volume(), volume - 3);
+        QVERIFY(fs.leave());
+        // In the Video panel Tab is not the bar's: the mode stays.
+        auto *videoPanel = item("videoPanel");
+        window->requestActivate();
+        QVERIFY(becomesFocusWindow(window));
+        videoPanel->forceActiveFocus();
+        press(Qt::Key_Tab);
+        QTest::qWait(50);
+        QCOMPARE(fs.barMode(), 1);
+        QVERIFY(!fs.active());
+        settings.set("video.fullscreenBar", 0);
+    }
+
+    // FS1-current-line: in translation mode the label reads the translation
+    // when the Line has one (the video shows it), else the original.
+    void videoTextIsWhatTheVideoShows()
+    {
+        const QString path = dir.filePath(QStringLiteral("fs1-tl.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nTLMode: Yes\nTLMode Style: TLmode\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,TLmode,,0,0,0,,orig one\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,tl two\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,untranslated three\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &editor = application->editor();
+        QVERIFY(editor.translationMode());
+        const auto lines = session->document().lines();
+        QCOMPARE(lines.size(), std::size_t(2));
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id}, lines[0]->id, {}});
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("tl two"));
+        editor.translationEdited(QStringLiteral("tl draft"), 8);
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("tl draft"));
+        // Without live editing the video shows the committed Line, and so does the label.
+        application->settingsStore()->set("video.disableLiveEditing", true);
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("tl two"));
+        // Its times too: an applied Start is the draft's, not yet the video's.
+        const QString committedTimes = editor.videoTimes();
+        QCOMPARE(committedTimes, QStringLiteral("0:00:01.00 – 0:00:02.00"));
+        editor.setStartText(QStringLiteral("0:00:01.50"));
+        QTRY_COMPARE(editor.startText(), QStringLiteral("0:00:01.50"));
+        QCOMPARE(editor.videoTimes(), committedTimes);
+        application->settingsStore()->set("video.disableLiveEditing", false);
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("tl draft"));
+        QTRY_COMPARE(editor.videoTimes(), QStringLiteral("0:00:01.50 – 0:00:02.00"));
+        // Only what the label reads, cut before the conversion.
+        const QString huge(3 * int(application::kFullscreenLineInputBytes), QLatin1Char('a'));
+        editor.translationEdited(huge, int(huge.size()));
+        QTRY_COMPARE(editor.videoText().size(), qsizetype(application::kFullscreenLineInputBytes));
+        editor.discard();
+        session->setSelection(application::Selection{lines[1]->id, {lines[1]->id}, lines[1]->id, {}});
+        QTRY_COMPARE(editor.videoText(), QStringLiteral("untranslated three"));
+    }
+
+    // FS1: the file name's strip and the bar between its controls take their
+    // clicks; they are not the picture's (VIDEO_PAUSE_ON_CLICK, a tool).
+    void videoFullscreenStripAndBarTakeTheirClicks()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        application->settingsStore()->set("video.pauseOnClick", true);
+        auto &fs = application->videoFullscreen();
+        auto &video = application->video();
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto *title = fullscreenItem("videoFullscreenTitle");
+        auto *panel = fullscreenItem("videoFullscreenPanel");
+        QTRY_VERIFY(title->isVisible());
+        QTRY_VERIFY(panel->isVisible());
+        QVERIFY(!video.playing());
+        const QPoint onTitle = title->mapToScene(QPointF(title->width() / 2, title->height() / 2)).toPoint();
+        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, onTitle);
+        QTest::qWait(100);
+        QVERIFY(!video.playing());
+        // Above the slider, inside the bar's top margin.
+        const QPoint betweenControls = panel->mapToScene(QPointF(panel->width() / 2, 2)).toPoint();
+        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, betweenControls);
+        QTest::qWait(100);
+        QVERIFY(!video.playing());
+        QVERIFY(fs.active());
+        // The picture's click still plays.
+        const QPoint picture(fsWindow->width() / 2, fsWindow->height() / 3);
+        QTest::mouseClick(fsWindow, Qt::LeftButton, Qt::NoModifier, picture);
+        QTRY_VERIFY(video.playing());
+        QVERIFY(video.pause());
+        QVERIFY(fs.leave());
+    }
+
+    // The bar's Open editor is the context menu's: with the Line editor
+    // closed by the layout it opens it and gives it the keyboard (WS3).
+    void videoFullscreenOpenEditorShowsTheLineEditor()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        QObject *editorDock = named("editorDock");
+        QVERIFY(QMetaObject::invokeMethod(editorDock, "close"));
+        QTRY_VERIFY(!editorDock->property("isOpen").toBool());
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        auto *open = fullscreenItem("fullscreenOpenEditor");
+        QTRY_VERIFY(open->isVisible());
+        clickWith(open, Qt::NoModifier);
+        QTRY_VERIFY(!fs.active());
+        QTRY_VERIFY(editorDock->property("isOpen").toBool());
+        QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
     }
 
     // V5-volume-slider: the fullscreen panel shows the Video panel's volume
@@ -23561,9 +24844,9 @@ private slots:
         QVERIFY(volume);
         QTRY_VERIFY(volume->isVisible());
         QVERIFY(volume->isEnabled());
-        // At the right of the transport's row, after the file name.
-        auto *name = fullscreenItem("fullscreenVideoName");
-        QVERIFY(volume->mapToScene(QPointF(0, 0)).x() >= name->mapToScene(QPointF(name->width(), 0)).x());
+        // At the right of the bar's row, after the speaker (FS1).
+        auto *speaker = fullscreenItem("fullscreenSpeaker");
+        QVERIFY(volume->mapToScene(QPointF(0, 0)).x() >= speaker->mapToScene(QPointF(speaker->width(), 0)).x());
         QVERIFY(volume->mapToScene(QPointF(volume->width(), 0)).x() <= fsWindow->width());
         // Icon-only: named in the tooltip and to assistive technology.
         QCOMPARE(QAccessible::queryAccessibleInterface(volume)->text(QAccessible::Name), QStringLiteral("Volume"));
@@ -23580,7 +24863,98 @@ private slots:
         // The other way: the main window's change shows here.
         view.setVolume(-10);
         QCOMPARE(volume->property("value").toInt(), -10);
-        QVERIFY(fs.leave());
+        // FS1-speaker-gestures: the speaker's click mutes the player, both
+        // sliders at the bottom, the volume kept; again, unmuted.
+        QCOMPARE(speaker->property("iconRole").toString(), QStringLiteral("volume"));
+        QCOMPARE(speaker->property("tip").toString(), QStringLiteral("Mute · Wheel: volume · Right-click: output device"));
+        clickWith(speaker, Qt::NoModifier);
+        QVERIFY(view.muted());
+        QCOMPARE(player.volume(), 0.0);
+        QCOMPARE(view.volume(), -10);
+        QCOMPARE(volume->property("value").toInt(), -86);
+        QCOMPARE(mainVolume->property("value").toInt(), -86);
+        QCOMPARE(speaker->property("iconRole").toString(), QStringLiteral("volume-muted"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(speaker)->text(QAccessible::Name), QStringLiteral("Unmute"));
+        clickWith(speaker, Qt::NoModifier);
+        QVERIFY(!view.muted());
+        QCOMPARE(player.volume(), std::pow(10.0, -100.0 / 100.0 / 20.0));
+        QCOMPARE(volume->property("value").toInt(), -10);
+        // A new volume unmutes (the wheel over the speaker, here).
+        clickWith(speaker, Qt::NoModifier);
+        QVERIFY(view.muted());
+        const QPoint over = speaker->mapToScene(QPointF(speaker->width() / 2, speaker->height() / 2)).toPoint();
+        QWheelEvent wheel(over, fsWindow->mapToGlobal(over), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(fsWindow, &wheel);
+        QTRY_VERIFY(!view.muted());
+        QCOMPARE(view.volume(), -7);
+        // In the zoom mode, which takes the rest of the bar's wheel, the
+        // speaker's wheel stays the volume's.
+        // Muted at a loud level, a quieter one is heard at once at its own
+        // level: the player is never given the loud one on the way.
+        {
+            struct Recorder : application::GeneralPlayerPort {
+                std::vector<double> gains;
+                void open(const std::string &, Opened) override {}
+                void seek(std::int64_t, Seeked) override {}
+                void play() override {}
+                void pause() override {}
+                void stop() override {}
+                bool selectAudioTrack(int) override { return false; }
+                bool selectSubtitleTrack(int) override { return false; }
+                application::PlaybackState playbackState() const override { return {}; }
+                application::MediaStatus mediaStatus() const override { return {}; }
+                double bufferProgress() const override { return 0; }
+                application::PlayerClock clock() const override { return {}; }
+                application::MediaDescription description() const override { return {}; }
+                std::uint64_t generation() const override { return 0; }
+                void setVolume(double linear) override { gains.push_back(linear); }
+            } recorder;
+            view.setVolume(0);
+            view.toggleMute();
+            QVERIFY(view.muted());
+            view.setPlayer(&recorder);
+            recorder.gains.clear();
+            view.setVolume(-60);
+            QVERIFY(!view.muted());
+            QVERIFY(!recorder.gains.empty());
+            for (double g : recorder.gains)
+                QVERIFY2(g <= application::videoVolumeGain(-60), qPrintable(QString::number(g)));
+            QCOMPARE(recorder.gains.back(), application::videoVolumeGain(-60));
+            view.setPlayer(&player);
+            view.setVolume(-7);
+        }
+        QVERIFY(view.toggleZoom());
+        const int zoom = view.zoomPercent();
+        QWheelEvent again(over, fsWindow->mapToGlobal(over), QPoint(), QPoint(0, 120), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
+        QCoreApplication::sendEvent(fsWindow, &again);
+        QTRY_COMPARE(view.volume(), -4);
+        QCOMPARE(view.zoomPercent(), zoom);
+        QVERIFY(view.toggleZoom());
+        QVERIFY(view.resetZoom());
+        // Right-click: AV1's output device menu, which holds the bar.
+        QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, over);
+        auto *outputs = named("fullscreenAudioOutputMenu");
+        QTRY_VERIFY(outputs->property("opened").toBool());
+        QVERIFY(fs.menuOpen());
+        // Above the speaker, though its rows came as it showed (its first opening).
+        auto *outputsBox = outputs->property("background").value<QQuickItem *>();
+        QVERIFY(outputsBox);
+        QTRY_VERIFY(outputsBox->mapToScene(QPointF(0, outputsBox->height())).y() <= speaker->mapToScene(QPointF()).y() + 1);
+        auto *audioSettings = outputs->findChild<QObject *>(QStringLiteral("audioOutputSettings"));
+        QVERIFY(audioSettings);
+        QVERIFY(!view.muted()); // the right button does not mute
+        // The devices only: the audio box's volume (AU1) is not this speaker's.
+        QVERIFY(!outputs->findChild<QQuickItem *>(QStringLiteral("audioVolume")));
+        QVERIFY(!outputs->findChild<QQuickItem *>(QStringLiteral("audioVolumeLinked")));
+        // Its "Audio settings…" leaves fullscreen for the dialog's Audio page.
+        QVERIFY(QMetaObject::invokeMethod(audioSettings, "triggered"));
+        QTRY_VERIFY(!fs.active());
+        auto *settingsDialog = named("settingsDialog");
+        QTRY_VERIFY(settingsDialog->property("visible").toBool());
+        QMetaObject::invokeMethod(settingsDialog, "close");
+        QTRY_VERIFY(!settingsDialog->property("visible").toBool());
     }
 
     // The fullscreen window follows the video: Unload video leaves it, and a
@@ -23665,8 +25039,8 @@ private slots:
     // 1087, 1103: the dialogs' parent is m_FullScreenWindow): the aspect
     // ratio, the previous / next file question, Open video and Open
     // subtitles; after leaving they are the main window's again. The menu key
-    // opens the context menu at the pointer; the toolbar row's buttons choose
-    // the visual tool; Shift+click on a transport button maps its binding
+    // opens the context menu at the pointer; the Visual tools menu chooses
+    // the visual tool (FS1); Shift+click on a transport button maps its binding
     // (Hotkeys::OnMapHkey) in the Video window.
     void videoFullscreenDialogsMenuKeyToolsAndMapping()
     {
@@ -23704,17 +25078,41 @@ private slots:
         QCOMPARE(fsMenu->property("parent").value<QQuickItem *>()->window(), fsWindow);
         QMetaObject::invokeMethod(fsMenu, "close");
         QTRY_VERIFY(!fsMenu->property("visible").toBool());
-        // The toolbar row: each button chooses its family.
+        // FS1-tool-rail-contextual: the Visual tools menu chooses a family;
+        // then the rail shows at the left and the bar's top row is the
+        // tool's (the VT1 slot); the rail's crosshair puts both away.
         auto &tools = application->visualTools();
         QCOMPARE(tools.activeFamily(), 0);
-        auto *scale = fullscreenItem("fullscreenTool3");
-        QVERIFY(scale && scale->isVisible());
-        clickWith(scale, Qt::NoModifier);
+        auto *rail = fullscreenItem("fullscreenToolRail");
+        auto *slot = fullscreenItem("fullscreenInspectorSlot");
+        QVERIFY(!rail->isVisible());
+        QVERIFY(!slot->isVisible());
+        auto *toolsButton = fullscreenItem("fullscreenToolsButton");
+        QTRY_VERIFY(toolsButton->isVisible()); // the bar fades in on entering
+        clickWith(toolsButton, Qt::NoModifier);
+        auto *toolsMenu = named("fullscreenToolsMenu");
+        QTRY_VERIFY(toolsMenu->property("opened").toBool());
+        QCOMPARE(toolsMenu->property("count").toInt(), application::visual::kFamilyCount);
+        auto *scale = toolsMenu->findChild<QObject *>(QStringLiteral("fullscreenTool3"));
+        QVERIFY(scale);
+        QCOMPARE(scale->property("text").toString(), tools.families().at(3).toMap().value(QStringLiteral("name")).toString());
+        QVERIFY(toolsMenu->findChild<QObject *>(QStringLiteral("fullscreenTool0"))->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(scale, "triggered"));
         QTRY_COMPARE(tools.activeFamily(), 3);
-        QVERIFY(scale->property("checked").toBool());
-        QVERIFY(!fullscreenItem("fullscreenTool0")->property("checked").toBool());
-        clickWith(fullscreenItem("fullscreenTool0"), Qt::NoModifier);
+        QTRY_VERIFY(!toolsMenu->property("visible").toBool());
+        QTRY_VERIFY(rail->isVisible());
+        QVERIFY(slot->isVisible());
+        QVERIFY(fullscreenItem("fullscreenToolOptions"));
+        QCOMPARE(fullscreenItem("fullscreenToolsButton")->property("iconRole").toString(), QStringLiteral("tool-scale"));
+        // The rail is inside the window, beside the picture, above the bar.
+        auto *bar = fullscreenItem("videoFullscreenPanel");
+        QVERIFY(rail->mapToScene(QPointF(0, rail->height())).y() <= bar->mapToScene(QPointF(0, 0)).y());
+        auto *crosshair = findItem(rail, QStringLiteral("visualTool0"));
+        QVERIFY(crosshair && crosshair->isVisible());
+        clickWith(crosshair, Qt::NoModifier);
         QTRY_COMPARE(tools.activeFamily(), 0);
+        QTRY_VERIFY(!rail->isVisible());
+        QVERIFY(!slot->isVisible());
         // Shift+click on Stop maps VIDEO_STOP in the Video window, and does not stop.
         QVERIFY(application->video().play());
         QTRY_VERIFY(application->video().playing());
@@ -23799,11 +25197,13 @@ private slots:
         QVERIFY(!fs.active());
     }
 
-    // V5: screenshots of the fullscreen window for review in the four themes,
-    // written to HIKARI_SURFACE_SHOT_DIR when it is set: the pinned panel with
-    // its toolbar row (video-fullscreen-<theme>.png), the panel shown under the
-    // pointer without the toolbar (video-fullscreen-panel-<theme>.png) and the
-    // fullscreen context menu (video-fullscreen-menu-<theme>.png).
+    // V5, FS1: screenshots of the fullscreen window for review in the four
+    // themes, written to HIKARI_SURFACE_SHOT_DIR when it is set, as
+    // video-fullscreen-<state>-<theme>.png: the bar in Auto with the file
+    // name's strip (auto), Always (always), a visual tool on with the rail
+    // and the tool's row (tool), the output device menu (output), the mode
+    // menu (mode), the Visual tools menu (tools), the context menu (menu) and
+    // the picture alone with the entry hint (hint).
     void videoFullscreenScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -23821,35 +25221,68 @@ private slots:
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
         auto *root = engine->rootObjects().first();
-        auto *fsMenu = named("videoFullscreenMenu");
         auto &tools = application->visualTools();
+        const QPoint picture(fsWindow->width() / 2, fsWindow->height() / 3);
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         for (const auto code : ui::theme::kCodes) {
             settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
             auto *controls = root->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
             const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
-            fs.setShowToolbar(true);
-            QTRY_VERIFY(fullscreenItem("fullscreenToolbar")->isVisible());
-            QTest::qWait(300);
-            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen") + suffix));
-            // Unpinned, the pointer below the picture.
-            fs.setShowToolbar(false);
-            QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, 20));
-            QTest::mouseMove(fsWindow, QPoint(fsWindow->width() / 2, fsWindow->height() - 3));
+            const auto shot = [&](const char *state) {
+                QTest::qWait(400);
+                QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-") + QLatin1String(state) + suffix));
+            };
+            const auto openAndShoot = [&](const char *button, const char *menuName, const char *state,
+                                          Qt::MouseButton mouse = Qt::LeftButton) {
+                auto *b = fullscreenItem(button);
+                QTest::mouseClick(fsWindow, mouse, Qt::NoModifier, centreOf(b));
+                auto *menu = named(menuName);
+                QTRY_VERIFY(menu->property("opened").toBool());
+                // Above its button, whatever rows came as it showed.
+                auto *box = menu->property("background").value<QQuickItem *>();
+                QVERIFY(box);
+                QTRY_VERIFY(box->mapToScene(QPointF(0, box->height())).y() <= b->mapToScene(QPointF()).y() + 1);
+                shot(state);
+                QMetaObject::invokeMethod(menu, "close");
+                QTRY_VERIFY(!menu->property("visible").toBool());
+            };
+            fs.setBarMode(0);
+            QTest::mouseMove(fsWindow, picture);
             QTRY_VERIFY(fullscreenItem("videoFullscreenPanel")->isVisible());
-            QTest::qWait(300);
-            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-panel") + suffix));
+            QTRY_VERIFY(!fullscreenItem("videoFullscreenHint")->isVisible());
+            shot("auto");
+            openAndShoot("fullscreenSpeaker", "fullscreenAudioOutputMenu", "output", Qt::RightButton);
+            openAndShoot("fullscreenBarMode", "fullscreenBarModeMenu", "mode");
+            openAndShoot("fullscreenToolsButton", "fullscreenToolsMenu", "tools");
             // The context menu over the picture.
             const QPoint centre = item("visualOverlay")->mapToScene(tools.videoRect().center()).toPoint();
             QTest::mouseClick(fsWindow, Qt::RightButton, Qt::NoModifier, centre);
+            auto *fsMenu = named("videoFullscreenMenu");
             QTRY_VERIFY(fsMenu->property("opened").toBool());
-            QTest::qWait(300);
-            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-menu") + suffix));
+            shot("menu");
             QMetaObject::invokeMethod(fsMenu, "close");
             QTRY_VERIFY(!fsMenu->property("visible").toBool());
+            // Clip rectangle on: the rail and the tool's row.
+            tools.selectFamily(6);
+            QTRY_VERIFY(fullscreenItem("fullscreenToolRail")->isVisible());
+            QTest::mouseMove(fsWindow, picture + QPoint(4, 0));
+            shot("tool");
+            tools.selectFamily(0);
+            QTRY_VERIFY(!fullscreenItem("fullscreenToolRail")->isVisible());
+            fs.setBarMode(1);
+            QTRY_VERIFY(fs.pinned());
+            shot("always");
+            // Never, entered again: the picture and the hint.
+            fs.setBarMode(2);
+            QVERIFY(fs.leave());
+            QVERIFY(fs.toggle(0));
+            QTRY_VERIFY(fsWindow->isExposed());
+            QTRY_VERIFY(fullscreenItem("videoFullscreenHint")->isVisible());
+            QTest::qWait(250);
+            QVERIFY(fsWindow->grabWindow().save(out + QStringLiteral("/video-fullscreen-hint") + suffix));
         }
-        fs.setShowToolbar(true);
+        fs.setBarMode(0);
         QVERIFY(fs.leave());
     }
 

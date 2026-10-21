@@ -255,6 +255,7 @@ FILE, EDIT, SUBS, TIMING, VIDEO, AUDIO, VIEW, AUTO, HELP = (
 TRANSPORT, FULLSCREEN, AUDIOBOX, EDITOR, VISUAL, PICKER, TABS = (
     "video-transport", "video-fullscreen", "audio-box", "line-editor", "visual-tools", "colour-picker",
     "document-tabs")
+AUTOPANEL = "automation-panel"  # AM1: the Automation panel (was the automation manager window)
 
 # File
 icon("open-subtitles", "Open subtitles", ["opensubs.png"], [FILE, "video-context-menu"], page(True) + plus_badge())
@@ -346,11 +347,12 @@ icon("zoom", "Zoom video", ["Zoom.png"], [VIDEO],
      magnifier(6.5, 6.5, 4.5, 4) + accent(stroke("M6.5 4.5v4M4.5 6.5h4")))
 
 # Media transport (video box, fullscreen, menus)
-icon("media-play", "Play", ["play.png", "play1.png", "PlayMenu.png"], [TRANSPORT, FULLSCREEN, VIDEO, "video-context-menu"],
+icon("media-play", "Play", ["play.png", "play1.png", "PlayMenu.png"], [TRANSPORT, FULLSCREEN, VIDEO, "video-context-menu",
+                                                                        AUTOPANEL],
      triangle(4.5, 2.5, 9, 11))
 icon("media-pause", "Pause", ["pause.png", "pause1.png", "PauseMenu.png"], [TRANSPORT, FULLSCREEN, VIDEO, "video-context-menu"],
      frect(3.5, 2.5, 3, 11, 0.5) + frect(9.5, 2.5, 3, 11, 0.5))
-icon("media-stop", "Stop", ["stop.png", "stop1.png", "button_stop.png"], [TRANSPORT, FULLSCREEN, AUDIOBOX, "video-context-menu", "automation-manager"],
+icon("media-stop", "Stop", ["stop.png", "stop1.png", "button_stop.png"], [TRANSPORT, FULLSCREEN, AUDIOBOX, "video-context-menu", AUTOPANEL],
      frect(3, 3, 10, 10, 1))
 icon("play-line", "Play the current line", ["playline.png", "playline1.png", "button_playsel.png"],
      [TRANSPORT, FULLSCREEN, AUDIOBOX],
@@ -360,8 +362,9 @@ icon("media-previous-file", "Previous file", ["backward.png", "backward1.png"], 
 icon("media-next-file", "Next file", ["forward.png", "forward1.png"], [TRANSPORT, FULLSCREEN],
      triangle(2.5, 2.5, 9, 11) + frect(13, 2, 2, 12, 0.5))
 # V5 #184: the fullscreen panel's "Show toolbar" (legacy a check box,
-# VideoFullscreen.cpp:68): the window with its toolbar row.
-icon("show-toolbar", "Show toolbar", [], [FULLSCREEN],
+# VideoFullscreen.cpp:68): the window with its toolbar row. FS1 #275: the
+# bar's mode button (FS1-bar-mode), which took its place.
+icon("show-toolbar", "Full screen bar", [], [FULLSCREEN],
      layout(stroke("M1.5 9.5h13"), frect(3.5, 10.75, 2, 1.5, 0.25), frect(7, 10.75, 2, 1.5, 0.25),
             frect(10.5, 10.75, 2, 1.5, 0.25)))
 
@@ -498,7 +501,7 @@ icon("hide-tags", "Hide tags", ["HideTags.png"], [SUBS, EDITOR],
      + stroke("M10.5 2.5h1a1 1 0 0 1 1 1v3l1 1.5-1 1.5v3a1 1 0 0 1-1 1h-1") + accent(stroke("M10 4l-4 8")))
 
 # Automation and help
-icon("automation", "Load script", ["Automation.png"], [AUTO, "automation-manager"],
+icon("automation", "Load script", ["Automation.png"], [AUTO, AUTOPANEL],
      page() + accent(stroke("M6.5 7.5L5 9.25 6.5 11M9.5 7.5L11 9.25 9.5 11")))
 icon("help", "HikariSub website", ["Help.png"], [HELP],
      circle(8, 8, 6.5) + stroke("M6 6.25a2 2 0 1 1 3 1.75c-.5.25-1 .5-1 1.25v.5") + dot(8, 11.5, 0.75))
@@ -682,8 +685,8 @@ icon("panel-menu", "Panel options", [], ["dock-headers"], dot(3.5, 8, 1.25) + do
 
 # Generic list and edit commands
 icon("add", "Add", [], [SHIFTPANEL, LISTS, "font-catalog", GRIDMENU], stroke("M7.5 2.5v10M2.5 7.5h10"))
-icon("remove", "Remove", [], [SHIFTPANEL, EDITOR], stroke("M2.5 7.5h10"))
-icon("edit", "Edit", [], [EDITOR, LISTS, GRIDMENU, VISUAL],
+icon("remove", "Remove", [], [SHIFTPANEL, EDITOR, AUTOPANEL], stroke("M2.5 7.5h10"))
+icon("edit", "Edit", [], [EDITOR, LISTS, GRIDMENU, VISUAL, AUTOPANEL],
      stroke("M11 2l3 3-8.5 8.5-3.5 1 1-3.5z") + accent(stroke("M9.5 3.5l3 3")))
 icon("duplicate", "Copy", [], [LISTS],
      stroke("M5.5 4.5v-2a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v8a1 1 0 0 1-1 1h-2") + rect(2.5, 4.5, 8, 10, 1)
@@ -694,9 +697,9 @@ icon("delete", "Delete", [], [LISTS, GRIDMENU, TEXTMENU],
 icon("import", "Load", [], [LISTS, FILE],
      stroke("M5.5 9.5h-3a1 1 0 0 1-1-1v-6a1 1 0 0 1 1-1h10a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-3")
      + accent(stroke("M7.5 4.5v10M4.5 11.5l3 3 3-3")))
-icon("clear", "Clear", [], [LISTS, VISUAL, GRIDMENU],
+icon("clear", "Clear", [], [LISTS, VISUAL, GRIDMENU, AUTOPANEL],
      stroke("M9 2l5 5-6.5 6.5-5-5z") + accent(stroke("M5.5 5.5l5 5")) + stroke("M7.5 13.5h6"))
-icon("refresh", "Refresh", [], ["font-catalog", "automation-manager"],
+icon("refresh", "Refresh", [], ["font-catalog", AUTOPANEL],
      stroke("M2.5 8a5.5 5.5 0 0 1 9.75-3.5") + stroke("M12.5 1.5v3h-3")
      + stroke("M13.5 8a5.5 5.5 0 0 1-9.75 3.5") + stroke("M3.5 14.5v-3h3"))
 icon("filter", "Filter", [], [GRIDMENU, "font-catalog"], stroke("M1.5 2.5h13L9.5 8.5V13l-3 1.5v-6z"))
@@ -741,16 +744,19 @@ icon("frame-snapshot", "Save frame as PNG", [], [VIDEOMENU],
      + accent(circle(8, 8.5, 2.5)))
 icon("zoom-reset", "Turn off video zoom", [], [VIDEO],
      magnifier(6.5, 6.5, 4.5, 4) + accent(stroke("M5 5l3 3M8 5L5 8")))
-icon("volume", "Volume", [], [TRANSPORT, AUDIOBOX],
+icon("volume", "Volume", [], [TRANSPORT, FULLSCREEN, AUDIOBOX],
      stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z") + accent(stroke("M10 5.5a3.5 3.5 0 0 1 0 5M12 3.5a6.25 6.25 0 0 1 0 9")))
+# FS1 (#275): the fullscreen speaker while muted (FS1-speaker-gestures).
+icon("volume-muted", "Unmute", [], [FULLSCREEN, TRANSPORT],
+     stroke("M1.5 6h2.5l3.5-3v10L4 10H1.5z") + accent(stroke("M10.5 6l4 4M14.5 6l-4 4")))
 
 # Line editor, reference tray, automation
 icon("pick-lines", "Pick selected lines", [], [VISUAL],
      stroke("M1.5 4.5h7M1.5 8h7M1.5 11.5h7") + accent(circle(12.5, 4.5, 2), stroke("M12.5 6.5v7")), mirror=True)
 icon("match-previous", "Previous match", [], ["reference-tray"], stroke("M3.5 10L8 5.5l4.5 4.5"))
 icon("match-next", "Next match", [], ["reference-tray"], stroke("M3.5 6L8 10.5 12.5 6"))
-icon("unload", "Unload", [], ["automation-manager"], SCRIPT_CUT + cross_badge())
-icon("run-script", "Run the last loaded script", [], [AUTO],
+icon("unload", "Unload", [], [AUTOPANEL], SCRIPT_CUT + cross_badge())
+icon("run-script", "Run the last loaded script", [], [AUTO, AUTOPANEL],
      SCRIPT_CUT + accent(solid("M10 9.5v5l4.5-2.5z")))
 
 # Options pages (the depth-0 pages; Editor and Subtitle properties take the
@@ -759,7 +765,7 @@ icon("settings-video", "Video", [], ["settings-dialog"], film(1.5, 3, 13, 10))
 icon("settings-audio", "Audio", [], ["settings-dialog"], waveform(2, 3.5, 12.5) + stroke("M14.5 6.5v3"))
 icon("appearance", "Appearance", [], ["settings-dialog"],
      circle(8, 8, 6.5) + accent(fill("M8 1.5a6.5 6.5 0 0 1 0 13z")))
-icon("hotkeys", "Hotkeys", [], ["settings-dialog"],
+icon("hotkeys", "Hotkeys", [], ["settings-dialog", AUTOPANEL],
      rect(1.5, 3.5, 13, 9, 1) + stroke("M4 6.5h1M7.5 6.5h1M11 6.5h1M4 9.5h1M11 9.5h1") + accent(stroke("M6.5 9.5h3")))
 
 
@@ -823,7 +829,7 @@ icon("session-save", "Save session to file", [], [FILE],
 # Automation menu
 icon("rerun-macro", "Rerun last macro", [], [AUTO],
      SCRIPT_CUT + REFRESH_BADGE)
-icon("automation-manager", "Automation manager", [], [AUTO],
+icon("automation-manager", "Show panel", [], [AUTO],
      stroke("M4.5 3.5v-2h6l3 3v8h-2") + stroke("M10.5 14.5h-9v-10h6l3 3z")
      + accent(stroke("M5 9L3.75 10.25 5 11.5M7 9l1.25 1.25L7 11.5")))
 

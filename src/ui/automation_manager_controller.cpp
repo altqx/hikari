@@ -50,10 +50,17 @@ void AutomationManagerController::refresh()
                                  {QStringLiteral("error"), QString::fromStdString(s.error)},
                                  {QStringLiteral("generation"), qulonglong(s.generation)},
                                  {QStringLiteral("forceStopOffered"), s.forceStopOffered},
+                                 {QStringLiteral("inDocument"), m_isDocumentScript && m_isDocumentScript(s.path)},
                                  {QStringLiteral("macros"), macros}};
         m_busy = m_busy || s.state == ScriptStatus::State::Running;
     }
     emit changed();
+}
+
+void AutomationManagerController::setDocumentScript(std::function<bool(const std::string &)> isDocumentScript)
+{
+    m_isDocumentScript = std::move(isDocumentScript);
+    refresh();
 }
 
 void AutomationManagerController::load(const QString &path)
