@@ -949,8 +949,9 @@ void TemplateEditorController::runPreview()
     if (!snapshot)
         return;
     // What the run reads: Script Info (meta, karaskel's resolution), the
-    // styles and the Lines.
-    std::string key;
+    // styles and the Lines; and the current template, whose own Lines the
+    // chain marks.
+    std::string key = std::to_string(m_current ? m_current->value : 0) + '\n';
     for (const auto &i : snapshot->info)
         key += i.key + ':' + i.value + '\n';
     for (const auto &d : snapshot->dialogues)

@@ -639,6 +639,33 @@ private slots:
         QVERIFY(oneCopyOnTheVideo(*source));
     }
 
+    // Choosing another template marks its own Lines, the Document unchanged.
+    void anotherTemplateChosenMarksItsOwnLines()
+    {
+        open(QStringLiteral("stock-environment.ass")); // six syllable templates on one Style
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        const auto own = [&] {
+            QList<bool> out;
+            for (const QVariant &v : editor->previewLines())
+                out << v.toMap().value(QStringLiteral("own")).toBool();
+            return out;
+        };
+        QVERIFY(QTest::qWaitFor([&] { return settled() && own().contains(true); }, 20'000));
+        QTest::qWait(300);
+        const QList<bool> first = own();
+        qulonglong other = 0;
+        for (const QVariant &v : editor->templates()) {
+            const auto t = v.toMap();
+            if (t.value(QStringLiteral("id")).toULongLong() != editor->current() &&
+                t.value(QStringLiteral("generated")).toInt() > 0 && t.value(QStringLiteral("kind")).toString() != QStringLiteral("code"))
+                other = t.value(QStringLiteral("id")).toULongLong();
+        }
+        QVERIFY(other);
+        editor->setCurrent(other);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && own() != first && own().contains(true); }, 20'000));
+    }
+
     void theCurrentTemplatesOwnLinesAreMarked()
     {
         open(QStringLiteral("stock-tutorials.ass"));
