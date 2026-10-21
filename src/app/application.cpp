@@ -1472,8 +1472,11 @@ QString Application::openProblem(const QString &path, const application::StageFa
     const core::LyricsProblem &problem = *failure.lyrics;
     QString excerpt = QString::fromUtf8(reinterpret_cast<const char *>(problem.excerpt.data()),
                                         static_cast<qsizetype>(problem.excerpt.size()));
-    if (excerpt.size() > 60)
-        excerpt = excerpt.left(59) + QChar(0x2026); // a long lyrics line, cut short
+    if (excerpt.size() > 60) {
+        // A long lyrics line, cut short, never between a surrogate pair's halves.
+        const qsizetype cut = excerpt.at(58).isHighSurrogate() ? 58 : 59;
+        excerpt = excerpt.left(cut) + QChar(0x2026);
+    }
 
     QString what;
     switch (problem.kind) {
@@ -1486,6 +1489,10 @@ QString Application::openProblem(const QString &path, const application::StageFa
         break;
     case Kind::EndBeforeBegin:
         what = QCoreApplication::translate("HikariSub.Documents", "the end %1 is earlier than the begin").arg(excerpt);
+        break;
+    case Kind::OutsideParent:
+        what = QCoreApplication::translate("HikariSub.Documents", "the time %1 is outside the times of the element around it")
+                   .arg(excerpt);
         break;
     case Kind::MissingTime:
         what = QCoreApplication::translate("HikariSub.Documents", "\"%1\" has no time").arg(excerpt);

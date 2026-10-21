@@ -170,7 +170,7 @@ public:
     // declared for it. An unprefixed attribute is in none; an unprefixed
     // element in the default namespace, if one is declared. A ttm: no one
     // declares is TTML's metadata namespace, as such files mean; another
-    // undeclared prefix names a namespace no lookup asks for.
+    // undeclared prefix is kUndeclared, which the reader refuses.
     Place of(u8sv name, bool element) const
     {
         const std::size_t colon = name.find(u8':');
@@ -898,17 +898,26 @@ private:
                     std::tie(m_pos, m_line) = start;
                     return std::unexpected(broken());
                 }
-                // Nor twice by expanded name, the namespace and the local
-                // name, as a:role and b:role with one namespace are (an
-                // undeclared prefix is a namespace of its own).
-                std::vector<std::tuple<Namespace, std::uint32_t, u8sv, u8sv>> expanded;
+                // Every prefix declared (ttm: aside, as such files mean TTML's
+                // metadata by it), and no attribute twice by expanded name,
+                // the namespace and the local name, as a:role and b:role with
+                // one namespace are.
+                std::vector<std::tuple<Namespace, std::uint32_t, u8sv>> expanded;
                 for (const auto &[key, value] : node.attributes) {
                     const auto place = m_scope.of(key, false);
+                    if (place.uri == NamespaceScope::kUndeclared) {
+                        std::tie(m_pos, m_line) = start;
+                        return std::unexpected(broken()); // a prefix no one declares
+                    }
                     node.attributeNamespaces.push_back(place.ns);
-                    const u8sv undeclared = place.uri == NamespaceScope::kUndeclared ? u8sv(key).substr(0, key.find(u8':')) : u8sv();
-                    expanded.emplace_back(place.ns, place.ns == Namespace::Other ? place.uri : 0, undeclared, localName(key));
+                    expanded.emplace_back(place.ns, place.ns == Namespace::Other ? place.uri : 0, localName(key));
                 }
-                node.ns = m_scope.of(node.name, true).ns;
+                const auto place = m_scope.of(node.name, true);
+                if (place.uri == NamespaceScope::kUndeclared) {
+                    std::tie(m_pos, m_line) = start;
+                    return std::unexpected(broken()); // a prefix no one declares
+                }
+                node.ns = place.ns;
                 std::ranges::sort(expanded);
                 if (std::ranges::adjacent_find(expanded) != expanded.end()) {
                     std::tie(m_pos, m_line) = start;
@@ -1242,8 +1251,8 @@ private:
                     if (id && metadata(child, u8"name"))
                         m_agents[std::u8string(*id)] = detail::trim(collapsed(allText(child)));
             }
-            if (node.ns == Namespace::Other)
-                return; // another namespace's element: nothing inside it is TTML's
+            if (foreign(node))
+                return; // another namespace's element (xml: too): nothing inside it is TTML's
             for (const XmlNode &child : node.children)
                 if (!child.isText() && !isTtml(child, u8"body"))
                     self(self, child);
@@ -1310,7 +1319,7 @@ private:
 
     // An element's begin and end within the ones it inherits, as a child's
     // interval lies within its parent's: its own begin no earlier than the
-    // inherited one, its own end no later. EndBeforeBegin, at its begin or
+    // inherited one, its own end no later. OutsideParent, at its begin or
     // its end, when it lies wholly outside them.
     static std::expected<std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>>, LyricsProblem>
     within(const XmlNode &node, std::pair<std::optional<std::int64_t>, std::optional<std::int64_t>> own,
@@ -1322,7 +1331,7 @@ private:
             // Its own begin after the end it inherits, or its own end before
             // the begin it inherits.
             const u8sv which = own.first && *from == *own.first ? u8"begin" : attribute(node, u8"end") ? u8"end" : u8"dur";
-            return std::unexpected(LyricsProblem{Kind::EndBeforeBegin, attributeLine(node, which),
+            return std::unexpected(LyricsProblem{Kind::OutsideParent, attributeLine(node, which),
                                                  std::u8string(attribute(node, which).value_or(u8""))});
         }
         return std::pair{from, to};

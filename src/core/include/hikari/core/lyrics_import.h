@@ -33,6 +33,7 @@ struct LyricsProblem {
         TooDeep,          // TTML: elements nested past kMaxTtmlDepth
         TooLarge,         // larger than a lyrics file: the file, its XML or its Lines
         NoLyrics,         // nothing timed in the whole file
+        OutsideParent,    // TTML: a begin after the end an element inherits, or an end before its begin
     };
     Kind kind = Kind::NoLyrics;
     std::size_t line = 0;  // 1-based line of the file; 0 when no line is at fault

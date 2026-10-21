@@ -125,6 +125,22 @@ private slots:
         QCOMPARE(result.value(QStringLiteral("problem")).toString(),
                  QStringLiteral("Could not import malformed.lrc: line 3: the word at <00:04.20> starts before the word "
                                 "before it. Nothing was imported."));
+        // A time outside its parent's says so; a long line is cut short, never
+        // inside a surrogate pair.
+        const auto lyrics = [this](const char *name, const QByteArray &text) {
+            QFile f(dir.filePath(QLatin1String(name)));
+            return f.open(QIODevice::WriteOnly) && f.write(text) == text.size() ? f.fileName() : QString();
+        };
+        const auto outside =
+            a.reviewOpen(lyrics("outside.ttml", "<tt><body><div begin=\"0\" end=\"2\"><p begin=\"3\">x</p></div></body></tt>"));
+        QCOMPARE(outside.value(QStringLiteral("problem")).toString(),
+                 QStringLiteral("Could not import outside.ttml: line 1: the time 3 is outside the times of the element "
+                                "around it. Nothing was imported."));
+        const auto cut = a.reviewOpen(
+            lyrics("long.ttml", "<tt><body><p>" + QByteArray(58, 'a') + "\xF0\x9F\x8E\xA4 b c d</p></body></tt>"));
+        QCOMPARE(cut.value(QStringLiteral("problem")).toString(),
+                 QStringLiteral("Could not import long.ttml: line 1: \"") + QString(58, QLatin1Char('a')) + QChar(0x2026) +
+                     QStringLiteral("\" has no time. Nothing was imported."));
         QCOMPARE(targetTitle(a), std::string("kept.ass"));
         QCOMPARE(targetText(a), std::string("unsaved"));
         QCOMPARE(a.workspace().documents().size(), std::size_t(1));

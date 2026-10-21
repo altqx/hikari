@@ -147,12 +147,12 @@ TEST(LyricsImport, AmllTtmlBecomesKaraokeLines)
     ASSERT_TRUE(result.has_value()) << int(result.error().kind) << " line " << result.error().line;
     EXPECT_EQ(result->document.scriptInfo(u8"Title"), u8"さくら さくら");
     // An empty title leaves the next one, or musicName, to name the file.
-    const auto untitled = importTtml(bytes("<tt><head><metadata><ttm:title> </ttm:title><amll:meta key=\"musicName\" value=\"Song\"/>"
+    const auto untitled = importTtml(bytes("<tt xmlns:amll=\"http://www.example.com/ns/amll\"><head><metadata><ttm:title> </ttm:title><amll:meta key=\"musicName\" value=\"Song\"/>"
                                            "</metadata></head><body><p begin=\"1\" end=\"2\">x</p></body></tt>"));
     ASSERT_TRUE(untitled.has_value());
     EXPECT_EQ(untitled->document.scriptInfo(u8"Title"), u8"Song");
     // AMLL's musicName collapses its whitespace, as a <ttm:title> does.
-    const auto named = importTtml(bytes("<tt><head><metadata><amll:meta key=\"musicName\" value=\"  My \t  Song \"/>"
+    const auto named = importTtml(bytes("<tt xmlns:amll=\"http://www.example.com/ns/amll\"><head><metadata><amll:meta key=\"musicName\" value=\"  My \t  Song \"/>"
                                         "</metadata></head><body><p begin=\"1\" end=\"2\">x</p></body></tt>"));
     ASSERT_TRUE(named.has_value());
     EXPECT_EQ(named->document.scriptInfo(u8"Title"), u8"My Song");
@@ -164,6 +164,12 @@ TEST(LyricsImport, AmllTtmlBecomesKaraokeLines)
     ASSERT_TRUE(foreign.has_value());
     EXPECT_EQ(foreign->document.scriptInfo(u8"Title"), u8"Right");
     EXPECT_EQ(rows(*foreign), (std::vector<Row>{{1000, 2000, "v1", "x"}}));
+    // Nor is an xml: element's (xml: is no namespace of TTML's).
+    const auto xmlWrapped = importTtml(bytes("<tt><head><metadata><xml:x><ttm:title>Wrong</ttm:title></xml:x>"
+                                             "<ttm:title>Right</ttm:title></metadata></head><body><p begin=\"1\" end=\"2\">x</p>"
+                                             "</body></tt>"));
+    ASSERT_TRUE(xmlWrapped.has_value());
+    EXPECT_EQ(xmlWrapped->document.scriptInfo(u8"Title"), u8"Right");
     // Nor is the text of another namespace's element inside a title or name.
     const auto inside = importTtml(bytes("<tt><head><metadata><ttm:title>Right<f:x xmlns:f=\"urn:other\">Wrong</f:x></ttm:title>"
                                          "<ttm:agent xml:id=\"v1\"><ttm:name>Lead<f:x xmlns:f=\"urn:other\">Wrong</f:x></ttm:name>"
@@ -293,7 +299,7 @@ TEST(LyricsImport, MalformedTtmlNamesTheLineAtFault)
     EXPECT_EQ(problemOf(head + "<p begin=\"2\"\nend=\"1\">x</p></body></tt>", u8"ttml"),
               (LyricsProblem{Kind::EndBeforeBegin, 4, u8"1"}));
     EXPECT_EQ(problemOf(head + "<div end=\"1\"><p\nbegin=\"2\">x</p></div></body></tt>", u8"ttml"),
-              (LyricsProblem{Kind::EndBeforeBegin, 4, u8"2"}));
+              (LyricsProblem{Kind::OutsideParent, 4, u8"2"}));
     EXPECT_EQ(problemOf(head + "<p><span begin=\"2\" end=\"3\">a</span><span\nbegin=\"1\" end=\"2\">b</span></p></body></tt>",
                         u8"ttml"),
               (LyricsProblem{Kind::TimeGoesBack, 4, u8"1"}));
@@ -330,7 +336,7 @@ TEST(LyricsImport, TtmlMustBeWellFormedXml)
         EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">" + bad + "x" + tail, u8"ttml").kind, Kind::NotWellFormed) << bad;
     for (const char *bad : {" :a=\"1\"", " a:=\"1\"", " a:b:c=\"1\""})
         EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"" + bad + ">x" + tail, u8"ttml").kind, Kind::NotWellFormed) << bad;
-    EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" end=\"2\" x:l\xC3\xA9-g\xC2\xB7.1=\"1\"><\xE6\x97\xA5\xE6\x9C\xAC/>x" + tail))
+    EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" end=\"2\" xmlns:x=\"urn:x\" x:l\xC3\xA9-g\xC2\xB7.1=\"1\"><\xE6\x97\xA5\xE6\x9C\xAC/>x" + tail))
                     .has_value());
     // Characters XML forbids, as references or written out.
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">x &#xFFFE; y" + tail, u8"ttml"),
@@ -561,7 +567,7 @@ TEST(LyricsImport, TtmlPrologIsChecked)
                         " <!ATTLIST q>"
                         " <!ENTITY e 'v'> <!ENTITY f SYSTEM 'f.xml'> <!ENTITY g PUBLIC 'id' 'g.png' NDATA png>"
                         " <!ENTITY % p PUBLIC 'id' 'p.dtd'> <!NOTATION png PUBLIC 'image/png'> <!NOTATION j SYSTEM 'j'>]>"));
-    for (const char *bad : {"<!DOCTYPE tt [<!ELEMENT tt ???>]>", "<!DOCTYPE tt [<!ELEMENT tt (a | b, c)>]>",
+    for (const char *bad : {"<!DOCTYPE tt [<!ELEMENT tt ??" "?>]>", "<!DOCTYPE tt [<!ELEMENT tt (a | b, c)>]>",
                             "<!DOCTYPE tt [<!ELEMENT tt (#PCDATA | a)>]>", "<!DOCTYPE tt [<!ELEMENT tt (a>]>",
                             "<!DOCTYPE tt [<!ELEMENT tt ()>]>", "<!DOCTYPE tt [<!ATTLIST p begin STRING #IMPLIED>]>",
                             "<!DOCTYPE tt [<!ATTLIST p begin CDATA>]>", "<!DOCTYPE tt [<!ATTLIST p a CDATA '<'>]>",
@@ -645,14 +651,14 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
     EXPECT_EQ(timed("<div begin=\"2\" end=\"4\"><p begin=\"1\" end=\"3\">x</p></div>"), (std::vector<Row>{{2000, 3000, "", "x"}}));
     // One wholly outside the times it inherits is wrong, at its begin or end.
     EXPECT_EQ(problemOf("<tt><body><p begin=\"0\" end=\"4\"><span begin=\"5\" end=\"6\">x</span></p></body></tt>", u8"ttml"),
-              (LyricsProblem{Kind::EndBeforeBegin, 1, u8"5"}));
+              (LyricsProblem{Kind::OutsideParent, 1, u8"5"}));
     EXPECT_EQ(problemOf("<tt><body><p begin=\"2\" end=\"4\"><span begin=\"0\" end=\"1\">x</span></p></body></tt>", u8"ttml"),
-              (LyricsProblem{Kind::EndBeforeBegin, 1, u8"1"}));
+              (LyricsProblem{Kind::OutsideParent, 1, u8"1"}));
     EXPECT_EQ(problemOf("<tt><body><p begin=\"0\" end=\"4\"><span begin=\"5\" end=\"6\">a<span begin=\"5\">b</span></span>"
                         "</p></body></tt>", u8"ttml"),
-              (LyricsProblem{Kind::EndBeforeBegin, 1, u8"5"}));
+              (LyricsProblem{Kind::OutsideParent, 1, u8"5"}));
     EXPECT_EQ(problemOf("<tt><body><div begin=\"0\" end=\"2\">\n<div begin=\"3\"><p>x</p></div></div></body></tt>", u8"ttml"),
-              (LyricsProblem{Kind::EndBeforeBegin, 2, u8"3"}));
+              (LyricsProblem{Kind::OutsideParent, 2, u8"3"}));
     // Background vocals keep their own times, as AMLL writes them over their
     // main Line, starting before it or ending after it.
     EXPECT_EQ(timed("<p begin=\"1\" end=\"3\"><span begin=\"1\" end=\"3\">a</span><span ttm:role=\"x-bg\" begin=\"0.5\" "
@@ -663,7 +669,7 @@ TEST(LyricsImport, TtmlParagraphsTakeTheirAncestorsTimes)
               (std::vector<Row>{{1000, 4000, "", "{\\k100}a {\\k200}b"}}));
     // Its own begin after the end it inherits; no times anywhere.
     EXPECT_EQ(problemOf("<tt><body>\n<div begin=\"1\" end=\"3\">\n<p begin=\"5\">x</p></div></body></tt>", u8"ttml"),
-              (LyricsProblem{Kind::EndBeforeBegin, 3, u8"5"}));
+              (LyricsProblem{Kind::OutsideParent, 3, u8"5"}));
     EXPECT_EQ(problemOf("<tt><body><div><p>x</p></div></body></tt>", u8"ttml").kind, Kind::MissingTime);
 }
 
@@ -785,7 +791,7 @@ TEST(LyricsImport, TtmlXmlSpacePreserveKeepsWhitespace)
                    "xml:space=\"preserve\">  b</span></span></p>"),
               "{\\k100}a   {\\k100}b");
     // Only xml:space counts, not another prefix's "space".
-    EXPECT_EQ(text("><p begin=\"1\" end=\"2\" x:space=\"preserve\">a  b</p>"), "a b");
+    EXPECT_EQ(text("><p begin=\"1\" end=\"2\" xmlns:x=\"urn:x\" x:space=\"preserve\">a  b</p>"), "a b");
 }
 
 TEST(LyricsImport, TtmlAttributesAreReadByNamespace)
@@ -794,8 +800,15 @@ TEST(LyricsImport, TtmlAttributesAreReadByNamespace)
         const auto result = importTtml(bytes(std::string(tt)));
         return result ? rows(*result) : std::vector<Row>{};
     };
+    // Every prefix is declared (but ttm:, which such files leave undeclared).
+    EXPECT_EQ(problemOf("<tt><body><p begin=\"1\" end=\"2\" foo:a=\"x\">x</p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 1, u8"<p begin=\"1\" end=\"2\" foo:a=\"x\">"}));
+    EXPECT_EQ(problemOf("<tt><body><p begin=\"1\" end=\"2\">x<foo:b/></p></body></tt>", u8"ttml"),
+              (LyricsProblem{Kind::NotWellFormed, 1, u8"<foo:b/>"}));
+    EXPECT_EQ(lines("<tt><body><p begin=\"1\" end=\"2\">a<span ttm:role=\"x-roman\">b</span></p></body></tt>"),
+              (std::vector<Row>{{1000, 2000, "", "a"}}));
     // Timing attributes are unprefixed: an extension's "begin" is not one.
-    EXPECT_EQ(lines("<tt><body><p foo:begin=\"10\" begin=\"1\" end=\"2\">x</p></body></tt>"),
+    EXPECT_EQ(lines("<tt xmlns:foo=\"urn:x\"><body><p foo:begin=\"10\" begin=\"1\" end=\"2\">x</p></body></tt>"),
               (std::vector<Row>{{1000, 2000, "", "x"}}));
     EXPECT_EQ(lines("<tt xmlns:foo=\"urn:x\"><body><p begin=\"1\" foo:end=\"0\" end=\"2\">x</p></body></tt>"),
               (std::vector<Row>{{1000, 2000, "", "x"}}));
