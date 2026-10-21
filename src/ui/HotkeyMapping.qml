@@ -116,6 +116,7 @@ Window {
         id: refusal
         objectName: "hotkeyRefusal"
         property alias text: refusalText.text
+        title: qsTr("Warning") // TI1-popup-titles: as the question beside it
         flags: Qt.Dialog
         modality: Qt.ApplicationModal
         width: 380

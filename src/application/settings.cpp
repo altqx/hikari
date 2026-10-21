@@ -304,6 +304,10 @@ const std::vector<SettingDefinition> &definitions()
         // override tags unless this is on (Settings > Editor, and the
         // EDITBOX_HIDE_TAGS command); legacy hid them on every start.
         {"editor.hideTags", "", Bool, Profile, Mapped, false, false},
+        // FS1-bar-mode (owner, 2026-10-20): the fullscreen bar's mode, 0 Auto
+        // (default), 1 Always (legacy's "Show toolbar", never saved there),
+        // 2 Never; VIDEO_FULLSCREEN_BAR and the bar's mode menu set it.
+        {"video.fullscreenBar", "", Int, Profile, Mapped, false, std::int64_t{0}},
         // WS2 (owner decision 2026-10-18, #216): "Save panel layout in
         // subtitle files": an ASS file keeps its Document tab's panel
         // arrangement in a [Hikari] section, written at each save and taken

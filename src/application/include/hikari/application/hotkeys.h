@@ -76,7 +76,8 @@ struct HotkeyAction {
 };
 // IDS in declaration order (243 symbols, kLegacyHotkeyActions), then the
 // rewrite's own commands on ids legacy left unused: GLOBAL_EDITOR_HIDE_TAGS
-// (LE3, 5169), GLOBAL_VIDEO_RENDER_COST (KE1, 5170), GLOBAL_TRANSLATION_MODE (TM1, 5171),
+// (LE3, 5169), GLOBAL_VIDEO_RENDER_COST (KE1, 5170), VIDEO_FULLSCREEN_BAR
+// (FS1, 2021, Tab in the Video window), GLOBAL_TRANSLATION_MODE (TM1, 5171),
 // and TM1's EDITBOX_PLACE_RUN_1 to _9 (3020-3028, Alt-1 to Alt-9) and
 // EDITBOX_PLACE_NEXT_RUN (3029, unbound).
 std::span<const HotkeyAction> hotkeyActions();

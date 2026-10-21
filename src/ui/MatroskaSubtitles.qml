@@ -101,6 +101,7 @@ Item {
     Dialog {
         id: noTracksMessage
         objectName: "mkvNoTracksMessage"
+        title: qsTr("Load subtitles from an MKV/OGM file") // TI1-popup-titles
         modal: true
         parent: Overlay.overlay
         anchors.centerIn: parent
@@ -143,6 +144,7 @@ Item {
     Dialog {
         id: progressDialog
         objectName: "mkvProgress"
+        title: qsTr("Load subtitles from an MKV/OGM file")
         modal: true
         parent: Overlay.overlay
         anchors.centerIn: parent

@@ -383,7 +383,7 @@ ApplicationWindow {
         // and leaves it on when another arrangement is chosen.
         function onPresetModeChosen(mode) {
             if (mode === "Translation" && root.app.translationQuestionDue())
-                translationModeQuestion.open()
+                root.openInMainWindow(translationModeQuestion)
         }
     }
 
@@ -662,6 +662,18 @@ ApplicationWindow {
 
     // The panel waiting for its window's activation (focusPanel).
     property var pendingFocus: null
+
+    // TM1: a question of the main window's (a dialog in its overlay) asked
+    // from a floating panel's window, the Translation mode hotkey's say: the
+    // main window comes up and is activated first, so the question shows
+    // above that window and takes the keys.
+    function openInMainWindow(dialog) {
+        if (root.workspaceLayout.focusWindow !== root) {
+            root.raise()
+            root.requestActivate()
+        }
+        dialog.open()
+    }
 
     // TM1: the text field the Line editor's commands act on. With the
     // Original text panel in a window of its own each window keeps its own
@@ -1885,7 +1897,7 @@ ApplicationWindow {
                             if (checked)
                                 root.app.turnOnTranslationMode()
                             else
-                                translationModeOffConfirm.open()
+                                root.openInMainWindow(translationModeOffConfirm)
                         }
                         checked = Qt.binding(() => root.editor.translationMode)
                     }
@@ -2597,14 +2609,20 @@ ApplicationWindow {
                 // T1: Esc cancels an open visual gesture first; keys no binding
                 // takes go to the visual tool (a nudge), as VideoBox::OnKeyPress
                 // hands them to the Visuals.
+                // FS1: VIDEO_FULLSCREEN_BAR is the fullscreen window's; here
+                // its key (Tab) keeps moving the keyboard focus.
+                function panelAction(event) {
+                    const action = root.hotkeys.actionFor(3, event.key, event.modifiers)
+                    return action === "VIDEO_FULLSCREEN_BAR" ? "" : action
+                }
                 Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.escapable)
-                                                  || root.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
+                                                  || videoPanel.panelAction(event) !== ""
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
                         event.accepted = true
                         return
                     }
-                    const action = root.hotkeys.actionFor(3, event.key, event.modifiers)
+                    const action = videoPanel.panelAction(event)
                     if (action !== "") {
                         root.runVideoHotkey(action)
                         event.accepted = true
@@ -2676,10 +2694,9 @@ ApplicationWindow {
                     // In fullscreen the pinned panel (m_PanelOnFullscreen) or none.
                     panelHeight: root.videoFullscreen.active ? videoFullscreenWindow.pinnedPanelHeight : videoControls.height
                     view: root.videoView // V4
-                    // V5: without "Show toolbar" the pointer shows (and after
-                    // a second hides) over the fullscreen picture.
-                    cursorOverride: !root.videoFullscreen.active || root.videoFullscreen.showToolbar ? -1
-                                    : videoFullscreenWindow.cursorHidden ? Qt.BlankCursor : Qt.ArrowCursor
+                    // FS1-cursor-hide: the pointer hides over the fullscreen
+                    // picture while nothing holds the bar.
+                    cursorOverride: root.videoFullscreen.active && videoFullscreenWindow.cursorHidden ? Qt.BlankCursor : -1
                     onContextMenuRequested: (x, y) => {
                         if (root.videoFullscreen.active)
                             videoFullscreenWindow.openMenuAt(Qt.point(x, y))
@@ -2689,7 +2706,7 @@ ApplicationWindow {
                     onFullScreenRequested: root.videoDoubleClick()
                     onPointerMoved: (x, y) => {
                         if (root.videoFullscreen.active)
-                            videoFullscreenWindow.pointerMoved(visualOverlay.mapToItem(null, x, y).y)
+                            videoFullscreenWindow.pointerMoved(visualOverlay.mapToItem(null, x, y))
                     }
                 }
                 // V4: the zoom mode's frame, the context menu and the aspect ratio.
@@ -5190,6 +5207,8 @@ ApplicationWindow {
         }
         FileDialog {
             id: closeSaveAs
+            objectName: "closeSaveAs"
+            title: qsTranslate("HikariSub.Documents", "Save subtitle file")
             property int row: -1
             fileMode: FileDialog.SaveFile
             nameFilters: [qsTranslate("HikariSub.Documents", "ASS subtitles (*.ass)"), qsTranslate("HikariSub.Documents", "All files (*)")]
@@ -5352,6 +5371,11 @@ ApplicationWindow {
         onOpenSubtitlesRequested: openDialog.open()
         onAspectRatioRequested: aspectRatioDialog.openAtCursor()
         onFileQuestionRequested: next => videoFileQuestion.ask(next)
+        // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
+        onAudioSettingsRequested: {
+            root.videoFullscreen.leave()
+            settingsDialog.openDialog(4) // the Audio page
+        }
         Component.onCompleted: {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
@@ -5724,7 +5748,8 @@ ApplicationWindow {
     }
     FileDialog {
         id: keyframesDialog
-        title: qsTranslate("HikariSub.Video", "Choose video file")
+        objectName: "keyframesDialog"
+        title: qsTranslate("HikariSub.Video", "Choose keyframes file") // TI1-keyframes-title
         nameFilters: [qsTranslate("HikariSub.Video", "Keyframes file (*.txt *.pass *.stats *.log)"), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
             // V3: the recent keyframes take the file too (SetRecent(3))
@@ -6286,6 +6311,7 @@ ApplicationWindow {
         id: spellingNotice
         objectName: "spellingNotice"
         property alias text: spellingNoticeLabel.text
+        title: qsTranslate("HikariSub.Spelling", "Spellchecker") // TI1-popup-titles
         anchors.centerIn: parent
         modal: true // legacy HikariMessageBox is modal
         standardButtons: Dialog.Ok
@@ -7015,6 +7041,8 @@ ApplicationWindow {
         case "VIDEO_HIDE_PROGRESS_BAR": root.videoView.toggleProgressBar(); return true
         // V5 (VideoBox.cpp:1161-1162): SetFullscreen().
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
+        // FS1-bar-mode: Auto, Always, Never.
+        case "VIDEO_FULLSCREEN_BAR": root.videoFullscreen.cycleBarMode(); return true
         case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
