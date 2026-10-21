@@ -1442,6 +1442,18 @@
    ]
   },
   {
+   "role": "whats-new",
+   "file": "whats-new.svg",
+   "label": "What's new",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:help",
+    "home"
+   ]
+  },
+  {
    "role": "layout",
    "file": "layout.svg",
    "label": "Layout",
