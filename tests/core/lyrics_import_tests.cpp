@@ -473,6 +473,13 @@ TEST(LyricsImport, TtmlPrologIsChecked)
     EXPECT_EQ(problemOf("<!DOCTYPE tt [<!ENTITY a \"]>" + root, u8"ttml").kind, Kind::NotWellFormed);
     // A "]" closes only the "[" that opened the internal subset, and ">" follows it.
     EXPECT_TRUE(imports("<!DOCTYPE tt [ ] >"));
+    // After the name only an external id, an internal subset and ">".
+    EXPECT_TRUE(imports("<!DOCTYPE tt SYSTEM \"ttml.dtd\">"));
+    EXPECT_TRUE(imports("<!DOCTYPE tt PUBLIC '-//W3C//DTD TTML//EN' 'ttml.dtd' [ ]>"));
+    EXPECT_TRUE(imports("<!DOCTYPE tt[]>"));
+    for (const char *bad : {"<!DOCTYPE tt garbage>", "<!DOCTYPE tt SYSTEM>", "<!DOCTYPE tt PUBLIC \"x\">",
+                            "<!DOCTYPE tt SYSTEM \"a\" \"b\">", "<!DOCTYPE tt SYSTEM\"a\">", "<!DOCTYPE tt [] SYSTEM \"a\">"})
+        EXPECT_EQ(problemOf(bad + root, u8"ttml").kind, Kind::NotWellFormed) << bad;
     EXPECT_EQ(problemOf("<!DOCTYPE tt ]>" + root, u8"ttml").kind, Kind::NotWellFormed);
     EXPECT_EQ(problemOf("<!DOCTYPE tt []]>" + root, u8"ttml").kind, Kind::NotWellFormed);
     EXPECT_EQ(problemOf("<!DOCTYPE tt [] x>" + root, u8"ttml").kind, Kind::NotWellFormed);
@@ -554,6 +561,10 @@ TEST(LyricsImport, TtmlEmptyAndNestedTimedSpans)
     EXPECT_EQ(text("<p begin=\"0\" end=\"3\"><span begin=\"1\" end=\"3\"><span>hel</span><span begin=\"2\" end=\"3\">lo</span>"
                    "</span></p>"),
               "{\\k100}{\\k100}hel{\\k100}lo");
+    // The span's text going on through an untimed element is the same word.
+    EXPECT_EQ(text("<p begin=\"0\" end=\"3\"><span begin=\"1\" end=\"3\">hel<span>lo</span><span begin=\"2\" end=\"3\">world"
+                   "</span></span></p>"),
+              "{\\k100}{\\k100}hello{\\k100}world");
     // A paragraph's own text still joins its first word as written.
     EXPECT_EQ(text("<p begin=\"1\" end=\"3\">hel<span begin=\"2\" end=\"3\">lo</span></p>"), "{\\k100}{\\k100}hello");
 }

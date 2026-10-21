@@ -254,39 +254,59 @@ private:
                         m_doctypeName = name();
                     ok = ok && m_doctypeName.has_value();
                 }
-                // Quoted literals (system ids, entity values) and comments
-                // in the internal subset may hold "]" and ">".
-                for (int depth = 0; ok;) {
-                    if (done()) {
-                        ok = false;
-                        break;
+                // Then XML's doctypedecl: an external id (SYSTEM "uri", or
+                // PUBLIC "id" "uri"), an internal subset in "[ ]", and ">".
+                // Quoted literals (entity values) and comments in the subset
+                // may hold "]" and ">".
+                auto literal = [&] {
+                    if (done() || (m_s[m_pos] != u8'"' && m_s[m_pos] != u8'\''))
+                        return false;
+                    const std::size_t close = m_s.find(m_s[m_pos], m_pos + 1);
+                    if (close == u8sv::npos)
+                        return false;
+                    advance(close + 1 - m_pos);
+                    return true;
+                };
+                auto space = [&] {
+                    const bool any = !done() && isSpace(m_s[m_pos]);
+                    skipSpace();
+                    return any;
+                };
+                if (ok && space()) {
+                    if (at(u8"SYSTEM")) {
+                        advance(6);
+                        ok = space() && literal();
+                    } else if (at(u8"PUBLIC")) {
+                        advance(6);
+                        ok = space() && literal() && space() && literal();
                     }
-                    const char8_t c = m_s[m_pos];
-                    if (c == u8'"' || c == u8'\'') {
-                        const std::size_t close = m_s.find(c, m_pos + 1);
-                        ok = close != u8sv::npos;
-                        if (ok)
-                            advance(close + 1 - m_pos);
-                        continue;
-                    }
-                    if (depth > 0 && at(u8"<!--")) {
-                        ok = skipComment();
-                        continue;
-                    }
-                    if (c == u8']' && depth == 0) { // a "]" that no "[" opened
-                        ok = false;
-                        break;
-                    }
-                    depth += c == u8'[' ? 1 : c == u8']' ? -1 : 0;
-                    advance(1);
-                    if (c == u8']' && depth == 0) { // the internal subset ends the declaration
-                        skipSpace();
-                        ok = at(u8">");
-                        continue;
-                    }
-                    if (c == u8'>' && depth == 0)
-                        break;
+                    skipSpace();
                 }
+                if (ok && at(u8"[")) {
+                    advance(1);
+                    for (;;) {
+                        if (done()) {
+                            ok = false;
+                            break;
+                        }
+                        const char8_t c = m_s[m_pos];
+                        if (c == u8'"' || c == u8'\'') {
+                            if (!(ok = literal()))
+                                break;
+                        } else if (at(u8"<!--")) {
+                            if (!(ok = skipComment()))
+                                break;
+                        } else {
+                            advance(1);
+                            if (c == u8']')
+                                break;
+                        }
+                    }
+                    skipSpace();
+                }
+                ok = ok && at(u8">");
+                if (ok)
+                    advance(1);
             } else
                 return {};
             if (!ok) {
@@ -716,6 +736,7 @@ private:
         std::vector<std::optional<std::int64_t>> ends;
         std::u8string leading;                    // text before the first word
         std::u8string plain;                      // all the text, for a Line without words
+        const XmlNode *textOf = nullptr;          // the timed span whose own text the last word is
     };
     // A background vocal span: whether its parent keeps whitespace, and the
     // times of the nearest timed span around it, which time it in place of
@@ -870,17 +891,20 @@ private:
     // The words of a <p> (or of a background span), and the background
     // vocals inside it, each a Line of its own.
     // `preserve`: whether the node keeps its whitespace (xml:space).
-    // `spanBegin`, `spanEnd`: the times of the nearest timed span around the
-    // node that holds timed spans too. Its own text is a word it times, and
-    // its end ends a word inside it that has no end of its own.
+    // `span`, `spanBegin`, `spanEnd`: the nearest timed span around the node
+    // that holds timed spans too, and its times. Its own text is a word it
+    // times, and its end ends a word inside it that has no end of its own.
     std::expected<void, LyricsProblem> collect(const XmlNode &node, Words &into, Backgrounds &backgrounds, bool preserve,
-                                               std::optional<std::int64_t> spanBegin, std::optional<std::int64_t> spanEnd)
+                                               const XmlNode *span, std::optional<std::int64_t> spanBegin,
+                                               std::optional<std::int64_t> spanEnd)
     {
         for (const XmlNode &child : node.children) {
             if (child.isText()) {
                 const std::u8string text = lyricText(child.text, preserve);
                 const u8sv lyric = trimBlankLeft(text);
-                if (!spanBegin || lyric.empty()) {
+                // Blank text, and the span's text going on through untimed
+                // elements ("hel<span>lo</span>"), stay with the word before.
+                if (!spanBegin || lyric.empty() || (into.textOf == span && !into.words.empty())) {
                     addText(into, text, preserve);
                     continue;
                 }
@@ -896,6 +920,7 @@ private:
                 into.words.push_back(LyricWord{begin, 0, std::u8string(lyric)});
                 into.ends.push_back(spanEnd);
                 into.lines.push_back(child.line);
+                into.textOf = span;
                 continue;
             }
             const u8sv local = localName(child.name);
@@ -932,19 +957,23 @@ private:
                 into.words.push_back(LyricWord{begin, 0, std::u8string(word)});
                 into.ends.push_back(t->second ? t->second : spanEnd);
                 into.lines.push_back(child.line);
+                into.textOf = nullptr;
                 continue;
             }
+            const XmlNode *innerSpan = span;
             std::optional<std::int64_t> innerBegin = spanBegin, innerEnd = spanEnd;
             if (attribute(child, u8"begin") || attribute(child, u8"end")) {
                 const auto t = times(child);
                 if (!t)
                     return std::unexpected(t.error());
-                if (t->first)
+                if (t->first) {
+                    innerSpan = &child;
                     innerBegin = t->first;
+                }
                 if (t->second)
                     innerEnd = t->second;
             }
-            if (auto ok = collect(child, into, backgrounds, preserves(child, preserve), innerBegin, innerEnd); !ok)
+            if (auto ok = collect(child, into, backgrounds, preserves(child, preserve), innerSpan, innerBegin, innerEnd); !ok)
                 return ok;
         }
         return {};
@@ -968,7 +997,7 @@ private:
         Words words;
         Backgrounds backgrounds;
         const bool preserve = preserves(node, inherited);
-        if (auto ok = collect(node, words, backgrounds, preserve, std::nullopt, std::nullopt); !ok)
+        if (auto ok = collect(node, words, backgrounds, preserve, nullptr, std::nullopt, std::nullopt); !ok)
             return ok;
         LyricLine out;
         out.actor = actor;
