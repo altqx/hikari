@@ -10519,6 +10519,51 @@ private slots:
         QTRY_COMPARE(runText(), QStringLiteral("C"));
     }
 
+    // TM1: two runs of the same formatting are told apart by where the
+    // translator placed them; Escape puts back the committed placements'
+    // numbers with their text, even where the text reads the same.
+    void tagsFromOriginalEscapeKeepsTheRunNumbers()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-equal.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,o {\\i1}a{\\i0} b {\\i1}c{\\i0} d\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,w x y z\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        const auto start = [&](int run) { return application->editor().tagRuns()[run - 1].toMap().value("start").toInt(); };
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QVERIFY(application->editor().placeRun(2, 6, 7));
+        const auto committed = q8(session->draftRecord()->translation);
+        QCOMPARE(committed, QStringLiteral("w {\\i1}x{\\i0} y {\\i1}z{\\i0}"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(start(1), 2);
+        QCOMPARE(start(2), 6);
+        // Swapped in a draft: the same text, the other numbers.
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        QVERIFY(application->editor().placeRun(1, 6, 7));
+        QCOMPARE(q8(session->draftRecord()->translation), committed);
+        QCOMPARE(start(2), 2);
+        application->editor().discard();
+        QTRY_COMPARE(start(1), 2);
+        QCOMPARE(start(2), 6);
+        // The same through the draft's undo.
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        QVERIFY(application->editor().placeRun(1, 6, 7));
+        QVERIFY(application->editor().undo());
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(start(1), 2);
+        QCOMPARE(start(2), 6);
+    }
+
     // TM1: with several Lines selected, an Original edit goes to each
     // selected Line's text (SubsGrid::ChangeLine) and each translation
     // follows its own Original: the edited Line's is not copied over the

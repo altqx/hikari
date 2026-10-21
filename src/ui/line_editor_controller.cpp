@@ -159,8 +159,13 @@ core::TranslationDraft LineEditorController::translationDraft(const core::Origin
                                                               const core::LineRecord &line) const
 {
     auto draft = core::readTranslation(tags, core::toUtf16(line.translation));
-    if (const auto it = m_runOrders.find(runOrderKey(line.id)); it != m_runOrders.end())
-        core::relabelRuns(tags, draft, it->second);
+    const auto it = m_runOrders.find(runOrderKey(line.id));
+    if (it == m_runOrders.end())
+        return draft;
+    auto bare = draft;
+    bare.carried = false; // as composedBody composed it
+    if (core::toUtf8(core::composeTranslation(tags, bare)) == it->second.body)
+        core::relabelRuns(tags, draft, it->second.order);
     return draft;
 }
 
@@ -169,8 +174,8 @@ std::u8string LineEditorController::composedBody(const core::OriginalTags &tags,
 {
     draft.carried = false; // carried() adds the carried tags
     std::vector<core::RunPlacement> placed;
-    const auto body = core::toUtf8(core::composeTranslation(tags, draft, &placed));
-    m_runOrders[runOrderKey(line)] = core::runOrder(placed);
+    auto body = core::toUtf8(core::composeTranslation(tags, draft, &placed));
+    m_runOrders[runOrderKey(line)] = {body, core::runOrder(placed)};
     return body;
 }
 
@@ -181,15 +186,25 @@ bool LineEditorController::saveTranslationDraft(const core::OriginalTags &tags, 
         return false;
     // The numbers the translator chose are kept before setRaw refreshes the
     // fields, which read them back.
-    const auto key = runOrderKey(real->id);
-    const auto previous = m_runOrders.contains(key) ? std::optional(m_runOrders[key]) : std::nullopt;
-    if (setRaw(1, composedBody(tags, std::move(draft), real->id)))
+    const auto previous = runOrderOf(real->id);
+    if (setRaw(1, composedBody(tags, std::move(draft), real->id), &previous))
         return true;
-    if (previous)
-        m_runOrders[key] = *previous;
-    else
-        m_runOrders.erase(key);
+    setRunOrder(real->id, previous);
     return false;
+}
+
+std::optional<LineEditorController::RunOrder> LineEditorController::runOrderOf(core::LineId line) const
+{
+    const auto it = m_runOrders.find(runOrderKey(line));
+    return it == m_runOrders.end() ? std::nullopt : std::optional(it->second);
+}
+
+void LineEditorController::setRunOrder(core::LineId line, std::optional<RunOrder> order)
+{
+    if (order)
+        m_runOrders[runOrderKey(line)] = std::move(*order);
+    else
+        m_runOrders.erase(runOrderKey(line));
 }
 
 std::u8string LineEditorController::recarried(const core::LineRecord &before, const Carry &now)
@@ -658,7 +673,7 @@ bool LineEditorController::translationTyped()
     return change && change->second.translation && !change->second.translationCarried;
 }
 
-bool LineEditorController::setRaw(int role, std::u8string raw)
+bool LineEditorController::setRaw(int role, std::u8string raw, const std::optional<RunOrder> *orderBefore)
 {
     auto *s = session();
     const auto r = record();
@@ -666,6 +681,7 @@ bool LineEditorController::setRaw(int role, std::u8string raw)
         return false;
     if (raw == roleText(*r, role))
         return true;
+    auto order = orderBefore ? *orderBefore : runOrderOf(r->id);
     const auto real = sessionRecord();
     const auto c = carry(*real);
     const bool typed = translationTyped();
@@ -686,7 +702,7 @@ bool LineEditorController::setRaw(int role, std::u8string raw)
     }
     if (!s->editDraft(r->id, change))
         return false;
-    m_draftUndo.push_back({real->text, real->translation, typed});
+    m_draftUndo.push_back({real->text, real->translation, typed, std::move(order)});
     m_draftRedo.clear();
     m_attempted.clear();
     refresh();
@@ -1018,6 +1034,9 @@ int shownAlignment(const core::LineRecord &line, const std::vector<core::StyleVa
 void LineEditorController::discard()
 {
     auto *s = session();
+    // TM1: the run order goes back with the text, to the draft's first step's.
+    if (const auto line = s ? s->draftLine() : std::nullopt; line && !m_draftUndo.empty())
+        setRunOrder(*line, m_draftUndo.front().order);
     if (s)
         s->discardDraft();
     clearTimeWarnings(); // the shown times are the Line's again
@@ -1068,9 +1087,10 @@ bool LineEditorController::undo()
     const QString before[2] = {m_shown[0], m_shown[1]};
     const auto line = s->selection().active;
     if (!m_draftUndo.empty() && r) {
-        m_draftRedo.push_back({r->text, r->translation, translationTyped()});
+        m_draftRedo.push_back({r->text, r->translation, translationTyped(), runOrderOf(r->id)});
         const Snapshot previous = std::move(m_draftUndo.back());
         m_draftUndo.pop_back();
+        setRunOrder(r->id, previous.order);
         s->editDraft(r->id, application::DraftChange{.text = previous.text,
                                                      .translation = previous.translation,
                                                      .translationCarried = !previous.translationTyped});
@@ -1114,9 +1134,10 @@ bool LineEditorController::redo()
     const QString before[2] = {m_shown[0], m_shown[1]};
     const auto line = s->selection().active;
     if (!m_draftRedo.empty() && r) {
-        m_draftUndo.push_back({r->text, r->translation, translationTyped()});
+        m_draftUndo.push_back({r->text, r->translation, translationTyped(), runOrderOf(r->id)});
         const Snapshot next = std::move(m_draftRedo.back());
         m_draftRedo.pop_back();
+        setRunOrder(r->id, next.order);
         s->editDraft(r->id, application::DraftChange{.text = next.text,
                                                      .translation = next.translation,
                                                      .translationCarried = !next.translationTyped});

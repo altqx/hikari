@@ -511,13 +511,23 @@ private:
     std::optional<std::tuple<core::LineId, std::u8string, std::u8string>> m_dismissedFor;
     std::set<int> m_dismissedRuns;
     // TM1: each Line's placed run numbers in text order (core::relabelRuns),
-    // by Document and Line (each Document numbers its own Lines).
+    // by Document and Line (each Document numbers its own Lines), with the
+    // body they were composed into: a translation put back by Escape or an
+    // undo is another body, read without them.
     using RunOrderKey = std::pair<std::uint64_t, std::uint64_t>;
     RunOrderKey runOrderKey(core::LineId line) const { return {m_document ? m_document->value : 0, line.value}; }
-    std::map<RunOrderKey, std::vector<int>> m_runOrders;
+    struct RunOrder {
+        std::u8string body;
+        std::vector<int> order;
+    };
+    std::map<RunOrderKey, RunOrder> m_runOrders;
+    std::optional<RunOrder> runOrderOf(core::LineId line) const;
+    void setRunOrder(core::LineId line, std::optional<RunOrder> order);
     void refresh();
     void fail(const QString &problem, const QString &attempted = {});
-    bool setRaw(int role, std::u8string raw);
+    // `orderBefore`: the Line's run order before this step, when the caller
+    // composed the new one already (saveTranslationDraft).
+    bool setRaw(int role, std::u8string raw, const std::optional<RunOrder> *orderBefore = nullptr);
     // A legacy text command on the raw text of `role`, mapped through the
     // hidden-tag projection; the result's selection is requested in QML.
     bool editRaw(int role, int selectionStart, int selectionEnd,
@@ -618,7 +628,8 @@ private:
     // Exact raw snapshots of this draft, both roles.
     struct Snapshot {
         std::u8string text, translation;
-        bool translationTyped = false; // the draft's translation cell was typed then
+        bool translationTyped = false;  // the draft's translation cell was typed then
+        std::optional<RunOrder> order; // the Line's run order then
     };
     // The draft holds a typed translation cell, not only a carried one
     // (application::DraftChange::translationCarried).
