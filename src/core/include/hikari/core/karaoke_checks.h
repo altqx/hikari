@@ -19,6 +19,10 @@
 
 namespace hikari::core {
 
+// A problem lists at most this many syllables; a Line of millions of bad
+// ones still makes one short row.
+inline constexpr std::size_t kListedSyllables = 20;
+
 struct KaraokeProblem {
     enum class Kind {
         Unclosed,         // a "{" with a karaoke tag and no "}", or a tag with no number
@@ -31,7 +35,8 @@ struct KaraokeProblem {
     Kind kind = Kind::Unclosed;
     std::int64_t totalMs = 0;    // TotalNotDuration: the syllables' sum, in milliseconds
     std::int64_t durationMs = 0; // TotalNotDuration: the Line's end - start
-    std::vector<std::size_t> syllables; // ZeroLength, OutsideLine: which ones, from 1
+    std::vector<std::size_t> syllables; // ZeroLength, OutsideLine: which ones, from 1, the first kListedSyllables
+    std::size_t syllableCount = 0;      // ZeroLength, OutsideLine: how many in all
     bool operator==(const KaraokeProblem &) const = default;
 };
 

@@ -22,13 +22,16 @@ QString seconds(std::int64_t ms)
     return QString::number(static_cast<double>(ms) / 1000.0, 'f', ms % 10 != 0 ? 3 : 2);
 }
 
-QString syllables(const std::vector<std::size_t> &numbers)
+// The syllables a problem lists, and "…" when it has more than it lists.
+QString syllables(const core::KaraokeProblem &problem)
 {
     QStringList list;
-    for (std::size_t n : numbers)
+    for (std::size_t n : problem.syllables)
         list << QString::number(n);
-    const QString label = numbers.size() == 1 ? QCoreApplication::translate("HikariSub.Karaoke", "Syllable %1")
-                                              : QCoreApplication::translate("HikariSub.Karaoke", "Syllables %1");
+    if (problem.syllableCount > problem.syllables.size())
+        list << QString(QChar(0x2026)); // "…"
+    const QString label = problem.syllableCount == 1 ? QCoreApplication::translate("HikariSub.Karaoke", "Syllable %1")
+                                                     : QCoreApplication::translate("HikariSub.Karaoke", "Syllables %1");
     return label.arg(list.join(QStringLiteral(", ")));
 }
 
@@ -60,11 +63,11 @@ QVariantList Application::checkKaraoke() const
             break;
         case Kind::ZeroLength:
             check = QCoreApplication::translate("HikariSub.Karaoke", "Zero-length syllable");
-            detail = syllables(problem.syllables);
+            detail = syllables(problem);
             break;
         case Kind::OutsideLine:
             check = QCoreApplication::translate("HikariSub.Karaoke", "Syllable outside the line");
-            detail = syllables(problem.syllables);
+            detail = syllables(problem);
             break;
         }
         rows << QVariantMap{{QStringLiteral("document"), QVariant::fromValue<qulonglong>(target->value)},

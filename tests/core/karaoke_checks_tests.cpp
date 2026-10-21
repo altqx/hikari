@@ -137,6 +137,23 @@ TEST(KaraokeChecks, SyllablesAddUpInCentiseconds)
               (std::vector<Found>{{0, Kind::OutsideLine, 0, 0, {2}}}));
 }
 
+TEST(KaraokeChecks, ALineOfManySyllablesListsTheFirstOnes)
+{
+    // A problem lists the first kListedSyllables syllables and counts them all,
+    // so a Line of a great many tags makes one short row.
+    std::string text;
+    for (int i = 0; i < 200'000; ++i)
+        text += "{\\k0}x";
+    const auto problems = checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text.c_str()));
+    ASSERT_EQ(problems.size(), 2u);
+    EXPECT_EQ(problems[0].kind, Kind::TotalNotDuration);
+    EXPECT_EQ(problems[1].kind, Kind::ZeroLength);
+    EXPECT_EQ(problems[1].syllables.size(), kListedSyllables);
+    EXPECT_EQ(problems[1].syllables.front(), 1u);
+    EXPECT_EQ(problems[1].syllables.back(), kListedSyllables);
+    EXPECT_EQ(problems[1].syllableCount, 200'000u);
+}
+
 TEST(KaraokeChecks, SignedAndOversizedValuesRead)
 {
     // "+" may lead the number, as "-" may.

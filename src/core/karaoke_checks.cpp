@@ -66,14 +66,13 @@ bool hasKaraokeTag(u8sv block)
 // adding them up cannot overflow.
 constexpr std::int64_t kLongestSyllable = 10'000'000'000;
 
-struct Syllables {
-    std::vector<std::int64_t> values; // milliseconds (whole centiseconds)
-    bool unclosed = false;
-};
-
-Syllables syllablesOf(u8sv text)
+// Each karaoke syllable's length in a Line's text, in order, to `each`
+// (milliseconds, whole centiseconds), one at a time so a Line of millions
+// of tags is never held; whether a karaoke tag is unclosed or has no number.
+template <typename Each>
+bool syllablesOf(u8sv text, Each each)
 {
-    Syllables out;
+    bool unclosed = false;
     for (std::size_t pos = 0; pos < text.size();) {
         if (text[pos] != u8'{') {
             ++pos;
@@ -81,7 +80,7 @@ Syllables syllablesOf(u8sv text)
         }
         const std::size_t close = text.find(u8'}', pos);
         if (close == u8sv::npos) {
-            out.unclosed = out.unclosed || hasKaraokeTag(text.substr(pos));
+            unclosed = unclosed || hasKaraokeTag(text.substr(pos));
             break; // the rest is literal text
         }
         const u8sv block = text.substr(pos + 1, close - pos - 1);
@@ -110,17 +109,17 @@ Syllables syllablesOf(u8sv text)
                 for (++j; j < block.size() && isDigit(block[j]); ++j)
                     digits = true;
             if (!digits) {
-                out.unclosed = true; // "\k" with no number
+                unclosed = true; // "\k" with no number
                 continue;
             }
             if (parenthesised && j < block.size() && block[j] == u8')')
                 ++j;
-            out.values.push_back(negative ? -ms : ms);
+            each(negative ? -ms : ms);
             i = j - 1;
         }
         pos = close + 1;
     }
-    return out;
+    return unclosed;
 }
 
 } // namespace
@@ -134,10 +133,6 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
         const LineRecord &line = *lines[row];
         if (isTemplateLine(line))
             continue;
-        // The text karaoke plays: the translation when there is one.
-        const Syllables syllables = syllablesOf(line.translation.empty() ? line.text : line.translation);
-        if (syllables.values.empty() && !syllables.unclosed)
-            continue;
         auto problem = [&](Kind kind) {
             KaraokeProblem p;
             p.line = line.id;
@@ -145,31 +140,41 @@ std::vector<KaraokeProblem> checkKaraoke(const Document &document)
             p.kind = kind;
             return p;
         };
-        if (syllables.unclosed)
-            problems.push_back(problem(Kind::Unclosed));
         // Each end in whole milliseconds, as the audio display's karaoke
         // reads the Line (Application's audio Lines), then their distance.
         const std::int64_t duration = line.end.value.microseconds() / 1000 - line.start.value.microseconds() / 1000;
         std::int64_t total = 0;
+        std::size_t count = 0;
         KaraokeProblem zero = problem(Kind::ZeroLength);
         KaraokeProblem outside = problem(Kind::OutsideLine);
-        for (std::size_t i = 0; i < syllables.values.size(); ++i) {
-            const std::int64_t start = total, length = syllables.values[i];
+        auto note = [](KaraokeProblem &p, std::size_t number) {
+            if (p.syllables.size() < kListedSyllables)
+                p.syllables.push_back(number);
+            ++p.syllableCount;
+        };
+        // The text karaoke plays: the translation when there is one.
+        const bool unclosed = syllablesOf(line.translation.empty() ? line.text : line.translation, [&](std::int64_t length) {
+            const std::int64_t start = total;
             total += length;
+            ++count;
             if (length == 0)
-                zero.syllables.push_back(i + 1);
+                note(zero, count);
             if (length < 0 || start < 0 || total < 0 || start > duration || total > duration) // or it runs backward
-                outside.syllables.push_back(i + 1);
-        }
-        if (!syllables.values.empty() && total != duration) {
+                note(outside, count);
+        });
+        if (count == 0 && !unclosed)
+            continue;
+        if (unclosed)
+            problems.push_back(problem(Kind::Unclosed));
+        if (count > 0 && total != duration) {
             KaraokeProblem p = problem(Kind::TotalNotDuration);
             p.totalMs = total;
             p.durationMs = duration;
             problems.push_back(std::move(p));
         }
-        if (!zero.syllables.empty())
+        if (zero.syllableCount > 0)
             problems.push_back(std::move(zero));
-        if (!outside.syllables.empty())
+        if (outside.syllableCount > 0)
             problems.push_back(std::move(outside));
     }
     return problems;
