@@ -918,6 +918,10 @@ void AudioController::tick()
 {
     if (!m_playback)
         return m_playTimer.stop();
+    // KA2: the playing reached the audio's end when this tick stops it past
+    // the end, not when the player stopped without it (a failed output)
+    const bool wasPlaying = playing();
+    const std::int64_t at = wasPlaying ? m_player->position() : 0;
     const auto redrawn = m_playback->tick(m_view, m_scrollbarThickness);
     m_cursor = m_playback->cursorPainted() ? std::optional(m_playback->cursorX()) : std::nullopt;
     // AV2: the video shows where the box is (legacy GetMSAtSample)
@@ -933,8 +937,8 @@ void AudioController::tick()
     if (!m_playback->timerRunning() || !playing())
         m_playTimer.stop();
     if (m_tapState == TapTapping) {
-        if (!playing()) // the audio's end
-            tapPlayingEnded();
+        if (!playing())
+            tapPlayingEnded(wasPlaying && at > m_player->endPosition());
         emit tapSpansChanged();
     }
     playbackStateChanged();
@@ -1475,19 +1479,22 @@ void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
     emit tapSpansChanged();
 }
 
-// The tap playing ran to the audio's end: a held syllable (the last press's
-// in Press mode) ends there, and it may finish the Line; then tapping stops.
-void AudioController::tapPlayingEnded()
+// The tap playing stopped by itself. At the audio's end a held syllable (the
+// last press's in Press mode) ends there, and it may finish the Line; a player
+// that stopped before it (a failed output) drops the held syllable as Esc
+// does. Then tapping stops.
+void AudioController::tapPlayingEnded(bool atEnd)
 {
     const auto *audio = m_box.audio();
-    const int endMs = audio && m_player && audio->sampleRate() > 0
-                          ? static_cast<int>(m_player->endPosition() * 1000 / audio->sampleRate())
-                          : tapSongNow();
-    if (m_tap.finish(endMs) == application::KaraokeTap::Event::LineDone)
-        finishTapLine(std::nullopt, endMs);
+    if (atEnd && audio && m_player && audio->sampleRate() > 0) {
+        const int endMs = static_cast<int>(m_player->endPosition() * 1000 / audio->sampleRate());
+        if (m_tap.finish(endMs) == application::KaraokeTap::Event::LineDone)
+            finishTapLine(std::nullopt, endMs);
+    }
     if (m_tapState != TapTapping)
         return;
     m_tap.stop();
+    m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "%1 of %2 tapped").arg(m_tap.tapped()).arg(m_tap.count());
     setTapState(TapStopped);
 }
 

@@ -38,11 +38,14 @@ Window {
     }
     function start() {
         edited = false
+        keys.forceActiveFocus()
         audio.startCalibration()
     }
     function apply() {
         audio.stopCalibration()
-        audio.setTapLatency(latency.value)
+        // what is typed in the field, though Enter there has not committed it
+        const typed = latency.valueFromText(latency.contentItem.text, latency.locale)
+        audio.setTapLatency(Math.max(latency.from, Math.min(latency.to, typed)))
         close()
     }
     onClosing: audio.stopCalibration()
@@ -54,7 +57,13 @@ Window {
         }
     }
 
-    // Space on a beep, Esc closes; the window's own keys before its buttons'.
+    Shortcut {
+        sequences: [StandardKey.Cancel]
+        onActivated: calibration.close()
+    }
+    // Space on a beep, Esc closes, Enter applies; the window's own keys before
+    // its buttons'. The latency field is inside, so Enter typed there comes
+    // here too; while the beeps play it cannot be chosen, so Space does.
     Item {
         id: keys
         anchors.fill: parent
@@ -72,190 +81,187 @@ Window {
                 event.accepted = true
             }
         }
-    }
-    Shortcut {
-        sequences: [StandardKey.Cancel]
-        onActivated: calibration.close()
-    }
 
-    ColumnLayout {
-        id: content
-        anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
-        spacing: 10
         ColumnLayout {
-            spacing: 2
-            RowLayout {
-                spacing: 5
-                Label {
-                    text: qsTr("Press")
+            id: content
+            anchors { left: parent.left; right: parent.right; top: parent.top; margins: 18 }
+            spacing: 10
+            ColumnLayout {
+                spacing: 2
+                RowLayout {
+                    spacing: 5
+                    Label {
+                        text: qsTr("Press")
+                    }
+                    Keycap {
+                        text: qsTr("Space")
+                    }
+                    Label {
+                        text: qsTr("on each beep.")
+                    }
                 }
-                Keycap {
-                    text: qsTr("Space")
-                }
                 Label {
-                    text: qsTr("on each beep.")
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    text: qsTr("16 beeps at 100 BPM; the first four are practice.")
                 }
             }
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                text: qsTr("16 beeps at 100 BPM; the first four are practice.")
+            // the beats: the practice ones dashed, those heard filled
+            Row {
+                objectName: "tapCalibrationBeats"
+                spacing: 6
+                Accessible.role: Accessible.ProgressBar
+                //: The latency calibration's progress; %1 the beeps heard
+                Accessible.name: qsTr("%1 of 16 beeps").arg(calibration.audio.calibrationBeat)
+                Repeater {
+                    model: 16
+                    delegate: Canvas {
+                        required property int index
+                        readonly property bool heard: index < calibration.audio.calibrationBeat
+                        readonly property bool coming: calibration.audio.calibrating && index === calibration.audio.calibrationBeat
+                        readonly property color ink: heard || coming ? Theme.accent : Theme.control
+                        objectName: "tapCalibrationBeat" + index
+                        width: 16
+                        height: 16
+                        onHeardChanged: requestPaint()
+                        onComingChanged: requestPaint()
+                        onInkChanged: requestPaint()
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            ctx.reset()
+                            ctx.beginPath()
+                            const line = coming ? 3 : 1
+                            ctx.arc(8, 8, 8 - line / 2, 0, 2 * Math.PI)
+                            if (heard) {
+                                ctx.fillStyle = ink
+                                ctx.fill()
+                            } else {
+                                ctx.lineWidth = line
+                                ctx.strokeStyle = ink
+                                if (index < 4 && !coming)
+                                    ctx.setLineDash([2, 2])
+                                ctx.stroke()
+                            }
+                        }
+                    }
+                }
             }
-        }
-        // the beats: the practice ones dashed, those heard filled
-        Row {
-            objectName: "tapCalibrationBeats"
-            spacing: 6
-            Accessible.role: Accessible.ProgressBar
-            //: The latency calibration's progress; %1 the beeps heard
-            Accessible.name: qsTr("%1 of 16 beeps").arg(calibration.audio.calibrationBeat)
-            Repeater {
-                model: 16
-                delegate: Canvas {
-                    required property int index
-                    readonly property bool heard: index < calibration.audio.calibrationBeat
-                    readonly property bool coming: calibration.audio.calibrating && index === calibration.audio.calibrationBeat
-                    readonly property color ink: heard || coming ? Theme.accent : Theme.control
-                    objectName: "tapCalibrationBeat" + index
-                    width: 16
-                    height: 16
-                    onHeardChanged: requestPaint()
-                    onComingChanged: requestPaint()
-                    onInkChanged: requestPaint()
+            ColumnLayout {
+                spacing: 2
+                Label {
+                    text: qsTr("Your presses, in ms after each beep")
+                    color: Theme.muted
+                    font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
+                }
+                // the counted presses' delays on 0 to 200 ms, the median across them
+                Canvas {
+                    id: plot
+                    objectName: "tapCalibrationPlot"
+                    readonly property var delays: calibration.audio.calibrationDelays
+                    readonly property int median: calibration.audio.calibrationLatency
+                    readonly property bool counted: calibration.audio.calibrationCounted > 0
+                    readonly property var colours: [Theme.line, Theme.muted, Theme.accent, Theme.text]
+                    Layout.preferredWidth: 320
+                    Layout.preferredHeight: 44
+                    onDelaysChanged: requestPaint()
+                    onMedianChanged: requestPaint()
+                    onColoursChanged: requestPaint()
                     onPaint: {
                         const ctx = getContext("2d")
                         ctx.reset()
+                        const left = 10, w = 300
+                        const at = ms => left + Math.max(0, Math.min(200, ms)) / 200 * w
+                        ctx.strokeStyle = Theme.line
+                        ctx.lineWidth = 1
                         ctx.beginPath()
-                        const line = coming ? 3 : 1
-                        ctx.arc(8, 8, 8 - line / 2, 0, 2 * Math.PI)
-                        if (heard) {
-                            ctx.fillStyle = ink
+                        ctx.moveTo(left, 30.5)
+                        ctx.lineTo(left + w, 30.5)
+                        ctx.stroke()
+                        ctx.strokeStyle = Theme.muted
+                        ctx.fillStyle = Theme.muted
+                        ctx.font = Math.round(Qt.application.font.pixelSize * 0.75) + "px sans-serif"
+                        ctx.textAlign = "center"
+                        for (const v of [0, 50, 100, 150, 200]) {
+                            ctx.beginPath()
+                            ctx.moveTo(Math.round(at(v)) + 0.5, 30)
+                            ctx.lineTo(Math.round(at(v)) + 0.5, 34)
+                            ctx.stroke()
+                            ctx.fillText(String(v), at(v), 43)
+                        }
+                        ctx.fillStyle = Theme.accent
+                        for (let i = 0; i < delays.length; i++) {
+                            ctx.beginPath()
+                            ctx.arc(at(delays[i]), 12 + (i % 3) * 5, 3, 0, 2 * Math.PI)
                             ctx.fill()
-                        } else {
-                            ctx.lineWidth = line
-                            ctx.strokeStyle = ink
-                            if (index < 4 && !coming)
-                                ctx.setLineDash([2, 2])
+                        }
+                        if (counted) {
+                            ctx.strokeStyle = Theme.text
+                            ctx.lineWidth = 1.5
+                            ctx.beginPath()
+                            ctx.moveTo(at(median), 4)
+                            ctx.lineTo(at(median), 30)
                             ctx.stroke()
                         }
                     }
                 }
             }
-        }
-        ColumnLayout {
-            spacing: 2
-            Label {
-                text: qsTr("Your presses, in ms after each beep")
-                color: Theme.muted
-                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
-            }
-            // the counted presses' delays on 0 to 200 ms, the median across them
-            Canvas {
-                id: plot
-                objectName: "tapCalibrationPlot"
-                readonly property var delays: calibration.audio.calibrationDelays
-                readonly property int median: calibration.audio.calibrationLatency
-                readonly property bool counted: calibration.audio.calibrationCounted > 0
-                readonly property var colours: [Theme.line, Theme.muted, Theme.accent, Theme.text]
-                Layout.preferredWidth: 320
-                Layout.preferredHeight: 44
-                onDelaysChanged: requestPaint()
-                onMedianChanged: requestPaint()
-                onColoursChanged: requestPaint()
-                onPaint: {
-                    const ctx = getContext("2d")
-                    ctx.reset()
-                    const left = 10, w = 300
-                    const at = ms => left + Math.max(0, Math.min(200, ms)) / 200 * w
-                    ctx.strokeStyle = Theme.line
-                    ctx.lineWidth = 1
-                    ctx.beginPath()
-                    ctx.moveTo(left, 30.5)
-                    ctx.lineTo(left + w, 30.5)
-                    ctx.stroke()
-                    ctx.strokeStyle = Theme.muted
-                    ctx.fillStyle = Theme.muted
-                    ctx.font = Math.round(Qt.application.font.pixelSize * 0.75) + "px sans-serif"
-                    ctx.textAlign = "center"
-                    for (const v of [0, 50, 100, 150, 200]) {
-                        ctx.beginPath()
-                        ctx.moveTo(Math.round(at(v)) + 0.5, 30)
-                        ctx.lineTo(Math.round(at(v)) + 0.5, 34)
-                        ctx.stroke()
-                        ctx.fillText(String(v), at(v), 43)
-                    }
-                    ctx.fillStyle = Theme.accent
-                    for (let i = 0; i < delays.length; i++) {
-                        ctx.beginPath()
-                        ctx.arc(at(delays[i]), 12 + (i % 3) * 5, 3, 0, 2 * Math.PI)
-                        ctx.fill()
-                    }
-                    if (counted) {
-                        ctx.strokeStyle = Theme.text
-                        ctx.lineWidth = 1.5
-                        ctx.beginPath()
-                        ctx.moveTo(at(median), 4)
-                        ctx.lineTo(at(median), 30)
-                        ctx.stroke()
-                    }
+            RowLayout {
+                spacing: 10
+                Label {
+                    text: qsTr("Latency")
+                    font.bold: true
+                }
+                SpinBox {
+                    id: latency
+                    objectName: "tapCalibrationLatency"
+                    from: -200
+                    to: 500
+                    editable: true
+                    enabled: !calibration.audio.calibrating
+                    Accessible.name: qsTr("Latency")
+                    //: The latency spin box's value; %1 is in milliseconds
+                    textFromValue: (value, locale) => qsTr("%1 ms").arg(value)
+                    valueFromText: (text, locale) => parseInt(text) || 0
+                    onValueModified: calibration.edited = true
+                }
+                Label {
+                    objectName: "tapCalibrationResult"
+                    Layout.fillWidth: true
+                    wrapMode: Text.WordWrap
+                    color: Theme.muted
+                    font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
+                    //: The latency calibration's result; %1 the spread in ms, %2 the presses counted (of 12)
+                    text: (calibration.audio.calibrating ? qsTr("Spread ±%1 ms · %2 of 12 counted beeps so far")
+                                                         : qsTr("Spread ±%1 ms · %2 of 12 counted beeps"))
+                          .arg(calibration.audio.calibrationSpread).arg(calibration.audio.calibrationCounted)
                 }
             }
-        }
-        RowLayout {
-            spacing: 10
-            Label {
-                text: qsTr("Latency")
-                font.bold: true
-            }
-            SpinBox {
-                id: latency
-                objectName: "tapCalibrationLatency"
-                from: -200
-                to: 500
-                editable: true
-                Accessible.name: qsTr("Latency")
-                //: The latency spin box's value; %1 is in milliseconds
-                textFromValue: (value, locale) => qsTr("%1 ms").arg(value)
-                valueFromText: (text, locale) => parseInt(text) || 0
-                onValueModified: calibration.edited = true
-            }
-            Label {
-                objectName: "tapCalibrationResult"
-                Layout.fillWidth: true
-                wrapMode: Text.WordWrap
-                color: Theme.muted
-                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
-                //: The latency calibration's result; %1 the spread in ms, %2 the presses counted (of 12)
-                text: (calibration.audio.calibrating ? qsTr("Spread ±%1 ms · %2 of 12 counted beeps so far")
-                                                     : qsTr("Spread ±%1 ms · %2 of 12 counted beeps"))
-                      .arg(calibration.audio.calibrationSpread).arg(calibration.audio.calibrationCounted)
-            }
-        }
-        RowLayout {
-            Layout.topMargin: 6
-            spacing: 8
-            Button {
-                objectName: "tapCalibrationAgain"
-                text: qsTr("Start again")
-                focusPolicy: Qt.NoFocus
-                onClicked: { calibration.start(); keys.forceActiveFocus() }
-            }
-            Item { Layout.fillWidth: true }
-            WindowFooter {
-                Layout.fillWidth: false
+            RowLayout {
+                Layout.topMargin: 6
+                spacing: 8
                 Button {
-                    objectName: "tapCalibrationCancel"
-                    text: qsTr("Cancel")
+                    objectName: "tapCalibrationAgain"
+                    text: qsTr("Start again")
                     focusPolicy: Qt.NoFocus
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: calibration.close()
+                    onClicked: calibration.start()
                 }
-                PrimaryButton {
-                    objectName: "tapCalibrationApply"
-                    text: qsTr("Apply")
-                    focusPolicy: Qt.NoFocus
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: calibration.apply()
+                Item { Layout.fillWidth: true }
+                WindowFooter {
+                    Layout.fillWidth: false
+                    Button {
+                        objectName: "tapCalibrationCancel"
+                        text: qsTr("Cancel")
+                        focusPolicy: Qt.NoFocus
+                        DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                        onClicked: calibration.close()
+                    }
+                    PrimaryButton {
+                        objectName: "tapCalibrationApply"
+                        text: qsTr("Apply")
+                        focusPolicy: Qt.NoFocus
+                        DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+                        onClicked: calibration.apply()
+                    }
                 }
             }
         }

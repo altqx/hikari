@@ -16181,6 +16181,48 @@ private slots:
         item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_Y);
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        // the playing stopping by itself: a held syllable ends at the audio's
+        // end, but is dropped (as by Esc) when the player stopped before it
+        // (a failed output), not stretched to the end
+        struct ScriptedPlayer final : application::AudioPlayerPort {
+            bool on = false;
+            std::int64_t start = 0, end = 0, at = 0;
+            void play(std::int64_t from, std::int64_t count) override { on = true, start = at = from, end = from + count; }
+            void stop() override { on = false; }
+            bool playing() const override { return on; }
+            std::int64_t position() const override { return on ? at : 0; }
+            std::int64_t startPosition() const override { return start; }
+            std::int64_t endPosition() const override { return end; }
+            void setEndPosition(std::int64_t to) override { end = to; }
+            void setVolume(double) override {}
+        } scripted;
+        audio.tapStop();
+        audio.setPlayer(&scripted);
+        audio.tapResume();
+        QVERIFY(scripted.on);
+        scripted.at = scripted.start + 44100;
+        key(Qt::Key_Space, true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        scripted.on = false; // the output failed
+        QTRY_COMPARE(audio.tapState(), int(ui::AudioController::TapStopped));
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
+        QCOMPARE(audio.tapMessage(), QStringLiteral("0 of %1 tapped").arg(audio.tapSyllables().size()));
+        key(Qt::Key_Space, false);
+        audio.tapResume();
+        QVERIFY(scripted.on);
+        scripted.at = scripted.start + 44100;
+        key(Qt::Key_Space, true);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableHeld));
+        scripted.at = scripted.end + 10000; // past the end: the box stops it
+        QTRY_COMPARE(audio.tapState(), int(ui::AudioController::TapStopped));
+        QVERIFY(!scripted.on);
+        QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableTapped));
+        QCOMPARE(syllableState(1), int(ui::AudioController::TapSyllableNext));
+        key(Qt::Key_Space, false);
+        audio.setPlayer(&application->audioPlayer());
+        audio.tapRevert();
+        audio.tapResume();
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
         // Press mode's started syllable is dropped by a switch to Hold, so
         // the next press starts it again
         audio.setTapHold(false);
@@ -16303,6 +16345,8 @@ private slots:
         auto *latency = calibration->findChild<QQuickItem *>(QStringLiteral("tapCalibrationLatency"));
         QVERIFY(latency);
         QCOMPARE(latency->property("value").toInt(), 0);
+        // the field cannot take Space from the beeps while they play
+        QVERIFY(!latency->isEnabled());
         // a press 80 ms after each beep (later by the polling, more so on a
         // loaded runner): twelve counted after the practice, a few to spare
         for (int beat = 0; beat < application::kCalibrationBeats; beat++) {
@@ -16348,6 +16392,20 @@ private slots:
         QTRY_VERIFY(!calibration->isVisible());
         QVERIFY(!audio.calibrating());
         QCOMPARE(audio.tapLatency(), measured);
+        // once the beeps are over a latency typed in the field and Enter there
+        // apply it
+        QVERIFY(QMetaObject::invokeMethod(calibrate, "triggered"));
+        QTRY_VERIFY(calibration->isVisible());
+        audio.stopCalibration();
+        QTRY_VERIFY(latency->isEnabled());
+        latency->forceActiveFocus();
+        QTRY_VERIFY(latency->hasActiveFocus());
+        QTest::keyClick(calibration, Qt::Key_A, Qt::ControlModifier);
+        for (const Qt::Key digit : {Qt::Key_1, Qt::Key_2, Qt::Key_0})
+            QTest::keyClick(calibration, digit);
+        QTest::keyClick(calibration, Qt::Key_Return);
+        QTRY_VERIFY(!calibration->isVisible());
+        QCOMPARE(audio.tapLatency(), 120);
         audio.setTapLatency(0);
         audio.toggleKaraoke();
     }
