@@ -139,10 +139,6 @@ HikariSubFrame::HikariSubFrame(const wxPoint &pos, const wxSize &size)
 	}
 #endif
 
-	// At once, for an AppImage update's watchdog; the rest of the
-	// updater's start waits for StartUpdater().
-	CallAfter([] { update_installer::OnShown(); });
-
 	Menubar = new MenuBar(this);
 
 	

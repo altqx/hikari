@@ -675,6 +675,18 @@ namespace update_manifest
 		return remindAt <= 0 || OfferReminderDue(remindAt, now);
 	}
 
+	// The decline after "Don't offer again" on the offer of version: it
+	// replaces declined unless declined is higher, as when the end of
+	// legacy support showed a lower offer once more; that keeps the
+	// higher version and spends the lift.
+	inline DeclinedOffer DeclinedAfter(std::string_view version, bool ended, const DeclinedOffer &declined)
+	{
+		std::optional<SemVer> offered = ParseSemVer(version), kept = ParseSemVer(declined.version);
+		if (offered && kept && CompareSemVer(*kept, *offered) > 0)
+			return { declined.version, declined.ended || ended };
+		return { std::string(version), ended };
+	}
+
 	// The decline after Try it on the offer of version: one it covers now
 	// covers the end of legacy support too, if the offer said so, as that
 	// was shown once more.

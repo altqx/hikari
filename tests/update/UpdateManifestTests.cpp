@@ -1010,7 +1010,8 @@ TEST(update_offer_declined_shows_once_more_when_legacy_support_ends)
 	CHECK(ShowsOfferAtStart("0.1.0", true, continued, 0, now));
 	CHECK(ShowsOfferAtStart("0.1.0-beta.2", true, continued, 0, now));
 	// Declined again once it said so: it holds, until a higher version.
-	DeclinedOffer ended{ "0.1.0", true };
+	DeclinedOffer ended = DeclinedAfter("0.1.0", true, continued);
+	CHECK(ended.version == "0.1.0" && ended.ended);
 	CHECK(!ShowsOfferAtStart("0.1.0", true, ended, 0, now));
 	CHECK(!ShowsOfferAtStart("0.1.0-beta.2", false, ended, 0, now));
 	CHECK(ShowsOfferAtStart("0.1.1", true, ended, 0, now));
@@ -1018,6 +1019,20 @@ TEST(update_offer_declined_shows_once_more_when_legacy_support_ends)
 	long long remind = OfferRemindAt(now);
 	CHECK(!ShowsOfferAtStart("0.1.0", true, continued, remind, now));
 	CHECK(ShowsOfferAtStart("0.1.0", true, continued, remind, now + kOfferRemindDelay));
+
+	// Declining a lower offer that the lift showed keeps the higher
+	// version declined, and the lift spent.
+	DeclinedOffer higher{ "0.1.0", false };
+	CHECK(ShowsOfferAtStart("0.1.0-beta.2", true, higher, 0, now));
+	DeclinedOffer kept = DeclinedAfter("0.1.0-beta.2", true, higher);
+	CHECK(kept.version == "0.1.0" && kept.ended);
+	CHECK(!ShowsOfferAtStart("0.1.0", false, kept, 0, now));
+	CHECK(!ShowsOfferAtStart("0.1.0", true, kept, 0, now));
+	// A higher one declined replaces the decline, and says whether it was
+	// the end of support.
+	CHECK(DeclinedAfter("0.1.1", false, kept).version == "0.1.1");
+	CHECK(!DeclinedAfter("0.1.1", false, kept).ended);
+	CHECK(DeclinedAfter("0.1.0", false, {}).version == "0.1.0");
 
 	// Try it on an offer that was declined spends the lift too; on one
 	// that was not, the decline stays as it was.

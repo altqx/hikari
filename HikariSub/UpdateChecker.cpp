@@ -549,7 +549,7 @@ namespace
 				SetOfferRemind(0);
 				break;
 			case kNoOfferId:
-				SetOfferDeclined({ manifest.version, ended });
+				SetOfferDeclined(update_manifest::DeclinedAfter(manifest.version, ended, LoadOfferDeclined()));
 				SetOfferRemind(0);
 				break;
 			default:
@@ -1004,11 +1004,11 @@ namespace
 
 		void Report(update_policy::Ending ending)
 		{
+			// A legacy update comes first, then the offer asked for from
+			// Help, if both were.
+			bool shown = (asksUpdates || atStartup) && ReportUpdate(ending, asksUpdates);
 			if (asksOffer)
-				ReportOffer(ending);
-			if (!asksUpdates && !atStartup)
-				return;
-			bool shown = ReportUpdate(ending, asksUpdates);
+				ReportOffer(ending, !asksUpdates);
 			if (!atStartup || ending != update_policy::Ending::Answered)
 				return;
 			// A startup check that answered: a reminder that has come is
@@ -1035,11 +1035,13 @@ namespace
 		}
 
 		// "Try the new HikariSub...": the current offer, whatever was
-		// chosen of it before, or that there is none.
-		void ReportOffer(update_policy::Ending ending)
+		// chosen of it before, or that there is none. saysFailure: a
+		// failed check is said here, when the update's report did not.
+		void ReportOffer(update_policy::Ending ending, bool saysFailure)
 		{
 			if (ending != update_policy::Ending::Answered) {
-				update_installer::Message(parent, _("Cannot check for updates"));
+				if (saysFailure)
+					update_installer::Message(parent, _("Cannot check for updates"));
 				return;
 			}
 			if (const update_manifest::Manifest *offer = offers.Get())
