@@ -1184,8 +1184,8 @@ private:
                 out += child.text;
             else if (isTtml(child, u8"br"))
                 out += u8' ';
-            else if (!attribute(child, u8"role", Namespace::TtmlMetadata))
-                out += allText(child);
+            else if (!foreign(child) && !attribute(child, u8"role", Namespace::TtmlMetadata))
+                out += allText(child); // another namespace's element holds no text of TTML's
         return out;
     }
 

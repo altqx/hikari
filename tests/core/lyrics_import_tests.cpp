@@ -164,6 +164,14 @@ TEST(LyricsImport, AmllTtmlBecomesKaraokeLines)
     ASSERT_TRUE(foreign.has_value());
     EXPECT_EQ(foreign->document.scriptInfo(u8"Title"), u8"Right");
     EXPECT_EQ(rows(*foreign), (std::vector<Row>{{1000, 2000, "v1", "x"}}));
+    // Nor is the text of another namespace's element inside a title or name.
+    const auto inside = importTtml(bytes("<tt><head><metadata><ttm:title>Right<f:x xmlns:f=\"urn:other\">Wrong</f:x></ttm:title>"
+                                         "<ttm:agent xml:id=\"v1\"><ttm:name>Lead<f:x xmlns:f=\"urn:other\">Wrong</f:x></ttm:name>"
+                                         "</ttm:agent></metadata></head><body><p begin=\"1\" end=\"2\" ttm:agent=\"v1\">x</p></body>"
+                                         "</tt>"));
+    ASSERT_TRUE(inside.has_value());
+    EXPECT_EQ(inside->document.scriptInfo(u8"Title"), u8"Right");
+    EXPECT_EQ(rows(*inside), (std::vector<Row>{{1000, 2000, "Lead", "x"}}));
     const std::vector<Row> expected{
         // The space between the spans stays after its word; the romanisation
         // and translation spans are not lyrics to time.
