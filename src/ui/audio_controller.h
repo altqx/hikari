@@ -313,8 +313,9 @@ public:
 public:
     struct TimingHooks {
         // CommitChanges' edit-box part: the times into the editor's fields,
-        // with `save` EditBox::Send(AUDIO_CHANGE_TIME, nextLine).
-        std::function<void(const application::AudioCommitRequest &)> commit;
+        // with `save` EditBox::Send(AUDIO_CHANGE_TIME, nextLine); false when
+        // the session refused it (KA2: tap mode does not go on as if done).
+        std::function<bool(const application::AudioCommitRequest &)> commit;
         // grid->SetActive: the Line at `key` becomes active, selected alone.
         std::function<void(int key)> setActive;
         // tab->video->Seek (Ctrl+left or middle click).
@@ -453,7 +454,7 @@ private:
     // A3
     application::AudioTimingOptions timingOptions() const;
     application::AudioSnapContext snapContext() const;
-    void commitChanges(bool nextLine, bool save, bool moveToEnd,
+    bool commitChanges(bool nextLine, bool save, bool moveToEnd,
                        application::AudioAdjacent adjacent = application::AudioAdjacent::None,
                        std::optional<std::u16string> karaokeText = std::nullopt, const char *stepName = nullptr,
                        bool activeOnly = false);
@@ -470,6 +471,8 @@ private:
     void playForTap(int fromMs);
     void finishTapLine(std::optional<int> carryKey, int carryMs);
     void setTapState(TapState state);
+    void stopBoxPlayback(); // the box's playing, whatever the video does
+    void leaveTapMode();
     double positionMs() const;
     void calibrationTick();
     void stopFollowingVideo();

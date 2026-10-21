@@ -171,6 +171,18 @@ void AudioController::newView()
     // has no zoom to go back to
     m_karaoke = {};
     m_lastHorizontalZoom = -1;
+    leaveTapMode();
+}
+
+// KA2: tap mode belongs to the audio it played; closed or replaced, the next
+// audio starts with it off.
+void AudioController::leaveTapMode()
+{
+    if (m_tapState == TapOff)
+        return;
+    m_tap.revert();
+    m_tapMessage.clear();
+    setTapState(TapOff);
 }
 
 QString AudioController::status() const
@@ -219,6 +231,8 @@ void AudioController::boxChanged()
     const bool loaded = state == AudioBox::State::Loading || state == AudioBox::State::Ready;
     const bool wasLoaded = m_seenState == AudioBox::State::Loading || m_seenState == AudioBox::State::Ready;
     m_seenState = state;
+    if (!loaded && wasLoaded)
+        leaveTapMode();
     if (loaded && !wasLoaded) {
         // legacy SetFile: loaded, the image, then the current Line (SetDialogue)
         const auto *audio = m_box.audio();
@@ -822,6 +836,13 @@ void AudioController::stopPlayback()
             m_pauseVideo();
         return;
     }
+    stopBoxPlayback();
+}
+
+// The box's own playing stopped, whatever the video does (tap mode's stops:
+// a video started meanwhile must not keep the tapping's audio going).
+void AudioController::stopBoxPlayback()
+{
     const auto *audio = m_box.audio();
     if (!audio || !m_playback)
         return;
@@ -983,21 +1004,23 @@ application::AudioSnapContext AudioController::snapContext() const
 
 // Legacy CommitChanges: the times go into the editor's fields and, with
 // `save`, to the Line (EditBox::Send); then Update(moveToEnd).
-void AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent,
+bool AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, application::AudioAdjacent adjacent,
                                     std::optional<std::u16string> karaokeText, const char *stepName, bool activeOnly)
 {
     if (!loaded())
-        return;
+        return false;
     if (save)
         m_needCommit = false;
+    bool committed = true;
     if (m_hooks.commit) {
         application::AudioCommitRequest request{m_startMs, m_endMs, save, nextLine, m_timing.hold() != 0, adjacent,
                                                 std::move(karaokeText)};
         request.stepName = stepName;
         request.activeOnly = activeOnly;
-        m_hooks.commit(request);
+        committed = m_hooks.commit(request);
     }
     update(moveToEnd);
+    return committed;
 }
 
 // AudioBox::OnCommit: CommitChanges(true), so the next Line follows whatever
@@ -1303,12 +1326,16 @@ void AudioController::beginTapLine()
     m_tapMessage.clear();
     if (m_tapState == TapTapping && m_tap.needsSplit()) {
         if (playing())
-            stopPlayback();
+            stopBoxPlayback();
         m_tapState = TapReady;
     } else if (m_tapState == TapTapping && !m_tapAdvancing) {
         // another Line chosen while tapping: its taps come from its own
-        // playing, from before it (the playing went on for the old Line)
+        // playing, from before it (the playing went on for the old Line),
+        // and the keys from the audio panel again once the grid's click has
+        // taken the focus
         playForTap(m_tap.resumeMs());
+        QMetaObject::invokeMethod(this, [this] { if (m_tapState == TapTapping) emit focusRequested(); },
+                                  Qt::QueuedConnection);
     }
     emit tapChanged();
     emit tapSpansChanged();
@@ -1327,7 +1354,7 @@ void AudioController::toggleTap()
     if (m_tapState != TapOff) {
         m_tap.revert();
         if (playing())
-            stopPlayback();
+            stopBoxPlayback();
         m_tapMessage.clear();
         setTapState(TapOff);
         return;
@@ -1420,12 +1447,23 @@ void AudioController::finishTapLine(std::optional<int> carryKey, int carryMs)
     const int before = m_active;
     const bool hasNext = application::legacyKeyFromPosition(m_lines, m_active, 1) != m_active;
     m_tapAdvancing = true;
-    commitChanges(hasNext, true, false, application::AudioAdjacent::None, m_karaoke.text(m_startMs),
-                  "Tap timing", true);
+    const bool committed = commitChanges(hasNext, true, false, application::AudioAdjacent::None,
+                                         m_karaoke.text(m_startMs), "Tap timing", true);
     m_tapAdvancing = false;
+    if (!committed) {
+        // refused (an edit the Line editor shows as not valid, a read-only
+        // file): the taps stay in the Line's fields, nothing goes on
+        if (playing())
+            stopBoxPlayback();
+        m_tap.begin(application::KaraokeTap::targets(m_karaoke), m_startMs);
+        m_tapMessage = QCoreApplication::translate("HikariSub.Audio",
+                                                   "Not applied: the Line cannot take these times as it is.");
+        setTapState(TapReady);
+        return;
+    }
     if (!hasNext || m_active == before) {
         if (playing())
-            stopPlayback();
+            stopBoxPlayback();
         m_tap.begin(application::KaraokeTap::targets(m_karaoke), m_startMs);
         m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "Every Line is tapped.");
         setTapState(TapReady);
@@ -1443,7 +1481,7 @@ void AudioController::tapStop()
         return;
     m_tap.stop();
     if (playing())
-        stopPlayback();
+        stopBoxPlayback();
     m_tapMessage = QCoreApplication::translate("HikariSub.Audio", "%1 of %2 tapped").arg(m_tap.tapped()).arg(m_tap.count());
     setTapState(TapStopped);
 }
@@ -1463,7 +1501,7 @@ void AudioController::tapRevert()
         return;
     m_tap.revert();
     if (playing())
-        stopPlayback();
+        stopBoxPlayback();
     m_tapMessage.clear();
     setTapState(TapReady);
 }
@@ -1542,7 +1580,7 @@ void AudioController::startCalibration()
     if (m_tapState == TapTapping)
         tapStop();
     if (playing())
-        stopPlayback();
+        stopBoxPlayback();
     m_calibrationPresses.clear();
     m_calibration = {};
     m_calibrationBeat = 0;

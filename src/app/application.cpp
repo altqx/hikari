@@ -1092,7 +1092,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     {
         ui::AudioController::TimingHooks hooks;
-        hooks.commit = [this](const application::AudioCommitRequest &request) { commitAudioTimes(request); };
+        hooks.commit = [this](const application::AudioCommitRequest &request) { return commitAudioTimes(request); };
         hooks.setActive = [this](int key) { setAudioActive(key); };
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
         m_audio->setTimingHooks(std::move(hooks));
@@ -1287,11 +1287,11 @@ void Application::rememberRecentAudio(const QString &path)
 }
 
 // A3: legacy AudioDisplay::CommitChanges' edit-box part.
-void Application::commitAudioTimes(const application::AudioCommitRequest &request)
+bool Application::commitAudioTimes(const application::AudioCommitRequest &request)
 {
     auto *session = targetSession();
     if (!session || !m_editor->editable())
-        return;
+        return false;
     const bool before = std::exchange(m_audioCommitting, true);
     // E4: StartEdit/EndEdit/DurEdit->SetTime(time, true): the warning colour
     // on each field whose time changes; Send (with `save`) clears it again.
@@ -1310,6 +1310,7 @@ void Application::commitAudioTimes(const application::AudioCommitRequest &reques
         applySelection(gridSelection().plain(session->selection(), *outcome->next));
         m_lineChangeOrigin.reset();
     }
+    return outcome.has_value();
 }
 
 // A3: legacy SubsGrid::SetActive from the box (AUDIO_NEXT / AUDIO_PREVIOUS).

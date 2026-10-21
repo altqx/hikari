@@ -15870,13 +15870,20 @@ private slots:
         press(Qt::Key_Backspace);
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
 
-        // Esc stops: Resume and Revert Line instead of the keys
+        // Esc stops: Resume and Revert Line instead of the keys. The tapping's
+        // audio stops even with a video playing meanwhile (a stopped audio
+        // box otherwise pauses the video and plays on)
         key(Qt::Key_Space, true);
         QTest::qWait(100);
         key(Qt::Key_Space, false);
+        bool videoPaused = false;
+        audio.setVideoPlayback([] { return true; }, [&] { videoPaused = true; });
         press(Qt::Key_Escape);
+        auto &video = application->video();
+        audio.setVideoPlayback([&video] { return video.playing(); }, [&video] { video.pause(); });
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapStopped));
         QVERIFY(!audio.playing());
+        QVERIFY(!videoPaused);
         QCOMPARE(text("audioTapState"), QStringLiteral("Stopped"));
         QCOMPARE(text("audioTapMessage"), QStringLiteral("1 of 2 tapped"));
         QVERIFY(visualItem("audioTapResume")->isVisible());
@@ -15890,7 +15897,9 @@ private slots:
         // from before it (not on from where Line 2's playing was)
         QTest::qWait(400);
         const int before = audio.tapSongNow();
+        item("editingGrid")->forceActiveFocus(); // as a click in the grid leaves it
         application->selectLine(targetSession()->document().lines()[0]->id.value);
+        QTRY_VERIFY(item("audioDisplay")->hasActiveFocus()); // the keys reach tap mode again
         QCOMPARE(audio.tapLine(), 1);
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
@@ -15956,8 +15965,38 @@ private slots:
         key(Qt::Key_Space, false);
         QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
         QVERIFY(audio.playing());
+
+        // a Line the session refuses to change (a margin out of range in its
+        // draft): no step, no "every Line is tapped", the Line stays
+        auto *session = targetSession();
+        application::DraftChange invalid;
+        invalid.marginLeft = 10000;
+        QVERIFY(session->editDraft(*session->selection().active, invalid));
+        const auto syllables = audio.tapSyllables().size();
+        for (qsizetype i = 0; i < syllables; i++) {
+            key(Qt::Key_Space, true);
+            QTest::qWait(60);
+            key(Qt::Key_Space, false);
+        }
+        QCOMPARE(editor.history().size(), steps + 2);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapReady));
+        QCOMPARE(audio.tapLine(), 3);
+        QCOMPARE(audio.tapMessage(), QStringLiteral("Not applied: the Line cannot take these times as it is."));
+        QVERIFY(!audio.playing());
+        session->discardDraft();
         press(Qt::Key_Escape);
-        press(Qt::Key_Escape);
+        QVERIFY(!audio.tapOn());
+
+        // tap mode belongs to the audio: closed while tapping, it is off,
+        // and the next audio starts without it
+        item("audioDisplay")->forceActiveFocus();
+        press(Qt::Key_Y);
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapTapping));
+        audio.closeAudio();
+        QVERIFY(!audio.tapOn());
+        QCOMPARE(audio.tapState(), int(ui::AudioController::TapOff));
+        audio.openDummy();
+        QTRY_VERIFY(audio.ready());
         QVERIFY(!audio.tapOn());
         QVERIFY(!audio.playing());
         audio.toggleKaraoke();
