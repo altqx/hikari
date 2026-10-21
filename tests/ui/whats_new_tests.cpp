@@ -345,6 +345,26 @@ private slots:
         const QByteArray none = WhatsNew::cacheContent(installed, since, releases, 200);
         QVERIFY(none.size() <= 200);
         QVERIFY(entries(none).size() < 3);
+        // The ten each channel shows keep their notes while others can go:
+        // here the stable channel shows 0.2.0 and 0.1.9, below twelve betas.
+        std::vector<hikari::application::ReleaseEntry> channels;
+        const auto add = [&](const std::string &tag, bool prerelease) {
+            hikari::application::ReleaseEntry release;
+            release.tag = tag;
+            release.prerelease = prerelease;
+            release.notes = std::string(1000, 'x');
+            channels.push_back(release);
+        };
+        add("v0.2.0", false);
+        for (int beta = 12; beta >= 1; --beta)
+            add("v0.2.0-beta." + std::to_string(beta), true);
+        add("v0.1.9", false);
+        const QByteArray whole = WhatsNew::cacheContent(QStringLiteral("0.2.0"), since, channels, WhatsNew::kMaxCacheBytes);
+        const QStringList kept = entries(WhatsNew::cacheContent(QStringLiteral("0.2.0"), since, channels, whole.size() - 1));
+        QCOMPARE(kept.size(), 14);
+        QCOMPARE(kept.last(), QStringLiteral("v0.1.9:1000"));
+        QCOMPARE(kept.at(12), QStringLiteral("v0.2.0-beta.1:0"));
+        QCOMPARE(kept.at(10), QStringLiteral("v0.2.0-beta.3:1000"));
         // Not even the header: nothing to write.
         QVERIFY(WhatsNew::cacheContent(installed, since, releases, 10).isEmpty());
     }

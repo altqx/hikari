@@ -75,7 +75,8 @@ public:
     // The cache file's content for `releases` (highest first) between
     // `since` and `installed`, at most `limit` (the list's pages are capped
     // one by one, so a range can be larger): past it the lowest versions'
-    // notes go, then the lowest versions; empty when not even none fit.
+    // notes go, first those neither channel shows among its ten, then the
+    // lowest versions; empty when not even none fit.
     static QByteArray cacheContent(const QString &installed, const QString &since,
                                    const std::vector<application::ReleaseEntry> &releases, qint64 limit);
 

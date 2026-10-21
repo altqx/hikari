@@ -306,21 +306,37 @@ QByteArray WhatsNew::cacheContent(const QString &installed, const QString &since
             .toJson(QJsonDocument::Compact);
     };
     // Each entry's share is itself and its comma. Past the limit, the
-    // lowest versions' notes go first: those are past the ten shown, and
-    // kept they still count in "And N earlier versions". Then, when that is
-    // not enough, the lowest versions. Each pass removes about what is over
-    // and measures again.
+    // lowest versions' notes go first, those of versions neither channel
+    // shows among its ten before the rest: kept without notes they still
+    // count in "And N earlier versions". Then, when that is not enough, the
+    // lowest versions. Each pass removes about what is over and measures
+    // again.
     QByteArray bytes = content();
     const auto share = [&](qsizetype i) {
         return QJsonDocument(entries.at(i).toObject()).toJson(QJsonDocument::Compact).size() + 1;
     };
-    qsizetype noted = entries.size(); // entries [noted, size) have lost their notes
-    while (bytes.size() > limit && noted > 0) {
-        for (qint64 over = bytes.size() - limit; over > 0 && noted > 0;) {
-            QJsonObject entry = entries.at(--noted).toObject();
+    std::vector<bool> shown(releases.size(), false);
+    std::size_t stable = 0;
+    for (std::size_t i = 0; i < releases.size(); ++i) {
+        const bool prerelease = a::isPrerelease(releases[i]);
+        shown[i] = i < a::kMaxWhatsNew || (!prerelease && stable < a::kMaxWhatsNew);
+        stable += prerelease ? 0 : 1;
+    }
+    std::vector<qsizetype> order; // whose notes go, in turn
+    for (qsizetype i = entries.size() - 1; i >= 0; --i)
+        if (!shown[std::size_t(i)])
+            order.push_back(i);
+    for (qsizetype i = entries.size() - 1; i >= 0; --i)
+        if (shown[std::size_t(i)])
+            order.push_back(i);
+    std::size_t next = 0;
+    while (bytes.size() > limit && next < order.size()) {
+        for (qint64 over = bytes.size() - limit; over > 0 && next < order.size();) {
+            const qsizetype i = order[next++];
+            QJsonObject entry = entries.at(i).toObject();
             over -= entry.value(QStringLiteral("notes")).toString().toUtf8().size();
             entry.insert(QStringLiteral("notes"), QString());
-            entries.replace(noted, entry);
+            entries.replace(i, entry);
         }
         bytes = content();
     }
