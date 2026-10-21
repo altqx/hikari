@@ -40,18 +40,21 @@ const std::array<FamilyInfo, kFamilyCount> &families()
     // VideoToolbar.cpp:44-54 (icons and tooltips) and SubsFile.cpp:228-238
     // (the history names of VISUAL_POSITION .. VISUAL_ALL_TAGS; the
     // crosshair's Ctrl+click records VISUAL_POSITION, VisualCross.cpp:125).
+    // VT2: the Video command choosing each (legacy had none).
     static const std::array<FamilyInfo, kFamilyCount> table{{
-        {Family::Crosshair, "cross", "Position pointer", "Visual positioning tool"},
-        {Family::Position, "position", "Text positioning", "Visual positioning tool"},
-        {Family::Move, "move", "Text moving", "Visual movement tool"},
-        {Family::Scale, "scale", "Text scaling", "Visual scaling tool"},
-        {Family::RotationZ, "frz", "Text Z rotation", "Visual Z-axis rotation tool"},
-        {Family::RotationXY, "frxy", "Text X / Y rotation", "Visual X/Y-axis rotation tool"},
-        {Family::RectangleClip, "cliprect", "Rectangle clipping", "Visual rectangular clipping tool"},
-        {Family::VectorClip, "clip", "Vector clipping", "Visual vector clipping tool"},
-        {Family::Drawing, "drawing", "Vector drawing", "Visual vector drawing tool"},
-        {Family::PositionShifter, "MOVEAll", "Position shifter", "Visual position adjustment tool"},
-        {Family::Hydra, "ALL_TAGS", "Hydra", "Visual Hydra tool"},
+        {Family::Crosshair, "cross", "Position pointer", "Visual positioning tool", "VIDEO_TOOL_CROSSHAIR"},
+        {Family::Position, "position", "Text positioning", "Visual positioning tool", "VIDEO_TOOL_POSITION"},
+        {Family::Move, "move", "Text moving", "Visual movement tool", "VIDEO_TOOL_MOVE"},
+        {Family::Scale, "scale", "Text scaling", "Visual scaling tool", "VIDEO_TOOL_SCALE"},
+        {Family::RotationZ, "frz", "Text Z rotation", "Visual Z-axis rotation tool", "VIDEO_TOOL_ROTATION_Z"},
+        {Family::RotationXY, "frxy", "Text X / Y rotation", "Visual X/Y-axis rotation tool", "VIDEO_TOOL_ROTATION_XY"},
+        {Family::RectangleClip, "cliprect", "Rectangle clipping", "Visual rectangular clipping tool",
+         "VIDEO_TOOL_RECTANGLE_CLIP"},
+        {Family::VectorClip, "clip", "Vector clipping", "Visual vector clipping tool", "VIDEO_TOOL_VECTOR_CLIP"},
+        {Family::Drawing, "drawing", "Vector drawing", "Visual vector drawing tool", "VIDEO_TOOL_DRAWING"},
+        {Family::PositionShifter, "MOVEAll", "Position shifter", "Visual position adjustment tool",
+         "VIDEO_TOOL_POSITION_SHIFTER"},
+        {Family::Hydra, "ALL_TAGS", "Hydra", "Visual Hydra tool", "VIDEO_TOOL_HYDRA"},
     }};
     return table;
 }
@@ -59,6 +62,37 @@ const std::array<FamilyInfo, kFamilyCount> &families()
 const FamilyInfo &familyInfo(Family family)
 {
     return families()[static_cast<std::size_t>(family)];
+}
+
+std::optional<Family> familyOfHotkey(std::string_view symbol)
+{
+    for (const FamilyInfo &f : families())
+        if (f.hotkey == symbol)
+            return f.family;
+    return std::nullopt;
+}
+
+bool isArrowKey(int key)
+{
+    return key == keys::Left || key == keys::Right || key == keys::Up || key == keys::Down;
+}
+
+std::optional<PointF> nudgeDirection(const Key &key, bool alt)
+{
+    if (key.control || (key.alt && !alt))
+        return std::nullopt;
+    switch (key.key) {
+    case keys::Left:
+        return PointF{-1, 0};
+    case keys::Right:
+        return PointF{1, 0};
+    case keys::Up:
+        return PointF{0, -1};
+    case keys::Down:
+        return PointF{0, 1};
+    default:
+        return std::nullopt;
+    }
 }
 
 std::expected<Gesture, CommandRefusal> Gesture::begin(const EditSession &session, std::vector<core::LineId> targets,

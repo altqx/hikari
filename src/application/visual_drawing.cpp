@@ -899,14 +899,18 @@ void DrawingTool::pointer(const Pointer &event, VisualHost &host)
     host.toolChanged();
 }
 
+bool DrawingTool::takesKey(const Key &event) const
+{
+    return nudgeDirection(event).has_value();
+}
+
 bool DrawingTool::key(const Key &event, VisualHost &host)
 {
     // DrawingAndClip::OnKeyPress (Shapes does not override it: the keys move
     // the Line's points, and the edit writes GetVisual, the shape's while
     // one is chosen).
     syncMove(host);
-    const bool nudge = event.key == keys::W || event.key == keys::S || event.key == keys::A ||
-                       event.key == keys::D || event.key == keys::Delete;
+    const bool nudge = isArrowKey(event.key) || event.key == keys::Delete;
     if (event.release) {
         if (!nudge || !m_keyCommit)
             return false;

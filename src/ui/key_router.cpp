@@ -125,6 +125,8 @@ void KeyRouter::hoverAtPointer()
 bool KeyRouter::shortcutOverride(QQuickWindow *window, QKeyEvent *event)
 {
     m_routed.reset();
+    if (!event->isAutoRepeat())
+        m_held.erase(event->key()); // a release that never came
     hoverAtPointer();
     QQuickItem *focus = window->activeFocusItem();
     if (takesText(focus) || keyboardFocused(focus) || recordsKeys(focus) || inPopup(focus))
@@ -182,10 +184,30 @@ bool KeyRouter::keyPress(QKeyEvent *event)
         m_dispatching = true;
         QCoreApplication::sendEvent(routed.target, &copy);
         m_dispatching = false;
+        m_held[event->key()] = routed.target;
         if (focus && window && to != from && window->activeFocusItem() != focus
             && panelOf(window->activeFocusItem()) == to)
             focus->forceActiveFocus(Qt::OtherFocusReason);
     }
+    return true;
+}
+
+bool KeyRouter::keyRelease(QKeyEvent *event)
+{
+    const auto it = m_held.find(event->key());
+    if (it == m_held.end())
+        return false;
+    const QPointer<QQuickItem> target = it->second;
+    if (!event->isAutoRepeat()) // Qt's auto-repeat: a release and a press while held
+        m_held.erase(it);
+    if (!target)
+        return false;
+    QKeyEvent copy(event->type(), event->key(), event->modifiers(), event->nativeScanCode(),
+                   event->nativeVirtualKey(), event->nativeModifiers(), event->text(), event->isAutoRepeat(),
+                   event->count());
+    m_dispatching = true;
+    QCoreApplication::sendEvent(target, &copy);
+    m_dispatching = false;
     return true;
 }
 
@@ -245,6 +267,14 @@ bool KeyRouter::eventFilter(QObject *watched, QEvent *event)
         if (!qobject_cast<QQuickWindow *>(watched) && !(m_routed && qobject_cast<QQuickItem *>(watched)))
             return false;
         return keyPress(static_cast<QKeyEvent *>(event));
+    }
+    case QEvent::KeyRelease: {
+        // Its press's way (a posted release comes to the item, as a press).
+        const auto *key = static_cast<QKeyEvent *>(event);
+        if (!qobject_cast<QQuickWindow *>(watched)
+            && !(m_held.contains(key->key()) && qobject_cast<QQuickItem *>(watched)))
+            return false;
+        return keyRelease(static_cast<QKeyEvent *>(event));
     }
     default:
         return false;
