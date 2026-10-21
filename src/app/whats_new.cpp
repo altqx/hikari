@@ -608,14 +608,19 @@ void WhatsNew::saveCache() const
 QString WhatsNew::render(const QString &markdown, const QColor &muted, const QColor &link, const QColor &code) const
 {
     QTextDocument doc;
-    doc.setMarkdown(markdown, QTextDocument::MarkdownFeatures((int(QTextDocument::MarkdownDialectGitHub) &
+    SourceMarks marks;
+    doc.setMarkdown(marks.mark(markdown), QTextDocument::MarkdownFeatures((int(QTextDocument::MarkdownDialectGitHub) &
                                                                ~(kMd4cPermissiveUrlAutolinks | kMd4cPermissiveWwwAutolinks)) |
                                                               int(QTextDocument::MarkdownNoHTML)));
+    // One edit block over all the edits: the document is laid out once, not
+    // at each edit (a long block took seconds).
+    QTextCursor edits(&doc);
+    edits.beginEditBlock();
     dropHtml(doc);
     linkUrls(doc);
     // Images after the raw HTML went (an alt's escaped "<b>" is text), last
     // to first so the positions hold: the alt text in their place, nothing
-    // loaded.
+    // loaded. (A linked image came as its alt text linked: SourceMarks.)
     struct Image {
         int position, length;
         QString alt;
@@ -680,6 +685,7 @@ QString WhatsNew::render(const QString &markdown, const QColor &muted, const QCo
             }
         }
     }
+    edits.endEditBlock();
     // The document's font stays out: the view's applies.
     static const QRegularExpression body(QStringLiteral("<body[^>]*>"));
     return doc.toHtml().replace(body, QStringLiteral("<body>"));

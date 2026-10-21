@@ -601,6 +601,15 @@ private slots:
         QVERIFY(!badges.contains(QStringLiteral("href=\"https://example.com/c")));
         QVERIFY(badges.contains(QStringLiteral("[![d](e.svg)](https://example.com/f) \\&lt;g\\&gt;")));
         QVERIFY(!badges.contains(QStringLiteral("href=\"https://example.com/f")));
+        // Many marks in one paragraph stay linear too.
+        QString many;
+        for (int i = 0; i < 5000; ++i)
+            many += QStringLiteral("[![b](%1.svg)](https://example.com/%1) \\<v\\> &lt;a&gt; ").arg(i);
+        QElapsedTimer marked;
+        marked.start();
+        const QString manyHtml = copy->whatsNew->render(many, muted, link, code);
+        QVERIFY2(marked.elapsed() < 2000, qPrintable(QString::number(marked.elapsed())));
+        QVERIFY(manyHtml.contains(QStringLiteral("href=\"https://example.com/4999\"")));
         // An image's alt text is text, escaped markup in it too.
         const QString alts = copy->whatsNew->render(
             QStringLiteral("Before ![Use \\<video\\>](a.png) mid ![x \\<script\\>](b.png) after\n\nNext"),
