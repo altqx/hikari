@@ -177,16 +177,22 @@ void dropHtml(QTextDocument &doc)
 // without its "(" in the URL are the prose's.
 qsizetype urlEnd(QStringView url)
 {
-    static const QRegularExpression entity(QStringLiteral("&[A-Za-z0-9]+;$"));
+    // Counted once, kept as the end moves: a long tail stays linear.
+    qsizetype opening = url.count(u'(');
+    qsizetype closing = url.count(u')');
     qsizetype end = url.size();
     while (end > 0) {
         const QChar last = url[end - 1];
         if (QStringView(u"?!.,:*_~'\"").contains(last)) {
             --end;
         } else if (last == u';') {
-            const auto found = entity.matchView(url.first(end));
-            end = found.hasMatch() ? found.capturedStart() : end - 1;
-        } else if (last == u')' && url.first(end).count(u'(') < url.first(end).count(u')')) {
+            // "&name;" goes whole, a lone ";" alone.
+            qsizetype from = end - 1;
+            while (from > 0 && url[from - 1].isLetterOrNumber() && url[from - 1].unicode() < 0x80)
+                --from;
+            end = from > 0 && from < end - 1 && url[from - 1] == u'&' ? from - 1 : end - 1;
+        } else if (last == u')' && opening < closing) {
+            --closing;
             --end;
         } else {
             break;

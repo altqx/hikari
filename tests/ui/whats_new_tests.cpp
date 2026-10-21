@@ -13,6 +13,7 @@
 
 #include <QColor>
 #include <QDir>
+#include <QElapsedTimer>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -625,6 +626,14 @@ private slots:
         QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/g_(h)_i?x=(1)(2)\"")));
         QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/j\"")));
         QVERIFY(ends.contains(QStringLiteral("href=\"https://example.com/k\"")));
+        // Trimming a long tail stays linear: a note near the size limit
+        // must not hold the window up.
+        QElapsedTimer timer;
+        timer.start();
+        const QString tail = copy->whatsNew->render(
+            QStringLiteral("https://example.com/x") + QString(100000, u')') + QString(100000, u';'), muted, link, code);
+        QVERIFY2(timer.elapsed() < 2000, qPrintable(QString::number(timer.elapsed())));
+        QVERIFY(tail.contains(QStringLiteral("href=\"https://example.com/x\"")));
         // An HTML comment (release templates leave them), over lines too.
         const QString commented = copy->whatsNew->render(
             QStringLiteral("Before <!-- one --> after\n<!-- two\nlines -->\nlast `<b>kept</b>`"), muted, link, code);
