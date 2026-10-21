@@ -12,6 +12,7 @@
 #include "settings_store.h"
 #include "theme.h"
 
+#include <QElapsedTimer>
 #include <QJSValue>
 #include <QQmlComponent>
 #include <QQmlContext>
@@ -519,6 +520,20 @@ private slots:
         QTest::keyClick(root.get(), Qt::Key_Return);
         QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         QCOMPARE(notes().last(), QStringLiteral("acted:Default"));
+        // A great many styles (a hostile file): Select all and None are
+        // lookups, not a scan of the ticks per style (Codex security review).
+        run(QStringLiteral("styles.openFor(anchorButton, Array.from({ length: 50000 }, (_, i) => 'S' + i),"
+                           " Array.from({ length: 50000 }, (_, i) => 'S' + i))"));
+        QTRY_VERIFY(run(QStringLiteral("styles.opened")).toBool());
+        QElapsedTimer many;
+        many.start();
+        click(findIn(root.get(), "chooseStylesNone"));
+        QCOMPARE(run(QStringLiteral("styles.checkedNames.length")).toInt(), 0);
+        click(findIn(root.get(), "chooseStylesAll"));
+        QCOMPARE(run(QStringLiteral("styles.checkedNames.length")).toInt(), 50000);
+        QVERIFY2(many.elapsed() < 5000, QByteArray::number(many.elapsed()).constData());
+        run(QStringLiteral("styles.revert()"));
+        QTRY_VERIFY(!run(QStringLiteral("styles.visible")).toBool());
         // A popover's anchor with no `pressed` (a text field) keeps the
         // record of the press that closed it, so that press opens nothing.
         run(QStringLiteral("styles.pressedAnchor = date.field; styles.keepPressedAnchor()"));

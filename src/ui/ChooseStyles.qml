@@ -28,6 +28,10 @@ Popover {
     property var counts: ({})
     property var checkedNames: []
     property var original: []
+    // Membership by lookup, not by scans: a file can list a great many
+    // styles (Codex security review). Plain objects, as V4's Set searches
+    // its entries one by one.
+    readonly property var checkedSet: lookup(checkedNames)
     property string actionText: ""
     readonly property var shown: {
         const f = search.text.trim().toLowerCase()
@@ -42,14 +46,24 @@ Popover {
         names = list || []
         counts = o.counts || ({})
         actionText = o.actionText || ""
-        checkedNames = (checked || []).filter(n => names.indexOf(n) >= 0)
+        const all = lookup(names)
+        checkedNames = (checked || []).filter(n => all[n] === true)
         original = checkedNames.slice()
         search.text = ""
         styleList.currentIndex = names.length > 0 ? 0 : -1
         return openAt(anchorItem)
     }
+    function lookup(list) {
+        const set = Object.create(null)
+        for (let i = 0; i < list.length; ++i)
+            set[list[i]] = true
+        return set
+    }
     // In the styles' order.
-    function ordered(list) { return names.filter(n => list.indexOf(n) >= 0) }
+    function ordered(list) {
+        const wanted = lookup(list)
+        return names.filter(n => wanted[n] === true)
+    }
     function setChecked(list) {
         checkedNames = ordered(list)
         if (actionText.length === 0)
@@ -62,7 +76,7 @@ Popover {
             act.clicked()
     }
     function toggle(name) {
-        setChecked(checkedNames.indexOf(name) >= 0 ? checkedNames.filter(n => n !== name) : checkedNames.concat([name]))
+        setChecked(checkedSet[name] === true ? checkedNames.filter(n => n !== name) : checkedNames.concat([name]))
     }
     onReverted: if (actionText.length === 0) changed(original, true)
 
@@ -142,11 +156,11 @@ Popover {
                     CheckBox {
                         id: box
                         objectName: "chooseStylesCheck_" + row.modelData
-                        checked: chooser.checkedNames.indexOf(row.modelData) >= 0
+                        checked: chooser.checkedSet[row.modelData] === true
                         focusPolicy: Qt.NoFocus
                         padding: 0
                         onClicked: {
-                            checked = Qt.binding(() => chooser.checkedNames.indexOf(row.modelData) >= 0)
+                            checked = Qt.binding(() => chooser.checkedSet[row.modelData] === true)
                             styleList.currentIndex = row.index
                             chooser.toggle(row.modelData)
                         }
@@ -182,7 +196,10 @@ Popover {
             flat: true
             text: qsTr("None")
             enabled: chooser.shown.length > 0
-            onClicked: chooser.setChecked(chooser.checkedNames.filter(n => chooser.shown.indexOf(n) < 0))
+            onClicked: {
+                const shown = chooser.lookup(chooser.shown)
+                chooser.setChecked(chooser.checkedNames.filter(n => shown[n] !== true))
+            }
         }
         Item { Layout.fillWidth: true }
         Label {
