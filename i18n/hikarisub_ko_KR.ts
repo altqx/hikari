@@ -3947,8 +3947,24 @@ Failed to copy %2 fonts.</source>
         <translation type="vanished">갱신 정보</translation>
     </message>
     <message>
+        <source>Development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Design and development</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Translation</source>
-        <translation type="vanished">번역본</translation>
+        <translation>번역본</translation>
+    </message>
+    <message>
+        <source>Korean, Polish, Tamil and Thai</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Built with</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Restore the previous layout</source>
@@ -4355,6 +4371,10 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Check for updates</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>You already have the latest version</source>
         <translation>이미 최신 버전을 사용 중입니다</translation>
     </message>
@@ -4372,7 +4392,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>You have version %1; version %2 is available</source>
-        <translation type="unfinished">현재 버전은 %1이며, %2 버전을 사용할 수 있습니다</translation>
+        <translation type="obsolete">현재 버전은 %1이며, %2 버전을 사용할 수 있습니다</translation>
     </message>
     <message>
         <source>This version needs Windows %1 or later.</source>
@@ -4383,7 +4403,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Downloading...</source>
+        <source>You have version %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloading… %1 %</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4415,15 +4439,34 @@ Failed to copy %2 fonts.</source>
         <translation>HikariSub 정보</translation>
     </message>
     <message>
-        <source>HikariSub subtitle editor by altqx,
-version %1</source>
+        <source>Version %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitle editor by altqx.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub is free software under the GNU General Public License, version 3. It comes with no warranty.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub website</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Report an issue</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Based on Kainote by Marcin Drob aka Bakura or Bjakja.
 
 </source>
-        <translation>Marcin Drob(Bakura 또는 Bjakja)의 Kainote를 기반으로 합니다.
+        <translation type="vanished">Marcin Drob(Bakura 또는 Bjakja)의 Kainote를 기반으로 합니다.
 
 </translation>
     </message>
@@ -4432,7 +4475,7 @@ version %1</source>
 open an issue at https://github.com/altqx/hikari/issues.
 
 </source>
-        <translation>버그를 발견했거나 변경 사항 또는 새 기능에 대한 제안이 있다면
+        <translation type="vanished">버그를 발견했거나 변경 사항 또는 새 기능에 대한 제안이 있다면
 https://github.com/altqx/hikari/issues 에 이슈를 등록해 주세요.
 
 </translation>
@@ -4440,14 +4483,8 @@ https://github.com/altqx/hikari/issues 에 이슈를 등록해 주세요.
     <message>
         <source>HikariSub includes parts of the following projects:
 </source>
-        <translation>HikariSub에는 다음 프로젝트의 일부가 포함됩니다:
+        <translation type="vanished">HikariSub에는 다음 프로젝트의 일부가 포함됩니다:
 </translation>
-    </message>
-    <message>
-        <source>Color picker, audio box, audio player, automation,
-and several other individual features taken from Aegisub -
-</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Credits</source>
@@ -4456,93 +4493,93 @@ and several other individual features taken from Aegisub -
     <message>
         <source>Graphical help: (buttons, help pictures etc.)
 </source>
-        <translation>그래픽 지원: (버튼, 이미지 기타 등등..)
+        <translation type="vanished">그래픽 지원: (버튼, 이미지 기타 등등..)
 </translation>
     </message>
     <message>
         <source>- Xandros (new video buttons).
 </source>
-        <translation>- Xandros (새로운 영상 버튼).
+        <translation type="vanished">- Xandros (새로운 영상 버튼).
 </translation>
     </message>
     <message>
         <source>- Devilkan (menu and toolbar buttons)
 </source>
-        <translation>- Devilkan (메뉴 및 도구 모음 버튼)
+        <translation type="vanished">- Devilkan (메뉴 및 도구 모음 버튼)
 </translation>
     </message>
     <message>
         <source>- Zły Los (icons for file associations and menu).
 </source>
-        <translation>- Zły Los (파일 연결 및 메뉴 아이콘).
+        <translation type="vanished">- Zły Los (파일 연결 및 메뉴 아이콘).
 </translation>
     </message>
     <message>
         <source>Testers:
 </source>
-        <translation>테스터:
+        <translation type="vanished">테스터:
 </translation>
     </message>
     <message>
         <source>- Sacredus (first translator using translator mode,
 great help testing HikariSub on a slow computer)
 </source>
-        <translation>- Sacredus (번역 모드를 사용하는 첫 번째 사용자입니다,
+        <translation type="vanished">- Sacredus (번역 모드를 사용하는 첫 번째 사용자입니다,
 느린 컴퓨터에서 HikariSub를 테스트하는데 많은 도움이 되었습니다).
 </translation>
     </message>
     <message>
         <source>- Devilkan (crashhunter, because of his system and habits he made HikariSub crash a lot
 </source>
-        <translation>- Devilkan (크래시 헌터. 그의 시스템과 사용 습관 덕분에 HikariSub가 자주 충돌했고,
+        <translation type="vanished">- Devilkan (크래시 헌터. 그의 시스템과 사용 습관 덕분에 HikariSub가 자주 충돌했고,
 </translation>
     </message>
     <message>
         <source>helped with typesetting tools and came up with many more improvements).
 </source>
-        <translation>타입세팅 도구 작업을 돕고 많은 개선 사항을 제안했습니다).
+        <translation type="vanished">타입세팅 도구 작업을 돕고 많은 개선 사항을 제안했습니다).
 </translation>
     </message>
     <message>
         <source>- MatiasMovie (found some crashes and suggessted some improvements, helps with crash debugging).
 </source>
-        <translation>- MatiasMovie (일부 충돌을 발견하고 몇 가지 개선 사항을 제안했으며 버그 수정에 도움이 되었습니다).
+        <translation type="vanished">- MatiasMovie (일부 충돌을 발견하고 몇 가지 개선 사항을 제안했으며 버그 수정에 도움이 되었습니다).
 </translation>
     </message>
     <message>
         <source>- mas1904 (found some errors and helping with crash debuging).
 </source>
-        <translation>- mas1904 (오류를 발견하고 충돌 디버깅에 도움을 주었습니다).
+        <translation type="vanished">- mas1904 (오류를 발견하고 충돌 디버깅에 도움을 주었습니다).
 </translation>
     </message>
     <message>
         <source>- Senami (made new themes and found some bugs).
 </source>
-        <translation>- Senami (새로운 테마를 만들고 몇 가지 버그를 발견했습니다).
+        <translation type="vanished">- Senami (새로운 테마를 만들고 몇 가지 버그를 발견했습니다).
 </translation>
     </message>
     <message>
         <source>- altinat (Thai translation).
 </source>
-        <translation>- altinat (태국어 번역).
+        <translation type="vanished">- altinat (태국어 번역).
 </translation>
     </message>
     <message>
         <source>- labrie75 (Korean translation).
 </source>
-        <translation>- labrie75 (한국어 번역).
+        <translation type="vanished">- labrie75 (한국어 번역).
 </translation>
     </message>
     <message>
         <source>- Niskala5570 (Malay translation).
 </source>
-        <translation>- Niskala5570(말레이어 번역).
+        <translation type="vanished">- Niskala5570(말레이어 번역).
 </translation>
     </message>
     <message>
         <source>Thanks to other HikariSub users who reported bugs:
 </source>
-        <translation>프로그램을 사용하고 버그를 제보 해 주신 분들께 감사드립니다.
+        <translation type="vanished">프로그램을 사용하고 버그를 제보 해 주신 분들께 감사드립니다.
 </translation>
     </message>
     <message>

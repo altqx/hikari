@@ -165,6 +165,7 @@ void Application::forgetTab(application::DocumentId document)
     m_importPaths.erase(document.value);
     m_lyricsImports.erase(document.value); // KA6
     m_originalColumns.erase(document.value); // E5: the tab's Grid goes with it
+    m_translationDeclined.erase(document.value); // TM1
     m_offers.erase(document.value); // P9: its unanswered association question
     const auto before = m_unresolved.size();
     std::erase_if(m_unresolved, [&](const UnresolvedRestore &u) { return u.document == document; });

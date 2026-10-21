@@ -263,8 +263,10 @@ constexpr HotkeyAction kActions[] = {
         {"GLOBAL_VIDEO_RENDER_COST", 5170},
         // FS1-bar-mode: the fullscreen bar's Auto / Always / Never (video.fullscreenBar).
         {"VIDEO_FULLSCREEN_BAR", 2021},
+        // TM1: Translation mode for the editing target (Subtitles menu).
+        {"GLOBAL_TRANSLATION_MODE", 5171},
         // KA7: the Karaoke check window.
-        {"GLOBAL_CHECK_KARAOKE", 5171},
+        {"GLOBAL_CHECK_KARAOKE", 5172},
 };
 
 struct NameRow {
@@ -502,7 +504,8 @@ constexpr NameRow kNames[] = {
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
         {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
         {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
-        {5171, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
+        {5171, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
+        {5172, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
 };
 
 struct DefaultRow {

@@ -23,6 +23,7 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | 3005 | `EDITBOX_HIDE_ORIGINAL` (renamed **Comment out original**, E63-comment-original) | none | Comment out original button: wraps the raw Original in braces | `shell_tests` |
 | 3100–3119 | `EDITBOX_TAG_BUTTON1`…`20` | none | The custom tag buttons by position (E2; LE5: added with the strip's "+", edited, moved and removed from a button's right click or Settings > Editor) | `tag_buttons_tests`, `line_editor_options_tests`, `shell_tests` |
 | 5169 | `GLOBAL_EDITOR_HIDE_TAGS` Hide tags in the line editor (the rewrite's own command, LE3-tags-shown) | — | none: switches `editor.hideTags`; Subtitles > "Hide tags in the line editor" | `line_editor_options_tests`, `hotkeys_tests` |
-| 5171 | `GLOBAL_CHECK_KARAOKE` Check karaoke (the rewrite's own command, KA7) | — | none: opens the Karaoke check window; Subtitles > "Check karaoke" | `shell_tests`, `hotkeys_tests` |
+| 5171 | `GLOBAL_TRANSLATION_MODE` Translation mode (the rewrite's own command, TM1-translator-check-removed) | — | none: turns the editing target's Translation mode on, or asks and turns it off; Subtitles > "Translation mode" | `translation_preset_tests`, `shell_tests` translatorModeSwitchesWithOneStepEach, `hotkeys_tests` |
+| 5172 | `GLOBAL_CHECK_KARAOKE` Check karaoke (the rewrite's own command, KA7) | — | none: opens the Karaoke check window; Subtitles > "Check karaoke" | `shell_tests`, `hotkeys_tests` |
 
 A "Not yet" row is unfinished, not dropped: each is assigned to the card or surface named.
