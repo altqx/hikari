@@ -23,6 +23,8 @@
 #include <wx/toplevel.h>
 #include <wx/evtloop.h>
 #include <wx/sizer.h>
+#include <wx/utils.h>
+#include <memory>
 
 class DialogSizer : public wxBoxSizer
 {
@@ -94,5 +96,7 @@ private:
 	bool setEscapeIdWithFocus = false;
 	bool showInactive = false;
 	wxModalEventLoop *loop;
+	// The other windows ShowModal() disables, until EndModal().
+	std::unique_ptr<wxWindowDisabler> disabler;
 	wxDECLARE_ABSTRACT_CLASS(HikariDialog);
 };
