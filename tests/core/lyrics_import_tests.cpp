@@ -337,12 +337,12 @@ TEST(LyricsImport, TtmlMustBeWellFormedXml)
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"><a$>x</a$>" + tail, u8"ttml").kind, Kind::NotWellFormed);
     EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\" $a=\"1\">x" + tail, u8"ttml").kind, Kind::NotWellFormed);
     // And namespaces' grammar: a prefix and a local name, neither empty, at
-    // most one colon.
+    // most one colon, each starting as an XML name does.
     EXPECT_EQ(problemOf("<:tt><:body><:p begin=\"1\" end=\"2\">x</:p></:body></:tt>", u8"ttml"),
               (LyricsProblem{Kind::NotWellFormed, 1, u8"<:tt>"}));
-    for (const char *bad : {"<a:/>", "<a:b:c/>", "<p:/>", "<x/ :a=\"1\">"})
+    for (const char *bad : {"<a:/>", "<a:b:c/>", "<p:/>", "<x/ :a=\"1\">", "<a:1/>", "<a:-b/>", "<a:.b/>", "<a:\xC2\xB7" "b/>"})
         EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\">" + bad + "x" + tail, u8"ttml").kind, Kind::NotWellFormed) << bad;
-    for (const char *bad : {" :a=\"1\"", " a:=\"1\"", " a:b:c=\"1\""})
+    for (const char *bad : {" :a=\"1\"", " a:=\"1\"", " a:b:c=\"1\"", " xmlns:a=\"urn:x\" a:1=\"x\"", " xmlns:a=\"urn:x\" a:-x=\"x\""})
         EXPECT_EQ(problemOf(head + "<p begin=\"1\" end=\"2\"" + bad + ">x" + tail, u8"ttml").kind, Kind::NotWellFormed) << bad;
     EXPECT_TRUE(importTtml(bytes(head + "<p begin=\"1\" end=\"2\" xmlns:x=\"urn:x\" x:l\xC3\xA9-g\xC2\xB7.1=\"1\"><\xE6\x97\xA5\xE6\x9C\xAC/>x" + tail))
                     .has_value());
@@ -958,7 +958,7 @@ TEST(LyricsImport, TtmlEntitiesTheFileDeclaresAreRead)
     // Names in declarations are XML names with at most one colon, and none
     // at all where the namespaces spec says NCName: entities, notations,
     // processing instruction targets.
-    for (const char *subset : {"<!ATTLIST p a:b:c CDATA 'x'>", "<!ATTLIST a:b:c x CDATA 'x'>", "<!ATTLIST p :x CDATA 'x'>",
+    for (const char *subset : {"<!ATTLIST p a:b:c CDATA 'x'>", "<!ATTLIST p a:1 CDATA 'x'>", "<!ELEMENT a:1 ANY>", "<!ATTLIST a:b:c x CDATA 'x'>", "<!ATTLIST p :x CDATA 'x'>",
                                "<!ELEMENT a:b:c ANY>", "<!ELEMENT p (a:b:c)*>", "<!ENTITY a:b 'x'>", "<!ENTITY % a:b 'x'>",
                                "<!NOTATION a:b SYSTEM 'x'>", "<?a:b x?>", "<!ENTITY e SYSTEM 'e' NDATA a:b>"})
         EXPECT_EQ(problem(subset, unused).kind, Kind::NotWellFormed) << subset;

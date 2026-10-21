@@ -65,14 +65,6 @@ struct XmlNode {
     bool isText() const { return name.empty(); }
 };
 
-// Whether a name is a QName (Namespaces in XML): a local name, or a
-// prefix, one colon and a local name, neither empty.
-bool qualifiedName(u8sv name)
-{
-    const std::size_t colon = name.find(u8':');
-    return colon == u8sv::npos || (colon > 0 && colon + 1 < name.size() && name.find(u8':', colon + 1) == u8sv::npos);
-}
-
 u8sv localName(u8sv name)
 {
     const std::size_t colon = name.rfind(u8':');
@@ -279,6 +271,18 @@ bool xmlName(u8sv text)
         i += length;
     }
     return !text.empty();
+}
+
+// Whether a name is a QName (Namespaces in XML): a local name, or a
+// prefix, one colon and a local name, each an XML name of its own (so
+// neither empty nor starting with a digit, "-" or ".").
+bool qualifiedName(u8sv name)
+{
+    const std::size_t colon = name.find(u8':');
+    if (colon == u8sv::npos)
+        return xmlName(name);
+    const u8sv local = name.substr(colon + 1);
+    return xmlName(name.substr(0, colon)) && xmlName(local) && local.find(u8':') == u8sv::npos;
 }
 
 // The character a reference's "#65" or "#x41" names, if it is one XML
