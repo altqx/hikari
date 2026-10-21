@@ -1192,6 +1192,30 @@ TEST(VisualMoveValues, TypedTimesGoIntoEveryPickedLine)
     EXPECT_EQ(text(host, 1), u8"{\\move(60,60,90,120,100,1500)}y");
 }
 
+// VT1 (Codex on #293): over several Lines a typed time leaves the other
+// one as the tag wrote it (a drag writes wxAtoi's whole part, as legacy).
+TEST(VisualMoveValues, ATypedTimeKeepsTheOtherTimesText)
+{
+    TestHost host;
+    standard(host, 1);
+    std::string script(kScript);
+    const std::string plain = ",,plain\n";
+    script.replace(script.find(plain), plain.size(), ",,{\\move(30,60,90,120,100.5,200.5)}z\n");
+    host.s = std::make_unique<EditSession>(load(script));
+    const core::LineId active = ids(*host.s)[1];
+    host.s->setSelection({active, {active}, active, std::nullopt});
+    host.picker.pick({ids(*host.s)[1], ids(*host.s)[2]});
+    MoveTool tool;
+    host.tool = &tool;
+    tool.selected(host);
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t1", u"100", host));
+    EXPECT_EQ(moveTimesOf(text(host, 2)), u8"100,200.5");
+    tool.reset(host);
+    EXPECT_TRUE(tool.setValue("t2", u"1500", host));
+    EXPECT_EQ(moveTimesOf(text(host, 2)), u8"100,1500");
+}
+
 // VT1 (Codex on #293): the times are read and written from the start the
 // Line editor holds (its pending draft's), as the tag is.
 TEST(VisualMoveValues, TypedTimesAreFromTheDraftsStart)

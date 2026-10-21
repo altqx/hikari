@@ -1027,6 +1027,7 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
     const PointF moveFrom = sub(m_lastFrom, m_from);
     const PointF moveTo = sub(m_lastTo, m_to);
     int moveStartTime = 0, moveEndTime = 0;
+    u16 tagStart, tagEnd; // the \move's own times, as written
     u16 tagBefore;
     if (!lp.putInBracket && lp.textStart < txt.size())
         tagBefore = txt.substr(lp.textStart, lp.textLength);
@@ -1053,12 +1054,17 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
         std::erase(t2, u')');
         moveStartTime = atoi16(t1); // wxAtoi
         moveEndTime = atoi16(t2);
+        tagStart = t1;
+        tagEnd = t2;
     }
-    // VT1: a typed time goes into every target, from its own start.
-    if (m_typedTimes[0])
-        moveStartTime = *m_typedTimes[0];
-    if (m_typedTimes[1])
-        moveEndTime = *m_typedTimes[1];
+    u16 startText = number(moveStartTime), endText = number(moveEndTime);
+    // VT1: a typed time goes into every target, from its own start; the
+    // other keeps its text (Codex on #293: not wxAtoi's whole part, as a
+    // drag writes it).
+    if (m_typedTimes[0] || m_typedTimes[1]) {
+        startText = m_typedTimes[0] ? number(*m_typedTimes[0]) : tagStart.empty() ? startText : tagStart;
+        endText = m_typedTimes[1] ? number(*m_typedTimes[1]) : tagEnd.empty() ? endText : tagEnd;
+    }
     const VideoView &view = host.view();
     const float coeffW = view.coeffW(), coeffH = view.coeffH();
     const PointF zoomScale = view.zoomScale();
@@ -1066,7 +1072,7 @@ std::u16string MoveTool::changeVisualBatch(const std::u16string &text, const cor
                     ft(lp.pos.y - (moveFrom.y / zoomScale.y) * coeffH) + u"," +
                     ft(lp.pos.x + ((m_moveDistance.x - moveTo.x) / zoomScale.x) * coeffW) + u"," +
                     ft(lp.pos.y + ((m_moveDistance.y - moveTo.y) / zoomScale.y) * coeffH) + u"," +
-                    number(moveStartTime) + u"," + number(moveEndTime) + u")";
+                    startText + u"," + endText + u")";
     const long x = static_cast<long>(lp.textStart);
     const long y = static_cast<long>(lp.textLength) + x - 1;
     (void)changeText(txt, tag, !lp.putInBracket, x, y);
