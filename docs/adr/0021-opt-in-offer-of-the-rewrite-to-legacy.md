@@ -43,7 +43,7 @@ The offer is an optional member of a rewrite release's `hikarisub-update.json`. 
   - `note`: optional, up to 200 characters.
 - A member that breaks these rules makes legacy ignore the offer. The rest of the manifest still counts.
 
-Legacy 0.0.2-rc.5 and later read `offer` from rewrite releases before dropping them as not offered to legacy. Of the releases whose offer applies to the user, they take the highest one. The packages, sizes and SHA-256 come from the same manifest, as for any update.
+Legacy 0.0.2 and later read `offer` from rewrite releases before dropping them as not offered to legacy. Of the releases whose offer applies to the user, they take the highest one. The packages, sizes and SHA-256 come from the same manifest, as for any update.
 
 The manifest is uploaded after `SHA256SUMS` is computed. To change a published offer's pitch or `legacy_support`, upload a new `hikarisub-update.json` to the same release. The owner approves every pitch before it is published.
 
