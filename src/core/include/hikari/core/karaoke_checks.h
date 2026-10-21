@@ -29,7 +29,7 @@ struct KaraokeProblem {
     enum class Kind {
         Unclosed,          // a "{" with a karaoke tag and no "}", or a tag with no number
         NotForAudioEditor, // no tag the audio editor reads: none whose number starts at once ("\k50")
-        EditorOnly,        // a tag only the audio editor reads as karaoke ("\kfo50", "\KF50"), which plays as none
+        EditorOnly,        // the audio editor reads other syllables than play ("\kfo50", "\keep", "\k(50)")
         TotalNotDuration,  // the syllables add up to more or less than the Line lasts
         ZeroLength,        // a syllable of no length
         OutsideLine,       // a syllable that starts before the Line, ends after it, or runs backward

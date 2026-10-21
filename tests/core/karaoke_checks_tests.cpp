@@ -6,6 +6,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <fstream>
 #include <iterator>
 #include <string>
@@ -197,7 +198,9 @@ TEST(KaraokeChecks, SignedAndOversizedValuesRead)
     // Other tags that start with k are not karaoke; a bare "\\k" or "\\ko" is
     // one with no number.
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep}text {\\kfoo\\Kx}more")).problems.empty());
-    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k50\\keep}a{\\k50}b")).problems.empty());
+    // Where the editor reads karaoke it splits at "\\keep" too (TagsOnly...).
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k50\\keep}a{\\k50}b")),
+              (std::vector<Found>{{0, Kind::EditorOnly, 0, 0, {}}}));
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\keep unclosed")).problems.empty());
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\ko\\i1}b")),
               (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}}));
@@ -215,13 +218,30 @@ TEST(KaraokeChecks, TagsOnlyTheAudioEditorReadsAreFlagged)
     // "\\KF50" and "\\kO50" are syllables to it; they play as no karaoke.
     for (const char *text : {"{\\kfo50}x", "{\\KF50}x", "{\\kO50}x", "{\\KFO50}x"})
         EXPECT_EQ(found(oneLine("0:00:00.00,0:00:00.50", text)), (std::vector<Found>{{0, Kind::EditorOnly, 0, 0, {}}})) << text;
-    // It lower-cases as QChar does, so a Kelvin sign for the K is a "k" to it.
+    // Its test lower-cases as QChar does, so a Kelvin sign for the K makes
+    // it read the Line as karaoke; its split reads "\\k" and "\\K" as
+    // written, so beside a tag it splits at the Line is as playback's.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:00.50", "{\\\xE2\x84\xAA" "50}x")), (std::vector<Found>{{0, Kind::EditorOnly, 0, 0, {}}}));
-    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:00.50", "{\\k+50}a{\\\xE2\x84\xAA" "50}b")),
-              (std::vector<Found>{{0, Kind::EditorOnly, 0, 0, {}}}));
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:00.50", "{\\k+50}a{\\\xE2\x84\xAA" "50}b")).problems.empty());
     EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\\xE2\x84\xAA}x \xE2\x84\xAA" "50")).problems.empty());
     // Beside real syllables, the editor splits where playback does not.
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k100}a{\\kfo50}b")), (std::vector<Found>{{0, Kind::EditorOnly, 0, 0, {}}}));
+    // Once it reads the Line as karaoke, it splits at every "\\k" or "\\K"
+    // in a block and reads the number with atoi up to the next "}" or "\\":
+    // a tag playback skips is a syllable to it, and a number in parentheses
+    // is 0 to it (playback reads "\\k(50)" as 50).
+    for (const char *text : {"{\\k100}a{\\keep}b", "{\\k50}a{\\kt50}b", "{\\k50}a{\\k(50)}b", "{\\k50}a{\\k 50}b",
+                             "{\\k50}a{\\KF50}b", "{\\k100}a{\\keep"})
+        EXPECT_TRUE(std::ranges::any_of(found(oneLine("0:00:00.00,0:00:01.00", text)),
+                                        [](const Found &f) { return f.kind == Kind::EditorOnly; }))
+            << text;
+    // A tag with no number, or one in a block that never closes, is left to
+    // Unclosed.
+    for (const char *text : {"{\\k100}a{\\k}b", "{\\k100}a{\\k50"})
+        EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", text)), (std::vector<Found>{{0, Kind::Unclosed, 0, 0, {}}})) << text;
+    // Numbers both read alike: a sign, a fraction playback drops, text after.
+    for (const char *text : {"{\\k50}a{\\k+50}b", "{\\k50}a{\\k50.9}b", "{\\k50}a{\\k50\\i1}b", "{\\k50}a{\\kf50}b"})
+        EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text)).problems.empty()) << text;
     // Tags both read, and ones neither reads, are not.
     for (const char *text : {"{\\k50}a{\\K50}b", "{\\kf50}a{\\ko50}b", "{\\kfoo}x", "{\\kfo}x", "{\\kfo50x"})
         EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text)).problems.empty()) << text;
@@ -231,8 +251,10 @@ TEST(KaraokeChecks, LinesTheAudioEditorCannotReadAreFlagged)
 {
     // The audio editor reads a Line as karaoke when one tag's number follows
     // it at once, in any case; it then reads every tag.
-    for (const char *text : {"{\\k(50)}a{\\k50}b", "{\\k+50}a{\\K50}b", "{\\K(50)}a{\\kf50}b", "{\\i1\\ko50}a{\\k(50)}b"})
-        EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", text)).problems.empty()) << text;
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.00", "{\\k+50}a{\\K50}b")).problems.empty());
+    // Read, it takes "(50)" as 0 (atoi), so the 50 played is not the editor's.
+    for (const char *text : {"{\\k(50)}a{\\k50}b", "{\\K(50)}a{\\kf50}b", "{\\i1\\ko50}a{\\k(50)}b"})
+        EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", text)), (std::vector<Found>{{0, Kind::EditorOnly, 0, 0, {}}})) << text;
     EXPECT_EQ(found(oneLine("0:00:00.00,0:00:01.00", "{\\k+1}a{\\k(99)}b")),
               (std::vector<Found>{{0, Kind::NotForAudioEditor, 0, 0, {}}}));
     // A Line with no karaoke tag is not one the editor should read.

@@ -3570,11 +3570,11 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Karaoke only in the audio editor</source>
+        <source>Other syllables in the audio editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The audio editor reads a tag such as \kfo50 or \KF50 as a syllable, but it plays as none</source>
+        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback&apos;s</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

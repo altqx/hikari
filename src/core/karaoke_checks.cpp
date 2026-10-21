@@ -3,6 +3,7 @@
 #include "text_util.h"
 
 #include <algorithm>
+#include <limits>
 #include <optional>
 #include <string>
 
@@ -73,9 +74,11 @@ std::size_t editorK(u8sv text, std::size_t i)
     return text.substr(std::min(i, text.size())).starts_with(u8"K") ? 3 : 0;
 }
 
-// The editor's tags: each backslash it reads as karaoke and where its
-// number starts. `stop` is asked of each in turn; true ends the search.
-template <typename Stop> bool audioEditorTags(u8sv text, Stop stop)
+// Whether the audio editor reads a text as karaoke (AudioKaraoke's
+// hasKaraokeTag, legacy's {([^}]*)\\kf?o?[0-9]([^}]*)} on the lower-cased
+// text): a tag whose number starts at once, in a block that closes. It
+// reads none of "\k+50", "\k(50)" or "\k.5", which the renderers play.
+bool audioEditorReads(u8sv text)
 {
     auto lower = [](char8_t c) { return c >= u8'A' && c <= u8'Z' ? static_cast<char8_t>(c - u8'A' + u8'a') : c; };
     const std::size_t lastClose = text.rfind(u8'}');
@@ -91,38 +94,78 @@ template <typename Stop> bool audioEditorTags(u8sv text, Stop stop)
                 ++r;
             if (r < text.size() && lower(text[r]) == u8'o')
                 ++r;
-            if (r < text.size() && isDigit(text[r]) && lastClose != u8sv::npos && lastClose > r && stop(i, r))
+            if (r < text.size() && isDigit(text[r]) && lastClose != u8sv::npos && lastClose > r)
                 return true;
         }
     }
     return false;
 }
 
-// Whether the audio editor reads a text as karaoke (AudioKaraoke's
-// hasKaraokeTag, legacy's {([^}]*)\\kf?o?[0-9]([^}]*)} on the lower-cased
-// text): a tag whose number starts at once, in a block that closes. It
-// reads none of "\k+50", "\k(50)" or "\k.5", which the renderers play.
-bool audioEditorReads(u8sv text)
-{
-    return audioEditorTags(text, [](std::size_t, std::size_t) { return true; });
-}
-
-// Whether the editor reads a tag the renderers do not play as karaoke:
-// "\kfo50" (no tag of theirs), "\KF50" and "\kO50" (the tag parser's
-// names are lower case after k) or "\K50" with a Kelvin sign for the K, so
-// the editor splits syllables where playback has none.
-bool audioEditorOnly(u8sv text)
-{
-    return audioEditorTags(text, [text](std::size_t i, std::size_t value) { return karaokeValue(text, i) != value; });
-}
-
 // Longer syllables count as this long (over 115 days, in milliseconds), so
 // adding them up cannot overflow.
 constexpr std::int64_t kLongestSyllable = 10'000'000'000;
 
+// The syllables of a Line the audio editor reads as karaoke, one at a time
+// (AudioKaraoke::split): every "\k" or "\K" in a block splits there, as
+// written (only its test above lower-cases), whatever follows the name;
+// the number is legacy atoi of all after the name ("k", "K", "kf" or "ko")
+// up to the next "}" or "\", so "\keep" is 0 and "\k(50)" too.
+class EditorSyllables {
+public:
+    explicit EditorSyllables(u8sv text) : m_text(text) {}
+
+    static constexpr std::int64_t kUnread = std::numeric_limits<std::int64_t>::min();
+
+    // The next one's length in milliseconds, kUnread when the text ends
+    // inside its number; nullopt past the last.
+    std::optional<std::int64_t> next()
+    {
+        for (; m_pos < m_text.size(); ++m_pos) {
+            const char8_t c = m_text[m_pos];
+            if (c == u8'{')
+                m_block = true;
+            else if (c == u8'}')
+                m_block = false;
+            else if (m_block && c == u8'\\' && m_pos + 1 < m_text.size() &&
+                     (m_text[m_pos + 1] == u8'k' || m_text[m_pos + 1] == u8'K'))
+                return tag();
+        }
+        return std::nullopt;
+    }
+
+private:
+    std::int64_t tag()
+    {
+        std::size_t from = m_pos + 2;
+        if (m_text[m_pos + 1] == u8'k' && from < m_text.size() && (m_text[from] == u8'f' || m_text[from] == u8'o'))
+            ++from;
+        const std::size_t end = std::min(m_text.find_first_of(u8"}\\", from), m_text.size());
+        m_pos = end;
+        if (end == m_text.size())
+            return kUnread; // the split stops at the last character, before reading it
+        // atoi: whitespace, a sign, then digits; it saturates at the int range.
+        std::size_t i = from;
+        while (i < end && (m_text[i] == u8' ' || (m_text[i] >= 9 && m_text[i] <= 13)))
+            ++i;
+        const bool negative = i < end && m_text[i] == u8'-';
+        if (i < end && (m_text[i] == u8'-' || m_text[i] == u8'+'))
+            ++i;
+        std::int64_t ms = 0;
+        for (; i < end && isDigit(m_text[i]); ++i)
+            ms = std::min<std::int64_t>(ms * 10 + (m_text[i] - u8'0') * 10, kLongestSyllable);
+        return negative ? -ms : ms;
+    }
+
+    u8sv m_text;
+    std::size_t m_pos = 0;
+    bool m_block = false;
+};
+
+
 // Each karaoke syllable's length in a Line's text, in order, to `each`
-// (milliseconds, whole centiseconds), one at a time so a Line of millions
-// of tags is never held; whether a karaoke tag is unclosed or has no number.
+// (milliseconds, whole centiseconds; nullopt for a tag with no number,
+// which plays as none), one at a time so a Line of millions of tags is
+// never held; whether a karaoke tag is unclosed or has no number.
 template <typename Each>
 bool syllablesOf(u8sv text, Each each)
 {
@@ -164,11 +207,12 @@ bool syllablesOf(u8sv text, Each each)
                     digits = true;
             if (!digits) {
                 unclosed = true; // "\k" with no number
+                each(std::nullopt);
                 continue;
             }
             if (parenthesised && j < block.size() && block[j] == u8')')
                 ++j;
-            each(negative ? -ms : ms);
+            each(std::optional(negative ? -ms : ms));
             i = j - 1;
         }
         pos = close + 1;
@@ -215,7 +259,23 @@ KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
         };
         // The text karaoke plays: the translation when there is one.
         const u8sv text = line.translation.empty() ? u8sv(line.text) : u8sv(line.translation);
-        const bool unclosed = syllablesOf(text, [&](std::int64_t length) {
+        // Where the audio editor reads the Line as karaoke, its syllables
+        // beside playback's: one more, one fewer or another length is
+        // karaoke the editor reads otherwise. What Unclosed reports is left
+        // to it: a tag with no number, and a block that never closes.
+        const bool editorReads = audioEditorReads(text);
+        const std::size_t lastClose = text.rfind(u8'}');
+        const std::size_t open = text.find(u8'{', lastClose == u8sv::npos ? 0 : lastClose + 1);
+        EditorSyllables editor(open != u8sv::npos && hasKaraokeTag(text.substr(open)) ? text.substr(0, open) : text);
+        bool editorOnly = false;
+        const bool unclosed = syllablesOf(text, [&](std::optional<std::int64_t> syllable) {
+            if (editorReads && !editorOnly) {
+                const auto read = editor.next();
+                editorOnly = !read || (syllable && *read != *syllable);
+            }
+            if (!syllable)
+                return;
+            const std::int64_t length = *syllable;
             const std::int64_t start = total;
             total += length;
             ++count;
@@ -224,12 +284,14 @@ KaraokeCheck checkKaraoke(const Document &document, std::size_t limit)
             if (length < 0 || start < 0 || total < 0 || start > duration || total > duration) // or it runs backward
                 note(outside, count);
         });
-        const bool editorOnly = audioEditorOnly(text);
+        // The editor reads karaoke where playback has none too (a Kelvin
+        // sign's "\K50" alone).
+        editorOnly = editorOnly || (editorReads && (count == 0 || editor.next().has_value()));
         if (count == 0 && !unclosed && !editorOnly)
             continue;
         if (unclosed)
             add(problem(Kind::Unclosed));
-        if (count > 0 && !audioEditorReads(text))
+        if (count > 0 && !editorReads)
             add(problem(Kind::NotForAudioEditor));
         if (editorOnly)
             add(problem(Kind::EditorOnly));
