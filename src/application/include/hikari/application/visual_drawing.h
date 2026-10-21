@@ -98,6 +98,7 @@ public:
     Family family() const override { return Family::Drawing; }
     void reset(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
+    bool takesKey(const Key &event) const override;
     bool key(const Key &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolOption> options(const VisualHost &host) const override;

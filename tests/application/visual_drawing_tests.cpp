@@ -18,6 +18,8 @@
 #include "hikari/core/ass_load.h"
 #include "hikari/core/text_projection.h"
 
+#include "legacy_visual_keys.h"
+
 #include <gtest/gtest.h>
 
 #include <QFile>
@@ -386,11 +388,9 @@ struct Replay {
             in >> k;
             while (in >> f)
                 flags += f + " ";
-            Key key;
-            key.key = k == "Delete" ? keys::Delete : k[0];
-            key.control = flags.find("ctrl") != std::string::npos;
-            key.shift = flags.find("shift") != std::string::npos;
-            key.alt = flags.find("alt") != std::string::npos;
+            Key key = legacy_keys::legacyKey(k, flags.find("shift") != std::string::npos,
+                                         flags.find("ctrl") != std::string::npos,
+                                         flags.find("alt") != std::string::npos, tool.family());
             tool.key(key, host);
             key.release = true; // the nudge commits on the key's release
             tool.key(key, host);

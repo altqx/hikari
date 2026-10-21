@@ -2519,8 +2519,11 @@ ApplicationWindow {
                 // VIDEO_PLAY_PAUSE Space, VIDEO_5_SECONDS_* L / ;,
                 // VIDEO_MINUTE_* Up / Down), before the application's shortcuts.
                 // T1: Esc cancels an open visual gesture first; keys no binding
-                // takes go to the visual tool (a nudge), as VideoBox::OnKeyPress
-                // hands them to the Visuals.
+                // takes go to the visual tool, as VideoBox::OnKeyPress hands
+                // them to the Visuals. VT2-arrow-nudge: a tool's nudge (the
+                // arrows, Shift a tenth) comes before the bindings, so they
+                // reach it over the video, focused or hovered (KB1's router
+                // asks this override).
                 // FS1: VIDEO_FULLSCREEN_BAR is the fullscreen window's; here
                 // its key (Tab) keeps moving the keyboard focus.
                 function panelAction(event) {
@@ -2528,9 +2531,15 @@ ApplicationWindow {
                     return action === "VIDEO_FULLSCREEN_BAR" ? "" : action
                 }
                 Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.escapable)
+                                                  || root.visualTools.takesKey(event.key, event.modifiers)
                                                   || videoPanel.panelAction(event) !== ""
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
+                        event.accepted = true
+                        return
+                    }
+                    if (root.visualTools.takesKey(event.key, event.modifiers)) {
+                        root.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)
                         event.accepted = true
                         return
                     }
@@ -2572,6 +2581,7 @@ ApplicationWindow {
                 VisualToolRail {
                     id: visualRail
                     tools: root.visualTools
+                    keyOf: symbol => root.boundKeys(symbol, 3)
                     anchors { left: parent.left; top: parent.top; bottom: videoControls.top }
                 }
                 // Where the picture sits in the panel.
@@ -7108,6 +7118,9 @@ ApplicationWindow {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         if (root.hotkeys.repeatedKey(action, 50)) // VideoBox::OnAccelerator (VideoBox.cpp:1137)
+            return true
+        // VT2: the tool commands choose their visual tool.
+        if (root.visualTools.runHotkey(action))
             return true
         switch (action) {
         case "VIDEO_PLAY_PAUSE": root.video.togglePlay(); return true

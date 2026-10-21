@@ -13481,9 +13481,9 @@ private slots:
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
-        // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR and
-        // TM1's "Translation mode" listed.
-        QCOMPARE(hotkeyRows().size(), 222);
+        // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
+        // "Translation mode" and VT2's eleven visual tools listed.
+        QCOMPARE(hotkeyRows().size(), 233);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -15359,6 +15359,20 @@ private slots:
         // runs no command; Convert to MDVD has no default key.
         for (const auto &context : contexts)
             departures.append(QStringLiteral("%1 F10: nothing, legacy GLOBAL_CONVERT_TO_MDVD").arg(QLatin1String(context.first)));
+        // VT2 (#270): the visual tools' single keys act in the Video window,
+        // where legacy's keys reached nothing (P is no legacy default).
+        for (const auto &[accel, symbol] : std::initializer_list<std::pair<const char *, const char *>>{
+                 {"X", "VIDEO_TOOL_CROSSHAIR"},
+                 {"G", "VIDEO_TOOL_MOVE"},
+                 {"S", "VIDEO_TOOL_SCALE"},
+                 {"R", "VIDEO_TOOL_ROTATION_Z"},
+                 {"T", "VIDEO_TOOL_ROTATION_XY"},
+                 {"C", "VIDEO_TOOL_RECTANGLE_CLIP"},
+                 {"V", "VIDEO_TOOL_VECTOR_CLIP"},
+                 {"D", "VIDEO_TOOL_DRAWING"},
+                 {"A", "VIDEO_TOOL_POSITION_SHIFTER"},
+                 {"H", "VIDEO_TOOL_HYDRA"}})
+            departures.append(QStringLiteral("Video %1: %2, legacy nothing").arg(QLatin1String(accel), QLatin1String(symbol)));
         QStringList differences;
         hotkeys.setRehearsing(true);
         auto rehearsing = qScopeGuard([&] { hotkeys.setRehearsing(false); });
@@ -17726,9 +17740,10 @@ private slots:
         QTRY_VERIFY(squareAt(staged));
         QTRY_VERIFY(handle() && near(deviceToFrame(*handle()), frameOf(staged), 0.5));
 
-        // A key nudge (D: a script pixel right) with the video focused, one step.
+        // A key nudge (Right, legacy's D: a script pixel right) with the
+        // video focused, one step.
         visualItem("videoPanel")->forceActiveFocus();
-        QTest::keyClick(window, Qt::Key_D);
+        QTest::keyClick(window, Qt::Key_Right);
         QTRY_COMPARE(session->historySize(), steps + 2);
         {
             PointF p = view.scriptToView({QString(ft(staged.x)).toFloat(), QString(ft(staged.y)).toFloat()});
@@ -18560,13 +18575,13 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_invert"), "click"));
         QTRY_VERIFY(text(session->document().lines()[0]).startsWith(QStringLiteral("{\\iclip(")));
         QCOMPARE(session->history().back().name, std::string("Visual vector clipping tool"));
-        // A D key nudge: one step on its release.
+        // A Right key nudge (legacy's D): one step on its release.
         const QString beforeNudge = text(session->document().lines()[0]);
         const std::size_t nudge = session->historySize();
-        QTest::keyPress(window, Qt::Key_D);
+        QTest::keyPress(window, Qt::Key_Right);
         QVERIFY(tools.gestureActive());
         QCOMPARE(session->historySize(), nudge);
-        QTest::keyRelease(window, Qt::Key_D);
+        QTest::keyRelease(window, Qt::Key_Right);
         QTRY_COMPARE(session->historySize(), nudge + 1);
         QVERIFY(text(session->document().lines()[0]) != beforeNudge);
 
@@ -19181,10 +19196,10 @@ private slots:
         QTRY_COMPARE(shifter->elements().back().elem,
                      view.scriptToView({static_cast<float>(a[0]), static_cast<float>(a[1])}));
 
-        // D: a script pixel right, its own step.
+        // Right (legacy's D): a script pixel right, its own step.
         visualItem("videoPanel")->forceActiveFocus();
         const std::size_t keySteps = session->historySize();
-        QTest::keyClick(window, Qt::Key_D);
+        QTest::keyClick(window, Qt::Key_Right);
         QTRY_COMPARE(session->historySize(), keySteps + 1);
         QCOMPARE(session->history().back().name, std::string("Visual position adjustment tool"));
         const auto c = numbers(3);
@@ -19400,6 +19415,176 @@ private slots:
     // A Video panel too short for the eleven families scrolls the rail so the
     // on family stays in view (the shifter and the all-tags tool are the last
     // two), and a family chosen above the fold scrolls it back.
+    // VT2 (#270): each visual tool's single key (a VIDEO_TOOL_* command,
+    // listed in Settings -> Hotkeys) chooses it while the Video panel is
+    // focused or hovered, as its rail button does (the on tool's key goes
+    // back to the crosshair), and a text field keeps typing it. A tool that
+    // nudges takes the arrows ahead of frame step, keyframe snap and minute
+    // seek over the video (VT2-arrow-nudge), Shift a tenth and Move's end
+    // point on Alt+arrows; the release commits the nudge wherever the
+    // pointer is by then. From another panel the arrows keep their bindings.
+    void visualToolHotkeysAndArrowNudge()
+    {
+        const char *extra = "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\pos(100,80)}sign\n"
+                            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\move(100,80,200,160,0,1000)}moving\n";
+        QVERIFY(application->openFile(visualDocument("vt2.ass", extra)));
+        auto &tools = application->visualTools();
+        auto &hotkeys = application->hotkeys();
+        auto &video = application->video();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId sign = session->document().lines()[2]->id;
+        const core::LineId moving = session->document().lines()[3]->id;
+        auto textOf = [&](core::LineId id) {
+            for (const auto *l : session->document().lines())
+                if (l->id == id)
+                    return text(l);
+            return QString();
+        };
+        application->selectLine(sign.value);
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        video.openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.frame() == 24, 20000);
+        keysNeverRepeat();
+        const auto keyOf = [](const QString &accel) { return Qt::Key(Qt::Key_A + (accel.at(0).unicode() - 'A')); };
+        const auto hover = [&](const char *name) {
+            QQuickItem *over = item(name);
+            QTest::mouseMove(window, over->mapToScene(QPointF(over->width() / 2, over->height() / 2)).toPoint());
+            QCoreApplication::processEvents();
+        };
+
+        // Every tool's key with the video focused: its tool, the rail button
+        // checked and its tooltip naming the key; the key again: the crosshair.
+        visualItem("videoPanel")->forceActiveFocus();
+        QStringList keys;
+        for (const auto &f : application::visual::families()) {
+            const QString symbol = QString::fromLatin1(f.hotkey.data(), f.hotkey.size());
+            const QString name = QString::fromLatin1(f.tooltip.data(), f.tooltip.size());
+            const QString accel = hotkeys.accelOf(symbol, 3);
+            QCOMPARE(accel.size(), 1);
+            keys.append(accel);
+            const Qt::Key key = keyOf(accel);
+            QCOMPARE(hotkeys.actionFor(3, key, Qt::NoModifier), symbol);
+            auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(int(f.family))));
+            QCOMPARE(QQmlProperty(button, QStringLiteral("ToolTip.text"), qmlContext(button)).read().toString(),
+                     QStringLiteral("%1 (%2)").arg(name, accel));
+            QTest::keyClick(window, key);
+            QTRY_COMPARE(tools.activeFamily(), int(f.family));
+            QVERIFY(button->property("checked").toBool());
+            QTest::keyClick(window, key);
+            QTRY_COMPARE(tools.activeFamily(), 0); // the crosshair's own key stays on it
+        }
+        QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H"}));
+        QCOMPARE(QQmlProperty(visualItem("visualTool0"), QStringLiteral("ToolTip.text"), qmlContext(visualItem("visualTool0")))
+                         .read()
+                         .toString(),
+                 QStringLiteral("Position pointer (X)"));
+
+        // Hovered, the focus in the Grid: P chooses Text positioning and the
+        // focus stays (KB1). The Line text keeps typing it.
+        item("editingGrid")->forceActiveFocus();
+        hover("videoPanel");
+        QTest::keyClick(window, Qt::Key_P);
+        QTRY_COMPARE(tools.activeFamily(), 1);
+        QVERIFY(item("editingGrid")->hasActiveFocus());
+        auto *lineText = item("lineText");
+        lineText->forceActiveFocus();
+        const QString typed = lineText->property("text").toString();
+        QTest::keyClick(window, Qt::Key_G);
+        QCOMPARE(tools.activeFamily(), 1);
+        QTRY_COMPARE(lineText->property("text").toString().size(), typed.size() + 1);
+        QTest::keyClick(window, Qt::Key_Backspace);
+        QTRY_COMPARE(lineText->property("text").toString(), typed);
+
+        // Text positioning on, the video hovered and the Grid focused: Right
+        // nudges the sign (no frame step), its release commits once, though
+        // the pointer has moved to the Grid by then.
+        static const QRegularExpression posOf(QStringLiteral("\\\\pos\\(([^,]+),([^)]+)\\)"));
+        const auto pos = [&] {
+            const auto m = posOf.match(textOf(sign));
+            return m.hasMatch() ? QPointF(m.captured(1).toDouble(), m.captured(2).toDouble()) : QPointF(-1, -1);
+        };
+        item("editingGrid")->forceActiveFocus();
+        hover("videoPanel");
+        const QPointF start = pos();
+        std::size_t steps = session->historySize();
+        QTest::keyPress(window, Qt::Key_Right);
+        QVERIFY(tools.gestureActive());
+        QCOMPARE(video.frame(), 24);
+        hover("editingGrid");
+        QTest::keyRelease(window, Qt::Key_Right);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QVERIFY(!tools.gestureActive());
+        const QPointF right = pos();
+        QVERIFY2(right.x() > start.x() && qFuzzyCompare(right.y(), start.y()), qPrintable(textOf(sign)));
+        const double step = right.x() - start.x();
+        // Down, then Shift+Up: no minute seek, the second a tenth of a step.
+        hover("videoPanel");
+        QTest::keyClick(window, Qt::Key_Down);
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QCOMPARE(video.frame(), 24);
+        QVERIFY2(std::abs(pos().y() - start.y() - step) < 0.01, qPrintable(textOf(sign)));
+        QTest::keyClick(window, Qt::Key_Up, Qt::ShiftModifier);
+        QTRY_COMPARE(session->historySize(), steps + 3);
+        QVERIFY2(std::abs(pos().y() - start.y() - step * 0.9) < 0.01, qPrintable(textOf(sign)));
+        // Shift+Left (GLOBAL_SNAP_WITH_START elsewhere) nudges a tenth too.
+        QTest::keyClick(window, Qt::Key_Left, Qt::ShiftModifier);
+        QTRY_COMPARE(session->historySize(), steps + 4);
+        QVERIFY2(std::abs(pos().x() - start.x() - step * 0.9) < 0.01, qPrintable(textOf(sign)));
+        // The letters nudge no longer: D chooses Vector drawing.
+        visualItem("videoPanel")->forceActiveFocus();
+        steps = session->historySize();
+        QTest::keyClick(window, Qt::Key_D);
+        QTRY_COMPARE(tools.activeFamily(), 8);
+        QCOMPARE(session->historySize(), steps);
+
+        // From the Grid the arrows keep their bindings: with Text positioning
+        // on and the video focused, Right over the Grid steps a frame.
+        QTest::keyClick(window, Qt::Key_P);
+        QTRY_COMPARE(tools.activeFamily(), 1);
+        hover("editingGrid");
+        QTest::keyClick(window, Qt::Key_Right);
+        QTRY_COMPARE(video.frame(), 25);
+        QCOMPARE(session->historySize(), steps);
+        QTest::keyClick(window, Qt::Key_Left);
+        QTRY_COMPARE(video.frame(), 24);
+        // With the crosshair on, the arrows step frames over the video too.
+        hover("videoPanel");
+        QTest::keyClick(window, Qt::Key_X);
+        QTRY_COMPARE(tools.activeFamily(), 0);
+        QTest::keyClick(window, Qt::Key_Right);
+        QTRY_COMPARE(video.frame(), 25);
+        QTest::keyClick(window, Qt::Key_Left);
+        QTRY_COMPARE(video.frame(), 24);
+
+        // Text moving: the arrows move the \move's start, Alt+arrows its end.
+        application->selectLine(moving.value);
+        QTRY_COMPARE(session->selection().active, moving);
+        visualItem("videoPanel")->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_G);
+        QTRY_COMPARE(tools.activeFamily(), 2);
+        steps = session->historySize();
+        const auto before = moveArguments(textOf(moving));
+        QVERIFY(before);
+        QTest::keyClick(window, Qt::Key_Right, Qt::AltModifier);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        auto after = moveArguments(textOf(moving));
+        QVERIFY2(after, qPrintable(textOf(moving)));
+        QCOMPARE(after->mid(0, 2), before->mid(0, 2));
+        QVERIFY2(after->at(2).toDouble() > before->at(2).toDouble(), qPrintable(textOf(moving)));
+        QCOMPARE(after->at(3), before->at(3));
+        QTest::keyClick(window, Qt::Key_Down);
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        const auto last = moveArguments(textOf(moving));
+        QVERIFY2(last, qPrintable(textOf(moving)));
+        QCOMPARE(last->at(0), after->at(0));
+        QVERIFY2(last->at(1).toDouble() > after->at(1).toDouble(), qPrintable(textOf(moving)));
+        QCOMPARE(last->mid(2, 2), after->mid(2, 2));
+        QCOMPARE(video.frame(), 24);
+        QTest::keyClick(window, Qt::Key_G);
+        QTRY_COMPARE(tools.activeFamily(), 0);
+    }
+
     void visualToolRailKeepsTheActiveFamilyInView()
     {
         auto &tools = application->visualTools();
