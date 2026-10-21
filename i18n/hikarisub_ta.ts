@@ -237,6 +237,18 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Syllable commands</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Split syllable at the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch long syllables between %1 and %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4940,6 +4952,14 @@ after switching from full screen</source>
     <message>
         <source>Move syllable line after click</source>
         <translation>சொடுக்கு செய்த பிறகு எழுத்து வரியை நகர்த்தவும்</translation>
+    </message>
+    <message>
+        <source>Give a double consonant its own syllable (so|ma|t|ta)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables this long switch to %1 (centiseconds)</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Load audio into RAM</source>
