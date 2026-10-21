@@ -103,13 +103,14 @@ std::optional<LineEditorController::Carry> LineEditorController::carry(const cor
     if (!m_moveTags || !translationMode())
         return std::nullopt;
     // The runs are read against the Line's Style (legacy GetStyle(0, name):
-    // the first of that name), and named resets against the Document's.
+    // the first of that name, else the first Style), and named resets
+    // against the Document's.
     const auto *styles = carryStyles();
     if (!styles)
         return std::nullopt;
     const auto style = std::ranges::find(*styles, line.style, &core::StyleValues::name);
-    Carry c{core::readOriginalTags(core::toUtf16(line.text), style != styles->end() ? &*style : nullptr, *styles), {},
-            {}};
+    const auto *base = style != styles->end() ? &*style : styles->empty() ? nullptr : &styles->front();
+    Carry c{core::readOriginalTags(core::toUtf16(line.text), base, *styles), {}, {}};
     if (c.tags.drawing || c.tags.malformed)
         return std::nullopt;
     c.leading = core::toUtf8(c.tags.leading);

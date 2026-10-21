@@ -10820,6 +10820,32 @@ private slots:
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an2}MurX"));
     }
 
+    // TM1: a Line naming a Style the Document lacks reads its runs against
+    // the first Style (legacy GetStyle(0, name): else the first Style).
+    void tagsFromOriginalMissingStyleUsesTheFirstStyle()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-gone.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: Gone\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Heavy,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Gone,,0,0,0,,A {\\b0}B{\\b1} C\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        // Under the bold first Style the run is "B", unbold; " C" is as the Style is.
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("text").toString(), QStringLiteral("B"));
+    }
+
     // TM1: a run's text is the subtitle's own, shown as written in its chip
     // and the chip's hover text: never read as markup, so an <img> in a
     // subtitle is not fetched when its Line becomes active.

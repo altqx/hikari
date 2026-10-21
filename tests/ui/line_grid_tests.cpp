@@ -744,6 +744,30 @@ private slots:
         QCOMPARE(image.pixelColor(corner), image.pixelColor(below));
     }
 
+    // TM1: a Line naming a Style the Document lacks reads its runs against
+    // the first Style (legacy GetStyle(0, name)), as the Line editor does.
+    void unplacedRunsOfAMissingStyleUseTheFirstStyle()
+    {
+        const char *script =
+            "[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: Gone\n\n[V4+ Styles]\n"
+            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+            "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+            "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+            "Style: Heavy,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n\n"
+            "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+            "Dialogue: 0,0:00:01.00,0:00:02.00,Gone,,0,0,0,,A {\\b0}B{\\b1} C\n"
+            "Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,X Y {\\b1}Z\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setRunMarks(true);
+        model.setDocument(core::loadAss(bytes).document);
+        QCOMPARE(model.rowCount(), 1);
+        // Under the bold first Style the run is the unbold "B", not placed;
+        // read against no Style it would be the bold "C", placed on "Z".
+        QVERIFY(model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
+    }
+
     // GR2: a row showing the Line editor's uncommitted draft paints its text
     // live and a triangle in place of the changed-Line circle, on the
     // committed Line's label colour; reverting brings the circle back.
