@@ -375,6 +375,24 @@ TEST(TagTransfer, ALeadingNamedResetEndsTheRunsInside)
     EXPECT_EQ(u8(trailing.trailing), "{\\r}");
 }
 
+TEST(TagTransfer, AFlagOutOfRangeIsTheActiveStyles)
+{
+    // libass (ass_parse.c) takes \i, \u and \s as 0 or 1 only, \b as 0, 1 or
+    // a weight of 100 and up; any other value is the Style's.
+    EXPECT_TRUE(readOriginalTags(u"a{\\i2}b{\\i0}c").runs.empty());
+    EXPECT_TRUE(readOriginalTags(u"a{\\u-1}b{\\u0}c").runs.empty());
+    EXPECT_TRUE(readOriginalTags(u"a{\\b50}b{\\b0}c").runs.empty());
+    StyleValues plain, alt;
+    plain.name = u8"Default";
+    alt.name = u8"Alt";
+    plain.italic = true;
+    const std::vector<StyleValues> styles{plain, alt};
+    // After \rAlt the active Style is Alt, not the Line's: \i2 is upright.
+    const auto tags = readOriginalTags(u"{\\rAlt}a{\\i1}b{\\i2}c", &plain, styles);
+    ASSERT_EQ(tags.runs.size(), 1u);
+    EXPECT_EQ(u8(tags.runs[0].text), "b");
+}
+
 TEST(TagTransfer, ManyTransformsStayCheapAndTooManyTagsCarryNothing)
 {
     std::u16string many = u"{\\an8}a";

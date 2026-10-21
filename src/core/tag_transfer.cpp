@@ -291,6 +291,22 @@ std::u16string normalised(Kind kind, std::u16string_view arg)
     }
 }
 
+// Whether an override's value is the active Style's: none at all, or (as
+// libass's ass_parse.c reads them) \i, \u and \s other than 0 or 1 and \b
+// other than 0, 1 or a weight of 100 and up.
+bool isStyleValue(Kind kind, std::u16string_view arg)
+{
+    const auto value = trimmed(arg);
+    if (value.empty())
+        return true;
+    std::string s;
+    long n = 0;
+    if ((kind != Kind::Flag && kind != Kind::Bold) || !narrow(value, s)
+        || std::from_chars(s.data(), s.data() + s.size(), n).ec != std::errc{})
+        return false;
+    return n != 0 && n != 1 && (kind == Kind::Flag || n < 100);
+}
+
 std::u16string valueIn(const TagState &state, const std::u16string &component)
 {
     const auto it = state.find(component);
@@ -443,17 +459,22 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
         t = ascii(std::to_string(count + 1) + "|" + std::to_string(hash));
         break;
     }
-    default:
+    default: {
+        // The Style a value falls back to is the one in effect, a named
+        // reset's when there was one.
+        const auto reset = state.find(u"r");
+        const auto active = reset != state.end() ? named.find(reset->second) : named.end();
+        const TagState &base = active != named.end() ? active->second : defaults;
         if (tag.name == u"fs") {
-            if (const auto size = fontSizeAfter(state, defaults, tag.args))
+            if (const auto size = fontSizeAfter(state, base, tag.args))
                 state[u"fs"] = *size;
             else
                 state[u"fs"] = trimmed(tag.args);
             break;
         }
         for (const auto &component : effect.components) {
-            if (trimmed(tag.args).empty()) {
-                if (const auto it = defaults.find(component); it != defaults.end())
+            if (isStyleValue(effect.kind, tag.args)) {
+                if (const auto it = base.find(component); it != base.end())
                     state[component] = it->second;
                 else
                     state.erase(component);
@@ -461,6 +482,7 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
                 state[component] = normalised(effect.kind, tag.args);
             }
         }
+    }
     }
     if (history)
         for (const auto &component : touched) {
