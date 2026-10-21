@@ -635,6 +635,22 @@ private slots:
         QVERIFY(closed.contains(QStringLiteral("after")));
         QVERIFY(!closed.contains(QStringLiteral("const x")));
         QVERIFY(!closed.contains(QStringLiteral("note")));
+        // A tag's attributes may go on over a line break, soft or hard.
+        const QString wrapped = copy->whatsNew->render(
+            QStringLiteral("Text <div\nclass=\"note\"\nid=x>inside</div> more <span  \ntitle=y>z</span>"), muted,
+            link, code);
+        QVERIFY2(wrapped.contains(QStringLiteral("Text inside more z")), qPrintable(wrapped));
+        QVERIFY(!wrapped.contains(QStringLiteral("class=")));
+        QVERIFY(!wrapped.contains(QStringLiteral("title=")));
+        // In code such a tag stays as written; a line opening a quote ends it.
+        const QString wrappedCode = copy->whatsNew->render(
+            QStringLiteral("```\n<div\nclass=a>\n```\n\nUse `<span\ntitle=b>` here\n\nSee <q\n> quoted"), muted, link,
+            code);
+        QVERIFY2(wrappedCode.contains(QStringLiteral("&lt;div")), qPrintable(wrappedCode));
+        QVERIFY(wrappedCode.contains(QStringLiteral("class=a&gt;")));
+        QVERIFY(!wrappedCode.contains(QStringLiteral("&lt;div class")));
+        QVERIFY(wrappedCode.contains(QStringLiteral("&lt;span title=b&gt;")));
+        QVERIFY(wrappedCode.contains(QStringLiteral("quoted")));
         // A quoted attribute value may hold ">": the tag ends after it.
         const QString quoted = copy->whatsNew->render(
             QStringLiteral("A <span title=\"1 > 0\" data-x='a>b'>kept</span> B"), muted, link, code);

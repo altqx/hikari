@@ -77,6 +77,8 @@ bool isCode(const QTextBlock &block, const QTextCharFormat &format)
 // - A linked image ("[![alt](badge.svg)](url)") loses its link in Qt's
 //   import: it is read as "[alt](url)" after its marker. On one line and
 //   without a backtick it is all code or none.
+// - A raw tag over a hard line break ends up in two blocks: its marker goes
+//   back before the raw HTML goes (restoreTags), the tag on one line.
 class SourceMarks
 {
 public:
@@ -87,6 +89,29 @@ public:
         for (const QChar c : markdown)
             if (c.unicode() >= kFirst && c.unicode() <= kLast)
                 m_byMarker[c.unicode() - kFirst] = kHeld;
+        // A tag over lines, as CommonMark reads one (but scripts and styles,
+        // which dropHtml follows over blocks): no blank line in it, no line
+        // of it opening a quote.
+        static const QRegularExpression tagOverLines(QStringLiteral(
+            "<(?:(?!(?i:script|style)(?![A-Za-z0-9-]))[A-Za-z][A-Za-z0-9-]*"
+            "(?>\\s+[A-Za-z_:][A-Za-z0-9_.:-]*(?>\\s*=\\s*(?>[^\\s\"'=<>`]+|'[^']*'|\"[^\"]*\"))?)*+\\s*/?"
+            "|/[A-Za-z][A-Za-z0-9-]*\\s*)>"));
+        static const QRegularExpression notInTag(QStringLiteral("\\n[ \\t]*(?:\\n|[ ]{0,3}>)"));
+        QString tagged;
+        qsizetype at = 0;
+        for (auto m = tagOverLines.globalMatch(markdown); m.hasNext();) {
+            const QRegularExpressionMatch found = m.next();
+            const QString written = found.captured();
+            if (!written.contains(u'\n') || notInTag.match(written).hasMatch())
+                continue;
+            const QChar marker = markerFor(written, QString(), QString(), true);
+            if (marker.isNull())
+                continue;
+            tagged += QStringView(markdown).sliced(at, found.capturedStart() - at);
+            tagged += marker;
+            at = found.capturedEnd();
+        }
+        tagged += QStringView(markdown).sliced(at);
         static const QRegularExpression linkedImage = [] {
             // A destination, bare or in <>, and a quoted title; no backtick.
             const QString destination = QStringLiteral(
@@ -95,16 +120,16 @@ public:
                                       QStringLiteral("\\)\\](\\(") + destination + QStringLiteral("\\))"));
         }();
         QString linked;
-        qsizetype at = 0;
-        for (auto m = linkedImage.globalMatch(markdown); m.hasNext();) {
+        at = 0;
+        for (auto m = linkedImage.globalMatch(tagged); m.hasNext();) {
             const QRegularExpressionMatch found = m.next();
             const QString shown = QLatin1Char('[') + found.captured(1) + QLatin1Char(']') + found.captured(2);
             const QChar marker = markerFor(found.captured(), shown, QString());
-            linked += QStringView(markdown).sliced(at, found.capturedStart() - at);
+            linked += QStringView(tagged).sliced(at, found.capturedStart() - at);
             linked += marker.isNull() ? found.captured() : marker + shown;
             at = found.capturedEnd();
         }
-        linked += QStringView(markdown).sliced(at);
+        linked += QStringView(tagged).sliced(at);
         // A backslash takes any punctuation ("\\\\<" is a backslash, then
         // "<"), so all are matched and only brackets are marked.
         static const QRegularExpression escaped(
@@ -128,6 +153,23 @@ public:
         }
         out += QStringView(linked).sliced(at);
         return out;
+    }
+
+    // The tags over lines, right after parsing: on one line where the raw
+    // HTML goes, as written in a code block.
+    void restoreTags(QTextDocument &doc) const
+    {
+        forEachFragment(doc, [&](const QTextBlock &block, const QString &text, const QTextFragment &fragment,
+                                 std::vector<Change> &changes) {
+            const bool codeBlock = block.blockFormat().hasProperty(QTextFormat::BlockCodeLanguage) ||
+                                   block.blockFormat().hasProperty(QTextFormat::BlockCodeFence);
+            const int from = fragment.position() - block.position();
+            for (int i = from; i < from + fragment.length(); ++i)
+                if (const Mark *mark = find(text[i]); mark && mark->tag)
+                    changes.push_back({block.position() + i, 1,
+                                       codeBlock ? mark->written : QString(mark->written).replace(u'\n', u' '),
+                                       fragment.charFormat()});
+        });
     }
 
     void restore(QTextDocument &doc) const
@@ -157,7 +199,7 @@ public:
                 const int from = fragment.position() - block.position();
                 for (int i = from; i < from + fragment.length(); ++i) {
                     const Mark *mark = find(text[i]);
-                    if (!mark || mark->shown.isEmpty() == linked)
+                    if (!mark || mark->tag || mark->shown.isEmpty() == linked)
                         continue;
                     const bool asRead = linked && code && QStringView(text).sliced(i + 1).startsWith(mark->shown);
                     const QString with = linked ? (asRead ? mark->written : QString())
@@ -199,8 +241,9 @@ private:
         QString written; // in the source
         QString shown;   // a linked image: what md4c reads after the marker
         QString meant;   // an escape: the bracket
+        bool tag = false;
     };
-    QChar markerFor(const QString &written, const QString &shown, const QString &meant)
+    QChar markerFor(const QString &written, const QString &shown, const QString &meant, bool tag = false)
     {
         if (const auto known = m_byWritten.constFind(written); known != m_byWritten.cend())
             return m_marks[*known].marker;
@@ -210,7 +253,7 @@ private:
             return {};
         m_byMarker[m_next - kFirst] = int(m_marks.size());
         m_byWritten.insert(written, int(m_marks.size()));
-        m_marks.push_back({QChar(m_next++), written, shown, meant});
+        m_marks.push_back({QChar(m_next++), written, shown, meant, tag});
         return m_marks.back().marker;
     }
     const Mark *find(QChar c) const
@@ -620,6 +663,7 @@ QString WhatsNew::render(const QString &markdown, const QColor &muted, const QCo
     // at each edit (a long block took seconds).
     QTextCursor edits(&doc);
     edits.beginEditBlock();
+    marks.restoreTags(doc);
     dropHtml(doc);
     linkUrls(doc);
     // Images after the raw HTML went (an alt's escaped "<b>" is text), last
