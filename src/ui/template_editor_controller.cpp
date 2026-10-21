@@ -418,6 +418,8 @@ void TemplateEditorController::refresh()
         m_previewSnapshotKey.clear(); // a reloaded script may write otherwise
     if (s->revision() != m_seenRevision || becameReady) {
         m_seenRevision = s->revision();
+        if (s->revision() != m_applyRevision)
+            m_lastApply.clear(); // an Undo or an edit since Apply
         schedulePreview();
     }
     emit changed();
@@ -961,6 +963,8 @@ void TemplateEditorController::applied(const std::string &report)
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
     takeBaseline();
     trust(templateLines(), sourceFields()); // the user ran them
+    if (const auto *ss = session())
+        m_applyRevision = ss->revision();
     // A file's unmarked Lines are marked now; an Undo that brings them back
     // matches again.
     m_replaced.clear();

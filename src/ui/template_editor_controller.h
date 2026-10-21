@@ -294,6 +294,7 @@ private:
     bool m_previewOnVideo = true;
     const application::EditSession *m_seenSession = nullptr;
     std::uint64_t m_seenRevision = 0;
+    std::uint64_t m_applyRevision = 0; // what the last Apply left
     std::optional<core::LineId> m_current;
     std::optional<Pending> m_pending;
     QTimer m_previewTimer, m_commitTimer;

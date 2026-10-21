@@ -1065,6 +1065,25 @@ private slots:
         QVERIFY(std::u8string_view(l->translation).ends_with(u8"{\\bord4}{\\bord5}"));
     }
 
+    // Apply's summary is of the Document Apply left: an Undo or another
+    // edit after it takes it away.
+    void anUndoneApplyLeavesNoSummary()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
+        QVERIFY(editor->apply(false));
+        editor->applied(templater->report);
+        editor->refresh();
+        QVERIFY(!editor->lastApply().isEmpty());
+        editor->refresh();
+        QVERIFY(!editor->lastApply().isEmpty());
+        QVERIFY(session->undo());
+        editor->refresh();
+        QVERIFY(editor->lastApply().isEmpty());
+    }
+
     void newPutsATemplateAboveTheFirstKaraokeLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));
