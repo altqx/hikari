@@ -430,6 +430,8 @@ public:
     Q_INVOKABLE int removeAutosavesOlderThan(const QDate &date);
     // Writes the editing target's recovery now (the autosave timer's work; tests).
     bool autosaveNow();
+    // Whether `document` waits for its autosave (tests).
+    bool autosavePending(application::DocumentId document) const;
     // G4: "Split lines": "videoTime" (GRID_SPLIT_BY_VIDEO_TIME) or "frames"
     // (GRID_SPLIT_BY_FRAME), against the open video's timebase.
     Q_INVOKABLE bool splitLines(const QString &kind);
@@ -1220,7 +1222,7 @@ private:
     QString m_recoveryDir;
     QString m_sessionId;
     std::map<std::uint64_t, QTimer *> m_autosaveTimers;
-    void scheduleAutosave();
+    void scheduleAutosave(std::optional<application::DocumentId> document = std::nullopt);
     bool autosave(application::DocumentId document);
     void discardRecovery(application::DocumentId document);
     std::string recoveryKey(application::DocumentId document) const;

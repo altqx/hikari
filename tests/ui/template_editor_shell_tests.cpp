@@ -141,6 +141,8 @@ private slots:
         app::Application::Options options;
         options.settingsFile = dir.filePath(QStringLiteral("hikari.ini"));
         options.playbackAudio = false;
+        if (QTest::currentTestFunction() == QByteArrayLiteral("aTemplateTypedBeforeATabChangeIsAutosaved"))
+            options.recoveryDir = dir.filePath(QStringLiteral("Recovery"));
         application = new app::Application(options);
         // No dictionary here: legacy's notice would pop up over the panel.
         application->settingsStore()->setValue(QStringLiteral("editor.spellchecker"), false);
@@ -269,6 +271,22 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(!editor().text().isEmpty(), 20'000);
         editor().setText(editor().text() + QStringLiteral("{\\bord8}"));
         QCOMPARE(application->reviewCloseTab(0).size(), qsizetype(1));
+    }
+
+    // The template typed before another tab is chosen goes into its own
+    // Document, which then waits for its autosave as any edit does.
+    void aTemplateTypedBeforeATabChangeIsAutosaved()
+    {
+        QVERIFY(openSong("km-minimal.ass", false));
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        application->selectTab(1);
+        showPanel("templateDock");
+        QTRY_VERIFY_WITH_TIMEOUT(!editor().text().isEmpty(), 20'000);
+        const auto typed = *application->workspace().editingTarget();
+        QVERIFY(!application->autosavePending(typed));
+        editor().setText(editor().text() + QStringLiteral("{\\bord7}"));
+        application->selectTab(0);
+        QVERIFY(application->autosavePending(typed));
     }
 
     // The Line editor's own moves (Enter, Ctrl+D) take the preview to the

@@ -1126,7 +1126,8 @@ void TemplateEditorController::commit()
         emit documentEdited();
     } else {
         // Another tab's, while the views change to this one: they show it
-        // after.
+        // after, and it waits for its autosave.
+        emit otherDocumentEdited(change.document);
         QMetaObject::invokeMethod(this, &TemplateEditorController::documentEdited, Qt::QueuedConnection);
     }
     emit changed();

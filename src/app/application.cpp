@@ -587,6 +587,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // dirty too).
     m_files->setBeforeSave([this] { m_templateEditor->commit(); });
     connect(m_templateEditor.get(), &ui::TemplateEditorController::documentEdited, this, [this] { refreshViews(); });
+    connect(m_templateEditor.get(), &ui::TemplateEditorController::otherDocumentEdited, this,
+            [this](std::pair<std::uint64_t, std::uint64_t> document) {
+                scheduleAutosave(application::DocumentId{document.first});
+            });
     connect(m_templateEditor.get(), &ui::TemplateEditorController::videoChanged, this, [this] {
         if (m_videoShowsTemplate || m_templateEditor->videoPreview())
             showVideoSubtitles();
@@ -2984,11 +2988,11 @@ std::string Application::recoveryKey(application::DocumentId document) const
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
 }
 
-void Application::scheduleAutosave()
+void Application::scheduleAutosave(std::optional<application::DocumentId> document)
 {
     if (!m_recovery || !m_recovery->enabled())
         return;
-    const auto target = m_workspace.editingTarget();
+    const auto target = document ? document : m_workspace.editingTarget();
     auto *session = target ? m_files->session(*target) : nullptr;
     if (!session || !session->isDirty() || session->isReadOnly())
         return;
@@ -3003,6 +3007,12 @@ void Application::scheduleAutosave()
     }
     if (!timer->isActive())
         timer->start();
+}
+
+bool Application::autosavePending(application::DocumentId document) const
+{
+    const auto it = m_autosaveTimers.find(document.value);
+    return it != m_autosaveTimers.end() && it->second && it->second->isActive();
 }
 
 bool Application::autosaveNow()

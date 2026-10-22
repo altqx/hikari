@@ -232,6 +232,9 @@ signals:
     void valuesChanged();
     // The panel changed the Document: the views refresh.
     void documentEdited();
+    // The panel's edit went into another tab's Document (`document`), typed
+    // there before that tab was left.
+    void otherDocumentEdited(std::pair<std::uint64_t, std::uint64_t> document);
     // What the video draws changed.
     void videoChanged();
 
