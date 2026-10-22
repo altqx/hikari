@@ -1638,7 +1638,9 @@ void AllTagsTool::pointer(const Pointer &event, VisualHost &host)
     takeView(host.view());
     if (event.kind == Pointer::Kind::Leave || event.kind == Pointer::Kind::DoubleClick)
         return;
-    host.setPointerShape(PointerShape::SizeWE);
+    // The sideways pointer over the picture only (the bars keep the arrow).
+    host.setPointerShape(host.view().videoRect().contains(event.x, event.y) || m_drag ? PointerShape::SizeWE
+                                                                                     : PointerShape::Arrow);
     if (event.kind == Pointer::Kind::Wheel && event.wheelSteps != 0) {
         if (host.gesture())
             return;
