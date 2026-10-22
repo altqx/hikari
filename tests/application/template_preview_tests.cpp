@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <cstring>
 #include <limits>
 #include <string>
@@ -162,6 +163,28 @@ TEST_F(TemplatePreview, ATranslatedTemplatesTextStandsForItsTranslation)
     ASSERT_EQ(s->dialogues.size(), 6u);
     EXPECT_EQ(s->dialogues[1].text, "{\\pos(2,2)}");
     EXPECT_EQ(s->dialogues[1].translation, "{\\pos($x,$y)}") << "the original";
+}
+
+// A `template line karaoke` is a template and a karaoke Line at once: as
+// the source it runs with the text not yet in the Document too, and its
+// generated Lines are matched to it.
+TEST_F(TemplatePreview, ATemplateThatIsAlsoAKaraokeLineIsBoth)
+{
+    ASSERT_TRUE(doc.editLine(ids[9], [](core::LineRecord &l) { l.effect = u8"template line karaoke"; }));
+    ASSERT_TRUE(templateKindOf(line(9)) && isKaraokeLine(line(9)));
+    const auto s = templatePreviewSnapshot(doc, ids[9], {{ids[9], u8"{\\bord2}"}});
+    ASSERT_TRUE(s);
+    const auto at = std::ranges::find_if(s->dialogues, [&](const auto &d) { return d.id == ids[9].value; });
+    ASSERT_NE(at, s->dialogues.end());
+    EXPECT_EQ(at->text, "{\\bord2}");
+    EXPECT_EQ(std::ranges::count_if(s->dialogues, [&](const auto &d) { return d.id == ids[9].value; }), 1);
+    const auto owners = templateOwnersSnapshot(doc);
+    ASSERT_TRUE(owners);
+    const int number = static_cast<int>(std::ranges::find_if(owners->dialogues, [&](const auto &d) {
+                                            return d.id == ids[9].value;
+                                        }) - owners->dialogues.begin()) +
+                       static_cast<int>(owners->info.size() + owners->styles.size()) + 1;
+    EXPECT_TRUE(std::ranges::find(owners->selected, number) != owners->selected.end()) << "selected for the matching run";
 }
 
 // A file's unmarked generated Lines go to the karaoke Lines that give them

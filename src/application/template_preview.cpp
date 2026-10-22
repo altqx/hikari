@@ -109,7 +109,7 @@ std::optional<MacroSnapshot> templateOwnersSnapshot(const core::Document &doc)
     plain.removeLinesIf([](const core::LineRecord &l) { return isGeneratedLine(l); });
     Selection all;
     for (const auto *l : plain.lines())
-        if (isKaraokeLine(*l) && !templateKindOf(*l)) {
+        if (isKaraokeLine(*l)) { // a `template line karaoke` too
             all.selected.insert(l->id);
             if (!all.active)
                 all.active = l->id;
@@ -158,22 +158,26 @@ std::optional<MacroSnapshot> templatePreviewSnapshot(const core::Document &doc, 
     MacroSnapshot s = macroSnapshotOf(doc, Selection{});
     s.dialogues.clear();
     const int offset = static_cast<int>(s.info.size() + s.styles.size()) + 1;
+    // A template with its text not yet in the Document (a `template line
+    // karaoke` source too).
+    const auto withText = [&](const core::LineRecord &l) {
+        const auto text = texts.find(l.id);
+        if (text == texts.end())
+            return macroLineOf(l);
+        core::LineRecord edited = l;
+        // In TLMode the script reads the translation (macroLineOf).
+        (edited.translation.empty() ? edited.text : edited.translation) = text->second;
+        return macroLineOf(edited);
+    };
     bool found = false;
     for (const auto *l : doc.lines()) {
         if (l->id == source) {
             found = true;
             s.active = offset + static_cast<int>(s.dialogues.size());
             s.selected = {s.active};
-            s.dialogues.push_back(macroLineOf(*l));
+            s.dialogues.push_back(withText(*l));
         } else if (templateKindOf(*l)) {
-            if (const auto text = texts.find(l->id); text != texts.end()) {
-                core::LineRecord edited = *l;
-                // In TLMode the script reads the translation (macroLineOf).
-                (edited.translation.empty() ? edited.text : edited.translation) = text->second;
-                s.dialogues.push_back(macroLineOf(edited));
-            } else {
-                s.dialogues.push_back(macroLineOf(*l));
-            }
+            s.dialogues.push_back(withText(*l));
         } else if (!found && !isGeneratedLine(*l)) {
             s.dialogues.push_back(templatePlaceholder()); // $li as a whole run gives it
         }
