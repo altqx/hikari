@@ -695,6 +695,11 @@ private slots:
         QVERIFY2(wrapped.contains(QStringLiteral("Text inside more z")), qPrintable(wrapped));
         QVERIFY(!wrapped.contains(QStringLiteral("class=")));
         QVERIFY(!wrapped.contains(QStringLiteral("title=")));
+        // Escaped, it is text; after an escaped backslash it is a tag.
+        const QString wrappedEscaped = copy->whatsNew->render(
+            QStringLiteral("Use \\<div\nclass=x> literally, not \\\\<span\ntitle=y>this</span>"), muted, link, code);
+        QVERIFY2(wrappedEscaped.contains(QStringLiteral("Use &lt;div class=x&gt; literally, not \\this")),
+                 qPrintable(wrappedEscaped));
         // In code such a tag stays as written; a line opening a quote ends it.
         const QString wrappedCode = copy->whatsNew->render(
             QStringLiteral("```\n<div\nclass=a>\n```\n\nUse `<span\ntitle=b>` here\n\nSee <q\n> quoted"), muted, link,

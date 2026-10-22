@@ -102,7 +102,11 @@ public:
         for (auto m = tagOverLines.globalMatch(markdown); m.hasNext();) {
             const QRegularExpressionMatch found = m.next();
             const QString written = found.captured();
-            if (!written.contains(u'\n') || notInTag.match(written).hasMatch())
+            // After an odd run of backslashes the "<" is escaped: text.
+            qsizetype slashes = 0;
+            while (found.capturedStart() - slashes > 0 && markdown[found.capturedStart() - slashes - 1] == u'\\')
+                ++slashes;
+            if (slashes % 2 || !written.contains(u'\n') || notInTag.match(written).hasMatch())
                 continue;
             const QChar marker = markerFor(written, QString(), QString(), true);
             if (marker.isNull())
