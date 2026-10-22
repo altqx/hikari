@@ -2,7 +2,8 @@
 // stamped "HH:MM:SS" (legacy LogHandler at 20d647c4); a silent message only
 // goes into the Log, a notice also asks for a toast; the panel's entries
 // filter by severity and text; a toast's Details marks its entry and shows
-// it whatever the filters; other threads are published here.
+// it whatever the filters; notices before the toasts are given again;
+// other threads are published here.
 
 #include "log_controller.h"
 
@@ -84,6 +85,26 @@ private slots:
         log.reveal(0);
         QCOMPARE(log.marked(), 0);
         QCOMPARE(revealed.size(), 2);
+    }
+
+    // Notices of the start come before Main's toasts: kept (the last ten)
+    // and given again once the toasts ask.
+    void noticesBeforeTheToastsAreGivenAgain()
+    {
+        LogController log;
+        for (int i = 1; i <= 12; ++i)
+            log.notice(LogController::Warning, QStringLiteral("Hotkeys"), QStringLiteral("retired %1").arg(i));
+        QSignalSpy noticed(&log, &LogController::noticed);
+        log.notice(LogController::Info, QStringLiteral("Hotkeys"), QStringLiteral("connected"));
+        QCOMPARE(noticed.size(), 1);
+        log.replayNotices();
+        QCOMPARE(noticed.size(), 11);
+        QCOMPARE(noticed[1][0].toInt(), 3);
+        QCOMPARE(noticed[1][3].toString(), QStringLiteral("retired 3"));
+        QCOMPARE(noticed[10][3].toString(), QStringLiteral("retired 12"));
+        log.replayNotices();
+        QCOMPARE(noticed.size(), 11);
+        QCOMPARE(log.warningCount(), 12);
     }
 
     void messagesFromOtherThreadsArePublishedHere()

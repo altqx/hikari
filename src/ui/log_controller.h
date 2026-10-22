@@ -98,6 +98,10 @@ public:
     // HikariLog: into the Log, and a toast (`noticed`).
     Q_INVOKABLE void notice(hikari::ui::LogController::Severity severity, const QString &title, const QString &text,
                             const QString &details = {});
+    // The notices given before anything took `noticed` (those of the start,
+    // before Main's toasts are made), given again; the toasts call it once
+    // connected.
+    Q_INVOKABLE void replayNotices();
     // A toast's Details, or "N more notices" (id 0): marks the entry, shows
     // it whatever the filters, and asks for the panel (`revealRequested`).
     Q_INVOKABLE void reveal(int id);
@@ -133,6 +137,8 @@ private:
     LogEntries *m_entries;
     int m_counts[3] = {0, 0, 0};
     int m_marked = 0;
+    // Entries noticed with nothing connected (the last few).
+    std::vector<int> m_unshown;
     std::function<QString()> m_clock;
 };
 

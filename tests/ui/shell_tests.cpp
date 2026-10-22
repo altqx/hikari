@@ -2758,7 +2758,15 @@ private slots:
         const int id = log.infoCount() + log.warningCount() + log.errorCount();
         QCOMPARE(log.marked(), id);
         QVERIFY(log.entries()->showErrors());
-        QTRY_VERIFY(partNamed(item<QQuickItem>("logPanel"), qPrintable(QStringLiteral("logEntry_%1").arg(id))));
+        QQuickItem *entry = nullptr;
+        QTRY_VERIFY((entry = qobject_cast<QQuickItem *>(
+                         partNamed(item<QQuickItem>("logPanel"), qPrintable(QStringLiteral("logEntry_%1").arg(id))))));
+        // The title is bold, not markup shown as text.
+        auto *entryText = partNamed(entry, "logEntryText");
+        QString shown;
+        QVERIFY(QMetaObject::invokeMethod(entryText, "getText", Q_RETURN_ARG(QString, shown), Q_ARG(int, 0),
+                                          Q_ARG(int, entryText->property("length").toInt())));
+        QCOMPARE(shown, QStringLiteral("Save nt1 could not be saved."));
         QVERIFY(log.history().contains(QStringLiteral("Save: nt1 could not be saved.\n    disk full\n")));
         // File > Log toggles the panel.
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("logMenuItem"));
@@ -2809,10 +2817,6 @@ private slots:
         };
         window->resize(1280, 800);
         QVERIFY(application->openFile(episode));
-        // The Search tool's message box comes with its panel.
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
-        QTRY_VERIFY(item<QObject>("searchTool"));
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "close"));
         auto *stack = item<QObject>("toastStack");
         stack->setProperty("fadeAfter", 600000);
         // Each message box: its host, then PK1's ask options.
@@ -2879,6 +2883,12 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(saveBox, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!saveBox->isVisible());
             for (const auto &[host, part, options] : boxes) {
+                // The Search tool's message box comes with its panel.
+                const bool search = qstrcmp(host, "findMessages") == 0;
+                if (search) {
+                    QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
+                    QTRY_VERIFY(named(host));
+                }
                 QObject *found = named(host);
                 QVERIFY2(found, host);
                 QVERIFY(QMetaObject::invokeMethod(found, "ask", Q_ARG(QVariant, options), Q_ARG(QVariant, QVariant())));
@@ -2889,6 +2899,8 @@ private slots:
                 save(shown, QStringLiteral("box-") + part + QLatin1Char('-') + code);
                 QVERIFY(QMetaObject::invokeMethod(shown, "answer", Q_ARG(QVariant, shown->property("choices").toList().value(0).toMap().value(QStringLiteral("id")))));
                 QTRY_VERIFY(!shown->isVisible());
+                if (search)
+                    QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "close"));
             }
         }
     }
@@ -24849,6 +24861,8 @@ private slots:
         restartWithSettings(ini);
         QVERIFY(application->log().history().contains(QStringLiteral("Ctrl-Alt-B")));
         QVERIFY(application->log().history().contains(QStringLiteral("Open blank 2h30m audio")));
+        // NT1: given before the window was made, and a toast all the same.
+        QTRY_VERIFY(toastWith(QStringLiteral("Ctrl-Alt-B")));
         QCOMPARE(application->settingsStore()->list("shortcuts.hotkeys"), QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
     }
 

@@ -170,7 +170,13 @@ Pane {
                         height: parent.height
                         color: Theme.accent
                     }
-                    TapHandler { onTapped: list.currentIndex = row.index }
+                    // The list takes the keys (Ctrl+C copies the entry).
+                    TapHandler {
+                        onTapped: {
+                            list.currentIndex = row.index
+                            list.forceActiveFocus()
+                        }
+                    }
                     RowLayout {
                         id: rowLayout
                         anchors.left: parent.left
@@ -202,7 +208,7 @@ Pane {
                                 readOnly: true
                                 selectByMouse: true
                                 activeFocusOnPress: false
-                                textFormat: TextEdit.StyledText
+                                textFormat: TextEdit.RichText
                                 wrapMode: TextEdit.Wrap
                                 color: Theme.text
                                 selectionColor: Theme.accent
@@ -223,6 +229,7 @@ Pane {
                                 selectedTextColor: Theme.onaccent
                                 font: Application.font
                                 leftPadding: 14
+                                textFormat: TextEdit.PlainText
                                 text: row.details
                                 Layout.fillWidth: true
                             }

@@ -24,7 +24,7 @@ QtObject {
             next()
     }
     function next() {
-        if (queue.length === 0)
+        if (asking || queue.length === 0)
             return
         const question = queue[0]
         queue = queue.slice(1)

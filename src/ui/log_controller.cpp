@@ -2,10 +2,18 @@
 
 #include <QClipboard>
 #include <QGuiApplication>
+#include <QMetaMethod>
 #include <QThread>
 #include <QTime>
 
+#include <utility>
+
 namespace hikari::ui {
+
+namespace {
+// More than the toasts can show at once; older ones stay in the Log only.
+constexpr size_t kUnshownKept = 10;
+}
 
 class LogController::Model : public QAbstractListModel {
 public:
@@ -151,7 +159,21 @@ void LogController::notice(Severity severity, const QString &title, const QStrin
         return;
     }
     const int id = add(severity, title, text, details);
+    if (!isSignalConnected(QMetaMethod::fromSignal(&LogController::noticed))) {
+        m_unshown.push_back(id);
+        if (m_unshown.size() > kUnshownKept)
+            m_unshown.erase(m_unshown.begin());
+        return;
+    }
     emit noticed(id, severity, title, text, details);
+}
+
+void LogController::replayNotices()
+{
+    for (const int id : std::exchange(m_unshown, {})) {
+        const Entry &entry = m_model->entries[size_t(id - 1)];
+        emit noticed(id, entry.severity, entry.title, entry.text, entry.details);
+    }
 }
 
 void LogController::reveal(int id)

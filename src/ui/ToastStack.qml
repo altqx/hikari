@@ -13,6 +13,7 @@ pragma Translator: "HikariSub.MainWindow"
 // Every notice is an entry of the Log (LogController::notice, which C++
 // calls directly); the stack shows what the Log's `noticed` gives it. With
 // "Show notices as toasts" off (notices.toasts) they go only to the Log.
+// Those given before the stack was made show when it is.
 //
 // post(severity, title, text, options): severity "info", "warning" or
 // "error"; title the command that gave it; options.details, more lines for
@@ -73,6 +74,8 @@ Item {
             stack.lastShown = stack.show(id, severity, title, text, details, stack.pendingActions)
         }
     }
+    // Notices of the start (a profile's retired hotkeys) came before the stack.
+    Component.onCompleted: if (log) log.replayNotices()
     function show(entry, level, title, text, details, actions) {
         if (!toasts)
             return 0

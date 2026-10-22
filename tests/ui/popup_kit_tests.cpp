@@ -6,7 +6,8 @@
 // kit says: a popover keeps on Enter and a press outside and reverts on
 // Esc; a message box's buttons are named for what they do, a destructive
 // one never the default; a fourth toast drops the oldest information or
-// folds the oldest warning.
+// folds the oldest warning; the message host (NT1) asks one question at a
+// time.
 
 #include "log_controller.h"
 #include "settings_store.h"
@@ -52,6 +53,7 @@ Window {
     Button { id: elsewhere; objectName: "elsewhere"; x: 600; y: 500; text: "Elsewhere" }
 
     MessageBox { id: box; settings: root.settings }
+    MessageHost { id: host; settings: root.settings }
 
     Popover {
         id: popover
@@ -270,6 +272,27 @@ private slots:
         QVERIFY(ok->mapToScene(QPointF(0, ok->height())).y() <= box->height());
         QTest::keyClick(box, Qt::Key_Escape);
         QTRY_VERIFY(!box->isVisible());
+    }
+
+    // NT1: the host asks one question at a time. An answer that asks again
+    // while another waits shows the waiting one; the new one comes after.
+    void messageHostAsksOneAtATime()
+    {
+        run(QStringLiteral(
+            "host.ask({ title: 'A', text: 'first' }, id => { root.note('A'); host.ask({ title: 'C', text: 'third' }, () => root.note('C')) });"
+            "host.ask({ title: 'B', text: 'second' }, () => root.note('B'))"));
+        QQuickWindow *box = windowOf("host.box");
+        QVERIFY(box);
+        for (const QString title : {QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}) {
+            QTRY_VERIFY(box->isVisible());
+            QVERIFY(QTest::qWaitForWindowFocused(box));
+            QCOMPARE(box->title(), title);
+            QTest::qWait(50); // a stray advance would have replaced it by now
+            QCOMPARE(box->title(), title);
+            QTest::keyClick(box, Qt::Key_Return);
+            QTRY_COMPARE(notes().size(), title == QLatin1String("A") ? 1 : title == QLatin1String("B") ? 2 : 3);
+        }
+        QCOMPARE(notes(), (QStringList{QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}));
     }
 
     void popoverKeepsOnEnterAndOutsideAndRevertsOnEsc()
