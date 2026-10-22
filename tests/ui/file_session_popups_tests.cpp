@@ -6,7 +6,9 @@
 
 #include "hikari/app/application.h"
 #include "docking.h"
+#include "theme.h"
 
+#include <QDateTime>
 #include <QDir>
 #include <QFile>
 #include <QQmlApplicationEngine>
@@ -286,6 +288,133 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("startupRestore"), "clicked"));
         QTRY_COMPARE(titles(*application), QStringList{QStringLiteral("last.ass")});
         QTRY_VERIFY(!bar->property("visible").toBool());
+    }
+
+    // The popups in the four themes, for review: written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (pu1-<part>-<theme>.png).
+    void screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        start();
+        window->resize(1280, 760);
+        auto restore = qScopeGuard([] { ui::theme::endPreview(); });
+        QObject *offer = named("startupBar")->property("offer").value<QObject *>();
+        QVERIFY(offer);
+        const auto shotOf = [](QQuickWindow *w, const QRect &part = {}) {
+            QTest::qWait(400); // laid out and painted
+            const QImage image = w->grabWindow();
+            return part.isNull() ? image : image.copy(part & QRect(QPoint(), image.size()));
+        };
+        const auto offerAs = [&](const char *kind) {
+            offer->setProperty("names", QStringList{QStringLiteral("Episode 03.ass"), QStringLiteral("Signs.ass")});
+            offer->setProperty("autosaveCount", 1);
+            offer->setProperty("restorable", true);
+            offer->setProperty("kind", QLatin1String(kind));
+        };
+        const QString d = QDir::fromNativeSeparators(dir.filePath(QStringLiteral("shots")));
+        // Home's recent files, as after some work.
+        QVERIFY(application->openFile(writeAss(d + QStringLiteral("/Signs.ass"), "mine")));
+        QVERIFY(application->openFile(writeAss(d + QStringLiteral("/Episode 03.ass"), "e")));
+        QVERIFY(application->reviewClose(QStringLiteral("all")).isEmpty());
+        application->finishClose();
+        QTRY_VERIFY(application->home());
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            ui::theme::preview({{QStringLiteral("appearance.theme"), theme}, {QStringLiteral("appearance.followSystem"), false}});
+            const auto save = [&](const char *part, const QImage &image) {
+                QVERIFY(image.save(out + QStringLiteral("/pu1-") + QLatin1String(part) + QLatin1Char('-') + theme + QStringLiteral(".png")));
+            };
+            // Home: the crash card and the Ask card.
+            QTRY_VERIFY(application->home());
+            offerAs("crash");
+            save("home-crash", shotOf(window, QRect(0, 0, 1280, 420)));
+            offerAs("ask");
+            save("home-ask", shotOf(window, QRect(0, 0, 1280, 420)));
+            offer->setProperty("kind", QString());
+            // A Document: the startup bar, changed on disk, a restore's missing video.
+            const QString path = writeAss(d + QStringLiteral("/Signs.ass"), "mine");
+            QVERIFY(application->openFile(path));
+            offerAs("crash");
+            offer->setProperty("keepWithDocuments", true);
+            changeOnDisk(path, "theirs");
+            QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
+            application->duplicateLines();
+            QTRY_VERIFY(shown("diskChangeBar") && shown("startupBar"));
+            save("bars", shotOf(window, QRect(0, 0, 1280, 260)));
+            offer->setProperty("kind", QString());
+            QVERIFY(QMetaObject::invokeMethod(named("reloadNo"), "clicked"));
+            // One Document with unsaved work: the message box.
+            window->close();
+            QTRY_VERIFY(named("closeQuestion"));
+            auto *question = qobject_cast<QQuickWindow *>(named("closeQuestion"));
+            QVERIFY(QTest::qWaitForWindowExposed(question));
+            save("unsaved-one", shotOf(question));
+            QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!question->isVisible());
+            // Several: the Unsaved changes window, one row Untitled.
+            QVERIFY(application->openFile(writeAss(d + QStringLiteral("/Episode 03.ass"), "e")));
+            application->selectTab(1);
+            application->duplicateLines();
+            application->addPage();
+            application->duplicateLines();
+            window->close();
+            QTRY_VERIFY(named("closeReview"));
+            auto *review = qobject_cast<QQuickWindow *>(named("closeReview"));
+            QVERIFY(QTest::qWaitForWindowExposed(review));
+            QVERIFY(QMetaObject::invokeMethod(named("closeDiscard1"), "clicked"));
+            save("unsaved-window", shotOf(review));
+            QVERIFY(QMetaObject::invokeMethod(named("closeCancel"), "clicked"));
+            QTRY_VERIFY(!review->isVisible());
+            // Close all tabs.
+            QVERIFY(QMetaObject::invokeMethod(named("tabCommands"), "confirmCloseAll"));
+            QTRY_VERIFY(named("closeAllPrompt"));
+            auto *closeAll = qobject_cast<QQuickWindow *>(named("closeAllPrompt"));
+            QVERIFY(QTest::qWaitForWindowExposed(closeAll));
+            save("close-all", shotOf(closeAll));
+            QVERIFY(QMetaObject::invokeMethod(closeAll, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!closeAll->isVisible());
+            // The Autosaves window, with Delete older than… open.
+            QObject *autosaves = named("autosaves");
+            QVERIFY(QMetaObject::invokeMethod(autosaves, "show", Q_ARG(QVariant, false)));
+            const QDateTime now = QDateTime::currentDateTime();
+            const auto row = [](const char *kind, const char *name, const QString &path, const QDateTime &when, int versions) {
+                QVariantList list;
+                for (int i = 0; i < versions; ++i)
+                    list << QVariantMap{{QStringLiteral("label"), when.addSecs(-600 * i).toString(QStringLiteral("HH:mm"))}};
+                return QVariantMap{{QStringLiteral("kind"), QLatin1String(kind)}, {QStringLiteral("key"), QLatin1String(name)},
+                                   {QStringLiteral("name"), QLatin1String(name)}, {QStringLiteral("path"), path},
+                                   {QStringLiteral("when"), when}, {QStringLiteral("versions"), list}};
+            };
+            autosaves->setProperty("entries", QVariantList{
+                row("bundle", "Episode 03.ass", QStringLiteral("~/subs/show/Episode 03.ass"), now.addSecs(-1200), 3),
+                row("bundle", "Untitled", QString(), now.addDays(-1), 1),
+                row("bundle", "Signs.ass", QStringLiteral("~/subs/show/Signs.ass"), now.addDays(-12), 2),
+                row("legacy", "Episode 02.ass", QString(), now.addDays(-40), 4)});
+            QTRY_VERIFY(named("autosavesWindow"));
+            auto *autosavesWindow = qobject_cast<QQuickWindow *>(named("autosavesWindow"));
+            QVERIFY(QTest::qWaitForWindowExposed(autosavesWindow));
+            save("autosaves", shotOf(autosavesWindow));
+            QVERIFY(QMetaObject::invokeMethod(named("autosavesDeleteOlder"), "clicked"));
+            QTRY_VERIFY(named("autosavesDeleteOlderPopover")->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(named("olderDate"), "setDate", Q_ARG(QVariant, now.addDays(-7))));
+            save("autosaves-delete-older", shotOf(autosavesWindow));
+            QVERIFY(QMetaObject::invokeMethod(autosavesWindow, "reject"));
+            QTRY_VERIFY(!autosavesWindow->isVisible());
+            // Back to Home for the next theme.
+            QVariantList discard;
+            for (const QVariant &r : application->reviewClose(QStringLiteral("all")))
+                discard << QVariantMap{{QStringLiteral("id"), r.toMap().value(QStringLiteral("id"))},
+                                       {QStringLiteral("save"), false},
+                                       {QStringLiteral("path"), QString()}};
+            if (discard.isEmpty())
+                application->finishClose();
+            else
+                application->resolveClose(discard);
+            QTRY_VERIFY(application->home());
+        }
     }
 };
 
