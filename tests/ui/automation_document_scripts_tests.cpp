@@ -197,8 +197,10 @@ private slots:
         QSignalSpy notices(&app->automation(), &app::AutomationShell::notice);
         app->automation().runLastLoadedScript();
         QCOMPARE(notices.size(), 1);
-        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("Info"));
-        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("This subtitle file does not have any scripts added"));
+        // NT1: a toast, titled with the command.
+        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("info"));
+        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Run the last loaded script"));
+        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("This subtitle file does not have any scripts added"));
         // Every script missing: the same.
         QVERIFY(!open("gone.ass", "|nothing.lua").isEmpty());
         app->automation().runLastLoadedScript();
@@ -217,22 +219,34 @@ private slots:
         QVERIFY(!open("invalid.ass", "|" + QDir::toNativeSeparators(script).toUtf8()).isEmpty());
         QSignalSpy done(&app->automation(), &app::AutomationShell::runCompleted);
         QSignalSpy notices(&app->automation(), &app::AutomationShell::notice);
+        QSignalSpy toasts(&app->log(), &ui::LogController::noticed);
+        const int errorsBefore = app->log().errorCount();
         const auto steps = session().historySize();
         app->automation().runLastLoadedScript();
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
         QVERIFY(!done.first().at(0).toBool());
         QCOMPARE(notices.size(), 1);
-        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("Error"));
-        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Validation Lua script 'invalid.lua' failed"));
+        // NT1: a message box, the runtime error its Details (and in the Log).
+        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("error"));
+        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Run the last loaded script"));
+        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("Validation Lua script 'invalid.lua' failed"));
+        QVERIFY(notices.first().at(3).toString().contains(QStringLiteral("no way")));
         QVERIFY(app->log().history().contains(QStringLiteral("Runtime error in Lua macro validation function:")));
         QVERIFY(app->log().history().contains(QStringLiteral("no way")));
+        // An error of the Log (its filter finds it), with no toast: the box says it.
+        QCOMPARE(app->log().errorCount(), errorsBefore + 1);
+        QVERIFY(app->log().history().contains(QStringLiteral("Automation: Runtime error in Lua macro validation function:")));
+        QCOMPARE(toasts.size(), 0);
         QCOMPARE(firstText(), std::string("Gate"));
         QCOMPARE(session().historySize(), steps);
         QVERIFY(!session().isReadOnly());
-        // From the menu legacy says nothing (LuaCommand::RunScript).
+        // From the menu legacy says nothing (LuaCommand::RunScript) but logs
+        // the error (NT1: an error toast, from the Log).
+        const int errors = app->log().errorCount();
         app->automation().run(QDir::toNativeSeparators(script).toStdString(), 0);
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 2, 30'000);
         QCOMPARE(notices.size(), 1);
+        QCOMPARE(app->log().errorCount(), errors + 1);
         // AM1: the Automation panel's run status still says it failed.
         QCOMPARE(app->automation().lastOutcome(), QStringLiteral("invalid"));
         // A script hotkey says so (HikariSubFrame::OnRunScript,
@@ -244,8 +258,9 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 3, 30'000);
         QVERIFY(!done.last().at(0).toBool());
         QCOMPARE(notices.size(), 2);
-        QCOMPARE(notices.last().at(0).toString(), QStringLiteral("Error"));
-        QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Validation Lua script 'invalid.lua' failed"));
+        QCOMPARE(notices.last().at(0).toString(), QStringLiteral("error"));
+        QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Automation"));
+        QCOMPARE(notices.last().at(2).toString(), QStringLiteral("Validation Lua script 'invalid.lua' failed"));
         QCOMPARE(firstText(), std::string("Gate"));
         QCOMPARE(session().historySize(), steps);
     }
@@ -275,7 +290,8 @@ private slots:
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
         QVERIFY(!done.first().at(0).toBool());
         QCOMPARE(notices.size(), 1);
-        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Validation Lua script 'editing.lua' failed"));
+        QCOMPARE(notices.first().at(1).toString(), QStringLiteral("Run the last loaded script")); // NT1: the title
+        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("Validation Lua script 'editing.lua' failed"));
         app->automation().run(QDir::toNativeSeparators(script).toStdString(), 0);
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 2, 30'000);
         QVERIFY(!done.last().at(0).toBool());
@@ -410,8 +426,8 @@ private slots:
             QVERIFY(!done.last().at(0).toBool());
             QCOMPARE(taken(), expected);
             QCOMPARE(notices.size(), boxes);
-            QCOMPARE(notices.last().at(0).toString(), QStringLiteral("Error"));
-            QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Validation Lua script '%1' failed").arg(file));
+            QCOMPARE(notices.last().at(0).toString(), QStringLiteral("error"));
+            QCOMPARE(notices.last().at(2).toString(), QStringLiteral("Validation Lua script '%1' failed").arg(file));
             QCOMPARE(firstText(), std::string("main:Gate"));
             QCOMPARE(session().historySize(), changed);
             QVERIFY(!session().isReadOnly());
@@ -516,10 +532,10 @@ private slots:
         QSignalSpy editor(&app->automation(), &app::AutomationShell::chooseScriptEditor);
         app->automation().runLastLoadedScript();
         QTRY_COMPARE_WITH_TIMEOUT(notices.size(), 1, 30'000);
-        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("Error"));
-        const QString text = notices.first().at(1).toString();
-        QVERIFY2(text.startsWith(QStringLiteral("Error loading Lua script: broken.lua\n")), qPrintable(text));
-        QVERIFY(text.size() > QStringLiteral("Error loading Lua script: broken.lua\n").size());
+        // NT1: the load error is the box's Details.
+        QCOMPARE(notices.first().at(0).toString(), QStringLiteral("error"));
+        QCOMPARE(notices.first().at(2).toString(), QStringLiteral("Error loading Lua script: broken.lua"));
+        QVERIFY(!notices.first().at(3).toString().isEmpty());
         QCOMPARE(editor.size(), 1);
         QCOMPARE(editor.first().at(0).toString(), script);
         // A file that is no program: chosen and saved, but it does not start
@@ -532,8 +548,9 @@ private slots:
         const hikari::test::desktop::Started start{QDir::toNativeSeparators(notAProgram), {script}};
         QCOMPARE(hikari::test::desktop::started(), QList<hikari::test::desktop::Started>{start});
         QCOMPARE(notices.size(), 2);
-        QCOMPARE(notices.last().at(0).toString(), QStringLiteral("Automation error"));
-        QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Cannot start editor."));
+        QCOMPARE(notices.last().at(0).toString(), QStringLiteral("error"));
+        QCOMPARE(notices.last().at(1).toString(), QStringLiteral("Edit script"));
+        QCOMPARE(notices.last().at(2).toString(), QStringLiteral("Cannot start editor."));
         QCOMPARE(app->settingsStore()->text("automation.scriptEditor"), QDir::toNativeSeparators(notAProgram));
         // With an editor set, it is used without asking.
         app->automation().editScript(script);
@@ -909,14 +926,17 @@ void AutomationDocumentScriptsTests::replaysTheLegacyCapture()
             QVERIFY2(notices.size() - noticesBefore == (box ? 1 : 0),
                      qPrintable(where + QStringLiteral(": ") + QString::number(notices.size() - noticesBefore) +
                                 QStringLiteral(" notices, the last ") +
-                                (notices.isEmpty() ? QString() : notices.last().at(1).toString())));
+                                (notices.isEmpty() ? QString() : notices.last().at(2).toString())));
             if (box) {
-                QCOMPARE(notices.last().at(0).toString(), titles.contains(QStringLiteral("Info")) ? QStringLiteral("Info")
-                                                                                                  : QStringLiteral("Error"));
+                // NT1: legacy's "Info" box is a toast, its "Error" boxes
+                // message boxes; a load error's second line is the Details.
+                QCOMPARE(notices.last().at(0).toString(), titles.contains(QStringLiteral("Info")) ? QStringLiteral("info")
+                                                                                                  : QStringLiteral("error"));
                 const auto text = boxText.find(id);
                 QVERIFY2(text != boxText.end(), qPrintable(where + QStringLiteral(": no legacy box text")));
-                QVERIFY2(notices.last().at(1).toString().startsWith(text->second),
-                         qPrintable(where + QStringLiteral(": ") + notices.last().at(1).toString()));
+                const QString details = notices.last().at(3).toString();
+                const QString shown = notices.last().at(2).toString() + (details.isEmpty() ? QString() : QStringLiteral("\n") + details);
+                QVERIFY2(shown.startsWith(text->second), qPrintable(where + QStringLiteral(": ") + shown));
             }
             QCOMPARE(editor.size() - editorBefore, picker ? 1 : 0);
             if (titles.contains(QStringLiteral("Log window")))

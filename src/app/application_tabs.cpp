@@ -162,7 +162,8 @@ void Application::forgetTab(application::DocumentId document)
 {
     m_tabMedia.erase(document.value);
     m_workspaceLayout->forgetTab(document.value); // WS1
-    m_matroskaPaths.erase(document.value);
+    m_importPaths.erase(document.value);
+    m_lyricsImports.erase(document.value); // KA6
     m_originalColumns.erase(document.value); // E5: the tab's Grid goes with it
     m_translationDeclined.erase(document.value); // TM1
     m_offers.erase(document.value); // P9: its unanswered association question
@@ -280,8 +281,7 @@ std::optional<QByteArray> Application::fileArrangement(application::DocumentId d
     if (report) {
         const std::string *title = m_workspace.title(document);
         m_log->log(QCoreApplication::translate("HikariSub.Workspace", "The panel layout saved in %1 was not used because %2.")
-                       .arg(title ? qs(*title) : QString(), problem),
-                   true); // silent: the tab opens as any other
+                       .arg(title ? qs(*title) : QString(), problem)); // silent: the tab opens as any other
     }
     return std::nullopt;
 }
@@ -639,7 +639,8 @@ QVariantMap Application::reviewSession(const QUrl &file)
     auto session = application::parseSession(*text);
     if (!session) {
         const QString problem = QCoreApplication::translate("HikariSub.Session", "Session file is corrupt");
-        m_log->log(problem);
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Load session from file"),
+                      problem);
         return result(false, problem);
     }
     PendingSession pending;
@@ -798,7 +799,8 @@ bool Application::retryRestore(int row)
     const auto isTarget = [&] { return m_workspace.editingTarget() == entry.document; };
     const bool dummyAudio = entry.kind == QLatin1String("audio") && application::AudioBox::isDummyName(entry.path.toStdString());
     if (!isFile(entry.path) && !dummyAudio) {
-        m_log->log(QCoreApplication::translate("HikariSub.Session", "Could not find %1").arg(QDir::toNativeSeparators(entry.path)));
+        m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Session", "Restore session"),
+                      QCoreApplication::translate("HikariSub.Session", "Could not find %1").arg(QDir::toNativeSeparators(entry.path)));
         return false;
     }
     TabMedia &media = m_tabMedia[entry.document.value];
@@ -807,13 +809,15 @@ bool Application::retryRestore(int row)
         auto *placeholder = m_files->session(entry.document);
         const auto destination = m_files->destination(entry.document);
         if (!placeholder || placeholder->isDirty() || (destination && !destination->value.empty())) {
-            m_log->log(QCoreApplication::translate("HikariSub.Session", "The tab of %1 has other work now; open the file in a new tab.")
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Session", "Restore session"),
+                          QCoreApplication::translate("HikariSub.Session", "The tab of %1 has other work now; open the file in a new tab.")
                            .arg(QFileInfo(entry.path).fileName()));
             return false;
         }
         auto staged = m_files->stageOpen({QFileInfo(entry.path).absoluteFilePath().toStdString()});
         if (!staged) {
-            m_log->log(QCoreApplication::translate("HikariSub.Session", "Could not open %1; nothing was changed.")
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Session", "Restore session"),
+                          QCoreApplication::translate("HikariSub.Session", "Could not open %1; nothing was changed.")
                            .arg(QFileInfo(entry.path).fileName()));
             return false;
         }
@@ -862,7 +866,7 @@ bool Application::retryRestore(int row)
             media.keyframes = native;
             if (isTarget())
                 if (const QString problem = openKeyframes(QUrl::fromLocalFile(entry.path)); !problem.isEmpty())
-                    m_log->log(problem);
+                    m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
         }
     }
     refreshViews();

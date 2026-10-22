@@ -1,19 +1,22 @@
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.MainWindow"
-// PK1 (#301): toasts, the kit's notice that needs no answer (the OK-only
-// messages of legacy). They stack at the bottom right of the window they
-// are put in, the newest on top, three at most:
+// PK1 (#301), NT1 (#302): toasts, the kit's notice that needs no answer
+// (the OK-only messages of legacy, and the messages that popped its Log
+// window up). They stack at the bottom right of the window they are put
+// in, the newest on top, three at most:
 // * "info" fades after 5 seconds; the pointer over it holds it;
 // * "warning" and "error" stay until their × is pressed;
 // * a fourth makes the oldest information toast go, or, with three
 //   warnings showing, folds the oldest into a "1 more notice" line that
 //   opens the Log (it stays when the toasts showing are dismissed);
-// * Details (when the notice has more to say) opens the Log.
-// Every notice goes to the Log too (silently: the Log window does not pop
-// up). With "Show notices as toasts" off (notices.toasts) they go only to
-// the Log.
+// * Details (when the notice has more to say) opens the Log panel at it.
+// Every notice is an entry of the Log (LogController::notice, which C++
+// calls directly); the stack shows what the Log's `noticed` gives it. With
+// "Show notices as toasts" off (notices.toasts) they go only to the Log.
+// Those given before the stack was made show when it is.
 //
-// post(severity, title, text, options): options.details, more lines for
+// post(severity, title, text, options): severity "info", "warning" or
+// "error"; title the command that gave it; options.details, more lines for
 // the Log, which adds Details; options.actions, [{text, run}] buttons
 // beside it. Returns the toast's id (0: none shown).
 import QtQuick
@@ -26,9 +29,9 @@ Item {
     objectName: "toastStack"
     property LogController log: null
     property SettingsStore settings: null
-    // Opens the whole Log (default: the Log window).
-    property var openLog: () => { if (stack.log) stack.log.showAll() }
-    // Newest first: {id, severity, title, text, details, actions}.
+    // Opens the Log panel at entry `id` (0: none marked).
+    property var openLog: id => { if (stack.log) stack.log.reveal(id || 0) }
+    // Newest first: {id, entry (the Log's), severity, title, text, details, actions}.
     property var entries: []
     // Warnings folded into the "more" line.
     property int folded: 0
@@ -50,15 +53,34 @@ Item {
     width: implicitWidth
     height: implicitHeight
 
+    readonly property var severities: ["info", "warning", "error"]
+    // The actions of the notice being posted (they do not go to the Log).
+    property var pendingActions: []
+    property int lastShown: 0
     function post(severity, title, text, options) {
         const o = options || {}
-        const logged = [title, text, o.details].filter(t => t && t.length > 0).join("\n")
-        if (log)
-            log.log(logged, true)
+        const level = Math.max(0, severities.indexOf(severity || "info"))
+        if (!log)
+            return show(0, level, title, text, o.details, o.actions)
+        pendingActions = o.actions || []
+        lastShown = 0
+        log.notice(level, title || "", text || "", o.details || "") // shown by onNoticed
+        pendingActions = []
+        return lastShown
+    }
+    Connections {
+        target: stack.log
+        function onNoticed(id, severity, title, text, details) {
+            stack.lastShown = stack.show(id, severity, title, text, details, stack.pendingActions)
+        }
+    }
+    // Notices of the start (a profile's retired hotkeys) came before the stack.
+    Component.onCompleted: if (log) log.replayNotices()
+    function show(entry, level, title, text, details, actions) {
         if (!toasts)
             return 0
-        const entry = { id: nextId++, severity: severity || "info", title: title || "", text: text || "",
-                        details: o.details || "", actions: o.actions || [] }
+        const item = { id: nextId++, entry: entry, severity: severities[level] || "info", title: title || "",
+                       text: text || "", details: details || "", actions: actions || [] }
         let list = entries.slice()
         if (list.length >= maximum) {
             let oldest = -1
@@ -70,9 +92,9 @@ Item {
             }
             list.splice(oldest, 1)
         }
-        list.unshift(entry)
+        list.unshift(item)
         entries = list
-        return entry.id
+        return item.id
     }
     // The folded count stays: only the Log (or clear()) lets those go.
     function dismiss(id) {
@@ -156,8 +178,11 @@ Item {
                     ColumnLayout {
                         spacing: 3
                         Layout.fillWidth: true
+                        // Notices quote files (a lyrics excerpt): never
+                        // markup, which could fetch an <img> (KA6).
                         Label {
                             objectName: "toastTitle"
+                            textFormat: Text.PlainText
                             text: toast.modelData.title
                             font.weight: Font.DemiBold
                             wrapMode: Text.Wrap
@@ -166,6 +191,7 @@ Item {
                         Label {
                             objectName: "toastText"
                             visible: text.length > 0
+                            textFormat: Text.PlainText
                             text: toast.modelData.text
                             color: Theme.muted
                             wrapMode: Text.Wrap
@@ -181,7 +207,7 @@ Item {
                                 visible: toast.modelData.details.length > 0
                                 flat: true
                                 text: qsTr("Details")
-                                onClicked: stack.openLog()
+                                onClicked: stack.openLog(toast.modelData.entry)
                             }
                             Repeater {
                                 model: toast.modelData.actions
@@ -231,7 +257,7 @@ Item {
                     text: qsTr("Open the Log")
                     onClicked: {
                         stack.folded = 0
-                        stack.openLog()
+                        stack.openLog(0)
                     }
                 }
             }

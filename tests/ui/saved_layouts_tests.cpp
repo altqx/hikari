@@ -139,16 +139,10 @@ class SavedLayoutsTest : public QObject {
         QCoreApplication::processEvents();
     }
     QString switcherText() const { return named("layoutSwitcherLabel")->property("text").toString(); }
-    // A Document open in the first tab. No dictionary here: the spelling
-    // notice is closed.
+    // A Document open in the first tab (no dictionary here: a toast, NT1).
     void openEpisode()
     {
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("episode.ass")))));
-        QObject *spelling = named("spellingNotice");
-        if (spelling && QTest::qWaitFor([&] { return spelling->property("visible").toBool(); }, 2000)) {
-            QMetaObject::invokeMethod(spelling, "close");
-            QTRY_VERIFY(!spelling->property("visible").toBool());
-        }
     }
     // Save layout as… from View > Layout, typed into its dialog and saved.
     void saveAs(const QString &name)

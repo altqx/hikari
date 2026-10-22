@@ -96,8 +96,10 @@ public:
     Q_INVOKABLE void sortStyles(bool store);
     // kind: 0 to start, 1 up, 2 down, 3 to end. Returns the new rows.
     Q_INVOKABLE QVariantList moveStyles(bool store, const QVariantList &rows, int kind);
-    // OnCleanStyles: the legacy "Styles used:\n...\nStyles deleted:\n..." text.
-    Q_INVOKABLE QString cleanStyles();
+    // OnCleanStyles: {text, details}, the notice's (NT1): how many styles
+    // went and which, and legacy's "Styles used:\n...\nStyles deleted:\n..."
+    // (empty without a Document).
+    Q_INVOKABLE QVariantMap cleanStyles();
 
     // StylePreview: the editor's values over the checkered background.
     Q_INVOKABLE void renderPreview(const QVariantMap &values, int width, int height, const QString &text);

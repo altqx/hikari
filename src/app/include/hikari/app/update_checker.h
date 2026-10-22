@@ -71,7 +71,7 @@ public:
     void setStableOnly(bool on);
     bool autoInstall() const { return m_autoInstall; }
     void setAutoInstall(bool on);
-    bool checking() const { return m_run != nullptr; }
+    bool checking() const;
     QString version() const { return m_version; }
     QString versionLabel() const;
     bool installsUpdates() const;
@@ -99,6 +99,16 @@ public:
     Q_INVOKABLE void downloadOffer();
     // Reads the options again (after "Set default").
     void reload();
+    // SH3: reads the release list alone, for What's new: no update check,
+    // nothing reported but releasesRead, the next check's time unchanged. A
+    // check started meanwhile takes the read over; while one runs, its list
+    // is the one read (at once when the check is past it).
+    void readReleases();
+    // The list as last read (releasesRead(true)).
+    const std::vector<application::ReleaseEntry> &releases() const { return m_releases; }
+    // "Stable versions only" as a check applies it (an AUR install's channel).
+    bool stableOnlyApplied() const;
+    const UpdateFeed &feed() const { return m_feed; }
 
 signals:
     void optionsChanged();
@@ -108,12 +118,16 @@ signals:
     // `interactive` only "available" is reported. `offer` is "install",
     // "notify", "requirement" or "aur".
     void finished(const QString &outcome, const QVariantMap &release, bool interactive);
-    // A message for the user: the last update's failure, or a download's.
-    void notice(const QString &message);
+    // A message for the user: a download's failure, or (`atStart`) the last
+    // update's, which the installer left (NT1: titled "Install update").
+    void notice(const QString &message, bool atStart);
+    // SH3: the release list was read (by a check or readReleases()), or not.
+    void releasesRead(bool ok);
 
 private:
     struct Run;
     void check(bool interactive);
+    void start(bool listOnly, bool interactive);
     void requestPage(int page);
     void pageFinished();
     void walk();
@@ -141,6 +155,7 @@ private:
     QString m_offerVersion;
     application::UpdatePackage m_offerPackage;
     bool m_offerInstallable = false;
+    std::vector<application::ReleaseEntry> m_releases;
 };
 
 } // namespace hikari::app

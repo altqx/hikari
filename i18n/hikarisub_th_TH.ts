@@ -48,6 +48,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Pitch is kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>and</source>
+        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>change the speed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Output device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -245,6 +258,58 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Tap to time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold the key: releasing it leaves a gap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press the key: no gaps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to vocal onsets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1%</source>
+        <extracomment>A playback speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Calibrate latency…</source>
+        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -319,6 +384,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Speed: %1%</source>
+        <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Customise the audio panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -379,6 +449,26 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not applied: the Line cannot take these times as it is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every Line is tapped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid the Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
         <translation type="unfinished"></translation>
@@ -387,6 +477,101 @@ Output device: %2</source>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This Line is one syllable. Split it first, then tap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">เลิกทำ</translation>
+    </message>
+    <message>
+        <source>Esc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Space</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Calibrate tap latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on each beep.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>16 beeps at 100 BPM; the first four are practice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of 16 beeps</source>
+        <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your presses, in ms after each beep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
+        <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">นำไปใช้</translation>
     </message>
 </context>
 <context>
@@ -697,7 +882,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Info</source>
-        <translation>ข้อมูล</translation>
+        <translation type="vanished">ข้อมูล</translation>
     </message>
     <message>
         <source>This subtitle file does not have any scripts added</source>
@@ -705,7 +890,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Error</source>
-        <translation>ข้อผิดพลาด</translation>
+        <translation type="vanished">ข้อผิดพลาด</translation>
     </message>
     <message>
         <source>Error loading Lua script: %1
@@ -715,7 +900,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Automation error</source>
-        <translation>ข้อผิดพลาดของ Automation</translation>
+        <translation type="vanished">ข้อผิดพลาดของ Automation</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -1297,6 +1482,12 @@ Match the resolution to the video?
 in tag &apos;%3&apos;</source>
         <translation type="unfinished">ไม่สามารถปรับขนาดบรรทัด %1 ด้วยขนาด &apos;%2&apos; ในแท็ก &apos;%3&apos;</translation>
     </message>
+    <message numerus="yes">
+        <source>%n value(s) could not be scaled.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>This document can&apos;t be converted to that format.</source>
         <translation type="unfinished"></translation>
@@ -1392,7 +1583,7 @@ in tag &apos;%3&apos;</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
     </message>
     <message>
         <source>Chosen file is read only,
@@ -1449,6 +1640,10 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Word-timed lyrics (*.lrc *.ttml)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Videos with embedded subtitles (*.mkv *.ogm)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1485,6 +1680,62 @@ please save with different name or change file attribute.</source>
         <translation>ไม่มีชื่อ</translation>
     </message>
     <message>
+        <source>the text is not UTF-8</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; is not a time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the word at %1 starts before the word before it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the end %1 is earlier than the begin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the time %1 is outside the times of the element around it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&quot;%1&quot; has no time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>a line with word times can have only one line time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the XML is broken at &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 is not a TTML document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the elements are nested more than %1 deep at &quot;%2&quot;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it is too large for a lyrics file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>it has no timed lyrics</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not import %1: line %2: %3. Nothing was imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Could not import %1: %2. Nothing was imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose where to save the untitled document.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1502,6 +1753,10 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Could not open %1; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reload subtitles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1754,6 +2009,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>&amp;Add word &quot;%1&quot; to dictionary</source>
         <translation type="unfinished">&amp;เพิ่มคำว่า &quot;%1&quot; ไปยังพจนานุกรม</translation>
+    </message>
+    <message>
+        <source>Add word to dictionary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
@@ -2232,7 +2491,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Info</source>
-        <translation>ข้อมูล</translation>
+        <translation type="vanished">ข้อมูล</translation>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
@@ -3357,6 +3616,10 @@ Failed to copy %2 fonts.</source>
         <source>Remove missing files</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Since %1</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Hotkeys</name>
@@ -3510,6 +3773,103 @@ Failed to copy %2 fonts.</source>
     </message>
 </context>
 <context>
+    <name>HikariSub.Karaoke</name>
+    <message>
+        <source>Syllable %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unclosed syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A karaoke tag has no duration, or its override block is never closed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not read by the audio editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No karaoke tag&apos;s duration starts with a digit, as in \k50, so the audio editor splits the line anew</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Other syllables in the audio editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The audio editor splits at every \k tag and reads its number its own way, so a tag such as \keep, \kfo50 or \k(50) gives it syllables unlike playback&apos;s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllables don&apos;t match the line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The syllables last %1 s; the line lasts %2 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zero-length syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Syllable outside the line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No karaoke problems found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Karaoke problems</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Detail</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1: %2. %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 more problem not listed; fix these and check again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more problems not listed; fix these and check again</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Re-check</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">ปิด</translation>
+    </message>
+</context>
+<context>
     <name>HikariSub.MainWindow</name>
     <message>
         <source>%1 - HikariSub</source>
@@ -3613,7 +3973,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Show / Hide log window</source>
-        <translation>แสดง / ซ่อนหน้าต่างบันทึก</translation>
+        <translation type="vanished">แสดง / ซ่อนหน้าต่างบันทึก</translation>
     </message>
     <message>
         <source>Last session</source>
@@ -3944,6 +4304,14 @@ Failed to copy %2 fonts.</source>
         <translation>&amp;ตรวจหาอัปเดต</translation>
     </message>
     <message>
+        <source>Shows the release notes of the versions since the one you used before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What&apos;s &amp;new</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>&amp;About</source>
         <translation>&amp;เกี่ยวกับ</translation>
     </message>
@@ -4220,6 +4588,10 @@ Failed to copy %2 fonts.</source>
         <translation>เปิดเสียงจากวิดีโอ</translation>
     </message>
     <message>
+        <source>Install update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
         <translation type="vanished">เปิดเสียงเปล่าที่ยาวเป็นเวลา 2:30 ชั่วโมง</translation>
     </message>
@@ -4248,6 +4620,14 @@ Failed to copy %2 fonts.</source>
         <translation>แปลงจากรูปแบบหนึ่งเป็นอีกรูปแบบหนึ่ง</translation>
     </message>
     <message>
+        <source>Checks the karaoke syllables of every line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check karaoke</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Hide tags in the line editor</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4273,7 +4653,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Log window</source>
-        <translation>หน้าต่างบันทึก</translation>
+        <translation type="vanished">หน้าต่างบันทึก</translation>
     </message>
     <message>
         <source>Log</source>
@@ -4293,7 +4673,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Update</source>
-        <translation>อัปเดต</translation>
+        <translation type="vanished">อัปเดต</translation>
     </message>
     <message>
         <source>A new version is available</source>
@@ -4636,6 +5016,20 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Pre-release</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>And 1 earlier version: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>And %n earlier versions: %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Don&apos;t ask again</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4668,6 +5062,42 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>all release notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All release notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes since version %1, the one you used before.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fetching the release notes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot fetch the release notes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No release notes for this version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No release notes yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub tries again at the next start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub fetches the release notes only while “Check for updates automatically” is on.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Open the Log</source>
@@ -4767,6 +5197,42 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Today</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">ตัวกรอง</translation>
+    </message>
+    <message>
+        <source>Filter the Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">คัดลอก</translation>
+    </message>
+    <message>
+        <source>Copy the entries shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No entries match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing logged yet</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -5069,6 +5535,10 @@ when find results window is open</source>
     <message>
         <source>Set default</source>
         <translation>ตั้งเป็นค่าเริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>OK</source>
@@ -5708,7 +6178,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
     </message>
     <message>
         <source>Red</source>
@@ -6226,6 +6696,10 @@ If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</sou
         <translation>ตำแหน่งการค้นหาไม่ถูกต้อง</translation>
     </message>
     <message>
+        <source>Find in files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Confirmation</source>
         <translation>การยืนยัน</translation>
     </message>
@@ -6401,10 +6875,6 @@ cause it was edited.</source>
     <message>
         <source>Close</source>
         <translation>ปิด</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -6593,13 +7063,25 @@ Load the last session with the latest autosaved subtitles?</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
+    </message>
+    <message>
+        <source>Save session</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Chosen file is read only,
 please save with different name or change file attribute.</source>
         <translation>แฟ้มที่เลือกเป็นแบบอ่านอย่างเดียว
 โปรดบันทึกโดยใช้ชื่ออื่นหรือเปลี่ยนคุณสมบัติของแฟ้ม</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
     </message>
     <message>
         <source>Session entries not restored</source>
@@ -6668,6 +7150,10 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Session file is corrupt</source>
         <translation>แฟ้มเซสชันไม่ถูกต้อง</translation>
+    </message>
+    <message>
+        <source>Restore session</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not find %1</source>
@@ -6925,7 +7411,7 @@ in uppercase</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
     </message>
     <message>
         <source>Words added to dictionary</source>
@@ -7003,16 +7489,8 @@ Spell checking will be disabled</source>
 <context>
     <name>HikariSub.Styles</name>
     <message>
-        <source>Styles</source>
-        <translation type="unfinished">สไตล์</translation>
-    </message>
-    <message>
-        <source>Styles: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Status of deleted styles</source>
-        <translation>สถานะของสไตล์ที่ถูกลบ</translation>
+        <translation type="vanished">สถานะของสไตล์ที่ถูกลบ</translation>
     </message>
     <message>
         <source>Style manager</source>
@@ -7044,6 +7522,10 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7121,6 +7603,10 @@ Spell checking will be disabled</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Save style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -7519,6 +8005,16 @@ Spell checking will be disabled</source>
         <translation>ไม่มี</translation>
     </message>
     <message>
+        <source>No unused styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n style(s) deleted: %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Styles used:
 %1
 Styles deleted:
@@ -7527,6 +8023,18 @@ Styles deleted:
 %1
 สไตล์ที่ลบไป:
 %2</translation>
+    </message>
+    <message>
+        <source>Styles</source>
+        <translation type="unfinished">สไตล์</translation>
+    </message>
+    <message>
+        <source>Styles: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete unused styles</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Filter</source>
@@ -7574,10 +8082,6 @@ Styles deleted:
     </message>
     <message>
         <source>Apply to the selected lines: sets their style (Enter, or double-click a style)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>New style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8379,6 +8883,18 @@ after the end time in milliseconds</source>
         <translation>เลือกแฟ้มคำบรรยาย</translation>
     </message>
     <message>
+        <source>Translation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original text</source>
+        <translation type="unfinished">ข้อความต้นฉบับ</translation>
+    </message>
+    <message>
+        <source>Original text: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8477,6 +8993,10 @@ Foreign language text will be deleted.</source>
 ข้อความภาษาต่างประเทศจะถูกลบ</translation>
     </message>
     <message>
+        <source>Paste translation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8485,7 +9005,27 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not confirmed: marks the selected Lines for review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on Translation mode for this file?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -8689,7 +9229,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
     </message>
     <message>
         <source>All files (*)</source>
@@ -9326,7 +9866,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

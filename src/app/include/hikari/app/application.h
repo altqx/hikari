@@ -9,6 +9,7 @@
 #include "hikari/app/settings_import_store.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/update_checker.h"
+#include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
@@ -99,14 +100,12 @@ signals:
     // G56: a command was refused because it would break the group described
     // by `description` (0 when the break makes a new malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
-    // F3: the spelling options or the dictionary changed (marks are stale),
-    // and legacy's message boxes when the spell checker cannot start.
+    // F3: the spelling options or the dictionary changed (marks are stale);
+    // when the spell checker cannot start, legacy's message box is a toast
+    // (NT1).
     void spellingChanged();
-    void spellingNotice(const QString &message);
     // W1: the chosen player changed (video.playbackPlayer).
     void playbackPlayerChanged();
-    // W1: DirectShow could not open the video: legacy's warning box.
-    void playerNotice(const QString &message);
     // AV1: the route both audio paths follow changed.
     void audioOutputChanged();
     // F1: find and replace shows a legacy message box (kind: 0 message, 1
@@ -170,6 +169,9 @@ public:
         std::function<std::unique_ptr<application::AudioDevicesPort>()> makeAudioDevices;
         // P8: the release list the update check reads (tests: a file).
         UpdateFeed updateFeed = UpdateFeed::github();
+        // Tests: the version the update check and What's new take as this
+        // one's; empty: HIKARI_VERSION.
+        QString appVersion;
         // ADR 0019: the package kind, update cache and installers; the
         // default installs nothing (tests). The composition sets this process's.
         UpdateEnvironment updateEnvironment;
@@ -580,6 +582,17 @@ public:
     // "Remove from dictionary": the user dictionary's lines, and removing the chosen ones.
     Q_INVOKABLE QStringList addedDictionaryWords() const;
     Q_INVOKABLE bool removeDictionaryWords(const QStringList &words);
+    // KA7: the Karaoke check window (Subtitles > Check karaoke,
+    // GLOBAL_CHECK_KARAOKE). The editing target's karaoke problems
+    // (core::checkKaraoke, with the editor's pending draft applied):
+    // {rows, unlisted}, a row for each of the first core::kListedProblems
+    // ({document and line (ids), number (the Grid's 1-based row), check,
+    // detail}) and how many more there are. showKaraokeLine selects a
+    // row's Line; false when the editing target is another Document now or
+    // no longer has the Line (Line ids are only unique within a Document),
+    // or when the editor refuses to leave its Line (a draft it cannot commit).
+    Q_INVOKABLE QVariantMap checkKaraoke() const;
+    Q_INVOKABLE bool showKaraokeLine(qulonglong document, qulonglong line);
     // F1: GLOBAL_SEARCH, GLOBAL_FIND_REPLACE and GLOBAL_FIND_NEXT. A tab of
     // the dialog as {tab (0 Find, 1 Find and replace, 2 Find in subtitles),
     // find, replace, styles, filters, folder, field, lines, matchCase, regex,
@@ -761,6 +774,7 @@ public:
     // O2: the shortcut editor and the bindings in effect.
     HotkeysController &hotkeys() { return *m_hotkeys; }
     UpdateChecker &updates() { return *m_updates; }
+    WhatsNew &whatsNew() { return *m_whatsNew; } // SH3
     StyleManagerController &styleManager() { return *m_styleManager; }
     // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
     FontCollectorController &fontCollector() { return *m_fontCollector; }
@@ -981,6 +995,9 @@ signals:
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
     std::optional<application::DocumentId> publish(application::StagedOpen staged, const QString &path, bool asReference);
+    // The log's message for a file that could not be staged (KA6: with the
+    // line at fault in a lyrics file).
+    static QString openProblem(const QString &path, const application::StageFailure &failure);
     // SH2: an open stamps the last-opened time; a save keeps the file's time
     // (a file first saved there, as by Save As, is stamped then).
     void rememberRecent(const std::string &path, bool opened = true);
@@ -1077,14 +1094,19 @@ private:
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
     std::unique_ptr<UpdateChecker> m_updates;
+    std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector; // Y8
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;         // Y6: without a settings file
     std::unique_ptr<FontCatalogsController> m_fontCatalogs;   // Y6
     std::unique_ptr<MatroskaController> m_matroska; // Y9
-    // Y9: OnMkvSubs' SubsPath for a loaded track, the Save dialog's name
-    // until the Document has a destination.
-    std::map<std::uint64_t, QString> m_matroskaPaths;
+    // Y9: OnMkvSubs' SubsPath for a loaded track, and KA6: the imported
+    // lyrics' name with ".ass"; the Save dialog's name until the Document
+    // has a destination.
+    std::map<std::uint64_t, QString> m_importPaths;
+    // KA6: the imported lyrics among them, whose name stands in for the
+    // destination when the same-named video is looked for (offerAssociations).
+    std::set<std::uint64_t> m_lyricsImports;
     bool m_keepVideoOnEnter = false; // replaceTarget(keepMedia) until the tab is entered
     // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);

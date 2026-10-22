@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" itunes:timing="Line" xml:lang="ja">
+  <head>
+    <metadata/>
+  </head>
+  <body>
+    <div>
+      <p begin="00:00:02.000" end="00:00:06.000">Sakura, sakura</p>
+      <p begin="00:00:06.000" end="00:00:10.000">Noyama mo sato mo<br/>miwatasu kagiri</p>
+      <p begin="10s" dur="4s">Kasumi ka kumo ka &amp; asahi ni niou</p>
+    </div>
+  </body>
+</tt>
