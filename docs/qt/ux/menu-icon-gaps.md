@@ -12,7 +12,7 @@
 | --- | --- |
 | Open auto save | autosave (new: the floppy with the recent clock) |
 | Remove temporary files | remove-temporary (new: the bin with the clock) |
-| Show / Hide log window | log (new) |
+| Log (legacy "Show / Hide log window") | log (new) |
 | Last session › Load session from file | session-open (new: the session's windows with the open plus) |
 | Last session › Save session to file | session-save (new: the floppy with the session's windows) |
 | Import legacy settings... | import |

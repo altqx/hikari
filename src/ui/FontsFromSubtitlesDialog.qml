@@ -67,9 +67,10 @@ DialogWindow {
         done = null
         accept()
         if (notices)
-            notices.post("info", (added === 1 ? qsTr("Added 1 font to “%1”") : qsTr("Added %n fonts to “%1”", "", added)).arg(name),
-                         from.currentIndex === 1 ? qsTr("From the styles and %1 tags of the open files.").arg("\\fn")
-                                                 : qsTr("From the styles and %1 tags of %2.").arg("\\fn").arg(fileName))
+            notices.post("info", qsTr("Add fonts from subtitles"),
+                         (added === 1 ? qsTr("Added 1 font to “%1”") : qsTr("Added %n fonts to “%1”", "", added)).arg(name),
+                         { details: from.currentIndex === 1 ? qsTr("From the styles and %1 tags of the open files.").arg("\\fn")
+                                                            : qsTr("From the styles and %1 tags of %2.").arg("\\fn").arg(fileName) })
         if (callback)
             callback(name)
     }

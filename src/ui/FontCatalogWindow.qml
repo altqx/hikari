@@ -226,7 +226,7 @@ DialogWindow {
         const r = catalogs.reviewCatalogFile(file)
         if (!r.ok) {
             if (notices)
-                notices.post("warning", qsTr("Cannot read “%1”").arg(r.file), qsTr("The file holds no font catalog."))
+                notices.post("warning", qsTr("Load font catalogs"), qsTr("The file holds no font catalog."), { details: r.file })
             return
         }
         if (r.rows.length === 0) {
@@ -271,9 +271,9 @@ DialogWindow {
             if (result.merged > 0) parts.push(qsTr("%n merged", "", result.merged))
             if (result.replaced > 0) parts.push(qsTr("%n replaced", "", result.replaced))
             if (result.renamed > 0) parts.push(qsTr("%n renamed", "", result.renamed))
-            notices.post("info", result.loaded === 1 ? qsTr("Loaded 1 font catalog")
-                                                     : qsTr("Loaded %n font catalogs", "", result.loaded),
-                         qsTr("From %1: %2.").arg(file).arg(parts.join(", ")))
+            notices.post("info", qsTr("Load font catalogs"),
+                         result.loaded === 1 ? qsTr("Loaded 1 font catalog") : qsTr("Loaded %n font catalogs", "", result.loaded),
+                         { details: qsTr("From %1: %2.").arg(file).arg(parts.join(", ")) })
         }
     }
     // PK1's message box: made at the first question.

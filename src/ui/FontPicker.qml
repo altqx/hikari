@@ -418,8 +418,8 @@ DialogWindow {
     Label {
         objectName: "fontPickerSampleSource"
         text: picker.sampleText.trim().length === 0 ? qsTr("Sample text")
-            : picker.sampleSource === "selection" ? qsTr("The Line’s selected text")
-            : picker.sampleSource === "line" ? qsTr("The Line’s text")
+            : picker.sampleSource === "selection" ? qsTr("The line’s selected text")
+            : picker.sampleSource === "line" ? qsTr("The line’s text")
             : qsTr("The Style editor’s sample text")
         color: Theme.muted
         font: picker.fontAt(11)
