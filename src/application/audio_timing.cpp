@@ -679,10 +679,13 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                        marginRChanged || marginVChanged || commentChanged || layerChanged || styleChanged ||
                        actorChanged || effectChanged || framesChanged;
 
-    // SubsGrid::ChangeLine: one Line, or every selected Line with several selected
+    // SubsGrid::ChangeLine: one Line, or every selected Line with several
+    // selected; an active-only request's own fields go to the active Line
+    // alone (KA1: keepDraftFieldsToItsLine above), a pending edit's others
+    // to every selected Line (Codex)
     std::vector<core::LineId> targets;
     const auto &selected = session.selection().selected;
-    if (selected.size() < 2 || request.activeOnly) {
+    if (selected.size() < 2) {
         targets.push_back(*active);
     } else {
         for (const auto *l : lines)
@@ -752,9 +755,11 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                         l.actor = record->actor;
                     if (effectChanged && !(other && own.effect))
                         l.effect = record->effect;
-                    if (framesChanged && !(other && (own.startFrame || own.endFrame))) {
-                        l.startFrame = record->startFrame;
-                        l.endFrame = record->endFrame;
+                    if (framesChanged) {
+                        if (!(other && own.startFrame))
+                            l.startFrame = record->startFrame;
+                        if (!(other && own.endFrame))
+                            l.endFrame = record->endFrame;
                     }
                 });
             if (append) {

@@ -209,7 +209,9 @@ struct AudioCommitRequest {
     // legacy's "Changing time on audio spectrum".
     const char *stepName = nullptr;
     // KA2-tap-to-time: the active Line alone takes the times and text, however
-    // many are selected (a tapped Line's syllables are its own).
+    // many are selected (a tapped Line's syllables are its own). KA1: the
+    // fields this request changes; a pending edit's other fields still go to
+    // every selected Line.
     bool activeOnly = false;
 };
 struct AudioCommitOutcome {

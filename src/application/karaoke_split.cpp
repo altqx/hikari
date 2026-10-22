@@ -61,7 +61,8 @@ bool isHan(char32_t c)
 bool isHangul(char32_t c)
 {
     return inRange(c, 0xAC00, 0xD7A3) || inRange(c, 0x1100, 0x11FF) || inRange(c, 0x3130, 0x318F) ||
-           inRange(c, 0xA960, 0xA97C) || inRange(c, 0xD7B0, 0xD7FB);
+           inRange(c, 0xA960, 0xA97C) || inRange(c, 0xD7B0, 0xD7FB) ||
+           inRange(c, 0xFFA0, 0xFFDC); // the halfwidth forms, as the compatibility jamo (Codex)
 }
 
 bool isLatin(char32_t c)

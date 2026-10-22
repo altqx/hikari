@@ -620,6 +620,57 @@ TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
     EXPECT_EQ(line(2).text, u8"shared");
 }
 
+// KA1: with AUDIO_AUTO_COMMIT on, an active-only save keeps a pending edit
+// meant for every selected Line (Codex)
+TEST_F(CommitTest, AnActiveOnlySaveKeepsAPendingEditForEverySelectedLine)
+{
+    select({a, c}, a);
+    ASSERT_TRUE(session.editDraft(a, DraftChange{.actor = u8"Kara"}));
+    AudioCommitRequest request{1000, 2000, true, false};
+    request.karaokeText = u"{\\k50}ka{\\k50}ra";
+    request.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, request, shown));
+    EXPECT_EQ(line(0).text, u8"{\\k50}ka{\\k50}ra");
+    EXPECT_EQ(line(0).actor, u8"Kara");
+    EXPECT_EQ(line(2).text, u8"c");
+    EXPECT_EQ(line(2).actor, u8"Kara");
+    EXPECT_EQ(ms(line(2).start.value), 6500);
+}
+
+// KA1: in MicroDVD the authored frames are kept apart too: an End for every
+// selected Line, then an active-only Start (Codex)
+TEST(AudioTimingCommit, AKeptStartFrameLeavesTheSharedEndFrame)
+{
+    const std::string_view sub = "{25}{50}a\n{75}{100}c\n";
+    std::vector<std::byte> bytes(sub.size());
+    std::memcpy(bytes.data(), sub.data(), sub.size());
+    auto loaded = core::loadSubtitle(bytes, u8"sub");
+    ASSERT_TRUE(loaded);
+    loaded->document.setFrameRate(*core::FrameRate::make(25, 1));
+    EditSession session{std::move(loaded->document)};
+    const auto ids = [&] {
+        std::vector<core::LineId> out;
+        for (const auto *l : session.document().lines())
+            out.push_back(l->id);
+        return out;
+    }();
+    session.setSelection(Selection{ids[0], {ids[0], ids[1]}, ids[0], {}});
+    const LineVisible shown;
+    ASSERT_TRUE(commitAudioTimes(session, {1000, 5000, false, false}, shown));
+    AudioCommitRequest start{800, 5000, false, false};
+    start.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, start, shown));
+    ASSERT_TRUE(commitAudioTimes(session, {800, 5000, true, false}, shown));
+    const auto &first = *session.document().lines()[0];
+    const auto &other = *session.document().lines()[1];
+    EXPECT_EQ(first.startFrame, std::optional<std::int64_t>(20));
+    EXPECT_EQ(first.endFrame, std::optional<std::int64_t>(125));
+    EXPECT_EQ(other.startFrame, std::optional<std::int64_t>(75));
+    EXPECT_EQ(other.endFrame, std::optional<std::int64_t>(125));
+    EXPECT_EQ(ms(other.end.value), 5000);
+    EXPECT_EQ(ms(other.start.value), 3000);
+}
+
 TEST_F(CommitTest, AnEndBeforeTheStartIsBlockedUnlessLegacyCommitsIt)
 {
     select({b}, b);
