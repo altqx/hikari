@@ -1700,6 +1700,21 @@ private slots:
                  QStringLiteral("template syl fx loop"));
     }
 
+    // The panel's own edit that takes a Line out of the templates keeps the
+    // user's choice for the others.
+    void anEffectEditThatEndsATemplateKeepsTheChoice()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(editor->trusted());
+        editor->setEffect(QStringLiteral("note"));
+        editor->commit();
+        editor->refresh();
+        QVERIFY(editor->trusted());
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

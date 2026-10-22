@@ -910,15 +910,22 @@ TemplateEditorController::TemplateLines TemplateEditorController::templateLines(
     return out;
 }
 
-std::vector<core::LineId> TemplateEditorController::templateOrder() const
+namespace {
+std::vector<core::LineId> templateOrderOf(const application::EditSession &s)
 {
     std::vector<core::LineId> out;
-    if (const auto *s = session())
-        forEachRunLine(*s, [&](const core::LineRecord &l) {
-            if (application::templateKindOf(l))
-                out.push_back(l.id);
-        });
+    forEachRunLine(s, [&](const core::LineRecord &l) {
+        if (application::templateKindOf(l))
+            out.push_back(l.id);
+    });
     return out;
+}
+} // namespace
+
+std::vector<core::LineId> TemplateEditorController::templateOrder() const
+{
+    const auto *s = session();
+    return s ? templateOrderOf(*s) : std::vector<core::LineId>{};
 }
 
 std::string TemplateEditorController::formOf(const core::LineRecord &line)
@@ -1085,10 +1092,14 @@ void TemplateEditorController::commit()
     }
     m_pending.reset();
     m_commitTimer.stop();
-    if (trustedForm)
+    if (trustedForm) {
         for (const auto *l : s->document().lines())
             if (l->id == change.line && application::templateKindOf(*l))
                 key->second.lines[change.line].insert(formOf(*l));
+        // An Effect that takes it out of the templates, or brings it back,
+        // changes the order too.
+        key->second.orders.insert(templateOrderOf(*s));
+    }
     if (s == session()) {
         m_seenRevision = s->revision();
         emit documentEdited();
