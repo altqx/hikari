@@ -10,6 +10,7 @@
 #include <optional>
 
 #include <string>
+#include <utility>
 #include <vector>
 
 using namespace hikari::application;
@@ -158,9 +159,10 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     // choice on the Audio page, LE2's Times/Frames and LE3's hidden-tag check
     // boxes on the Line editor page, WS2's panel layout in the file on the
     // Subtitle properties page, VF1's two follow lists on the Video page,
-    // PK1's notices as toasts on the General page, then (Windows)
-    // A4-wasapi-default's output host API and W1's video player.
-    ASSERT_GT(all.size(), std::size(kLegacy) + 8);
+    // PK1's notices as toasts on the General page, PU7's update options on
+    // the Updates page, then (Windows) A4-wasapi-default's output host API
+    // and W1's video player.
+    ASSERT_GT(all.size(), std::size(kLegacy) + 12);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
     EXPECT_EQ(fromVideo.control, OptionsControl::Check);
@@ -205,9 +207,20 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(toasts.setting, "notices.toasts");
     EXPECT_EQ(toasts.control, OptionsControl::Check);
     EXPECT_EQ(toasts.page, OptionsPage::General);
+    // PU7 (#309): the update options, out of the update window.
+    const std::pair<const char *, OptionsControl> updates[] = {{"updater.autoCheck", OptionsControl::Check},
+                                                               {"updater.checkForStable", OptionsControl::Check},
+                                                               {"updater.autoInstall", OptionsControl::Check},
+                                                               {"updater.skippedVersion", OptionsControl::Text}};
+    for (std::size_t i = 0; i < std::size(updates); ++i) {
+        const auto &binding = all[std::size(kLegacy) + 9 + i];
+        EXPECT_EQ(binding.setting, updates[i].first);
+        EXPECT_EQ(binding.control, updates[i].second) << updates[i].first;
+        EXPECT_EQ(binding.page, OptionsPage::Updates) << updates[i].first;
+    }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 11);
-    const auto &hostApi = all[std::size(kLegacy) + 9];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 15);
+    const auto &hostApi = all[std::size(kLegacy) + 13];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -218,7 +231,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 9);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 13);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));
@@ -674,9 +687,10 @@ TEST(OptionsDialog, PagesHaveIdsAndAPageResetsAlone)
 {
     for (const auto page : {OptionsPage::General, OptionsPage::Appearance, OptionsPage::LineEditor, OptionsPage::Grid,
                             OptionsPage::Video, OptionsPage::Audio, OptionsPage::Conversion,
-                            OptionsPage::SubtitleProperties, OptionsPage::Automation})
+                            OptionsPage::SubtitleProperties, OptionsPage::Automation, OptionsPage::Updates})
         EXPECT_EQ(optionsPageOfId(optionsPageId(page)), page);
     EXPECT_EQ(optionsPageId(OptionsPage::LineEditor), "lineEditor");
+    EXPECT_EQ(optionsPageId(OptionsPage::Updates), "updates"); // PU7
     EXPECT_EQ(optionsPageOfId("hotkeys"), std::nullopt); // the hotkeys' own page
     EXPECT_EQ(optionsPageOfId(""), std::nullopt);
 
