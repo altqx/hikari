@@ -18,6 +18,15 @@ DialogWindow {
     // The Document it shows: History follows the editing target, and names
     // it (grid-operations.md; Codex review).
     property string documentName: ""
+    // The editing target's tab id: another one selects its current step,
+    // so Go to step never acts on the last tab's choice (Codex review).
+    property var target: null
+    property var selectedFor: null
+    onTargetChanged: {
+        if (target !== selectedFor && visible)
+            historyList.currentIndex = editor.historyCursor
+        selectedFor = target
+    }
     dialogId: "history"
     title: qsTr("History")
     resizable: true

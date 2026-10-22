@@ -5789,6 +5789,10 @@ ApplicationWindow {
         id: historyWindow
         editor: root.editor
         documentName: root.shell.editingTitle
+        target: {
+            const tab = root.app.tabs[root.app.currentTab]
+            return tab ? tab.id : null
+        }
         settings: root.app.settings
     }
 

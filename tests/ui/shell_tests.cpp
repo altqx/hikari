@@ -2586,10 +2586,13 @@ private slots:
         QVERIFY(documentLabel);
         QVERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history.ass")));
         const int historyTab = application->currentTab();
+        list->setProperty("currentIndex", 2); // chosen, not gone to
         QVERIFY(application->openFile(writeFile(dir, "history-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
         if (application->currentTab() == historyTab)
             application->selectTab(int(application->tabs().size()) - 1);
         QTRY_VERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history-other.ass")));
+        // The other tab's current step is selected, not the last tab's choice.
+        QCOMPARE(list->property("currentIndex").toInt(), editor.historyCursor());
         application->selectTab(historyTab);
         QTRY_VERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history.ass")));
         QCOMPARE(editor.historyCursor(), 0);
