@@ -130,7 +130,8 @@ const QStringList &WorkspaceLayoutController::panelIds()
 {
     static const QStringList ids{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor"),
                                  QStringLiteral("Grid"), QStringLiteral("Reference"), QStringLiteral("Timing"),
-                                 QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original")};
+                                 QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original"),
+                                 QStringLiteral("Styles")};
     return ids;
 }
 
@@ -643,6 +644,14 @@ void WorkspaceLayoutController::captureDefault()
     m_default = KDDockWidgets::LayoutSaver().serializeLayout();
 }
 
+void WorkspaceLayoutController::capturePreset(const QString &name)
+{
+    if (!presets().contains(name) || m_default.isEmpty())
+        return;
+    m_presetPayloads[name] = KDDockWidgets::LayoutSaver().serializeLayout();
+    restorePayload(m_default, true);
+}
+
 bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool inPlace)
 {
     m_restoring = true; // no autosave while restoring
@@ -793,10 +802,13 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
 {
     if (m_default.isEmpty())
         return false;
+    // TP1: a preset with an arrangement of its own (Typesetting).
+    if (const auto own = m_presetPayloads.find(name); own != m_presetPayloads.end())
+        return restorePayload(own->second, inPlace);
     const bool done = restorePayload(m_default, inPlace);
     // The Editing arrangement with the panels the preset leaves closed
-    // (docs/qt/ux/workspaces.md): Timing without Video, Translation and
-    // Typesetting without Audio.
+    // (docs/qt/ux/workspaces.md): Timing without Video, Translation (and
+    // Typesetting before the shell built its own) without Audio.
     QString closed;
     if (name == QLatin1String("Timing"))
         closed = QStringLiteral("Video");

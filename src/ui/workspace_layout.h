@@ -103,11 +103,11 @@ public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    static constexpr int kPanelRegistry = 5; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1)
+    static constexpr int kPanelRegistry = 6; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Styles (TP1)
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
-    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original
+    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original, Styles
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without
     // settings). The saved layouts are kept beside it, in layouts.json.
@@ -115,6 +115,10 @@ public:
 
     // After the shell built its default arrangement: what Reset layout returns to.
     Q_INVOKABLE void captureDefault();
+    // TP1 (#274): after the shell built a preset's own arrangement from the
+    // default one, that arrangement is the preset's (applyPreset, Reset this
+    // layout); the default arrangement is shown again.
+    Q_INVOKABLE void capturePreset(const QString &name);
     // At start: the saved layout, if it validates and restores; false (with a
     // notice when a file was there) leaves the default arrangement.
     Q_INVOKABLE bool restoreSaved();
@@ -128,7 +132,8 @@ public:
     Q_INVOKABLE bool saveForQuit();
     Q_INVOKABLE bool resetLayout();
     // A built-in template (Editing, Timing, Translation, Typesetting) for the
-    // current tab: the default arrangement with the panels it leaves closed.
+    // current tab: its own arrangement (Typesetting's, capturePreset), else
+    // the default arrangement with the panels it leaves closed.
     Q_INVOKABLE bool applyPreset(const QString &name);
     // A preset's name as the user reads it.
     Q_INVOKABLE static QString presetLabel(const QString &name);
@@ -315,6 +320,7 @@ private:
 
     QString m_file;
     QByteArray m_default;
+    std::map<QString, QByteArray> m_presetPayloads; // TP1: capturePreset
     QByteArray m_lastSaved;
     // The notices of the panel layout (restore failures: a layout chosen
     // after them answers them) and of the saved layouts (files kept aside,
