@@ -2685,34 +2685,236 @@ private slots:
         fps->close();
     }
 
-    void aFailedOpenPopsUpTheLogWindow()
+    // NT1 (#302): the toast of the notice whose text contains `text`.
+    // (A Repeater's toasts are items of the stack, not its QObject children.)
+    QQuickItem *toastWith(const QString &text) const
+    {
+        const std::function<QQuickItem *(QQuickItem *, QQuickItem *)> find = [&](QQuickItem *from, QQuickItem *toast) -> QQuickItem * {
+            if (from->objectName().startsWith(QLatin1String("toast_")))
+                toast = from;
+            if (toast && from->objectName() == QLatin1String("toastText") && from->property("text").toString().contains(text))
+                return toast;
+            for (QQuickItem *child : from->childItems())
+                if (QQuickItem *found = find(child, toast))
+                    return found;
+            return nullptr;
+        };
+        return find(item<QQuickItem>("toastStack"), nullptr);
+    }
+    // A child item by name (a Repeater's or a ListView's delegates are not
+    // QObject children).
+    static QObject *partNamed(QQuickItem *toast, const char *name)
+    {
+        if (toast->objectName() == QLatin1String(name))
+            return toast;
+        for (QQuickItem *child : toast->childItems())
+            if (QObject *found = partNamed(child, name))
+                return found;
+        return nullptr;
+    }
+    // NT1 (#302): the message box of the MessageHost `host`, once asked.
+    QQuickWindow *messageBox(const char *host) const
+    {
+        QObject *found = named(host);
+        return found ? qvariant_cast<QQuickWindow *>(found->property("box")) : nullptr;
+    }
+    // NT1: the message box of `host` shows `text` under `title`; OK closes it.
+    void answerMessage(const char *host, const QString &title, const QString &text, const QString &choice = QStringLiteral("ok"))
+    {
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY2((box = messageBox(host)) && box->isVisible(), host);
+        QCOMPARE(box->title(), title);
+        QCOMPARE(box->property("text").toString(), text);
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, choice)));
+        QTRY_VERIFY(!box->isVisible());
+    }
+    // NT1 (#302): a failed open is an error toast titled with the command;
+    // the Log is a panel that never opens by itself, opened by a toast's
+    // Details at its entry (marked) and by File > Log.
+    void aFailedOpenIsAToastAndTheLogAPanel()
     {
         auto *root = engine->rootObjects().first();
-        auto *logWindow = root->findChild<QQuickWindow *>(QStringLiteral("logWindow"));
-        QVERIFY(logWindow);
-        QVERIFY(!logWindow->isVisible());
+        auto *dock = item<QObject>("logDock");
+        auto &log = application->log();
+        QVERIFY(!dock->property("isOpen").toBool());
+        const int errors = log.errorCount();
         QVERIFY(QMetaObject::invokeMethod(root, "openSubtitles", Q_ARG(QVariant, dir.filePath(QStringLiteral("none.ass")))));
-        QTRY_VERIFY(logWindow->isVisible());
-        QVERIFY(logWindow->findChild<QObject *>(QStringLiteral("logLastMessage"))
-                    ->property("text").toString().contains(QStringLiteral("none.ass")));
-        // Messages quote files, so they show as plain text, never markup.
-        QCOMPARE(logWindow->findChild<QObject *>(QStringLiteral("logLastMessage"))->property("textFormat").toInt(),
-                 int(Qt::PlainText));
-        QCOMPARE(logWindow->findChild<QObject *>(QStringLiteral("logHistory"))->property("textFormat").toInt(),
-                 int(Qt::PlainText));
-        QVERIFY(QMetaObject::invokeMethod(logWindow->findChild<QObject *>(QStringLiteral("logClose")), "clicked"));
-        QTRY_VERIFY(!logWindow->isVisible());
-        // File > Show / Hide log window: the whole log.
-        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("logMenuItem")), "click"));
-        QTRY_VERIFY(logWindow->isVisible());
-        QVERIFY(logWindow->findChild<QObject *>(QStringLiteral("logHistory"))
-                    ->property("text").toString().contains(QStringLiteral("none.ass")));
-        application->log().close();
-        // A video that cannot be opened is logged too.
+        QTRY_COMPARE(log.errorCount(), errors + 1);
+        QVERIFY(log.lastMessage().contains(QStringLiteral("none.ass")));
+        QQuickItem *toast = nullptr;
+        QTRY_VERIFY((toast = toastWith(QStringLiteral("none.ass"))));
+        QCOMPARE(partNamed(toast, "toastTitle")->property("text").toString(),
+                 QStringLiteral("Open subtitles"));
+        // Messages quote files, so they show as plain text, never markup (KA6).
+        for (const char *part : {"toastTitle", "toastText"})
+            QCOMPARE(partNamed(toast, part)->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(!dock->property("isOpen").toBool());
+        // Details: the panel at the entry, marked, whatever the filters.
+        log.entries()->setShowErrors(false);
+        log.notice(ui::LogController::Error, QStringLiteral("Save"), QStringLiteral("nt1 could not be saved."),
+                   QStringLiteral("disk full"));
+        QTRY_VERIFY((toast = toastWith(QStringLiteral("nt1 could not be saved."))));
+        auto *details = partNamed(toast, "toastDetails");
+        QVERIFY(details && details->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(details, "clicked"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        const int id = log.infoCount() + log.warningCount() + log.errorCount();
+        QCOMPARE(log.marked(), id);
+        QVERIFY(log.entries()->showErrors());
+        QQuickItem *entry = nullptr;
+        QTRY_VERIFY((entry = qobject_cast<QQuickItem *>(
+                         partNamed(item<QQuickItem>("logPanel"), qPrintable(QStringLiteral("logEntry_%1").arg(id))))));
+        // The title is bold, not markup shown as text.
+        auto *entryText = partNamed(entry, "logEntryText");
+        QString shown;
+        QVERIFY(QMetaObject::invokeMethod(entryText, "getText", Q_RETURN_ARG(QString, shown), Q_ARG(int, 0),
+                                          Q_ARG(int, entryText->property("length").toInt())));
+        QCOMPARE(shown, QStringLiteral("Save nt1 could not be saved."));
+        // Markup in a message is its text (the row escapes it).
+        log.notice(ui::LogController::Error, QStringLiteral("Open subtitles"), QStringLiteral("<img src=\"x\"> & <b>"));
+        QQuickItem *quoted = nullptr;
+        QTRY_VERIFY((quoted = qobject_cast<QQuickItem *>(partNamed(
+                         item<QQuickItem>("logPanel"), qPrintable(QStringLiteral("logEntry_%1").arg(id + 1))))));
+        auto *quotedText = partNamed(quoted, "logEntryText");
+        QVERIFY(QMetaObject::invokeMethod(quotedText, "getText", Q_RETURN_ARG(QString, shown), Q_ARG(int, 0),
+                                          Q_ARG(int, quotedText->property("length").toInt())));
+        QCOMPARE(shown, QStringLiteral("Open subtitles <img src=\"x\"> & <b>"));
+        QVERIFY(log.history().contains(QStringLiteral("Save: nt1 could not be saved.\n    disk full\n")));
+        // File > Log toggles the panel.
+        auto *menuItem = root->findChild<QObject *>(QStringLiteral("logMenuItem"));
+        QCOMPARE(menuItem->property("text").toString(), QStringLiteral("Log"));
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "click"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "click"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(menuItem, "click"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        // A video that cannot be opened is a notice too; the panel stays shut.
+        const int before = log.errorCount() + log.warningCount();
         application->video().openVideo(dir.filePath(QStringLiteral("missing.mkv")));
-        QTRY_VERIFY_WITH_TIMEOUT(application->log().lastMessage().startsWith(QStringLiteral("Video unavailable")), 20000);
-        QVERIFY(application->log().shown());
-        application->log().close();
+        QTRY_VERIFY_WITH_TIMEOUT(log.errorCount() + log.warningCount() > before, 20000);
+        QVERIFY(!dock->property("isOpen").toBool());
+    }
+
+    // NT1 (#302) screenshots for review (HIKARI_SURFACE_SHOT_DIR; skipped
+    // without it), in the four themes (nt1-<part>-<theme>.png): the toasts
+    // over the main window with the Log panel open at a toast's entry, the
+    // Log filtered, and each message box NT1 asks, with its real text.
+    void noticeScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        auto *window = qobject_cast<QQuickWindow *>(root);
+        auto &log = application->log();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            log.entries()->setFilterText({});
+            QMetaObject::invokeMethod(item<QObject>("logDock"), "close");
+            item<QObject>("toastStack")->setProperty("fadeAfter", 5000);
+        });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto save = [&](QQuickWindow *w, const QString &name) {
+            QVERIFY(QTest::qWaitForWindowExposed(w));
+            QTest::qWait(300);
+            QVERIFY(w->grabWindow().save(out + QStringLiteral("/nt1-") + name + QStringLiteral(".png")));
+        };
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode));
+        auto *stack = item<QObject>("toastStack");
+        stack->setProperty("fadeAfter", 600000);
+        // Each message box: its host, then PK1's ask options.
+        const auto box = [](const QString &title, const QString &text, const QString &severity,
+                            const QString &details = {}) {
+            return QVariantMap{{QStringLiteral("title"), title}, {QStringLiteral("text"), text},
+                               {QStringLiteral("severity"), severity}, {QStringLiteral("details"), details}};
+        };
+        const QString readOnly = QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute.");
+        const QVariantList readOnlyChoices{
+            QVariantMap{{QStringLiteral("id"), QStringLiteral("saveAs")}, {QStringLiteral("text"), QStringLiteral("Save as…")},
+                        {QStringLiteral("role"), QStringLiteral("accept")}, {QStringLiteral("isDefault"), true}},
+            QVariantMap{{QStringLiteral("id"), QStringLiteral("cancel")}, {QStringLiteral("text"), QStringLiteral("Cancel")},
+                        {QStringLiteral("role"), QStringLiteral("reject")}}};
+        QVariantMap sessionReadOnly = box(QStringLiteral("Save session"), readOnly, QStringLiteral("warning"));
+        sessionReadOnly.insert(QStringLiteral("choices"), readOnlyChoices);
+        const std::vector<std::tuple<const char *, QString, QVariantMap>> boxes{
+            {"messages", QStringLiteral("load-script"),
+             box(QStringLiteral("Run the last loaded script"), QStringLiteral("Error loading Lua script: karaoke.lua"),
+                 QStringLiteral("error"), QStringLiteral("karaoke.lua:12: '=' expected near 'end'"))},
+            {"messages", QStringLiteral("edit-script"),
+             box(QStringLiteral("Edit script"), QStringLiteral("Cannot start editor."), QStringLiteral("error"))},
+            {"sessionMessages", QStringLiteral("save-session"), sessionReadOnly},
+            {"spellMessages", QStringLiteral("spell-replace"),
+             box(QStringLiteral("Replace"), QStringLiteral("The edited line cannot be committed."), QStringLiteral("error"))},
+            {"styleMessages", QStringLiteral("new-style"),
+             box(QStringLiteral("New style"), QStringLiteral("The document has no styles to edit."), QStringLiteral("error"))},
+            {"tagsMessages", QStringLiteral("tag-editing"),
+             box(QStringLiteral("Tag editing"), QStringLiteral("Enter a name for the new tag."), QStringLiteral("error"))},
+            {"shapesMessages", QStringLiteral("shape-editing"),
+             box(QStringLiteral("Vector shape editing"), QStringLiteral("Enter a name for the new shape."), QStringLiteral("error"))},
+            {"fontCatalogMessages", QStringLiteral("font-catalogs"),
+             box(QStringLiteral("Manage font catalogs"), QStringLiteral("Enter a name for the new catalog"), QStringLiteral("warning"))},
+            {"fontCollectorMessages", QStringLiteral("font-collector"),
+             box(QStringLiteral("Font collector"), QStringLiteral("Select the folder where you want to copy fonts"),
+                 QStringLiteral("warning"))},
+            {"findMessages", QStringLiteral("find-in-files"),
+             box(QStringLiteral("Find in files"), QStringLiteral("Search path is invalid"), QStringLiteral("error"))},
+        };
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            // Toasts of each severity, one with Details; the Log open at it.
+            QVERIFY(QMetaObject::invokeMethod(stack, "clear"));
+            log.notice(ui::LogController::Warning, QStringLiteral("Shift times"), QStringLiteral("Video was not loaded using FFMS2"));
+            log.notice(ui::LogController::Info, QStringLiteral("Select lines"), QStringLiteral("2 lines selected."));
+            log.notice(ui::LogController::Error, QStringLiteral("Open subtitles"),
+                       QStringLiteral("Could not open %1; nothing was changed.").arg(QDir::toNativeSeparators(dir.filePath(QStringLiteral("episode 03.ass")))),
+                       QStringLiteral("The file is not valid UTF-8 (byte 0xE3 at 1:14)."));
+            save(window, QStringLiteral("toasts-") + code);
+            log.reveal(log.infoCount() + log.warningCount() + log.errorCount());
+            QTRY_VERIFY(item<QObject>("logDock")->property("isOpen").toBool());
+            save(window, QStringLiteral("log-") + code);
+            log.entries()->setFilterText(QStringLiteral("open"));
+            save(window, QStringLiteral("log-filtered-") + code);
+            log.entries()->setFilterText({});
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("logDock"), "close"));
+            QVERIFY(QMetaObject::invokeMethod(stack, "clear"));
+            // The read-only save, as Save asks it.
+            QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+            QQuickWindow *saveBox = nullptr;
+            QTRY_VERIFY((saveBox = messageBox("messages")) && saveBox->isVisible());
+            save(saveBox, QStringLiteral("box-save-") + code);
+            QVERIFY(QMetaObject::invokeMethod(saveBox, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!saveBox->isVisible());
+            for (const auto &[host, part, options] : boxes) {
+                // The Search tool's message box comes with its panel.
+                const bool search = qstrcmp(host, "findMessages") == 0;
+                if (search) {
+                    QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
+                    QTRY_VERIFY(named(host));
+                }
+                QObject *found = named(host);
+                QVERIFY2(found, host);
+                QVERIFY(QMetaObject::invokeMethod(found, "ask", Q_ARG(QVariant, options), Q_ARG(QVariant, QVariant())));
+                QQuickWindow *shown = nullptr;
+                QTRY_VERIFY2((shown = messageBox(host)) && shown->isVisible(), host);
+                if (!options.value(QStringLiteral("details")).toString().isEmpty())
+                    shown->setProperty("showDetails", true);
+                save(shown, QStringLiteral("box-") + part + QLatin1Char('-') + code);
+                QVERIFY(QMetaObject::invokeMethod(shown, "answer", Q_ARG(QVariant, shown->property("choices").toList().value(0).toMap().value(QStringLiteral("id")))));
+                QTRY_VERIFY(!shown->isVisible());
+                if (search)
+                    QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "close"));
+            }
+        }
     }
 
     void tagButtonsInsertTheirTags()
@@ -6284,7 +6486,7 @@ private slots:
         QCOMPARE(styles.transferClashes(true, {1}), QVariantList());
         QCOMPARE(styles.addToStore({1}, {}), QVariantList{0});
         QCOMPARE(styles.storeStyles(), QStringList{QStringLiteral("Title")});
-        QVERIFY(styles.cleanStyles().contains(QStringLiteral("Styles deleted:\nDefault\n")));
+        QVERIFY(styles.cleanStyles().value(QStringLiteral("details")).toString().contains(QStringLiteral("Styles deleted:\nDefault")));
         QCOMPARE(styles.documentStyles(), QStringList{QStringLiteral("Title")});
         // Adding it back is a clash (PK1's clash review): the same on both
         // sides, with a free name offered. Skip keeps the Document's; Rename
@@ -6629,11 +6831,11 @@ private slots:
         restartWith(app::Application::Options());
     }
 
-    // P8, ADR 0019, DG1 (#222): the update check's results and notices open
-    // on the dialog frame, modeless: the check's messages titled "Check for
-    // updates" (a failure with the warning glyph), the installer's "Update";
-    // a newer release in the resizable notice with its notes, or in the AUR
-    // notice for an AUR copy.
+    // P8, ADR 0019, DG1 (#222): the update check's results are toasts (NT1,
+    // #302), titled "Check for updates" (a failure a warning), the
+    // installer's errors "Download and install" or, at the start, "Install
+    // update"; a newer release opens on the dialog frame, modeless, in the
+    // resizable notice with its notes, or in the AUR notice for an AUR copy.
     void updateNoticesOpenOnTheDialogFrame()
     {
         // Keys sent before a new window has taken its first show (its
@@ -6645,27 +6847,27 @@ private slots:
         };
         auto *root = engine->rootObjects().first();
         auto &updates = application->updates();
-        auto *message = root->findChild<QQuickWindow *>(QStringLiteral("updateMessage"));
-        QVERIFY(message);
-        const auto shows = [&](const QString &title, const QString &text, bool warning) {
-            QTRY_VERIFY(message->isVisible());
-            QCOMPARE(message->title(), title);
-            QCOMPARE(dialogItem("updateMessage", "updateMessageText")->property("text").toString(), text);
-            QCOMPARE(dialogItem("updateMessage", "updateMessageIcon")->property("iconRole").toString(),
-                     warning ? QStringLiteral("notice-warning") : QStringLiteral("about"));
-            QCOMPARE(message->modality(), Qt::NonModal);
-            settled(message);
-            QTest::keyClick(message, Qt::Key_Escape);
-            QTRY_VERIFY(!message->isVisible());
+        QSignalSpy noticed(&application->log(), &ui::LogController::noticed);
+        const auto toasts = [&](ui::LogController::Severity severity, const QString &title, const QString &text) {
+            QTRY_COMPARE(noticed.count(), 1);
+            const QList<QVariant> notice = noticed.takeFirst();
+            QCOMPARE(notice.at(1).value<ui::LogController::Severity>(), severity);
+            QCOMPARE(notice.at(2).toString(), title);
+            QCOMPARE(notice.at(3).toString(), text);
+            QTRY_VERIFY(toastWith(text));
         };
         QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("current")),
                                           Q_ARG(QVariantMap, {}), Q_ARG(bool, true)));
-        shows(QStringLiteral("Check for updates"), QStringLiteral("You already have the latest version"), false);
+        toasts(ui::LogController::Info, QStringLiteral("Check for updates"), QStringLiteral("You already have the latest version"));
         QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("failed")),
                                           Q_ARG(QVariantMap, {}), Q_ARG(bool, true)));
-        shows(QStringLiteral("Check for updates"), QStringLiteral("Cannot check for updates"), true);
-        QVERIFY(QMetaObject::invokeMethod(&updates, "notice", Q_ARG(QString, QStringLiteral("The update was put back."))));
-        shows(QStringLiteral("Update"), QStringLiteral("The update was put back."), true);
+        toasts(ui::LogController::Warning, QStringLiteral("Check for updates"), QStringLiteral("Cannot check for updates"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "notice", Q_ARG(QString, QStringLiteral("The download failed.")),
+                                          Q_ARG(bool, false)));
+        toasts(ui::LogController::Error, QStringLiteral("Download and install"), QStringLiteral("The download failed."));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "notice", Q_ARG(QString, QStringLiteral("The update was put back.")),
+                                          Q_ARG(bool, true)));
+        toasts(ui::LogController::Error, QStringLiteral("Install update"), QStringLiteral("The update was put back."));
 
         auto *available = root->findChild<QQuickWindow *>(QStringLiteral("updateAvailable"));
         const QVariantMap release{{QStringLiteral("name"), QStringLiteral("HikariSub 9.0.0")},
@@ -6786,6 +6988,30 @@ private slots:
             QSKIP("Read-only files are writable for this user");
         QCOMPARE(application->saveChosen(QUrl::fromLocalFile(locked)), QStringLiteral("readonly"));
         QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+        // NT1: the question is PK1's message box, Save as… (the Save dialog
+        // again) or Cancel (nothing more).
+        auto *root = engine->rootObjects().first();
+        auto *saveAs = named("saveAsDialog");
+        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        QCOMPARE(box->property("severity").toString(), QStringLiteral("warning"));
+        const QVariantList choices = box->property("choices").toList();
+        QCOMPARE(choices.size(), 2);
+        QCOMPARE(choices.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Save as…"));
+        QCOMPARE(choices.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Cancel"));
+        answerMessage("messages", QStringLiteral("Save"),
+                      QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute."),
+                      QStringLiteral("cancel"));
+        QTest::qWait(50);
+        QVERIFY(!saveAs->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+        answerMessage("messages", QStringLiteral("Save"),
+                      QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute."),
+                      QStringLiteral("saveAs"));
+        QTRY_VERIFY(saveAs->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(saveAs, "close"));
+        QTRY_VERIFY(!saveAs->property("visible").toBool());
     }
 
     // F4: Edit > Fix minor errors: check rules, find, review the results and
@@ -7121,9 +7347,8 @@ private slots:
         QTRY_VERIFY(matroska.available());
         QTRY_VERIFY(item->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        auto *noTracks = named("mkvNoTracksMessage");
-        QTRY_VERIFY_WITH_TIMEOUT(noTracks->property("visible").toBool(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(noTracks, "accept"));
+        // NT1: an info toast.
+        QTRY_VERIFY_WITH_TIMEOUT(toastWith(QStringLiteral("The file does not contain any subtitle tracks.")), 20000);
         QCOMPARE(matroska.state(), 0);
         QCOMPARE(target(), before);
 
@@ -7621,15 +7846,12 @@ private slots:
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorPath")->property("enabled").toBool());
         dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", QString());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
-        auto *message = root->findChild<QObject *>(QStringLiteral("fontCollectorMessage"));
-        QTRY_VERIFY(message->property("visible").toBool());
-        QCOMPARE(message->property("text").toString(), QStringLiteral("Select the folder where you want to copy fonts"));
-        QVERIFY(QMetaObject::invokeMethod(message, "accept"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"),
+                      QStringLiteral("Select the folder where you want to copy fonts")); // NT1
 
         // FC-slash-linux: the path field takes '/' typed on Linux; on Windows
         // it excludes / * ? " < > | as legacy's HikariTextValidator did.
         auto *pathField = dialogItem("fontCollectorDialog", "fontCollectorPath");
-        QTRY_VERIFY(!message->property("visible").toBool());
         pathField->forceActiveFocus();
         QTRY_VERIFY(pathField->hasActiveFocus());
         for (const char key : {'a', '/', 'b', '*', 'c'})
@@ -8069,9 +8291,12 @@ private slots:
         QVERIFY(find);
         find->setProperty("editText", QStringLiteral("alpha"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectRun"), "click"));
-        auto *result = root->findChild<QObject *>(QStringLiteral("selectResult"));
-        QTRY_VERIFY(result->property("visible").toBool());
-        QCOMPARE(result->property("text").toString(), QStringLiteral("2 lines selected."));
+        // NT1: the result is an info toast and Select lines stays open.
+        QQuickItem *result = nullptr;
+        QTRY_VERIFY((result = toastWith(QStringLiteral("2 lines selected."))));
+        QCOMPARE(partNamed(result, "toastTitle")->property("text").toString(),
+                 QStringLiteral("Select lines"));
+        QVERIFY(dialog->property("visible").toBool());
         const auto lines = session->document().lines();
         QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id}));
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
@@ -8093,8 +8318,7 @@ private slots:
         QTRY_VERIFY(!styles->property("visible").toBool());
         QCOMPARE(find->property("editText").toString(), QStringLiteral("alpha"));
         QVERIFY(!dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
-        // "Close" in the message closes the Select dialog too.
-        QVERIFY(QMetaObject::invokeMethod(result, "accept"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         // Delete by style, as one "Selecting lines" step; Without and Comments too.
         const auto steps = session->historySize();
@@ -8447,10 +8671,7 @@ private slots:
         QCOMPARE(application->editor().selectionStart(), 0);
         QCOMPARE(application->editor().selectionEnd(), 3);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellIgnore"), "click"));
-        auto *message = root->findChild<QObject *>(QStringLiteral("spellMessage"));
-        QTRY_VERIFY(message->property("visible").toBool());
-        QCOMPARE(message->property("text").toString(), QStringLiteral("No spelling errors were found"));
-        QVERIFY(QMetaObject::invokeMethod(message, "accept"));
+        QTRY_VERIFY(toastWith(QStringLiteral("No spelling errors were found"))); // NT1: an info toast
         QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellClose"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
 
@@ -8602,16 +8823,18 @@ private slots:
         QVERIFY(empty.isValid());
         restartWithSpelling(empty.path(), true);
         QVERIFY(application->openFile(path));
-        auto *notice = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("spellingNotice"));
-        QTRY_VERIFY(notice->property("visible").toBool());
-        QCOMPARE(notice->property("text").toString(),
-                 QStringLiteral("No dictionary files were found in the \"%1\" folder.\nSpell checking will be disabled")
-                     .arg(QDir::toNativeSeparators(QDir(empty.path()).absoluteFilePath(QStringLiteral("Dictionary")))));
+        // NT1: a warning toast titled "Spellchecker", on one line.
+        const QString text = QStringLiteral("No dictionary files were found in the \"%1\" folder. Spell checking will be disabled")
+                                 .arg(QDir::toNativeSeparators(QDir(empty.path()).absoluteFilePath(QStringLiteral("Dictionary"))));
+        QQuickItem *notice = nullptr;
+        QTRY_VERIFY((notice = toastWith(text)));
+        QCOMPARE(partNamed(notice, "toastTitle")->property("text").toString(),
+                 QStringLiteral("Spellchecker"));
+        QVERIFY(application->log().history().contains(QStringLiteral("Spellchecker: ") + text));
 #ifndef _WIN32
-        QVERIFY(!notice->property("text").toString().contains(QLatin1Char('\\'))); // native separators only
+        QVERIFY(!text.contains(QLatin1Char('\\'))); // native separators only
 #endif
         QVERIFY(!application->spellingOn());
-        QVERIFY(QMetaObject::invokeMethod(notice, "accept"));
     }
 
     // TI1: each picker and popup says what it is for, where legacy's caption
@@ -8637,8 +8860,6 @@ private slots:
             {"fontsFolderDialog", QStringLiteral("Choose external font folder")},
             {"findFolderDialog", QStringLiteral("Choose subtitle search folder")},
             {"closeSaveAs", QStringLiteral("Save subtitle file")},
-            {"spellingNotice", QStringLiteral("Spellchecker")},
-            {"mkvNoTracksMessage", QStringLiteral("Load subtitles from an MKV/OGM file")},
             {"mkvProgress", QStringLiteral("Load subtitles from an MKV/OGM file")},
             {"aspectRatioDialog", QStringLiteral("Change aspect ratio")},
         };
@@ -8721,8 +8942,7 @@ private slots:
         }
         named("closeReview")->setProperty("visible", false);
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
-        find("spellingNotice")->setProperty("text", QStringLiteral("Error. Word \"wrold\" was not added."));
-        for (const char *name : {"spellingNotice", "mkvNoTracksMessage", "mkvProgress", "aspectRatioDialog"}) {
+        for (const char *name : {"mkvProgress", "aspectRatioDialog"}) {
             QObject *popup = find(name);
             QVERIFY(QMetaObject::invokeMethod(popup, qstrcmp(name, "aspectRatioDialog") == 0 ? "openAtCursor" : "open"));
             QTRY_VERIFY2(popup->property("opened").toBool(), name);
@@ -8756,7 +8976,7 @@ private slots:
         auto marks = [&] { return application->shell().lines()->index(0, 0).data(ui::LineTableModel::SpellMarksRole).toList(); };
         QCOMPARE(marks(), (QVariantList{5, 5}));
         QTest::qWait(50);
-        QVERIFY(!engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("spellingNotice"))->property("visible").toBool());
+        QCOMPARE(application->log().warningCount() + application->log().errorCount(), 0); // no notice
         QVERIFY(application->spellingOn());
         QVERIFY(!QSettings(home.filePath(QStringLiteral("hikari.ini")), QSettings::IniFormat).contains(QStringLiteral("profile/editor.spellchecker")));
         QVERIFY(application->dictionaries().isEmpty());
@@ -8844,7 +9064,7 @@ private slots:
         replacement->setProperty("text", QString());
         QVERIFY(QMetaObject::invokeMethod(replace, "click"));
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("Helo"));
-        QVERIFY(!root->findChild<QObject *>(QStringLiteral("spellMessage"))->property("visible").toBool());
+        QVERIFY(!messageBox("spellMessages"));
         QVERIFY(application->spellCheckerReplace(QString(), {}).value(QStringLiteral("unchanged")).toBool());
         replacement->setProperty("text", QStringLiteral("Hello"));
         QVERIFY(QMetaObject::invokeMethod(replace, "click"));
@@ -9124,26 +9344,27 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Replace all"));
         QVERIFY(!application->canReplaceFindResults());
         QVERIFY(!item("replaceCheckedButton")->isEnabled());
-        // An answer that asks again at once: Yes to "Reached end" finds
-        // nothing from the beginning either, and "Could not find" stays open
-        // after the click (whose button box closes the dialog as well).
+        // "Could not find" is an info toast titled "Find" (NT1), not a box;
+        // Yes to "Reached end" that finds nothing from the beginning either
+        // closes the question and gives the toast.
         application->setFindQuestionHandler({});
         const QVariantMap zzz{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}};
+        const QString notFound = QStringLiteral("Could not find the specified phrase \"zzz\".");
+        const int infos = application->log().infoCount();
         application->runFindReplace(QStringLiteral("find"), zzz); // from the beginning (the last search wrapped)
-        QTRY_VERIFY(question->property("visible").toBool());
-        QCOMPARE(question->property("text").toString(), QStringLiteral("Could not find the specified phrase \"zzz\"."));
-        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerOk")), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QQuickItem *toast = nullptr;
+        QTRY_VERIFY((toast = toastWith(notFound)));
+        QCOMPARE(partNamed(toast, "toastTitle")->property("text").toString(), QStringLiteral("Find"));
+        QCOMPARE(application->log().infoCount(), infos + 1);
+        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!application->findBusy());
         application->runFindReplace(QStringLiteral("find"), zzz);
         QTRY_VERIFY(question->property("visible").toBool());
         QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
         QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
-        QTRY_COMPARE(question->property("text").toString(), QStringLiteral("Could not find the specified phrase \"zzz\"."));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QTest::qWait(50);
-        QVERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerOk")), "click"));
+        QTRY_COMPARE(application->log().infoCount(), infos + 2);
         QTRY_VERIFY(!question->property("visible").toBool());
+        QVERIFY(!application->findBusy());
         // Ctrl+F again on the Find tab with the focus in the tool hides it.
         item("findText")->forceActiveFocus();
         press(Qt::Key_F, Qt::ControlModifier);
@@ -11693,14 +11914,22 @@ private slots:
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
         // "does not exist" for the catalog: the current one is shown.
-        auto *warning = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsWarning"));
-        QVERIFY(warning);
-        QTRY_VERIFY(warning->property("visible").toBool());
+        // NT1: a warning toast titled "Settings".
+        QQuickItem *warning = nullptr;
+        QTRY_VERIFY((warning = toastWith(QStringLiteral("does not exist"))));
+        QCOMPARE(partNamed(warning, "toastTitle")->property("text").toString(), QStringLiteral("Settings"));
+        // Over the modal dialog's dimmer: beside the window's popup overlay, above it.
+        auto *stack = item<QQuickItem>("toastStack");
+        QQuickItem *overlay = nullptr;
+        for (QQuickItem *child : stack->parentItem()->childItems())
+            if (child->inherits("QQuickOverlay"))
+                overlay = child;
+        QVERIFY(overlay && overlay->isVisible());
+        QVERIFY(stack->z() > overlay->z());
         const auto catalogs = dialog->property("catalogs").toStringList();
         QVERIFY(catalogs.contains(QStringLiteral("Conv")));
         auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
         QCOMPARE(catalog->property("currentText").toString(), QStringLiteral("Default"));
-        QVERIFY(QMetaObject::invokeMethod(warning, "close"));
         // Choosing a catalog loads it and lists its Styles (none in a new one).
         QVERIFY(QMetaObject::invokeMethod(catalog, "activated", Q_ARG(int, int(catalogs.indexOf(QStringLiteral("Conv"))))));
         QCOMPARE(styles.catalog(), QStringLiteral("Conv"));
@@ -14774,7 +15003,7 @@ private slots:
         store.set("shortcuts.hotkeys", QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Bogus"),
                                                    QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-H")});
         QStringList logged;
-        app::HotkeysController h(application->automationHotkeys(), store, [&](const QString &m) { logged << m; });
+        app::HotkeysController h(application->automationHotkeys(), store, [&](const QString &m, bool) { logged << m; });
         QCOMPARE(logged, QStringList{QStringLiteral("Shortcut \"Bogus\" is invalid")});
         QCOMPARE(h.accelOf(QStringLiteral("GLOBAL_SAVE_SUBS"), 0), QStringLiteral("Ctrl-Bogus"));
         QVERIFY(!h.keys().value(QStringLiteral("global")).toMap().contains(QStringLiteral("GLOBAL_SAVE_SUBS")));
@@ -15370,10 +15599,11 @@ private slots:
         dock->setProperty("isFloating", false);
     }
 
-    // S4: Automation > "Run the last loaded script" (HikariSubFrame.cpp:353,
-    // after Refresh autoload scripts) on a Document naming no scripts shows
-    // legacy's modal box (HikariSubFrame.cpp:920); a script editor asked for
-    // while a box shows opens once it is closed (legacy's boxes are modal).
+    // S4: "Run the last loaded script" (GLOBAL_LOAD_LAST_SCRIPT, the action
+    // after Refresh autoload scripts) on a Document naming no scripts says so
+    // (HikariSubFrame.cpp:920), an info toast now (NT1); a script editor
+    // asked for while an error's message box shows opens once it is closed
+    // (legacy's boxes are modal).
     void runTheLastLoadedScriptSaysWhenThereIsNone()
     {
         QVERIFY(application->openFile(episode));
@@ -15381,18 +15611,20 @@ private slots:
         QVERIFY(run);
         QCOMPARE(run->property("text").toString(), QStringLiteral("Run the last loaded script"));
         QVERIFY(QMetaObject::invokeMethod(run, "click"));
-        auto *notice = named("automationNotice");
-        QVERIFY(notice);
-        QTRY_VERIFY(notice->property("visible").toBool());
-        QCOMPARE(notice->property("title").toString(), QStringLiteral("Info"));
-        QCOMPARE(named("automationNoticeText")->property("text").toString(),
-                 QStringLiteral("This subtitle file does not have any scripts added"));
+        QQuickItem *notice = nullptr;
+        QTRY_VERIFY((notice = toastWith(QStringLiteral("This subtitle file does not have any scripts added"))));
+        QCOMPARE(partNamed(notice, "toastTitle")->property("text").toString(),
+                 QStringLiteral("Run the last loaded script"));
+        QVERIFY(!messageBox("messages") || !messageBox("messages")->isVisible());
         auto *editor = named("scriptEditorDialog");
         QVERIFY(editor);
+        emit application->automation().notice(QStringLiteral("error"), QStringLiteral("Edit script"),
+                                               QStringLiteral("Cannot start editor."), QString());
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
         emit application->automation().chooseScriptEditor(QStringLiteral("/scripts/x.lua"));
         QVERIFY(!editor->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(notice, "accept"));
-        QTRY_VERIFY(!notice->property("visible").toBool());
+        answerMessage("messages", QStringLiteral("Edit script"), QStringLiteral("Cannot start editor."));
         QTRY_VERIFY(editor->property("visible").toBool());
         QCOMPARE(editor->property("title").toString(), QStringLiteral("Select a script editor"));
         QCOMPARE(editor->property("script").toString(), QStringLiteral("/scripts/x.lua"));
@@ -20214,57 +20446,21 @@ private slots:
         QVERIFY2(script.contains("Dialogue: 2147483647,") && script.contains("\\1a&H77&\\pos(0,0)\\an7\\iclip(m "),
                  script.constData());
         // Separate point: another "m" right after the "m" is refused with
-        // legacy's modal HikariMessageBox titled "Warning"
-        // (VisualClips.cpp:1013-1016), a box in the window closed by OK.
+        // legacy's HikariMessageBox (VisualClips.cpp:1013-1016), a warning
+        // toast titled with the tool now (NT1), which takes no keyboard.
         QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_mode4"), "click"));
         QTRY_VERIFY(visualItem("visualOption_mode4")->property("checked").toBool());
         QVERIFY(!visualItem("visualOption_mode1")->property("checked").toBool());
         const std::size_t refused = session->historySize();
+        const int warnings = application->log().warningCount();
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, b);
-        QTRY_COMPARE(tools.notice(), QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
-        QObject *box = named("visualNotice");
-        QVERIFY(box);
-        QTRY_VERIFY(box->property("visible").toBool());
-        QCOMPARE(box->property("title").toString(), QStringLiteral("Warning"));
-        QCOMPARE(box->property("modal").toBool(), true);
-        QCOMPARE(named("visualNoticeText")->property("text").toString(),
-                 QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
+        QQuickItem *notice = nullptr;
+        QTRY_VERIFY((notice = toastWith(QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"))));
+        QCOMPARE(partNamed(notice, "toastTitle")->property("text").toString(), tools.toolName());
+        QVERIFY(!tools.toolName().isEmpty());
+        QCOMPARE(application->log().warningCount(), warnings + 1);
         QCOMPARE(session->historySize(), refused);
-        QVERIFY(!QGuiApplication::modalWindow()); // in the window: nothing an offscreen run cannot close
-        // One box, in the window showing the tools (Codex on #293: the Video
-        // panel's bar and fullscreen's share the controller): fullscreen
-        // takes the open notice and gives it back as it closes.
-        {
-            const auto notices = [&] {
-                QList<QObject *> out;
-                for (QObject *o : engine->rootObjects().first()->findChildren<QObject *>())
-                    if (o->objectName() == QLatin1String("visualNotice"))
-                        out << o;
-                return out;
-            };
-            const auto noticeWindow = [&]() -> QQuickWindow * {
-                const auto all = notices();
-                auto *item = all.size() == 1 ? qvariant_cast<QQuickItem *>(all.front()->property("parent")) : nullptr;
-                return item ? item->window() : nullptr;
-            };
-            QCOMPARE(notices().size(), 1);
-            QCOMPARE(noticeWindow(), window);
-            auto &fs = application->videoFullscreen();
-            QVERIFY(fs.toggle(0));
-            QTRY_VERIFY(fullscreenWindow()->isExposed());
-            QTRY_COMPARE(noticeWindow(), fullscreenWindow());
-            QTRY_VERIFY(notices().front()->property("visible").toBool());
-            QCOMPARE(tools.notice(), QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
-            QVERIFY(fs.leave());
-            QTRY_VERIFY(!fullscreenWindow()->isVisible());
-            QTRY_COMPARE(noticeWindow(), window);
-            box = notices().front();
-            QTRY_VERIFY(box->property("visible").toBool());
-            QCOMPARE(tools.notice(), QStringLiteral("Double \"m\" was blocked because of Vsfilter bug"));
-        }
-        QVERIFY(QMetaObject::invokeMethod(box, "accept"));
-        QTRY_VERIFY(!box->property("visible").toBool());
-        QCOMPARE(tools.notice(), QString());
+        QVERIFY(!QGuiApplication::modalWindow());
         QCOMPARE(text(session->document().lines()[0]).left(7), QStringLiteral("{\\iclip"));
         Q_UNUSED(first);
     }
@@ -21025,11 +21221,7 @@ private slots:
         QVERIFY(!named("tagsField_value2")->property("enabled").toBool());
         // An empty new name is refused.
         QVERIFY(QMetaObject::invokeMethod(named("addTag"), "click"));
-        QObject *message = named("tagsMessage");
-        QTRY_VERIFY(message->property("visible").toBool());
-        QCOMPARE(named("tagsMessageText")->property("text").toString(), QStringLiteral("Enter a name for the new tag."));
-        QVERIFY(QMetaObject::invokeMethod(message, "accept"));
-        QTRY_VERIFY(!message->property("visible").toBool());
+        answerMessage("tagsMessages", QStringLiteral("Tag editing"), QStringLiteral("Enter a name for the new tag.")); // NT1
         named("newTagName")->setProperty("text", QStringLiteral("wide"));
         QVERIFY(QMetaObject::invokeMethod(named("addTag"), "click"));
         QTRY_COMPARE(editor->list().size(), 23);
@@ -24530,10 +24722,10 @@ private slots:
     }
 
     // DG1 (#222) screenshots for review (HIKARI_DIALOG_SHOT_DIR; skipped
-    // without it): About, Credits, the update check's warning, a newer
-    // release and the AUR notice in the four themes on HikariSub's title bar
-    // (where the platform has one: X11, Wayland, Windows), then About and the
-    // warning with "Use system title bar".
+    // without it): About, Credits, a newer release and the AUR notice in the
+    // four themes on HikariSub's title bar (where the platform has one: X11,
+    // Wayland, Windows), then About with "Use system title bar" (the update
+    // check's warning is a toast since NT1).
     void dialogFrameScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_DIALOG_SHOT_DIR");
@@ -24566,9 +24758,6 @@ private slots:
         const std::vector<std::pair<QString, std::function<void()>>> dialogs{
             {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutDialog")), "open"); }},
             {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsDialog")), "open"); }},
-            {QStringLiteral("updateMessage"), [&] {
-                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("failed")), Q_ARG(QVariantMap, {}), Q_ARG(bool, true));
-             }},
             {QStringLiteral("updateAvailable"), [&] {
                  QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, release), Q_ARG(bool, true));
              }},
@@ -24599,7 +24788,7 @@ private slots:
         for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark")}) {
             setTheme(code);
             for (const auto &[name, open] : dialogs) {
-                if (name != QLatin1String("aboutDialog") && name != QLatin1String("updateMessage"))
+                if (name != QLatin1String("aboutDialog"))
                     continue;
                 open();
                 shoot(name, QStringLiteral("dg1-%1-system-%2.png").arg(name, code));
@@ -24790,24 +24979,22 @@ private slots:
                       {"convert.mkv", QStringLiteral("Cannot convert video to RGBA")}};
         for (const auto &stage : stages) {
             const qsizetype before = log.history().count(stage.message);
+            const int errors = log.errorCount();
             fail(file(stage.name));
             QCOMPARE(log.lastMessage(), stage.message);
-            QVERIFY(log.shown());
+            QCOMPARE(log.errorCount(), errors + 1); // NT1: an error toast, "Open video"
+            QVERIFY(log.history().contains(QStringLiteral("Open video: ") + stage.message));
             QCOMPARE(log.history().count(stage.message), before + 1); // once
-            log.close();
         }
         fail(file("indexer.mkv"));
         QVERIFY2(log.lastMessage().startsWith(QStringLiteral("Video unavailable")), qPrintable(log.lastMessage()));
         QCOMPARE(log.lastMessage(), video.status());
-        log.close();
         // a refused dummy text after a failed file: the status, not the file's message
         fail(file("source.mkv"));
         QCOMPARE(log.lastMessage(), QStringLiteral("Cannot create VideoSource."));
-        log.close();
         fail(QStringLiteral("?dummy:25:0:8:4:1:2:3:"));
         QVERIFY2(log.lastMessage().startsWith(QStringLiteral("Video unavailable")), qPrintable(log.lastMessage()));
         QVERIFY(!video.session().openFailure());
-        log.close();
     }
 
     // V3-unload-video: VIDEO_DELETE_FILE ("Unload video") empties the Video
@@ -24981,6 +25168,8 @@ private slots:
         restartWithSettings(ini);
         QVERIFY(application->log().history().contains(QStringLiteral("Ctrl-Alt-B")));
         QVERIFY(application->log().history().contains(QStringLiteral("Open blank 2h30m audio")));
+        // NT1: given before the window was made, and a toast all the same.
+        QTRY_VERIFY(toastWith(QStringLiteral("Ctrl-Alt-B")));
         QCOMPARE(application->settingsStore()->list("shortcuts.hotkeys"), QStringList{QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")});
     }
 
@@ -27085,6 +27274,29 @@ private slots:
         QTRY_VERIFY(!fs.active());
         QTRY_VERIFY(editorDock->property("isOpen").toBool());
         QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+    }
+
+    // NT1: a toast shows in the fullscreen window; its Details leave
+    // fullscreen for the Log panel in the main window.
+    void videoFullscreenToastDetailsLeaveForTheLog()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        QObject *logDock = named("logDock");
+        QVERIFY(!logDock->property("isOpen").toBool());
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        application->log().notice(ui::LogController::Error, QStringLiteral("Save"), QStringLiteral("nt1 fullscreen notice"),
+                                  QStringLiteral("disk full"));
+        QQuickItem *toast = nullptr;
+        QTRY_VERIFY((toast = toastWith(QStringLiteral("nt1 fullscreen notice"))));
+        QCOMPARE(toast->window(), fsWindow);
+        QVERIFY(QMetaObject::invokeMethod(partNamed(toast, "toastDetails"), "clicked"));
+        QTRY_VERIFY(!fs.active());
+        QTRY_VERIFY(logDock->property("isOpen").toBool());
     }
 
     // V5-volume-slider: the fullscreen panel shows the Video panel's volume

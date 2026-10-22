@@ -257,6 +257,8 @@ ApplicationWindow {
         editorDock.setAsCurrentTab()
         timingDock.close()
         automationDock.close()
+        // NT1: the Log has no place until it first opens (addLog), so the
+        // arrangement keeps the sizes it had without it.
     }
     Connections {
         target: root.shell
@@ -308,6 +310,13 @@ ApplicationWindow {
             dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(400, 0))
     }
 
+    // NT1 (#302): the Log's place when it opens in an arrangement that has
+    // none for it (every preset, an older saved layout): along the bottom,
+    // the whole width.
+    function addLog() {
+        dockingArea.addDockWidget(logDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
+    }
+
     // AM1: a macro started while the Automation panel is closed opens it
     // (its run status holds Cancel and the log), without taking the focus.
     readonly property bool automationRunning: root.automation.running
@@ -320,10 +329,10 @@ ApplicationWindow {
 
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel]
+                                          timingPanel, searchPanel, automationPanel, logPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock]
+                                     searchDock, automationDock, logDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -489,6 +498,8 @@ ApplicationWindow {
             return
         if (dock === originalDock)
             root.openOriginal()
+        else if (dock === logDock && !Docking.hasPlace("Log"))
+            root.addLog()
         else
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
@@ -1174,12 +1185,18 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) temporaryFilesWindow.showFiles()
                     }
                 }
+                // NT1: the Log panel, shown or hidden (legacy's place in File).
                 ShellMenuItem {
                     iconRole: "log"
                     objectName: "logMenuItem"
                     action: Action {
-                        text: qsTr("Show / Hide log window")
-                        onTriggered: root.log.toggleWindow()
+                        text: qsTr("Log")
+                        onTriggered: {
+                            if (logDock.isOpen)
+                                logDock.close()
+                            else
+                                root.showPanel(logDock)
+                        }
                     }
                 }
                 // P6: legacy "Last session" submenu.
@@ -1534,7 +1551,7 @@ ApplicationWindow {
                 onChosen: path => {
                     const problem = root.app.openKeyframesFile(path)
                     if (problem.length > 0)
-                        root.log.log(problem)
+                        root.notices.post("error", qsTr("Open keyframes"), problem)
                 }
             }
             ShellMenuItem {
@@ -2251,10 +2268,9 @@ ApplicationWindow {
                 visible: !!field.misspell.word
                 height: visible ? implicitHeight : 0
                 onTriggered: {
-                    if (!root.app.addEditorWord(field.misspell.word)) {
-                        spellingNotice.text = qsTranslate("HikariSub.Editor", "Error. Word \"%1\" was not added.").arg(field.misspell.word)
-                        spellingNotice.open()
-                    }
+                    if (!root.app.addEditorWord(field.misspell.word))
+                        root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
+                                          qsTranslate("HikariSub.Editor", "Error. Word \"%1\" was not added.").arg(field.misspell.word))
                 }
             }
             ShellMenuItem {
@@ -5519,12 +5535,36 @@ ApplicationWindow {
             }
         }
 
+        // NT1 (#302): the Log panel (legacy's Log window). A toast's Details
+        // opens it at its entry; nothing else opens it by itself.
+        KDDW.DockWidget {
+            id: logDock
+            objectName: "logDock"
+            uniqueName: "Log"
+            title: qsTr("Log")
+            Panel {
+                id: logPanel
+                objectName: "logPanel"
+                dockName: "Log"
+                minimumBodySize: logView.minimumSize
+                anchors.fill: parent
+                title: qsTr("Log")
+                LogPanel {
+                    id: logView
+                    objectName: "logView"
+                    anchors.fill: parent
+                    log: root.log
+                }
+            }
+        }
+
         Component.onCompleted: {
             // D3: the horizontal panels keep a one-tab header even alone;
             // the Reference tray's toolbar sits in its header.
             Docking.setPanelHeader("Grid", true, null)
             Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
             Docking.setPanelHeader("Search", true, null)
+            Docking.setPanelHeader("Log", true, null)
             Docking.setPanelHeader("Original", true, originalTools) // TM1
             root.defaultLayout()
         }
@@ -5638,21 +5678,42 @@ ApplicationWindow {
     }
     // PK1 (#301): the toasts, at the bottom right of the main window above
     // the status bar, or of the fullscreen video window (above its pinned
-    // bar) while it is open. root.notices.post(severity, title, text, options).
+    // bar) while it is open. root.notices.post(severity, title, text, options);
+    // C++ gives them through LogController::notice (NT1). NT1: beside the
+    // window's popup overlay and above it, so a modal dialog's dimmer does
+    // not hide them (Settings' warnings).
     ToastStack {
         id: notices
         objectName: "toastStack"
         log: root.log
         settings: root.app.settings
         readonly property bool inFullscreen: root.videoFullscreen.active
-        parent: inFullscreen ? videoFullscreenWindow.contentItem : root.contentItem
+        parent: inFullscreen ? videoFullscreenWindow.contentItem : root.Overlay.overlay.parent
         anchors.right: parent ? parent.right : undefined
         anchors.bottom: parent ? parent.bottom : undefined
         anchors.rightMargin: 12
-        anchors.bottomMargin: 12 + (inFullscreen ? videoFullscreenWindow.pinnedPanelHeight : 0)
-        z: 1000
+        anchors.bottomMargin: 12 + (inFullscreen ? videoFullscreenWindow.pinnedPanelHeight : root.footer.height)
+        z: 1000002
     }
     readonly property alias notices: notices
+    // NT1: a toast's Details (and "N more notices") opens the Log panel,
+    // out of fullscreen (as the fullscreen's Audio settings).
+    Connections {
+        target: root.log
+        function onRevealRequested() {
+            if (root.videoFullscreen.active)
+                root.videoFullscreen.leave()
+            root.showPanel(logDock)
+        }
+    }
+    // NT1 (#302): the message box for the notices that need an answer
+    // (root.messages.ask(options, done), MessageHost.qml).
+    MessageHost {
+        id: messages
+        objectName: "messages"
+        settings: root.app.settings
+    }
+    readonly property alias messages: messages
     // WS3: Save layout as… and Manage layouts… (the switcher's and View > Layout's).
     SaveLayoutDialog {
         id: saveLayoutDialog
@@ -5741,10 +5802,9 @@ ApplicationWindow {
         const route = root.app.saveRouteFor(document)
         if (route === "dialog")
             openSaveDialog(document)
-        else if (route === "readonly") {
-            readOnlyWarning.document = document
-            readOnlyWarning.open()
-        } else if (document === 0)
+        else if (route === "readonly")
+            warnReadOnly(document)
+        else if (document === 0)
             root.editor.save()
         else
             root.app.saveDocument(document)
@@ -5759,12 +5819,10 @@ ApplicationWindow {
             return
         const next = saveQueue[0]
         saveQueue = saveQueue.slice(1)
-        if (next.route === "readonly") {
-            readOnlyWarning.document = next.id
-            readOnlyWarning.open()
-        } else {
+        if (next.route === "readonly")
+            warnReadOnly(next.id)
+        else
             openSaveDialog(next.id)
-        }
     }
     function openSaveDialog(id) {
         const v = root.app.saveDialogValuesFor(id ?? 0)
@@ -5785,8 +5843,7 @@ ApplicationWindow {
         property var document: 0 // P9: the Document saved (0: the editing target)
         onAccepted: {
             if (root.app.saveChosenFor(document, selectedFile) === "readonly") {
-                readOnlyWarning.document = document
-                readOnlyWarning.open()
+                root.warnReadOnly(document)
             } else {
                 matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
                 root.saveNext()
@@ -5802,22 +5859,33 @@ ApplicationWindow {
         id: matroskaSubtitles
         matroska: root.matroska
         settings: root.app.settings
+        notices: root.notices
         save: function() {
             const route = root.app.saveRoute()
             root.saveSubtitles()
             return route === "dialog" || route === "readonly"
         }
     }
-    Dialog {
-        id: readOnlyWarning
-        objectName: "readOnlyWarning"
-        title: qsTranslate("HikariSub.Documents", "Warning")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { text: qsTranslate("HikariSub.Documents", "Chosen file is read only,\nplease save with different name or change file attribute.") }
-        property var document: 0
-        onClosed: root.openSaveDialog(document)
+    // NT1 (#302): a read-only file is a question now, Save as… or Cancel
+    // (legacy's OK opened the Save dialog again, with no way out but it).
+    // Cancel goes on as a cancelled Save dialog does.
+    function warnReadOnly(document) {
+        root.messages.ask({
+            title: qsTranslate("HikariSub.Documents", "Save"),
+            text: qsTranslate("HikariSub.Documents", "Chosen file is read only,\nplease save with different name or change file attribute."),
+            severity: "warning",
+            choices: [
+                { id: "saveAs", text: qsTranslate("HikariSub.Documents", "Save as…"), role: "accept", isDefault: true },
+                { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject" }
+            ]
+        }, id => {
+            if (id === "saveAs") {
+                root.openSaveDialog(document)
+            } else {
+                matroskaSubtitles.saveDone()
+                root.saveNext()
+            }
+        })
     }
 
     // P9: Close all tabs' question and a video's same-named subtitles.
@@ -5973,6 +6041,8 @@ ApplicationWindow {
     }
     AutomationNotices {
         automation: root.automation
+        toasts: root.notices
+        messages: root.messages
     }
     FileDialog {
         id: scriptDialog
@@ -5999,7 +6069,7 @@ ApplicationWindow {
         app: root.app
         colourPicker: root.colourPicker
         anchors.centerIn: parent
-        onRefused: message => root.log.log(message)
+        onRefused: message => root.notices.post("error", qsTr("Open dummy video"), message)
     }
     VideoFileQuestion {
         id: videoFileQuestion
@@ -6217,54 +6287,6 @@ ApplicationWindow {
         }
     }
 
-    // Legacy LogWindow: a message pops it up with just that message; the File
-    // menu entry shows the whole log.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: logWindow
-        objectName: "logWindow"
-        title: qsTr("Log window")
-        width: 520
-        height: root.log.full ? 380 : 140
-        flags: Qt.Dialog
-        visible: root.log.shown
-        onClosing: root.log.close()
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                objectName: "logLastMessage"
-                visible: !root.log.full
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                horizontalAlignment: Text.AlignHCenter
-                // A message quotes files (a broken lyrics file's excerpt):
-                // never markup, which could fetch an <img> from a server.
-                textFormat: Text.PlainText
-                text: root.log.lastMessage
-            }
-            ScrollView {
-                visible: root.log.full
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                TextArea {
-                    objectName: "logHistory"
-                    readOnly: true
-                    textFormat: TextEdit.PlainText
-                    text: root.log.history
-                    Accessible.name: qsTr("Log")
-                }
-            }
-            Item { Layout.fillHeight: !root.log.full }
-            Button {
-                objectName: "logClose"
-                Layout.alignment: Qt.AlignRight
-                text: qsTr("Close")
-                onClicked: root.log.close()
-            }
-        }
-    }
-
     // D1: every drag placement from the keyboard, and numeric resizing.
     Window {
         color: Theme.panel // K2: a Window draws white unless told
@@ -6411,7 +6433,7 @@ ApplicationWindow {
             // V3: the recent keyframes take the file too (SetRecent(3))
             const problem = root.app.openKeyframesFile(selectedFile.toString())
             if (problem.length > 0)
-                root.log.log(problem)
+                root.notices.post("error", qsTr("Open keyframes"), problem)
         }
         // V3: the video's folder, else the latest recent keyframes'
         function show() {
@@ -6503,28 +6525,24 @@ ApplicationWindow {
                     updateAurNotice.showRelease(release, !interactive)
                 else
                     updateAvailable.showRelease(release, !interactive)
+            } else if (outcome === "current") {
+                // NT1 (#302): toasts, titled with the command (DG1-update-titles).
+                root.notices.post("info", qsTr("Check for updates"), qsTr("You already have the latest version"))
             } else {
-                // DG1: titled with the command that gave it (DG1-update-titles).
-                updateMessage.showMessage(qsTr("Check for updates"),
-                                   outcome === "current" ? qsTr("You already have the latest version")
-                                                         : qsTr("Cannot check for updates"),
-                                   outcome !== "current")
+                root.notices.post("warning", qsTr("Check for updates"), qsTr("Cannot check for updates"))
             }
         }
-        function onNotice(message) {
-            updateMessage.showMessage(qsTr("Update"), message, true)
+        function onNotice(message, atStart) {
+            root.notices.post("error", atStart ? qsTr("Install update") : qsTr("Download and install"),
+                              message)
         }
     }
     Connections {
         target: root.updates.installer
         function onReady() { updateAvailable.close() }
     }
-    // DG1 (#222): About, Credits and the update notices are windows of their
+    // DG1 (#222): About, Credits and the update offers are windows of their
     // own on the dialog frame (DialogWindow.qml), modeless.
-    UpdateMessage {
-        id: updateMessage
-        settings: root.app.settings
-    }
     UpdateAurNotice {
         id: updateAurNotice
         updates: root.updates
@@ -6784,6 +6802,7 @@ ApplicationWindow {
         catalogs: root.fontCatalogs
         colourPicker: root.colourPicker
         app: root.app
+        postCleanStyles: root.postCleanStyles
     }
     SettingsImportDialog {
         id: settingsImportDialog
@@ -6793,6 +6812,7 @@ ApplicationWindow {
     SettingsDialog {
         id: settingsDialog
         app: root.app
+        notices: root.notices
         hotkeys: root.hotkeys
         colourPicker: root.colourPicker
         tagButtons: root.tagButtons
@@ -6817,6 +6837,7 @@ ApplicationWindow {
     SelectLinesDialog {
         id: selectLinesDialog
         app: root.app
+        notices: root.notices
         anchors.centerIn: parent
         // DestroyDialogs (a changed program font): SaveOptions, then gone.
         Connections {
@@ -6839,11 +6860,12 @@ ApplicationWindow {
             function onMisspellReplacerDestroyed() { misspellDialog.destroyDialog() }
         }
     }
-    // F3: the Spellchecker window, legacy's spelling message boxes and the
-    // editor's "Fix suggestions" list.
+    // F3: the Spellchecker window and the editor's "Fix suggestions" list
+    // (legacy's spelling message boxes are toasts, NT1).
     SpellCheckerDialog {
         id: spellCheckerDialog
         app: root.app
+        notices: root.notices
         anchors.centerIn: parent
     }
     // KA7: the Karaoke check window, made at its first opening, as PK1's
@@ -6861,42 +6883,8 @@ ApplicationWindow {
         karaokeCheckLoader.active = true
         karaokeCheckLoader.item.openDialog()
     }
-    Dialog {
-        id: spellingNotice
-        objectName: "spellingNotice"
-        property alias text: spellingNoticeLabel.text
-        title: qsTranslate("HikariSub.Spelling", "Spellchecker") // TI1-popup-titles
-        anchors.centerIn: parent
-        modal: true // legacy HikariMessageBox is modal
-        standardButtons: Dialog.Ok
-        Label { id: spellingNoticeLabel; Accessible.role: Accessible.AlertMessage }
-    }
-    // W1: DirectShow could not open the video (legacy VideoBox::LoadVideo's
-    // HikariMessageBox, titled "Warning").
-    Dialog {
-        id: playerNotice
-        objectName: "playerNotice"
-        property alias text: playerNoticeLabel.text
-        title: qsTranslate("HikariSub.Video", "Warning")
-        anchors.centerIn: parent
-        modal: true
-        standardButtons: Dialog.Ok
-        Label { id: playerNoticeLabel; Accessible.role: Accessible.AlertMessage }
-    }
-    Connections {
-        target: root.app
-        function onPlayerNotice(message) {
-            playerNotice.text = message
-            playerNotice.open()
-        }
-    }
-    Connections {
-        target: root.app
-        function onSpellingNotice(message) {
-            spellingNotice.text = message
-            spellingNotice.open()
-        }
-    }
+    // W1: DirectShow could not open the video: legacy VideoBox::LoadVideo's
+    // HikariMessageBox is a warning toast (NT1, application_directshow.cpp).
     // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK's "Fix suggestions", on PK1's list
     // chooser as a popover at the misspelled word: a click or Enter replaces
     // it, Esc or a press outside leaves it.
@@ -7459,8 +7447,7 @@ ApplicationWindow {
             return true
         case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles
             if (editing) {
-                cleanStylesMessage.text = root.styleManager.cleanStyles()
-                cleanStylesMessage.open()
+                root.postCleanStyles(root.styleManager.cleanStyles())
             }
             return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
@@ -7684,17 +7671,13 @@ ApplicationWindow {
         hotkeys: root.hotkeys
         settings: root.app.settings
     }
-    // GLOBAL_STYLE_MANAGER_CLEAN_STYLE: StyleStore::OnCleanStyles's message
-    // (stylestore.cpp:738-775).
-    Dialog {
-        id: cleanStylesMessage
-        objectName: "cleanStylesMessage"
-        property alias text: cleanStylesLabel.text
-        title: qsTranslate("HikariSub.Styles", "Status of deleted styles")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { id: cleanStylesLabel }
+    // GLOBAL_STYLE_MANAGER_CLEAN_STYLE and the Style manager's Clear:
+    // StyleStore::OnCleanStyles's message (stylestore.cpp:738-775), a toast
+    // with the lists as its Details (NT1).
+    function postCleanStyles(result) {
+        if (result && result.text)
+            root.notices.post("info", qsTranslate("HikariSub.Styles", "Delete unused styles"), result.text,
+                              { details: result.details })
     }
 
     // S2: committed automation shortcuts, application-wide.

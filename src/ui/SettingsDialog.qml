@@ -38,7 +38,7 @@ Dialog {
     property var renderers: [] // W2: the CSRI renderers' names and "libass", VSFilterMod last
     property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
     property var outputDevices: [] // H2: System default, the connected devices, a missing choice
-    property var warnings: []
+    property ToastStack notices: null
     // LE5: the tag buttons as the Editor page holds them, {name, tag, type,
     // icon} each, written on OK or Apply where they differ.
     property var tagButtonList: []
@@ -69,22 +69,17 @@ Dialog {
             hotkeys.filter(hotkeyFilter.currentIndex)
         }
         open()
-        warnings = r.warnings
-        showWarning()
+        // NT1 (#302): the legacy constructor's "does not exist" message
+        // boxes, one at a time; warning toasts now.
+        if (notices)
+            for (const warning of r.warnings)
+                notices.post("warning", qsTr("Settings"), warning)
     }
     // O5: Apply switched the interface language: the dictionary choice's
     // entry for an empty Dictionary folder in the new language.
     Connections {
         target: dialog.app
         function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
-    }
-    // The legacy constructor's "does not exist" message boxes, one at a time.
-    function showWarning() {
-        if (warnings.length === 0)
-            return
-        warningText.text = warnings[0]
-        warnings = warnings.slice(1)
-        warningDialog.open()
     }
     function put(setting, value) {
         const v = Object.assign({}, values)
@@ -1200,17 +1195,5 @@ Dialog {
         objectName: "settingsHotkeyMapping"
         hotkeys: dialog.hotkeys
         settings: dialog.app ? dialog.app.settings : null
-    }
-
-    Dialog {
-        id: warningDialog
-        objectName: "settingsWarning"
-        title: qsTr("Warning")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        width: 420
-        Label { id: warningText; width: parent.width; wrapMode: Text.Wrap }
-        onClosed: dialog.showWarning()
     }
 }
