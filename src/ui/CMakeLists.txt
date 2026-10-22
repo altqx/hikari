@@ -27,6 +27,8 @@ qt_add_qml_module(hikari_ui
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
 # SH2: the Home page, while no Document is open.
 qt_target_qml_sources(hikari_ui QML_FILES HomePage.qml)
+# TP1: the Styles panel.
+qt_target_qml_sources(hikari_ui QML_FILES StylesPanel.qml)
 # E6: the Line editor's tag list.
 qt_target_qml_sources(hikari_ui QML_FILES TagListPopup.qml EditorTagList.qml)
 # LE5: the custom tag buttons, as the strip shows them, and their popover.
@@ -59,9 +61,9 @@ qt_target_qml_sources(hikari_ui QML_FILES GridHeaderToolTip.qml)
 # The windows' closing rows (DialogButtonBox, in the platform's order).
 qt_target_qml_sources(hikari_ui QML_FILES WindowFooter.qml FooterButton.qml)
 # P9: the association question, the tab commands' questions and the legacy autosaves.
-qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml LegacyAutosaveList.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml)
 # ADR 0019: the update notices and the installing notice.
-qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateAurNotice.qml UpdateInstallingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateInstallingWindow.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 # KA7: the Karaoke check window.
@@ -76,7 +78,7 @@ qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 # T1: the visual tool rail and the overlay over the Video canvas; VT1: the inspector bar below it and its fields.
-qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml)
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 # T2-T6: the families' options in the bar (Position, Move, Scale, the rotations,
 # the clips' point modes and Invert clip, ...) and the tools' dialogs.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
@@ -122,7 +124,7 @@ target_sources(hikari_ui PRIVATE title_bars.cpp title_bars.h)
 if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 # K2: the controls style (Fusion with the theme's control outlines), chosen by
 # theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
 add_subdirectory(style)
@@ -206,16 +208,24 @@ if(UNIX AND NOT APPLE)
 endif()
 qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml TitleBarMenus.qml TitleBarMenuItem.qml
     TitleBarMoveArea.qml TitleBarButton.qml)
-# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update notices on it.
+# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update offer on it.
 qt_target_qml_sources(hikari_ui QML_FILES DialogWindow.qml DialogTitleBar.qml AboutDialog.qml CreditsDialog.qml
-    UpdateMessage.qml UpdateAvailable.qml)
+    UpdateAvailable.qml)
 # SH3: What's new from the release notes, on the Home page and in Help > What's new.
 qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml WhatsNewCard.qml WhatsNewDialog.qml)
 # PK1: the popup kit on DG1's frame (docs/qt/ux/visual-language.md "Popups"): the message box, the popover,
-# toasts and the inline bar, and the clash review, Choose styles, hotkey capture, list chooser and date picker.
+# toasts and the inline bar, and the clash review, Choose styles, hotkey capture, list chooser and date picker;
+# NT1: the application's message box (MessageHost) and the Log panel.
 qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
-    ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml)
+    ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
+    MessageHost.qml LogPanel.qml)
+# PU1: the file and session popups on the kit: the lazily made message box, Unsaved changes, Autosaves and the
+# startup offer.
+qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")
 qt_add_resources(hikari_ui "hikari_app_icon" PREFIX "/hikari/ui" FILES "${hikari_app_icon}")
+# KA1 (#276): Karaoke's English hyphenation (LibreOffice's hyph_en_US.dic,
+# BSD-style; README_hyph_en_US.txt beside it).
+qt_add_resources(hikari_ui "hikari_hyphenation" PREFIX "/hikari/ui" FILES hyphenation/hyph_en_US.dic)

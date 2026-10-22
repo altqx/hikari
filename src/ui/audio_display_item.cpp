@@ -284,12 +284,12 @@ application::KaraokeCharClass karaokeCharClass()
     const auto ascii = application::KaraokeCharClass::ascii();
     application::KaraokeCharClass classes;
     classes.space = [ascii](char16_t c) { return c < 128 ? ascii.space(c) : QChar(c).isSpace(); };
-    classes.punct = [ascii](char16_t c) {
+    classes.punct = [ascii](char32_t c) {
         if (c < 128)
             return ascii.punct(c);
-        const QChar ch(c);
-        return ch.isPunct() || ch.isSymbol();
+        return QChar::isPunct(c) || QChar::isSymbol(c);
     };
+    classes.symbol = [ascii](char32_t c) { return c < 128 ? ascii.symbol(c) : QChar::isSymbol(c); };
     // U1-unicode-case: Unicode's lower case (one unit to one, as wx's Lower)
     classes.lower = [](char16_t c) { return static_cast<char16_t>(QChar(c).toLower().unicode()); };
     return classes;
@@ -388,6 +388,7 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
     const QPointF p = event->position();
     const int h = m_controller->view().height();
     const bool over = p.x() >= 0 && p.y() >= 0 && p.x() < width() && p.y() < h;
+    m_controller->setPointerOver(over);
     const auto result = timingEvent(event, static_cast<int>(application::AudioMouse::Type::Move));
     // A5: in karaoke mode legacy can return before the cursor is drawn, and
     // draws none over the syllables' letters
@@ -401,8 +402,10 @@ void AudioDisplayItem::hoverMoveEvent(QHoverEvent *event)
 
 void AudioDisplayItem::hoverLeaveEvent(QHoverEvent *)
 {
-    if (m_controller)
+    if (m_controller) {
+        m_controller->setPointerOver(false);
         m_controller->setCursor(std::nullopt);
+    }
 }
 
 // Any button takes focus and hides the cursor (timing clicks are A3's).

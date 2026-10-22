@@ -249,6 +249,18 @@ std::expected<PermitId, SaveRefusal> DocumentFiles::startSave(SavePlan plan, boo
     return *permit;
 }
 
+bool DocumentFiles::acceptExternalChange(DocumentId document)
+{
+    Entry *entry = find(document);
+    if (!entry || entry->destination.value.empty())
+        return false;
+    auto current = m_reader.read(entry->destination);
+    if (!current)
+        return false;
+    entry->knownBytes = std::move(*current);
+    return true;
+}
+
 void DocumentFiles::onWriteResult(const WriteResult &result)
 {
     const auto it = m_pending.find(result.permit);

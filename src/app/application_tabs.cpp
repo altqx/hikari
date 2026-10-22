@@ -281,8 +281,7 @@ std::optional<QByteArray> Application::fileArrangement(application::DocumentId d
     if (report) {
         const std::string *title = m_workspace.title(document);
         m_log->log(QCoreApplication::translate("HikariSub.Workspace", "The panel layout saved in %1 was not used because %2.")
-                       .arg(title ? qs(*title) : QString(), problem),
-                   true); // silent: the tab opens as any other
+                       .arg(title ? qs(*title) : QString(), problem)); // silent: the tab opens as any other
     }
     return std::nullopt;
 }
@@ -585,8 +584,13 @@ bool Application::lastSessionCrashed() const
 
 QVariantMap Application::lastSessionSummary() const
 {
+    return {{QStringLiteral("names"), sessionNames(readSessionText(lastSessionPath()))}};
+}
+
+QStringList Application::sessionNames(const std::optional<std::string> &text)
+{
     QStringList names;
-    if (const auto text = readSessionText(lastSessionPath()))
+    if (text)
         if (const auto session = application::parseSession(*text))
             for (const auto &tab : session->tabs) {
                 // A tab with neither subtitles nor a video file is an
@@ -598,7 +602,12 @@ QVariantMap Application::lastSessionSummary() const
                 if (!file.isEmpty())
                     names << QFileInfo(file).fileName();
             }
-    return {{QStringLiteral("names"), names}};
+    return names;
+}
+
+void Application::rememberStartSession()
+{
+    m_startSession = readSessionText(lastSessionPath());
 }
 
 QString Application::startupSession() const
@@ -621,6 +630,26 @@ QString Application::startupSession() const
     return kind;
 }
 
+QString Application::startupOffer() const
+{
+    if ((m_startSession && !application::sessionClosed(*m_startSession)) || !recoveryBundles().isEmpty())
+        return QStringLiteral("crash");
+    // On start: Ask; Load has loaded it already, unless files were given.
+    if (m_startSession && sessionRestore() == 1)
+        return QStringLiteral("ask");
+    return {};
+}
+
+QStringList Application::startupOfferNames() const
+{
+    return sessionNames(m_startSession);
+}
+
+QVariantMap Application::reviewStartupSession()
+{
+    return reviewSessionText(m_startSession);
+}
+
 bool Application::forwardedOpenWaits() const
 {
     // A review (close, open, session, dropped files) waits for its answer;
@@ -630,17 +659,22 @@ bool Application::forwardedOpenWaits() const
 
 QVariantMap Application::reviewSession(const QUrl &file)
 {
+    const QString path = file.isEmpty() ? lastSessionPath() : (file.isLocalFile() ? file.toLocalFile() : file.toString());
+    return reviewSessionText(readSessionText(path));
+}
+
+QVariantMap Application::reviewSessionText(const std::optional<std::string> &text)
+{
     auto result = [](bool ok, const QString &problem, const QVariantList &rows = {}) {
         return QVariantMap{{QStringLiteral("ok"), ok}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), rows}};
     };
-    const QString path = file.isEmpty() ? lastSessionPath() : (file.isLocalFile() ? file.toLocalFile() : file.toString());
-    const auto text = readSessionText(path);
     if (!text)
         return result(false, QString()); // no file or an empty one: legacy did nothing
     auto session = application::parseSession(*text);
     if (!session) {
         const QString problem = QCoreApplication::translate("HikariSub.Session", "Session file is corrupt");
-        m_log->log(problem);
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Load session from file"),
+                      problem);
         return result(false, problem);
     }
     PendingSession pending;
@@ -799,7 +833,8 @@ bool Application::retryRestore(int row)
     const auto isTarget = [&] { return m_workspace.editingTarget() == entry.document; };
     const bool dummyAudio = entry.kind == QLatin1String("audio") && application::AudioBox::isDummyName(entry.path.toStdString());
     if (!isFile(entry.path) && !dummyAudio) {
-        m_log->log(QCoreApplication::translate("HikariSub.Session", "Could not find %1").arg(QDir::toNativeSeparators(entry.path)));
+        m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Session", "Restore session"),
+                      QCoreApplication::translate("HikariSub.Session", "Could not find %1").arg(QDir::toNativeSeparators(entry.path)));
         return false;
     }
     TabMedia &media = m_tabMedia[entry.document.value];
@@ -808,13 +843,15 @@ bool Application::retryRestore(int row)
         auto *placeholder = m_files->session(entry.document);
         const auto destination = m_files->destination(entry.document);
         if (!placeholder || placeholder->isDirty() || (destination && !destination->value.empty())) {
-            m_log->log(QCoreApplication::translate("HikariSub.Session", "The tab of %1 has other work now; open the file in a new tab.")
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Session", "Restore session"),
+                          QCoreApplication::translate("HikariSub.Session", "The tab of %1 has other work now; open the file in a new tab.")
                            .arg(QFileInfo(entry.path).fileName()));
             return false;
         }
         auto staged = m_files->stageOpen({QFileInfo(entry.path).absoluteFilePath().toStdString()});
         if (!staged) {
-            m_log->log(QCoreApplication::translate("HikariSub.Session", "Could not open %1; nothing was changed.")
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Session", "Restore session"),
+                          QCoreApplication::translate("HikariSub.Session", "Could not open %1; nothing was changed.")
                            .arg(QFileInfo(entry.path).fileName()));
             return false;
         }
@@ -863,7 +900,7 @@ bool Application::retryRestore(int row)
             media.keyframes = native;
             if (isTarget())
                 if (const QString problem = openKeyframes(QUrl::fromLocalFile(entry.path)); !problem.isEmpty())
-                    m_log->log(problem);
+                    m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
         }
     }
     refreshViews();

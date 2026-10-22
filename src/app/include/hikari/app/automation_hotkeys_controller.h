@@ -50,9 +50,11 @@ public:
     // Runs the macro a committed shortcut names; false when it does not resolve.
     Q_INVOKABLE bool run(const QString &legacyName);
     // Adds the script hotkeys of a legacy Hotkeys.txt that have no binding
-    // yet (current bindings are kept), saved and installed; returns how many
-    // were added.
-    Q_INVOKABLE int importLegacy(const QString &path);
+    // yet (current bindings are kept), saved and installed. PU7 (#309): what
+    // it did, for its notice: {read (false: the file could not be read),
+    // added, kept (a binding there already), skipped (the keys belong to
+    // another macro), skippedNames ("Script <file>-<n> (<keys>)" each)}.
+    Q_INVOKABLE QVariantMap importLegacy(const QString &path);
     // The portable sequence for a key press ("" for a lone modifier).
     Q_INVOKABLE QString keysOf(int key, int modifiers) const;
     // "Script <file name>-<ordinal>" for a registered macro.

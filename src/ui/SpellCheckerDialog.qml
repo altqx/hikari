@@ -18,6 +18,9 @@ Dialog {
     modal: false
     property var current: ({})
     property var suggestions: []
+    // NT1 (#302): "No spelling errors were found" is a toast; a refusal
+    // (the edited line cannot be committed) is a message box.
+    property ToastStack notices: null
 
     function options() {
         return {ignoreComments: ignoreComments.checked, ignoreUpperCase: ignoreUpper.checked}
@@ -30,8 +33,7 @@ Dialog {
             return
         current = next
         if (next.problem && next.problem.length > 0) {
-            message.text = next.problem
-            message.open()
+            messages.ask({ title: qsTr("Replace"), text: next.problem, severity: "error" })
             return
         }
         misspell.text = next.word
@@ -39,8 +41,8 @@ Dialog {
         suggestionList.currentIndex = -1
         replacement.text = next.replacement
         if (!next.found) {
-            message.text = qsTr("No spelling errors were found")
-            message.open()
+            if (notices)
+                notices.post("info", qsTr("Spellchecker"), qsTr("No spelling errors were found"))
         }
     }
     function openDialog() {
@@ -68,7 +70,7 @@ Dialog {
         return false
     }
     function activate() {
-        if (!activeFocus || !opened || message.opened || addedWords.opened || actionPressed())
+        if (!activeFocus || !opened || messages.asking || addedWords.opened || actionPressed())
             return
         const next = app.spellCheckerActivated(options())
         if (next.restarted)
@@ -222,15 +224,10 @@ Dialog {
         }
     }
 
-    Dialog {
-        id: message
-        objectName: "spellMessage"
-        title: qsTr("Warning")
-        modal: true
-        anchors.centerIn: parent
-        property alias text: messageLabel.text
-        standardButtons: Dialog.Ok
-        Label { id: messageLabel; Accessible.role: Accessible.AlertMessage }
+    MessageHost {
+        id: messages
+        objectName: "spellMessages"
+        settings: dialog.app.settings
     }
 
     // CustomCheckListBox "Words added to dictionary".

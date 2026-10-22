@@ -6,6 +6,7 @@
 
 #include "hikari/application/resample.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_transform.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/text_projection.h"
 
@@ -22,6 +23,7 @@
 #include <QStringList>
 #include <QVariantMap>
 
+#include <algorithm>
 #include <cmath>
 #include <utility>
 
@@ -459,6 +461,31 @@ std::string VisualToolsController::editorHotkey(int id) const
     return m_editorHotkey ? m_editorHotkey(id) : VisualHost::editorHotkey(id);
 }
 
+int VisualToolsController::targetCount() const
+{
+    // HY1: the Lines a change edits: several picked ones less those the
+    // Grid hides (AllTagsTool::beginEdit).
+    const auto targets = batchTargets();
+    const auto shown = application::visual::transform::severalLines(targets, activeLine())
+                           ? shownLines()
+                           : std::function<bool(core::LineId)>{};
+    if (!shown)
+        return static_cast<int>(targets.size());
+    return static_cast<int>(std::ranges::count_if(targets, shown));
+}
+
+bool VisualToolsController::undoStep(std::uint64_t revision)
+{
+    // HY1: the tool's own last step undone, only while it is the last thing
+    // that changed the Document (no gesture, no draft on it); the tool keeps
+    // its state through it.
+    auto *s = editingSession();
+    if (!s || m_gesture || s->revision() != revision || s->draftLine() || !s->canUndo() || !s->undo())
+        return false;
+    m_seenRevision = s->revision();
+    return true;
+}
+
 void VisualToolsController::openTagsEditor()
 {
     if (m_tagsEditor)
@@ -566,16 +593,16 @@ void VisualToolsController::bell()
 
 void VisualToolsController::notice(std::u16string_view text)
 {
-    m_notice = qs(text);
-    emit changed();
+    if (m_log)
+        m_log(qs(text));
 }
 
-void VisualToolsController::dismissNotice()
+QString VisualToolsController::toolName() const
 {
-    if (m_notice.isEmpty())
-        return;
-    m_notice.clear();
-    emit changed();
+    for (const FamilyInfo &f : application::visual::families())
+        if (f.family == m_family)
+            return QString::fromLatin1(f.tooltip.data(), f.tooltip.size());
+    return {};
 }
 
 void VisualToolsController::refreshOptions()
@@ -598,8 +625,18 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
         QStringList choices;
         for (const auto &c : o.choices)
             choices.append(qs(c));
+        QStringList notes;
+        for (const auto &n : o.notes)
+            notes.append(qs(n));
+        QStringList sectionNames;
+        for (const auto &n : o.sectionNames)
+            sectionNames.append(qs(n));
+        QVariantList sections;
+        for (const int section : o.sections)
+            sections.append(section);
         const QString kind = o.kind == ToolOption::Kind::Choice   ? QStringLiteral("choice")
                              : o.kind == ToolOption::Kind::Action ? QStringLiteral("action")
+                             : o.kind == ToolOption::Kind::Switch ? QStringLiteral("switch")
                                                                   : QStringLiteral("toggle");
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(o.name)},
                                {QStringLiteral("kind"), kind},
@@ -610,7 +647,12 @@ QVariantList VisualToolsController::optionMaps(const VisualTool &t) const
                                {QStringLiteral("choices"), choices},
                                {QStringLiteral("index"), o.index},
                                {QStringLiteral("listEnds"), o.listEnds},
-                               {QStringLiteral("group"), qs(o.group)}});
+                               {QStringLiteral("group"), qs(o.group)},
+                               {QStringLiteral("searchable"), o.searchable},
+                               {QStringLiteral("notes"), notes},
+                               {QStringLiteral("sections"), sections},
+                               {QStringLiteral("sectionNames"), sectionNames},
+                               {QStringLiteral("afterValues"), o.afterValues}});
     }
     return out;
 }
@@ -632,7 +674,6 @@ bool VisualToolsController::setOption(const QString &name, int value)
     auto *t = tool();
     if (!t || !m_railEnabled || m_gesture)
         return false;
-    m_notice.clear();
     if (m_family == Family::Drawing && name == QStringLiteral("shape") && shapePresets() &&
         value > static_cast<int>(m_shapes.size())) {
         // The shape list's "Edit" (VectorItem::ShowContols, VideoToolbar.cpp:
@@ -659,6 +700,17 @@ bool VisualToolsController::setOption(const QString &name, int value)
         // the "Tag editing" dialog on the list's selection.
         openTagsEditor();
         return true;
+    }
+    if (m_family == Family::Hydra && name == QStringLiteral("variant")) {
+        // HY1: Set's placing is the tag definition's (AllTagsSettings.txt),
+        // as the "Tag editing" dialog's Mode.
+        auto *allTags = dynamic_cast<application::visual::AllTagsTool *>(t);
+        const auto at = allTags ? static_cast<std::size_t>(allTags->currentTag()) : 0;
+        if (allTags && allTags->mode() == application::visual::PasteInsert && allTagsSettings() &&
+            at < m_allTags.size() && value >= 0 && value <= 2) {
+            m_allTags[at].mode = static_cast<unsigned char>(value);
+            saveAllTags();
+        }
     }
     const bool done = t->setOption(name.toStdString(), value, *this);
     emit changed();
@@ -938,14 +990,80 @@ void VisualToolsController::pickBatch()
             picked.push_back(line->id);
     m_picker.pick(std::move(picked));
     ++m_editTarget;
+    if (auto *t = tool())
+        t->targetsChanged(*this);
+    refreshOptions();
     emit changed();
+    emit overlayChanged();
 }
 
 void VisualToolsController::clearBatch()
 {
     m_picker.clear();
     ++m_editTarget;
+    if (auto *t = tool())
+        t->targetsChanged(*this);
+    refreshOptions();
     emit changed();
+    emit overlayChanged();
+}
+
+bool VisualToolsController::markValue(const QString &name)
+{
+    auto *t = tool();
+    if (!t || !t->markValue(name.toStdString(), *this))
+        return false;
+    emit changed();
+    return true;
+}
+
+QVariantMap VisualToolsController::lastChange() const
+{
+    const auto *t = tool();
+    const auto last = t ? t->lastChange(*this) : std::nullopt;
+    if (!last)
+        return {};
+    QVariantList values;
+    for (const ToolValue &v : last->values)
+        values.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(v.name)},
+                                  {QStringLiteral("label"), qs(v.label)},
+                                  {QStringLiteral("text"), qs(v.text)},
+                                  {QStringLiteral("group"), qs(v.group)},
+                                  {QStringLiteral("unit"), qs(v.unit)},
+                                  {QStringLiteral("step"), v.step},
+                                  {QStringLiteral("swatch"), v.swatch ? QColor::fromRgba(v.swatch).name() : QString()}});
+    return QVariantMap{{QStringLiteral("tag"), qs(last->tag)},
+                       {QStringLiteral("change"), last->change},
+                       {QStringLiteral("lines"), last->lines},
+                       {QStringLiteral("values"), values}};
+}
+
+bool VisualToolsController::editLastChange(const QString &name, const QString &text)
+{
+    // HY1: the card's value: the last step undone and done again with it,
+    // so the history still has one step for it.
+    auto *t = tool();
+    const auto *s = editingSession();
+    if (!t || !s || !m_railEnabled || m_gesture)
+        return false;
+    const std::uint64_t before = s->revision();
+    const bool done = t->editLastChange(name.toStdString(), text.toStdU16String(), *this);
+    // A redone change refreshed the shell as it committed; an undo whose
+    // change could not be done again has not.
+    if (const auto *now = editingSession(); !done && now && now->revision() != before && m_edited)
+        m_edited();
+    updatePreview();
+    emit changed();
+    emit overlayChanged();
+    return done;
+}
+
+void VisualToolsController::dismissLastChange()
+{
+    if (auto *t = tool()) {
+        t->dismissLastChange();
+        emit changed();
+    }
 }
 
 LineWarning VisualToolsController::currentWarning() const
@@ -1087,15 +1205,20 @@ QVariantList VisualToolsController::values() const
 
 QVariantList VisualToolsController::valueMaps(const VisualTool &t) const
 {
+    // HY1: "marked" only for a tool that marks one of its values.
     QVariantList out;
-    for (const ToolValue &v : t.values(*this))
+    const auto values = t.values(*this);
+    const bool marks = std::ranges::any_of(values, [](const ToolValue &v) { return v.marked; });
+    for (const ToolValue &v : values)
         out.append(QVariantMap{{QStringLiteral("name"), QString::fromStdString(v.name)},
                                {QStringLiteral("label"), qs(v.label)},
                                {QStringLiteral("text"), qs(v.text)},
                                {QStringLiteral("editable"), v.editable},
                                {QStringLiteral("group"), qs(v.group)},
                                {QStringLiteral("unit"), qs(v.unit)},
-                               {QStringLiteral("step"), v.step}});
+                               {QStringLiteral("step"), v.step},
+                               {QStringLiteral("swatch"), v.swatch ? QColor::fromRgba(v.swatch).name() : QString()},
+                               {QStringLiteral("marked"), marks ? QVariant(v.marked) : QVariant()}});
     return out;
 }
 

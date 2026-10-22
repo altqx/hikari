@@ -19,6 +19,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QScopeGuard>
 #include <QTimer>
 
 #include <algorithm>
@@ -320,7 +321,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         const QString keyframes = QDir::toNativeSeparators(qs(load.keyframes));
         if (shown) {
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(qs(load.keyframes))); !problem.isEmpty())
-                m_log->log(problem);
+                m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
         } else {
             media.keyframes = keyframes;
         }
@@ -462,7 +463,7 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
         case application::OpenKind::Keyframes:
             // KeyframesPath = filename; OpenKeyframes; SetRecent(3).
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
-                m_log->log(problem);
+                m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
             break;
         case application::OpenKind::Refused: break;
         }
@@ -506,7 +507,8 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
         const QString &path = pending.subtitlePaths[i];
         auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
         if (!staged) {
-            m_log->log(openProblem(path, staged.error()));
+            m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open subtitles"),
+                          openProblem(path, staged.error()));
             pending.count = i;
             break;
         }
@@ -543,6 +545,14 @@ QVariantMap Application::openForwarded(const QStringList &paths)
     const QStringList files = sortedFiles(paths);
     if (files.isEmpty())
         return openResult(QString());
+    // PU1-startup-cards: files that opened end the startup offer; files that
+    // all failed to open leave it.
+    const auto before = m_workspace.documents();
+    bool accepted = false;
+    auto ended = qScopeGuard([&] {
+        if (accepted || m_workspace.documents() != before)
+            emit filesForwarded();
+    });
     const bool untouched = targetUntouched();
     if (files.size() == 1) {
         const QString &file = files.front();
@@ -553,11 +563,13 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             } else if (auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()})) {
                 openInNewTab(std::move(*staged), file);
             } else {
-                m_log->log(openProblem(file, staged.error()));
+                m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open subtitles"),
+                              openProblem(file, staged.error()));
             }
             return openResult(QString());
         case application::OpenKind::Video:
             // Opened by the shell as OpenFile opens one video (openSingleVideo).
+            accepted = true;
             if (!untouched)
                 addPage();
             return openResult(QStringLiteral("video"), file);
@@ -565,8 +577,10 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             // The tab's own, as a video is: a tab's keyframes stay.
             if (!untouched)
                 addPage();
-            if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
-                m_log->log(problem);
+            if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); problem.isEmpty())
+                accepted = true;
+            else
+                m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
             return openResult(QString());
         default: // a script (the Automation manager's, no tab's) or a refused file: as when dropped
             return openDropped({QUrl::fromLocalFile(file)});

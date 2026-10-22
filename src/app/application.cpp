@@ -199,6 +199,15 @@ public:
             reply(answer ? 3 : 0); // nobody to ask: Cancel
             return;
         }
+        // NT1 (#302): "Could not find" and "Replaced N times" are info
+        // toasts; only an invalid path is still a message (a message box).
+        using I = application::FindQuestion::Info;
+        if (question.kind == application::FindQuestion::Kind::Message &&
+            (question.info == I::NotFound || question.info == I::Replaced)) {
+            m_app.m_log->notice(ui::LogController::Info, title, text);
+            reply(0);
+            return;
+        }
         const int id = ++m_app.m_findQuestionId;
         if (answer)
             m_app.m_findAnswers.emplace(id, std::move(answer));
@@ -238,8 +247,17 @@ public:
         }
         return qs(q.text);
     }
+    // NT1: a message is titled with the command that gave it.
     static QString questionTitle(const application::FindQuestion &q)
     {
+        using I = application::FindQuestion::Info;
+        if (q.kind == application::FindQuestion::Kind::Message)
+            switch (q.info) {
+            case I::NotFound: return QCoreApplication::translate("HikariSub.Search", "Find");
+            case I::Replaced: return QCoreApplication::translate("HikariSub.Search", "Replace all");
+            case I::InvalidPath: return QCoreApplication::translate("HikariSub.Search", "Find in files");
+            case I::None: break;
+            }
         const QString title = qs(q.title);
         if (title == QLatin1String("Confirmation"))
             return QCoreApplication::translate("HikariSub.Search", "Confirmation");
@@ -251,7 +269,15 @@ public:
     }
     void finished() override { m_app.findFinished(); }
     // The legacy log lines, translated (the engine's English is the source).
-    void logLine(const application::FindLog &line) override { m_app.m_log->log(logText(line)); }
+    // NT1: each is a notice of Find and replace, an error when the
+    // expression does not compile.
+    void logLine(const application::FindLog &line) override
+    {
+        using K = application::FindLog::Kind;
+        const bool error = line.kind == K::InvalidRegex || line.kind == K::OutsideReplaceTab;
+        m_app.m_log->notice(error ? ui::LogController::Error : ui::LogController::Warning,
+                            QCoreApplication::translate("HikariSub.Search", "Find and replace"), logText(line));
+    }
     static QString logText(const application::FindLog &line)
     {
         using K = application::FindLog::Kind;
@@ -346,7 +372,8 @@ public:
         {
             QFile in(name);
             if (!in.open(QIODevice::ReadOnly)) {
-                m_app.m_log->log(QCoreApplication::translate("HikariSub.Search", "Cannot open file %1.").arg(name));
+                m_app.m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Search", "Find and replace"),
+                                    QCoreApplication::translate("HikariSub.Search", "Cannot open file %1.").arg(name));
                 return false;
             }
             original = in.readAll();
@@ -363,10 +390,13 @@ public:
         };
         if (write(bytes))
             return true;
-        m_app.m_log->log(QCoreApplication::translate("HikariSub.Search", "Cannot write file %1; it was left as it was.").arg(name));
+        const QString title = QCoreApplication::translate("HikariSub.Search", "Find and replace");
+        m_app.m_log->notice(ui::LogController::Error, title,
+                            QCoreApplication::translate("HikariSub.Search", "Cannot write file %1; it was left as it was.").arg(name));
         if (!write(original))
-            m_app.m_log->log(QCoreApplication::translate("HikariSub.Search", "%1 could not be restored; its backup is in %2.")
-                                 .arg(name, m_app.m_replaceBackup));
+            m_app.m_log->notice(ui::LogController::Error, title,
+                                QCoreApplication::translate("HikariSub.Search", "%1 could not be restored; its backup is in %2.")
+                                    .arg(name, m_app.m_replaceBackup));
         return false;
     }
     // FindReplace::ShowResult for a file: the tab that has it, else legacy
@@ -490,7 +520,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // W2: CSRI renderers come from the program's Csri folder (legacy
     // csrilib_os_init); their messages go to the log silently (HikariLogSilent).
     m_renderer.setCsriFolder(std::filesystem::path(QCoreApplication::applicationDirPath().toStdU16String()) / u"Csri");
-    m_renderer.setLog([this](const std::string &text) { m_log->log(QString::fromStdString(text), true); });
+    m_renderer.setLog([this](const std::string &text) { m_log->log(QString::fromStdString(text)); });
     m_videoSource = std::make_unique<application::DummyVideoSource>(*m_mediaSource);
     m_video = std::make_unique<ui::VideoController>(*m_videoSource, m_renderer);
     m_video->setMediaInfo(m_mediaSource.get(), m_mediaSource.get()); // V3: track names, chapters
@@ -527,6 +557,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
+    rememberStartSession(); // PU1: before anything writes the session
     // R6-dictionary-location: user dictionaries in the settings folder's
     // Dictionary, bundled ones in the program folder's (legacy's only one).
     if (!m_settingsFile.isEmpty())
@@ -640,7 +671,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_video->session().setSubtitles(rendererScript(preview ? *preview : session->document())); // E5
         m_videoScript.clear(); // E4: the next refresh shows the draft again
     });
-    m_visualTools->setLog([this](const QString &text) { m_log->log(text); });
+    // NT1: a gesture the tool refused, titled with the tool's name.
+    m_visualTools->setLog([this](const QString &text) { m_log->notice(ui::LogController::Warning, m_visualTools->toolName(), text); });
     m_visualTools->setIgnoreFiltered([this] { return m_gridFilter->ignoreInActions(); });
     // T3: the Line editor's caret in the text the tools edit (the
     // translation in TLMode unless it is empty), for FindTag's mode 0.
@@ -672,7 +704,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     // HikariLog(_("Cannot change YCbCr matrix")) (ProviderFFMS2.cpp:402, 408, 979).
     m_video->session().setLog([this](const std::string &) {
-        m_log->log(QCoreApplication::translate("HikariSub.Video", "Cannot change YCbCr matrix"));
+        m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Options", "Video"),
+                      QCoreApplication::translate("HikariSub.Video", "Cannot change YCbCr matrix"));
     });
     setUpTranslationControls(); // E5
     setUpFileArrangements();    // WS2
@@ -688,13 +721,24 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     createFindReplace();
     if (!m_settingsFile.isEmpty())
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
-    // S4: validation errors go to the log window; the script editor setting.
-    m_automation->setLog([this](const QString &line, bool silent) { m_log->log(line, silent); });
+    // S4: validation errors go to the Log (NT1: a menu run's as an error
+    // toast); the script editor setting.
+    m_automation->setLog([this](const QString &line, AutomationShell::LogLine kind) {
+        const QString title = QCoreApplication::translate("HikariSub.Automation", "Automation");
+        switch (kind) {
+        case AutomationShell::LogLine::Notice: m_log->notice(ui::LogController::Error, title, line); break;
+        case AutomationShell::LogLine::Quiet: m_log->log(line); break;
+        case AutomationShell::LogLine::QuietError: m_log->log(line, ui::LogController::Error, title); break;
+        }
+    });
     m_automation->setSettings(m_settings.get());
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);
     // O2: legacy LoadHkeys at startup, then SetAccels.
     m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings,
-                                                    [this](const QString &message) { m_log->log(message); });
+                                                    [this](const QString &message, bool warning) {
+                                                        m_log->notice(warning ? ui::LogController::Warning : ui::LogController::Info,
+                                                                      QCoreApplication::translate("HikariSub.Options", "Hotkeys"), message);
+                                                    });
     m_updates = std::make_unique<UpdateChecker>(
         *m_settings, options.updateFeed,
         options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.updateEnvironment);
@@ -767,11 +811,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     {
         // Y9: GRID_SUBS_FROM_MKV on the editing target's tab video.
         MatroskaController::Hooks hooks;
-        hooks.videoPath = [this] {
-            const auto target = m_workspace.editingTarget();
-            const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
-            return it == m_tabMedia.end() ? QString() : it->second.video;
-        };
+        hooks.videoPath = [this] { return targetVideoPath(); };
         hooks.modified = [this] {
             auto *session = targetSession();
             return session && session->isDirty();
@@ -786,7 +826,21 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.apply = [this](application::MatroskaLoaded loaded, bool newTab) {
             applyMatroska(std::move(loaded), newTab);
         };
-        hooks.log = [this](const QString &text) { m_log->log(text); };
+        hooks.started = [this] {
+            m_matroskaTarget = m_workspace.editingTarget();
+            auto *session = targetSession();
+            m_matroskaRevision = session ? session->revision() : 0;
+            m_matroskaDraftLine = session ? session->draftLine() : std::nullopt;
+            m_matroskaDraft = session ? session->draftText() : std::nullopt;
+            m_matroskaReloads = m_reloads;
+            m_matroskaVideo = targetVideoPath();
+            m_matroskaRequested = m_video->requestedVideo();
+            m_matroskaFromHome = !m_matroskaTarget;
+        };
+        hooks.log = [this](const QString &text) {
+            m_log->notice(ui::LogController::Error,
+                          QCoreApplication::translate("HikariSub.Matroska", "Load subtitles from an MKV/OGM file"), text);
+        };
         m_matroska = std::make_unique<MatroskaController>(
             std::make_unique<backends::FfmsMatroska>(mediaHelperPath(options.mediaHelper)), std::move(hooks));
         connect(this, &Application::tabsChanged, m_matroska.get(), &MatroskaController::refresh);
@@ -813,7 +867,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                         out.push_back(std::make_shared<core::Document>(session->document()));
             return out;
         };
-        hooks.log = [this](const QString &text) { m_log->log(text); };
+        hooks.log = [this](const QString &text) {
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogs"), text);
+        };
         // FontEnumerator's RefreshVideo(true): libass's fonts are loaded
         // again (ReloadLibraries, so a font installed meanwhile is found), and
         // the video's subtitles render again with the external fonts.
@@ -930,8 +986,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_editorTimebaseVideo = path;
         m_editor->setVideoTimebase(ready ? std::optional(video.legacyTimebase()) : std::nullopt);
     });
-    // A video that cannot be opened is reported in the log window once (V3:
-    // with legacy ProviderFFMS2's messages).
+    // A video that cannot be opened is reported once, a notice (V3: with
+    // legacy ProviderFFMS2's messages).
     connect(m_video.get(), &ui::VideoController::changed, this, &Application::logVideoFailure);
     // Y4: a newly shown video is compared with the editing target's resolution once.
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {
@@ -951,7 +1007,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         const QString path = std::exchange(m_pendingKeyframes, QString());
         const QString problem = openKeyframes(QUrl::fromLocalFile(path));
         if (!problem.isEmpty())
-            m_log->log(problem);
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"),
+                          problem);
     });
     // The editor moved the active Line itself (Enter, Ctrl+D, Undo): a plain selection there.
     connect(m_editor.get(), &ui::LineEditorController::leftLineCommitted, this,
@@ -1049,7 +1106,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_audio->setPlaybackSettings([this] { return m_settings->integer("audio.markPlayTime"); });
         m_audio->setVideoPlayback([this] { return m_video->playing(); }, [this] { m_video->pause(); });
         m_audioConnections << connect(m_audioPlayer.get(), &backends::AudioBoxPlayer::failed, this,
-                                      [this](const QString &message) { m_log->log(message); });
+                                      [this](const QString &message) {
+                                          m_log->notice(ui::LogController::Error,
+                                                        QCoreApplication::translate("HikariSub.Options", "Audio"), message);
+                                      });
     }
     // H2 (decision 60): both audio paths follow the system's output devices:
     // the chosen device (audio.outputDevice) while it is connected, else the
@@ -1069,11 +1129,12 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     m_recentAudio.set(m_settings->settings().list("recent.audio")); // AUDIO_RECENT_FILES
     m_audioConnections << connect(m_audio.get(), &ui::AudioController::opened, this,
                                   [this](const QString &path, bool) { rememberRecentAudio(path); });
-    m_audioConnections << connect(m_audio.get(), &ui::AudioController::logged, this, [this](const QString &message, bool debug) {
+    m_audioConnections << connect(m_audio.get(), &ui::AudioController::logged, this, [this](const QString &message, bool debug, bool error) {
         if (debug)
             qDebug().noquote() << message; // legacy HikariLogDebug: debug builds only
         else
-            m_log->log(message);
+            m_log->notice(error ? ui::LogController::Error : ui::LogController::Warning,
+                          QCoreApplication::translate("HikariSub.MainWindow", "Open audio"), message);
     });
     m_audioConnections << connect(m_editor.get(), &ui::LineEditorController::changed, this, &Application::refreshAudio);
     m_audioConnections << connect(m_video.get(), &ui::VideoController::changed, this, &Application::followVideoInAudio);
@@ -1097,6 +1158,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.commit = [this](const application::AudioCommitRequest &request) { return commitAudioTimes(request); };
         hooks.setActive = [this](int key) { setAudioActive(key); };
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
+        hooks.fieldTime = [this](int ms) {
+            const auto *session = targetSession();
+            return session ? application::committedAudioTime(session->document(), ms) : ms;
+        };
+        hooks.severalSelected = [this] {
+            const auto *session = targetSession();
+            return session && session->selection().selected.size() > 1;
+        };
         m_audio->setTimingHooks(std::move(hooks));
     }
     // KA2-tap-to-time: the tap bar's next Line (keys as refreshAudio gives them)
@@ -1698,6 +1767,10 @@ void Application::refreshViews()
         if (m_find)
             m_find->reset();
     }
+    // TP1: the Styles panel, once the Line editor is on the target (the
+    // panel picks the active Line's Style when its own is gone).
+    if (m_styleManager)
+        m_styleManager->documentEdited();
     refreshVideo();
     refreshAudio();
     if (m_statusBar)
@@ -1885,6 +1958,7 @@ QVariantList Application::reviewClose(const QString &then)
     std::vector<application::DocumentId> scope;
     if (then != QLatin1String("tab"))
         m_closingTab.reset(); // P6
+    m_closeTarget = m_workspace.editingTarget();
     if (then != QLatin1String("session"))
         m_pendingSession.reset(); // P6
     if (then == QLatin1String("quit") || then == QLatin1String("session")) // P6: a session replaces every tab
@@ -1902,12 +1976,19 @@ QVariantList Application::reviewClose(const QString &then)
             continue;
         const std::string *title = m_workspace.title(id);
         const auto destination = m_files->destination(id);
+        const bool untitled = !destination || destination->value.empty();
         rows << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
                             {QStringLiteral("title"), title ? QString::fromStdString(*title) : QString()},
-                            {QStringLiteral("untitled"), !destination || destination->value.empty()}};
+                            {QStringLiteral("untitled"), untitled},
+                            {QStringLiteral("folder"), untitled ? QString()
+                                                                : QDir::toNativeSeparators(QFileInfo(QString::fromStdString(destination->value)).absolutePath())}};
     }
     return rows;
 }
+
+namespace {
+QString extensionFor(core::SubtitleFormat format); // with Save as's helpers below
+} // namespace
 
 void Application::resolveClose(const QVariantList &choices)
 {
@@ -1920,7 +2001,11 @@ void Application::resolveClose(const QVariantList &choices)
             continue;
         Closing c{id, row.value(QStringLiteral("save")).toBool(), 0, std::nullopt};
         if (c.save) {
-            const QString path = row.value(QStringLiteral("path")).toString();
+            QString path = row.value(QStringLiteral("path")).toString();
+            // A file picked for an Untitled row gets its format's extension,
+            // as Save as gives it (saveChosenFor).
+            if (const QString ext = extensionFor(session->document().format()); !path.isEmpty() && !path.endsWith(ext))
+                path += u'.' + ext;
             auto plan = m_files->prepareSave(
                 id, path.isEmpty() ? std::nullopt
                                    : std::optional(application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()}));
@@ -1961,14 +2046,23 @@ void Application::writeFinished(const application::WriteResult &result)
          result.outcome == application::WriteOutcome::DurabilityUncertain) &&
         (m_workspace.editingTarget() == result.document || m_workspace.reference() == result.document))
         refreshViews();
+    // PU1-disk-change-bar: a published write, confirmed or not, moved the
+    // Document to its file.
+    if (result.outcome == application::WriteOutcome::Written ||
+        result.outcome == application::WriteOutcome::DurabilityUncertain) {
+        if (const auto destination = m_files->destination(result.document);
+            destination && destination->value == result.destination.value)
+            recordFileTime(result.document);
+        emit documentWritten(result.document.value);
+    } else if (result.outcome == application::WriteOutcome::Failed ||
+               result.outcome == application::WriteOutcome::Cancelled) {
+        emit documentWriteFailed(result.document.value);
+    }
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
         rememberRecent(result.destination.value, false); // legacy SetRecent after a save
         if (auto *session = m_files->session(result.document); session && !session->isDirty())
             discardRecovery(result.document); // the work is in the file
-        if (const auto destination = m_files->destination(result.document);
-            destination && destination->value == result.destination.value)
-            recordFileTime(result.document);
     }
     if (result.outcome == application::WriteOutcome::Written)
         if (const std::string *title = m_workspace.title(result.document);
@@ -2014,9 +2108,14 @@ void Application::finishClose()
         }
     }
     const QString then = m_closeThen;
+    const auto reviewed = std::exchange(m_closeTarget, std::nullopt);
     m_closing.clear();
     m_closeThen.clear();
     if (!kept.isEmpty()) {
+        // PU1-unsaved-window: the review shows again with the problem; a
+        // retry finishes the same command on the same tab (Cancel ends it).
+        m_closeThen = then;
+        m_closeTarget = reviewed;
         if (then == QLatin1String("quit"))
             emit quitCancelled(); // WS5
         refreshViews();
@@ -2024,6 +2123,20 @@ void Application::finishClose()
                                                               "Not closed, because saving failed or there is newer work: %1")
                                       .arg(kept.join(QStringLiteral(", "))));
         return;
+    }
+    // PU1-unsaved-window: one Document's question closes at its answer, so
+    // another tab may be the target once the save is written; a command on
+    // the target acts on the reviewed one's tab (gone: nothing is replaced).
+    const bool onTarget = then != QLatin1String("quit") && then != QLatin1String("session") && then != QLatin1String("tab")
+        && then != QLatin1String("all");
+    if (onTarget && reviewed && m_workspace.editingTarget() != reviewed) {
+        if (!m_workspace.setEditingTarget(*reviewed)) {
+            m_closeThen = then;
+            cancelClose();
+            emit closeFinished(true, QString());
+            return;
+        }
+        refreshViews();
     }
     if (then == QLatin1String("quit")) {
         for (const auto id : m_workspace.documents())
@@ -2235,7 +2348,8 @@ bool Application::saveDocument(qulonglong id)
     const std::string *title = m_workspace.title(*document);
     const QString name = title ? QString::fromStdString(*title) : QString();
     if (!plan || !m_files->startSave(std::move(*plan))) {
-        m_log->log(QCoreApplication::translate("HikariSub.Documents", "%1 could not be saved.").arg(name));
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Save"),
+                      QCoreApplication::translate("HikariSub.Documents", "%1 could not be saved.").arg(name));
         return false;
     }
     refreshViews();
@@ -2300,7 +2414,7 @@ QVariantMap Application::reviewOpen(const QString &path)
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
         const QString problem = openProblem(path, staged.error());
-        m_log->log(problem);
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open subtitles"), problem);
         return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
     }
     // P9: OPEN_SUBS_IN_NEW_TAB (legacy OpenFile): with the option on and
@@ -2435,6 +2549,15 @@ QString Application::externalChange()
     return known == m_fileTimes.end() ? QString() : QStringLiteral("modified");
 }
 
+bool Application::acceptFileOnDisk(qulonglong id)
+{
+    const auto document = documentOf(id);
+    if (!document || !m_files->acceptExternalChange(*document))
+        return false;
+    recordFileTime(*document); // the change accepted is the file as it is now
+    return true;
+}
+
 bool Application::reloadTarget()
 {
     const auto target = m_workspace.editingTarget();
@@ -2442,22 +2565,45 @@ bool Application::reloadTarget()
         return false;
     auto staged = m_files->stageReload(*target);
     if (!staged) {
-        m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
+                      QCoreApplication::translate("HikariSub.Documents", "Could not reload the subtitles; nothing was changed."));
         return false;
     }
     if (!m_files->activate(std::move(*staged))) {
-        m_log->log(QCoreApplication::translate("HikariSub.Documents", "The subtitles changed while reloading; nothing was replaced."));
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Documents", "Reload subtitles"),
+                      QCoreApplication::translate("HikariSub.Documents", "The subtitles changed while reloading; nothing was replaced."));
         return false;
     }
     if (auto *session = m_files->session(*target))
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
+    ++m_reloads;
     m_videoRevision.reset();
     m_videoScript.clear();
     m_videoLine.reset();
+    // R1: a compared Document reloaded is compared again (the new session
+    // starts at the same revision as the one it replaced).
+    m_comparedRevisions.erase(target->value);
+    refreshComparison();
     m_editor->reloadFromSession();
     refreshViews();
     return true;
+}
+
+bool Application::compareWithFileOnDisk()
+{
+    const auto target = m_workspace.editingTarget();
+    const auto destination = target ? m_files->destination(*target) : std::nullopt;
+    if (!destination || destination->value.empty())
+        return false;
+    // Compared again (the bar stays): the earlier copy of the file goes, not
+    // to a tab of its own, and the file is read as it is now.
+    if (const auto reference = m_workspace.reference(); reference && !m_workspace.referenceIsTab())
+        if (const auto held = m_files->destination(*reference); held && held->value == destination->value)
+            closeDocument(*reference);
+    if (!openReference(QString::fromStdString(destination->value)))
+        return false;
+    return compareWithReference();
 }
 
 bool Application::saveAs(const QString &path)
@@ -2833,6 +2979,31 @@ QVariantMap Application::styleLineCounts() const
     return out;
 }
 
+bool Application::selectLinesWithStyle(const QString &style)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const QByteArray bytes = style.toUtf8();
+    const std::u8string name(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
+    // As Select lines on the Style field: the Grid's hidden Lines only with
+    // "Ignore filtering in some actions".
+    const application::LineVisible shown = m_gridFilter->ignoreInActions() ? application::LineVisible{} : shownLines();
+    std::vector<core::LineId> found;
+    for (const auto *line : session->document().lines())
+        if (line->style == name && (!shown || shown(line->id)))
+            found.push_back(line->id);
+    const auto current = session->selection().active;
+    if (found.empty()) { // as Select mode: the old selection goes, the active Line stays
+        applySelection(application::Selection{current, {}, current, {}});
+        return false;
+    }
+    std::set<core::LineId> selected(found.begin(), found.end());
+    const core::LineId active = current && selected.contains(*current) ? *current : found.front();
+    // A new range: Shift extends from the active Line, as after Select lines.
+    return applySelection(application::Selection{active, std::move(selected), active, {}});
+}
+
 std::string Application::recoveryKey(application::DocumentId document) const
 {
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
@@ -2959,8 +3130,37 @@ QVariantList Application::recoveryBundles() const
     return out;
 }
 
+// The editing target's video, as its tab has it (the file an MKV read
+// takes, not the one the player may still be closing).
+QString Application::targetVideoPath() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+    return it == m_tabMedia.end() ? QString() : it->second.video;
+}
+
 void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 {
+    // PU1-mkv-notices: the window stayed usable while the track was read. A
+    // tab that is no longer the editing target, or whose Document changed
+    // since, keeps what was typed: the subtitles open in a new tab. A draft
+    // being typed doesn't move the revision, so a pending one counts too; a
+    // tab that opened another video meanwhile keeps that video's subtitles.
+    // Started on Home, a Document opened meanwhile keeps its tab too.
+    if (!newTab && m_matroskaTarget) {
+        auto *session = m_files->session(*m_matroskaTarget);
+        newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision
+            || session->draftLine() != m_matroskaDraftLine || session->draftText() != m_matroskaDraft
+            || m_reloads != m_matroskaReloads // reloaded: a new session at the same revision
+            || targetVideoPath() != m_matroskaVideo
+            // another video asked for in the tab, still being opened (the
+            // tab's own, opened again on coming back to it, is not)
+            || m_video->requestedVideo() != m_matroskaRequested;
+    } else if (!newTab && m_matroskaFromHome) {
+        newTab = m_workspace.editingTarget().has_value();
+    }
+    m_matroskaTarget.reset();
+    m_matroskaFromHome = false;
     if (newTab) {
         // File > Open: InsertTab then OnMkvSubs in it (HikariSubFrame.cpp:
         // 1021-1028): a new tab after the last one, with no media, takes the
@@ -3066,9 +3266,10 @@ QVariantList Application::legacyAutosaves()
         // finds nothing (the Linux build's, for an empty folder too; on
         // Windows "." and ".." are found), else "Auto save folder is empty".
 #ifdef _WIN32
-        m_log->log(QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
+        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"),
+                      QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
 #else
-        m_log->log(QDir(m_legacyAutosaveDir).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
+        m_log->notice(ui::LogController::Info, QCoreApplication::translate("HikariSub.Session", "Open auto save"), QDir(m_legacyAutosaveDir).isEmpty(QDir::AllEntries | QDir::NoDotAndDotDot | QDir::Hidden | QDir::System)
                        ? QCoreApplication::translate("HikariSub.Session", "Cannot open auto save folder")
                        : QCoreApplication::translate("HikariSub.Session", "Auto save folder is empty"));
 #endif
@@ -3077,8 +3278,14 @@ QVariantList Application::legacyAutosaves()
     for (const auto &file : files) {
         QVariantList versions;
         for (const auto &version : file.versions)
+        {
+            const QString path = QString::fromStdU16String(version.file.u16string());
+            // PU1-autosaves-window: the time as recoveryBundles() gives it,
+            // for the Autosaves window's date filter and order.
             versions << QVariantMap{{QStringLiteral("written"), QString::fromStdString(version.written)},
-                                    {QStringLiteral("file"), QString::fromStdU16String(version.file.u16string())}};
+                                    {QStringLiteral("time"), QFileInfo(path).lastModified().toString(Qt::ISODate)},
+                                    {QStringLiteral("file"), path}};
+        }
         rows << QVariantMap{{QStringLiteral("name"), QString::fromStdU16String(file.name)},
                             {QStringLiteral("versions"), versions}};
     }
@@ -3120,7 +3327,8 @@ bool Application::openLegacyAutosave(const QString &file)
     // new unsaved Untitled copy and the file is only read.
     auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()});
     if (!staged) {
-        m_log->log(QCoreApplication::translate("HikariSub.Session", "Failed to load autosave"));
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Session", "Open auto save"),
+                      QCoreApplication::translate("HikariSub.Session", "Failed to load autosave"));
         return false;
     }
     const auto id = m_files->createUnsaved(std::move(staged->load.document));
@@ -3228,8 +3436,9 @@ bool Application::pasteTranslationFile(const QUrl &file)
     // that is empty changes nothing.
     const auto read = backends::readLegacyTextFile(path);
     if (!read) {
-        m_log->log(QCoreApplication::translate("HikariSub.Translation", "Could not open %1; nothing was changed.")
-                       .arg(QFileInfo(path).fileName()));
+        m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Translation", "Paste translation"),
+                      QCoreApplication::translate("HikariSub.Translation", "Could not open %1; nothing was changed.")
+                          .arg(QFileInfo(path).fileName()));
         return false;
     }
     const QString text = QString::fromStdU16String(*read);
@@ -3340,7 +3549,8 @@ QString Application::shiftTimes()
         return QCoreApplication::translate("HikariSub.TimeShift", "The times could not be shifted.");
     }
     if (result->endCorrectionSkipped)
-        m_log->log(QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2"));
+        m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.TimeShift", "Shift times"),
+                      QCoreApplication::translate("HikariSub.TimeShift", "Video was not loaded using FFMS2"));
     return {};
 }
 
@@ -3446,10 +3656,12 @@ QString Application::selectLines(const QVariantMap &map, bool allTabs)
             continue;
         // wxRegEx's wxLogError calls, per tab as legacy compiled per tab.
         if (result->invalidExpression)
-            m_log->log(QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
-                           .arg(fromUtf16(result->invalidExpression->first), fromUtf16(result->invalidExpression->second)));
+            m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.SelectLines", "Select lines"),
+                          QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
+                              .arg(fromUtf16(result->invalidExpression->first), fromUtf16(result->invalidExpression->second)));
         for (const auto &error : result->matchErrors)
-            m_log->log(regexMatchError(error));
+            m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.SelectLines", "Select lines"),
+                          regexMatchError(error));
         count += result->count;
         // Each Document's Copy or Cut replaces the clipboard (legacy, per tab).
         if (result->clipboard)
@@ -3503,13 +3715,41 @@ application::ReplacerRule replacerRule(const QVariantMap &m)
             utf8(m.value(QStringLiteral("replace")).toString()), m.value(QStringLiteral("options")).toInt(), false};
 }
 
+// A value a resample could not scale (legacy logged each, two lines).
+QString unscaledValue(int row, const std::u16string &value, const std::u16string &tag)
+{
+    return QCoreApplication::translate("HikariSub.Conversion", "In line %1, value '%2' cannot be scaled\nin tag '%3'")
+        .arg(row)
+        .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag))
+        .replace(QLatin1Char('\n'), QLatin1Char(' '));
+}
+
+// NT1: one notice for a resample's values that could not be scaled, each a
+// line of its Details.
+void noticeUnscaled(ui::LogController &log, const QStringList &values)
+{
+    if (values.isEmpty())
+        return;
+    log.notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Conversion", "Resample subtitles"),
+               QCoreApplication::translate("HikariSub.Conversion", "%n value(s) could not be scaled.", nullptr,
+                                           int(values.size())),
+               values.join(QLatin1Char('\n')));
+}
+
+// NT1: notices of Fix minor errors (the replacer's menu command).
+QString replacerTitle()
+{
+    return QCoreApplication::translate("HikariSub.MisspellReplacer", "Fix minor errors");
+}
+
 // wxRegEx::Compile's wxLogError for each rule that does not compile, at the
 // points MisspellReplacer compiles its rules.
 void logRegexErrors(ui::LogController &log, const std::vector<application::ReplacerRule> &rules, bool checkedOnly)
 {
     for (const auto &error : application::replacerRegexErrors(rules, checkedOnly))
-        log.log(QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
-                    .arg(fromUtf16(error.expression), fromUtf16(error.message)));
+        log.notice(ui::LogController::Error, replacerTitle(),
+                   QCoreApplication::translate("HikariSub.SelectLines", "Invalid regular expression '%1': %2")
+                       .arg(fromUtf16(error.expression), fromUtf16(error.message)));
 }
 
 // wx_regexec's wxLogError for each Matches or Replace that failed with a
@@ -3523,7 +3763,7 @@ QString regexMatchError(const std::u16string &error)
 void logMatchErrors(ui::LogController &log, const application::ReplacerMatchErrors &errors)
 {
     for (const auto &error : errors)
-        log.log(regexMatchError(error));
+        log.notice(ui::LogController::Warning, replacerTitle(), regexMatchError(error));
 }
 
 application::ReplacerScope replacerScope(const QVariantMap &m)
@@ -3662,7 +3902,8 @@ std::vector<application::ReplacerRule> &Application::misspellRuleList()
         auto read = application::readReplacerRules(
             std::u8string_view(reinterpret_cast<const char8_t *>(text.constData()), static_cast<std::size_t>(text.size())));
         for (const auto &line : read.invalid)
-            m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid.").arg(fromUtf8(line)));
+            m_log->notice(ui::LogController::Warning, replacerTitle(),
+                          QCoreApplication::translate("HikariSub.MisspellReplacer", "Rule \"%1\" is invalid.").arg(fromUtf8(line)));
         m_misspellRules = std::move(read.rules);
     }
     return *m_misspellRules;
@@ -3683,7 +3924,8 @@ QVariantList Application::misspellRules()
 bool Application::addMisspellRule(const QVariantMap &rule)
 {
     if (m_misspellResultsShown) {
-        m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
+        m_log->notice(ui::LogController::Warning, replacerTitle(),
+                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
         return false;
     }
     misspellRuleList().push_back(replacerRule(rule)); // added unchecked
@@ -3693,12 +3935,14 @@ bool Application::addMisspellRule(const QVariantMap &rule)
 bool Application::editMisspellRule(int index, const QVariantMap &rule)
 {
     if (m_misspellResultsShown) {
-        m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
+        m_log->notice(ui::LogController::Warning, replacerTitle(),
+                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
         return false;
     }
     auto &rules = misspellRuleList();
     if (index < 0 || static_cast<std::size_t>(index) >= rules.size()) {
-        m_log->log(QStringLiteral("edit rule - bad selection of rule %1 - %2").arg(index).arg(rules.size()));
+        m_log->notice(ui::LogController::Error, replacerTitle(),
+                      QStringLiteral("edit rule - bad selection of rule %1 - %2").arg(index).arg(rules.size()));
         return false;
     }
     // The checkbox stays as it was.
@@ -3711,12 +3955,14 @@ bool Application::editMisspellRule(int index, const QVariantMap &rule)
 bool Application::removeMisspellRule(int index)
 {
     if (m_misspellResultsShown) {
-        m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
+        m_log->notice(ui::LogController::Warning, replacerTitle(),
+                      QCoreApplication::translate("HikariSub.MisspellReplacer", "Cannot change rules\nwhen find results window is open"));
         return false;
     }
     auto &rules = misspellRuleList();
     if (index < 0 || static_cast<std::size_t>(index) >= rules.size()) {
-        m_log->log(QStringLiteral("edit rule - bad selection of rule %1 - %2").arg(index).arg(rules.size()));
+        m_log->notice(ui::LogController::Error, replacerTitle(),
+                      QStringLiteral("edit rule - bad selection of rule %1 - %2").arg(index).arg(rules.size()));
         return false;
     }
     rules.erase(rules.begin() + index);
@@ -3812,15 +4058,17 @@ void Application::replaceMisspellFinds(const QVariantList &chosen)
         for (const auto &problem : result->problems) {
             using K = application::ReplacerProblem::Kind;
             if (problem.kind == K::Edited)
-                m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer", "Line %1 cannot be replaced,\ncause it was edited.")
-                               .arg(problem.lineNumber));
+                m_log->notice(ui::LogController::Warning, replacerTitle(),
+                              QCoreApplication::translate("HikariSub.MisspellReplacer", "Line %1 cannot be replaced,\ncause it was edited.")
+                                  .arg(problem.lineNumber));
             else if (problem.kind == K::MatchError)
-                m_log->log(regexMatchError(problem.found));
+                m_log->notice(ui::LogController::Warning, replacerTitle(), regexMatchError(problem.found));
             else
-                m_log->log(QCoreApplication::translate("HikariSub.MisspellReplacer",
-                                                       "Cannot replace \"%1\" to \"%2\", with rule \"%3\" in line %4.")
-                               .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
-                               .arg(problem.lineNumber));
+                m_log->notice(ui::LogController::Warning, replacerTitle(),
+                              QCoreApplication::translate("HikariSub.MisspellReplacer",
+                                                          "Cannot replace \"%1\" to \"%2\", with rule \"%3\" in line %4.")
+                                  .arg(fromUtf16(problem.found), fromUtf8(problem.replace), fromUtf8(problem.find))
+                                  .arg(problem.lineNumber));
         }
     }
     m_editor->reloadFromSession();
@@ -3859,9 +4107,11 @@ application::SpellChecker *Application::spellChecker()
         if (m_settings->boolean("editor.spellchecker")) {
             const auto status = m_spellChecker->initialize(dictionaryLanguage().toStdU16String());
             if (status != application::SpellChecker::Status::Ready) {
-                // Legacy turns SPELLCHECKER_ON off and says why. The Line
-                // editor's switch stays: with no dictionary it marks brackets only.
+                // Legacy turns SPELLCHECKER_ON off and says why (NT1: a toast,
+                // a warning without dictionaries). The Line editor's switch
+                // stays: with no dictionary it marks brackets only.
                 m_settings->set("editor.spellchecker", false);
+                const bool noDictionary = status == application::SpellChecker::Status::NoDictionary;
                 const QString message =
                     status == application::SpellChecker::Status::NoDictionary
                         // Legacy names "<settings folder>\Dictionary"; the path
@@ -3871,8 +4121,10 @@ application::SpellChecker *Application::spellChecker()
                                                       "Spell checking will be disabled")
                               .arg(QDir::toNativeSeparators(QFileInfo(m_dictionaryDir).absoluteFilePath()))
                         : QCoreApplication::translate("HikariSub.Spelling", "Failed to initialize spell checker.");
-                QMetaObject::invokeMethod(this, [this, message] {
-                    emit spellingNotice(message);
+                QMetaObject::invokeMethod(this, [this, message, noDictionary] {
+                    m_log->notice(noDictionary ? ui::LogController::Warning : ui::LogController::Error,
+                                  QCoreApplication::translate("HikariSub.Spelling", "Spellchecker"),
+                                  QString(message).replace(QLatin1Char('\n'), QLatin1Char(' ')));
                     emit spellingChanged();
                 }, Qt::QueuedConnection);
             }
@@ -4531,12 +4783,13 @@ bool Application::resample(int subsWidth, int subsHeight, int width, int height,
     auto *session = targetSession();
     if (!session || (subsWidth == width && subsHeight == height) || subsWidth < 1 || subsHeight < 1)
         return false;
-    const auto warn = [this](int row, const std::u16string &value, const std::u16string &tag) {
-        m_log->log(QCoreApplication::translate("HikariSub.Conversion", "In line %1, value '%2' cannot be scaled\nin tag '%3'").arg(row)
-                       .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag)));
+    QStringList unscaled;
+    const auto warn = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
+        unscaled << unscaledValue(row, value, tag);
     };
     const bool done = application::changeResolution(*session, {subsWidth, subsHeight}, {width, height}, true, stretch, warn)
                           .has_value();
+    noticeUnscaled(*m_log, unscaled);
     m_editor->reloadFromSession();
     refreshViews();
     return done;
@@ -4550,11 +4803,12 @@ bool Application::matchVideoResolution(int option)
         return false;
     const application::Resolution subs{values.value(QStringLiteral("subsWidth")).toInt(), values.value(QStringLiteral("subsHeight")).toInt()};
     const application::Resolution video{values.value(QStringLiteral("videoWidth")).toInt(), values.value(QStringLiteral("videoHeight")).toInt()};
-    const auto warn = [this](int row, const std::u16string &value, const std::u16string &tag) {
-        m_log->log(QCoreApplication::translate("HikariSub.Conversion", "In line %1, value '%2' cannot be scaled\nin tag '%3'").arg(row)
-                       .arg(QString::fromStdU16String(value), QString::fromStdU16String(tag)));
+    QStringList unscaled;
+    const auto warn = [&unscaled](int row, const std::u16string &value, const std::u16string &tag) {
+        unscaled << unscaledValue(row, value, tag);
     };
     const bool done = application::changeResolution(*session, subs, video, option != 0, option == 2, warn).has_value();
+    noticeUnscaled(*m_log, unscaled);
     m_editor->reloadFromSession();
     refreshViews();
     return done;
@@ -5380,8 +5634,12 @@ void Application::addAppearance(QVariantMap &values) const
         values.insert(qs(id), m_settings->value(qs(id)));
 }
 
-void Application::applySettings(const QVariantMap &values)
+void Application::applySettings(const QVariantMap &values, bool resetAll)
 {
+    // PF1-staged-reset: "Reset all settings…" takes effect here, before the
+    // staged values (every page's defaults, and the changes made since).
+    if (resetAll)
+        resetAllSettings();
     // K2: the appearance, saved when it differs; the theme follows at once.
     for (const auto id : appearanceSettings()) {
         const auto found = values.constFind(qs(id));
@@ -5413,6 +5671,10 @@ void Application::applySettings(const QVariantMap &values)
     // A changed program font runs HikariSubFrame::DestroyDialogs.
     if (wrote("program.font") || wrote("program.fontSize"))
         destroyDialogs();
+    // PU7 (#309): the Updates page's options, which the update checker holds
+    // (and writes back with its next check's time).
+    if (std::ranges::any_of(written, [](const std::string &id) { return id.starts_with("updater."); }))
+        m_updates->reload();
     // O2: the Hotkeys page's list, a bound control of SetOptions.
     m_hotkeys->commitOptions();
 }
@@ -5451,19 +5713,79 @@ void Application::destroyDialogs()
 
 QVariantMap Application::resetSettings(const QVariantMap &values)
 {
+    // PF1-staged-reset: "Reset all settings…" shows every page's defaults
+    // (as ResetDefault refreshes the controls, its defects included) and
+    // changes nothing until OK or Apply (applySettings with resetAll); the
+    // appearance and the hotkeys stay as they are.
+    application::MemorySettingsStorage storage;
+    const application::Settings defaults(storage);
+    auto refreshed = toVariant(application::refreshOptionsDialogAfterReset(defaults, m_optionsLists, fromVariant(values)));
+    const auto keep = [&](std::string_view id) {
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            refreshed.insert(qs(id), *found);
+    };
+    for (const auto id : appearanceSettings())
+        keep(id);
+    // The Appearance page's bound options too: the program font and its size.
+    for (const auto &b : application::optionsBindings())
+        if (b.page == application::OptionsPage::Appearance) {
+            keep(b.setting);
+            if (!b.sizeSetting.empty())
+                keep(b.sizeSetting);
+        }
+    refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
+    return refreshed;
+}
+
+QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QString &page)
+{
+    // PF1-staged-reset: "Reset page", the page's controls at their defaults,
+    // staged like any change. The Appearance page's settings too (K2's,
+    // previewed by the dialog), and the General page's questions hidden with
+    // "Don't ask again". The Hotkeys page's is the list's (optionsResetAll).
+    const auto which = application::optionsPageOfId(page.toStdString());
+    if (!which)
+        return values;
+    application::MemorySettingsStorage storage;
+    const application::Settings defaults(storage);
+    // Conversion: the default catalog loaded and its Styles listed, as
+    // choosing it does, so the default Style is found among them.
+    if (*which == application::OptionsPage::Conversion)
+        if (const auto load = application::optionsCatalogToLoad(defaults, m_optionsLists)) {
+            m_styleManager->chooseCatalog(QString::fromStdString(*load));
+            m_optionsLists.currentCatalog = *load;
+            m_optionsLists.styles = stdList(m_styleManager->storeStyles());
+        }
+    QVariantMap out = values;
+    const auto refreshed =
+        toVariant(application::refreshOptionsDialogAfterReset(defaults, m_optionsLists, fromVariant(values), which));
+    for (auto it = refreshed.cbegin(); it != refreshed.cend(); ++it)
+        out.insert(it.key(), it.value());
+    if (*which == application::OptionsPage::Appearance)
+        for (const auto id : appearanceSettings())
+            out.insert(qs(id), ui::SettingsStore::toVariant(defaults.value(id)));
+    if (*which == application::OptionsPage::General)
+        out.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
+    return out;
+}
+
+void Application::resetAllSettings()
+{
     // config::ResetDefault resets every option in memory. What long-lived
     // legacy objects hold is not reset, and they write it back later:
-    // - HikariSubFrame's recent subtitles, video and audio lists (SetRecent
-    //   at the next addition, OnClose at exit), kept here at once;
-    // - the hotkey files (Hotkeys.txt, AudioHotkeys.txt): Hkeys.ResetDefaults()
-    //   (below) resets the bindings in memory only; they are written when
-    //   legacy next saves them.
+    // HikariSubFrame's recent subtitles, video and audio lists (SetRecent at
+    // the next addition, OnClose at exit), kept here at once.
+    // PF1-staged-reset: the hotkeys are left as they are (legacy's
+    // Hkeys.ResetDefaults() reset them in memory); the Hotkeys page's "Reset
+    // page" restores them.
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
     // The appearance is not an option: ResetDefault leaves it, as it left the theme.
     std::vector<std::string_view> keep{"recent.subtitles", "recent.subtitlesOpened", "recent.video", "recent.audio",
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
-                                       application::kAudioHotkeysSetting};
+                                       application::kAudioHotkeysSetting,
+                                       // PF1: the Settings window's page shown last, no option either
+                                       "workspace.settingsPage"};
     const auto appearance = appearanceSettings();
     keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)
@@ -5508,15 +5830,11 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     // and the spell checker its dictionary (no SpellChecker::Destroy); the
     // Grid and the menus read the reset options.
     emit spellingChanged();
-    // O2: Hkeys.ResetDefaults(), then the Hotkeys list again.
-    m_hotkeys->resetDefaults();
-    auto refreshed =
-        toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
-    // the Appearance page keeps what it shows
-    for (const auto id : appearanceSettings())
-        if (const auto found = values.constFind(qs(id)); found != values.cend())
-            refreshed.insert(qs(id), *found);
-    return refreshed;
+}
+
+QStringList Application::settingsStyles() const
+{
+    return qList(m_optionsLists.styles);
 }
 
 QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int index)

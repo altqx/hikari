@@ -190,7 +190,7 @@ UpdateChecker::UpdateChecker(QString settingsFile, UpdateFeed feed, QString vers
       m_installer(std::make_unique<UpdateInstaller>(std::move(environment), m_version))
 {
     load();
-    connect(m_installer.get(), &UpdateInstaller::failed, this, &UpdateChecker::notice);
+    connect(m_installer.get(), &UpdateInstaller::failed, this, [this](const QString &message) { emit notice(message, false); });
 }
 
 UpdateChecker::UpdateChecker(ui::SettingsStore &settings, UpdateFeed feed, QString version,
@@ -199,7 +199,7 @@ UpdateChecker::UpdateChecker(ui::SettingsStore &settings, UpdateFeed feed, QStri
       m_installer(std::make_unique<UpdateInstaller>(std::move(environment), m_version))
 {
     load();
-    connect(m_installer.get(), &UpdateInstaller::failed, this, &UpdateChecker::notice);
+    connect(m_installer.get(), &UpdateInstaller::failed, this, [this](const QString &message) { emit notice(message, false); });
 }
 
 UpdateChecker::~UpdateChecker()
@@ -222,6 +222,7 @@ void UpdateChecker::load()
     m_stableOnly = m_settings->boolean("updater.checkForStable");
     m_autoInstall = m_settings->boolean("updater.autoInstall");
     m_nextCheck = m_settings->integer64("updater.nextCheck");
+    m_skippedVersion = m_settings->text("updater.skippedVersion");
 }
 
 void UpdateChecker::save() const
@@ -230,6 +231,7 @@ void UpdateChecker::save() const
     m_settings->set("updater.checkForStable", m_stableOnly);
     m_settings->set("updater.autoInstall", m_autoInstall);
     m_settings->set("updater.nextCheck", m_nextCheck);
+    m_settings->set("updater.skippedVersion", m_skippedVersion);
 }
 
 void UpdateChecker::setAutoCheck(bool on)
@@ -257,6 +259,26 @@ void UpdateChecker::setAutoInstall(bool on)
     m_autoInstall = on;
     save();
     emit optionsChanged();
+}
+
+void UpdateChecker::skipVersion(const QString &version)
+{
+    if (m_skippedVersion == version)
+        return;
+    m_skippedVersion = version;
+    save();
+    emit optionsChanged();
+}
+
+QString UpdateChecker::aurCommand() const
+{
+    const UpdateEnvironment &env = m_installer->environment();
+    return qs(a::aurUpdateCommand(env.aurHelper.toStdString(), env.package.aurChannel));
+}
+
+bool UpdateChecker::aur() const
+{
+    return m_installer->environment().package.kind == a::PackageKind::Arch;
 }
 
 void UpdateChecker::setNextCheck(qint64 secondsSinceEpoch)
@@ -316,7 +338,7 @@ bool UpdateChecker::checkOnStartup()
 void UpdateChecker::startUp()
 {
     if (const QString message = m_installer->start(); !message.isEmpty())
-        emit notice(message);
+        emit notice(message, true);
 }
 
 void UpdateChecker::remindInAWeek()
@@ -551,6 +573,9 @@ void UpdateChecker::offer(const a::ReleaseEntry &release, const a::ReleasePackag
                           {QStringLiteral("requirement"), qs(chosen.requirement)},
                           {QStringLiteral("requirementIsOs"), chosen.requirementIsOs}};
     end(QString());
+    // PU7: a skipped version is the menu's check's only.
+    if (!interactive && !m_skippedVersion.isEmpty() && version == m_skippedVersion)
+        return;
     if (m_offerInstallable && !interactive && m_autoInstall) {
         // The automatic check downloads without asking; "Update ready" follows.
         downloadOffer();

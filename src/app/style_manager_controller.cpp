@@ -2,6 +2,7 @@
 
 #include "hikari/core/ass_load.h"
 
+#include <QColor>
 #include <QCoreApplication>
 #include <QCollator>
 #include <QQuickImageProvider>
@@ -256,10 +257,50 @@ QStringList StyleManagerController::documentStyles() const
     return out;
 }
 
+QVariantList StyleManagerController::panelRows() const
+{
+    QVariantList out;
+    auto *session = m_hooks.target ? m_hooks.target() : nullptr;
+    const auto styles = session ? application::documentStyles(*session) : std::nullopt;
+    if (!styles)
+        return out;
+    std::unordered_map<std::u8string, int> lines;
+    for (const auto *line : session->document().lines())
+        ++lines[line->style];
+    const auto colour = [](const core::Colour &c) {
+        return QColor(int(std::clamp<std::int64_t>(c.r, 0, 255)), int(std::clamp<std::int64_t>(c.g, 0, 255)),
+                      int(std::clamp<std::int64_t>(c.b, 0, 255)), 255 - int(std::clamp<std::int64_t>(c.a, 0, 255)));
+    };
+    for (const auto &s : *styles) {
+        const auto used = lines.find(s.name);
+        out << QVariantMap{{QStringLiteral("name"), qs(s.name)},
+                           {QStringLiteral("font"), qs(s.fontname)},
+                           {QStringLiteral("size"), qs(s.fontsize)},
+                           {QStringLiteral("bold"), s.bold},
+                           {QStringLiteral("italic"), s.italic},
+                           {QStringLiteral("primary"), colour(s.primary)},
+                           {QStringLiteral("outline"), colour(s.outline)},
+                           {QStringLiteral("lines"), used == lines.end() ? 0 : used->second}};
+    }
+    return out;
+}
+
 bool StyleManagerController::available() const
 {
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;
     return session && application::documentStyles(*session).has_value();
+}
+
+void StyleManagerController::documentEdited()
+{
+    if (const bool now = available(); now != m_available) {
+        m_available = now;
+        emit changed();
+    }
+    const auto *target = m_hooks.target ? m_hooks.target() : nullptr;
+    const bool retargeted = target != m_notifiedTarget;
+    m_notifiedTarget = target;
+    emit documentChanged(retargeted);
 }
 
 void StyleManagerController::refreshLists()
@@ -615,7 +656,7 @@ QVariantList StyleManagerController::moveStyles(bool store, const QVariantList &
     return listOf(moved);
 }
 
-QString StyleManagerController::cleanStyles()
+QVariantMap StyleManagerController::cleanStyles()
 {
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;
     if (!session)
@@ -635,7 +676,18 @@ QString StyleManagerController::cleanStyles()
         used = QCoreApplication::translate("HikariSub.Styles", "None");
     if (deleted.isEmpty())
         deleted = QCoreApplication::translate("HikariSub.Styles", "None");
-    return QCoreApplication::translate("HikariSub.Styles", "Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted);
+    // NT1: a toast says how many went and which; legacy's two lists are its
+    // Details.
+    QStringList names;
+    for (const auto &n : result->deleted)
+        names << qs(n);
+    const QString text =
+        names.isEmpty() ? QCoreApplication::translate("HikariSub.Styles", "No unused styles.")
+                        : QCoreApplication::translate("HikariSub.Styles", "%n style(s) deleted: %1.", nullptr, int(names.size()))
+                              .arg(names.join(QStringLiteral(", ")));
+    return {{QStringLiteral("text"), text},
+            {QStringLiteral("details"),
+             QCoreApplication::translate("HikariSub.Styles", "Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted).trimmed()}};
 }
 
 void StyleManagerController::renderPreview(const QVariantMap &values, int width, int height, const QString &text)

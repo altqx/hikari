@@ -19,6 +19,8 @@ Window {
     required property var catalogs // Y6: FontCatalogsController
     required property ColourPickerController colourPicker
     required property var app
+    // NT1: Clear's notice (a toast; Main's postCleanStyles).
+    property var postCleanStyles: null
     title: qsTr("Style manager")
     // Tall enough for the editor and its preview above the buttons, within
     // the screen's free area (1280 x 800 at 150 % leaves 853 x 533); a
@@ -35,9 +37,15 @@ Window {
 
     function showFor(styleName) {
         styles.refreshLists()
-        const row = styles.documentStyles.indexOf(styleName)
-        assSelected = [Math.max(0, row)]
-        storeSelected = styles.storeStyles.length > 0 ? [0] : []
+        showAt(styles.documentStyles.indexOf(styleName))
+    }
+    // TP1: the Styles panel's rows are the Document's, a name possibly twice.
+    function showAt(row) {
+        styles.refreshLists()
+        if (!editing) { // an edit in progress keeps both lists' selections
+            assSelected = [Math.max(0, Math.min(row, styles.documentStyles.length - 1))]
+            storeSelected = styles.storeStyles.length > 0 ? [0] : []
+        }
         show()
         raise()
         requestActivate()
@@ -62,6 +70,30 @@ Window {
             createQuestion.open()
         }
     }
+    // TP1 (#274): the Styles panel's New, Duplicate and Copy to the catalog,
+    // as the window's own buttons do them on the Document's list.
+    function newDocumentStyle() {
+        showFor("")
+        beginEditing(styles.beginNew(false), false)
+    }
+    function editStyleAt(row) {
+        showAt(row)
+        if (row >= 0 && row < styles.documentStyles.length)
+            editDocumentStyle(row)
+    }
+    function duplicateDocumentStyle(row) {
+        showAt(row)
+        if (row >= 0 && row < styles.documentStyles.length)
+            beginEditing(styles.beginCopy(false, row), false)
+    }
+    function copyToCatalog(row) {
+        showAt(row)
+        if (row < 0 || row >= styles.documentStyles.length)
+            return
+        reviewClashes(styles.transferClashes(true, [row]), 1, qsTr("the storage"), function(choices) {
+            manager.storeSelected = manager.styles.addToStore([row], choices)
+        })
+    }
     function editDocumentStyle(row) {
         assSelected = [row]
         beginEditing(styles.beginEdit(false, row), false)
@@ -75,8 +107,7 @@ Window {
         const problem = styles.commitEdit(v, [], false, false)
         if (problem !== "") {
             styles.endEdit()
-            message.text = problem
-            message.open()
+            messages.ask({ title: qsTr("New style"), text: problem, severity: "error" })
             return
         }
         editDocumentStyle(styles.documentStyles.indexOf(styleName))
@@ -145,14 +176,11 @@ Window {
             settings: manager.app.settings
         }
     }
-    Dialog {
-        id: message
-        objectName: "styleMessage"
-        property alias text: messageLabel.text
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { id: messageLabel }
+    // NT1: a refused commit, on the kit's message box.
+    MessageHost {
+        id: messages
+        objectName: "styleMessages"
+        settings: manager.app.settings
     }
 
     // --- Editor ------------------------------------------------------------
@@ -194,8 +222,7 @@ Window {
             const done = function(rename) {
                 const problem = styles.commitEdit(v, selected, applyAll, rename)
                 if (problem !== "") {
-                    message.text = problem
-                    message.open()
+                    messages.ask({ title: qsTr("Save style"), text: problem, severity: "error" })
                     return
                 }
                 if (close)
@@ -495,7 +522,7 @@ Window {
                             iconRole: "clear"
                             text: qsTr("Clear")
                             tip: qsTr("Delete unused ASS styles")
-                            onClicked: { message.title = qsTr("Status of deleted styles"); message.text = manager.styles.cleanStyles(); message.open() }
+                            onClicked: { const r = manager.styles.cleanStyles(); if (manager.postCleanStyles) manager.postCleanStyles(r) }
                         }
                         moves: [
                             IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 0) },

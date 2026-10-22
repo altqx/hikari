@@ -216,7 +216,7 @@ QString retiredNotice(int id)
 } // namespace
 
 HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
-                                     std::function<void(const QString &)> log, QObject *parent)
+                                     std::function<void(const QString &, bool warning)> log, QObject *parent)
     : QObject(parent), m_scripts(scripts), m_settings(settings), m_log(std::move(log))
 {
     load();
@@ -224,7 +224,7 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
     if (m_log)
         for (const QString &notice : std::exchange(m_retiredNotices, {}))
-            m_log(notice);
+            m_log(notice, false);
     logInvalid(); // the frame's SetAccels(false) at startup
     // A change in the Automation panel (AM1; legacy's automation hotkeys
     // window's OK): SetHotkeysMap, SetAccels(true), SaveHkeys().
@@ -312,7 +312,7 @@ void HotkeysController::logInvalid() const
             continue;
         const auto bad = application::invalidHotkeyKey(hotkey.accel);
         if (!bad.empty())
-            m_log(QCoreApplication::translate("HikariSub.Hotkeys", "Shortcut \"%1\" is invalid").arg(qs(bad)));
+            m_log(QCoreApplication::translate("HikariSub.Hotkeys", "Shortcut \"%1\" is invalid").arg(qs(bad)), true);
     }
 }
 
@@ -536,6 +536,16 @@ void HotkeysController::relistMacros()
             more[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
     if (!more.empty())
         m_list->addRows(more);
+    // A search matches the macros' rows by their script and macro too: the
+    // rows listed already are searched again, the selected one kept if it
+    // still shows.
+    if (!m_list->searchText().empty()) {
+        const int selected = m_list->selection();
+        m_list->filter(m_list->filterMode());
+        const auto shown = m_list->shown();
+        if (const auto at = std::ranges::find(shown, selected); at != shown.end())
+            m_list->selectShown(int(at - shown.begin()));
+    }
     // The rows listed already show their macro by name, or why it is
     // missing, from the registrations: a script that loads changes them too.
     emit rowsChanged();
@@ -565,8 +575,12 @@ QVariantList HotkeysController::rows() const
     int position = 0;
     for (const int i : m_list->shown()) {
         const auto &r = m_list->row(i);
+        // PF1: "context" (the window's index) and "name" for the page's
+        // context headings, the row showing its name under its heading.
         QVariantMap row{{QStringLiteral("row"), i},
                         {QStringLiteral("text"), qs(r.text)},
+                        {QStringLiteral("context"), r.key.type},
+                        {QStringLiteral("name"), qs(r.name)},
                         {QStringLiteral("accel"), qs(r.accel)},
                         {QStringLiteral("textModified"), r.textModified},
                         {QStringLiteral("keyModified"), r.keyModified},
@@ -658,6 +672,21 @@ void HotkeysController::filter(int mode)
     emit rowsChanged();
 }
 
+void HotkeysController::search(const QString &text)
+{
+    if (!m_list)
+        return;
+    m_list->search(text.toStdString(), [this](const application::HotkeyList::Row &r) {
+        if (r.key.id < application::kFirstScriptHotkey)
+            return std::string();
+        const QVariantMap macro = m_scripts.describe(r.name);
+        return (macro.value(QStringLiteral("script")).toString() + QLatin1Char(' ') +
+                macro.value(QStringLiteral("macro")).toString())
+            .toStdString();
+    });
+    emit rowsChanged();
+}
+
 void HotkeysController::select(int position)
 {
     if (!m_list)
@@ -707,6 +736,14 @@ void HotkeysController::optionsReset()
     emit rowsChanged();
 }
 
+void HotkeysController::optionsResetAll()
+{
+    if (!m_list)
+        return;
+    m_list->resetAll(bindings());
+    emit rowsChanged();
+}
+
 void HotkeysController::optionsDelete()
 {
     if (!m_list || m_list->selection() < 0)
@@ -729,6 +766,29 @@ void HotkeysController::optionsRedo()
         return;
     m_list->redo();
     emit rowsChanged();
+}
+
+bool HotkeysController::optionsModified() const
+{
+    return m_list && m_list->modified();
+}
+
+QVariantMap HotkeysController::importLegacyScripts(const QString &path)
+{
+    if (optionsModified())
+        return {{QStringLiteral("read"), false}};
+    QVariantMap result = m_scripts.importLegacy(path);
+    if (m_list && result.value(QStringLiteral("added")).toInt() > 0) {
+        const int mode = m_list->filterMode();
+        // The staged copy an applied edit left is the bindings before the
+        // import: the next edit stages from the bindings now, import included.
+        m_copy.clear();
+        m_list->clear();
+        m_list->build(listed());
+        m_list->filter(mode);
+        emit rowsChanged();
+    }
+    return result;
 }
 
 void HotkeysController::commitOptions()

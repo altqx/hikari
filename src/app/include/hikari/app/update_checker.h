@@ -53,6 +53,12 @@ class UpdateChecker : public QObject {
     // channel (aur-channel.txt), whose package decides.
     Q_PROPERTY(bool stableOnlyOption READ stableOnlyOption CONSTANT)
     Q_PROPERTY(QObject *installer READ installerObject CONSTANT)
+    // PU7 (#309): the version "Skip this version" hid (no "v"), "" for none.
+    Q_PROPERTY(QString skippedVersion READ skippedVersion WRITE skipVersion NOTIFY optionsChanged)
+    // PU7: the command an AUR install is offered to copy (aurUpdateCommand).
+    Q_PROPERTY(QString aurCommand READ aurCommand CONSTANT)
+    // PU7: an AUR install (Settings > Updates says its package manager updates it).
+    Q_PROPERTY(bool aur READ aur CONSTANT)
 public:
     // The GitHub release list.
     static QUrl defaultFeed() { return UpdateFeed::github().releases; }
@@ -76,6 +82,13 @@ public:
     QString versionLabel() const;
     bool installsUpdates() const;
     bool stableOnlyOption() const;
+    QString skippedVersion() const { return m_skippedVersion; }
+    // "Skip this version": the automatic check stays quiet about `version`
+    // (nothing shown, nothing downloaded) until a newer release is found;
+    // the menu's check still shows it. "" offers it again.
+    Q_INVOKABLE void skipVersion(const QString &version);
+    QString aurCommand() const;
+    bool aur() const;
     qint64 nextCheck() const { return m_nextCheck; }
     void setNextCheck(qint64 secondsSinceEpoch);
     UpdateInstaller &installer() { return *m_installer; }
@@ -89,7 +102,7 @@ public:
     Q_INVOKABLE bool checkOnStartup();
     // At start, before the check: what an earlier update left (notice()).
     void startUp();
-    // "Remind me in a week".
+    // "Remind me later" (legacy's "Remind me in a week", PU7-remind-later).
     Q_INVOKABLE void remindInAWeek();
     // Opens a release page this checker built.
     Q_INVOKABLE void openReleasePage(const QString &url);
@@ -118,8 +131,9 @@ signals:
     // `interactive` only "available" is reported. `offer` is "install",
     // "notify", "requirement" or "aur".
     void finished(const QString &outcome, const QVariantMap &release, bool interactive);
-    // A message for the user: the last update's failure, or a download's.
-    void notice(const QString &message);
+    // A message for the user: a download's failure, or (`atStart`) the last
+    // update's, which the installer left (NT1: titled "Install update").
+    void notice(const QString &message, bool atStart);
     // SH3: the release list was read (by a check or readReleases()), or not.
     void releasesRead(bool ok);
 
@@ -147,6 +161,7 @@ private:
     bool m_stableOnly = true;
     bool m_autoInstall = true;
     qint64 m_nextCheck = 0;
+    QString m_skippedVersion;
     QNetworkAccessManager m_network;
     std::unique_ptr<Run> m_run;
     std::unique_ptr<UpdateInstaller> m_installer;

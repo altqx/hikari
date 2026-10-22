@@ -34,6 +34,14 @@ Window {
     property SettingsStore settings: null
     property bool resizable: false
     property bool modal: false
+    // PF1 (#225): the content from edge to edge under the title bar, without
+    // the 24-wide margins (a window with a side list, Settings); the footer
+    // keeps them.
+    property bool flush: false
+    // PU7 (#309): false: no Close on the title bar, the window system's
+    // frame included (DialogFrame drops its close hint), and Esc and the
+    // window system's close do nothing (a wait the window cannot end).
+    property bool closable: true
     property T.AbstractButton defaultButton: null
     property Item initialFocus: null
     readonly property bool opened: visible
@@ -137,7 +145,14 @@ Window {
         }
     }
 
-    onClosing: if (!accepting) rejected()
+    onClosing: close => {
+        if (!closable && !accepting) {
+            close.accepted = false
+            return
+        }
+        if (!accepting)
+            rejected()
+    }
     Connections {
         target: dialog.startFocus
         ignoreUnknownSignals: true
@@ -194,6 +209,7 @@ Window {
         id: frame
         window: dialog
         resizable: dialog.resizable
+        closable: dialog.closable
         // (customAvailable is read for its notification: the desktop can change in tests.)
         custom: WindowFrame.customAvailable && !WindowFrame.usesSystemTitleBar(dialog.titleBarChoice)
         // A shown dialog on its screen with the new frame's room: now, and
@@ -228,7 +244,8 @@ Window {
         Accessible.name: dialog.title
         Keys.onEscapePressed: event => {
             event.accepted = true
-            dialog.reject()
+            if (dialog.closable)
+                dialog.reject()
         }
         Keys.onReturnPressed: event => dialog.enter(event)
         Keys.onEnterPressed: event => dialog.enter(event)
@@ -239,6 +256,7 @@ Window {
             spacing: 0
             DialogTitleBar {
                 frame: frame
+                closable: dialog.closable
                 Layout.fillWidth: true
             }
             ColumnLayout {
@@ -247,9 +265,9 @@ Window {
                 spacing: 12
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.leftMargin: 24
-                Layout.rightMargin: 24
-                Layout.topMargin: frame.custom ? 12 : 24
+                Layout.leftMargin: dialog.flush ? 0 : 24
+                Layout.rightMargin: dialog.flush ? 0 : 24
+                Layout.topMargin: dialog.flush ? 0 : frame.custom ? 12 : 24
             }
             RowLayout {
                 id: footer

@@ -155,6 +155,14 @@ public:
     using Companion = std::function<void(const core::LineRecord &before, core::LineRecord &after)>;
     bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false, const Companion &companion = {});
     void discardDraft();
+    // KA1: these fields of the pending draft (those `fields` holds) are sent
+    // to its own Line alone, however many Lines are selected, until it is
+    // committed or discarded or a later edit changes them again (a karaoke
+    // commit's text that waits for Commit is that Line's syllables); the
+    // draft's other fields still go to every selected Line
+    void keepDraftFieldsToItsLine(const DraftChange &fields);
+    // The fields kept to the draft's Line (presence alone); null without a draft.
+    const DraftChange *draftOwnFields() const { return m_draft ? &m_draft->own : nullptr; }
 
     std::expected<void, CommandRefusal> run(const Command &command);
 
@@ -225,6 +233,7 @@ private:
     struct Draft {
         core::LineId line;
         DraftChange change;
+        DraftChange own; // KA1: keepDraftFieldsToItsLine
     };
 
     void pushState(core::Document document, std::string name);

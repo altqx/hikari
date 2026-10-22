@@ -60,6 +60,8 @@ class HotkeysController : public QObject {
     Q_PROPERTY(QVariantList rows READ rows NOTIFY rowsChanged)
     Q_PROPERTY(int selected READ selected NOTIFY rowsChanged)
     Q_PROPERTY(int filterMode READ filterMode NOTIFY rowsChanged)
+    // PU7 (#309): the page holds edits not yet kept with OK or Apply.
+    Q_PROPERTY(bool optionsModified READ optionsModified NOTIFY rowsChanged)
     // HikariListCtrl's gutter: the list is filtered (isFiltered), and the
     // block above the first shown row (CheckIfHasHiddenBlock(-1)); each row
     // carries its own ("block": 0, 1 "+", 2 "-"; "inBlock": shown from one).
@@ -71,7 +73,7 @@ class HotkeysController : public QObject {
 public:
     // `log`: HikariLog (the log window), for GetHKey's 'Shortcut "%s" is invalid'.
     HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
-                      std::function<void(const QString &)> log = {}, QObject *parent = nullptr);
+                      std::function<void(const QString &, bool warning)> log = {}, QObject *parent = nullptr);
     ~HotkeysController() override;
 
     QVariantMap keys() const;
@@ -122,6 +124,9 @@ public:
     // The Options page (legacy OptionsDialog's constructor, AddHotkeysOnList).
     Q_INVOKABLE void beginOptions();
     Q_INVOKABLE void filter(int mode);
+    // PF1 (#225): the page's search field (HotkeyList::search; a macro's
+    // row also by its script and macro names).
+    Q_INVOKABLE void search(const QString &text);
     Q_INVOKABLE void select(int position);
     // A click on the gutter's box after a shown position (-1: above the first).
     Q_INVOKABLE void toggleBlock(int position);
@@ -134,11 +139,21 @@ public:
     Q_INVOKABLE QVariantMap optionsConflict(const QString &accel, int type);
     Q_INVOKABLE void optionsMap(const QString &accel, int type, const QString &answer);
     Q_INVOKABLE void optionsReset();
+    // PF1-staged-reset: "Reset page" on the Hotkeys page, every row's
+    // default, kept or dropped with the dialog as the other edits.
+    Q_INVOKABLE void optionsResetAll();
     Q_INVOKABLE void optionsDelete();
     Q_INVOKABLE void optionsUndo();
     Q_INVOKABLE void optionsRedo();
     // OK/Apply (SetOptions).
     Q_INVOKABLE void commitOptions();
+    // PU7 (#309): Import legacy hotkeys on the Hotkeys page: the script
+    // hotkeys of a legacy Hotkeys.txt, added at once as AM1's import adds
+    // them (AutomationHotkeysController::importLegacy's result), and the
+    // page's list made again with them. Only while the page holds no edits
+    // (the page offers it then): OK would write the list over them.
+    Q_INVOKABLE QVariantMap importLegacyScripts(const QString &path);
+    bool optionsModified() const;
     // "Set default" (ResetDefault): Hkeys.ResetDefaults() and the list again.
     void resetDefaults();
 
@@ -206,7 +221,7 @@ private:
     bool m_lastClickShift = false;     // Shift alone
     bool m_lastClickShiftHeld = false; // Shift with any other modifiers
     bool m_lastClickCtrlHeld = false;  // Ctrl with any other modifiers
-    std::function<void(const QString &)> m_log;
+    std::function<void(const QString &, bool warning)> m_log;
     bool m_rehearsing = false;
     QStringList m_retiredNotices; // V3: retired bindings dropped by load()
     std::function<qint64()> m_keyClock;
