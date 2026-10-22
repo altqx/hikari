@@ -6514,17 +6514,15 @@ ApplicationWindow {
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.
-    // ADR 0019: an AUR copy gets its own notice; an update that installs
-    // offers "Download and install" and, once downloaded, the ready bar.
+    // ADR 0019: an update that installs offers "Download and install" and,
+    // once downloaded, the ready bar; PU7 (#309): an AUR copy gets the same
+    // window, with its command.
     Connections {
         target: root.updates
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
-                // The automatic check's notice takes no keyboard (DG1).
-                if (release.offer === "aur")
-                    updateAurNotice.showRelease(release, !interactive)
-                else
-                    updateAvailable.showRelease(release, !interactive)
+                // The automatic check's window takes no keyboard (DG1).
+                updateAvailable.showRelease(release, !interactive)
             } else if (outcome === "current") {
                 // NT1 (#302): toasts, titled with the command (DG1-update-titles).
                 root.notices.post("info", qsTr("Check for updates"), qsTr("You already have the latest version"))
@@ -6543,14 +6541,10 @@ ApplicationWindow {
     }
     // DG1 (#222): About, Credits and the update offers are windows of their
     // own on the dialog frame (DialogWindow.qml), modeless.
-    UpdateAurNotice {
-        id: updateAurNotice
-        updates: root.updates
-        settings: root.app.settings
-    }
     UpdateAvailable {
         id: updateAvailable
         updates: root.updates
+        app: root.app
         whatsNew: root.whatsNew
         settings: root.app.settings
     }

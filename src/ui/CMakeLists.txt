@@ -61,7 +61,7 @@ qt_target_qml_sources(hikari_ui QML_FILES WindowFooter.qml FooterButton.qml)
 # P9: the association question, the tab commands' questions and the legacy autosaves.
 qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml LegacyAutosaveList.qml)
 # ADR 0019: the update notices and the installing notice.
-qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateAurNotice.qml UpdateInstallingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateInstallingWindow.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
 # KA7: the Karaoke check window.

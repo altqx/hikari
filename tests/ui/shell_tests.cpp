@@ -6950,17 +6950,55 @@ private slots:
         QTest::keyClick(available, Qt::Key_Escape);
         QTRY_VERIFY(!available->isVisible());
 
-        auto *aur = root->findChild<QQuickWindow *>(QStringLiteral("updateAurNotice"));
+        // PU7 (#309): an AUR copy gets the same window: the command to copy,
+        // no offer, Close the default.
         QVariantMap fromAur = release;
         fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
+        fromAur.insert(QStringLiteral("aurCarries"), true);
         QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
                                           Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
-        QTRY_VERIFY(aur->isVisible());
-        QVERIFY(dialogItem("updateAurNotice", "updateAurText")->property("text").toString().contains(QStringLiteral("yay -Syu")));
-        QVERIFY(!available->isVisible());
-        settled(aur);
-        QTest::keyClick(aur, Qt::Key_Escape);
-        QTRY_VERIFY(!aur->isVisible());
+        QTRY_VERIFY(available->isVisible());
+        auto *command = dialogItem("updateAvailable", "updateAurCommand");
+        QTRY_VERIFY(command->isVisible());
+        QVERIFY(command->property("text").toString().contains(QStringLiteral(" -Syu")));
+        QVERIFY(!dialogItem("updateAvailable", "updateOffer")->isVisible());
+        QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateClose"));
+        auto *copy = dialogItem("updateAvailable", "updateAurCopy");
+        QVERIFY(QMetaObject::invokeMethod(copy, "click"));
+        QCOMPARE(QGuiApplication::clipboard()->text(), command->property("text").toString());
+        QCOMPARE(copy->property("text").toString(), QStringLiteral("Copied"));
+        settled(available);
+        QTest::keyClick(available, Qt::Key_Escape);
+        QTRY_VERIFY(!available->isVisible());
+        // A prerelease the AUR package does not carry: the release page.
+        fromAur.insert(QStringLiteral("aurCarries"), false);
+        fromAur.insert(QStringLiteral("url"), QStringLiteral("https://example.invalid/v9.0.0"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QTRY_VERIFY(dialogItem("updateAvailable", "updateAurPrerelease")->isVisible());
+        QVERIFY(!dialogItem("updateAvailable", "updateAurCommand")->isVisible());
+        QCOMPARE(dialogItem("updateAvailable", "updateOffer")->property("text").toString(), QStringLiteral("Open the release page"));
+        QVERIFY(QMetaObject::invokeMethod(available, "close"));
+        QTRY_VERIFY(!available->isVisible());
+        // Skip this version: the version kept as skipped, the window closed;
+        // Settings > Updates offers it again.
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("updateAvailable", "updateSkip"), "click"));
+        QTRY_VERIFY(!available->isVisible());
+        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QCOMPARE(application->settingsStore()->text("updater.skippedVersion"), QStringLiteral("9.0.0"));
+        // Remind me later: the next automatic check a week away.
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        const qint64 before = QDateTime::currentSecsSinceEpoch();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("updateAvailable", "updateRemind"), "click"));
+        QTRY_VERIFY(!available->isVisible());
+        QVERIFY(updates.nextCheck() >= before + 7 * 24 * 60 * 60);
+        updates.skipVersion(QString());
     }
 
     // P7: the legacy Save routes: the video name, the extension, Save
@@ -24887,7 +24925,7 @@ private slots:
     }
 
     // DG1 (#222) screenshots for review (HIKARI_DIALOG_SHOT_DIR; skipped
-    // without it): About, Credits, a newer release and the AUR notice in the
+    // without it): About, Credits and a newer release in the
     // four themes on HikariSub's title bar (where the platform has one: X11,
     // Wayland, Windows), then About with "Use system title bar" (the update
     // check's warning is a toast since NT1).
@@ -24917,17 +24955,13 @@ private slots:
                                                                            "window.\n- About and Credits stay open beside the editor.\n\nFixed\n"
                                                                            "- The update notice remembers its size.")},
                                   {QStringLiteral("offer"), QStringLiteral("page")}};
-        QVariantMap fromAur = release;
-        fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
-        // Each opener leaves its dialog shown; the name is its window's.
+        // Each opener leaves its dialog shown; the name is its window's (the
+        // AUR variant is PU7's, pu7Screenshots).
         const std::vector<std::pair<QString, std::function<void()>>> dialogs{
             {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutDialog")), "open"); }},
             {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsDialog")), "open"); }},
             {QStringLiteral("updateAvailable"), [&] {
                  QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, release), Q_ARG(bool, true));
-             }},
-            {QStringLiteral("updateAurNotice"), [&] {
-                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true));
              }},
         };
         const auto shoot = [&](const QString &name, const QString &file) {
