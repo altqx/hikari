@@ -293,6 +293,9 @@ private:
     TemplateLines templateLines() const;
     std::vector<core::LineId> templateOrder() const;
     core::Document runDocument() const; // the Document with the Line editor's draft
+    // runDocument with the panel's pending Effect, Style and Layer on the
+    // record there, as the commit puts them (the text goes in the snapshot).
+    core::Document pendingDocument() const;
     std::optional<core::LineRecord> sourceRecord() const; // with the Line editor's draft
     // What the templater runs of a template or code Line.
     static std::string formOf(const core::LineRecord &line);

@@ -351,6 +351,18 @@ core::Document TemplateEditorController::runDocument() const
     return doc;
 }
 
+core::Document TemplateEditorController::pendingDocument() const
+{
+    core::Document doc = runDocument();
+    if (m_pending && m_pending->document == documentKey() &&
+        (m_pending->effect || m_pending->style || m_pending->layer)) {
+        Pending fields = *m_pending;
+        fields.text.reset();
+        doc.editLine(fields.line, [&](core::LineRecord &l) { l = edited(l, fields); }, core::ChangeMark::Kept);
+    }
+    return doc;
+}
+
 const core::LineRecord *TemplateEditorController::line(core::LineId id) const
 {
     const auto *doc = document();
@@ -502,10 +514,11 @@ void TemplateEditorController::refresh()
 void TemplateEditorController::updateSource()
 {
     const auto *s = session();
-    // The active Line as Apply runs on it: with the Line editor's draft.
+    // The active Line as Apply runs on it: with the Line editor's draft and
+    // an Effect still pending (one that makes a template a karaoke Line).
     std::optional<core::Document> drafted;
-    if (s && s->draftRecord())
-        drafted = runDocument();
+    if (s && (s->draftRecord() || (m_pending && m_pending->document == documentKey())))
+        drafted = pendingDocument();
     const core::Document *doc = drafted ? &*drafted : s ? &s->document() : nullptr;
     std::optional<core::LineId> source =
         doc ? application::templatePreviewSource(*doc, s->selection().active, m_lastSource) : std::nullopt;
@@ -1053,6 +1066,8 @@ void TemplateEditorController::edit(const Pending &change)
         m_pending->layer = change.layer;
     m_lastApply.clear();
     m_commitTimer.start();
+    if (change.effect)
+        updateSource(); // it may make the template a karaoke Line, or not
     emit changed();
     schedulePreview();
 }
@@ -1278,14 +1293,8 @@ void TemplateEditorController::runPreview()
         emit changed(); // canApply
         return;
     }
-    // The Line editor's draft, and the pending Effect, Style and Layer
-    // through the record.
-    core::Document seen = runDocument();
-    if (m_pending && m_pending->document == documentKey() &&
-        (m_pending->effect || m_pending->style || m_pending->layer)) {
-        const auto r = currentRecord();
-        seen.editLine(r->id, [&](core::LineRecord &l) { l = *r; }, core::ChangeMark::Kept);
-    }
+    // The Line editor's draft, and the pending Effect, Style and Layer on it.
+    core::Document seen = pendingDocument();
     // A template made by an Effect still pending counts.
     if (std::ranges::none_of(seen.lines(), [](const core::LineRecord *l) {
             return application::templateKindOf(*l) == application::TemplateKind::Template;

@@ -2013,6 +2013,54 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // A pending Effect, Style or Layer goes onto the Line editor's draft of
+    // the template, as the commit puts it: the drafted Layer stays.
+    void aPendingEffectKeepsTheLineEditorsDraft()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(previewCame());
+        const core::LineId templ{editor->current()};
+        application::DraftChange layer;
+        layer.layer = 7;
+        QVERIFY(session->editDraft(templ, layer));
+        editor->setDelays(10, 60'000);
+        editor->setEffect(editor->effect() + QStringLiteral(" keeptags"));
+        QVERIFY(editor->trusted());
+        QVERIFY(QTest::qWaitFor(
+            [&] {
+                if (!settled())
+                    return false;
+                for (const QVariant &v : editor->previewLines())
+                    if (v.toMap().value(QStringLiteral("own")).toBool() &&
+                        v.toMap().value(QStringLiteral("layer")).toInt() == 7)
+                        return true;
+                return false;
+            },
+            20'000));
+    }
+
+    // An Effect still pending that makes the active template a karaoke Line
+    // too previews that Line, as the commit will.
+    void aPendingEffectChoosesTheKaraokeLine()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> templ;
+        for (const auto *l : session->document().lines())
+            if (application::templateKindOf(*l) == application::TemplateKind::Template && l->effect == u8"template line")
+                templ = l->id;
+        QVERIFY(templ);
+        activate(*templ);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && editor->source() != 0; }, 20'000));
+        QVERIFY(editor->source() != templ->value);
+        QCOMPARE(editor->current(), templ->value);
+        editor->setDelays(10, 60'000);
+        editor->setEffect(QStringLiteral("template line karaoke"));
+        QVERIFY(QTest::qWaitFor([&] { return editor->source() == templ->value; }, 5'000));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
