@@ -946,6 +946,8 @@ Rectangle {
             QStringLiteral("layout-restore"), QStringLiteral("restore-default"),
             // TM1's text-line icon and its moving arrow
             QStringLiteral("translation-mode"), QStringLiteral("comment-original"), QStringLiteral("moving-tags"),
+            // TP1's text lines under a swatch
+            QStringLiteral("style-apply"),
             // PK1's arrows: the date picker's previous and next month, the Details disclosure
             QStringLiteral("chevron-left"), QStringLiteral("chevron-right"),
             // PF1's grid and notice icons (a list's column, text lines)

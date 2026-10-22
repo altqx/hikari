@@ -153,6 +153,7 @@ KDDWViews.TabBarBase {
         width: Math.max(0, (systemMoveArea.enabled ? systemMoveArea.x : menuButton.x) - x - 4)
         anchors.verticalCenter: parent.verticalCenter
         text: root.currentTitle
+        textFormat: Text.PlainText // the file's name in it, never markup
         color: Theme.text
         font.bold: true
         elide: Text.ElideRight
@@ -237,6 +238,7 @@ KDDWViews.TabBarBase {
                                       : Math.max(0, tab.width - x - (tab.selected ? 6 + menuButton.width + 6 : 10) - 1)
                     anchors.verticalCenter: parent.verticalCenter
                     text: tab.title
+                    textFormat: Text.PlainText // the file's name in it, never markup
                     color: Theme.text
                     font.bold: tab.selected
                     elide: tab.cutOff ? Text.ElideNone : Text.ElideRight

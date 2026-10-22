@@ -270,6 +270,9 @@ target_include_directories(hikari_ui_file_layouts_tests PRIVATE "${PROJECT_SOURC
 # text panel and Subtitles > Translation mode.
 hikari_add_qttest(hikari_ui_translation_preset_tests SOURCES translation_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
+# TP1 (#274): the Typesetting preset's own arrangement and the Styles panel.
+hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
 # WS3 (#217): the layout presets and saved layouts (save, apply, rename,
 # delete, persistence) and the retired View arrangements and editor switch.
 # Every function starts the application and its QML, as D2's suite did, so

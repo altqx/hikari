@@ -3564,6 +3564,17 @@
    "surfaces": [
     "menu:subtitles"
    ]
+  },
+  {
+   "role": "style-apply",
+   "file": "style-apply.svg",
+   "label": "Apply to the selected lines",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "styles-panel"
+   ]
   }
  ],
  "notReplaced": {

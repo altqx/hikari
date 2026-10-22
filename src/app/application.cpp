@@ -1767,6 +1767,10 @@ void Application::refreshViews()
         if (m_find)
             m_find->reset();
     }
+    // TP1: the Styles panel, once the Line editor is on the target (the
+    // panel picks the active Line's Style when its own is gone).
+    if (m_styleManager)
+        m_styleManager->documentEdited();
     refreshVideo();
     refreshAudio();
     if (m_statusBar)
@@ -2973,6 +2977,31 @@ QVariantMap Application::styleLineCounts() const
         }
     }
     return out;
+}
+
+bool Application::selectLinesWithStyle(const QString &style)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const QByteArray bytes = style.toUtf8();
+    const std::u8string name(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
+    // As Select lines on the Style field: the Grid's hidden Lines only with
+    // "Ignore filtering in some actions".
+    const application::LineVisible shown = m_gridFilter->ignoreInActions() ? application::LineVisible{} : shownLines();
+    std::vector<core::LineId> found;
+    for (const auto *line : session->document().lines())
+        if (line->style == name && (!shown || shown(line->id)))
+            found.push_back(line->id);
+    const auto current = session->selection().active;
+    if (found.empty()) { // as Select mode: the old selection goes, the active Line stays
+        applySelection(application::Selection{current, {}, current, {}});
+        return false;
+    }
+    std::set<core::LineId> selected(found.begin(), found.end());
+    const core::LineId active = current && selected.contains(*current) ? *current : found.front();
+    // A new range: Shift extends from the active Line, as after Select lines.
+    return applySelection(application::Selection{active, std::move(selected), active, {}});
 }
 
 std::string Application::recoveryKey(application::DocumentId document) const
