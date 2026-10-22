@@ -769,6 +769,56 @@ private slots:
         QVERIFY(!editor->previewPending());
     }
 
+    // The last template turned into code in the panel while its first
+    // preview runs, or after it failed: the run's answer and its problems go
+    // with it.
+    void noTemplatesLeftEndsAnUnfinishedPreview()
+    {
+        // One template only, as `text` has it.
+        const auto oneTemplate = [](const std::u8string &text) {
+            core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+            std::optional<core::LineId> kept;
+            for (const auto *l : doc.lines())
+                if (!kept && application::templateKindOf(*l) == application::TemplateKind::Template)
+                    kept = l->id;
+            doc.removeLinesIf([&](const core::LineRecord &l) {
+                return application::templateKindOf(l) == application::TemplateKind::Template && l.id != *kept;
+            });
+            doc.editLine(*kept, [&](core::LineRecord &l) {
+                l.effect = u8"template syl";
+                if (!text.empty())
+                    l.text = text;
+            });
+            return std::pair{std::move(doc), *kept};
+        };
+        auto [doc, id] = oneTemplate({});
+        openDocument(std::move(doc), true);
+        activate(*firstKaraoke());
+        editor->setCurrent(id.value);
+        templater->holdPreviews = 1;
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
+        QVERIFY(!editor->hasPreview());
+        editor->setEffect(QStringLiteral("code line"));
+        QVERIFY(editor->trusted());
+        QTest::qWait(100);
+        QVERIFY(answerHeld());
+        QTest::qWait(100);
+        QVERIFY(!editor->hasPreview());
+        QVERIFY(!editor->previewPending());
+        // A first preview that failed.
+        auto [broken, brokenId] = oneTemplate(u8"{\\fscx!nosuch.field!}");
+        openDocument(std::move(broken), true);
+        activate(*firstKaraoke());
+        editor->setCurrent(brokenId.value);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->hasProblems() && !editor->previewPending(); }, 20'000));
+        editor->setEffect(QStringLiteral("code line"));
+        QVERIFY(editor->trusted());
+        QTest::qWait(300);
+        QVERIFY(!editor->hasProblems());
+    }
+
     // The values asked for on one tab stay that tab's: the same file in
     // another tab (the same Line ids) shows none until asked there.
     void valuesFromAnotherTabAreDropped()

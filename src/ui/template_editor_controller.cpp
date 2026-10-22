@@ -1154,8 +1154,10 @@ void TemplateEditorController::runPreview()
     if (std::ranges::none_of(seen.lines(), [](const core::LineRecord *l) {
             return application::templateKindOf(*l) == application::TemplateKind::Template;
         })) {
-        if (m_preview)
-            clearPreview(); // the last template went: its preview too
+        // The last template went: its preview too, a run still going (its
+        // answer is no template's now) and its problems.
+        if (m_preview || m_running || m_previewing || !m_issues.empty() || !m_runError.isEmpty())
+            clearPreview();
         m_running = false;
         m_previewing = false;
         emit changed(); // canApply
