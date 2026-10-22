@@ -5695,31 +5695,38 @@ ApplicationWindow {
         }
         // PU1-session-entries-bar: what a restore could not find for this tab,
         // one bar each, with Retry, Relink… and Remove (they stay until then).
-        Repeater {
-            model: root.app.unresolvedRestores.filter(e => e.tab === root.app.currentTab)
-            delegate: InlineBar {
-                id: entryBar
-                required property var modelData
-                required property int index
-                objectName: "unresolvedBar" + index
-                severity: "warning"
-                closable: false
-                text: sessionWindows.entryText(modelData)
-                Layout.fillWidth: true
-                Button {
-                    objectName: "restoreRetry" + entryBar.index
-                    text: qsTranslate("HikariSub.Session", "Retry")
-                    onClicked: sessionWindows.retry(entryBar.modelData)
-                }
-                Button {
-                    objectName: "restoreRelink" + entryBar.index
-                    text: qsTranslate("HikariSub.Session", "Relink…")
-                    onClicked: sessionWindows.relink(entryBar.modelData)
-                }
-                Button {
-                    objectName: "restoreRemove" + entryBar.index
-                    text: qsTranslate("HikariSub.Session", "Remove")
-                    onClicked: sessionWindows.remove(entryBar.modelData)
+        ColumnLayout {
+            objectName: "unresolvedBars"
+            visible: entryBars.count > 0
+            spacing: 0
+            Layout.fillWidth: true
+            Repeater {
+                id: entryBars
+                model: root.app.unresolvedRestores.filter(e => e.tab === root.app.currentTab)
+                delegate: InlineBar {
+                    id: entryBar
+                    required property var modelData
+                    required property int index
+                    objectName: "unresolvedBar" + index
+                    severity: "warning"
+                    closable: false
+                    text: sessionWindows.entryText(modelData)
+                    Layout.fillWidth: true
+                    Button {
+                        objectName: "restoreRetry" + entryBar.index
+                        text: qsTranslate("HikariSub.Session", "Retry")
+                        onClicked: sessionWindows.retry(entryBar.modelData)
+                    }
+                    Button {
+                        objectName: "restoreRelink" + entryBar.index
+                        text: qsTranslate("HikariSub.Session", "Relink…")
+                        onClicked: sessionWindows.relink(entryBar.modelData)
+                    }
+                    Button {
+                        objectName: "restoreRemove" + entryBar.index
+                        text: qsTranslate("HikariSub.Session", "Remove")
+                        onClicked: sessionWindows.remove(entryBar.modelData)
+                    }
                 }
             }
         }

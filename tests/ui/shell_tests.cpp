@@ -3057,11 +3057,11 @@ private slots:
         field->setProperty("editText", QStringLiteral("B"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogDelete"), "click"));
         auto *question = in("catalogDeleteQuestion");
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(question, "reject"));
         QCOMPARE(catalogs.catalogNames(), QStringList{"B"});
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogDelete"), "click"));
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(question, "accept"));
         QCOMPARE(catalogs.catalogNames(), QStringList{});
         QCOMPARE(field->property("editText").toString(), QString());
@@ -3497,7 +3497,7 @@ private slots:
         findItem(content, QStringLiteral("fontCatalogField"))->setProperty("editText", QStringLiteral("B"));
         QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("fontCatalogDelete")), "click"));
         auto *question = window->findChild<QObject *>(QStringLiteral("catalogDeleteQuestion"));
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(question, "accept"));
         QVERIFY(QMetaObject::invokeMethod(window, "close"));
         QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A"}));
@@ -8826,7 +8826,7 @@ private slots:
         application->setFindQuestionHandler({});
         auto *question = item<QObject>("findQuestion");
         press(Qt::Key_F3);
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
         QVERIFY(application->findBusy());
         press(Qt::Key_F3);
@@ -8836,7 +8836,7 @@ private slots:
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
         // Yes: from the beginning.
         QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
-        QTRY_VERIFY(!mkvQuestionShown());
+        QTRY_VERIFY(!question->property("visible").toBool());
         QVERIFY(!application->findBusy());
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
         // Find all lists the matches on the right; a double click goes there.
@@ -8871,20 +8871,20 @@ private slots:
         application->setFindQuestionHandler({});
         const QVariantMap zzz{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}};
         application->runFindReplace(QStringLiteral("find"), zzz); // from the beginning (the last search wrapped)
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QCOMPARE(question->property("text").toString(), QStringLiteral("Could not find the specified phrase \"zzz\"."));
         QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerOk")), "click"));
-        QTRY_VERIFY(!mkvQuestionShown());
+        QTRY_VERIFY(!question->property("visible").toBool());
         application->runFindReplace(QStringLiteral("find"), zzz);
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
         QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
         QTRY_COMPARE(question->property("text").toString(), QStringLiteral("Could not find the specified phrase \"zzz\"."));
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QTest::qWait(50);
         QVERIFY(question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerOk")), "click"));
-        QTRY_VERIFY(!mkvQuestionShown());
+        QTRY_VERIFY(!question->property("visible").toBool());
         // Ctrl+F again on the Find tab with the focus in the tool hides it.
         item("findText")->forceActiveFocus();
         press(Qt::Key_F, Qt::ControlModifier);
@@ -9874,7 +9874,7 @@ private slots:
         // question on Windows (Yes, OK, No, Cancel by their roles).
         auto *question = item<QObject>("findQuestion");
         emit application->findQuestion(0, 2, QStringLiteral("Styles named \"X\" do not exist."), QStringLiteral("Confirmation"));
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         auto *answerBox = boxOf(question->findChild<QQuickItem *>(QStringLiteral("findAnswerOk")));
         const QVariant answerLayout = answerBox->property("buttonLayout");
         {
@@ -9894,7 +9894,7 @@ private slots:
             QTRY_COMPARE(answers(), (QStringList{"Remove styles", "Remove nonexistent styles", "Ignore", "Cancel"}));
         }
         QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerCancel")), "click"));
-        QTRY_VERIFY(!mkvQuestionShown());
+        QTRY_VERIFY(!question->property("visible").toBool());
 
         // Line group: the Cancel alone when there is no group to remove.
         auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
@@ -11593,7 +11593,7 @@ private slots:
         QVERIFY(footerButton("settingsImportRollback")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportRollback"), "click"));
         auto *question = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportRollbackQuestion"));
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(question, "accept"));
         QVERIFY(application->settingsImport().pending());
         restartWithSpelling(home.path(), false);
@@ -20375,7 +20375,7 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("shapesRestoreDefault"), "click"));
         QObject *question = named("shapesQuestion");
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QCOMPARE(named("shapesQuestionText")->property("text").toString(),
                  QStringLiteral("Are you sure you want to reset to default?"));
         QVERIFY(QMetaObject::invokeMethod(question, "accept"));
@@ -20798,7 +20798,7 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("tagsRestoreDefault"), "click"));
         QObject *question = named("tagsQuestion");
-        QTRY_VERIFY(mkvQuestionShown());
+        QTRY_VERIFY(question->property("visible").toBool());
         QCOMPARE(named("tagsQuestionText")->property("text").toString(),
                  QStringLiteral("Are you sure you want to reset to default?"));
         QVERIFY(QMetaObject::invokeMethod(question, "accept"));
@@ -27070,7 +27070,7 @@ private slots:
         QCOMPARE(dialogItem("videoFileQuestion", "videoFileQuestionText")->property("text").toString(),
                  QStringLiteral("Are you sure you want to index the next video?"));
         QMetaObject::invokeMethod(question, "close");
-        QTRY_VERIFY(!mkvQuestionShown());
+        QTRY_VERIFY(!question->property("visible").toBool());
         // Open video and Open subtitles take the fullscreen window as parent.
         QCOMPARE(named("videoOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
         QCOMPARE(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
