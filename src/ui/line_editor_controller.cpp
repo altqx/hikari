@@ -18,7 +18,6 @@
 #include <utility>
 
 #include <algorithm>
-#include <set>
 #include <tuple>
 #include <cstdlib>
 
@@ -264,17 +263,40 @@ std::optional<LineEditorController::RunOrder> LineEditorController::runOrderOf(c
 // The latest entry (runOrderOf) becomes `order`; nullopt drops it.
 void LineEditorController::setRunOrder(core::LineId line, std::optional<RunOrder> order)
 {
-    auto &entries = m_runOrders[runOrderKey(line)];
-    if (!entries.empty())
-        entries.erase(entries.begin());
+    if (const auto it = m_runOrders.find(runOrderKey(line)); it != m_runOrders.end()) {
+        uncountRunOrder(it->second.front());
+        it->second.erase(it->second.begin());
+        if (it->second.empty())
+            m_runOrders.erase(it);
+    }
     if (order)
         noteRunOrder(line, std::move(*order));
+}
+
+void LineEditorController::countRunOrder(RunOrderKey key, const RunOrder &entry)
+{
+    m_runOrderAges.emplace(entry.noted, key);
+    m_runOrderSize += entry.translation.size();
+    if (++m_runOrderReadings[entry.tags.get()] == 1)
+        m_runOrderSize += runUnits(*entry.tags);
+}
+
+void LineEditorController::uncountRunOrder(const RunOrder &entry)
+{
+    m_runOrderAges.erase(entry.noted);
+    m_runOrderSize -= entry.translation.size();
+    const auto it = m_runOrderReadings.find(entry.tags.get());
+    if (--it->second == 0) {
+        m_runOrderSize -= runUnits(*entry.tags);
+        m_runOrderReadings.erase(it);
+    }
 }
 
 // `order` the latest entry, in place of one of the same translation and runs.
 void LineEditorController::noteRunOrder(core::LineId line, RunOrder order)
 {
-    auto &entries = m_runOrders[runOrderKey(line)];
+    const auto key = runOrderKey(line);
+    auto &entries = m_runOrders[key];
     // An Original read the same as before is kept once (each typed edit
     // notes an entry).
     for (const auto &e : entries)
@@ -283,33 +305,29 @@ void LineEditorController::noteRunOrder(core::LineId line, RunOrder order)
             break;
         }
     std::erase_if(entries, [&](const RunOrder &e) {
-        return e.translation == order.translation && sameRuns(*e.tags, *order.tags);
+        const bool same = e.translation == order.translation && sameRuns(*e.tags, *order.tags);
+        if (same)
+            uncountRunOrder(e);
+        return same;
     });
     order.noted = ++m_runOrderClock;
+    countRunOrder(key, order);
     entries.insert(entries.begin(), std::move(order));
-    if (entries.size() > kRunOrderHistory)
-        entries.resize(kRunOrderHistory);
-    // Every Line's together kept within kRunOrderUnits, the oldest going.
-    for (;;) {
-        std::set<const core::OriginalTags *> counted;
-        std::size_t units = 0;
-        std::vector<RunOrder> *oldestIn = nullptr;
-        std::size_t oldest = 0;
-        for (auto &[key, list] : m_runOrders)
-            for (std::size_t i = 0; i < list.size(); ++i) {
-                units += list[i].translation.size();
-                if (counted.insert(list[i].tags.get()).second)
-                    units += runUnits(*list[i].tags);
-                if (!oldestIn || list[i].noted < (*oldestIn)[oldest].noted) {
-                    oldestIn = &list;
-                    oldest = i;
-                }
-            }
-        if (units <= kRunOrderUnits || !oldestIn || (oldestIn == &entries && oldest == 0))
-            break;
-        oldestIn->erase(oldestIn->begin() + static_cast<std::ptrdiff_t>(oldest));
+    while (entries.size() > kRunOrderHistory) {
+        uncountRunOrder(entries.back());
+        entries.pop_back();
     }
-    std::erase_if(m_runOrders, [](const auto &entry) { return entry.second.empty(); });
+    // Every Line's together kept within kRunOrderUnits, the oldest going
+    // (never the entry just noted, the newest).
+    while (m_runOrderSize > kRunOrderUnits && m_runOrderAges.size() > 1) {
+        const auto [noted, oldestKey] = *m_runOrderAges.begin();
+        const auto list = m_runOrders.find(oldestKey);
+        const auto oldest = std::ranges::find(list->second, noted, &RunOrder::noted);
+        uncountRunOrder(*oldest);
+        list->second.erase(oldest);
+        if (list->second.empty())
+            m_runOrders.erase(list);
+    }
 }
 
 std::u8string LineEditorController::recarried(const core::LineRecord &before, const Carry &now)
@@ -1323,7 +1341,9 @@ bool LineEditorController::undo()
     const QString before[2] = {m_shown[0], m_shown[1]};
     const auto line = s->selection().active;
     if (!m_draftUndo.empty() && r) {
-        m_draftRedo.push_back({r->text, r->translation, translationTyped(), runOrderOf(r->id)});
+        // The whole translation, the carried tags too (record() strips them).
+        const auto whole = sessionRecord();
+        m_draftRedo.push_back({whole->text, whole->translation, translationTyped(), runOrderOf(r->id)});
         const Snapshot previous = std::move(m_draftUndo.back());
         m_draftUndo.pop_back();
         setRunOrder(r->id, previous.order);
@@ -1370,7 +1390,8 @@ bool LineEditorController::redo()
     const QString before[2] = {m_shown[0], m_shown[1]};
     const auto line = s->selection().active;
     if (!m_draftRedo.empty() && r) {
-        m_draftUndo.push_back({r->text, r->translation, translationTyped(), runOrderOf(r->id)});
+        const auto whole = sessionRecord(); // as Undo's
+        m_draftUndo.push_back({whole->text, whole->translation, translationTyped(), runOrderOf(r->id)});
         const Snapshot next = std::move(m_draftRedo.back());
         m_draftRedo.pop_back();
         setRunOrder(r->id, next.order);

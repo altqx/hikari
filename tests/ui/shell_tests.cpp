@@ -11637,6 +11637,88 @@ private slots:
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("y x"));
     }
 
+    // TM1: Undo and Redo in the draft give back the whole translation, the
+    // carried tags with it, and carrying goes on.
+    void tagsFromOriginalRedoKeepsTheCarriedTags()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-redo.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("Hola"), 4);
+        application->editor().translationEdited(QStringLiteral("Holax"), 5);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Holax"));
+        QVERIFY(application->editor().undo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Hola"));
+        QVERIFY(application->editor().redo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Holax"));
+        // Redo's own snapshot for the next Undo is whole too.
+        QVERIFY(application->editor().undo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Hola"));
+        application->editor().translationEdited(QStringLiteral("Hola!"), 5);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Hola!"));
+    }
+
+    // TM1: a position for many translated Lines recarries each one, and
+    // noting each one's run order costs about the same however many came
+    // before (no walk of every Line's entries per note): about as long as
+    // the same step with Tags from original off.
+    void tagsFromOriginalManyLinesRecarryInLinearTime()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-many.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+        constexpr int kLines = 6000;
+        for (int i = 0; i < kLines; ++i)
+            f.write(QStringLiteral("Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a{\\i1}b%1{\\i0}c\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}x{\\i0}\n")
+                        .arg(i)
+                        .toUtf8());
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        const auto timed = [&] {
+            item("editingGrid")->forceActiveFocus();
+            press(Qt::Key_A, Qt::ControlModifier);
+            [&] { QTRY_COMPARE(session->selection().selected.size(), std::size_t(kLines)); }();
+            QElapsedTimer clock;
+            clock.start();
+            [&] { QVERIFY(application->editor().chooseAlignment(7)); }(); // \an8
+            return clock.elapsed();
+        };
+        application->editor().setMoveTags(false);
+        const auto off = timed();
+        if (QTest::currentTestFailed())
+            return;
+        QCOMPARE(q8(session->document().lines().back()->translation), QStringLiteral("{\\an8\\i1}x{\\i0}"));
+        QVERIFY(application->editor().undo());
+        application->editor().setMoveTags(true);
+        const auto on = timed();
+        if (QTest::currentTestFailed())
+            return;
+        const auto lines = session->document().lines();
+        QCOMPARE(q8(lines.back()->text), QStringLiteral("{\\an8}a{\\i1}b%1{\\i0}c").arg(kLines - 1));
+        QCOMPARE(q8(lines.back()->translation), QStringLiteral("{\\an8}{\\i1}x{\\i0}"));
+        QVERIFY2(on < 2 * off + 2000, qPrintable(QStringLiteral("on %1 ms, off %2 ms").arg(on).arg(off)));
+    }
+
     // TM1: the font dialog on one Line with a placed run changes the
     // translation's own text; the run stays placed, its tags written again
     // around it, not merged into the new tag.

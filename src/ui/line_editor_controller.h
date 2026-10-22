@@ -545,6 +545,14 @@ private:
     static constexpr std::size_t kRunOrderUnits = std::size_t(1) << 21;
     std::map<RunOrderKey, std::vector<RunOrder>> m_runOrders;
     std::uint64_t m_runOrderClock = 0;
+    // Kept as entries come and go, so a note never walks every Line: the
+    // entries' Lines by age (the oldest first), the entries sharing each
+    // reading, and the units of them all, each reading counted once.
+    std::map<std::uint64_t, RunOrderKey> m_runOrderAges;
+    std::map<const core::OriginalTags *, std::size_t> m_runOrderReadings;
+    std::size_t m_runOrderSize = 0;
+    void countRunOrder(RunOrderKey key, const RunOrder &entry);
+    void uncountRunOrder(const RunOrder &entry);
     std::optional<RunOrder> runOrderOf(core::LineId line) const;
     void setRunOrder(core::LineId line, std::optional<RunOrder> order);
     void noteRunOrder(core::LineId line, RunOrder order);
