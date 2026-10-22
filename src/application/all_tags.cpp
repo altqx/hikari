@@ -482,14 +482,18 @@ AllTagsEdition::Check AllTagsEdition::setName(u16v name, u16 *taken)
 
 AllTagsEdition::Check AllTagsEdition::setTag(u16v tag)
 {
-    while (!tag.empty() && tag.front() == u'\\')
+    // As typed or pasted: the blanks around it and its leading backslashes
+    // go (" \\bord" is "bord").
+    while (!tag.empty() && (tag.front() == u'\\' || isBlank(tag.front())))
         tag.remove_prefix(1);
-    if (tag.empty() || blank(tag))
+    while (!tag.empty() && isBlank(tag.back()))
+        tag.remove_suffix(1);
+    if (tag.empty())
         return Check::Empty;
     if (tag.find_first_of(u",\r\n") != u16v::npos)
         return Check::Separator;
     AllTagsSetting t = current();
-    t.tag = trimStart(tag);
+    t.tag = u16(tag);
     edit(std::move(t), EditTag, "tag");
     return Check::Ok;
 }
@@ -591,6 +595,13 @@ void AllTagsEdition::duplicate()
     const int at = selection() + 1;
     items.insert(items.begin() + at, std::move(t));
     m_history.change(std::move(items), at, DuplicateTag);
+}
+
+bool AllTagsEdition::canRemove() const
+{
+    if (tags().size() <= 1)
+        return false;
+    return current().tag.empty() || usable().size() > 1;
 }
 
 bool AllTagsEdition::remove()

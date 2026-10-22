@@ -184,7 +184,7 @@ public:
     void select(int index);
 
     Check setName(std::u16string_view name, std::u16string *taken = nullptr);
-    // The tag, its leading backslashes dropped.
+    // The tag, the blanks around it and its leading backslashes dropped.
     Check setTag(std::u16string_view tag);
     // A number field's text (a comma reads as the decimal point).
     Check setNumber(Number field, std::u16string_view text);
@@ -203,9 +203,11 @@ public:
     // Duplicate: the selected definition as "<name> copy" ("<name> copy 2"),
     // after it, selected.
     void duplicate();
-    // Delete: the selected definition goes; never the last one (false).
+    // Delete: the selected definition goes; never the last one, nor the
+    // last one with a tag while new ones wait for theirs (false): the tool
+    // and the file always have one.
     bool remove();
-    bool canRemove() const { return tags().size() > 1; }
+    bool canRemove() const;
     // The answer Replace to a taken name: the definition that has it goes
     // and the selected one takes `name`, one step.
     void replaceNamed(std::u16string_view name);

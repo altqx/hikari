@@ -583,6 +583,8 @@ TEST(AllTagsEdition, EachChangeIsKeptAndUndoneInSteps)
     EXPECT_EQ(e.setNumber(Number::Step, u"0,25"), Check::Ok); // a comma for the point
     EXPECT_EQ(e.current().step, 0.25f);
     EXPECT_EQ(e.setNumber(Number::Value0, u"2.5"), Check::Ok);
+    EXPECT_EQ(e.setTag(u" \\bord\t"), Check::Ok); // pasted: the blanks around it go first
+    EXPECT_EQ(e.current().tag, u"bord");
     EXPECT_EQ(e.setTag(u"\\\\be"), Check::Ok); // its backslashes dropped
     EXPECT_EQ(e.current().tag, u"be");
     e.setCount(2);
@@ -615,6 +617,7 @@ TEST(AllTagsEdition, AValueTheToolCannotUseIsRefusedAndTheLastKept)
     EXPECT_EQ(taken, u"blur");
     EXPECT_EQ(e.setTag(u""), Check::Empty);
     EXPECT_EQ(e.setTag(u"\\"), Check::Empty);
+    EXPECT_EQ(e.setTag(u" \\ "), Check::Empty);
     EXPECT_EQ(e.setTag(u"1c,2"), Check::Separator);
     EXPECT_EQ(e.setNumber(Number::Max, u"-"), Check::NotANumber);
     EXPECT_EQ(e.setNumber(Number::Max, u"1e9"), Check::OutOfRange);
@@ -679,6 +682,19 @@ TEST(AllTagsEdition, NewDuplicateDeleteReplaceAndRestore)
     EXPECT_EQ(e.undoStep(), AllTagsEdition::UndoAll);
     AllTagsEdition one({AllTagsSetting::named(u"x")}, 0);
     EXPECT_FALSE(one.remove());
+    // Nor the last one with a tag while a new one waits for its own: the
+    // tool and the file keep a definition.
+    AllTagsSetting glow = AllTagsSetting::named(u"glow");
+    glow.tag = u"be";
+    AllTagsEdition draft({glow}, 0);
+    draft.addTag();
+    EXPECT_TRUE(draft.canRemove()); // the new one
+    draft.select(0);
+    EXPECT_FALSE(draft.canRemove());
+    EXPECT_FALSE(draft.remove());
+    draft.select(1);
+    EXPECT_TRUE(draft.remove());
+    EXPECT_EQ(draft.tags(), std::vector<AllTagsSetting>{glow});
 }
 
 TEST(AllTagsEdition, TheStripsNamesSectionsAndSetText)
