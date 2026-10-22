@@ -1545,6 +1545,31 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // The `$` values of a TLMode Line are read from the translation, where
+    // the templater writes them.
+    void aTranslatedLinesValuesAreRead()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> source;
+        for (const auto *l : doc.lines())
+            if (!source && application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                source = l->id;
+        QVERIFY(source);
+        doc.editLine(*source, [](core::LineRecord &l) {
+            l.translation = l.text;
+            l.text = u8"original";
+        });
+        openDocument(std::move(doc), true);
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        editor->requestValues();
+        QVERIFY(QTest::qWaitFor([&] { return !editor->values().isEmpty(); }, 20'000));
+        bool number = false;
+        editor->values().value(QStringLiteral("swidth")).toString().toDouble(&number);
+        QVERIFY(number);
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

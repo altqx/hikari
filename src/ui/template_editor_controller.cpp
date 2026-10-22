@@ -1389,7 +1389,9 @@ void TemplateEditorController::runValues(std::uint64_t generation)
         const auto lines = application::templatePreviewLines(*p.result, id);
         if (lines.empty())
             return;
-        const QStringList values = qs(lines.front().text).split(QLatin1Char(kValueSeparator));
+        // A TLMode Line's are written into its translation.
+        const auto &written = lines.front().translation.empty() ? lines.front().text : lines.front().translation;
+        const QStringList values = qs(written).split(QLatin1Char(kValueSeparator));
         self->m_values.clear();
         for (std::size_t k = 0; k < variables().size() && k < static_cast<std::size_t>(values.size()); ++k)
             self->m_values[QString::fromLatin1(variables()[k].name)] = values[static_cast<qsizetype>(k)];
