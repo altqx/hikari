@@ -3269,7 +3269,8 @@ private slots:
     // The Style manager fits the screen's free area, and the Style editor's
     // geometry is one grid: each label over its field, the colours' columns
     // over the geometry's, no control cut off or past the editor's right
-    // edge, the closing row inside the window. Also registered on a
+    // edge, the lists' tools in the sidebar and the one footer inside the
+    // window (SY1). Also registered on a
     // 1280 x 800 screen at 100 % and 150 % (CMakeLists.txt); the default
     // offscreen screen is 800 x 600.
     void styleEditorFitsTheScreen()
@@ -3334,7 +3335,8 @@ private slots:
             return;
 
         // The geometry grid: every label over the field or box below it, and
-        // the colour columns over the geometry's.
+        // the colour columns (each swatch with its transparency) over the
+        // geometry's.
         const auto at = [&](const char *name) {
             auto *item = findItem(editor, QLatin1String(name));
             return item ? item->mapRectToItem(editor, QRectF(0, 0, item->width(), item->height())) : QRectF();
@@ -3347,94 +3349,76 @@ private slots:
             QVERIFY2(top.width() > 0, columns[c]);
             for (const char *name : below[c])
                 QCOMPARE(at(name).left(), top.left());
-            const QRectF colour = at(qPrintable(QStringLiteral("styleColour%1").arg(c + 1)));
-            QCOMPARE(colour.left(), top.left());
-            if (c < 3)
-                QCOMPARE(colour.width(), top.width());
+            QQuickItem *colour = findItem(editor, QStringLiteral("styleColour%1").arg(c + 1))->parentItem();
+            const QRectF column = colour->mapRectToItem(editor, QRectF(0, 0, colour->width(), colour->height()));
+            QCOMPARE(column.left(), top.left());
+            QCOMPARE(column.width(), top.width());
         }
         auto *geometry = findItem(editor, QStringLiteral("styleGeometry"));
         QVERIFY(geometry);
         for (QQuickItem *label : geometry->childItems()) {
-            if (!label->inherits("QQuickLabel"))
+            if (!label->inherits("QQuickRowLayout")) // a field's label with its reset button
                 continue;
             const QRectF l = label->mapRectToItem(editor, QRectF(0, 0, label->width(), label->height()));
             bool over = false;
             for (QQuickItem *field : geometry->childItems())
-                if (!field->inherits("QQuickLabel") && field->isVisible()) {
+                if (!field->inherits("QQuickRowLayout") && field->isVisible()) {
                     const QRectF f = field->mapRectToItem(editor, QRectF(0, 0, field->width(), field->height()));
                     over |= qAbs(f.left() - l.left()) < 0.5 && f.top() >= l.bottom() - 0.5 && f.top() - l.bottom() < 8;
                 }
-            QVERIFY2(over, qPrintable(label->property("text").toString()));
+            QVERIFY2(over, qPrintable(label->childItems().value(0)->property("text").toString()));
         }
 
-        // The lists' commands beside the editor above the closing row (the
-        // move arrows take a column of their own in a short window), each
-        // inside its box.
-        auto *cancelButton = findItem(content, QStringLiteral("styleEditorCancel"));
-        auto *footer = cancelButton->parentItem();
-        while (footer && !footer->inherits("QQuickDialogButtonBox"))
-            footer = footer->parentItem();
-        QVERIFY(footer);
-        const qreal footerTop = footer->mapToItem(content, QPointF()).y();
-        std::function<void(QQuickItem *, QQuickItem *)> inBox = [&](QQuickItem *item, QQuickItem *box) {
+        // SY1: every button above the footer and inside the window, the
+        // lists' tools each in one row inside the sidebar, the footer's
+        // buttons in the window: Revert, then OK, Apply and Cancel.
+        auto *footerRow = findItem(content, QStringLiteral("dialogFooter"));
+        QVERIFY(footerRow);
+        const qreal footerTop = footerRow->mapToItem(content, QPointF()).y();
+        std::function<void(QQuickItem *)> above = [&](QQuickItem *item) {
             for (QQuickItem *child : item->childItems()) {
-                if (!child->isVisible() || child == scroll || child == footer)
+                if (!child->isVisible() || child == scroll || child == footerRow)
                     continue;
-                QQuickItem *within = child->inherits("QQuickGroupBox") ? child : box;
                 if (child->inherits("QQuickAbstractButton")) {
                     const QRectF r = child->mapRectToItem(content, QRectF(0, 0, child->width(), child->height()));
-                    const QRectF b = within ? within->mapRectToItem(content, QRectF(0, 0, within->width(), within->height()))
-                                            : QRectF(0, 0, manager->width(), footerTop);
-                    QVERIFY2(b.adjusted(-0.5, -0.5, 0.5, 0.5).contains(r) && r.bottom() <= footerTop + 0.5,
+                    QVERIFY2(QRectF(0, 0, manager->width(), footerTop).adjusted(-0.5, -0.5, 0.5, 0.5).contains(r),
                              qPrintable(QStringLiteral("%1 \"%2\" at %3,%4 %5x%6").arg(QString::fromLatin1(child->metaObject()->className()),
                                             child->property("text").toString()).arg(r.x()).arg(r.y()).arg(r.width()).arg(r.height())));
                 }
-                inBox(child, within);
+                above(child);
             }
         };
-        inBox(content, nullptr);
+        above(content);
         if (QTest::currentTestFailed())
             return;
-        // Each strip keeps its two groups apart: the arrows under the
-        // commands with the separator between, or in a column of their own
-        // right of them with the separator between; never a separator
-        // inside a column of commands.
+        auto *sidebar = findItem(content, QStringLiteral("styleSidebar"));
+        QVERIFY(sidebar);
+        const QRectF side = sidebar->mapRectToItem(content, QRectF(0, 0, sidebar->width(), sidebar->height()));
         for (const char *name : {"storeCommands", "assCommands"}) {
             auto *strip = findItem(content, QLatin1String(name));
             QVERIFY2(strip, name);
-            const auto parts = strip->childItems(); // commands, across, down, moves
-            QCOMPARE(parts.size(), 4);
-            const auto bounds = [&](QQuickItem *group) {
-                QRectF r;
-                for (QQuickItem *b : group->childItems())
-                    r |= b->mapRectToItem(content, QRectF(0, 0, b->width(), b->height()));
-                return r;
-            };
-            const QRectF commands = bounds(parts[0]);
-            const QRectF moves = bounds(parts[3]);
-            QVERIFY2(parts[1]->isVisible() != parts[2]->isVisible(), name);
-            QQuickItem *separator = parts[1]->isVisible() ? parts[1] : parts[2];
-            const QRectF between = separator->mapRectToItem(content, QRectF(0, 0, separator->width(), separator->height()));
-            const bool stacked = between.top() >= commands.bottom() - 0.5 && moves.top() >= between.bottom() - 0.5
-                                 && qAbs(moves.left() - commands.left()) < 0.5;
-            const bool beside = between.left() >= commands.right() - 0.5 && moves.left() >= between.right() - 0.5
-                                && qAbs(moves.top() - commands.top()) < 0.5;
-            QVERIFY2(parts[1]->isVisible() ? stacked : beside,
-                     qPrintable(QStringLiteral("%1: commands %2,%3 %4x%5, separator %6,%7, arrows %8,%9")
-                                    .arg(QLatin1String(name)).arg(commands.x()).arg(commands.y()).arg(commands.width())
-                                    .arg(commands.height()).arg(between.x()).arg(between.y()).arg(moves.x()).arg(moves.y())));
+            qreal row = -1;
+            for (QQuickItem *b : strip->childItems()) {
+                if (!b->inherits("QQuickAbstractButton") || !b->isVisible())
+                    continue;
+                const QRectF r = b->mapRectToItem(content, QRectF(0, 0, b->width(), b->height()));
+                QVERIFY2(side.adjusted(-0.5, -0.5, 0.5, 0.5).contains(r), qPrintable(b->property("text").toString()));
+                if (row < 0)
+                    row = r.top();
+                QCOMPARE(r.top(), row);
+            }
         }
-
-        // The closing row in the window: the editor's OK, Apply and Cancel,
-        // not the manager's OK and Close (one button rejects).
-        for (const char *name : {"styleEditorOk", "styleEditorApply", "styleEditorCancel"}) {
+        for (const char *name : {"styleEditorRevert", "styleEditorOk", "styleEditorApply", "styleEditorCancel"}) {
             auto *button = findItem(content, QLatin1String(name));
             QVERIFY2(button && button->isVisible(), name);
             const QRectF r = button->mapRectToItem(content, QRectF(0, 0, button->width(), button->height()));
             QVERIFY2(r.left() >= 0 && r.right() <= manager->width() && r.bottom() <= manager->height(), name);
         }
-        QVERIFY(!findItem(content, QStringLiteral("styleManagerOk"))->isVisible());
-        QVERIFY(!findItem(content, QStringLiteral("styleManagerClose"))->isVisible());
+        auto *cancelButton = findItem(content, QStringLiteral("styleEditorCancel"));
+        auto *footer = cancelButton->parentItem();
+        while (footer && !footer->inherits("QQuickDialogButtonBox"))
+            footer = footer->parentItem();
+        QVERIFY(footer);
         QTRY_COMPARE(footer->implicitWidth(), findItem(content, QStringLiteral("styleEditorOk"))->width()
                                                   + findItem(content, QStringLiteral("styleEditorApply"))->width()
                                                   + cancelButton->width() + 2 * footer->property("spacing").toReal()
@@ -3535,14 +3519,22 @@ private slots:
         picker.setSwitchClicks(false);
         QCOMPARE(colour(1), (QList<int>{0x10, 0x20, 0x30, 0x40}));
 
-        // Left click: the popover under the button, at the colour and its
+        // Left click: the popover beside the button, at the colour and its
         // transparency, named after the colour it edits.
         QVERIFY(QMetaObject::invokeMethod(swatch(1), "click"));
         QTRY_VERIFY(popover->property("visible").toBool());
         QCOMPARE(popover->property("anchor").value<QQuickItem *>(), swatch(1));
         auto *frame = popover->property("background").value<QQuickItem *>();
-        QVERIFY(frame->mapToScene(QPointF(0, 0)).y() >= swatch(1)->mapToScene(QPointF(0, swatch(1)->height())).y());
-        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("First"));
+        // Under the swatch, or above it where the window has no room below
+        // (SY1: the editor's colours sit under its pinned preview); placed
+        // once the popover has its height.
+        const auto clear = [&] {
+            const qreal top = frame->mapToScene(QPointF(0, 0)).y(), bottom = top + frame->height();
+            return top >= swatch(1)->mapToScene(QPointF(0, swatch(1)->height())).y() ||
+                   bottom <= swatch(1)->mapToScene(QPointF(0, 0)).y();
+        };
+        QTRY_VERIFY(clear());
+        QCOMPARE(QAccessible::queryAccessibleInterface(popoverContent)->text(QAccessible::Name), QStringLiteral("Primary"));
         QVERIFY(!named("colourPopover")->property("visible").toBool());
         QCOMPARE(popover->property("red").toInt(), 0x10);
         QCOMPARE(popover->property("green").toInt(), 0x20);
@@ -6306,6 +6298,298 @@ private slots:
         QTRY_VERIFY(!window->isVisible());
         styles.deleteCatalog(QStringLiteral("Show"));
         application->editor().discard();
+    }
+
+    // SY1 (#247): the editor follows the selection, always beside the lists.
+    // A field edited shows its reset and the row its unapplied mark; picking
+    // another Style asks about the edit (Apply, Discard, Cancel); Revert
+    // drops it. A name is checked as typed, and a rename goes to the Lines
+    // as its check box says. A multiple selection shows "Multiple values"
+    // and writes only the fields changed to each. New adds a row only on
+    // Apply or OK.
+    void styleManagerEditsInPlace()
+    {
+        QVERIFY(application->openFile(writeStyled("in-place.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,a\n"
+                                                                  "Dialogue: 0,0:00:03.00,0:00:04.00,Sign,,0,0,0,,b\n"
+                                                                  "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,c\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        auto *content = manager->contentItem();
+        const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
+        const auto on = [&](const char *name) { return field(name)->isVisible() && field(name)->isEnabled(); };
+        const auto edit = [&](const char *name, const QString &text) {
+            field(name)->setProperty("text", text);
+            QVERIFY(QMetaObject::invokeMethod(field(name), "textEdited"));
+        };
+        const auto box = [&] { return manager->findChild<QQuickWindow *>(QStringLiteral("styleMessageBox")); };
+        const auto answer = [&](const char *id) {
+            QTRY_VERIFY(box() && box()->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(findItem(box()->contentItem(), QStringLiteral("messageBoxChoice_") + QLatin1String(id)),
+                                              "click"));
+            QTRY_VERIFY(!box()->isVisible());
+        };
+        const auto pick = [&](const QVariantList &rows) {
+            QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, false), Q_ARG(QVariant, QVariant(rows))));
+        };
+        const auto value = [&](int row, std::u8string core::StyleValues::*member) {
+            const auto list = application::documentStyles(*targetSession());
+            return list && row < int(list->size()) ? QString::fromUtf8(reinterpret_cast<const char *>(((*list)[row].*member).c_str()))
+                                                   : QString();
+        };
+        // The list's delegates are not QObject children: walk the items.
+        const auto marks = [&] {
+            int n = 0;
+            std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                n += from->objectName() == QLatin1String("styleUnapplied") && from->isVisible();
+                for (QQuickItem *child : from->childItems())
+                    walk(child);
+            };
+            walk(field("assStyles"));
+            return n;
+        };
+
+        // Opened on the Line's Style, nothing to apply.
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{1});
+        QVERIFY(manager->property("editing").toBool());
+        QCOMPARE(field("styleName")->property("text").toString(), QStringLiteral("Sign"));
+        QVERIFY(!on("styleEditorApply") && !on("styleEditorRevert") && on("styleEditorOk"));
+        QVERIFY(!field("styleReset_fontsize")->isVisible());
+
+        // An edit: the field's reset, the row's mark, Apply and Revert on;
+        // the reset puts the value back.
+        edit("styleSize", QStringLiteral("36"));
+        QVERIFY(manager->property("dirty").toBool());
+        QVERIFY(on("styleEditorApply") && on("styleEditorRevert"));
+        QTRY_VERIFY(field("styleReset_fontsize")->isVisible());
+        QTRY_COMPARE(marks(), 1);
+        QVERIFY(QMetaObject::invokeMethod(field("styleReset_fontsize"), "click"));
+        QCOMPARE(field("styleSize")->property("text").toString(), QStringLiteral("20"));
+        QVERIFY(!manager->property("dirty").toBool());
+        QTRY_COMPARE(marks(), 0);
+
+        // Another Style picked with an edit: Cancel stays, Discard drops it,
+        // Apply writes it first.
+        edit("styleSize", QStringLiteral("36"));
+        pick({0});
+        QTRY_VERIFY(box() && box()->isVisible());
+        QCOMPARE(box()->property("text").toString(), QStringLiteral("Apply the changes to “Sign”?"));
+        answer("cancel");
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{1});
+        QVERIFY(manager->property("dirty").toBool());
+        pick({0});
+        answer("discard");
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{0});
+        QCOMPARE(field("styleName")->property("text").toString(), QStringLiteral("Default"));
+        QCOMPARE(value(1, &core::StyleValues::fontsize), QStringLiteral("20"));
+        pick({1});
+        edit("styleSize", QStringLiteral("36"));
+        pick({0});
+        answer("apply");
+        QCOMPARE(value(1, &core::StyleValues::fontsize), QStringLiteral("36"));
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{0});
+        // Revert drops the edit and stays.
+        edit("styleShadow", QStringLiteral("7"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorRevert"), "click"));
+        QCOMPARE(field("styleShadow")->property("text").toString(), QStringLiteral("2"));
+        QVERIFY(!manager->property("dirty").toBool());
+
+        // The name, checked as typed: empty, taken, and a comma refused.
+        pick({1});
+        edit("styleName", QString());
+        QTRY_VERIFY(field("styleNameProblem")->isVisible());
+        QCOMPARE(field("styleNameProblem")->property("text").toString(), QStringLiteral("A style needs a name."));
+        QVERIFY(!on("styleEditorOk") && !on("styleEditorApply"));
+        edit("styleName", QStringLiteral("Default"));
+        QCOMPARE(field("styleNameProblem")->property("text").toString(),
+                 QStringLiteral("This file already has a style named “Default”."));
+        QVERIFY(!field("styleRenameLines")->isVisible());
+        field("styleName")->setProperty("text", QString());
+        manager->requestActivate();
+        QVERIFY(becomesFocusWindow(manager));
+        field("styleName")->forceActiveFocus();
+        for (const char c : {'T', 'i', ',', 't', 'l', 'e'})
+            QTest::keyClick(manager, c);
+        QCOMPARE(field("styleName")->property("text").toString(), QStringLiteral("Title"));
+        // A rename: the check box, on, for the two Lines; off keeps them.
+        QTRY_VERIFY(!field("styleNameProblem")->isVisible());
+        QVERIFY(field("styleRenameLines")->isVisible());
+        QCOMPARE(field("styleRenameLines")->property("text").toString(), QStringLiteral("Rename it in the 2 lines that use it"));
+        QVERIFY(field("styleRenameLines")->property("checked").toBool());
+        field("styleRenameLines")->setProperty("checked", false);
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        QCOMPARE(value(1, &core::StyleValues::name), QStringLiteral("Title"));
+        QCOMPARE(targetSession()->document().lines()[0]->style, std::u8string(u8"Sign"));
+        QVERIFY(!field("styleRenameLines")->isVisible());
+        edit("styleName", QStringLiteral("Sign"));
+        QVERIFY(!field("styleRenameLines")->isVisible()); // no Line uses Title
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        edit("styleName", QStringLiteral("Title"));
+        QVERIFY(field("styleRenameLines")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        QCOMPARE(targetSession()->document().lines()[0]->style, std::u8string(u8"Title"));
+        QCOMPARE(targetSession()->document().lines()[1]->style, std::u8string(u8"Title"));
+
+        // Two Styles: "Multiple values" where they differ (the alignment, the
+        // size), the name off; Apply writes the shadow alone to both.
+        pick({0, 1});
+        QVERIFY(manager->property("multi").toBool());
+        QVERIFY(!field("styleName")->isEnabled());
+        const QStringList mixed = manager->property("mixed").toStringList();
+        QVERIFY(mixed.contains(QStringLiteral("alignment")) && mixed.contains(QStringLiteral("fontsize")));
+        QCOMPARE(field("styleSize")->property("text").toString(), QString());
+        QCOMPARE(field("styleSize")->property("placeholderText").toString(), QStringLiteral("Multiple values"));
+        QVERIFY(field("stylePreviewNote")->isVisible());
+        edit("styleShadow", QStringLiteral("5"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        QCOMPARE(value(0, &core::StyleValues::shadow), QStringLiteral("5"));
+        QCOMPARE(value(1, &core::StyleValues::shadow), QStringLiteral("5"));
+        QCOMPARE(value(0, &core::StyleValues::alignment), QStringLiteral("2"));
+        QCOMPARE(value(1, &core::StyleValues::alignment), QStringLiteral("8"));
+        QCOMPARE(value(0, &core::StyleValues::fontsize), QStringLiteral("20"));
+        QCOMPARE(value(1, &core::StyleValues::fontsize), QStringLiteral("36"));
+        QCOMPARE(manager->property("assSelected").toList(), (QVariantList{0, 1}));
+
+        // New: a row at the end, made only by Apply or OK; Revert drops it.
+        const int count = application->styleManager().documentStyles().size();
+        QVERIFY(QMetaObject::invokeMethod(field("assNew"), "click"));
+        QVERIFY(manager->property("pendingNew").toBool());
+        QCOMPARE(field("styleName")->property("text").toString(), QStringLiteral("New Style"));
+        QTRY_VERIFY(field("styleName")->hasActiveFocus());
+        auto *list = field("assStyles");
+        QTRY_COMPARE(list->property("count").toInt(), count + 1);
+        QCOMPARE(application->styleManager().documentStyles().size(), count);
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorRevert"), "click"));
+        QVERIFY(!manager->property("editing").toBool());
+        QTRY_COMPARE(list->property("count").toInt(), count);
+        QVERIFY(QMetaObject::invokeMethod(field("assNew"), "click"));
+        edit("styleName", QStringLiteral("Karaoke"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorOk"), "click"));
+        QTRY_VERIFY(!manager->isVisible());
+        QCOMPARE(application->styleManager().documentStyles().last(), QStringLiteral("Karaoke"));
+        // Its place and size are kept.
+        QVERIFY(application->settingsStore()->list("workspace.dialogGeometry").join(QLatin1Char('\n')).contains(QStringLiteral("styleManager")));
+        application->editor().discard();
+    }
+
+    // SY1 (#247): the lists. The filter narrows both; a selection in one
+    // list clears the other's and decides the copy that is on; the keys move
+    // and delete; F6 goes from list to list to the editor. Delete unused
+    // styles is a toast; New catalog a popover and Delete catalog a message
+    // box. Another tab's Styles come with a question about an edit not
+    // applied, which goes to the file it was made in.
+    void styleManagerListsCatalogsAndKeys()
+    {
+        QVERIFY(application->openFile(writeStyled("lists.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,a\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto &styles = application->styleManager();
+        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        auto *content = manager->contentItem();
+        const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
+        const auto box = [&] { return manager->findChild<QQuickWindow *>(QStringLiteral("styleMessageBox")); };
+        const auto answer = [&](const char *id) {
+            QTRY_VERIFY(box() && box()->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(findItem(box()->contentItem(), QStringLiteral("messageBoxChoice_") + QLatin1String(id)),
+                                              "click"));
+            QTRY_VERIFY(!box()->isVisible());
+        };
+        auto *storeList = field("storeStyles");
+        auto *assList = field("assStyles");
+
+        // The filter narrows both lists.
+        QCOMPARE(assList->property("count").toInt(), 3);
+        field("styleFilter")->setProperty("text", QStringLiteral("si"));
+        QTRY_COMPARE(assList->property("count").toInt(), 1);
+        field("styleFilter")->setProperty("text", QString());
+        QTRY_COMPARE(assList->property("count").toInt(), 3);
+
+        // One list's selection clears the other's; the copy from it is on.
+        QVERIFY(field("addToStore")->isEnabled());
+        QVERIFY(!field("addToAss")->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, true), Q_ARG(QVariant, QVariantList{0})));
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList());
+        QVERIFY(manager->property("editingStore").toBool());
+        QVERIFY(field("addToAss")->isEnabled());
+        QVERIFY(!field("addToStore")->isEnabled());
+
+        // The keys: Alt+Down moves, Delete deletes (Ctrl+Z puts it back),
+        // F6 goes from list to list to the editor.
+        manager->requestActivate();
+        QVERIFY(becomesFocusWindow(manager));
+        QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, false), Q_ARG(QVariant, QVariantList{0})));
+        assList->forceActiveFocus();
+        QTest::keyClick(manager, Qt::Key_Down, Qt::AltModifier);
+        QTRY_COMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Sign"), QStringLiteral("Default"), QStringLiteral("Alpha")}));
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{1});
+        QTest::keyClick(manager, Qt::Key_Down);
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{2});
+        QTest::keyClick(manager, Qt::Key_Delete);
+        QTRY_COMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Sign"), QStringLiteral("Default")}));
+        QTest::keyClick(manager, Qt::Key_F6);
+        QTRY_VERIFY(field("styleName")->hasActiveFocus());
+        QTest::keyClick(manager, Qt::Key_F6);
+        QTRY_VERIFY(storeList->hasActiveFocus());
+        QTest::keyClick(manager, Qt::Key_F6);
+        QTRY_VERIFY(assList->hasActiveFocus());
+        QVERIFY(application->editor().undo()); // the menu's Undo
+        QTRY_COMPARE(styles.documentStyles().size(), 3);
+
+        // Delete unused styles: a toast with the names, the report in the Log.
+        auto *toasts = named("toastStack");
+        QVERIFY(QMetaObject::invokeMethod(manager, "deleteUnused"));
+        QTRY_COMPARE(styles.documentStyles(), QStringList{QStringLiteral("Sign")});
+        const QVariantMap toast = toasts->property("entries").toList().value(0).toMap();
+        QCOMPARE(toast.value(QStringLiteral("title")).toString(), QStringLiteral("Deleted 2 unused styles"));
+        QCOMPARE(toast.value(QStringLiteral("text")).toString(), QStringLiteral("Default, Alpha\nCtrl+Z puts them back."));
+        QVERIFY(toast.value(QStringLiteral("details")).toString().contains(QStringLiteral("Styles deleted:\nDefault\nAlpha\n")));
+        QVERIFY(application->editor().undo()); // the menu's Undo
+        QTRY_COMPARE(styles.documentStyles().size(), 3);
+
+        // New catalog: a popover with the name; a taken name is refused.
+        QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
+        auto *popover = manager->findChild<QObject *>(QStringLiteral("newCatalogPopover"));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
+        findItem(popoverContent, QStringLiteral("newCatalogName"))->setProperty("text", QStringLiteral("Default"));
+        QVERIFY(!findItem(popoverContent, QStringLiteral("newCatalogCreate"))->isEnabled());
+        findItem(popoverContent, QStringLiteral("newCatalogName"))->setProperty("text", QStringLiteral("SY1 show"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(popoverContent, QStringLiteral("newCatalogCreate")), "click"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(styles.catalog(), QStringLiteral("SY1 show"));
+        QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("SY1 show"));
+        // Delete catalog: a warning, Cancel the default.
+        QVERIFY(QMetaObject::invokeMethod(field("deleteCatalog"), "click"));
+        QTRY_VERIFY(box() && box()->isVisible());
+        QCOMPARE(box()->property("text").toString(), QStringLiteral("Delete the catalog “SY1 show”?"));
+        QCOMPARE(box()->property("defaultButton").value<QObject *>()->objectName(), QStringLiteral("messageBoxChoice_cancel"));
+        answer("delete");
+        QVERIFY(!styles.catalogs().contains(QStringLiteral("SY1 show")));
+
+        // Another tab with an edit not applied: asked, applied to the file
+        // it was made in; the list then shows the new tab's Styles.
+        QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, false), Q_ARG(QVariant, QVariantList{0})));
+        auto *first = targetSession();
+        field("styleSize")->setProperty("text", QStringLiteral("44"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleSize"), "textEdited"));
+        QVERIFY(application->openFile(fontAss("lists-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        application->selectTab(1);
+        QTRY_VERIFY(box() && box()->isVisible());
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("You edited it in the file shown before."));
+        answer("apply");
+        QCOMPARE((*application::documentStyles(*first))[0].fontsize, std::u8string(u8"44"));
+        QVERIFY(targetSession() != first);
+        QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{0});
+        QCOMPARE(field("styleName")->property("text").toString(), styles.documentStyles().value(0));
+        QVERIFY(!manager->property("dirty").toBool());
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        QTRY_VERIFY(!manager->isVisible());
     }
 
     // Y5: Convert to SRT previews its losses, applies the plan as one step,
@@ -9735,8 +10019,7 @@ private slots:
             {{"columnsOk", Accept}, {"columnsCancel", Reject}},
             {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
             {{"reloadYes", Yes}, {"reloadNo", No}},
-            {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
-             {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
+            {{"styleEditorOk", Accept}, {"styleEditorApply", Apply}, {"styleEditorCancel", Reject}}, // SY1: one footer
             {{"conversionAccept", Accept}, {"Cancel", Reject}},
             {{"resampleOk", Accept}, {"Cancel", Reject}},
             {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
@@ -9751,7 +10034,6 @@ private slots:
             {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}}, // PK1
             {{"listChooserTake", Accept}, {"listChooserCancel", Reject}}, // PK1
-            {{"styleCreateYes", Accept}, {"styleCreateCancel", Reject}}, // LE6
         };
         // The find question lives in the Search tool's dock: open it. The
         // Automation panel's Reassign question has no items until it opens.
@@ -21672,6 +21954,114 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
         }
+    }
+
+    // SY1 (#247): the Style manager in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set: the window with an edit not
+    // applied (sy1-window-<theme>.png), two Styles edited together
+    // (sy1-multi-), a rename with its check box (sy1-rename-), a taken name
+    // (sy1-name-), the unapplied question (sy1-question-), New catalog's
+    // popover (sy1-catalog-) and the ⋯ menu (sy1-menu-).
+    void styleManagerScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const QString path = dir.filePath(QStringLiteral("sy1-shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nPlayResX: 1920\nPlayResY: 1080\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,DejaVu Sans,60,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,3,1,2,40,40,40,1\n"
+                    "Style: Default - Italic,DejaVu Sans,60,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,-1,0,0,100,100,0,0,1,3,1,2,40,40,40,1\n"
+                    "Style: Flashback,DejaVu Sans,60,&H00E2F0F4,&H000000FF,&H00402010,&H80000000,0,0,0,0,100,100,0,0,1,3,1,2,40,40,40,1\n"
+                    "Style: Note,DejaVu Sans,44,&H00FFFFFF,&H000000FF,&H00804020,&H80000000,0,-1,0,0,100,100,0,0,1,2,0,8,40,40,40,1\n"
+                    "Style: Sign - Station,DejaVu Serif,64,&H00E2F0F4,&H000000FF,&H002B2B2B,&H00000000,-1,0,0,0,112.5,112.5,0.5,0,1,2,0,7,40,40,40,1\n"
+                    "Style: Sign - Title,DejaVu Serif,72,&H0080D0FF,&H000000FF,&H00203040,&H00000000,-1,0,0,0,100,100,0,0,1,3,0,8,40,40,40,1\n"
+                    "Style: OP Romaji,DejaVu Sans,52,&H00FFE0FF,&H000000FF,&H00602060,&H80000000,0,0,0,0,100,100,0,0,1,3,1,8,40,40,40,1\n"
+                    "Style: Credits,DejaVu Sans,36,&H00FFFFFF,&H000000FF,&H00000000,&H80000000,0,0,0,0,100,100,0,0,1,2,0,1,40,40,40,1\n"
+                    "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n"
+                    "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,second\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default - Italic,,0,0,0,,third\n"
+                    "Dialogue: 0,0:00:04.00,0:00:05.00,Flashback,,0,0,0,,fourth\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Note,,0,0,0,,fifth\n"
+                    "Dialogue: 0,0:00:06.00,0:00:07.00,Sign - Station,,0,0,0,,sign\n"
+                    "Dialogue: 0,0:00:07.00,0:00:08.00,Sign - Station,,0,0,0,,sign\n"
+                    "Dialogue: 0,0:00:08.00,0:00:09.00,Sign - Title,,0,0,0,,title\n"
+                    "Dialogue: 0,0:00:09.00,0:00:10.00,OP Romaji,,0,0,0,,song\n");
+        }
+        QVERIFY(application->openFile(path));
+        app::attachStylePreview(*engine, application->styleManager()); // the sample line, as the program has it
+        auto *root = engine->rootObjects().first();
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(manager, "showFor", Q_ARG(QVariant, QStringLiteral("Sign - Station"))));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(manager));
+        auto *content = manager->contentItem();
+        const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
+        const auto edit = [&](const char *name, const QString &text) {
+            field(name)->setProperty("text", text);
+            QVERIFY(QMetaObject::invokeMethod(field(name), "textEdited"));
+        };
+        const auto pick = [&](const QVariantList &rows) {
+            QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, false), Q_ARG(QVariant, QVariant(rows))));
+        };
+        const auto box = [&] { return manager->findChild<QQuickWindow *>(QStringLiteral("styleMessageBox")); };
+        const auto shot = [&](QQuickWindow *w, const QString &name) {
+            QTest::qWait(250); // the preview and the layouts settle
+            QVERIFY(w->grabWindow().save(out + QStringLiteral("/sy1-") + name + QStringLiteral(".png")));
+        };
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            pick({4});
+            edit("styleSize", QStringLiteral("72"));
+            field("styleSize")->forceActiveFocus();
+            shot(manager, QStringLiteral("window-") + theme);
+            QVERIFY(QMetaObject::invokeMethod(manager, "revert"));
+            pick({4, 5, 6});
+            QVERIFY(field("styleFontMixed")->isVisible()); // two fonts among the three
+            shot(manager, QStringLiteral("multi-") + theme);
+            pick({4});
+            edit("styleName", QStringLiteral("Sign - Station board"));
+            shot(manager, QStringLiteral("rename-") + theme);
+            edit("styleName", QStringLiteral("Sign - Title"));
+            shot(manager, QStringLiteral("name-") + theme);
+            edit("styleName", QStringLiteral("Sign - Station"));
+            edit("styleShadow", QStringLiteral("2"));
+            pick({0});
+            QTRY_VERIFY(box() && box()->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(box()));
+            shot(box(), QStringLiteral("question-") + theme);
+            QVERIFY(QMetaObject::invokeMethod(findItem(box()->contentItem(), QStringLiteral("messageBoxChoice_discard")), "click"));
+            QTRY_VERIFY(!box()->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(field("newCatalog"), "click"));
+            auto *popover = manager->findChild<QObject *>(QStringLiteral("newCatalogPopover"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+            auto *popoverContent = popover->property("contentItem").value<QQuickItem *>();
+            findItem(popoverContent, QStringLiteral("newCatalogName"))->setProperty("text", QStringLiteral("Show"));
+            shot(manager, QStringLiteral("catalog-") + theme);
+            QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(field("assMore"), "click"));
+            auto *menu = manager->findChild<QObject *>(QStringLiteral("assMoreMenu"));
+            QTRY_VERIFY(menu->property("opened").toBool());
+            shot(manager, QStringLiteral("menu-") + theme);
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+        }
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        application->editor().discard();
     }
 
     // SY2/SY3 review images in the four themes (HIKARI_SURFACE_SHOT_DIR):
