@@ -42,6 +42,7 @@ DialogWindow {
     property var selected: ({})   // the selected rows' fonts
     property int resolveRequest: -1
     property var resolution: ({})
+    property bool extending: false // a Ctrl click moves the current row, keeping the selection
     // CATALOG_CHANGED, sent when the window is shown and when it is hidden.
     signal catalogChanged()
 
@@ -77,12 +78,19 @@ DialogWindow {
         selectFont(font)
     }
     // Opened from the picker or the Style editor (`opener`, their window)
-    // with their font.
+    // with their font: the whole list, that font selected. Shown for
+    // another window already, it closes first, so that it serves (and is
+    // not blocked by) the new opener.
     function openFor(font, opener) {
-        if (!created)
+        if (visible && opener && transientParent !== opener)
+            close()
+        if (!created) {
             create(font)
-        else if (!visible)
+        } else if (!visible) {
+            search.text = ""
+            show = 0
             selectFont(font)
+        }
         openFrom(opener || null)
     }
     // + › New catalog… in the picker: the window, then New's popover.
@@ -130,7 +138,9 @@ DialogWindow {
             else
                 set[f] = true
             selected = set
+            extending = true
             list.currentIndex = row
+            extending = false
         } else if ((modifiers & Qt.ShiftModifier) && list.currentIndex >= 0) {
             const set = Object.create(null)
             for (let i = Math.min(row, list.currentIndex); i <= Math.max(row, list.currentIndex); ++i)
@@ -513,7 +523,7 @@ DialogWindow {
                     keyNavigationEnabled: true
                     Accessible.name: qsTr("Fonts")
                     ScrollBar.vertical: ScrollBar {}
-                    onCurrentIndexChanged: if (activeFocus) window.select(currentIndex)
+                    onCurrentIndexChanged: if (activeFocus && !window.extending) window.select(currentIndex)
                     Keys.onSpacePressed: window.toggleSelected()
                     delegate: ItemDelegate {
                         id: row
@@ -525,6 +535,9 @@ DialogWindow {
                         height: 28
                         highlighted: isSelected
                         Accessible.name: modelData
+                        // The current row has the list's focus: Space toggles
+                        // the selection, not a press of the row.
+                        Keys.onSpacePressed: window.toggleSelected()
                         background: Rectangle {
                             color: row.isSelected ? Theme.select : row.hovered ? Theme.raised : "transparent"
                             Rectangle { visible: row.isSelected && row.ListView.isCurrentItem; width: 3; height: parent.height; color: Theme.accent }
@@ -601,9 +614,9 @@ DialogWindow {
     leadingActions: [
         Label {
             objectName: "fontCatalogStatus"
-            visible: window.catalogs.autosaveStatus.length > 0
-            text: qsTr("Saved")
-            color: Theme.muted
+            visible: window.catalogs.autosaveFailed || window.catalogs.autosaveStatus.length > 0
+            text: window.catalogs.autosaveFailed ? qsTr("Not saved: the safety copy could not be written") : qsTr("Saved")
+            color: window.catalogs.autosaveFailed ? Theme.warning : Theme.muted
             ToolTip.visible: savedHover.hovered
             ToolTip.text: qsTr("The catalogs are saved automatically to FontCatalogs.txt in the \"Config\" folder.")
             HoverHandler { id: savedHover }

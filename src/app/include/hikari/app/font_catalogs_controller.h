@@ -57,6 +57,8 @@ class FontCatalogsController : public QObject {
     // The management window's status bar field 0: "Autosave" for 10 s after
     // each safety copy.
     Q_PROPERTY(QString autosaveStatus READ autosaveStatus NOTIFY autosaveStatusChanged)
+    // The last safety copy could not be written (PU3: the footer says so).
+    Q_PROPERTY(bool autosaveFailed READ autosaveFailed NOTIFY autosaveStatusChanged)
     // The font environment generation: each re-listing makes a new one.
     Q_PROPERTY(int generation READ generation NOTIFY fontsChanged)
     Q_PROPERTY(int previewKey READ previewKey NOTIFY previewChanged)
@@ -81,6 +83,7 @@ public:
     bool filterOn() const;
     QString previewText() const;
     QString autosaveStatus() const { return m_autosaveStatus; }
+    bool autosaveFailed() const { return m_autosaveFailed; }
     int generation() const { return int(m_generation); }
     int previewKey() const { return m_previewKey; }
     QImage preview() const { return m_preview; }
@@ -231,6 +234,7 @@ private:
     QTimer m_autosave, m_autosaveLabel, m_watchDelay;
     int m_autosaveIndex = 0;
     QString m_autosaveStatus;
+    bool m_autosaveFailed = false;
     QFileSystemWatcher m_watcher;
     backends::LibassRenderer m_renderer;
     QImage m_preview;

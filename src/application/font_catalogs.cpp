@@ -202,7 +202,10 @@ void FontCatalogs::apply(const std::vector<Catalog> &file, const std::vector<Loa
         const LoadChoice choice = i < choices.size() ? choices[i] : LoadChoice{};
         if (choice.action == LoadAction::Skip)
             continue;
-        const u16 name = choice.action == LoadAction::Rename ? choice.newName : file[i].name;
+        // A catalog of that name in another case is that catalog.
+        u16 name = choice.action == LoadAction::Rename ? choice.newName : file[i].name;
+        if (const Catalog *existing = findNoCase(name))
+            name = existing->name;
         addCatalog(name);
         Catalog *target = findMutable(name);
         if (choice.action == LoadAction::Replace)

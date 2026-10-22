@@ -2356,6 +2356,10 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not saved: the safety copy could not be written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The catalogs are saved automatically to FontCatalogs.txt in the &quot;Config&quot; folder.</source>
         <translation type="unfinished"></translation>
     </message>

@@ -332,7 +332,7 @@ QVariantMap FontCatalogsController::reviewCatalogFile(const QUrl &file)
     QVariantList rows;
     int same = 0;
     for (const auto &c : m_reviewed) {
-        const auto *here = m_catalogs.find(c.name);
+        const auto *here = m_catalogs.findNoCase(c.name); // another case is that catalog
         if (!here)
             continue;
         int added = 0;
@@ -376,7 +376,7 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
             chosen[i].newName = u16(c.value(QStringLiteral("newName")).toString());
         }
         // One left out of the review that exists holds the same fonts.
-        if (!reviewed && m_catalogs.find(m_reviewed[i].name)) {
+        if (!reviewed && m_catalogs.findNoCase(m_reviewed[i].name)) {
             chosen[i].action = Action::Skip;
             ++same;
             continue;
@@ -385,7 +385,7 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
         case Action::Skip: ++skipped; break;
         case Action::Replace: ++replaced; break;
         case Action::Rename: ++renamed; break;
-        case Action::Merge: ++(m_catalogs.find(m_reviewed[i].name) ? merged : added); break;
+        case Action::Merge: ++(m_catalogs.findNoCase(m_reviewed[i].name) ? merged : added); break;
         }
     }
     m_catalogs.apply(m_reviewed, chosen);
@@ -427,11 +427,13 @@ void FontCatalogsController::startAutosave()
 void FontCatalogsController::autosaveNow()
 {
     // The edition timer: "Autosave", Config/FontCatalogsAutosave<i>.txt with i
-    // going 0, 1, 2 and round again.
-    m_autosaveStatus = QCoreApplication::translate("HikariSub.Fonts", "Autosave");
+    // going 0, 1, 2 and round again. The status says so only once the copy
+    // is written; a failed write is said until one succeeds.
+    const bool written = application::writeFontCatalogFile(
+        catalogPath(m_dir, application::fontCatalogsAutosaveFile(m_autosaveIndex)), m_catalogs.serialize());
+    m_autosaveStatus = written ? QCoreApplication::translate("HikariSub.Fonts", "Autosave") : QString();
+    m_autosaveFailed = !written;
     emit autosaveStatusChanged();
-    application::writeFontCatalogFile(catalogPath(m_dir, application::fontCatalogsAutosaveFile(m_autosaveIndex)),
-                                      m_catalogs.serialize());
     if (++m_autosaveIndex > 2)
         m_autosaveIndex = 0;
     m_autosaveLabel.start();

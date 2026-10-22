@@ -3081,7 +3081,28 @@ private slots:
         QTRY_VERIFY(window->isVisible());
         QCOMPARE(window->transientParent(), manager);
         QCOMPARE(qobject_cast<QQuickWindow *>(named("fontCatalogWindow")), window);
+        // Reopened, it shows every font with the one asked for selected,
+        // whatever the search and Show were when it closed.
+        findItem(window->contentItem(), QStringLiteral("fontCatalogFind"))->setProperty("text", QStringLiteral("Verd"));
+        window->setProperty("show", 1);
         QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->property("shown").toStringList().size(), 5);
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Tahoma"));
+        // Shown for the Style manager, then asked for by the modal picker:
+        // it serves the picker (and closes with it).
+        const QVariantMap arial{{QStringLiteral("name"), QStringLiteral("Arial")}};
+        QVERIFY(QMetaObject::invokeMethod(picker, "choose", Q_ARG(QVariant, arial), Q_ARG(QVariant, QStringLiteral("Sample")),
+                                          Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(picker->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerManage"), "click"));
+        QTRY_COMPARE(window->transientParent(), picker);
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Arial"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
         QTRY_VERIFY(!window->isVisible());
         QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
         application->fontCatalogs().waitResolved();
@@ -3135,10 +3156,15 @@ private slots:
         QTRY_VERIFY(in("fontCatalogStatus")->isVisible());
         QCOMPARE(in("fontCatalogStatus")->property("text").toString(), QStringLiteral("Saved"));
 
-        // Comic Sans MS, then Tahoma with Ctrl: Space puts both in C.
+        // Comic Sans MS, then Tahoma with Ctrl (the list has the keyboard,
+        // as after a click): both selected, Space puts both in C.
+        in("fontCatalogList")->forceActiveFocus();
+        QTRY_VERIFY(in("fontCatalogList")->hasActiveFocus());
         QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 1), Q_ARG(QVariant, 0)));
         QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 3), Q_ARG(QVariant, int(Qt::ControlModifier))));
-        QVERIFY(QMetaObject::invokeMethod(window, "toggleSelected"));
+        QCOMPARE(window->property("selected").toMap().keys(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Tahoma"));
+        QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Space);
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Comic Sans MS")));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Tahoma")));
         // Show "In “C”": only its fonts; "Not in a catalog": every font is in one now.
@@ -3239,7 +3265,8 @@ private slots:
                 f.write(text);
             return path;
         };
-        const QString file = catalogFile("more-catalogs.txt", "A={\n\tTahoma\n}\nB={\n\tImpact\n}\nD={\n\tComic Sans MS\n}\n");
+        // The file's "a" is the catalog A (names are one ignoring case).
+        const QString file = catalogFile("more-catalogs.txt", "a={\n\tTahoma\n}\nB={\n\tImpact\n}\nD={\n\tComic Sans MS\n}\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
         auto *review = named("fontCatalogClashReview");
         QVERIFY(review);
@@ -3249,17 +3276,17 @@ private slots:
         QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalog"));
         const QVariantList rows = review->property("rows").toList();
         QCOMPARE(rows.size(), 1);
-        QCOMPARE(rows[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("A"));
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("a"));
         QCOMPARE(rows[0].toMap().value(QStringLiteral("difference")).toString(), QStringLiteral("3 here, +1 new"));
         QCOMPARE(review->property("actions").toStringList(), QStringList{"merge"});
         QCOMPARE(review->property("kinds").toStringList(), (QStringList{"merge", "replace", "rename", "skip"}));
-        // Rename: the file's A comes in as "A (2)".
+        // Rename: the file's a comes in as "a (2)".
         QVERIFY(QMetaObject::invokeMethod(review, "setAction", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("rename"))));
-        QCOMPARE(review->property("names").toStringList(), QStringList{"A (2)"});
+        QCOMPARE(review->property("names").toStringList(), QStringList{"a (2)"});
         QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
         QTRY_VERIFY(!review->property("visible").toBool());
-        QCOMPARE(catalogs.catalogNames().join(QLatin1Char('|')), QStringLiteral("A|B|A (2)|D"));
-        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"A (2)"});
+        QCOMPARE(catalogs.catalogNames().join(QLatin1Char('|')), QStringLiteral("A|B|a (2)|D"));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"a (2)"});
         QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 3);
         QCOMPARE(catalogs.catalogSize(QStringLiteral("B")), 1);
         QCOMPARE(lastNotice(), QStringLiteral("Loaded 2 font catalogs|From more-catalogs.txt: 1 new, 1 renamed."));
@@ -3287,7 +3314,7 @@ private slots:
         const QString empty = catalogFile("no-catalogs.txt", "nothing here\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(empty))));
         QCOMPARE(lastNotice(), QStringLiteral("Cannot read “no-catalogs.txt”|The file holds no font catalog."));
-        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "A (2)", "D"}));
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D"}));
         QVERIFY(QMetaObject::invokeMethod(window, "reject"));
         QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();
@@ -3312,6 +3339,36 @@ private slots:
         QVERIFY(copy(1).contains("X={") && !copy(1).contains("Y={"));
         QVERIFY(copy(2).contains("Y={") && !copy(2).contains("Z={"));
         QVERIFY(!QFileInfo::exists(dirPath + QStringLiteral("/FontCatalogsAutosave3.txt")));
+    }
+
+    // PU3 (#305): a safety copy that cannot be written is not "Saved": the
+    // status stays empty and the catalog window's footer says it failed.
+    void fontCatalogAutosaveFailureIsSaid()
+    {
+        QTemporaryDir parent;
+        QVERIFY(parent.isValid());
+        const QString notAFolder = parent.filePath(QStringLiteral("catalogs"));
+        {
+            QFile f(notAFolder); // a file where the catalogs' folder should be
+            QVERIFY(f.open(QIODevice::WriteOnly));
+        }
+        app::Application::Options options;
+        options.fontCatalogDir = notAFolder;
+        restartWith(options);
+        auto &catalogs = application->fontCatalogs();
+        catalogs.setAutosaveInterval(20);
+        auto *window = named("fontCatalogWindow");
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QString()), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(window->property("visible").toBool());
+        QVERIFY(catalogs.addCatalog(QStringLiteral("W")));
+        QTRY_VERIFY(catalogs.property("autosaveFailed").toBool());
+        QCOMPARE(catalogs.autosaveStatus(), QString());
+        auto *status = dialogItem("fontCatalogWindow", "fontCatalogStatus");
+        QTRY_VERIFY(status->isVisible());
+        QCOMPARE(status->property("text").toString(), QStringLiteral("Not saved: the safety copy could not be written"));
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->property("visible").toBool());
+        restartWith(app::Application::Options());
     }
 
     // Y6: ~FontCatalogList saves the catalogs (FontCatalogList.cpp:218-221):

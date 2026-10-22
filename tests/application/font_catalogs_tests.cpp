@@ -264,6 +264,16 @@ TEST(FontCatalogs, LoadingAFileCanReplaceRenameOrSkipEachCatalog)
     // A name is found ignoring case for the windows' clash checks.
     EXPECT_EQ(c.findNoCase(u"ANIME"), c.find(u"Anime"));
     EXPECT_EQ(c.findNoCase(u"Nothing"), nullptr);
+    // A file's catalog (or a new name) in another case is that catalog:
+    // no second catalog differing only by case.
+    FontCatalogs cased = c;
+    cased.apply(FontCatalogs::parse(u"anime={\n\tTahoma\n}\n"), {});
+    EXPECT_EQ(cased.find(u"anime"), nullptr);
+    EXPECT_EQ(fontsOf(cased, u"Anime").back(), u"Tahoma");
+    FontCatalogs renamedCased = c;
+    renamedCased.apply({file[1]}, {{A::Rename, u"ANIME"}});
+    EXPECT_EQ(renamedCased.find(u"ANIME"), nullptr);
+    EXPECT_EQ(fontsOf(renamedCased, u"Anime").back(), u"Tahoma");
 }
 
 // SaveCatalogs' OpenWrite: the folder is made, the file replaced; no
