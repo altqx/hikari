@@ -481,14 +481,19 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
 
 QString FontCatalogsController::samplePlain(const QString &text, bool ass, int from, int to) const
 {
+    // A preview needs a line's worth: a longer text stops there.
+    constexpr qsizetype kMaxSample = 1000;
     QString out;
-    out.reserve(text.size());
+    out.reserve(std::min(text.size(), kMaxSample));
     const auto put = [&](qsizetype at, QChar c) {
         if (to < from || (at >= from && at < to))
             out += c;
     };
     bool drawing = false; // \p1 and up: vector drawing until \p0
-    for (qsizetype i = 0; i < text.size(); ++i) {
+    // The next '}' at or after a position, found once per brace (one pass
+    // over a line of unclosed '{').
+    qsizetype nextClose = -2;
+    for (qsizetype i = 0; i < text.size() && out.size() < kMaxSample; ++i) {
         const QChar c = text[i];
         if (c == QLatin1Char('\n')) {
             if (!drawing)
@@ -500,7 +505,9 @@ QString FontCatalogsController::samplePlain(const QString &text, bool ass, int f
             continue;
         }
         if (c == QLatin1Char('{')) {
-            const qsizetype close = text.indexOf(QLatin1Char('}'), i + 1);
+            if (nextClose != -1 && nextClose <= i)
+                nextClose = text.indexOf(QLatin1Char('}'), i + 1);
+            const qsizetype close = nextClose;
             if (close >= 0) { // an override block (an unclosed '{' is text)
                 // A top-level \pN only: one inside \t(…) or another tag's
                 // parentheses does not switch drawing mode (as the renderer

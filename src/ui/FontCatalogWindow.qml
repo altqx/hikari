@@ -139,7 +139,12 @@ DialogWindow {
     }
     function toggleSelected() {
         const names = shown.filter(f => selected[f] === true)
-        setMembership(names, !(members[currentFont] === true))
+        if (names.length === 0)
+            return
+        // The current row decides while it is marked (a Ctrl-click can
+        // unmark it), else the first marked one.
+        const lead = selected[currentFont] === true ? currentFont : names[0]
+        setMembership(names, !(members[lead] === true))
     }
     function clickRow(row, modifiers) {
         const f = shown[row]
@@ -177,6 +182,13 @@ DialogWindow {
         if (existing.length === 0 || existing === renaming)
             return ""
         return renaming ? "" : qsTr("“%1” already exists.").arg(existing)
+    }
+    function stepCatalog(by) {
+        const names = catalogs.catalogNames
+        if (names.length === 0)
+            return
+        const at = names.indexOf(chosen)
+        chosen = names[at < 0 ? 0 : Math.max(0, Math.min(names.length - 1, at + by))]
     }
     function createCatalog(name) {
         catalogs.addCatalog(name, true)
@@ -408,6 +420,9 @@ DialogWindow {
                     model: window.created ? window.catalogs.catalogNames : []
                     currentIndex: model.indexOf(window.chosen)
                     highlightMoveDuration: 0
+                    // Up and Down choose the catalog (the current row follows `chosen`).
+                    Keys.onUpPressed: window.stepCatalog(-1)
+                    Keys.onDownPressed: window.stepCatalog(1)
                     Accessible.name: qsTr("Catalogs")
                     ScrollBar.vertical: ScrollBar {}
                     delegate: ItemDelegate {

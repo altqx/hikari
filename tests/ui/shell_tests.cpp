@@ -3230,6 +3230,11 @@ private slots:
         // A range: what [from, to) draws, drawing mode read from the start.
         QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0{\\p0}ab\\Nc"), true, 7, 20), QStringLiteral("ab c"));
         QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0{\\p0}ab"), true, 5, 10), QString());
+        // A line of unclosed braces is read in one pass, and a preview
+        // stops at a line's worth.
+        const QString braces(400000, QLatin1Char('{'));
+        QCOMPARE(fonts.samplePlain(braces, true), braces.left(1000));
+        QCOMPARE(fonts.samplePlain(QString(5000, QLatin1Char('a')), false).size(), 1000);
         // The preview is drawn by the subtitle renderer.
         QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
         QVERIFY(!application->fontCatalogs().sample().isNull());
@@ -3577,6 +3582,16 @@ private slots:
         QTRY_VERIFY(in("fontCatalogStatus")->isVisible());
         QCOMPARE(in("fontCatalogStatus")->property("text").toString(), QStringLiteral("Saved"));
 
+        // Up and Down in the catalog list choose the catalog.
+        auto *catalogList = in("fontCatalogCatalogs");
+        catalogList->forceActiveFocus();
+        QTRY_VERIFY(catalogList->hasActiveFocus());
+        QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Up);
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("B"));
+        QCOMPARE(catalogList->property("currentIndex").toInt(), 1);
+        QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Down);
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("C"));
+        QCOMPARE(catalogList->property("currentIndex").toInt(), 2);
         // Comic Sans MS, then Tahoma with Ctrl (the list has the keyboard,
         // as after a click): both selected, Space puts both in C.
         in("fontCatalogList")->forceActiveFocus();
@@ -3588,6 +3603,17 @@ private slots:
         QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Space);
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Comic Sans MS")));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Tahoma")));
+        // Comic Sans MS (in C), Arial with Ctrl, then Comic Sans MS unmarked
+        // with Ctrl (still current): Space adds the marked Arial.
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 1), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 0), Q_ARG(QVariant, int(Qt::ControlModifier))));
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 1), Q_ARG(QVariant, int(Qt::ControlModifier))));
+        QCOMPARE(window->property("selected").toMap().keys(), QStringList{"Arial"});
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Comic Sans MS"));
+        QTest::keyClick(qobject_cast<QWindow *>(window), Qt::Key_Space);
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Arial")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Comic Sans MS")));
+        catalogs.setFontsInCatalog(QStringLiteral("C"), {QStringLiteral("Arial")}, false);
         // Show "In “C”": only its fonts; "Not in a catalog": every font is in one now.
         window->setProperty("show", 1);
         QCOMPARE(window->property("shown").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
