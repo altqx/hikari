@@ -8402,6 +8402,10 @@ private slots:
         QCOMPARE(styleRequested.at(0).at(0).toString(), QStringLiteral("Sign"));
         QTRY_VERIFY(named("styleManager")->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("styleManager"), "closeManager"));
+        // SY1: the manager is a window of its own, which had the keyboard;
+        // offscreen gives it back to no window when it closes.
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
 
         // Copy to selected folder without a folder: legacy's message.
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
