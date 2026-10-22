@@ -34,8 +34,8 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 | A19 | ui/Main.qml readOnlyWarning | Warning | Chosen file is read only… | warning | yes | message box: Save as… / Cancel | Save |
 | A20 | ui/SessionWindows.qml readOnlyNotice | Warning | same | warning | yes | message box: Save as… / Cancel | Save session |
 | A21 | ui/MatroskaSubtitles.qml noTracksMessage | Load subtitles from an MKV/OGM file | The file does not contain any subtitle tracks. | info | yes | toast | same |
-| A22 | ui/AllTagsEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | message box | Tag editing |
-| A23 | ui/ShapesEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | message box | Vector shape editing |
+| A22 | ui/AllTagsEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | inline error under the field (PU5-inline-errors) | Edit tags |
+| A23 | ui/ShapesEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | inline error under the field (PU5-inline-errors) | Edit shapes |
 | A24 | ui/FontCatalogWindow.qml info | Info | Enter a name for the new catalog | warning | yes | message box | Manage font catalogs |
 | A25 | ui/FontCollectorDialog.qml message | none | Start refusals | warning / error | yes | message box | Font collector |
 | A26 | ui/SettingsDialog.qml warningDialog | Warning | The selected %1 for conversion does not exist… | warning | yes | toast | Settings |
