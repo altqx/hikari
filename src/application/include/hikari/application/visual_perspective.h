@@ -32,7 +32,9 @@
 #include <array>
 #include <map>
 #include <memory>
+#include <cstdint>
 #include <optional>
+#include <utility>
 #include <string>
 
 namespace hikari::application::visual {
@@ -217,6 +219,9 @@ private:
     mutable perspective::LineState m_state;
     mutable perspective::Quad m_inner{};
     mutable std::int64_t m_time = 0; // the video's, as read
+    // The session's serial and revision m_state was read at.
+    mutable std::optional<std::pair<std::uint64_t, std::uint64_t>> m_read;
+    static std::optional<std::pair<std::uint64_t, std::uint64_t>> readAt(const VisualHost &host);
     mutable PointF m_c1{0.25f, 0.25f}, m_c2{0.75f, 0.75f}; // follow() keeps a shown plane
     double m_screenZ = 312.5;
     std::optional<core::LineId> m_line;

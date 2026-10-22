@@ -307,6 +307,11 @@ public:
             c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
         return leased.contains(lower);
     }
+    std::u16string uncovered; // the characters no font the measure sees has
+    bool fallsBackToLeased(const std::string &, bool, bool, std::u16string_view text) const override
+    {
+        return !leased.empty() && text.find_first_of(uncovered) != std::u16string_view::npos;
+    }
 };
 
 core::LineRecord lineWith(const Host &host, std::size_t i = 0) { return *host.s->document().lines()[i]; }
@@ -555,8 +560,8 @@ TEST(PerspectiveTags, AHostileLineTakesLinearTime)
     std::string escapes;
     for (int i = 0; i < 100000; ++i)
         escapes += "\\h";
-    std::string blocks;
-    for (int i = 0; i < 100000; ++i)
+    std::string blocks; // within the 512 KiB a read parses
+    for (int i = 0; i < 70000; ++i)
         blocks += "{\\frx1}";
     Host host(apart({braces, escapes, blocks + "x"}), "WrapStyle: 2"); // unwrapped: measured
     const auto started = std::chrono::steady_clock::now();
@@ -716,6 +721,29 @@ TEST(PerspectiveTags, AHostileDrawingIsMeasuredBoundedly)
     EXPECT_FALSE(readLine(host, lineWith(host, 1)));
     EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count(),
               100);
+}
+
+TEST(PerspectiveTags, TheTextOneReadParsesIsBounded)
+{
+    // Before any budget of rows or points: a block of many tags is parsed
+    // once whole, so past 512 KiB of Line text, the Line's and those it
+    // stacks on together, no quad.
+    const auto tags = [](std::size_t bytes) {
+        std::string t = "{";
+        while (t.size() < bytes)
+            t += "\\frx0";
+        return t + "}";
+    };
+    Host host(apart({"{\\pos(320,200)}" + tags(600 * 1024) + "A", "{\\pos(320,200)}" + tags(400 * 1024) + "A"}));
+    const auto started = std::chrono::steady_clock::now();
+    EXPECT_FALSE(readLine(host, lineWith(host, 0)));
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count(),
+              50);
+    EXPECT_TRUE(readLine(host, lineWith(host, 1)));
+    // Two of 300 KiB: the second stacks on the first.
+    Host stacked({tags(300 * 1024) + "First", tags(300 * 1024) + "Second"});
+    EXPECT_FALSE(readLine(stacked, lineWith(stacked, 1)));
+    EXPECT_TRUE(readLine(stacked, lineWith(stacked, 0)));
 }
 
 TEST(PerspectiveTags, TheWrapTakesTheLinesOwnStyleMargins)
@@ -901,6 +929,27 @@ TEST(PerspectiveTags, ARowsEndSpacesAreDroppedAsLibassDropsThem)
     EXPECT_EQ(host.measure.lastText, " A");
     ASSERT_TRUE(readLine(host, lineWith(host, 2)));
     EXPECT_EQ(host.measure.lastText, "B");
+}
+
+TEST(PerspectiveTags, AFallbackOnlyTheRendererSeesIsNotMeasured)
+{
+    // The font lacks a character: libass may take it from a leased font,
+    // the measure from one of the system's.
+    Host host({"{\\pos(320,200)}A中", "{\\pos(320,200)}A"});
+    host.uncovered = u"中";
+    EXPECT_TRUE(readLine(host, lineWith(host, 0))); // nothing leased: the system's either way
+    host.leased = {"other"};
+    EXPECT_FALSE(readLine(host, lineWith(host, 0)));
+    EXPECT_TRUE(readLine(host, lineWith(host, 1)));
+}
+
+TEST(PerspectiveTags, ASpacedSurrogatePairIsNotMeasured)
+{
+    // The measure spaces each UTF-16 unit, libass each character.
+    Host host({"{\\pos(320,200)\\fsp2}A\U0001F600", "{\\pos(320,200)}A\U0001F600", "{\\pos(320,200)\\fsp2}A"});
+    EXPECT_FALSE(readLine(host, lineWith(host, 0)));
+    EXPECT_TRUE(readLine(host, lineWith(host, 1)));
+    EXPECT_TRUE(readLine(host, lineWith(host, 2)));
 }
 
 TEST(PerspectiveTags, AWrittenPositionStaysAheadOfAMove)
@@ -1537,6 +1586,10 @@ TEST(PerspectiveTool, TheStackIsLibassCollisions)
     EXPECT_NEAR(second("First", "{\\t(\\c&HFF&)}Second").value_or(0), nominal, 0.05);
     // Nothing shown is no obstacle.
     EXPECT_NEAR(second("{\\c&HFF&}").value_or(0), nominal, 0.05);
+    // A border changed after the text: libass's rectangle takes the
+    // largest, which one box does not hold.
+    EXPECT_FALSE(second("A{\\ybord20}B"));
+    EXPECT_NEAR(second("{\\shad9}A{\\shad20}B").value_or(0), second("AB").value_or(0), 0.05);
     // Nor are spaces (libass drops them), but \\h is shown.
     EXPECT_NEAR(second(" \t ").value_or(0), nominal, 0.05);
     EXPECT_NEAR(second("\\h").value_or(0), plain, 0.05);
@@ -1622,6 +1675,47 @@ TEST(PerspectiveTool, ADroppedPlaneComesBackWhereItWas)
     ASSERT_TRUE(f.tool.hasQuad());
     ASSERT_LT(f.tool.inner()[2].y, bottom - 1);
     expectQuadNear(f.tool.outer(), plane, 0.1);
+}
+
+TEST(PerspectiveTool, AStillLineIsNotReadEveryFrame)
+{
+    // Neither moving nor stacked, the Line is where it was until the
+    // script changes; a stacked one is read again with the time.
+    Fixture f;
+    const int calls = f.host.measure.calls;
+    for (const std::int64_t t : {1600, 1700, 1800}) {
+        f.host.time = t;
+        (void)f.tool.overlay(f.host);
+    }
+    EXPECT_EQ(f.host.measure.calls, calls);
+    EXPECT_TRUE(f.tool.setValue("frz", u"10", f.host)); // a revision
+    f.host.time = 1900;
+    (void)f.tool.overlay(f.host);
+    EXPECT_GT(f.host.measure.calls, calls);
+    EXPECT_NEAR(f.tool.transform().frz, 10, 1e-3);
+
+    Fixture g({"Unpositioned"});
+    const int before = g.host.measure.calls;
+    g.host.time = 1600;
+    (void)g.tool.overlay(g.host);
+    EXPECT_GT(g.host.measure.calls, before);
+}
+
+TEST(PerspectiveTool, AnEditOfTooMuchTextIsRefused)
+{
+    // Each step parses every target: past 512 KiB of their text together,
+    // no edit.
+    std::string big = "{\\pos(320,200)";
+    while (big.size() < 600 * 1024)
+        big += "\\frx0";
+    Fixture f({"{\\pos(320,200)}Perspective", big + "}B"});
+    f.host.targets = {f.host.line(0), f.host.line(1)};
+    const std::size_t steps = f.steps();
+    f.drag({430, 200}, {450, 230});
+    EXPECT_EQ(f.steps(), steps);
+    f.host.targets = {f.host.line(0)};
+    f.drag({430, 200}, {450, 230});
+    EXPECT_EQ(f.steps(), steps + 1);
 }
 
 TEST(PerspectiveTool, ALockedResizeWritesNoTags)

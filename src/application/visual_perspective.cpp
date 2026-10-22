@@ -742,14 +742,24 @@ bool animatesTheQuad(const Tag &tag)
     return false;
 }
 
-// What one read may measure on the UI thread: the Line and every Line it
-// stacks on draw from it, rows and characters through the font and the
-// code of drawings point by point. libass shows any number of rows and
-// points, but a box of more than these is no sign the tool places, and a
-// hostile script (a comment of \N, a drawing of megabytes, or many Lines
-// shown at once) gets no quad rather than unbounded work.
+// What one read may do on the UI thread: the Line and every Line it
+// stacks on draw from it, their text parsed, rows and characters measured
+// through the font and the code of drawings read point by point. libass
+// shows any number of rows and points, but a box of more than these is no
+// sign the tool places, and a hostile script (a comment of \N, a block of
+// megabytes of tags, a drawing of megabytes, or many Lines shown at once)
+// gets no quad rather than unbounded work.
+constexpr std::size_t kMaxParsed = 512 * 1024; // bytes of Line text
 struct MeasureBudget {
-    std::size_t rows = 64, shown = 4096, drawn = 256 * 1024;
+    std::size_t rows = 64, shown = 4096, drawn = 256 * 1024, parsed = kMaxParsed;
+    // Whether `line`'s text may be parsed, charging it.
+    bool parse(const core::LineRecord &line)
+    {
+        if (line.text.size() > parsed)
+            return false;
+        parsed -= line.text.size();
+        return true;
+    }
 };
 
 // `edited`: the Line the tool writes, whose outline and shadow are scaled
@@ -953,6 +963,19 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         piece.erase(0, first == u16::npos ? piece.size() : first);
         piece.erase(piece.find_last_not_of(u' ') + 1);
     }
+    // The measure spaces each UTF-16 unit as legacy's text_extents does,
+    // libass each character: a pair of surrogates is spaced twice.
+    const bool spaced = transform::styleNumber(s.spacing, 0) != 0;
+    u16 all;
+    for (const u16 &piece : lines) {
+        if (spaced && std::any_of(piece.begin(), piece.end(), [](char16_t c) { return c >= 0xD800 && c < 0xE000; }))
+            return std::nullopt;
+        all += piece;
+    }
+    // A character the font lacks libass may take from a font only it is
+    // given, where the measure takes one of the system's.
+    if (host.fallsBackToLeased(std::string(s.fontname.begin(), s.fontname.end()), s.bold, s.italic, all))
+        return std::nullopt;
     double width = 0, height = 0;
     for (const u16 &piece : lines) {
         const std::u8string utf8 = core::toUtf8(piece.empty() ? u16(u" ") : piece);
@@ -978,9 +1001,10 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     return Box{{0, 0}, {static_cast<float>(width), static_cast<float>(height)}};
 }
 
-// Whether an outline or shadow tag comes after the leading blocks, which
-// the tool does not scale.
-bool outlineAfterText(u16v text)
+// Whether one of `tags` comes after the leading blocks: an outline or
+// shadow the tool does not scale, a border libass takes the largest of.
+template <std::size_t N>
+bool afterText(u16v text, const u16v (&tags)[N])
 {
     std::size_t k = 0;
     bool leading = true;
@@ -990,10 +1014,15 @@ bool outlineAfterText(u16v text)
         if (leading)
             continue;
         for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1)))
-            if (std::find(std::begin(kOutlineTags), std::end(kOutlineTags), tag.name) != std::end(kOutlineTags))
+            if (std::find(std::begin(tags), std::end(tags), tag.name) != std::end(tags))
                 return true;
     }
     return false;
+}
+
+bool outlineAfterText(u16v text)
+{
+    return afterText(text, kOutlineTags);
 }
 
 // libass's scrolling effects: Banner;, and Scroll up; or Scroll down; with
@@ -1063,13 +1092,18 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             break;
         if (dial->comment || !shown(*dial) || dial->layer.value != line.layer.value)
             continue; // libass renders no Comment
+        if (!budget.parse(*dial))
+            return std::nullopt;
         const LineState other = readTagsIn(host, styles, *dial);
         if (!other.stacks || static_cast<int>(other.transform.an / 3.1f) != band)
             continue;
         const u16 text = transform::lineText(*dial);
         const core::StyleValues style = styles.line(dial->style);
+        // libass's rectangle takes the largest border of its glyphs, which
+        // one box at one border does not hold.
+        static constexpr u16v kBorderTags[] = {u"bord", u"xbord", u"ybord"};
         const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text), false, budget);
-        if (!otherBox)
+        if (!otherBox || afterText(text, kBorderTags))
             return std::nullopt;
         if (otherBox->width() <= 0)
             continue; // nothing shown
@@ -1261,14 +1295,14 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line, StyleCache &cache)
 {
     // A scrolling Line moves with the time, which the quad does not.
-    if (scrolls(line))
+    MeasureBudget budget;
+    if (scrolls(line) || !budget.parse(line))
         return std::nullopt;
     const auto decoded = cache.get(host);
     const transform::Context ctx = transform::context(host, false);
     const StyleIndex styles(ctx, *decoded);
     LineState out = readTagsIn(host, styles, line);
     const u16 text = transform::lineText(line);
-    MeasureBudget budget;
     const auto box =
         measureBox(host, styles, line, text, styles.line(line.style), leadingOf(text), true, budget);
     if (!box)
@@ -1524,6 +1558,7 @@ void PerspectiveTool::reset(VisualHost &host)
         m_state = *state;
         m_inner = textToQuad(m_state.transform, m_state.box, m_screenZ);
         m_valid = convex(m_inner);
+        m_read = readAt(host);
     }
     // A saved plane holds on any reading again (an edit, an Undo, a new
     // Style), not only on another Line's; an edit open keeps its own.
@@ -1574,6 +1609,10 @@ void PerspectiveTool::follow(const VisualHost &host) const
     if (!m_line || host.videoTimeMs() == m_time || m_drag != Drag::None || m_valueEdit || m_keyEdit)
         return;
     m_time = host.videoTimeMs();
+    // A Line neither moving nor stacked is where it was until the script
+    // changes: it is not parsed again every frame.
+    if (m_valid && !m_state.hasMove && !m_state.stacks && m_read && m_read == readAt(host))
+        return;
     const transform::Context ctx = transform::context(host, false);
     if (!ctx.active || ctx.active->id != *m_line)
         return;
@@ -1595,6 +1634,7 @@ void PerspectiveTool::follow(const VisualHost &host) const
     m_state = *state;
     m_inner = inner;
     m_valid = true;
+    m_read = readAt(host);
     if (plane) {
         const PointF c1 = toUV(*plane, m_inner[0]), c2 = toUV(*plane, m_inner[2]);
         if (planeHolds(m_inner, c1, c2)) {
@@ -1606,6 +1646,14 @@ void PerspectiveTool::follow(const VisualHost &host) const
         fitPlane();
 }
 
+std::optional<std::pair<std::uint64_t, std::uint64_t>> PerspectiveTool::readAt(const VisualHost &host)
+{
+    const EditSession *session = host.session();
+    if (!session)
+        return std::nullopt;
+    return std::pair{session->serial(), session->revision()};
+}
+
 bool PerspectiveTool::beginEdit(VisualHost &host)
 {
     if (host.gesture())
@@ -1613,7 +1661,18 @@ bool PerspectiveTool::beginEdit(VisualHost &host)
     const auto targets = host.batchTargets();
     if (targets.empty())
         return false;
-    return host.beginGesture(targets, std::string(familyInfo(Family::Perspective).history)).has_value();
+    if (!host.beginGesture(targets, std::string(familyInfo(Family::Perspective).history)).has_value())
+        return false;
+    // Each step parses every target again: their text is bounded as a
+    // read's is.
+    std::size_t parsed = 0;
+    for (const core::LineId &id : host.gesture()->targets())
+        parsed += host.gesture()->before(id).text.size();
+    if (parsed > perspective::kMaxParsed) {
+        host.cancelGesture();
+        return false;
+    }
+    return true;
 }
 
 void PerspectiveTool::stageAll(VisualHost &host)
