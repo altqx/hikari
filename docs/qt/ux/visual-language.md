@@ -63,6 +63,8 @@ The user decided on 2026-10-05 to follow MuseScore 4's appearance model ([resear
 
 The forms built on them: the clash review (PK1-clash-review), Choose styles (PK1-choose-styles-live), the hotkey capture (PK1-hotkey-capture), the list chooser (PK1-list-chooser) and the date picker (PK1-date-picker).
 
+File and session popups (PU1, [#303](https://github.com/altqx/hikari/issues/303)): a state that belongs to one Document is an inline bar under the Document tabs, shown only while that Document is the editing target (a file changed on disk, each file a restore could not find, an MKV being read); the startup offer is a card on the Home page, or the same offer as a bar when files were opened from the command line, and never holds the start back. A question about several Documents (unsaved work) is a window with a row per Document; about one, a message box. The file pickers are the native ones, titled for what they do or the file they are for ("Save “name” as"), each kind starting where it was last left.
+
 **Accent.** Seven presets per mode (`appearance.lightAccent`, `appearance.darkAccent`: Light and Dark remember their own), in hue order, the spec's green the default. Each preset sets three roles: `accent`, `onaccent` and `select` (its hue at the green's selected lightness); `focus` does not change with the accent. No custom accent outside high contrast. The accent drives selection, primary buttons, toggles, the tab underline, the focused field border, text selection, progress, the icons' accent layer and the selection-type marks of owner-drawn content.
 
 | Key | Light accent / text on it | Dark accent / text on it |
