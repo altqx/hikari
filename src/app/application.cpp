@@ -835,6 +835,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             auto *session = targetSession();
             m_matroskaRevision = session ? session->revision() : 0;
             m_matroskaVideo = m_video->session().path();
+            m_matroskaFromHome = !m_matroskaTarget;
         };
         hooks.log = [this](const QString &text) {
             m_log->notice(ui::LogController::Error,
@@ -1945,6 +1946,7 @@ QVariantList Application::reviewClose(const QString &then)
     std::vector<application::DocumentId> scope;
     if (then != QLatin1String("tab"))
         m_closingTab.reset(); // P6
+    m_closeTarget = m_workspace.editingTarget();
     if (then != QLatin1String("session"))
         m_pendingSession.reset(); // P6
     if (then == QLatin1String("quit") || then == QLatin1String("session")) // P6: a session replaces every tab
@@ -2086,6 +2088,7 @@ void Application::finishClose()
         }
     }
     const QString then = m_closeThen;
+    const auto reviewed = std::exchange(m_closeTarget, std::nullopt);
     m_closing.clear();
     m_closeThen.clear();
     if (!kept.isEmpty()) {
@@ -2096,6 +2099,20 @@ void Application::finishClose()
                                                               "Not closed, because saving failed or there is newer work: %1")
                                       .arg(kept.join(QStringLiteral(", "))));
         return;
+    }
+    // PU1-unsaved-window: one Document's question closes at its answer, so
+    // another tab may be the target once the save is written; a command on
+    // the target acts on the reviewed one's tab (gone: nothing is replaced).
+    const bool onTarget = then != QLatin1String("quit") && then != QLatin1String("session") && then != QLatin1String("tab")
+        && then != QLatin1String("all");
+    if (onTarget && reviewed && m_workspace.editingTarget() != reviewed) {
+        if (!m_workspace.setEditingTarget(*reviewed)) {
+            m_closeThen = then;
+            cancelClose();
+            emit closeFinished(true, QString());
+            return;
+        }
+        refreshViews();
     }
     if (then == QLatin1String("quit")) {
         for (const auto id : m_workspace.documents())
@@ -3063,12 +3080,16 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
     // since, keeps what was typed: the subtitles open in a new tab. A draft
     // being typed doesn't move the revision, so a pending one counts too; a
     // tab that opened another video meanwhile keeps that video's subtitles.
+    // Started on Home, a Document opened meanwhile keeps its tab too.
     if (!newTab && m_matroskaTarget) {
         auto *session = m_files->session(*m_matroskaTarget);
         newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision
             || session->draftLine() || m_video->session().path() != m_matroskaVideo;
+    } else if (!newTab && m_matroskaFromHome) {
+        newTab = m_workspace.editingTarget().has_value();
     }
     m_matroskaTarget.reset();
+    m_matroskaFromHome = false;
     if (newTab) {
         // File > Open: InsertTab then OnMkvSubs in it (HikariSubFrame.cpp:
         // 1021-1028): a new tab after the last one, with no media, takes the

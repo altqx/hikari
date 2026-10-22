@@ -140,7 +140,8 @@ ApplicationWindow {
     // goes once that write is done (a failed one leaves it).
     property var savingAway: ({})
     // PU1-mkv-notices: the tab an MKV load started on (taken as it starts,
-    // before its tracks are listed, as the application takes its target).
+    // before its tracks are listed, as the application takes its target);
+    // "home" for a load File > Open started on Home.
     property var mkvTab: undefined
     Connections {
         target: root.matroska
@@ -148,7 +149,7 @@ ApplicationWindow {
             if (root.matroska.state === 0)
                 root.mkvTab = undefined
             else if (root.mkvTab === undefined)
-                root.mkvTab = root.currentTab().id
+                root.mkvTab = root.app.home ? "home" : root.currentTab().id
         }
     }
     function checkExternalChange() {
@@ -5732,7 +5733,8 @@ ApplicationWindow {
             objectName: "mkvProgress"
             // With the tab the read started on (it goes on while another
             // tab, or Home, shows).
-            visible: root.matroska.state === 3 && !root.app.home && root.currentTab().id === root.mkvTab
+            visible: root.matroska.state === 3
+                     && (root.mkvTab === "home" ? root.app.home : !root.app.home && root.currentTab().id === root.mkvTab)
             closable: false
             text: qsTranslate("HikariSub.Matroska", "Loading subtitles from %1").arg(root.matroska.source)
             Layout.fillWidth: true
@@ -6025,7 +6027,10 @@ ApplicationWindow {
     }
     property var saveQueue: []
     function saveAllTabs(overDisk) {
-        const marked = root.app.tabs.filter(t => t.modified && root.changedOnDisk[t.id] === true).map(t => t.id)
+        // Only the saves written over their own file ask: a Save As or a
+        // read-only file's question doesn't write it.
+        const marked = root.app.tabs.filter(t => t.modified && root.changedOnDisk[t.id] === true
+                                                 && root.app.saveRouteFor(t.id) === "").map(t => t.id)
         if (!overDisk && marked.length > 0) {
             diskSaveQuestion.confirm(marked, () => root.saveAllTabs(true))
             return
@@ -6199,7 +6204,7 @@ ApplicationWindow {
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
         confirmOverDisk: (ids, then, cancelled) => {
-            const marked = ids.filter(id => root.changedOnDisk[id] === true)
+            const marked = ids.filter(id => root.changedOnDisk[id] === true && root.app.saveRouteFor(id) === "")
             if (marked.length === 0)
                 then()
             else

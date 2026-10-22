@@ -1153,6 +1153,7 @@ private:
     std::optional<application::DocumentId> m_matroskaTarget;
     std::uint64_t m_matroskaRevision = 0;
     std::string m_matroskaVideo; // the tab's video when the read started
+    bool m_matroskaFromHome = false; // started with no editing target
     // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);
     std::unique_ptr<ui::LogController> m_log;
@@ -1443,6 +1444,8 @@ private:
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
     std::optional<application::DocumentId> m_closingTab; // reviewCloseTab's
+    // PU1: the editing target a review was asked for; the command acts on it.
+    std::optional<application::DocumentId> m_closeTarget;
     QString m_keepTabAudio;  // a restored video whose audio must not replace the tab's own
     std::optional<std::pair<QString, int>> m_pendingTabSeek; // video path, ms; until the seek has landed
     bool m_tabSeekQueued = false;
