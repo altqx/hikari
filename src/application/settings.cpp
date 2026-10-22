@@ -260,6 +260,9 @@ const std::vector<SettingDefinition> &definitions()
         // PU1 (#303): the folder each file picker of the file and session
         // popups was last left in, one "<picker>\t<folder URL>" row per picker.
         {"workspace.pickerFolders", "", StringList, Workspace, Mapped, false, std::vector<std::string>()},
+        // PF1 (#225): the Settings page shown last (its id), where the
+        // window opens next, also after a restart.
+        {"workspace.settingsPage", "", String, Workspace, Mapped, false, std::string("general")},
         // PK1 (#301): "Show notices as toasts" (off: notices go only to the
         // Log), and the questions hidden by "Don't ask again" that have no
         // setting of their own (Settings > General > Ask again clears them).

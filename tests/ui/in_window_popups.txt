@@ -28,7 +28,6 @@ SaveLayoutDialog.qml:dialog
 ScriptPropertiesDialog.qml:dialog
 SearchTool.qml:question
 SelectLinesDialog.qml:dialog
-SettingsDialog.qml:dialog
 SettingsImportDialog.qml:dialog
 SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog

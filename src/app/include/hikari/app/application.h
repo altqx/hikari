@@ -706,12 +706,21 @@ public:
     // once and loads the conversion catalog, as legacy does.
     Q_INVOKABLE QVariantMap openSettingsDialog();
     // OK/Apply (legacy SetOptions): each bound control whose value differs
-    // from the stored one is written; nothing else.
-    Q_INVOKABLE void applySettings(const QVariantMap &values);
-    // "Set default" (legacy ResetDefault): every setting at once, even if the
-    // dialog is then cancelled; returns the controls' state as legacy
-    // refreshes them (its defects included).
+    // from the stored one is written; nothing else. `resetAll`: "Reset all
+    // settings…" was chosen since the last OK or Apply, and every setting
+    // but the appearance, the hotkeys and the recent files goes back to its
+    // default first (legacy ResetDefault, PF1-staged-reset).
+    Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
+    // "Reset all settings…": the controls' state at the defaults, as legacy
+    // ResetDefault refreshes them (its defects included); nothing is
+    // stored until OK or Apply (PF1-staged-reset).
     Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
+    // "Reset page": `values` with the page's controls at their defaults
+    // (page: an OptionsPage id, "general", "appearance", ...); staged too.
+    Q_INVOKABLE QVariantMap resetSettingsPage(const QVariantMap &values, const QString &page);
+    // The conversion catalog's Styles as the dialog lists them (after a
+    // Reset page on Conversion loaded the default catalog).
+    Q_INVOKABLE QStringList settingsStyles() const;
     // OnChangeCatalog: loads the catalog and returns {values, styles}.
     Q_INVOKABLE QVariantMap chooseSettingsCatalog(const QVariantMap &values, int index);
     // wxDirDialog::GetPath: the chosen folder with native separators.
@@ -1185,6 +1194,9 @@ private:
     std::vector<application::ReplacerRule> &misspellRuleList();
     void saveMisspellRules();
     void destroyDialogs();
+    // ResetDefault's reset of the store and of what reads it at once, at OK
+    // or Apply after "Reset all settings…" (PF1-staged-reset).
+    void resetAllSettings();
     // F1
     class FindHost;
     friend class FindHost;

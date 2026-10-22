@@ -83,8 +83,8 @@ std::vector<std::byte> encodeDialogRequest(const DialogRequest &request)
             w.str(item);
     }
     w.i32(static_cast<std::int32_t>(request.buttons.size()));
-    for (const auto &b : request.buttons)
-        w.str(b);
+    for (std::size_t i = 0; i < request.buttons.size(); ++i)
+        w.str(request.buttons[i]).str(i < request.buttonIds.size() ? request.buttonIds[i] : std::string());
     return w.take();
 }
 
@@ -124,8 +124,10 @@ std::optional<DialogRequest> decodeDialogRequest(const std::vector<std::byte> &p
     const auto buttons = count(r, payload.size());
     if (!buttons)
         return std::nullopt;
-    for (std::size_t i = 0; i < *buttons; ++i)
+    for (std::size_t i = 0; i < *buttons; ++i) {
         request.buttons.push_back(r.str());
+        request.buttonIds.push_back(r.str());
+    }
     if (!r.ok() || !r.atEnd())
         return std::nullopt;
     return request;

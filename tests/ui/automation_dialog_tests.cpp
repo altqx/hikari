@@ -4,9 +4,14 @@
 // sees typed values (false kept, the label's nil absent).
 #include "automation_dialog_controller.h"
 #include "colour_picker_controller.h"
+#include "settings_store.h"
+#include "theme.h"
 #include "hikari/backends/lua_script_host.h"
 
+#include <QAccessible>
+#include <QCursor>
 #include <QFile>
+#include <QInputMethodEvent>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -15,12 +20,15 @@
 #include <QQmlExtensionPlugin>
 #include <QQuickItem>
 #include <QQuickWindow>
+#include <QScreen>
+#include <QScopeGuard>
 #include <QDir>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QWheelEvent>
 #include <QtTest>
 
+#include <functional>
 #include <optional>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
@@ -83,22 +91,47 @@ class AutomationDialogTests : public QObject {
     }
     void showDialog(const DialogRequest &request, std::optional<DialogResult> &result)
     {
+        showDialogOn(request, result, QStringLiteral("dialogButton0"));
+    }
+    // Shows the dialog and waits for the Enter button, named, to have the keyboard.
+    void showDialogOn(const DialogRequest &request, std::optional<DialogResult> &result, const QString &enter)
+    {
         result.reset();
+        // Off the controls, no hovered hint: on xcb the real pointer hovers too.
+        QCursor::setPos(window->screen(), window->screen()->geometry().bottomRight() - QPoint(2, 2));
         controller->present(QStringLiteral("Keys"), request, [&result](DialogResult r) { result = r; });
         QTRY_VERIFY(window->isVisible());
+        QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2));
         window->requestActivate();
         QTRY_VERIFY(QGuiApplication::focusWindow() == window);
-        QTRY_COMPARE(focusName(), QStringLiteral("dialogButton0"));
+        QTRY_COMPARE(focusName(), enter);
+    }
+    // Types ASCII text with real key events (QTest::keyClicks takes widgets only).
+    static void type(QWindow *into, const QString &text)
+    {
+        for (const QChar c : text)
+            QTest::keyClick(into, c.toLatin1());
+    }
+    QString hint()
+    {
+        QQuickItem *text = named(QStringLiteral("automationHintText"));
+        return text ? text->property("text").toString() : QString();
+    }
+    static QString accessible(QQuickItem *item, QAccessible::Text which)
+    {
+        QAccessibleInterface *face = QAccessible::queryAccessibleInterface(item);
+        return face ? face->text(which) : QString();
     }
     static QPoint centre(QQuickItem *item)
     {
         return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
     }
-    void wheel(QQuickItem *item, int notches)
+    void wheel(QQuickItem *item, int notches) { wheelBy(item, 120 * notches); }
+    void wheelBy(QQuickItem *item, int angle)
     {
         const QPointF at = centre(item);
-        QWheelEvent event(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120 * notches), Qt::NoButton,
-                          Qt::NoModifier, Qt::NoScrollPhase, false);
+        QWheelEvent event(at, window->mapToGlobal(at), QPoint(), QPoint(0, angle), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
         QGuiApplication::sendEvent(window, &event);
     }
 
@@ -217,6 +250,11 @@ private slots:
         request.buttons = {"OK"};
         std::optional<DialogResult> result;
         showDialog(request, result);
+        // At the screen's top: on xvfb-run's 640 x 480 screen a centred
+        // dialog leaves the popover room neither below nor above its anchor,
+        // so it would cover the anchor the presses below aim at.
+        window->setPosition(window->x(), window->screen()->availableGeometry().top());
+        QTRY_VERIFY(window->y() < window->screen()->availableGeometry().top() + 40); // (the frame may add its margin)
         auto *popover = window->findChild<QObject *>(QStringLiteral("automationColourPopover"));
         QVERIFY(popover);
         auto *content = popover->property("contentItem").value<QQuickItem *>();
@@ -269,7 +307,8 @@ private slots:
         // after opens it again.
         QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
         QTRY_VERIFY(popover->property("visible").toBool());
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(2, 2));
+        // (In the body's bottom margin, away from the popover: the window's edge is its frame's, for resizing.)
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(14, window->height() - 10));
         QTRY_VERIFY(!popover->property("visible").toBool());
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
                           anchor->mapToScene(QPointF(anchor->width() / 2, anchor->height() / 2)).toPoint());
@@ -283,10 +322,9 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("#0000FF"));
     }
 
-    // Legacy HikariDialog::Show focuses the enter button (LuaDialog::
-    // CreateWindow: the first OK/Yes/Save button, else the first; the
-    // rewrite drops the IDs, so the first), so typing reaches no field and
-    // Return presses that button (arrows: arrowsOnAButtonMoveTheFocusPerPlatform).
+    // The enter button has the keyboard when the dialog shows (legacy
+    // HikariDialog::Show, DG1), so typing reaches no field and Enter presses
+    // it; shown again, it has the keyboard again.
     void enterButtonHasTheFocusOnShow()
     {
         std::optional<DialogResult> result;
@@ -307,7 +345,6 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("t"));
         QTRY_VERIFY(!window->isVisible());
 
-        // Shown again, the enter button has the focus again.
         result.reset();
         controller->present(QStringLiteral("Again"), sampleRequest(), [&](DialogResult r) { result = r; });
         QTRY_VERIFY(window->isVisible());
@@ -316,189 +353,722 @@ private slots:
                     window->activeFocusItem()->objectName() == QStringLiteral("dialogButton0"));
         QTest::keyClick(window, Qt::Key_Escape);
         QTRY_VERIFY(result.has_value());
-        QCOMPARE(result->pressed, -1); // OnEscape: no button pushed
+        QCOMPARE(result->pressed, -1);
     }
 
-    // L2, legacy HikariDialog::OnCharHook and the controls' keys (see
-    // AutomationDialog.qml): Return presses the focused button, Escape ends
-    // the dialog with no button, Space does nothing on a button.
-    void returnPressesTheFocusedButtonAndEscapeNone()
+    // AD1-button-ids: the Enter button is Aegisub's affirmative one (an ok,
+    // yes or save id, the last such), else the first; it is filled in the
+    // accent and has the keyboard. The buttons keep the script's order at
+    // the footer's trailing edge.
+    void enterButtonFollowsTheButtonIds()
     {
+        DialogRequest request;
+        request.controls = {DialogControl{.kind = "label", .name = "l", .label = "x"}};
+        request.buttons = {"Trust", "Fetch once", "Block", "Skip"};
+        request.buttonIds = {"", "ok", "", "cancel"};
         std::optional<DialogResult> result;
-        window->setProperty("navigationPlatform", QStringLiteral("linux"));
-        showDialog(sampleRequest(), result);
-        QTest::keyClick(window, Qt::Key_Space);
-        QTest::keyClick(window, Qt::Key_Enter, Qt::KeypadModifier); // Linux: not the Return accelerator
-        QVERIFY(!result.has_value());
-        QVERIFY(controlItem(4)->property("checked").toBool());
-        named(QStringLiteral("dialogButton1"))->forceActiveFocus();
+        controller->present(QStringLiteral("Feed"), request, [&](DialogResult r) { result = r; });
+        QCOMPARE(controller->enterButton(), 1);
+        QTRY_VERIFY(window->isVisible());
+        window->requestActivate();
+        QTRY_COMPARE(focusName(), QStringLiteral("dialogButton1"));
+        qreal x = -1;
+        for (int i = 0; i < 4; ++i) {
+            QQuickItem *b = named(QStringLiteral("dialogButton%1").arg(i));
+            QVERIFY(b);
+            const qreal at = b->mapToScene(QPointF()).x();
+            QVERIFY2(at > x, qPrintable(QString::number(i)));
+            x = at;
+            QCOMPARE(QString::fromLatin1(b->metaObject()->className()).contains(QLatin1String("PrimaryButton")), i == 1);
+        }
+        QQuickItem *last = named(QStringLiteral("dialogButton3"));
+        QVERIFY(last->mapToScene(QPointF(last->width(), 0)).x() > window->width() - 40); // at the trailing edge
         QTest::keyClick(window, Qt::Key_Return);
         QTRY_VERIFY(result.has_value());
         QCOMPARE(result->pressed, 1);
 
-        showDialog(sampleRequest(), result);
-        QTest::keyClick(window, Qt::Key_Escape);
-        QTRY_VERIFY(result.has_value());
-        QCOMPARE(result->pressed, -1);
-        QCOMPARE(std::get<std::string>(result->values[1]), std::string("t")); // values are read back
-
-        // On Windows keypad Enter matches the Return accelerator.
-        window->setProperty("navigationPlatform", QStringLiteral("windows"));
-        showDialog(sampleRequest(), result);
-        QTest::keyClick(window, Qt::Key_Enter, Qt::KeypadModifier);
-        QTRY_VERIFY(result.has_value());
-        QCOMPARE(result->pressed, 0);
-        window->setProperty("navigationPlatform", QStringLiteral("linux"));
+        request.buttonIds = {"", "yes", "save", "close"};
+        controller->present(QStringLiteral("Affirmative"), request, [](DialogResult) {});
+        QCOMPARE(controller->enterButton(), 2);
+        request.buttonIds = {"", "", "", "cancel"};
+        controller->present(QStringLiteral("None"), request, [](DialogResult) {});
+        QCOMPARE(controller->enterButton(), 0);
+        request.buttonIds.clear();
+        controller->present(QStringLiteral("No ids"), request, [](DialogResult) {});
+        QCOMPARE(controller->enterButton(), 0);
+        controller->withdraw();
+        QTRY_VERIFY(!window->isVisible());
     }
 
-    // A text field takes Return and Escape (OnCharHook skips them for a
-    // HikariTextCtrl): a single-line one ignores them, the textbox makes a
-    // new line (keypad Enter too on Windows, where it matches the Return
-    // accelerator); the dialog stays open.
-    void textFieldsKeepReturnAndEscape_data()
+    // AD1-keyboard, one rule set on every platform: Enter (and keypad Enter)
+    // presses the focused button, else the Enter button, from a single-line
+    // field too; a textbox takes Enter as a new line and presses the Enter
+    // button on Ctrl+Enter; Esc ends with no button from anywhere, text
+    // fields included; Space ticks a check box and presses a button.
+    void keysFollowOneRuleSet()
     {
-        QTest::addColumn<QString>("platform");
-        QTest::addColumn<QString>("textbox");
-        QTest::newRow("linux") << QStringLiteral("linux") << QStringLiteral("a\n");
-        QTest::newRow("windows") << QStringLiteral("windows") << QStringLiteral("a\n\n");
-    }
-    void textFieldsKeepReturnAndEscape()
-    {
-        QFETCH(QString, platform);
-        QFETCH(QString, textbox);
         DialogRequest request;
         request.controls = {DialogControl{.kind = "edit", .name = "e", .text = ""},
                             DialogControl{.kind = "textbox", .name = "t", .y = 1, .text = ""},
                             DialogControl{.kind = "intedit", .name = "i", .y = 2, .intValue = 1, .intMin = 0, .intMax = 9},
-                            DialogControl{.kind = "floatedit", .name = "f", .y = 3, .number = 1, .numberMin = 0,
-                                          .numberMax = 9}};
+                            DialogControl{.kind = "checkbox", .name = "c", .y = 3, .label = "Check"},
+                            DialogControl{.kind = "dropdown", .name = "d", .y = 4, .text = "b", .items = {"a", "b"}}};
+        request.buttons = {"Back", "Go", "Stop"};
+        request.buttonIds = {"", "ok", "cancel"};
         std::optional<DialogResult> result;
-        window->setProperty("navigationPlatform", platform);
-        showDialog(request, result);
-        for (int i = 0; i < 4; ++i) {
+
+        showDialogOn(request, result, QStringLiteral("dialogButton1"));
+        controlItem(0)->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_A);
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(result.has_value());
+        QCOMPARE(result->pressed, 1);
+        QCOMPARE(std::get<std::string>(result->values[0]), std::string("a"));
+
+        showDialogOn(request, result, QStringLiteral("dialogButton1"));
+        controlItem(1)->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_A);
+        QTest::keyClick(window, Qt::Key_Return);
+        QTest::keyClick(window, Qt::Key_B);
+        QTest::qWait(20);
+        QVERIFY(!result.has_value());
+        QCOMPARE(controlItem(1)->property("text").toString(), QStringLiteral("a\nb"));
+        QTest::keyClick(window, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_VERIFY(result.has_value());
+        QCOMPARE(result->pressed, 1);
+        QCOMPARE(std::get<std::string>(result->values[1]), std::string("a\nb"));
+
+        for (int i : {0, 1, 2, 3, 4}) {
+            showDialogOn(request, result, QStringLiteral("dialogButton1"));
             controlItem(i)->forceActiveFocus();
-            QTest::keyClick(window, Qt::Key_A);
-            QTest::keyClick(window, Qt::Key_Return);
             QTest::keyClick(window, Qt::Key_Escape);
-            QTest::keyClick(window, Qt::Key_Enter, Qt::KeypadModifier);
-            QTest::qWait(20);
-            QVERIFY2(!result.has_value(), qPrintable(QString::number(i)));
-            QVERIFY(window->isVisible());
+            QTRY_VERIFY2(result.has_value(), qPrintable(QString::number(i)));
+            QCOMPARE(result->pressed, -1);
         }
-        QCOMPARE(controlItem(0)->property("text").toString(), QStringLiteral("a"));
-        QCOMPARE(controlItem(1)->property("text").toString(), textbox);
-        QCOMPARE(controlItem(2)->property("text").toString(), QStringLiteral("1")); // digits only
-        QCOMPARE(controlItem(3)->property("text").toString(), QStringLiteral("1"));
-        named(QStringLiteral("dialogButton0"))->forceActiveFocus();
+
+        showDialogOn(request, result, QStringLiteral("dialogButton1"));
+        controlItem(3)->forceActiveFocus();
+        QTest::keyClick(window, Qt::Key_Space);
+        QTRY_VERIFY(controlItem(3)->property("checked").toBool());
+        QTest::keyClick(window, Qt::Key_Enter, Qt::KeypadModifier);
+        QTRY_VERIFY(result.has_value());
+        QCOMPARE(result->pressed, 1);
+        QCOMPARE(std::get<bool>(result->values[3]), true);
+
+        showDialogOn(request, result, QStringLiteral("dialogButton1"));
+        named(QStringLiteral("dialogButton0"))->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(window, Qt::Key_Return);
         QTRY_VERIFY(result.has_value());
         QCOMPARE(result->pressed, 0);
-        QCOMPARE(QString::fromStdString(std::get<std::string>(result->values[1])), textbox);
+
+        showDialogOn(request, result, QStringLiteral("dialogButton1"));
+        named(QStringLiteral("dialogButton2"))->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_Space);
+        QTRY_VERIFY(result.has_value());
+        QCOMPARE(result->pressed, 2);
     }
 
-    // A checkbox and a dropdown handle no Return or Escape: OnCharHook clicks
-    // the enter or escape ID on the dialog, which ends with no button pushed
-    // (the script's button is false). Space toggles or opens nothing.
-    void checkboxAndDropdownEndTheDialogWithoutAButton()
-    {
-        for (const auto &[index, key] : {std::pair{4, Qt::Key_Return}, std::pair{4, Qt::Key_Escape},
-                                         std::pair{5, Qt::Key_Return}, std::pair{5, Qt::Key_Escape}}) {
-            std::optional<DialogResult> result;
-            showDialog(sampleRequest(), result);
-            controlItem(index)->forceActiveFocus();
-            QTest::keyClick(window, Qt::Key_Space);
-            QTest::qWait(20);
-            QVERIFY(controlItem(4)->property("checked").toBool());
-            QVERIFY(!result.has_value());
-            QTest::keyClick(window, key);
-            QTRY_VERIFY(result.has_value());
-            QCOMPARE(result->pressed, -1);
-            QCOMPARE(std::get<bool>(result->values[4]), true);
-            QCOMPARE(std::get<std::string>(result->values[5]), std::string("b"));
-        }
-    }
-
-    // Legacy NumCtrl (int): no key steps it; the wheel adds a notch at a
-    // time and a right-button drag changes it (1 per 8 px up or down, 10 per
-    // 10 px sideways), within the range.
-    void intEditStepsByWheelAndRightDragOnly()
+    // AD1-keyboard: Tab goes through the grid row by row, left to right
+    // (a colour's swatch, then its field), then the buttons in order;
+    // Shift+Tab goes back. The script lists its controls in another order.
+    void tabFollowsTheGrid()
     {
         DialogRequest request;
-        request.controls = {DialogControl{.kind = "intedit", .name = "i", .intValue = 5, .intMin = 0, .intMax = 30}};
+        request.controls = {DialogControl{.kind = "edit", .name = "b", .x = 1, .y = 1, .text = ""},
+                            DialogControl{.kind = "checkbox", .name = "c", .y = 2, .label = "c"},
+                            DialogControl{.kind = "color", .name = "a2", .x = 1, .text = "#000000"},
+                            DialogControl{.kind = "textbox", .name = "b0", .y = 1, .text = ""},
+                            DialogControl{.kind = "label", .name = "l", .label = "L"},
+                            DialogControl{.kind = "intedit", .name = "a3", .x = 2, .intValue = 0}};
+        request.buttons = {"One", "Two"};
         std::optional<DialogResult> result;
         showDialog(request, result);
-        QQuickItem *field = controlItem(0);
-        field->forceActiveFocus();
-        QTest::keyClick(window, Qt::Key_Up);
+        auto *swatch = qobject_cast<QQuickItem *>(findNamed(controlItem(2), QStringLiteral("colorPick")));
+        QVERIFY(swatch);
+        swatch->forceActiveFocus(Qt::TabFocusReason);
+        QStringList order;
+        for (int i = 0; i < 8; ++i) {
+            QQuickItem *f = window->activeFocusItem();
+            order << (f->objectName().isEmpty() ? focusName() : f->objectName());
+            QTest::keyClick(window, Qt::Key_Tab);
+        }
+        QCOMPARE(order, (QStringList{QStringLiteral("colorPick"), QStringLiteral("colorText"), QStringLiteral("numberField"),
+                                     QStringLiteral("control_3"), QStringLiteral("control_0"), QStringLiteral("control_1"),
+                                     QStringLiteral("dialogButton0"), QStringLiteral("dialogButton1")}));
+        QTest::keyClick(window, Qt::Key_Backtab);
+        QCOMPARE(focusName(), QStringLiteral("dialogButton1"));
+        controlItem(3)->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_Tab); // the textbox passes Tab on
+        QCOMPARE(focusName(), QStringLiteral("control_0"));
+        QTest::keyClick(window, Qt::Key_Backtab);
+        QCOMPARE(focusName(), QStringLiteral("control_3"));
+        QCOMPARE(controlItem(3)->property("text").toString(), QString());
+        window->close();
+        QTRY_VERIFY(result.has_value());
+    }
+
+    // AD1-number-commit and AD1-float-step: typing is never blocked; out of
+    // range shows in the danger colour and the strip says what it becomes;
+    // committing clamps. The arrows, Up / Down, Page Up / Page Down and the
+    // wheel step by 1 / 10 steps (an intedit by 1, a floatedit by its step);
+    // a floatedit without a step has no arrows and does not step. An
+    // emptied field shows the range and keeps its value. An intedit keeps
+    // legacy's right-button drag.
+    void numbersClampOnCommit()
+    {
+        DialogRequest request;
+        request.controls = {DialogControl{.kind = "intedit", .name = "i", .intValue = 40, .intMin = 10, .intMax = 500},
+                            DialogControl{.kind = "floatedit", .name = "f", .y = 1, .number = 1.25, .numberMin = 0.1,
+                                          .numberMax = 10, .step = 0.05},
+                            DialogControl{.kind = "floatedit", .name = "g", .y = 2, .number = 0.6, .numberMin = 0,
+                                          .numberMax = 20},
+                            DialogControl{.kind = "intedit", .name = "j", .y = 3, .intValue = 5, .intMin = 0, .intMax = 30},
+                            DialogControl{.kind = "floatedit", .name = "p", .y = 4, .number = 1.23456789012345},
+                            DialogControl{.kind = "intedit", .name = "u", .y = 5, .intValue = 7},
+                            DialogControl{.kind = "floatedit", .name = "q", .y = 6, .number = 1234567890123456,
+                                          .step = 1}};
+        std::optional<DialogResult> result;
+        showDialog(request, result);
+        QQuickItem *i = controlItem(0);
+        i->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        QTest::keyClick(window, Qt::Key_5);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("5"));
+        QVERIFY(i->property("outOfRange").toBool());
+        QTRY_VERIFY(hint().contains(QStringLiteral("10 to 500")));
+        QVERIFY2(hint().contains(QStringLiteral("5 becomes 10")), qPrintable(hint()));
+        QTest::keyClick(window, Qt::Key_0);
+        QVERIFY(!i->property("outOfRange").toBool()); // "50" on the way
+        QTest::keyClick(window, Qt::Key_0);
+        QTest::keyClick(window, Qt::Key_0);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("5000"));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("500"));
+        i->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(window, Qt::Key_Down);
-        QCOMPARE(field->property("text").toString(), QStringLiteral("5"));
-        wheel(field, 1);
-        QCOMPARE(field->property("text").toString(), QStringLiteral("6"));
-        wheel(field, -2);
-        QCOMPARE(field->property("text").toString(), QStringLiteral("4"));
-        const QPoint at = centre(field);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("499"));
+        QTest::keyClick(window, Qt::Key_PageDown);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("489"));
+        QTest::keyClick(window, Qt::Key_PageUp);
+        QTest::keyClick(window, Qt::Key_Up);
+        QTest::keyClick(window, Qt::Key_Up);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("500"));
+        wheel(i, -3);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        QTest::keyClick(window, Qt::Key_Backspace);
+        QCOMPARE(i->property("placeholderText").toString(), QStringLiteral("10 – 500"));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("497")); // emptied: the value stays
+        i->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("4x")); // never blocked; no number: back to the value
+        QCOMPARE(i->property("text").toString(), QStringLiteral("4x"));
+        QVERIFY(i->property("bad").toBool());
+        QTRY_VERIFY2(hint().contains(QStringLiteral("4x becomes 497")), qPrintable(hint()));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
+        i->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("45,9")); // a decimal is cut toward zero (legacy)
+        QVERIFY(!i->property("bad").toBool());
+        QTRY_VERIFY2(hint().contains(QStringLiteral("45,9 becomes 45")), qPrintable(hint()));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("45"));
+        i->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("497"));
+        QTest::keyClick(window, Qt::Key_Tab);
+        wheelBy(i, 60); // half notches add up
+        QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
+        wheelBy(i, 60);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("498"));
+        wheelBy(i, -120);
+
+        QQuickItem *f = controlItem(1);
+        auto *up = qobject_cast<QQuickItem *>(findNamed(f, QStringLiteral("numberUp")));
+        QVERIFY(up && up->isVisible());
+        f->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_Up);
+        QCOMPARE(f->property("text").toString(), QStringLiteral("1.3"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centre(up));
+        QCOMPARE(f->property("text").toString(), QStringLiteral("1.35"));
+        QTRY_VERIFY2(hint().contains(QStringLiteral("0.1 to 10, in steps of 0.05")), qPrintable(hint()));
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("0,01"));
+        QVERIFY(f->property("outOfRange").toBool());
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(f->property("text").toString(), QStringLiteral("0.1"));
+
+        QQuickItem *g = controlItem(2);
+        QCOMPARE(controlItem(4)->property("text").toString(), QStringLiteral("1.23456789012345")); // every digit
+        QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2)); // off f's arrows
+        controlItem(5)->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("4x")); // no range: the strip still says what happens
+        QTRY_VERIFY2(hint().contains(QStringLiteral("4x becomes 7")), qPrintable(hint()));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(controlItem(5)->property("text").toString(), QStringLiteral("7"));
+        controlItem(5)->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("0x10")); // decimal only, as the controller reads it
+        QVERIFY(controlItem(5)->property("bad").toBool());
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(controlItem(5)->property("text").toString(), QStringLiteral("7"));
+        controlItem(6)->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_Up); // one step, every digit kept
+        QCOMPARE(controlItem(6)->property("text").toString(), QStringLiteral("1234567890123457"));
+        QVERIFY(!qobject_cast<QQuickItem *>(findNamed(g, QStringLiteral("numberUp")))->isVisible());
+        g->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_Up);
+        wheel(g, 2);
+        QCOMPARE(g->property("text").toString(), QStringLiteral("0.6"));
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("25"));
+        QTest::keyClick(window, Qt::Key_Return); // commits, then presses the Enter button
+        QTRY_VERIFY(result.has_value());
+        QCOMPARE(std::get<int>(result->values[0]), 497);
+        QCOMPARE(std::get<double>(result->values[1]), 0.1);
+        QCOMPARE(std::get<double>(result->values[2]), 20.0);
+        QCOMPARE(std::get<double>(result->values[4]), 1.23456789012345); // opened and accepted: unchanged
+
+        showDialog(request, result);
+        QQuickItem *j = controlItem(3);
+        const QPoint at = centre(j);
         QTest::mousePress(window, Qt::RightButton, Qt::NoModifier, at);
         QTest::mouseMove(window, at - QPoint(0, 9));
-        QCOMPARE(field->property("text").toString(), QStringLiteral("5"));
+        QCOMPARE(j->property("text").toString(), QStringLiteral("6"));
         QTest::mouseMove(window, at - QPoint(-11, 9));
-        QCOMPARE(field->property("text").toString(), QStringLiteral("15"));
+        QCOMPARE(j->property("text").toString(), QStringLiteral("16"));
         QTest::mouseRelease(window, Qt::RightButton, Qt::NoModifier, at - QPoint(-11, 9));
-        // Past the range the wheel shows nothing, but the value keeps the step.
-        wheel(field, 20);
-        QCOMPARE(field->property("text").toString(), QStringLiteral("15"));
-        wheel(field, -10);
-        QCOMPARE(field->property("text").toString(), QStringLiteral("25"));
-        named(QStringLiteral("dialogButton0"))->forceActiveFocus();
-        QTest::keyClick(window, Qt::Key_Return);
-        QTRY_VERIFY(result.has_value());
-        QCOMPARE(std::get<int>(result->values[0]), 25);
+        controlItem(0)->setProperty("text", QStringLiteral("7")); // typed, never committed
+        press(0);
+        QVERIFY(result.has_value());
+        QCOMPARE(std::get<int>(result->values[0]), 10); // a button commits it, clamped
+        QCOMPARE(std::get<int>(result->values[3]), 16);
     }
 
-    // The arrows on a button move the focus: the Linux build's GtkWindow
-    // moves it to the nearest control in that direction overlapping the
-    // button (else nowhere); the Windows build to the previous or next
-    // control in creation order, wrapping (HikariDialog::SetNextControl).
-    void arrowsOnAButtonMoveTheFocusPerPlatform()
+    // The hint strip shows the hovered control's hint, else the focused
+    // one's; the hint is the tooltip and the accessible description too. It
+    // keeps one height while focus moves. A dialog with no hint and no
+    // range has no strip.
+    void hintStripShowsTheHoveredElseTheFocusedHint()
     {
         DialogRequest request;
-        request.controls = {DialogControl{.kind = "edit", .name = "e", .text = ""}};
+        request.controls = {DialogControl{.kind = "label", .name = "l", .hint = "Override tags.", .label = "&Tags"},
+                            DialogControl{.kind = "edit", .name = "t", .hint = "The tags to gradient.", .x = 1, .text = ""},
+                            DialogControl{.kind = "checkbox", .name = "k", .hint = "Leave the border as it is.", .x = 1,
+                                          .y = 1, .label = "&Ignore border"},
+                            DialogControl{.kind = "edit", .name = "n", .hint = QString(80, QLatin1Char('w')).toStdString()
+                                          + " a long hint that wraps", .x = 1, .y = 2, .text = ""}};
         std::optional<DialogResult> result;
-        window->setProperty("navigationPlatform", QStringLiteral("linux"));
         showDialog(request, result);
-        QTest::keyClick(window, Qt::Key_Down);
-        QCOMPARE(focusName(), QStringLiteral("dialogButton0"));
-        QTest::keyClick(window, Qt::Key_Left);
-        QCOMPARE(focusName(), QStringLiteral("dialogButton0"));
-        QTest::keyClick(window, Qt::Key_Right);
-        QCOMPARE(focusName(), QStringLiteral("dialogButton1"));
-        QTest::keyClick(window, Qt::Key_Right);
-        QCOMPARE(focusName(), QStringLiteral("dialogButton1"));
-        QTest::keyClick(window, Qt::Key_Left);
-        QCOMPARE(focusName(), QStringLiteral("dialogButton0"));
-        QTest::keyClick(window, Qt::Key_Up);
-        QCOMPARE(focusName(), QStringLiteral("control_0"));
-        QTest::keyClick(window, Qt::Key_Down); // the edit takes its arrows
-        QCOMPARE(focusName(), QStringLiteral("control_0"));
-        QTest::keyClick(window, Qt::Key_Escape);
-        QVERIFY(!result.has_value());
+        QQuickItem *strip = named(QStringLiteral("automationHints"));
+        QVERIFY(strip && strip->isVisible());
+        const qreal height = strip->height();
+        QCOMPARE(hint(), QString());
+        controlItem(1)->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_COMPARE(hint(), QStringLiteral("The tags to gradient."));
+        QCOMPARE(accessible(controlItem(1), QAccessible::Description), QStringLiteral("The tags to gradient."));
+        QCOMPARE(accessible(controlItem(1), QAccessible::Name), QStringLiteral("Tags"));
+        QCOMPARE(accessible(controlItem(0), QAccessible::Description), QStringLiteral("Override tags."));
+        QTest::mouseMove(window, centre(controlItem(2)));
+        QTRY_COMPARE(hint(), QStringLiteral("Leave the border as it is."));
+        QTest::mouseMove(window, QPoint(14, window->height() - 8));
+        QTRY_COMPARE(hint(), QStringLiteral("The tags to gradient."));
+        controlItem(3)->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(hint().endsWith(QStringLiteral("wraps")));
+        QCOMPARE(strip->height(), height);
         window->close();
         QTRY_VERIFY(result.has_value());
 
-        window->setProperty("navigationPlatform", QStringLiteral("windows"));
+        request.controls = {DialogControl{.kind = "edit", .name = "e", .text = ""}};
         showDialog(request, result);
-        QTest::keyClick(window, Qt::Key_Down);
-        QCOMPARE(focusName(), QStringLiteral("dialogButton1"));
-        QTest::keyClick(window, Qt::Key_Right);
-        QCOMPARE(focusName(), QStringLiteral("control_0"));
-        named(QStringLiteral("dialogButton0"))->forceActiveFocus();
-        QTest::keyClick(window, Qt::Key_Left);
-        QCOMPARE(focusName(), QStringLiteral("control_0"));
-        named(QStringLiteral("dialogButton0"))->forceActiveFocus();
-        QTest::keyClick(window, Qt::Key_Up, Qt::ControlModifier); // Ctrl+arrow is not navigation
-        QCOMPARE(focusName(), QStringLiteral("dialogButton0"));
+        QVERIFY(!named(QStringLiteral("automationHints"))->isVisible());
         window->close();
         QTRY_VERIFY(result.has_value());
-        window->setProperty("navigationPlatform", QStringLiteral("linux"));
+    }
+
+    // A colour's field takes #RRGGBB, RRGGBB or ASS &HBBGGRR& (and the ASS
+    // transparency for coloralpha: #RRGGBBAA, &HAABBGGRR&); the swatch
+    // follows as you type; committed, it shows #RRGGBB[AA]; text that is
+    // no colour shows in the danger colour and goes back when left. The
+    // script gets the legacy hex as before.
+    void colourFieldsTakeHtmlAndAss()
+    {
+        DialogRequest request;
+        request.controls = {DialogControl{.kind = "color", .name = "c", .text = "#E83A5F"},
+                            DialogControl{.kind = "coloralpha", .name = "a", .y = 1, .text = "#803A7BE8"}};
+        std::optional<DialogResult> result;
+        showDialog(request, result);
+        auto *c = qobject_cast<QQuickItem *>(findNamed(controlItem(0), QStringLiteral("colorText")));
+        auto *a = qobject_cast<QQuickItem *>(findNamed(controlItem(1), QStringLiteral("colorText")));
+        QCOMPARE(c->property("text").toString(), QStringLiteral("#E83A5F"));
+        QCOMPARE(a->property("text").toString(), QStringLiteral("#3A7BE880"));
+        c->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("&H5F3AE8&"));
+        QCOMPARE(control(0)->property("value").value<QColor>(), QColor(0xE8, 0x3A, 0x5F));
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("00ff00"));
+        QCOMPARE(control(0)->property("value").value<QColor>(), QColor(0, 255, 0));
+        QTest::keyClick(window, Qt::Key_Backspace);
+        QVERIFY(c->property("bad").toBool());
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(c->property("text").toString(), QStringLiteral("#00FF00"));
+        QVERIFY(!c->property("bad").toBool());
+        a->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("&H40FF0000&"));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(a->property("text").toString(), QStringLiteral("#0000FF40"));
+        press(0);
+        QVERIFY(result.has_value());
+        QCOMPARE(std::get<std::string>(result->values[0]), std::string("#00FF00"));
+        QCOMPARE(std::get<std::string>(result->values[1]), std::string("#400000FF"));
+    }
+
+    // Above 10 items, typing on a dropdown opens its list with a filter
+    // field: the matches keep the script's order, the first is current,
+    // Enter picks it and Esc closes the list only. Ten or fewer: no filter.
+    // A value that is none of the items shows blank and comes back as given.
+    void dropdownsFilterAboveTenItems()
+    {
+        const std::vector<std::string> masks = {"square", "rounded square", "circle", "triangle 1", "triangle 2",
+                                                "fade left", "fade right", "fade up", "fade down", "alignment grid",
+                                                "rect. gradient", "ring", "diamond", "star"};
+        DialogRequest request;
+        request.controls = {DialogControl{.kind = "dropdown", .name = "m", .text = "circle", .items = masks},
+                            DialogControl{.kind = "dropdown", .name = "s", .y = 1, .text = "a", .items = {"a", "b"}},
+                            DialogControl{.kind = "dropdown", .name = "x", .y = 2, .text = "zzz", .items = {"a", "b"}}};
+        std::optional<DialogResult> result;
+        showDialog(request, result);
+        QQuickItem *m = controlItem(0);
+        m->forceActiveFocus(Qt::TabFocusReason);
+        auto *popup = m->property("popup").value<QObject *>();
+        QTest::keyClick(window, 'f'); // opens the list with "f"
+        QTRY_VERIFY(popup->property("opened").toBool());
+        // In the dialog, as tall as the room it has (it scrolls).
+        auto *listItem = popup->property("contentItem").value<QQuickItem *>();
+        QCOMPARE(listItem->window(), static_cast<QQuickWindow *>(window));
+        const QRectF at = listItem->mapRectToScene(QRectF(0, 0, listItem->width(), listItem->height()));
+        QVERIFY2(at.top() >= 0 && at.bottom() <= window->height(), qPrintable(QString::number(at.bottom())));
+        QVERIFY2(at.right() <= window->width(), qPrintable(QString::number(at.right())));
+        auto *filterField = qobject_cast<QQuickItem *>(findNamed(listItem, QStringLiteral("dropdownFilter")));
+        QVERIFY(filterField && filterField->hasActiveFocus()); // the filter takes the keys
+        QCOMPARE(filterField->property("text").toString(), QStringLiteral("f"));
+        type(window, QStringLiteral("ad"));
+        QCOMPARE(m->property("filter").toString(), QStringLiteral("fad"));
+        QCOMPARE(m->property("matches").toList().size(), 4);
+        QTest::keyClick(window, Qt::Key_Down);
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(m->property("currentText").toString(), QStringLiteral("fade right"));
+        QVERIFY(!result.has_value());
+        m->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, 's');
+        QTRY_VERIFY(popup->property("opened").toBool());
+        type(window, QStringLiteral("t"));
+        QCOMPARE(m->property("matches").toList().size(), 1);
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QVERIFY(window->isVisible()); // the list's Esc
+        QVERIFY(!result.has_value());
+        QCOMPARE(m->property("currentText").toString(), QStringLiteral("fade right"));
+        QVERIFY(m->hasActiveFocus());
+        // Space opens it unfiltered; an input method's text filters it.
+        QTest::keyClick(window, Qt::Key_Space);
+        QTRY_VERIFY(popup->property("opened").toBool());
+        QCOMPARE(m->property("filter").toString(), QString());
+        QTRY_VERIFY(filterField->hasActiveFocus());
+        QInputMethodEvent composing(QStringLiteral("ri"), {});
+        QCoreApplication::sendEvent(filterField, &composing);
+        QCOMPARE(m->property("filter").toString(), QString()); // still composing
+        QInputMethodEvent committed;
+        committed.setCommitString(QStringLiteral("ring"));
+        QCoreApplication::sendEvent(filterField, &committed);
+        QCOMPARE(m->property("filter").toString(), QStringLiteral("ring"));
+        QCOMPARE(m->property("matches").toList().size(), 1);
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(m->property("currentText").toString(), QStringLiteral("ring"));
+        QVERIFY(m->hasActiveFocus());
+        // Tab from the filter closes the list and moves on.
+        QTest::keyClick(window, 'd');
+        QTRY_VERIFY(popup->property("opened").toBool());
+        QTest::keyClick(window, Qt::Key_Tab);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QTRY_VERIFY(controlItem(1)->hasActiveFocus());
+        QCOMPARE(m->property("currentText").toString(), QStringLiteral("ring"));
+
+        QQuickItem *s = controlItem(1);
+        QVERIFY(!s->property("filters").toBool());
+        s->forceActiveFocus(Qt::TabFocusReason);
+        auto *shortList = s->property("popup").value<QObject *>();
+        QTest::keyClick(window, Qt::Key_Space); // opens the short list
+        QTRY_VERIFY(shortList->property("opened").toBool());
+        QTest::keyClick(window, Qt::Key_B); // its type-ahead moves the highlight
+        QTest::keyClick(window, Qt::Key_Return); // and Enter picks that row
+        QTRY_VERIFY(!shortList->property("visible").toBool());
+        QCOMPARE(s->property("currentText").toString(), QStringLiteral("b"));
+        QCOMPARE(controlItem(2)->property("currentIndex").toInt(), -1);
+        press(0);
+        QVERIFY(result.has_value());
+        QCOMPARE(std::get<std::string>(result->values[0]), std::string("ring"));
+        QCOMPARE(std::get<std::string>(result->values[1]), std::string("b"));
+        QCOMPARE(std::get<std::string>(result->values[2]), std::string("zzz"));
+    }
+
+    // `&` mnemonics: Alt with the letter presses a button, ticks a check box
+    // or moves to the control after a label; the letters are underlined
+    // while Alt is held; the `&` is never shown and the label returned
+    // keeps it; `&&` is one `&`.
+    void mnemonicsWork()
+    {
+        DialogRequest request;
+        request.controls = {DialogControl{.kind = "label", .name = "l", .label = "&Tags"},
+                            DialogControl{.kind = "edit", .name = "t", .x = 1, .text = ""},
+                            DialogControl{.kind = "checkbox", .name = "k", .x = 1, .y = 1, .label = "&Ignore"},
+                            DialogControl{.kind = "label", .name = "r", .y = 2, .label = "Fish && chips"}};
+        request.buttons = {"&Apply", "&Load preset", "Cancel"};
+        request.buttonIds = {"ok", "", "cancel"};
+        std::optional<DialogResult> result;
+        showDialog(request, result);
+        QCOMPARE(controlItem(0)->property("text").toString(), QStringLiteral("Tags"));
+        QCOMPARE(controlItem(3)->property("text").toString(), QStringLiteral("Fish &amp; chips"));
+        QCOMPARE(named(QStringLiteral("dialogButton0"))->property("text").toString(), QStringLiteral("Apply"));
+        QTest::keyPress(window, Qt::Key_Alt, Qt::AltModifier);
+        QTRY_COMPARE(controlItem(0)->property("text").toString(), QStringLiteral("<u>T</u>ags"));
+        QTest::keyRelease(window, Qt::Key_Alt);
+        QTRY_COMPARE(controlItem(0)->property("text").toString(), QStringLiteral("Tags"));
+        QTest::keyClick(window, Qt::Key_I, Qt::AltModifier);
+        QTRY_VERIFY(controlItem(2)->property("checked").toBool());
+        QTest::keyClick(window, Qt::Key_T, Qt::AltModifier);
+        QTRY_COMPARE(focusName(), QStringLiteral("control_1"));
+        QTest::keyClick(window, Qt::Key_L, Qt::AltModifier);
+        QTRY_VERIFY(result.has_value());
+        QCOMPARE(result->pressed, 1);
+        QCOMPARE(std::get<bool>(result->values[2]), true);
+    }
+
+    // The window is resizable: the columns of an edit grow, a label's do
+    // not; a textbox's row takes the extra height. Taller than the screen's
+    // free area, it is capped: the grid scrolls (the focused control comes
+    // into view) and the buttons stay on screen.
+    void sizeGrowsTheFieldsAndIsCappedToTheScreen()
+    {
+        DialogRequest request;
+        request.controls = {DialogControl{.kind = "label", .name = "l", .label = "Notes"},
+                            DialogControl{.kind = "textbox", .name = "t", .x = 1, .text = "a"},
+                            DialogControl{.kind = "label", .name = "m", .y = 1, .label = "Tags"},
+                            DialogControl{.kind = "edit", .name = "e", .x = 1, .y = 1, .text = ""},
+                            DialogControl{.kind = "label", .name = "s", .y = 2, .label = "Size"},
+                            DialogControl{.kind = "intedit", .name = "i", .x = 2, .y = 2, .intValue = 3}};
+        std::optional<DialogResult> result;
+        showDialog(request, result);
+        QVERIFY(window->maximumWidth() > window->width());
+        const qreal label = controlItem(0)->width(), edit = controlItem(3)->width(), box = controlItem(1)->height(),
+                    number = controlItem(5)->width();
+        window->resize(window->width() + 200, window->height() + 150);
+        QTRY_VERIFY(controlItem(3)->width() > edit + 50);
+        QTRY_VERIFY(controlItem(5)->width() > number + 50); // a number's own column grows too
+        QCOMPARE(controlItem(0)->width(), label);
+        QTRY_VERIFY(controlItem(1)->height() > box + 100);
+        window->close();
+        QTRY_VERIFY(result.has_value());
+
+        DialogRequest tall;
+        for (int y = 0; y < 80; ++y)
+            tall.controls.push_back(DialogControl{.kind = "edit", .name = "e" + std::to_string(y), .y = y, .text = ""});
+        showDialog(tall, result);
+        const QRect room = window->screen()->availableGeometry();
+        QVERIFY2(window->height() <= room.height(), qPrintable(QString::number(window->height())));
+        QQuickItem *scroll = named(QStringLiteral("automationDialogScroll"));
+        QVERIFY(scroll->property("overflows").toBool());
+        QQuickItem *button = named(QStringLiteral("dialogButton0"));
+        QVERIFY(button->mapToScene(QPointF(0, button->height())).y() <= window->height());
+        controlItem(79)->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(scroll->property("contentY").toReal() > 0);
+        const QPointF at = controlItem(79)->mapToItem(scroll, QPointF(0, 0));
+        QVERIFY(at.y() >= 0 && at.y() + controlItem(79)->height() <= scroll->height());
+        window->close();
+        QTRY_VERIFY(result.has_value());
+
+        DialogRequest wide; // wider than the screen: the focused field comes into view across too
+        for (int x = 0; x < 40; ++x)
+            wide.controls.push_back(DialogControl{.kind = "edit", .name = "w" + std::to_string(x), .x = x, .text = ""});
+        showDialog(wide, result);
+        QVERIFY(window->width() <= room.width());
+        controlItem(39)->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(scroll->property("contentX").toReal() > 0);
+        const QPointF across = controlItem(39)->mapToItem(scroll, QPointF(0, 0));
+        QVERIFY2(across.x() >= 0 && across.x() + controlItem(39)->width() <= scroll->width(),
+                 qPrintable(QString::number(across.x())));
+        window->close();
+        QTRY_VERIFY(result.has_value());
+
+        DialogRequest huge; // a span of 2^31 - 1: bounded to the grid's 256 cells, shown at once
+        huge.controls = {DialogControl{.kind = "edit", .name = "e", .x = 2147483646, .y = 2147483646,
+                                       .width = 2147483647, .height = 2147483647, .text = ""}};
+        showDialog(huge, result);
+        const QVariantMap spec = controller->property("controls").toList().value(0).toMap();
+        QCOMPARE(spec.value(QStringLiteral("x")).toInt(), 255);
+        QCOMPARE(spec.value(QStringLiteral("width")).toInt(), 256);
+        QCOMPARE(spec.value(QStringLiteral("height")).toInt(), 256);
+        QVERIFY(window->width() <= room.width());
+        window->close();
+        QTRY_VERIFY(result.has_value());
+    }
+
+    // The size and place are kept per script file, macro and set of
+    // controls (their classes and names).
+    void sizeIsKeptPerScriptAndDialog()
+    {
+        DialogRequest a;
+        a.controls = {DialogControl{.kind = "edit", .name = "git_path", .text = ""}};
+        DialogRequest b = a;
+        b.controls[0].name = "other";
+        auto idOf = [&](const DialogRequest &r, const QString &source) {
+            controller->present(QStringLiteral("t"), r, [](DialogResult) {}, source);
+            const QString id = controller->dialogId();
+            controller->withdraw();
+            return id;
+        };
+        const QString one = idOf(a, QStringLiteral("/s/gitsigns.moon\nConfigure"));
+        QVERIFY(one.startsWith(QStringLiteral("automation.")));
+        QVERIFY(!one.contains(QLatin1Char('\t')) && !one.contains(QLatin1Char('\n')));
+        QCOMPARE(idOf(a, QStringLiteral("/s/gitsigns.moon\nConfigure")), one);
+        QVERIFY(idOf(b, QStringLiteral("/s/gitsigns.moon\nConfigure")) != one);
+        QVERIFY(idOf(a, QStringLiteral("/s/gitsigns.moon\nShow diff")) != one);
+        QVERIFY(idOf(a, QString()).isEmpty());
+        controller->present(QStringLiteral("t"), a, [](DialogResult) {}, QStringLiteral("/s/x.lua\nm"));
+        QTRY_COMPARE(window->property("dialogId").toString(), controller->dialogId());
+        controller->withdraw();
+        QTRY_VERIFY(!window->isVisible());
+    }
+
+    // The dialog in the four themes, for review: written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (script-dialog-<part>-<theme>.png).
+    void screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        hikari::ui::SettingsStore store;
+        hikari::ui::theme::useSettings(&store);
+        window->setProperty("settings", QVariant::fromValue(&store));
+        auto restore = qScopeGuard([this] {
+            window->setProperty("settings", QVariant());
+            hikari::ui::theme::endPreview();
+            hikari::ui::theme::useSettings(nullptr);
+        });
+
+        DialogRequest gradient; // a typesetting script's dialog
+        gradient.controls = {
+            DialogControl{.kind = "label", .name = "l0", .label = "&Tags"},
+            DialogControl{.kind = "edit", .name = "tags", .hint = "Override tags to gradient, e.g. \\1c\\3c.", .x = 1,
+                          .width = 3, .text = "\\1c\\3c"},
+            DialogControl{.kind = "label", .name = "l1", .y = 1, .label = "&Start"},
+            DialogControl{.kind = "color", .name = "c1", .hint = "Colour at the start.", .x = 1, .y = 1, .text = "#E83A5F"},
+            DialogControl{.kind = "label", .name = "l2", .x = 2, .y = 1, .label = "&End"},
+            DialogControl{.kind = "coloralpha", .name = "c2", .hint = "Colour and transparency at the end.", .x = 3,
+                          .y = 1, .text = "#803A7BE8"},
+            DialogControl{.kind = "label", .name = "l3", .y = 2, .label = "Strip &width"},
+            DialogControl{.kind = "intedit", .name = "w", .hint = "Pixels per strip.", .x = 1, .y = 2, .intValue = 2,
+                          .intMin = 1, .intMax = 50},
+            DialogControl{.kind = "label", .name = "l4", .x = 2, .y = 2, .label = "Acce&l"},
+            DialogControl{.kind = "floatedit", .name = "a", .hint = "Acceleration of the gradient.", .x = 3, .y = 2,
+                          .number = 1.25, .numberMin = 0.1, .numberMax = 10, .step = 0.05},
+            DialogControl{.kind = "label", .name = "l5", .y = 3, .label = "&Mode"},
+            DialogControl{.kind = "dropdown", .name = "m", .hint = "How the strips are cut.", .x = 1, .y = 3, .width = 3,
+                          .text = "Horizontal", .items = {"Horizontal", "Vertical", "Diagonal"}},
+            DialogControl{.kind = "checkbox", .name = "b", .hint = "Leave the border as it is.", .x = 1, .y = 4,
+                          .width = 3, .label = "&Ignore border"},
+        };
+        gradient.buttons = {"&Apply", "&Load preset", "Cancel"};
+        gradient.buttonIds = {"ok", "", "cancel"};
+
+        DialogRequest numbers;
+        numbers.controls = {DialogControl{.kind = "label", .name = "l", .label = "Interval (seconds)"},
+                            DialogControl{.kind = "intedit", .name = "i", .x = 1, .intValue = 40, .intMin = 10,
+                                          .intMax = 500},
+                            DialogControl{.kind = "label", .name = "k", .y = 1, .label = "Opacity (%)"},
+                            DialogControl{.kind = "floatedit", .name = "f", .x = 1, .y = 1, .number = 50,
+                                          .numberMin = 0, .numberMax = 100, .step = 1}};
+        numbers.buttons = {"Go", "Cancel"};
+        numbers.buttonIds = {"ok", "cancel"};
+
+        DialogRequest tall; // a HYDRA-sized dialog on a 1280 x 800 screen
+        for (int y = 0; y < 40; ++y) {
+            tall.controls.push_back(DialogControl{.kind = "checkbox", .name = "t" + std::to_string(y), .y = y,
+                                                  .label = "\\tag" + std::to_string(y)});
+            tall.controls.push_back(DialogControl{.kind = "edit", .name = "v" + std::to_string(y), .x = 1, .y = y,
+                                                  .text = std::to_string(y * 3)});
+        }
+        tall.buttons = {"Apply", "Cancel"};
+        tall.buttonIds = {"ok", "cancel"};
+
+        DialogRequest masks;
+        std::vector<std::string> items = {"square", "rounded square", "circle", "triangle 1", "triangle 2", "fade left",
+                                          "fade right", "fade up", "fade down", "alignment grid", "ring", "star"};
+        masks.controls = {DialogControl{.kind = "label", .name = "l", .label = "Mask"},
+                          DialogControl{.kind = "dropdown", .name = "m", .x = 1, .text = "circle", .items = items}};
+        const char *rows[] = {"Size", "Rotation", "Blur", "Border", "Layer", "Offset x", "Offset y"};
+        for (int y = 0; y < 7; ++y) {
+            masks.controls.push_back(DialogControl{.kind = "label", .name = "r" + std::to_string(y), .y = y + 1,
+                                                   .label = rows[y]});
+            masks.controls.push_back(DialogControl{.kind = "intedit", .name = "v" + std::to_string(y), .x = 1,
+                                                   .y = y + 1, .intValue = 0, .intMin = 0, .intMax = 100});
+        }
+        masks.buttons = {"Draw", "Cancel"};
+        masks.buttonIds = {"ok", "cancel"};
+
+        for (const auto code : hikari::ui::theme::kCodes) {
+            const QString theme = hikari::ui::theme::codeName(code);
+            hikari::ui::theme::preview(
+                {{QStringLiteral("appearance.theme"), theme}, {QStringLiteral("appearance.followSystem"), false}});
+            const auto save = [&](const QString &part) {
+                QTest::qWait(250);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/script-dialog-") + part + QLatin1Char('-') +
+                                                  theme + QStringLiteral(".png")));
+            };
+            std::optional<DialogResult> result;
+            showDialog(gradient, result);
+            controlItem(1)->forceActiveFocus(Qt::TabFocusReason);
+            save(QStringLiteral("layout"));
+            QTest::keyPress(window, Qt::Key_Alt, Qt::AltModifier);
+            save(QStringLiteral("mnemonics"));
+            QTest::keyRelease(window, Qt::Key_Alt);
+            window->close();
+            QTRY_VERIFY(result.has_value());
+
+            showDialog(numbers, result);
+            controlItem(1)->forceActiveFocus(Qt::TabFocusReason);
+            QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+            type(window, QStringLiteral("5000"));
+            save(QStringLiteral("number-out-of-range"));
+            window->close();
+            QTRY_VERIFY(result.has_value());
+
+            showDialog(tall, result);
+            controlItem(41)->forceActiveFocus(Qt::TabFocusReason);
+            save(QStringLiteral("scrolling"));
+            window->close();
+            QTRY_VERIFY(result.has_value());
+
+            showDialog(masks, result);
+            controlItem(1)->forceActiveFocus(Qt::TabFocusReason);
+            auto *list = controlItem(1)->property("popup").value<QObject *>();
+            QTest::keyClick(window, 'f');
+            QTRY_VERIFY(list->property("opened").toBool());
+            type(window, QStringLiteral("a"));
+            save(QStringLiteral("dropdown-filter"));
+            QTest::keyClick(window, Qt::Key_Escape);
+            QTRY_VERIFY(!list->property("visible").toBool());
+            window->close();
+            QTRY_VERIFY(result.has_value());
+        }
     }
 
     void defaultButtonsShowOkAndCancel()
@@ -532,13 +1102,72 @@ private slots:
         control(3)->setProperty("text", QStringLiteral("2.5"));
         control(4)->setProperty("checked", false);
         control(5)->setProperty("currentIndex", 0);
-        press(1); // "Stop"
+        press(1); // "Stop", the cancel id: false, as in Aegisub (AD1-button-ids)
 
         QTRY_VERIFY(outcome.has_value());
         QCOMPARE(*outcome, LuaScriptHost::RunOutcome::Ok);
         QCOMPARE(log, QStringList{QStringLiteral(
-                          "button=string:Stop 7=number:99 f=number:2.5 flag=boolean:false pick=string:a "
+                          "button=boolean:false 7=number:99 f=number:2.5 flag=boolean:false pick=string:a "
                           "text=string:typed")});
+    }
+
+    // AD1-button-ids: dialogs from real scripts (lua-fixtures/
+    // script-dialogs.lua) answered with the keyboard through this window
+    // return what Aegisub returns: Return presses the ok id's button, a
+    // cancel-id button and Esc give false.
+    void realScriptDialogsAnswerAsInAegisub()
+    {
+        LuaScriptHost host(QStringLiteral(HIKARI_LUA_HELPER), QStringLiteral(HIKARI_LUA_FIXTURES "/script-dialogs.lua"),
+                           QStringLiteral(HIKARI_LUA_INCLUDE));
+        host.setDialogHandler([&](const DialogRequest &request, LuaScriptHost::DialogReply reply) {
+            controller->present(QString::fromStdString(host.info().name), request, std::move(reply));
+        });
+        QStringList log;
+        std::optional<LuaScriptHost::RunOutcome> outcome;
+        connect(&host, &LuaScriptHost::logged, this, [&](const QString &t) { log << t; });
+        connect(&host, &LuaScriptHost::finished, this,
+                [&](LuaScriptHost::RunOutcome o, const QString &) { outcome = o; });
+        host.load();
+        QTRY_COMPARE(host.state(), LuaScriptHost::State::Ready);
+        const auto run = [&](int macro, const QString &enter, const std::function<void()> &answer) {
+            log.clear();
+            outcome.reset();
+            QVERIFY(host.run(macro));
+            QTRY_VERIFY(window->isVisible());
+            window->requestActivate();
+            QTRY_VERIFY(QGuiApplication::focusWindow() == window);
+            QTRY_COMPARE(focusName(), enter);
+            answer();
+            QTRY_VERIFY(outcome.has_value());
+            QCOMPARE(*outcome, LuaScriptHost::RunOutcome::Ok);
+            QTRY_VERIFY(!window->isVisible());
+        };
+        run(0, QStringLiteral("dialogButton0"), [&] { // GitSigns Configure: Cancel
+            QTest::keyClick(window, Qt::Key_Tab);
+            QCOMPARE(focusName(), QStringLiteral("dialogButton1"));
+            QTest::keyClick(window, Qt::Key_Space);
+        });
+        QCOMPARE(log, QStringList{QStringLiteral("not saved button=boolean:false git_path=string:git")});
+        run(0, QStringLiteral("dialogButton0"), [&] { // typed, then Return in the field saves
+            controlItem(1)->forceActiveFocus(Qt::TabFocusReason);
+            QTest::keyClick(window, Qt::Key_End);
+            type(window, QStringLiteral("-2"));
+            QTest::keyClick(window, Qt::Key_Return);
+        });
+        QCOMPARE(log, QStringList{QStringLiteral("saved button=string:Save git_path=string:git-2")});
+        run(1, QStringLiteral("dialogButton0"), [&] { // SemiColorCalc: Esc
+            QTest::keyClick(window, Qt::Key_Escape);
+        });
+        QCOMPARE(log.value(0).section(QLatin1Char(' '), 0, 1), QStringLiteral("calculated button=boolean:false"));
+        run(4, QStringLiteral("dialogButton1"), [&] { // Toolbox feed trust: Return
+            QTest::keyClick(window, Qt::Key_Return);
+        });
+        QCOMPARE(log, QStringList{QStringLiteral("feed button=string:Fetch once")});
+        run(2, QStringLiteral("dialogButton0"), [&] { // Toolbox install: no buttons, OK
+            QCOMPARE(controller->buttons(), (QStringList{QStringLiteral("OK"), QStringLiteral("Cancel")}));
+            QTest::keyClick(window, Qt::Key_Return);
+        });
+        QCOMPARE(log, QStringList{QStringLiteral("install button=string: macro=string: module=string:")});
     }
 
     void cancelledRunWithdrawsTheDialog()
@@ -568,13 +1197,14 @@ private slots:
     // as drive.py/drive_windows.py send them to the legacy app. Each case's
     // JSON line is the rewrite side of the legacy comparison
     // (artifacts/automation-capture-dialogs.json). The legacy baseline hangs
-    // on all of them, so what is asserted comes from the legacy sources: the
-    // enter button has the focus when the dialog shows (HikariDialog::Show);
-    // Return presses it, Escape ends the dialog with no button (false); Up on
-    // it moves the focus to the edit above (GTK directional focus on Linux,
-    // the previous control on Windows), where Return does nothing, so
-    // float-step-up and int-step-up stay open, unchanged, until the OK
-    // button is clicked (f=1, i=1); typed text reaches no field (e="").
+    // on all of them, so what is asserted comes from the legacy sources and
+    // AD1: the Enter button has the focus when the dialog shows; Return
+    // presses it, Escape ends the dialog with no button (false); Up on a
+    // button does nothing (AD1-keyboard: legacy moved the focus to the field
+    // above, where Return did nothing), so float-step-up and int-step-up
+    // answer unchanged (f=1, i=1); typed text reaches no field (e=""); an id
+    // naming no button is an error before any dialog shows, as in Aegisub
+    // (AD1-button-ids).
     void captureProbeDialogCasesAnswer()
     {
         QFile planFile(QStringLiteral(HIKARI_LEGACY_CAPTURE_PLAN));
@@ -702,13 +1332,15 @@ private slots:
                 .value(QLatin1String(field)).toObject()
                 .value(QStringLiteral("value"));
         };
-        for (const char *name : {"float-step-up", "int-step-up"}) {
-            const QJsonObject record = byName.value(QLatin1String(name));
-            QVERIFY2(record.value(QStringLiteral("dialog_open_after_keys")).toBool(), name);
-            QCOMPARE(record.value(QStringLiteral("focus_after_keys")).toString(), QStringLiteral("control_0"));
-        }
-        for (const char *name : {"defaults-ok", "buttons-return", "edit-typed", "defaults-escape", "buttons-escape"})
+        for (const char *name : {"defaults-ok", "buttons-return", "edit-typed", "defaults-escape", "buttons-escape",
+                                 "button-id-unknown", "float-step-up", "int-step-up"})
             QVERIFY2(!byName.value(QLatin1String(name)).contains(QStringLiteral("dialog_open_after_keys")), name);
+        const QJsonObject invalid = byName.value(QStringLiteral("button-id-invalid"));
+        QVERIFY(!invalid.value(QStringLiteral("dialog_shown")).toBool());
+        QCOMPARE(invalid.value(QStringLiteral("result")).toObject().value(QStringLiteral("ok")).toBool(true), false);
+        QVERIFY2(invalid.value(QStringLiteral("result")).toObject().value(QStringLiteral("error")).toString().contains(
+                     QStringLiteral("Invalid button for id ok")),
+                 qPrintable(QJsonDocument(invalid).toJson()));
         const auto button = [&](const char *name) {
             return byName.value(QLatin1String(name)).value(QStringLiteral("result")).toObject()
                 .value(QStringLiteral("button")).toObject();
@@ -716,6 +1348,7 @@ private slots:
         QCOMPARE(button("defaults-ok").value(QStringLiteral("value")).toString(), QString());
         QCOMPARE(button("defaults-escape").value(QStringLiteral("type")).toString(), QStringLiteral("boolean"));
         QCOMPARE(button("buttons-return").value(QStringLiteral("value")).toString(), QStringLiteral("Apply"));
+        QCOMPARE(button("button-id-unknown").value(QStringLiteral("value")).toString(), QStringLiteral("A"));
         QCOMPARE(button("buttons-escape").value(QStringLiteral("type")).toString(), QStringLiteral("boolean"));
         QCOMPARE(button("buttons-escape").value(QStringLiteral("value")).toBool(), false);
         QCOMPARE(value("float-step-up", "f").toDouble(), 1.0);

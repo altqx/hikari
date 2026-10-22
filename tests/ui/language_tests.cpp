@@ -147,7 +147,13 @@ class LanguageTest : public QObject {
         return nullptr;
     }
     QString fileMenuTitle() const { return item("fileMenuBarItem")->property("text").toString(); }
-    QObject *settingsDialog() const { return root()->findChild<QObject *>(QStringLiteral("settingsDialog")); }
+    // PF1: the Settings window, made at its first opening.
+    QObject *settingsDialog() const
+    {
+        QVariant made;
+        QMetaObject::invokeMethod(root(), "settingsWindow", Q_RETURN_ARG(QVariant, made));
+        return made.value<QObject *>();
+    }
     QQuickItem *dialogItem(const char *name) const
     {
         auto *content = settingsDialog()->property("contentItem").value<QQuickItem *>();
@@ -155,8 +161,7 @@ class LanguageTest : public QObject {
     }
     QQuickItem *settingsButton(const char *name) const
     {
-        auto *footer = settingsDialog()->property("footer").value<QQuickItem *>();
-        return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+        return dialogItem(name); // in the window's footer
     }
     void openSettings()
     {
@@ -392,30 +397,31 @@ private slots:
                  (QStringList{QStringLiteral("English"), QStringLiteral("한국어"), QStringLiteral("Polski"),
                               QStringLiteral("தமிழ்"), QStringLiteral("ไทย")}));
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 0);
-        QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Options"));
+        QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Settings"));
         // The choice applies at once, so its label asks for no restart
         // (O5-language-label; legacy "Language (program restart required)").
         QCOMPARE(dialogItem("settingsLanguageGroup")->property("title").toString(), QStringLiteral("Language"));
         QAccessibleInterface *languageChoice = QAccessible::queryAccessibleInterface(dialogItem("setting_program.language"));
         QVERIFY(languageChoice);
-        QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Language"));
+        QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Interface language"));
         choose("setting_program.language", 2);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsApply"), "click"));
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("pl"));
         QCOMPARE(application->localisation().language(), QStringLiteral("pl"));
         // The window and the open dialog, retranslated.
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&Plik"));
-        QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Opcje"));
         QCOMPARE(settingsButton("settingsApply")->property("text").toString(), QStringLiteral("Zastosuj"));
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 2);
-        // An accessible name (Accessible.name: qsTr(...)).
-        QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_editor.dictionaryLanguage"));
+        // An accessible name (Accessible.name: text, a check box's).
+        QAccessibleInterface *a = QAccessible::queryAccessibleInterface(dialogItem("setting_grid.loadSortedSubs"));
         QVERIFY(a);
-        QCOMPARE(a->text(QAccessible::Name), QStringLiteral("Język sprawdzania pisowni (folder \"Dictionary\")"));
-        // The language label's key is new and unfinished until translator
-        // review: English, never the legacy restart text.
+        QCOMPARE(a->text(QAccessible::Name), QStringLiteral("Wczytywanie posortowanych napisów"));
+        // PF1's keys (the window's title, the language label) are new and
+        // unfinished until translator review: English, never the legacy
+        // restart text.
+        QCOMPARE(settingsDialog()->property("title").toString(), QStringLiteral("Settings"));
         QCOMPARE(dialogItem("settingsLanguageGroup")->property("title").toString(), QStringLiteral("Language"));
-        QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Language"));
+        QCOMPARE(languageChoice->text(QAccessible::Name), QStringLiteral("Interface language"));
         // A string the application keeps: the Untitled tab's name; a tab
         // named after its file keeps it.
         QCOMPARE(tabTitle(0), QStringLiteral("episode.ass"));
@@ -430,16 +436,22 @@ private slots:
         QCOMPARE(application->settingsStore()->text("program.language"), QStringLiteral("en"));
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&File"));
         QCOMPARE(tabTitle(1), QStringLiteral("Untitled"));
-        // "Set default" resets PROGRAM_LANGUAGE at once (legacy
-        // ResetDefault), so the interface is English then too.
+        // "Reset all settings…" resets PROGRAM_LANGUAGE (legacy
+        // ResetDefault) at OK (PF1-staged-reset), so the interface is
+        // English then too.
         application->settingsStore()->set("program.language", QStringLiteral("ko_KR"));
         QCOMPARE(application->localisation().language(), QStringLiteral("ko_KR"));
         openSettings();
         QCOMPARE(dialogItem("setting_program.language")->property("currentIndex").toInt(), 1);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsDialog(), "resetAll"));
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = settingsDialog()->property("question").value<QObject *>()) &&
+                    question->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("reset"))));
+        QCOMPARE(application->localisation().language(), QStringLiteral("ko_KR"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QCOMPARE(application->localisation().language(), QString());
         QTRY_COMPARE(fileMenuTitle(), QStringLiteral("&File"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
 
     // Cold start: the stored language before the window exists, also from
@@ -907,6 +919,7 @@ private slots:
         };
         start();
         QVERIFY(application->openFile(episode));
+        QVERIFY(settingsDialog()); // PF1: the Settings window, made at its first opening
         QCoreApplication::processEvents();
         const Shown english = shown();
         application->settingsStore()->set("program.language", QStringLiteral("pl"));
@@ -1001,7 +1014,8 @@ private slots:
             QTRY_VERIFY(!menu->property("visible").toBool());
             openSettings();
             QTest::qWait(300);
-            QVERIFY(window->grabWindow().save(out + QStringLiteral("/options-%1.png").arg(QLatin1String(c.name))));
+            QVERIFY(qobject_cast<QQuickWindow *>(settingsDialog())->grabWindow().save(
+                out + QStringLiteral("/options-%1.png").arg(QLatin1String(c.name))));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!settingsDialog()->property("visible").toBool());
         }
