@@ -159,7 +159,7 @@ private:
     application::StyleCatalogs m_catalogs;
     Hooks m_hooks;
     std::optional<Edit> m_edit;
-    application::EditSession *m_lastTarget = nullptr;
+    std::optional<application::DocumentId> m_lastTarget;
     backends::LibassRenderer m_renderer;
     QImage m_preview;
     int m_previewKey = 0;

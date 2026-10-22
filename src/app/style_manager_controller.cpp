@@ -401,7 +401,9 @@ void StyleManagerController::saveCatalog()
 
 void StyleManagerController::targetRefreshed()
 {
-    auto *now = m_hooks.target ? m_hooks.target() : nullptr;
+    // By the Document's id: a session loaded in place of the last may take
+    // its address.
+    const auto now = m_hooks.targetDocument ? m_hooks.targetDocument() : std::nullopt;
     const bool switched = now != m_lastTarget;
     m_lastTarget = now;
     emit targetEdited(switched);

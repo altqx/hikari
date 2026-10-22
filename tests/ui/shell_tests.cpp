@@ -7048,6 +7048,24 @@ private slots:
         click("styleEditorApply");
         QCOMPARE(style(first, u8"Sign").fontsize, std::u8string(u8"20"));
         QCOMPARE(style(first, u8"Sign").shadow, std::u8string(u8"6"));
+        // A field the selected Styles shared, edited, then made to differ
+        // elsewhere (a redo gives the first the edited value): still an
+        // edit, written to each.
+        pick(false, {0});
+        edit("styleSpacing", QStringLiteral("3"));
+        click("styleEditorApply");
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(style(first, u8"Default").spacing, std::u8string(u8"0"));
+        pick(false, {0, 1}); // Default, Sign
+        QVERIFY(!mixed().contains(QStringLiteral("spacing")));
+        edit("styleSpacing", QStringLiteral("3"));
+        QVERIFY(application->editor().redo());
+        QTRY_COMPARE(style(first, u8"Default").spacing, std::u8string(u8"3"));
+        QTRY_VERIFY(resolved().contains(QStringLiteral("spacing")));
+        QVERIFY(manager->property("dirty").toBool());
+        click("styleEditorApply");
+        QCOMPARE(style(first, u8"Default").spacing, std::u8string(u8"3"));
+        QCOMPARE(style(first, u8"Sign").spacing, std::u8string(u8"3"));
 
         // Another tab with a taken name and a size not applied: Apply keeps
         // the name, writes the size and says so. Until it is answered the

@@ -230,7 +230,9 @@ DialogWindow {
         values = map
         openedMixed = fields
         mixed = fields.filter(k => kept.indexOf(k) < 0)
-        resolved = resolved.filter(k => fields.indexOf(k) >= 0)
+        // A field edited that the Styles now differ in is set by hand (a
+        // "Multiple values" field): written to each.
+        resolved = kept.filter(k => fields.indexOf(k) >= 0)
         const v = Object.assign({}, map)
         for (const k of kept)
             v[k] = edits[k]
