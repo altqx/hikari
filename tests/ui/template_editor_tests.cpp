@@ -1468,6 +1468,38 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->source() == owner->value && settled(); }, 20'000));
     }
 
+    // Whether a karaoke Line's Actor reaches the templates hangs on its other
+    // fields too (a blank Line `noblank` passes over): an Actor or Style
+    // holding `!` is trusted with the whole Line, so a new text asks again.
+    // A plain Actor's Line takes new text without asking.
+    void anActorHoldingAnExpressionIsTrustedWithItsWholeLine()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::vector<core::LineId> karaoke;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                karaoke.push_back(l->id);
+        QVERIFY(karaoke.size() >= 2);
+        const std::optional<core::LineId> blank = karaoke[0], plain = karaoke[1];
+        QVERIFY(doc.editLine(*blank, [](core::LineRecord &l) {
+            l.text.clear();
+            l.actor = u8"!_G.marker = 1!";
+        }));
+        QVERIFY(doc.editLine(*plain, [](core::LineRecord &l) { l.actor = u8"Aiko"; }));
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*plain, [](core::LineRecord &l) { l.text = u8"{\\k50}ka"; });
+        }));
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*blank, [](core::LineRecord &l) { l.text = u8"{\\k50}ka"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     // Only the Lines the templater runs give trusted Actor and Style
     // values, each in its own role: a value a comment held, or a Style's
     // name, put as a runnable Line's Actor asks first.

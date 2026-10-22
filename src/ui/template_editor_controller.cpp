@@ -960,7 +960,13 @@ std::string TemplateEditorController::fieldOf(const core::LineRecord &line)
     // ($actor), so a trusted Actor under another Style, or a Style's name as
     // an Actor, is new.
     const auto m = application::macroLineOf(line);
-    return std::to_string(m.style.size()) + ':' + m.style + m.actor;
+    std::string field = std::to_string(m.style.size()) + ':' + m.style + m.actor;
+    // A `!` in either can make an expression of what the templates write;
+    // whether it runs hangs on the rest of the Line (a blank one `noblank`
+    // passes over, its Effect, its times), so the whole Line is the choice.
+    if (field.find('!') != std::string::npos)
+        field += '\n' + m.raw + '\x1f' + m.text + '\x1f' + m.translation;
+    return field;
 }
 
 std::set<std::string> TemplateEditorController::sourceFields() const
