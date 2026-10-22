@@ -403,13 +403,17 @@ QString runKind(const core::TagRun &run)
     return names.join(QStringLiteral(", "));
 }
 
-// Whether a run turns a flag on, for its chip's preview: a \b0 or \i0
-// over a bold or italic base turns it off. A \b weight is bold from 600.
-bool runTurnsOn(const core::TagRun &run, const std::u16string &component)
+// Whether a flag is on in a run, for its chip's preview: a \b0 or \i0
+// over a bold or italic base turns it off, and a flag the run leaves is
+// the base's. A \b weight is bold from 600.
+bool runTurnsOn(const core::OriginalTags &tags, const core::TagRun &run, const std::u16string &component)
 {
-    const auto it = run.differs.find(component);
-    if (it == run.differs.end())
-        return false;
+    auto it = run.differs.find(component);
+    if (it == run.differs.end()) {
+        it = tags.base.find(component);
+        if (it == tags.base.end())
+            return false;
+    }
     if (component != u"b")
         return it->second != u"0";
     bool ok = false;
@@ -480,10 +484,10 @@ QVariantList LineEditorController::tagRuns() const
                            {QStringLiteral("text"), qs16(run.text)},
                            {QStringLiteral("kind"), runKind(run)},
                            {QStringLiteral("colour"), runColour(run)},
-                           {QStringLiteral("italic"), runTurnsOn(run, u"i")},
-                           {QStringLiteral("bold"), runTurnsOn(run, u"b")},
-                           {QStringLiteral("underline"), runTurnsOn(run, u"u")},
-                           {QStringLiteral("strikeout"), runTurnsOn(run, u"s")},
+                           {QStringLiteral("italic"), runTurnsOn(*tags, run, u"i")},
+                           {QStringLiteral("bold"), runTurnsOn(*tags, run, u"b")},
+                           {QStringLiteral("underline"), runTurnsOn(*tags, run, u"u")},
+                           {QStringLiteral("strikeout"), runTurnsOn(*tags, run, u"s")},
                            {QStringLiteral("placed"), start >= 0},
                            {QStringLiteral("originalStart"), static_cast<int>(originalStart)},
                            {QStringLiteral("originalEnd"), static_cast<int>(originalEnd)},

@@ -11144,6 +11144,9 @@ private slots:
         QCOMPARE(visualItem("runChipText1")->property("text").toString(), QStringLiteral("plain"));
         QVERIFY(!font("runChipText1").bold());
         QVERIFY(!font("runChipText2").italic());
+        // What a run leaves is the base's: plain stays italic, upright bold.
+        QVERIFY(font("runChipText1").italic());
+        QVERIFY(font("runChipText2").bold());
         application->editor().discard();
     }
 
