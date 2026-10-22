@@ -2997,6 +2997,24 @@ private slots:
         return made.value<QObject *>();
     }
     // E1: a control inside a dialog (popups live in the overlay).
+    // PU6: `text` typed into an editable SpinBox of a DialogWindow, then
+    // Enter with the keyboard still in the box (the default button).
+    void typeIntoSpinBoxAndEnter(const char *dialog, const char *name, const QString &text)
+    {
+        auto *window = qobject_cast<QQuickWindow *>(engine->rootObjects().first()->findChild<QObject *>(QLatin1String(dialog)));
+        QVERIFY(window);
+        window->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(window));
+        auto *editor = dialogItem(dialog, name)->property("contentItem").value<QQuickItem *>();
+        QVERIFY(editor);
+        editor->forceActiveFocus();
+        QTRY_VERIFY(editor->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(editor, "selectAll"));
+        for (const QChar c : text)
+            QTest::keyClick(window, c.toLatin1());
+        QCOMPARE(editor->property("text").toString(), text);
+        QTest::keyClick(window, Qt::Key_Return);
+    }
     QQuickItem *dialogItem(const char *dialog, const char *name) const
     {
         auto *popup = qstrcmp(dialog, "settingsDialog") == 0
@@ -6463,6 +6481,14 @@ private slots:
         QCOMPARE(d.scriptInfo(u8"PlayResX"), std::optional<std::u8string>(u8"1280"));
         QCOMPARE(d.scriptInfo(u8"PlayResY"), std::optional<std::u8string>(u8"360")); // height not edited
         QCOMPARE(d.scriptInfo(u8"Title"), std::optional<std::u8string>(u8"Show"));
+        // PU6: a height typed and Enter with the keyboard still in the box
+        // saves the typed height.
+        QVariant reopened;
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, reopened)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        typeIntoSpinBoxAndEnter("scriptPropertiesDialog", "propHeight", QStringLiteral("720"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->document().scriptInfo(u8"PlayResY"), std::optional<std::u8string>(u8"720"));
 
         // PU6: another tab becoming the editing target (the main window stays
         // usable beside a floating panel the window opened from) closes the
@@ -6799,6 +6825,15 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleOk"), "click"));
         QTRY_VERIFY(!resample->property("visible").toBool());
         QCOMPARE(session->document().scriptInfo(u8"PlayResY"), std::optional(std::u8string(u8"100")));
+        // Typed sizes and Enter with the keyboard still in the box: the
+        // typed values are the ones resampled to.
+        QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+        QTRY_VERIFY(resample->property("visible").toBool());
+        dialogItem("resampleDialog", "resampleHeight")->setProperty("value", 200);
+        typeIntoSpinBoxAndEnter("resampleDialog", "resampleWidth", QStringLiteral("200"));
+        QTRY_VERIFY(!resample->property("visible").toBool());
+        QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"200")));
+        QCOMPARE(session->document().scriptInfo(u8"PlayResY"), std::optional(std::u8string(u8"200")));
         // "Disable warning" stops the question.
         application->setAskForBadResolution(false);
         QVERIFY(!application->askForBadResolution());
