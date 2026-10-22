@@ -6834,6 +6834,20 @@ private slots:
         QTRY_VERIFY(!resample->property("visible").toBool());
         QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"200")));
         QCOMPARE(session->document().scriptInfo(u8"PlayResY"), std::optional(std::u8string(u8"200")));
+        // An answer about sizes that are no longer the shown ones (another
+        // video opened for the Document meanwhile) changes nothing.
+        {
+            const QVariant stale = QVariantMap{{QStringLiteral("subsWidth"), 200}, {QStringLiteral("subsHeight"), 200},
+                                               {QStringLiteral("videoWidth"), 999}, {QStringLiteral("videoHeight"), 555}};
+            QVERIFY(QMetaObject::invokeMethod(root, "askResolutionMismatch", Q_ARG(QVariant, stale)));
+            QQuickWindow *question = nullptr;
+            QTRY_VERIFY((question = messageBox("messages")) && question->isVisible());
+            const auto before = session->historySize();
+            QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("resample"))));
+            QTRY_VERIFY(!question->isVisible());
+            QCOMPARE(session->historySize(), before);
+            QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"200")));
+        }
         // "Disable warning" stops the question.
         application->setAskForBadResolution(false);
         QVERIFY(!application->askForBadResolution());
