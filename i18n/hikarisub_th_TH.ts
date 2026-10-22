@@ -1384,7 +1384,7 @@ in tag &apos;%3&apos;</source>
     </message>
     <message>
         <source>Save subtitle file</source>
-        <translation>บันทึกแฟ้มคำบรรยาย</translation>
+        <translation type="vanished">บันทึกแฟ้มคำบรรยาย</translation>
     </message>
     <message>
         <source>Subtitle file </source>
@@ -1392,33 +1392,17 @@ in tag &apos;%3&apos;</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
     </message>
     <message>
         <source>Chosen file is read only,
 please save with different name or change file attribute.</source>
-        <translation>แฟ้มที่เลือกเป็นแบบอ่านอย่างเดียว
+        <translation type="vanished">แฟ้มที่เลือกเป็นแบบอ่านอย่างเดียว
 โปรดบันทึกโดยใช้ชื่ออื่นหรือเปลี่ยนคุณสมบัติของแฟ้ม</translation>
-    </message>
-    <message>
-        <source>Unsaved changes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose where to save %1.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>These documents have unsaved changes:</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save</source>
         <translation>บันทึก</translation>
-    </message>
-    <message>
-        <source>Discard</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Save as…</source>
@@ -1426,23 +1410,47 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Save all</source>
-        <translation>บันทึกทั้งหมด</translation>
+        <translation type="vanished">บันทึกทั้งหมด</translation>
     </message>
     <message>
-        <source>Discard all</source>
+        <source>%1 was changed by another program. Reloading drops the changes you made here.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Continue</source>
+        <source>%1 was changed by another program.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>ASS subtitles (*.ass)</source>
+        <source>Reload</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Compare</source>
+        <translation type="unfinished">เปรียบเทียบ</translation>
+    </message>
+    <message>
+        <source>Keep mine</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save “%1” as</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>All files (*)</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is read-only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save it under another name, or make the file writable and save again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open subtitles</source>
+        <translation type="unfinished">เปิดคำบรรยาย</translation>
     </message>
     <message>
         <source>Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)</source>
@@ -1454,11 +1462,11 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Reloading</source>
-        <translation>กำลังโหลดใหม่</translation>
+        <translation type="vanished">กำลังโหลดใหม่</translation>
     </message>
     <message>
         <source>Subtitles were modified by another program. Reload?</source>
-        <translation>คำบรรยายถูกแก้ไขโดยโปรแกรมอื่น ต้องการโหลดใหม่หรือไม่?</translation>
+        <translation type="vanished">คำบรรยายถูกแก้ไขโดยโปรแกรมอื่น ต้องการโหลดใหม่หรือไม่?</translation>
     </message>
     <message>
         <source>Yes</source>
@@ -1543,6 +1551,132 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Load from directory</source>
         <translation>โหลดจากไดเรกทอรี</translation>
+    </message>
+    <message>
+        <source>Quit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Save the changes to %n documents before quitting?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Save the changes to “%1” before quitting?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save and quit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Quit without saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close all tabs</source>
+        <translation type="unfinished">ปิดแท็บทั้งหมด</translation>
+    </message>
+    <message numerus="yes">
+        <source>Save the changes to %n documents before closing them?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Save the changes to “%1” before closing?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save and close</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close without saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Save the changes to %n documents before loading the session?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Save the changes to “%1” before loading the session?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save and load</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load without saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove subtitles from the editor</source>
+        <translation type="unfinished">นำคำบรรยายออกจากตัวแก้ไข</translation>
+    </message>
+    <message>
+        <source>Save the changes to “%1” before removing them?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save and remove</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remove without saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the changes to “%1” before replacing them?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save and open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open without saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes you don’t save are lost.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don’t save</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not saved yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saves %1 · Discards %2</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -3294,6 +3428,22 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Restore session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autosaves…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore it at every start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Recent files</source>
         <translation type="unfinished"></translation>
     </message>
@@ -4774,19 +4924,23 @@ great help testing HikariSub on a slow computer)
     <name>HikariSub.Matroska</name>
     <message>
         <source>Confirmation</source>
-        <translation>การยืนยัน</translation>
+        <translation type="vanished">การยืนยัน</translation>
     </message>
     <message>
         <source>Save the file before loading subtitles from the MKV?</source>
-        <translation>ต้องการบันทึกแฟ้มก่อนจะโหลดคำบรรยายจาก MKV หรือไม่?</translation>
+        <translation type="vanished">ต้องการบันทึกแฟ้มก่อนจะโหลดคำบรรยายจาก MKV หรือไม่?</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation>ใช่</translation>
+        <translation type="vanished">ใช่</translation>
     </message>
     <message>
         <source>No</source>
-        <translation>ไม่</translation>
+        <translation type="vanished">ไม่</translation>
+    </message>
+    <message>
+        <source>Loading subtitles from %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -4794,7 +4948,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Load subtitles from an MKV/OGM file</source>
-        <translation type="unfinished">โหลดคำบรรยายจากแฟ้ม MKV / OGM</translation>
+        <translation type="obsolete">โหลดคำบรรยายจากแฟ้ม MKV / OGM</translation>
     </message>
     <message>
         <source>The file does not contain any subtitle tracks.</source>
@@ -4802,6 +4956,26 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Choose the subtitle track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load subtitles from MKV</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the changes to “%1” first?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The subtitles from %1 replace this tab’s.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save and load</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load without saving</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -4814,7 +4988,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Loading subtitles from Matroska.</source>
-        <translation>กำลังอ่านคำบรรยายจากแฟ้ม Matroska</translation>
+        <translation type="vanished">กำลังอ่านคำบรรยายจากแฟ้ม Matroska</translation>
     </message>
     <message>
         <source>Time elapsed: %1</source>
@@ -6430,43 +6604,131 @@ cause it was edited.</source>
 <context>
     <name>HikariSub.Session</name>
     <message>
-        <source>Autosaves of the previous version (read only). Each opens as a new unsaved copy.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Find files</source>
-        <translation>ค้นหาแฟ้ม</translation>
+        <translation type="vanished">ค้นหาแฟ้ม</translation>
     </message>
     <message>
         <source>Filter list</source>
-        <translation>กรองรายการ</translation>
+        <translation type="vanished">กรองรายการ</translation>
     </message>
     <message>
         <source>All words</source>
-        <translation>ทุกคำ</translation>
+        <translation type="vanished">ทุกคำ</translation>
     </message>
     <message>
         <source>Files</source>
-        <translation>แฟ้ม</translation>
+        <translation type="vanished">แฟ้ม</translation>
     </message>
     <message>
         <source>Versions</source>
-        <translation>เวอร์ชัน</translation>
+        <translation type="vanished">เวอร์ชัน</translation>
     </message>
     <message>
         <source>Open</source>
-        <translation>เปิด</translation>
+        <translation type="vanished">เปิด</translation>
     </message>
     <message>
         <source>Open auto save</source>
-        <translation>เปิดแฟ้มบันทึกอัตโนมัติ</translation>
+        <translation type="vanished">เปิดแฟ้มบันทึกอัตโนมัติ</translation>
     </message>
     <message>
         <source>Remove temporary files</source>
-        <translation>ลบแฟ้มชั่วคราว</translation>
+        <translation type="vanished">ลบแฟ้มชั่วคราว</translation>
     </message>
     <message>
-        <source>Dismiss</source>
+        <source>Today %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Yesterday %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autosaves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search autosaves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Any time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last 7 days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last 30 days</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Before a date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved before</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>There are no autosaves.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching autosaves</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autosave of the previous version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Never saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Version of %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Opens it as a new unsaved copy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Read only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">ลบ</translation>
+    </message>
+    <message>
+        <source>Each opens as a new unsaved copy; the original file is not changed. Autosaves of the previous version are read only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete older than…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6474,16 +6736,30 @@ cause it was edited.</source>
         <translation>ปิด</translation>
     </message>
     <message>
-        <source>Unsaved work from a session that did not close. Each opens as a new unsaved copy; the original file is not changed.</source>
+        <source>Delete autosaves saved before</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>There is no unsaved work to recover.</source>
+        <source>A week ago</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>%1 — %2</source>
+        <source>A month ago</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Everything</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete 1 autosave</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Delete %n autosaves</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Autosave</source>
@@ -6495,23 +6771,19 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Auto save</source>
-        <translation>บันทึกอัตโนมัติ</translation>
-    </message>
-    <message>
-        <source>No auto save files</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">บันทึกอัตโนมัติ</translation>
     </message>
     <message>
         <source>Remove selected autosave files</source>
-        <translation>ลบแฟ้มบันทึกอัตโนมัติที่เลือก</translation>
+        <translation type="vanished">ลบแฟ้มบันทึกอัตโนมัติที่เลือก</translation>
     </message>
     <message>
         <source>Remove all auto save files</source>
-        <translation>ลบแฟ้มบันทึกอัตโนมัติทั้งหมด</translation>
+        <translation type="vanished">ลบแฟ้มบันทึกอัตโนมัติทั้งหมด</translation>
     </message>
     <message>
         <source>Remove files older than</source>
-        <translation>ลบแฟ้มที่เก่ากว่า</translation>
+        <translation type="vanished">ลบแฟ้มที่เก่ากว่า</translation>
     </message>
     <message>
         <source>January</source>
@@ -6563,70 +6835,62 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Remove older auto save files</source>
-        <translation>ลบแฟ้มบันทึกอัตโนมัติที่เก่ากว่า</translation>
+        <translation type="vanished">ลบแฟ้มบันทึกอัตโนมัติที่เก่ากว่า</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>คำถาม</translation>
+        <translation type="vanished">คำถาม</translation>
     </message>
     <message>
         <source>Load last session?</source>
-        <translation>ต้องการโหลดเซสชันก่อนหน้าหรือไม่?</translation>
+        <translation type="vanished">ต้องการโหลดเซสชันก่อนหน้าหรือไม่?</translation>
     </message>
     <message>
         <source>The program crashed or was closed improperly.
 Load the last session with the latest autosaved subtitles?</source>
-        <translation>โปรแกรมมีปัญหาหรือปิดตัวลงอย่างไม่ถูกต้อง
+        <translation type="vanished">โปรแกรมมีปัญหาหรือปิดตัวลงอย่างไม่ถูกต้อง
 ต้องการโหลดเซสชันก่อนหน้าพร้อมกับคำบรรยายบันทึกอัตโนมัติล่าสุดหรือไม่?</translation>
     </message>
     <message>
         <source>Choose session file</source>
-        <translation>เลือกแฟ้มเซสชัน</translation>
-    </message>
-    <message>
-        <source>Session file (*.kls)</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">เลือกแฟ้มเซสชัน</translation>
     </message>
     <message>
         <source>Save session file</source>
-        <translation>บันทึกแฟ้มเซสชัน</translation>
+        <translation type="vanished">บันทึกแฟ้มเซสชัน</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>คำเตือน</translation>
+        <translation type="vanished">คำเตือน</translation>
     </message>
     <message>
         <source>Chosen file is read only,
 please save with different name or change file attribute.</source>
-        <translation>แฟ้มที่เลือกเป็นแบบอ่านอย่างเดียว
+        <translation type="vanished">แฟ้มที่เลือกเป็นแบบอ่านอย่างเดียว
 โปรดบันทึกโดยใช้ชื่ออื่นหรือเปลี่ยนคุณสมบัติของแฟ้ม</translation>
     </message>
     <message>
-        <source>Session entries not restored</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Subtitles</source>
-        <translation>คำบรรยาย</translation>
+        <translation type="vanished">คำบรรยาย</translation>
     </message>
     <message>
         <source>Video</source>
-        <translation>วิดีโอ</translation>
+        <translation type="vanished">วิดีโอ</translation>
     </message>
     <message>
         <source>Audio</source>
-        <translation>เสียง</translation>
+        <translation type="vanished">เสียง</translation>
     </message>
     <message>
-        <source>Keyframes</source>
+        <source>Restore session</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>These files of the session could not be found. The tabs stay open; retry, choose the file, or remove the entry.</source>
+        <source>Restore</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tab %1 (%2) – %3: %4</source>
+        <source>Autosaves…</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6639,10 +6903,6 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Remove</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Choose the file</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6676,6 +6936,146 @@ please save with different name or change file attribute.</source>
     <message>
         <source>The tab of %1 has other work now; open the file in a new tab.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sessions (*.kls)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save session</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is read-only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the session under another name, or make the file writable and save again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>keyframes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, this tab’s subtitles, was not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, this tab’s video, was not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, this tab’s audio, was not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, this tab’s keyframes, was not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 was not found.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keyframes file (*.txt *.pass *.stats *.log)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last session had 1 document: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The last session had %n documents: %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Unsaved work in 1 document was autosaved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Unsaved work in %n documents was autosaved.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>HikariSub did not close properly</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the last session?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 document</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n documents</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>HikariSub did not close properly.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the last session (1 document)?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Restore the last session (%n documents)?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
 </context>
 <context>
@@ -7609,19 +8009,57 @@ Styles deleted:
     </message>
     <message>
         <source>Prompt</source>
-        <translation>คำถาม</translation>
+        <translation type="vanished">คำถาม</translation>
     </message>
     <message>
         <source>All tabs will be closed, continue?</source>
-        <translation>ต้องการปิดแท็บทั้งหมดแล้วดำเนินต่อหรือไม่?</translation>
+        <translation type="vanished">ต้องการปิดแท็บทั้งหมดแล้วดำเนินต่อหรือไม่?</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>การยืนยัน</translation>
+        <translation type="vanished">การยืนยัน</translation>
     </message>
     <message>
         <source>Load subtitles named &quot;%1&quot;?</source>
-        <translation type="unfinished">ต้องการโหลดคำบรรยายชื่อ &quot;%1&quot; หรือไม่?</translation>
+        <translation type="obsolete">ต้องการโหลดคำบรรยายชื่อ &quot;%1&quot; หรือไม่?</translation>
+    </message>
+    <message>
+        <source>Close the tab?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Close all %n tabs?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>You are asked about unsaved changes next.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation type="unfinished">เปิดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Open “%1” with the video?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It is next to %1 and has the same name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Video only</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
