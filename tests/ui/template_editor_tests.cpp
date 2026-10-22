@@ -1794,6 +1794,28 @@ private slots:
         QTRY_VERIFY(textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied with problems")));
     }
 
+    // The Line editor holding a draft of the template edited: the edit goes
+    // in after it, not left pending for the timer (Save writes both).
+    void aTemplateEditGoesInAfterTheLineEditorsDraft()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->current() != 0; }, 20'000));
+        const core::LineId templ{editor->current()};
+        application::DraftChange actor;
+        actor.actor = u8"drafted";
+        QVERIFY(session->editDraft(templ, actor));
+        editor->setText(editor->text() + QStringLiteral("{\\bord4}"));
+        editor->commit(); // once, as Save's runs it
+        QVERIFY(!session->draftLine());
+        for (const auto *l : session->document().lines())
+            if (l->id == templ) {
+                QVERIFY(std::u8string_view(l->text).ends_with(u8"{\\bord4}"));
+                QVERIFY(l->actor == u8"drafted");
+            }
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

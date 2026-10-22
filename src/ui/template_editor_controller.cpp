@@ -1080,6 +1080,12 @@ void TemplateEditorController::commit()
     const bool trustedForm = application::templateKindOf(*was) && key != m_trusted.end() &&
                              key->second.lines.contains(change.line) &&
                              key->second.lines.at(change.line).contains(formOf(*was));
+    // A Line editor draft of this Line goes in first, as its own step (the
+    // run would, and then find the revision moved).
+    if (s->draftLine() == change.line && !s->commitDraft()) {
+        m_commitTimer.start(); // a draft that can't go in yet
+        return;
+    }
     application::Command command;
     command.name = "Edit template";
     command.expectedRevision = s->revision();
