@@ -226,7 +226,7 @@ QVariantMap Application::dummyVideoDefaults() const
                                                        QStringLiteral("29.97"), QStringLiteral("30"), QStringLiteral("60")}},
             {QStringLiteral("fps"), QStringLiteral("23.976")},
             {QStringLiteral("duration"), QStringLiteral("0:25:00.00")},
-            {QStringLiteral("frames"), application::dummyVideoDialogFrames()}};
+            {QStringLiteral("frames"), *application::dummyVideoFrames("23.976", 1500000)}};
 }
 
 // GLOBAL_OPEN_DUMMY_VIDEO's OK (HikariSubFrame.cpp:1069-1075): GetDummyText,
@@ -258,11 +258,43 @@ QString Application::openDummyVideo(const QVariantMap &values)
 // (tests/fixtures/legacy-observations/local-v3-next-file-20261013).
 bool Application::nextVideoFile(bool next)
 {
+    const auto step = nextVideoStep(m_nextFile, next);
+    if (!step)
+        return false; // legacy indexes an empty list (V3-next-file-no-recent)
+    if (step->kind == application::NextFileStep::Kind::Open) {
+        m_video->openVideo(QString::fromStdString(step->path));
+        return true;
+    }
+    // Seek(0); Pause(false): back to the start, and the play state toggled
     auto &session = m_video->session();
-    QString path = QString::fromStdString(session.path());
+    const bool done = session.restartToggled();
+    emit m_video->changed();
+    return done;
+}
+
+QString Application::nextVideoFileName(bool next) const
+{
+    // A copy walks, so the question leaves the walk where it is.
+    application::NextFileWalker walker = m_nextFile;
+    const auto step = nextVideoStep(walker, next);
+    if (!step || step->kind != application::NextFileStep::Kind::Open)
+        return {};
+    return QFileInfo(QString::fromStdString(step->path)).fileName();
+}
+
+int Application::dummyVideoFrames(const QString &fps, int durationMs) const
+{
+    const auto frames = application::dummyVideoFrames(fps.toStdString(), durationMs);
+    return frames ? *frames : -1;
+}
+
+std::optional<application::NextFileStep> Application::nextVideoStep(application::NextFileWalker &walker,
+                                                                     bool next) const
+{
+    QString path = QString::fromStdString(m_video->session().path());
     if (path.isEmpty()) {
         if (m_recentVideo.entries().empty())
-            return false; // legacy indexes an empty list (V3-next-file-no-recent)
+            return std::nullopt;
         path = QString::fromStdString(m_recentVideo.entries().back());
     }
     // a folder that cannot be opened (a dummy video's text has none) walks
@@ -286,15 +318,7 @@ bool Application::nextVideoFile(bool next)
                 files->push_back((prefix + QFileInfo(file).fileName()).toStdString());
         }
     }
-    const auto step = m_nextFile.step(std::move(files), path.toStdString(), next);
-    if (step.kind == application::NextFileStep::Kind::Open) {
-        m_video->openVideo(QString::fromStdString(step.path));
-        return true;
-    }
-    // Seek(0); Pause(false): back to the start, and the play state toggled
-    const bool done = session.restartToggled();
-    emit m_video->changed();
-    return done;
+    return walker.step(std::move(files), path.toStdString(), next);
 }
 
 } // namespace hikari::app
