@@ -3328,6 +3328,35 @@ private slots:
         catalogs.waitResolved();
     }
 
+    // PU3 (#305): with no text of the Line's to draw, the picker's lookup
+    // asks for the preview text's characters, as the catalog window's
+    // does; with no catalogs the picker's first choice is still All fonts.
+    void fontPopupsResolveThePreviewTextsCharacters()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        for (const QString &name : catalogs.catalogNames())
+            catalogs.removeCatalog(name);
+        application->settingsStore()->set("styles.previewText", QStringLiteral("{\\b1}日本"));
+        auto *picker = openFontPicker(fontAss("drawing-only.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("sampleText").toString(), QString());
+        QCOMPARE(picker->property("resolvedFor").toString(), QStringLiteral("日本"));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog"}));
+        QCOMPARE(picker->property("choice").toInt(), 0);
+        QCOMPARE(picker->property("listed").toStringList().size(), picker->property("total").toInt());
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        auto *window = named("fontCatalogWindow");
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(window->property("visible").toBool());
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Arial"));
+        QCOMPARE(window->property("resolvedFor").toString(), QStringLiteral("日本"));
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
     // PU3 (#305): names from files (a catalog's, an attached font's file)
     // show as plain text, never as markup that Qt would load; a lookup
     // clears the last answer until its own comes.

@@ -42,6 +42,7 @@ DialogWindow {
     property var selected: ({})   // the selected rows' fonts
     property int resolveRequest: -1
     property var resolution: ({})
+    property string resolvedFor: "" // the characters the last lookup asked for
     property bool extending: false // a Ctrl click moves the current row, keeping the selection
     property string selectedFont: "" // the current row's font, kept when the list changes under it
     // Show "In …" lists the chosen catalog: another catalog, another list.
@@ -125,10 +126,12 @@ DialogWindow {
             return
         }
         catalogs.renderPreview(currentFont, Math.max(1, preview.width), Math.max(1, preview.height))
-        // The preview Style is bold: the bold face is the one drawn. Until
-        // this request's answer no other face is said.
+        // The preview Style is bold: the bold face is the one drawn, with
+        // the preview text's characters. Until this request's answer no
+        // other face is said.
         resolution = ({})
-        resolveRequest = catalogs.resolveFamily(currentFont, true, false)
+        resolvedFor = catalogs.samplePlain(catalogs.previewText, true)
+        resolveRequest = catalogs.resolveFamily(currentFont, true, false, false, resolvedFor)
     }
     // The selected fonts join or leave the chosen catalog (CatalogList's
     // menu over the marked rows).

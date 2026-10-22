@@ -57,6 +57,7 @@ DialogWindow {
     property int total: 0   // every installed font
     property var resolution: ({})
     property int resolveRequest: -1
+    property string resolvedFor: "" // the characters the last lookup asked for
 
     readonly property var shown: {
         const term = search.text.trim().toLowerCase()
@@ -110,7 +111,7 @@ DialogWindow {
         underline.checked = f.underline === true
         strikeOut.checked = f.strikeOut === true
         search.text = ""
-        choices = catalogs.catalogChoices()
+        choices = catalogChoices()
         choice = 0
         relist()
         loading = false
@@ -122,6 +123,12 @@ DialogWindow {
     function current() {
         return { name: family, size: sizeField.text, bold: bold.checked, italic: italic.checked,
                  underline: underline.checked, strikeOut: strikeOut.checked }
+    }
+    // "All fonts" then "Without catalog", then the catalogs (with none,
+    // legacy's clamped insert puts "Without catalog" first).
+    function catalogChoices() {
+        const c = catalogs.catalogChoices()
+        return c.length === 2 && catalogs.catalogNames.length === 0 ? [c[1], c[0]] : c
     }
     function indexIn(list, name) {
         const lower = name.toLowerCase()
@@ -182,10 +189,11 @@ DialogWindow {
     // identities stay distinct, fonts.md).
     function resolve() {
         resolution = ({}) // until this request's answer: no other face is said
-        // The characters the preview draws need the glyphs (a CJK Line, a CJK face).
+        // The characters the preview draws need the glyphs (a CJK Line, a
+        // CJK face): the Line's, else the preview text's.
         const own = sampleText.trim().length > 0
-        resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true,
-                                                own ? catalogs.samplePlain(sampleText, sampleAss) : "")
+        resolvedFor = own ? catalogs.samplePlain(sampleText, sampleAss) : catalogs.samplePlain(catalogs.previewText, true)
+        resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true, resolvedFor)
     }
     function render() {
         const own = sampleText.trim().length > 0
@@ -202,7 +210,7 @@ DialogWindow {
     // subtitles): the choice stays on its catalog while it exists.
     function catalogsEdited() {
         const was = choice >= 0 && choice < choices.length ? choices[choice] : ""
-        choices = catalogs.catalogChoices()
+        choices = catalogChoices()
         const key = was.toLowerCase()
         const at = choice > 1 ? choices.findIndex(c => c.toLowerCase() === key) : choice
         choice = at >= 0 ? at : 0
