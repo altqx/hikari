@@ -54,7 +54,12 @@ public:
     // The window opened or the editing target changed (LoadAssStyles): the
     // catalog named by "Last Style Storage" becomes current when it exists.
     Q_INVOKABLE void refreshLists();
+    // SY1: the catalog refreshLists would make current for the target now.
+    Q_INVOKABLE QString followedCatalog() const;
+    // The Style manager's choice, kept as styles.lastCatalog.
     Q_INVOKABLE bool chooseCatalog(const QString &name);
+    // Another user's load (Settings' conversion catalog): not kept.
+    bool loadCatalog(const QString &name);
     Q_INVOKABLE bool createCatalog(const QString &name); // NewCatalog
     Q_INVOKABLE bool deleteCatalog(const QString &name);
     Q_INVOKABLE void saveCatalog();                       // OnClose saves the store
@@ -81,9 +86,11 @@ public:
     // opened), rename (an existing Document Style renamed)}.
     Q_INVOKABLE QVariantMap commitQuestions(const QVariantMap &values) const;
     // ChangeStyle: "" when committed, else the legacy message. `selected`
-    // are the list's selected rows, used with `applyToSelected`.
+    // are the list's selected rows, used with `applyToSelected`. SY1:
+    // `resolved` are the value keys a multiple selection set by hand, written
+    // to each Style even where the value equals the first one's.
     Q_INVOKABLE QString commitEdit(const QVariantMap &values, const QVariantList &selected, bool applyToSelected,
-                                   bool renameLines);
+                                   bool renameLines, const QStringList &resolved = {});
     Q_INVOKABLE void endEdit();
 
     // PK1's clash review: the clashes a transfer has, in order

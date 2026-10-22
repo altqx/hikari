@@ -6452,6 +6452,21 @@ private slots:
         QCOMPARE(value(0, &core::StyleValues::fontsize), QStringLiteral("20"));
         QCOMPARE(value(1, &core::StyleValues::fontsize), QStringLiteral("36"));
         QCOMPARE(manager->property("assSelected").toList(), (QVariantList{0, 1}));
+        // A "Multiple values" field set by hand, even to the first Style's
+        // value, is an edit: its reset brings "Multiple values" back, Apply
+        // writes it to both.
+        edit("styleSize", QStringLiteral("20"));
+        QVERIFY(on("styleEditorApply"));
+        QTRY_VERIFY(field("styleReset_fontsize")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(field("styleReset_fontsize"), "click"));
+        QCOMPARE(field("styleSize")->property("text").toString(), QString());
+        QVERIFY(manager->property("mixed").toStringList().contains(QStringLiteral("fontsize")));
+        QVERIFY(!manager->property("dirty").toBool());
+        edit("styleSize", QStringLiteral("20"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        QCOMPARE(value(0, &core::StyleValues::fontsize), QStringLiteral("20"));
+        QCOMPARE(value(1, &core::StyleValues::fontsize), QStringLiteral("20"));
+        QVERIFY(!manager->property("mixed").toStringList().contains(QStringLiteral("fontsize")));
 
         // New: a row at the end, made only by Apply or OK; Revert drops it.
         const int count = application->styleManager().documentStyles().size();
@@ -6588,6 +6603,95 @@ private slots:
         QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{0});
         QCOMPARE(field("styleName")->property("text").toString(), styles.documentStyles().value(0));
         QVERIFY(!manager->property("dirty").toBool());
+        // Closed without an answer, the question drops the edit: only Apply
+        // writes to the file shown before.
+        auto *second = targetSession();
+        const std::u8string size = (*application::documentStyles(*second))[0].fontsize;
+        field("styleSize")->setProperty("text", QStringLiteral("55"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleSize"), "textEdited"));
+        application->selectTab(0);
+        QTRY_VERIFY(box() && box()->isVisible());
+        box()->requestActivate();
+        QVERIFY(becomesFocusWindow(box()));
+        QTest::keyClick(box(), Qt::Key_Escape);
+        QTRY_VERIFY(!box()->isVisible());
+        QCOMPARE((*application::documentStyles(*second))[0].fontsize, size);
+        QCOMPARE(targetSession(), first);
+        QVERIFY(!manager->property("dirty").toBool());
+        QCOMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Sign"), QStringLiteral("Default"), QStringLiteral("Alpha")}));
+
+        // Sort by name: the selection follows its Styles.
+        const auto pick = [&](bool store, const QVariantList &rows) {
+            QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, store), Q_ARG(QVariant, QVariant(rows))));
+        };
+        pick(false, {0, 1}); // Sign, Default
+        QVERIFY(QMetaObject::invokeMethod(manager, "sortList", Q_ARG(QVariant, false)));
+        QTRY_COMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Alpha"), QStringLiteral("Default"), QStringLiteral("Sign")}));
+        QCOMPARE(manager->property("assSelected").toList(), (QVariantList{1, 2}));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(styles.documentStyles().value(0), QStringLiteral("Sign"));
+
+        // Deleting under a filter selects only what it shows: Alpha gone,
+        // "alp" shows nothing, so nothing is selected.
+        field("styleFilter")->setProperty("text", QStringLiteral("alp"));
+        QTRY_COMPARE(assList->property("count").toInt(), 1);
+        pick(false, {2});
+        QVERIFY(QMetaObject::invokeMethod(manager, "deleteSelected", Q_ARG(QVariant, false)));
+        QTRY_COMPARE(styles.documentStyles().size(), 2);
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList());
+        QVERIFY(!manager->property("editing").toBool());
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(styles.documentStyles().size(), 3);
+        field("styleFilter")->setProperty("text", QString());
+
+        // Discard before another catalog keeps the file Style open.
+        pick(false, {1});
+        field("styleSize")->setProperty("text", QStringLiteral("61"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleSize"), "textEdited"));
+        QVERIFY(QMetaObject::invokeMethod(manager, "chooseCatalog", Q_ARG(QVariant, styles.catalog())));
+        answer("discard");
+        QVERIFY(manager->property("editing").toBool());
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{1});
+        QCOMPARE(field("styleSize")->property("text").toString(), QStringLiteral("20"));
+
+        // A catalog edit not applied, and a tab naming another catalog: asked
+        // first, applied to the catalog it was made in.
+        QVERIFY(styles.createCatalog(QStringLiteral("SY1 other")));
+        styles.saveCatalog();
+        QVERIFY(styles.createCatalog(QStringLiteral("SY1 from")));
+        styles.addToStore({0}, {});
+        styles.saveCatalog();
+        QVERIFY(QMetaObject::invokeMethod(manager, "refresh"));
+        pick(true, {0});
+        QCOMPARE(field("styleName")->property("text").toString(), QStringLiteral("Sign"));
+        field("styleSize")->setProperty("text", QStringLiteral("77"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleSize"), "textEdited"));
+        {
+            const QString path = dir.filePath(QStringLiteral("lists-catalog.ass"));
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nLast Style Storage: SY1 other\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n");
+            f.close();
+            QVERIFY(application->openFile(path));
+        }
+        const QVariantList tabs = application->tabs();
+        for (int i = 0; i < tabs.size(); ++i)
+            if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String("lists-catalog.ass"))
+                application->selectTab(i);
+        QTRY_VERIFY(box() && box()->isVisible());
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The file shown now uses the catalog “SY1 other”."));
+        answer("apply");
+        QCOMPARE(styles.catalog(), QStringLiteral("SY1 other"));
+        QCOMPARE(styles.catalogStore().find(u8"SY1 from", u8"Sign")->fontsize, std::u8string(u8"77"));
+        QVERIFY(styles.storeStyles().isEmpty());
+        QVERIFY(styles.deleteCatalog(QStringLiteral("SY1 other")));
+        QVERIFY(styles.deleteCatalog(QStringLiteral("SY1 from")));
         QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
         QTRY_VERIFY(!manager->isVisible());
     }

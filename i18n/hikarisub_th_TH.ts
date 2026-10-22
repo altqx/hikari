@@ -7429,6 +7429,10 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The file shown now uses the catalog “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>You edited it in the file shown before.</source>
         <translation type="unfinished"></translation>
     </message>

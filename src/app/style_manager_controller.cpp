@@ -44,6 +44,29 @@ core::Colour colourOf(const QVariant &v)
             m.value(QStringLiteral("a")).toInt()};
 }
 
+// SY1: the style_field flags of valuesOf's keys.
+int fieldsOf(const QStringList &keys)
+{
+    namespace f = application::style_field;
+    static const std::unordered_map<QString, int> flags{
+        {QStringLiteral("fontname"), f::FontName},         {QStringLiteral("fontsize"), f::FontSize},
+        {QStringLiteral("bold"), f::Bold},                 {QStringLiteral("italic"), f::Italic},
+        {QStringLiteral("underline"), f::Underline},       {QStringLiteral("strikeOut"), f::StrikeOut},
+        {QStringLiteral("primary"), f::Primary},           {QStringLiteral("secondary"), f::Secondary},
+        {QStringLiteral("outline"), f::Outline},           {QStringLiteral("back"), f::Shadow},
+        {QStringLiteral("outlineWidth"), f::OutlineWidth}, {QStringLiteral("shadow"), f::ShadowWidth},
+        {QStringLiteral("scaleX"), f::ScaleX},             {QStringLiteral("scaleY"), f::ScaleY},
+        {QStringLiteral("angle"), f::Angle},               {QStringLiteral("spacing"), f::Spacing},
+        {QStringLiteral("borderStyle"), f::BorderStyle},   {QStringLiteral("alignment"), f::Alignment},
+        {QStringLiteral("marginLeft"), f::MarginLeft},     {QStringLiteral("marginRight"), f::MarginRight},
+        {QStringLiteral("marginVertical"), f::MarginVertical}, {QStringLiteral("encoding"), f::Encoding}};
+    int out = 0;
+    for (const QString &key : keys)
+        if (const auto it = flags.find(key); it != flags.end())
+            out |= it->second;
+    return out;
+}
+
 QVariantMap valuesOf(const core::StyleValues &s)
 {
     return {{QStringLiteral("name"), qs(s.name)},
@@ -267,23 +290,37 @@ bool StyleManagerController::available() const
     return session && application::documentStyles(*session).has_value();
 }
 
-void StyleManagerController::refreshLists()
+QString StyleManagerController::followedCatalog() const
 {
     if (auto *session = m_hooks.target ? m_hooks.target() : nullptr) {
         // SY1: "Default", which every new file names, leaves the catalog
         // chosen last as it is.
         const auto last = session->document().scriptInfo(u8"Last Style Storage");
-        if (last && !last->empty() && *last != u8"Default" && *last != m_catalogs.current() && m_catalogs.choose(*last))
-            catalogChosen();
+        const auto names = m_catalogs.names();
+        if (last && !last->empty() && *last != u8"Default" && std::ranges::find(names, *last) != names.end())
+            return qs(*last);
     }
+    return qs(m_catalogs.current());
+}
+
+void StyleManagerController::refreshLists()
+{
+    if (const QString name = followedCatalog(); name != catalog() && m_catalogs.choose(u8(name)))
+        catalogChosen();
     emit changed();
 }
 
 bool StyleManagerController::chooseCatalog(const QString &name)
 {
-    const bool ok = m_catalogs.choose(u8(name));
+    const bool ok = loadCatalog(name);
     if (ok)
         catalogChosen();
+    return ok;
+}
+
+bool StyleManagerController::loadCatalog(const QString &name)
+{
+    const bool ok = m_catalogs.choose(u8(name));
     emit changed();
     return ok;
 }
@@ -445,7 +482,7 @@ QVariantMap StyleManagerController::commitQuestions(const QVariantMap &values) c
 }
 
 QString StyleManagerController::commitEdit(const QVariantMap &values, const QVariantList &selected, bool applyToSelected,
-                                           bool renameLines)
+                                           bool renameLines, const QStringList &resolved)
 {
     if (!m_edit)
         return {};
@@ -459,7 +496,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     edit.style = styleOf(values, m_edit->opened);
     edit.oldName = m_edit->opened.name;
     edit.selected = rowsOf(selected);
-    edit.fields = applyToSelected ? application::compareStyles(m_edit->opened, edit.style) : 0;
+    edit.fields = applyToSelected ? application::compareStyles(m_edit->opened, edit.style) | fieldsOf(resolved) : 0;
     const StyleList before = *styles;
     const auto row = application::commitStyle(*styles, edit);
     if (!row)

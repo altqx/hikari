@@ -5199,7 +5199,7 @@ QVariantMap Application::openSettingsDialog()
     lists.catalogs = stdList(m_styleManager->catalogs());
     lists.currentCatalog = m_styleManager->catalog().toStdString();
     if (const auto load = application::optionsCatalogToLoad(m_settings->settings(), lists)) {
-        m_styleManager->chooseCatalog(QString::fromStdString(*load));
+        m_styleManager->loadCatalog(QString::fromStdString(*load)); // not the manager's choice (SY1)
         lists.currentCatalog = *load;
     }
     lists.styles = stdList(m_styleManager->storeStyles());
@@ -5456,7 +5456,7 @@ QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int in
     auto state = fromVariant(values);
     if (index >= 0 && index < qsizetype(m_optionsLists.catalogs.size())) {
         // Options.SaveOptions(false) then LoadStyles: the current catalog is saved first.
-        m_styleManager->chooseCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
+        m_styleManager->loadCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
         m_optionsLists.currentCatalog = m_optionsLists.catalogs[std::size_t(index)];
         m_optionsLists.styles = stdList(m_styleManager->storeStyles());
     }

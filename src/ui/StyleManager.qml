@@ -43,6 +43,9 @@ DialogWindow {
     // values"), and those the editor opened with (Revert).
     property var mixed: []
     property var openedMixed: []
+    // The "Multiple values" fields set by hand: written to every Style,
+    // even at the first one's value.
+    property var resolved: []
     // New or Duplicate: a Style not in its list until Apply or OK.
     property bool pendingNew: false
     // The fields edited since the editor opened ({key: true}).
@@ -145,6 +148,39 @@ DialogWindow {
         const rows = store ? storeRows : assRows
         return rows.findIndex(r => r.name === name)
     }
+    // The rows of `names` (each name's next row for a repeated name), in one
+    // pass: a file may hold thousands of Styles.
+    function rowsNamed(store, names) {
+        const rows = store ? storeRows : assRows
+        const at = Object.create(null)
+        for (let i = 0; i < rows.length; ++i)
+            (at[rows[i].name] = at[rows[i].name] || []).push(i)
+        const used = Object.create(null)
+        const out = []
+        for (const name of names) {
+            const list = at[name]
+            const n = used[name] || 0
+            if (list && n < list.length) {
+                out.push(list[n])
+                used[name] = n + 1
+            }
+        }
+        return out
+    }
+    // `rows` the filter shows; if none, the shown row nearest the first.
+    function shownOf(store, rows) {
+        const shown = (store ? storeShown : assShown).filter(s => !s.pending).map(s => s.row)
+        if (shown.length === 0 || rows.length === 0)
+            return []
+        const visible = Object.create(null)
+        for (const r of shown)
+            visible[r] = true
+        const kept = rows.filter(r => visible[r])
+        if (kept.length > 0)
+            return kept
+        const after = shown.find(r => r >= rows[0])
+        return [after !== undefined ? after : shown[shown.length - 1]]
+    }
     function sorted(list) { return list.slice().sort((a, b) => a - b) }
     // Selects `rows` in one list (the other's selection goes) and opens the
     // editor on them.
@@ -188,7 +224,7 @@ DialogWindow {
                 if (manager.commit(false))
                     next()
             } else if (id === "discard") {
-                manager.endEditing()
+                manager.revert() // the selection stays open, as it was
                 next()
             }
         })
@@ -221,7 +257,7 @@ DialogWindow {
         const rows = store ? storeSelected : assSelected
         if (rows.length === 0)
             return
-        const left = styles.removeStyles(store, rows)
+        const left = shownOf(store, styles.removeStyles(store, rows))
         if (editing && editingStore === store)
             choose(store, left)
         else if (store)
@@ -244,7 +280,7 @@ DialogWindow {
         const rows = store ? storeRows : assRows
         const names = (store ? storeSelected : assSelected).map(r => rows[r].name)
         styles.sortStyles(store)
-        const found = names.map(n => rowNamed(store, n)).filter(r => r >= 0)
+        const found = rowsNamed(store, names)
         if (store)
             storeSelected = sorted(found)
         else
@@ -255,6 +291,7 @@ DialogWindow {
     // legacy report in the Log, where StyleStore showed a message.
     function deleteUnused() {
         const done = () => {
+            const names = assSelected.filter(r => r < assRows.length).map(r => assRows[r].name)
             const result = styles.deleteUnusedStyles()
             if (result.deleted === undefined)
                 return
@@ -266,8 +303,10 @@ DialogWindow {
                              deleted.length === 0 ? qsTr("Every style is used by a line.")
                                                   : deleted.join(", ") + "\n" + qsTr("Ctrl+Z puts them back."),
                              { details: result.report })
-            if (visible && editing && !editingStore)
-                choose(false, assSelected.filter(r => r < assRows.length))
+            if (visible && editing && !editingStore) {
+                const found = rowsNamed(false, names)
+                choose(false, shownOf(false, found.length > 0 ? found : [0]))
+            }
         }
         if (visible && editing && !editingStore)
             guard(done)
@@ -412,6 +451,7 @@ DialogWindow {
         values = map
         mixed = mixedKeys
         openedMixed = mixed
+        resolved = []
         renameBox.checked = true
         // Y6: StyleChange makes its font list once (ChangeCatalog in its constructor).
         if (!fontCatalogBar.made) {
@@ -433,8 +473,10 @@ DialogWindow {
     function isMixed(key) { return mixed.indexOf(key) >= 0 }
     // A field edited by hand: no longer "Multiple values".
     function edited(key) {
-        if (isMixed(key))
+        if (isMixed(key)) {
             mixed = mixed.filter(k => k !== key)
+            resolved = resolved.concat([key])
+        }
         refreshChanges()
         updatePreview()
     }
@@ -453,12 +495,18 @@ DialogWindow {
         for (const key in v)
             if (!same(v[key], values[key]))
                 out[key] = true
+        for (const key of resolved) // set by hand, maybe to the first Style's value
+            out[key] = true
         changedKeys = out
     }
     // A field's reset: the value it had when the editor opened.
     function resetField(key) {
         const v = editor.values()
         v[key] = values[key]
+        if (resolved.indexOf(key) >= 0) { // back to "Multiple values"
+            resolved = resolved.filter(k => k !== key)
+            mixed = mixed.concat([key])
+        }
         editor.load(v)
         refreshChanges()
         updatePreview()
@@ -469,6 +517,7 @@ DialogWindow {
             return
         }
         mixed = openedMixed
+        resolved = []
         editor.load(values)
         refreshChanges()
         updatePreview()
@@ -521,7 +570,8 @@ DialogWindow {
         const rows = editedRows
         const many = multi
         const v = editor.values()
-        const problem = styles.commitEdit(v, many ? rows : [], many, renameBox.visible && renameBox.checked)
+        const problem = styles.commitEdit(v, many ? rows : [], many, renameBox.visible && renameBox.checked,
+                                          many ? resolved : [])
         if (problem !== "") {
             showError(problem)
             return false
@@ -561,34 +611,42 @@ DialogWindow {
                 manager.reloadRows()
                 return
             }
+            // The new tab may name another catalog (Last Style Storage).
+            const catalogMoves = manager.styles.followedCatalog() !== manager.styles.catalog
+            const onStore = manager.editing && manager.editingStore
+            const onFile = manager.editing && !manager.editingStore
             const shown = () => {
                 manager.refresh()
-                manager.choose(false, manager.assRows.length > 0 ? [0] : [])
+                if (onFile)
+                    manager.choose(false, manager.assRows.length > 0 ? [0] : [])
+                else if (onStore && catalogMoves)
+                    manager.choose(true, manager.storeRows.length > 0 ? [0] : [])
+                else
+                    manager.assSelected = [] // a catalog Style stays open
             }
-            if (manager.editing && !manager.editingStore) {
-                if (!manager.dirty) {
-                    shown()
-                    return
-                }
-                // The lists stay the file's the edit was made in until answered.
-                manager.ask({
-                    title: qsTr("Edit style"),
-                    text: qsTr("Apply the changes to “%1”?").arg(manager.pendingNew ? nameField.text : manager.values.name),
-                    detail: qsTr("You edited it in the file shown before."),
-                    severity: "warning",
-                    choices: [{ id: "discard", text: qsTr("Discard"), role: "destructive" },
-                              { id: "apply", text: qsTr("Apply"), role: "accept", isDefault: true }]
-                }, id => {
-                    // Closed without an answer: the edit is kept, applied.
-                    if (id !== "discard")
-                        manager.commit(false)
-                    manager.endEditing()
-                    shown()
-                })
-            } else {
-                manager.refresh()
-                manager.assSelected = []
+            // An edit not applied that the switch would leave on another
+            // file or catalog is asked about first; the lists stay where the
+            // edit was made until answered.
+            if (!manager.dirty || (onStore && !catalogMoves)) {
+                shown()
+                return
             }
+            manager.ask({
+                title: qsTr("Edit style"),
+                text: qsTr("Apply the changes to “%1”?").arg(manager.pendingNew ? nameField.text : manager.values.name),
+                detail: onStore ? qsTr("The file shown now uses the catalog “%1”.").arg(manager.styles.followedCatalog())
+                                : qsTr("You edited it in the file shown before."),
+                severity: "warning",
+                choices: [{ id: "discard", text: qsTr("Discard"), role: "destructive" },
+                          { id: "apply", text: qsTr("Apply"), role: "accept", isDefault: true }]
+            }, id => {
+                // Only Apply writes it: Discard, or the question closed,
+                // drops the edit.
+                if (id === "apply")
+                    manager.commit(false)
+                manager.revert()
+                shown()
+            })
         }
     }
 
@@ -1064,14 +1122,17 @@ DialogWindow {
         Layout.fillWidth: true
         Layout.fillHeight: true
         // The sidebar: the filter, the catalog and its Styles, the copies,
-        // this file's Styles. It gives up to 40 pixels before the editor
-        // has to scroll sideways (1280 x 800 at 150 %).
+        // this file's Styles. It narrows to its strips' width (260 pixels
+        // here) before the editor has to scroll sideways (1280 x 800 at
+        // 150 %).
         Rectangle {
             objectName: "styleSidebar"
+            readonly property real narrowest: Math.max(260, Math.ceil(Math.max(storeTools.implicitWidth,
+                                                                               copyRow.implicitWidth)) + 24)
             color: Theme.background
-            Layout.preferredWidth: Math.max(260, Math.min(300, body.width - 1 - editorScroll.narrowest
-                                                                  - (editorScroll.width - editorScroll.availableWidth)))
-            Layout.minimumWidth: 260
+            Layout.preferredWidth: Math.max(narrowest, Math.min(300, body.width - 1 - editorScroll.narrowest
+                                                                         - (editorScroll.width - editorScroll.availableWidth)))
+            Layout.minimumWidth: narrowest
             Layout.fillHeight: true
             implicitHeight: side.implicitHeight + 24
             ColumnLayout {
@@ -1138,7 +1199,7 @@ DialogWindow {
                         onClicked: manager.askDeleteCatalog()
                     }
                 }
-                ListTools { objectName: "storeCommands"; store: true; Layout.fillWidth: true }
+                ListTools { id: storeTools; objectName: "storeCommands"; store: true; Layout.fillWidth: true }
                 Frame {
                     padding: 1
                     Layout.fillWidth: true
@@ -1155,6 +1216,7 @@ DialogWindow {
                     }
                 }
                 RowLayout {
+                    id: copyRow
                     spacing: 6
                     Layout.topMargin: 2
                     IconTextButton {
