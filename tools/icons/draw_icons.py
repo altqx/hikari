@@ -567,6 +567,9 @@ icon("tool-rotate-z", "Text Z rotation", ["FRZ.png"], [VISUAL],
 icon("tool-rotate-xy", "Text X / Y rotation", ["FRXY.png"], [VISUAL],
      stroke("M8 1.5v13") + stroke("M11 4.5c2.25.5 3.5 1.5 3.5 2.5 0 1.75-3 3-6.5 3S1.5 8.75 1.5 7c0-1.25 1.75-2.25 4.25-2.75")
      + accent(stroke("M4.25 3l1.5 1.25L4.5 5.75")))
+icon("tool-perspective", "Perspective", [], [VISUAL],
+     stroke("M4.5 3.5l8-1.5 2 11.5-12.5-1.5z") + stroke("M8.5 2.75L8.25 12.75M3.25 7.75l10.25-.5")
+     + accent(dot(4.5, 3.5, 1.5), dot(12.5, 2, 1.5), dot(14.5, 13.5, 1.5), dot(2, 12, 1.5)))
 icon("tool-clip-rect", "Rectangle clipping", ["cliprect.png"], [VISUAL],
      stroke("M4 2.5h8M4 13.5h8M2.5 4v8M13.5 4v8") + accent(frect(1, 1, 3, 3), frect(12, 1, 3, 3), frect(1, 12, 3, 3),
                                                        frect(12, 12, 3, 3)))
@@ -635,6 +638,17 @@ icon("tag-edit", "Edit the tag list", [], [VISUAL],
 icon("two-points", "Set angle from 2 points", ["TwoPoints.png"], [VISUAL],
      stroke("M3.5 12.5l9-8") + stroke("M1.5 12.5h13") + stroke("M8.5 12.5a5 5 0 0 0-1.25-3.25")
      + accent(dot(3.5, 12.5, 1.5), dot(12.5, 4.5, 1.5)))
+# VT3: the Perspective tool's toggles
+icon("perspective-plane", "Show surrounding plane", [], [VISUAL],
+     stroke("M5.5 5.5l5-.75 1 5.75-6.75-.75z")
+     + accent(stroke("M2.5 2.5h1.5M6 2l1.5-.25M10 1.25l2.5-.25.5 2.5M13.5 5.5l.5 2.75M14.5 10.5l.5 3-2.5-.25"
+                     "M10 13l-2-.25M5.5 12.5l-2-.25-1.5-.25.25-2.5M1.5 7.5l.5-2.5")))
+icon("perspective-lock-outer", "Lock outer quad", [], [VISUAL],
+     stroke("M2.5 2.5l9-1 1 6M8 13.5l-6.5-.5 1-10.5")
+     + accent(rect(9.5, 11.5, 5, 3.5, .5), stroke("M10.5 11.5v-1.25a1.5 1.5 0 0 1 3 0v1.25")))
+icon("perspective-grid", "Show grid", [], [VISUAL],
+     stroke("M4.5 2.5l7-.5 3 12.5-13 .25z")
+     + accent(stroke("M6.75 2.25l-1.5 12.5M9.25 2.25l1.25 12.25M3.25 6.5l9.5-.5M2.25 10.5l11.5-.25")))
 icon("frame-to-scale", "Set scale by rectangle", ["FrameToScale.png"], [VISUAL],
      stroke("M2.5 9.5v-6a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3M9.5 12.5h-6a1 1 0 0 1-1-1")
      + accent(stroke("M12.5 9.5v5M10 12h5")))
