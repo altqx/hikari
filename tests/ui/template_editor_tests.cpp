@@ -2671,6 +2671,34 @@ private slots:
         QMetaObject::invokeMethod(popup, "close");
     }
 
+    // Apply to the selected Lines leaves the other Lines' output from the
+    // old templates: an edit since stays marked as not applied.
+    void aSelectedApplyKeepsTheChangedMarks()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
+        QVERIFY(editor->apply(false));
+        editor->applied(templater->report);
+        QCOMPARE(editor->changedCount(), 0);
+        editor->setText(editor->text() + QStringLiteral("{\\bord3}"));
+        editor->commit();
+        editor->refresh();
+        QCOMPARE(editor->changedCount(), 1);
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApplySelected(); }, 20'000));
+        QVERIFY(editor->apply(true));
+        QVERIFY(templater->report.find("\"mode\":\"selected\"") != std::string::npos);
+        editor->applied(templater->report);
+        editor->refresh();
+        QCOMPARE(editor->changedCount(), 1);
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
+        QVERIFY(editor->apply(false));
+        editor->applied(templater->report);
+        editor->refresh();
+        QCOMPARE(editor->changedCount(), 0);
+    }
+
     void applyFromThePanelIsOneStepAndSaysWhatItWrote()
     {
         open(QStringLiteral("stock-tutorials.ass"));

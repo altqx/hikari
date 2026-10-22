@@ -1213,7 +1213,10 @@ void TemplateEditorController::applied(const std::string &report, std::optional<
                    {QStringLiteral("karaokeLines"), o.value(QLatin1String("karaoke_lines")).toInt()},
                    {QStringLiteral("seconds"), o.value(QLatin1String("seconds")).toDouble()},
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
-    takeBaseline();
+    // A selected-Lines run leaves the other Lines' output from the templates
+    // as they were: what changed since the last whole Apply stays marked.
+    if (o.value(QLatin1String("mode")).toString() != QLatin1String("selected"))
+        takeBaseline();
     trust(); // the user ran them
     if (const auto *ss = session())
         m_applyRevision = ss->revision();
