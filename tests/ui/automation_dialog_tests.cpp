@@ -122,11 +122,12 @@ class AutomationDialogTests : public QObject {
     {
         return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
     }
-    void wheel(QQuickItem *item, int notches)
+    void wheel(QQuickItem *item, int notches) { wheelBy(item, 120 * notches); }
+    void wheelBy(QQuickItem *item, int angle)
     {
         const QPointF at = centre(item);
-        QWheelEvent event(at, window->mapToGlobal(at), QPoint(), QPoint(0, 120 * notches), Qt::NoButton,
-                          Qt::NoModifier, Qt::NoScrollPhase, false);
+        QWheelEvent event(at, window->mapToGlobal(at), QPoint(), QPoint(0, angle), Qt::NoButton, Qt::NoModifier,
+                          Qt::NoScrollPhase, false);
         QGuiApplication::sendEvent(window, &event);
     }
 
@@ -545,6 +546,19 @@ private slots:
         QCOMPARE(i->property("placeholderText").toString(), QStringLiteral("10 – 500"));
         QTest::keyClick(window, Qt::Key_Tab);
         QCOMPARE(i->property("text").toString(), QStringLiteral("497")); // emptied: the value stays
+        i->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("4x")); // never blocked; no number: back to the value
+        QCOMPARE(i->property("text").toString(), QStringLiteral("4x"));
+        QVERIFY(i->property("bad").toBool());
+        QTRY_VERIFY2(hint().contains(QStringLiteral("4x becomes 497")), qPrintable(hint()));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
+        wheelBy(i, 60); // half notches add up
+        QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
+        wheelBy(i, 60);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("498"));
+        wheelBy(i, -120);
 
         QQuickItem *f = controlItem(1);
         auto *up = qobject_cast<QQuickItem *>(findNamed(f, QStringLiteral("numberUp")));
@@ -598,7 +612,7 @@ private slots:
     void hintStripShowsTheHoveredElseTheFocusedHint()
     {
         DialogRequest request;
-        request.controls = {DialogControl{.kind = "label", .name = "l", .label = "&Tags"},
+        request.controls = {DialogControl{.kind = "label", .name = "l", .hint = "Override tags.", .label = "&Tags"},
                             DialogControl{.kind = "edit", .name = "t", .hint = "The tags to gradient.", .x = 1, .text = ""},
                             DialogControl{.kind = "checkbox", .name = "k", .hint = "Leave the border as it is.", .x = 1,
                                           .y = 1, .label = "&Ignore border"},
@@ -614,6 +628,7 @@ private slots:
         QTRY_COMPARE(hint(), QStringLiteral("The tags to gradient."));
         QCOMPARE(accessible(controlItem(1), QAccessible::Description), QStringLiteral("The tags to gradient."));
         QCOMPARE(accessible(controlItem(1), QAccessible::Name), QStringLiteral("Tags"));
+        QCOMPARE(accessible(controlItem(0), QAccessible::Description), QStringLiteral("Override tags."));
         QTest::mouseMove(window, centre(controlItem(2)));
         QTRY_COMPARE(hint(), QStringLiteral("Leave the border as it is."));
         QTest::mouseMove(window, QPoint(2, window->height() - 2));
@@ -770,13 +785,17 @@ private slots:
         request.controls = {DialogControl{.kind = "label", .name = "l", .label = "Notes"},
                             DialogControl{.kind = "textbox", .name = "t", .x = 1, .text = "a"},
                             DialogControl{.kind = "label", .name = "m", .y = 1, .label = "Tags"},
-                            DialogControl{.kind = "edit", .name = "e", .x = 1, .y = 1, .text = ""}};
+                            DialogControl{.kind = "edit", .name = "e", .x = 1, .y = 1, .text = ""},
+                            DialogControl{.kind = "label", .name = "s", .y = 2, .label = "Size"},
+                            DialogControl{.kind = "intedit", .name = "i", .x = 2, .y = 2, .intValue = 3}};
         std::optional<DialogResult> result;
         showDialog(request, result);
         QVERIFY(window->maximumWidth() > window->width());
-        const qreal label = controlItem(0)->width(), edit = controlItem(3)->width(), box = controlItem(1)->height();
+        const qreal label = controlItem(0)->width(), edit = controlItem(3)->width(), box = controlItem(1)->height(),
+                    number = controlItem(5)->width();
         window->resize(window->width() + 200, window->height() + 150);
-        QTRY_COMPARE(controlItem(3)->width(), edit + 200);
+        QTRY_VERIFY(controlItem(3)->width() > edit + 50);
+        QTRY_VERIFY(controlItem(5)->width() > number + 50); // a number's own column grows too
         QCOMPARE(controlItem(0)->width(), label);
         QTRY_VERIFY(controlItem(1)->height() > box + 100);
         window->close();
@@ -796,6 +815,19 @@ private slots:
         QTRY_VERIFY(scroll->property("contentY").toReal() > 0);
         const QPointF at = controlItem(79)->mapToItem(scroll, QPointF(0, 0));
         QVERIFY(at.y() >= 0 && at.y() + controlItem(79)->height() <= scroll->height());
+        window->close();
+        QTRY_VERIFY(result.has_value());
+
+        DialogRequest wide; // wider than the screen: the focused field comes into view across too
+        for (int x = 0; x < 40; ++x)
+            wide.controls.push_back(DialogControl{.kind = "edit", .name = "w" + std::to_string(x), .x = x, .text = ""});
+        showDialog(wide, result);
+        QVERIFY(window->width() <= room.width());
+        controlItem(39)->forceActiveFocus(Qt::TabFocusReason);
+        QTRY_VERIFY(scroll->property("contentX").toReal() > 0);
+        const QPointF across = controlItem(39)->mapToItem(scroll, QPointF(0, 0));
+        QVERIFY2(across.x() >= 0 && across.x() + controlItem(39)->width() <= scroll->width(),
+                 qPrintable(QString::number(across.x())));
         window->close();
         QTRY_VERIFY(result.has_value());
     }

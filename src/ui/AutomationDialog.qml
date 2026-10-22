@@ -7,8 +7,8 @@
 // - a resizable DG1 window titled with the macro, its size and place kept per
 //   script and dialog (controller.dialogId); never larger than the screen's
 //   free area: past that the grid scrolls and the hint strip and the
-//   buttons stay. Columns holding an edit, a textbox, a dropdown or a colour
-//   take the extra width, rows holding a textbox the extra height;
+//   buttons stay. Columns holding an edit, a textbox, a number, a dropdown
+//   or a colour take the extra width, rows holding a textbox the extra height;
 // - the hint strip above the buttons shows the hovered control's hint, else
 //   the focused one's (with a number's range), at one height while open;
 //   the hint is the control's tooltip and accessible description;
@@ -53,12 +53,12 @@ DialogWindow {
         return list
     }
     // The columns that take the extra width: those of an edit, a textbox, a
-    // dropdown or a colour one column wide, and the columns of a wider one
+    // number, a dropdown or a colour one column wide, and the columns of a wider one
     // when none of its columns does already.
     readonly property var growingColumns: {
         const grows = {}
-        const growing = controller.controls.filter(c => ["edit", "textbox", "dropdown", "color", "coloralpha"]
-                                                   .indexOf(c.kind) >= 0)
+        const growing = controller.controls.filter(c => ["edit", "alpha", "textbox", "intedit", "floatedit",
+                                                         "dropdown", "color", "coloralpha"].indexOf(c.kind) >= 0)
         for (const c of growing)
             if (c.width === 1)
                 grows[c.x] = true
@@ -353,6 +353,11 @@ DialogWindow {
                 // Brings the focused control into view.
                 function reveal(item) {
                     const p = item.mapToItem(grid, 0, 0)
+                    const across = scroll.width - scroll.barWidth - 4
+                    if (p.x < scroll.contentX)
+                        scroll.contentX = Math.max(0, p.x - 4)
+                    else if (p.x + item.width > scroll.contentX + across)
+                        scroll.contentX = Math.min(scroll.contentWidth - across, p.x + item.width - across + 4)
                     if (p.y < scroll.contentY)
                         scroll.contentY = Math.max(0, p.y - 4)
                     else if (p.y + item.height > scroll.contentY + scroll.height)
@@ -487,6 +492,10 @@ DialogWindow {
             readonly property var focusTargets: []
             text: window.shownLabel(spec.label)
             textFormat: Text.StyledText
+            Accessible.description: spec.hint
+            ToolTip.text: spec.hint
+            ToolTip.visible: labelHover.hovered && spec.hint !== ""
+            HoverHandler { id: labelHover }
             function readValue() { return undefined }
             Shortcut {
                 sequence: window.mnemonic(label.spec.label) !== "" ? "Alt+" + window.mnemonic(label.spec.label) : ""
@@ -569,6 +578,9 @@ DialogWindow {
             property real value: isInt ? spec.intValue : spec.number
             readonly property real typed: parse(text)
             readonly property bool outOfRange: !isNaN(typed) && (typed < lo || typed > hi)
+            // Text that is no number: it goes back to the value when committed.
+            readonly property bool notANumber: isNaN(typed) && text.trim() !== ""
+            readonly property bool bad: outOfRange || notANumber
             readonly property string rangeText: {
                 if (hasLo && hasHi)
                     return steps && !isInt ? qsTr("%1 to %2, in steps of %3").arg(shown(lo)).arg(shown(hi)).arg(shown(step))
@@ -579,11 +591,13 @@ DialogWindow {
                     return qsTr("At most %1").arg(shown(hi))
                 return ""
             }
-            readonly property string overflowText: outOfRange
-                ? qsTr("%1 becomes %2 when you leave the field.").arg(text).arg(shown(clamp(typed))) : ""
+            readonly property string overflowText: bad
+                ? qsTr("%1 becomes %2 when you leave the field.").arg(text).arg(shown(outOfRange ? clamp(typed) : value))
+                : ""
             readonly property string overflowLongest: qsTr("%1 becomes %2 when you leave the field.")
                 .arg(shown(hasHi ? hi : lo)).arg(shown(hasHi ? hi : lo))
             property bool holding: false
+            property real wheelRest: 0
             property real oldX: 0
             property real oldY: 0
 
@@ -623,10 +637,7 @@ DialogWindow {
             rightPadding: steps ? arrows.width + 4 : 8
             placeholderText: rangeText.replace(/ to /, " – ")
             placeholderTextColor: Theme.muted
-            color: outOfRange ? Theme.danger : palette.text
-            validator: RegularExpressionValidator {
-                regularExpression: num.isInt ? /^-?[0-9]*$/ : /^-?[0-9]*([.,][0-9]*)?([eE][-+]?[0-9]*)?$/
-            }
+            color: bad ? Theme.danger : palette.text
             Accessible.name: window.nameFor(spec)
             Accessible.description: spec.hint
             ToolTip.text: spec.hint
@@ -647,7 +658,7 @@ DialogWindow {
             Rectangle {
                 objectName: "numberOutOfRange"
                 anchors.fill: parent
-                visible: num.outOfRange
+                visible: num.bad
                 color: "transparent"
                 border.width: 2
                 border.color: Theme.danger
@@ -734,7 +745,12 @@ DialogWindow {
                         wheel.accepted = false
                         return
                     }
-                    num.stepBy(Math.trunc(wheel.angleDelta.y / 120))
+                    // Precision wheels and touchpads send parts of a notch.
+                    num.wheelRest += wheel.angleDelta.y !== 0 ? wheel.angleDelta.y : wheel.pixelDelta.y * 8
+                    const notches = Math.trunc(num.wheelRest / 120)
+                    num.wheelRest -= notches * 120
+                    if (notches !== 0)
+                        num.stepBy(notches)
                 }
             }
         }
