@@ -1,22 +1,40 @@
-// Y3: legacy ScriptInfo "ASS subtitle properties" (GLOBAL_OPEN_ASS_PROPERTIES).
-// Only the fields the user changes are written (legacy IsModified), with the
-// legacy defaults applied on Save.
+// Y3, PU6 (#308): legacy ScriptInfo "ASS subtitle properties"
+// (GLOBAL_OPEN_ASS_PROPERTIES), titled with its menu command, on DG1's
+// frame, fixed, modal to the main window. Credits, Resolution and Rendering
+// are sections with the labels beside the fields; legacy's "Link the layout
+// resolution to the subtitle resolution" is "Same as the subtitles" under
+// the Layout row it controls. Only the fields the user changes are written
+// (legacy IsModified), with the legacy defaults applied on Save.
+pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.ScriptProperties"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-Dialog {
+DialogWindow {
     id: dialog
     objectName: "scriptPropertiesDialog"
     required property var app
     title: qsTr("ASS file properties") // the menu command's name
-    // K1: the title with the set's script-properties icon (legacy ScriptInfo SetIcon(ASSPROPS)).
-    header: IconDialogHeader { objectName: "scriptPropertiesDialogTitle"; iconRole: "script-properties"; text: dialog.title }
+    dialogId: "scriptProperties"
     modal: true
+    defaultButton: saveButton
+    initialFocus: titleField
     property var initial: ({})
     property var edits: ({})
+    // The Document it opened for. Opened from a floating panel, it is modal
+    // to that panel only and another tab can become the editing target:
+    // that closes it rather than writing these values to the other
+    // Document.
+    property var document: 0
+    Connections {
+        target: dialog.app
+        function onTabsChanged() {
+            if (dialog.visible && dialog.app.editingDocument() !== dialog.document)
+                dialog.reject()
+        }
+    }
 
     // False for a Document that is not ASS.
     function openFor() {
@@ -42,6 +60,7 @@ Dialog {
         collisionBox.currentIndex = p.reverseCollisions ? 1 : 0
         borderBox.checked = p.scaledBorderAndShadow
         edits = ({})
+        document = app.editingDocument()
         open()
         return true
     }
@@ -58,45 +77,54 @@ Dialog {
                  matrix: matrixBox.currentIndex, wrapStyle: wrapBox.currentIndex,
                  reverseCollisions: collisionBox.currentIndex === 1, scaledBorderAndShadow: borderBox.checked }
     }
-    footer: DialogButtonBox {
-        Button { objectName: "scriptPropertiesSave"; text: qsTr("Save"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
-        Button { text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
+    onAccepted: {
+        if (app.editingDocument() === document)
+            app.applyScriptProperties(values(), edits, linkBox.checked)
     }
-    onAccepted: app.applyScriptProperties(values(), edits, linkBox.checked)
 
-    ColumnLayout {
-        anchors.fill: parent
-        GroupBox {
-            title: qsTr("Subtitle information")
+    component FieldLabel: Label { Layout.preferredWidth: 104 }
+    component WideField: TextField { Layout.fillWidth: true; Layout.preferredWidth: 300 }
+    component SizeBox: SpinBox { from: 0; to: 100000; editable: true; Layout.preferredWidth: 110 }
+
+    FormSection {
+        objectName: "propCredits"
+        title: qsTr("Credits")
+        ruled: false
+        GridLayout {
+            columns: 2
+            columnSpacing: 12
+            rowSpacing: 6
             Layout.fillWidth: true
-            GridLayout {
-                anchors.fill: parent
-                columns: 2
-                Label { text: qsTr("Title") }
-                TextField { id: titleField; objectName: "propTitle"; Layout.fillWidth: true; Accessible.name: qsTr("Title"); onTextEdited: dialog.mark("title") }
-                Label { text: qsTr("Author") }
-                TextField { id: scriptField; objectName: "propAuthor"; Layout.fillWidth: true; Accessible.name: qsTr("Author"); onTextEdited: dialog.mark("originalScript") }
-                Label { text: qsTr("Translator") }
-                TextField { id: translationField; objectName: "propTranslator"; Layout.fillWidth: true; Accessible.name: qsTr("Translator"); onTextEdited: dialog.mark("originalTranslation") }
-                Label { text: qsTr("Proofreading") }
-                TextField { id: editingField; Layout.fillWidth: true; Accessible.name: qsTr("Proofreading"); onTextEdited: dialog.mark("originalEditing") }
-                Label { text: qsTr("Timer") }
-                TextField { id: timingField; Layout.fillWidth: true; Accessible.name: qsTr("Timer"); onTextEdited: dialog.mark("originalTiming") }
-                Label { text: qsTr("Editing") }
-                TextField { id: updatedField; Layout.fillWidth: true; Accessible.name: qsTr("Editing"); onTextEdited: dialog.mark("updatedBy") }
-            }
+            FieldLabel { text: qsTr("Title") }
+            WideField { id: titleField; objectName: "propTitle"; Accessible.name: qsTr("Title"); onTextEdited: dialog.mark("title") }
+            FieldLabel { text: qsTr("Author") }
+            WideField { id: scriptField; objectName: "propAuthor"; Accessible.name: qsTr("Author"); onTextEdited: dialog.mark("originalScript") }
+            FieldLabel { text: qsTr("Translator") }
+            WideField { id: translationField; objectName: "propTranslator"; Accessible.name: qsTr("Translator"); onTextEdited: dialog.mark("originalTranslation") }
+            FieldLabel { text: qsTr("Proofreading") }
+            WideField { id: editingField; objectName: "propProofreading"; Accessible.name: qsTr("Proofreading"); onTextEdited: dialog.mark("originalEditing") }
+            FieldLabel { text: qsTr("Timer") }
+            WideField { id: timingField; objectName: "propTimer"; Accessible.name: qsTr("Timer"); onTextEdited: dialog.mark("originalTiming") }
+            FieldLabel { text: qsTr("Editing") }
+            WideField { id: updatedField; objectName: "propEditing"; Accessible.name: qsTr("Editing"); onTextEdited: dialog.mark("updatedBy") }
         }
-        GroupBox {
-            title: qsTr("Resolution")
+    }
+    FormSection {
+        objectName: "propResolution"
+        title: qsTr("Resolution")
+        GridLayout {
+            columns: 2
+            columnSpacing: 12
+            rowSpacing: 6
             Layout.fillWidth: true
-            GridLayout {
-                anchors.fill: parent
-                columns: 5
-                Label { text: qsTr("Subtitles") }
-                SpinBox { id: widthField; objectName: "propWidth"; from: 0; to: 100000; editable: true; Accessible.name: qsTr("Video width"); onValueModified: dialog.mark("playResX") }
+            FieldLabel { text: qsTr("Subtitles") }
+            RowLayout {
+                spacing: 6
+                SizeBox { id: widthField; objectName: "propWidth"; Accessible.name: qsTr("Video width"); onValueModified: dialog.mark("playResX") }
                 Label { text: "×" }
-                SpinBox { id: heightField; objectName: "propHeight"; from: 0; to: 100000; editable: true; Accessible.name: qsTr("Video height"); onValueModified: dialog.mark("playResY") }
+                SizeBox { id: heightField; objectName: "propHeight"; Accessible.name: qsTr("Video height"); onValueModified: dialog.mark("playResY") }
                 Button {
+                    objectName: "propFromVideo"
                     text: qsTr("From video")
                     enabled: dialog.initial.videoWidth > 0
                     onClicked: {
@@ -106,11 +134,15 @@ Dialog {
                         dialog.mark("playResY")
                     }
                 }
-                Label { text: qsTr("Layout") }
-                SpinBox { id: layoutWidthField; from: 0; to: 100000; editable: true; enabled: !linkBox.checked; Accessible.name: qsTr("Layout width"); onValueModified: dialog.mark("layoutResX") }
+            }
+            FieldLabel { text: qsTr("Layout") }
+            RowLayout {
+                spacing: 6
+                SizeBox { id: layoutWidthField; objectName: "propLayoutWidth"; enabled: !linkBox.checked; Accessible.name: qsTr("Layout width"); onValueModified: dialog.mark("layoutResX") }
                 Label { text: "×" }
-                SpinBox { id: layoutHeightField; from: 0; to: 100000; editable: true; enabled: !linkBox.checked; Accessible.name: qsTr("Layout height"); onValueModified: dialog.mark("layoutResY") }
+                SizeBox { id: layoutHeightField; objectName: "propLayoutHeight"; enabled: !linkBox.checked; Accessible.name: qsTr("Layout height"); onValueModified: dialog.mark("layoutResY") }
                 Button {
+                    objectName: "propLayoutFromVideo"
                     text: qsTr("From video")
                     enabled: !linkBox.checked && dialog.initial.videoWidth > 0
                     onClicked: {
@@ -120,30 +152,50 @@ Dialog {
                         dialog.mark("layoutResY")
                     }
                 }
-                CheckBox { id: linkBox; objectName: "propLinkResolutions"; text: qsTr("Link the layout resolution to the subtitle resolution"); Layout.columnSpan: 5 }
-                Label { text: qsTr("YCbCr matrix") }
-                ComboBox { id: matrixBox; objectName: "propMatrix"; Layout.columnSpan: 4; Accessible.name: qsTr("YCbCr matrix") }
             }
-        }
-        GroupBox {
-            title: qsTr("Options")
-            Layout.fillWidth: true
-            GridLayout {
-                anchors.fill: parent
-                columns: 2
-                Label { text: qsTr("Wrap style") }
-                ComboBox {
-                    id: wrapBox
-                    objectName: "propWrapStyle"
-                    Layout.fillWidth: true
-                    Accessible.name: qsTr("Wrap style")
-                    model: [qsTr("0: Auto, top line wider"), qsTr("1: End-of-line wrapping, only \\N breaks"),
-                            qsTr("2: No wrapping, both \\n and \\N break"), qsTr("3: Auto, bottom line wider")]
-                }
-                Label { text: qsTr("Colliding lines") }
-                ComboBox { id: collisionBox; objectName: "propCollisions"; Layout.fillWidth: true; Accessible.name: qsTr("Colliding lines"); model: [qsTr("Normal"), qsTr("Reversed")] }
-                CheckBox { id: borderBox; objectName: "propScaleBorder"; text: qsTr("Scale border and shadow"); Layout.columnSpan: 2 }
-            }
+            Item { implicitWidth: 1 }
+            CheckBox { id: linkBox; objectName: "propLinkResolutions"; text: qsTr("Same as the subtitles") }
+            FieldLabel { text: qsTr("YCbCr matrix") }
+            ComboBox { id: matrixBox; objectName: "propMatrix"; Layout.preferredWidth: 200; Accessible.name: qsTr("YCbCr matrix") }
         }
     }
+    FormSection {
+        objectName: "propRendering"
+        title: qsTr("Rendering")
+        GridLayout {
+            columns: 2
+            columnSpacing: 12
+            rowSpacing: 6
+            Layout.fillWidth: true
+            FieldLabel { text: qsTr("Wrap style") }
+            ComboBox {
+                id: wrapBox
+                objectName: "propWrapStyle"
+                Layout.fillWidth: true
+                Accessible.name: qsTr("Wrap style")
+                model: [qsTr("0: Auto, top line wider"), qsTr("1: End-of-line wrapping, only \\N breaks"),
+                        qsTr("2: No wrapping, both \\n and \\N break"), qsTr("3: Auto, bottom line wider")]
+            }
+            FieldLabel { text: qsTr("Colliding lines") }
+            ComboBox { id: collisionBox; objectName: "propCollisions"; Layout.preferredWidth: 200; Accessible.name: qsTr("Colliding lines"); model: [qsTr("Normal"), qsTr("Reversed")] }
+            Item { implicitWidth: 1 }
+            CheckBox { id: borderBox; objectName: "propScaleBorder"; text: qsTr("Scale border and shadow") }
+        }
+    }
+
+    buttons: [
+        PrimaryButton {
+            id: saveButton
+            objectName: "scriptPropertiesSave"
+            text: qsTr("Save")
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            onClicked: dialog.accept()
+        },
+        Button {
+            objectName: "scriptPropertiesCancel"
+            text: qsTr("Cancel")
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: dialog.reject()
+        }
+    ]
 }

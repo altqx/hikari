@@ -1,0 +1,350 @@
+// F3, PU6 (#308): legacy SpellCheckerDialog "Spellchecker"
+// (GLOBAL_OPEN_SPELLCHECKER) as the Spellchecker panel, a dock along the
+// bottom: the misspelled word, its Line and the text around it, its
+// replacement, the suggestions, and Replace / Replace all / Ignore / Ignore
+// All / Add to dictionary. Enter in the replacement replaces. Showing the
+// panel from the menu starts at the active Line (start()); closing it ends
+// the check. Its options and "Words added to dictionary…" are the panel's
+// "⋯" items (Main.qml panelOwnItems), its messages toasts (NT1). The dock
+// header names it, so it has no heading of its own.
+pragma ComponentBehavior: Bound
+pragma Translator: "HikariSub.Spelling"
+import QtQuick
+import QtQuick.Controls
+import QtQuick.Layouts
+import Hikari.Ui
+
+FocusScope {
+    id: panel
+    required property var app
+    property ToastStack notices: null
+    // The editing target's name, for the empty state.
+    property string documentName: ""
+    // The legacy window's two check boxes, for as long as the program runs.
+    property bool ignoreComments: false
+    property bool ignoreUpperCase: false
+    // A check is going on (start() to stop()).
+    property bool checking: false
+    property var current: ({})
+    property var suggestions: []
+    readonly property bool found: checking && current.found === true
+    // "Spelling settings…" with no dictionary.
+    signal settingsRequested()
+
+    implicitWidth: 760
+    implicitHeight: 150
+    // The three columns side by side, the actions whole.
+    readonly property size minimumSize: Qt.size(Math.ceil(wordColumn.Layout.minimumWidth + suggestionFrame.Layout.minimumWidth
+                                                          + actions.implicitWidth + 2 * columns.spacing) + 16,
+                                                Math.ceil(actions.implicitHeight) + 16)
+
+    // The body font at `size` against its 13, as DialogWindow.fontAt (a
+    // FocusScope has no font of its own).
+    function fontAt(size, weight) {
+        const base = fontSource.font
+        const f = Qt.font({family: base.family, weight: weight === undefined ? Font.Normal : weight})
+        if (base.pointSize > 0)
+            f.pointSize = base.pointSize * size / 13
+        else
+            f.pixelSize = Math.round(base.pixelSize * size / 13)
+        return f
+    }
+    function options() {
+        return {ignoreComments: ignoreComments, ignoreUpperCase: ignoreUpperCase}
+    }
+    // SetNextMisspell's display: the word, its suggestions, the first one to
+    // replace with; nothing found shows the empty state and says so once.
+    // `action` names the command a refusal is titled with.
+    function show(next, action) {
+        // An action that did nothing (legacy returns before touching the panel).
+        if (next.unchanged)
+            return
+        current = next
+        if (next.problem && next.problem.length > 0) {
+            // PU6: a refused replace is a toast (was a message box).
+            if (notices)
+                notices.post("error", action || qsTr("Replace"), next.problem)
+            return
+        }
+        suggestions = next.suggestions
+        suggestionList.currentIndex = suggestions.length > 0 ? 0 : -1
+        replacement.text = next.replacement
+        if (!next.found && next.available !== false && notices)
+            notices.post("info", qsTr("Spellchecker"), qsTr("No spelling errors were found"))
+    }
+    // Opening the panel (Subtitles > Check spelling, View > Panels > Show,
+    // Check again): from the active Line.
+    function start() {
+        checking = true
+        show(app.openSpellChecker(options()))
+        if (found)
+            replacement.forceActiveFocus()
+        else
+            emptyAction.forceActiveFocus()
+    }
+    function stop() {
+        if (!checking)
+            return
+        checking = false
+        current = ({})
+        suggestions = []
+        app.closeSpellChecker()
+    }
+    function setIgnoreComments(on) { ignoreComments = on }
+    function setIgnoreUpperCase(on) { ignoreUpperCase = on }
+    function replace() { show(app.spellCheckerReplace(replacement.text, options()), qsTr("Replace")) }
+    function replaceAll() { show(app.spellCheckerReplaceAll(current.word, replacement.text, options()), qsTr("Replace all")) }
+    function ignore() { show(app.spellCheckerIgnore(options())) }
+    function ignoreAll() { show(app.spellCheckerIgnoreAll(current.word, options())) }
+    function addWord() { show(app.spellCheckerAddWord(current.word, options())) }
+    // ⋯ > Words added to dictionary…: the window, made at its first opening.
+    function openAddedWords() {
+        addedWordsLoader.active = true
+        addedWordsLoader.item.openWith(app.addedDictionaryWords())
+    }
+
+    // OnActive: back in the panel after the editor or the Grid. Handled once
+    // the focusing event is done: when it was a press on one of the panel's
+    // actions (the five buttons, or a suggestion, whose click picks the
+    // replacement and whose double click replaces, legacy's
+    // ID_SUGGESTIONS_LIST), that action checks the word itself (the editor's
+    // draft commits first and a changed Line starts the walk again instead of
+    // acting), so the press cannot swap the word or the list under the click.
+    function actionPressed() {
+        if ([replaceButton, replaceAllButton, ignoreButton, ignoreAllButton, addWordButton, emptyAction].some(b => b.pressed))
+            return true
+        const delegates = suggestionList.contentItem.children
+        for (let i = 0; i < delegates.length; ++i)
+            if (delegates[i].pressed === true)
+                return true
+        return false
+    }
+    function activate() {
+        if (!activeFocus || !checking || actionPressed())
+            return
+        const next = app.spellCheckerActivated(options())
+        if (next.restarted)
+            show(next)
+    }
+    onActiveFocusChanged: if (activeFocus) Qt.callLater(activate)
+    // The check starts again from the active Line with another dictionary
+    // (Spelling settings…, the editor's language menu: restartSpellChecker),
+    // its word and suggestions the new checker's; and while it waits for a
+    // dictionary, spelling turned on starts it too. Later, and not again
+    // from openSpellChecker's own spellingChanged.
+    property bool restarting: false
+    function restartCheck() {
+        if (!checking)
+            return
+        restarting = true
+        show(app.openSpellChecker(options()))
+        restarting = false
+    }
+    Connections {
+        target: panel.app
+        function onSpellCheckerRestarted() {
+            if (panel.checking && !panel.restarting)
+                Qt.callLater(panel.restartCheck)
+        }
+        function onSpellingChanged() {
+            if (panel.checking && !panel.restarting && panel.current.available === false)
+                Qt.callLater(panel.restartCheck)
+        }
+    }
+
+    // Nothing to show: not checking (a layout showed the panel), nothing
+    // left to check, or no dictionary; one muted line and the command.
+    ColumnLayout {
+        objectName: "spellEmpty"
+        anchors.centerIn: parent
+        visible: !panel.found
+        spacing: 10
+        Label {
+            objectName: "spellEmptyText"
+            Layout.alignment: Qt.AlignHCenter
+            color: Theme.muted
+            text: !panel.checking ? qsTr("Checks the spelling from the active line")
+                : panel.current.available === false ? qsTr("No dictionaries found")
+                : panel.documentName.length > 0 ? qsTr("No spelling errors in %1").arg(panel.documentName)
+                : qsTr("No spelling errors were found")
+        }
+        Button {
+            id: emptyAction
+            objectName: "spellEmptyAction"
+            Layout.alignment: Qt.AlignHCenter
+            readonly property bool settings: panel.checking && panel.current.available === false
+            text: settings ? qsTr("Spelling settings…") : panel.checking ? qsTr("Check again") : qsTr("Check spelling")
+            onClicked: settings ? panel.settingsRequested() : panel.start()
+        }
+    }
+
+    RowLayout {
+        id: columns
+        objectName: "spellColumns"
+        anchors.fill: parent
+        anchors.margins: 8
+        spacing: 24
+        visible: panel.found
+        ColumnLayout {
+            id: wordColumn
+            Layout.alignment: Qt.AlignTop
+            Layout.fillWidth: true
+            Layout.minimumWidth: 220
+            Layout.preferredWidth: 330
+            spacing: 4
+            RowLayout {
+                spacing: 10
+                Layout.fillWidth: true
+                Label {
+                    id: misspell
+                    objectName: "spellMisspell"
+                    text: panel.current.word ?? ""
+                    font: panel.fontAt(18, Font.DemiBold)
+                    elide: Text.ElideRight
+                    // Up to its own width, elided in what the Line's label
+                    // leaves; never wider than the column gives it, so the
+                    // columns cannot shift under a click. Rounded up, as
+                    // the layout gives whole pixels.
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 0
+                    Layout.maximumWidth: Math.ceil(implicitWidth)
+                    Accessible.name: qsTr("Misspelled word: %1").arg(text)
+                }
+                Label {
+                    id: lineLabel
+                    objectName: "spellLine"
+                    visible: (panel.current.line ?? 0) > 0
+                    text: qsTr("Line %1").arg(panel.current.line ?? 0)
+                    color: Theme.muted
+                    font: panel.fontAt(12)
+                }
+            }
+            // The text around the word, the word underlined as the editor marks it.
+            Label {
+                objectName: "spellContext"
+                Layout.fillWidth: true
+                Layout.preferredWidth: 0
+                elide: Text.ElideRight
+                color: Theme.muted
+                textFormat: Text.StyledText
+                function escaped(s) { return (s ?? "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;") }
+                text: escaped(panel.current.before) + "<u><font color=\"" + Theme.text + "\">"
+                      + escaped(panel.current.word) + "</font></u>" + escaped(panel.current.after)
+                Accessible.name: (panel.current.before ?? "") + (panel.current.word ?? "") + (panel.current.after ?? "")
+            }
+            RowLayout {
+                spacing: 8
+                Layout.topMargin: 6
+                Layout.fillWidth: true
+                Label { text: qsTr("Replace with") }
+                TextField {
+                    id: replacement
+                    objectName: "spellReplacement"
+                    Layout.fillWidth: true
+                    Layout.maximumWidth: 260
+                    Accessible.name: qsTr("Replace with")
+                    Keys.onReturnPressed: panel.replace()
+                    Keys.onEnterPressed: panel.replace()
+                }
+            }
+        }
+        Frame {
+            id: suggestionFrame
+            Layout.fillHeight: true
+            Layout.minimumWidth: 160
+            Layout.preferredWidth: 220
+            padding: 1
+            background: Rectangle { color: Theme.field; border.color: Theme.line }
+            Label {
+                anchors.centerIn: parent
+                visible: suggestionList.count === 0
+                color: Theme.muted
+                text: qsTr("No suggestions")
+            }
+            ListView {
+                id: suggestionList
+                objectName: "spellSuggestions"
+                model: panel.suggestions
+                clip: true
+                anchors.fill: parent
+                Accessible.role: Accessible.List
+                Accessible.name: qsTr("Suggestions")
+                ScrollBar.vertical: ScrollBar {}
+                delegate: ItemDelegate {
+                    required property string modelData
+                    required property int index
+                    width: ListView.view.width
+                    text: modelData
+                    highlighted: ListView.isCurrentItem
+                    // A click brings the panel back, as any click on
+                    // legacy's window does (OnActive); see actionPressed().
+                    focusPolicy: Qt.ClickFocus // a click only: Tab skips the suggestions
+                    onClicked: {
+                        suggestionList.currentIndex = index
+                        replacement.text = modelData
+                    }
+                    onDoubleClicked: {
+                        replacement.text = modelData
+                        panel.replace()
+                    }
+                }
+            }
+        }
+        GridLayout {
+            id: actions
+            Layout.alignment: Qt.AlignTop
+            columns: 2
+            rowSpacing: 8
+            columnSpacing: 8
+            PrimaryButton {
+                id: replaceButton
+                objectName: "spellReplace"
+                text: qsTr("Replace")
+                Layout.fillWidth: true
+                Layout.preferredWidth: 140
+                onClicked: panel.replace()
+            }
+            Button {
+                id: replaceAllButton
+                objectName: "spellReplaceAll"
+                text: qsTr("Replace all")
+                Layout.fillWidth: true
+                Layout.preferredWidth: 140
+                onClicked: panel.replaceAll()
+            }
+            Button {
+                id: ignoreButton
+                objectName: "spellIgnore"
+                text: qsTr("Ignore")
+                Layout.fillWidth: true
+                onClicked: panel.ignore()
+            }
+            Button {
+                id: ignoreAllButton
+                objectName: "spellIgnoreAll"
+                text: qsTr("Ignore All")
+                Layout.fillWidth: true
+                onClicked: panel.ignoreAll()
+            }
+            IconTextButton {
+                id: addWordButton
+                objectName: "spellAddWord"
+                iconRole: "dictionary-add"
+                text: qsTr("Add to dictionary")
+                Layout.columnSpan: 2
+                Layout.fillWidth: true
+                onClicked: panel.addWord()
+            }
+        }
+    }
+
+    Label { id: fontSource; visible: false }
+    Loader {
+        id: addedWordsLoader
+        active: false
+        sourceComponent: SpellingAddedWords {
+            settings: panel.app.settings
+            onRemoveRequested: words => panel.app.removeDictionaryWords(words)
+        }
+    }
+}
