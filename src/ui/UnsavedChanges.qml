@@ -29,6 +29,9 @@ Item {
     // The shell's remembered picker folders (PU1-picker-titles).
     property var pickerFolder: picker => ""
     property var rememberPickerFolder: (picker, file) => {}
+    // PU1-disk-change-bar: the Documents to save whose file another program
+    // changed are confirmed first (Save over it); `cancelled` when not.
+    property var confirmOverDisk: (ids, then, cancelled) => then()
     property var rows: []
     // One per row: {id, save, path (an Untitled Document's file)}.
     property var choices: []
@@ -84,7 +87,16 @@ Item {
         if (i >= 0)
             pick(i, () => proceed())
         else
-            app.resolveClose(choices)
+            resolve()
+    }
+    // The choices to the application, once a file changed on disk that is
+    // to be saved over was confirmed; cancelled, the window stays (one
+    // Document: the close is cancelled).
+    function resolve() {
+        confirmOverDisk(choices.filter(c => c.save).map(c => c.id), () => app.resolveClose(choices), () => {
+            if (!window || !window.visible)
+                cancel()
+        })
     }
     function discardAll() {
         setAll(false)
@@ -157,9 +169,9 @@ Item {
         }, id => {
             if (id === "save") {
                 if (row.untitled)
-                    unsaved.pick(0, () => unsaved.app.resolveClose(unsaved.choices))
+                    unsaved.pick(0, () => unsaved.resolve())
                 else
-                    unsaved.app.resolveClose(unsaved.choices)
+                    unsaved.resolve()
             } else if (id === "discard") {
                 unsaved.discardAll()
             } else {

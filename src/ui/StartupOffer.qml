@@ -9,8 +9,10 @@ pragma Translator: "HikariSub.Session"
 // * "ask": Restore, and "Restore it at every start" (On start: Restore).
 // * "crash": Restore session, when the session has a Document and was not
 //   loaded already, and Autosaves… when autosaved work was left; × dismisses.
-// The offer ends when it is answered or dismissed, when the session loads,
-// or when a Document opens from Home (a start with files keeps it).
+// The offer ends when it is answered or dismissed, when the session loads
+// (a crash's autosaved work stays offered in the bar until it is deleted or
+// the bar dismissed), or when a Document opens from Home (a start with files
+// keeps it).
 import QtQuick
 
 QtObject {
@@ -51,7 +53,24 @@ QtObject {
         if (!restorable && autosaveCount === 0)
             kind = ""
     }
-    function restore() { offer.restoreRequested() }
+    // Restore was chosen: the session's Documents opening don't end the
+    // offer, its loading does (sessionLoaded).
+    property bool restoring: false
+    function restore() {
+        restoring = true
+        offer.restoreRequested()
+    }
+    // The session loaded (Restore, or On start: Restore). Work a crash
+    // autosaved stays offered in the startup bar until those autosaves are
+    // deleted or the bar is dismissed; anything else ends here.
+    function sessionLoaded() {
+        restoring = false
+        restorable = false
+        if (kind === "crash" && autosaveCount > 0)
+            keepWithDocuments = true
+        else
+            end()
+    }
     function openAutosaves() { offer.autosavesRequested() }
     // "Restore it at every start": On start: Restore (Settings › General).
     function setRestoreAlways(on) { app.sessionRestore = on ? 2 : 1 }
@@ -72,9 +91,9 @@ QtObject {
 
     // A Document opened from Home ends it.
     property bool home: app.home
-    onHomeChanged: if (!home && !keepWithDocuments) end()
+    onHomeChanged: if (!home && !keepWithDocuments && !restoring) end()
     property Connections restored: Connections {
         target: offer.app
-        function onSessionRestored() { offer.end() }
+        function onSessionRestored() { offer.sessionLoaded() }
     }
 }

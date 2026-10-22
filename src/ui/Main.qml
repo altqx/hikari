@@ -2768,7 +2768,7 @@ ApplicationWindow {
                         at = point
                         popup(visualOverlay, point)
                     }
-                    onOpenVideoRequested: videoDialog.open()
+                    onOpenVideoRequested: videoDialog.show()
                     onOpenSubtitlesRequested: openDialog.show()
                     onAspectRatioRequested: aspectRatioDialog.openAtCursor()
                 }
@@ -5976,9 +5976,14 @@ ApplicationWindow {
         property var document: 0 // P9: the Document saved (0: the editing target)
         onAccepted: {
             root.rememberPickerFolder("subtitles", selectedFile)
-            if (root.app.saveChosenFor(document, selectedFile) === "readonly") {
+            const result = root.app.saveChosenFor(document, selectedFile)
+            if (result === "readonly") {
                 readOnlyWarning.warn(document, root.app.localPath(selectedFile).replace(/^.*[\\/]/, ""))
             } else {
+                // PU1-disk-change-bar: saved under another name, the bar
+                // about the file it came from goes.
+                if (result === "")
+                    root.endDiskChange(document === 0 ? root.currentTab().id : document)
                 matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
                 root.saveNext()
             }
@@ -6039,7 +6044,7 @@ ApplicationWindow {
         id: diskSaveQuestion
         name: "diskSaveQuestion"
         settings: root.app.settings
-        function confirm(ids, save) {
+        function confirm(ids, save, cancelled) {
             const names = ids.map(id => "“" + root.tabTitle(id) + "”").join(", ")
             ask({
                 title: qsTranslate("HikariSub.Documents", "Save"),
@@ -6059,6 +6064,8 @@ ApplicationWindow {
                         root.endDiskChange(marked)
                     }
                     save()
+                } else if (cancelled) {
+                    cancelled()
                 }
                 matroskaSubtitles.saveDone() // Y9: the load waits for the answer
             })
@@ -6093,6 +6100,13 @@ ApplicationWindow {
         settings: root.app.settings
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
+        confirmOverDisk: (ids, then, cancelled) => {
+            const marked = ids.filter(id => root.changedOnDisk[id] === true)
+            if (marked.length === 0)
+                then()
+            else
+                diskSaveQuestion.confirm(marked, then, cancelled)
+        }
     }
 
     // Automation windows (S1): the fixed script dialog and picker, the
