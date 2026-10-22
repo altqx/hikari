@@ -303,6 +303,26 @@ private slots:
         QCOMPARE(row().value(QStringLiteral("accel")).toString(), QStringLiteral("Alt-Ctrl-E")); // legacy's order
     }
 
+    // ...and a search by its macro's name finds the row once the script
+    // loads, without the search being typed again.
+    void aSearchFindsAMacroLoadedWhileSettingsIsOpen()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("searched.ini"));
+        app::Application a(o);
+        a.automationHotkeys().replaceCommitted({{kEdgeblur, "Ctrl+Alt+E"}});
+        auto &h = a.hotkeys();
+        h.beginOptions();
+        h.search(QStringLiteral("add edgeblur"));
+        QVERIFY(h.rows().isEmpty());
+        QSignalSpy refreshed(&h, &app::HotkeysController::rowsChanged);
+        a.automation().load(HIKARI_AUTOLOAD_DIR "/macro-1-edgeblur.lua");
+        QTRY_VERIFY_WITH_TIMEOUT(!refreshed.isEmpty() && h.rows().size() == 1, 30'000);
+        QCOMPARE(h.rows().first().toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Global ") + QLatin1String(kEdgeblur));
+        QCOMPARE(h.rows().at(h.selected()).toMap().value(QStringLiteral("macro")).toString(), QStringLiteral("Add edgeblur"));
+    }
+
     // Macros unloaded while Settings → Hotkeys is open: an unbound one's row
     // goes (keys given it would bind nothing), one given keys there stays.
     void aMacroUnloadedWhileSettingsIsOpenLeavesTheList()
