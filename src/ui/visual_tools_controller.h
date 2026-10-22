@@ -67,6 +67,11 @@ class VisualToolsController : public QObject, public application::visual::Visual
     Q_PROPERTY(bool escapable READ escapable NOTIFY changed)
     // The batch picker.
     Q_PROPERTY(int batchCount READ batchCount NOTIFY changed)
+    // HY1: the Lines a value edit changes (the picked ones, else the active).
+    Q_PROPERTY(int targetCount READ targetCount NOTIFY changed)
+    // HY1: the tool's last change while it can be done again with other
+    // values (tag, change, lines, values); empty otherwise.
+    Q_PROPERTY(QVariantMap lastChange READ lastChange NOTIFY changed)
     Q_PROPERTY(bool gestureActive READ gestureActive NOTIFY changed)
     // VT1: counts the changes of what a value edits (the Document, the
     // active Line, the picked Lines): a field's typed text is dropped then.
@@ -149,6 +154,8 @@ public:
     QVariantList values() const;
     bool escapable() const;
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
+    int targetCount() const { return static_cast<int>(batchTargets().size()); }
+    QVariantMap lastChange() const;
     bool gestureActive() const { return m_gesture.has_value(); }
     int editTarget() const { return m_editTarget; }
     QString copied() const { return m_copied; }
@@ -193,6 +200,11 @@ public:
     // The batch picker: the Grid's selected Lines, or nothing (the active Line).
     Q_INVOKABLE void pickBatch();
     Q_INVOKABLE void clearBatch();
+    // HY1: the value a drag or the wheel changes (◆); the last change done
+    // again with a value, in place of its step; the card closed.
+    Q_INVOKABLE bool markValue(const QString &name);
+    Q_INVOKABLE bool editLastChange(const QString &name, const QString &text);
+    Q_INVOKABLE void dismissLastChange();
     // A toggle (0/1), a choice's index or an action (1) of the family's options.
     Q_INVOKABLE bool setOption(const QString &name, int value);
     Q_INVOKABLE void dismissNotice();
@@ -235,6 +247,7 @@ public:
     }
     const std::vector<application::visual::AllTagsSetting> *allTagsSettings() const override;
     std::string editorHotkey(int id) const override;
+    bool undoStep(std::uint64_t revision) override;
 
     // The shared view (tests and V4's zoom commands).
     application::visual::VideoView &videoView() { return m_view; }
