@@ -153,10 +153,12 @@ DialogWindow {
     function redo() { if (editor) { editor.redo(); showFields() } }
 
     onEditorChanged: showFields()
-    // Closing keeps the changes: the editor goes with the window. (Not on
-    // hiding: fullscreen's opening or closing makes the window again, with
-    // the same editor.)
-    onClosing: if (editor) editor.close()
+    // Closing keeps the changes: the editor goes with the window. Not on
+    // hiding, nor when the window goes with the one it opened from
+    // (fullscreen left, a floating panel hidden): the bar showing the
+    // dialogs then makes the window again with the same editor and its
+    // history (or Edit… brings it back).
+    onClosing: if (editor && !(transientParent && !transientParent.visible)) editor.close()
     Connections {
         target: dialog.editor
         function onClosed() { dialog.close() }
@@ -335,30 +337,31 @@ DialogWindow {
                                 return r
                         return -1
                     }
+                    // The selected definition's row, through this binding
+                    // only: a click or a key chooses through the editor. (Set
+                    // by hand after each new model, the view freed its rows
+                    // after them when its window went: a crash, found with
+                    // Codex on #349.)
+                    currentIndex: dialog.editor && count > 0 ? rowOf(dialog.editor.selection) : -1
+                    onCurrentIndexChanged: if (currentIndex >= 0) positionViewAtIndex(currentIndex, ListView.Contain)
                     function selectRow(row) {
-                        if (row < 0)
+                        if (row < 0 || row >= count || model[row].header || !dialog.editor)
                             return
-                        currentIndex = row
-                        positionViewAtIndex(row, ListView.Contain)
-                        if (dialog.editor && model[row].index !== dialog.editor.selection) {
+                        if (model[row].index !== dialog.editor.selection) {
                             dialog.editor.select(model[row].index)
                             dialog.showFields()
                         }
                     }
-                    function follow() {
-                        if (!dialog.editor)
-                            return
-                        const items = dialog.editor.items
-                        const sel = dialog.editor.selection
-                        if (!moreOpen && sel >= 0 && sel < items.length && items[sel].section === 1 && search.text.length === 0)
+                    // More opens to show a definition chosen in it.
+                    readonly property int selected: dialog.editor ? dialog.editor.selection : -1
+                    onSelectedChanged: {
+                        const items = dialog.editor ? dialog.editor.items : []
+                        if (!moreOpen && selected >= 0 && selected < items.length && items[selected].section === 1
+                                && search.text.length === 0)
                             moreOpen = true
-                        currentIndex = rowOf(sel)
-                        if (currentIndex >= 0)
-                            positionViewAtIndex(currentIndex, ListView.Contain)
                     }
-                    onModelChanged: Qt.callLater(follow)
-                    Keys.onUpPressed: selectRow(firstItemRow(currentIndex - 1, -1))
-                    Keys.onDownPressed: selectRow(firstItemRow(currentIndex + 1, 1))
+                    Keys.onUpPressed: selectRow(firstItemRow(rowOf(selected) - 1, -1))
+                    Keys.onDownPressed: selectRow(firstItemRow(rowOf(selected) + 1, 1))
                     delegate: ItemDelegate {
                         id: row
                         required property var modelData

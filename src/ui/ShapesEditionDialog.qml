@@ -110,10 +110,12 @@ DialogWindow {
     function redo() { if (editor) { editor.redo(); showFields() } }
 
     onEditorChanged: showFields()
-    // Closing keeps the changes: the editor goes with the window. (Not on
-    // hiding: fullscreen's opening or closing makes the window again, with
-    // the same editor.)
-    onClosing: if (editor) editor.close()
+    // Closing keeps the changes: the editor goes with the window. Not on
+    // hiding, nor when the window goes with the one it opened from
+    // (fullscreen left, a floating panel hidden): the bar showing the
+    // dialogs then makes the window again with the same editor and its
+    // history (or Edit… brings it back).
+    onClosing: if (editor && !(transientParent && !transientParent.visible)) editor.close()
     Connections {
         target: dialog.editor
         function onClosed() { dialog.close() }
@@ -150,17 +152,24 @@ DialogWindow {
                     Layout.fillHeight: true
                     clip: true
                     model: dialog.editor ? dialog.editor.items : []
-                    currentIndex: dialog.editor ? dialog.editor.selection : -1
-                    keyNavigationEnabled: true
+                    // The editor's selection is the list's, through this
+                    // binding only: a click or a key chooses through the
+                    // editor (the view's own index moves as each change
+                    // gives it a new model, and must not choose; Codex on
+                    // #349).
+                    currentIndex: dialog.editor && count > 0 ? dialog.editor.selection : -1
+                    keyNavigationEnabled: false
                     activeFocusOnTab: true
                     Accessible.role: Accessible.List
                     Accessible.name: qsTr("Shapes")
-                    onCurrentIndexChanged: {
-                        if (dialog.editor && currentIndex >= 0 && currentIndex !== dialog.editor.selection) {
-                            dialog.editor.select(currentIndex)
-                            dialog.showFields()
-                        }
+                    function selectRow(index) {
+                        if (!dialog.editor || index < 0 || index >= count || index === dialog.editor.selection)
+                            return
+                        dialog.editor.select(index)
+                        dialog.showFields()
                     }
+                    Keys.onUpPressed: if (dialog.editor) selectRow(dialog.editor.selection - 1)
+                    Keys.onDownPressed: if (dialog.editor) selectRow(dialog.editor.selection + 1)
                     ScrollBar.vertical: ScrollBar {}
                     delegate: ItemDelegate {
                         id: row
@@ -174,7 +183,7 @@ DialogWindow {
                         Accessible.role: Accessible.ListItem
                         Accessible.name: modelData.name
                         Accessible.selected: highlighted
-                        onClicked: shapeList.currentIndex = index
+                        onClicked: shapeList.selectRow(index)
                         background: Rectangle {
                             color: row.highlighted ? Theme.select : row.hovered ? Theme.raised : "transparent"
                             Rectangle {

@@ -42,8 +42,8 @@ class AllTagsEditor : public QObject {
     // Its values' names in the strip (as many as it takes).
     Q_PROPERTY(QStringList valueNames READ valueNames NOTIFY changed)
     // The preview of Set on the active Line: {before, tag, after}, the tag
-    // the part Set writes.
-    Q_PROPERTY(QVariantMap preview READ preview NOTIFY changed)
+    // the part Set writes. It follows the definition and the Line.
+    Q_PROPERTY(QVariantMap preview READ preview NOTIFY previewChanged)
     // The user's own definitions (Restore default tags removes them).
     Q_PROPERTY(int ownCount READ ownCount NOTIFY changed)
     Q_PROPERTY(bool canRemove READ canRemove NOTIFY changed)
@@ -79,7 +79,7 @@ public:
 
     QVariantList items() const;
     int selection() const { return m_edition.selection(); }
-    void select(int index);
+    Q_INVOKABLE void select(int index);
     QString name() const;
     QString tag() const;
     QVariantMap numbers() const;
@@ -121,11 +121,14 @@ public:
     void setPlacingOf(const QString &name, int placing);
     // The window closed: the changes are kept already.
     Q_INVOKABLE void close();
+    // Another active Line, or its text changed: the preview reads it again.
+    void lineChanged() { emit previewChanged(); }
 
     const application::visual::AllTagsEdition &edition() const { return m_edition; }
 
 signals:
     void changed();
+    void previewChanged();
     void closed();
 
 private:

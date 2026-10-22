@@ -46,30 +46,60 @@ QString ShapeEditor::svgPath(std::u16string_view drawing, QRectF *bounds)
     std::vector<double> numbers;
     double x0 = std::numeric_limits<double>::max(), y0 = x0;
     double x1 = std::numeric_limits<double>::lowest(), y1 = x1;
-    const auto point = [&](double x, double y) {
-        x0 = std::min(x0, x);
-        y0 = std::min(y0, y);
-        x1 = std::max(x1, x);
-        y1 = std::max(y1, y);
-        return QString::number(x) + QLatin1Char(' ') + QString::number(y);
+    const auto point = [&](QPointF p) {
+        x0 = std::min(x0, p.x());
+        y0 = std::min(y0, p.y());
+        x1 = std::max(x1, p.x());
+        y1 = std::max(y1, p.y());
+        return QString::number(p.x()) + QLatin1Char(' ') + QString::number(p.y());
+    };
+    // The pen: the last point given. A B-spline's control points (s, more
+    // with p) start at the pen; its curve is drawn as the renderer draws it
+    // (flattenCurve's uniform cubic B-spline): each run of four points one
+    // Bézier, a line from the pen to its start, c closing it with its first
+    // three points again.
+    QPointF pen;
+    std::vector<QPointF> spline;
+    const auto drawSpline = [&](bool close) {
+        if (close && spline.size() >= 3)
+            spline.insert(spline.end(), {spline[0], spline[1], spline[2]});
+        for (std::size_t i = 0; i + 3 < spline.size(); ++i) {
+            const QPointF &a = spline[i], &b = spline[i + 1], &c = spline[i + 2], &d = spline[i + 3];
+            if (i == 0)
+                out += QStringLiteral(" L ") + point((a + 4 * b + c) / 6);
+            out += QStringLiteral(" C ") + point((2 * b + c) / 3) + QLatin1Char(' ') + point((b + 2 * c) / 3) +
+                   QLatin1Char(' ') + point((b + 4 * c + d) / 6);
+        }
+        spline.clear();
     };
     const auto flush = [&] {
         const std::size_t pairs = numbers.size() / 2;
-        const auto at = [&](std::size_t i) { return point(numbers[2 * i], numbers[2 * i + 1]); };
+        const auto at = [&](std::size_t i) { return QPointF(numbers[2 * i], numbers[2 * i + 1]); };
         const char16_t c = command.unicode();
+        if (c != u'p' && c != u'c')
+            drawSpline(false);
         if ((c == u'm' || c == u'n') && pairs > 0) {
-            out += QStringLiteral(" M ") + at(0);
+            out += QStringLiteral(" M ") + point(at(0));
             for (std::size_t i = 1; i < pairs; ++i)
-                out += QStringLiteral(" L ") + at(i);
-        } else if (c == u'l' || c == u's' || c == u'p') {
+                out += QStringLiteral(" L ") + point(at(i));
+        } else if (c == u'l') {
             for (std::size_t i = 0; i < pairs; ++i)
-                out += QStringLiteral(" L ") + at(i);
+                out += QStringLiteral(" L ") + point(at(i));
+        } else if (c == u's' || (c == u'p' && !spline.empty())) {
+            if (c == u's')
+                spline.push_back(pen);
+            for (std::size_t i = 0; i < pairs; ++i)
+                spline.push_back(at(i));
         } else if (c == u'b') {
             for (std::size_t i = 0; i + 2 < pairs; i += 3)
-                out += QStringLiteral(" C ") + at(i) + QLatin1Char(' ') + at(i + 1) + QLatin1Char(' ') + at(i + 2);
+                out += QStringLiteral(" C ") + point(at(i)) + QLatin1Char(' ') + point(at(i + 1)) + QLatin1Char(' ') +
+                       point(at(i + 2));
         } else if (c == u'c') {
+            drawSpline(true);
             out += QStringLiteral(" Z");
         }
+        if (pairs > 0 && c != u'c')
+            pen = at(pairs - 1);
         numbers.clear();
     };
     const QString text = qs(drawing);
@@ -85,6 +115,7 @@ QString ShapeEditor::svgPath(std::u16string_view drawing, QRectF *bounds)
             numbers.push_back(v);
     }
     flush();
+    drawSpline(false);
     if (bounds)
         *bounds = x0 <= x1 ? QRectF(QPointF(x0, y0), QPointF(x1, y1)) : QRectF();
     return out.trimmed();

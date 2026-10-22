@@ -14,8 +14,10 @@ Item {
     property color fill: Theme.select
     property color stroke: Theme.text
     property real strokeWidth: 1
-    readonly property real scale: view.width > 0 && view.height > 0
-                                  ? Math.min(width / view.width, height / view.height) : 1
+    // A line's bounds have no width or no height: the other side fits.
+    readonly property real scale: view.width > 0 || view.height > 0
+                                  ? Math.min(view.width > 0 ? width / view.width : Infinity,
+                                             view.height > 0 ? height / view.height : Infinity) : 1
     // The plane's point in the item.
     function mapX(x) { return (width - view.width * scale) / 2 + (x - view.x) * scale }
     function mapY(y) { return (height - view.height * scale) / 2 + (y - view.y) * scale }

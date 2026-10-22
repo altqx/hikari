@@ -61,7 +61,7 @@ public:
 
     QVariantList items() const;
     int selection() const { return m_edition.selection(); }
-    void select(int index);
+    Q_INVOKABLE void select(int index);
     QString name() const;
     QString shape() const;
     int mode() const { return m_edition.current().mode; }
@@ -97,8 +97,9 @@ public:
 
     const application::visual::ShapesEdition &edition() const { return m_edition; }
 
-    // An ASS drawing as an SVG path (m and n move, l and the b-spline's s
-    // and p draw lines, b a cubic Bézier, c closes) and its bounds.
+    // An ASS drawing as an SVG path (m and n move, l draws lines, b a cubic
+    // Bézier, s and p a B-spline as the renderer draws it, c closes) and its
+    // bounds.
     static QString svgPath(std::u16string_view drawing, QRectF *bounds = nullptr);
 
 signals:

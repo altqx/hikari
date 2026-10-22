@@ -6,6 +6,7 @@
 
 #include "hikari/application/resample.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_drawing.h"
 #include "hikari/application/visual_transform.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/text_projection.h"
@@ -203,6 +204,10 @@ void VisualToolsController::refresh()
     }
     if (id != m_seenSession || active != m_seenActive)
         ++m_editTarget;
+    // PU5: an open "Edit tags" previews Set on the active Line (or the
+    // first): read again whenever the tool reads its Line again.
+    if (m_tagsEditor && reset)
+        m_tagsEditor->lineChanged();
     m_seenSession = id;
     m_seenRevision = revision;
     m_seenActive = active;
@@ -502,8 +507,12 @@ bool VisualToolsController::undoStep(std::uint64_t revision)
 
 void VisualToolsController::openTagsEditor()
 {
-    if (m_tagsEditor)
+    if (m_tagsEditor) {
+        // Open already: its window comes forward (or back, gone with the
+        // window it opened from).
+        emit tagsEditorChanged();
         return;
+    }
     auto *allTags = dynamic_cast<application::visual::AllTagsTool *>(tool());
     if (!allTags)
         return;
@@ -543,8 +552,12 @@ void VisualToolsController::openTagsEditor()
 
 void VisualToolsController::openShapeEditor()
 {
-    if (m_shapeEditor)
+    if (m_shapeEditor) {
+        // Open already: its window comes forward (or back, gone with the
+        // window it opened from).
+        emit shapeEditorChanged();
         return;
+    }
     auto *drawing = tool();
     int selection = 0;
     for (const QVariant &o : std::as_const(m_options)) {
@@ -559,20 +572,27 @@ void VisualToolsController::openShapeEditor()
         // PU5: each change in "Edit shapes" is kept at once (legacy's OK:
         // VideoToolbar::SetShapesSettings, the list's names again, its
         // selection kept (or the last preset's), and the tool told,
-        // ChangeTool -> SetShape, which keeps the shape it has when the
-        // selection is the same).
-        m_shapes = presets;
-        saveShapes();
+        // ChangeTool -> SetShape). The chosen preset follows its name when
+        // others come or go before it, and the tool reads it again (legacy's
+        // SetShape kept the shape it had when the selection was the same).
         int selection = 0;
         for (const QVariant &o : std::as_const(m_options)) {
             const QVariantMap m = o.toMap();
             if (m.value(QStringLiteral("name")).toString() == QStringLiteral("shape"))
                 selection = m.value(QStringLiteral("index")).toInt();
         }
+        if (selection > 0 && selection <= static_cast<int>(m_shapes.size())) {
+            const std::u16string &chosen = m_shapes[static_cast<std::size_t>(selection - 1)].name;
+            const auto at = std::ranges::find(presets, chosen, &ShapePreset::name);
+            if (at != presets.end())
+                selection = static_cast<int>(at - presets.begin()) + 1;
+        }
+        m_shapes = presets;
+        saveShapes();
         if (selection > static_cast<int>(m_shapes.size()))
             selection = static_cast<int>(m_shapes.size());
-        if (drawing && drawing == tool())
-            drawing->setOption("shape", selection, *this);
+        if (auto *d = dynamic_cast<DrawingTool *>(drawing); d && drawing == tool())
+            d->presetsChanged(selection, *this);
         refreshOptions();
         emit optionsChanged();
         emit overlayChanged();

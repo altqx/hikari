@@ -24,6 +24,7 @@
 #include "hikari/application/video_sources.h"
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_drawing.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
@@ -20772,6 +20773,21 @@ private slots:
             QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::SizeBDiagCursor));
         }
 
+        // PU5 (Codex on #349): the list and the preview draw a B-spline as
+        // the renderer does (flattenCurve's), not its control points: one
+        // Bézier for each four points from the pen, c closing it with its
+        // first three again, p adding points.
+        QRectF splineBox;
+        QCOMPARE(ui::ShapeEditor::svgPath(u"m 0 0 s 60 0 60 60 0 60", &splineBox),
+                 QStringLiteral("M 0 0 L 50 10 C 60 20 60 40 50 50"));
+        QCOMPARE(splineBox, QRectF(0, 0, 60, 50));
+        QCOMPARE(ui::ShapeEditor::svgPath(u"m 0 0 s 60 0 60 60 0 60 p 0 0").count(QStringLiteral(" C ")), 2);
+        const QString closed = ui::ShapeEditor::svgPath(u"m 0 0 s 60 0 60 60 0 60 c");
+        QCOMPARE(closed.count(QStringLiteral(" C ")), 4);
+        QVERIFY2(closed.endsWith(QStringLiteral(" 50 10 Z")), qPrintable(closed)); // back at its start
+        QCOMPARE(ui::ShapeEditor::svgPath(u"m 0 0 l 10 0 b 20 0 20 10 10 10"),
+                 QStringLiteral("M 0 0 L 10 0 C 20 0 20 10 10 10"));
+
         // PU5 (#307): "Edit shapes", on the preset chosen
         // (T5-editor-opens-next: legacy opened on the one after it, "circle").
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
@@ -20791,7 +20807,7 @@ private slots:
         QCOMPARE(editor->name(), QStringLiteral("rectangle"));
         QObject *shapeName = named("shapeName");
         QCOMPARE(shapeName->property("text").toString(), QStringLiteral("rectangle"));
-        QCOMPARE(named("shapeList")->property("currentIndex").toInt(), 0);
+        QTRY_COMPARE(named("shapeList")->property("currentIndex").toInt(), 0);
         QVERIFY(!named("shapesUndo")->property("enabled").toBool());
         const auto file = [&] {
             QFile saved(shapesFile);
@@ -20874,6 +20890,45 @@ private slots:
         QCOMPARE(named("shapesUndo")->property("tip").toString(), QStringLiteral("Undo “Restore default shapes”"));
         QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
         QTRY_COMPARE(list()->property("model").toStringList()[1], QStringLiteral("box"));
+        // The tool reads the chosen preset again after each change, and the
+        // bar's choice follows its name when one before it goes or comes
+        // back (Codex on #349).
+        auto *drawingTool = dynamic_cast<application::visual::DrawingTool *>(tools.tool());
+        QVERIFY(drawingTool);
+        QCOMPARE(drawingTool->shapePoints().size(), 3u); // box's drawing as edited
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 2)); // circle
+        QTRY_COMPARE(shown(), QStringLiteral("circle"));
+        QCOMPARE(drawingTool->shape(), 1);
+        editor->select(0);
+        QVERIFY(editor->remove()); // box
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 1);
+        QCOMPARE(shown(), QStringLiteral("circle"));
+        QCOMPARE(drawingTool->shape(), 0);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 2);
+        QCOMPARE(shown(), QStringLiteral("circle"));
+        QCOMPARE(drawingTool->shape(), 1);
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 1)); // box again
+        // The window's list follows the editor's selection after a click
+        // too: Duplicate selects the copy; a key moves through the editor.
+        auto *shapeList = qobject_cast<QQuickItem *>(named("shapeList"));
+        QQuickItem *row = nullptr; // the list's row now (each change makes them again)
+        QVERIFY(QMetaObject::invokeMethod(shapeList, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, row), Q_ARG(int, 1)));
+        QVERIFY(row);
+        QVERIFY(QMetaObject::invokeMethod(row, "clicked"));
+        QCOMPARE(editor->selection(), 1);
+        QVERIFY(QMetaObject::invokeMethod(named("duplicateShape"), "clicked"));
+        QCOMPARE(editor->selection(), 2);
+        QTRY_COMPARE(shapeList->property("currentIndex").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        QTRY_COMPARE(shapeList->property("currentIndex").toInt(), 1);
+        {
+            QKeyEvent down(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
+            QCoreApplication::sendEvent(shapeList, &down);
+        }
+        QCOMPARE(editor->selection(), 2);
+        QTRY_COMPARE(shapeList->property("currentIndex").toInt(), 2);
+        editor->select(1);
         // Close keeps every change; the editor goes with the window.
         QVERIFY(QMetaObject::invokeMethod(named("shapesClose"), "clicked"));
         QTRY_VERIFY(!dialog->isVisible());
@@ -21365,6 +21420,16 @@ private slots:
         // What Set writes on the active Line, the tag at its start value.
         QCOMPARE(editor->preview().value(QStringLiteral("tag")).toString(), QStringLiteral("\\bord0"));
         QVERIFY(editor->preview().value(QStringLiteral("after")).toString().endsWith(QStringLiteral("}third")));
+        // Another active Line: the preview follows it (Codex on #349).
+        {
+            QSignalSpy previewed(editor, &ui::AllTagsEditor::previewChanged);
+            application->selectLine(session->document().lines()[0]->id.value);
+            QTRY_VERIFY(previewed.count() > 0);
+            QVERIFY(!editor->preview().value(QStringLiteral("after")).toString().endsWith(QStringLiteral("}third")));
+            application->selectLine(third.value);
+            QTRY_VERIFY(session->selection().active == third);
+            QVERIFY(editor->preview().value(QStringLiteral("after")).toString().endsWith(QStringLiteral("}third")));
+        }
         const auto file = [&] {
             QFile saved(tagsFile);
             if (!saved.open(QIODevice::ReadOnly))
@@ -21425,6 +21490,26 @@ private slots:
         QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 23);
         QTRY_VERIFY(!file().contains("Tag: wide copy"));
         QCOMPARE(named("tagsUndo")->property("tip").toString(), QStringLiteral("Undo “Delete tag”"));
+        // A click on a row chooses its definition (Codex on #349).
+        {
+            auto *tagList = qobject_cast<QQuickItem *>(named("tagList"));
+            QQuickItem *row = nullptr;
+            int at = 1; // row 0: the Common header
+            QTRY_VERIFY(QMetaObject::invokeMethod(tagList, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, row), Q_ARG(int, at)) && row);
+            if (row->property("modelData").toMap().value(QStringLiteral("index")).toInt() == editor->selection())
+                QVERIFY(QMetaObject::invokeMethod(tagList, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, row), Q_ARG(int, ++at)) && row);
+            QVERIFY(row->objectName().startsWith(QStringLiteral("tagRow")));
+            const int chosen = row->property("modelData").toMap().value(QStringLiteral("index")).toInt();
+            QVERIFY(QMetaObject::invokeMethod(row, "clicked"));
+            QCOMPARE(editor->selection(), chosen);
+            QCOMPARE(named("tagsName")->property("text").toString(), editor->name());
+            QTRY_COMPARE(tagList->property("currentIndex").toInt(), at);
+            // Down: the next definition, through the editor.
+            QKeyEvent down(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
+            QCoreApplication::sendEvent(tagList, &down);
+            QVERIFY(editor->selection() != chosen);
+            QTRY_VERIFY(tagList->property("currentIndex").toInt() > at);
+        }
         // Undo all changes (⋯): one step back to the list as it opened.
         QVERIFY(QMetaObject::invokeMethod(named("tagsUndoAll"), "triggered"));
         QCOMPARE(editor->items().size(), 22);
@@ -27854,6 +27939,46 @@ private slots:
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("Ctrl-Shift-F12"));
         QVERIFY(application->video().pause());
+        // PU5 (Codex on #349): "Edit shapes" opened from fullscreen's bar.
+        QTemporaryDir shapesConfig;
+        QVERIFY(shapesConfig.isValid());
+        tools.setShapesFile(shapesConfig.filePath(QStringLiteral("ShapesSettings.txt")));
+        tools.selectFamily(8);
+        QTRY_VERIFY(fullscreenItem("visualOption_shape"));
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 99)); // the list's "Edit"
+        QPointer<ui::ShapeEditor> shapes = tools.shapeEditor();
+        QVERIFY(shapes);
+        const auto shapesWindow = [&]() -> QQuickWindow * {
+            for (auto *w : engine->rootObjects().first()->findChildren<QQuickWindow *>(QStringLiteral("shapesEditionDialog")))
+                if (w->isVisible())
+                    return w;
+            return nullptr;
+        };
+        QTRY_VERIFY(shapesWindow());
+        QCOMPARE(shapesWindow()->transientParent(), fsWindow);
+        shapes->addShape();
+        QVERIFY(shapes->canUndo());
+        // And "Edit tags" (Hydra's Edit tags…).
+        QTemporaryDir tagsConfig;
+        QVERIFY(tagsConfig.isValid());
+        tools.setAllTagsFile(tagsConfig.filePath(QStringLiteral("AllTagsSettings.txt")));
+        tools.selectFamily(10);
+        QTRY_VERIFY(fullscreenItem("visualOption_tag"));
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(tools.setOption(QStringLiteral("edit"), 1));
+        QPointer<ui::AllTagsEditor> tags = tools.tagsEditor();
+        QVERIFY(tags);
+        const auto tagsWindow = [&]() -> QQuickWindow * {
+            for (auto *w : engine->rootObjects().first()->findChildren<QQuickWindow *>(QStringLiteral("tagsEditionDialog")))
+                if (w->isVisible())
+                    return w;
+            return nullptr;
+        };
+        QTRY_VERIFY(tagsWindow());
+        QCOMPARE(tagsWindow()->transientParent(), fsWindow);
+        tags->addTag();
+        QVERIFY(tags->canUndo());
         // Left, the dialogs are the main window's again.
         QVERIFY(fs.leave());
         QTRY_VERIFY(!fsWindow->isVisible());
@@ -27861,6 +27986,23 @@ private slots:
         QVERIFY(question->property("parent").value<QQuickItem *>() != fsWindow->contentItem());
         QVERIFY(named("videoOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
         QVERIFY(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
+        // Edit shapes and Edit tags too, with their history: a window going
+        // with fullscreen's is no closing of it.
+        QTRY_VERIFY(shapesWindow() && shapesWindow()->transientParent() != fsWindow);
+        QTest::qWait(100);
+        QVERIFY(shapes);
+        QCOMPARE(tools.shapeEditor(), shapes.data());
+        QVERIFY(shapes->canUndo());
+        QTRY_VERIFY(tagsWindow() && tagsWindow()->transientParent() != fsWindow);
+        QVERIFY(tags);
+        QCOMPARE(tools.tagsEditor(), tags.data());
+        QVERIFY(tags->canUndo());
+        // Closed by the user, the editors go.
+        shapesWindow()->close();
+        QTRY_VERIFY(!tools.shapeEditor());
+        tagsWindow()->close();
+        QTRY_VERIFY(!tools.tagsEditor());
+        tools.selectFamily(0);
     }
 
     // video.fullScreenOnStart is OpenFile's `fulls` for one open: when the

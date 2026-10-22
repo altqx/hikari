@@ -38,6 +38,7 @@ const QSet<QString> &defaultNames()
 AllTagsEditor::AllTagsEditor(std::vector<AllTagsSetting> tags, int curTag, Hooks hooks, QObject *parent)
     : QObject(parent), m_edition(std::move(tags), curTag), m_hooks(std::move(hooks))
 {
+    connect(this, &AllTagsEditor::changed, this, &AllTagsEditor::previewChanged);
 }
 
 QVariantList AllTagsEditor::items() const
