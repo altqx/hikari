@@ -43,8 +43,6 @@ SelectLinesDialog.qml:result
 SessionWindows.qml:askPrompt
 SessionWindows.qml:crashPrompt
 SessionWindows.qml:readOnlyNotice
-SettingsDialog.qml:dialog
-SettingsDialog.qml:warningDialog
 SettingsImportDialog.qml:dialog
 SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog

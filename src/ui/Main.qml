@@ -551,7 +551,7 @@ ApplicationWindow {
                       iconRole: "refresh", enabled: () => reloadAutoloadAction.enabled && !root.automation.running,
                       run: () => reloadAutoloadAction.trigger() },
                     { name: "automationShortcutsInSettings", text: qsTranslate("HikariSub.Automation", "Shortcuts in Settings…"),
-                      iconRole: "hotkeys", run: () => settingsDialog.openDialog(7, 7) },
+                      iconRole: "hotkeys", run: () => root.openSettings("hotkeys", 7) },
                     { name: "automationImportLegacy", text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…"),
                       iconRole: "import", run: () => legacyHotkeysDialog.open() }]
         return []
@@ -1238,7 +1238,7 @@ ApplicationWindow {
                     action: Action {
                         id: settingsAction
                         text: qsTr("&Settings")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) settingsDialog.openDialog()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_SETTINGS")) root.openSettings()
                     }
                 }
                 // O3: the one-shot legacy settings importer (no legacy item).
@@ -4340,7 +4340,7 @@ ApplicationWindow {
                                 audio: root.audio
                                 slowerKey: root.boundKeys("AUDIO_SPEED_DOWN", 4)
                                 fasterKey: root.boundKeys("AUDIO_SPEED_UP", 4)
-                                onSettingsRequested: settingsDialog.openDialog(4) // the Audio page
+                                onSettingsRequested: root.openSettings("audio")
                             }
                         }
                         // AU2 (#268): Customise: each control AU1 folded as a
@@ -6006,7 +6006,7 @@ ApplicationWindow {
         // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
-            settingsDialog.openDialog(4) // the Audio page
+            root.openSettings("audio")
         }
         Component.onCompleted: {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
@@ -6747,14 +6747,28 @@ ApplicationWindow {
         importer: root.settingsImport
         anchors.centerIn: parent
     }
-    SettingsDialog {
-        id: settingsDialog
-        app: root.app
-        hotkeys: root.hotkeys
-        colourPicker: root.colourPicker
-        tagButtons: root.tagButtons
-        anchors.centerIn: parent
+    // PF1 (#225): the Settings window, made at its first opening (a window
+    // made at the start slows every start, PK1).
+    Loader {
+        id: settingsLoader
+        objectName: "settingsLoader"
+        active: false
+        sourceComponent: Component {
+            SettingsDialog {
+                app: root.app
+                hotkeys: root.hotkeys
+                colourPicker: root.colourPicker
+                tagButtons: root.tagButtons
+            }
+        }
     }
+    function settingsWindow() {
+        settingsLoader.active = true
+        return settingsLoader.item
+    }
+    // `page`: a page's id ("audio", "hotkeys"); without one, the page shown
+    // last. `filter`: the Hotkeys page's filter.
+    function openSettings(page, filter) { settingsWindow().openDialog(page, filter) }
     // Y8: the font collector; a double click on a Style in its log opens the
     // Style editor (StyleStore::ShowStyleEdit).
     FontCollectorDialog {
