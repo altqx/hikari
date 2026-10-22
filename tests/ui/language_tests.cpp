@@ -834,7 +834,7 @@ private slots:
         QCOMPARE(QGuiApplication::font().families().value(0), QStringLiteral("DejaVu Sans"));
         QTRY_COMPARE(label->property("font").value<QFont>().pointSizeF(), statusSize(14));
         // A control in a window made with the main one (the History window).
-        QCOMPARE(item("historyOk")->property("font").value<QFont>().pointSize(), 14);
+        QCOMPARE(item("historyGo")->property("font").value<QFont>().pointSize(), 14);
         QTRY_COMPARE(label->property("font").value<QFont>().families().value(0), QStringLiteral("DejaVu Sans"));
         application->settingsStore()->set("program.fontSize", 0); // legacy GetFont: 10
         QCOMPARE(QGuiApplication::font().pointSize(), 10);
