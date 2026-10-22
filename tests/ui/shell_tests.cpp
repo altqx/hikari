@@ -20656,7 +20656,8 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Visual perspective tool"));
         const QString dragged = text(session->document().lines()[2]);
         QVERIFY2(dragged.contains(QLatin1String("\\org(")) && dragged.contains(QLatin1String("\\frx"))
-                     && dragged.contains(QLatin1String("\\fry")) && dragged.endsWith(QLatin1String("\\p1}m 0 0 l 120 0 120 60 0 60")),
+                     && dragged.contains(QLatin1String("\\fry")) && dragged.startsWith(QLatin1String("{\\an7\\p1\\pos("))
+                     && dragged.endsWith(QLatin1String("}m 0 0 l 120 0 120 60 0 60")),
                  qPrintable(dragged));
         QTRY_VERIFY((corner(2) - (p + QPoint(12, 8))).manhattanLength() <= 2);
         QCOMPARE(tool->selectedCorner(), 2);
