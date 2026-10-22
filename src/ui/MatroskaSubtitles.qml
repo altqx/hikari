@@ -20,8 +20,10 @@ Item {
     required property var save
     property SettingsStore settings: null
     property bool waitingForSave: false
-    // PU1-disk-change-bar: the Documents whose write the load waits for.
+    // PU1-disk-change-bar: the Documents whose write the load waits for,
+    // and the tab that asked.
     property var writes: []
+    property var writeTab: undefined
     // The shell's OK-only notice: notify(severity, title, text).
     required property var notify
     // The editing target's tab name, for the question.
@@ -63,6 +65,7 @@ Item {
     // made: Save and load loads nothing over the unsaved work.
     function saveCancelled() {
         flow.writes = []
+        flow.writeTab = undefined
         if (!flow.waitingForSave)
             return
         flow.waitingForSave = false
@@ -71,16 +74,27 @@ Item {
     // Save over it was chosen: the load goes on once the write is done
     // (written), and is cancelled if it fails, so the work it was to save
     // is not replaced.
-    function awaitWrite(ids) {
-        if (flow.waitingForSave)
-            flow.writes = ids.slice()
+    function awaitWrite(ids, tab) {
+        if (!flow.waitingForSave)
+            return
+        flow.writes = ids.slice()
+        flow.writeTab = tab
     }
-    function written(id) {
+    // `current`: the editing target's tab row. The load goes on in the tab
+    // that asked, with its work written (another tab chosen meanwhile, or
+    // work an earlier write didn't cover, cancels it).
+    function written(id, current) {
         if (flow.writes.indexOf(id) < 0)
             return
         flow.writes = flow.writes.filter(w => w !== id)
-        if (flow.writes.length === 0)
+        if (flow.writes.length > 0)
+            return
+        if (current.id === flow.writeTab && !current.modified) {
+            flow.writeTab = undefined
             flow.saveDone()
+        } else {
+            flow.saveCancelled()
+        }
     }
     function writeFailed(id) {
         if (flow.writes.indexOf(id) >= 0)

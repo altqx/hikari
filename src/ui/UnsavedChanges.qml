@@ -112,8 +112,8 @@ Item {
             saveAs.currentFolder = v.folder
         else if (pickerFolder("subtitles").length > 0)
             saveAs.currentFolder = pickerFolder("subtitles")
-        if (v.file.toString() !== "")
-            saveAs.selectedFile = v.file
+        // No suggested name: none (not the file picked for the row before).
+        saveAs.selectedFile = v.file
         saveAs.open()
     }
 

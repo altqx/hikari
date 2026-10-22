@@ -1164,7 +1164,7 @@ private:
     std::optional<application::DocumentId> m_matroskaTarget;
     std::uint64_t m_matroskaRevision = 0;
     QString m_matroskaVideo; // the tab's video when the read started
-    std::uint64_t m_matroskaVideoRequest = 0; // and its last open request
+    QString m_matroskaRequested; // and the video last asked for then
     // The draft being typed when the read started (the question covered it).
     std::optional<core::LineId> m_matroskaDraftLine;
     std::optional<std::u8string> m_matroskaDraft;

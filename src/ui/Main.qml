@@ -983,7 +983,7 @@ ApplicationWindow {
         // change until scrollRestored(), so the model reset's transient 0
         // never replaces the tab's own scroll.
         function onDocumentWritten(id) {
-            matroskaSubtitles.written(id)
+            matroskaSubtitles.written(id, root.currentTab())
             if (root.savingAway[id] !== true)
                 return
             const away = Object.assign({}, root.savingAway)
@@ -6029,9 +6029,10 @@ ApplicationWindow {
         else if (route === "readonly")
             root.warnReadOnly(document, root.tabTitle(document))
         else if (document === 0)
-            root.editor.save()
+            return root.editor.save()
         else
-            root.app.saveDocument(document)
+            return root.app.saveDocument(document)
+        return true // it asks
     }
     property var saveQueue: []
     function saveAllTabs(overDisk) {
@@ -6067,8 +6068,7 @@ ApplicationWindow {
             saveAsDialog.currentFolder = v.folder
         else if (root.pickerFolder("subtitles").length > 0)
             saveAsDialog.currentFolder = root.pickerFolder("subtitles")
-        if (v.file.toString() !== "")
-            saveAsDialog.selectedFile = v.file
+        saveAsDialog.selectedFile = v.file // none: not the last Document's
         saveAsDialog.open()
     }
     FileDialog {
@@ -6167,8 +6167,9 @@ ApplicationWindow {
                         root.endDiskChange(marked)
                     // Y9: an MKV load waiting for this save goes on once it
                     // is written, and is cancelled if it fails.
-                    matroskaSubtitles.awaitWrite(ids)
-                    save()
+                    matroskaSubtitles.awaitWrite(ids, root.currentTab().id)
+                    if (save() === false) // refused: nothing is being written
+                        matroskaSubtitles.saveCancelled()
                 } else if (id === "saveOver") {
                     root.notify("warning", qsTranslate("HikariSub.Documents", "Save"),
                                 qsTranslate("HikariSub.Editor", "The file changed on disk since it was opened. Reload it, or save elsewhere."))

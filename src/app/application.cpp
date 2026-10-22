@@ -834,7 +834,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_matroskaDraft = session ? session->draftText() : std::nullopt;
             m_matroskaReloads = m_reloads;
             m_matroskaVideo = targetVideoPath();
-            m_matroskaVideoRequest = m_video->openRequest();
+            m_matroskaRequested = m_video->requestedVideo();
             m_matroskaFromHome = !m_matroskaTarget;
         };
         hooks.log = [this](const QString &text) {
@@ -3116,7 +3116,9 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
             || session->draftLine() != m_matroskaDraftLine || session->draftText() != m_matroskaDraft
             || m_reloads != m_matroskaReloads // reloaded: a new session at the same revision
             || targetVideoPath() != m_matroskaVideo
-            || m_video->openRequest() != m_matroskaVideoRequest; // one asked for, still being opened
+            // another video asked for in the tab, still being opened (the
+            // tab's own, opened again on coming back to it, is not)
+            || m_video->requestedVideo() != m_matroskaRequested;
     } else if (!newTab && m_matroskaFromHome) {
         newTab = m_workspace.editingTarget().has_value();
     }
