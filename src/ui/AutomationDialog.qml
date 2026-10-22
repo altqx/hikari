@@ -27,6 +27,7 @@
 //   the button, ticks the check box or (a label) moves to the control after
 //   it, the letters underlined while Alt is held.
 pragma ComponentBehavior: Bound
+pragma Translator: "HikariSub.Automation"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts

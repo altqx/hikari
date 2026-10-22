@@ -9,6 +9,7 @@
 #include "hikari/backends/lua_script_host.h"
 
 #include <QAccessible>
+#include <QCursor>
 #include <QFile>
 #include <QJsonArray>
 #include <QJsonDocument>
@@ -95,9 +96,11 @@ class AutomationDialogTests : public QObject {
     void showDialogOn(const DialogRequest &request, std::optional<DialogResult> &result, const QString &enter)
     {
         result.reset();
-        QTest::mouseMove(window, QPoint(1, 1)); // off the controls: no hovered hint
+        // Off the controls, no hovered hint: on xcb the real pointer hovers too.
+        QCursor::setPos(window->screen(), window->screen()->geometry().bottomRight() - QPoint(2, 2));
         controller->present(QStringLiteral("Keys"), request, [&result](DialogResult r) { result = r; });
         QTRY_VERIFY(window->isVisible());
+        QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2));
         window->requestActivate();
         QTRY_VERIFY(QGuiApplication::focusWindow() == window);
         QTRY_COMPARE(focusName(), enter);
@@ -298,7 +301,8 @@ private slots:
         // after opens it again.
         QVERIFY(QMetaObject::invokeMethod(pick, "clicked"));
         QTRY_VERIFY(popover->property("visible").toBool());
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(2, 2));
+        // (In the body's bottom margin, away from the popover: the window's edge is its frame's, for resizing.)
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, QPoint(14, window->height() - 10));
         QTRY_VERIFY(!popover->property("visible").toBool());
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
                           anchor->mapToScene(QPointF(anchor->width() / 2, anchor->height() / 2)).toPoint());
@@ -631,7 +635,7 @@ private slots:
         QCOMPARE(accessible(controlItem(0), QAccessible::Description), QStringLiteral("Override tags."));
         QTest::mouseMove(window, centre(controlItem(2)));
         QTRY_COMPARE(hint(), QStringLiteral("Leave the border as it is."));
-        QTest::mouseMove(window, QPoint(2, window->height() - 2));
+        QTest::mouseMove(window, QPoint(14, window->height() - 8));
         QTRY_COMPARE(hint(), QStringLiteral("The tags to gradient."));
         controlItem(3)->forceActiveFocus(Qt::TabFocusReason);
         QTRY_VERIFY(hint().endsWith(QStringLiteral("wraps")));
