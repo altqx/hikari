@@ -9332,11 +9332,11 @@ bądź brakuje kodeków czy też splittera</translation>
     <name>HikariSub.VisualTools</name>
     <message>
         <source>Tag editing</source>
-        <translation>Edycja tagu</translation>
+        <translation type="vanished">Edycja tagu</translation>
     </message>
     <message>
         <source>Edited tag</source>
-        <translation>Edytowany tag</translation>
+        <translation type="vanished">Edytowany tag</translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -9407,28 +9407,460 @@ bądź brakuje kodeków czy też splittera</translation>
         </translation>
     </message>
     <message>
-        <source>New tag name</source>
+        <source>Add tag</source>
+        <translation type="vanished">Dodaj tag</translation>
+    </message>
+    <message>
+        <source>Edit tags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add tag</source>
-        <translation>Dodaj tag</translation>
+        <source>Set</source>
+        <translation type="unfinished">Ustaw</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">Dodaj</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At the start of the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip rectangle with %1 animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set by line number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add by line number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across characters, increasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across characters, decreasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across lines, increasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across lines, decreasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit decimal places</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit starting value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change change option</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change placing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate tag</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete tag</source>
         <translation>Usuń tag</translation>
     </message>
     <message>
+        <source>Replace tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the tag, without the backslash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another tag is named “%1”. Press Enter to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag can&apos;t contain “,”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can&apos;t contain “,”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a whole number from 0 to 6.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a number from -10000 to 10000.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum must be greater than the minimum (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The minimum must be less than the maximum (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The step must be greater than zero.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The step must be at most half the range (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the tag “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the default tags?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Your %n tag(s) are removed and the 22 default tags come back, with their ranges and steps.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The 22 default tags come back with their ranges and steps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The list keeps at least one tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The tag takes %n value(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Starts at</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Starts on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the tag goes in the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How each Line&apos;s number changes the value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the gradient runs across</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the inspector bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set writes, on the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Common</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default tags…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name:</source>
-        <translation>Nazwa:</translation>
+        <translation type="vanished">Nazwa:</translation>
+    </message>
+    <message>
+        <source>Edit shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change scaling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take drawing from line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can&apos;t contain “;”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another shape is named “%1”. Press Enter to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the shape “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” takes its name and its place in the list; the other is removed. Undo brings it back while this window is open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the default shapes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Your %n shape(s) are removed and the five default shapes come back.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The five default shapes come back as they were.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo brings yours back while this window is open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">Usuń</translation>
+    </message>
+    <message>
+        <source>The list keeps at least one shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
         <translation>Nazwa</translation>
     </message>
     <message>
+        <source>Scale from the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width and height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A drawing can&apos;t contain “;”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A shape needs a drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take from the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put the active line&apos;s drawing in this shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The active line has no drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">Podgląd</translation>
+    </message>
+    <message>
+        <source>The shape keeps its last drawing until this one can be used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 × %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">Cofnij</translation>
+    </message>
+    <message>
+        <source>Undo “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">Ponów</translation>
+    </message>
+    <message>
+        <source>Redo “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Zamknij</translation>
+    </message>
+    <message>
+        <source>Restore default shapes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tag:</source>
-        <translation>Tag:</translation>
+        <translation type="vanished">Tag:</translation>
     </message>
     <message>
         <source>Tag</source>
@@ -9436,43 +9868,27 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Minimal value:</source>
-        <translation>Minimalna wartość:</translation>
-    </message>
-    <message>
-        <source>Minimal value</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Minimalna wartość:</translation>
     </message>
     <message>
         <source>Maximal value:</source>
-        <translation>Maksymalna wartość:</translation>
-    </message>
-    <message>
-        <source>Maximal value</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Maksymalna wartość:</translation>
     </message>
     <message>
         <source>Value:</source>
-        <translation>Wartość:</translation>
-    </message>
-    <message>
-        <source>Value</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Wartość:</translation>
     </message>
     <message>
         <source>Step:</source>
-        <translation>Przeskok:</translation>
+        <translation type="vanished">Przeskok:</translation>
     </message>
     <message>
         <source>Step</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Where Insert puts the tag</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Decimal places:</source>
-        <translation>Liczby po przecinku:</translation>
+        <translation type="vanished">Liczby po przecinku:</translation>
     </message>
     <message>
         <source>Decimal places</source>
@@ -9480,27 +9896,23 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Used only when tag have 2 values or more</source>
-        <translation>Używane tylko w przypadku gdy tag ma 2 wartości bądź więcej</translation>
+        <translation type="vanished">Używane tylko w przypadku gdy tag ma 2 wartości bądź więcej</translation>
     </message>
     <message>
         <source>Tag change options</source>
-        <translation>Opcje zmiany tagów</translation>
+        <translation type="vanished">Opcje zmiany tagów</translation>
     </message>
     <message>
         <source>Additional values:</source>
-        <translation>Dodatkowe wartości:</translation>
+        <translation type="vanished">Dodatkowe wartości:</translation>
     </message>
     <message>
         <source>Value %1</source>
-        <translation type="unfinished">Wartość %1</translation>
+        <translation type="obsolete">Wartość %1</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation>Zastosuj</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Zastosuj</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -9508,31 +9920,23 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Restore default</source>
-        <translation>Przywróć domyślne</translation>
+        <translation type="vanished">Przywróć domyślne</translation>
     </message>
     <message>
         <source>Vector shape editing</source>
-        <translation>Edycja kształtów wektorowych</translation>
-    </message>
-    <message>
-        <source>A shape named &quot;%1&quot; already exists.</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Edycja kształtów wektorowych</translation>
     </message>
     <message>
         <source>Edited shape</source>
-        <translation>Edytowany kształt</translation>
+        <translation type="vanished">Edytowany kształt</translation>
     </message>
     <message>
         <source>Shapes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>New shape name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Add shape</source>
-        <translation>Dodaj kształt</translation>
+        <translation type="vanished">Dodaj kształt</translation>
     </message>
     <message>
         <source>Delete shape</source>
@@ -9540,51 +9944,43 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Editing</source>
-        <translation>Edycja</translation>
+        <translation type="vanished">Edycja</translation>
     </message>
     <message>
         <source>Scaling relative to cursor:</source>
-        <translation>Skalowanie względem kursora:</translation>
+        <translation type="vanished">Skalowanie względem kursora:</translation>
     </message>
     <message>
         <source>Changed width and height</source>
-        <translation>Zmienna szerokość i wysokość</translation>
+        <translation type="vanished">Zmienna szerokość i wysokość</translation>
     </message>
     <message>
         <source>Preserve aspect ratio</source>
-        <translation>Utrzymuj proporcje</translation>
+        <translation type="vanished">Utrzymuj proporcje</translation>
     </message>
     <message>
         <source>Changed is only width</source>
-        <translation>Zmienna tylko szerokość</translation>
-    </message>
-    <message>
-        <source>Scaling relative to cursor</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Zmienna tylko szerokość</translation>
     </message>
     <message>
         <source>Scaling mode:</source>
-        <translation>Rodzaj skalowania:</translation>
+        <translation type="vanished">Rodzaj skalowania:</translation>
     </message>
     <message>
         <source>Changing only drawing coordinates</source>
-        <translation>Zmiana koordynatów rysunku</translation>
+        <translation type="vanished">Zmiana koordynatów rysunku</translation>
     </message>
     <message>
         <source>Changing scale</source>
-        <translation>Zmiana skali</translation>
-    </message>
-    <message>
-        <source>Scaling mode</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Zmiana skali</translation>
     </message>
     <message>
         <source>Shape:</source>
-        <translation>Kształt:</translation>
+        <translation type="vanished">Kształt:</translation>
     </message>
     <message>
         <source>Get shape from active line</source>
-        <translation>Pobierz kształt z aktywnej linii</translation>
+        <translation type="vanished">Pobierz kształt z aktywnej linii</translation>
     </message>
     <message>
         <source>Shape</source>
@@ -9592,15 +9988,11 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>Potwierdzenie</translation>
+        <translation type="vanished">Potwierdzenie</translation>
     </message>
     <message>
         <source>Replace</source>
         <translation>Zamień</translation>
-    </message>
-    <message>
-        <source>Rename</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy video position</source>
