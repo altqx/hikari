@@ -52,7 +52,10 @@ enum class OptionsControl {
 // list's order (Hotkeys holds none; Appearance holds the program font).
 // Legacy's tree (Editor with Conversion and Advanced, Video, Audio with
 // Advanced, Subtitle properties) became these topic pages (PF1-pages).
-enum class OptionsPage { General, Appearance, LineEditor, Grid, Video, Audio, Conversion, SubtitleProperties, Automation };
+// PU7 (#309): Updates, after Hotkeys, holds the update options that left the
+// update window (PU7-update-settings).
+enum class OptionsPage { General, Appearance, LineEditor, Grid, Video, Audio, Conversion, SubtitleProperties, Automation,
+                         Updates };
 // The page's id in the Settings window ("general", "lineEditor", ...), and
 // back; nothing for an id that names no such page.
 std::string_view optionsPageId(OptionsPage page);
@@ -72,7 +75,8 @@ struct OptionsBinding {
 // them: automation.scriptResolutionFromVideo (Y4), grid.autoHideColumns
 // (GR3), audio.outputDevice (H2), editor.timesToFramesSwitch (LE2),
 // editor.hideTags (LE3), subtitles.layoutInFile (WS2),
-// video.moveToActiveLine and video.playAfterSelection (VF1) and, on Windows,
+// video.moveToActiveLine and video.playAfterSelection (VF1),
+// notices.toasts (PK1), the Updates page's updater.* (PU7) and, on Windows,
 // audio.outputHostApi and video.playbackPlayer (W1).
 std::span<const OptionsBinding> optionsBindings();
 const OptionsBinding *findOptionsBinding(std::string_view setting);

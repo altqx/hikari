@@ -98,6 +98,12 @@ UpdateEnvironment UpdateEnvironment::current()
     env.glibcVersion = QString::fromLatin1(gnu_get_libc_version());
 #endif
     env.pkexec = QStandardPaths::findExecutable(QStringLiteral("pkexec"));
+    if (env.package.kind == application::PackageKind::Arch)
+        for (const auto *helper : {"yay", "paru"})
+            if (!QStandardPaths::findExecutable(QString::fromLatin1(helper)).isEmpty()) {
+                env.aurHelper = QString::fromLatin1(helper);
+                break;
+            }
 #endif
     env.allowRedirect = [](const QUrl &url) {
         return url.scheme() == QLatin1String("https") && url.port() == -1 && url.userInfo().isEmpty() &&

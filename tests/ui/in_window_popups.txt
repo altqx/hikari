@@ -21,15 +21,11 @@ Main.qml:shiftConfirm
 Main.qml:conversionDialog
 Main.qml:resampleDialog
 Main.qml:mismatchDialog
-ManageLayoutsDialog.qml:dialog
 MisspellReplacerDialog.qml:dialog
 MisspellReplacerDialog.qml:results
-SaveLayoutDialog.qml:dialog
 ScriptPropertiesDialog.qml:dialog
 SearchTool.qml:question
 SelectLinesDialog.qml:dialog
-SettingsImportDialog.qml:dialog
-SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
