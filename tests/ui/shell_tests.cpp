@@ -2712,6 +2712,11 @@ private slots:
         QTRY_VERIFY(logWindow->isVisible());
         QVERIFY(logWindow->findChild<QObject *>(QStringLiteral("logLastMessage"))
                     ->property("text").toString().contains(QStringLiteral("none.ass")));
+        // Messages quote files, so they show as plain text, never markup.
+        QCOMPARE(logWindow->findChild<QObject *>(QStringLiteral("logLastMessage"))->property("textFormat").toInt(),
+                 int(Qt::PlainText));
+        QCOMPARE(logWindow->findChild<QObject *>(QStringLiteral("logHistory"))->property("textFormat").toInt(),
+                 int(Qt::PlainText));
         QVERIFY(QMetaObject::invokeMethod(logWindow->findChild<QObject *>(QStringLiteral("logClose")), "clicked"));
         QTRY_VERIFY(!logWindow->isVisible());
         // File > Show / Hide log window: the whole log.
@@ -6498,6 +6503,150 @@ private slots:
         QTRY_VERIFY(!credits->isVisible());
     }
 
+    // SH3 (#223): What's new on Home and in Help, from the recorded release
+    // list: nothing asked for while update checks are off, the dialog saying
+    // why; Help > What's new fetches once they are on; the Home card then
+    // shows the notes since the version run before, beside the recent list
+    // (under it in a narrow window). With HIKARI_SURFACE_SHOT_DIR, both in the
+    // four themes (whats-new-home-<theme>.png, whats-new-dialog-<theme>.png).
+    void whatsNewOnHomeAndInHelp()
+    {
+        const QString root = dir.filePath(QStringLiteral("whats-new"));
+        QVERIFY(QDir().mkpath(root + QStringLiteral("/feed")));
+        QFile::remove(root + QStringLiteral("/feed/releases.json"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_GITHUB_RELEASES), root + QStringLiteral("/feed/releases.json")));
+        app::Application::Options options;
+        options.settingsFile = root + QStringLiteral("/hikari.ini");
+        options.playbackAudio = false;
+        options.appVersion = QStringLiteral("0.1.3");
+        options.updateFeed = app::UpdateFeed::local(QUrl::fromLocalFile(root + QStringLiteral("/feed/")));
+        // The copy's cache: 0.1.1 ran last.
+        options.updateEnvironment.cacheDir = root + QStringLiteral("/cache");
+        QVERIFY(QDir().mkpath(options.updateEnvironment.cacheDir));
+        {
+            QFile cache(app::WhatsNew::cacheFileIn(options.updateEnvironment));
+            QVERIFY(cache.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            cache.write(R"({"installed":"0.1.1","since":""})");
+        }
+        restartWith(options);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("updater.autoCheck"), false);
+        settings.setValue(QStringLiteral("updater.nextCheck"), QDateTime::currentSecsSinceEpoch() + 86400);
+        application->updates().reload();
+        auto &whatsNew = application->whatsNew();
+        whatsNew.start();
+        hikari::test::desktop::clear();
+
+        // Off: no card, and the dialog says why.
+        auto *top = engine->rootObjects().first();
+        QVERIFY(item("homePage")->isVisible());
+        QVERIFY(!item("homeWhatsNew")->isVisible());
+        QVERIFY(!window->findChild<QObject *>(QStringLiteral("whatsNewCard")));
+        auto *dialog = top->findChild<QQuickWindow *>(QStringLiteral("whatsNewDialog"));
+        QVERIFY(dialog);
+        auto *menuItem = top->findChild<QObject *>(QStringLiteral("whatsNewMenuItem"));
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("whats-new"));
+        auto *action = menuItem->property("action").value<QObject *>();
+        QCOMPARE(action->property("text").toString(), QStringLiteral("What's &new"));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(dialog->isVisible());
+        QCOMPARE(dialog->title(), QStringLiteral("What's new"));
+        QCOMPARE(dialog->modality(), Qt::NonModal);
+        QVERIFY(dialog->property("resizable").toBool());
+        QCOMPARE(whatsNew.state(), QStringLiteral("off"));
+        QVERIFY(dialogItem("whatsNewDialog", "whatsNewEmpty")->isVisible());
+        QVERIFY(!dialogItem("whatsNewDialog", "whatsNewDialogNotes")->isVisible());
+        QCOMPARE(dialogItem("whatsNewDialog", "whatsNewEmptyTitle")->property("text").toString(),
+                 QStringLiteral("No release notes yet"));
+        QVERIFY(dialogItem("whatsNewDialog", "whatsNewEmptyText")->property("text").toString().contains(
+            QStringLiteral("Check for updates automatically")));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+        QTRY_VERIFY(!dialog->isVisible());
+
+        // On: opening it fetches; Fetching while the list is read, then the
+        // notes since 0.1.1 on the stable channel.
+        application->updates().setAutoCheck(true);
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(dialog->isVisible());
+        if (whatsNew.state() == QLatin1String("fetching")) {
+            QCOMPARE(dialogItem("whatsNewDialog", "whatsNewEmptyTitle")->property("text").toString(),
+                     QStringLiteral("Fetching the release notes…"));
+            QVERIFY(!item("homeWhatsNew")->isVisible()); // hidden during the first fetch
+        }
+        QTRY_COMPARE(whatsNew.state(), QStringLiteral("ready"));
+        QTRY_VERIFY(dialogItem("whatsNewDialog", "whatsNewDialogNotes")->isVisible());
+        QVERIFY(!dialogItem("whatsNewDialog", "whatsNewEmpty")->isVisible());
+        QCOMPARE(dialogItem("whatsNewDialog", "whatsNewIntro")->property("text").toString(),
+                 QStringLiteral("Changes since version 0.1.1, the one you used before."));
+        QCOMPARE(dialogItem("whatsNewDialog", "whatsNewDialogNotes")->property("count").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("whatsNewDialog", "whatsNewAllReleaseNotes"), "click"));
+        QCOMPARE(hikari::test::desktop::opened(), QList<QUrl>{app::WhatsNew::allReleaseNotesUrl(options.updateFeed)});
+        hikari::test::desktop::clear();
+        QVERIFY(QTest::qWaitForWindowExposed(dialog));
+        QTRY_VERIFY(dialog->contentItem()->width() > 0);
+        QVERIFY(QTest::qWaitForWindowActive(dialog));
+        QTest::keyClick(dialog, Qt::Key_Escape);
+        QTRY_VERIFY(!dialog->isVisible());
+
+        // The Home card: beside the recent list, the newest first.
+        QTRY_VERIFY(item("homeWhatsNew")->isVisible());
+        window->resize(1280, 800);
+        QQuickItem *card = item("whatsNewCard");
+        QVERIFY(card);
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(item<QObject>("whatsNewSince")->property("text").toString(), QStringLiteral("Since 0.1.1"));
+        QCOMPARE(item("whatsNewNotes")->property("count").toInt(), 2);
+        QQuickItem *newest = findItem(card, QStringLiteral("releaseNotes0"));
+        QVERIFY(newest);
+        QCOMPARE(findItem(newest, QStringLiteral("releaseName"))->property("text").toString(), QStringLiteral("HikariSub 0.1.3"));
+        // A release's name is GitHub's text: never read as markup.
+        QCOMPARE(findItem(newest, QStringLiteral("releaseName"))->property("textFormat").toInt(), int(Qt::PlainText));
+        QQuickItem *older = findItem(card, QStringLiteral("releaseNotes1"));
+        QVERIFY(older);
+        QCOMPARE(findItem(older, QStringLiteral("releaseName"))->property("text").toString(), QStringLiteral("HikariSub 0.1.2"));
+        QVERIFY(!findItem(older, QStringLiteral("releasePrerelease"))->isVisible());
+        // The notes as plain rich text: no Markdown marks, no image loaded.
+        const QString text = findItem(newest, QStringLiteral("releaseText"))->property("text").toString();
+        QVERIFY2(!text.contains(QStringLiteral("<img")) && !text.contains(QStringLiteral("## ")), qPrintable(text));
+        QVERIFY(QMetaObject::invokeMethod(item("whatsNewAll"), "click"));
+        QCOMPARE(hikari::test::desktop::opened(), QList<QUrl>{app::WhatsNew::allReleaseNotesUrl(options.updateFeed)});
+        QQuickItem *recent = item("homeRecent");
+        QTRY_VERIFY(card->mapToScene(QPointF()).x() >= recent->mapToScene(QPointF(recent->width(), 0)).x());
+        // No recent files: the list's title and "No recent files" stay at
+        // its top as the card makes the row tall.
+        QQuickItem *none = item("homeNoRecent");
+        QVERIFY(none->isVisible());
+        QVERIFY2(none->mapToItem(recent, QPointF()).y() < 80, qPrintable(QString::number(none->mapToItem(recent, QPointF()).y())));
+        // Narrow: under the list, as wide as it.
+        window->resize(900, 680);
+        QTRY_VERIFY(card->mapToScene(QPointF()).y() >= recent->mapToScene(QPointF(0, recent->height())).y());
+        QTRY_COMPARE(card->width(), recent->width());
+
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (!out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            window->resize(1280, 800);
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = top->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(200);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/whats-new-home-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+                QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
+                QVERIFY(QTest::qWaitForWindowExposed(dialog));
+                QTest::qWait(300);
+                QVERIFY(dialog->grabWindow().save(out + QStringLiteral("/whats-new-dialog-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+                QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+                QTRY_VERIFY(!dialog->isVisible());
+            }
+        }
+        restartWith(app::Application::Options());
+    }
+
     // P8, ADR 0019, DG1 (#222): the update check's results and notices open
     // on the dialog frame, modeless: the check's messages titled "Check for
     // updates" (a failure with the warning glyph), the installer's "Update";
@@ -6540,14 +6689,23 @@ private slots:
         const QVariantMap release{{QStringLiteral("name"), QStringLiteral("HikariSub 9.0.0")},
                                   {QStringLiteral("tag"), QStringLiteral("v9.0.0")},
                                   {QStringLiteral("version"), QStringLiteral("9.0.0")},
-                                  {QStringLiteral("notes"), QStringLiteral("New\n- everything")},
+                                  {QStringLiteral("notes"), QStringLiteral("## New\n- everything")},
                                   {QStringLiteral("offer"), QStringLiteral("page")}};
         QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
                                           Q_ARG(QVariantMap, release), Q_ARG(bool, false)));
         QTRY_VERIFY(available->isVisible());
         QVERIFY(available->property("resizable").toBool());
         QCOMPARE(dialogItem("updateAvailable", "updateName")->property("text").toString(), QStringLiteral("HikariSub 9.0.0"));
-        QCOMPARE(dialogItem("updateAvailable", "updateNotes")->property("text").toString(), QStringLiteral("New\n- everything"));
+        QCOMPARE(dialogItem("updateAvailable", "updateName")->property("textFormat").toInt(), int(Qt::PlainText));
+        // SH3: the notes as plain rich text, the Markdown gone.
+        auto *notes = dialogItem("updateAvailable", "updateNotes");
+        QCOMPARE(notes->property("notes").toString(), QStringLiteral("## New\n- everything"));
+        QString shownNotes;
+        QVERIFY(QMetaObject::invokeMethod(notes, "getText", Q_RETURN_ARG(QString, shownNotes), Q_ARG(int, 0),
+                                          Q_ARG(int, notes->property("length").toInt())));
+        QVERIFY2(shownNotes.contains(QStringLiteral("New")) && shownNotes.contains(QStringLiteral("everything")),
+                 qPrintable(shownNotes));
+        QVERIFY(!shownNotes.contains(QStringLiteral("##")));
         QVERIFY(dialogItem("updateAvailable", "updateOffer")->isVisible());
         QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateOffer"));
         QVERIFY(!dialogItem("updateAvailable", "updateRequirement")->isVisible());
@@ -8129,6 +8287,138 @@ private:
     }
 
 private slots:
+    // KA7: Subtitles > Check karaoke and GLOBAL_CHECK_KARAOKE open the
+    // Karaoke check window; each check's row selects its Line, Re-check reads
+    // the Document again, and a clean Document says so.
+    void karaokeCheckWindowSelectsEachProblemsLine()
+    {
+        const QString path = writeFile(dir, "karaoke.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\k50}fi{\\k50}ne\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,{\\k100}un{\\k0closed\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\k50}too {\\k20}short\n"
+                                       "Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,{\\k0}zero {\\k100}length\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,{\\k-10}out{\\k110}side\n"
+                                       "Dialogue: 0,0:00:06.00,0:00:07.00,Default,,0,0,0,,plain\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+
+        auto *root = engine->rootObjects().first();
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("karaokeCheckDialog"));
+        QVERIFY(dialog);
+        // Subtitles > Check karaoke, right after Check spelling.
+        auto *item = root->findChild<QObject *>(QStringLiteral("checkKaraokeMenuItem"));
+        const auto entries = menuItems(item->property("menu").value<QObject *>());
+        const auto at = [&](const char *name) {
+            for (qsizetype i = 0; i < entries.size(); ++i)
+                if (entries[i] && entries[i]->objectName() == QLatin1String(name))
+                    return i;
+            return qsizetype(-1);
+        };
+        QCOMPARE(at("checkKaraokeMenuItem"), at("checkSpellingMenuItem") + 1);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *list = dialogItem("karaokeCheckDialog", "karaokeProblems");
+        QVERIFY(list);
+        QTRY_COMPARE(list->property("count").toInt(), 4);
+        QVERIFY(!dialogItem("karaokeCheckDialog", "karaokeCheckEmpty")->isVisible());
+        QVERIFY(!dialogItem("karaokeCheckDialog", "karaokeUnlisted")->isVisible());
+        // Past core::kListedProblems the window says how many more there are.
+        const QVariantMap checked = application->checkKaraoke();
+        QCOMPARE(checked.value(QStringLiteral("unlisted")).toULongLong(), 0ull);
+        dialog->setProperty("unlisted", 1234);
+        QTRY_VERIFY(dialogItem("karaokeCheckDialog", "karaokeUnlisted")->isVisible());
+        QCOMPARE(dialogItem("karaokeCheckDialog", "karaokeUnlisted")->property("text").toString(),
+                 QStringLiteral("1234 more problems not listed; fix these and check again"));
+        dialog->setProperty("unlisted", 1);
+        QCOMPARE(dialogItem("karaokeCheckDialog", "karaokeUnlisted")->property("text").toString(),
+                 QStringLiteral("1 more problem not listed; fix these and check again"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeRecheck"), "click"));
+        QTRY_VERIFY(!dialogItem("karaokeCheckDialog", "karaokeUnlisted")->isVisible());
+
+        struct Expected {
+            int number;
+            const char *check;
+            const char *detail;
+        };
+        const Expected expected[] = {
+                {2, "Unclosed syllable", "A karaoke tag has no duration, or its override block is never closed"},
+                {3, "Syllables don't match the line", "The syllables last 0.70 s; the line lasts 1.00 s"},
+                {4, "Zero-length syllable", "Syllable 1"},
+                {5, "Syllable outside the line", "Syllables 1, 2"},
+        };
+        const QVariantList problems = dialog->property("problems").toList();
+        QCOMPARE(problems.size(), qsizetype(std::size(expected)));
+        // The rows in order; a click on each selects its Line.
+        auto rowItem = [&](int index) -> QQuickItem * {
+            QMetaObject::invokeMethod(list, "positionViewAtIndex", Q_ARG(int, index), Q_ARG(int, 0));
+            for (QQuickItem *child : list->property("contentItem").value<QQuickItem *>()->childItems())
+                if (child->property("index").isValid() && child->property("index").toInt() == index)
+                    return child;
+            return nullptr;
+        };
+        for (int i = 0; i < int(std::size(expected)); ++i) {
+            const QVariantMap row = problems[i].toMap();
+            QCOMPARE(row.value(QStringLiteral("number")).toInt(), expected[i].number);
+            QCOMPARE(row.value(QStringLiteral("check")).toString(), QString::fromUtf8(expected[i].check));
+            QCOMPARE(row.value(QStringLiteral("detail")).toString(), QString::fromUtf8(expected[i].detail));
+            auto *item = rowItem(i);
+            QVERIFY(item);
+            QVERIFY(QMetaObject::invokeMethod(item, "click"));
+            const auto line = lines[std::size_t(expected[i].number - 1)]->id;
+            QTRY_COMPARE(session->selection().active, std::optional(line));
+            QCOMPARE(session->selection().selected, std::set<core::LineId>{line});
+            QCOMPARE(row.value(QStringLiteral("line")).toULongLong(), line.value);
+        }
+        // A row is only for the Document it checked: a Line the target no
+        // longer has, or the same Line id in another Document, is not selected.
+        const qulonglong document = application->workspace().editingTarget()->value;
+        QCOMPARE(problems[0].toMap().value(QStringLiteral("document")).toULongLong(), document);
+        QVERIFY(!application->showKaraokeLine(document, 987654321));
+        QVERIFY(!application->showKaraokeLine(document + 1, lines[0]->id.value));
+        QCOMPARE(session->selection().active, std::optional(lines[4]->id));
+
+        // Fixed Lines leave the list at Re-check; the command opens the window too.
+        for (std::size_t row = 1; row <= 4; ++row) {
+            const auto id = lines[row]->id;
+            QVERIFY(session->run(application::Command{"Set text", session->revision(), {id},
+                                                      [&](core::Document &d) { return d.setLineText(id, u8"{\\k100}fixed"); }}));
+        }
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_CHECK_KARAOKE"))));
+        QVERIFY(ran.toBool());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QTRY_COMPARE(list->property("count").toInt(), 0);
+        QVERIFY(dialogItem("karaokeCheckDialog", "karaokeCheckEmpty")->isVisible());
+        QCOMPARE(dialogItem("karaokeCheckDialog", "karaokeCheckEmpty")->property("text").toString(),
+                 QStringLiteral("No karaoke problems found"));
+        // Re-check picks up a new problem.
+        const auto first = lines[0]->id;
+        QVERIFY(session->run(application::Command{"Set text", session->revision(), {first},
+                                                  [&](core::Document &d) { return d.setLineText(first, u8"{\\k0}x{\\k100}y"); }}));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeRecheck"), "click"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        QCOMPARE(dialog->property("problems").toList().front().toMap().value(QStringLiteral("number")).toInt(), 1);
+        // The editor's pending draft is checked as it stands, and stays a draft.
+        QCOMPARE(session->selection().active, std::optional(session->document().lines()[4]->id));
+        application->editor().textEdited(QStringLiteral("{\\k50}draft"), 0);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeRecheck"), "click"));
+        QTRY_COMPARE(list->property("count").toInt(), 2);
+        QCOMPARE(dialog->property("problems").toList().at(1).toMap().value(QStringLiteral("number")).toInt(), 5);
+        QVERIFY(session->document().lines()[4]->text == u8"{\\k100}fixed");
+        // A draft the editor cannot commit keeps its Line: the row is refused.
+        QVERIFY(session->editDraft(lines[4]->id, application::DraftChange{.start = core::DocumentTime(5'000'000),
+                                                                          .end = core::DocumentTime(1'000'000)}));
+        QVERIFY(!application->showKaraokeLine(document, first.value));
+        QCOMPARE(session->selection().active, std::optional(lines[4]->id));
+        application->editor().discard();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("karaokeCheckDialog", "karaokeClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     // F3: the Grid's and the editor's marks, Subtitles > Check spelling
     // (Replace as one step, then the next word on another Line, then "No
     // spelling errors were found"), a suggestion from the editor and Add word.
@@ -14038,8 +14328,8 @@ private slots:
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and VT2's eleven visual tools listed; KA2's Tap
-        // to time, Slower and Faster.
-        QCOMPARE(hotkeyRows().size(), 236);
+        // to time, Slower and Faster; KA7's "Check karaoke".
+        QCOMPARE(hotkeyRows().size(), 237);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.

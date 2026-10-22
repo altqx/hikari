@@ -124,6 +124,9 @@ TEST(OpenKind, FollowsTheLegacyExtensions)
     for (const bool single : {true, false}) {
         for (const char *s : {"a.ass", "a.SSA", "a.srt", "a.sub", "a.txt"})
             EXPECT_EQ(openKindOf(s, single), OpenKind::Subtitles) << s;
+        // KA6: lyrics are imported as karaoke Lines.
+        for (const char *s : {"a.lrc", "a.TTML"})
+            EXPECT_EQ(openKindOf(s, single), OpenKind::Subtitles) << s;
         for (const char *s : {"a.lua", "a.Moon"})
             EXPECT_EQ(openKindOf(s, single), OpenKind::Script) << s;
         for (const char *s : {"a.exe", "a.ZIP", "a.rar", "a.7z"})
