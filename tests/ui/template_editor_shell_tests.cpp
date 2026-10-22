@@ -310,6 +310,31 @@ private slots:
         }));
     }
 
+    // A template typed just before Save or Save all is saved with the file:
+    // the pending edit goes in first, and the file is left clean.
+    void aSaveWritesTheTemplateJustTyped()
+    {
+        QVERIFY(openSong("stock-tutorials.ass", false));
+        showPanel("templateDock");
+        const QString path = dir.filePath(QStringLiteral("stock-tutorials.ass"));
+        const auto saved = [&](const char *tag) {
+            QFile f(path);
+            return f.open(QIODevice::ReadOnly) && f.readAll().contains(tag);
+        };
+        QVERIFY(!session()->isDirty());
+        editor().setText(editor().text() + QStringLiteral("{\\bord8}"));
+        application->saveAll(); // the file looked clean
+        QTRY_VERIFY_WITH_TIMEOUT(saved("bord8"), 10'000);
+        QTRY_VERIFY(!session()->isDirty());
+        QTest::qWait(1'000); // past the commit delay: nothing comes in after
+        QVERIFY(!session()->isDirty());
+        editor().setText(editor().text() + QStringLiteral("{\\bord9}"));
+        QVERIFY(application->editor().save());
+        QTRY_VERIFY_WITH_TIMEOUT(saved("bord9"), 10'000);
+        QTest::qWait(1'000);
+        QVERIFY(!session()->isDirty());
+    }
+
     // A file opened while the panel shows runs none of its templates or
     // code until the user previews it; a second file asks again.
     void aFileRunsNoCodeUntilTheUserPreviewsIt()

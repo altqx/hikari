@@ -553,6 +553,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     // A shortcut's or the menu's macro starts from the template just typed.
     m_automation->setBeforeRun([this] { m_templateEditor->commit(); });
+    // A save writes the template just typed (Save all sees the file it made
+    // dirty too).
+    m_files->setBeforeSave([this] { m_templateEditor->commit(); });
     connect(m_templateEditor.get(), &ui::TemplateEditorController::documentEdited, this, [this] { refreshViews(); });
     connect(m_templateEditor.get(), &ui::TemplateEditorController::videoChanged, this, [this] {
         if (m_videoShowsTemplate || m_templateEditor->videoPreview())
@@ -2241,6 +2244,7 @@ bool Application::saveDocument(qulonglong id)
 QVariantList Application::saveAll()
 {
     // Legacy SaveAll: Save(false, i, false) for every modified tab in order.
+    m_templateEditor->commit(); // KE2: a template just typed makes its tab modified
     QVariantList later;
     for (const auto id : m_workspace.tabs()) {
         auto *session = m_files->session(id);
