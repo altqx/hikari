@@ -487,16 +487,23 @@ void TemplateEditorController::updateSource()
     std::optional<core::LineId> source =
         doc ? application::templatePreviewSource(*doc, s->selection().active, m_lastSource) : std::nullopt;
     // A generated Line of a file opened without marks: its karaoke Line is
-    // found first; the preview stays until then.
+    // found first; the preview stays until then. One no karaoke Line gives
+    // has none, and no other Line stands in for it.
     const auto active = s ? s->selection().active : std::nullopt;
+    bool unknown = false;
     if (const auto *l = active ? line(*active) : nullptr;
         l && application::isGeneratedLine(*l) && l->generatedFrom.value == 0) {
         if (m_ownersRevision == s->revision()) {
-            if (const auto owner = m_owners.find(*active); owner != m_owners.end())
-                source = owner->second;
+            const auto owner = m_owners.find(*active);
+            unknown = owner == m_owners.end();
+            source = unknown ? std::nullopt : std::optional(owner->second);
         } else if (m_ownersAsked == s->revision() || askOwners()) {
             return;
         }
+    }
+    if (unknown != m_sourceUnknown) {
+        m_sourceUnknown = unknown;
+        emit previewChanged();
     }
     if (source == m_source)
         return;

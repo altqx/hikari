@@ -764,7 +764,9 @@ Pane {
                         Layout.fillWidth: true
                         wrapMode: Text.Wrap
                         color: Theme.muted
-                        text: root.controller.source === 0
+                        text: root.controller.sourceUnknown
+                              ? qsTr("These templates give the active Line from no karaoke Line. Apply them to the whole file to preview it.")
+                              : root.controller.source === 0
                               ? qsTr("Select a karaoke Line to preview the templates on it.")
                               : root.controller.previewPending
                                 ? qsTr("Running the templates on Line %1…").arg(root.controller.sourceNumber)

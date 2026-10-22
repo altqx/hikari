@@ -67,6 +67,9 @@ class TemplateEditorController : public QObject {
     // The karaoke Line the preview runs on (0: none), its number, Style and
     // text without tags, and its time.
     Q_PROPERTY(qulonglong source READ source NOTIFY previewChanged)
+    // The active Line is a generated Line no karaoke Line gives with these
+    // templates (a file opened without marks): nothing is previewed for it.
+    Q_PROPERTY(bool sourceUnknown READ sourceUnknown NOTIFY previewChanged)
     Q_PROPERTY(int sourceNumber READ sourceNumber NOTIFY previewChanged)
     Q_PROPERTY(QString sourceStyle READ sourceStyle NOTIFY previewChanged)
     Q_PROPERTY(QString sourceText READ sourceText NOTIFY previewChanged)
@@ -166,6 +169,7 @@ public:
     QVariantList problemRange() const;
     bool hasProblems() const;
     qulonglong source() const { return m_source ? m_source->value : 0; }
+    bool sourceUnknown() const { return m_sourceUnknown; }
     int sourceNumber() const;
     QString sourceStyle() const;
     QString sourceText() const;
@@ -354,6 +358,7 @@ private:
     // The template and code Lines at the last Apply (or when the panel first
     // saw the Document), per Document: another tab's visit keeps them.
     std::map<DocumentKey, std::map<core::LineId, std::string>> m_baselines;
+    bool m_sourceUnknown = false;
     QVariantMap m_lastApply;
     QVariantMap m_values;
 };

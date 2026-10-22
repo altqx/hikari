@@ -1649,6 +1649,26 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->source() == karaoke[1].value && settled(); }, 20'000));
     }
 
+    // A generated Line clicked that no karaoke Line gives with these
+    // templates previews no other Line in its place, and says why.
+    void aGeneratedLineNoTemplateGivesPreviewsNothingElse()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        std::optional<core::LineId> clicked;
+        for (const auto *l : session->document().lines())
+            if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0)
+                clicked = l->id;
+        QVERIFY(clicked);
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*clicked, [](core::LineRecord &l) { l.text += u8"{\\bord9}"; });
+        }));
+        editor->setShown(true);
+        activate(*clicked);
+        QVERIFY(QTest::qWaitFor([&] { return editor->sourceUnknown(); }, 20'000));
+        QCOMPARE(editor->source(), 0ull);
+        QVERIFY(!editor->hasPreview());
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
