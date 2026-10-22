@@ -19,6 +19,8 @@ Item {
     // opened the Save dialog, whose end the shell reports with saveDone().
     required property var save
     property SettingsStore settings: null
+    // NT1 (#302): "no subtitle tracks" is an info toast.
+    property ToastStack notices: null
     property bool waitingForSave: false
 
     // SubsGrid::OnMkvSubs (SubsGrid.cpp:1134-1146).
@@ -100,17 +102,6 @@ Item {
         }
     }
 
-    Dialog {
-        id: noTracksMessage
-        objectName: "mkvNoTracksMessage"
-        title: qsTr("Load subtitles from an MKV/OGM file") // TI1-popup-titles
-        modal: true
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { text: qsTr("The file does not contain any subtitle tracks.") }
-    }
-
     // Legacy's "Choose subtitle track" list, on PK1's list chooser in its
     // compact window: the first row chosen, Open or a double click takes it.
     ListChooser {
@@ -168,7 +159,11 @@ Item {
 
     Connections {
         target: flow.matroska
-        function onNoTracks() { noTracksMessage.open() }
+        function onNoTracks() {
+            if (flow.notices)
+                flow.notices.post("info", qsTr("Load subtitles from an MKV/OGM file"),
+                                  qsTr("The file does not contain any subtitle tracks."))
+        }
         function onChooseTrack(labels) { trackChooser.ask(labels) }
     }
 }

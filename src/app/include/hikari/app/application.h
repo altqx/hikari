@@ -100,14 +100,12 @@ signals:
     // G56: a command was refused because it would break the group described
     // by `description` (0 when the break makes a new malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
-    // F3: the spelling options or the dictionary changed (marks are stale),
-    // and legacy's message boxes when the spell checker cannot start.
+    // F3: the spelling options or the dictionary changed (marks are stale);
+    // when the spell checker cannot start, legacy's message box is a toast
+    // (NT1).
     void spellingChanged();
-    void spellingNotice(const QString &message);
     // W1: the chosen player changed (video.playbackPlayer).
     void playbackPlayerChanged();
-    // W1: DirectShow could not open the video: legacy's warning box.
-    void playerNotice(const QString &message);
     // AV1: the route both audio paths follow changed.
     void audioOutputChanged();
     // F1: find and replace shows a legacy message box (kind: 0 message, 1

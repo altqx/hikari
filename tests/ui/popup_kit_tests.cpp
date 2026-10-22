@@ -6,7 +6,8 @@
 // kit says: a popover keeps on Enter and a press outside and reverts on
 // Esc; a message box's buttons are named for what they do, a destructive
 // one never the default; a fourth toast drops the oldest information or
-// folds the oldest warning.
+// folds the oldest warning; the message host (NT1) asks one question at a
+// time.
 
 #include "log_controller.h"
 #include "settings_store.h"
@@ -52,6 +53,7 @@ Window {
     Button { id: elsewhere; objectName: "elsewhere"; x: 600; y: 500; text: "Elsewhere" }
 
     MessageBox { id: box; settings: root.settings }
+    MessageHost { id: host; settings: root.settings }
 
     Popover {
         id: popover
@@ -68,7 +70,7 @@ Window {
         anchors.bottom: parent.bottom
         log: root.logger
         settings: root.settings
-        openLog: () => root.note("log")
+        openLog: id => root.note("log " + id)
     }
 
     InlineBar {
@@ -272,6 +274,27 @@ private slots:
         QTRY_VERIFY(!box->isVisible());
     }
 
+    // NT1: the host asks one question at a time. An answer that asks again
+    // while another waits shows the waiting one; the new one comes after.
+    void messageHostAsksOneAtATime()
+    {
+        run(QStringLiteral(
+            "host.ask({ title: 'A', text: 'first' }, id => { root.note('A'); host.ask({ title: 'C', text: 'third' }, () => root.note('C')) });"
+            "host.ask({ title: 'B', text: 'second' }, () => root.note('B'))"));
+        QQuickWindow *box = windowOf("host.box");
+        QVERIFY(box);
+        for (const QString title : {QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}) {
+            QTRY_VERIFY(box->isVisible());
+            QVERIFY(QTest::qWaitForWindowFocused(box));
+            QCOMPARE(box->title(), title);
+            QTest::qWait(50); // a stray advance would have replaced it by now
+            QCOMPARE(box->title(), title);
+            QTest::keyClick(box, Qt::Key_Return);
+            QTRY_COMPARE(notes().size(), title == QLatin1String("A") ? 1 : title == QLatin1String("B") ? 2 : 3);
+        }
+        QCOMPARE(notes(), (QStringList{QStringLiteral("A"), QStringLiteral("B"), QStringLiteral("C")}));
+    }
+
     void popoverKeepsOnEnterAndOutsideAndRevertsOnEsc()
     {
         QQuickItem *anchor = findIn(root.get(), "anchorButton");
@@ -358,11 +381,12 @@ private slots:
         QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 1);
         QTRY_VERIFY(findIn(root.get(), "toastMore")->isVisible());
         click(findIn(root.get(), "toastMoreOpenLog"));
-        QCOMPARE(notes(), QStringList{QStringLiteral("log")});
+        QCOMPARE(notes(), QStringList{QStringLiteral("log 0")});
         QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 0);
-        // Every notice went to the Log, silently.
-        QVERIFY(logger->history().contains(QLatin1String("text of One")));
-        QVERIFY(!logger->shown());
+        // NT1: every notice is an entry of the Log, with its severity and title.
+        QVERIFY(logger->history().contains(QLatin1String("One: text of One")));
+        QCOMPARE(logger->warningCount(), 3);
+        QCOMPARE(logger->errorCount(), 1);
         // × dismisses.
         const int six = run(QStringLiteral("toasts.entries[0].id")).toInt();
         QQuickItem *toast = findIn(root.get(), QStringLiteral("toast_%1").arg(six).toLatin1().constData());
@@ -379,14 +403,18 @@ private slots:
         QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 0);
         QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 1);
         QTRY_VERIFY(findIn(root.get(), "toastMore")->isVisible());
-        // Details opens the Log.
+        // Details opens the Log at its entry, and a notice C++ gives the Log
+        // shows as a toast too.
         run(QStringLiteral("toasts.clear()"));
+        logger->notice(ui::LogController::Warning, QStringLiteral("Audio"), QStringLiteral("from C++"));
+        QCOMPARE(run(QStringLiteral("toasts.entries[0].text")).toString(), QStringLiteral("from C++"));
+        QCOMPARE(run(QStringLiteral("toasts.entries[0].severity")).toString(), QStringLiteral("warning"));
         const int detailed = run(QStringLiteral("toasts.post('error', 'Failed', 'Could not save', { details: 'disk full' })")).toInt();
         QQuickItem *details = nullptr;
         QTRY_VERIFY((details = findItem(findIn(root.get(), QStringLiteral("toast_%1").arg(detailed).toLatin1().constData()),
                                         QStringLiteral("toastDetails"))));
         click(details);
-        QCOMPARE(notes().last(), QStringLiteral("log"));
+        QCOMPARE(notes().last(), QStringLiteral("log %1").arg(logger->entries()->rowCount()));
     }
 
     void informationToastsFadeAndWarningsStay()

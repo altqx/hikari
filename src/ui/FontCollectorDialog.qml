@@ -56,10 +56,14 @@ Dialog {
         acknowledge.checked = false
         const r = collector.start(path.text, allTabs)
         if (r.message !== undefined) {
-            message.text = r.message
-            message.open()
-            if (r.message === qsTr("Select the folder where you want to copy fonts") || r.message === qsTr("Choose a name for the archive"))
-                path.forceActiveFocus()
+            // NT1 (#302): on PK1's message box; a missing path is a warning
+            // and the path field has the keyboard once it closes.
+            const missingPath = r.message === qsTr("Select the folder where you want to copy fonts")
+                             || r.message === qsTr("Choose a name for the archive")
+            messages.ask({ title: dialog.title, text: r.message, severity: missingPath ? "warning" : "error" }, () => {
+                if (missingPath)
+                    path.forceActiveFocus()
+            })
         } else if (r.question !== undefined) {
             replaceQuestion.text = r.question
             replaceQuestion.title = r.title
@@ -244,15 +248,9 @@ Dialog {
         }
     }
 
-    Dialog {
-        id: message
-        objectName: "fontCollectorMessage"
-        property alias text: messageLabel.text
-        modal: true
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { id: messageLabel }
+    MessageHost {
+        id: messages
+        objectName: "fontCollectorMessages"
     }
     Dialog {
         id: replaceQuestion

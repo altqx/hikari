@@ -29,12 +29,12 @@ Dialog {
     // A list change waiting on its question.
     property int pendingIndex: -1
 
+    // NT1: an error is the application's message box, titled with this
+    // dialog (legacy's untranslated "Error").
     function show(message) {
         if (!message || !message.text)
             return false
-        messageBox.title = message.title
-        messageText.text = message.text
-        messageBox.open()
+        messages.ask({ title: dialog.title, text: message.text, severity: "error" })
         return true
     }
     function listChanged(index) {
@@ -278,20 +278,10 @@ Dialog {
         }
     }
 
-    // HikariMessageBox with OK (the errors).
-    Dialog {
-        id: messageBox
-        objectName: "tagsMessage"
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        modal: true
-        standardButtons: Dialog.Ok
-        Label {
-            id: messageText
-            objectName: "tagsMessageText"
-            Accessible.role: Accessible.AlertMessage
-            Accessible.name: text
-        }
+    // HikariMessageBox with OK (the errors), NT1 on the kit's message box.
+    MessageHost {
+        id: messages
+        objectName: "tagsMessages"
     }
     // HikariMessageBox with Yes and No: a list change's "Save changes to
     // tag ...?" and Restore default's "Are you sure ...?".
