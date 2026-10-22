@@ -103,15 +103,18 @@ protected:
             // 2. A dialog macro: the fixed window, answered with OK.
             runMacro(fixture, 0);
             if (waitForItem("automationDialog/dialogButton0", 10s)) {
-                wait(500ms); // the run opens the Automation panel too: let the layout settle
+                wait(500ms); // let the dialog's layout settle
                 mouseClick("automationDialog/dialogButton0");
                 observed.push_back(waitForCompletion(2) ? firstText() : "dialog macro did not finish"); // 1
-                observed.push_back(getStringProperty("mainWindow/automationLog", "text")); // 2
+                std::string log;
+                onGui([&] { log = g_app->automation().log().toStdString(); });
+                observed.push_back(log); // 2
             }
-            // 3. Cancel from the panel's run status.
+            // 3. Cancel on the progress card, which opens after the macro's
+            // first second (AD3).
             runMacro(fixture, 1);
             if (waitForItem("mainWindow/automationCancel", 10s)) {
-                wait(500ms);
+                wait(1500ms);
                 mouseClick("mainWindow/automationCancel");
                 observed.push_back(waitForCompletion(3) ? "cancelled" : "cancel did not finish"); // 3
             }

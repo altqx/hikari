@@ -8,20 +8,24 @@
 // gesture's path), so Settings → Hotkeys shows the same bindings. Loading
 // and reloading run the script's top level visibly; a failed or stopped
 // script says why and offers reload. The dock header names the panel; the
-// panel has no heading of its own.
+// panel has no heading of its own. AD3 (#312): a second view, Runs, keeps
+// the session's last runs (AutomationRuns) and the chosen run's log, with a
+// level filter (a threshold, as the trace level is), a text filter, times
+// on or off, Copy and Save; the run under way shows on the progress card
+// (AutomationProgress), not here.
 pragma Translator: "HikariSub.Automation"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import QtQuick.Shapes
+import QtQuick.Dialogs as Dialogs
 import Hikari.Ui
 
 Pane {
     id: root
     required property AutomationManagerController controller
-    // AutomationShell: the run (running, runTitle, task, progress, log,
-    // lastMessage, forceStopOffered, canRerun, cancelRun, forceStopRun,
-    // rerunLast, editScript, runCompleted).
+    // AutomationShell: the run (running, canRerun, rerunLast, editScript,
+    // runs).
     property var automation: null
     // AutomationHotkeysController: the macros' bindings (keys, missing, clearKeys).
     property var macroHotkeys: null
@@ -30,8 +34,12 @@ Pane {
     // The Automation menu's actions: Load script…, Refresh autoload scripts.
     property Action loadAction: null
     property Action refreshAction: null
-    // The editing target's name, for the run's read-only note.
+    // The editing target's name (its scripts are offered as it changes).
     property string documentName: ""
+    // SettingsStore: automation.runLogTimes.
+    property var settings: null
+    // ToastStack: Save's refusal.
+    property var notices: null
     // The current tab: the editing target changes with it.
     property int documentTab: -1
     implicitWidth: 340
@@ -50,17 +58,13 @@ Pane {
     property string blocked: ""
     // Section keys folded away; the missing shortcuts start folded.
     property var folded: ({ missing: true })
-    // A run that changed nothing (failed, refused, not valid, cancelled,
-    // lost or stopped) keeps its box until dismissed; the log shows on demand.
-    property bool keepResult: false
-    readonly property string outcome: automation !== null && !running ? automation.lastOutcome : ""
-    readonly property bool cancelled: outcome === "cancelled"
-    // KE1-template-problems: a run that applied but whose log names
-    // template problems stays too, its log open to be read.
-    readonly property bool problemsNamed: outcome === "applied" && automation !== null && automation.keepLog
-    property bool showLog: false
-    property string runTarget: ""
-
+    // "scripts" or "runs" (AD3); showRun() opens Runs at a run.
+    property string view: "scripts"
+    readonly property AutomationRuns runs: automation ? automation.runs : null
+    function showRun(id) {
+        view = "runs"
+        runList.choose(id)
+    }
     readonly property bool running: automation !== null && automation.running
     readonly property string filterText: filter.text.trim().toLowerCase()
 
@@ -209,42 +213,26 @@ Pane {
         return out
     }
 
-    onRunningChanged: {
-        if (running) {
-            keepResult = false
-            runTarget = documentName
-        }
-    }
-    Connections {
-        target: root.automation
-        ignoreUnknownSignals: true
-        function onRunCompleted(ok, message) {
-            // Not when the user declined the resolution question: the
-            // macro did not start.
-            root.keepResult = (!ok && root.automation.lastOutcome !== "declined") || root.problemsNamed
-            if (root.keepResult)
-                root.showLog = root.problemsNamed
-        }
-    }
-
     ColumnLayout {
         anchors.fill: parent
         spacing: 0
 
-        // The tool strip: the filter and the panel's commands, icon-only
-        // with their names on hover.
+        // The tool strip: the two views and the panel's commands, icon-only
+        // with their names on hover; the Scripts view's filter below.
         RowLayout {
             Layout.fillWidth: true
             Layout.margins: 8
+            Layout.bottomMargin: 0
             spacing: 4
-            TextField {
-                id: filter
-                objectName: "automationFilter"
-                Layout.fillWidth: true
-                placeholderText: qsTr("Filter macros")
-                Accessible.name: qsTr("Filter macros")
-                Keys.onDownPressed: list.forceActiveFocus(Qt.TabFocusReason)
+            SegmentedButtons {
+                objectName: "automationView"
+                choices: [{text: qsTr("Scripts"), name: "automationViewScripts"},
+                          {text: root.runs && root.runs.count > 0 ? qsTr("Runs %1").arg(root.runs.count) : qsTr("Runs"),
+                           name: "automationViewRuns"}]
+                currentIndex: root.view === "runs" ? 1 : 0
+                onActivated: index => root.view = index === 1 ? "runs" : "scripts"
             }
+            Item { Layout.fillWidth: true }
             IconToolButton {
                 objectName: "automationLoad"
                 iconRole: "automation"
@@ -267,130 +255,21 @@ Pane {
                 onClicked: root.automation.rerunLast()
             }
         }
-
-        // The run: while a macro runs, and after one that changed nothing
-        // until dismissed.
-        Rectangle {
-            id: runBox
-            objectName: "automationRun"
-            visible: root.running || root.keepResult
+        TextField {
+            id: filter
+            objectName: "automationFilter"
+            visible: root.view === "scripts"
             Layout.fillWidth: true
-            Layout.leftMargin: 8
-            Layout.rightMargin: 8
-            Layout.bottomMargin: 6
-            implicitHeight: runColumn.implicitHeight + 16
-            color: Theme.panel
-            border.width: 1
-            border.color: !root.keepResult || root.running || root.cancelled ? Theme.line
-                          : root.problemsNamed ? Theme.warning : Theme.danger
-            Accessible.role: Accessible.Grouping
-            Accessible.name: runTitle.text
-
-            ColumnLayout {
-                id: runColumn
-                anchors.fill: parent
-                anchors.margins: 8
-                spacing: 4
-                RowLayout {
-                    Layout.fillWidth: true
-                    Label {
-                        id: runTitle
-                        objectName: "automationRunTitle"
-                        Layout.fillWidth: true
-                        elide: Text.ElideRight
-                        font.bold: true
-                        color: root.running || root.cancelled ? Theme.text : root.problemsNamed ? Theme.warning : Theme.danger
-                        text: !root.automation ? ""
-                              : root.running ? root.automation.runTitle
-                              : root.cancelled ? qsTr("%1 cancelled").arg(root.automation.runTitle)
-                              : root.problemsNamed ? qsTr("%1 named problems").arg(root.automation.runTitle)
-                              : qsTr("%1 failed").arg(root.automation.runTitle)
-                    }
-                    Label {
-                        visible: root.running
-                        color: Theme.muted
-                        text: root.automation ? Math.round(root.automation.progress) + "%" : ""
-                    }
-                }
-                Label {
-                    objectName: "automationTask"
-                    Layout.fillWidth: true
-                    visible: text.length > 0
-                    wrapMode: Text.Wrap
-                    color: root.running || root.cancelled || root.problemsNamed ? Theme.muted : Theme.danger
-                    font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
-                    // Validation says nothing itself (legacy's menu neither);
-                    // its error, if any, is in the log.
-                    text: !root.automation ? "" : root.running ? root.automation.task
-                          : root.outcome === "invalid" ? qsTr("Its validation did not let it run; nothing was changed.")
-                          : root.automation.lastMessage
-                }
-                ProgressBar {
-                    objectName: "automationProgressBar"
-                    visible: root.running
-                    Layout.fillWidth: true
-                    from: 0
-                    to: 100
-                    value: root.automation ? root.automation.progress : 0
-                    Accessible.name: qsTr("Progress")
-                }
-                Label {
-                    visible: root.running && root.runTarget.length > 0
-                    Layout.fillWidth: true
-                    wrapMode: Text.Wrap
-                    color: Theme.muted
-                    font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
-                    text: qsTr("%1 is read-only until the macro ends").arg(root.runTarget)
-                }
-                RowLayout {
-                    Layout.fillWidth: true
-                    spacing: 6
-                    Button {
-                        objectName: "automationShowLog"
-                        flat: true
-                        text: root.showLog ? qsTr("Hide log") : qsTr("Show log")
-                        onClicked: root.showLog = !root.showLog
-                    }
-                    Item { Layout.fillWidth: true }
-                    Button {
-                        objectName: "automationForceStop"
-                        visible: root.running && root.automation.forceStopOffered
-                        text: qsTr("Force stop")
-                        onClicked: root.automation.forceStopRun()
-                    }
-                    Button {
-                        objectName: "automationCancel"
-                        text: root.running ? qsTr("Cancel") : qsTr("Close")
-                        onClicked: {
-                            if (root.running)
-                                root.automation.cancelRun()
-                            else
-                                root.keepResult = false
-                        }
-                    }
-                }
-                ScrollView {
-                    visible: root.showLog
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: Math.min(logText.implicitHeight, 6 * logMetrics.height) + 4
-                    TextArea {
-                        id: logText
-                        objectName: "automationLog"
-                        readOnly: true
-                        wrapMode: TextEdit.Wrap
-                        font.family: "monospace"
-                        text: root.automation ? root.automation.log : ""
-                        Accessible.name: qsTr("Log")
-                    }
-                    FontMetrics { id: logMetrics; font: logText.font }
-                }
-            }
+            Layout.margins: 8
+            placeholderText: qsTr("Filter macros")
+            Accessible.name: qsTr("Filter macros")
+            Keys.onDownPressed: list.forceActiveFocus(Qt.TabFocusReason)
         }
 
         // The Document's scripts, offered until loaded.
         Rectangle {
             objectName: "documentScriptsOffer"
-            visible: root.offeredScripts.length > 0
+            visible: root.view === "scripts" && root.offeredScripts.length > 0
             Layout.fillWidth: true
             Layout.leftMargin: 8
             Layout.rightMargin: 8
@@ -452,7 +331,7 @@ Pane {
 
         // The empty state: what is missing and the command that adds it.
         ColumnLayout {
-            visible: root.controller.scripts.length === 0 && root.rows.length === 0
+            visible: root.view === "scripts" && root.controller.scripts.length === 0 && root.rows.length === 0
             Layout.fillWidth: true
             Layout.fillHeight: true
             spacing: 10
@@ -477,7 +356,7 @@ Pane {
         }
         Label {
             objectName: "scriptsNoMatch"
-            visible: root.controller.scripts.length > 0 && root.rows.length === 0
+            visible: root.view === "scripts" && root.controller.scripts.length > 0 && root.rows.length === 0
             Layout.fillWidth: true
             Layout.margins: 12
             horizontalAlignment: Text.AlignHCenter
@@ -488,7 +367,7 @@ Pane {
         ListView {
             id: list
             objectName: "scripts"
-            visible: root.rows.length > 0
+            visible: root.view === "scripts" && root.rows.length > 0
             Layout.fillWidth: true
             Layout.fillHeight: true
             clip: true
@@ -539,6 +418,346 @@ Pane {
                                  : modelData.kind === "script" ? scriptRow
                                  : modelData.kind === "macro" ? macroRow : missingRow
             }
+        }
+
+        // AD3: Runs, newest first, and the chosen run's log.
+        Label {
+            objectName: "runsEmpty"
+            visible: root.view === "runs" && (!root.runs || root.runs.count === 0)
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+            color: Theme.muted
+            text: qsTr("No macro has run yet")
+        }
+        ColumnLayout {
+            id: runsView
+            objectName: "automationRuns"
+            visible: root.view === "runs" && root.runs !== null && root.runs.count > 0
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.margins: 8
+            spacing: 8
+            Rectangle {
+                color: Theme.field
+                border.color: Theme.line
+                Layout.fillWidth: true
+                // Up to five runs show; the rest scroll.
+                Layout.preferredHeight: Math.min(runList.contentHeight, 5 * 52) + 2
+                ListView {
+                    id: runList
+                    objectName: "runList"
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    clip: true
+                    model: root.runs
+                    activeFocusOnTab: true
+                    keyNavigationEnabled: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    highlightFollowsCurrentItem: false
+                    Accessible.role: Accessible.List
+                    Accessible.name: qsTr("Runs")
+                    ScrollBar.vertical: ScrollBar { policy: runList.contentHeight > runList.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded }
+                    // The chosen run (its id; 0: the newest).
+                    property int chosen: 0
+                    readonly property int shownRun: !root.runs ? 0
+                                                    : (root.runs.count, chosen > 0 && root.runs.rowOf(chosen) >= 0)
+                                                      ? chosen : root.runs.idAt(0)
+                    function choose(id) {
+                        chosen = id
+                        const row = root.runs ? root.runs.rowOf(id) : -1
+                        if (row >= 0) {
+                            currentIndex = row
+                            positionViewAtIndex(row, ListView.Contain)
+                        }
+                    }
+                    onCurrentIndexChanged: if (currentItem) chosen = currentItem.runId
+                    delegate: ItemDelegate {
+                        id: runRow
+                        required property int index
+                        required property int runId
+                        required property string macro
+                        required property string document
+                        required property string started
+                        required property string runState
+                        required property string task
+                        required property double progress
+                        required property int duration
+                        required property int lineCount
+                        readonly property bool chosen: runId === runList.shownRun
+                        objectName: "run_" + runId
+                        width: ListView.view.width
+                        padding: 0
+                        leftPadding: 10
+                        rightPadding: 10
+                        topPadding: 6
+                        bottomPadding: 6
+                        focusPolicy: Qt.NoFocus
+                        highlighted: chosen
+                        Accessible.role: Accessible.ListItem
+                        Accessible.name: macro + ", " + runRow.summary
+                        readonly property string summary: {
+                            if (runState === "running")
+                                return progress >= 0 ? task.length > 0 ? task + " · " + Math.round(progress) + " %"
+                                                                       : Math.round(progress) + " %"
+                                                     : task
+                            const word = ({ applied: qsTr("Applied"), problems: qsTr("Applied, problems named"),
+                                            cancelled: qsTr("Cancelled"), failed: qsTr("Failed") })[runState] || ""
+                            const lines = lineCount > 0 ? (lineCount === 1 ? qsTr("1 line") : qsTr("%n lines", "", lineCount)) : qsTr("nothing logged")
+                            return [word + ", " + root.durationText(duration), document, lines]
+                                   .filter(t => t.length > 0).join(" · ")
+                        }
+                        background: Rectangle {
+                            color: runRow.chosen ? Theme.select : runRow.hovered ? Theme.raised : "transparent"
+                            Rectangle {
+                                visible: runRow.chosen
+                                width: 2
+                                height: parent.height
+                                color: Theme.accent
+                            }
+                            Rectangle {
+                                visible: runRow.index > 0
+                                width: parent.width
+                                height: 1
+                                color: Theme.line
+                            }
+                        }
+                        contentItem: RowLayout {
+                            spacing: 10
+                            Icon {
+                                id: runIcon
+                                iconRole: ({ applied: "run-applied", problems: "notice-warning", cancelled: "run-cancelled",
+                                             failed: "notice-error" })[runRow.runState] || "run-busy"
+                                color: runRow.runState === "failed" ? Theme.danger
+                                     : runRow.runState === "problems" || runRow.runState === "cancelled" ? Theme.warning
+                                     : IconTheme.normal
+                                accentColor: runRow.runState === "applied" || runRow.runState === "running" ? IconTheme.accent : color
+                                Layout.alignment: Qt.AlignTop
+                                Layout.topMargin: 1
+                                RotationAnimator on rotation {
+                                    running: runRow.runState === "running" && runIcon.visible
+                                    from: 0
+                                    to: 360
+                                    duration: 1200
+                                    loops: Animation.Infinite
+                                }
+                            }
+                            ColumnLayout {
+                                spacing: 2
+                                Layout.fillWidth: true
+                                RowLayout {
+                                    Layout.fillWidth: true
+                                    Label {
+                                        text: runRow.macro
+                                        textFormat: Text.PlainText
+                                        font.weight: Font.DemiBold
+                                        elide: Text.ElideRight
+                                        Layout.fillWidth: true
+                                    }
+                                    Label {
+                                        text: runRow.started
+                                        color: Theme.muted
+                                        font.features: { "tnum": 1 }
+                                    }
+                                }
+                                Label {
+                                    objectName: "runSummary"
+                                    text: runRow.summary
+                                    textFormat: Text.PlainText
+                                    color: Theme.muted
+                                    elide: Text.ElideRight
+                                    font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
+                                    Layout.fillWidth: true
+                                }
+                                ProgressBar {
+                                    visible: runRow.runState === "running"
+                                    from: 0
+                                    to: 100
+                                    indeterminate: runRow.progress < 0
+                                    value: Math.max(0, runRow.progress)
+                                    implicitHeight: 4
+                                    Layout.fillWidth: true
+                                    Accessible.name: qsTr("Progress")
+                                }
+                            }
+                        }
+                        onClicked: {
+                            runList.currentIndex = index
+                            runList.chosen = runId
+                        }
+                    }
+                }
+            }
+            // The chosen run's log: its strip, then its lines.
+            RowLayout {
+                spacing: 4
+                Layout.fillWidth: true
+                ComboBox {
+                    id: levelChoice
+                    objectName: "runLogLevel"
+                    // Up to fatal (0) … All levels (5): a threshold, as the trace level is.
+                    model: [qsTr("Up to fatal"), qsTr("Up to error"), qsTr("Up to warning"), qsTr("Up to hint"),
+                            qsTr("Up to debug"), qsTr("All levels")]
+                    currentIndex: runLines.levelLimit
+                    onActivated: index => runLines.levelLimit = index
+                    Accessible.name: qsTr("Levels shown")
+                    ToolTip.visible: hovered && !popup.visible
+                    ToolTip.text: qsTr("Lines without a level always show")
+                    delegate: ItemDelegate {
+                        id: levelItem
+                        required property int index
+                        required property string modelData
+                        width: ListView.view ? ListView.view.width : implicitWidth
+                        highlighted: levelChoice.highlightedIndex === index
+                        contentItem: RowLayout {
+                            spacing: 12
+                            Label {
+                                text: levelItem.modelData
+                                Layout.fillWidth: true
+                            }
+                            Label {
+                                // The level's number and how many lines it has.
+                                text: levelItem.index + " · " + (runLines.total, runLines.countAt(levelItem.index))
+                                color: Theme.muted
+                                font.features: { "tnum": 1 }
+                            }
+                        }
+                    }
+                }
+                TextField {
+                    id: runFilter
+                    objectName: "runLogFilter"
+                    placeholderText: qsTr("Filter")
+                    text: runLines.filterText
+                    selectByMouse: true
+                    rightPadding: matchCount.visible ? matchCount.implicitWidth + 16 : leftPadding
+                    Layout.fillWidth: true
+                    Accessible.name: qsTr("Filter the run's log")
+                    onTextEdited: runLines.filterText = text
+                    Keys.onEscapePressed: event => {
+                        if (text.length === 0) {
+                            event.accepted = false
+                            return
+                        }
+                        runLines.filterText = ""
+                    }
+                    Label {
+                        id: matchCount
+                        objectName: "runLogMatches"
+                        visible: runLines.filterText.trim().length > 0
+                        anchors.right: parent.right
+                        anchors.rightMargin: 8
+                        anchors.verticalCenter: parent.verticalCenter
+                        color: Theme.muted
+                        text: qsTr("%1 of %2").arg(runLines.count).arg(runLines.total)
+                    }
+                }
+                IconToolButton {
+                    objectName: "runLogTimes"
+                    iconRole: "history"
+                    text: qsTr("Show times")
+                    checkable: true
+                    checked: runLines.times
+                    onToggled: {
+                        if (root.settings)
+                            root.settings.setValue("automation.runLogTimes", checked)
+                        else
+                            runLines.times = checked
+                    }
+                }
+                IconToolButton {
+                    objectName: "runLogCopy"
+                    iconRole: "edit-copy"
+                    text: qsTr("Copy")
+                    tip: qsTr("Copy the lines shown")
+                    enabled: runLines.count > 0
+                    onClicked: runLines.copyShown()
+                }
+                IconToolButton {
+                    objectName: "runLogSave"
+                    iconRole: "save"
+                    text: qsTr("Save…")
+                    tip: qsTr("Save the lines shown…")
+                    enabled: runLines.count > 0
+                    onClicked: {
+                        saveDialog.selectedFile = saveDialog.currentFolder + "/" + runLines.suggestedName()
+                        saveDialog.open()
+                    }
+                }
+            }
+            Rectangle {
+                color: Theme.field
+                border.color: Theme.line
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                ListView {
+                    id: runLog
+                    objectName: "runLog"
+                    anchors.fill: parent
+                    anchors.margins: 4
+                    clip: true
+                    activeFocusOnTab: true
+                    boundsBehavior: Flickable.StopAtBounds
+                    model: AutomationRunLines {
+                        id: runLines
+                        objectName: "runLines"
+                        runs: root.runs
+                        run: runList.shownRun
+                        times: root.settings ? root.settings.value("automation.runLogTimes") === true : false
+                    }
+                    // Follows the end while the run logs, unless scrolled up.
+                    property bool follow: true
+                    onMovementEnded: follow = atYEnd
+                    onCountChanged: if (follow) Qt.callLater(positionViewAtEnd)
+                    Accessible.role: Accessible.List
+                    Accessible.name: qsTr("Log")
+                    ScrollBar.vertical: ScrollBar { policy: runLog.contentHeight > runLog.height ? ScrollBar.AlwaysOn : ScrollBar.AsNeeded }
+                    delegate: RunLogLine {
+                        width: ListView.view.width
+                        times: runLines.times
+                        font: logMetrics.font
+                    }
+                }
+                Label {
+                    objectName: "runLogEmpty"
+                    anchors.centerIn: parent
+                    visible: runLog.count === 0
+                    color: Theme.muted
+                    text: runLines.total > 0 ? qsTr("No lines match") : qsTr("Nothing logged")
+                }
+                FontMetrics {
+                    id: logMetrics
+                    font.family: "monospace"
+                    font.pixelSize: Math.max(10, Qt.application.font.pixelSize - 1)
+                }
+            }
+        }
+    }
+    Connections {
+        target: root.settings
+        ignoreUnknownSignals: true
+        function onChanged(id) {
+            if (id === "automation.runLogTimes")
+                runLines.times = root.settings.value(id) === true
+        }
+    }
+    function durationText(ms) {
+        const s = ms / 1000
+        if (s < 60)
+            return qsTr("%1 s").arg(s < 10 ? s.toFixed(1) : Math.round(s))
+        return qsTr("%1 min %2 s").arg(Math.floor(s / 60)).arg(Math.round(s % 60))
+    }
+    Dialogs.FileDialog {
+        id: saveDialog
+        objectName: "runLogSaveDialog"
+        title: qsTr("Save the run's log")
+        fileMode: Dialogs.FileDialog.SaveFile
+        nameFilters: [qsTr("Log files (*.log *.txt)"), qsTr("All files (*)")]
+        onAccepted: {
+            const error = runLines.saveShown(selectedFile)
+            if (error.length > 0 && root.notices)
+                root.notices.post("error", qsTr("Save the run's log"), error)
         }
     }
 
@@ -752,6 +971,22 @@ Pane {
                         text: macroItem.row.macro.name
                         elide: Text.ElideRight
                         color: macroItem.runnable || macroItem.row.script.state === "ready" ? Theme.text : Theme.disabled
+                    }
+                    // AD3: the macro running turns its mark (the card has the run).
+                    Icon {
+                        id: busyMark
+                        objectName: "macroBusy_" + macroItem.row.index + "_" + macroItem.row.macro.ordinal
+                        visible: root.running && root.automation.runPath === macroItem.row.script.path
+                                 && root.automation.runOrdinal === macroItem.row.macro.ordinal
+                        iconRole: "run-busy"
+                        size: 14
+                        RotationAnimator on rotation {
+                            running: busyMark.visible
+                            from: 0
+                            to: 360
+                            duration: 1200
+                            loops: Animation.Infinite
+                        }
                     }
                     IconToolButton {
                         objectName: "run_" + macroItem.row.index + "_" + macroItem.row.macro.ordinal

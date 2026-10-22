@@ -15,6 +15,10 @@ pragma Translator: "HikariSub.MainWindow"
 // "Show notices as toasts" off (notices.toasts) they go only to the Log.
 // Those given before the stack was made show when it is.
 //
+// AD3 (#312): what is declared in it (the macro run's progress card) sits
+// at the bottom, under the toasts, and shows whatever "Show notices as
+// toasts" says, while its `shown` is true.
+//
 // post(severity, title, text, options): severity "info", "warning" or
 // "error"; title the command that gave it; options.details, more lines for
 // the Log, which adds Details; options.actions, [{text, run}] buttons
@@ -31,6 +35,7 @@ Item {
     property SettingsStore settings: null
     // Opens the Log panel at entry `id` (0: none marked).
     property var openLog: id => { if (stack.log) stack.log.reveal(id || 0) }
+    default property alias pinned: pinnedSlot.data
     // Newest first: {id, entry (the Log's), severity, title, text, details, actions}.
     property var entries: []
     // Warnings folded into the "more" line.
@@ -261,6 +266,22 @@ Item {
                     }
                 }
             }
+        }
+        // The pinned items, the tallest shown sets the height. An item says
+        // it shows by its `shown` (its own visible goes false with the
+        // slot's, so it cannot say it).
+        Item {
+            id: pinnedSlot
+            objectName: "toastPinned"
+            Layout.fillWidth: true
+            implicitHeight: {
+                let h = 0
+                for (const child of children)
+                    if (child.shown === true)
+                        h = Math.max(h, child.implicitHeight)
+                return h
+            }
+            visible: implicitHeight > 0
         }
     }
 }

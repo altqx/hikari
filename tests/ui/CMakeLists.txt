@@ -185,6 +185,12 @@ target_compile_definitions(hikari_ui_automation_hotkeys_tests PRIVATE
     HIKARI_AUTOLOAD_DIR="${HIKARI_AUTOMATION_STAGE}/Autoload"
     HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
 add_dependencies(hikari_ui_automation_hotkeys_tests hikari_lua_helper hikari_automation_stage)
+# AD3 (#312): a macro run's progress card and its kept log, with real Lua helpers.
+hikari_add_qttest(hikari_ui_automation_progress_tests SOURCES automation_progress_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_automation_progress_tests PRIVATE
+    HIKARI_LUA_FIXTURES="${PROJECT_SOURCE_DIR}/tests/backends/lua-fixtures")
+add_dependencies(hikari_ui_automation_progress_tests hikari_lua_helper hikari_automation_stage)
+hikari_add_qttest(hikari_ui_automation_runs_tests SOURCES automation_runs_tests.cpp LIBRARIES hikari_ui)
 # S4: Document scripts and "Run the last loaded script" with real Lua helpers and media.
 hikari_add_qttest(hikari_ui_automation_document_scripts_tests SOURCES automation_document_scripts_tests.cpp
     LIBRARIES hikari_composition)

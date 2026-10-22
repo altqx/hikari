@@ -15417,40 +15417,52 @@ private slots:
         macros.install();
         QTRY_COMPARE(visualItem(name("keysNote", 0).constData())->property("text").toString(),
                      QStringLiteral("Save also uses Ctrl+S and takes it."));
-        // A run opens the closed panel on its run status; Cancel ends it.
+        // AD3: a run leaves the closed panel closed; the progress card
+        // (under the toasts) shows it and its Cancel ends it.
+        auto &automation = application->automation();
+        automation.setCardDelay(0);
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
         QTRY_VERIFY(!dock->property("isOpen").toBool());
-        QVERIFY(application->automation().run(QDir::toNativeSeparators(fixture).toStdString(), 1));
-        QTRY_VERIFY(dock->property("isOpen").toBool());
-        auto *run = visualItem("automationRun");
-        QTRY_VERIFY(run && run->isVisible());
-        auto *cancel = visualItem("automationCancel");
+        QVERIFY(automation.run(QDir::toNativeSeparators(fixture).toStdString(), 1));
+        auto *card = item("automationCard");
+        QTRY_COMPARE(automation.cardState(), QStringLiteral("running"));
+        QTRY_VERIFY(card->isVisible());
+        QVERIFY(!dock->property("isOpen").toBool());
+        auto *cancel = item("automationCancel");
+        QTRY_VERIFY(cancel->isVisible());
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        // What the run said stays until Close (S1's window kept it too).
-        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        // What the run said stays until × (S1's window kept it too).
+        QCOMPARE(item("automationCardTask")->property("text").toString(),
                  QStringLiteral("The macro was cancelled; nothing was changed."));
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Wait for cancel cancelled"));
-        QCOMPARE(cancel->property("text").toString(), QStringLiteral("Close"));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Wait for cancel cancelled"));
+        QVERIFY(!cancel->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
+        // The run stays in the panel's Runs.
+        QCOMPARE(automation.runs()->count(), 1);
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(automation.running(), 30000);
+        QTRY_VERIFY(cancel->isVisible());
         // Enter on a macro row leaves the key alone while a macro runs, as
         // Run and a double click are off then.
+        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *list = visualItem("scripts");
         QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
         QVERIFY(list->property("currentIndex").toInt() >= 0);
         QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
         QCoreApplication::sendEvent(list, &enter);
         QVERIFY(!enter.isAccepted());
+        // The running macro's row carries the busy mark.
+        QTRY_VERIFY(visualItem(name("macroBusy", 1).constData()) && visualItem(name("macroBusy", 1).constData())->isVisible());
+        QVERIFY(!visualItem(name("macroBusy", 0).constData())->isVisible());
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
-        // Off under a modal dialog (Settings), which keeps the run status
-        // out of reach.
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
+        QTRY_VERIFY(!card->isVisible());
+        // Off under a modal dialog (Settings), which keeps the card out of
+        // reach.
         QVERIFY(!application->workspaceLayout().modalOpen());
         auto *runLast = named("loadLastScriptMenuItem")->property("action").value<QObject *>();
         QVERIFY(runLast->property("enabled").toBool());
@@ -15458,23 +15470,25 @@ private slots:
         QTRY_VERIFY(application->workspaceLayout().modalOpen());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTest::qWait(200);
-        QVERIFY(!application->automation().running());
+        QVERIFY(!automation.running());
         // The Global command running the last loaded script too.
         QVERIFY(!runLast->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(runLast, "trigger"));
         QTest::qWait(200);
-        QVERIFY(!application->automation().running());
+        QVERIFY(!automation.running());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!application->workspaceLayout().modalOpen());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(automation.running(), 30000);
+        // Automation → Cancel macro ends it too.
+        auto *cancelMacro = named("cancelMacroMenuItem")->property("action").value<QObject *>();
+        QTRY_VERIFY(cancelMacro->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(cancelMacro, "trigger"));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("cancelled"));
+        automation.dismissCard();
         // A macro whose validation does not let it run (from the panel or
-        // the menu, which say nothing else): the run status says so.
+        // the menu, which say nothing else): the card says so.
         QTemporaryDir scripts;
         const QString invalid = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("invalid.lua")));
         {
@@ -15482,16 +15496,16 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("aegisub.register_macro(\"Guarded\", \"\", function() end, function() return false end)\n");
         }
-        application->automation().load(invalid.toStdString());
+        automation.load(invalid.toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Guarded"), 30000);
-        QVERIFY(application->automation().run(invalid.toStdString(), 0));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
-        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+        QVERIFY(automation.run(invalid.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
+        QCOMPARE(item("automationCardTask")->property("text").toString(),
                  QStringLiteral("Its validation did not let it run; nothing was changed."));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
         // KE1-template-problems: a run that applied but whose karaoke report
         // names template problems stays, its log open to be read.
         const QString templated = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("templated.lua")));
@@ -15508,18 +15522,27 @@ private slots:
                     "    .. '{\"line\":2,\"effect\":\"template syl\",\"style\":\"Default\",\"seconds\":0.4,\"generated\":2}]}')\n"
                     "end)\n");
         }
-        application->automation().load(templated.toStdString());
+        automation.load(templated.toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Templated"), 30000);
-        QVERIFY(application->automation().run(templated.toStdString(), 0));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY2(application->automation().lastOutcome() == QStringLiteral("applied"),
-                 qPrintable(application->automation().lastMessage()));
-        QVERIFY(application->automation().keepLog());
-        QTRY_VERIFY(run->isVisible());
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
-        QCOMPARE(visualItem("automationShowLog")->property("text").toString(), QStringLiteral("Hide log"));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QVERIFY(automation.run(templated.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QVERIFY2(automation.lastOutcome() == QStringLiteral("applied"), qPrintable(automation.lastMessage()));
+        QVERIFY(automation.keepLog());
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(automation.cardState(), QStringLiteral("problems"));
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
+        QVERIFY(card->property("logOpen").toBool());
+        // Open in panel: the panel's Runs at that run.
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("automationOpenRun"), "clicked"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QCOMPARE(tool->property("view").toString(), QStringLiteral("runs"));
+        QCOMPARE(item<QObject>("runLines")->property("run").toInt(), automation.runId());
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
+        tool->setProperty("view", QStringLiteral("scripts"));
+        automation.setCardDelay(1000);
     }
 
     // AM1: the Automation panel in the four themes, written to
@@ -15527,7 +15550,7 @@ private slots:
     // visual review): a Document script and two autoload ones, one failed;
     // a shortcut, one a Global command takes, one recording on a taken
     // shortcut, one whose macro is missing (automation-panel-<theme>.png);
-    // a macro running (automation-run-<theme>.png); Settings → Hotkeys
+    // a macro running, its row marked (automation-run-<theme>.png); Settings → Hotkeys
     // under "Automation shortcuts" (automation-settings-<theme>.png).
     void automationPanelScreenshots()
     {
@@ -15581,13 +15604,15 @@ private slots:
         };
         shoot(floating, QStringLiteral("panel"));
         keyTo(recorder, Qt::Key_Escape);
-        // A macro running: the run status at the top.
+        // A macro running: its row's busy mark (the card is in the main
+        // window, shot by automationProgressScreenshots).
         QVERIFY(automation.run(QDir::toNativeSeparators(fixture).toStdString(), 1));
-        QTRY_VERIFY(item("automationRun")->isVisible());
+        QTRY_VERIFY(automation.running());
         QTest::qWait(500);
         shoot(floating, QStringLiteral("run"));
-        QVERIFY(QMetaObject::invokeMethod(item("automationCancel"), "clicked"));
+        automation.cancelRun();
         QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
         // Settings → Hotkeys, Automation shortcuts: what the panel's menu opens.
         auto *settingsDialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
         QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, 7),
@@ -15596,6 +15621,105 @@ private slots:
         QCOMPARE(application->hotkeys().filterMode(), 7);
         shoot(window, QStringLiteral("settings"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        dock->setProperty("isFloating", false);
+    }
+
+    // AD3: the progress card and the Runs view in the four themes, written
+    // to HIKARI_AUTOMATION_SHOT_DIR when it is set (tools/review): the notice
+    // (automation-notice-<theme>.png), the card running with its log
+    // (automation-card-<theme>.png), after an error (automation-failed-…),
+    // applied with a log (automation-applied-…), and the panel's Runs at
+    // that run, the level threshold at warning (automation-runs-…).
+    void automationProgressScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_AUTOMATION_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_AUTOMATION_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        auto &settings = *application->settingsStore();
+        auto &automation = application->automation();
+        QVERIFY(application->openFile(episode));
+        const std::string fixture = HIKARI_LUA_FIXTURES "/progress-fixture.lua";
+        automation.load(fixture);
+        QTRY_VERIFY_WITH_TIMEOUT(std::ranges::any_of(automation.scripts(), [&](const auto &s) {
+                                     return s.path == fixture && s.state == application::ScriptStatus::State::Ready;
+                                 }),
+                                 30000);
+        const auto ordinal = [&](const char *macro) {
+            for (const auto &s : automation.scripts())
+                if (s.path == fixture)
+                    for (std::size_t i = 0; i < s.info.macros.size(); ++i)
+                        if (s.info.macros[i].name == macro)
+                            return static_cast<int>(i);
+            return -1;
+        };
+        auto *root = engine->rootObjects().first();
+        auto *card = item("automationCard");
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        // The card's corner of the main window, or a whole window.
+        const auto shoot = [&](QQuickWindow *w, QQuickItem *area, const QString &name) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QImage shot;
+                QTRY_VERIFY((shot = w->grabWindow(), !shot.isNull() && shot.width() > 0));
+                if (area) {
+                    const qreal dpr = shot.devicePixelRatio();
+                    const QRectF r = area->mapRectToScene(QRectF(0, 0, area->width(), area->height())).adjusted(-24, -24, 24, 24);
+                    shot = shot.copy(QRectF(r.x() * dpr, r.y() * dpr, r.width() * dpr, r.height() * dpr).toRect());
+                }
+                QVERIFY(shot.save(out + QStringLiteral("/automation-") + name + QLatin1Char('-') + QLatin1String(code) +
+                                  QStringLiteral(".png")));
+            }
+        };
+        // The notice: a run under its second.
+        automation.setCardDelay(600000);
+        QVERIFY(automation.run(fixture, ordinal("Busy")));
+        QTRY_VERIFY(item("automationNotice")->isVisible());
+        shoot(window, card, QStringLiteral("notice"));
+        automation.cancelRun();
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
+        // The card, running, its log open.
+        automation.setCardDelay(1000);
+        QVERIFY(automation.run(fixture, ordinal("Retime karaoke")));
+        QTRY_COMPARE(automation.cardState(), QStringLiteral("running"));
+        QTRY_VERIFY(automation.progressKnown());
+        QTRY_COMPARE(item<QObject>("automationCardLog")->property("count").toInt(), 4);
+        shoot(window, card, QStringLiteral("card"));
+        automation.cancelRun();
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        // After an error, and applied with a log.
+        QVERIFY(automation.run(fixture, ordinal("Fail")));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("failed"));
+        shoot(window, card, QStringLiteral("failed"));
+        QVERIFY(automation.run(fixture, ordinal("Levels")));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("applied"));
+        shoot(window, card, QStringLiteral("applied"));
+        // Runs, at the karaoke run, up to warning, times on.
+        const int retimed = automation.runs()->idAt(2);
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "openAutomationRun", Q_ARG(QVariant, retimed)));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        dock->setProperty("isFloating", true);
+        auto *panel = item("automationPanel");
+        QTRY_VERIFY(panel && panel->window() != window);
+        QQuickWindow *floating = panel->window();
+        floating->resize(460, 760);
+        auto *lines = item<QObject>("runLines");
+        QTRY_COMPARE(lines->property("run").toInt(), retimed);
+        lines->setProperty("levelLimit", 2);
+        QTRY_COMPARE(item<QObject>("runLogLevel")->property("currentIndex").toInt(), 2);
+        settings.setValue(QStringLiteral("automation.runLogTimes"), true);
+        QTRY_VERIFY(lines->property("times").toBool());
+        shoot(floating, nullptr, QStringLiteral("runs"));
+        settings.setValue(QStringLiteral("automation.runLogTimes"), false);
+        automation.dismissCard();
         dock->setProperty("isFloating", false);
     }
 
@@ -15747,8 +15871,9 @@ private slots:
         QVERIFY(doc.scriptInfo(u8"PlayResX") == std::u8string(u8"640"));
         QVERIFY(doc.scriptInfo(u8"PlayResY") == std::u8string(u8"480"));
         QVERIFY(!application->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
-        // The Automation panel's run status goes: nothing to say (AM1).
-        QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
+        // It applied and wrote to its log: the progress card stays (AD3).
+        QTRY_COMPARE(application->automation().cardState(), QStringLiteral("applied"));
+        application->automation().dismissCard();
 
         // Return on Cancel, and Escape, stop the macro, quietly.
         application->editor().undo();
@@ -15769,7 +15894,8 @@ private slots:
             const auto &after = application->files().session(*application->workspace().editingTarget())->document();
             QVERIFY(!after.scriptInfo(u8"PlayResX"));
             QVERIFY(after.lines().front()->text == std::u8string(u8"first"));
-            QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
+            // Declined: nothing to say, the card goes (AD3).
+            QTRY_COMPARE(application->automation().cardState(), QString());
         }
     }
 
