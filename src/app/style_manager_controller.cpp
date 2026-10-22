@@ -512,7 +512,13 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
             m_catalogs.choose(shown);
         return QCoreApplication::translate("HikariSub.Styles", "Style named \"%1\" already exists.").arg(qs(row.error()));
     }
-    if (m_edit->store) {
+    // The editor stays on the committed Style (Apply keeps it open), set
+    // before the lists are told: whoever follows them may end the edit.
+    const bool store = m_edit->store;
+    const bool renames = renameLines && m_edit->row && edit.oldName != edit.style.name;
+    m_edit->row = *row;
+    m_edit->opened = edit.style;
+    if (store) {
         m_catalogs.markChanged();
         if (away)
             m_catalogs.choose(shown);
@@ -522,13 +528,10 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
         for (std::size_t i = 0; i < styles->size(); ++i)
             origin.push_back(i < before.size() ? std::optional(i) : std::nullopt);
         std::optional<std::pair<std::u8string, std::u8string>> rename;
-        if (renameLines && m_edit->row && edit.oldName != edit.style.name)
+        if (renames)
             rename = std::pair(edit.oldName, edit.style.name);
         applyDocument(*session, *styles, origin, rename);
     }
-    // The editor stays on the committed Style (Apply keeps it open).
-    m_edit->row = *row;
-    m_edit->opened = edit.style;
     return {};
 }
 
