@@ -370,11 +370,12 @@ std::string TemplateEditorController::keyOf(const core::LineRecord &l) const
 
 void TemplateEditorController::takeBaseline()
 {
-    m_baseline.clear();
+    auto &baseline = m_baselines[documentKey()];
+    baseline.clear();
     if (const auto *doc = document())
         for (const auto *l : doc->lines())
             if (application::templateKindOf(*l))
-                m_baseline[l->id] = keyOf(*l);
+                baseline[l->id] = keyOf(*l);
 }
 
 void TemplateEditorController::refresh()
@@ -399,7 +400,6 @@ void TemplateEditorController::refresh()
         m_lastApply.clear();
         m_previewSnapshotKey.clear();
         stopRuns();
-        takeBaseline();
     }
     if (!s) {
         emit changed();
@@ -407,6 +407,8 @@ void TemplateEditorController::refresh()
         emit videoChanged();
         return;
     }
+    if (!m_baselines.contains(documentKey()))
+        takeBaseline(); // first seen, or reloaded
     const auto &doc = s->document();
     // The current template follows the active Line when that is one.
     const auto active = s->selection().active;
@@ -605,7 +607,10 @@ QVariantList TemplateEditorController::templates() const
             continue;
         const core::LineRecord r = (m_current == l->id) ? *currentRecord() : *l;
         const auto stats = m_stats.find(l->id);
-        const auto base = m_baseline.find(l->id);
+        static const std::map<core::LineId, std::string> none;
+        const auto ours = m_baselines.find(documentKey());
+        const auto &baseline = ours == m_baselines.end() ? none : ours->second;
+        const auto base = baseline.find(l->id);
         const bool problem = std::ranges::any_of(m_issues, [&](const Issue &i) { return i.line == l->id; });
         out.append(QVariantMap{
             {QStringLiteral("id"), QVariant::fromValue<qulonglong>(l->id.value)},
@@ -617,7 +622,7 @@ QVariantList TemplateEditorController::templates() const
             {QStringLiteral("text"), qs(l->translation.empty() ? r.text : r.translation)},
             {QStringLiteral("generated"), stats == m_stats.end() ? -1 : stats->second.generated},
             {QStringLiteral("seconds"), stats == m_stats.end() ? -1.0 : stats->second.seconds},
-            {QStringLiteral("changed"), base == m_baseline.end() || base->second != keyOf(r)},
+            {QStringLiteral("changed"), base == baseline.end() || base->second != keyOf(r)},
             {QStringLiteral("problem"), problem},
         });
     }

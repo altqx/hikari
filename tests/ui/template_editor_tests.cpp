@@ -796,6 +796,39 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return !editor->values().isEmpty(); }, 20'000));
     }
 
+    // A template edited since Apply stays marked after a visit to another
+    // tab: its generated Lines are still the old Apply's.
+    void aChangeSinceApplyOutlastsATabSwitch()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        std::pair<std::uint64_t, std::uint64_t> key{1, 1};
+        editor->setDocumentKey([&] { return key; });
+        editor->refresh();
+        editor->trustDocument();
+        const auto changed = [&] {
+            for (const QVariant &v : editor->templates())
+                if (v.toMap().value(QStringLiteral("id")).toULongLong() == editor->current())
+                    return v.toMap().value(QStringLiteral("changed")).toBool();
+            return false;
+        };
+        QVERIFY(editor->current() != 0);
+        QVERIFY(!changed());
+        editor->setText(editor->text() + QStringLiteral("{\\bord3}"));
+        editor->commit();
+        editor->refresh();
+        QVERIFY(changed());
+        auto first = std::move(session);
+        session = std::make_unique<application::EditSession>(loadFile(QStringLiteral("stock-tutorials.ass")));
+        key = {2, 1};
+        editor->refresh();
+        QVERIFY(!changed());
+        session = std::move(first);
+        key = {1, 1};
+        editor->refresh();
+        QVERIFY(changed());
+        editor->setDocumentKey({});
+    }
+
     void anUndoneApplyMatchesAgain()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));

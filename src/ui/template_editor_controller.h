@@ -347,7 +347,9 @@ private:
     std::optional<application::MacroSnapshot> m_previewSnapshot;
     std::optional<core::Document> m_previewSeen; // the Document it was built from
     std::string m_previewSnapshotKey;              // skips a run on what was just run
-    std::map<core::LineId, std::string> m_baseline; // at the last Apply
+    // The template and code Lines at the last Apply (or when the panel first
+    // saw the Document), per Document: another tab's visit keeps them.
+    std::map<DocumentKey, std::map<core::LineId, std::string>> m_baselines;
     QVariantMap m_lastApply;
     QVariantMap m_values;
 };
