@@ -68,7 +68,7 @@ Window {
         anchors.bottom: parent.bottom
         log: root.logger
         settings: root.settings
-        openLog: () => root.note("log")
+        openLog: id => root.note("log " + id)
     }
 
     InlineBar {
@@ -358,11 +358,12 @@ private slots:
         QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 1);
         QTRY_VERIFY(findIn(root.get(), "toastMore")->isVisible());
         click(findIn(root.get(), "toastMoreOpenLog"));
-        QCOMPARE(notes(), QStringList{QStringLiteral("log")});
+        QCOMPARE(notes(), QStringList{QStringLiteral("log 0")});
         QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 0);
-        // Every notice went to the Log, silently.
-        QVERIFY(logger->history().contains(QLatin1String("text of One")));
-        QVERIFY(!logger->shown());
+        // NT1: every notice is an entry of the Log, with its severity and title.
+        QVERIFY(logger->history().contains(QLatin1String("One: text of One")));
+        QCOMPARE(logger->warningCount(), 3);
+        QCOMPARE(logger->errorCount(), 1);
         // × dismisses.
         const int six = run(QStringLiteral("toasts.entries[0].id")).toInt();
         QQuickItem *toast = findIn(root.get(), QStringLiteral("toast_%1").arg(six).toLatin1().constData());
@@ -379,14 +380,18 @@ private slots:
         QCOMPARE(run(QStringLiteral("toasts.entries.length")).toInt(), 0);
         QCOMPARE(run(QStringLiteral("toasts.folded")).toInt(), 1);
         QTRY_VERIFY(findIn(root.get(), "toastMore")->isVisible());
-        // Details opens the Log.
+        // Details opens the Log at its entry, and a notice C++ gives the Log
+        // shows as a toast too.
         run(QStringLiteral("toasts.clear()"));
+        logger->notice(ui::LogController::Warning, QStringLiteral("Audio"), QStringLiteral("from C++"));
+        QCOMPARE(run(QStringLiteral("toasts.entries[0].text")).toString(), QStringLiteral("from C++"));
+        QCOMPARE(run(QStringLiteral("toasts.entries[0].severity")).toString(), QStringLiteral("warning"));
         const int detailed = run(QStringLiteral("toasts.post('error', 'Failed', 'Could not save', { details: 'disk full' })")).toInt();
         QQuickItem *details = nullptr;
         QTRY_VERIFY((details = findItem(findIn(root.get(), QStringLiteral("toast_%1").arg(detailed).toLatin1().constData()),
                                         QStringLiteral("toastDetails"))));
         click(details);
-        QCOMPARE(notes().last(), QStringLiteral("log"));
+        QCOMPARE(notes().last(), QStringLiteral("log %1").arg(logger->entries()->rowCount()));
     }
 
     void informationToastsFadeAndWarningsStay()

@@ -1,56 +1,195 @@
 #include "log_controller.h"
 
+#include <QClipboard>
+#include <QGuiApplication>
 #include <QThread>
 #include <QTime>
 
 namespace hikari::ui {
 
-LogController::LogController(QObject *parent)
-    : QObject(parent), m_clock([] { return QTime::currentTime().toString(QStringLiteral("HH:mm:ss")); })
+class LogController::Model : public QAbstractListModel {
+public:
+    using QAbstractListModel::QAbstractListModel;
+
+    std::vector<Entry> entries;
+
+    int rowCount(const QModelIndex &parent = {}) const override
+    {
+        return parent.isValid() ? 0 : int(entries.size());
+    }
+    QVariant data(const QModelIndex &index, int role) const override
+    {
+        if (!index.isValid() || index.row() >= int(entries.size()))
+            return {};
+        const Entry &e = entries[size_t(index.row())];
+        switch (role) {
+        case LogEntries::IdRole: return e.id;
+        case LogEntries::TimeRole: return e.time;
+        case LogEntries::SeverityRole: return int(e.severity);
+        case LogEntries::TitleRole: return e.title;
+        case Qt::DisplayRole:
+        case LogEntries::TextRole: return e.text;
+        case LogEntries::DetailsRole: return e.details;
+        default: return {};
+        }
+    }
+    QHash<int, QByteArray> roleNames() const override
+    {
+        return {{LogEntries::IdRole, "entryId"},     {LogEntries::TimeRole, "time"},
+                {LogEntries::SeverityRole, "severity"}, {LogEntries::TitleRole, "title"},
+                {LogEntries::TextRole, "text"},      {LogEntries::DetailsRole, "details"}};
+    }
+    void append(Entry entry)
+    {
+        const int row = int(entries.size());
+        beginInsertRows({}, row, row);
+        entries.push_back(std::move(entry));
+        endInsertRows();
+    }
+};
+
+LogEntries::LogEntries(QObject *parent) : QSortFilterProxyModel(parent) {}
+
+void LogEntries::setShown(int severity, bool on)
 {
+    if (severity < 0 || severity > 2 || m_show[severity] == on)
+        return;
+    m_show[severity] = on;
+    invalidateRowsFilter();
+    emit filterChanged();
 }
 
-void LogController::log(const QString &text, bool silent)
+void LogEntries::setFilterText(const QString &text)
+{
+    if (m_filter == text)
+        return;
+    m_filter = text;
+    invalidateRowsFilter();
+    emit filterChanged();
+}
+
+int LogEntries::rowOf(int id) const
+{
+    for (int row = 0; row < rowCount(); ++row)
+        if (data(index(row, 0), IdRole).toInt() == id)
+            return row;
+    return -1;
+}
+
+bool LogEntries::filterAcceptsRow(int sourceRow, const QModelIndex &sourceParent) const
+{
+    const QModelIndex i = sourceModel()->index(sourceRow, 0, sourceParent);
+    const int severity = sourceModel()->data(i, SeverityRole).toInt();
+    if (severity >= 0 && severity <= 2 && !m_show[severity])
+        return false;
+    const QString needle = m_filter.trimmed();
+    if (needle.isEmpty())
+        return true;
+    for (int role : {TitleRole, TextRole, DetailsRole})
+        if (sourceModel()->data(i, role).toString().contains(needle, Qt::CaseInsensitive))
+            return true;
+    return false;
+}
+
+LogController::LogController(QObject *parent)
+    : QObject(parent), m_model(new Model(this)), m_entries(new LogEntries(this)),
+      m_clock([] { return QTime::currentTime().toString(QStringLiteral("HH:mm:ss")); })
+{
+    m_entries->setSourceModel(m_model);
+}
+
+LogController::~LogController() = default;
+
+QString LogController::lastMessage() const
+{
+    return m_model->entries.empty() ? QString() : m_model->entries.back().text;
+}
+
+QString LogController::lineOf(const Entry &entry)
+{
+    QString line = entry.time + QLatin1Char(' ');
+    if (!entry.title.isEmpty())
+        line += entry.title + QStringLiteral(": ");
+    line += entry.text + QLatin1Char('\n');
+    if (!entry.details.isEmpty())
+        for (const QString &detail : entry.details.split(QLatin1Char('\n')))
+            line += QStringLiteral("    ") + detail + QLatin1Char('\n');
+    return line;
+}
+
+QString LogController::history() const
+{
+    QString text;
+    for (const Entry &entry : m_model->entries)
+        text += lineOf(entry);
+    return text;
+}
+
+int LogController::add(Severity severity, const QString &title, const QString &text, const QString &details)
+{
+    const int id = int(m_model->entries.size()) + 1;
+    m_model->append({id, m_clock(), severity, title, text, details});
+    ++m_counts[severity];
+    emit changed();
+    return id;
+}
+
+void LogController::log(const QString &text)
 {
     if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, [this, text, silent] { log(text, silent); }, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, [this, text] { log(text); }, Qt::QueuedConnection);
         return;
     }
-    m_last = text;
-    m_history += m_clock() + QLatin1Char(' ') + text + QLatin1Char('\n');
-    // A message that is not silent shows the window, back to just the last
-    // message if it was showing the whole log (legacy OnGetLog).
-    if (!silent && !m_shown) {
-        m_shown = true;
-        m_full = false;
+    add(Info, {}, text, {});
+}
+
+void LogController::notice(Severity severity, const QString &title, const QString &text, const QString &details)
+{
+    if (QThread::currentThread() != thread()) {
+        QMetaObject::invokeMethod(this, [=, this] { notice(severity, title, text, details); },
+                                  Qt::QueuedConnection);
+        return;
     }
-    emit changed();
+    const int id = add(severity, title, text, details);
+    emit noticed(id, severity, title, text, details);
 }
 
-void LogController::toggleWindow()
+void LogController::reveal(int id)
 {
-    // Legacy switches to the whole log once, then toggles: a window that was
-    // showing a message hides (characterized).
-    m_full = true;
-    m_shown = !m_shown;
-    emit changed();
+    if (id > 0 && id <= int(m_model->entries.size())) {
+        const Entry &entry = m_model->entries[size_t(id - 1)];
+        m_entries->setShown(entry.severity, true);
+        if (m_entries->rowOf(id) < 0)
+            m_entries->setFilterText({});
+    }
+    if (m_marked != id) {
+        m_marked = id;
+        emit markedChanged();
+    }
+    emit revealRequested();
 }
 
-void LogController::showAll()
+QString LogController::shownText() const
 {
-    if (m_shown && m_full)
-        return;
-    m_full = true;
-    m_shown = true;
-    emit changed();
+    QString text;
+    for (int row = 0; row < m_entries->rowCount(); ++row) {
+        const int id = m_entries->data(m_entries->index(row, 0), LogEntries::IdRole).toInt();
+        text += lineOf(m_model->entries[size_t(id - 1)]);
+    }
+    return text;
 }
 
-void LogController::close()
+void LogController::copyShown() const
 {
-    if (!m_shown)
-        return;
-    m_shown = false;
-    emit changed();
+    if (auto *clipboard = QGuiApplication::clipboard())
+        clipboard->setText(shownText());
+}
+
+void LogController::copyEntry(int id) const
+{
+    auto *clipboard = QGuiApplication::clipboard();
+    if (clipboard && id > 0 && id <= int(m_model->entries.size()))
+        clipboard->setText(lineOf(m_model->entries[size_t(id - 1)]));
 }
 
 } // namespace hikari::ui
