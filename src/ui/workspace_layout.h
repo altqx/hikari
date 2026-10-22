@@ -94,20 +94,21 @@ class WorkspaceLayoutController : public QObject {
     // legacy's menu took every key while it was shown (D1 Windows gate).
     Q_PROPERTY(bool menuHasFocus READ menuHasFocus NOTIFY menuHasFocusChanged)
     // AM1: whether a modal popup (a dialog over its window, Popup.Item) is
-    // open in a shown window. The application-wide macro shortcuts stay off
-    // then: a macro started behind it shows its run controls in the
-    // Automation panel, which the modal keeps out of reach.
+    // open in a shown window, or a modal window (DG1's frame) is shown. The
+    // application-wide macro shortcuts stay off then: a macro started behind
+    // it shows its run controls in the Automation panel, which the modal
+    // keeps out of reach.
     Q_PROPERTY(bool modalOpen READ modalOpen NOTIFY modalOpenChanged)
 public:
     // WS1: how a tab shown for the first time starts.
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    static constexpr int kPanelRegistry = 5; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1)
+    static constexpr int kPanelRegistry = 6; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Log (NT1)
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
-    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original
+    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original, Log
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without
     // settings). The saved layouts are kept beside it, in layouts.json.

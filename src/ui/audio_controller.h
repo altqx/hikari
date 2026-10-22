@@ -471,8 +471,9 @@ signals:
     // A file was opened and is loading (legacy SetRecent(2) after LoadAudio);
     // `created` when there was no box before (legacy then focuses the display).
     void opened(const QString &path, bool created);
-    // A message for the log: legacy HikariLog, or HikariLogDebug (`debug`).
-    void logged(const QString &message, bool debug);
+    // A message for the log: legacy HikariLog, or HikariLogDebug (`debug`);
+    // `error` when the audio did not open (NT1), else a warning.
+    void logged(const QString &message, bool debug, bool error);
     void trackChoicesChanged();
     // A2: a slider or switch moved; `volume` also when the player's volume changed.
     void boxControlsChanged();

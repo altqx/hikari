@@ -216,7 +216,7 @@ QString retiredNotice(int id)
 } // namespace
 
 HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
-                                     std::function<void(const QString &)> log, QObject *parent)
+                                     std::function<void(const QString &, bool warning)> log, QObject *parent)
     : QObject(parent), m_scripts(scripts), m_settings(settings), m_log(std::move(log))
 {
     load();
@@ -224,7 +224,7 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
     if (m_log)
         for (const QString &notice : std::exchange(m_retiredNotices, {}))
-            m_log(notice);
+            m_log(notice, false);
     logInvalid(); // the frame's SetAccels(false) at startup
     // A change in the Automation panel (AM1; legacy's automation hotkeys
     // window's OK): SetHotkeysMap, SetAccels(true), SaveHkeys().
@@ -312,7 +312,7 @@ void HotkeysController::logInvalid() const
             continue;
         const auto bad = application::invalidHotkeyKey(hotkey.accel);
         if (!bad.empty())
-            m_log(QCoreApplication::translate("HikariSub.Hotkeys", "Shortcut \"%1\" is invalid").arg(qs(bad)));
+            m_log(QCoreApplication::translate("HikariSub.Hotkeys", "Shortcut \"%1\" is invalid").arg(qs(bad)), true);
     }
 }
 
@@ -565,8 +565,12 @@ QVariantList HotkeysController::rows() const
     int position = 0;
     for (const int i : m_list->shown()) {
         const auto &r = m_list->row(i);
+        // PF1: "context" (the window's index) and "name" for the page's
+        // context headings, the row showing its name under its heading.
         QVariantMap row{{QStringLiteral("row"), i},
                         {QStringLiteral("text"), qs(r.text)},
+                        {QStringLiteral("context"), r.key.type},
+                        {QStringLiteral("name"), qs(r.name)},
                         {QStringLiteral("accel"), qs(r.accel)},
                         {QStringLiteral("textModified"), r.textModified},
                         {QStringLiteral("keyModified"), r.keyModified},
@@ -658,6 +662,21 @@ void HotkeysController::filter(int mode)
     emit rowsChanged();
 }
 
+void HotkeysController::search(const QString &text)
+{
+    if (!m_list)
+        return;
+    m_list->search(text.toStdString(), [this](const application::HotkeyList::Row &r) {
+        if (r.key.id < application::kFirstScriptHotkey)
+            return std::string();
+        const QVariantMap macro = m_scripts.describe(r.name);
+        return (macro.value(QStringLiteral("script")).toString() + QLatin1Char(' ') +
+                macro.value(QStringLiteral("macro")).toString())
+            .toStdString();
+    });
+    emit rowsChanged();
+}
+
 void HotkeysController::select(int position)
 {
     if (!m_list)
@@ -704,6 +723,14 @@ void HotkeysController::optionsReset()
     if (!m_list || m_list->selection() < 0)
         return;
     m_list->reset(m_list->selection(), bindings());
+    emit rowsChanged();
+}
+
+void HotkeysController::optionsResetAll()
+{
+    if (!m_list)
+        return;
+    m_list->resetAll(bindings());
     emit rowsChanged();
 }
 

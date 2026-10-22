@@ -190,7 +190,7 @@ UpdateChecker::UpdateChecker(QString settingsFile, UpdateFeed feed, QString vers
       m_installer(std::make_unique<UpdateInstaller>(std::move(environment), m_version))
 {
     load();
-    connect(m_installer.get(), &UpdateInstaller::failed, this, &UpdateChecker::notice);
+    connect(m_installer.get(), &UpdateInstaller::failed, this, [this](const QString &message) { emit notice(message, false); });
 }
 
 UpdateChecker::UpdateChecker(ui::SettingsStore &settings, UpdateFeed feed, QString version,
@@ -199,7 +199,7 @@ UpdateChecker::UpdateChecker(ui::SettingsStore &settings, UpdateFeed feed, QStri
       m_installer(std::make_unique<UpdateInstaller>(std::move(environment), m_version))
 {
     load();
-    connect(m_installer.get(), &UpdateInstaller::failed, this, &UpdateChecker::notice);
+    connect(m_installer.get(), &UpdateInstaller::failed, this, [this](const QString &message) { emit notice(message, false); });
 }
 
 UpdateChecker::~UpdateChecker()
@@ -316,7 +316,7 @@ bool UpdateChecker::checkOnStartup()
 void UpdateChecker::startUp()
 {
     if (const QString message = m_installer->start(); !message.isEmpty())
-        emit notice(message);
+        emit notice(message, true);
 }
 
 void UpdateChecker::remindInAWeek()

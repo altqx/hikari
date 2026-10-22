@@ -100,14 +100,12 @@ signals:
     // G56: a command was refused because it would break the group described
     // by `description` (0 when the break makes a new malformed group).
     void groupBreakRefused(qulonglong description, const QString &title);
-    // F3: the spelling options or the dictionary changed (marks are stale),
-    // and legacy's message boxes when the spell checker cannot start.
+    // F3: the spelling options or the dictionary changed (marks are stale);
+    // when the spell checker cannot start, legacy's message box is a toast
+    // (NT1).
     void spellingChanged();
-    void spellingNotice(const QString &message);
     // W1: the chosen player changed (video.playbackPlayer).
     void playbackPlayerChanged();
-    // W1: DirectShow could not open the video: legacy's warning box.
-    void playerNotice(const QString &message);
     // AV1: the route both audio paths follow changed.
     void audioOutputChanged();
     // F1: find and replace shows a legacy message box (kind: 0 message, 1
@@ -684,12 +682,21 @@ public:
     // once and loads the conversion catalog, as legacy does.
     Q_INVOKABLE QVariantMap openSettingsDialog();
     // OK/Apply (legacy SetOptions): each bound control whose value differs
-    // from the stored one is written; nothing else.
-    Q_INVOKABLE void applySettings(const QVariantMap &values);
-    // "Set default" (legacy ResetDefault): every setting at once, even if the
-    // dialog is then cancelled; returns the controls' state as legacy
-    // refreshes them (its defects included).
+    // from the stored one is written; nothing else. `resetAll`: "Reset all
+    // settings…" was chosen since the last OK or Apply, and every setting
+    // but the appearance, the hotkeys and the recent files goes back to its
+    // default first (legacy ResetDefault, PF1-staged-reset).
+    Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
+    // "Reset all settings…": the controls' state at the defaults, as legacy
+    // ResetDefault refreshes them (its defects included); nothing is
+    // stored until OK or Apply (PF1-staged-reset).
     Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
+    // "Reset page": `values` with the page's controls at their defaults
+    // (page: an OptionsPage id, "general", "appearance", ...); staged too.
+    Q_INVOKABLE QVariantMap resetSettingsPage(const QVariantMap &values, const QString &page);
+    // The conversion catalog's Styles as the dialog lists them (after a
+    // Reset page on Conversion loaded the default catalog).
+    Q_INVOKABLE QStringList settingsStyles() const;
     // OnChangeCatalog: loads the catalog and returns {values, styles}.
     Q_INVOKABLE QVariantMap chooseSettingsCatalog(const QVariantMap &values, int index);
     // wxDirDialog::GetPath: the chosen folder with native separators.
@@ -1132,6 +1139,9 @@ private:
     std::vector<application::ReplacerRule> &misspellRuleList();
     void saveMisspellRules();
     void destroyDialogs();
+    // ResetDefault's reset of the store and of what reads it at once, at OK
+    // or Apply after "Reset all settings…" (PF1-staged-reset).
+    void resetAllSettings();
     // F1
     class FindHost;
     friend class FindHost;

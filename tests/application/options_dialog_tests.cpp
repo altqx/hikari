@@ -7,6 +7,7 @@
 #include <gtest/gtest.h>
 
 #include <algorithm>
+#include <optional>
 
 #include <string>
 #include <vector>
@@ -16,7 +17,8 @@ using namespace hikari::application;
 namespace {
 
 // The ConOpt calls of OptionsDialog's constructor, in order, with the legacy
-// control: SubtitlesProperties first (it is built before the Main page).
+// control and the PF1 page that shows the option now (PF1-pages):
+// SubtitlesProperties first (it is built before the Main page).
 struct LegacyBinding {
     const char *option;
     OptionsControl control;
@@ -38,40 +40,40 @@ constexpr LegacyBinding kLegacy[] = {
     {"ASS_PROPERTIES_UPDATE_ON", OptionsControl::Check, OptionsPage::SubtitleProperties},
     {"ASS_PROPERTIES_ASK_FOR_CHANGE", OptionsControl::Check, OptionsPage::SubtitleProperties},
     // OptionsDialog.cpp:340-367: the two choices, then opts[18].
-    {"PROGRAM_LANGUAGE", OptionsControl::Language, OptionsPage::Editor},
-    {"DICTIONARY_LANGUAGE", OptionsControl::Dictionary, OptionsPage::Editor},
-    {"GRID_LOAD_SORTED_SUBS", OptionsControl::Check, OptionsPage::Editor},
-    {"SPELLCHECKER_ON", OptionsControl::Check, OptionsPage::Editor},
-    {"AUTO_SELECT_LINES_FROM_LAST_TAB", OptionsControl::Check, OptionsPage::Editor},
-    {"EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK", OptionsControl::Check, OptionsPage::Editor},
-    {"OPEN_SUBS_IN_NEW_TAB", OptionsControl::Check, OptionsPage::Editor},
-    {"EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT", OptionsControl::Check, OptionsPage::Editor},
-    {"DISABLE_LIVE_VIDEO_EDITING", OptionsControl::Check, OptionsPage::Editor},
-    {"GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN", OptionsControl::Check, OptionsPage::Editor},
-    {"SHIFT_TIMES_CHANGE_VALUES_WITH_TAB", OptionsControl::Check, OptionsPage::Editor},
-    {"GRID_CHANGE_ACTIVE_ON_SELECTION", OptionsControl::Check, OptionsPage::Editor},
-    {"TL_MODE_SHOW_ORIGINAL", OptionsControl::Check, OptionsPage::Editor},
-    {"TL_MODE_HIDE_ORIGINAL_ON_VIDEO", OptionsControl::Check, OptionsPage::Editor},
-    {"GRID_DUPLICATION_DONT_CHANGE_SELECTION", OptionsControl::Check, OptionsPage::Editor},
-    {"GRID_DONT_CENTER_ACTIVE_LINE", OptionsControl::Check, OptionsPage::Editor},
-    {"TEXT_FIELD_ALLOW_NUMPAD_HOTKEYS", OptionsControl::Check, OptionsPage::Editor},
-    {"VIDEO_VISUAL_WARNINGS_OFF", OptionsControl::Check, OptionsPage::Editor},
-    {"DONT_ASK_FOR_BAD_RESOLUTION", OptionsControl::Check, OptionsPage::Editor},
-    {"AUTOMATION_OLD_SCRIPTS_COMPATIBILITY", OptionsControl::Check, OptionsPage::Editor},
+    {"PROGRAM_LANGUAGE", OptionsControl::Language, OptionsPage::General},
+    {"DICTIONARY_LANGUAGE", OptionsControl::Dictionary, OptionsPage::LineEditor},
+    {"GRID_LOAD_SORTED_SUBS", OptionsControl::Check, OptionsPage::General},
+    {"SPELLCHECKER_ON", OptionsControl::Check, OptionsPage::LineEditor},
+    {"AUTO_SELECT_LINES_FROM_LAST_TAB", OptionsControl::Check, OptionsPage::Grid},
+    {"EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK", OptionsControl::Check, OptionsPage::LineEditor},
+    {"OPEN_SUBS_IN_NEW_TAB", OptionsControl::Check, OptionsPage::General},
+    {"EDITBOX_DONT_GO_TO_NEXT_LINE_ON_TIMES_EDIT", OptionsControl::Check, OptionsPage::LineEditor},
+    {"DISABLE_LIVE_VIDEO_EDITING", OptionsControl::Check, OptionsPage::Video},
+    {"GRID_SET_VISIBLE_LINE_AFTER_FULL_SCREEN", OptionsControl::Check, OptionsPage::Grid},
+    {"SHIFT_TIMES_CHANGE_VALUES_WITH_TAB", OptionsControl::Check, OptionsPage::General},
+    {"GRID_CHANGE_ACTIVE_ON_SELECTION", OptionsControl::Check, OptionsPage::Grid},
+    {"TL_MODE_SHOW_ORIGINAL", OptionsControl::Check, OptionsPage::LineEditor},
+    {"TL_MODE_HIDE_ORIGINAL_ON_VIDEO", OptionsControl::Check, OptionsPage::LineEditor},
+    {"GRID_DUPLICATION_DONT_CHANGE_SELECTION", OptionsControl::Check, OptionsPage::Grid},
+    {"GRID_DONT_CENTER_ACTIVE_LINE", OptionsControl::Check, OptionsPage::Grid},
+    {"TEXT_FIELD_ALLOW_NUMPAD_HOTKEYS", OptionsControl::Check, OptionsPage::LineEditor},
+    {"VIDEO_VISUAL_WARNINGS_OFF", OptionsControl::Check, OptionsPage::Video},
+    {"DONT_ASK_FOR_BAD_RESOLUTION", OptionsControl::Check, OptionsPage::Video},
+    {"AUTOMATION_OLD_SCRIPTS_COMPATIBILITY", OptionsControl::Check, OptionsPage::Automation},
     // :385-391, 412-416, 428-434, 437-452.
-    {"GRID_SAVE_AFTER_CHARACTER_COUNT", OptionsControl::Number, OptionsPage::EditorAdvanced},
-    {"AUTOSAVE_MAX_FILES", OptionsControl::Number, OptionsPage::EditorAdvanced},
-    {"AUTOMATION_TRACE_LEVEL", OptionsControl::Number, OptionsPage::EditorAdvanced},
-    {"TAB_TEXT_MAX_CHARS", OptionsControl::Number, OptionsPage::EditorAdvanced},
-    {"GRID_INSERT_START_OFFSET", OptionsControl::Number, OptionsPage::EditorAdvanced},
-    {"GRID_INSERT_END_OFFSET", OptionsControl::Number, OptionsPage::EditorAdvanced},
-    {"GRID_TAGS_SWAP_CHARACTER", OptionsControl::Text, OptionsPage::EditorAdvanced},
-    {"GRID_FONT", OptionsControl::Font, OptionsPage::EditorAdvanced},
-    {"PROGRAM_FONT", OptionsControl::Font, OptionsPage::EditorAdvanced},
-    {"CALC_SPACES_AND_PUNCTATION_FOR_WRAPS", OptionsControl::Check, OptionsPage::EditorAdvanced},
-    {"CALC_SPACES_AND_PUNCTATION_FOR_CPS", OptionsControl::Check, OptionsPage::EditorAdvanced},
-    {"AUTOMATION_LOADING_METHOD", OptionsControl::IndexChoice, OptionsPage::EditorAdvanced},
-    {"EXTERNAL_FONTS_DIRECTORY", OptionsControl::Text, OptionsPage::EditorAdvanced},
+    {"GRID_SAVE_AFTER_CHARACTER_COUNT", OptionsControl::Number, OptionsPage::General},
+    {"AUTOSAVE_MAX_FILES", OptionsControl::Number, OptionsPage::General},
+    {"AUTOMATION_TRACE_LEVEL", OptionsControl::Number, OptionsPage::Automation},
+    {"TAB_TEXT_MAX_CHARS", OptionsControl::Number, OptionsPage::General},
+    {"GRID_INSERT_START_OFFSET", OptionsControl::Number, OptionsPage::Grid},
+    {"GRID_INSERT_END_OFFSET", OptionsControl::Number, OptionsPage::Grid},
+    {"GRID_TAGS_SWAP_CHARACTER", OptionsControl::Text, OptionsPage::Grid},
+    {"GRID_FONT", OptionsControl::Font, OptionsPage::Grid},
+    {"PROGRAM_FONT", OptionsControl::Font, OptionsPage::Appearance},
+    {"CALC_SPACES_AND_PUNCTATION_FOR_WRAPS", OptionsControl::Check, OptionsPage::Grid},
+    {"CALC_SPACES_AND_PUNCTATION_FOR_CPS", OptionsControl::Check, OptionsPage::Grid},
+    {"AUTOMATION_LOADING_METHOD", OptionsControl::IndexChoice, OptionsPage::Automation},
+    {"EXTERNAL_FONTS_DIRECTORY", OptionsControl::Text, OptionsPage::General},
     // :515, 535, 547, 551-567.
     {"CONVERT_STYLE_CATALOG", OptionsControl::Catalog, OptionsPage::Conversion},
     {"CONVERT_STYLE", OptionsControl::Style, OptionsPage::Conversion},
@@ -107,13 +109,13 @@ constexpr LegacyBinding kLegacy[] = {
     {"AUDIO_KARAOKE_MOVE_ON_CLICK", OptionsControl::Check, OptionsPage::Audio},
     {"AUDIO_RAM_CACHE", OptionsControl::Check, OptionsPage::Audio},
     // :733-739.
-    {"AUDIO_DELAY", OptionsControl::Number, OptionsPage::AudioAdvanced},
-    {"AUDIO_MARK_PLAY_TIME", OptionsControl::Number, OptionsPage::AudioAdvanced},
-    {"AUDIO_LINE_BOUNDARIES_THICKNESS", OptionsControl::Number, OptionsPage::AudioAdvanced},
-    {"AUDIO_INACTIVE_LINES_DISPLAY_MODE", OptionsControl::IndexChoice, OptionsPage::AudioAdvanced},
-    {"AUDIO_CACHE_FILES_LIMIT", OptionsControl::Number, OptionsPage::AudioAdvanced},
-    {"AUDIO_LEAD_IN_VALUE", OptionsControl::Number, OptionsPage::AudioAdvanced},
-    {"AUDIO_LEAD_OUT_VALUE", OptionsControl::Number, OptionsPage::AudioAdvanced},
+    {"AUDIO_DELAY", OptionsControl::Number, OptionsPage::Audio},
+    {"AUDIO_MARK_PLAY_TIME", OptionsControl::Number, OptionsPage::Audio},
+    {"AUDIO_LINE_BOUNDARIES_THICKNESS", OptionsControl::Number, OptionsPage::Audio},
+    {"AUDIO_INACTIVE_LINES_DISPLAY_MODE", OptionsControl::IndexChoice, OptionsPage::Audio},
+    {"AUDIO_CACHE_FILES_LIMIT", OptionsControl::Number, OptionsPage::Audio},
+    {"AUDIO_LEAD_IN_VALUE", OptionsControl::Number, OptionsPage::Audio},
+    {"AUDIO_LEAD_OUT_VALUE", OptionsControl::Number, OptionsPage::Audio},
 };
 
 OptionsLists lists()
@@ -151,23 +153,23 @@ std::string textOf(const OptionsState &s, const char *id)
 TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
 {
     const auto all = optionsBindings();
-    // The rewrite's own after legacy's: Y4-playres-ask's and GR3's check
-    // boxes on the Editor page, H2-output-device's device choice on the Audio
-    // page, LE2's Times/Frames and LE3's hidden-tag check boxes on the Editor
-    // page, WS2's panel layout in the file on the Subtitle properties page,
-    // VF1's two follow lists on the Video page, KA1's double consonants and
-    // \\kf length on the Audio page, PK1's notices as toasts on the Editor
-    // page, then (Windows) A4-wasapi-default's output host API and W1's video
-    // player.
+    // The rewrite's own after legacy's: Y4-playres-ask's check box on the
+    // Video page, GR3's on the Subtitle grid page, H2-output-device's device
+    // choice on the Audio page, LE2's Times/Frames and LE3's hidden-tag check
+    // boxes on the Line editor page, WS2's panel layout in the file on the
+    // Subtitle properties page, VF1's two follow lists on the Video page,
+    // KA1's double consonants and \\kf length on the Audio page, PK1's
+    // notices as toasts on the General page, then (Windows)
+    // A4-wasapi-default's output host API and W1's video player.
     ASSERT_GT(all.size(), std::size(kLegacy) + 10);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
     EXPECT_EQ(fromVideo.control, OptionsControl::Check);
-    EXPECT_EQ(fromVideo.page, OptionsPage::Editor);
+    EXPECT_EQ(fromVideo.page, OptionsPage::Video);
     const auto &autoHide = all[std::size(kLegacy) + 1];
     EXPECT_EQ(autoHide.setting, "grid.autoHideColumns");
     EXPECT_EQ(autoHide.control, OptionsControl::Check);
-    EXPECT_EQ(autoHide.page, OptionsPage::Editor);
+    EXPECT_EQ(autoHide.page, OptionsPage::Grid);
     const auto &device = all[std::size(kLegacy) + 2];
     EXPECT_EQ(device.setting, "audio.outputDevice");
     EXPECT_EQ(device.control, OptionsControl::OutputDevice);
@@ -176,12 +178,12 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     const auto &frames = all[std::size(kLegacy) + 3];
     EXPECT_EQ(frames.setting, "editor.timesToFramesSwitch");
     EXPECT_EQ(frames.control, OptionsControl::Check);
-    EXPECT_EQ(frames.page, OptionsPage::Editor);
+    EXPECT_EQ(frames.page, OptionsPage::LineEditor);
     // LE3-tags-shown: the Line editor's hidden-tag view.
     const auto &tags = all[std::size(kLegacy) + 4];
     EXPECT_EQ(tags.setting, "editor.hideTags");
     EXPECT_EQ(tags.control, OptionsControl::Check);
-    EXPECT_EQ(tags.page, OptionsPage::Editor);
+    EXPECT_EQ(tags.page, OptionsPage::LineEditor);
     const auto &layout = all[std::size(kLegacy) + 5];
     EXPECT_EQ(layout.setting, "subtitles.layoutInFile");
     EXPECT_EQ(layout.control, OptionsControl::Check);
@@ -213,7 +215,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     const auto &toasts = all[std::size(kLegacy) + 10];
     EXPECT_EQ(toasts.setting, "notices.toasts");
     EXPECT_EQ(toasts.control, OptionsControl::Check);
-    EXPECT_EQ(toasts.page, OptionsPage::Editor);
+    EXPECT_EQ(toasts.page, OptionsPage::General);
 #ifdef _WIN32
     ASSERT_EQ(all.size(), std::size(kLegacy) + 13);
     const auto &hostApi = all[std::size(kLegacy) + 11];
@@ -675,4 +677,31 @@ TEST(OptionsDialog, NumbersReadAsLegacyReadsThem)
     EXPECT_EQ(numCtrlValue("wide", 1, 3000), 1);
     EXPECT_EQ(numCtrlValue("", 2, 10), 2);
     EXPECT_EQ(numCtrlValue("5000000", 2, 1000000), 1000000);
+}
+
+// PF1 (#225): the pages by id (the window keeps the page shown last), and
+// "Reset page", which refreshes the page's controls alone.
+TEST(OptionsDialog, PagesHaveIdsAndAPageResetsAlone)
+{
+    for (const auto page : {OptionsPage::General, OptionsPage::Appearance, OptionsPage::LineEditor, OptionsPage::Grid,
+                            OptionsPage::Video, OptionsPage::Audio, OptionsPage::Conversion,
+                            OptionsPage::SubtitleProperties, OptionsPage::Automation})
+        EXPECT_EQ(optionsPageOfId(optionsPageId(page)), page);
+    EXPECT_EQ(optionsPageId(OptionsPage::LineEditor), "lineEditor");
+    EXPECT_EQ(optionsPageOfId("hotkeys"), std::nullopt); // the hotkeys' own page
+    EXPECT_EQ(optionsPageOfId(""), std::nullopt);
+
+    MemorySettingsStorage storage;
+    Settings settings(storage);
+    const auto l = lists();
+    settings.set("grid.loadSortedSubs", true); // General
+    settings.set("grid.dontCenterActiveLine", true); // Subtitle grid
+    auto state = openOptionsDialog(settings, l).state;
+    MemorySettingsStorage defaultsStorage;
+    const Settings defaults(defaultsStorage);
+    state = refreshOptionsDialogAfterReset(defaults, l, state, OptionsPage::General);
+    EXPECT_FALSE(std::get<bool>(state.at("grid.loadSortedSubs")));
+    EXPECT_TRUE(std::get<bool>(state.at("grid.dontCenterActiveLine")));
+    // The store stays as it was until OK or Apply.
+    EXPECT_TRUE(settings.boolean("grid.loadSortedSubs"));
 }

@@ -59,7 +59,8 @@ AudioController::AudioController(application::DisplayAudioPort &own, QObject *pa
     connect(this, &AudioController::changed, this, &AudioController::textsChanged);
     m_box.setObserver([this] { boxChanged(); });
     m_box.setLog([this](const std::string &message, application::AudioBox::LogLevel level) {
-        emit logged(QString::fromStdString(message), level == application::AudioBox::LogLevel::Debug);
+        using L = application::AudioBox::LogLevel;
+        emit logged(QString::fromStdString(message), level == L::Debug, level == L::Shown);
     });
     m_box.setSettings([this] { return m_settings ? m_settings() : application::AudioCacheSettings{}; });
     m_box.setChooser([this](const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer) {

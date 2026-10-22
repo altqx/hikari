@@ -76,7 +76,7 @@ qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
 # T1: the visual tool rail and the overlay over the Video canvas; VT1: the inspector bar below it and its fields.
-qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml)
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml VisualTagPicker.qml VisualLastChange.qml)
 # T2-T6: the families' options in the bar (Position, Move, Scale, the rotations,
 # the clips' point modes and Invert clip, ...) and the tools' dialogs.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
@@ -122,7 +122,7 @@ target_sources(hikari_ui PRIVATE title_bars.cpp title_bars.h)
 if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 # K2: the controls style (Fusion with the theme's control outlines), chosen by
 # theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
 add_subdirectory(style)
@@ -206,15 +206,17 @@ if(UNIX AND NOT APPLE)
 endif()
 qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml TitleBarMenus.qml TitleBarMenuItem.qml
     TitleBarMoveArea.qml TitleBarButton.qml)
-# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update notices on it.
+# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update offer on it.
 qt_target_qml_sources(hikari_ui QML_FILES DialogWindow.qml DialogTitleBar.qml AboutDialog.qml CreditsDialog.qml
-    UpdateMessage.qml UpdateAvailable.qml)
+    UpdateAvailable.qml)
 # SH3: What's new from the release notes, on the Home page and in Help > What's new.
 qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml WhatsNewCard.qml WhatsNewDialog.qml)
 # PK1: the popup kit on DG1's frame (docs/qt/ux/visual-language.md "Popups"): the message box, the popover,
-# toasts and the inline bar, and the clash review, Choose styles, hotkey capture, list chooser and date picker.
+# toasts and the inline bar, and the clash review, Choose styles, hotkey capture, list chooser and date picker;
+# NT1: the application's message box (MessageHost) and the Log panel.
 qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
-    ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml)
+    ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
+    MessageHost.qml LogPanel.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")

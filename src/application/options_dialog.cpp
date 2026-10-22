@@ -15,7 +15,8 @@ using enum OptionsPage;
 
 // OptionsDialog at 20d647c4, in the order its constructor calls ConOpt: the
 // SubtitlesProperties page is built first, then Main, the advanced editor
-// page, conversion, video, the two audio pages.
+// page, conversion, video, the two audio pages. Each binding names the PF1
+// page that shows it now.
 constexpr OptionsBinding kBindings[] = {
     // SubtitlesProperties (OptionsPanels.cpp): the six fields with their switches.
     {"scriptProperties.title", Text, SubtitleProperties},
@@ -32,40 +33,40 @@ constexpr OptionsBinding kBindings[] = {
     {"scriptProperties.updateOn", Check, SubtitleProperties},
     {"scriptProperties.askForChange", Check, SubtitleProperties},
     // Main (GLOBAL_EDITOR).
-    {"program.language", Language, Editor},
-    {"editor.dictionaryLanguage", Dictionary, Editor},
-    {"grid.loadSortedSubs", Check, Editor},
-    {"editor.spellchecker", Check, Editor},
-    {"grid.autoSelectLinesFromLastTab", Check, Editor},
-    {"editor.suggestionsOnDoubleClick", Check, Editor},
-    {"subtitles.openInNewTab", Check, Editor},
-    {"editor.dontGoToNextLineOnTimesEdit", Check, Editor},
-    {"video.disableLiveEditing", Check, Editor},
-    {"grid.setVisibleLineAfterFullScreen", Check, Editor},
-    {"shiftTimes.changeValuesWithTab", Check, Editor},
-    {"grid.changeActiveOnSelection", Check, Editor},
-    {"translation.showOriginal", Check, Editor},
-    {"translation.hideOriginalOnVideo", Check, Editor},
-    {"grid.duplicationDontChangeSelection", Check, Editor},
-    {"grid.dontCenterActiveLine", Check, Editor},
-    {"editor.allowNumpadHotkeys", Check, Editor},
-    {"video.visualWarningsOff", Check, Editor},
-    {"video.dontAskForBadResolution", Check, Editor},
-    {"automation.oldScriptsCompatibility", Check, Editor},
+    {"program.language", Language, General},
+    {"editor.dictionaryLanguage", Dictionary, LineEditor},
+    {"grid.loadSortedSubs", Check, General},
+    {"editor.spellchecker", Check, LineEditor},
+    {"grid.autoSelectLinesFromLastTab", Check, Grid},
+    {"editor.suggestionsOnDoubleClick", Check, LineEditor},
+    {"subtitles.openInNewTab", Check, General},
+    {"editor.dontGoToNextLineOnTimesEdit", Check, LineEditor},
+    {"video.disableLiveEditing", Check, Video},
+    {"grid.setVisibleLineAfterFullScreen", Check, Grid},
+    {"shiftTimes.changeValuesWithTab", Check, General},
+    {"grid.changeActiveOnSelection", Check, Grid},
+    {"translation.showOriginal", Check, LineEditor},
+    {"translation.hideOriginalOnVideo", Check, LineEditor},
+    {"grid.duplicationDontChangeSelection", Check, Grid},
+    {"grid.dontCenterActiveLine", Check, Grid},
+    {"editor.allowNumpadHotkeys", Check, LineEditor},
+    {"video.visualWarningsOff", Check, Video},
+    {"video.dontAskForBadResolution", Check, Video},
+    {"automation.oldScriptsCompatibility", Check, Automation},
     // EditorAdvanced.
-    {"editor.saveAfterCharacterCount", Number, EditorAdvanced, 0, 10000},
-    {"autosave.maxFiles", Number, EditorAdvanced, 2, 1000000},
-    {"automation.traceLevel", Number, EditorAdvanced, 0, 5},
-    {"program.tabTextMaxChars", Number, EditorAdvanced, 20, 150},
-    {"grid.insertStartOffset", Number, EditorAdvanced, -100000, 100000},
-    {"grid.insertEndOffset", Number, EditorAdvanced, -100000, 100000},
-    {"grid.tagsSwapCharacter", Text, EditorAdvanced},
-    {"grid.font", Font, EditorAdvanced, 0, 0, 0, "grid.fontSize"},
-    {"program.font", Font, EditorAdvanced, 0, 0, 0, "program.fontSize"},
-    {"grid.calcSpacesAndPunctuationForWraps", Check, EditorAdvanced},
-    {"grid.calcSpacesAndPunctuationForCps", Check, EditorAdvanced},
-    {"automation.loadingMethod", IndexChoice, EditorAdvanced, 0, 0, 4},
-    {"fonts.externalDirectory", Text, EditorAdvanced},
+    {"editor.saveAfterCharacterCount", Number, General, 0, 10000},
+    {"autosave.maxFiles", Number, General, 2, 1000000},
+    {"automation.traceLevel", Number, Automation, 0, 5},
+    {"program.tabTextMaxChars", Number, General, 20, 150},
+    {"grid.insertStartOffset", Number, Grid, -100000, 100000},
+    {"grid.insertEndOffset", Number, Grid, -100000, 100000},
+    {"grid.tagsSwapCharacter", Text, Grid},
+    {"grid.font", Font, Grid, 0, 0, 0, "grid.fontSize"},
+    {"program.font", Font, Appearance, 0, 0, 0, "program.fontSize"},
+    {"grid.calcSpacesAndPunctuationForWraps", Check, Grid},
+    {"grid.calcSpacesAndPunctuationForCps", Check, Grid},
+    {"automation.loadingMethod", IndexChoice, Automation, 0, 0, 4},
+    {"fonts.externalDirectory", Text, General},
     // ConvOpt.
     {"convert.styleCatalog", Catalog, Conversion},
     {"convert.style", Style, Conversion},
@@ -103,28 +104,27 @@ constexpr OptionsBinding kBindings[] = {
     {"audio.karaokeMoveOnClick", Check, Audio},
     {"audio.ramCache", Check, Audio},
     // AudioSecond.
-    {"audio.delay", Number, AudioAdvanced, -50000000, 50000000},
-    {"audio.markPlayTime", Number, AudioAdvanced, 400, 5000},
-    {"audio.lineBoundariesThickness", Number, AudioAdvanced, 1, 5},
-    {"audio.inactiveLinesDisplayMode", IndexChoice, AudioAdvanced, 0, 0, 3},
-    {"audio.cacheFilesLimit", Number, AudioAdvanced, 0, 10000},
-    {"audio.leadInValue", Number, AudioAdvanced, 0, 10000},
-    {"audio.leadOutValue", Number, AudioAdvanced, 0, 10000},
+    {"audio.delay", Number, Audio, -50000000, 50000000},
+    {"audio.markPlayTime", Number, Audio, 400, 5000},
+    {"audio.lineBoundariesThickness", Number, Audio, 1, 5},
+    {"audio.inactiveLinesDisplayMode", IndexChoice, Audio, 0, 0, 3},
+    {"audio.cacheFilesLimit", Number, Audio, 0, 10000},
+    {"audio.leadInValue", Number, Audio, 0, 10000},
+    {"audio.leadOutValue", Number, Audio, 0, 10000},
     // The rewrite's own, after legacy's. Y4-playres-ask: a missing script
     // resolution a macro reads is set from the video without asking, on the
-    // Editor page after the automation compatibility option.
-    {"automation.scriptResolutionFromVideo", Check, Editor},
-    // GR3: empty Grid columns hide themselves, on the Editor page after the
-    // Grid's other options.
-    {"grid.autoHideColumns", Check, Editor},
+    // Video page's Script resolution section.
+    {"automation.scriptResolutionFromVideo", Check, Video},
+    // GR3: empty Grid columns hide themselves, on the Subtitle grid page.
+    {"grid.autoHideColumns", Check, Grid},
     // H2-output-device (decision 60): the device both audio paths play
     // through, on the Audio page; empty follows the system default.
     {"audio.outputDevice", OutputDevice, Audio},
     // LE2: the Times/Frames switch (EDITBOX_TIMES_TO_FRAMES_SWITCH), which
-    // left the Line editor for the Editor page and the Video panel's menu.
-    {"editor.timesToFramesSwitch", Check, Editor},
+    // left the Line editor for Settings and the Video panel's menu.
+    {"editor.timesToFramesSwitch", Check, LineEditor},
     // LE3-tags-shown: the Line editor's hidden-tag view (shown by default).
-    {"editor.hideTags", Check, Editor},
+    {"editor.hideTags", Check, LineEditor},
     // WS2: the panel layout in the subtitle file ([Hikari]), on the
     // Subtitle properties page with the other things a save writes there.
     {"subtitles.layoutInFile", Check, SubtitleProperties},
@@ -137,9 +137,9 @@ constexpr OptionsBinding kBindings[] = {
     // syllable, on the Audio page after the karaoke options.
     {"audio.karaokeDoubleConsonantApart", Check, Audio},
     {"audio.karaokeKfThreshold", Number, Audio, 10, 10000},
-    // PK1 (#301): notices as toasts, or in the Log only, on the Editor page's
-    // Notices group.
-    {"notices.toasts", Check, Editor},
+    // PK1 (#301): notices as toasts, or in the Log only, on the General
+    // page's Notices section.
+    {"notices.toasts", Check, General},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
@@ -147,6 +147,12 @@ constexpr OptionsBinding kBindings[] = {
     // W1: the video player (0 built-in, 1 DirectShow), on the Video page.
     {"video.playbackPlayer", IndexChoice, Video, 0, 0, 2},
 #endif
+};
+
+constexpr std::pair<OptionsPage, std::string_view> kPageIds[] = {
+    {General, "general"},   {Appearance, "appearance"}, {LineEditor, "lineEditor"},
+    {Grid, "grid"},         {Video, "video"},           {Audio, "audio"},
+    {Conversion, "conversion"}, {SubtitleProperties, "subtitleProperties"}, {Automation, "automation"},
 };
 
 constexpr std::string_view kFps[] = {"23.976", "24", "25", "29.97", "30", "60"};
@@ -499,9 +505,12 @@ std::vector<std::string> commitOptionsDialog(Settings &settings, const OptionsLi
     return written;
 }
 
-OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const OptionsLists &lists, OptionsState state)
+OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const OptionsLists &lists, OptionsState state,
+                                            std::optional<OptionsPage> page)
 {
     for (const auto &b : kBindings) {
+        if (page && b.page != *page)
+            continue;
         const std::string id(b.setting);
         switch (b.control) {
         case Check:
@@ -563,6 +572,22 @@ OptionsState refreshOptionsDialogAfterReset(const Settings &settings, const Opti
         }
     }
     return state;
+}
+
+std::string_view optionsPageId(OptionsPage page)
+{
+    for (const auto &[p, id] : kPageIds)
+        if (p == page)
+            return id;
+    return {};
+}
+
+std::optional<OptionsPage> optionsPageOfId(std::string_view id)
+{
+    for (const auto &[p, pageId] : kPageIds)
+        if (pageId == id)
+            return p;
+    return std::nullopt;
 }
 
 void chooseOptionsDialogCatalog(const OptionsLists &lists, OptionsState &state, int catalog)
