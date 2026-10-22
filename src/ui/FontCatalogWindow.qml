@@ -42,8 +42,11 @@ DialogWindow {
     property var selected: ({})   // the selected rows' fonts
     property int resolveRequest: -1
     property var resolution: ({})
-    property bool extending: false // a Ctrl click moves the current row, keeping the selection
+    property bool extending: false
+    property string selectedFont: "" // the row select() chose, kept when the list changes under it // a Ctrl click moves the current row, keeping the selection
     // CATALOG_CHANGED, sent when the window is shown and when it is hidden.
+    // Show "In …" lists the chosen catalog: another catalog, another list.
+    onChosenChanged: if (created && show === 1) selectFont(selectedFont)
     signal catalogChanged()
 
     // The fonts the chosen catalog holds, by name.
@@ -110,6 +113,7 @@ DialogWindow {
         if (f.length > 0)
             set[f] = true
         selected = set
+        selectedFont = f
         refreshPreview()
     }
     function refreshPreview() {
@@ -292,7 +296,8 @@ DialogWindow {
         target: window.catalogs
         function onCatalogsChanged() {
             window.revision++
-            if (window.chosen.length > 0 && !window.catalogs.catalogExists(window.chosen))
+            // A catalog gone, or the first loaded into an empty list: the first.
+            if (window.created && !window.catalogs.catalogExists(window.chosen))
                 window.chosen = window.catalogs.catalogNames.length > 0 ? window.catalogs.catalogNames[0] : ""
         }
         // FontEnum's observers: a font change lists the fonts again.

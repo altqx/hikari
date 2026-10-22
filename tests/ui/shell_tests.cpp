@@ -3236,6 +3236,32 @@ private slots:
         application->fontCatalogs().waitResolved();
     }
 
+    // PU3 (#305): the picker draws and names a family only the Document's
+    // [Fonts] has (tests/fixtures/attachments/attached.ass), as its
+    // renderer does.
+    void fontPickerUsesTheDocumentsAttachedFonts()
+    {
+        QTemporaryDir folder;
+        const QString path = folder.filePath(QStringLiteral("attached.ass"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_ATTACHMENT_FIXTURES "/attached.ass"), path));
+        auto *picker = openFontPicker(path);
+        QVERIFY(picker);
+        QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, QStringLiteral("HikariAttachedTest"))));
+        QTRY_VERIFY(dialogItem("fontPicker", "fontResolutionText")->property("text").toString().startsWith(
+            QStringLiteral("Drawn by the subtitle renderer with HikariAttachedTest")));
+        auto &catalogs = application->fontCatalogs();
+        const auto font = [](const char *name) {
+            return QVariantMap{{QStringLiteral("name"), QString::fromLatin1(name)}, {QStringLiteral("size"), QStringLiteral("40")}};
+        };
+        catalogs.renderSample(font("HikariAttachedTest"), QStringLiteral("HH"), true, 300, 80);
+        const QImage attached = catalogs.sample();
+        catalogs.renderSample(font("HikariNoSuchFamily"), QStringLiteral("HH"), true, 300, 80);
+        QVERIFY(attached != catalogs.sample()); // not the fallback face
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
     // PU3 (#305): + adds the picker's family to a catalog (legacy's Add
     // menu, AddToCatalog), its rows' catalogs following.
     void fontPickerAddsTheFamilyToACatalog()
@@ -3340,6 +3366,19 @@ private slots:
         QTRY_COMPARE(window->transientParent(), picker);
         QTRY_VERIFY(window->isVisible());
         QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Arial"));
+        // Add fonts from subtitles, shown for the Style manager and then
+        // asked for by the picker, is modal to the picker.
+        auto *fromSubtitles = qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog"));
+        QVERIFY(QMetaObject::invokeMethod(fromSubtitles, "openFor", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QVariant()),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(manager))));
+        QTRY_VERIFY(fromSubtitles->isVisible());
+        QCOMPARE(fromSubtitles->transientParent(), manager);
+        QVERIFY(QMetaObject::invokeMethod(fromSubtitles, "openFor", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QVariant()),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(picker))));
+        QTRY_VERIFY(fromSubtitles->isVisible());
+        QCOMPARE(fromSubtitles->transientParent(), picker);
+        QVERIFY(QMetaObject::invokeMethod(fromSubtitles, "reject"));
+        QTRY_VERIFY(!fromSubtitles->isVisible());
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         QTRY_VERIFY(!picker->isVisible());
         QTRY_VERIFY(!window->isVisible());
@@ -3409,6 +3448,15 @@ private slots:
         // Show "In “C”": only its fonts; "Not in a catalog": every font is in one now.
         window->setProperty("show", 1);
         QCOMPARE(window->property("shown").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        // Another catalog chosen: its list, its first font current and
+        // selected (Tahoma is not in A), the preview with it.
+        window->setProperty("chosen", QStringLiteral("A"));
+        const QStringList inA = window->property("shown").toStringList();
+        QVERIFY(!inA.isEmpty() && !inA.contains(QStringLiteral("Tahoma")));
+        QCOMPARE(window->property("currentFont").toString(), inA.first());
+        QCOMPARE(window->property("selected").toMap().keys(), QStringList{inA.first()});
+        window->setProperty("chosen", QStringLiteral("C"));
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Comic Sans MS"));
         window->setProperty("show", 2);
         QCOMPARE(window->property("shown").toStringList(), QStringList());
         window->setProperty("show", 0);
@@ -3554,6 +3602,19 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(empty))));
         QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|The file holds no font catalog.|no-catalogs.txt"));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D"}));
+        // Two new names differing only by case are one catalog, counted so.
+        const QString cased = catalogFile("cased-catalogs.txt", "N={\n\tArial\n}\nn={\n\tTahoma\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(cased))));
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D", "N"}));
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("N")), 2);
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 2 font catalogs|From cased-catalogs.txt: 1 new, 1 merged."));
+        // Loaded into an empty list: the first catalog is chosen.
+        for (const QString &name : catalogs.catalogNames())
+            catalogs.removeCatalog(name);
+        QCOMPARE(window->property("chosen").toString(), QString());
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
+        QCOMPARE(catalogs.catalogNames(), QStringList{"B"});
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("B"));
         QVERIFY(QMetaObject::invokeMethod(window, "reject"));
         QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();

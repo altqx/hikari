@@ -33,6 +33,9 @@ DialogWindow {
     // Opens from `opener` (a window) with `name` chosen (a catalog, or the
     // first); done(catalog) once fonts were added.
     function openFor(name, callback, opener) {
+        // Shown for another window: closed first, so that it is modal to the new one.
+        if (visible && opener && transientParent !== opener)
+            close()
         const names = catalogs.catalogNames
         catalog.model = names
         const at = names.indexOf(name || "")

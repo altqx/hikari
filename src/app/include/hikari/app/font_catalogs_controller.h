@@ -72,6 +72,9 @@ public:
         std::function<void(const QString &)> log; // HikariLog
         // The external fonts changed (renderers take them on their next context).
         std::function<void()> fontsChanged;
+        // The editing target's attached fonts, which its renderer takes
+        // before the external ones (the picker's preview and its note).
+        std::function<std::vector<application::FontLease>()> documentFonts;
     };
 
     FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,
@@ -180,8 +183,10 @@ public:
     // {kind: "requested"|"substituted"|"fallback"|"missing", family, file,
     // emboldened, italicized}; resolutionReady(requestId, result) answers.
     // One worker thread resolves the latest request; a request still waiting
-    // when a newer one comes is replaced and never answered.
-    Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic);
+    // when a newer one comes is replaced and never answered. With
+    // `documentFonts`, the editing target's attached fonts come first, as
+    // its renderer has them.
+    Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts = false);
 
     // The external fonts' bytes, for renderer contexts.
     std::vector<application::FontLease> externalFontLeases() const;

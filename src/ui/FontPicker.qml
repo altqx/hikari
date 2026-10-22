@@ -174,7 +174,7 @@ DialogWindow {
     // Y6: what the renderer selects for the name (requested and resolved
     // identities stay distinct, fonts.md).
     function resolve() {
-        resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked)
+        resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true)
     }
     function render() {
         const own = sampleText.trim().length > 0

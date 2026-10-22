@@ -361,6 +361,17 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
     using Action = application::FontCatalogs::LoadAction;
     std::vector<application::FontCatalogs::LoadChoice> chosen(m_reviewed.size());
     int added = 0, merged = 0, replaced = 0, renamed = 0, skipped = 0, same = 0;
+    // New names already counted: a later one in another case merges into it.
+    std::vector<std::u16string> addedNames;
+    const auto isNew = [&](const std::u16string &name) {
+        if (m_catalogs.findNoCase(name))
+            return false;
+        for (const auto &earlier : addedNames)
+            if (application::sameNoCase(earlier, name, kLower))
+                return false;
+        addedNames.push_back(name);
+        return true;
+    };
     for (std::size_t i = 0; i < m_reviewed.size(); ++i) {
         bool reviewed = false;
         for (const QVariant &v : choices) {
@@ -385,7 +396,7 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
         case Action::Skip: ++skipped; break;
         case Action::Replace: ++replaced; break;
         case Action::Rename: ++renamed; break;
-        case Action::Merge: ++(m_catalogs.findNoCase(m_reviewed[i].name) ? merged : added); break;
+        case Action::Merge: ++(isNew(m_reviewed[i].name) ? added : merged); break;
         }
     }
     m_catalogs.apply(m_reviewed, chosen);
@@ -477,7 +488,12 @@ void FontCatalogsController::renderSample(const QVariantMap &font, const QString
         plain.replace(QLatin1Char('{'), QStringLiteral("\\{")).replace(QLatin1Char('}'), QStringLiteral("\\}"));
     }
     plain.replace(QLatin1Char('\n'), QLatin1Char(' '));
-    m_sample = renderStylePreview(m_renderer, style, width, height, plain.trimmed(), externalFontLeases());
+    // The fonts as the Line's renderer has them: the Document's attached
+    // fonts, then the external ones.
+    std::vector<application::FontLease> fonts = m_hooks.documentFonts ? m_hooks.documentFonts() : std::vector<application::FontLease>();
+    for (auto &font : externalFontLeases())
+        fonts.push_back(std::move(font));
+    m_sample = renderStylePreview(m_renderer, style, width, height, plain.trimmed(), std::move(fonts));
     ++m_sampleKey;
     emit sampleChanged();
 }
@@ -563,14 +579,18 @@ void FontCatalogsController::settingChanged(const QString &id)
     }
 }
 
-int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic)
+int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts)
 {
+    application::FontEnvironment environment = m_families->environment();
+    if (documentFonts && m_hooks.documentFonts)
+        for (auto &font : m_hooks.documentFonts())
+            environment.attachments.push_back({std::move(font.family), std::move(font.bytes)});
     // Each resolution builds a libass library over fontconfig, so it runs on
     // the worker; the GUI thread only hands over the latest request.
     const int request = ++m_resolveRequest;
     {
         std::lock_guard lock(m_resolveMutex);
-        m_resolveJob = ResolveJob{request, m_service, m_families->environment(),
+        m_resolveJob = ResolveJob{request, m_service, std::move(environment),
                                   application::FontRequest{family.toStdString(), bold, italic, "AaBbCcDdEeFfGg 0123456789"}};
     }
     m_resolveWake.notify_one();
