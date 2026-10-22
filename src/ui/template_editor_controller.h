@@ -287,11 +287,6 @@ private:
     bool askOwners();
 
     DocumentKey documentKey() const;
-    // The Document's template and code Lines, each with what the templater
-    // runs of it (its Effect and the text it reads).
-    using TemplateLines = std::map<core::LineId, std::string>;
-    TemplateLines templateLines() const;
-    std::vector<core::LineId> templateOrder() const;
     core::Document runDocument() const; // the Document with the Line editor's draft
     // runDocument with the panel's pending Effect, Style and Layer on the
     // record there, as the commit puts them (the text goes in the snapshot).
@@ -300,32 +295,34 @@ private:
     // What the templater runs of a template or code Line.
     static std::string formOf(const core::LineRecord &line);
     static std::string fieldOf(const core::LineRecord &line); // its Style and Actor pairing
-    // The Actor and Style values, each with its role, of the Lines the
-    // templater runs templates on (the karaoke Lines; a comment or a
-    // generated Line is none), which it puts into templates ($actor,
-    // $style) before it runs their !expressions!.
-    std::set<std::string> sourceFields() const;
-    // `lines` and `fields` as the user chose to run them, on top of what they
-    // chose before.
-    void trust(const TemplateLines &lines, const std::set<std::string> &fields = {});
+    // A Document as far as running it goes: its template and code Lines in
+    // file order (a named template joins its Lines' text in that order, and
+    // code Lines run in it), each with what the templater runs of it, and
+    // the Style and Actor pairings of the Lines it runs templates on (the
+    // karaoke Lines; a comment or a generated Line is none), which it puts
+    // into templates ($actor, $style) before it runs their !expressions!.
+    struct TrustState {
+        std::string templates;
+        std::set<std::string> fields;
+    };
+    static TrustState stateOf(const application::EditSession &s); // with the Line editor's draft
+    // `s` is in a state the user chose to run for `document`: the same
+    // template and code Lines, and no pairing that state did not have.
+    bool trustedIn(const application::EditSession &s, const DocumentKey &document) const;
+    // The Document as it is now, as the user chose to run it.
+    void trust();
+    void trust(const application::EditSession &s, const DocumentKey &document);
 
     SessionSource m_sessionSource;
     DocumentKeySource m_documentKey;
     SessionOf m_sessionOf;
     HostState m_hostState;
     std::string m_hostSeen; // the host state the last preview was asked under
-    // The template and code Lines the user chose to run, per Document, each
-    // in every form the user chose: as they were when the user previewed or
-    // applied, as New made them and as the panel's edits left them (an Undo
-    // goes back to one).
-    // With them, each runnable Line's Style and Actor, as a pair, there when
-    // the user previewed or applied.
-    struct Trust {
-        std::map<core::LineId, std::set<std::string>> lines;
-        std::set<std::vector<core::LineId>> orders; // of the template and code Lines
-        std::set<std::string> fields;
-    };
-    std::map<DocumentKey, Trust> m_trusted;
+    // The states the user chose to run, per Document: each whole, as it was
+    // when the user previewed or applied, and as New and the panel's edits
+    // left a chosen one (an Undo goes back to one). A template from one and
+    // a pairing from another were never run together.
+    std::map<DocumentKey, std::vector<TrustState>> m_trusted;
     application::KaraokeTemplaterPort *m_templater = nullptr;
     bool m_editable = false;
     bool m_shown = false;

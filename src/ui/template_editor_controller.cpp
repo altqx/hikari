@@ -932,35 +932,6 @@ TemplateEditorController::DocumentKey TemplateEditorController::documentKey() co
                          : DocumentKey{static_cast<std::uint64_t>(reinterpret_cast<std::uintptr_t>(session())), 0};
 }
 
-TemplateEditorController::TemplateLines TemplateEditorController::templateLines() const
-{
-    TemplateLines out;
-    if (const auto *s = session())
-        forEachRunLine(*s, [&](const core::LineRecord &l) {
-            if (application::templateKindOf(l))
-                out[l.id] = formOf(l);
-        });
-    return out;
-}
-
-namespace {
-std::vector<core::LineId> templateOrderOf(const application::EditSession &s)
-{
-    std::vector<core::LineId> out;
-    forEachRunLine(s, [&](const core::LineRecord &l) {
-        if (application::templateKindOf(l))
-            out.push_back(l.id);
-    });
-    return out;
-}
-} // namespace
-
-std::vector<core::LineId> TemplateEditorController::templateOrder() const
-{
-    const auto *s = session();
-    return s ? templateOrderOf(*s) : std::vector<core::LineId>{};
-}
-
 std::string TemplateEditorController::formOf(const core::LineRecord &line)
 {
     // The Style too: it picks the karaoke Lines the template runs on, and so
@@ -984,50 +955,63 @@ std::string TemplateEditorController::fieldOf(const core::LineRecord &line)
     return field;
 }
 
-std::set<std::string> TemplateEditorController::sourceFields() const
+TemplateEditorController::TrustState TemplateEditorController::stateOf(const application::EditSession &s)
 {
-    std::set<std::string> out;
-    if (const auto *s = session())
-        forEachRunLine(*s, [&](const core::LineRecord &l) {
-            if (application::isKaraokeLine(l)) // a `template line karaoke` too
-                out.insert(fieldOf(l));
-        });
+    TrustState out;
+    forEachRunLine(s, [&](const core::LineRecord &l) {
+        if (application::templateKindOf(l)) {
+            const std::string form = formOf(l);
+            out.templates += std::to_string(l.id.value) + ':' + std::to_string(form.size()) + ':' + form;
+        }
+        if (application::isKaraokeLine(l)) // a `template line karaoke` too
+            out.fields.insert(fieldOf(l));
+    });
     return out;
 }
 
-void TemplateEditorController::trust(const TemplateLines &lines, const std::set<std::string> &fields)
+bool TemplateEditorController::trustedIn(const application::EditSession &s, const DocumentKey &document) const
 {
-    auto &trusted = m_trusted[documentKey()];
-    for (const auto &[id, runs] : lines)
-        trusted.lines[id].insert(runs);
-    trusted.orders.insert(templateOrder());
-    trusted.fields.insert(fields.begin(), fields.end());
+    // A template or code Line come or changed since another way (a paste,
+    // an import, a translation pasted over it, a sort) is Lua the user has
+    // not chosen to run; so is a new Actor or Style the templates put into
+    // theirs. Lines deleted or copied with a pairing there leave a state
+    // chosen.
+    const auto it = m_trusted.find(document);
+    if (it == m_trusted.end())
+        return false;
+    const TrustState now = stateOf(s);
+    return std::ranges::any_of(it->second, [&](const TrustState &chosen) {
+        return chosen.templates == now.templates && std::ranges::includes(chosen.fields, now.fields);
+    });
+}
+
+void TemplateEditorController::trust()
+{
+    if (const auto *s = session())
+        trust(*s, documentKey());
+}
+
+void TemplateEditorController::trust(const application::EditSession &s, const DocumentKey &document)
+{
+    auto &states = m_trusted[document];
+    TrustState now = stateOf(s);
+    if (std::ranges::none_of(states, [&](const TrustState &chosen) {
+            return chosen.templates == now.templates && std::ranges::includes(chosen.fields, now.fields);
+        }))
+        states.push_back(std::move(now));
 }
 
 bool TemplateEditorController::trusted() const
 {
-    // A template or code Line come or changed since another way (a paste,
-    // an import, a translation pasted over it) is Lua the user has not
-    // chosen to run; so is a new Actor or Style the templates put into
-    // theirs. A named template joins its Lines' text in file order, and
-    // code Lines run in it, so the order is part of what was chosen.
-    const auto it = session() ? m_trusted.find(documentKey()) : m_trusted.end();
-    if (it == m_trusted.end() || !it->second.orders.contains(templateOrder()))
-        return false;
-    const auto &lines = it->second.lines;
-    return std::ranges::all_of(templateLines(),
-                               [&](const auto &line) {
-                                   const auto forms = lines.find(line.first);
-                                   return forms != lines.end() && forms->second.contains(line.second);
-                               }) &&
-           std::ranges::includes(it->second.fields, sourceFields());
+    const auto *s = session();
+    return s && trustedIn(*s, documentKey());
 }
 
 void TemplateEditorController::trustDocument()
 {
     if (!session() || trusted())
         return;
-    trust(templateLines(), sourceFields());
+    trust();
     m_previewSnapshotKey.clear();
     emit changed();
     updateSource(); // an unmarked generated Line's karaoke Line can be found now
@@ -1129,14 +1113,9 @@ void TemplateEditorController::commit()
         }
         was = lineOf();
     }
-    // The user's edit of a form they chose to run is theirs to run too; a
-    // draft that went in with it is not, so the form is read after it.
-    const auto key = m_trusted.find(change.document);
-    const bool trustedForm = was && application::templateKindOf(*was) && key != m_trusted.end() &&
-                             key->second.lines.contains(change.line) &&
-                             key->second.lines.at(change.line).contains(formOf(*was));
-    const bool trustedField = trustedForm && (!application::isKaraokeLine(*was) ||
-                                              key->second.fields.contains(fieldOf(*was)));
+    // The user's edit of a state they chose to run is theirs to run too; a
+    // draft that went in with it is not, so the state is read after it.
+    const bool chosen = was && application::templateKindOf(*was) && trustedIn(*s, change.document);
     application::Command command;
     command.name = "Edit template";
     command.expectedRevision = s->revision();
@@ -1151,18 +1130,8 @@ void TemplateEditorController::commit()
     }
     m_pending.reset();
     m_commitTimer.stop();
-    if (trustedForm) {
-        for (const auto *l : s->document().lines())
-            if (l->id == change.line && application::templateKindOf(*l))
-                key->second.lines[change.line].insert(formOf(*l));
-        // An Effect that takes it out of the templates, or brings it back,
-        // changes the order too; a `template line karaoke`'s Style its
-        // pairing.
-        key->second.orders.insert(templateOrderOf(*s));
-        for (const auto *l : s->document().lines())
-            if (l->id == change.line && application::isKaraokeLine(*l) && trustedField)
-                key->second.fields.insert(fieldOf(*l));
-    }
+    if (chosen) // with what it changed: an Effect, a `template line karaoke`'s pairing
+        trust(*s, change.document);
     if (s == session()) {
         m_seenRevision = s->revision();
         emit documentEdited();
@@ -1213,7 +1182,7 @@ void TemplateEditorController::applied(const std::string &report, std::optional<
                    {QStringLiteral("seconds"), o.value(QLatin1String("seconds")).toDouble()},
                    {QStringLiteral("problems"), o.value(QLatin1String("problems")).toInt()}};
     takeBaseline();
-    trust(templateLines(), sourceFields()); // the user ran them
+    trust(); // the user ran them
     if (const auto *ss = session())
         m_applyRevision = ss->revision();
     // A file's unmarked Lines are marked now; an Undo that brings them back
@@ -1253,10 +1222,11 @@ bool TemplateEditorController::insertTemplate(const QString &effect)
         added = before ? doc.insertLineBefore(*before, fresh) : doc.appendLine(fresh);
         return added.has_value();
     };
+    const bool chosen = trusted();
     if (!s->run(command) || !added)
         return false;
-    if (const auto lines = templateLines(); m_trusted.contains(documentKey()) && lines.contains(*added))
-        trust({{*added, lines.at(*added)}}); // the user's own
+    if (chosen)
+        trust(); // with the user's own template
     m_seenRevision = s->revision();
     m_current = *added;
     emit documentEdited();

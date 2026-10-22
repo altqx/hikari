@@ -1489,6 +1489,47 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->source() == owner->value && settled(); }, 20'000));
     }
 
+    // What the user chose is each whole state: a template from one preview
+    // and an Actor from another were never run together, so their mix asks.
+    void templatesAndActorsFromTwoChoicesAsk()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> tl, karaoke;
+        for (const auto *l : doc.lines()) {
+            if (!tl && application::templateKindOf(*l) == application::TemplateKind::Template)
+                tl = l->id;
+            if (!karaoke && application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                karaoke = l->id;
+        }
+        QVERIFY(tl && karaoke);
+        QVERIFY(doc.editLine(*tl, [](core::LineRecord &l) { l.text = u8"{\\bord1}$actor"; }));
+        QVERIFY(doc.editLine(*karaoke, [](core::LineRecord &l) { l.actor = u8"plain"; }));
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        // Pasted over: a literal template and an expression for an Actor,
+        // previewed as such.
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*tl, [](core::LineRecord &l) { l.text = u8"{\\bord1}literal"; }) &&
+                   d.editLine(*karaoke, [](core::LineRecord &l) { l.actor = u8"!_G.marker = 1!"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+        // The first template's text pasted back: never run with that Actor.
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*tl, [](core::LineRecord &l) { l.text = u8"{\\bord1}$actor"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        // Back as it was chosen first, it runs again.
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*karaoke, [](core::LineRecord &l) { l.actor = u8"plain"; });
+        }));
+        editor->refresh();
+        QVERIFY(editor->trusted());
+    }
+
     // Whether a karaoke Line's Actor reaches the templates hangs on its other
     // fields too (a blank Line `noblank` passes over): an Actor or Style
     // holding `!` is trusted with the whole Line, so a new text asks again.
