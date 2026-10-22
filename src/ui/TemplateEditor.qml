@@ -902,6 +902,10 @@ Pane {
                     const applied = c.lastApply
                     if (c.hasProblems)
                         return qsTr("Apply is off while a template has a problem.")
+                    if (applied.lines !== undefined && applied.problems > 0)
+                        //: After an Apply with problems: %1 the Lines written, %2 the karaoke Lines they came from
+                        return qsTr("Applied with problems: %1 Lines from %2 karaoke Lines; the log lists the problems. Undo removes them in one step.")
+                               .arg(applied.lines).arg(applied.karaokeLines)
                     if (applied.lines !== undefined)
                         //: After Apply: %1 the Lines written, %2 the karaoke Lines they came from, %3 the run's time
                         return qsTr("Applied: %1 Lines from %2 karaoke Lines in %3 s. Undo removes them in one step.")

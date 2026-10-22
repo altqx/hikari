@@ -1776,6 +1776,24 @@ private slots:
         QVERIFY(editor->source() != owner);
     }
 
+    // An Apply whose run had problems on other karaoke Lines says so, not
+    // that it went well.
+    void anApplyWithProblemsSaysSo()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        editor->setShown(true);
+        showPanel();
+        QTRY_VERIFY(item(QStringLiteral("templateApply"))->isEnabled());
+        click(item(QStringLiteral("templateApply")));
+        std::string report = templater->report;
+        const auto at = report.find("\"problems\":0");
+        QVERIFY(at != std::string::npos);
+        report.replace(at, 12, "\"problems\":2");
+        editor->applied(report);
+        editor->refresh();
+        QTRY_VERIFY(textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied with problems")));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
