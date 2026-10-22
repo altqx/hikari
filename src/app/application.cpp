@@ -976,6 +976,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_shell->setDraft(session->draftRecord());
         m_editRefresh->start();
         scheduleAutosave();
+        if (m_templateEditor && m_templateEditor->shown())
+            m_templateEditor->refresh(); // KE2: Apply runs on the draft, so the preview does
     });
     // E4: the editor's time fields show frames of the open video (TimeCtrl::SetVideoBox).
     connect(m_video.get(), &ui::VideoController::changed, this, [this] {

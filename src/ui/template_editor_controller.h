@@ -280,6 +280,7 @@ private:
     using TemplateLines = std::map<core::LineId, std::string>;
     TemplateLines templateLines() const;
     std::vector<core::LineId> templateOrder() const;
+    core::Document runDocument() const; // the Document with the Line editor's draft
     // What the templater runs of a template or code Line.
     static std::string formOf(const core::LineRecord &line);
     // The Actor and Style values, each with its role, of the Lines the
@@ -315,6 +316,7 @@ private:
     bool m_previewOnVideo = true;
     const application::EditSession *m_seenSession = nullptr;
     std::uint64_t m_seenRevision = 0;
+    std::string m_seenDraft; // the Line editor's, as the last refresh saw it
     std::uint64_t m_applyRevision = 0; // what the last Apply left
     std::optional<core::LineId> m_current;
     std::optional<Pending> m_pending;

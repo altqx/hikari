@@ -316,6 +316,26 @@ const core::Document *TemplateEditorController::document() const
     return s ? &s->document() : nullptr;
 }
 
+namespace {
+// The Lines as a run reads them: Apply commits the Line editor's draft
+// before it runs, so the draft stands in for its Line.
+template <class F> void forEachRunLine(const application::EditSession &s, F &&f)
+{
+    const auto draft = s.draftRecord();
+    for (const auto *l : s.document().lines())
+        f(draft && draft->id == l->id ? *draft : *l);
+}
+} // namespace
+
+core::Document TemplateEditorController::runDocument() const
+{
+    const auto *s = session();
+    core::Document doc = s->document();
+    if (const auto draft = s->draftRecord())
+        doc.editLine(draft->id, [&](core::LineRecord &l) { l = *draft; }, core::ChangeMark::Kept);
+    return doc;
+}
+
 const core::LineRecord *TemplateEditorController::line(core::LineId id) const
 {
     const auto *doc = document();
@@ -439,7 +459,14 @@ void TemplateEditorController::refresh()
     // file's result, nor are its problems.
     if ((!trusted() || unloaded) && (m_preview || m_previewing || !m_issues.empty() || !m_runError.isEmpty()))
         clearPreview();
-    if (s->revision() != m_seenRevision || becameReady) {
+    // The Line editor's draft is what Apply runs on too.
+    const auto draft = s->draftRecord();
+    const std::string drafted =
+        draft ? std::to_string(draft->id.value) + '\n' + application::macroLineOf(*draft).raw + '\x1f' +
+                    std::string(draft->translation.begin(), draft->translation.end())
+              : std::string();
+    if (s->revision() != m_seenRevision || becameReady || drafted != m_seenDraft) {
+        m_seenDraft = drafted;
         m_seenRevision = s->revision();
         if (s->revision() != m_applyRevision)
             m_lastApply.clear(); // an Undo or an edit since Apply
@@ -847,20 +874,22 @@ TemplateEditorController::DocumentKey TemplateEditorController::documentKey() co
 TemplateEditorController::TemplateLines TemplateEditorController::templateLines() const
 {
     TemplateLines out;
-    if (const auto *doc = document())
-        for (const auto *l : doc->lines())
-            if (application::templateKindOf(*l))
-                out[l->id] = formOf(*l);
+    if (const auto *s = session())
+        forEachRunLine(*s, [&](const core::LineRecord &l) {
+            if (application::templateKindOf(l))
+                out[l.id] = formOf(l);
+        });
     return out;
 }
 
 std::vector<core::LineId> TemplateEditorController::templateOrder() const
 {
     std::vector<core::LineId> out;
-    if (const auto *doc = document())
-        for (const auto *l : doc->lines())
-            if (application::templateKindOf(*l))
-                out.push_back(l->id);
+    if (const auto *s = session())
+        forEachRunLine(*s, [&](const core::LineRecord &l) {
+            if (application::templateKindOf(l))
+                out.push_back(l.id);
+        });
     return out;
 }
 
@@ -875,15 +904,16 @@ std::string TemplateEditorController::formOf(const core::LineRecord &line)
 std::set<std::string> TemplateEditorController::sourceFields() const
 {
     std::set<std::string> out;
-    if (const auto *doc = document())
-        for (const auto *l : doc->lines())
-            if (application::isKaraokeLine(*l)) { // a `template line karaoke` too
+    if (const auto *s = session())
+        forEachRunLine(*s, [&](const core::LineRecord &l) {
+            if (application::isKaraokeLine(l)) { // a `template line karaoke` too
                 // The pairing: the Style picks the templates the Actor goes
                 // into ($actor), so a trusted Actor under another Style, or a
                 // Style's name as an Actor, is new.
-                const auto m = application::macroLineOf(*l);
+                const auto m = application::macroLineOf(l);
                 out.insert(std::to_string(m.style.size()) + ':' + m.style + m.actor);
             }
+        });
     return out;
 }
 
@@ -1156,9 +1186,9 @@ void TemplateEditorController::runPreview()
         emit changed(); // canApply
         return;
     }
-    // The pending Effect, Style and Layer reach the run through the record.
-    const auto *doc = document();
-    core::Document seen = *doc;
+    // The Line editor's draft, and the pending Effect, Style and Layer
+    // through the record.
+    core::Document seen = runDocument();
     if (m_pending && m_pending->document == documentKey() &&
         (m_pending->effect || m_pending->style || m_pending->layer)) {
         const auto r = currentRecord();
@@ -1357,11 +1387,14 @@ void TemplateEditorController::runValues(std::uint64_t generation)
 {
     // m_wantValues stays until the answer comes: a preview that replaces
     // this run asks again when its chain ends.
-    const auto *doc = document();
-    if (!doc || !m_source || !available() || !trusted() || m_ownersAsked)
+    if (!session() || !m_source || !available() || !trusted() || m_ownersAsked)
         return;
-    auto snapshot = application::templatePreviewSnapshot(*doc, *m_source);
-    const auto *source = line(*m_source);
+    const core::Document doc = runDocument();
+    auto snapshot = application::templatePreviewSnapshot(doc, *m_source);
+    const core::LineRecord *source = nullptr;
+    for (const auto *l : doc.lines())
+        if (l->id == *m_source)
+            source = l;
     if (!snapshot || !source)
         return;
     // One syllable template that writes every variable, on the source alone.

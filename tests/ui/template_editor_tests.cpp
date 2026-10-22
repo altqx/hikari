@@ -1545,6 +1545,30 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // Apply commits the Line editor's draft before it runs, so the preview
+    // runs on the draft too; and a drafted Actor is one the user has not
+    // chosen to run yet.
+    void theLineEditorsDraftIsPreviewed()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto source = firstKaraoke();
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(!previewTexts().join(QString()).contains(QStringLiteral("zzq")));
+        const auto revision = session->revision();
+        QVERIFY(session->editDraftText(*source, u8"{\\k50}zzq{\\k50}yyq"));
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor(
+            [&] { return settled() && previewTexts().join(QString()).contains(QStringLiteral("zzq")); }, 20'000));
+        QCOMPARE(session->revision(), revision); // still a draft
+        application::DraftChange actor;
+        actor.actor = u8"!_G.marker = 1!";
+        QVERIFY(session->editDraft(*source, actor));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     // The `$` values of a TLMode Line are read from the translation, where
     // the templater writes them.
     void aTranslatedLinesValuesAreRead()
