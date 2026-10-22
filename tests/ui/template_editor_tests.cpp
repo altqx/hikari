@@ -453,6 +453,27 @@ private slots:
         }));
     }
 
+    // A problem the last karaoke Line's preview had goes with that Line: no
+    // preview is left to say otherwise.
+    void aProblemGoesWithTheLastKaraokeLine()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(previewCame());
+        editor->setText(QStringLiteral("{\\fscx!nosuch.field!}") + editor->text());
+        editor->commit();
+        QVERIFY(QTest::qWaitFor([&] { return editor->hasProblems() && !editor->previewPending(); }, 20'000));
+        QVERIFY(change([](core::Document &d) {
+            return d.removeLinesIf([](const core::LineRecord &l) {
+                       return application::isKaraokeLine(l) && !application::templateKindOf(l);
+                   }) > 0;
+        }));
+        editor->refresh();
+        QCOMPARE(editor->source(), 0);
+        QVERIFY(!editor->hasProblems());
+    }
+
     void problemsArePlacedInTheTextAndKeepTheLastPreview()
     {
         open(QStringLiteral("stock-tutorials.ass"));

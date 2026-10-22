@@ -536,6 +536,8 @@ void TemplateEditorController::updateSource()
     stopRuns(); // their answers are another Line's
     m_preview.reset();
     m_own.clear();
+    m_issues.clear(); // that Line's run's; the next one's replace them
+    m_runError.clear();
     m_previewKept = false;
     m_previewSeconds = 0;
     m_values.clear();
