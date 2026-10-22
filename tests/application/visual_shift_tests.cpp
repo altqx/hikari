@@ -559,89 +559,153 @@ TEST(AllTagsDefinitions, ATextWithoutTheVersionGivesTheDefaultsAndReplacesIt)
     EXPECT_TRUE(writeAllTags({}).empty());
 }
 
-TEST(AllTagsEdition, AddDeleteSaveAndRestoreFollowLegacy)
+// PU5: the "Edit tags" window keeps each change as it is made, a step of
+// its history.
+TEST(AllTagsEdition, EachChangeIsKeptAndUndoneInSteps)
 {
+    using Check = AllTagsEdition::Check;
+    using Number = AllTagsEdition::Number;
     AllTagsEdition e(defaultAllTags(), 40);
     EXPECT_EQ(e.selection(), 0); // out of range: the first
-    EXPECT_EQ(e.name, u"blur");
-    EXPECT_EQ(e.step.text(), u"0.5");
-    EXPECT_EQ(e.digitsAfterDot.text(), u"1");
-    EXPECT_FALSE(e.valueEnabled(1));
-    EXPECT_FALSE(e.modified());
-    // OnAddTag.
-    ASSERT_TRUE(e.addTag());
-    EXPECT_EQ(e.addTag()->text, u"Enter a name for the new tag.");
-    e.newTagName = u"BLUR";
-    ASSERT_TRUE(e.addTag());
-    EXPECT_EQ(e.addTag()->text, u"New tag already exists, enter another name.");
-    e.newTagName = u"wide";
-    EXPECT_FALSE(e.addTag());
-    EXPECT_EQ(e.selection(), 22);
-    EXPECT_EQ(e.list().back(), u"wide");
-    EXPECT_EQ(e.tag, u"wide");
-    EXPECT_EQ(e.maxValue.text(), u"100");
-    // Edits and the list's question, which names the tag.
-    e.tag = u"fscx";
-    e.maxValue.setText(u"400");
-    e.step.setText(u"2.5");
-    e.additionalValues = 1;
-    e.values[1].setText(u"7");
-    EXPECT_TRUE(e.modified());
-    EXPECT_EQ(e.saveChangesQuestion().text, u"Save changes to tag \"wide\"?");
-    EXPECT_FALSE(e.save());
-    EXPECT_FALSE(e.modified());
-    EXPECT_EQ(e.tags()[22].tag, u"fscx");
-    EXPECT_EQ(e.tags()[22].numOfValues, 2);
-    EXPECT_EQ(e.tags()[22].values[1], 7.f);
-    EXPECT_EQ(e.list()[22], u"wide"); // the name was not changed
-    // Save's checks, in legacy's order.
-    e.tag.clear();
-    EXPECT_EQ(e.save()->text, u"Field \"Tag\" cannot be empty.");
-    e.tag = u"fscx";
-    e.name.clear();
-    e.maxValue.setText(u"-20");
-    EXPECT_EQ(e.save()->text, u"Field \"Maximum value\" must contain a value\ngreater than field \"Minimum value\".");
-    EXPECT_EQ(e.name, u"fscx"); // an empty name became the tag first
-    e.maxValue.setText(u"10");
-    e.step.setText(u"0");
-    EXPECT_EQ(e.save()->text, u"Field \"Step\" must contain a value greater than zero.");
-    e.step.setText(u"6");
-    EXPECT_EQ(e.save()->text, u"Field \"Step\" contains a number too large for the current min-max range.");
-    e.step.setText(u"5");
-    EXPECT_FALSE(e.save());
-    // A number field falls back to the last valid text typed.
-    e.minValue.setText(u"abc");
-    EXPECT_EQ(e.minValue.getDouble(), 0.0);
-    e.minValue.setText(u"-20000"); // read, then held to the range
-    EXPECT_EQ(e.minValue.getDouble(), -10000.0);
-    e.minValue.setText(u"1,5");
-    EXPECT_EQ(e.minValue.getDouble(), 1.5);
-    // OnRemoveTag: the last goes, the one before it is selected.
-    EXPECT_FALSE(e.removeTag());
-    EXPECT_EQ(e.selection(), 21);
-    EXPECT_EQ(e.name, u"tanimation");
-    // Restore default: the defaults, the selection kept by its name.
-    e.select(3);
-    e.restoreDefaults();
+    EXPECT_EQ(e.current().name, u"blur");
+    // Typing a field is one step however many keys it takes.
+    EXPECT_EQ(e.setNumber(Number::Max, u"5"), Check::Ok);
+    EXPECT_EQ(e.setNumber(Number::Max, u"50"), Check::Ok);
+    EXPECT_EQ(e.tags()[0].rangeMax, 50.f); // kept at once
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::EditRange);
+    EXPECT_EQ(e.setNumber(Number::Step, u"0,25"), Check::Ok); // a comma for the point
+    EXPECT_EQ(e.current().step, 0.25f);
+    EXPECT_EQ(e.setNumber(Number::Value0, u"2.5"), Check::Ok);
+    EXPECT_EQ(e.setTag(u"\\\\be"), Check::Ok); // its backslashes dropped
+    EXPECT_EQ(e.current().tag, u"be");
+    e.setCount(2);
+    e.setChangeOption(PasteMultiplyPlus);
+    e.setPlacing(2);
+    EXPECT_EQ(e.current().numOfValues, 2);
+    EXPECT_EQ(e.current().tagMode, PasteMultiplyPlus);
+    EXPECT_EQ(e.current().mode, 2);
+    for (const int step : {AllTagsEdition::ChangePlacing, AllTagsEdition::ChangeOption, AllTagsEdition::EditCount,
+                           AllTagsEdition::EditTag, AllTagsEdition::EditValue, AllTagsEdition::EditStep,
+                           AllTagsEdition::EditRange}) {
+        EXPECT_EQ(e.undoStep(), step);
+        EXPECT_TRUE(e.undo());
+    }
+    EXPECT_FALSE(e.canUndo());
     EXPECT_EQ(e.tags(), defaultAllTags());
-    EXPECT_EQ(e.selection(), 3);
-    EXPECT_EQ(AllTagsEdition::restoreQuestion().text, u"Are you sure you want to reset to default?");
-    // One definition left cannot go.
-    AllTagsEdition one({AllTagsSetting::named(u"x")}, 0);
-    EXPECT_EQ(one.removeTag()->text, u"Cannot remove all tags from list");
+    EXPECT_TRUE(e.redo());
+    EXPECT_EQ(e.current().rangeMax, 50.f);
 }
 
-// T6-dialog-list-stale (compatibility-decisions.md): a save puts a rename
-// into the dialog's list. Legacy's list kept the old name (only Add, Delete
-// and Restore default changed it).
-TEST(AllTagsEdition, ARenameByApplyReachesTheList)
+TEST(AllTagsEdition, AValueTheToolCannotUseIsRefusedAndTheLastKept)
 {
-    AllTagsEdition e(defaultAllTags(), 0);
-    e.name = u"soft edges";
-    EXPECT_FALSE(e.save());
-    EXPECT_EQ(e.tags()[0].name, u"soft edges");
-    EXPECT_EQ(e.list()[0], u"soft edges");
-    EXPECT_EQ(e.list().size(), 22u);
+    using Check = AllTagsEdition::Check;
+    using Number = AllTagsEdition::Number;
+    AllTagsEdition e(defaultAllTags(), 7); // color1, 0 to 255, step 1
+    std::u16string taken;
+    EXPECT_EQ(e.setName(u""), Check::Empty);
+    EXPECT_EQ(e.setName(u"a,b"), Check::Separator); // the file's separator
+    EXPECT_EQ(e.setName(u"BLUR", &taken), Check::Taken); // ignoring case
+    EXPECT_EQ(taken, u"blur");
+    EXPECT_EQ(e.setTag(u""), Check::Empty);
+    EXPECT_EQ(e.setTag(u"\\"), Check::Empty);
+    EXPECT_EQ(e.setTag(u"1c,2"), Check::Separator);
+    EXPECT_EQ(e.setNumber(Number::Max, u"-"), Check::NotANumber);
+    EXPECT_EQ(e.setNumber(Number::Max, u"1e9"), Check::OutOfRange);
+    EXPECT_EQ(e.setNumber(Number::Max, u"inf"), Check::NotANumber);
+    // Legacy Save's checks, said for the field typed.
+    EXPECT_EQ(e.setNumber(Number::Max, u"-5"), Check::MaxNotAboveMin);
+    EXPECT_EQ(e.setNumber(Number::Min, u"300"), Check::MinNotBelowMax);
+    EXPECT_EQ(e.setNumber(Number::Step, u"0"), Check::StepNotPositive);
+    EXPECT_EQ(e.setNumber(Number::Step, u"200"), Check::StepTooLarge); // more than half the range
+    EXPECT_EQ(e.setNumber(Number::Max, u"1"), Check::StepTooLarge);
+    EXPECT_EQ(e.setNumber(Number::Digits, u"7"), Check::OutOfRange);
+    EXPECT_EQ(e.setNumber(Number::Digits, u"1.5"), Check::OutOfRange);
+    EXPECT_EQ(e.current(), defaultAllTags()[7]);
+    EXPECT_FALSE(e.canUndo());
+    EXPECT_EQ(e.setNumber(Number::Digits, u"2"), Check::Ok);
+    EXPECT_EQ(e.setNumber(Number::Step, u"127.5"), Check::Ok); // half the range
+}
+
+TEST(AllTagsEdition, NewDuplicateDeleteReplaceAndRestore)
+{
+    AllTagsEdition e(defaultAllTags(), 3);
+    // New tag: no tag yet, so not among the definitions the tool takes.
+    e.addTag();
+    EXPECT_EQ(e.selection(), 22);
+    EXPECT_EQ(e.current().name, u"New tag");
+    EXPECT_TRUE(e.current().tag.empty());
+    EXPECT_EQ(e.current().rangeMax, 100.f);
+    EXPECT_EQ(e.current().step, 1.f);
+    EXPECT_EQ(e.usable().size(), 22u);
+    EXPECT_EQ(e.setTag(u"be"), AllTagsEdition::Check::Ok);
+    EXPECT_EQ(e.usable().size(), 23u);
+    e.addTag();
+    EXPECT_EQ(e.current().name, u"New tag 2");
+    // Duplicate after it, "copy".
+    e.select(0);
+    e.duplicate();
+    EXPECT_EQ(e.selection(), 1);
+    EXPECT_EQ(e.current().name, u"blur copy");
+    EXPECT_EQ(e.current().tag, u"blur");
+    // A taken name replaced: the other goes, one step.
+    std::u16string taken;
+    EXPECT_EQ(e.setName(u"Border", &taken), AllTagsEdition::Check::Taken);
+    e.replaceNamed(u"Border");
+    EXPECT_EQ(e.current().name, u"Border");
+    EXPECT_EQ(e.current().tag, u"blur");
+    EXPECT_EQ(e.tags().size(), 24u);
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::ReplaceTag);
+    // Delete: never the last one.
+    EXPECT_TRUE(e.remove());
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::DeleteTag);
+    // Restore: legacy's 22, one step; Undo all: the opening ones.
+    e.select(5);
+    const std::u16string name = e.current().name;
+    e.restoreDefaults();
+    EXPECT_EQ(e.tags(), defaultAllTags());
+    EXPECT_EQ(e.current().name, name);
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::RestoreDefaults);
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.tags().size(), 23u);
+    EXPECT_TRUE(e.undoAll());
+    EXPECT_EQ(e.tags(), defaultAllTags());
+    EXPECT_EQ(e.undoStep(), AllTagsEdition::UndoAll);
+    AllTagsEdition one({AllTagsSetting::named(u"x")}, 0);
+    EXPECT_FALSE(one.remove());
+}
+
+TEST(AllTagsEdition, TheStripsNamesSectionsAndSetText)
+{
+    const auto tags = defaultAllTags();
+    const auto byName = [&](std::u16string_view n) {
+        return *std::ranges::find_if(tags, [&](const AllTagsSetting &t) { return t.name == n; });
+    };
+    // HY1's sections: Common, More, the user's own.
+    std::vector<AllTagsSetting> list{byName(u"blur"), byName(u"fax"), AllTagsSetting::named(u"glow")};
+    EXPECT_EQ(allTagsSections(list), (std::vector<int>{0, 1, 2}));
+    // The values' names.
+    EXPECT_EQ(allTagsValueNames(byName(u"blur")), std::vector<std::u16string>{u"Value"});
+    EXPECT_EQ(allTagsValueNames(byName(u"color1")), (std::vector<std::u16string>{u"R", u"G", u"B"}));
+    EXPECT_EQ(allTagsValueNames(byName(u"position")), (std::vector<std::u16string>{u"X", u"Y"}));
+    EXPECT_EQ(allTagsValueNames(byName(u"fading")), (std::vector<std::u16string>{u"In", u"Out"}));
+    EXPECT_EQ(allTagsValueNames(byName(u"tanimation")), (std::vector<std::u16string>{u"Start", u"End"}));
+    AllTagsSetting three = AllTagsSetting::named(u"be");
+    three.numOfValues = 3;
+    EXPECT_EQ(allTagsValueNames(three), (std::vector<std::u16string>{u"1", u"2", u"3"}));
+    // What Set writes at the starting values.
+    AllTagsSetting blur = byName(u"blur");
+    blur.values[0] = 2.5f;
+    EXPECT_EQ(allTagsSetText(blur), u"\\blur2.5");
+    AllTagsSetting colour = byName(u"color1");
+    colour.values = {250.f, 214.f, 92.f, 0.f};
+    EXPECT_EQ(allTagsSetText(colour), u"\\1c&H5CD6FA&");
+    AllTagsSetting alpha = byName(u"alpha");
+    alpha.values[0] = 128.f;
+    EXPECT_EQ(allTagsSetText(alpha), u"\\alpha&H80&");
+    AllTagsSetting fad = byName(u"fading");
+    fad.values = {200.f, 350.f, 0.f, 0.f};
+    EXPECT_EQ(allTagsSetText(fad), u"\\fad(200,350)");
+    EXPECT_EQ(allTagsSetText(byName(u"tanimation")), u"\\t(0,0,)");
 }
 
 // Esc during a drag (the host cancels the gesture and resets the tool):

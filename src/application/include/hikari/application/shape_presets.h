@@ -7,10 +7,11 @@
 // settings, one "Shape: <name>; <shape>; <mode>; <scaling mode>" line each;
 // without the file legacy's five defaults are used.
 //
-// Saving a preset under a name another preset has asks to replace it or to
-// rename (accepted on #55, surface-decision-routing.md); legacy kept both.
+// A name another preset has asks to replace it (accepted on #55, PU5's
+// message box on #307); legacy kept both.
 
-#include <optional>
+#include "hikari/application/edit_history.h"
+
 #include <string>
 #include <string_view>
 #include <vector>
@@ -53,90 +54,90 @@ std::u16string writeShapePresets(const std::vector<ShapePreset> &presets);
 // (opens the editor).
 std::vector<std::u16string> shapeListChoices(const std::vector<ShapePreset> &presets);
 
-// The ShapesEdition dialog's state and actions (VisualDrawingShapes.cpp:
-// 43-288), "Vector shape editing". It edits a copy of the presets; Apply
-// keeps an edit in the copy, OK keeps it and gives the copy back to be
-// saved, Cancel drops the copy. The fields (name, shape, the two modes) are
-// what the dialog shows; `current` is legacy's currentShape, what they were
-// last set from or saved to.
+// PU5 (#307): the "Edit shapes" window's model (legacy ShapesEdition,
+// "Vector shape editing", VisualDrawingShapes.cpp:43-288, redesigned). Every
+// change is kept as it is made and is a step of the window's history: the
+// caller hands the presets back to the drawing tool and writes the file
+// after each one. A value the tool cannot use is refused and the preset
+// keeps its last good one. The questions and their answers are the
+// window's: a name another preset has is refused here and replaceNamed()
+// replaces that preset; restoreDefaults() after its question.
 class ShapesEdition {
 public:
-    // A legacy message box: its text and title. Error boxes have OK only.
-    struct Message {
-        std::u16string text;
-        std::u16string title;
+    // The window's steps (it names them for Undo and Redo).
+    enum Step : int {
+        Rename,
+        EditDrawing,
+        ChangeScaling,
+        NewShape,
+        DuplicateShape,
+        DeleteShape,
+        TakeFromLine,
+        ReplaceShape,
+        RestoreDefaults,
+        UndoAll
     };
+    // Why a name is refused.
+    enum class NameCheck { Ok, Empty, Taken, Separator };
 
-    // curShape is a preset's index; out of range the first (the toolbar
+    // `selection` is a preset's index; out of range the first (the toolbar
     // gives its list's selection less "Choose", T5-editor-opens-next).
-    ShapesEdition(std::vector<ShapePreset> presets, int curShape);
+    ShapesEdition(std::vector<ShapePreset> presets, int selection);
 
-    const std::vector<ShapePreset> &presets() const { return m_presets; }
-    // The dialog's list of presets as legacy's HikariChoice holds it: names
-    // are added and removed with the presets, and a save puts a rename
-    // there (T5-dialog-list-stale: legacy never refreshed it).
-    const std::vector<std::u16string> &list() const { return m_list; }
-    int selection() const { return m_selection; }
-    const ShapePreset &current() const { return m_current; }
-
-    // The fields.
-    std::u16string name, shape;
-    int mode = 0, scalingMode = 0;
+    const std::vector<ShapePreset> &presets() const { return m_history.items(); }
+    int selection() const { return m_history.selection(); }
+    // The selected preset (an empty one when there are none).
+    const ShapePreset &current() const;
+    // Another preset chosen: no step.
+    void select(int index);
     static constexpr int kNameMaxLength = 20; // shapeName->SetMaxLength(20): typing only
 
-    // OnAddShape: a new empty preset named `newName`, selected. Refused with
-    // a message when the name is empty or the list holds it (ignoring case).
-    std::optional<Message> addShape(std::u16string_view newName);
-    // OnRemoveShape: the selected preset goes; refused for the last one.
-    std::optional<Message> removeShape();
-    // CheckModified: a field differs from `current`.
-    bool modified() const;
-    // OnListChanged's question when modified(): "Save changes to shape
-    // \"%s\"?" with the preset's name (T5-save-question-text: legacy's
-    // showed the shape's text).
-    Message saveChangesQuestion() const;
-    // SetShape: the list's `index` (out of range: the first) becomes the
-    // selection and the fields show it.
-    void select(int index);
-    // OnGetShapeFromLine on the active Line's text: every drawing in it
-    // (ParseTags "p": the text after a \p other than \p0) goes into the
-    // shape field; when the current preset already has a shape each one
-    // becomes a new preset "Untitled" (only the name and shape fields
-    // change). False when the Line has no drawing.
-    bool getShapeFromLine(std::u16string_view lineText);
+    // A name for the selected preset: empty, holding ";" or a line break
+    // (the file's separators), or another preset's (ignoring case: `taken`
+    // gets its name) is refused; else it is the preset's name.
+    NameCheck setName(std::u16string_view name, std::u16string *taken = nullptr);
+    // The drawing: line breaks become spaces; empty (or only blanks) or
+    // holding ";" is refused.
+    bool setShape(std::u16string_view shape);
+    // "Scale from the cursor" (ShapePreset::Mode).
+    void setMode(int mode);
+    // A field left: its next change is a step of its own.
+    void endTyping() { m_history.endMerge(); }
 
-    // Save (VisualDrawingShapes.cpp:267-288), for Apply and OK: the fields
-    // become the selected preset. An empty shape is refused; an empty name
-    // becomes "Untitled". When another preset has the name (ignoring case)
-    // nothing is saved and `clash` names it: replaceClash() replaces it,
-    // or the user renames and saves again.
-    struct SaveResult {
-        std::optional<Message> error;
-        std::optional<std::u16string> clash;
-        bool saved() const { return !error && !clash; }
-    };
-    SaveResult save();
-    // The answer Replace: the other preset with the clashing name goes and
-    // the held edit is saved over the selection (the answer Rename keeps
-    // nothing; the fields stay as typed). Returns the selection's new index; `pending` (a
-    // list index the caller still wants to move to, or -1) is given back
-    // adjusted for the removal (-1 if it was the removed preset).
-    int replaceClash(int *pending = nullptr);
-
-    // OnResetDefault after its question ("Are you sure you want to reset to
-    // default?") and the file's removal: the presets are `defaults`, the
-    // list keeps the selected name's place if it is there (else the first,
-    // HikariChoice::PutArray) and the fields show it.
+    // New shape: the last drawing in `lineText` (the active Line's), else a
+    // 100 x 100 square, named "New shape" ("New shape 2", ...), selected.
+    void addShape(std::u16string_view lineText);
+    // Duplicate: the selected preset as "<name> copy" ("<name> copy 2", the
+    // name cut to fit 20 characters), after it, selected.
+    void duplicate();
+    // Delete: the selected preset goes; never the last one (false).
+    bool remove();
+    bool canRemove() const { return presets().size() > 1; }
+    // Take from the active line: the last drawing in `lineText` replaces
+    // the selected preset's (ParseTags "p": the text after a \p other than
+    // \p0). False when the Line has none.
+    bool takeFromLine(std::u16string_view lineText);
+    // The answer Replace to a taken name: the preset that has it goes and
+    // the selected one takes `name`, one step.
+    void replaceNamed(std::u16string_view name);
+    // Restore default shapes, after its question: the presets are
+    // `defaults`, the selected name's place kept when it is there (else the
+    // first, HikariChoice::PutArray), one step.
     void restoreDefaults(std::vector<ShapePreset> defaults);
-    static Message restoreQuestion();
+    // Undo all changes: the presets the window opened with, one step.
+    bool undoAll() { return m_history.undoAll(UndoAll); }
+
+    bool canUndo() const { return m_history.canUndo(); }
+    bool canRedo() const { return m_history.canRedo(); }
+    int undoStep() const { return m_history.undoStep(); }
+    int redoStep() const { return m_history.redoStep(); }
+    bool undo() { return m_history.undo(); }
+    bool redo() { return m_history.redo(); }
 
 private:
-    void showCurrent(); // SetShapeFromSettings
-    std::vector<ShapePreset> m_presets;
-    std::vector<std::u16string> m_list;
-    ShapePreset m_current;
-    int m_selection = 0;
-    std::optional<ShapePreset> m_pending; // the edit a name clash holds back
+    void edit(ShapePreset preset, Step step, std::string mergeKey = {});
+    std::u16string freeName(std::u16string base, bool copy) const;
+    EditHistory<ShapePreset> m_history;
 };
 
 // wxString::IsSameAs(other, false) / wxArrayString::Index(s, false): equal

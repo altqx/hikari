@@ -4,6 +4,8 @@
 #include "hikari/application/visual_transform.h"
 
 #include <algorithm>
+#include <cmath>
+#include <optional>
 #include <cstdio>
 #include <cstdlib>
 
@@ -295,202 +297,350 @@ double NumberField::getDouble() const
     return value;
 }
 
-AllTagsEdition::AllTagsEdition(std::vector<AllTagsSetting> tags, int curTag)
-    : m_tags(std::move(tags))
+std::vector<int> allTagsSections(const std::vector<AllTagsSetting> &tags)
 {
-    // AllTagsEdition::AllTagsEdition (VisualAllTagsEdition.cpp:155-271).
-    if (curTag < 0 || curTag >= static_cast<int>(m_tags.size()))
-        curTag = 0;
-    m_selection = curTag;
-    m_current = m_tags[static_cast<std::size_t>(m_selection)];
-    m_list = allTagsNames(m_tags);
-    name = m_current.name;
-    tag = m_current.tag;
-    minValue.setDouble(m_current.rangeMin);
-    maxValue.setDouble(m_current.rangeMax);
-    values[0].setDouble(m_current.values[0]);
-    step.setDouble(m_current.step);
-    placing = m_current.mode;
-    digitsAfterDot.setInt(m_current.digitsAfterDot);
-    additionalValues = m_current.numOfValues - 1;
-    changeOption = m_current.tagMode;
-    for (std::size_t i = 1; i < 4; i++)
-        values[i].setDouble(m_current.values[i]);
+    static const std::vector<u16> common{u"blur",    u"blur edge", u"border", u"shadow", u"font size",
+                                         u"spacing", u"alpha",     u"color1", u"color3"};
+    static const std::vector<u16> builtIn = allTagsNames(defaultAllTags());
+    std::vector<int> out;
+    out.reserve(tags.size());
+    for (const AllTagsSetting &tag : tags)
+        out.push_back(std::ranges::contains(common, tag.name)    ? 0
+                      : std::ranges::contains(builtIn, tag.name) ? 1
+                                                                 : 2);
+    return out;
 }
 
-std::optional<AllTagsEdition::Message> AllTagsEdition::addTag()
+namespace {
+
+bool isColour(u16v tag)
 {
-    // OnAddTag (VisualAllTagsEdition.cpp:293-310).
-    if (newTagName.empty())
-        return Message{u"Enter a name for the new tag.", u"Error"};
-    for (const u16 &listed : m_list)
-        if (sameNameIgnoringCase(listed, newTagName)) // HikariChoice::FindString
-            return Message{u"New tag already exists, enter another name.", u"Error"};
-    m_current = AllTagsSetting::named(newTagName);
-    m_tags.push_back(m_current);
-    m_list.push_back(m_current.name);
-    m_selection = static_cast<int>(m_tags.size()) - 1;
-    showCurrent();
-    return std::nullopt;
+    return tag == u"1c" || tag == u"2c" || tag == u"3c" || tag == u"4c" || tag == u"c";
 }
 
-std::optional<AllTagsEdition::Message> AllTagsEdition::removeTag()
+bool isAlpha(u16v tag)
 {
-    // OnRemoveTag (VisualAllTagsEdition.cpp:312-339).
-    if (m_selection < 0 || m_selection >= static_cast<int>(m_tags.size()))
-        return Message{u"Selected tag is out of range of tagList.", u"Error"};
-    if (m_tags.size() <= 1)
-        return Message{u"Cannot remove all tags from list", u"Error"};
-    m_tags.erase(m_tags.begin() + m_selection);
-    m_list.erase(m_list.begin() + m_selection);
-    if (m_selection >= static_cast<int>(m_list.size()))
-        m_selection = static_cast<int>(m_list.size()) - 1;
-    m_current = m_selection < 0 ? AllTagsSetting() : m_tags[static_cast<std::size_t>(m_selection)];
-    showCurrent();
-    return std::nullopt;
+    return tag == u"1a" || tag == u"2a" || tag == u"3a" || tag == u"4a" || tag == u"alpha";
 }
 
-bool AllTagsEdition::modified() const
+u16 hexByte(float value)
 {
-    // CheckModified (VisualAllTagsEdition.cpp:400-420).
-    if (m_current.name != name || m_current.tag != tag ||
-        m_current.rangeMin != static_cast<float>(minValue.getDouble()) ||
-        m_current.rangeMax != static_cast<float>(maxValue.getDouble()) ||
-        m_current.step != static_cast<float>(step.getDouble()) || m_current.mode != placing ||
-        m_current.digitsAfterDot != digitsAfterDot.getInt() || m_current.numOfValues != additionalValues + 1 ||
-        m_current.tagMode != changeOption)
-        return true;
-    for (int i = 0; i < m_current.numOfValues && i < 4; i++)
-        if (m_current.values[static_cast<std::size_t>(i)] != static_cast<float>(values[static_cast<std::size_t>(i)].getDouble()))
-            return true;
-    return false;
+    const int v = std::clamp(static_cast<int>(value + 0.5f), 0, 255);
+    static constexpr char16_t digits[] = u"0123456789ABCDEF";
+    return {digits[v >> 4], digits[v & 15]};
 }
 
-AllTagsEdition::Message AllTagsEdition::saveChangesQuestion() const
+} // namespace
+
+std::vector<u16> allTagsValueNames(const AllTagsSetting &tag)
 {
-    return {u"Save changes to tag \"" + m_current.tag + u"\"?", u"Confirmation"};
+    const int n = std::clamp(static_cast<int>(tag.numOfValues), 1, 4);
+    if (n == 1)
+        return {u"Value"};
+    std::vector<u16> names;
+    if (isColour(tag.tag))
+        names = {u"R", u"G", u"B"};
+    else if (tag.tag == u"pos")
+        names = {u"X", u"Y"};
+    else if (tag.tag == u"fad")
+        names = {u"In", u"Out"};
+    else if (tag.tag == u"t")
+        names = {u"Start", u"End"};
+    else
+        names = {u"1", u"2", u"3", u"4"};
+    std::vector<u16> out;
+    for (int i = 0; i < n; ++i)
+        out.push_back(names[static_cast<std::size_t>(std::min<int>(i, static_cast<int>(names.size()) - 1))]);
+    return out;
+}
+
+u16 allTagsSetText(const AllTagsSetting &tag)
+{
+    const std::string format = "5." + std::to_string(static_cast<int>(tag.digitsAfterDot)) + "f";
+    const auto &v = tag.values;
+    u16 value;
+    if (isAlpha(tag.tag)) {
+        value = u"&H" + hexByte(v[0]) + u"&";
+    } else if (isColour(tag.tag)) {
+        value = u"&H" + hexByte(v[2]) + hexByte(v[1]) + hexByte(v[0]) + u"&";
+    } else if (tag.numOfValues > 1) {
+        value = u"(";
+        for (int i = 0; i < std::min<int>(tag.numOfValues, 4); ++i)
+            value += (i ? u"," : u"") + transform::getfloat(v[static_cast<std::size_t>(i)], format);
+        if (tag.tag == u"t")
+            value += u",";
+        value += u")";
+    } else {
+        value = transform::getfloat(v[0], format);
+    }
+    return u"\\" + tag.tag + value;
+}
+
+// ---------------------------------------------------------------------------
+// AllTagsEdition: PU5's "Edit tags" (legacy VisualAllTagsEdition.cpp:155-455).
+
+namespace {
+
+int clampedSelection(int selection, std::size_t size)
+{
+    return selection < 0 || selection >= static_cast<int>(size) ? 0 : selection;
+}
+
+bool blank(u16v text)
+{
+    return std::ranges::all_of(text, isBlank);
+}
+
+// A number field's text: the whole text a C-locale number (a comma for the
+// point), finite.
+std::optional<double> readNumber(u16v text)
+{
+    u16 t = trimStart(text);
+    while (!t.empty() && isBlank(t.back()))
+        t.pop_back();
+    std::ranges::replace(t, u',', u'.');
+    double value = 0;
+    if (t.empty() || !transform::toDouble(t, value) || !std::isfinite(value))
+        return std::nullopt;
+    return value;
+}
+
+AllTagsEdition::Check checkRange(const AllTagsSetting &t, AllTagsEdition::Number edited)
+{
+    // Legacy Save's checks (VisualAllTagsEdition.cpp:427-437), said for the
+    // field being typed.
+    using Check = AllTagsEdition::Check;
+    using Number = AllTagsEdition::Number;
+    if (t.rangeMax <= t.rangeMin)
+        return edited == Number::Min ? Check::MinNotBelowMax : Check::MaxNotAboveMin;
+    if (t.step <= 0)
+        return Check::StepNotPositive;
+    if ((t.rangeMax - t.rangeMin) / t.step < 2)
+        return Check::StepTooLarge;
+    return Check::Ok;
+}
+
+} // namespace
+
+AllTagsEdition::AllTagsEdition(std::vector<AllTagsSetting> tags, int selection)
+    : m_history(tags, clampedSelection(selection, tags.size()))
+{
+}
+
+std::vector<AllTagsSetting> AllTagsEdition::usable() const
+{
+    std::vector<AllTagsSetting> out;
+    for (const AllTagsSetting &t : tags())
+        if (!t.tag.empty())
+            out.push_back(t);
+    return out;
+}
+
+const AllTagsSetting &AllTagsEdition::current() const
+{
+    static const AllTagsSetting none;
+    const int i = selection();
+    return i >= 0 && i < static_cast<int>(tags().size()) ? tags()[static_cast<std::size_t>(i)] : none;
 }
 
 void AllTagsEdition::select(int index)
 {
-    setTag(index);
+    if (index >= 0 && index < static_cast<int>(tags().size()))
+        m_history.select(index);
 }
 
-void AllTagsEdition::setTag(int num)
+void AllTagsEdition::edit(AllTagsSetting tag, Step step, std::string mergeKey)
 {
-    // SetTag (VisualAllTagsEdition.cpp:389-398).
-    if (num < 0 || num >= static_cast<int>(m_tags.size()))
-        num = 0;
-    m_current = m_tags[static_cast<std::size_t>(num)];
-    m_selection = num;
-    showCurrent();
+    const int i = selection();
+    if (i < 0 || i >= static_cast<int>(tags().size()) || tags()[static_cast<std::size_t>(i)] == tag)
+        return;
+    std::vector<AllTagsSetting> items = tags();
+    items[static_cast<std::size_t>(i)] = std::move(tag);
+    if (!mergeKey.empty())
+        mergeKey += ':' + std::to_string(i);
+    m_history.change(std::move(items), i, step, std::move(mergeKey));
 }
 
-void AllTagsEdition::updateTag()
+AllTagsEdition::Check AllTagsEdition::setName(u16v name, u16 *taken)
 {
-    // UpdateTag (VisualAllTagsEdition.cpp:352-368).
-    m_current.name = name;
-    m_current.tag = tag;
-    m_current.rangeMin = static_cast<float>(minValue.getDouble());
-    m_current.rangeMax = static_cast<float>(maxValue.getDouble());
-    m_current.step = static_cast<float>(step.getDouble());
-    m_current.mode = static_cast<unsigned char>(placing);
-    m_current.digitsAfterDot = static_cast<unsigned char>(digitsAfterDot.getInt());
-    m_current.numOfValues = static_cast<unsigned char>(additionalValues + 1);
-    m_current.tagMode = changeOption;
-    for (int i = 0; i < m_current.numOfValues && i < 4; i++)
-        m_current.values[static_cast<std::size_t>(i)] = static_cast<float>(values[static_cast<std::size_t>(i)].getDouble());
-}
-
-void AllTagsEdition::showCurrent()
-{
-    // SetTagFromSettings (VisualAllTagsEdition.cpp:370-387): the values past
-    // the count keep what the fields showed.
-    name = m_current.name;
-    tag = m_current.tag;
-    minValue.setDouble(m_current.rangeMin);
-    maxValue.setDouble(m_current.rangeMax);
-    step.setDouble(m_current.step);
-    placing = m_current.mode;
-    digitsAfterDot.setInt(m_current.digitsAfterDot);
-    additionalValues = m_current.numOfValues - 1;
-    changeOption = m_current.tagMode;
-    for (int i = 0; i < m_current.numOfValues && i < 4; i++)
-        values[static_cast<std::size_t>(i)].setDouble(m_current.values[static_cast<std::size_t>(i)]);
-}
-
-std::optional<AllTagsEdition::Message> AllTagsEdition::save()
-{
-    // Save (VisualAllTagsEdition.cpp:422-455).
-    updateTag();
-    if (m_current.tag.empty())
-        return Message{u"Field \"Tag\" cannot be empty.", u"Error"};
-    if (m_current.name.empty()) {
-        m_current.name = m_current.tag;
-        name = m_current.name;
+    if (name.empty() || blank(name))
+        return Check::Empty;
+    if (name.find_first_of(u",\r\n") != u16v::npos)
+        return Check::Separator;
+    for (std::size_t i = 0; i < tags().size(); ++i) {
+        if (static_cast<int>(i) != selection() && sameNameIgnoringCase(tags()[i].name, name)) {
+            if (taken)
+                *taken = tags()[i].name;
+            return Check::Taken;
+        }
     }
-    if (m_current.rangeMax <= m_current.rangeMin)
-        return Message{u"Field \"Maximum value\" must contain a value\ngreater than field \"Minimum value\".", u"Error"};
-    if (m_current.step <= 0)
-        return Message{u"Field \"Step\" must contain a value greater than zero.", u"Error"};
-    if (((m_current.rangeMax - m_current.rangeMin) / m_current.step) < 2)
-        return Message{u"Field \"Step\" contains a number too large for the current min-max range.", u"Error"};
-    if (m_selection < 0 || m_selection >= static_cast<int>(m_tags.size()))
-        return Message{u"Selected tag is out of range of tagList.", u"Error"};
-    m_tags[static_cast<std::size_t>(m_selection)] = m_current;
-    // The list takes a rename (T6-dialog-list-stale: legacy's kept the old
-    // name).
-    m_list[static_cast<std::size_t>(m_selection)] = m_current.name;
-    return std::nullopt;
+    AllTagsSetting t = current();
+    t.name = u16(name);
+    edit(std::move(t), Rename, "name");
+    return Check::Ok;
+}
+
+AllTagsEdition::Check AllTagsEdition::setTag(u16v tag)
+{
+    while (!tag.empty() && tag.front() == u'\\')
+        tag.remove_prefix(1);
+    if (tag.empty() || blank(tag))
+        return Check::Empty;
+    if (tag.find_first_of(u",\r\n") != u16v::npos)
+        return Check::Separator;
+    AllTagsSetting t = current();
+    t.tag = trimStart(tag);
+    edit(std::move(t), EditTag, "tag");
+    return Check::Ok;
+}
+
+AllTagsEdition::Check AllTagsEdition::setNumber(Number field, u16v text)
+{
+    const auto value = readNumber(text);
+    if (!value)
+        return Check::NotANumber;
+    AllTagsSetting t = current();
+    if (field == Number::Digits) {
+        if (*value != std::floor(*value) || *value < 0 || *value > kMaxDigits)
+            return Check::OutOfRange;
+        t.digitsAfterDot = static_cast<unsigned char>(*value);
+        edit(std::move(t), EditDecimals, "digits");
+        return Check::Ok;
+    }
+    if (std::abs(*value) > kNumberLimit)
+        return Check::OutOfRange;
+    const auto v = static_cast<float>(*value);
+    switch (field) {
+    case Number::Min:
+    case Number::Max:
+    case Number::Step: {
+        (field == Number::Min ? t.rangeMin : field == Number::Max ? t.rangeMax : t.step) = v;
+        if (const Check c = checkRange(t, field); c != Check::Ok)
+            return c;
+        const char *key = field == Number::Min ? "min" : field == Number::Max ? "max" : "step";
+        edit(std::move(t), field == Number::Step ? EditStep : EditRange, key);
+        return Check::Ok;
+    }
+    default: {
+        const auto at = static_cast<std::size_t>(static_cast<int>(field) - static_cast<int>(Number::Value0));
+        t.values[at] = v;
+        edit(std::move(t), EditValue, "value" + std::to_string(at));
+        return Check::Ok;
+    }
+    }
+}
+
+void AllTagsEdition::setCount(int count)
+{
+    if (count < 1 || count > 4)
+        return;
+    AllTagsSetting t = current();
+    t.numOfValues = static_cast<unsigned char>(count);
+    edit(std::move(t), EditCount);
+}
+
+void AllTagsEdition::setChangeOption(int option)
+{
+    if (option < PasteAdd || option > PasteGradientLineDecrease)
+        return;
+    AllTagsSetting t = current();
+    t.tagMode = option;
+    edit(std::move(t), ChangeOption);
+}
+
+void AllTagsEdition::setPlacing(int placing)
+{
+    if (placing < 0 || placing > 2)
+        return;
+    AllTagsSetting t = current();
+    t.mode = static_cast<unsigned char>(placing);
+    edit(std::move(t), ChangePlacing);
+}
+
+u16 AllTagsEdition::freeName(u16 base, bool copy) const
+{
+    const auto taken = [this](u16v name) {
+        return std::ranges::any_of(tags(), [&](const AllTagsSetting &t) { return sameNameIgnoringCase(t.name, name); });
+    };
+    for (int n = 1;; ++n) {
+        u16 name = base + (copy ? u16(u" copy") : u16());
+        if (n > 1)
+            name += u" " + ascii(std::to_string(n));
+        if (!taken(name))
+            return name;
+    }
+}
+
+void AllTagsEdition::addTag()
+{
+    AllTagsSetting t = AllTagsSetting::named(freeName(u"New tag", false));
+    t.tag.clear(); // typed next; the tool takes it once it has one
+    std::vector<AllTagsSetting> items = tags();
+    items.push_back(std::move(t));
+    const int at = static_cast<int>(items.size()) - 1;
+    m_history.change(std::move(items), at, NewTag);
+}
+
+void AllTagsEdition::duplicate()
+{
+    if (tags().empty())
+        return;
+    AllTagsSetting t = current();
+    t.name = freeName(t.name, true);
+    std::vector<AllTagsSetting> items = tags();
+    const int at = selection() + 1;
+    items.insert(items.begin() + at, std::move(t));
+    m_history.change(std::move(items), at, DuplicateTag);
+}
+
+bool AllTagsEdition::remove()
+{
+    if (!canRemove())
+        return false;
+    std::vector<AllTagsSetting> items = tags();
+    const int at = selection();
+    items.erase(items.begin() + at);
+    m_history.change(std::move(items), std::min(at, static_cast<int>(items.size()) - 1), DeleteTag);
+    return true;
+}
+
+void AllTagsEdition::replaceNamed(u16v name)
+{
+    std::vector<AllTagsSetting> items = tags();
+    int at = selection();
+    if (at < 0 || at >= static_cast<int>(items.size()) || name.empty())
+        return;
+    for (std::size_t i = 0; i < items.size(); ++i) {
+        if (static_cast<int>(i) != at && sameNameIgnoringCase(items[i].name, name)) {
+            items.erase(items.begin() + static_cast<std::ptrdiff_t>(i));
+            if (static_cast<int>(i) < at)
+                --at;
+            break;
+        }
+    }
+    items[static_cast<std::size_t>(at)].name = u16(name);
+    m_history.change(std::move(items), at, ReplaceTag);
 }
 
 void AllTagsEdition::restoreDefaults()
 {
-    // OnResetDefault (VisualAllTagsEdition.cpp:278-291) after the question
-    // and the file's removal: LoadSettings, then HikariChoice::PutArray
-    // (ListControls.cpp:498-520) keeps the selected name's place when it is
-    // listed, else the first; SetTag shows it.
-    const u16 ce = (m_selection >= 0 && m_selection < static_cast<int>(m_list.size()))
-                       ? m_list[static_cast<std::size_t>(m_selection)]
-                       : u16();
-    m_tags = defaultAllTags();
-    m_list = allTagsNames(m_tags);
-    int choice = m_selection;
-    if (m_list.empty()) {
-        choice = -1;
-    } else if (!ce.empty()) {
-        if (choice >= static_cast<int>(m_list.size()))
-            choice = 0;
-        if (ce != m_list[static_cast<std::size_t>(choice)]) {
-            int ichoice = -1;
-            for (std::size_t i = 0; i < m_list.size(); ++i)
-                if (m_list[i] == ce) { // wxArrayString::Index, case-sensitive
-                    ichoice = static_cast<int>(i);
-                    break;
-                }
-            choice = ichoice == -1 ? 0 : ichoice;
-        }
+    // HikariChoice::PutArray (ListControls.cpp:498-520): the selected name's
+    // place when the new list has it there, else where the list has it
+    // (case-sensitive), else the first.
+    std::vector<AllTagsSetting> defaults = defaultAllTags();
+    if (defaults == tags())
+        return;
+    const u16 name = current().name;
+    int choice = selection() < static_cast<int>(defaults.size()) ? selection() : 0;
+    if (defaults[static_cast<std::size_t>(choice)].name != name) {
+        choice = 0;
+        for (std::size_t i = 0; i < defaults.size(); ++i)
+            if (defaults[i].name == name) {
+                choice = static_cast<int>(i);
+                break;
+            }
     }
-    setTag(choice);
-}
-
-AllTagsEdition::Message AllTagsEdition::restoreQuestion()
-{
-    return {u"Are you sure you want to reset to default?", u"Confirmation"};
-}
-
-const std::array<std::u16string_view, 3> &AllTagsEdition::placings()
-{
-    static const std::array<std::u16string_view, 3> list{
-        u"Inserted at the cursor position", u"Insert Tag at text beginning of text", u"Clip rectangle with \\t animation"};
-    return list;
-}
-
-const std::array<std::u16string_view, 4> &AllTagsEdition::valueCounts()
-{
-    static const std::array<std::u16string_view, 4> list{u"No additional values", u"One additional value",
-                                                         u"Two additional values", u"Three additional values"};
-    return list;
+    m_history.change(std::move(defaults), choice, RestoreDefaults);
 }
 
 const std::array<std::u16string_view, 8> &allTagsChangeOptions()
