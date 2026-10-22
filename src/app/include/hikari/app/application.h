@@ -694,6 +694,9 @@ public:
     // "Reset page": `values` with the page's controls at their defaults
     // (page: an OptionsPage id, "general", "appearance", ...); staged too.
     Q_INVOKABLE QVariantMap resetSettingsPage(const QVariantMap &values, const QString &page);
+    // The conversion catalog's Styles as the dialog lists them (after a
+    // Reset page on Conversion loaded the default catalog).
+    Q_INVOKABLE QStringList settingsStyles() const;
     // OnChangeCatalog: loads the catalog and returns {values, styles}.
     Q_INVOKABLE QVariantMap chooseSettingsCatalog(const QVariantMap &values, int index);
     // wxDirDialog::GetPath: the chosen folder with native separators.

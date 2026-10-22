@@ -162,6 +162,8 @@ DialogWindow {
             Theme.preview(values)
         if (currentPage === "lineEditor")
             tagButtonList = [] // the page's tag buttons too, staged
+        if (currentPage === "conversion")
+            styles = app.settingsStyles() // the default catalog's
         reloaded()
     }
     // "Reset all settings…", after its question: every page but the
