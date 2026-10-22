@@ -8,6 +8,10 @@
 // (visual-language.md: focus stays distinguishable from selection).
 // Everything else is Fusion's.
 // The popup's frame takes the boundary colour too.
+// TP1 (Codex security review): the popup's items are Fusion's, their text
+// plain. The choices are often a file's own text (Styles, actors, effects):
+// as markup an <img> in them would be fetched (and Qt's IconLabel crashes
+// laying one out).
 // Fusion's text field inside the box (read-only unless the box is editable)
 // is the box's Edit to assistive technology (UI Automation's Edit under the
 // ComboBox); it carries the box's accessible name, as a native combo box's
@@ -21,6 +25,25 @@ import QtQuick.Controls.Fusion.impl as FI
 
 F.ComboBox {
     id: control
+    delegate: F.MenuItem {
+        id: choice
+        required property var model
+        required property int index
+
+        width: ListView.view.width
+        text: model[control.textRole]
+        font.weight: control.currentIndex === index ? Font.DemiBold : Font.Normal
+        highlighted: control.highlightedIndex === index
+        hoverEnabled: control.hoverEnabled
+        contentItem: Text {
+            text: choice.text
+            textFormat: Text.PlainText
+            font: choice.font
+            color: choice.down || choice.highlighted ? F.Fusion.highlightedText(choice.palette) : choice.palette.text
+            elide: Text.ElideRight
+            verticalAlignment: Text.AlignVCenter
+        }
+    }
     background: FI.ButtonPanel {
         implicitWidth: 120
         implicitHeight: 24

@@ -324,6 +324,62 @@ private slots:
         stop();
     }
 
+    // A Style's name and font are the file's text, never markup: an <img>
+    // in them is shown as typed and fetches nothing (Codex security review).
+    void stylesAreShownAsPlainText()
+    {
+        start();
+        const QString path = dir.filePath(QStringLiteral("markup.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: <img src=\"http://127.0.0.1:9/n.png\">,<b>Arial</b>,48,&H00FFFFFF,&H000000FF,&H00000000,"
+                "&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,<img src=\"http://127.0.0.1:9/n.png\">,,0,0,0,,first\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        applyPreset("Typesetting");
+        QTRY_VERIFY(rowItem("stylesName0"));
+        const auto plain = [](QQuickItem *label) { return label->property("textFormat").toInt() == Qt::PlainText; };
+        QVERIFY(plain(rowItem("stylesName0")));
+        QCOMPARE(rowItem("stylesName0")->property("text").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
+        QVERIFY(plain(rowItem("stylesFont0")));
+        QCOMPARE(rowItem("stylesFont0")->property("text").toString(), QStringLiteral("<b>Arial</b> · 48"));
+        // The Line editor's Style choice (its popup's items) too.
+        auto *choice = item<QObject>("styleChoice");
+        QVERIFY(choice);
+        QTRY_COMPARE(choice->property("currentText").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
+        // The Grid's Hide lines with styles menu: its items plain too.
+        auto *grid = item("editingGrid");
+        auto *gridMenu = item<QObject>("gridMenu");
+        QTest::mouseClick(window(), Qt::RightButton, Qt::NoModifier, grid->mapToScene(QPointF(grid->width() / 2, 30)).toPoint());
+        QTRY_VERIFY(gridMenu->property("opened").toBool());
+        auto *filtering = item<QObject>("filteringMenu");
+        QVERIFY(QMetaObject::invokeMethod(filtering, "open"));
+        QTRY_VERIFY(filtering->property("opened").toBool());
+        auto *stylesMenu = item<QObject>("filterStylesMenu");
+        QVERIFY(QMetaObject::invokeMethod(stylesMenu, "open"));
+        QTRY_VERIFY(stylesMenu->property("opened").toBool());
+        QQuickItem *entry = nullptr;
+        QTRY_VERIFY(QMetaObject::invokeMethod(stylesMenu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, 0)) && entry);
+        auto *shown = entry->findChild<QQuickItem *>(QStringLiteral("menuItemPlainText"));
+        QVERIFY(shown && shown->isVisible());
+        QVERIFY(plain(shown));
+        QCOMPARE(shown->property("text").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
+        QVERIFY(QMetaObject::invokeMethod(gridMenu, "dismiss"));
+        QTRY_VERIFY(!gridMenu->property("visible").toBool());
+        // The panels' headers too: their titles carry the file's name.
+        const auto titles = window()->findChildren<QQuickItem *>(QStringLiteral("dockTitleText"));
+        QVERIFY(!titles.isEmpty());
+        for (QQuickItem *title : titles)
+            QVERIFY(plain(title));
+        stop();
+    }
+
     // Typing in the list filters it; Esc in the filter clears it.
     void typingFiltersTheStyles()
     {

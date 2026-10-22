@@ -259,13 +259,18 @@ Item {
                         id: rowText
                         spacing: 0
                         Layout.fillWidth: true
+                        // The file's names, never markup (no <img> fetched).
                         Label {
+                            objectName: "stylesName" + row.index
                             text: row.modelData.name
+                            textFormat: Text.PlainText
                             elide: Text.ElideRight
                             Layout.fillWidth: true
                         }
                         Label {
+                            objectName: "stylesFont" + row.index
                             text: row.modelData.font + " · " + row.modelData.size
+                            textFormat: Text.PlainText
                             color: Theme.muted
                             font.pointSize: panel.smallSize
                             elide: Text.ElideRight
@@ -283,6 +288,7 @@ Item {
                     }
                     Label {
                         text: row.modelData.lines
+                        textFormat: Text.PlainText
                         color: Theme.muted
                         font.pointSize: panel.smallSize
                         horizontalAlignment: Text.AlignRight

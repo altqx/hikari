@@ -5272,6 +5272,7 @@ ApplicationWindow {
                             }
                             ShellMenu {
                                 id: filterStylesMenu
+                                objectName: "filterStylesMenu"
                                 iconRole: "styles"
                                 title: qsTranslate("HikariSub.Grid", "Hide lines with styles")
                                 enabled: root.shell.assColumns
