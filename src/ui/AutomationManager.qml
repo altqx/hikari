@@ -548,16 +548,19 @@ Pane {
                                 spacing: 2
                                 Layout.fillWidth: true
                                 RowLayout {
+                                    id: runTitle
                                     Layout.fillWidth: true
                                     // The macro, then its script: two
-                                    // scripts' macros may share a name.
+                                    // scripts' macros may share a name. The
+                                    // script gives way first; the macro is
+                                    // elided only when it alone is too wide.
                                     Label {
                                         text: runRow.macro
                                         textFormat: Text.PlainText
                                         font.weight: Font.DemiBold
                                         elide: Text.ElideRight
-                                        Layout.maximumWidth: implicitWidth
-                                        Layout.fillWidth: true
+                                        Layout.maximumWidth: Math.max(0, runTitle.width - runStarted.implicitWidth
+                                                                         - 2 * runTitle.spacing)
                                     }
                                     Label {
                                         objectName: "runScript"
@@ -566,8 +569,11 @@ Pane {
                                         color: Theme.muted
                                         elide: Text.ElideMiddle
                                         Layout.fillWidth: true
+                                        Layout.minimumWidth: 0
+                                        Layout.preferredWidth: 0
                                     }
                                     Label {
+                                        id: runStarted
                                         text: runRow.started
                                         color: Theme.muted
                                         font.features: { "tnum": 1 }
