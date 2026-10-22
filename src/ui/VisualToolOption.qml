@@ -48,7 +48,8 @@ Loader {
         "Gradient": qsTr("Gradient"),
         "At the cursor": qsTr("At the cursor"),
         "At the start of the text": qsTr("At the start of the text"),
-        "Clip rectangle with \\t animation": qsTr("Clip rectangle with \\t animation"),
+        // (the tag outside the text: lupdate reads "\\t" as a tab)
+        "Clip rectangle with \\t animation": qsTr("Clip rectangle with %1 animation").arg("\\t"),
         "Set by line number": qsTr("Set by line number"),
         "Add by line number": qsTr("Add by line number"),
         "Across characters, increasing": qsTr("Across characters, increasing"),
