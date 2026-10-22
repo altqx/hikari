@@ -179,10 +179,11 @@ FocusScope {
                     elide: Text.ElideRight
                     // Up to its own width, elided in what the Line's label
                     // leaves; never wider than the column gives it, so the
-                    // columns cannot shift under a click.
+                    // columns cannot shift under a click. Rounded up, as
+                    // the layout gives whole pixels.
                     Layout.fillWidth: true
                     Layout.preferredWidth: 0
-                    Layout.maximumWidth: implicitWidth
+                    Layout.maximumWidth: Math.ceil(implicitWidth)
                     Accessible.name: qsTr("Misspelled word: %1").arg(text)
                 }
                 Label {
