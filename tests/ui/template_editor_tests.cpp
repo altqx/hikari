@@ -1288,6 +1288,8 @@ private slots:
                                              static_cast<qsizetype>(l->translation.size()));
         QVERIFY(!applied.isEmpty());
         QCOMPARE(previewTexts(), applied);
+        QVERIFY(editor->sourceText() != QStringLiteral("original")); // the heading names what ran
+        QVERIFY(!editor->sourceText().contains(QLatin1Char('{')));
     }
 
     // Apply's summary is of the Document Apply left: an Undo or another

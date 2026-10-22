@@ -743,7 +743,8 @@ QString TemplateEditorController::sourceStyle() const
 QString TemplateEditorController::sourceText() const
 {
     const auto *l = m_source ? line(*m_source) : nullptr;
-    return l ? withoutTags(l->text) : QString();
+    // In TLMode the run reads the translation (macroLineOf).
+    return l ? withoutTags(l->translation.empty() ? l->text : l->translation) : QString();
 }
 
 int TemplateEditorController::sourceStartMs() const
