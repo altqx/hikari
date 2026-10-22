@@ -159,6 +159,21 @@ class TemplateEditorTests : public QObject {
 
     // `trust`: the user chose to preview this file's templates (most tests).
     void open(const QString &name, bool trust = true) { openDocument(loadFile(name), trust); }
+    // The templates without Lua (no `!` expression, no code Line), so that
+    // karaoke text edits keep the choice.
+    static core::Document withoutLua(core::Document doc)
+    {
+        std::vector<core::LineId> lua;
+        for (const auto *l : doc.lines())
+            if (application::templateKindOf(*l) && application::macroLineOf(*l).text.find('!') != std::string::npos)
+                lua.push_back(l->id);
+        for (const auto id : lua)
+            doc.editLine(id, [](core::LineRecord &l) { l.text = u8"{\\bord1}"; });
+        doc.removeLinesIf([](const core::LineRecord &l) {
+            return application::templateKindOf(l) == application::TemplateKind::Code;
+        });
+        return doc;
+    }
     void openDocument(core::Document doc, bool trust)
     {
         view.reset();
@@ -602,6 +617,7 @@ private slots:
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
         QVERIFY(editor->apply(false));
+        editor->applied(templater->report);
         editor->refresh();
         const auto source = firstKaraoke();
         QVERIFY(source);
@@ -806,7 +822,9 @@ private slots:
         QVERIFY(editor->videoPreview());
         templater->holdPreviews = 1;
         QVERIFY(change([&](core::Document &doc) {
-            return doc.editLine(*source, [](core::LineRecord &l) { l.text += u8"{\\bord3}"; });
+            return doc.editLine(*source, [](core::LineRecord &l) {
+                l.end.value = core::DocumentTime(l.end.value.microseconds() + 100'000);
+            });
         }));
         editor->refresh();
         QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
@@ -1291,7 +1309,9 @@ private slots:
         QVERIFY(editor->videoPreview());
         templater->holdPreviews = 1;
         QVERIFY(change([&](core::Document &doc) {
-            return doc.editLine(*source, [](core::LineRecord &l) { l.text += u8"{\\bord3}"; });
+            return doc.editLine(*source, [](core::LineRecord &l) {
+                l.end.value = core::DocumentTime(l.end.value.microseconds() + 100'000);
+            });
         }));
         editor->refresh();
         QVERIFY(QTest::qWaitFor([&] { return templater->held.size() == 1; }, 20'000));
@@ -1586,13 +1606,65 @@ private slots:
         }
     }
 
+    // Lua in the templates (a code Line, or a `!` expression in a template)
+    // can read a karaoke Line's text (`orgline.text`): then a new text,
+    // translation or Effect asks again, a retime doesn't. Templates with no
+    // Lua leave the text to the user.
+    void luaReadingTheLinesTrustsTheirText()
+    {
+        const auto openWith = [&](const std::u8string &effect, const std::u8string &text) {
+            core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+            std::vector<core::LineId> templates;
+            std::optional<core::LineId> karaoke;
+            for (const auto *l : doc.lines()) {
+                if (application::templateKindOf(*l))
+                    templates.push_back(l->id);
+                else if (!karaoke && application::isKaraokeLine(*l))
+                    karaoke = l->id;
+            }
+            for (const auto id : templates)
+                doc.editLine(id, [](core::LineRecord &l) { l.text = u8"{\\bord1}"; });
+            core::LineRecord added;
+            added.comment = true;
+            added.effect = effect;
+            added.text = text;
+            for (const auto *l : doc.lines())
+                if (l->id == templates.front())
+                    added.style = l->style;
+            doc.appendLine(added);
+            openDocument(std::move(doc), true);
+            return *karaoke;
+        };
+        const auto edit = [&](core::LineId id, auto how) {
+            QVERIFY(change([&](core::Document &d) { return d.editLine(id, how); }));
+            editor->refresh();
+        };
+        // Tag-only templates: the text is the user's.
+        auto karaoke = openWith(u8"template line", u8"{\\bord2}");
+        QVERIFY(editor->trusted());
+        edit(karaoke, [](core::LineRecord &l) { l.text = u8"{\\k50}zzq"; });
+        QVERIFY(editor->trusted());
+        for (const auto &[effect, text] : {std::pair<std::u8string, std::u8string>{u8"code line", u8"_G.marker = orgline.text"},
+                                           {u8"template line", u8"{\\bord!1!}"}}) {
+            karaoke = openWith(effect, text);
+            QVERIFY(editor->trusted());
+            edit(karaoke, [](core::LineRecord &l) {
+                l.start.value = core::DocumentTime(l.start.value.microseconds() + 100'000);
+                l.end.value = core::DocumentTime(l.end.value.microseconds() + 100'000);
+            });
+            QVERIFY(editor->trusted());
+            edit(karaoke, [](core::LineRecord &l) { l.text = u8"{\\k50}zzq"; });
+            QVERIFY(!editor->trusted());
+        }
+    }
+
     // Whether a karaoke Line's Actor reaches the templates hangs on its other
     // fields too (a blank Line `noblank` passes over): an Actor or Style
     // holding `!` is trusted with the whole Line, so a new text asks again.
     // A plain Actor's Line takes new text without asking.
     void anActorHoldingAnExpressionIsTrustedWithItsWholeLine()
     {
-        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
         std::vector<core::LineId> karaoke;
         for (const auto *l : doc.lines())
             if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
@@ -1782,7 +1854,7 @@ private slots:
     // chosen to run yet.
     void theLineEditorsDraftIsPreviewed()
     {
-        open(QStringLiteral("stock-tutorials.ass"));
+        openDocument(withoutLua(loadFile(QStringLiteral("stock-tutorials.ass"))), true);
         const auto source = firstKaraoke();
         activate(*source);
         editor->setShown(true);
@@ -1862,7 +1934,7 @@ private slots:
     // previewed.
     void aDraftThatMakesAKaraokeLineIsPreviewed()
     {
-        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
         std::vector<core::LineId> karaoke;
         for (const auto *l : doc.lines())
             if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))

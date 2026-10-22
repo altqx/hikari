@@ -12,7 +12,6 @@
 #include <QRegularExpression>
 
 #include <algorithm>
-#include <cctype>
 
 namespace hikari::ui {
 
@@ -961,27 +960,28 @@ std::string TemplateEditorController::fieldOf(const core::LineRecord &line, bool
     // A `!` in either can make an expression of what the templates write;
     // whether it runs hangs on the rest of the Line (a blank one `noblank`
     // passes over, its Effect, its times), so the whole Line is the choice.
-    if (whole || field.find('!') != std::string::npos)
+    if (field.find('!') != std::string::npos)
         field += '\n' + m.raw + '\x1f' + m.text + '\x1f' + m.translation;
+    // Lua reading the Lines (`orgline.text`) takes their strings; times are
+    // only numbers to it.
+    else if (whole)
+        field += '\n' + m.effect + '\x1f' + m.text + '\x1f' + m.translation;
     return field;
 }
 
 TemplateEditorController::TrustState TemplateEditorController::stateOf(const application::EditSession &s)
 {
     TrustState out;
-    // A template that puts an Actor or Style into an expression (`!$actor!`:
-    // the template brings the `!`s) makes any of them Lua, run or not as the
-    // rest of its Line decides: then every karaoke Line is the whole Line.
-    // The templater reads the name in any case (`$ACTOR`), so this does too.
+    // Lua in the templates (a code Line, or a template's `!` expression) can
+    // read every karaoke Line (`orgline.text`, `$actor` in `!$actor!`): then
+    // each one is trusted with its text, translation and Effect too.
     bool whole = false;
     forEachRunLine(s, [&](const core::LineRecord &l) {
-        if (application::templateKindOf(l)) {
+        if (const auto kind = application::templateKindOf(l)) {
             const std::string form = formOf(l);
             out.templates += std::to_string(l.id.value) + ':' + std::to_string(form.size()) + ':' + form;
-            std::string text = application::macroLineOf(l).text;
-            std::ranges::transform(text, text.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
-            whole = whole || (text.find('!') != std::string::npos &&
-                              (text.find("$actor") != std::string::npos || text.find("$style") != std::string::npos));
+            whole = whole || *kind == application::TemplateKind::Code ||
+                    application::macroLineOf(l).text.find('!') != std::string::npos;
         }
     });
     forEachRunLine(s, [&](const core::LineRecord &l) {
