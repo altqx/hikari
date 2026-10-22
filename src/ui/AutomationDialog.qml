@@ -586,6 +586,8 @@ DialogWindow {
             // Text that is no number: it goes back to the value when committed.
             readonly property bool notANumber: isNaN(typed) && text.trim() !== ""
             readonly property bool bad: outOfRange || notANumber
+            // An intedit's decimal, which the field cuts to a whole number.
+            readonly property bool truncated: isInt && !isNaN(typed) && /[.,eE]/.test(text)
             readonly property string rangeText: {
                 if (hasLo && hasHi)
                     return steps && !isInt ? qsTr("%1 to %2, in steps of %3").arg(shown(lo)).arg(shown(hi)).arg(shown(step))
@@ -596,8 +598,9 @@ DialogWindow {
                     return qsTr("At most %1").arg(shown(hi))
                 return ""
             }
-            readonly property string overflowText: bad
-                ? qsTr("%1 becomes %2 when you leave the field.").arg(text).arg(shown(outOfRange ? clamp(typed) : value))
+            readonly property string overflowText: bad || truncated
+                ? qsTr("%1 becomes %2 when you leave the field.").arg(text)
+                      .arg(shown(outOfRange ? clamp(typed) : notANumber ? value : typed))
                 : ""
             readonly property string overflowLongest: qsTr("%1 becomes %2 when you leave the field.")
                 .arg(shown(hasHi ? hi : hasLo ? lo : value)).arg(shown(hasHi ? hi : hasLo ? lo : value))
@@ -606,15 +609,15 @@ DialogWindow {
             property real oldX: 0
             property real oldY: 0
 
-            // Decimal text only (a comma for the point; an exponent for a
-            // floatedit), as the controller reads it: not 0x10 or Infinity.
+            // Decimal text only (a comma for the point, an exponent), as the
+            // controller reads it: not 0x10 or Infinity. An intedit cuts a
+            // decimal toward zero (legacy NumCtrl::GetInt).
             function parse(t) {
                 const s = String(t).trim().replace(",", ".")
-                const decimal = isInt ? /^[-+]?[0-9]+$/ : /^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?$/
-                if (!decimal.test(s))
+                if (!/^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?$/.test(s))
                     return NaN
                 const n = Number(s)
-                return isFinite(n) ? n : NaN
+                return !isFinite(n) ? NaN : isInt ? Math.trunc(n) : n
             }
             // The digits after the point a number is written with (-1: in
             // exponent form).
@@ -773,13 +776,12 @@ DialogWindow {
     Component {
         id: dropdownControl
         // Ten items or fewer: a plain list (a letter jumps to the next item
-        // starting with it). More: typing opens the list with a filter field;
-        // the matches keep the script's order, the first is current, Enter
-        // picks it, Esc closes the list only. The keyboard stays on the
-        // dropdown while its list is open (the list may be a window of its
-        // own, which the dropdown would close on losing the keys). A value
-        // that is none of the items shows blank and is returned untouched
-        // (legacy).
+        // starting with it), the keyboard staying on the dropdown. More:
+        // typing (or Space) opens the list with a filter field, which takes
+        // the keys and an input method's text; the matches keep the
+        // script's order, the first is current, Enter picks it, Esc closes
+        // the list only. A value that is none of the items shows blank and
+        // is returned untouched (legacy).
         ComboBox {
             id: dropdown
             readonly property var spec: parent ? parent.spec : ({})
@@ -820,7 +822,7 @@ DialogWindow {
                     return
                 }
                 fit()
-                if (filters && event.text.length === 1 && event.text >= " "
+                if (filters && event.text.length === 1 && event.text > " "
                         && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier))) {
                     event.accepted = true
                     openFiltered(event.text)
@@ -828,7 +830,7 @@ DialogWindow {
             }
             // A key while the list is open: it moves the current row, picks
             // it (Enter, Space without a filter), closes the list (Esc) or,
-            // with a filter, edits the filter.
+            // in a short list, jumps to an item.
             function listKey(event) {
                 const view = popup.contentItem.view
                 event.accepted = true
@@ -846,11 +848,6 @@ DialogWindow {
                 else if (!filters && event.text.length === 1 && event.text > " "
                          && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)))
                     typeAhead(event.text.toLowerCase())
-                else if (filters && event.key === Qt.Key_Backspace)
-                    setFilter(filter.slice(0, -1))
-                else if (filters && event.text.length === 1 && event.text >= " "
-                         && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)))
-                    setFilter(filter + event.text)
                 else {
                     // Tab closes the list and moves on; the rest are the dropdown's.
                     if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
@@ -892,33 +889,48 @@ DialogWindow {
                 width: Math.max(60, Math.min(Math.max(dropdown.width, 180), roomRight))
                 implicitHeight: Math.min(wanted, room)
                 padding: 4
-                focus: false // the keys stay on the dropdown
+                // In the dialog: a list window would close on losing the keys.
+                popupType: Popup.Item
+                focus: false // the keys stay on the dropdown, or go to the filter
                 closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
                 onAboutToShow: {
                     if (!dropdown.filters)
                         dropdown.filter = ""
                     view.currentIndex = dropdown.filters && dropdown.filter !== "" ? 0
                                         : Math.max(0, dropdown.matches.indexOf(dropdown.currentIndex))
+                    if (dropdown.filters) {
+                        filterField.text = dropdown.filter
+                        filterField.forceActiveFocus(Qt.PopupFocusReason)
+                    }
                 }
+                onAboutToHide: if (filterField.activeFocus) dropdown.forceActiveFocus(Qt.PopupFocusReason)
                 onOpened: view.positionViewAtIndex(view.currentIndex, ListView.Contain)
                 onClosed: dropdown.filter = ""
                 background: PopoverBackground {}
                 contentItem: ColumnLayout {
                     readonly property alias view: view
                     spacing: 4
-                    // Shows the filter the dropdown's keys type (it takes no keys).
+                    // The filter; the list's keys go on to the dropdown.
                     TextField {
                         id: filterField
                         objectName: "dropdownFilter"
                         visible: dropdown.filters
                         Layout.fillWidth: true
-                        text: dropdown.filter
-                        readOnly: true
-                        focusPolicy: Qt.NoFocus
-                        activeFocusOnPress: false
-                        cursorVisible: true
-                        cursorPosition: text.length
+                        focusPolicy: Qt.ClickFocus
                         placeholderText: qsTr("Type to filter")
+                        onTextEdited: dropdown.setFilter(text)
+                        Keys.onPressed: event => {
+                            if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
+                                event.accepted = true
+                                const back = event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) !== 0
+                                list.close()
+                                dropdown.nextItemInFocusChain(!back).forceActiveFocus(back ? Qt.BacktabFocusReason
+                                                                                           : Qt.TabFocusReason)
+                            } else if ([Qt.Key_Up, Qt.Key_Down, Qt.Key_PageUp, Qt.Key_PageDown, Qt.Key_Return,
+                                        Qt.Key_Enter, Qt.Key_Escape].indexOf(event.key) >= 0) {
+                                dropdown.listKey(event)
+                            }
+                        }
                     }
                     ListView {
                         id: view

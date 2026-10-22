@@ -14,6 +14,10 @@ using application::DialogValueType;
 
 namespace {
 
+// A script's grid is at most 256 cells each way: a place or span as large
+// as 2^31 would lay out that many empty columns first.
+constexpr int kGridCells = 256;
+
 bool isColour(const std::string &kind)
 {
     return kind == "color" || kind == "coloralpha";
@@ -60,10 +64,10 @@ void AutomationDialogController::present(const QString &title, const application
             {QStringLiteral("kind"), QString::fromStdString(c.kind)},
             {QStringLiteral("name"), QString::fromStdString(c.name)},
             {QStringLiteral("hint"), QString::fromStdString(c.hint)},
-            {QStringLiteral("x"), std::max(0, c.x)},
-            {QStringLiteral("y"), std::max(0, c.y)},
-            {QStringLiteral("width"), std::max(1, c.width)},
-            {QStringLiteral("height"), std::max(1, c.height)},
+            {QStringLiteral("x"), std::clamp(c.x, 0, kGridCells - 1)},
+            {QStringLiteral("y"), std::clamp(c.y, 0, kGridCells - 1)},
+            {QStringLiteral("width"), std::clamp(c.width, 1, kGridCells)},
+            {QStringLiteral("height"), std::clamp(c.height, 1, kGridCells)},
             {QStringLiteral("label"), QString::fromStdString(c.label)},
             {QStringLiteral("text"), QString::fromStdString(c.text)},
             {QStringLiteral("intValue"), c.intValue},
@@ -78,7 +82,7 @@ void AutomationDialogController::present(const QString &title, const application
             {QStringLiteral("checked"), c.checked},
             {QStringLiteral("items"), items},
         };
-        m_columns = std::max(m_columns, std::max(0, c.x) + std::max(1, c.width));
+        m_columns = std::max(m_columns, std::clamp(c.x, 0, kGridCells - 1) + std::clamp(c.width, 1, kGridCells));
     }
     m_buttons.clear();
     if (request.buttons.empty())

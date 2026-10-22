@@ -11,6 +11,7 @@
 #include <QAccessible>
 #include <QCursor>
 #include <QFile>
+#include <QInputMethodEvent>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -567,6 +568,17 @@ private slots:
         QTRY_VERIFY2(hint().contains(QStringLiteral("4x becomes 497")), qPrintable(hint()));
         QTest::keyClick(window, Qt::Key_Tab);
         QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
+        i->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("45,9")); // a decimal is cut toward zero (legacy)
+        QVERIFY(!i->property("bad").toBool());
+        QTRY_VERIFY2(hint().contains(QStringLiteral("45,9 becomes 45")), qPrintable(hint()));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(i->property("text").toString(), QStringLiteral("45"));
+        i->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("497"));
+        QTest::keyClick(window, Qt::Key_Tab);
         wheelBy(i, 60); // half notches add up
         QCOMPARE(i->property("text").toString(), QStringLiteral("497"));
         wheelBy(i, 60);
@@ -742,7 +754,9 @@ private slots:
         const QRectF at = listItem->mapRectToScene(QRectF(0, 0, listItem->width(), listItem->height()));
         QVERIFY2(at.top() >= 0 && at.bottom() <= window->height(), qPrintable(QString::number(at.bottom())));
         QVERIFY2(at.right() <= window->width(), qPrintable(QString::number(at.right())));
-        QVERIFY(m->hasActiveFocus()); // the keys stay on the dropdown
+        auto *filterField = qobject_cast<QQuickItem *>(findNamed(listItem, QStringLiteral("dropdownFilter")));
+        QVERIFY(filterField && filterField->hasActiveFocus()); // the filter takes the keys
+        QCOMPARE(filterField->property("text").toString(), QStringLiteral("f"));
         type(window, QStringLiteral("ad"));
         QCOMPARE(m->property("filter").toString(), QStringLiteral("fad"));
         QCOMPARE(m->property("matches").toList().size(), 4);
@@ -761,6 +775,31 @@ private slots:
         QVERIFY(window->isVisible()); // the list's Esc
         QVERIFY(!result.has_value());
         QCOMPARE(m->property("currentText").toString(), QStringLiteral("fade right"));
+        QVERIFY(m->hasActiveFocus());
+        // Space opens it unfiltered; an input method's text filters it.
+        QTest::keyClick(window, Qt::Key_Space);
+        QTRY_VERIFY(popup->property("opened").toBool());
+        QCOMPARE(m->property("filter").toString(), QString());
+        QTRY_VERIFY(filterField->hasActiveFocus());
+        QInputMethodEvent composing(QStringLiteral("ri"), {});
+        QCoreApplication::sendEvent(filterField, &composing);
+        QCOMPARE(m->property("filter").toString(), QString()); // still composing
+        QInputMethodEvent committed;
+        committed.setCommitString(QStringLiteral("ring"));
+        QCoreApplication::sendEvent(filterField, &committed);
+        QCOMPARE(m->property("filter").toString(), QStringLiteral("ring"));
+        QCOMPARE(m->property("matches").toList().size(), 1);
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QCOMPARE(m->property("currentText").toString(), QStringLiteral("ring"));
+        QVERIFY(m->hasActiveFocus());
+        // Tab from the filter closes the list and moves on.
+        QTest::keyClick(window, 'd');
+        QTRY_VERIFY(popup->property("opened").toBool());
+        QTest::keyClick(window, Qt::Key_Tab);
+        QTRY_VERIFY(!popup->property("visible").toBool());
+        QTRY_VERIFY(controlItem(1)->hasActiveFocus());
+        QCOMPARE(m->property("currentText").toString(), QStringLiteral("ring"));
 
         QQuickItem *s = controlItem(1);
         QVERIFY(!s->property("filters").toBool());
@@ -775,7 +814,7 @@ private slots:
         QCOMPARE(controlItem(2)->property("currentIndex").toInt(), -1);
         press(0);
         QVERIFY(result.has_value());
-        QCOMPARE(std::get<std::string>(result->values[0]), std::string("fade right"));
+        QCOMPARE(std::get<std::string>(result->values[0]), std::string("ring"));
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("b"));
         QCOMPARE(std::get<std::string>(result->values[2]), std::string("zzz"));
     }
@@ -865,6 +904,18 @@ private slots:
         const QPointF across = controlItem(39)->mapToItem(scroll, QPointF(0, 0));
         QVERIFY2(across.x() >= 0 && across.x() + controlItem(39)->width() <= scroll->width(),
                  qPrintable(QString::number(across.x())));
+        window->close();
+        QTRY_VERIFY(result.has_value());
+
+        DialogRequest huge; // a span of 2^31 - 1: bounded to the grid's 256 cells, shown at once
+        huge.controls = {DialogControl{.kind = "edit", .name = "e", .x = 2147483646, .y = 2147483646,
+                                       .width = 2147483647, .height = 2147483647, .text = ""}};
+        showDialog(huge, result);
+        const QVariantMap spec = controller->property("controls").toList().value(0).toMap();
+        QCOMPARE(spec.value(QStringLiteral("x")).toInt(), 255);
+        QCOMPARE(spec.value(QStringLiteral("width")).toInt(), 256);
+        QCOMPARE(spec.value(QStringLiteral("height")).toInt(), 256);
+        QVERIFY(window->width() <= room.width());
         window->close();
         QTRY_VERIFY(result.has_value());
     }
