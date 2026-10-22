@@ -133,7 +133,9 @@ Tokens tokenize(std::u16string_view raw)
             out.pieces.push_back({false, textStart, end, {}});
     };
     for (std::size_t i = 0; i < raw.size();) {
-        if (raw[i] == u'}') {
+        // libass shows "\{" and "\}" as braces: the text is read as having
+        // no tags rather than lose one (the projection takes them as tags).
+        if (raw[i] == u'}' || (raw[i] == u'\\' && i + 1 < raw.size() && (raw[i + 1] == u'{' || raw[i + 1] == u'}'))) {
             out.malformed = true;
             return out;
         }
@@ -482,10 +484,19 @@ struct Budget {
     }
 };
 
-// A \t with no override tag in it, which libass skips.
+// A \t with no override tag in it that changes anything (none at all, or
+// only ones libass does not know), which libass skips or that does nothing.
 bool isEmptyTransform(const Tag &tag)
 {
-    return tag.name == u"t" && tag.args.find(u'\\') == std::u16string::npos;
+    if (tag.name != u"t")
+        return false;
+    std::size_t order = 0;
+    for (const auto &nested : parseBlock(tag.args, order)) {
+        const auto kind = effectOf(nested.name).kind;
+        if (kind != Kind::None && kind != Kind::Reset && kind != Kind::Transform)
+            return false;
+    }
+    return true;
 }
 
 // Whether applying `tag` may change the formatting state.
@@ -815,22 +826,30 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         out.malformed = true;
         return out;
     };
+    bool drawingNow = false; // \p as the renderer is at each piece
     for (const auto &piece : tokens.pieces) {
+        if (!piece.block && drawingNow) {
+            out.drawing = true;
+            return out;
+        }
         for (const auto &tag : piece.tags) {
             if (effectOf(tag.name).kind == Kind::Reset) {
                 const auto name = std::u16string(trimmed(tag.args));
                 const auto u8name = toUtf8(name);
-                const auto named = std::ranges::find_if(styles, [&](const StyleValues &s) { return s.name == u8name; });
-                if (!name.empty() && named != styles.end() && !out.named.contains(name)) {
+                // The last Style of the name, as libass's lookup_style.
+                const auto named = std::ranges::find_if(std::views::reverse(styles),
+                                                        [&](const StyleValues &s) { return s.name == u8name; });
+                if (!name.empty() && named != std::views::reverse(styles).end() && !out.named.contains(name)) {
                     out.named[name] = defaultsFor(&*named);
                     if (!budget.spend(unitsOf(out.named[name])))
                         return tooMuch();
                 }
             }
-            // libass reads \p as a whole number and clamps it to 0 and up.
-            if (const auto scale = tag.name == u"p" ? numberIn(tag.args) : std::nullopt; scale && *scale >= 1) {
-                out.drawing = true;
-                return out;
+            // libass reads \p as a whole number and clamps it to 0 and up;
+            // a later \p0 is text again.
+            if (tag.name == u"p") {
+                const auto scale = numberIn(tag.args);
+                drawingNow = scale && *scale >= 1;
             }
             out.karaoke = out.karaoke || isKaraoke(tag.name);
         }
@@ -927,6 +946,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             if (isLeading && effect.kind == Kind::Reset) {
                 if (!budget.spend(unitsOf(state)))
                     return tooMuch();
+                leadingSetters.clear(); // what it undid restores nothing (a \t)
                 for (const auto &component : state | std::views::keys)
                     leadingSetters[component] = {tag.order, tag.text};
             }
@@ -1066,7 +1086,8 @@ std::u16string composeTranslation(const OriginalTags &tags, const TranslationDra
     return out;
 }
 
-TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view translation)
+TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view translation,
+                                 std::span<const int> order)
 {
     TranslationDraft plain;
     if (translation.empty())
@@ -1204,6 +1225,37 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
             return std::nullopt;
         return draft;
     };
+    // The runs as last placed, by position, first: each group with
+    // formatting is the next of them, exactly or under more, or the
+    // translator's own.
+    if (!order.empty()) {
+        std::vector<int> hinted(segments.size(), 0);
+        std::vector<bool> taken(tags.runs.size(), false);
+        std::size_t next = 0;
+        for (const auto &group : groups) {
+            const auto &differs = segments[group.first].differs;
+            if (differs.empty())
+                continue;
+            int label = -1;
+            if (next < order.size()) {
+                if (const TagRun *run = runAt(tags, order[next]); run && !taken[run->number - 1]) {
+                    const bool within = std::ranges::all_of(run->differs, [&](const auto &value) {
+                        const auto it = differs.find(value.first);
+                        return it != differs.end() && it->second == value.second;
+                    });
+                    if (within) {
+                        taken[run->number - 1] = true;
+                        label = run->number;
+                        ++next;
+                    }
+                }
+            }
+            std::fill(hinted.begin() + group.first, hinted.begin() + group.last + 1, label);
+        }
+        if (next == order.size())
+            if (auto draft = read(hinted))
+                return *draft;
+    }
     if (under != labels)
         if (auto draft = read(under))
             return *draft;

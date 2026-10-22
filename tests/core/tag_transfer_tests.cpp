@@ -522,6 +522,9 @@ TEST(TagTransfer, ATransformWithNoTagIsNoRun)
     // libass skips a \t with no override tag in it.
     EXPECT_TRUE(readOriginalTags(u"a {\\t()}b{\\r} c").runs.empty());
     EXPECT_TRUE(readOriginalTags(u"a {\\t(0,10,1)}b{\\r} c").runs.empty());
+    // Nor with only tags it does not know.
+    EXPECT_TRUE(readOriginalTags(u"a {\\t(\\foo1)}b{\\r} c").runs.empty());
+    EXPECT_EQ(readOriginalTags(u"a {\\t(\\fs20)}b{\\r} c").runs.size(), 1u);
 }
 
 TEST(TagTransfer, AColourTakesOnlyAnUppercaseH)
@@ -609,6 +612,57 @@ TEST(TagTransfer, LongStyleValuesAndTheirComparisonsAreBounded)
         many += u"\\i0";
     many += u"}b {\\i1}c{\\i0} d";
     EXPECT_TRUE(readOriginalTags(many, &style, styles).malformed);
+}
+
+TEST(TagTransfer, EscapedBracesCarryNothing)
+{
+    // libass shows "\{" as a brace: no tag is read, Paste all copies it all.
+    const std::u16string original = u"Say \\{name\\} {\\i1}x{\\i0} y";
+    const auto tags = readOriginalTags(original);
+    EXPECT_TRUE(tags.malformed);
+    EXPECT_EQ(u8(draftOfOriginal(original, tags).body), u8(original));
+}
+
+TEST(TagTransfer, ANamedResetTakesTheLastStyleOfTheName)
+{
+    StyleValues plain, first, last;
+    plain.name = u8"Default";
+    first.name = last.name = u8"A";
+    last.bold = true;
+    const std::vector<StyleValues> styles{plain, first, last};
+    // libass's lookup_style: the bold A, so \b0 parts b from c.
+    const auto tags = readOriginalTags(u"a {\\rA}b{\\b0}c{\\r} d", &plain, styles);
+    ASSERT_EQ(tags.runs.size(), 2u);
+    EXPECT_EQ(u8(tags.runs[0].text), "b");
+}
+
+TEST(TagTransfer, AnOrderAsPlacedDecidesARunUnderOwnFormatting)
+{
+    const auto tags = readOriginalTags(u"a {\\i1}b{\\i0} c {\\b1}d{\\b0} e");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    // Run 2 (bold) on the translator's own italic x: italic and bold, which
+    // run 1 could be read under too.
+    const auto d = draft(u"{\\i1}x{\\i0} y", {{5, 6, 2}});
+    const auto saved = composeTranslation(tags, d);
+    const auto read = readTranslation(tags, saved, std::vector<int>{2});
+    ASSERT_EQ(read.placements.size(), 1u) << u8(saved);
+    EXPECT_EQ(read.placements[0].run, 2);
+    EXPECT_EQ(composeTranslation(tags, read), saved);
+}
+
+TEST(TagTransfer, TextModeAgainIsNoDrawing)
+{
+    // \p0 after \p1: the renderer draws nothing, \an8 still applies.
+    const auto tags = readOriginalTags(u"{\\p1\\p0\\an8}Hello");
+    EXPECT_FALSE(tags.drawing);
+    EXPECT_EQ(u8(tags.leading), "{\\p1\\p0\\an8}");
+}
+
+TEST(TagTransfer, ALeadingResetEndsWhatItUndid)
+{
+    // The \t before the reset ends nothing after it: the run on b has no
+    // closing and is not offered.
+    EXPECT_TRUE(readOriginalTags(u"{\\t(\\fs20)\\r}a {\\t(\\bord2)}b").runs.empty());
 }
 
 TEST(TagTransfer, ARunOfSpacesAloneIsNoRun)

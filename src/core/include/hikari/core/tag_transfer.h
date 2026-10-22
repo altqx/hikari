@@ -42,6 +42,7 @@ struct TagSetter {
     // False for a closing the Original did not write after the run (the
     // leading spelling, or an empty reset): left out at the translation's end.
     bool written = true;
+    bool operator==(const TagSetter &) const = default;
 };
 
 struct TagRun {
@@ -52,6 +53,7 @@ struct TagRun {
     TagState differs;                             // where it differs from the base
     std::map<std::u16string, TagSetter> opens;    // the tag that sets each value
     std::map<std::u16string, TagSetter> closes;   // the tag that restores the base
+    bool operator==(const TagRun &) const = default;
 };
 
 struct OriginalTags {
@@ -71,6 +73,7 @@ struct OriginalTags {
     // than kMaxTagTransferUnits / kMaxTagTransferTags, or whose formatting
     // (the Styles its resets name) would copy too much to read.
     bool malformed = false;
+    bool operator==(const OriginalTags &) const = default;
 };
 
 // A text past either is read as having no runs (an Original: malformed).
@@ -109,7 +112,10 @@ std::u16string composeTranslation(const OriginalTags &tags, const TranslationDra
                                   std::vector<RunPlacement> *placed = nullptr);
 // The draft that composes back to `translation` exactly. Formatting that
 // matches no run stays in the body as the translator's own tags.
-TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view translation);
+// `order`, the runs placed by position as last composed (runOrder), decides
+// a span two runs could be read as under the translator's own formatting.
+TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view translation,
+                                 std::span<const int> order = {});
 
 // Moves placements for an edit that replaced the body's [start, end) with
 // `inserted` UTF-16 units. Text typed at a run's start joins it; text typed
