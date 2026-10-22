@@ -1322,13 +1322,12 @@ DialogWindow {
         Layout.fillWidth: true
         Layout.fillHeight: true
         // The sidebar: the filter, the catalog and its Styles, the copies,
-        // this file's Styles. It narrows to its strips' width (260 pixels
-        // here) before the editor has to scroll sideways (1280 x 800 at
-        // 150 %).
+        // this file's Styles. It narrows to its icon strips' width (260
+        // pixels here) before the editor has to scroll sideways (1280 x 800
+        // at 150 %); the copies' texts, wider in some fonts, wrap instead.
         Rectangle {
             objectName: "styleSidebar"
-            readonly property real narrowest: Math.max(260, Math.ceil(Math.max(storeTools.implicitWidth,
-                                                                               copyRow.implicitWidth)) + 24)
+            readonly property real narrowest: Math.max(260, Math.ceil(storeTools.implicitWidth) + 24)
             color: Theme.background
             Layout.preferredWidth: Math.max(narrowest, Math.min(300, body.width - 1 - editorScroll.narrowest
                                                                          - (editorScroll.width - editorScroll.availableWidth)))
@@ -1415,9 +1414,10 @@ DialogWindow {
                         anchors.fill: parent
                     }
                 }
-                RowLayout {
+                Flow {
                     id: copyRow
                     spacing: 6
+                    Layout.fillWidth: true
                     Layout.topMargin: 2
                     IconTextButton {
                         objectName: "addToAss"
