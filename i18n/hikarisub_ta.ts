@@ -1464,6 +1464,18 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>%1 were changed by another program.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving writes over those changes.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save over it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Open subtitles</source>
         <translation type="unfinished">வசன வரிகள் திற</translation>
     </message>
