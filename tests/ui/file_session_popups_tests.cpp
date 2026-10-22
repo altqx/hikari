@@ -384,6 +384,44 @@ private slots:
         QVERIFY(!QFileInfo::exists(path));
     }
 
+    // A save that won't write over the file (a read-only file's question,
+    // a Save As) doesn't ask about it: Save all's question leaves it out,
+    // and the change on disk stays unaccepted.
+    void aSaveAllThatDoesNotWriteTheFileLeavesItsBar()
+    {
+        start();
+        const QString path = writeAss(dir.filePath(QStringLiteral("disk/locked.ass")), "mine");
+        QVERIFY(application->openFile(path));
+        changeOnDisk(path, "theirs");
+        QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
+        QTRY_VERIFY(shown("diskChangeBar"));
+        application->duplicateLines();
+        QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::ReadUser);
+        auto writable = qScopeGuard([&] { QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner); });
+        if (QFileInfo(path).isWritable()) // root (CI containers) writes read-only files
+            QSKIP("Read-only files are writable for this user");
+        const qulonglong id = application->workspace().editingTarget()->value;
+        QCOMPARE(application->saveRouteFor(id), QStringLiteral("readonly"));
+        QVERIFY(QMetaObject::invokeMethod(window, "saveAllTabs", Q_ARG(QVariant, QVariant())));
+        QObject *messages = named("messages");
+        QVERIFY(messages);
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = qvariant_cast<QQuickWindow *>(messages->property("box"))) && box->isVisible());
+        QVERIFY(!shown("diskSaveQuestion"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("“locked.ass” is read-only."));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QVERIFY(shown("diskChangeBar"));
+        // Writable again, a save still asks first.
+        writable.dismiss();
+        QFile::setPermissions(path, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
+        QVERIFY(QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(shown("diskSaveQuestion"));
+        QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!shown("diskSaveQuestion"));
+        QVERIFY(readAll(path).contains("theirs"));
+    }
+
     // Saved under another name, the bar about the file it came from goes.
     void saveAsEndsTheDiskChangeBar()
     {

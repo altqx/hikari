@@ -144,6 +144,30 @@ private slots:
         QVERIFY(readAll(path).contains(",,saved"));
     }
 
+    // PU1-unsaved-window: one Document's question closes at its answer, so
+    // another tab can be chosen while the save is written: the reviewed
+    // tab closes, the chosen one stays.
+    void theReviewedTabClosesThoughAnotherWasChosenMeanwhile()
+    {
+        app::Application a;
+        const QString path = writeFile(dir, "reviewed.ass", "x");
+        QVERIFY(a.openFile(path));
+        const auto reviewed = *a.workspace().editingTarget();
+        edit(a, u8"saved");
+        QSignalSpy finished(&a, &app::Application::closeFinished);
+        a.resolveClose(choose(a.reviewClose(QStringLiteral("close")), true));
+        a.addPage();
+        const auto other = *a.workspace().editingTarget();
+        QVERIFY(other != reviewed);
+        a.waitForWrites();
+        QTRY_COMPARE(finished.size(), 1);
+        QVERIFY(finished.first().at(0).toBool());
+        QVERIFY(!a.files().session(reviewed));
+        QVERIFY(a.files().session(other));
+        QCOMPARE(a.workspace().editingTarget(), std::optional(other));
+        QVERIFY(readAll(path).contains(",,saved"));
+    }
+
     void newerEditsAfterTheChoiceKeepTheDocumentOpen()
     {
         app::Application a;

@@ -7523,6 +7523,34 @@ private slots:
         QCOMPARE(application->files().session(drafted)->document().lines().size(), lines);
     }
 
+    // PU1-mkv-notices: a load File > Open started on Home has its progress
+    // there; a Document opened while the file is read keeps its tab, and
+    // the track opens in a new one.
+    void anMkvOpenedOnHomeKeepsADocumentOpenedMeanwhile()
+    {
+        auto &matroska = application->matroska();
+        auto *dialog = named("subtitlesOpenDialog");
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(dialog && chooser);
+        auto *root = engine->rootObjects().first();
+        QVERIFY(!application->workspace().editingTarget());
+        dialog->setProperty("selectedFile", QUrl::fromLocalFile(nativeFixture("mkvextract.mkv")));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accepted"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QCOMPARE(root->property("mkvTab").toString(), QStringLiteral("home"));
+        QVERIFY(application->openFile(writeFile(dir, "home.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,kept\n")));
+        const auto opened = *application->workspace().editingTarget();
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != opened, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(2));
+        auto *kept = application->files().session(opened);
+        QVERIFY(kept);
+        QCOMPARE(kept->document().lines().size(), std::size_t(1));
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*application->workspace().editingTarget())),
+                 QStringLiteral("mkvextract.ass"));
+    }
+
     // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
     // 20d647c4) on an MKV file: OnMkvSubs on that file (Demux reads its
     // subtitle track, every block of it) instead of reading the Matroska
