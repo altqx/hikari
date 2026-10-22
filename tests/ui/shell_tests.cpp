@@ -6698,6 +6698,15 @@ private slots:
         auto *accept = dialogItem("conversionDialog", "conversionAccept");
         QVERIFY(accept->property("enabled").toBool());
         QVERIFY(!losses().contains(QStringLiteral("Times changed")));
+        // MicroDVD keeps no formatting: its row is a warning.
+        {
+            const QVariantMap p = dialog->property("preview").toMap();
+            const QStringList rows = p.value(QStringLiteral("losses")).toStringList();
+            const auto row = std::find_if(rows.begin(), rows.end(),
+                                          [](const QString &r) { return r.startsWith(QLatin1String("Formatting tags")); });
+            QVERIFY2(row != rows.end(), qPrintable(rows.join(u'|')));
+            QCOMPARE(p.value(QStringLiteral("kinds")).toStringList().value(int(row - rows.begin())), QStringLiteral("warning"));
+        }
         // A frame rate of 0, typed: said under the field, Convert off.
         auto *fps = dialogItem("conversionDialog", "convFps");
         fps->setProperty("text", QStringLiteral("0"));
@@ -6762,6 +6771,16 @@ private slots:
         QVERIFY(accept->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "conversionCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        // A plan made with the video's frame rate is refused once the video
+        // is another (here none): Convert shows the new preview instead.
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
+        application->setConversionOptions({{QStringLiteral("fpsFromVideo"), true}});
+        QVERIFY(application->previewConversion(QStringLiteral("mdvd")).value(QStringLiteral("ok")).toBool());
+        QVERIFY(application->video().unloadVideo());
+        QVERIFY(!application->acceptConversion());
         application->setConversionOptions(kept);
         application->editor().discard();
     }

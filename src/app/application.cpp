@@ -4865,10 +4865,12 @@ QVariantMap Application::previewConversion(const QString &targetName)
         add(QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved), true);
     if (r.reordered)
         add(QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time."), false);
+    // Into ASS the markup is converted; into another format some of it is
+    // stripped for good, a warning.
     if (r.textChanged)
         add(QCoreApplication::translate("HikariSub.Conversion", "Formatting tags converted or removed in %n line(s).", nullptr,
                                         r.textChanged),
-            false);
+            *target != core::SubtitleFormat::Ass);
     if (r.fieldsDropped)
         add(*target == core::SubtitleFormat::Ass
                 ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style \"%1\".", nullptr,
@@ -4888,7 +4890,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
                                         r.timesChanged),
             false);
     m_conversionPlan = std::make_unique<ConversionPlan>(
-        ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, std::move(result->document)});
+        ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, frameMs, std::move(result->document)});
     return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}, {QStringLiteral("kinds"), kinds}};
 }
 
@@ -4897,9 +4899,13 @@ bool Application::acceptConversion()
     auto plan = std::move(m_conversionPlan);
     auto *session = targetSession();
     const auto target = m_workspace.editingTarget();
-    // A changed Document or options invalidates the plan (C02).
+    // A changed Document or options invalidates the plan (C02), and so does
+    // another video (or none): its frame rate is in the plan.
+    const auto &video = m_video->session();
+    const float frameMs =
+        video.state() == application::VideoSession::State::Ready ? video.legacyTimebase().frameDuration() : 0.f;
     if (!plan || !session || !target || target->value != plan->document || session->revision() != plan->revision ||
-        conversionOptions() != plan->options)
+        conversionOptions() != plan->options || frameMs != plan->frameMs)
         return false;
     std::set<core::LineId> touches;
     for (const auto *line : session->document().lines())

@@ -1139,6 +1139,7 @@ private:
         std::uint64_t document = 0;
         std::uint64_t revision = 0;
         QVariantMap options;
+        float frameMs = 0.f; // the video's frame duration it was made with, 0 without one
         core::Document converted;
     };
     std::unique_ptr<ConversionPlan> m_conversionPlan;
