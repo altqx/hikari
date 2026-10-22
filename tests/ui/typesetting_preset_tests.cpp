@@ -305,6 +305,81 @@ private slots:
         stop();
     }
 
+    // A combo box over an array of objects with a text role (the Move
+    // panel window's Panel and Next to) shows each entry's text in its popup.
+    void arrayChoicesShowTheirTextRole()
+    {
+        start();
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("movePanel"), "triggered"));
+        auto *placement = window()->findChild<QQuickWindow *>(QStringLiteral("placementWindow"));
+        QVERIFY(placement);
+        QTRY_VERIFY(placement->isVisible());
+        QObject *box = findVisual(placement->contentItem(), QStringLiteral("placementPanel"));
+        QVERIFY(box);
+        auto *popup = box->property("popup").value<QObject *>();
+        QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+        QTRY_VERIFY(popup->property("opened").toBool());
+        auto *list = qobject_cast<QQuickItem *>(popup->property("contentItem").value<QObject *>());
+        QVERIFY(list);
+        QQuickItem *first = nullptr;
+        QTRY_VERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, first), Q_ARG(int, 0)) && first);
+        QCOMPARE(first->property("text").toString(), dock("videoDock")->property("title").toString());
+        QVERIFY(!first->property("text").toString().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+        placement->close();
+        stop();
+    }
+
+    // The panel follows the editing target: with no Document left (its
+    // last tab closed) New is off and the empty state says why.
+    void noDocumentTurnsNewOff()
+    {
+        start();
+        openEpisode();
+        applyPreset("Typesetting");
+        QTRY_VERIFY(item<QObject>("stylesNew")->property("enabled").toBool());
+        // Opened files always have ASS Styles (SSA's are converted on open).
+        QVERIFY(application->closeEditingTarget());
+        QTRY_VERIFY(!item<QObject>("stylesNew")->property("enabled").toBool());
+        QTRY_VERIFY(item("stylesEmpty")->property("text").toString().startsWith(QStringLiteral("No styles: the file")));
+        stop();
+    }
+
+    // Two Styles of one name (a file may hold them): the commands act on the
+    // row chosen, not the first of that name.
+    void aDuplicateNameActsOnTheRowChosen()
+    {
+        start();
+        const QString path = dir.filePath(QStringLiteral("twice.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Sign,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n"
+                "Style: Sign,Georgia,64,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n"
+                "Style: Other,Arial,30,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Other,,0,0,0,,first\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        applyPreset("Typesetting");
+        auto *panel = item<QObject>("stylesTool");
+        QTRY_COMPARE(panel->property("rows").toList().size(), 3);
+        auto *list = item("stylesList");
+        list->setProperty("currentIndex", 1);
+        QCOMPARE(panel->property("chosenAt").toInt(), 1);
+        QCOMPARE(panel->property("chosen").toString(), QStringLiteral("Sign"));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("stylesDelete"), "clicked"));
+        QTRY_COMPARE(panel->property("rows").toList().size(), 2);
+        const auto rows = panel->property("rows").toList();
+        QCOMPARE(rows.at(0).toMap().value("name").toString(), QStringLiteral("Sign"));
+        QCOMPARE(rows.at(0).toMap().value("font").toString(), QStringLiteral("Arial")); // the first one stays
+        QCOMPARE(rows.at(1).toMap().value("name").toString(), QStringLiteral("Other"));
+        stop();
+    }
+
     // The rows: the editing target's Styles in order, with their font, size,
     // colours and how many Lines use each; the current line's style marked.
     void theStylesPanelListsTheDocumentsStyles()
