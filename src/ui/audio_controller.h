@@ -506,6 +506,7 @@ private:
     void commitKaraoke();       // KA1: the syllables' text committed as a letter split is, the view kept
     int committedStart() const; // KA1: the start the commit writes (TimingHooks::fieldTime)
     std::u16string committedKaraokeText(); // KA1: the syllables' text for it
+    void syncCommittedStart();             // KA1: in Karaoke mode the panel's start becomes it
     void makeDialogueVisible(bool force = false, bool moveToEnd = false); // legacy MakeDialogueVisible
     void splitKaraoke();                                                   // legacy Karaoke::Split
     void changeLine(int delta);

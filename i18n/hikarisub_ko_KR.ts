@@ -5794,7 +5794,15 @@ after switching from full screen</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Syllables this long switch to %1 (centiseconds)</source>
+        <source>Long syllables for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>cs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Switch long syllables between %1 and %2 changes the syllables at least this long.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

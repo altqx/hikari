@@ -68,7 +68,10 @@ bool isLatin(char32_t c)
 {
     return inRange(c, U'a', U'z') || inRange(c, U'A', U'Z') ||
            (inRange(c, 0x00C0, 0x024F) && c != 0x00D7 && c != 0x00F7) || inRange(c, 0x1E00, 0x1EFF) ||
-           inRange(c, 0xFB00, 0xFB06); // the ligatures (ﬁ, ﬃ), which the patterns know (Codex)
+           inRange(c, 0xFB00, 0xFB06) || // the ligatures (ﬁ, ﬃ), which the patterns know (Codex)
+           // IPA and Latin Extended-C to G (Codex)
+           inRange(c, 0x0250, 0x02AF) || inRange(c, 0x2C60, 0x2C7F) || inRange(c, 0xA720, 0xA7FF) ||
+           inRange(c, 0xAB30, 0xAB6F) || inRange(c, 0x10780, 0x107BF) || inRange(c, 0x1DF00, 0x1DFFF);
 }
 
 bool isApostrophe(char32_t c)

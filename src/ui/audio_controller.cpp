@@ -376,6 +376,15 @@ int AudioController::committedStart() const
     return m_hooks.fieldTime ? m_hooks.fieldTime(m_startMs) : m_startMs;
 }
 
+// KA1: in Karaoke mode the panel takes the start the commit wrote, so the
+// syllables are drawn, played and hit from the start their text is read
+// from, as a new reading of the Line would give (Codex)
+void AudioController::syncCommittedStart()
+{
+    if (m_hasKara && loaded())
+        m_startMs = committedStart();
+}
+
 // The syllables' text for that start: an earlier one lengthens the first
 // syllable; a later one (MicroDVD rounds up to a frame) first cuts the
 // syllables it passes, as moving the start does, so none is negative.
@@ -1138,6 +1147,7 @@ bool AudioController::commitChanges(bool nextLine, bool save, bool moveToEnd, ap
         request.activeOnly = activeOnly;
         committed = m_hooks.commit(request);
     }
+    syncCommittedStart();
     update(moveToEnd, scroll);
     return committed;
 }
@@ -1294,6 +1304,7 @@ void AudioController::addLead(bool in, bool out)
                         .adjacent = application::AudioAdjacent::None,
                         .karaokeText = std::move(karaokeText),
                         .duration = false}); // UpdateTimeEditCtrls: Start and End
+    syncCommittedStart();
     m_needCommit = true;
     if (options.autoCommit)
         commitChanges(false, true, false);
@@ -1326,9 +1337,9 @@ void AudioController::lostCapture()
         karaoke.karaoke = &m_karaoke;
         karaoke.fieldTime = m_hooks.fieldTime;
     }
-    if (m_timing.lostCapture(m_startMs, karaoke))
+    if (m_timing.lostCapture(m_startMs, karaoke)) // the active Line's alone, as commitKaraoke (Codex)
         commitChanges(false, timingOptions().autoCommit, false, application::AudioAdjacent::None,
-                      committedKaraokeText());
+                      committedKaraokeText(), nullptr, true);
 }
 
 application::AudioMouseResult AudioController::mouse(const application::AudioMouse &event)

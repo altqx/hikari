@@ -174,6 +174,11 @@ TEST(KaraokeAutoSplit, EnglishByHyphenation)
     EXPECT_EQ(syllables("happy story"), "hap|py |sto|ry"); // two letters at least either side
     // a ligature is a letter of its word, as the patterns read it (Codex)
     EXPECT_EQ(syllables("a\xEF\xAC\x83nity"), "a\xEF\xAC\x83n|i|ty");
+    // and so are Latin Extended-C to G's and IPA's letters (Codex): ꞵ
+    // (U+A7B5) and ɐ (U+0250) are no script boundary inside their words,
+    // which are no romaji and too short to hyphenate
+    EXPECT_EQ(syllables("a\xEA\x9E\xB5" "a"), "a\xEA\x9E\xB5" "a");
+    EXPECT_EQ(syllables("ka\xC9\x90ra"), "ka\xC9\x90ra");
     // without patterns a word is one syllable
     EXPECT_EQ(syllables("beautiful", {.hyphenate = false}), "beautiful");
 }
