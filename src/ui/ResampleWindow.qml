@@ -62,6 +62,19 @@ DialogWindow {
     function resample() {
         if (same || app.editingDocument() !== document)
             return
+        // The subtitles' resolution can change while this is open (the main
+        // window stays usable beside a floating panel): source sizes left as
+        // they opened follow it and are shown before anything is resampled.
+        const v = app.resampleValues()
+        if (v.subsWidth !== initial.subsWidth || v.subsHeight !== initial.subsHeight) {
+            const untouched = subsWidth.value === initial.subsWidth && subsHeight.value === initial.subsHeight
+            initial = v
+            if (untouched) {
+                subsWidth.value = v.subsWidth
+                subsHeight.value = v.subsHeight
+                return
+            }
+        }
         app.resample(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value, aspectChanges && stretch)
         close()
     }

@@ -6881,10 +6881,53 @@ private slots:
         QTRY_VERIFY(!resample->property("visible").toBool());
         QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"200")));
         QCOMPARE(session->document().scriptInfo(u8"PlayResY"), std::optional(std::u8string(u8"200")));
+        // PU6: the subtitles' resolution changed while the window is open
+        // (from the main window beside a floating panel): the first Resample
+        // shows the new source sizes and resamples nothing, the next one
+        // resamples from them.
+        QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+        QTRY_VERIFY(resample->property("visible").toBool());
+        dialogItem("resampleDialog", "resampleWidth")->setProperty("value", 400);
+        dialogItem("resampleDialog", "resampleHeight")->setProperty("value", 400);
+        QVERIFY(application->applyScriptProperties({{QStringLiteral("playResX"), 300}, {QStringLiteral("playResY"), 300}},
+                                                   {{QStringLiteral("playResX"), true}, {QStringLiteral("playResY"), true}}, false));
+        QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"300")));
+        {
+            const auto before = session->historySize();
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleOk"), "click"));
+            QVERIFY(resample->property("visible").toBool());
+            QCOMPARE(session->historySize(), before);
+            QCOMPARE(dialogItem("resampleDialog", "resampleSubsWidth")->property("value").toInt(), 300);
+            QCOMPARE(dialogItem("resampleDialog", "resampleSubsHeight")->property("value").toInt(), 300);
+            const auto &moved = session->document().lines()[0]->text;
+            const QString was = QString::fromUtf8(reinterpret_cast<const char *>(moved.data()), qsizetype(moved.size()));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleOk"), "click"));
+            QTRY_VERIFY(!resample->property("visible").toBool());
+            QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"400")));
+            const auto &now = session->document().lines()[0]->text;
+            QVERIFY2(QString::fromUtf8(reinterpret_cast<const char *>(now.data()), qsizetype(now.size())) != was, qPrintable(was));
+        }
+        // PU6: ASS file properties' From video takes the video open now, not
+        // the one open when the window opened.
+        application->setAskForBadResolution(false);
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+        QObject *properties = nullptr;
+        QTRY_VERIFY((properties = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
+                    properties->property("visible").toBool());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/colorhd.mkv"));
+        QTRY_COMPARE_WITH_TIMEOUT(application->resampleValues().value(QStringLiteral("videoWidth")).toInt(), 1280, 20000);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("scriptPropertiesDialog", "propFromVideo"), "click"));
+        QCOMPARE(dialogItem("scriptPropertiesDialog", "propWidth")->property("value").toInt(), 1280);
+        QCOMPARE(dialogItem("scriptPropertiesDialog", "propHeight")->property("value").toInt(), 720);
+        QVERIFY(QMetaObject::invokeMethod(properties, "reject"));
+        QTRY_VERIFY(!properties->property("visible").toBool());
+        application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+        QTRY_COMPARE_WITH_TIMEOUT(application->resampleValues().value(QStringLiteral("videoWidth")).toInt(), width, 20000);
+        application->setAskForBadResolution(true);
         // An answer about sizes that are no longer the shown ones (another
         // video opened for the Document meanwhile) changes nothing.
         {
-            const QVariant stale = QVariantMap{{QStringLiteral("subsWidth"), 200}, {QStringLiteral("subsHeight"), 200},
+            const QVariant stale = QVariantMap{{QStringLiteral("subsWidth"), 400}, {QStringLiteral("subsHeight"), 400},
                                                {QStringLiteral("videoWidth"), 999}, {QStringLiteral("videoHeight"), 555}};
             QVERIFY(QMetaObject::invokeMethod(root, "askResolutionMismatch", Q_ARG(QVariant, stale)));
             QQuickWindow *question = nullptr;
@@ -6893,7 +6936,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("resample"))));
             QTRY_VERIFY(!question->isVisible());
             QCOMPARE(session->historySize(), before);
-            QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"200")));
+            QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(u8"400")));
         }
         // "Disable warning" stops the question.
         application->setAskForBadResolution(false);
