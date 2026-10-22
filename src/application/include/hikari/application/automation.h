@@ -46,7 +46,7 @@ struct DialogControl {
     std::string label; // label and checkbox
     std::string text;  // edit, textbox, alpha, dropdown and colour values
     int intValue = 0, intMin = INT_MIN, intMax = INT_MAX;                // intedit
-    double number = 0, numberMin = -DBL_MAX, numberMax = DBL_MAX, step = 0; // floatedit (step unused)
+    double number = 0, numberMin = -DBL_MAX, numberMax = DBL_MAX, step = 0; // floatedit (AD1-float-step)
     bool checked = false;            // checkbox
     std::vector<std::string> items;  // dropdown
 };
@@ -55,6 +55,10 @@ struct DialogRequest {
     std::vector<DialogControl> controls;
     // Button labels in order. Empty: the default pair, OK then Cancel.
     std::vector<std::string> buttons;
+    // AD1-button-ids: each button's id from the script's third argument, as
+    // Aegisub reads it (ok, yes, save, apply, close, no, cancel, help or
+    // context_help; empty for none), one per button.
+    std::vector<std::string> buttonIds;
 };
 
 enum class DialogValueType { None, Text, Integer, Number, Boolean };

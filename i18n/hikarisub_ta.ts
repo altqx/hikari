@@ -5542,6 +5542,10 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Interface theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Follow system theme</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5558,7 +5562,15 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Accent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Program font</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5587,7 +5599,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Options</source>
-        <translation>விருப்பங்கள்</translation>
+        <translation type="vanished">விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -5599,7 +5611,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Set default</source>
-        <translation>இயல்புநிலையை அமைக்கவும்</translation>
+        <translation type="vanished">இயல்புநிலையை அமைக்கவும்</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -5615,7 +5627,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Editor</source>
-        <translation>திருத்தி</translation>
+        <translation type="vanished">திருத்தி</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -5623,7 +5635,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Advanced</source>
-        <translation>மேம்பட்ட</translation>
+        <translation type="vanished">மேம்பட்ட</translation>
     </message>
     <message>
         <source>Video</source>
@@ -5659,7 +5671,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
-        <translation>எழுத்துப்பிழை சரிபார்ப்பு மொழி (&quot;Dictionary&quot; கோப்புறை)</translation>
+        <translation type="vanished">எழுத்துப்பிழை சரிபார்ப்பு மொழி (&quot;Dictionary&quot; கோப்புறை)</translation>
     </message>
     <message>
         <source>None chosen</source>
@@ -5674,15 +5686,7 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show notices as toasts (off: in the Log only)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Ask again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Brings back the questions hidden with &quot;Don&apos;t ask again&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5691,17 +5695,17 @@ when find results window is open</source>
     </message>
     <message>
         <source>Turn spell checking</source>
-        <translation>எழுத்துப்பிழை சரிபார்ப்பைத் திருப்புங்கள்</translation>
+        <translation type="vanished">எழுத்துப்பிழை சரிபார்ப்பைத் திருப்புங்கள்</translation>
     </message>
     <message>
         <source>Select the line with the time line
 of the previous active tab</source>
-        <translation>நேரக் கோட்டுடன் வரியைத் தேர்ந்தெடுக்கவும்
+        <translation type="vanished">நேரக் கோட்டுடன் வரியைத் தேர்ந்தெடுக்கவும்
  முந்தைய செயலில் உள்ள தாவலின்</translation>
     </message>
     <message>
         <source>Show suggestions by double-clicking on misspell</source>
-        <translation>மிச்ச்பெல்லில் இருமுறை சொடுக்கு செய்வதன் மூலம் பரிந்துரைகளைக் காட்டுங்கள்</translation>
+        <translation type="vanished">மிச்ச்பெல்லில் இருமுறை சொடுக்கு செய்வதன் மூலம் பரிந்துரைகளைக் காட்டுங்கள்</translation>
     </message>
     <message>
         <source>Always open subtitles in a new tab</source>
@@ -5709,18 +5713,18 @@ of the previous active tab</source>
     </message>
     <message>
         <source>Stay on selected line when editing times</source>
-        <translation>நேரங்களைத் திருத்தும்போது தேர்ந்தெடுக்கப்பட்ட வரியில் இருங்கள்</translation>
+        <translation type="vanished">நேரங்களைத் திருத்தும்போது தேர்ந்தெடுக்கப்பட்ட வரியில் இருங்கள்</translation>
     </message>
     <message>
         <source>Turn off edits preview on video
 (re-opening tab is required)</source>
-        <translation>வீடியோவில் திருத்தங்கள் முன்னோட்டத்தை அணைக்கவும்
+        <translation type="vanished">வீடியோவில் திருத்தங்கள் முன்னோட்டத்தை அணைக்கவும்
  (மறு திறக்கும் தாவல் தேவை)</translation>
     </message>
     <message>
         <source>Turn searching of visible line
 after switching from full screen</source>
-        <translation>புலப்படும் வரியைத் தேடுங்கள் 
+        <translation type="vanished">புலப்படும் வரியைத் தேடுங்கள் 
 முழுத் திரையில் இருந்து மாறிய பிறகு</translation>
     </message>
     <message>
@@ -5729,27 +5733,23 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Change active line after add to selection</source>
-        <translation>தேர்வில் சேர்க்கப்பட்ட பிறகு செயலில் உள்ள வரியை மாற்றவும்</translation>
+        <translation type="vanished">தேர்வில் சேர்க்கப்பட்ட பிறகு செயலில் உள்ள வரியை மாற்றவும்</translation>
     </message>
     <message>
         <source>Show original in translator mode</source>
-        <translation>மொழிபெயர்ப்பாளர் பயன்முறையில் அசலைக் காட்டு</translation>
+        <translation type="vanished">மொழிபெயர்ப்பாளர் பயன்முறையில் அசலைக் காட்டு</translation>
     </message>
     <message>
         <source>Hide original on video in translator mode</source>
-        <translation>மொழிபெயர்ப்பாளர் பயன்முறையில் வீடியோவில் அசலை மறைக்கவும்</translation>
+        <translation type="vanished">மொழிபெயர்ப்பாளர் பயன்முறையில் வீடியோவில் அசலை மறைக்கவும்</translation>
     </message>
     <message>
         <source>Do not change selections when duplicating dialogue lines</source>
-        <translation>உரையாடல் கோடுகள் நகலெடுப்பில் தேர்வை மாற்ற வேண்டாம்</translation>
+        <translation type="vanished">உரையாடல் கோடுகள் நகலெடுப்பில் தேர்வை மாற்ற வேண்டாம்</translation>
     </message>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
-        <translation>வசன வரிகள் கட்டத்தில் செங்குத்தாக செயலில் உள்ள வரியை மையப்படுத்த வேண்டாம்</translation>
-    </message>
-    <message>
-        <source>Hide empty columns in the subtitle grid</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">வசன வரிகள் கட்டத்தில் செங்குத்தாக செயலில் உள்ள வரியை மையப்படுத்த வேண்டாம்</translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>
@@ -5757,11 +5757,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Turn off visual tools warning</source>
-        <translation>காட்சி கருவிகள் எச்சரிக்கையை அணைக்கவும்</translation>
+        <translation type="vanished">காட்சி கருவிகள் எச்சரிக்கையை அணைக்கவும்</translation>
     </message>
     <message>
         <source>Do not warn about resolution mismatch</source>
-        <translation>தீர்மானம் பொருந்தாத தன்மை பற்றி தெரிவிக்க வேண்டாம்</translation>
+        <translation type="vanished">தீர்மானம் பொருந்தாத தன்மை பற்றி தெரிவிக்க வேண்டாம்</translation>
     </message>
     <message>
         <source>Compatibility with older HikariSub scripts</source>
@@ -5769,14 +5769,6 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show video frames instead of times in the line editor and the subtitle grid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide tags in the line editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5809,19 +5801,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Choose catalog</source>
-        <translation>பட்டியலைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">பட்டியலைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Choose style</source>
-        <translation>ச்டைலைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">ச்டைலைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Choose FPS</source>
-        <translation>FPS ஐத் தேர்வுசெய்க</translation>
+        <translation type="vanished">FPS ஐத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>FPS from video</source>
-        <translation>வீடியோவிலிருந்து FPS</translation>
+        <translation type="vanished">வீடியோவிலிருந்து FPS</translation>
     </message>
     <message>
         <source>New end times</source>
@@ -5829,39 +5821,39 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Show window before conversion</source>
-        <translation>மாற்றுவதற்கு முன் சாளரத்தைக் காட்டு</translation>
+        <translation type="vanished">மாற்றுவதற்கு முன் சாளரத்தைக் காட்டு</translation>
     </message>
     <message>
         <source>Time for one letter in milliseconds</source>
-        <translation>மில்லி விநாடிகளில் ஒரு எழுத்துக்கான நேரம்</translation>
+        <translation type="vanished">மில்லி விநாடிகளில் ஒரு எழுத்துக்கான நேரம்</translation>
     </message>
     <message>
         <source>Resolution when converting to ASS</source>
-        <translation>ASS ஆக மாற்றும்போது தீர்மானம்</translation>
+        <translation type="vanished">ASS ஆக மாற்றும்போது தீர்மானம்</translation>
     </message>
     <message>
         <source>Tags to paste at the beginning of every ASS line</source>
-        <translation>ஒவ்வொரு ASS வரியின் தொடக்கத்திலும் ஒட்ட வேண்டிய குறிச்சொற்கள்</translation>
+        <translation type="vanished">ஒவ்வொரு ASS வரியின் தொடக்கத்திலும் ஒட்ட வேண்டிய குறிச்சொற்கள்</translation>
     </message>
     <message>
         <source>Calculate spaces and punctation characters for wraps</source>
-        <translation>வரி மடக்குகளுக்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் கணக்கிடவும்</translation>
+        <translation type="vanished">வரி மடக்குகளுக்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் கணக்கிடவும்</translation>
     </message>
     <message>
         <source>Calculate spaces and punctation characters for CPS</source>
-        <translation>CPS-க்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் கணக்கிடவும்</translation>
+        <translation type="vanished">CPS-க்கு இடைவெளிகளையும் நிறுத்தற்குறிகளையும் கணக்கிடவும்</translation>
     </message>
     <message>
         <source>Number of edits to save</source>
-        <translation>சேமிக்க திருத்தங்களின் எண்ணிக்கை</translation>
+        <translation type="vanished">சேமிக்க திருத்தங்களின் எண்ணிக்கை</translation>
     </message>
     <message>
         <source>0 turns off saving while editing</source>
-        <translation>0 திருத்துதல் செய்யும் போது சேமிப்பை முடக்குகிறது</translation>
+        <translation type="vanished">0 திருத்துதல் செய்யும் போது சேமிப்பை முடக்குகிறது</translation>
     </message>
     <message>
         <source>Maximum number of autosave files</source>
-        <translation>ஆட்டோசேவ் கோப்புகளின் அதிகபட்ச எண்ணிக்கை</translation>
+        <translation type="vanished">ஆட்டோசேவ் கோப்புகளின் அதிகபட்ச எண்ணிக்கை</translation>
     </message>
     <message>
         <source>Number of autosaves can be set from 2 to 1000000</source>
@@ -5869,19 +5861,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Start frame offset in ms:</source>
-        <translation>எம்.எச்சில் பிரேம் ஆஃப்செட்டைத் தொடங்குங்கள்:</translation>
+        <translation type="vanished">எம்.எச்சில் பிரேம் ஆஃப்செட்டைத் தொடங்குங்கள்:</translation>
     </message>
     <message>
         <source>End frame offset in ms:</source>
-        <translation>எம்.எச்சில் இறுதி பிரேம் ஆஃப்செட்:</translation>
+        <translation type="vanished">எம்.எச்சில் இறுதி பிரேம் ஆஃப்செட்:</translation>
     </message>
     <message>
         <source>ASS tag replacement:</source>
-        <translation>ASS குறிச்சொல் மாற்று:</translation>
+        <translation type="vanished">ASS குறிச்சொல் மாற்று:</translation>
     </message>
     <message>
         <source>Number of tab name characters</source>
-        <translation>தாவல் பெயர் எழுத்துகளின் எண்ணிக்கை</translation>
+        <translation type="vanished">தாவல் பெயர் எழுத்துகளின் எண்ணிக்கை</translation>
     </message>
     <message>
         <source>Number of tab name characters. Range from 20 to 150</source>
@@ -5889,19 +5881,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>LUA scripts tracking level</source>
-        <translation>லுவா ச்கிரிப்ட்ச் கண்காணிப்பு நிலை</translation>
+        <translation type="vanished">லுவா ச்கிரிப்ட்ச் கண்காணிப்பு நிலை</translation>
     </message>
     <message>
         <source>Subtitle grid font:</source>
-        <translation>வசன வரிகள் கட்டம் எழுத்துரு:</translation>
+        <translation type="vanished">வசன வரிகள் கட்டம் எழுத்துரு:</translation>
     </message>
     <message>
         <source>Program font:</source>
-        <translation>நிரல் எழுத்துரு:</translation>
+        <translation type="vanished">நிரல் எழுத்துரு:</translation>
     </message>
     <message>
         <source>Autoload loading method</source>
-        <translation>ஆட்டோலோட் ஏற்றுதல் முறை</translation>
+        <translation type="vanished">ஆட்டோலோட் ஏற்றுதல் முறை</translation>
     </message>
     <message>
         <source>After program start asynchronously</source>
@@ -5921,15 +5913,15 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Folder with external fonts</source>
-        <translation>வெளிப்புற எழுத்துருக்கள் கொண்ட கோப்புறை</translation>
+        <translation type="vanished">வெளிப்புற எழுத்துருக்கள் கொண்ட கோப்புறை</translation>
     </message>
     <message>
         <source>Choose</source>
-        <translation>தேர்வு</translation>
+        <translation type="vanished">தேர்வு</translation>
     </message>
     <message>
         <source>Open video from context menu on full screen</source>
-        <translation>முழு திரையில் சூழல் மெனுவிலிருந்து வீடியோவைத் திறக்கவும்</translation>
+        <translation type="vanished">முழு திரையில் சூழல் மெனுவிலிருந்து வீடியோவைத் திறக்கவும்</translation>
     </message>
     <message>
         <source>Left mouse button pauses video</source>
@@ -5937,19 +5929,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Open video with time of active line</source>
-        <translation>செயலில் உள்ள நேரத்துடன் வீடியோவைத் திறக்கவும்</translation>
+        <translation type="vanished">செயலில் உள்ள நேரத்துடன் வீடியோவைத் திறக்கவும்</translation>
     </message>
     <message>
         <source>Convert video colours on the GPU (requires reloading)</source>
-        <translation>வீடியோ வண்ணங்களை GPU-வில் மாற்றவும் (மறுஏற்றம் தேவை)</translation>
+        <translation type="vanished">வீடியோ வண்ணங்களை GPU-வில் மாற்றவும் (மறுஏற்றம் தேவை)</translation>
     </message>
     <message>
         <source>Preferred audio (separated by semicolons)</source>
-        <translation>விருப்பமான ஆடியோ (அரைக்காற்புள்ளிகளால் பிரிக்கப்படுகிறது)</translation>
+        <translation type="vanished">விருப்பமான ஆடியோ (அரைக்காற்புள்ளிகளால் பிரிக்கப்படுகிறது)</translation>
     </message>
     <message>
         <source>FFMS2 video seeking method (requires reloading)</source>
-        <translation>FFMS2 வீடியோ தேடல் (மறுஏற்றம் தேவை)</translation>
+        <translation type="vanished">FFMS2 வீடியோ தேடல் (மறுஏற்றம் தேவை)</translation>
     </message>
     <message>
         <source>Linear</source>
@@ -5981,11 +5973,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Start video zoom in percent.</source>
-        <translation>தொடக்க வீடியோ சூம், சதவீதத்தில்.</translation>
+        <translation type="vanished">தொடக்க வீடியோ சூம், சதவீதத்தில்.</translation>
     </message>
     <message>
         <source>Show time next to cursor</source>
-        <translation>கர்சருக்கு அடுத்து நேரத்தைக் காட்டு</translation>
+        <translation type="vanished">கர்சருக்கு அடுத்து நேரத்தைக் காட்டு</translation>
     </message>
     <message>
         <source>Show seconds markers</source>
@@ -5993,11 +5985,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Show background selection</source>
-        <translation>பின்னணி தேர்வைக் காட்டு</translation>
+        <translation type="vanished">பின்னணி தேர்வைக் காட்டு</translation>
     </message>
     <message>
         <source>Show video position</source>
-        <translation>வீடியோ நிலையைக் காட்டு</translation>
+        <translation type="vanished">வீடியோ நிலையைக் காட்டு</translation>
     </message>
     <message>
         <source>Show keyframes</source>
@@ -6021,7 +6013,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Snap to keyframe</source>
-        <translation>கீஃப்ரேமுக்கு ஒடி</translation>
+        <translation type="vanished">கீஃப்ரேமுக்கு ஒடி</translation>
     </message>
     <message>
         <source>Snap to other lines</source>
@@ -6029,23 +6021,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Do not play audio after changing the line</source>
-        <translation>மாற்ற வரிக்குப் பிறகு ஆடியோவை இயக்க வேண்டாம்</translation>
+        <translation type="vanished">மாற்ற வரிக்குப் பிறகு ஆடியோவை இயக்க வேண்டாம்</translation>
     </message>
     <message>
         <source>Merge all the &quot;n&quot; with the previous syllable</source>
-        <translation>முந்தைய எழுத்துடன் அனைத்து &quot;n&quot; ஐ ஒன்றிணைக்கவும்</translation>
+        <translation type="vanished">முந்தைய எழுத்துடன் அனைத்து &quot;n&quot; ஐ ஒன்றிணைக்கவும்</translation>
     </message>
     <message>
         <source>Move syllable line after click</source>
-        <translation>சொடுக்கு செய்த பிறகு எழுத்து வரியை நகர்த்தவும்</translation>
+        <translation type="vanished">சொடுக்கு செய்த பிறகு எழுத்து வரியை நகர்த்தவும்</translation>
     </message>
     <message>
         <source>Load audio into RAM</source>
         <translation>ஆடியோவை ரேமில் ஏற்றவும்</translation>
-    </message>
-    <message>
-        <source>Audio output</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Device</source>
@@ -6057,11 +6045,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Audio delay in milliseconds</source>
-        <translation>மில்லி விநாடிகளில் ஆடியோ நேரந்தவறுகை</translation>
+        <translation type="vanished">மில்லி விநாடிகளில் ஆடியோ நேரந்தவறுகை</translation>
     </message>
     <message>
         <source>Audio to play before and after the marker in milliseconds</source>
-        <translation>மில்லி விநாடிகளில் மார்க்கருக்கு முன்னும் பின்னும் இயக்க ஆடியோ</translation>
+        <translation type="vanished">மில்லி விநாடிகளில் மார்க்கருக்கு முன்னும் பின்னும் இயக்க ஆடியோ</translation>
     </message>
     <message>
         <source>Lead-in</source>
@@ -6077,7 +6065,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Audio cache files limit</source>
-        <translation>ஆடியோ கேச் கோப்புகள் வரம்பு</translation>
+        <translation type="vanished">ஆடியோ கேச் கோப்புகள் வரம்பு</translation>
     </message>
     <message>
         <source>Range from 0 to 10000, where 0 turns off
@@ -6087,7 +6075,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>The way to display inactive lines</source>
-        <translation>செயலற்ற கோடுகளைக் காண்பிப்பதற்கான வழி</translation>
+        <translation type="vanished">செயலற்ற கோடுகளைக் காண்பிப்பதற்கான வழி</translation>
     </message>
     <message>
         <source>None</source>
@@ -6130,6 +6118,454 @@ removing audio cache files.</source>
         <translation>அனைத்தும்</translation>
     </message>
     <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>General</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all settings to their defaults?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The settings of the page shown back to their defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More resets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset this page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Interface language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tab name length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save while editing every</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 turns saving while editing off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autosave files kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show notices as toasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off: notices go to the Log only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Questions hidden with “Don’t ask again”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fonts folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spelling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation type="unfinished">எழுத்துப்பிழை சரிபார்ப்பு</translation>
+    </message>
+    <message>
+        <source>Dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show suggestions on double-click</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Display</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide tags</source>
+        <translation type="unfinished">குறிச்சொற்களை மறைக்கவும்</translation>
+    </message>
+    <message>
+        <source>Show video frames instead of times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the line editor and the subtitle grid.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stay on the line when editing times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the original</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the original on the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation type="unfinished">எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Grid font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the line at the previous tab&apos;s time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change the active line when adding to the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the selection when duplicating lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don&apos;t center the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find the visible line after leaving full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Counting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Count spaces and punctuation for wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Count spaces and punctuation for CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start frame offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End frame offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS tag replacement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video from the context menu in full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video at the active line&apos;s time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Player</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles on video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off the edits preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies when the tab opens again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seeking method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies when the video opens again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert video colours on the GPU</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preferred audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Separated by semicolons.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off the visual tools warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don&apos;t warn about a resolution mismatch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies when the output opens again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio delay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around the marker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in and lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don&apos;t play after changing the line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the time beside the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the selection background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the video position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inactive lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to keyframes</source>
+        <translation type="unfinished">கீஃப்ரேம்களுக்கு ஒடி</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge every &quot;n&quot; with the previous syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the syllable line after a click</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cache files kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 keeps them all.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">பட்டியல்</translation>
+    </message>
+    <message>
+        <source>Timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate from the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time per letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation type="unfinished">பகுத்தல்</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags at the start of each line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the conversion window first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation type="unfinished">கோப்புகள்</translation>
+    </message>
+    <message>
+        <source>Save the panel layout in subtitle files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load scripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Debugging</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua trace level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Set shortcuts</source>
         <translation>குறுக்குவழிகளை அமைக்கவும்</translation>
     </message>
@@ -6162,6 +6598,14 @@ removing audio cache files.</source>
         <translation>வடிகட்டுதல் பயன்முறை:</translation>
     </message>
     <message>
+        <source>Search hotkeys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Global</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show hidden rows</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6182,16 +6626,28 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Map hotkey…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default</source>
+        <translation type="unfinished">இயல்புநிலையை மீட்டெடுங்கள்</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">நீக்கு</translation>
+    </message>
+    <message>
         <source>Map hotkey</source>
-        <translation>வரைபட ஆட்ச்கி</translation>
+        <translation type="vanished">வரைபட ஆட்ச்கி</translation>
     </message>
     <message>
         <source>Restore default hotkey</source>
-        <translation>இயல்புநிலை ஆட்ச்கியை மீட்டமைக்கவும்</translation>
+        <translation type="vanished">இயல்புநிலை ஆட்ச்கியை மீட்டமைக்கவும்</translation>
     </message>
     <message>
         <source>Delete hotkey</source>
-        <translation>ஆட்ச்கியை நீக்கு</translation>
+        <translation type="vanished">ஆட்ச்கியை நீக்கு</translation>
     </message>
     <message>
         <source>Subtitle information</source>
@@ -6232,10 +6688,6 @@ removing audio cache files.</source>
     <message>
         <source>Always ask before changing subtitle information</source>
         <translation>மாற்ற வசன வரிகளை எப்போதும் கேளுங்கள்</translation>
-    </message>
-    <message>
-        <source>Save panel layout in subtitle files</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>
@@ -9649,6 +10101,45 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>By</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Per line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changes 1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9882,6 +10373,42 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished">வீடியோ நிலையை நகலெடுக்கவும்</translation>
     </message>
     <message>
+        <source>At the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At the start of the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip rectangle with %1 animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set by line number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add by line number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across characters, increasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across characters, decreasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across lines, increasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across lines, decreasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Free drawing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9916,6 +10443,54 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Clear</source>
         <translation type="obsolete">தெளிவான</translation>
+    </message>
+    <message>
+        <source>Common</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit tags…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set</source>
+        <translation type="unfinished">அமை</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">கூட்டு</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">மூடு</translation>
+    </message>
+    <message>
+        <source>Change a value to redo it in place of that step</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

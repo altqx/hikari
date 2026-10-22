@@ -26,7 +26,6 @@ SearchTool.qml:question
 SelectLinesDialog.qml:dialog
 SessionWindows.qml:askPrompt
 SessionWindows.qml:crashPrompt
-SettingsDialog.qml:dialog
 SettingsImportDialog.qml:dialog
 SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog

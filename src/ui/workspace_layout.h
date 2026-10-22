@@ -94,9 +94,10 @@ class WorkspaceLayoutController : public QObject {
     // legacy's menu took every key while it was shown (D1 Windows gate).
     Q_PROPERTY(bool menuHasFocus READ menuHasFocus NOTIFY menuHasFocusChanged)
     // AM1: whether a modal popup (a dialog over its window, Popup.Item) is
-    // open in a shown window. The application-wide macro shortcuts stay off
-    // then: a macro started behind it shows its run controls in the
-    // Automation panel, which the modal keeps out of reach.
+    // open in a shown window, or a modal window (DG1's frame) is shown. The
+    // application-wide macro shortcuts stay off then: a macro started behind
+    // it shows its run controls in the Automation panel, which the modal
+    // keeps out of reach.
     Q_PROPERTY(bool modalOpen READ modalOpen NOTIFY modalOpenChanged)
 public:
     // WS1: how a tab shown for the first time starts.
