@@ -13,6 +13,7 @@
 #include "hikari/application/edit_session.h"
 #include "hikari/application/write_coordinator.h"
 #include "hikari/core/ass_save.h"
+#include "hikari/core/lyrics_import.h"
 
 #include <expected>
 #include <functional>
@@ -40,6 +41,7 @@ enum class OpenError {
     AccessDenied,
     ReadFailed,
     InvalidFormat, // no reader found a Line (legacy "Invalid format")
+    MalformedLyrics, // KA6: a lyrics file that can't be imported
     UnknownDocument,
     StaleTarget,   // the Document changed or was replaced after staging
 };
@@ -54,6 +56,12 @@ enum class SaveRefusal {
     InvalidDraft,   // the pending draft can't be committed (E63-invalid-commit)
 };
 
+// Why staging failed; for MalformedLyrics, what is wrong and where.
+struct StageFailure {
+    OpenError reason = OpenError::ReadFailed;
+    std::optional<core::LyricsProblem> lyrics;
+};
+
 // A prepared replacement. Nothing is published until activate().
 struct StagedOpen {
     DestinationKey destination;
@@ -61,6 +69,9 @@ struct StagedOpen {
     std::optional<DocumentId> replaces;
     std::uint64_t expectedGeneration = 0;
     std::uint64_t expectedRevision = 0;
+    // KA6: lyrics turned into an ASS Document. It opens Untitled with
+    // unsaved work, so the lyrics file is never overwritten with ASS.
+    bool imported = false;
 };
 
 struct SavePlan {
@@ -114,8 +125,8 @@ class DocumentFiles {
 public:
     DocumentFiles(FileReadPort &reader, WriteCoordinator &writes);
 
-    std::expected<StagedOpen, OpenError> stageOpen(const DestinationKey &destination);
-    std::expected<StagedOpen, OpenError> stageReload(DocumentId document);
+    std::expected<StagedOpen, StageFailure> stageOpen(const DestinationKey &destination);
+    std::expected<StagedOpen, StageFailure> stageReload(DocumentId document);
     // Publishes a staged open once: a new Document, or the replacement of the
     // one it was staged for when that Document is still exactly as it was.
     std::expected<DocumentId, OpenError> activate(StagedOpen staged);
@@ -171,7 +182,7 @@ private:
         std::optional<std::u8string> activeLine;
         std::optional<std::u8string> layout;
     };
-    std::expected<StagedOpen, OpenError> stage(const DestinationKey &destination);
+    std::expected<StagedOpen, StageFailure> stage(const DestinationKey &destination);
     Entry *find(DocumentId document);
 
     FileReadPort &m_reader;

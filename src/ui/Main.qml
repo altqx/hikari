@@ -38,6 +38,7 @@ ApplicationWindow {
     required property GridFilterController gridFilter
     required property var automationHotkeys
     required property var updates
+    required property var whatsNew // SH3: WhatsNew
     required property var styleManager
     required property var fontCollector // Y8: FontCollectorController
     required property var fontCatalogs // Y6: FontCatalogsController
@@ -1948,6 +1949,16 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
+            // KA7: the Karaoke check window, after Check spelling.
+            ShellMenuItem {
+                help: qsTr("Checks the karaoke syllables of every line")
+                id: checkKaraokeItem
+                iconRole: "karaoke"
+                objectName: "checkKaraokeMenuItem"
+                text: qsTr("Check karaoke")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) karaokeCheckDialog.openDialog()
+            }
             MenuSeparator {}
             // TM1 (#232): the editing target's Translation mode, which the
             // Line editor's "Translator mode" check box switched in legacy
@@ -2035,6 +2046,17 @@ ApplicationWindow {
                     text: qsTr("Check for &updates")
                     enabled: !root.updates.checking
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
+                }
+            }
+            // SH3 (#223): the release notes since the version used before; no hotkey.
+            ShellMenuItem {
+                help: qsTr("Shows the release notes of the versions since the one you used before")
+                iconRole: "whats-new"
+                objectName: "whatsNewMenuItem"
+                action: Action {
+                    id: whatsNewAction
+                    text: qsTr("What's &new")
+                    onTriggered: whatsNewDialog.open()
                 }
             }
             ShellMenuItem {
@@ -2518,10 +2540,19 @@ ApplicationWindow {
         onOpenRequested: openAction.trigger()
         onOpenVideoRequested: openVideoAction.trigger()
         onRestoreRequested: sessionWindows.load()
+        // SH3: What's new, while there are notes to show.
+        whatsNew: root.whatsNew.releases.length > 0 ? whatsNewCard : null
         // P9: Ctrl+click shows the file in its folder, as in File > Recent.
         onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
         onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
         Component.onCompleted: if (visible) Qt.callLater(takeFocus)
+    }
+    Component {
+        id: whatsNewCard
+        WhatsNewCard {
+            whatsNew: root.whatsNew
+            smallFont: homePage.smallFont
+        }
     }
     // The first Document opened from Home: the focus, left nowhere when the
     // page went, goes to the Grid (else the first shown panel), unless the
@@ -6117,8 +6148,10 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         objectName: "subtitlesOpenDialog"
-        // Legacy's second filter, "Videos with embedded subtitles".
+        // Legacy's second filter, "Videos with embedded subtitles". KA6:
+        // word-timed lyrics, imported as karaoke Lines, after the subtitles.
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
+                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.ttml)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
                       qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: root.openChosenSubtitles(root.app.localPath(selectedFile))
@@ -6263,6 +6296,9 @@ ApplicationWindow {
                 Layout.fillWidth: true
                 wrapMode: Text.Wrap
                 horizontalAlignment: Text.AlignHCenter
+                // A message quotes files (a broken lyrics file's excerpt):
+                // never markup, which could fetch an <img> from a server.
+                textFormat: Text.PlainText
                 text: root.log.lastMessage
             }
             ScrollView {
@@ -6272,6 +6308,7 @@ ApplicationWindow {
                 TextArea {
                     objectName: "logHistory"
                     readOnly: true
+                    textFormat: TextEdit.PlainText
                     text: root.log.history
                     Accessible.name: qsTr("Log")
                 }
@@ -6554,6 +6591,12 @@ ApplicationWindow {
     UpdateAvailable {
         id: updateAvailable
         updates: root.updates
+        whatsNew: root.whatsNew
+        settings: root.app.settings
+    }
+    WhatsNewDialog {
+        id: whatsNewDialog
+        whatsNew: root.whatsNew
         settings: root.app.settings
     }
     AboutDialog {
@@ -6860,6 +6903,12 @@ ApplicationWindow {
         id: spellCheckerDialog
         app: root.app
         anchors.centerIn: parent
+    }
+    // KA7: the Karaoke check window.
+    KaraokeCheckDialog {
+        id: karaokeCheckDialog
+        app: root.app
+        settings: root.app.settings
     }
     Dialog {
         id: spellingNotice
@@ -7349,6 +7398,7 @@ ApplicationWindow {
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
+        GLOBAL_CHECK_KARAOKE: checkKaraokeItem, // KA7
     }
     }
     // The menu bar's items show their Global binding at the right (legacy
