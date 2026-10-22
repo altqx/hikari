@@ -11104,6 +11104,62 @@ private slots:
         QCOMPARE(translated->property("cursorPosition").toInt(), 3);
     }
 
+    // TM1: as above past a carried \h before the leading block.
+    void tagsFromOriginalCaretPastCarriedLeadingSpaces()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-caret-space.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,\\h{\\fs40}Wall\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\\h{\\fs40}Mur\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *translated = item("translationText");
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("Mur"));
+        translated->setProperty("cursorPosition", 1);
+        application->editor().setMoveTags(false);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("\\h{\\fs40}Mur"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 10);
+        application->editor().setMoveTags(true);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("Mur"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 1);
+    }
+
+    // TM1: an Original that comes to carry nothing (a drawing) leaves the
+    // translation its own text, the tags it carried gone.
+    void tagsFromOriginalGoneTakesTheCarriedTags()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-drawing.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("y x"), 3);
+        QVERIFY(application->editor().placeRun(1, 0, 1));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}{\\i1}y{\\i0} x"));
+        const QString drawing = QStringLiteral("{\\p1}m 0 0 l 10 10");
+        application->editor().setShowTags(true); // the Original's tags typed raw
+        application->editor().textEdited(drawing, drawing.size());
+        QCOMPARE(q8(session->draftRecord()->text), drawing);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("y x"));
+    }
+
     // TM1: the font dialog on one Line with a placed run changes the
     // translation's own text; the run stays placed, its tags written again
     // around it, not merged into the new tag.

@@ -18,6 +18,7 @@
 #include <utility>
 
 #include <algorithm>
+#include <set>
 #include <tuple>
 #include <cstdlib>
 
@@ -168,6 +169,29 @@ bool sameRuns(const core::OriginalTags &a, const core::OriginalTags &b)
     });
 }
 
+// What a reading keeps, in UTF-16 units, near enough to bound them.
+std::size_t runUnits(const core::OriginalTags &tags)
+{
+    const auto state = [](const core::TagState &s) {
+        std::size_t n = 0;
+        for (const auto &[k, v] : s)
+            n += k.size() + v.size();
+        return n;
+    };
+    const auto setters = [](const std::map<std::u16string, core::TagSetter> &m) {
+        std::size_t n = 0;
+        for (const auto &[k, v] : m)
+            n += k.size() + v.tag.size() + 4;
+        return n;
+    };
+    std::size_t n = tags.leading.size() + tags.trailing.size() + state(tags.defaults) + state(tags.base);
+    for (const auto &[name, s] : tags.named)
+        n += name.size() + state(s);
+    for (const auto &run : tags.runs)
+        n += run.text.size() + state(run.differs) + setters(run.opens) + setters(run.closes) + 8;
+    return n;
+}
+
 } // namespace
 
 core::TranslationDraft LineEditorController::translationDraft(const core::OriginalTags &tags,
@@ -183,8 +207,9 @@ core::TranslationDraft LineEditorController::translationDraft(const core::Origin
         if (entry.translation != line.translation)
             continue;
         if (sameRuns(*entry.tags, tags)) {
-            core::relabelRuns(tags, draft, entry.order);
-            return draft;
+            auto hinted = core::readTranslation(tags, translation, entry.order);
+            core::relabelRuns(tags, hinted, entry.order);
+            return hinted;
         }
         if (!composed)
             composed = &entry;
@@ -193,7 +218,7 @@ core::TranslationDraft LineEditorController::translationDraft(const core::Origin
         return draft;
     // The runs changed under the translation: its placements as composed,
     // each given to the run it became (recarried), one gone dropped.
-    auto was = core::readTranslation(*composed->tags, translation);
+    auto was = core::readTranslation(*composed->tags, translation, composed->order);
     if (!was.carried)
         return draft;
     core::relabelRuns(*composed->tags, was, composed->order);
@@ -250,12 +275,41 @@ void LineEditorController::setRunOrder(core::LineId line, std::optional<RunOrder
 void LineEditorController::noteRunOrder(core::LineId line, RunOrder order)
 {
     auto &entries = m_runOrders[runOrderKey(line)];
+    // An Original read the same as before is kept once (each typed edit
+    // notes an entry).
+    for (const auto &e : entries)
+        if (e.tags != order.tags && *e.tags == *order.tags) {
+            order.tags = e.tags;
+            break;
+        }
     std::erase_if(entries, [&](const RunOrder &e) {
         return e.translation == order.translation && sameRuns(*e.tags, *order.tags);
     });
+    order.noted = ++m_runOrderClock;
     entries.insert(entries.begin(), std::move(order));
     if (entries.size() > kRunOrderHistory)
         entries.resize(kRunOrderHistory);
+    // Every Line's together kept within kRunOrderUnits, the oldest going.
+    for (;;) {
+        std::set<const core::OriginalTags *> counted;
+        std::size_t units = 0;
+        std::vector<RunOrder> *oldestIn = nullptr;
+        std::size_t oldest = 0;
+        for (auto &[key, list] : m_runOrders)
+            for (std::size_t i = 0; i < list.size(); ++i) {
+                units += list[i].translation.size();
+                if (counted.insert(list[i].tags.get()).second)
+                    units += runUnits(*list[i].tags);
+                if (!oldestIn || list[i].noted < (*oldestIn)[oldest].noted) {
+                    oldestIn = &list;
+                    oldest = i;
+                }
+            }
+        if (units <= kRunOrderUnits || !oldestIn || (oldestIn == &entries && oldest == 0))
+            break;
+        oldestIn->erase(oldestIn->begin() + static_cast<std::ptrdiff_t>(oldest));
+    }
+    std::erase_if(m_runOrders, [](const auto &entry) { return entry.second.empty(); });
 }
 
 std::u8string LineEditorController::recarried(const core::LineRecord &before, const Carry &now)
@@ -836,6 +890,15 @@ bool LineEditorController::setRaw(int role, std::u8string raw, const std::option
         if (const auto next = c && !r->translation.empty() ? carry(after) : std::nullopt) {
             change.translation = recarried(*real, *next);
             change.translationCarried = true;
+        } else if (c && !r->translation.empty()) {
+            // The new Original carries nothing (a drawing, unclosed braces):
+            // the translation keeps its own text and tags, the carried ones
+            // and the placed runs' gone.
+            const auto was = translationDraft(c->tags, *real);
+            if (was.carried) {
+                change.translation = core::toUtf8(was.body);
+                change.translationCarried = true;
+            }
         }
         change.text = std::move(raw);
     }

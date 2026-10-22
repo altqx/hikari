@@ -536,10 +536,15 @@ private:
     struct RunOrder {
         std::u8string translation;
         std::vector<int> order;
-        std::shared_ptr<const core::OriginalTags> tags;
+        std::shared_ptr<const core::OriginalTags> tags; // shared by the entries read the same
+        std::uint64_t noted = 0;                         // when, for the oldest to go first
     };
     static constexpr std::size_t kRunOrderHistory = 16; // entries kept per Line
+    // The runs every entry keeps, in UTF-16 units, at most: past it the
+    // oldest entries of any Line go.
+    static constexpr std::size_t kRunOrderUnits = std::size_t(1) << 21;
     std::map<RunOrderKey, std::vector<RunOrder>> m_runOrders;
+    std::uint64_t m_runOrderClock = 0;
     std::optional<RunOrder> runOrderOf(core::LineId line) const;
     void setRunOrder(core::LineId line, std::optional<RunOrder> order);
     void noteRunOrder(core::LineId line, RunOrder order);

@@ -2047,11 +2047,11 @@ ApplicationWindow {
 
         property bool syncing: false
         // Where `inner` starts in `outer` past its carried tags: a match
-        // after whole override blocks, not one inside a tag ("an8" in
-        // "{\an8}an8").
+        // after whole override blocks and the spaces among them ("\h" before
+        // a leading tag), not one inside a tag ("an8" in "{\an8}an8").
         function carriedPrefix(outer, inner) {
             for (let at = outer.indexOf(inner); at > 0; at = outer.indexOf(inner, at + 1))
-                if (outer[0] === "{" && outer[at - 1] === "}")
+                if (outer[at - 1] === "}" && /^(?:\{[^{}]*\}|\\[hNn]|[ \t])+$/.test(outer.substring(0, at)))
                     return at
             return -1
         }
