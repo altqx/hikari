@@ -9633,25 +9633,41 @@ private slots:
                                               Q_ARG(QVariant, QVariant::fromValue(dock))));
             QTRY_VERIFY(dock->property("isOpen").toBool());
             QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
+            const auto dictionary = [&](const char *code, const QByteArray &words) {
+                QDir().mkpath(bare.path() + QStringLiteral("/Dictionary"));
+                QFile aff(bare.path() + QStringLiteral("/Dictionary/%1.aff").arg(QLatin1String(code)));
+                QVERIFY(aff.open(QIODevice::WriteOnly));
+                QFile dic(bare.path() + QStringLiteral("/Dictionary/%1.dic").arg(QLatin1String(code)));
+                QVERIFY(dic.open(QIODevice::WriteOnly));
+                dic.write(words);
+            };
             // As the Line editor page applies them: the failed start turned
             // spell checking off (legacy SPELLCHECKER_ON), so on again, and
-            // the language (restartSpellChecker).
-            writeDictionary(bare.path());
+            // the language (restartSpellChecker). Every word is in this one:
+            // one check, so one "No spelling errors" notice.
+            dictionary("en_US", "3\nHello\nwrold\ngood\n");
+            QSignalSpy noticed(&application->log(), &ui::LogController::noticed);
+            const auto clean = [&] {
+                return std::ranges::count_if(noticed, [](const QList<QVariant> &n) {
+                    return n.at(3).toString() == QStringLiteral("No spelling errors were found");
+                });
+            };
             application->setSpellingOn(true);
             application->setDictionaryLanguage(QStringLiteral("en_US"));
-            QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
-            QVERIFY(spellItem("spellColumns")->isVisible());
-            // Another dictionary while a word shows: the check starts again
-            // with it (here "wrold" is a word and "good" is not).
-            {
-                QFile aff(bare.path() + QStringLiteral("/Dictionary/en_GB.aff"));
-                QVERIFY(aff.open(QIODevice::WriteOnly));
-                QFile dic(bare.path() + QStringLiteral("/Dictionary/en_GB.dic"));
-                QVERIFY(dic.open(QIODevice::WriteOnly));
-                dic.write("2\nHello\nwrold\n");
-            }
+            QTRY_COMPARE(clean(), 1);
+            QTest::qWait(200);
+            QCOMPARE(clean(), 1);
+            // Another dictionary after that: the check starts again with it
+            // (here "good" is not a word).
+            dictionary("en_GB", "2\nHello\nwrold\n");
             application->setDictionaryLanguage(QStringLiteral("en_GB"));
             QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("good"));
+            QVERIFY(spellItem("spellColumns")->isVisible());
+            // And another while a word shows ("wrold" is not one in this).
+            dictionary("en_AU", "2\nHello\ngood\n");
+            application->setDictionaryLanguage(QStringLiteral("en_AU"));
+            QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
+            QCOMPARE(clean(), 1);
             QVERIFY(QMetaObject::invokeMethod(dock, "close"));
             QTRY_VERIFY(!dock->property("isOpen").toBool());
             application->editor().discard();

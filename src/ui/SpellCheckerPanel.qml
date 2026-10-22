@@ -131,9 +131,18 @@ FocusScope {
     // (Spelling settings…, the editor's language menu: restartSpellChecker),
     // its word and suggestions the new checker's; and while it waits for a
     // dictionary, spelling turned on starts it too. Later, and not again
-    // from openSpellChecker's own spellingChanged.
+    // from openSpellChecker's own spellingChanged; once for a dictionary
+    // chosen while it waits (restartSpellChecker gives both signals).
     property bool restarting: false
+    property bool restartPending: false
+    function scheduleRestart() {
+        if (restartPending)
+            return
+        restartPending = true
+        Qt.callLater(restartCheck)
+    }
     function restartCheck() {
+        restartPending = false
         if (!checking)
             return
         restarting = true
@@ -144,11 +153,11 @@ FocusScope {
         target: panel.app
         function onSpellCheckerRestarted() {
             if (panel.checking && !panel.restarting)
-                Qt.callLater(panel.restartCheck)
+                panel.scheduleRestart()
         }
         function onSpellingChanged() {
             if (panel.checking && !panel.restarting && panel.current.available === false)
-                Qt.callLater(panel.restartCheck)
+                panel.scheduleRestart()
         }
     }
 
