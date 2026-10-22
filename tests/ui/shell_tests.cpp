@@ -25092,6 +25092,146 @@ private slots:
         }
     }
 
+    // PU7 (#309): every popup the card redesigned, in the four themes, for
+    // the card's evidence: the update window (an offer, an AUR install's
+    // command, a prerelease its package does not carry), Install update,
+    // Settings > Updates and > Hotkeys, the import wizard's three steps and
+    // its Roll back question, Save layout as, Manage layouts (renaming, the
+    // Delete question) and Move panel.
+    void pu7Screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_PU7_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_PU7_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QTemporaryDir legacy;
+        QVERIFY(legacy.isValid());
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        for (const auto &[name, bytes] :
+             {std::pair{"Config/Config.txt", QByteArray("[HikariSub v0.0.1-rc.1]\r\nGRID_FONT=Arial\r\nPROGRAM_THEME=Mine\r\n"
+                                                        "AUTOSAVE_MAX_FILES=5\r\nGRID_LOAD_SORTED_SUBS=1\r\n")},
+              std::pair{"Config/Hotkeys.txt", QByteArray("[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n")}}) {
+            QFile f(legacy.filePath(QLatin1String(name)));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        }
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto grab = [&](QQuickWindow *window, const QString &file) {
+            QVERIFY(window);
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QLatin1Char('/') + file));
+        };
+        const auto windowNamed = [&](const char *name) { return root->findChild<QQuickWindow *>(QLatin1String(name)); };
+        const auto closeWindow = [&](QQuickWindow *window) {
+            QVERIFY(window->close());
+            QTRY_VERIFY(!window->isVisible());
+        };
+        auto &updates = application->updates();
+        const QString notes = QStringLiteral("New\n- Dialogs are windows of their own.\n- The update options are on "
+                                             "Settings > Updates.\n\nFixed\n- Skip this version is kept.");
+        const auto release = [&](const char *offer, bool prerelease, bool carries) {
+            const QString version = prerelease ? QStringLiteral("1.4.0-beta.2") : QStringLiteral("1.4.0");
+            return QVariantMap{{QStringLiteral("name"), QStringLiteral("HikariSub ") + version},
+                               {QStringLiteral("tag"), QStringLiteral("v") + version},
+                               {QStringLiteral("version"), version},
+                               {QStringLiteral("notes"), notes},
+                               {QStringLiteral("prerelease"), prerelease},
+                               {QStringLiteral("aurCarries"), carries},
+                               {QStringLiteral("offer"), QLatin1String(offer)}};
+        };
+        auto &layouts = application->workspaceLayout();
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Subtitles only")));
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Review with video")));
+        auto &importer = application->settingsImport();
+        QVERIFY(importer.addRoot(legacy.path()));
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            const auto file = [&](const char *name) { return QStringLiteral("pu7-%1-%2.png").arg(QLatin1String(name), code); };
+            // The update window.
+            for (const auto &[name, r] : {std::pair{"update-offer", release("notify", false, true)},
+                                          std::pair{"update-aur", release("aur", false, true)},
+                                          std::pair{"update-aur-prerelease", release("aur", true, false)}}) {
+                QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, r),
+                                          Q_ARG(bool, true));
+                grab(windowNamed("updateAvailable"), file(name));
+                closeWindow(windowNamed("updateAvailable"));
+            }
+            {
+                std::unique_ptr<QQuickWindow> installing(installingWindow(QStringLiteral("1.4.0")));
+                grab(installing.get(), file("install-update"));
+            }
+            // Settings > Updates and > Hotkeys.
+            auto *settingsDialog = qobject_cast<QQuickWindow *>(openSettings());
+            QVERIFY(settingsDialog);
+            QVERIFY(QMetaObject::invokeMethod(settingsDialog, "put", Q_ARG(QVariant, QStringLiteral("updater.skippedVersion")),
+                                              Q_ARG(QVariant, QStringLiteral("1.3.2"))));
+            showSettingsPage("updates");
+            grab(settingsDialog, file("settings-updates"));
+            showSettingsPage("hotkeys");
+            grab(settingsDialog, file("settings-hotkeys"));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!settingsDialog->isVisible());
+            // The import wizard: its steps, then the Roll back question.
+            QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+            auto *wizard = windowNamed("settingsImportDialog");
+            QTRY_VERIFY(wizard && wizard->isVisible());
+            QQuickItem *legacyRoot = nullptr;
+            const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
+            QTRY_VERIFY((legacyRoot = dialogItem("settingsImportDialog", last.constData())) != nullptr);
+            QVERIFY(QMetaObject::invokeMethod(legacyRoot, "click"));
+            grab(wizard, file("import-1"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportNext"), "click"));
+            grab(wizard, file("import-2-conflicts"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportFilter"), "activated", Q_ARG(int, 1)));
+            grab(wizard, file("import-2-all"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportFilter"), "activated", Q_ARG(int, 0)));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportImport"), "click"));
+            QTRY_COMPARE(wizard->property("step").toInt(), 3);
+            grab(wizard, file("import-3"));
+            QVERIFY(QMetaObject::invokeMethod(wizard, "askRollBack"));
+            grab(messageBox("settingsImportMessages"), file("import-rollback"));
+            QVERIFY(QMetaObject::invokeMethod(messageBox("settingsImportMessages"), "answer", Q_ARG(QVariant, QStringLiteral("rollback"))));
+            closeWindow(wizard);
+            // The layout windows.
+            QVERIFY(QMetaObject::invokeMethod(named("viewLayoutSaveAs"), "triggered"));
+            findItem(windowNamed("saveLayoutDialog")->contentItem(), QStringLiteral("saveLayoutName"))
+                ->setProperty("text", QStringLiteral("Subtitles only"));
+            grab(windowNamed("saveLayoutDialog"), file("save-layout"));
+            closeWindow(windowNamed("saveLayoutDialog"));
+            auto *manage = windowNamed("manageLayoutsDialog");
+            QVERIFY(QMetaObject::invokeMethod(named("viewLayoutManage"), "triggered"));
+            grab(manage, file("manage-layouts"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "startRename"));
+            grab(manage, file("manage-layouts-rename"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "endRename"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "askDelete"));
+            grab(messageBox("manageLayoutsMessages"), file("manage-layouts-delete"));
+            QVERIFY(QMetaObject::invokeMethod(messageBox("manageLayoutsMessages"), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            closeWindow(manage);
+            // Move panel.
+            item("editingGrid")->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(named("movePanel"), "triggered"));
+            grab(windowNamed("placementWindow"), file("move-panel"));
+            closeWindow(windowNamed("placementWindow"));
+        }
+    }
+
     void theReferenceIsNeverEdited()
     {
         QVERIFY(application->openReference(original)); // the only Document is protected
