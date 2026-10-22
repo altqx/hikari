@@ -155,9 +155,10 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     // boxes on the Editor page, H2-output-device's device choice on the Audio
     // page, LE2's Times/Frames and LE3's hidden-tag check boxes on the Editor
     // page, WS2's panel layout in the file on the Subtitle properties page,
-    // VF1's two follow lists on the Video page, then (Windows)
-    // A4-wasapi-default's output host API and W1's video player.
-    ASSERT_GT(all.size(), std::size(kLegacy) + 5);
+    // VF1's two follow lists on the Video page, PK1's notices as toasts on
+    // the Editor page, then (Windows) A4-wasapi-default's output host API
+    // and W1's video player.
+    ASSERT_GT(all.size(), std::size(kLegacy) + 8);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
     EXPECT_EQ(fromVideo.control, OptionsControl::Check);
@@ -197,9 +198,14 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(play.control, OptionsControl::IndexChoice);
     EXPECT_EQ(play.page, OptionsPage::Video);
     EXPECT_EQ(play.entries, 4);
+    // PK1 (#301): notices as toasts (off: in the Log only).
+    const auto &toasts = all[std::size(kLegacy) + 8];
+    EXPECT_EQ(toasts.setting, "notices.toasts");
+    EXPECT_EQ(toasts.control, OptionsControl::Check);
+    EXPECT_EQ(toasts.page, OptionsPage::Editor);
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 10);
-    const auto &hostApi = all[std::size(kLegacy) + 8];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 11);
+    const auto &hostApi = all[std::size(kLegacy) + 9];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -210,7 +216,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 8);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 9);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));

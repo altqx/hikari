@@ -200,6 +200,7 @@ struct HotkeyConflict {
     std::string message;
     bool canSwitch = false;   // "Switch hotkeys" (wxOK)
     bool canSetAnyway = false; // "Set anyway" (wxNO)
+    std::vector<std::string> commands; // the names of the commands holding the keys
 };
 enum class HotkeyAnswer { Switch, Delete, SetAnyway, Cancel };
 

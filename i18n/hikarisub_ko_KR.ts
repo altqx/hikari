@@ -359,8 +359,16 @@ Output device: %2</source>
         <translation>모든 파일</translation>
     </message>
     <message>
+        <source>Choose the audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">열기</translation>
+    </message>
+    <message>
         <source>Choose the track</source>
-        <translation>트랙 선택</translation>
+        <translation type="vanished">트랙 선택</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -3354,7 +3362,11 @@ Failed to copy %2 fonts.</source>
     <name>HikariSub.Hotkeys</name>
     <message>
         <source>Hotkey mapping</source>
-        <translation>단축키 설정</translation>
+        <translation type="vanished">단축키 설정</translation>
+    </message>
+    <message>
+        <source>Keys for &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Global hotkey</source>
@@ -3377,32 +3389,68 @@ Failed to copy %2 fonts.</source>
         <translation>소리 단축키</translation>
     </message>
     <message>
+        <source>Press the keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press the keys…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Window</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Please enter a hotkey for &quot;%1&quot;.</source>
-        <translation type="unfinished">단축키 입력 &quot;%1&quot;.</translation>
-    </message>
-    <message>
-        <source>OK</source>
+        <source>%1 is already used by %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Swap with %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take it from %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">스타일 정리</translation>
+    </message>
+    <message>
+        <source>Please enter a hotkey for &quot;%1&quot;.</source>
+        <translation type="obsolete">단축키 입력 &quot;%1&quot;.</translation>
+    </message>
+    <message>
         <source>Warning</source>
-        <translation>경고</translation>
+        <translation type="vanished">경고</translation>
     </message>
     <message>
         <source>Switch hotkeys</source>
-        <translation>단축키 전환</translation>
+        <translation type="vanished">단축키 전환</translation>
     </message>
     <message>
         <source>Delete hotkey</source>
-        <translation>단축키 삭제</translation>
+        <translation type="vanished">단축키 삭제</translation>
     </message>
     <message>
         <source>Set anyway</source>
-        <translation>계속 설정</translation>
+        <translation type="vanished">계속 설정</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -3411,10 +3459,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Shortcut can be set using Shift + Click</source>
         <translation>첫 번째 단축키 설정 / 쉬프트 + 클릭</translation>
-    </message>
-    <message>
-        <source>&quot;%1&quot; is already assigned to %2. Press it again to replace it.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Exit</source>
@@ -4591,6 +4635,140 @@ great help testing HikariSub on a slow computer)
         <source>Application menu</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Don&apos;t ask again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more notice(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open the Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">교체</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Action for every row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation type="unfinished">찾은 후에 할 동작</translation>
+    </message>
+    <message>
+        <source>Action for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New name for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">적용</translation>
+    </message>
+    <message>
+        <source>Choose styles</source>
+        <translation type="unfinished">스타일 선택</translation>
+    </message>
+    <message>
+        <source>Search styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No style matches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A week ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A month ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Date, as %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous month</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next month</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4623,8 +4801,16 @@ great help testing HikariSub on a slow computer)
         <translation>파일에 자막이 없습니다.</translation>
     </message>
     <message>
+        <source>Choose the subtitle track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">열기</translation>
+    </message>
+    <message>
         <source>Choose subtitle track</source>
-        <translation>자막 트랙 선택</translation>
+        <translation type="vanished">자막 트랙 선택</translation>
     </message>
     <message>
         <source>Loading subtitles from Matroska.</source>
@@ -4942,6 +5128,22 @@ when find results window is open</source>
     </message>
     <message>
         <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show notices as toasts (off: in the Log only)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brings back the questions hidden with &quot;Don&apos;t ask again&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6307,64 +6509,52 @@ cause it was edited.</source>
         <translation>다음보다 오래된 파일 삭제</translation>
     </message>
     <message>
-        <source>Day</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>January</source>
-        <translation>1월</translation>
+        <translation type="vanished">1월</translation>
     </message>
     <message>
         <source>February</source>
-        <translation>2월</translation>
+        <translation type="vanished">2월</translation>
     </message>
     <message>
         <source>March</source>
-        <translation>3월</translation>
+        <translation type="vanished">3월</translation>
     </message>
     <message>
         <source>April</source>
-        <translation>4월</translation>
+        <translation type="vanished">4월</translation>
     </message>
     <message>
         <source>May</source>
-        <translation>5월</translation>
+        <translation type="vanished">5월</translation>
     </message>
     <message>
         <source>June</source>
-        <translation>6월</translation>
+        <translation type="vanished">6월</translation>
     </message>
     <message>
         <source>July</source>
-        <translation>7월</translation>
+        <translation type="vanished">7월</translation>
     </message>
     <message>
         <source>August</source>
-        <translation>8월</translation>
+        <translation type="vanished">8월</translation>
     </message>
     <message>
         <source>September</source>
-        <translation>9월</translation>
+        <translation type="vanished">9월</translation>
     </message>
     <message>
         <source>October</source>
-        <translation>10월</translation>
+        <translation type="vanished">10월</translation>
     </message>
     <message>
         <source>November</source>
-        <translation>11월</translation>
+        <translation type="vanished">11월</translation>
     </message>
     <message>
         <source>December</source>
-        <translation>12월</translation>
-    </message>
-    <message>
-        <source>Month</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Year</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">12월</translation>
     </message>
     <message>
         <source>Remove older auto save files</source>
@@ -6820,19 +7010,19 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Style named &quot;%1&quot; already exists. Replace?</source>
-        <translation type="unfinished">&quot;%1&quot;인 스타일이 있습니다. 바꾸겠습니까?</translation>
+        <translation type="obsolete">&quot;%1&quot;인 스타일이 있습니다. 바꾸겠습니까?</translation>
     </message>
     <message>
         <source>Yes to all</source>
-        <translation>모두 예</translation>
+        <translation type="vanished">모두 예</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation>예</translation>
+        <translation type="vanished">예</translation>
     </message>
     <message>
         <source>No</source>
-        <translation>아니오</translation>
+        <translation type="vanished">아니오</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -6849,6 +7039,74 @@ Spell checking will be disabled</source>
     <message>
         <source>Create</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>bold, italic, underline or strikeout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>shadow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>alignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>margins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 styles already exist in %3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more are the same as the ones there and are left as they are.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copy %n style(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -6959,12 +7217,20 @@ Spell checking will be disabled</source>
         <translation>ASS 파일에서 목록으로 스타일을 복사</translation>
     </message>
     <message>
+        <source>the storage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add to ASS</source>
         <translation>자막에 추가</translation>
     </message>
     <message>
         <source>Copy style from storage to ASS</source>
         <translation>목록에서 ASS 파일로 스타일을 복사합니다</translation>
+    </message>
+    <message>
+        <source>the ASS file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to all open ASS files</source>
@@ -7220,7 +7486,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Choose styles</source>
-        <translation>스타일 선택</translation>
+        <translation type="vanished">스타일 선택</translation>
     </message>
     <message>
         <source>Copy of </source>
@@ -8100,7 +8366,7 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Translator mode</source>
-        <translation>번역 모드</translation>
+        <translation type="vanished">번역 모드</translation>
     </message>
     <message>
         <source>Translator mode displays and saves both foreign text and translation text</source>
@@ -8122,6 +8388,10 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Translation needs an ASS file: plain text cannot store it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

@@ -270,9 +270,10 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // panel's script offer, "… and %n more" and its tooltip's (AM1); 19
         // with the karaoke templater's report, its summary, its problems and
         // its template Lines (KE1). 20 with the inspector bar's picked count
-        // beside its picker, "%n lines" (VT1). 21 with Hydra's "Changes %n
-        // lines" (HY1).
-        ASSERT_EQ(numerus, 21) << language.toStdString();
+        // beside its picker, "%n lines" (VT1). 23 with the popup kit's "%n
+        // more notice(s)" and the style copy's count and clash summary (PK1).
+        // 24 with Hydra's "Changes %n lines" (HY1).
+        ASSERT_EQ(numerus, 24) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

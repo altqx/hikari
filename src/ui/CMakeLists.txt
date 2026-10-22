@@ -46,7 +46,6 @@ get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DI
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*")
 # O2: the "Hotkey mapping" window and its questions.
-qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 # S4: the automation shell's message boxes and script editor picker.
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
 # Y4-playres-ask: the question a macro reading a missing script resolution asks.
@@ -208,6 +207,10 @@ qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml T
 # DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update notices on it.
 qt_target_qml_sources(hikari_ui QML_FILES DialogWindow.qml DialogTitleBar.qml AboutDialog.qml CreditsDialog.qml
     UpdateMessage.qml UpdateAvailable.qml)
+# PK1: the popup kit on DG1's frame (docs/qt/ux/visual-language.md "Popups"): the message box, the popover,
+# toasts and the inline bar, and the clash review, Choose styles, hotkey capture, list chooser and date picker.
+qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
+    ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")
