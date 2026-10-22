@@ -308,6 +308,42 @@ private slots:
         QVERIFY(!named("startupBar")->property("visible").toBool());
     }
 
+    // Started with files, the offer is a bar over them (PU1-startup-cards):
+    // files handed over later end it too.
+    void forwardedFilesEndTheStartupBar()
+    {
+        {
+            app::Application::Options o;
+            o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+            o.playbackAudio = false;
+            app::Application before(o);
+            QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("b/last.ass")), "l")));
+        }
+        app::Application::Options o;
+        o.settingsFile = home.filePath(QStringLiteral("hikari.ini"));
+        o.playbackAudio = false;
+        o.spellingBackend = {};
+        application = new app::Application(o);
+        application->setSessionRestore(1);
+        application->setStartedWithPaths(true);
+        QVERIFY(application->openFile(writeAss(dir.filePath(QStringLiteral("b/given.ass")), "g")));
+        forwarded = new app::ForwardedLaunches(*application);
+        engine = new QQmlApplicationEngine;
+        hikari::ui::attachDocking(*engine);
+        engine->setInitialProperties(application->qmlProperties());
+        engine->loadFromModule("Hikari.Ui", "Main");
+        QVERIFY(!engine->rootObjects().isEmpty());
+        window = qobject_cast<QQuickWindow *>(engine->rootObjects().first());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        forwarded->setWindow(window);
+        QObject *bar = named("startupBar");
+        QVERIFY(bar);
+        QTRY_VERIFY(bar->property("visible").toBool());
+        take({writeAss(dir.filePath(QStringLiteral("b/more.ass")), "m")});
+        QTRY_COMPARE(titles(), (QStringList{QStringLiteral("given.ass"), QStringLiteral("more.ass")}));
+        QTRY_VERIFY(!bar->property("visible").toBool());
+    }
+
     // A session loaded at the start (P6, "Always") comes first, and the
     // files open after its tabs.
     void filesOpenAfterTheStartupSession()

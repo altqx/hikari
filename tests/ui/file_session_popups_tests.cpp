@@ -356,8 +356,8 @@ private slots:
         QCOMPARE(readAll(path).count("mine"), qsizetype(2));
     }
 
-    // The file gone after its bar showed: Reload and Save over it can't
-    // use it, and the bar stays for Keep mine or Save as.
+    // The file gone after its bar showed: Reload, Keep mine and Save over
+    // it can't use it, and the bar stays for Save as.
     void aFileGoneAfterItsBarKeepsTheBar()
     {
         start();
@@ -372,6 +372,9 @@ private slots:
         QTest::qWait(200);
         QVERIFY(shown("diskChangeBar"));
         QCOMPARE(target()->document().lines().size(), std::size_t(2));
+        QVERIFY(QMetaObject::invokeMethod(named("reloadNo"), "clicked"));
+        QTest::qWait(200);
+        QVERIFY(shown("diskChangeBar"));
         QVERIFY(QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(shown("diskSaveQuestion"));
         QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("saveOver"))));
