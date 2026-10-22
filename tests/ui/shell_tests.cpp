@@ -7066,7 +7066,7 @@ private slots:
         results = item<QObject>("misspellResults");
         QVERIFY(results);
         QTRY_VERIFY(tool->isVisible() && tool->width() > 0);
-        QCOMPARE(tool->property("rules").toList().size(), 13);
+        QTRY_COMPARE(tool->property("rules").toList().size(), 13); // read once it shows
         // Docked at the right edge, full height, on its first opening.
         const QRectF toolArea = tool->mapRectToScene(QRectF(0, 0, tool->width(), tool->height()));
         QVERIFY2(toolArea.right() > window->width() - 40, qPrintable(QString::number(toolArea.right())));
@@ -7247,6 +7247,31 @@ private slots:
         // The valid checked rule still ran.
         const auto &line = *session->document().lines()[1];
         QCOMPARE(std::string(line.text.begin(), line.text.end()), std::string("untranslated three"));
+    }
+
+    // PU2 (#304): starting and quitting leave Rules.txt alone: the default
+    // arrangement opens Fix minor errors only in passing, and the rules are
+    // read (and written back at exit) only once the panel shows (Codex
+    // review). A malformed file would come back rewritten otherwise.
+    void startingLeavesTheRulesFileAlone()
+    {
+        QTemporaryDir home;
+        const QByteArray bytes("#HikariSub rules file\r\n1\r\nnot a rule\r\nMine\fteh\fthe\f1\r\n");
+        QFile rules(home.filePath(QStringLiteral("Rules.txt")));
+        QVERIFY(rules.open(QIODevice::WriteOnly));
+        rules.write(bytes);
+        rules.close();
+        restartWithSpelling(home.path(), false);
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "defaultLayout"));
+        QTest::qWait(100);
+        QVERIFY(!item<QObject>("misspellDock")->property("isOpen").toBool());
+        QVERIFY(!application->log().history().contains(QStringLiteral("is invalid")));
+        delete engine;
+        delete application;
+        engine = nullptr;
+        application = nullptr;
+        QVERIFY(rules.open(QIODevice::ReadOnly));
+        QCOMPARE(rules.readAll(), bytes);
     }
 
     // F4: Rules.txt beside the INI file, written when the application ends

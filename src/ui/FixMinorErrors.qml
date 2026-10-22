@@ -53,7 +53,7 @@ Item {
         whereChoice.currentIndex = 0
         whichLines.currentIndex = 0
         styles.text = ""
-        reloadRules()
+        rules = [] // read again at the next showing
     }
     // The rules file's bits (MisspellReplacer: 1 match case, 2 lower case,
     // 4 upper case, 8 unchanged, 16 only in tags, 32 only in text). Case

@@ -5581,8 +5581,14 @@ ApplicationWindow {
             objectName: "misspellDock"
             uniqueName: "FixMinorErrors"
             title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
-            // MR->Show() read Rules.txt again at each showing.
-            onIsOpenChanged: if (isOpen) misspellTool.reloadRules()
+            // MR->Show() read Rules.txt again at each showing. Not on the
+            // passing open of the default arrangement, which closes it at
+            // once: read rules are written back at exit (Codex review).
+            onIsOpenChanged: if (isOpen) Qt.callLater(misspellDock.reloadIfOpen)
+            function reloadIfOpen() {
+                if (misspellDock.isOpen)
+                    misspellTool.reloadRules()
+            }
             Panel {
                 id: misspellPanel
                 objectName: "misspellPanel"
@@ -5597,7 +5603,10 @@ ApplicationWindow {
                     // DestroyDialogs (a changed program font): MR->Destroy().
                     Connections {
                         target: root.app
-                        function onMisspellReplacerDestroyed() { misspellTool.reset() }
+                        function onMisspellReplacerDestroyed() {
+                            misspellTool.reset()
+                            misspellDock.reloadIfOpen()
+                        }
                     }
                 }
             }
