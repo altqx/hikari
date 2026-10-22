@@ -14583,19 +14583,23 @@ private slots:
         QVERIFY(styles.deleteCatalog(QStringLiteral("Conv")));
     }
 
-    // "Reset all settings…" keeps the page shown, where Settings opens next.
+    // "Reset all settings…" keeps the page shown, where Settings opens next,
+    // and the Appearance page as it is: its program font size too.
     void resetAllKeepsThePageShown()
     {
         auto &settings = *application->settingsStore();
+        settings.set("program.fontSize", 13);
         auto *dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
         showSettingsPage("video");
         QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("video"));
         QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
         answerSettingsQuestion("reset");
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("program.fontSize")).toInt(), 13);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("video"));
+        QCOMPARE(settings.integer("program.fontSize"), 13);
         dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(dialog->property("currentPage").toString(), QStringLiteral("video"));

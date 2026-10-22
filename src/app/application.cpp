@@ -5566,9 +5566,19 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     application::MemorySettingsStorage storage;
     const application::Settings defaults(storage);
     auto refreshed = toVariant(application::refreshOptionsDialogAfterReset(defaults, m_optionsLists, fromVariant(values)));
-    for (const auto id : appearanceSettings())
+    const auto keep = [&](std::string_view id) {
         if (const auto found = values.constFind(qs(id)); found != values.cend())
             refreshed.insert(qs(id), *found);
+    };
+    for (const auto id : appearanceSettings())
+        keep(id);
+    // The Appearance page's bound options too: the program font and its size.
+    for (const auto &b : application::optionsBindings())
+        if (b.page == application::OptionsPage::Appearance) {
+            keep(b.setting);
+            if (!b.sizeSetting.empty())
+                keep(b.sizeSetting);
+        }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
     return refreshed;
 }
