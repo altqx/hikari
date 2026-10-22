@@ -6489,6 +6489,27 @@ private slots:
         typeIntoSpinBoxAndEnter("scriptPropertiesDialog", "propHeight", QStringLiteral("720"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(session->document().scriptInfo(u8"PlayResY"), std::optional<std::u8string>(u8"720"));
+        // PU6: the rendering fields changed meanwhile (from the main window
+        // beside a floating panel): Save keeps them, writing only the title
+        // edited here.
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, reopened)));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(application->applyScriptProperties({{QStringLiteral("title"), QStringLiteral("Show")}, {QStringLiteral("playResX"), 1280},
+                                                    {QStringLiteral("playResY"), 720}, {QStringLiteral("wrapStyle"), 2},
+                                                    {QStringLiteral("reverseCollisions"), true}},
+                                                   {{QStringLiteral("wrapStyle"), true}, {QStringLiteral("reverseCollisions"), true}}, false));
+        QCOMPARE(session->document().scriptInfo(u8"WrapStyle"), std::optional<std::u8string>(u8"2"));
+        auto *renamed = dialogItem("scriptPropertiesDialog", "propTitle");
+        renamed->setProperty("text", QStringLiteral("Renamed"));
+        QVERIFY(QMetaObject::invokeMethod(renamed, "textEdited"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->document().scriptInfo(u8"Title"), std::optional<std::u8string>(u8"Renamed"));
+        QCOMPARE(session->document().scriptInfo(u8"WrapStyle"), std::optional<std::u8string>(u8"2"));
+        QCOMPARE(session->document().scriptInfo(u8"Collisions"), std::optional<std::u8string>(u8"Reverse"));
+        QVERIFY(session->undo());
+        QCOMPARE(session->document().scriptInfo(u8"Title"), std::optional<std::u8string>(u8"Show"));
+        application->editor().reloadFromSession();
 
         // PU6: another tab becoming the editing target (the main window stays
         // usable beside a floating panel the window opened from) closes the
@@ -27432,6 +27453,7 @@ private slots:
         auto *matrix = dialogItem("scriptPropertiesDialog", "propMatrix");
         QCOMPARE(matrix->property("currentText").toString(), QStringLiteral("TV.709"));
         matrix->setProperty("currentIndex", 1);
+        QVERIFY(QMetaObject::invokeMethod(matrix, "activated", Q_ARG(int, 1))); // as the user's choice
         QCOMPARE(matrix->property("currentText").toString(), QStringLiteral("TV.601"));
         QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
         QTRY_VERIFY_WITH_TIMEOUT(near(pixel(), bt601), 10000);
@@ -27497,6 +27519,7 @@ private slots:
                         dialog->property("visible").toBool());
             auto *matrix = dialogItem("scriptPropertiesDialog", "propMatrix");
             matrix->setProperty("currentIndex", index);
+            QVERIFY(QMetaObject::invokeMethod(matrix, "activated", Q_ARG(int, index)));
             QCOMPARE(matrix->property("currentText").toString(), name);
             QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
             QTRY_VERIFY(!dialog->property("visible").toBool());

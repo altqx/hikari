@@ -5001,6 +5001,18 @@ bool Application::applyScriptProperties(const QVariantMap &values, const QVarian
     p.scaledBorderAndShadow = values.value(QStringLiteral("scaledBorderAndShadow")).toBool();
     application::ScriptPropertiesEdits e;
     auto edited = [&](const char *key) { return edits.value(QLatin1String(key)).toBool(); };
+    // PU6: the rendering fields the user left alone are the Document's now,
+    // not the dialog's snapshot (the main window can change or undo them
+    // while the dialog is open beside a floating panel).
+    const auto now = application::scriptProperties(session->document());
+    if (!edited("matrix"))
+        p.matrix = now.matrix;
+    if (!edited("wrapStyle"))
+        p.wrapStyle = now.wrapStyle;
+    if (!edited("reverseCollisions"))
+        p.reverseCollisions = now.reverseCollisions;
+    if (!edited("scaledBorderAndShadow"))
+        p.scaledBorderAndShadow = now.scaledBorderAndShadow;
     e.title = edited("title");
     e.originalScript = edited("originalScript");
     e.originalTranslation = edited("originalTranslation");

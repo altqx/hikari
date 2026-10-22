@@ -4,7 +4,8 @@
 // are sections with the labels beside the fields; legacy's "Link the layout
 // resolution to the subtitle resolution" is "Same as the subtitles" under
 // the Layout row it controls. Only the fields the user changes are written
-// (legacy IsModified), with the legacy defaults applied on Save.
+// (legacy IsModified; PU6: the matrix, wrap style, collisions and border
+// scaling too), with the legacy defaults applied on Save.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.ScriptProperties"
 import QtQuick
@@ -69,6 +70,17 @@ DialogWindow {
         e[name] = true
         edits = e
     }
+    // From video: the video open now (the main window can open another
+    // while this is open beside a floating panel).
+    function fromVideo(widthBox, heightBox, widthName, heightName) {
+        const p = app.scriptProperties()
+        if (!(p.videoWidth > 0))
+            return
+        widthBox.value = p.videoWidth
+        heightBox.value = p.videoHeight
+        mark(widthName)
+        mark(heightName)
+    }
     function values() {
         return { title: titleField.text, originalScript: scriptField.text, originalTranslation: translationField.text,
                  originalEditing: editingField.text, originalTiming: timingField.text, updatedBy: updatedField.text,
@@ -127,12 +139,7 @@ DialogWindow {
                     objectName: "propFromVideo"
                     text: qsTr("From video")
                     enabled: dialog.initial.videoWidth > 0
-                    onClicked: {
-                        widthField.value = dialog.initial.videoWidth
-                        heightField.value = dialog.initial.videoHeight
-                        dialog.mark("playResX")
-                        dialog.mark("playResY")
-                    }
+                    onClicked: dialog.fromVideo(widthField, heightField, "playResX", "playResY")
                 }
             }
             FieldLabel { text: qsTr("Layout") }
@@ -145,18 +152,13 @@ DialogWindow {
                     objectName: "propLayoutFromVideo"
                     text: qsTr("From video")
                     enabled: !linkBox.checked && dialog.initial.videoWidth > 0
-                    onClicked: {
-                        layoutWidthField.value = dialog.initial.videoWidth
-                        layoutHeightField.value = dialog.initial.videoHeight
-                        dialog.mark("layoutResX")
-                        dialog.mark("layoutResY")
-                    }
+                    onClicked: dialog.fromVideo(layoutWidthField, layoutHeightField, "layoutResX", "layoutResY")
                 }
             }
             Item { implicitWidth: 1 }
             CheckBox { id: linkBox; objectName: "propLinkResolutions"; text: qsTr("Same as the subtitles") }
             FieldLabel { text: qsTr("YCbCr matrix") }
-            ComboBox { id: matrixBox; objectName: "propMatrix"; Layout.preferredWidth: 200; Accessible.name: qsTr("YCbCr matrix") }
+            ComboBox { id: matrixBox; objectName: "propMatrix"; Layout.preferredWidth: 200; Accessible.name: qsTr("YCbCr matrix"); onActivated: dialog.mark("matrix") }
         }
     }
     FormSection {
@@ -173,13 +175,14 @@ DialogWindow {
                 objectName: "propWrapStyle"
                 Layout.fillWidth: true
                 Accessible.name: qsTr("Wrap style")
+                onActivated: dialog.mark("wrapStyle")
                 model: [qsTr("0: Auto, top line wider"), qsTr("1: End-of-line wrapping, only \\N breaks"),
                         qsTr("2: No wrapping, both \\n and \\N break"), qsTr("3: Auto, bottom line wider")]
             }
             FieldLabel { text: qsTr("Colliding lines") }
-            ComboBox { id: collisionBox; objectName: "propCollisions"; Layout.preferredWidth: 200; Accessible.name: qsTr("Colliding lines"); model: [qsTr("Normal"), qsTr("Reversed")] }
+            ComboBox { id: collisionBox; objectName: "propCollisions"; Layout.preferredWidth: 200; Accessible.name: qsTr("Colliding lines"); model: [qsTr("Normal"), qsTr("Reversed")]; onActivated: dialog.mark("reverseCollisions") }
             Item { implicitWidth: 1 }
-            CheckBox { id: borderBox; objectName: "propScaleBorder"; text: qsTr("Scale border and shadow") }
+            CheckBox { id: borderBox; objectName: "propScaleBorder"; text: qsTr("Scale border and shadow"); onToggled: dialog.mark("scaledBorderAndShadow") }
         }
     }
 
