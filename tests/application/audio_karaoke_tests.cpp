@@ -918,10 +918,22 @@ TEST_F(KaraokeMouseTest, ALostCaptureKeepsTheSyllablesAsAReleaseDoes)
     send(drag(130));
     EXPECT_EQ(selection.startMs, 3900);
     EXPECT_EQ(karaoke.times()[0], 3600);
-    timing.lostCapture(selection.startMs, {&karaoke, moveOnClick, sevenPixels(), fieldTime});
+    EXPECT_FALSE(timing.lostCapture(selection.startMs, {&karaoke, moveOnClick, sevenPixels(), fieldTime}));
     EXPECT_EQ(timing.hold(), 0);
     EXPECT_EQ(karaoke.times(), (std::vector<int>{3900, 4500, 6000}));
     EXPECT_EQ(s(karaoke.text(selection.startMs)), "{\\k0}ka{\\k60}ra{\\k150}oke");
+    // the right button's: the syllables stay carried, and the caller is told
+    // to commit them as the release would
+    karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3000, 6000);
+    selection.startMs = 3000;
+    timing.drawn(view, selection);
+    send(press(100, 50, AudioMouse::Button::Right));
+    send(drag(104, AudioMouse::Button::Right));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3720, 4620, 6000}));
+    EXPECT_TRUE(timing.lostCapture(selection.startMs, {&karaoke, moveOnClick, sevenPixels(), fieldTime}));
+    EXPECT_EQ(timing.hold(), 0);
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3720, 4620, 6000}));
+    EXPECT_FALSE(timing.lostCapture(selection.startMs, {&karaoke, moveOnClick, sevenPixels(), fieldTime}));
 }
 
 TEST_F(KaraokeMouseTest, AStaleGrabKeepsTheSelectionAsItIs)

@@ -1314,7 +1314,8 @@ void AudioController::showTime(int ms, bool mark)
 }
 
 // KA1: a start drag cut short keeps the syllables at their times, as its
-// release does (Codex)
+// release does (Codex); one the right button carried them with commits them
+// as its release would, since a later Commit reads the Line's own tags
 void AudioController::lostCapture()
 {
     application::AudioKaraokeMouse karaoke;
@@ -1322,7 +1323,9 @@ void AudioController::lostCapture()
         karaoke.karaoke = &m_karaoke;
         karaoke.fieldTime = m_hooks.fieldTime;
     }
-    m_timing.lostCapture(m_startMs, karaoke);
+    if (m_timing.lostCapture(m_startMs, karaoke))
+        commitChanges(false, timingOptions().autoCommit, false, application::AudioAdjacent::None,
+                      committedKaraokeText());
 }
 
 application::AudioMouseResult AudioController::mouse(const application::AudioMouse &event)

@@ -144,7 +144,9 @@ public:
     bool setMark(int ms);
     // Legacy OnLostCapture; KA1: a start the left button was dragging (now
     // `startMs`) leaves the syllables at their times, as its release does.
-    void lostCapture(int startMs, const AudioKaraokeMouse &karaoke = {});
+    // True for a start the right button carried the syllables with: the
+    // caller commits them, as the release would (Codex).
+    bool lostCapture(int startMs, const AudioKaraokeMouse &karaoke = {});
     // A new box (legacy Reset keeps the mark: AudioDisplay is made again with the box).
     void reset() { *this = AudioTiming{}; }
 

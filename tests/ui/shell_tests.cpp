@@ -16411,6 +16411,44 @@ private slots:
         QCOMPARE(after[0]->start.value.microseconds(), 200000);
     }
 
+    // KA1 (Codex): a start the right button carries the syllables with, its
+    // drag cut short (the grab lost), commits them as its release would: the
+    // Line keeps its syllables' lengths, not the times its own tags read
+    void audioKaraokeLostCaptureKeepsTheCarriedSyllables()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lost-capture.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:02.60,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const int from = int(view.xAtMs(200));
+        QTest::mouseMove(window, at(from, 40));
+        QTest::mousePress(window, Qt::RightButton, {}, at(from, 40));
+        QTest::mouseMove(window, at(int(view.xAtMs(300)), 40));
+        const int by = application::legacyZeroIt(audio.selectionStart()) - 200; // as the commit writes it
+        QVERIFY(by > 50);
+        QCOMPARE(audio.karaokeModel().times(), (std::vector<int>{600 + by, 1800}));
+        display->ungrabMouse();
+        QTest::mouseRelease(window, Qt::RightButton, {}, at(int(view.xAtMs(300)), 40));
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->start.value.microseconds() / 1000, std::int64_t(200 + by));
+        // "sakura" carried whole; "hana" ends with the Line (its own tags
+        // would have kept "sakura" at its old end)
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(after[0]->text.c_str())),
+                 QStringLiteral("{\\k40}sakura{\\k%1}hana").arg((1200 - by) / 10));
+    }
+
     // KA1 (Codex): K and Shift+K with several Lines selected write the
     // active Line's syllables to it alone; the others keep their texts
     void audioKaraokeCommandsSeveralLines()
