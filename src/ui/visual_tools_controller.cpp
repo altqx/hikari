@@ -459,6 +459,20 @@ std::string VisualToolsController::editorHotkey(int id) const
     return m_editorHotkey ? m_editorHotkey(id) : VisualHost::editorHotkey(id);
 }
 
+std::u16string VisualToolsController::activeLineText() const
+{
+    // OnGetShapeFromLine reads tab->edit->line: the Line as last sent
+    // (Dialogue::GetTextNoCopy: its translation when it has one).
+    const auto *s = editingSession();
+    const auto active = activeLine();
+    if (!s || !active)
+        return {};
+    for (const auto *line : s->document().lines())
+        if (line->id == *active)
+            return core::toUtf16(line->translation.empty() ? line->text : line->translation);
+    return {};
+}
+
 void VisualToolsController::openTagsEditor()
 {
     if (m_tagsEditor)
@@ -467,29 +481,34 @@ void VisualToolsController::openTagsEditor()
     if (!allTags)
         return;
     AllTagsEditor::Hooks hooks;
-    hooks.removeFile = [this] {
-        if (!m_tagsFile.isEmpty())
-            QFile::remove(m_tagsFile);
-    };
-    hooks.finished = [this, allTags](std::optional<std::vector<application::visual::AllTagsSetting>> tags) {
-        if (tags) {
-            // OK: VideoToolbar::SetTagsSettings, the list's names again (its
-            // selection kept by name) and the tool told (ChangeTool).
-            const auto oldNames = application::visual::allTagsNames(*allTagsSettings());
-            m_allTags = std::move(*tags);
-            if (m_allTags.empty())
-                m_allTags = application::visual::defaultAllTags();
-            saveAllTags();
-            if (allTags == tool())
-                allTags->definitionsChanged(oldNames, *this);
+    hooks.activeLineText = [this] {
+        // The preview's Line: the active one, else the first.
+        if (const auto *s = editingSession(); s && !activeLine() && !s->document().lines().empty()) {
+            const auto *first = s->document().lines().front();
+            return core::toUtf16(first->translation.empty() ? first->text : first->translation);
         }
+        return activeLineText();
+    };
+    hooks.changed = [this, allTags](const std::vector<application::visual::AllTagsSetting> &tags) {
+        // PU5: each change in "Edit tags" is kept at once (legacy's OK:
+        // VideoToolbar::SetTagsSettings, the list's names again, its
+        // selection kept by name, and the tool told, ChangeTool).
+        const auto oldNames = application::visual::allTagsNames(*allTagsSettings());
+        m_allTags = tags;
+        if (m_allTags.empty())
+            m_allTags = application::visual::defaultAllTags();
+        saveAllTags();
+        if (allTags == tool())
+            allTags->definitionsChanged(oldNames, *this);
+        refreshOptions();
+        emit changed();
+        emit overlayChanged();
+    };
+    hooks.finished = [this] {
         if (m_tagsEditor)
             m_tagsEditor->deleteLater();
         m_tagsEditor = nullptr;
         emit tagsEditorChanged();
-        refreshOptions();
-        emit changed();
-        emit overlayChanged();
     };
     m_tagsEditor = new AllTagsEditor(*allTagsSettings(), allTags->toggled() & 0xFFFFF, std::move(hooks), this);
     emit tagsEditorChanged();
@@ -507,49 +526,35 @@ void VisualToolsController::openShapeEditor()
             selection = m.value(QStringLiteral("index")).toInt();
     }
     ShapeEditor::Hooks hooks;
-    hooks.activeLineText = [this]() -> std::u16string {
-        // OnGetShapeFromLine reads tab->edit->line: the Line as last sent
-        // (Dialogue::GetTextNoCopy: its translation when it has one).
-        const auto *s = editingSession();
-        const auto active = activeLine();
-        if (!s || !active)
-            return {};
-        for (const auto *line : s->document().lines())
-            if (line->id == *active)
-                return core::toUtf16(line->translation.empty() ? line->text : line->translation);
-        return {};
-    };
-    hooks.removeFile = [this] {
-        if (!m_shapesFile.isEmpty())
-            QFile::remove(m_shapesFile);
-    };
+    hooks.activeLineText = [this] { return activeLineText(); };
     hooks.defaults = [] { return defaultShapePresets(); };
-    hooks.finished = [this, drawing](std::optional<std::vector<ShapePreset>> presets) {
-        if (presets) {
-            // OK: VideoToolbar::SetShapesSettings, the list's names again,
-            // its selection kept (or the last preset's), and the tool told
-            // (ChangeTool -> SetShape, which keeps the shape it has when the
-            // selection is the same).
-            m_shapes = std::move(*presets);
-            saveShapes();
-            int selection = 0;
-            for (const QVariant &o : std::as_const(m_options)) {
-                const QVariantMap m = o.toMap();
-                if (m.value(QStringLiteral("name")).toString() == QStringLiteral("shape"))
-                    selection = m.value(QStringLiteral("index")).toInt();
-            }
-            if (selection > static_cast<int>(m_shapes.size()))
-                selection = static_cast<int>(m_shapes.size());
-            if (drawing && drawing == tool())
-                drawing->setOption("shape", selection, *this);
+    hooks.changed = [this, drawing](const std::vector<ShapePreset> &presets) {
+        // PU5: each change in "Edit shapes" is kept at once (legacy's OK:
+        // VideoToolbar::SetShapesSettings, the list's names again, its
+        // selection kept (or the last preset's), and the tool told,
+        // ChangeTool -> SetShape, which keeps the shape it has when the
+        // selection is the same).
+        m_shapes = presets;
+        saveShapes();
+        int selection = 0;
+        for (const QVariant &o : std::as_const(m_options)) {
+            const QVariantMap m = o.toMap();
+            if (m.value(QStringLiteral("name")).toString() == QStringLiteral("shape"))
+                selection = m.value(QStringLiteral("index")).toInt();
         }
+        if (selection > static_cast<int>(m_shapes.size()))
+            selection = static_cast<int>(m_shapes.size());
+        if (drawing && drawing == tool())
+            drawing->setOption("shape", selection, *this);
+        refreshOptions();
+        emit optionsChanged();
+        emit overlayChanged();
+    };
+    hooks.finished = [this] {
         if (m_shapeEditor)
             m_shapeEditor->deleteLater();
         m_shapeEditor = nullptr;
         emit shapeEditorChanged();
-        refreshOptions();
-        emit optionsChanged();
-        emit overlayChanged();
     };
     // The chosen preset: the list's selection less "Choose" (from "Choose"
     // the first). Legacy passed the selection itself, opening on the preset

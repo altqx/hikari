@@ -1,297 +1,470 @@
 pragma Translator: "HikariSub.VisualTools"
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// T5: legacy ShapesEdition, "Vector shape editing" (VisualDrawingShapes.cpp:
-// 43-118): the drawing tool's shape presets, opened from the shape list's
-// "Edit". The list with a new name, Add shape and Delete shape; the edited
-// preset's name, "Scaling relative to cursor", the scaling mode (disabled,
-// as legacy), "Get shape from active line" and the shape's drawing; Apply
-// keeps an edit here, OK keeps it and saves the presets, Cancel drops what
-// the dialog changed, Restore default puts legacy's five presets back.
-// Legacy's message boxes are modal boxes over the dialog. Saving under a
-// name another preset has asks to replace it or rename (accepted on #55).
-Dialog {
+// PU5 (#307, mockup approved 2026-10-22): "Edit shapes", legacy's "Vector
+// shape editing" (ShapesEdition, VisualDrawingShapes.cpp:43-288), opened by
+// the drawing tool's Shape list "Edit shapes…". A resizable, modeless window
+// on DG1's frame: the presets on the left (each drawn small) with New shape,
+// Duplicate, Delete and ⋯ (Restore default shapes…, Undo all changes) under
+// them; the selected one's name, "Scale from the cursor" and drawing; its
+// preview around the point the tool's click puts it at. Each change is kept
+// as it is made (the tool's list and the file follow); Undo and Redo walk
+// the window's steps; Close and Esc keep them. A value the tool cannot use
+// is said under its field and the preset keeps its last good one; a name
+// another preset has asks to replace it (accepted on #55); Restore default
+// shapes asks first.
+DialogWindow {
     id: dialog
     objectName: "shapesEditionDialog"
     property ShapeEditor editor
-    title: qsTr("Vector shape editing")
-    parent: Overlay.overlay
-    anchors.centerIn: parent
-    modal: true
-    closePolicy: Popup.CloseOnEscape
-    padding: 8
+    title: qsTr("Edit shapes")
+    dialogId: "shapesEdition"
+    resizable: true
+    initialFocus: shapeList
 
-    // A list change or OK waiting on a question.
-    property int pendingIndex: -1
-    property bool pendingOk: false
-    property bool fromList: false
-
-    // NT1: an error is the application's message box, titled with this
-    // dialog (legacy's untranslated "Error").
-    function show(message) {
-        if (!message || !message.text)
-            return false
-        messages.ask({ title: dialog.title, text: message.text, severity: "error" })
-        return true
+    // The window's words for its steps (ShapesEdition::Step).
+    function stepText(step) {
+        return [qsTr("Rename shape"), qsTr("Edit drawing"), qsTr("Change scaling"), qsTr("New shape"),
+                qsTr("Duplicate shape"), qsTr("Delete shape"), qsTr("Take drawing from line"),
+                qsTr("Replace shape"), qsTr("Restore default shapes"), qsTr("Undo all changes")][step] ?? ""
     }
-    function saved(result, ok) {
-        // {} kept, {text, title} an error, {clash} a name another preset has.
-        if (result.clash !== undefined) {
-            pendingOk = ok
-            clashText.text = qsTr("A shape named \"%1\" already exists.").arg(result.clash)
-            clashBox.open()
-            return false
+    // The fields show the preset again (another one chosen, a step undone,
+    // or a refused value left).
+    function showFields() {
+        if (!editor)
+            return
+        shapeName.text = editor.name
+        shapeName.error = ""
+        shapeText.text = editor.shape
+        shapeText.error = ""
+    }
+    function nameTyped() {
+        const code = editor.setName(shapeName.text)
+        shapeName.error = code === ShapeEditor.NameEmpty ? qsTr("Type a name.")
+                        : code === ShapeEditor.NameSeparator ? qsTr("A name can't contain “;”.")
+                        : code === ShapeEditor.NameTaken
+                          ? qsTr("Another shape is named “%1”. Press Enter to replace it.").arg(editor.takenName())
+                        : ""
+    }
+    // Enter, or leaving the name with an error: a taken name asks to replace
+    // the other preset; any other refused name goes back.
+    property bool asking: false
+    function nameLeft() {
+        if (!editor || asking || shapeName.error.length === 0) {
+            if (editor)
+                editor.endTyping()
+            return
         }
-        return !show(result)
-    }
-    function listChanged(index) {
-        // OnListChanged: the edited preset's changes are asked about first.
-        const question = editor.listChangeQuestion()
-        if (question.text) {
-            pendingIndex = index
-            questionBox.kind = "list"
-            questionBox.title = question.title
-            questionText.text = question.text
-            questionBox.open()
-        } else {
-            editor.select(index)
+        if (editor.setName(shapeName.text) !== ShapeEditor.NameTaken) {
+            showFields()
+            return
         }
+        const name = shapeName.text
+        asking = true
+        messages.ask({
+            title: dialog.title,
+            text: qsTr("Replace the shape “%1”?").arg(editor.takenName()),
+            detail: qsTr("“%1” takes its name and its place in the list; the other is removed. Undo brings it back while this window is open.").arg(editor.name),
+            severity: "warning",
+            choices: [{ id: "replace", text: qsTr("Replace"), role: "destructive" },
+                      { id: "keep", text: qsTr("Keep editing"), role: "reject", isDefault: true }]
+        }, id => {
+            asking = false
+            if (id === "replace") {
+                editor.replaceNamed(name)
+                showFields()
+            } else {
+                shapeName.forceActiveFocus()
+                shapeName.selectAll()
+            }
+        })
     }
+    function askRestore() {
+        const own = editor.ownCount
+        messages.ask({
+            title: dialog.title,
+            text: qsTr("Restore the default shapes?"),
+            detail: (own > 0 ? qsTr("Your %n shape(s) are removed and the five default shapes come back.", "", own)
+                             : qsTr("The five default shapes come back as they were."))
+                    + " " + qsTr("Undo brings yours back while this window is open."),
+            severity: "warning",
+            choices: [{ id: "restore", text: qsTr("Restore defaults"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, id => {
+            if (id === "restore") {
+                editor.restoreDefaults()
+                showFields()
+            }
+        })
+    }
+    function undo() { if (editor) { editor.undo(); showFields() } }
+    function redo() { if (editor) { editor.redo(); showFields() } }
 
-    onRejected: if (editor) editor.cancel()
+    onEditorChanged: showFields()
+    // Closing keeps the changes: the editor goes with the window. (Not on
+    // hiding: fullscreen's opening or closing makes the window again, with
+    // the same editor.)
+    onClosing: if (editor) editor.close()
     Connections {
         target: dialog.editor
         function onClosed() { dialog.close() }
     }
+    Shortcut {
+        sequences: [StandardKey.Undo]
+        onActivated: dialog.undo()
+    }
+    Shortcut {
+        sequences: [StandardKey.Redo]
+        onActivated: dialog.redo()
+    }
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 6
-        GroupBox {
-            title: qsTr("Edited shape")
-            Layout.fillWidth: true
-            RowLayout {
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredHeight: 420
+        spacing: 0
+
+        // The presets, and the commands on them.
+        Rectangle {
+            Layout.preferredWidth: 220
+            Layout.fillHeight: true
+            color: Theme.field
+            border.color: Theme.line
+            ColumnLayout {
                 anchors.fill: parent
-                ComboBox {
+                anchors.margins: 1
+                spacing: 0
+                ListView {
                     id: shapeList
                     objectName: "shapeList"
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 160
-                    model: dialog.editor ? dialog.editor.list : []
+                    Layout.fillHeight: true
+                    clip: true
+                    model: dialog.editor ? dialog.editor.items : []
                     currentIndex: dialog.editor ? dialog.editor.selection : -1
+                    keyNavigationEnabled: true
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.List
                     Accessible.name: qsTr("Shapes")
-                    onActivated: index => {
-                        currentIndex = Qt.binding(() => dialog.editor ? dialog.editor.selection : -1)
-                        dialog.listChanged(index)
-                    }
-                }
-                TextField {
-                    id: newShapeName
-                    objectName: "newShapeName"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 160
-                    placeholderText: qsTr("New shape name")
-                    Accessible.name: qsTr("New shape name")
-                    onAccepted: okButton.clicked()
-                }
-                Button {
-                    objectName: "addShape"
-                    text: qsTr("Add shape")
-                    onClicked: dialog.show(dialog.editor.addShape(newShapeName.text))
-                }
-                Button {
-                    objectName: "deleteShape"
-                    text: qsTr("Delete shape")
-                    onClicked: dialog.show(dialog.editor.removeShape())
-                }
-            }
-        }
-        GroupBox {
-            title: qsTr("Editing")
-            Layout.fillWidth: true
-            ColumnLayout {
-                anchors.fill: parent
-                GridLayout {
-                    columns: 2
-                    Layout.fillWidth: true
-                    Label { text: qsTr("Name:") }
-                    TextField {
-                        id: shapeName
-                        objectName: "shapeName"
-                        Layout.fillWidth: true
-                        text: dialog.editor ? dialog.editor.name : ""
-                        Accessible.name: qsTr("Name")
-                        // shapeName->SetMaxLength(20): typing stops there; a longer
-                        // name read from the file is shown whole.
-                        validator: RegularExpressionValidator { regularExpression: /^.{0,20}$/ }
-                        onTextEdited: dialog.editor.name = text
-                        onAccepted: okButton.clicked()
-                    }
-                    Label { text: qsTr("Scaling relative to cursor:") }
-                    ComboBox {
-                        objectName: "shapeMode"
-                        Layout.fillWidth: true
-                        model: [qsTr("Changed width and height"), qsTr("Preserve aspect ratio"), qsTr("Changed is only width")]
-                        currentIndex: dialog.editor ? dialog.editor.mode : 0
-                        implicitContentWidthPolicy: ComboBox.WidestText
-                        Accessible.name: qsTr("Scaling relative to cursor")
-                        onActivated: index => {
-                            currentIndex = Qt.binding(() => dialog.editor ? dialog.editor.mode : 0)
-                            dialog.editor.mode = index
+                    onCurrentIndexChanged: {
+                        if (dialog.editor && currentIndex >= 0 && currentIndex !== dialog.editor.selection) {
+                            dialog.editor.select(currentIndex)
+                            dialog.showFields()
                         }
                     }
-                    Label { text: qsTr("Scaling mode:") }
-                    ComboBox {
-                        objectName: "shapeScalingMode"
-                        Layout.fillWidth: true
-                        enabled: false // legacy: scalingMode->Enable(false)
-                        model: [qsTr("Changing only drawing coordinates"), qsTr("Changing scale")]
-                        currentIndex: dialog.editor ? dialog.editor.scalingMode : 0
-                        implicitContentWidthPolicy: ComboBox.WidestText
-                        Accessible.name: qsTr("Scaling mode")
-                    }
-                    Label { text: qsTr("Shape:") }
-                    Button {
-                        objectName: "shapeFromLine"
-                        Layout.fillWidth: true
-                        text: qsTr("Get shape from active line")
-                        onClicked: dialog.editor.getShapeFromLine()
+                    ScrollBar.vertical: ScrollBar {}
+                    delegate: ItemDelegate {
+                        id: row
+                        required property var modelData
+                        required property int index
+                        objectName: "shapeRow" + index
+                        width: ListView.view.width
+                        height: 30
+                        focusPolicy: Qt.NoFocus
+                        highlighted: ListView.isCurrentItem
+                        Accessible.role: Accessible.ListItem
+                        Accessible.name: modelData.name
+                        Accessible.selected: highlighted
+                        onClicked: shapeList.currentIndex = index
+                        background: Rectangle {
+                            color: row.highlighted ? Theme.select : row.hovered ? Theme.raised : "transparent"
+                            Rectangle {
+                                visible: row.highlighted
+                                width: 3
+                                height: parent.height
+                                color: Theme.accent
+                            }
+                        }
+                        contentItem: RowLayout {
+                            spacing: 10
+                            ShapeDrawing {
+                                Layout.preferredWidth: 20
+                                Layout.preferredHeight: 20
+                                path: row.modelData.path
+                                view: Qt.rect(row.modelData.box.x - row.modelData.box.width * 0.08,
+                                              row.modelData.box.y - row.modelData.box.height * 0.08,
+                                              row.modelData.box.width * 1.16, row.modelData.box.height * 1.16)
+                            }
+                            Label {
+                                text: row.modelData.name
+                                font.weight: row.highlighted ? Font.DemiBold : Font.Normal
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                            Label {
+                                visible: row.modelData.own
+                                text: qsTr("yours")
+                                color: Theme.muted
+                                font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
+                            }
+                        }
                     }
                 }
-                ScrollView {
-                    Layout.fillWidth: true
-                    Layout.preferredHeight: 300
-                    Layout.preferredWidth: 520
-                    TextArea {
-                        id: shapeText
-                        objectName: "shapeText"
-                        text: dialog.editor ? dialog.editor.shape : ""
-                        wrapMode: TextEdit.Wrap
-                        selectByMouse: true
-                        Accessible.name: qsTr("Shape")
-                        onTextChanged: if (dialog.editor && text !== dialog.editor.shape) dialog.editor.shape = text
+                Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
+                RowLayout {
+                    Layout.margins: 4
+                    spacing: 2
+                    IconToolButton {
+                        objectName: "addShape"
+                        iconRole: "add"
+                        text: qsTr("New shape")
+                        onClicked: { dialog.editor.addShape(); dialog.showFields(); shapeName.forceActiveFocus(); shapeName.selectAll() }
+                    }
+                    IconToolButton {
+                        objectName: "duplicateShape"
+                        iconRole: "duplicate"
+                        text: qsTr("Duplicate")
+                        onClicked: { dialog.editor.duplicate(); dialog.showFields() }
+                    }
+                    IconToolButton {
+                        objectName: "deleteShape"
+                        iconRole: "delete"
+                        text: qsTr("Delete")
+                        enabled: dialog.editor ? dialog.editor.canRemove : false
+                        tip: enabled ? text : qsTr("The list keeps at least one shape")
+                        onClicked: { dialog.editor.remove(); dialog.showFields() }
+                    }
+                    Item { Layout.fillWidth: true }
+                    IconToolButton {
+                        id: moreButton
+                        objectName: "shapesMore"
+                        iconRole: "panel-menu"
+                        text: qsTr("More")
+                        down: moreMenu.visible
+                        onClicked: moreMenu.popup(moreButton, 0, moreButton.height)
                     }
                 }
             }
         }
-    }
 
-    // Legacy's button row, in its order: Apply, OK, Cancel, Restore default.
-    footer: Pane {
-        padding: 8
-        RowLayout {
-            anchors.fill: parent
-            uniformCellSizes: true
-            Button {
-                objectName: "shapesApply"
-                Layout.fillWidth: true
-                text: qsTr("Apply")
-                onClicked: { dialog.fromList = false; dialog.saved(dialog.editor.save(false), false) }
+        // The selected preset.
+        ColumnLayout {
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.leftMargin: 20
+            Layout.rightMargin: 20
+            Layout.preferredWidth: 360
+            spacing: 8
+            Label { text: qsTr("Name"); font.weight: Font.DemiBold }
+            TextField {
+                id: shapeName
+                objectName: "shapeName"
+                property string error
+                Layout.preferredWidth: 220
+                Accessible.name: qsTr("Name")
+                Accessible.description: error
+                // shapeName->SetMaxLength(20): typing stops there; a longer
+                // name read from the file is shown whole.
+                maximumLength: Math.max(dialog.editor ? dialog.editor.nameMaxLength : 20, text.length)
+                onTextEdited: dialog.nameTyped()
+                // Enter ends the name (asks to replace a taken one); the
+                // window stays.
+                Keys.onReturnPressed: event => { event.accepted = true; dialog.nameLeft() }
+                Keys.onEnterPressed: event => { event.accepted = true; dialog.nameLeft() }
+                onActiveFocusChanged: if (!activeFocus) dialog.nameLeft()
             }
-            Button {
-                id: okButton
-                objectName: "shapesOk"
+            FieldError { objectName: "shapeNameError"; text: shapeName.error; Layout.fillWidth: true }
+            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line; Layout.topMargin: 6 }
+            Label { text: qsTr("Scale from the cursor"); font.weight: Font.DemiBold; Layout.topMargin: 6 }
+            SegmentedButtons {
+                objectName: "shapeMode"
                 Layout.fillWidth: true
-                text: qsTr("OK")
-                onClicked: { dialog.fromList = false; dialog.saved(dialog.editor.save(true), true) }
+                // ShapePreset::Mode; legacy's "Scaling relative to cursor".
+                choices: [{ text: qsTr("Width and height"), name: "shapeMode0" },
+                          { text: qsTr("Keep aspect ratio"), name: "shapeMode1" },
+                          { text: qsTr("Width only"), name: "shapeMode2" }]
+                currentIndex: dialog.editor ? dialog.editor.mode : 0
+                Accessible.name: qsTr("Scale from the cursor")
+                onActivated: index => dialog.editor.mode = index
             }
-            Button {
-                objectName: "shapesCancel"
+            Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line; Layout.topMargin: 6 }
+            Label { text: qsTr("Drawing"); font.weight: Font.DemiBold; Layout.topMargin: 6 }
+            ScrollView {
                 Layout.fillWidth: true
-                text: qsTr("Cancel")
-                onClicked: dialog.reject()
+                Layout.fillHeight: true
+                Layout.minimumHeight: 90
+                TextArea {
+                    id: shapeText
+                    objectName: "shapeText"
+                    property string error
+                    wrapMode: TextEdit.Wrap
+                    selectByMouse: true
+                    font.family: "monospace"
+                    Accessible.name: qsTr("Drawing")
+                    Accessible.description: error
+                    background: Rectangle {
+                        color: Theme.field
+                        border.width: shapeText.error.length > 0 || shapeText.activeFocus ? 2 : 1
+                        border.color: shapeText.error.length > 0 ? Theme.danger
+                                    : shapeText.activeFocus ? Theme.focus : Theme.line
+                    }
+                    // (The text the window shows is the preset's: only a
+                    // typed one differs.)
+                    onTextChanged: {
+                        if (!dialog.editor || text === dialog.editor.shape)
+                            return
+                        error = dialog.editor.setShape(text) ? ""
+                              : text.indexOf(";") >= 0 ? qsTr("A drawing can't contain “;”.")
+                              : qsTr("A shape needs a drawing.")
+                    }
+                    onActiveFocusChanged: {
+                        if (activeFocus || !dialog.editor)
+                            return
+                        dialog.editor.endTyping()
+                        if (error.length > 0)
+                            dialog.showFields()
+                    }
+                }
             }
-            Button {
-                objectName: "shapesRestoreDefault"
-                Layout.fillWidth: true
-                text: qsTr("Restore default")
+            FieldError { objectName: "shapeTextError"; text: shapeText.error; Layout.fillWidth: true }
+            IconTextButton {
+                objectName: "shapeFromLine"
+                iconRole: "tool-drawing"
+                text: qsTr("Take from the active line")
+                tip: qsTr("Put the active line's drawing in this shape")
                 onClicked: {
-                    const q = dialog.editor.restoreQuestion()
-                    questionBox.kind = "restore"
-                    questionBox.title = q.title
-                    questionText.text = q.text
-                    questionBox.open()
+                    if (dialog.editor.takeFromLine())
+                        dialog.showFields()
+                    else
+                        shapeText.error = qsTr("The active line has no drawing.")
                 }
             }
         }
+
+        // The preview: the drawing around the point a click with the tool
+        // puts it at (the cross), on a 50-unit grid.
+        ColumnLayout {
+            Layout.preferredWidth: 280
+            Layout.fillHeight: true
+            spacing: 8
+            Label { text: qsTr("Preview"); font.weight: Font.DemiBold }
+            Rectangle {
+                id: previewFrame
+                objectName: "shapePreview"
+                Layout.fillWidth: true
+                Layout.preferredHeight: width
+                color: Theme.field
+                border.color: Theme.line
+                clip: true
+                readonly property rect box: dialog.editor ? dialog.editor.box : Qt.rect(0, 0, 0, 0)
+                // The drawing and the cursor point, with room around them.
+                readonly property rect view: {
+                    const span = Math.max(box.width, box.height, 1) * 1.5
+                    const cx = box.x + box.width / 2, cy = box.y + box.height / 2
+                    const x0 = Math.min(cx - span / 2, -span * 0.12), x1 = Math.max(cx + span / 2, span * 0.12)
+                    const y0 = Math.min(cy - span / 2, -span * 0.12), y1 = Math.max(cy + span / 2, span * 0.12)
+                    const s = Math.max(x1 - x0, y1 - y0)
+                    return Qt.rect(x0, y0, s, s)
+                }
+                Repeater {
+                    // The grid's lines every 50 units.
+                    model: {
+                        const v = previewFrame.view
+                        const lines = []
+                        if (v.width <= 0 || v.width / 50 > 80)
+                            return lines
+                        for (let g = Math.ceil(v.x / 50) * 50; g <= v.x + v.width; g += 50)
+                            lines.push({ vertical: true, at: g })
+                        for (let g = Math.ceil(v.y / 50) * 50; g <= v.y + v.height; g += 50)
+                            lines.push({ vertical: false, at: g })
+                        return lines
+                    }
+                    Rectangle {
+                        required property var modelData
+                        color: Theme.line
+                        opacity: 0.6
+                        x: modelData.vertical ? preview.mapX(modelData.at) : 0
+                        y: modelData.vertical ? 0 : preview.mapY(modelData.at)
+                        width: modelData.vertical ? 1 : previewFrame.width
+                        height: modelData.vertical ? previewFrame.height : 1
+                    }
+                }
+                ShapeDrawing {
+                    id: preview
+                    anchors.fill: parent
+                    visible: shapeText.error.length === 0
+                    path: dialog.editor ? dialog.editor.path : ""
+                    view: previewFrame.view
+                    stroke: Theme.accent
+                    strokeWidth: 2
+                }
+                // The cursor point.
+                Item {
+                    x: preview.mapX(0)
+                    y: preview.mapY(0)
+                    Rectangle { x: -8; y: -0.5; width: 16; height: 1; color: Theme.danger }
+                    Rectangle { x: -0.5; y: -8; width: 1; height: 16; color: Theme.danger }
+                    Rectangle { x: -3; y: -3; width: 6; height: 6; radius: 3; color: "transparent"; border.color: Theme.danger }
+                }
+            }
+            Label {
+                objectName: "shapePreviewSize"
+                Layout.fillWidth: true
+                horizontalAlignment: Text.AlignHCenter
+                wrapMode: Text.Wrap
+                color: Theme.muted
+                text: shapeText.error.length > 0 ? qsTr("The shape keeps its last drawing until this one can be used")
+                    : previewFrame.box.width > 0 || previewFrame.box.height > 0
+                      ? qsTr("%1 × %2").arg(Math.round(previewFrame.box.width)).arg(Math.round(previewFrame.box.height))
+                      : ""
+            }
+            Item { Layout.fillHeight: true }
+        }
     }
 
-    // HikariMessageBox with OK (the errors), NT1 on the kit's message box.
+    leadingActions: [
+        IconTextButton {
+            objectName: "shapesUndo"
+            iconRole: "undo"
+            text: qsTr("Undo")
+            enabled: dialog.editor ? dialog.editor.canUndo : false
+            tip: enabled ? qsTr("Undo “%1”").arg(dialog.stepText(dialog.editor.undoStep)) : ""
+            onClicked: dialog.undo()
+        },
+        IconTextButton {
+            objectName: "shapesRedo"
+            iconRole: "redo"
+            text: qsTr("Redo")
+            enabled: dialog.editor ? dialog.editor.canRedo : false
+            tip: enabled ? qsTr("Redo “%1”").arg(dialog.stepText(dialog.editor.redoStep)) : ""
+            onClicked: dialog.redo()
+        }
+    ]
+    buttons: PrimaryButton {
+        id: closeButton
+        objectName: "shapesClose"
+        text: qsTr("Close")
+        DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+        onClicked: dialog.close()
+    }
+    defaultButton: closeButton
+
+    ShellMenu {
+        id: moreMenu
+        objectName: "shapesMoreMenu"
+        ShellMenuItem {
+            objectName: "shapesRestoreDefault"
+            iconRole: "restore-default"
+            text: qsTr("Restore default shapes…")
+            onTriggered: dialog.askRestore()
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "shapesUndoAll"
+            iconRole: "undo"
+            text: qsTr("Undo all changes")
+            onTriggered: { dialog.editor.undoAll(); dialog.showFields() }
+        }
+    }
+
+    // The window's questions, PK1's message box over it.
     MessageHost {
         id: messages
         objectName: "shapesMessages"
-    }
-    // HikariMessageBox with Yes and No: a list change's "Save changes to
-    // shape ...?" and Restore default's "Are you sure ...?".
-    Dialog {
-        id: questionBox
-        objectName: "shapesQuestion"
-        property string kind
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        modal: true
-        standardButtons: Dialog.Yes | Dialog.No
-        Label {
-            id: questionText
-            objectName: "shapesQuestionText"
-            Accessible.role: Accessible.AlertMessage
-            Accessible.name: text
-        }
-        onAccepted: {
-            if (kind === "restore") {
-                dialog.editor.restoreDefaults()
-                return
-            }
-            // Save(ID_BUTTON_COMMIT), then the list's new preset (after an
-            // error too, as legacy); a name clash waits for its answer.
-            dialog.fromList = true
-            const result = dialog.editor.save(false)
-            if (result.clash !== undefined) {
-                dialog.saved(result, false)
-                return
-            }
-            dialog.show(result)
-            dialog.editor.select(dialog.pendingIndex)
-        }
-        onRejected: if (kind === "list") dialog.editor.select(dialog.pendingIndex)
-    }
-    // Accepted on #55: a name another preset has.
-    Dialog {
-        id: clashBox
-        objectName: "shapesClash"
-        title: qsTr("Confirmation")
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        modal: true
-        Label {
-            id: clashText
-            objectName: "shapesClashText"
-            Accessible.role: Accessible.AlertMessage
-            Accessible.name: text
-        }
-        footer: DialogButtonBox {
-            Button {
-                objectName: "shapesClashReplace"
-                text: qsTr("Replace")
-                onClicked: {
-                    clashBox.close()
-                    const index = dialog.editor.replaceClash(dialog.fromList ? dialog.pendingIndex : -1, dialog.pendingOk)
-                    if (dialog.fromList)
-                        dialog.editor.select(index)
-                }
-            }
-            Button {
-                objectName: "shapesClashRename"
-                text: qsTr("Rename")
-                onClicked: {
-                    clashBox.close()
-                    shapeName.forceActiveFocus()
-                    shapeName.selectAll()
-                }
-            }
-        }
+        settings: dialog.settings
     }
 }

@@ -1,20 +1,23 @@
 #pragma once
 
-// T6: the "Tag editing" dialog's model for QML (legacy AllTagsEdition,
-// HikariSub/VisualAllTagsEdition.cpp:155-455): a copy of the all-tags tool's
-// definitions, edited through application::visual::AllTagsEdition. The
-// VisualToolsController opens it from the tool row's Edit and takes the
-// definitions back on OK.
+// PU5 (#307): the "Edit tags" window's model for QML (legacy AllTagsEdition,
+// "Tag editing", HikariSub/VisualAllTagsEdition.cpp:155-455, redesigned):
+// the all-tags tool's definitions, edited through
+// application::visual::AllTagsEdition. The VisualToolsController opens it
+// from Hydra's "Edit tags…" and takes the definitions back after every
+// change (hooks.changed: the tool's list and the file), until the window
+// closes (hooks.finished). The window words the steps and the refusals
+// (the codes below) and the change options in the Hydra strip's words.
 
 #include "hikari/application/all_tags.h"
 
 #include <QObject>
 #include <QStringList>
+#include <QVariantList>
 #include <QVariantMap>
 #include <QtQml/qqmlregistration.h>
 
 #include <functional>
-#include <optional>
 
 namespace hikari::ui {
 
@@ -22,61 +25,99 @@ class AllTagsEditor : public QObject {
     Q_OBJECT
     QML_ELEMENT
     QML_UNCREATABLE("Opened by the visual tools")
-    // The dialog's list (names as legacy's choice holds them).
-    Q_PROPERTY(QStringList list READ list NOTIFY changed)
-    Q_PROPERTY(int selection READ selection NOTIFY changed)
-    // The fields: the texts, the number fields' texts as typed or set
-    // (`numbers`: minimum, maximum, value, step, decimal places, values 3-5
-    // as legacy's tooltips number them), the three choices.
-    Q_PROPERTY(QString name READ name WRITE setName NOTIFY changed)
-    Q_PROPERTY(QString tag READ tag WRITE setTag NOTIFY changed)
+    // The list: each definition's {name, tag, section (0 Common, 1 More, 2
+    // the user's own)}, in the file's order.
+    Q_PROPERTY(QVariantList items READ items NOTIFY changed)
+    Q_PROPERTY(int selection READ selection WRITE select NOTIFY changed)
+    // The selected definition.
+    Q_PROPERTY(QString name READ name NOTIFY changed)
+    Q_PROPERTY(QString tag READ tag NOTIFY changed)
+    // The number fields' texts: "min", "max", "step", "digits", "value0" to
+    // "value3".
     Q_PROPERTY(QVariantMap numbers READ numbers NOTIFY changed)
-    Q_PROPERTY(int placing READ placing WRITE setPlacing NOTIFY changed)
-    Q_PROPERTY(int additionalValues READ additionalValues WRITE setAdditionalValues NOTIFY changed)
+    Q_PROPERTY(int count READ count WRITE setCount NOTIFY changed)
+    // The change option it brings (AllTagsPasteMode) and Set's placing.
     Q_PROPERTY(int changeOption READ changeOption WRITE setChangeOption NOTIFY changed)
-    Q_PROPERTY(QStringList placings READ placings CONSTANT)
-    Q_PROPERTY(QStringList valueCounts READ valueCounts CONSTANT)
-    Q_PROPERTY(QStringList changeOptions READ changeOptions CONSTANT)
+    Q_PROPERTY(int placing READ placing WRITE setPlacing NOTIFY changed)
+    // Its values' names in the strip (as many as it takes).
+    Q_PROPERTY(QStringList valueNames READ valueNames NOTIFY changed)
+    // The preview of Set on the active Line: {before, tag, after}, the tag
+    // the part Set writes.
+    Q_PROPERTY(QVariantMap preview READ preview NOTIFY changed)
+    // The user's own definitions (Restore default tags removes them).
+    Q_PROPERTY(int ownCount READ ownCount NOTIFY changed)
+    Q_PROPERTY(bool canRemove READ canRemove NOTIFY changed)
+    // Undo and Redo: whether there is a step, and which
+    // (application::visual::AllTagsEdition::Step; -1 none).
+    Q_PROPERTY(bool canUndo READ canUndo NOTIFY changed)
+    Q_PROPERTY(bool canRedo READ canRedo NOTIFY changed)
+    Q_PROPERTY(int undoStep READ undoStep NOTIFY changed)
+    Q_PROPERTY(int redoStep READ redoStep NOTIFY changed)
 public:
+    // AllTagsEdition::Check as QML reads it.
+    enum Check {
+        CheckOk,
+        CheckEmpty,
+        CheckTaken,
+        CheckSeparator,
+        CheckNotANumber,
+        CheckOutOfRange,
+        CheckMaxNotAboveMin,
+        CheckMinNotBelowMax,
+        CheckStepNotPositive,
+        CheckStepTooLarge
+    };
+    Q_ENUM(Check)
+
     struct Hooks {
-        std::function<void()> removeFile; // OnResetDefault's _wremove
-        std::function<void(std::optional<std::vector<application::visual::AllTagsSetting>>)> finished;
+        std::function<std::u16string()> activeLineText; // the preview's Line
+        std::function<void(const std::vector<application::visual::AllTagsSetting> &)> changed;
+        std::function<void()> finished;
     };
     AllTagsEditor(std::vector<application::visual::AllTagsSetting> tags, int curTag, Hooks hooks,
                   QObject *parent = nullptr);
 
-    QStringList list() const;
+    QVariantList items() const;
     int selection() const { return m_edition.selection(); }
+    void select(int index);
     QString name() const;
     QString tag() const;
     QVariantMap numbers() const;
-    int placing() const { return m_edition.placing; }
-    int additionalValues() const { return m_edition.additionalValues; }
-    int changeOption() const { return m_edition.changeOption; }
-    QStringList placings() const;
-    QStringList valueCounts() const;
-    QStringList changeOptions() const;
-    void setName(const QString &name);
-    void setTag(const QString &tag);
-    void setPlacing(int placing);
-    void setAdditionalValues(int count);
+    int count() const { return m_edition.current().numOfValues; }
+    void setCount(int count);
+    int changeOption() const { return m_edition.current().tagMode; }
     void setChangeOption(int option);
+    int placing() const { return m_edition.current().mode; }
+    void setPlacing(int placing);
+    QStringList valueNames() const;
+    QVariantMap preview() const;
+    int ownCount() const;
+    bool canRemove() const { return m_edition.canRemove(); }
+    bool canUndo() const { return m_edition.canUndo(); }
+    bool canRedo() const { return m_edition.canRedo(); }
+    int undoStep() const { return m_edition.undoStep(); }
+    int redoStep() const { return m_edition.redoStep(); }
 
-    // A number field typed into: "min", "max", "value", "step", "digits",
-    // "value2", "value3" or "value4".
-    Q_INVOKABLE void setNumber(const QString &field, const QString &text);
-    // Each returns {} or a message box to show: {text, title}.
-    Q_INVOKABLE QVariantMap addTag(const QString &newName);
-    Q_INVOKABLE QVariantMap removeTag();
-    // OnListChanged: the question to ask first ({} when nothing changed).
-    Q_INVOKABLE QVariantMap listChangeQuestion() const;
-    Q_INVOKABLE void select(int index);
-    // Apply (ok false) or OK: {} when kept (OK then closes), or {text,
-    // title} for an error.
-    Q_INVOKABLE QVariantMap save(bool ok);
-    Q_INVOKABLE QVariantMap restoreQuestion() const;
+    // Typed into a field: Check; with CheckTaken `takenName()` has the
+    // other's name, with a range check `limit()` the other end or the
+    // largest step.
+    Q_INVOKABLE int setName(const QString &name);
+    Q_INVOKABLE int setTag(const QString &tag);
+    // "min", "max", "step", "digits", "value0" to "value3".
+    Q_INVOKABLE int setNumber(const QString &field, const QString &text);
+    Q_INVOKABLE QString takenName() const { return m_taken; }
+    Q_INVOKABLE QString limit() const { return m_limit; }
+    Q_INVOKABLE void endTyping() { m_edition.endTyping(); }
+    Q_INVOKABLE void addTag();
+    Q_INVOKABLE void duplicate();
+    Q_INVOKABLE bool remove();
+    Q_INVOKABLE void replaceNamed(const QString &name);
     Q_INVOKABLE void restoreDefaults();
-    Q_INVOKABLE void cancel();
+    Q_INVOKABLE bool undoAll();
+    Q_INVOKABLE void undo();
+    Q_INVOKABLE void redo();
+    // The window closed: the changes are kept already.
+    Q_INVOKABLE void close();
 
     const application::visual::AllTagsEdition &edition() const { return m_edition; }
 
@@ -85,10 +126,12 @@ signals:
     void closed();
 
 private:
-    application::visual::NumberField *field(const QString &name);
-    void finish(bool ok);
+    void kept(); // a step: tell QML and hand the definitions back
+    int checked(application::visual::AllTagsEdition::Check check);
     application::visual::AllTagsEdition m_edition;
     Hooks m_hooks;
+    QString m_taken;
+    QString m_limit;
     bool m_done = false;
 };
 

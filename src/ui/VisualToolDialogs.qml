@@ -7,12 +7,13 @@ import Hikari.Ui
 // before it the options row). A notice a tool gives (legacy's HikariMessageBox
 // titled "Warning", VisualClips.cpp:1013-1016) is a warning toast (NT1,
 // VisualToolsController::notice). T5: the drawing's shape list's "Edit"
-// opens "Vector shape editing"; T6: the all-tags tool's Edit opens "Tag
-// editing".
+// opens "Edit shapes"; T6: the all-tags tool's Edit opens "Edit tags" (PU5,
+// modeless windows on DG1's frame, kept where they were left).
 Item {
     id: dialogs
     objectName: "visualToolDialogs"
     required property VisualToolsController tools
+    property SettingsStore settings: null
     width: 0
     height: 0
 
@@ -20,11 +21,13 @@ Item {
     ShapesEditionDialog {
         id: shapesDialog
         editor: dialogs.tools.shapeEditor
+        settings: dialogs.settings
     }
     // T6: the all-tags tool's Edit.
     AllTagsEditionDialog {
         id: tagsDialog
         editor: dialogs.tools.tagsEditor
+        settings: dialogs.settings
     }
     function syncShapes() {
         if (dialogs.tools.shapeEditor)

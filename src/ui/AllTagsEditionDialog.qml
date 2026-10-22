@@ -1,314 +1,716 @@
 pragma Translator: "HikariSub.VisualTools"
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-// T6: legacy AllTagsEdition, "Tag editing" (VisualAllTagsEdition.cpp:
-// 155-271): the all-tags tool's tag definitions, opened from the tool row's
-// Edit. The list with a new name, Add tag and Delete tag; the edited tag's
-// name, tag, minimal and maximal value, value and step, where Insert puts
-// it, its decimal places, how many more values it takes and its change
-// option, and the more values; Apply keeps an edit here, OK keeps it and
-// saves the definitions, Cancel drops what the dialog changed, Restore
-// default puts legacy's 22 definitions back. Legacy's message boxes are
-// modal boxes over the dialog. Legacy titled the fields' box "Tag editing"
-// too; the dialog's title alone names it here (the user's UI rule: no label
-// repeats its container's).
-Dialog {
+// PU5 (#307, mockup approved 2026-10-22): "Edit tags", legacy's "Tag
+// editing" (AllTagsEdition, VisualAllTagsEdition.cpp:155-455), opened by
+// Hydra's "Edit tags…". The same window as "Edit shapes": the definitions on
+// the left in the strip's sections (Common, More folded, Your tags) with a
+// search, New tag, Duplicate, Delete and ⋯ under them; the selected one in
+// three sections, Tag, Values and Change, in the strip's words (HY1); the
+// preview under them: the strip as Hydra shows the tag, and what Set writes
+// on the active Line. Each change is kept as it is made; Undo and Redo walk
+// the window's steps; Close and Esc keep them. A value the tool cannot use
+// is said under its field and the definition keeps its last good one; a
+// name another definition has asks to replace it; Restore default tags asks
+// first.
+DialogWindow {
     id: dialog
     objectName: "tagsEditionDialog"
     property AllTagsEditor editor
-    title: qsTr("Tag editing")
-    parent: Overlay.overlay
-    anchors.centerIn: parent
-    modal: true
-    closePolicy: Popup.CloseOnEscape
-    padding: 8
+    title: qsTr("Edit tags")
+    dialogId: "allTagsEdition"
+    resizable: true
+    initialFocus: tagList
 
-    // A list change waiting on its question.
-    property int pendingIndex: -1
-
-    // NT1: an error is the application's message box, titled with this
-    // dialog (legacy's untranslated "Error").
-    function show(message) {
-        if (!message || !message.text)
-            return false
-        messages.ask({ title: dialog.title, text: message.text, severity: "error" })
-        return true
+    // The strip's change switch and the choice beside it (HY1,
+    // AllTagsTool::changeOf): the definition's change option is one of
+    // legacy's eight (AllTagsPasteMode), Set's choice its placing.
+    readonly property var changeNames: [qsTr("Set"), qsTr("Add"), qsTr("Multiply"), qsTr("Gradient")]
+    readonly property var placingNames: [qsTr("At the cursor"), qsTr("At the start of the text"),
+                                         qsTr("Clip rectangle with %1 animation").arg("\\t")]
+    readonly property var multiplyNames: [qsTr("Set by line number"), qsTr("Add by line number")]
+    readonly property var gradientNames: [qsTr("Across characters, increasing"), qsTr("Across characters, decreasing"),
+                                          qsTr("Across lines, increasing"), qsTr("Across lines, decreasing")]
+    readonly property int changeOption: editor ? editor.changeOption : 1
+    readonly property int change: changeOption === 1 ? 0 : changeOption === 0 ? 1 : changeOption <= 3 ? 2 : 3
+    readonly property var variants: change === 0 ? placingNames : change === 2 ? multiplyNames
+                                   : change === 3 ? gradientNames : []
+    readonly property int variant: change === 0 ? (editor ? editor.placing : 0)
+                                 : change === 2 ? changeOption - 2 : change === 3 ? changeOption - 4 : -1
+    function setChange(index) {
+        editor.changeOption = [1, 0, 2, 4][index]
     }
-    function listChanged(index) {
-        // OnListChanged: the edited tag's changes are asked about first.
-        const question = editor.listChangeQuestion()
-        if (question.text) {
-            pendingIndex = index
-            questionBox.kind = "list"
-            questionBox.title = question.title
-            questionText.text = question.text
-            questionBox.open()
-        } else {
-            editor.select(index)
+    function setVariant(index) {
+        if (change === 0)
+            editor.placing = index
+        else
+            editor.changeOption = (change === 2 ? 2 : 4) + index
+    }
+
+    // The window's words for its steps (AllTagsEdition::Step).
+    function stepText(step) {
+        return [qsTr("Rename tag"), qsTr("Edit tag"), qsTr("Edit range"), qsTr("Edit step"),
+                qsTr("Edit decimal places"), qsTr("Change count"), qsTr("Edit starting value"),
+                qsTr("Change change option"), qsTr("Change placing"), qsTr("New tag"), qsTr("Duplicate tag"),
+                qsTr("Delete tag"), qsTr("Replace tag"), qsTr("Restore default tags"),
+                qsTr("Undo all changes")][step] ?? ""
+    }
+    // A refused value, said for its field (AllTagsEditor::Check).
+    function checkText(code, field) {
+        switch (code) {
+        case AllTagsEditor.CheckEmpty:
+            return field === "tag" ? qsTr("Type the tag, without the backslash.") : qsTr("Type a name.")
+        case AllTagsEditor.CheckTaken:
+            return qsTr("Another tag is named “%1”. Press Enter to replace it.").arg(editor.takenName())
+        case AllTagsEditor.CheckSeparator:
+            return field === "tag" ? qsTr("A tag can't contain “,”.") : qsTr("A name can't contain “,”.")
+        case AllTagsEditor.CheckNotANumber:
+            return qsTr("Type a number.")
+        case AllTagsEditor.CheckOutOfRange:
+            return field === "digits" ? qsTr("Type a whole number from 0 to 6.")
+                                      : qsTr("Type a number from -10000 to 10000.")
+        case AllTagsEditor.CheckMaxNotAboveMin:
+            return qsTr("The maximum must be greater than the minimum (%1).").arg(editor.limit())
+        case AllTagsEditor.CheckMinNotBelowMax:
+            return qsTr("The minimum must be less than the maximum (%1).").arg(editor.limit())
+        case AllTagsEditor.CheckStepNotPositive:
+            return qsTr("The step must be greater than zero.")
+        case AllTagsEditor.CheckStepTooLarge:
+            return qsTr("The step must be at most half the range (%1).").arg(editor.limit())
         }
+        return ""
     }
 
-    onRejected: if (editor) editor.cancel()
+    // The fields show the definition again (another one chosen, a step
+    // undone, or a refused value left).
+    signal showFields()
+    property bool asking: false
+    // Enter, or leaving the name with an error: a taken name asks to replace
+    // the other definition; any other refused name goes back.
+    function nameLeft() {
+        if (!editor || asking || tagName.error.length === 0) {
+            if (editor)
+                editor.endTyping()
+            return
+        }
+        if (editor.setName(tagName.text) !== AllTagsEditor.CheckTaken) {
+            showFields()
+            return
+        }
+        const name = tagName.text
+        asking = true
+        messages.ask({
+            title: dialog.title,
+            text: qsTr("Replace the tag “%1”?").arg(editor.takenName()),
+            detail: qsTr("“%1” takes its name and its place in the list; the other is removed. Undo brings it back while this window is open.").arg(editor.name),
+            severity: "warning",
+            choices: [{ id: "replace", text: qsTr("Replace"), role: "destructive" },
+                      { id: "keep", text: qsTr("Keep editing"), role: "reject", isDefault: true }]
+        }, id => {
+            asking = false
+            if (id === "replace") {
+                editor.replaceNamed(name)
+                showFields()
+            } else {
+                tagName.forceActiveFocus()
+                tagName.selectAll()
+            }
+        })
+    }
+    function askRestore() {
+        const own = editor.ownCount
+        messages.ask({
+            title: dialog.title,
+            text: qsTr("Restore the default tags?"),
+            detail: (own > 0 ? qsTr("Your %n tag(s) are removed and the 22 default tags come back, with their ranges and steps.", "", own)
+                             : qsTr("The 22 default tags come back with their ranges and steps."))
+                    + " " + qsTr("Undo brings yours back while this window is open."),
+            severity: "warning",
+            choices: [{ id: "restore", text: qsTr("Restore defaults"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, id => {
+            if (id === "restore") {
+                editor.restoreDefaults()
+                showFields()
+            }
+        })
+    }
+    function undo() { if (editor) { editor.undo(); showFields() } }
+    function redo() { if (editor) { editor.redo(); showFields() } }
+
+    onEditorChanged: showFields()
+    // Closing keeps the changes: the editor goes with the window. (Not on
+    // hiding: fullscreen's opening or closing makes the window again, with
+    // the same editor.)
+    onClosing: if (editor) editor.close()
     Connections {
         target: dialog.editor
         function onClosed() { dialog.close() }
     }
-
-    // Legacy NumCtrl: digits, a minus where the range takes one, a point or
-    // a comma for a decimal; 20 characters at most. The model keeps the
-    // last valid text to fall back to.
-    component NumberField: TextField {
-        id: number
-        required property string field
-        property bool decimals: true
-        property bool negative: true
-        objectName: "tagsField_" + field
-        Layout.fillWidth: true
-        Layout.preferredWidth: 90
-        maximumLength: 20
-        text: dialog.editor ? dialog.editor.numbers[field] : ""
-        validator: RegularExpressionValidator {
-            regularExpression: number.decimals ? (number.negative ? /[-0-9.,]*/ : /[0-9.,]*/)
-                                               : (number.negative ? /[-0-9]*/ : /[0-9]*/)
-        }
-        onTextEdited: dialog.editor.setNumber(field, text)
-        onAccepted: okButton.clicked()
+    Shortcut {
+        sequences: [StandardKey.Undo]
+        onActivated: dialog.undo()
+    }
+    Shortcut {
+        sequences: [StandardKey.Redo]
+        onActivated: dialog.redo()
     }
 
-    ColumnLayout {
-        anchors.fill: parent
+    // A field of the definition: what it shows comes back from the editor
+    // (showFields), what is typed goes to it at once; a refused value is
+    // said (error) and goes back when the field is left.
+    component EditField: TextField {
+        id: edit
+        // The editor's name for it ("name", "tag", "min", … "value3").
+        property string field
+        property string error
+        selectByMouse: true
+        Accessible.description: error
+        // (Read now, not through a binding: the editor's change may reach
+        // this before a binding on it.)
+        function show() {
+            text = !dialog.editor ? ""
+                 : field === "name" ? dialog.editor.name
+                 : field === "tag" ? dialog.editor.tag
+                 : dialog.editor.numbers[field] ?? ""
+            error = ""
+        }
+        onTextEdited: {
+            const code = field === "name" ? dialog.editor.setName(text)
+                       : field === "tag" ? dialog.editor.setTag(text)
+                       : dialog.editor.setNumber(field, text)
+            error = dialog.checkText(code, field)
+        }
+        function leave() {
+            if (field === "name") {
+                dialog.nameLeft()
+                return
+            }
+            // (A kept number shows as the tool reads it: "1,5" as 1.5.)
+            dialog.editor.endTyping()
+            show()
+        }
+        Keys.onReturnPressed: event => { event.accepted = true; leave() }
+        Keys.onEnterPressed: event => { event.accepted = true; leave() }
+        onActiveFocusChanged: if (!activeFocus && dialog.editor) leave()
+        Connections {
+            target: dialog
+            function onShowFields() { edit.show() }
+        }
+        Component.onCompleted: show()
+    }
+    component NumberEdit: EditField {
+        Layout.preferredWidth: 80
+        font.family: "monospace"
+        inputMethodHints: Qt.ImhFormattedNumbersOnly
+    }
+    // A starting value, named as the strip names it; shown while the tag
+    // takes it.
+    component ValueEdit: RowLayout {
+        id: valueEdit
+        property int at
+        readonly property alias error: valueField.error
+        readonly property string label: dialog.editor ? dialog.editor.valueNames[at] ?? "" : ""
+        visible: dialog.editor ? at < dialog.editor.count : at === 0
         spacing: 6
-        GroupBox {
-            title: qsTr("Edited tag")
-            Layout.fillWidth: true
-            RowLayout {
+        Label { text: valueEdit.label; color: Theme.muted }
+        NumberEdit {
+            id: valueField
+            objectName: "tagValue" + valueEdit.at
+            field: "value" + valueEdit.at
+            Layout.preferredWidth: 70
+            Accessible.name: valueEdit.label
+        }
+    }
+    component RowLabel: Label {
+        color: Theme.muted
+        Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+    }
+    component SectionTitle: Label {
+        font.weight: Font.DemiBold
+        Layout.topMargin: 6
+    }
+    component Rule: Rectangle {
+        Layout.fillWidth: true
+        implicitHeight: 1
+        color: Theme.line
+        Layout.topMargin: 6
+    }
+
+    RowLayout {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.preferredHeight: 680
+        spacing: 0
+
+        // The definitions in the strip's sections, and the commands on them.
+        Rectangle {
+            Layout.preferredWidth: 250
+            Layout.fillHeight: true
+            color: Theme.field
+            border.color: Theme.line
+            ColumnLayout {
                 anchors.fill: parent
-                ComboBox {
+                anchors.margins: 1
+                spacing: 0
+                TextField {
+                    id: search
+                    objectName: "tagSearch"
+                    Layout.fillWidth: true
+                    Layout.margins: 6
+                    placeholderText: qsTr("Search tags")
+                    Accessible.name: qsTr("Search tags")
+                    // Enter takes the first match; Down goes into the list.
+                    Keys.onReturnPressed: event => { event.accepted = true; tagList.selectRow(tagList.firstItemRow(0, 1)) }
+                    Keys.onEnterPressed: event => { event.accepted = true; tagList.selectRow(tagList.firstItemRow(0, 1)) }
+                    Keys.onDownPressed: tagList.forceActiveFocus()
+                }
+                ListView {
                     id: tagList
-                    objectName: "tagsList"
+                    objectName: "tagList"
+                    property bool moreOpen: false
+                    // The rows: a section's header ({header, section, count})
+                    // or a definition ({index, name, tag}); searching shows
+                    // the matches of every section, without headers.
+                    model: {
+                        const items = dialog.editor ? dialog.editor.items : []
+                        const query = search.text.trim().toLowerCase()
+                        const rows = []
+                        if (query.length > 0) {
+                            items.forEach((t, i) => {
+                                if (t.name.toLowerCase().includes(query) || t.tag.toLowerCase().includes(query))
+                                    rows.push({ header: false, index: i, name: t.name, tag: t.tag })
+                            })
+                            return rows
+                        }
+                        for (let section = 0; section < 3; ++section) {
+                            const inSection = []
+                            items.forEach((t, i) => {
+                                if (t.section === section)
+                                    inSection.push({ header: false, index: i, name: t.name, tag: t.tag })
+                            })
+                            if (inSection.length === 0)
+                                continue
+                            const folded = section === 1 && !moreOpen
+                            rows.push({ header: true, section: section, count: inSection.length, folded: folded })
+                            if (!folded)
+                                rows.push(...inSection)
+                        }
+                        return rows
+                    }
                     Layout.fillWidth: true
-                    Layout.preferredWidth: 150
-                    model: dialog.editor ? dialog.editor.list : []
-                    currentIndex: dialog.editor ? dialog.editor.selection : -1
+                    Layout.fillHeight: true
+                    clip: true
+                    activeFocusOnTab: true
+                    Accessible.role: Accessible.List
                     Accessible.name: qsTr("Tags")
-                    onActivated: index => {
-                        currentIndex = Qt.binding(() => dialog.editor ? dialog.editor.selection : -1)
-                        dialog.listChanged(index)
+                    ScrollBar.vertical: ScrollBar {}
+                    // The row of the selected definition (More opens to show it).
+                    function rowOf(index) {
+                        for (let r = 0; r < count; ++r)
+                            if (!model[r].header && model[r].index === index)
+                                return r
+                        return -1
+                    }
+                    function firstItemRow(from, step) {
+                        for (let r = from; r >= 0 && r < count; r += step)
+                            if (!model[r].header)
+                                return r
+                        return -1
+                    }
+                    function selectRow(row) {
+                        if (row < 0)
+                            return
+                        currentIndex = row
+                        positionViewAtIndex(row, ListView.Contain)
+                        if (dialog.editor && model[row].index !== dialog.editor.selection) {
+                            dialog.editor.select(model[row].index)
+                            dialog.showFields()
+                        }
+                    }
+                    function follow() {
+                        if (!dialog.editor)
+                            return
+                        const items = dialog.editor.items
+                        const sel = dialog.editor.selection
+                        if (!moreOpen && sel >= 0 && sel < items.length && items[sel].section === 1 && search.text.length === 0)
+                            moreOpen = true
+                        currentIndex = rowOf(sel)
+                        if (currentIndex >= 0)
+                            positionViewAtIndex(currentIndex, ListView.Contain)
+                    }
+                    onModelChanged: Qt.callLater(follow)
+                    Keys.onUpPressed: selectRow(firstItemRow(currentIndex - 1, -1))
+                    Keys.onDownPressed: selectRow(firstItemRow(currentIndex + 1, 1))
+                    delegate: ItemDelegate {
+                        id: row
+                        required property var modelData
+                        required property int index
+                        objectName: modelData.header ? "tagSection" + modelData.section : "tagRow" + modelData.index
+                        width: ListView.view.width
+                        height: modelData.header ? 28 : 30
+                        focusPolicy: Qt.NoFocus
+                        highlighted: !modelData.header && ListView.isCurrentItem
+                        Accessible.role: modelData.header ? Accessible.Button : Accessible.ListItem
+                        Accessible.name: modelData.header ? dialog.sectionName(modelData.section) : modelData.name
+                        Accessible.selected: highlighted
+                        onClicked: {
+                            if (modelData.header) {
+                                if (modelData.section === 1)
+                                    tagList.moreOpen = !tagList.moreOpen
+                            } else {
+                                tagList.selectRow(index)
+                            }
+                        }
+                        background: Rectangle {
+                            color: row.highlighted ? Theme.select : row.hovered && !row.modelData.header ? Theme.raised : "transparent"
+                            Rectangle {
+                                visible: row.highlighted
+                                width: 3
+                                height: parent.height
+                                color: Theme.accent
+                            }
+                        }
+                        contentItem: RowLayout {
+                            spacing: 8
+                            Icon {
+                                visible: row.modelData.header
+                                iconRole: row.modelData.folded ? "chevron-right" : "chevron-down"
+                                size: 14
+                            }
+                            Label {
+                                text: row.modelData.header ? dialog.sectionName(row.modelData.section) : row.modelData.name
+                                font.weight: row.modelData.header || row.highlighted ? Font.DemiBold : Font.Normal
+                                color: row.modelData.header ? Theme.muted : Theme.text
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                            Label {
+                                visible: row.modelData.header ? row.modelData.section === 1 : true
+                                text: row.modelData.header ? row.modelData.count
+                                    : row.modelData.tag.length > 0 ? "\\" + row.modelData.tag : ""
+                                color: Theme.muted
+                                font.family: row.modelData.header ? Qt.application.font.family : "monospace"
+                            }
+                        }
                     }
                 }
-                TextField {
-                    id: newTagName
-                    objectName: "newTagName"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 150
-                    placeholderText: qsTr("New tag name")
-                    Accessible.name: qsTr("New tag name")
-                    onAccepted: addTagButton.clicked()
-                }
-                Button {
-                    id: addTagButton
-                    objectName: "addTag"
-                    text: qsTr("Add tag")
-                    onClicked: dialog.show(dialog.editor.addTag(newTagName.text))
-                }
-                Button {
-                    objectName: "deleteTag"
-                    text: qsTr("Delete tag")
-                    onClicked: dialog.show(dialog.editor.removeTag())
-                }
-            }
-        }
-        Frame {
-            Layout.fillWidth: true
-            GridLayout {
-                anchors.fill: parent
-                columns: 4
-                columnSpacing: 8
-                Label { text: qsTr("Name:") }
-                TextField {
-                    objectName: "tagsName"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 140
-                    text: dialog.editor ? dialog.editor.name : ""
-                    Accessible.name: qsTr("Name")
-                    onTextEdited: dialog.editor.name = text
-                    onAccepted: okButton.clicked()
-                }
-                Label { text: qsTr("Tag:") }
-                TextField {
-                    objectName: "tagsTag"
-                    Layout.fillWidth: true
-                    Layout.preferredWidth: 140
-                    text: dialog.editor ? dialog.editor.tag : ""
-                    Accessible.name: qsTr("Tag")
-                    onTextEdited: dialog.editor.tag = text
-                    onAccepted: okButton.clicked()
-                }
-                Label { text: qsTr("Minimal value:") }
-                NumberField { field: "min"; Accessible.name: qsTr("Minimal value") }
-                Label { text: qsTr("Maximal value:") }
-                NumberField { field: "max"; Accessible.name: qsTr("Maximal value") }
-                Label { text: qsTr("Value:") }
-                NumberField { field: "value"; Accessible.name: qsTr("Value") }
-                Label { text: qsTr("Step:") }
-                NumberField { field: "step"; Accessible.name: qsTr("Step") }
-                ComboBox {
-                    objectName: "tagsPlacing"
-                    Layout.columnSpan: 2
-                    Layout.fillWidth: true
-                    model: dialog.editor ? dialog.editor.placings : []
-                    currentIndex: dialog.editor ? dialog.editor.placing : 0
-                    implicitContentWidthPolicy: ComboBox.WidestText
-                    Accessible.name: qsTr("Where Insert puts the tag")
-                    onActivated: index => {
-                        currentIndex = Qt.binding(() => dialog.editor ? dialog.editor.placing : 0)
-                        dialog.editor.placing = index
-                    }
-                }
-                Label { text: qsTr("Decimal places:") }
-                NumberField {
-                    field: "digits"
-                    decimals: false
-                    negative: false
-                    Accessible.name: qsTr("Decimal places")
-                }
-                ComboBox {
-                    objectName: "tagsValueCount"
-                    Layout.columnSpan: 2
-                    Layout.fillWidth: true
-                    model: dialog.editor ? dialog.editor.valueCounts : []
-                    currentIndex: dialog.editor ? dialog.editor.additionalValues : 0
-                    implicitContentWidthPolicy: ComboBox.WidestText
-                    Accessible.name: qsTr("Used only when tag have 2 values or more")
-                    ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Used only when tag have 2 values or more")
-                    onActivated: index => {
-                        currentIndex = Qt.binding(() => dialog.editor ? dialog.editor.additionalValues : 0)
-                        dialog.editor.additionalValues = index
-                    }
-                }
-                ComboBox {
-                    objectName: "tagsChangeOption"
-                    Layout.columnSpan: 2
-                    Layout.fillWidth: true
-                    model: dialog.editor ? dialog.editor.changeOptions : []
-                    currentIndex: dialog.editor ? dialog.editor.changeOption : 0
-                    implicitContentWidthPolicy: ComboBox.WidestText
-                    Accessible.name: qsTr("Tag change options")
-                    ToolTip.visible: hovered
-                    ToolTip.text: qsTr("Tag change options")
-                    onActivated: index => {
-                        currentIndex = Qt.binding(() => dialog.editor ? dialog.editor.changeOption : 0)
-                        dialog.editor.changeOption = index
-                    }
-                }
-                Label { text: qsTr("Additional values:") }
+                Rectangle { Layout.fillWidth: true; implicitHeight: 1; color: Theme.line }
                 RowLayout {
-                    Layout.columnSpan: 3
+                    Layout.margins: 4
+                    spacing: 2
+                    IconToolButton {
+                        objectName: "addTag"
+                        iconRole: "add"
+                        text: qsTr("New tag")
+                        onClicked: {
+                            search.text = ""
+                            dialog.editor.addTag()
+                            dialog.showFields()
+                            tagCode.forceActiveFocus()
+                        }
+                    }
+                    IconToolButton {
+                        objectName: "duplicateTag"
+                        iconRole: "duplicate"
+                        text: qsTr("Duplicate")
+                        onClicked: { dialog.editor.duplicate(); dialog.showFields() }
+                    }
+                    IconToolButton {
+                        objectName: "deleteTag"
+                        iconRole: "delete"
+                        text: qsTr("Delete")
+                        enabled: dialog.editor ? dialog.editor.canRemove : false
+                        tip: enabled ? text : qsTr("The list keeps at least one tag")
+                        onClicked: { dialog.editor.remove(); dialog.showFields() }
+                    }
+                    Item { Layout.fillWidth: true }
+                    IconToolButton {
+                        id: moreButton
+                        objectName: "tagsMore"
+                        iconRole: "panel-menu"
+                        text: qsTr("More")
+                        down: moreMenu.visible
+                        onClicked: moreMenu.popup(moreButton, 0, moreButton.height)
+                    }
+                }
+            }
+        }
+
+        // The selected definition, then its preview.
+        ScrollView {
+            id: detailScroll
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            Layout.preferredWidth: 620
+            contentWidth: availableWidth
+            ColumnLayout {
+                width: detailScroll.availableWidth - 40
+                x: 20
+                spacing: 8
+
+                Label { text: qsTr("Tag"); font.weight: Font.DemiBold }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    rowSpacing: 8
+                    RowLabel { text: qsTr("Name") }
+                    EditField {
+                        id: tagName
+                        objectName: "tagsName"
+                        field: "name"
+                        Layout.preferredWidth: 220
+                        Accessible.name: qsTr("Name")
+                    }
+                    Item { implicitWidth: 1; visible: tagNameError.visible }
+                    FieldError { id: tagNameError; objectName: "tagsNameError"; text: tagName.error; Layout.fillWidth: true }
+                    RowLabel { text: qsTr("Tag") }
+                    RowLayout {
+                        spacing: 0
+                        Label { text: "\\"; color: Theme.muted; font.family: "monospace"; Layout.rightMargin: 2 }
+                        EditField {
+                            id: tagCode
+                            objectName: "tagCode"
+                            field: "tag"
+                            font.family: "monospace"
+                            Layout.preferredWidth: 160
+                            Accessible.name: qsTr("Tag")
+                        }
+                    }
+                    Item { implicitWidth: 1; visible: tagCodeError.visible }
+                    FieldError { id: tagCodeError; objectName: "tagCodeError"; text: tagCode.error; Layout.fillWidth: true }
+                }
+
+                Rule {}
+                SectionTitle { text: qsTr("Values") }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    rowSpacing: 8
+                    RowLabel { text: qsTr("Range") }
+                    RowLayout {
+                        spacing: 8
+                        NumberEdit { id: rangeMin; objectName: "tagMin"; field: "min"; Accessible.name: qsTr("Minimum") }
+                        Label { text: qsTr("to"); color: Theme.muted }
+                        NumberEdit { id: rangeMax; objectName: "tagMax"; field: "max"; Accessible.name: qsTr("Maximum") }
+                    }
+                    Item { implicitWidth: 1; visible: rangeError.visible }
+                    FieldError {
+                        id: rangeError
+                        objectName: "tagRangeError"
+                        text: rangeMin.error || rangeMax.error
+                        Layout.fillWidth: true
+                    }
+                    RowLabel { text: qsTr("Step") }
+                    RowLayout {
+                        spacing: 8
+                        NumberEdit { id: stepField; objectName: "tagStep"; field: "step"; Accessible.name: qsTr("Step") }
+                        Label { text: qsTr("Decimal places"); color: Theme.muted; Layout.leftMargin: 10 }
+                        NumberEdit {
+                            id: digitsField
+                            objectName: "tagDigits"
+                            field: "digits"
+                            Layout.preferredWidth: 52
+                            Accessible.name: qsTr("Decimal places")
+                        }
+                    }
+                    Item { implicitWidth: 1; visible: stepError.visible }
+                    FieldError {
+                        id: stepError
+                        objectName: "tagStepError"
+                        text: stepField.error || digitsField.error
+                        Layout.fillWidth: true
+                    }
+                    RowLabel { text: qsTr("Count") }
+                    SegmentedButtons {
+                        objectName: "tagCount"
+                        // Legacy's "No / One / Two / Three additional values".
+                        choices: [1, 2, 3, 4].map(n => ({ text: String(n), name: "tagCount" + n,
+                                                          tip: qsTr("The tag takes %n value(s)", "", n) }))
+                        currentIndex: dialog.editor ? dialog.editor.count - 1 : 0
+                        Accessible.name: qsTr("Count")
+                        onActivated: index => dialog.editor.count = index + 1
+                    }
+                    RowLabel { text: qsTr("Starts at") }
+                    Flow {
+                        Layout.fillWidth: true
+                        spacing: 8
+                        ValueEdit { id: value0; at: 0 }
+                        ValueEdit { id: value1; at: 1 }
+                        ValueEdit { id: value2; at: 2 }
+                        ValueEdit { id: value3; at: 3 }
+                    }
+                    Item { implicitWidth: 1; visible: valuesError.visible }
+                    FieldError {
+                        id: valuesError
+                        objectName: "tagValuesError"
+                        text: value0.error || value1.error || value2.error || value3.error
+                        Layout.fillWidth: true
+                    }
+                }
+
+                Rule {}
+                SectionTitle { text: qsTr("Change") }
+                GridLayout {
+                    columns: 2
+                    columnSpacing: 12
+                    rowSpacing: 8
+                    RowLabel { text: qsTr("Starts on") }
+                    ColumnLayout {
+                        spacing: 8
+                        SegmentedButtons {
+                            objectName: "tagChange"
+                            choices: dialog.changeNames.map((n, i) => ({ text: n, name: "tagChange" + i }))
+                            currentIndex: dialog.change
+                            Accessible.name: qsTr("Starts on")
+                            onActivated: index => dialog.setChange(index)
+                        }
+                        ComboBox {
+                            objectName: "tagVariant"
+                            visible: dialog.variants.length > 0
+                            model: dialog.variants
+                            currentIndex: dialog.variant
+                            Layout.preferredWidth: 280
+                            Accessible.name: dialog.change === 0 ? qsTr("Where the tag goes in the text")
+                                           : dialog.change === 2 ? qsTr("How each Line's number changes the value")
+                                           : qsTr("What the gradient runs across")
+                            onActivated: index => dialog.setVariant(index)
+                        }
+                    }
+                }
+
+                Rule {}
+                SectionTitle { text: qsTr("Preview") }
+                Label { text: qsTr("In the inspector bar"); color: Theme.muted }
+                // The strip as Hydra shows this tag (HY1): the tag, its
+                // values at their start, the change.
+                Rectangle {
+                    objectName: "tagStripPreview"
                     Layout.fillWidth: true
-                    // values[i] takes input while the count takes it
-                    // (VisualAllTagsEdition.cpp:230-241); legacy's tooltips
-                    // number them from 3.
-                    NumberField {
-                        field: "value2"
-                        enabled: dialog.editor ? dialog.editor.additionalValues >= 1 : false
-                        Accessible.name: qsTr("Value %1").arg(3)
-                        ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Value %1").arg(3)
-                    }
-                    NumberField {
-                        field: "value3"
-                        enabled: dialog.editor ? dialog.editor.additionalValues >= 2 : false
-                        Accessible.name: qsTr("Value %1").arg(4)
-                        ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Value %1").arg(4)
-                    }
-                    NumberField {
-                        field: "value4"
-                        enabled: dialog.editor ? dialog.editor.additionalValues >= 3 : false
-                        Accessible.name: qsTr("Value %1").arg(5)
-                        ToolTip.visible: hovered
-                        ToolTip.text: qsTr("Value %1").arg(5)
+                    implicitHeight: strip.implicitHeight + 16
+                    color: Theme.raised
+                    border.color: Theme.line
+                    clip: true
+                    RowLayout {
+                        id: strip
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        anchors.rightMargin: 10
+                        spacing: 8
+                        Icon { iconRole: "tool-all-tags"; size: 16 }
+                        Label { text: dialog.editor ? dialog.editor.name : ""; font.weight: Font.DemiBold }
+                        Label {
+                            text: dialog.editor && dialog.editor.tag.length > 0 ? "\\" + dialog.editor.tag : ""
+                            color: Theme.muted
+                            font.family: "monospace"
+                        }
+                        Repeater {
+                            model: dialog.editor ? dialog.editor.count : 0
+                            RowLayout {
+                                id: stripValue
+                                required property int index
+                                spacing: 4
+                                Label { text: dialog.editor.valueNames[stripValue.index] ?? ""; color: Theme.muted }
+                                Label { text: dialog.editor.numbers["value" + stripValue.index] ?? ""; font.family: "monospace" }
+                            }
+                        }
+                        Label {
+                            text: dialog.changeNames[dialog.change]
+                                  + (dialog.variant >= 0 ? " · " + dialog.variants[dialog.variant] : "")
+                            color: Theme.muted
+                            elide: Text.ElideRight
+                            Layout.fillWidth: true
+                            horizontalAlignment: Text.AlignRight
+                        }
                     }
                 }
+                Label { text: qsTr("Set writes, on the active line"); color: Theme.muted; Layout.topMargin: 4 }
+                Rectangle {
+                    Layout.fillWidth: true
+                    implicitHeight: writes.implicitHeight + 16
+                    color: Theme.field
+                    border.color: Theme.line
+                    Label {
+                        id: writes
+                        objectName: "tagSetPreview"
+                        anchors.fill: parent
+                        anchors.margins: 8
+                        textFormat: Text.StyledText
+                        wrapMode: Text.WrapAnywhere
+                        maximumLineCount: 3
+                        elide: Text.ElideRight
+                        font.family: "monospace"
+                        function escaped(text) {
+                            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+                        }
+                        readonly property var preview: dialog.editor ? dialog.editor.preview : ({})
+                        text: escaped(preview.before ?? "")
+                              + "<b><font color=\"" + Theme.accent + "\">" + escaped(preview.tag ?? "") + "</font></b>"
+                              + escaped(preview.after ?? "")
+                    }
+                }
+                Item { implicitHeight: 8 }
             }
         }
     }
 
-    // Legacy's button row, in its order: Apply, OK, Cancel, Restore default.
-    footer: Pane {
-        padding: 8
-        RowLayout {
-            anchors.fill: parent
-            uniformCellSizes: true
-            Button {
-                objectName: "tagsApply"
-                Layout.fillWidth: true
-                text: qsTr("Apply")
-                onClicked: dialog.show(dialog.editor.save(false))
-            }
-            Button {
-                id: okButton
-                objectName: "tagsOk"
-                Layout.fillWidth: true
-                text: qsTr("OK")
-                onClicked: dialog.show(dialog.editor.save(true))
-            }
-            Button {
-                objectName: "tagsCancel"
-                Layout.fillWidth: true
-                text: qsTr("Cancel")
-                onClicked: dialog.reject()
-            }
-            Button {
-                objectName: "tagsRestoreDefault"
-                Layout.fillWidth: true
-                text: qsTr("Restore default")
-                onClicked: {
-                    const q = dialog.editor.restoreQuestion()
-                    questionBox.kind = "restore"
-                    questionBox.title = q.title
-                    questionText.text = q.text
-                    questionBox.open()
-                }
-            }
+    function sectionName(section) {
+        return [qsTr("Common"), qsTr("More"), qsTr("Your tags")][section] ?? ""
+    }
+
+    leadingActions: [
+        IconTextButton {
+            objectName: "tagsUndo"
+            iconRole: "undo"
+            text: qsTr("Undo")
+            enabled: dialog.editor ? dialog.editor.canUndo : false
+            tip: enabled ? qsTr("Undo “%1”").arg(dialog.stepText(dialog.editor.undoStep)) : ""
+            onClicked: dialog.undo()
+        },
+        IconTextButton {
+            objectName: "tagsRedo"
+            iconRole: "redo"
+            text: qsTr("Redo")
+            enabled: dialog.editor ? dialog.editor.canRedo : false
+            tip: enabled ? qsTr("Redo “%1”").arg(dialog.stepText(dialog.editor.redoStep)) : ""
+            onClicked: dialog.redo()
+        }
+    ]
+    buttons: PrimaryButton {
+        id: closeButton
+        objectName: "tagsClose"
+        text: qsTr("Close")
+        DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+        onClicked: dialog.close()
+    }
+    defaultButton: closeButton
+
+    ShellMenu {
+        id: moreMenu
+        objectName: "tagsMoreMenu"
+        ShellMenuItem {
+            objectName: "tagsRestoreDefault"
+            iconRole: "restore-default"
+            text: qsTr("Restore default tags…")
+            onTriggered: dialog.askRestore()
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "tagsUndoAll"
+            iconRole: "undo"
+            text: qsTr("Undo all changes")
+            onTriggered: { dialog.editor.undoAll(); dialog.showFields() }
         }
     }
 
-    // HikariMessageBox with OK (the errors), NT1 on the kit's message box.
+    // The window's questions, PK1's message box over it.
     MessageHost {
         id: messages
         objectName: "tagsMessages"
-    }
-    // HikariMessageBox with Yes and No: a list change's "Save changes to
-    // tag ...?" and Restore default's "Are you sure ...?".
-    Dialog {
-        id: questionBox
-        objectName: "tagsQuestion"
-        property string kind
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        modal: true
-        standardButtons: Dialog.Yes | Dialog.No
-        Label {
-            id: questionText
-            objectName: "tagsQuestionText"
-            Accessible.role: Accessible.AlertMessage
-            Accessible.name: text
-        }
-        onAccepted: {
-            if (kind === "restore") {
-                dialog.editor.restoreDefaults()
-                return
-            }
-            // Save(ID_BUTTON_COMMIT), then the list's new tag (after an
-            // error too, as legacy).
-            dialog.show(dialog.editor.save(false))
-            dialog.editor.select(dialog.pendingIndex)
-        }
-        onRejected: if (kind === "list") dialog.editor.select(dialog.pendingIndex)
+        settings: dialog.settings
     }
 }

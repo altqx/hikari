@@ -315,11 +315,14 @@ Control {
     // the window showing them: the Video panel's bar and fullscreen's share
     // one controller, so one bar's at a time (Codex on #293).
     property bool dialogs: true
+    // Where the dialogs' places are kept (DG1).
+    property SettingsStore settings: null
     Loader {
         active: bar.dialogs
         sourceComponent: Component {
             VisualToolDialogs {
                 tools: bar.tools
+                settings: bar.settings
             }
         }
     }

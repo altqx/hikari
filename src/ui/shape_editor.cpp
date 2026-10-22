@@ -1,5 +1,12 @@
 #include "shape_editor.h"
 
+#include <QRegularExpression>
+#include <QSet>
+
+#include <algorithm>
+#include <cmath>
+#include <limits>
+
 namespace hikari::ui {
 
 using application::visual::ShapePreset;
@@ -12,11 +19,15 @@ QString qs(std::u16string_view text)
     return QString::fromUtf16(text.data(), static_cast<qsizetype>(text.size()));
 }
 
-QVariantMap message(const std::optional<ShapesEdition::Message> &m)
+const QSet<QString> &defaultNames()
 {
-    if (!m)
-        return {};
-    return {{QStringLiteral("text"), qs(m->text)}, {QStringLiteral("title"), qs(m->title)}};
+    static const QSet<QString> names = [] {
+        QSet<QString> out;
+        for (const ShapePreset &p : application::visual::defaultShapePresets())
+            out.insert(qs(p.name));
+        return out;
+    }();
+    return names;
 }
 
 } // namespace
@@ -26,139 +37,215 @@ ShapeEditor::ShapeEditor(std::vector<ShapePreset> presets, int curShape, Hooks h
 {
 }
 
-QStringList ShapeEditor::list() const
+QString ShapeEditor::svgPath(std::u16string_view drawing, QRectF *bounds)
 {
-    QStringList out;
-    for (const auto &n : m_edition.list())
-        out.append(qs(n));
+    // The drawing's tokens: a command letter, or a number (anything else is
+    // skipped, as libass skips it).
+    QString out;
+    QChar command;
+    std::vector<double> numbers;
+    double x0 = std::numeric_limits<double>::max(), y0 = x0;
+    double x1 = std::numeric_limits<double>::lowest(), y1 = x1;
+    const auto point = [&](double x, double y) {
+        x0 = std::min(x0, x);
+        y0 = std::min(y0, y);
+        x1 = std::max(x1, x);
+        y1 = std::max(y1, y);
+        return QString::number(x) + QLatin1Char(' ') + QString::number(y);
+    };
+    const auto flush = [&] {
+        const std::size_t pairs = numbers.size() / 2;
+        const auto at = [&](std::size_t i) { return point(numbers[2 * i], numbers[2 * i + 1]); };
+        const char16_t c = command.unicode();
+        if ((c == u'm' || c == u'n') && pairs > 0) {
+            out += QStringLiteral(" M ") + at(0);
+            for (std::size_t i = 1; i < pairs; ++i)
+                out += QStringLiteral(" L ") + at(i);
+        } else if (c == u'l' || c == u's' || c == u'p') {
+            for (std::size_t i = 0; i < pairs; ++i)
+                out += QStringLiteral(" L ") + at(i);
+        } else if (c == u'b') {
+            for (std::size_t i = 0; i + 2 < pairs; i += 3)
+                out += QStringLiteral(" C ") + at(i) + QLatin1Char(' ') + at(i + 1) + QLatin1Char(' ') + at(i + 2);
+        } else if (c == u'c') {
+            out += QStringLiteral(" Z");
+        }
+        numbers.clear();
+    };
+    const QString text = qs(drawing);
+    for (const QString &token : text.split(QRegularExpression(QStringLiteral("\\s+")), Qt::SkipEmptyParts)) {
+        if (token.size() == 1 && QStringLiteral("mnlbspc").contains(token[0])) {
+            flush();
+            command = token[0];
+            continue;
+        }
+        bool ok = false;
+        const double v = token.toDouble(&ok);
+        if (ok && std::isfinite(v))
+            numbers.push_back(v);
+    }
+    flush();
+    if (bounds)
+        *bounds = x0 <= x1 ? QRectF(QPointF(x0, y0), QPointF(x1, y1)) : QRectF();
+    return out.trimmed();
+}
+
+QVariantList ShapeEditor::items() const
+{
+    QVariantList out;
+    for (const ShapePreset &p : m_edition.presets()) {
+        QRectF bounds;
+        const QString path = svgPath(p.shape, &bounds);
+        out.append(QVariantMap{{QStringLiteral("name"), qs(p.name)},
+                               {QStringLiteral("path"), path},
+                               {QStringLiteral("box"), bounds},
+                               {QStringLiteral("own"), !defaultNames().contains(qs(p.name))}});
+    }
     return out;
-}
-
-QString ShapeEditor::name() const
-{
-    return qs(m_edition.name);
-}
-
-QString ShapeEditor::shape() const
-{
-    return qs(m_edition.shape);
-}
-
-void ShapeEditor::setName(const QString &name)
-{
-    if (name == this->name())
-        return;
-    m_edition.name = name.toStdU16String();
-    emit changed();
-}
-
-void ShapeEditor::setShape(const QString &shape)
-{
-    if (shape == this->shape())
-        return;
-    m_edition.shape = shape.toStdU16String();
-    emit changed();
-}
-
-void ShapeEditor::setMode(int mode)
-{
-    if (mode == m_edition.mode)
-        return;
-    m_edition.mode = mode;
-    emit changed();
-}
-
-void ShapeEditor::setScalingMode(int mode)
-{
-    if (mode == m_edition.scalingMode)
-        return;
-    m_edition.scalingMode = mode;
-    emit changed();
-}
-
-QVariantMap ShapeEditor::addShape(const QString &newName)
-{
-    const auto m = m_edition.addShape(newName.toStdU16String());
-    emit changed();
-    return message(m);
-}
-
-QVariantMap ShapeEditor::removeShape()
-{
-    const auto m = m_edition.removeShape();
-    emit changed();
-    return message(m);
-}
-
-QVariantMap ShapeEditor::listChangeQuestion() const
-{
-    if (!m_edition.modified())
-        return {};
-    return message(m_edition.saveChangesQuestion());
 }
 
 void ShapeEditor::select(int index)
 {
+    if (index == selection())
+        return;
     m_edition.select(index);
     emit changed();
 }
 
-bool ShapeEditor::getShapeFromLine()
+QString ShapeEditor::name() const
 {
-    const bool found = m_edition.getShapeFromLine(m_hooks.activeLineText ? m_hooks.activeLineText() : u"");
-    emit changed();
-    return found;
+    return qs(m_edition.current().name);
 }
 
-QVariantMap ShapeEditor::save(bool ok)
+QString ShapeEditor::shape() const
 {
-    const ShapesEdition::SaveResult r = m_edition.save();
-    emit changed();
-    if (r.error)
-        return message(r.error);
-    if (r.clash)
-        return {{QStringLiteral("clash"), qs(*r.clash)}};
-    if (ok)
-        finish(true); // SaveSettings and EndModal(wxID_OK)
-    return {};
+    return qs(m_edition.current().shape);
 }
 
-int ShapeEditor::replaceClash(int pending, bool ok)
+QString ShapeEditor::path() const
 {
-    (void)m_edition.replaceClash(&pending);
-    emit changed();
-    if (ok)
-        finish(true);
-    return pending;
+    return svgPath(m_edition.current().shape);
 }
 
-QVariantMap ShapeEditor::restoreQuestion() const
+QRectF ShapeEditor::box() const
 {
-    return message(ShapesEdition::restoreQuestion());
+    QRectF bounds;
+    (void)svgPath(m_edition.current().shape, &bounds);
+    return bounds;
+}
+
+int ShapeEditor::ownCount() const
+{
+    return static_cast<int>(std::ranges::count_if(m_edition.presets(), [](const ShapePreset &p) {
+        return !defaultNames().contains(qs(p.name));
+    }));
+}
+
+void ShapeEditor::kept()
+{
+    emit changed();
+    if (m_hooks.changed)
+        m_hooks.changed(m_edition.presets());
+}
+
+void ShapeEditor::setMode(int mode)
+{
+    if (mode == this->mode())
+        return;
+    m_edition.setMode(mode);
+    kept();
+}
+
+int ShapeEditor::setName(const QString &name)
+{
+    if (name == this->name())
+        return NameOk;
+    std::u16string taken;
+    const auto check = m_edition.setName(name.toStdU16String(), &taken);
+    m_taken = qs(taken);
+    if (check != ShapesEdition::NameCheck::Ok)
+        return static_cast<int>(check);
+    kept();
+    return NameOk;
+}
+
+bool ShapeEditor::setShape(const QString &shape)
+{
+    if (shape == this->shape())
+        return true;
+    if (!m_edition.setShape(shape.toStdU16String()))
+        return false;
+    kept();
+    return true;
+}
+
+void ShapeEditor::addShape()
+{
+    m_edition.addShape(m_hooks.activeLineText ? m_hooks.activeLineText() : std::u16string());
+    kept();
+}
+
+void ShapeEditor::duplicate()
+{
+    m_edition.duplicate();
+    kept();
+}
+
+bool ShapeEditor::remove()
+{
+    if (!m_edition.remove())
+        return false;
+    kept();
+    return true;
+}
+
+bool ShapeEditor::takeFromLine()
+{
+    if (!m_edition.takeFromLine(m_hooks.activeLineText ? m_hooks.activeLineText() : std::u16string()))
+        return false;
+    kept();
+    return true;
+}
+
+void ShapeEditor::replaceNamed(const QString &name)
+{
+    m_edition.replaceNamed(name.toStdU16String());
+    kept();
 }
 
 void ShapeEditor::restoreDefaults()
 {
-    // OnResetDefault after Yes: the file goes at once (Cancel does not bring
-    // it back), then LoadSettings gives legacy's defaults.
-    if (m_hooks.removeFile)
-        m_hooks.removeFile();
     m_edition.restoreDefaults(m_hooks.defaults ? m_hooks.defaults() : application::visual::defaultShapePresets());
-    emit changed();
+    kept();
 }
 
-void ShapeEditor::cancel()
+bool ShapeEditor::undoAll()
 {
-    finish(false);
+    if (!m_edition.undoAll())
+        return false;
+    kept();
+    return true;
 }
 
-void ShapeEditor::finish(bool ok)
+void ShapeEditor::undo()
+{
+    if (m_edition.undo())
+        kept();
+}
+
+void ShapeEditor::redo()
+{
+    if (m_edition.redo())
+        kept();
+}
+
+void ShapeEditor::close()
 {
     if (m_done)
         return;
     m_done = true;
     if (m_hooks.finished)
-        m_hooks.finished(ok ? std::optional(m_edition.presets()) : std::nullopt);
+        m_hooks.finished();
     emit closed();
 }
 

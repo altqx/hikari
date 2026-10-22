@@ -1,10 +1,14 @@
 #include "all_tags_editor.h"
 
+#include <QHash>
+#include <QSet>
+
+#include <algorithm>
+
 namespace hikari::ui {
 
 using application::visual::AllTagsEdition;
 using application::visual::AllTagsSetting;
-using application::visual::NumberField;
 
 namespace {
 
@@ -13,20 +17,20 @@ QString qs(std::u16string_view text)
     return QString::fromUtf16(text.data(), static_cast<qsizetype>(text.size()));
 }
 
-QVariantMap message(const std::optional<AllTagsEdition::Message> &m)
+QString number(double value)
 {
-    if (!m)
-        return {};
-    return {{QStringLiteral("text"), qs(m->text)}, {QStringLiteral("title"), qs(m->title)}};
+    return qs(application::visual::numCtrlText(value));
 }
 
-template <std::size_t N>
-QStringList listOf(const std::array<std::u16string_view, N> &items)
+const QSet<QString> &defaultNames()
 {
-    QStringList out;
-    for (const auto item : items)
-        out.append(qs(item));
-    return out;
+    static const QSet<QString> names = [] {
+        QSet<QString> out;
+        for (const AllTagsSetting &t : application::visual::defaultAllTags())
+            out.insert(qs(t.name));
+        return out;
+    }();
+    return names;
 }
 
 } // namespace
@@ -36,188 +40,219 @@ AllTagsEditor::AllTagsEditor(std::vector<AllTagsSetting> tags, int curTag, Hooks
 {
 }
 
-QStringList AllTagsEditor::list() const
+QVariantList AllTagsEditor::items() const
 {
-    QStringList out;
-    for (const auto &n : m_edition.list())
-        out.append(qs(n));
-    return out;
-}
-
-QString AllTagsEditor::name() const
-{
-    return qs(m_edition.name);
-}
-
-QString AllTagsEditor::tag() const
-{
-    return qs(m_edition.tag);
-}
-
-QVariantMap AllTagsEditor::numbers() const
-{
-    return {{QStringLiteral("min"), qs(m_edition.minValue.text())},
-            {QStringLiteral("max"), qs(m_edition.maxValue.text())},
-            {QStringLiteral("value"), qs(m_edition.values[0].text())},
-            {QStringLiteral("step"), qs(m_edition.step.text())},
-            {QStringLiteral("digits"), qs(m_edition.digitsAfterDot.text())},
-            {QStringLiteral("value2"), qs(m_edition.values[1].text())},
-            {QStringLiteral("value3"), qs(m_edition.values[2].text())},
-            {QStringLiteral("value4"), qs(m_edition.values[3].text())}};
-}
-
-QStringList AllTagsEditor::placings() const
-{
-    return listOf(AllTagsEdition::placings());
-}
-
-QStringList AllTagsEditor::valueCounts() const
-{
-    return listOf(AllTagsEdition::valueCounts());
-}
-
-QStringList AllTagsEditor::changeOptions() const
-{
-    return listOf(application::visual::allTagsChangeOptions());
-}
-
-void AllTagsEditor::setName(const QString &name)
-{
-    if (name == this->name())
-        return;
-    m_edition.name = name.toStdU16String();
-    emit changed();
-}
-
-void AllTagsEditor::setTag(const QString &tag)
-{
-    if (tag == this->tag())
-        return;
-    m_edition.tag = tag.toStdU16String();
-    emit changed();
-}
-
-void AllTagsEditor::setPlacing(int placing)
-{
-    if (placing == m_edition.placing)
-        return;
-    m_edition.placing = placing;
-    emit changed();
-}
-
-void AllTagsEditor::setAdditionalValues(int count)
-{
-    // The count's choice enables the values it takes (VisualAllTagsEdition.
-    // cpp:236-241).
-    if (count == m_edition.additionalValues)
-        return;
-    m_edition.additionalValues = count;
-    emit changed();
-}
-
-void AllTagsEditor::setChangeOption(int option)
-{
-    if (option == m_edition.changeOption)
-        return;
-    m_edition.changeOption = option;
-    emit changed();
-}
-
-NumberField *AllTagsEditor::field(const QString &name)
-{
-    if (name == QLatin1String("min"))
-        return &m_edition.minValue;
-    if (name == QLatin1String("max"))
-        return &m_edition.maxValue;
-    if (name == QLatin1String("value"))
-        return &m_edition.values[0];
-    if (name == QLatin1String("step"))
-        return &m_edition.step;
-    if (name == QLatin1String("digits"))
-        return &m_edition.digitsAfterDot;
-    if (name == QLatin1String("value2"))
-        return &m_edition.values[1];
-    if (name == QLatin1String("value3"))
-        return &m_edition.values[2];
-    if (name == QLatin1String("value4"))
-        return &m_edition.values[3];
-    return nullptr;
-}
-
-void AllTagsEditor::setNumber(const QString &name, const QString &text)
-{
-    if (auto *f = field(name)) {
-        f->setText(text.toStdU16String());
-        emit changed();
+    QVariantList out;
+    const auto sections = application::visual::allTagsSections(m_edition.tags());
+    for (std::size_t i = 0; i < m_edition.tags().size(); ++i) {
+        const AllTagsSetting &t = m_edition.tags()[i];
+        out.append(QVariantMap{{QStringLiteral("name"), qs(t.name)},
+                               {QStringLiteral("tag"), qs(t.tag)},
+                               {QStringLiteral("section"), sections[i]}});
     }
-}
-
-QVariantMap AllTagsEditor::addTag(const QString &newName)
-{
-    m_edition.newTagName = newName.toStdU16String();
-    const auto m = m_edition.addTag();
-    emit changed();
-    return message(m);
-}
-
-QVariantMap AllTagsEditor::removeTag()
-{
-    const auto m = m_edition.removeTag();
-    emit changed();
-    return message(m);
-}
-
-QVariantMap AllTagsEditor::listChangeQuestion() const
-{
-    if (!m_edition.modified())
-        return {};
-    return message(m_edition.saveChangesQuestion());
+    return out;
 }
 
 void AllTagsEditor::select(int index)
 {
+    if (index == selection())
+        return;
     m_edition.select(index);
     emit changed();
 }
 
-QVariantMap AllTagsEditor::save(bool ok)
+QString AllTagsEditor::name() const
 {
-    const auto m = m_edition.save();
-    emit changed();
-    if (m)
-        return message(m);
-    if (ok)
-        finish(true); // SaveSettings and EndModal(wxID_OK)
-    return {};
+    return qs(m_edition.current().name);
 }
 
-QVariantMap AllTagsEditor::restoreQuestion() const
+QString AllTagsEditor::tag() const
 {
-    return message(AllTagsEdition::restoreQuestion());
+    return qs(m_edition.current().tag);
+}
+
+QVariantMap AllTagsEditor::numbers() const
+{
+    const AllTagsSetting &t = m_edition.current();
+    return {{QStringLiteral("min"), number(t.rangeMin)},
+            {QStringLiteral("max"), number(t.rangeMax)},
+            {QStringLiteral("step"), number(t.step)},
+            {QStringLiteral("digits"), QString::number(t.digitsAfterDot)},
+            {QStringLiteral("value0"), number(t.values[0])},
+            {QStringLiteral("value1"), number(t.values[1])},
+            {QStringLiteral("value2"), number(t.values[2])},
+            {QStringLiteral("value3"), number(t.values[3])}};
+}
+
+QStringList AllTagsEditor::valueNames() const
+{
+    QStringList out;
+    for (const auto &n : application::visual::allTagsValueNames(m_edition.current()))
+        out.append(qs(n));
+    return out;
+}
+
+QVariantMap AllTagsEditor::preview() const
+{
+    // Set at the start of the Line's text: in its first override block, or
+    // a block of its own.
+    const AllTagsSetting &t = m_edition.current();
+    const QString tag = t.tag.empty() ? QString() : qs(application::visual::allTagsSetText(t));
+    const QString line = m_hooks.activeLineText ? qs(m_hooks.activeLineText()) : QString();
+    if (line.startsWith(QLatin1Char('{')))
+        return {{QStringLiteral("before"), QStringLiteral("{")},
+                {QStringLiteral("tag"), tag},
+                {QStringLiteral("after"), line.mid(1)}};
+    return {{QStringLiteral("before"), QStringLiteral("{")},
+            {QStringLiteral("tag"), tag},
+            {QStringLiteral("after"), QStringLiteral("}") + line}};
+}
+
+int AllTagsEditor::ownCount() const
+{
+    return static_cast<int>(std::ranges::count_if(m_edition.tags(), [](const AllTagsSetting &t) {
+        return !defaultNames().contains(qs(t.name));
+    }));
+}
+
+void AllTagsEditor::kept()
+{
+    emit changed();
+    if (m_hooks.changed)
+        m_hooks.changed(m_edition.usable());
+}
+
+int AllTagsEditor::checked(AllTagsEdition::Check check)
+{
+    if (check == AllTagsEdition::Check::Ok)
+        kept();
+    return static_cast<int>(check);
+}
+
+void AllTagsEditor::setCount(int count)
+{
+    if (count == this->count())
+        return;
+    m_edition.setCount(count);
+    kept();
+}
+
+void AllTagsEditor::setChangeOption(int option)
+{
+    if (option == changeOption())
+        return;
+    m_edition.setChangeOption(option);
+    kept();
+}
+
+void AllTagsEditor::setPlacing(int placing)
+{
+    if (placing == this->placing())
+        return;
+    m_edition.setPlacing(placing);
+    kept();
+}
+
+int AllTagsEditor::setName(const QString &name)
+{
+    if (name == this->name())
+        return CheckOk;
+    std::u16string taken;
+    const auto check = m_edition.setName(name.toStdU16String(), &taken);
+    m_taken = qs(taken);
+    return checked(check);
+}
+
+int AllTagsEditor::setTag(const QString &tag)
+{
+    QString bare = tag;
+    while (bare.startsWith(QLatin1Char('\\')))
+        bare.remove(0, 1);
+    if (bare == this->tag())
+        return CheckOk;
+    return checked(m_edition.setTag(tag.toStdU16String()));
+}
+
+int AllTagsEditor::setNumber(const QString &field, const QString &text)
+{
+    using Number = AllTagsEdition::Number;
+    static const QHash<QString, Number> fields{
+        {QStringLiteral("min"), Number::Min},       {QStringLiteral("max"), Number::Max},
+        {QStringLiteral("step"), Number::Step},     {QStringLiteral("digits"), Number::Digits},
+        {QStringLiteral("value0"), Number::Value0}, {QStringLiteral("value1"), Number::Value1},
+        {QStringLiteral("value2"), Number::Value2}, {QStringLiteral("value3"), Number::Value3}};
+    const auto it = fields.constFind(field);
+    if (it == fields.cend())
+        return CheckNotANumber;
+    if (text == numbers().value(field).toString())
+        return CheckOk;
+    // What a range check names: the other end, or half the range.
+    const AllTagsSetting &t = m_edition.current();
+    m_limit = *it == Number::Min ? number(t.rangeMax)
+            : *it == Number::Max ? number(t.rangeMin)
+                                 : number((t.rangeMax - t.rangeMin) / 2);
+    return checked(m_edition.setNumber(*it, text.toStdU16String()));
+}
+
+void AllTagsEditor::addTag()
+{
+    m_edition.addTag();
+    kept();
+}
+
+void AllTagsEditor::duplicate()
+{
+    m_edition.duplicate();
+    kept();
+}
+
+bool AllTagsEditor::remove()
+{
+    if (!m_edition.remove())
+        return false;
+    kept();
+    return true;
+}
+
+void AllTagsEditor::replaceNamed(const QString &name)
+{
+    m_edition.replaceNamed(name.toStdU16String());
+    kept();
 }
 
 void AllTagsEditor::restoreDefaults()
 {
-    // OnResetDefault after Yes: the file goes at once (Cancel does not bring
-    // it back), then LoadSettings gives legacy's defaults.
-    if (m_hooks.removeFile)
-        m_hooks.removeFile();
     m_edition.restoreDefaults();
-    emit changed();
+    kept();
 }
 
-void AllTagsEditor::cancel()
+bool AllTagsEditor::undoAll()
 {
-    finish(false);
+    if (!m_edition.undoAll())
+        return false;
+    kept();
+    return true;
 }
 
-void AllTagsEditor::finish(bool ok)
+void AllTagsEditor::undo()
+{
+    if (m_edition.undo())
+        kept();
+}
+
+void AllTagsEditor::redo()
+{
+    if (m_edition.redo())
+        kept();
+}
+
+void AllTagsEditor::close()
 {
     if (m_done)
         return;
     m_done = true;
     if (m_hooks.finished)
-        m_hooks.finished(ok ? std::optional(m_edition.tags()) : std::nullopt);
+        m_hooks.finished();
     emit closed();
 }
 
