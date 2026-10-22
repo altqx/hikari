@@ -131,7 +131,7 @@ const QStringList &WorkspaceLayoutController::panelIds()
     static const QStringList ids{QStringLiteral("Video"), QStringLiteral("Audio"), QStringLiteral("Editor"),
                                  QStringLiteral("Grid"), QStringLiteral("Reference"), QStringLiteral("Timing"),
                                  QStringLiteral("Search"), QStringLiteral("Automation"), QStringLiteral("Original"),
-                                 QStringLiteral("Log"),
+                                 QStringLiteral("Log"), QStringLiteral("Styles"),
                                  QStringLiteral("FixMinorErrors")};
     return ids;
 }
@@ -179,6 +179,12 @@ void WorkspaceLayoutController::checkModal()
         auto *quick = qobject_cast<QQuickWindow *>(window);
         if (!quick || !quick->isVisible())
             continue;
+        // A modal window of its own (DG1's frame: PF1's Settings window, PK1's
+        // message boxes); its showing and hiding move the keyboard.
+        if (quick->modality() != Qt::NonModal) {
+            open = true;
+            continue;
+        }
         // A popup opening or closing moves its item in or out of the
         // overlay, with or without the keyboard.
         QQuickItem *overlay = overlayOf(quick);
@@ -645,6 +651,12 @@ void WorkspaceLayoutController::captureDefault()
     m_default = KDDockWidgets::LayoutSaver().serializeLayout();
 }
 
+void WorkspaceLayoutController::buildsArrangement(const QString &name)
+{
+    if (presets().contains(name) && !m_builtPresets.contains(name))
+        m_builtPresets << name;
+}
+
 bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool inPlace)
 {
     m_restoring = true; // no autosave while restoring
@@ -795,10 +807,18 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
 {
     if (m_default.isEmpty())
         return false;
+    // TP1: a preset with an arrangement of its own (Typesetting).
+    if (const auto own = m_presetPayloads.find(name); own != m_presetPayloads.end())
+        return restorePayload(own->second, inPlace);
     const bool done = restorePayload(m_default, inPlace);
+    if (done && m_builtPresets.contains(name)) {
+        emit buildArrangement(name);
+        m_presetPayloads[name] = KDDockWidgets::LayoutSaver().serializeLayout();
+        return true;
+    }
     // The Editing arrangement with the panels the preset leaves closed
-    // (docs/qt/ux/workspaces.md): Timing without Video, Translation and
-    // Typesetting without Audio.
+    // (docs/qt/ux/workspaces.md): Timing without Video, Translation (and
+    // Typesetting without a shell to build its own) without Audio.
     QString closed;
     if (name == QLatin1String("Timing"))
         closed = QStringLiteral("Video");
@@ -823,7 +843,9 @@ bool WorkspaceLayoutController::applyPresetArrangement(const QString &name)
 {
     if (!presets().contains(name) || m_default.isEmpty())
         return false;
-    const bool done = buildPreset(name, false);
+    // In place, as a saved layout or a tab's arrangement: the main window
+    // keeps its geometry, not the one the preset was captured or built at.
+    const bool done = buildPreset(name, true);
     dismissPanelNotice();
     setPreset(name);
     emit arrangementSwapped(); // WS3: the panels the preset leaves closed are closed now

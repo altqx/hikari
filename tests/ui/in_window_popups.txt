@@ -22,13 +22,8 @@ Main.qml:conversionDialog
 Main.qml:resampleDialog
 Main.qml:mismatchDialog
 ManageLayoutsDialog.qml:dialog
-MatroskaSubtitles.qml:saveQuestion
-MatroskaSubtitles.qml:progressDialog
 SaveLayoutDialog.qml:dialog
 ScriptPropertiesDialog.qml:dialog
-SessionWindows.qml:askPrompt
-SessionWindows.qml:crashPrompt
-SettingsDialog.qml:dialog
 SettingsImportDialog.qml:dialog
 SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog
@@ -41,6 +36,4 @@ StyleManager.qml:multiQuestion
 StyleManager.qml:renameQuestion
 StyleManager.qml:newCatalog
 StyleManager.qml:deleteCatalogQuestion
-TabCommands.qml:closeAllPrompt
-TabCommands.qml:subtitlesPrompt
 VideoFileQuestion.qml:dialog

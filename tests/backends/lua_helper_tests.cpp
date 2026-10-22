@@ -155,7 +155,7 @@ TEST_F(LuaHelper, DialogRoundTripPreservesCoercionsFalseAndNil)
     host->setDialogHandler([&](const DialogRequest &request, LuaScriptHost::DialogReply reply) {
         asked = request;
         DialogResult result;
-        result.pressed = 1; // "Stop": the ID table is dropped, so it is not Cancel
+        result.pressed = 1; // "Stop", the cancel id (AD1-button-ids)
         result.values = {std::monostate{}, std::string("typed"), 99, 2.5, false, std::string("a")};
         reply(result);
     });
@@ -182,11 +182,89 @@ TEST_F(LuaHelper, DialogRoundTripPreservesCoercionsFalseAndNil)
     EXPECT_EQ(c[5].items, (std::vector<std::string>{"a", "3", "b"})) << "non-strings are skipped";
     EXPECT_EQ(c[5].text, "b");
     EXPECT_EQ(asked->buttons, (std::vector<std::string>{"Go", "Stop"}));
+    EXPECT_EQ(asked->buttonIds, (std::vector<std::string>{"ok", "cancel"}));
 
     ASSERT_EQ(run.log.size(), 1);
     EXPECT_EQ(run.log[0].toStdString(),
-              "button=string:Stop 7=number:99 f=number:2.5 flag=boolean:false pick=string:a text=string:typed")
-        << "false survives; the label's nil leaves no key";
+              "button=boolean:false 7=number:99 f=number:2.5 flag=boolean:false pick=string:a text=string:typed")
+        << "the cancel button is false; false survives; the label's nil leaves no key";
+}
+
+// AD1-button-ids: real scripts' dialogs answer as in Aegisub
+// (auto4_lua_dialog.cpp at TypesettingTools/Aegisub 5bc77e4f: LuaDialog reads
+// the ids; LuaReadBack gives false for no button or wxID_CANCEL, else the
+// label). Each row presses one button of an untouched dialog.
+TEST_F(LuaHelper, ScriptDialogsAnswerAsInAegisub)
+{
+    auto host = load(fixture("script-dialogs.lua"));
+    ASSERT_EQ(host->state(), LuaScriptHost::State::Ready) << host->lastError().toStdString();
+    int pressed = 0;
+    std::optional<DialogRequest> asked;
+    host->setDialogHandler([&](const DialogRequest &request, LuaScriptHost::DialogReply reply) {
+        asked = request;
+        auto result = hikari::application::initialDialogResult(request);
+        result.pressed = pressed;
+        reply(result);
+    });
+    struct Case {
+        const char *macro;
+        int pressed;
+        const char *log;
+    };
+    const std::string semi = " al=number:50 bg=string:#000000 c1=boolean:false c2=boolean:false c3=boolean:false "
+                             "c4=boolean:false tg=string:#000000";
+    const std::string config = " logging.traceLevel=string:3 paths.logDir=string:?user/log "
+                               "updates.updateInterval=number:302400 updates.updaterEnabled=boolean:true";
+    const std::vector<std::pair<Case, std::string>> cases = {
+        {{"GitSigns Configure", 0, "saved button=string:Save git_path=string:git"}, ""},
+        {{"GitSigns Configure", 1, "not saved button=boolean:false git_path=string:git"}, "Cancel saves nothing"},
+        {{"GitSigns Configure", -1, "not saved button=boolean:false git_path=string:git"}, "closed"},
+        {{"SemiColorCalc", 0, "calculated button=string:Go"}, semi},
+        {{"SemiColorCalc", 1, "calculated button=boolean:false"}, semi},
+        {{"Toolbox install", 0, "install button=string: macro=string: module=string:"}, ""},
+        {{"Toolbox install", 1, "nothing button=boolean:false macro=string: module=string:"}, ""},
+        {{"Toolbox confirm", 0, "confirmed button=string:Yes"}, ""},
+        {{"Toolbox confirm", 1, "declined button=boolean:false"}, ""},
+        {{"Toolbox feed trust", 0, "feed button=string:Trust"}, ""},
+        {{"Toolbox feed trust", 1, "feed button=string:Fetch once"}, ""},
+        {{"Toolbox feed trust", 3, "feed button=boolean:false"}, ""},
+        {{"Toolbox config", 0, "applied button=string:Save"}, config},
+        {{"Toolbox config", 1, "applied button=string:Restore defaults"}, config},
+        {{"Toolbox config", 2, "closed button=boolean:false"}, config},
+        {{"Ok only", 0, "ok-only button=string:Go"}, ""},
+        {{"Ok only", -1, "ok-only button=boolean:false"}, "Esc never presses a button"},
+        {{"Unknown id", 0, "unknown button=string:A"}, "an id Aegisub does not know names no button"},
+        {{"Unknown id", 1, "unknown button=boolean:false"}, ""},
+        {{"Affirmative ids", 1, "affirmative button=string:&Yes"}, "the label keeps its &"},
+        {{"Affirmative ids", 3, "affirmative button=string:Close"}, "close is not cancel"},
+    };
+    for (const auto &[c, rest] : cases) {
+        pressed = c.pressed;
+        ASSERT_TRUE(runToEnd(*host, c.macro)) << c.macro;
+        EXPECT_EQ(*run.outcome, LuaScriptHost::RunOutcome::Ok) << c.macro << run.message.toStdString();
+        const std::string want = std::string(c.log) + (rest.empty() || rest[0] != ' ' ? "" : rest);
+        EXPECT_EQ(run.log.value(0).toStdString(), want) << c.macro << " pressed " << c.pressed << " " << rest;
+    }
+
+    ASSERT_TRUE(runToEnd(*host, "GitSigns Configure"));
+    EXPECT_EQ(asked->buttonIds, (std::vector<std::string>{"ok", "cancel"}));
+    ASSERT_TRUE(runToEnd(*host, "Toolbox install"));
+    EXPECT_TRUE(asked->buttons.empty());
+    EXPECT_TRUE(asked->buttonIds.empty());
+    ASSERT_TRUE(runToEnd(*host, "Unknown id"));
+    EXPECT_EQ(asked->buttonIds, (std::vector<std::string>{"", "cancel"}));
+    ASSERT_TRUE(runToEnd(*host, "Affirmative ids"));
+    EXPECT_EQ(asked->buttonIds, (std::vector<std::string>{"", "yes", "save", "close"}));
+    ASSERT_TRUE(runToEnd(*host, "SemiColorCalc"));
+    ASSERT_EQ(asked->controls.size(), 11u); // 4 labels, 4 checkboxes, 2 colours, 1 floatedit
+    for (const auto &c : asked->controls)
+        if (c.kind == "floatedit")
+            EXPECT_DOUBLE_EQ(c.step, 1.0) << "AD1-float-step: the step reaches the dialog";
+
+    asked.reset();
+    ASSERT_TRUE(runToEnd(*host, "Invalid id"));
+    EXPECT_FALSE(asked) << "an id naming no button is an error before anything shows";
+    EXPECT_EQ(run.log.value(0).toStdString(), "invalid false Invalid button for id ok");
 }
 
 TEST_F(LuaHelper, DefaultButtonsReturnEmptyStringOrFalse)
@@ -231,7 +309,7 @@ TEST_F(LuaHelper, ColourAndNumberControlsFollowTheLegacyCoercions)
     EXPECT_EQ(c[5].text, "#000000") << "malformed components stay 0";
     EXPECT_EQ(c[6].intValue, 10) << "NumCtrl clamps what it shows";
     EXPECT_DOUBLE_EQ(c[7].number, 0.0);
-    EXPECT_DOUBLE_EQ(c[7].step, 0.5) << "carried, then ignored, as legacy ignores it";
+    EXPECT_DOUBLE_EQ(c[7].step, 0.5) << "carried to the dialog (AD1-float-step)";
     ASSERT_EQ(run.log.size(), 1);
     EXPECT_EQ(run.log[0].toStdString(),
               "button=string:OK al=string:&H40& alpha=string:#800000FF ass=string:#FF0000 clamped=number:10 "

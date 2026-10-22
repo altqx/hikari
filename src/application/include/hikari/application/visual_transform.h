@@ -158,6 +158,9 @@ struct TextSize {
 };
 TextSize textSize(const Context &context, const core::LineRecord &line, const core::StyleValues *style,
                   bool keepExtraLead);
+// HY1: the rectangle `line`'s text covers, its border included, in script
+// pixels (top-left, bottom-right); none for a Line with no text to measure.
+std::optional<std::pair<PointF, PointF>> lineBox(const Context &context, const core::LineRecord &line);
 // Visuals::GetDrawingSize (1135-1187).
 PointF drawingSize(std::u16string_view drawing, PointF *position);
 

@@ -1,4 +1,4 @@
-// K2: the Options dialog's Appearance page (in place of legacy's Themes page;
+// K2: the Settings window's Appearance page (in place of legacy's Themes page;
 // theme files stay excluded), after MuseScore 4's appearance preferences
 // (docs/research/musescore-appearance.md): the four themes as sample cards,
 // "Follow system theme" (Light or Dark from the platform's colour scheme;
@@ -7,7 +7,8 @@
 // and border colour pickers with their reset. Every choice is staged in the
 // dialog's values and previewed live (Theme.preview); OK or Apply saves it,
 // Cancel takes the preview back. SH1 (#220): "Use system title bar", which
-// OK or Apply applies.
+// OK or Apply applies. PF1 (#225): in the Settings window's section form,
+// with the program font (from legacy Editor > Advanced).
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Options"
 import QtQuick
@@ -18,7 +19,7 @@ import Hikari.Ui
 ScrollView {
     id: page
     objectName: "settingsPageAppearance"
-    required property var dialog // the Options dialog: values, put(), pickThemeColour()
+    required property var dialog // the Settings window: values, put(), pickThemeColour(), reloaded
     contentWidth: availableWidth
 
     function staged(setting) { return page.dialog.values[setting] }
@@ -28,24 +29,18 @@ ScrollView {
 
     ColumnLayout {
         width: page.availableWidth
-        spacing: 8
+        spacing: 16
 
-        GroupBox {
+        SettingsSection {
+            objectName: "appearanceTheme"
             title: qsTr("Theme")
-            Layout.fillWidth: true
-            ColumnLayout {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                CheckBox {
-                    id: follow
-                    objectName: "appearanceFollowSystem"
-                    text: qsTr("Follow system theme")
-                    checked: page.staged("appearance.followSystem") === true
-                    onToggled: page.dialog.put("appearance.followSystem", checked)
-                    Accessible.name: text
-                    ToolTip.text: qsTr("Light or Dark as the system's colour scheme sets it; high contrast stays as chosen")
-                    ToolTip.visible: hovered
-                }
+            ruled: false
+            Layout.leftMargin: 24
+            Layout.rightMargin: 24
+            Layout.topMargin: 20
+            SettingsRow {
+                iconRole: "theme"
+                text: qsTr("Interface theme")
                 GridLayout {
                     objectName: "appearanceThemes"
                     columns: 2
@@ -81,7 +76,7 @@ ScrollView {
                                 FocusRing { control: card; radius: 2 }
                             }
                             contentItem: Item {
-                                implicitWidth: 160
+                                implicitWidth: 140
                                 // A sample of the theme: a panel with its name,
                                 // secondary lines and an accent button.
                                 Rectangle {
@@ -115,42 +110,151 @@ ScrollView {
                     }
                 }
             }
+            CheckBox {
+                id: follow
+                objectName: "appearanceFollowSystem"
+                text: qsTr("Follow system theme")
+                leftPadding: 1 // the box in the rows' icon slot
+                spacing: 9
+                checked: page.staged("appearance.followSystem") === true
+                onToggled: page.dialog.put("appearance.followSystem", checked)
+                Accessible.name: text
+                Accessible.description: followHint.text
+            }
+            Label {
+                id: followHint
+                text: qsTr("Light or Dark as the system's colour scheme sets it; high contrast stays as chosen")
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.leftMargin: 24
+                Layout.topMargin: -5
+                Layout.fillWidth: true
+                Accessible.ignored: true
+            }
         }
 
         // Light and Dark: the mode's seven accents.
-        GroupBox {
+        SettingsSection {
             objectName: "appearanceAccents"
             title: qsTr("Accent color")
             visible: !Theme.highContrast
-            Layout.fillWidth: true
-            Row {
-                spacing: 8
-                Repeater {
-                    model: Theme.accents(Theme.dark)
-                    delegate: AbstractButton {
-                        id: swatch
-                        required property var modelData
-                        objectName: "accent_" + modelData.key
-                        width: 28
-                        height: 28
-                        checkable: false // checked follows the staged value
-                        checked: page.staged(page.accentSetting) === modelData.key
-                        text: modelData.name
-                        Accessible.role: Accessible.RadioButton
-                        Accessible.name: text
-                        Accessible.checked: checked
-                        ToolTip.text: qsTr("%1 (contrast %2:1)").arg(modelData.name).arg(modelData.contrast.toFixed(1))
-                        ToolTip.visible: hovered
-                        onClicked: page.dialog.put(page.accentSetting, modelData.key)
-                        background: Rectangle {
-                            radius: width / 2
-                            color: swatch.modelData.accent
-                            border.color: swatch.checked ? Theme.text : Theme.line
-                            border.width: swatch.checked ? 2 : 1
-                            FocusRing { control: swatch; radius: width / 2 }
+            Layout.leftMargin: 24
+            Layout.rightMargin: 24
+            SettingsRow {
+                iconRole: "accent-colour"
+                text: qsTr("Accent")
+                Row {
+                    spacing: 8
+                    Repeater {
+                        model: Theme.accents(Theme.dark)
+                        delegate: AbstractButton {
+                            id: swatch
+                            required property var modelData
+                            objectName: "accent_" + modelData.key
+                            width: 24
+                            height: 24
+                            checkable: false // checked follows the staged value
+                            checked: page.staged(page.accentSetting) === modelData.key
+                            text: modelData.name
+                            Accessible.role: Accessible.RadioButton
+                            Accessible.name: text
+                            Accessible.checked: checked
+                            ToolTip.text: qsTr("%1 (contrast %2:1)").arg(modelData.name).arg(modelData.contrast.toFixed(1))
+                            ToolTip.visible: hovered
+                            onClicked: page.dialog.put(page.accentSetting, modelData.key)
+                            background: Rectangle {
+                                radius: width / 2
+                                color: swatch.modelData.accent
+                                border.color: swatch.checked ? Theme.text : Theme.line
+                                border.width: swatch.checked ? 2 : 1
+                                FocusRing { control: swatch; radius: width / 2 }
+                            }
+                            contentItem: Item {}
                         }
-                        contentItem: Item {}
                     }
+                }
+            }
+        }
+
+        // High contrast: the pickers of the theme shown.
+        SettingsSection {
+            objectName: "appearanceHighContrast"
+            title: qsTr("UI colors")
+            visible: Theme.highContrast
+            Layout.leftMargin: 24
+            Layout.rightMargin: 24
+            Repeater {
+                model: Theme.picks(page.shownTheme)
+                delegate: SettingsRow {
+                    id: pick
+                    required property var modelData
+                    required property int index
+                    objectName: "highContrastPick_" + modelData.setting
+                    readonly property string colour: page.staged(modelData.setting) ?? ""
+                    iconRole: index === 0 ? "ui-colours" : ""
+                    text: modelData.name
+                    Rectangle {
+                        Layout.preferredWidth: 24
+                        Layout.preferredHeight: 24
+                        color: pick.colour.length ? pick.colour : "transparent"
+                        border.color: Theme.line
+                        Accessible.ignored: true
+                    }
+                    Label { text: pick.colour; Layout.preferredWidth: 80 }
+                    Button {
+                        objectName: "highContrastChoose_" + pick.modelData.setting
+                        text: qsTr("Choose…")
+                        Accessible.name: qsTr("Choose %1").arg(pick.modelData.name)
+                        onClicked: page.dialog.pickThemeColour(pick.modelData.setting, pick.colour, this, pick.modelData.name)
+                    }
+                }
+            }
+            SettingsRow {
+                IconTextButton {
+                    objectName: "resetHighContrast"
+                    iconRole: "restore-default"
+                    text: qsTr("Reset to default")
+                    onClicked: {
+                        for (const p of Theme.picks(page.shownTheme))
+                            page.dialog.put(p.setting, p.defaultColour)
+                    }
+                }
+            }
+        }
+
+        // The program font (legacy Editor > Advanced's FontPickerButton).
+        SettingsSection {
+            objectName: "appearanceFont"
+            title: qsTr("Font")
+            Layout.leftMargin: 24
+            Layout.rightMargin: 24
+            SettingsRow {
+                iconRole: "ui-font"
+                text: qsTr("Program font")
+                ComboBox {
+                    id: family
+                    objectName: "setting_program.font"
+                    editable: true
+                    model: Qt.fontFamilies()
+                    Accessible.name: qsTr("Program font")
+                    Layout.preferredWidth: 200
+                    function refresh() { editText = page.dialog.values["program.font"] ?? "" }
+                    Component.onCompleted: refresh()
+                    Connections { target: page.dialog; function onReloaded() { family.refresh() } }
+                    onActivated: page.dialog.put("program.font", currentText)
+                    onAccepted: page.dialog.put("program.font", editText)
+                }
+                SpinBox {
+                    id: size
+                    objectName: "setting_program.fontSize"
+                    from: 1
+                    to: 200
+                    editable: true
+                    Accessible.name: qsTr("Font size")
+                    function refresh() { value = page.dialog.values["program.fontSize"] ?? 10 }
+                    Component.onCompleted: refresh()
+                    Connections { target: page.dialog; function onReloaded() { size.refresh() } }
+                    onValueModified: page.dialog.put("program.fontSize", value)
                 }
             }
         }
@@ -158,80 +262,36 @@ ScrollView {
         // SH1 (#220): the window's title bar, HikariSub's own or the
         // system's. Choosing the desktop's default stores "auto", so the
         // choice follows the desktop again.
-        GroupBox {
+        SettingsSection {
             objectName: "appearanceWindow"
             title: qsTr("Window")
-            Layout.fillWidth: true
-            ColumnLayout {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                CheckBox {
-                    objectName: "appearanceSystemTitleBar"
-                    text: qsTr("Use system title bar")
-                    // Where the window cannot draw its own (WindowFrame.customAvailable), it is the system's.
-                    enabled: WindowFrame.customAvailable
-                    checked: !WindowFrame.customAvailable
-                             || WindowFrame.usesSystemTitleBar(page.staged("appearance.titleBar") ?? "auto")
-                    onToggled: page.dialog.put("appearance.titleBar",
-                                               checked === WindowFrame.systemTitleBarByDefault ? "auto"
-                                                   : checked ? "system" : "custom")
-                    Accessible.name: text
-                    Accessible.description: systemTitleBarHint.text
-                }
-                Label {
-                    id: systemTitleBarHint
-                    text: qsTr("Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.")
-                    color: Theme.muted
-                    wrapMode: Text.WordWrap
-                    leftPadding: 24
-                    Layout.fillWidth: true
-                    Accessible.ignored: true
-                }
+            Layout.leftMargin: 24
+            Layout.rightMargin: 24
+            Layout.bottomMargin: 24
+            CheckBox {
+                objectName: "appearanceSystemTitleBar"
+                text: qsTr("Use system title bar")
+                leftPadding: 1
+                spacing: 9
+                // Where the window cannot draw its own (WindowFrame.customAvailable), it is the system's.
+                enabled: WindowFrame.customAvailable
+                checked: !WindowFrame.customAvailable
+                         || WindowFrame.usesSystemTitleBar(page.staged("appearance.titleBar") ?? "auto")
+                onToggled: page.dialog.put("appearance.titleBar",
+                                           checked === WindowFrame.systemTitleBarByDefault ? "auto"
+                                               : checked ? "system" : "custom")
+                Accessible.name: text
+                Accessible.description: systemTitleBarHint.text
             }
-        }
-
-        // High contrast: the pickers of the theme shown.
-        GroupBox {
-            objectName: "appearanceHighContrast"
-            title: qsTr("UI colors")
-            visible: Theme.highContrast
-            Layout.fillWidth: true
-            ColumnLayout {
-                anchors.left: parent.left
-                anchors.right: parent.right
-                Repeater {
-                    model: Theme.picks(page.shownTheme)
-                    delegate: RowLayout {
-                        id: pick
-                        required property var modelData
-                        objectName: "highContrastPick_" + modelData.setting
-                        readonly property string colour: page.staged(modelData.setting) ?? ""
-                        Layout.fillWidth: true
-                        Label { text: pick.modelData.name; Layout.fillWidth: true }
-                        Rectangle {
-                            Layout.preferredWidth: 20
-                            Layout.preferredHeight: 20
-                            color: pick.colour.length ? pick.colour : "transparent"
-                            border.color: Theme.line
-                            Accessible.ignored: true
-                        }
-                        Label { text: pick.colour; Layout.preferredWidth: 80 }
-                        Button {
-                            objectName: "highContrastChoose_" + pick.modelData.setting
-                            text: qsTr("Choose…")
-                            Accessible.name: qsTr("Choose %1").arg(pick.modelData.name)
-                            onClicked: page.dialog.pickThemeColour(pick.modelData.setting, pick.colour, this, pick.modelData.name)
-                        }
-                    }
-                }
-                Button {
-                    objectName: "resetHighContrast"
-                    text: qsTr("Reset to default")
-                    onClicked: {
-                        for (const p of Theme.picks(page.shownTheme))
-                            page.dialog.put(p.setting, p.defaultColour)
-                    }
-                }
+            Label {
+                id: systemTitleBarHint
+                text: qsTr("Off by default on Windows, KDE Plasma and GNOME; on by default on tiling window managers.")
+                color: Theme.muted
+                wrapMode: Text.WordWrap
+                Layout.leftMargin: 24
+                Layout.topMargin: -5
+                Layout.fillWidth: true
+                Accessible.ignored: true
             }
         }
     }

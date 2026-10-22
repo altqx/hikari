@@ -7,6 +7,7 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <array>
 #include <cfloat>
 #include <cmath>
 #include <cstdio>
@@ -310,6 +311,10 @@ void curve(std::size_t pos, const std::vector<ClipPoint> &points, std::vector<Po
     float h = 1.0f;
     if (maxaccel > 4.0f)
         h = std::sqrt(4.0f / maxaccel);
+    // At most 1024 points a segment: coordinates near a float's limit made
+    // the step 0 (or close to it) and this loop endless.
+    if (!(h >= 1.0f / 1024))
+        h = 1.0f / 1024;
     float p_x, p_y;
     for (float t = 0; t < 1.0; t += h) {
         p_x = a[0] + t * (a[1] + t * (a[2] + t * a[3]));
@@ -1317,6 +1322,55 @@ PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
                             kHandleFill,
                             kHandleBorder});
     return pend;
+}
+
+std::optional<std::pair<PointF, PointF>> lineBox(const Context &context, const core::LineRecord &line)
+{
+    // HY1: Scale's sizing rectangle (SetSecondRectScale) for any Line: its
+    // position, its text's size with the border round it, placed by its
+    // alignment.
+    const core::StyleValues style = lineStyle(context, line.style);
+    const TextSize ts = textSize(context, line, &style, true);
+    if (ts.size.x <= 0 || ts.size.y <= 0)
+        return std::nullopt;
+    PointF pos = linePosition(context, line).pos;
+    // A \move's position at the shown time, as libass moves it: over the
+    // whole Line without times (or both 0 or less), the earlier time first.
+    const u16 txt = lineText(line);
+    if (posRegex().matches(txt) && group(posRegex(), txt, 1) == u"move") {
+        std::array<double, 6> v{};
+        std::size_t n = 0;
+        for (const u16 &token : tokens(group(posRegex(), txt, 2), u',', false)) {
+            if (n >= v.size())
+                break;
+            if (!toDouble(token, v[n]))
+                v[n] = 0;
+            ++n;
+        }
+        if (n >= 4) {
+            const double length = endMs(line) - startMs(line);
+            double t1 = n >= 6 ? v[4] : 0, t2 = n >= 6 ? v[5] : length;
+            if (t1 <= 0 && t2 <= 0) {
+                t1 = 0;
+                t2 = length;
+            }
+            if (t1 > t2)
+                std::swap(t1, t2);
+            const double t = context.timeMs - startMs(line);
+            const double k = t <= t1 ? 0 : t >= t2 ? 1 : (t - t1) / (t2 - t1);
+            pos = {static_cast<float>(v[0] + (v[2] - v[0]) * k), static_cast<float>(v[1] + (v[3] - v[1]) * k)};
+        }
+    }
+    const int an = alignmentOf(style, txt);
+    PointF a{pos.x - ts.border.x / 2, pos.y - ts.border.y / 2};
+    PointF b{pos.x + ts.size.x + ts.border.x / 2, pos.y + ts.size.y + ts.border.y / 2};
+    const float dx = an % 3 == 0 ? ts.size.x : an % 3 == 2 ? ts.size.x / 2 : 0;
+    const float dy = an < 4 ? ts.size.y : an < 7 ? ts.size.y / 2 : 0;
+    a.x -= dx;
+    b.x -= dx;
+    a.y -= dy;
+    b.y -= dy;
+    return std::pair(a, b);
 }
 
 void drawRect(Overlay &out, PointF pos, bool selected, float size)
