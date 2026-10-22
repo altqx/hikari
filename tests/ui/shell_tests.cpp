@@ -11636,6 +11636,38 @@ private slots:
     }
     QVariantMap settingsValues(QObject *dialog) const { return dialog->property("values").toMap(); }
 
+    // PU7 (#309): the update options on Settings > Updates, staged like
+    // every page's: OK writes them and the checker reads them at once; the
+    // skipped version is named there with Offer it again.
+    void settingsUpdatesPageKeepsTheUpdateOptions()
+    {
+        auto &updates = application->updates();
+        const bool autoCheck = updates.autoCheck();
+        updates.skipVersion(QStringLiteral("9.0.0"));
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("updates");
+        QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageUpdates")->isVisible());
+        auto *check = dialogItem("settingsDialog", "setting_updater.autoCheck");
+        QVERIFY(check);
+        QCOMPARE(check->property("checked").toBool(), autoCheck);
+        QCOMPARE(dialogItem("settingsDialog", "settingsSkippedVersion")->property("text").toString(), QStringLiteral("9.0.0"));
+        QVERIFY(dialogItem("settingsDialog", "settingsInstallNote"));
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "settingsOfferAgain"), "click"));
+        QVERIFY(!dialogItem("settingsDialog", "settingsSkippedVersion")->isVisible());
+        // Staged until OK.
+        QCOMPARE(updates.autoCheck(), autoCheck);
+        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(updates.autoCheck(), !autoCheck);
+        QVERIFY(updates.skippedVersion().isEmpty());
+        QCOMPARE(application->settingsStore()->boolean("updater.autoCheck"), !autoCheck);
+        updates.setAutoCheck(autoCheck);
+    }
+
     void settingsDialogAppliesChangedValuesLive()
     {
         auto &settings = *application->settingsStore();
@@ -14369,7 +14401,7 @@ private slots:
         // (legacy's Themes page is K2's Appearance page, #206; PF1-pages:
         // one flat list, legacy's sub-pages are sections)
         QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Subtitle grid", "Video", "Audio",
-                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys"}));
+                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys", "Updates"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and

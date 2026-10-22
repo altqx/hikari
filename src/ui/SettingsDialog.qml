@@ -29,6 +29,7 @@ DialogWindow {
     // SY2: the Appearance page's colour popover.
     required property ColourPickerController colourPicker
     property var hotkeys: null // O2: the Hotkeys page's HotkeysController
+    property var updates: null // PU7: the Updates page's UpdateChecker (what this install offers)
     property TagButtonsController tagButtons: null // LE5: the Line editor page's tag button list
     title: qsTr("Settings")
     dialogId: "settings"
@@ -57,7 +58,8 @@ DialogWindow {
     readonly property VideoFollowChoices follow: VideoFollowChoices { settings: dialog.app.settings }
 
     // The pages in the list's order, by id (the C++ OptionsPage ids, and
-    // "hotkeys").
+    // "hotkeys"). PU7 (#309): Updates after Hotkeys (MuseScore 4's Update
+    // after Shortcuts).
     readonly property var pages: [
         {id: "general", name: qsTr("General"), iconRole: "settings"},
         {id: "appearance", name: qsTr("Appearance"), iconRole: "appearance"},
@@ -68,7 +70,8 @@ DialogWindow {
         {id: "conversion", name: qsTr("Conversion"), iconRole: "convert"},
         {id: "subtitleProperties", name: qsTr("Subtitle properties"), iconRole: "script-properties"},
         {id: "automation", name: qsTr("Automation"), iconRole: "automation"},
-        {id: "hotkeys", name: qsTr("Hotkeys"), iconRole: "hotkeys"}
+        {id: "hotkeys", name: qsTr("Hotkeys"), iconRole: "hotkeys"},
+        {id: "updates", name: qsTr("Updates"), iconRole: "check-updates"}
     ]
     readonly property string currentPage: pages[Math.max(0, pageList.currentIndex)].id
     function pageIndex(id) { return pages.findIndex(p => p.id === id) }
@@ -1443,6 +1446,66 @@ DialogWindow {
                                 onClicked: dialog.hotkeys.optionsReset()
                             }
                             Button { objectName: "hotkeyRemove"; text: qsTr("Delete"); onClicked: dialog.hotkeys.optionsDelete() }
+                        }
+                    }
+                }
+
+                // PU7 (#309): Updates, the three options that left the update
+                // window (PU7-update-settings) and the version "Skip this
+                // version" hid, staged as every other setting. An install
+                // that does not install updates itself (AUR, portable) shows
+                // why in place of "Install updates automatically"; an AUR
+                // install with a channel has no "Stable versions only".
+                SettingsPage {
+                    objectName: "settingsPageUpdates"
+                    SettingsSection {
+                        title: qsTr("Checking")
+                        ruled: false
+                        SettingCheck { setting: "updater.autoCheck"; text: qsTr("Check for updates automatically") }
+                        SettingNote { text: qsTr("At most once a day, when HikariSub starts.") }
+                        SettingCheck {
+                            setting: "updater.checkForStable"
+                            visible: !dialog.updates || dialog.updates.stableOnlyOption
+                            text: qsTr("Stable versions only")
+                        }
+                        SettingNote {
+                            visible: !dialog.updates || dialog.updates.stableOnlyOption
+                            text: qsTr("Off: prereleases (beta versions) are offered too.")
+                        }
+                        SettingsRow {
+                            visible: (dialog.values["updater.skippedVersion"] ?? "").length > 0
+                            text: qsTr("Skipped version")
+                            Label {
+                                objectName: "settingsSkippedVersion"
+                                text: dialog.values["updater.skippedVersion"] ?? ""
+                            }
+                            Button {
+                                objectName: "settingsOfferAgain"
+                                text: qsTr("Offer it again")
+                                onClicked: dialog.put("updater.skippedVersion", "")
+                            }
+                        }
+                        SettingNote {
+                            visible: (dialog.values["updater.skippedVersion"] ?? "").length > 0
+                            text: qsTr("Skip this version hides one version; a newer one is offered again.")
+                        }
+                    }
+                    SettingsSection {
+                        title: qsTr("Installing")
+                        SettingCheck {
+                            setting: "updater.autoInstall"
+                            visible: !dialog.updates || dialog.updates.installsUpdates
+                            text: qsTr("Install updates automatically")
+                        }
+                        SettingNote {
+                            objectName: "settingsInstallNote"
+                            text: !dialog.updates || dialog.updates.installsUpdates
+                                  ? qsTr("Downloads the update in the background and installs it when you quit HikariSub.")
+                                  : dialog.updates.aur
+                                    ? qsTr("You installed HikariSub from the AUR, so your package manager installs updates.")
+                                    : qsTr("This copy does not install updates itself: the update window opens the download page.")
+                            Layout.leftMargin: !dialog.updates || dialog.updates.installsUpdates ? 24 : 0
+                            Layout.topMargin: !dialog.updates || dialog.updates.installsUpdates ? -5 : 0
                         }
                     }
                 }

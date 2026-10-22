@@ -6814,6 +6814,7 @@ ApplicationWindow {
                 app: root.app
                 notices: root.notices
                 hotkeys: root.hotkeys
+                updates: root.updates
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
             }
