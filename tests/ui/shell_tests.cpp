@@ -12086,6 +12086,35 @@ private slots:
         QVERIFY(!application->editor().placeRun(1, 0, 3));
     }
 
+    // TM1: a run moved next to the translator's own formatting of the same
+    // kind would read back over that text too: refused, nothing changed.
+    void tagsFromOriginalPlacementReadsBackOverItsOwnText()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-span.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a{\\u1}b{\\u0}x{\\u1}c{\\u0}z\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,"
+                "{\\u1}X{\\u0} {\\u1}Y{\\u0} A{\\u1}BC{\\u0}D\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        const QString saved = QStringLiteral("{\\u1}X{\\u0} {\\u1}Y{\\u0} A{\\u1}BC{\\u0}D");
+        QCOMPARE(q8(session->document().lines()[0]->translation), saved);
+        QVERIFY(application->editor().tagRuns()[1].toMap().value("placed").toBool());
+        // Run 2 onto C alone: read back, it would take B as well.
+        const int c = saved.indexOf(QLatin1Char('C'));
+        QVERIFY(!application->editor().placeRun(2, c, c + 1));
+        QVERIFY(!session->draftRecord() || q8(session->draftRecord()->translation) == saved);
+    }
+
     // TM1: a karaoke Line carries its leading tags without its \k timing,
     // and says so under the Translated text.
     void tagsFromOriginalOnAKaraokeLine()

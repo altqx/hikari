@@ -108,7 +108,9 @@ std::optional<LineEditorController::Carry> LineEditorController::carry(const cor
     // the first of that name, else the first Style), and named resets
     // against the Document's.
     const auto *styles = carryStyles();
-    if (!styles)
+    // An Original past what Tags from original reads (a UTF-16 unit is three
+    // UTF-8 bytes at most) carries nothing: not converted for nothing.
+    if (!styles || line.text.size() > 3 * core::kMaxTagTransferUnits)
         return std::nullopt;
     const auto style = std::ranges::find(*styles, line.style, &core::StyleValues::name);
     const auto *base = style != styles->end() ? &*style : styles->empty() ? nullptr : &styles->front();
@@ -433,17 +435,25 @@ bool pastTransferLimit(std::u8string_view translation)
 }
 
 // Whether a draft with `runs` just placed in it is saved as placed: each
-// is found again on reading the composed translation (one past the
-// reader's limits is not, its tags left as the translator's own), and the
-// translator's own formatting around them draws as it did.
+// is found again, over the same text, on reading the composed translation
+// (one past the reader's limits is not, its tags left as the translator's
+// own; one opened by the translator's own tags before it reads over more),
+// and the translator's own formatting around them draws as it did.
 bool placementHolds(const core::OriginalTags &tags, const core::TranslationDraft &draft, std::span<const int> runs)
 {
     const auto order = core::runOrder(draft.placements);
     auto back = core::readTranslation(tags, core::composeTranslation(tags, draft), order);
     core::relabelRuns(tags, back, order);
-    for (const int run : runs)
-        if (std::ranges::none_of(back.placements, [&](const core::RunPlacement &p) { return p.run == run; }))
+    if (back.body != draft.body)
+        return false;
+    for (const int run : runs) {
+        const auto of = [&](const core::RunPlacement &p) { return p.run == run; };
+        const auto placed = std::ranges::find_if(draft.placements, of);
+        const auto read = std::ranges::find_if(back.placements, of);
+        if (placed == draft.placements.end() || read == back.placements.end() || read->start != placed->start
+            || read->end != placed->end)
             return false;
+    }
     return core::keepsOwnFormatting(tags, draft);
 }
 
