@@ -2247,6 +2247,33 @@ private slots:
         QCOMPARE(editor->values().value(QStringLiteral("style")).toString(), QString::fromStdString(std::string(both.style.begin(), both.style.end())));
     }
 
+    // A `template line karaoke` source's text still pending in the panel is
+    // the one its `$` values come from, as the preview's.
+    void theValuesReadAPendingTextOfATemplateThatIsAlsoAKaraokeLine()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord both;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                both = *l;
+        both.comment = true;
+        both.effect = u8"template line karaoke";
+        both.text = u8"{\\k50}ka{\\k50}ze";
+        const auto id = doc.appendLine(both);
+        QVERIFY(id);
+        openDocument(std::move(doc), true);
+        activate(*id);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && editor->source() == id->value; }, 20'000));
+        editor->setCurrent(id->value);
+        editor->setDelays(10, 60'000);
+        editor->setText(QStringLiteral("{\\k50}ka{\\k50}ze{\\k50}ru"));
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        editor->requestValues();
+        QVERIFY(QTest::qWaitFor([&] { return !editor->values().isEmpty(); }, 20'000));
+        QCOMPARE(editor->values().value(QStringLiteral("syln")).toString(), QStringLiteral("3"));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

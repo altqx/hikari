@@ -1513,8 +1513,10 @@ void TemplateEditorController::runValues(std::uint64_t generation)
     // this run asks again when its chain ends.
     if (!session() || !m_source || !available() || !trusted() || m_ownersAsked)
         return;
-    const core::Document doc = runDocument();
-    auto snapshot = application::templatePreviewSnapshot(doc, *m_source);
+    // As the preview reads it: the draft, the pending fields and text (a
+    // `template line karaoke` source's own).
+    const core::Document doc = pendingDocument();
+    auto snapshot = application::templatePreviewSnapshot(doc, *m_source, pendingTexts());
     const core::LineRecord *source = nullptr;
     for (const auto *l : doc.lines())
         if (l->id == *m_source)
