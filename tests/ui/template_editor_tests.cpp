@@ -2464,6 +2464,24 @@ private slots:
                 QCOMPARE(QString::fromStdString(std::string(l->text.begin(), l->text.end())), committed + QStringLiteral("x"));
     }
 
+    // The panel shows the Line editor's draft of the current template, the
+    // one the preview runs and Apply commits.
+    void thePanelShowsTheLineEditorsDraftOfTheTemplate()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->current() != 0; }, 20'000));
+        const core::LineId templ{editor->current()};
+        QVERIFY(session->editDraftText(templ, u8"{\\bord9}"));
+        application::DraftChange layer;
+        layer.layer = 7;
+        QVERIFY(session->editDraft(templ, layer));
+        editor->refresh();
+        QCOMPARE(editor->text(), QStringLiteral("{\\bord9}"));
+        QCOMPARE(editor->layer(), 7);
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

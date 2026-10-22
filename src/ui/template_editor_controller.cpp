@@ -379,9 +379,14 @@ std::optional<core::LineRecord> TemplateEditorController::currentRecord() const
     const auto *l = m_current ? line(*m_current) : nullptr;
     if (!l)
         return std::nullopt;
+    // The Line editor's draft of it, as the preview runs it (runDocument).
+    core::LineRecord out = *l;
+    if (const auto *s = session())
+        if (auto draft = s->draftRecord(); draft && draft->id == l->id)
+            out = *draft;
     if (m_pending && m_pending->line == l->id && m_pending->document == documentKey())
-        return edited(*l, *m_pending);
-    return *l;
+        return edited(out, *m_pending);
+    return out;
 }
 
 core::LineRecord TemplateEditorController::edited(core::LineRecord line, const Pending &pending)
