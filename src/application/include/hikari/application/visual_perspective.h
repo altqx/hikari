@@ -94,6 +94,10 @@ PointF toUV(const Quad &quad, PointF xy);
 PointF fromUV(const Quad &quad, PointF uv);
 // The quad of the rectangle `a` .. `b` in `quad`'s plane coordinates.
 Quad subQuad(const Quad &quad, PointF a, PointF b);
+// Whether the plane whose rectangle c1 .. c2 is `inner` holds: its outer
+// quad (the unit rectangle) is finite, convex and on the near side of the
+// projective horizon at every corner.
+bool planeHolds(const Quad &inner, PointF c1, PointF c2);
 
 // A Line's transform and box as the tool reads them: the tags of its first
 // block (the last of each), its first \pos, \move (at `timeMs` from its
@@ -108,6 +112,7 @@ struct LineState {
     std::array<double, 4> move{0, 0, 0, 0}; // \move's points
     std::u16string moveTimes;               // its times, as written (",t1,t2" or empty)
     bool stacks = false; // no \pos, \move or \org: libass moves it clear of others
+    bool ownOrg = false; // an \org of its own (else libass turns it about its position)
 };
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line);
 // The same without the box.
@@ -118,6 +123,8 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line);
 // \fax, \fscx, \fscy, \frz, \frx, \fry, \xbord, \ybord, \xshad, \yshad, the
 // block's \fay, \fr, \bord and \shad removed, a tag at its Style's value
 // (\fax, \frx and \fry at 0) left out. Tags inside \t(...) are not touched.
+// A \move Line without an \org keeps libass's origin, its moving position,
+// when `t` does not turn it or turns it about `t`.pos: no \org is written.
 std::u16string writeTransform(std::u16string_view text, const Transform &t, const core::StyleValues &style,
                               std::optional<PointF> movedFrom = std::nullopt);
 
@@ -158,11 +165,21 @@ private:
     // Applies a new inner or outer quad (a drag's or a nudge's), keeping the
     // other per the plane and the lock; false when the result would fold.
     bool applyCorner(int corner, PointF to, bool fromCentre, VisualHost &host);
-    bool applyInner(const perspective::Quad &inner, VisualHost &host);
+    // `explicitOrg`: the \org was given (typed or dragged), so a \move
+    // Line takes it as it is.
+    bool applyInner(const perspective::Quad &inner, VisualHost &host, bool explicitOrg = false);
+    // libass turns a \move Line without an \org about its moving position,
+    // which a fixed \org cannot hold: whether `t` keeps that for the
+    // targets (it does not turn them, or turns the active one about its
+    // position), as writeTransform writes it.
+    bool keepsMovingOrigins(const perspective::Transform &t, VisualHost &host, bool explicitOrg) const;
+    // A shown plane that holds for the inner quad (the saved one, else the
+    // largest of the defaults that does).
+    void fitPlane() const;
     perspective::Quad startQuad(bool outer) const;
     PointF snap(PointF p, int skip) const;
     PointF axisLock(int corner, PointF delta) const;
-    void move(PointF delta, VisualHost &host);
+    bool move(PointF delta, VisualHost &host);
     void rememberPlane(VisualHost &host);
     // The saved outer quad of the active Line, in the inner quad's plane.
     void restorePlane();

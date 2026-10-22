@@ -25,6 +25,7 @@ namespace {
 constexpr double kZ = 312.5;
 
 double dist(PointF a, PointF b) { return std::hypot(a.x - b.x, a.y - b.y); }
+PointF add(PointF a, PointF b) { return {a.x + b.x, a.y + b.y}; }
 
 void expectQuadNear(const Quad &a, const Quad &b, double tolerance)
 {
@@ -148,6 +149,18 @@ TEST(PerspectiveMaths, TheBorderKeepsItsProportion)
     EXPECT_NEAR(back->shad.y, 1.5, 1e-4);
 }
 
+TEST(PerspectiveMaths, APlaneHoldsShortOfItsHorizon)
+{
+    // A rectangle's plane holds at any size; a quad narrowing fast meets its
+    // horizon (where its sides meet, 11 above it) within twice its size.
+    const Quad rect{PointF{0, 0}, PointF{100, 0}, PointF{100, 100}, PointF{0, 100}};
+    EXPECT_TRUE(planeHolds(rect, {0.25f, 0.25f}, {0.75f, 0.75f}));
+    const Quad steep{PointF{45, 0}, PointF{55, 0}, PointF{100, 100}, PointF{0, 100}};
+    EXPECT_FALSE(planeHolds(steep, {0.25f, 0.25f}, {0.75f, 0.75f}));
+    EXPECT_TRUE(planeHolds(steep, {0.f, 0.f}, {1.f, 1.f}));
+    EXPECT_FALSE(planeHolds(rect, {0.75f, 0.25f}, {0.25f, 0.75f})); // not a rectangle of it
+}
+
 TEST(PerspectiveMaths, QuadsAndThePlane)
 {
     const Quad q{PointF{100, 100}, PointF{300, 120}, PointF{280, 260}, PointF{90, 240}};
@@ -174,6 +187,7 @@ public:
     std::optional<TextExtents> measure(const std::vector<std::string> &style, const std::string &text) override
     {
         const double fs = std::strtod(style[2].c_str(), nullptr);
+        ++calls;
         lastScaleX = style[11];
         lastFont = style[1];
         lastBold = style[7];
@@ -186,6 +200,7 @@ public:
         return e;
     }
     std::string lastScaleX, lastFont, lastBold, lastItalic, lastSpacing;
+    int calls = 0;
 };
 
 std::string scriptOf(const std::vector<std::string> &texts, const std::string &extraInfo = {},
@@ -380,9 +395,10 @@ TEST(PerspectiveTags, WritesIntoTheFirstBlock)
     t.fscy = 100;
     t.bord = {2, 2};
     EXPECT_EQ(writeTransform(u"Text", t, style), u"{\\pos(320,180.5)\\org(300,170)}Text");
-    // A \move keeps its motion: both points move by the change.
+    // A \move keeps its motion: both points move by the change (and, not
+    // turned, libass's own origin: no \org).
     EXPECT_EQ(writeTransform(u"{\\move(100,100,300,200,0,1000)}Text", t, style, PointF{200, 150}),
-              u"{\\move(220,130.5,420,230.5,0,1000)\\org(300,170)}Text");
+              u"{\\move(220,130.5,420,230.5,0,1000)}Text");
 }
 
 TEST(PerspectiveTags, ReadsAStyleReset)
@@ -521,10 +537,12 @@ TEST(PerspectiveTags, AHostileLineTakesLinearTime)
     Host host({braces, escapes, blocks + "x"}, "WrapStyle: 2"); // unwrapped: measured
     const auto started = std::chrono::steady_clock::now();
     for (std::size_t i = 0; i < 3; ++i) {
-        const auto state = readLine(host, lineWith(host, i));
-        ASSERT_TRUE(state) << i;
+        // The braces and the hard spaces are past the shown characters'
+        // bound: no quad, but read (and written) in linear time all the same.
+        EXPECT_EQ(readLine(host, lineWith(host, i)).has_value(), i == 2) << i;
+        const LineState state = readTags(host, lineWith(host, i));
         const std::u16string text = core::toUtf16(lineWith(host, i).text);
-        EXPECT_FALSE(writeTransform(text, state->transform, core::StyleValues{}).empty());
+        EXPECT_FALSE(writeTransform(text, state.transform, core::StyleValues{}).empty());
     }
     const auto ms =
         std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
@@ -615,6 +633,70 @@ TEST(PerspectiveTags, AValuelessTagResets)
 }
 
 // ------------------------------------------------------------------ the tool
+
+TEST(PerspectiveTags, AHostileLineIsMeasuredBoundedly)
+{
+    // libass would show every row, but the measure goes through the font on
+    // the UI thread: past 64 rows or 4096 shown characters no quad, and no
+    // measuring first (a comment of \N is the cheap way to ask for it).
+    std::string rows = "{\\pos(320,200)}a", tooMany = rows;
+    for (int i = 1; i < 64; ++i)
+        rows += "\\Na";
+    tooMany = rows + "\\Na";
+    std::string breaks = "{\\pos(320,200)}";
+    for (int i = 0; i < 200000; ++i)
+        breaks += "\\N";
+    Host host({rows, tooMany, breaks, "{\\pos(320,200)}" + std::string(4097, 'a'),
+               "{\\pos(320,200)}" + std::string(4096, 'a')},
+              "WrapStyle: 2");
+    EXPECT_TRUE(readLine(host, lineWith(host, 0)));
+    EXPECT_EQ(host.measure.calls, 64);
+    host.measure.calls = 0;
+    for (const std::size_t i : {1, 2, 3})
+        EXPECT_FALSE(readLine(host, lineWith(host, i))) << i;
+    EXPECT_EQ(host.measure.calls, 0);
+    EXPECT_TRUE(readLine(host, lineWith(host, 4)));
+}
+
+TEST(PerspectiveTags, TheWrapTakesTheLinesOwnStyleMargins)
+{
+    // libass keeps the Line's Style's margins after a \r: Default's leave
+    // 620 of 640, so 32 characters of 20 wrap whatever the reset Style's.
+    const std::string styles =
+        "Style: Bare,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,0,0,10,1\n"
+        "Style: Wide,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,300,300,10,1\n";
+    Host host({"{\\pos(320,200)\\rBare}" + std::string(32, 'a'), "{\\pos(320,200)\\rWide}" + std::string(20, 'a')}, {},
+              styles);
+    EXPECT_FALSE(readLine(host, lineWith(host, 0)));
+    EXPECT_TRUE(readLine(host, lineWith(host, 1)));
+}
+
+TEST(PerspectiveTags, AMovingLineWithoutAnOriginKeepsIt)
+{
+    const core::StyleValues st;
+    Transform t;
+    t.pos = {150, 100};
+    t.org = {150, 100};
+    t.frx = 20;
+    // Turned about its position, or not turned: libass's own origin, kept.
+    EXPECT_EQ(writeTransform(u"{\\move(100,100,300,200)}a", t, st, PointF{150, 100}).find(u"\\org"),
+              std::u16string::npos);
+    Transform flat = t;
+    flat.frx = 0;
+    flat.org = {10, 10};
+    EXPECT_EQ(writeTransform(u"{\\move(100,100,300,200)}a", flat, st, PointF{150, 100}).find(u"\\org"),
+              std::u16string::npos);
+    // Turned about another point, or the Line's own \org: written.
+    Transform away = t;
+    away.org = {10, 10};
+    EXPECT_NE(writeTransform(u"{\\move(100,100,300,200)}a", away, st, PointF{150, 100}).find(u"\\org(10,10)"),
+              std::u16string::npos);
+    EXPECT_NE(writeTransform(u"{\\move(100,100,300,200)\\org(5,5)}a", t, st, PointF{150, 100})
+                  .find(u"\\org(150,100)"),
+              std::u16string::npos);
+    // A \pos Line's is always written.
+    EXPECT_NE(writeTransform(u"{\\pos(150,100)}a", t, st).find(u"\\org(150,100)"), std::u16string::npos);
+}
 
 struct Fixture {
     Host host;
@@ -766,7 +848,7 @@ TEST(PerspectiveTool, AFoldedQuadIsNotTaken)
 
 TEST(PerspectiveTool, EveryPickedLineGetsTheTags)
 {
-    Fixture f({"{\\pos(320,200)}Perspective", "{\\pos(320,200)\\bord4}Backing", "{\\move(0,0,100,0)}Moving"});
+    Fixture f({"{\\pos(320,200)}Perspective", "{\\pos(320,200)\\bord4}Backing", "{\\move(0,0,100,0)\\org(5,5)}Moving"});
     f.host.targets = {f.host.line(0), f.host.line(1), f.host.line(2)};
     f.drag({430, 200}, {450, 230});
     const auto tagOf = [](const std::string &text, const std::string &tag) {
@@ -1064,6 +1146,84 @@ TEST(PerspectiveTool, TheOptions)
     f.tool.selected(f.host);
     EXPECT_TRUE(f.tool.gridShown());
     EXPECT_EQ(f.tool.orgMode(), OrgMode::NoFax);
+}
+
+TEST(PerspectiveTool, TheStackTakesTheOtherLinesScaleAndOutline)
+{
+    // The first Line's rectangle at its own \fscy and \bord (Default's
+    // outline 2 and shadow 1): 40 + 4 + 1 high, 80 + 4 + 1 at \fscy200,
+    // 40 + 12 + 1 at \bord6; the second goes above it by that.
+    const auto second = [](const std::string &first) {
+        Fixture f({first, "Second"});
+        f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
+        f.host.targets = {f.host.line(1)};
+        f.tool.reset(f.host);
+        return f.tool.inner()[2].y;
+    };
+    const float plain = second("First");
+    EXPECT_NEAR(plain - second("{\\fscy200}First"), 40, 0.05);
+    EXPECT_NEAR(plain - second("{\\bord6}First"), 8, 0.05);
+}
+
+TEST(PerspectiveTool, ARefusedNudgeOrMoveChangesNothing)
+{
+    // A turned Line picked with a moving one without an \org: no turn can
+    // keep the moving one's origin, so the nudge and the drag are refused,
+    // and the Line, written otherwise than the tool writes it, stays as it
+    // is, with no step.
+    Fixture f({"{\\frx20\\an2\\pos(320,200)}Perspective", "{\\move(0,0,100,0)}Moving"});
+    f.host.targets = {f.host.line(0), f.host.line(1)};
+    ASSERT_TRUE(f.tool.hasQuad());
+    const std::string a = f.host.text(0), b = f.host.text(1);
+    const std::size_t before = f.steps();
+    EXPECT_TRUE(f.tool.key({keys::Right}, f.host));
+    EXPECT_TRUE(f.tool.key({keys::Right, true}, f.host));
+    f.tool.reset(f.host);
+    f.drag(centre(f.tool.inner()), add(centre(f.tool.inner()), {10, 0}));
+    f.drag(f.tool.inner()[2], add(f.tool.inner()[2], {10, 10}));
+    EXPECT_EQ(f.steps(), before);
+    EXPECT_EQ(f.host.text(0), a);
+    EXPECT_EQ(f.host.text(1), b);
+}
+
+TEST(PerspectiveTool, AMovingLineIsTurnedAboutItsPosition)
+{
+    // libass turns a \move Line without an \org about its moving position:
+    // the drag finds the turn about it and writes no \org.
+    Fixture f({"{\\move(100,100,300,200,0,1000)}Moving"});
+    const PointF to = add(f.tool.inner()[2], {10, 15});
+    const std::size_t before = f.steps();
+    f.drag(f.tool.inner()[2], to);
+    ASSERT_EQ(f.steps(), before + 1);
+    const std::string text = f.host.text();
+    EXPECT_EQ(text.find("\\org"), std::string::npos) << text;
+    EXPECT_NE(text.find("\\move("), std::string::npos) << text;
+    EXPECT_NE(text.find("\\frx"), std::string::npos) << text;
+    EXPECT_LT(dist(f.tool.inner()[2], to), 0.05);
+    EXPECT_EQ(f.tool.transform().org.x, f.tool.transform().pos.x);
+    EXPECT_EQ(f.tool.transform().org.y, f.tool.transform().pos.y);
+}
+
+TEST(PerspectiveTool, ThePlaneIsShownWhereItHolds)
+{
+    // A steeply turned quad's plane at twice its size would reach past the
+    // horizon: the plane shown is one short of it.
+    bool found = false;
+    for (int frx = 40; frx <= 85 && !found; frx += 5) {
+        Fixture f({"{\\an5\\pos(320,180)\\frx" + std::to_string(frx) + "\\p1}m 0 0 l 600 0 600 300 0 300"});
+        if (!f.tool.hasQuad() || planeHolds(f.tool.inner(), {0.25f, 0.25f}, {0.75f, 0.75f}))
+            continue;
+        found = true;
+        EXPECT_TRUE(f.tool.setOption("plane", 1, f.host));
+        const Quad o = f.tool.outer();
+        for (const PointF &p : o)
+            EXPECT_TRUE(std::isfinite(p.x) && std::isfinite(p.y));
+        EXPECT_TRUE(convex(o));
+        // ... and holds as the quad moves in it.
+        f.drag(f.tool.inner()[2], add(f.tool.inner()[2], {2, 2}));
+        EXPECT_TRUE(convex(f.tool.outer()));
+    }
+    EXPECT_TRUE(found);
 }
 
 TEST(PerspectiveTool, IsTheTwelfthFamily)

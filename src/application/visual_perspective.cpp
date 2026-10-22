@@ -402,6 +402,28 @@ Quad subQuad(const Quad &quad, PointF a, PointF b)
     return {pf(apply(m, {a.x, a.y})), pf(apply(m, {b.x, a.y})), pf(apply(m, {b.x, b.y})), pf(apply(m, {a.x, b.y}))};
 }
 
+bool planeHolds(const Quad &inner, PointF c1, PointF c2)
+{
+    if (!finite(c1.x) || !finite(c1.y) || !finite(c2.x) || !finite(c2.y) || !(c1.x < c2.x && c1.y < c2.y))
+        return false;
+    const PointF a{-c1.x / (c2.x - c1.x), -c1.y / (c2.y - c1.y)};
+    const PointF b{(1 - c1.x) / (c2.x - c1.x), (1 - c1.y) / (c2.y - c1.y)};
+    // The map's divisor keeps the inner quad's sign over the whole outer
+    // rectangle (it is affine, so at its corners), and does not come near
+    // 0: past it the outer quad wraps through infinity.
+    const M3 m = unitToQuad(inner);
+    const auto w = [&m](double u, double v) { return m[2][0] * u + m[2][1] * v + m[2][2]; };
+    const double mid = w(0.5, 0.5);
+    for (const V2 p : {V2{a.x, a.y}, V2{b.x, a.y}, V2{b.x, b.y}, V2{a.x, b.y}})
+        if (!(w(p.x, p.y) / mid > 0.01))
+            return false;
+    const Quad outer = subQuad(inner, a, b);
+    for (const PointF &p : outer)
+        if (!finite(p.x) || !finite(p.y))
+            return false;
+    return convex(outer);
+}
+
 std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMode mode, const Transform &from,
                                          double f)
 {
@@ -715,6 +737,12 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         return n >= 0 && n <= 3 ? n : 0;
     };
     int wrap = wrapOf();
+    // libass shows any number of rows, but a box of more than these is no
+    // sign the tool places, and each row is measured through the font on
+    // the UI thread: a hostile Line (a comment of \N, say) gets no quad
+    // rather than unbounded work.
+    constexpr std::size_t kMaxRows = 64, kMaxShown = 4096;
+    std::size_t shown = 0;
     std::vector<u16> lines(1);
     const std::size_t lastClose = text.rfind(u'}'); // a { before it opens a block
     static constexpr u16v kGlyphTags[] = {u"fs",  u"fn",  u"fscx", u"fscy", u"fsp", u"b",  u"i",
@@ -741,6 +769,8 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         if (ch == u'\\' && i + 1 < text.size()) {
             const char16_t next = text[i + 1];
             if (next == u'N' || (next == u'n' && wrap == 2)) {
+                if (lines.size() == kMaxRows)
+                    return std::nullopt;
                 lines.emplace_back();
                 started = true;
                 i += 2;
@@ -750,12 +780,16 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
                 lines.back().push_back(next == u'n' ? u' ' : next == u'h' ? u'\u00A0' : next);
                 started = true;
                 i += 2;
+                if (++shown > kMaxShown)
+                    return std::nullopt;
                 continue;
             }
         }
         lines.back().push_back(ch);
         started = true;
         ++i;
+        if (++shown > kMaxShown)
+            return std::nullopt;
     }
     double width = 0, height = 0;
     for (const u16 &piece : lines) {
@@ -768,47 +802,29 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         height += e->height;
     }
     // Wider than the room between its margins, libass wraps it (but under
-    // wrap style 2): rows this box does not hold.
+    // wrap style 2): rows this box does not hold. The margins are the
+    // Line's, else its own Style's (a \r does not move the Line).
     if (wrap != 2) {
         const auto margin = [](std::int64_t own, const std::u8string &styleMargin) {
             return own != 0 ? static_cast<double>(own) : transform::styleNumber(styleMargin, 0);
         };
-        const double room = ctx.width - margin(line.marginLeft.value, current.marginLeft) -
-                            margin(line.marginRight.value, current.marginRight);
+        const double room = ctx.width - margin(line.marginLeft.value, style.marginLeft) -
+                            margin(line.marginRight.value, style.marginRight);
         if (width * scaleX / 100 > room)
             return std::nullopt;
     }
     return Box{{0, 0}, {static_cast<float>(width), static_cast<float>(height)}};
 }
 
-// A Line's alignment and whether libass keeps it out of collisions (a valid
-// \pos, \move or \org), as readTags reads them.
-std::pair<int, bool> placement(u16v text, const core::StyleValues &style)
-{
-    int an = static_cast<int>(transform::styleNumber(style.alignment, 2));
-    if (an < 1 || an > 9)
-        an = 2;
-    bool haveAn = false, positioned = false;
-    for (const auto &[open, close] : blocksOf(text)) {
-        for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1))) {
-            if ((tag.name == u"pos" || tag.name == u"move" || tag.name == u"org") && positional(tag)) {
-                positioned = true;
-            } else if ((tag.name == u"an" || tag.name == u"a") && !haveAn) {
-                haveAn = true;
-                const int n = static_cast<int>(number(tag.value).value_or(0));
-                if (tag.name == u"an" ? (n >= 1 && n <= 9) : (n >= 1 && n <= 11))
-                    an = tag.name == u"an" ? n : alignmentOfA(n);
-            }
-        }
-    }
-    return {an, positioned};
-}
+LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line);
 
 // How far an unpositioned Line is moved clear of the Lines before it shown
 // with it: legacy's GetDialogueAdditionalPosition (Visuals.cpp:143-215),
 // the rule the other tools place such a Line by, over this tool's own
-// reading, which takes linear time (legacy's tag parse does not).
-double stackOffset(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line, int an,
+// reading, which takes linear time (legacy's tag parse does not). Each
+// Line's rectangle is its box at its leading scale with its outline and
+// shadow, as legacy's GetTextSize measures it.
+double stackOffset(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line, const Transform &t,
                    const Box &box)
 {
     const transform::Context &ctx = styles.ctx;
@@ -818,10 +834,12 @@ double stackOffset(const VisualHost &host, const StyleIndex &styles, const core:
     };
     if (!ctx.document || !shown(line))
         return 0;
-    // Its rectangle at its default position, with outline and shadow.
-    const auto rect = [&ctx](const core::LineRecord &l, const core::StyleValues &st, int a, const Box &b) {
-        const double extra = 2 * transform::styleNumber(st.outlineWidth, 0) + transform::styleNumber(st.shadow, 0);
-        const double w = b.width() + extra, h = b.height() + extra;
+    // Its rectangle at its default position.
+    const auto rect = [&ctx](const core::LineRecord &l, const core::StyleValues &st, const Transform &lt,
+                             const Box &b) {
+        const double w = b.width() * std::abs(lt.fscx) / 100 + 2 * lt.bord.x + lt.shad.x;
+        const double h = b.layoutHeight() * std::abs(lt.fscy) / 100 + 2 * lt.bord.y + lt.shad.y;
+        const int a = lt.an;
         const PointF p = transform::defaultPosition(l, st, a, ctx.width, ctx.height);
         double x = p.x, y = p.y;
         if (a % 3 == 2)
@@ -834,8 +852,12 @@ double stackOffset(const VisualHost &host, const StyleIndex &styles, const core:
             y -= h / 2;
         return std::array<double, 4>{x, y, x + w, y + h};
     };
-    const int band = static_cast<int>(an / 3.1f);
-    const auto mine = rect(line, styles.line(line.style), an, box);
+    const int band = static_cast<int>(t.an / 3.1f);
+    const auto mine = rect(line, styles.line(line.style), t, box);
+    // Past this many Lines in its band the stack is off the frame; the
+    // bound keeps a script of many simultaneous Lines from stalling a read.
+    constexpr int kMaxMeasured = 256;
+    int measured = 0;
     double offset = 0;
     int placesForText = 0, placesTaken = 0;
     for (const core::LineRecord *dial : ctx.document->lines()) {
@@ -845,15 +867,17 @@ double stackOffset(const VisualHost &host, const StyleIndex &styles, const core:
             break;
         if (!shown(*dial))
             continue;
+        const LineState other = readTagsIn(host, styles, *dial);
+        if (!other.stacks || static_cast<int>(other.transform.an / 3.1f) != band)
+            continue;
+        if (++measured > kMaxMeasured)
+            break;
         const u16 text = transform::lineText(*dial);
         const core::StyleValues style = styles.line(dial->style);
-        const auto [a, positioned] = placement(text, style);
-        if (positioned || static_cast<int>(a / 3.1f) != band)
+        const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text));
+        if (!otherBox)
             continue;
-        const auto other = measureBox(host, styles, *dial, text, style, leadingOf(text));
-        if (!other)
-            continue;
-        const auto r = rect(*dial, style, a, *other);
+        const auto r = rect(*dial, style, other.transform, *otherBox);
         if (r[2] > mine[0] && r[0] < mine[2] && r[3] > mine[1] && r[1] < mine[3]) {
             const double h = r[3] - r[1];
             offset += band == 2 ? h : band == 1 ? h / 2 : -h;
@@ -1009,6 +1033,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
     }
     t.pos = pf(*pos);
     t.org = org ? pf(*org) : t.pos;
+    out.ownOrg = org.has_value();
     return out;
 }
 
@@ -1031,7 +1056,7 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
         return std::nullopt;
     out.box = *box;
     if (out.stacks) {
-        out.transform.pos.y += static_cast<float>(stackOffset(host, styles, line, out.transform.an, *box));
+        out.transform.pos.y += static_cast<float>(stackOffset(host, styles, line, out.transform, *box));
         out.transform.org = out.transform.pos;
     }
     return out;
@@ -1046,7 +1071,10 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
 
     // The Line's first \pos or \move decides, as readTags reads it: a \move
     // is moved, a \pos (or none) is written again.
-    bool moved = false;
+    bool moved = false, ownOrg = false;
+    for (const auto &[open, close] : blocksOf(out))
+        for (const Tag &tag : tagsOf(u16v(out).substr(open + 1, close - open - 1)))
+            ownOrg = ownOrg || (tag.name == u"org" && positional(tag));
     for (const auto &[open, close] : blocksOf(out)) {
         bool decided = false;
         for (const Tag &tag : tagsOf(u16v(out).substr(open + 1, close - open - 1))) {
@@ -1105,7 +1133,13 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     };
     if (!moved)
         tags += u"\\pos(" + fmt(t.pos.x, 2) + u"," + fmt(t.pos.y, 2) + u")";
-    tags += u"\\org(" + fmt(t.org.x, 2) + u"," + fmt(t.org.y, 2) + u")";
+    // libass turns a \move Line without an \org about its moving position:
+    // kept when `t` does not turn it (the origin then does nothing) or
+    // turns it about its position.
+    const bool turns = fmt(t.frx, 4) != u"0" || fmt(t.fry, 4) != u"0" || fmt(t.frz, 4) != u"0";
+    const bool aboutPosition = fmt(t.org.x, 2) == fmt(t.pos.x, 2) && fmt(t.org.y, 2) == fmt(t.pos.y, 2);
+    if (!(moved && !ownOrg && (!turns || aboutPosition)))
+        tags += u"\\org(" + fmt(t.org.x, 2) + u"," + fmt(t.org.y, 2) + u")";
     put(u"fax", t.fax, 6, 0);
     put(u"fscx", t.fscx, 2, transform::styleNumber(style.scaleX, 100));
     put(u"fscy", t.fscy, 2, transform::styleNumber(style.scaleY, 100));
@@ -1270,6 +1304,8 @@ void PerspectiveTool::reset(VisualHost &host)
     // Style), not only on another Line's; an edit open keeps its own.
     if (newLine || (m_drag == Drag::None && !m_valueEdit && !m_keyEdit && !host.gesture()))
         restorePlane();
+    if (m_plane && !host.gesture())
+        fitPlane();
     host.toolChanged();
 }
 
@@ -1283,10 +1319,23 @@ void PerspectiveTool::restorePlane()
     if (saved == m_planes.end())
         return;
     const PointF c1 = toUV(saved->second, m_inner[0]), c2 = toUV(saved->second, m_inner[2]);
-    if (std::isfinite(c1.x) && std::isfinite(c1.y) && std::isfinite(c2.x) && std::isfinite(c2.y) && c1.x < c2.x &&
-        c1.y < c2.y) {
+    if (planeHolds(m_inner, c1, c2)) {
         m_c1 = c1;
         m_c2 = c2;
+    }
+}
+
+void PerspectiveTool::fitPlane() const
+{
+    if (!m_valid || planeHolds(m_inner, m_c1, m_c2))
+        return;
+    // The default (the plane twice the inner quad), else a smaller one: a
+    // strongly turned quad's plane meets its horizon close by.
+    for (const float m : {0.25f, 0.2f, 0.15f, 0.1f, 0.05f, 0.02f, 0.f}) {
+        m_c1 = {m, m};
+        m_c2 = {1 - m, 1 - m};
+        if (planeHolds(m_inner, m_c1, m_c2))
+            return;
     }
 }
 
@@ -1311,11 +1360,11 @@ void PerspectiveTool::follow(const VisualHost &host) const
         m_inner = inner;
         if (plane) {
             const PointF c1 = toUV(*plane, m_inner[0]), c2 = toUV(*plane, m_inner[2]);
-            if (std::isfinite(c1.x) && std::isfinite(c1.y) && std::isfinite(c2.x) && std::isfinite(c2.y) &&
-                c1.x < c2.x && c1.y < c2.y) {
+            if (planeHolds(m_inner, c1, c2)) {
                 m_c1 = c1;
                 m_c2 = c2;
             }
+            fitPlane();
         }
     }
 }
@@ -1383,18 +1432,65 @@ bool PerspectiveTool::finish(VisualHost &host)
     return committed;
 }
 
-bool PerspectiveTool::applyInner(const Quad &inner, VisualHost &host)
+bool PerspectiveTool::applyInner(const Quad &inner, VisualHost &host, bool explicitOrg)
 {
-    (void)host;
-    if (!convex(inner))
+    if (!convex(inner) || (m_plane && !planeHolds(inner, m_c1, m_c2)))
         return false;
     Transform from = m_startTransform;
     from.org = m_state.transform.org;
-    const auto t = quadToTransform(inner, m_state.box, m_orgMode, from, m_screenZ);
-    if (!t)
+    auto t = explicitOrg ? quadToTransform(inner, m_state.box, OrgMode::Keep, from, m_screenZ)
+                         : quadToTransform(inner, m_state.box, m_orgMode, from, m_screenZ);
+    if (t && !explicitOrg && m_state.hasMove && !m_state.ownOrg && !keepsMovingOrigins(*t, host, false)) {
+        // libass turns it about its moving position: the turn about the
+        // position itself, found by moving a kept \org onto the position
+        // the quad then gives until they meet.
+        std::optional<Transform> about;
+        Transform f = from;
+        PointF guess = m_state.transform.pos;
+        for (int i = 0; i < 64 && !about; ++i) {
+            f.org = guess;
+            const auto k = quadToTransform(inner, m_state.box, OrgMode::Keep, f, m_screenZ);
+            if (!k)
+                break;
+            if (std::hypot(k->pos.x - guess.x, k->pos.y - guess.y) < 1e-3) {
+                about = k;
+                about->org = about->pos;
+            }
+            guess = k->pos;
+        }
+        t = about;
+    }
+    if (!t || !keepsMovingOrigins(*t, host, explicitOrg))
         return false;
     m_inner = inner;
     m_state.transform = *t;
+    return true;
+}
+
+bool PerspectiveTool::keepsMovingOrigins(const Transform &t, VisualHost &host, bool explicitOrg) const
+{
+    if (std::abs(t.frx) < 5e-5 && std::abs(t.fry) < 5e-5 && std::abs(t.frz) < 5e-5)
+        return true; // no turn: the origin does nothing
+    const auto about = [&t](PointF pos) {
+        return std::abs(t.org.x - pos.x) < 0.005 && std::abs(t.org.y - pos.y) < 0.005;
+    };
+    if (m_state.hasMove && !m_state.ownOrg && !explicitOrg && !about(t.pos))
+        return false;
+    // The other targets' \move moves with the active Line's position; each
+    // keeps its origin only about its own, which the active Line's \org is
+    // not.
+    const Gesture *g = host.gesture();
+    if (!g || g->targets().size() < 2)
+        return true;
+    const transform::Context ctx = transform::context(host);
+    const StyleIndex styles(ctx);
+    for (const core::LineId &id : g->targets()) {
+        if (m_line && id == *m_line)
+            continue;
+        const LineState own = readTagsIn(host, styles, g->before(id));
+        if (own.hasMove && !own.ownOrg)
+            return false;
+    }
     return true;
 }
 
@@ -1455,11 +1551,6 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
     const PointF keepC1 = m_c1, keepC2 = m_c2;
     m_c1 = c1;
     m_c2 = c2;
-    if (m_plane && !convex(outer())) {
-        m_c1 = keepC1;
-        m_c2 = keepC2;
-        return false;
-    }
     if (!applyInner(inner, host)) {
         m_c1 = keepC1;
         m_c2 = keepC2;
@@ -1468,7 +1559,7 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
     return true;
 }
 
-void PerspectiveTool::move(PointF delta, VisualHost &host)
+bool PerspectiveTool::move(PointF delta, VisualHost &host)
 {
     if (m_drag == Drag::Body && m_plane && !m_lock) {
         // Within the plane.
@@ -1482,13 +1573,14 @@ void PerspectiveTool::move(PointF delta, VisualHost &host)
         if (!applyInner(subQuad(plane, m_c1, m_c2), host)) {
             m_c1 = keepC1;
             m_c2 = keepC2;
+            return false;
         }
-        return;
+        return true;
     }
     Quad inner = m_startInner;
     for (PointF &p : inner)
         p = add(p, delta);
-    (void)applyInner(inner, host);
+    return applyInner(inner, host);
 }
 
 PointF PerspectiveTool::snap(PointF p, int skip) const
@@ -1643,8 +1735,11 @@ void PerspectiveTool::pointer(const Pointer &event, VisualHost &host)
             PointF to = add(m_startOrg, delta);
             if (event.control)
                 to = snap(to, 8);
+            const PointF keep = m_state.transform.org;
             m_state.transform.org = to;
-            changed = applyInner(m_inner, host);
+            changed = applyInner(m_inner, host, true);
+            if (!changed)
+                m_state.transform.org = keep;
             break;
         }
         case Drag::Body:
@@ -1655,8 +1750,7 @@ void PerspectiveTool::pointer(const Pointer &event, VisualHost &host)
                 else
                     delta.x = 0;
             }
-            move(delta, host);
-            changed = true;
+            changed = move(delta, host);
             break;
         case Drag::None:
             break;
@@ -1710,15 +1804,19 @@ bool PerspectiveTool::key(const Key &event, VisualHost &host)
     m_startOrg = m_state.transform.org;
     const float step = event.shift ? 0.1f : 1.f;
     const PointF delta{dir->x * step, dir->y * step};
+    bool moved = false;
     if (m_selected >= 0) {
         const Quad q = startQuad(m_selected >= 4);
-        (void)applyCorner(m_selected, add(q[static_cast<std::size_t>(m_selected % 4)], delta), false, host);
+        moved = applyCorner(m_selected, add(q[static_cast<std::size_t>(m_selected % 4)], delta), false, host);
     } else {
         m_drag = Drag::Plane;
-        move(delta, host);
+        moved = move(delta, host);
         m_drag = Drag::None;
     }
-    stageAll(host);
+    // A step that would fold the quad changes nothing (the key is still
+    // the tool's: the release ends the edit, which records nothing then).
+    if (moved)
+        stageAll(host);
     return true;
 }
 
@@ -1819,7 +1917,7 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
         PointF o = m_startOrg;
         (name == "orgx" ? o.x : o.y) = static_cast<float>(value);
         m_state.transform.org = o;
-        if (!applyInner(m_startInner, host)) {
+        if (!applyInner(m_startInner, host, true)) {
             m_state.transform.org = m_startOrg;
             return refuse();
         }
@@ -1830,7 +1928,7 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
         t.fay = 0; // the tool writes no \fay, as a corner's edit
 
         const Quad q = textToQuad(t, m_state.box, m_screenZ);
-        if (!convex(q))
+        if (!convex(q) || (m_plane && !planeHolds(q, m_c1, m_c2)) || !keepsMovingOrigins(t, host, false))
             return refuse();
         m_state.transform = t;
         m_inner = q;
@@ -1887,12 +1985,21 @@ bool PerspectiveTool::setOption(const std::string &name, int value, VisualHost &
             return false;
         if (m_plane && m_line && m_valid)
             m_planes[*m_line] = outer(); // where it was when hidden
-        m_plane = value != 0;
-        if (m_plane) {
+        if (value != 0 && m_valid) {
+            // Shown only where it holds (its outer quad short of the
+            // horizon), the saved one else the largest default that does.
+            const PointF keepC1 = m_c1, keepC2 = m_c2;
             restorePlane();
-            if (m_line && m_valid)
-                m_planes[*m_line] = outer(); // absolute from now on
+            fitPlane();
+            if (!planeHolds(m_inner, m_c1, m_c2)) {
+                m_c1 = keepC1;
+                m_c2 = keepC2;
+                return false;
+            }
         }
+        m_plane = value != 0;
+        if (m_plane && m_line && m_valid)
+            m_planes[*m_line] = outer(); // absolute from now on
         if (!m_plane && (m_selected >= 4))
             m_selected = -1;
     } else if (name == "lockOuter") {
