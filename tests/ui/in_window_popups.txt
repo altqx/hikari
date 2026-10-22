@@ -8,9 +8,7 @@
 AllTagsEditionDialog.qml:dialog
 AllTagsEditionDialog.qml:messageBox
 AllTagsEditionDialog.qml:questionBox
-AspectRatioDialog.qml:dialog
 AutomationNotices.qml:notice
-DummyVideoDialog.qml:dialog
 FontCatalogWindow.qml:window
 FontCatalogWindow.qml:edition
 FontCatalogWindow.qml:info

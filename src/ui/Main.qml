@@ -1543,7 +1543,7 @@ ApplicationWindow {
                 action: Action {
                     id: dummyVideoAction
                     text: qsTr("Open dummy video")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) dummyVideoDialog.show()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) root.openDummyVideo()
                 }
             }
             // V6: GLOBAL_SET_START_TIME / GLOBAL_SET_END_TIME (HikariSubFrame.cpp:259-262;
@@ -5365,7 +5365,7 @@ ApplicationWindow {
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
+                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps() }
                         ShellMenuItem {
                             iconRole: "fps-from-video"
                             objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
@@ -5993,18 +5993,27 @@ ApplicationWindow {
             open()
         }
     }
-    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question.
-    DummyVideoDialog {
-        id: dummyVideoDialog
-        app: root.app
-        colourPicker: root.colourPicker
-        anchors.centerIn: parent
-        onRefused: message => root.log.log(message)
+    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question. PU4: the
+    // window made at its first opening (PK1: every window made at the start
+    // costs the program).
+    Loader {
+        id: dummyVideoLoader
+        active: false
+        sourceComponent: DummyVideoDialog {
+            app: root.app
+            settings: root.app.settings
+            colourPicker: root.colourPicker
+            onRefused: message => root.log.log(message)
+        }
+    }
+    function openDummyVideo() {
+        dummyVideoLoader.active = true
+        dummyVideoLoader.item.show()
     }
     VideoFileQuestion {
         id: videoFileQuestion
         app: root.app
-        anchors.centerIn: parent
+        settings: root.app.settings
     }
     // TM1: the Translation preset's question and Translation mode's turn-off
     // confirmation (Subtitles > Translation mode).
@@ -6099,58 +6108,19 @@ ApplicationWindow {
         onAccepted: root.openChosenSubtitles(root.app.localPath(selectedFile))
     }
 
-    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: fpsWindow
-        objectName: "fpsWindow"
-        title: qsTranslate("HikariSub.Conversion", "Choose new FPS")
-        width: 360
-        height: 140
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        readonly property var presets: ["23.976", "24", "25", "29.97", "30", "60"]
-        GridLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            columns: 2
-            Label { text: qsTranslate("HikariSub.Conversion", "Subtitles FPS") }
-            ComboBox {
-                id: oldFps
-                objectName: "oldFps"
-                editable: true
-                model: fpsWindow.presets
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTranslate("HikariSub.Conversion", "Subtitles FPS")
-            }
-            Label { text: qsTranslate("HikariSub.Conversion", "New FPS") }
-            ComboBox {
-                id: newFps
-                objectName: "newFps"
-                editable: true
-                model: fpsWindow.presets
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTranslate("HikariSub.Conversion", "New FPS")
-            }
-            WindowFooter {
-                Layout.columnSpan: 2
-                Button {
-                    objectName: "fpsOk"
-                    text: qsTranslate("HikariSub.Conversion", "OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        if (root.app.setNewFps(oldFps.editText, newFps.editText))
-                            fpsWindow.close()
-                    }
-                }
-                Button {
-                    objectName: "fpsCancel"
-                    text: qsTranslate("HikariSub.Conversion", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: fpsWindow.close()
-                }
-            }
+    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new
+    // one (PU4: a compact window, made at its first opening).
+    Loader {
+        id: setNewFpsLoader
+        active: false
+        sourceComponent: SetNewFpsWindow {
+            app: root.app
+            settings: root.app.settings
         }
+    }
+    function openSetNewFps() {
+        setNewFpsLoader.active = true
+        setNewFpsLoader.item.show()
     }
 
     // The column choice for Copy columns / Paste columns (legacy Stylelistbox),
@@ -7649,7 +7619,7 @@ ApplicationWindow {
         // (SubsGrid::OnAccelerator, SubsGrid.cpp:839-881, 938).
         case "GRID_COPY_COLUMNS": columnsWindow.choose(false); return true
         case "GRID_PASTE_COLUMNS": columnsWindow.choose(true); return true
-        case "GRID_SET_NEW_FPS": fpsWindow.show(); return true
+        case "GRID_SET_NEW_FPS": root.openSetNewFps(); return true
         case "GRID_SET_FPS_FROM_VIDEO": if (video) root.app.setFpsFromVideo(); return true
         case "GRID_PASTE_TRANSLATION":
             if (root.app.canPasteTranslation()) {

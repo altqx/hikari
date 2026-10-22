@@ -2658,31 +2658,64 @@ private slots:
         QTRY_COMPARE(texts(), (QStringList{"middle", "early", "late"}));
     }
 
+    // GRID_SET_NEW_FPS (legacy FPSDialog). PU4-set-new-fps: a compact
+    // window on DG1's frame made at its first opening, titled with the
+    // command, at legacy's 23.976 and 25, saying what the change does; a
+    // field that is no frame rate is said under it with Change FPS off.
     void fpsWindowScalesEveryTime()
     {
         const QString path = writeFile(dir, "g11.ass", "Dialogue: 0,0:00:10.00,0:00:20.00,Default,,0,0,0,,x\n");
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
+        QVERIFY(!root->findChild<QQuickWindow *>(QStringLiteral("fpsWindow")));
+        QVERIFY(QMetaObject::invokeMethod(root, "openSetNewFps"));
         auto *fps = root->findChild<QQuickWindow *>(QStringLiteral("fpsWindow"));
         QVERIFY(fps);
-        fps->show();
-        auto *oldFps = fps->findChild<QObject *>(QStringLiteral("oldFps"));
-        auto *newFps = fps->findChild<QObject *>(QStringLiteral("newFps"));
-        QVERIFY(oldFps && newFps);
+        QTRY_VERIFY(fps->isVisible());
+        QCOMPARE(fps->title(), QStringLiteral("Set new FPS"));
+        QCOMPARE(fps->transientParent(), window);
+        auto *oldFps = dialogItem("fpsWindow", "oldFps");
+        auto *newFps = dialogItem("fpsWindow", "newFps");
+        auto *ok = dialogItem("fpsWindow", "fpsOk");
+        QVERIFY(oldFps && newFps && ok);
+        QCOMPARE(oldFps->property("editText").toString(), QStringLiteral("23.976"));
+        QCOMPARE(newFps->property("editText").toString(), QStringLiteral("25"));
+        QCOMPARE(ok->property("text").toString(), QStringLiteral("Change FPS"));
+        QCOMPARE(dialogItem("fpsWindow", "fpsScale")->property("text").toString(),
+                 QStringLiteral("Every start and end time × 0.959"));
         oldFps->setProperty("editText", QStringLiteral("25"));
         newFps->setProperty("editText", QStringLiteral("50"));
-        QVERIFY(QMetaObject::invokeMethod(fps->findChild<QObject *>(QStringLiteral("fpsOk")), "clicked"));
+        QCOMPARE(dialogItem("fpsWindow", "fpsScale")->property("text").toString(),
+                 QStringLiteral("Every start and end time × 0.500"));
+        QVERIFY(QMetaObject::invokeMethod(ok, "click"));
         QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
         QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 10'000'000);
-        QVERIFY(!fps->isVisible());
-        // Text that is not a number keeps the window open and changes nothing.
-        fps->show();
-        newFps->setProperty("editText", QStringLiteral("."));
-        QVERIFY(QMetaObject::invokeMethod(fps->findChild<QObject *>(QStringLiteral("fpsOk")), "clicked"));
+        QTRY_VERIFY(!fps->isVisible());
+        // Text that is not a frame rate: said under its field, Change FPS
+        // off, Enter changes nothing; it opens again at legacy's values.
+        QVERIFY(QMetaObject::invokeMethod(root, "openSetNewFps"));
+        QTRY_VERIFY(fps->isVisible());
+        QCOMPARE(newFps->property("editText").toString(), QStringLiteral("25"));
+        for (const char *text : {".", "", "0", "0.0"}) {
+            newFps->setProperty("editText", QLatin1String(text));
+            QVERIFY2(dialogItem("fpsWindow", "newFpsProblem")->isVisible(), text);
+            QVERIFY2(!dialogItem("fpsWindow", "fpsScale")->isVisible(), text);
+            QVERIFY2(!ok->isEnabled(), text);
+        }
+        QCOMPARE(dialogItem("fpsWindow", "newFpsProblem")->property("text").toString(),
+                 QStringLiteral("Type a frame rate, such as 25."));
+        QTest::keyClick(fps, Qt::Key_Return);
         QVERIFY(fps->isVisible());
         QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
-        fps->close();
+        newFps->setProperty("editText", QStringLiteral(".5"));
+        QVERIFY(ok->isEnabled());
+        oldFps->setProperty("editText", QStringLiteral("."));
+        QVERIFY(dialogItem("fpsWindow", "oldFpsProblem")->isVisible());
+        QVERIFY(!ok->isEnabled());
+        QTest::keyClick(fps, Qt::Key_Escape);
+        QTRY_VERIFY(!fps->isVisible());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
     }
 
     void aFailedOpenPopsUpTheLogWindow()
@@ -24885,14 +24918,21 @@ private slots:
         auto &audio = application->audio();
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
-        auto *dialog = named("dummyVideoDialog");
-        QVERIFY(dialog);
+        // PU4-dummy-video: a window on DG1's frame, made at its first opening.
+        QVERIFY(!named("dummyVideoDialog"));
         auto *action = named("dummyVideoMenuItem")->property("action").value<QObject *>();
         QVERIFY(action);
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        auto *dialog = qobject_cast<QQuickWindow *>(named("dummyVideoDialog"));
+        QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("opened").toBool());
+        QCOMPARE(dialog->title(), QStringLiteral("Open dummy video"));
+        QCOMPARE(dialog->transientParent(), window);
+        QCOMPARE(dialog->property("defaultButton").value<QObject *>()->property("text").toString(), QStringLiteral("Open"));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
                  QStringLiteral("This gives 35964 frames"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("displayText").toString(),
+                 QStringLiteral("1920x1080 (HD 1080p)"));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyFps")->property("editText").toString(), QStringLiteral("23.976"));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 1920);
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyHeight")->property("value").toInt(), 1080);
@@ -24916,7 +24956,7 @@ private slots:
         QVERIFY(!dialogItem("dummyColourPopover", "alpha")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dummyPopover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
         QTRY_COMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&H0000FF&"));
-        QTest::keyClick(window, Qt::Key_Escape);
+        QTest::keyClick(dialog, Qt::Key_Escape); // the popover's, not the window's
         QTRY_VERIFY(!dummyPopover->property("visible").toBool());
         QVERIFY(dialog->property("visible").toBool());
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&HFEA32F&"));
@@ -24926,13 +24966,45 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(resolution, "activated", Q_ARG(int, 0)));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 640);
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyHeight")->property("value").toInt(), 480);
-        // a refused rate: logged, nothing opens
+        // a size that is no preset: Custom (PU4-dummy-video)
+        dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 1000);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("currentIndex").toInt(), -1);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("displayText").toString(), QStringLiteral("Custom"));
+        dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 640);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("currentIndex").toInt(), 0);
+        // the frame count follows the rate and the duration as they are typed
+        // (legacy: the defaults' once)
+        dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("25"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
+                 QStringLiteral("This gives 37500 frames"));
+        dialogItem("dummyVideoDialog", "dummyDuration")->setProperty("text", QStringLiteral("0:01:00.00"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
+                 QStringLiteral("This gives 1500 frames"));
+        // a refused rate or an unreadable duration: said under the field, the
+        // count hidden and Open off (legacy's "Invalid FPS value." after OK)
+        auto *openButton = dialogItem("dummyVideoDialog", "dummyVideoOpen");
+        QVERIFY(openButton->isEnabled());
         dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("10"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
-        QCOMPARE(application->log().lastMessage(), QStringLiteral("Invalid FPS value."));
+        QVERIFY(dialogItem("dummyVideoDialog", "dummyFpsProblem")->isVisible());
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFpsProblem")->property("text").toString(),
+                 QStringLiteral("Must be from 15 to 120."));
+        QVERIFY(!dialogItem("dummyVideoDialog", "dummyFrames")->isVisible());
+        QVERIFY(!openButton->isEnabled());
+        QTest::keyClick(dialog, Qt::Key_Return); // Enter presses no button that is off
+        QVERIFY(dialog->isVisible());
         QVERIFY(!application->video().loaded());
+        dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("120"));
+        QVERIFY(openButton->isEnabled());
+        dialogItem("dummyVideoDialog", "dummyDuration")->setProperty("text", QStringLiteral("25 minutes"));
+        QVERIFY(dialogItem("dummyVideoDialog", "dummyDurationProblem")->isVisible());
+        QVERIFY(!openButton->isEnabled());
+        // Esc closes it; it opens again at the defaults
+        QTest::keyClick(dialog, Qt::Key_Escape);
+        QTRY_VERIFY(!dialog->isVisible());
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(dialog->property("opened").toBool());
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
+                 QStringLiteral("This gives 35964 frames"));
         dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("25"));
         dialogItem("dummyVideoDialog", "dummyDuration")->setProperty("text", QStringLiteral("0:00:02.00"));
         dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 320);
