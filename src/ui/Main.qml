@@ -6823,7 +6823,7 @@ ApplicationWindow {
     KaraokeCheckDialog {
         id: karaokeCheckDialog
         app: root.app
-        anchors.centerIn: parent
+        settings: root.app.settings
     }
     Dialog {
         id: spellingNotice
