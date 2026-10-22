@@ -132,6 +132,9 @@ bool MatroskaController::start()
         path = m_hooks.videoPath();
     }
     // mkvpath = event.GetString() for File > Open; FFMS2 gets it as UTF-8.
+    m_source = QFileInfo(path).fileName();
+    if (m_hooks.started)
+        m_hooks.started();
     m_load->start(path.toStdString());
     emit stateChanged();
     return true;
