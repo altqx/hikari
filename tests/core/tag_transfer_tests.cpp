@@ -625,6 +625,42 @@ TEST(TagTransfer, LongStyleValuesAndTheirComparisonsAreBounded)
     EXPECT_TRUE(readOriginalTags(many, &style, styles).malformed);
 }
 
+TEST(TagTransfer, RunSettersCopiedAreBounded)
+{
+    // Two Styles alternating over 700 runs, each run's every component
+    // ended by one long spelled \r: each run would copy it per component.
+    StyleValues plain, a, b;
+    plain.name = u8"Default";
+    a.name = u8"A";
+    b.name = u8"B";
+    for (auto *s : {&a, &b}) {
+        s->bold = s->italic = s->underline = s->strikeOut = true;
+        s->primary = s->secondary = s->outline = s->back = {1, 2, 3, 0};
+        s->scaleX = s->scaleY = u8"120";
+        s->spacing = s->angle = s->outlineWidth = s->shadow = u8"3";
+    }
+    a.fontname = u8"FA";
+    a.fontsize = u8"30";
+    b.fontname = u8"FB";
+    b.fontsize = u8"31";
+    const std::vector<StyleValues> styles{plain, a, b};
+    std::u16string original = u"x";
+    for (int i = 0; i < 700; ++i)
+        original += i % 2 ? u"{\\rB}b" : u"{\\rA}a";
+    original += u"{\\" + std::u16string(8000, u' ') + u"r}y";
+    ASSERT_LE(original.size(), kMaxTagTransferUnits);
+    const auto tags = readOriginalTags(original, &plain, styles);
+    std::size_t copied = 0;
+    for (const auto &run : tags.runs)
+        for (const auto *setters : {&run.opens, &run.closes})
+            for (const auto &[component, setter] : *setters)
+                copied += setter.tag.size();
+    EXPECT_TRUE(tags.malformed) << copied;
+    // Two runs of them are read.
+    original = u"x{\\rA}a{\\rB}b{\\" + std::u16string(8000, u' ') + u"r}y";
+    EXPECT_EQ(readOriginalTags(original, &plain, styles).runs.size(), 2u);
+}
+
 TEST(TagTransfer, EscapedBracesCarryNothing)
 {
     // libass shows "\{" as a brace: no tag is read, Paste all copies it all.

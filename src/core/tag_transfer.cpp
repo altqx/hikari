@@ -742,16 +742,18 @@ std::vector<RunPlacement> validPlacements(const OriginalTags &tags, const Transl
 
 // The last tag before the `before`th to give `component` the value.
 TagSetter lastSetter(const History &history, const std::u16string &component, std::size_t before,
-                     const std::u16string &value)
+                     const std::u16string &value, std::size_t &work)
 {
     const auto it = history.find(component);
     if (it == history.end())
         return {};
     const auto &assignments = it->second;
     auto end = std::ranges::lower_bound(assignments, before, {}, &Assignment::order);
-    for (auto a = end; a != assignments.begin();)
+    for (auto a = end; a != assignments.begin();) {
+        work += 1 + value.size();
         if ((--a)->value == value)
             return {a->order, a->tag};
+    }
     return {};
 }
 
@@ -762,7 +764,7 @@ constexpr std::size_t kMaxTransformOpening = 1024;
 
 // The \t tags from the `from`th to `last`, since the last reset: what puts
 // back the transforms running after `last`.
-TagSetter transformsTo(const History &history, const TagSetter &last, std::size_t from)
+TagSetter transformsTo(const History &history, const TagSetter &last, std::size_t from, std::size_t &work)
 {
     const auto it = history.find(u"t");
     if (last.tag.empty() || it == history.end())
@@ -770,8 +772,10 @@ TagSetter transformsTo(const History &history, const TagSetter &last, std::size_
     const auto &assignments = it->second;
     const auto end = std::ranges::upper_bound(assignments, last.order, {}, &Assignment::order);
     auto begin = end;
-    while (begin != assignments.begin() && std::prev(begin)->order >= from && std::prev(begin)->tag.starts_with(u"\\t"))
+    while (begin != assignments.begin() && std::prev(begin)->order >= from && std::prev(begin)->tag.starts_with(u"\\t")) {
+        ++work;
         --begin;
+    }
     std::u16string tags;
     for (auto a = begin; a != end && tags.size() <= kMaxTransformOpening; ++a)
         tags += a->tag;
@@ -780,15 +784,17 @@ TagSetter transformsTo(const History &history, const TagSetter &last, std::size_
 
 // The first tag from the `from`th on to give `component` the value.
 TagSetter firstSetter(const History &history, const std::u16string &component, std::size_t from,
-                      const std::u16string &value)
+                      const std::u16string &value, std::size_t &work)
 {
     const auto it = history.find(component);
     if (it == history.end())
         return {};
     const auto &assignments = it->second;
-    for (auto a = std::ranges::lower_bound(assignments, from, {}, &Assignment::order); a != assignments.end(); ++a)
+    for (auto a = std::ranges::lower_bound(assignments, from, {}, &Assignment::order); a != assignments.end(); ++a) {
+        work += 1 + value.size();
         if (a->value == value)
             return {a->order, a->tag};
+    }
     return {};
 }
 
@@ -1005,13 +1011,17 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         run.rawEnd = lastSegment.rawEnd;
         run.text = projection.text.substr(start, end - start);
         bool closable = true;
+        // The lookups and what the run keeps (its setters spell the
+        // Original's tags, a long one per component) charged.
+        std::size_t work = unitsOf(run.differs) + run.text.size();
         for (const auto &[component, value] : run.differs) {
-            auto open = lastSetter(history, component, firstSegment.order, value);
+            auto open = lastSetter(history, component, firstSegment.order, value, work);
             if (component == u"t") {
                 // The transforms are all those still running, after any the
                 // leading block carries: the last alone is another state.
                 const auto leadingT = leadingSetters.find(component);
-                open = transformsTo(history, open, leadingT != leadingSetters.end() ? leadingT->second.order + 1 : 0);
+                open = transformsTo(history, open, leadingT != leadingSetters.end() ? leadingT->second.order + 1 : 0,
+                                    work);
                 closable = closable && open.tag.size() <= kMaxTransformOpening;
             } else if (component == u"fs" && open.tag.starts_with(u"\\fs")) {
                 // A relative size scales the current one: from the base it
@@ -1025,7 +1035,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                 return it != run.differs.end() ? it->second : valueIn(out.base, other);
             });
             const auto baseValue = valueIn(out.base, component);
-            TagSetter close = firstSetter(history, component, lastSegment.order, baseValue);
+            TagSetter close = firstSetter(history, component, lastSegment.order, baseValue, work);
             if (close.tag.empty()) {
                 if (const auto it = leadingSetters.find(component); it != leadingSetters.end())
                     close = {it->second.order, it->second.tag, false};
@@ -1035,7 +1045,13 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             closable = closable && !close.tag.empty();
             run.closes[component] = alone(std::move(close), component, baseValue,
                                           [&](const std::u16string &other) { return valueIn(out.base, other); });
+            work += run.opens[component].tag.size() + run.closes[component].tag.size();
+            if (!budget.spend(work))
+                return tooMuch();
+            work = 0;
         }
+        if (!budget.spend(work))
+            return tooMuch();
         // A run nothing can end (a \t the Original never resets) would go on
         // past the text it is placed on: it is not offered.
         if (!closable)
