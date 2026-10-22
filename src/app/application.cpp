@@ -1847,6 +1847,10 @@ QVariantList Application::reviewClose(const QString &then)
     return rows;
 }
 
+namespace {
+QString extensionFor(core::SubtitleFormat format); // with Save as's helpers below
+} // namespace
+
 void Application::resolveClose(const QVariantList &choices)
 {
     m_closing.clear();
@@ -1858,7 +1862,11 @@ void Application::resolveClose(const QVariantList &choices)
             continue;
         Closing c{id, row.value(QStringLiteral("save")).toBool(), 0, std::nullopt};
         if (c.save) {
-            const QString path = row.value(QStringLiteral("path")).toString();
+            QString path = row.value(QStringLiteral("path")).toString();
+            // A file picked for an Untitled row gets its format's extension,
+            // as Save as gives it (saveChosenFor).
+            if (const QString ext = extensionFor(session->document().format()); !path.isEmpty() && !path.endsWith(ext))
+                path += u'.' + ext;
             auto plan = m_files->prepareSave(
                 id, path.isEmpty() ? std::nullopt
                                    : std::optional(application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()}));
@@ -2404,6 +2412,11 @@ bool Application::compareWithFileOnDisk()
     const auto destination = target ? m_files->destination(*target) : std::nullopt;
     if (!destination || destination->value.empty())
         return false;
+    // Compared again (the bar stays): the earlier copy of the file goes, not
+    // to a tab of its own, and the file is read as it is now.
+    if (const auto reference = m_workspace.reference(); reference && !m_workspace.referenceIsTab())
+        if (const auto held = m_files->destination(*reference); held && held->value == destination->value)
+            closeDocument(*reference);
     if (!openReference(QString::fromStdString(destination->value)))
         return false;
     return compareWithReference();
@@ -2912,10 +2925,12 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 {
     // PU1-mkv-notices: the window stayed usable while the track was read. A
     // tab that is no longer the editing target, or whose Document changed
-    // since, keeps what was typed: the subtitles open in a new tab.
+    // since, keeps what was typed: the subtitles open in a new tab. A draft
+    // being typed doesn't move the revision, so a pending one counts too.
     if (!newTab && m_matroskaTarget) {
         auto *session = m_files->session(*m_matroskaTarget);
-        newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision;
+        newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision
+            || session->draftLine();
     }
     m_matroskaTarget.reset();
     if (newTab) {
