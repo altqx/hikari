@@ -105,6 +105,14 @@ class LineEditorOptionsTest : public QObject {
         for (QObject *o : root()->findChildren<QObject *>())
             if (o->objectName() == QLatin1String(name))
                 return o;
+        // PF1: the Settings window, once made, and what it holds.
+        auto *loader = root()->findChild<QObject *>(QStringLiteral("settingsLoader"));
+        if (auto *settings = loader ? loader->property("item").value<QObject *>() : nullptr) {
+            if (settings->objectName() == QLatin1String(name))
+                return settings;
+            if (auto *found = settings->findChild<QObject *>(QLatin1String(name)))
+                return found;
+        }
         return nullptr;
     }
     // Repeater delegates are not QObject children of the window: walk the items.
@@ -160,8 +168,7 @@ class LineEditorOptionsTest : public QObject {
         QVERIFY(check);
         QCOMPARE(check->property("checked").toBool(), expectedBefore);
         QVERIFY(QMetaObject::invokeMethod(check, "click"));
-        auto *footer = dialog->property("footer").value<QQuickItem *>();
-        auto *ok = findItem(footer, QStringLiteral("settingsOk"));
+        auto *ok = findItem(content, QStringLiteral("settingsOk")); // in the window's footer
         QVERIFY(ok && QMetaObject::invokeMethod(ok, "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
@@ -529,8 +536,7 @@ private slots:
         // Staged: the strip still has the two it had.
         QCOMPARE(buttons.count(), 2);
         QCOMPARE(buttons.button(0).name, QStringLiteral("One"));
-        auto *footer = dialog->property("footer").value<QQuickItem *>();
-        QVERIFY(QMetaObject::invokeMethod(findItem(footer, QStringLiteral("settingsOk")), "click"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("settingsOk")), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(buttons.count(), 2);
         QCOMPARE(buttons.button(0).name, QStringLiteral("Two"));

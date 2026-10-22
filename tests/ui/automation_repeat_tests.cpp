@@ -283,7 +283,7 @@ private slots:
         QCOMPARE(shown[0].value(QStringLiteral("count")).toInt(), 2);
     }
 
-    // Settings > Clear last answers forgets them and Repeat's record.
+    // Settings > Automation > Clear last answers forgets them and Repeat's record.
     void clearingTheAnswersEndsRepeat()
     {
         select(1);
@@ -297,7 +297,7 @@ private slots:
 
     // For review (HIKARI_SURFACE_SHOT_DIR; skipped without it), in the four
     // themes (ad2-<part>-<theme>.png): the Automation panel's Repeat last
-    // run with its tooltip, the Automation menu, Settings' Script dialogs
+    // run with its tooltip, the Automation menu, Settings > Automation's Script dialogs
     // group and the Clear last answers question.
     void screenshots()
     {
@@ -353,13 +353,17 @@ private slots:
             save(QStringLiteral("menu-") + code);
             QVERIFY(QMetaObject::invokeMethod(menu, "close"));
 
-            auto *dialog = named("settingsDialog");
-            QVERIFY(QMetaObject::invokeMethod(dialog, "openDialog", Q_ARG(QVariant, 0), Q_ARG(QVariant, QVariant())));
+            QVariant made;
+            QVERIFY(QMetaObject::invokeMethod(engine.rootObjects().first(), "settingsWindow", Q_RETURN_ARG(QVariant, made)));
+            auto *dialog = made.value<QObject *>();
+            QVERIFY(dialog);
+            QVERIFY(QMetaObject::invokeMethod(dialog, "openDialog", Q_ARG(QVariant, QStringLiteral("automation")),
+                                              Q_ARG(QVariant, QVariant())));
             QTRY_VERIFY(dialog->property("visible").toBool());
             auto *group = qobject_cast<QQuickItem *>(dialog->findChild<QObject *>(QStringLiteral("settingsScriptDialogsGroup")));
             QVERIFY(group);
             // The page scrolled to the group.
-            auto *page = dialog->findChild<QObject *>(QStringLiteral("settingsPageEditor"));
+            auto *page = dialog->findChild<QObject *>(QStringLiteral("settingsPageAutomation"));
             auto *flick = page->property("contentItem").value<QObject *>();
             QTRY_VERIFY(group->height() > 0);
             flick->setProperty("contentY", group->mapToItem(flick->property("contentItem").value<QQuickItem *>(),
@@ -368,9 +372,9 @@ private slots:
             auto *clear = dialog->findChild<QObject *>(QStringLiteral("settingsClearAnswers"));
             QVERIFY(clear->property("enabled").toBool());
             QVERIFY(QMetaObject::invokeMethod(clear, "clicked"));
-            auto *messages = named("messages");
             QQuickWindow *box = nullptr;
-            QTRY_VERIFY((box = messages->property("box").value<QQuickWindow *>()) && box->isVisible());
+            QTRY_VERIFY((box = qobject_cast<QQuickWindow *>(dialog->property("question").value<QObject *>())) &&
+                        box->isVisible());
             QVERIFY(QTest::qWaitForWindowExposed(box));
             QTest::qWait(300);
             QVERIFY(box->grabWindow().save(out + QStringLiteral("/ad2-clear-answers-") + code + QStringLiteral(".png")));

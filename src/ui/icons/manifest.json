@@ -421,8 +421,7 @@
     "videoonstime.png"
    ],
    "surfaces": [
-    "menu:video",
-    "panel-menu"
+    "menu:video"
    ]
   },
   {
@@ -547,8 +546,7 @@
    "surfaces": [
     "video-transport",
     "video-fullscreen",
-    "audio-box",
-    "panel-menu"
+    "audio-box"
    ]
   },
   {
@@ -2870,8 +2868,7 @@
    "mirror": false,
    "legacy": [],
    "surfaces": [
-    "video-context-menu",
-    "visual-tools"
+    "video-context-menu"
    ]
   },
   {
@@ -3402,8 +3399,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "ui-font",
@@ -3414,8 +3410,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "renderer",
@@ -3426,8 +3421,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "video-seek",
@@ -3438,8 +3432,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "audio-device",
@@ -3450,8 +3443,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "audio-delay",
@@ -3462,8 +3454,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "theme",
@@ -3474,8 +3465,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "accent-colour",
@@ -3486,8 +3476,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "ui-colours",
@@ -3498,8 +3487,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "restore-default",
@@ -3510,8 +3498,29 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
+  },
+  {
+   "role": "settings-grid",
+   "file": "settings-grid.svg",
+   "label": "Subtitle grid",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
+  },
+  {
+   "role": "notices",
+   "file": "notices.svg",
+   "label": "Notices",
+   "accent": true,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "settings-dialog"
+   ]
   },
   {
    "role": "paste-selection-translation",

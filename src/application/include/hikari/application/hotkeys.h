@@ -250,6 +250,13 @@ public:
     // 4 Editor, 5 Video, 6 Audio; AM1: 7 Automation (the macros' rows). The
     // selection goes to the first shown row.
     void filter(int mode);
+    // PF1 (#225): the Hotkeys page's search, with the filter: only the rows
+    // whose Function or Hotkey column holds `text` (ASCII letters in any
+    // case; the macros' rows also by their script and macro, `also`) show.
+    // Empty shows every row the filter shows. The selection goes to the
+    // first shown row. Edits, Undo and Redo search again.
+    void search(std::string text, const std::function<std::string(const Row &)> &also = {});
+    const std::string &searchText() const { return m_search; }
     // GetSelection: the selected row, or -1.
     int selection() const;
     // SetSelection of a shown position.
@@ -277,6 +284,10 @@ public:
     void map(int row, const std::string &accel, int type, HotkeyAnswer answer, const HotkeyMap &live);
     // OnResetHotkey / OnDeleteHotkey.
     void reset(int row, const HotkeyMap &live);
+    // PF1-staged-reset: every row back to its default binding, one step of
+    // the history ("Reset page" on the Hotkeys page); nothing when every
+    // row has it already.
+    void resetAll(const HotkeyMap &live);
     void remove(int row, const HotkeyMap &live);
     // Ctrl+Z / Ctrl+Y in the list.
     void undo();
@@ -297,6 +308,9 @@ private:
     void rebuildFiltered();
     int findShown(int row) const; // FindId
     void moveInHistory(int to);
+    // After an edit, while searching: the rows matching their bindings now,
+    // the selected row kept if it still matches.
+    void rerunSearch();
     std::vector<HotkeyId> conflicts(int row, const std::string &accel) const;
 
     HotkeyMap &m_copy;
@@ -307,7 +321,10 @@ private:
     bool m_modified = false;
     int m_sel = 0; // a position in m_filtered; -1 for none
     int m_filterMode = 0;
+    std::string m_search; // lower case
+    std::function<std::string(const Row &)> m_searchAlso;
     bool m_isFiltered = false;
+    bool shownNow(const Row &r) const;
     int findKey(int position) const; // FindKey: the row at a shown position, or -1
 };
 

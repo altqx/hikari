@@ -487,6 +487,102 @@ TEST(Hotkeys, FilterModesAndSelection)
     EXPECT_EQ(list.shown().size(), 237u);
 }
 
+// PF1 (#225): the Hotkeys page's search, within the filter, by the
+// Function or Hotkey column in any case (the macros' rows also by script
+// and macro, `also`).
+TEST(Hotkeys, SearchNarrowsTheFilter)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    const auto live = defaultHotkeys();
+    list.build(live);
+    list.search("gLOBAL hISTORY");
+    ASSERT_EQ(list.shown().size(), 1u);
+    EXPECT_EQ(list.row(list.selection()).text, "Global History");
+    list.search("ctrl-shift-h"); // the Hotkey column
+    EXPECT_TRUE(std::ranges::any_of(list.shown(), [&](int i) { return list.row(i).text == "Global History"; }));
+    // Within the filter: History is no Video shortcut.
+    list.filter(5);
+    EXPECT_TRUE(std::ranges::none_of(list.shown(), [&](int i) { return list.row(i).text == "Global History"; }));
+    list.filter(0);
+    list.search("no such function");
+    EXPECT_TRUE(list.shown().empty());
+    list.search("my script", [](const HotkeyList::Row &r) { return r.text == "Global Save" ? "My Script" : ""; });
+    ASSERT_EQ(list.shown().size(), 1u);
+    EXPECT_EQ(list.row(list.shown()[0]).text, "Global Save");
+    list.search("");
+    EXPECT_EQ(list.shown().size(), list.rowCount()); // every row again
+}
+
+// PF1-staged-reset: "Reset page" on the Hotkeys page, every row back to
+// its default in one step of the history.
+TEST(Hotkeys, ResetAllIsOneStep)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    const auto live = defaultHotkeys();
+    list.build(live);
+    const int history = list.find("Global History");
+    const int open = list.find("Global Open subtitles");
+    list.map(history, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Cancel, live);
+    list.remove(open, live);
+    list.filter(5); // History and Open hidden by the filter
+    list.resetAll(live);
+    EXPECT_EQ(list.row(history).accel, "Ctrl-Shift-H");
+    EXPECT_EQ(list.row(open).accel, "Ctrl-O");
+    EXPECT_EQ(copy.at(HotkeyId{kHistory, GlobalHotkey}).accel, "Ctrl-Shift-H");
+    EXPECT_EQ(list.row(history).visible, 0); // still filtered out
+    list.undo();
+    EXPECT_EQ(list.row(history).accel, "Ctrl-Shift-J");
+    EXPECT_EQ(list.row(open).accel, "");
+    list.redo();
+    EXPECT_EQ(list.row(open).accel, "Ctrl-O");
+}
+
+// A search by the Hotkey column follows the reset bindings.
+TEST(Hotkeys, ResetAllRerunsTheSearch)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    const auto live = defaultHotkeys();
+    list.build(live);
+    const int history = list.find("Global History");
+    list.map(history, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Cancel, live);
+    list.search("ctrl-shift-j");
+    ASSERT_TRUE(std::ranges::any_of(list.shown(), [&](int i) { return i == history; }));
+    list.resetAll(live);
+    EXPECT_TRUE(std::ranges::none_of(list.shown(), [&](int i) { return i == history; }));
+    list.search("ctrl-shift-h");
+    EXPECT_TRUE(std::ranges::any_of(list.shown(), [&](int i) { return i == history; }));
+}
+
+// So do Map hotkey, Delete, Undo and Redo; the selection stays on the
+// edited row while it still matches.
+TEST(Hotkeys, EditsRerunTheSearch)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    const auto live = defaultHotkeys();
+    list.build(live);
+    const int history = list.find("Global History");
+    const auto shown = [&](int row) { return std::ranges::any_of(list.shown(), [&](int i) { return i == row; }); };
+    list.search("history");
+    list.map(history, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Cancel, live);
+    EXPECT_TRUE(shown(history)); // still "History"
+    EXPECT_EQ(list.selection(), history);
+    list.search("ctrl-shift-j");
+    ASSERT_TRUE(shown(history));
+    list.remove(history, live);
+    EXPECT_FALSE(shown(history));
+    list.undo();
+    EXPECT_TRUE(shown(history));
+    list.redo();
+    EXPECT_FALSE(shown(history));
+    list.undo();
+    list.map(history, "Ctrl-Shift-K", GlobalHotkey, HotkeyAnswer::Cancel, live);
+    EXPECT_FALSE(shown(history));
+}
+
 TEST(Hotkeys, MapSetsTheBindingAndCommitWritesTheCopy)
 {
     HotkeyMap copy;

@@ -122,7 +122,7 @@ target_sources(hikari_ui PRIVATE title_bars.cpp title_bars.h)
 if(WIN32)
     target_link_libraries(hikari_ui PRIVATE dwmapi)
 endif()
-qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AppearancePage.qml SettingsSection.qml SettingsRow.qml FocusRing.qml PanelFocusMark.qml DockSeparator.qml DockGroup.qml DockFloatingWindow.qml)
 # K2: the controls style (Fusion with the theme's control outlines), chosen by
 # theme::chooseControlsStyle and imported as a static plugin by theme.cpp.
 add_subdirectory(style)

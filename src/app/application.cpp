@@ -5487,8 +5487,12 @@ void Application::addAppearance(QVariantMap &values) const
         values.insert(qs(id), m_settings->value(qs(id)));
 }
 
-void Application::applySettings(const QVariantMap &values)
+void Application::applySettings(const QVariantMap &values, bool resetAll)
 {
+    // PF1-staged-reset: "Reset all settings…" takes effect here, before the
+    // staged values (every page's defaults, and the changes made since).
+    if (resetAll)
+        resetAllSettings();
     // K2: the appearance, saved when it differs; the theme follows at once.
     for (const auto id : appearanceSettings()) {
         const auto found = values.constFind(qs(id));
@@ -5562,19 +5566,79 @@ void Application::destroyDialogs()
 
 QVariantMap Application::resetSettings(const QVariantMap &values)
 {
+    // PF1-staged-reset: "Reset all settings…" shows every page's defaults
+    // (as ResetDefault refreshes the controls, its defects included) and
+    // changes nothing until OK or Apply (applySettings with resetAll); the
+    // appearance and the hotkeys stay as they are.
+    application::MemorySettingsStorage storage;
+    const application::Settings defaults(storage);
+    auto refreshed = toVariant(application::refreshOptionsDialogAfterReset(defaults, m_optionsLists, fromVariant(values)));
+    const auto keep = [&](std::string_view id) {
+        if (const auto found = values.constFind(qs(id)); found != values.cend())
+            refreshed.insert(qs(id), *found);
+    };
+    for (const auto id : appearanceSettings())
+        keep(id);
+    // The Appearance page's bound options too: the program font and its size.
+    for (const auto &b : application::optionsBindings())
+        if (b.page == application::OptionsPage::Appearance) {
+            keep(b.setting);
+            if (!b.sizeSetting.empty())
+                keep(b.sizeSetting);
+        }
+    refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
+    return refreshed;
+}
+
+QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QString &page)
+{
+    // PF1-staged-reset: "Reset page", the page's controls at their defaults,
+    // staged like any change. The Appearance page's settings too (K2's,
+    // previewed by the dialog), and the General page's questions hidden with
+    // "Don't ask again". The Hotkeys page's is the list's (optionsResetAll).
+    const auto which = application::optionsPageOfId(page.toStdString());
+    if (!which)
+        return values;
+    application::MemorySettingsStorage storage;
+    const application::Settings defaults(storage);
+    // Conversion: the default catalog loaded and its Styles listed, as
+    // choosing it does, so the default Style is found among them.
+    if (*which == application::OptionsPage::Conversion)
+        if (const auto load = application::optionsCatalogToLoad(defaults, m_optionsLists)) {
+            m_styleManager->chooseCatalog(QString::fromStdString(*load));
+            m_optionsLists.currentCatalog = *load;
+            m_optionsLists.styles = stdList(m_styleManager->storeStyles());
+        }
+    QVariantMap out = values;
+    const auto refreshed =
+        toVariant(application::refreshOptionsDialogAfterReset(defaults, m_optionsLists, fromVariant(values), which));
+    for (auto it = refreshed.cbegin(); it != refreshed.cend(); ++it)
+        out.insert(it.key(), it.value());
+    if (*which == application::OptionsPage::Appearance)
+        for (const auto id : appearanceSettings())
+            out.insert(qs(id), ui::SettingsStore::toVariant(defaults.value(id)));
+    if (*which == application::OptionsPage::General)
+        out.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
+    return out;
+}
+
+void Application::resetAllSettings()
+{
     // config::ResetDefault resets every option in memory. What long-lived
     // legacy objects hold is not reset, and they write it back later:
-    // - HikariSubFrame's recent subtitles, video and audio lists (SetRecent
-    //   at the next addition, OnClose at exit), kept here at once;
-    // - the hotkey files (Hotkeys.txt, AudioHotkeys.txt): Hkeys.ResetDefaults()
-    //   (below) resets the bindings in memory only; they are written when
-    //   legacy next saves them.
+    // HikariSubFrame's recent subtitles, video and audio lists (SetRecent at
+    // the next addition, OnClose at exit), kept here at once.
+    // PF1-staged-reset: the hotkeys are left as they are (legacy's
+    // Hkeys.ResetDefaults() reset them in memory); the Hotkeys page's "Reset
+    // page" restores them.
     auto &store = m_settings->settings();
     std::vector<std::pair<std::string_view, application::SettingValue>> kept;
     // The appearance is not an option: ResetDefault leaves it, as it left the theme.
     std::vector<std::string_view> keep{"recent.subtitles", "recent.subtitlesOpened", "recent.video", "recent.audio",
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
-                                       application::kAudioHotkeysSetting};
+                                       application::kAudioHotkeysSetting,
+                                       // PF1: the Settings window's page shown last, no option either
+                                       "workspace.settingsPage"};
     const auto appearance = appearanceSettings();
     keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)
@@ -5619,15 +5683,11 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
     // and the spell checker its dictionary (no SpellChecker::Destroy); the
     // Grid and the menus read the reset options.
     emit spellingChanged();
-    // O2: Hkeys.ResetDefaults(), then the Hotkeys list again.
-    m_hotkeys->resetDefaults();
-    auto refreshed =
-        toVariant(application::refreshOptionsDialogAfterReset(m_settings->settings(), m_optionsLists, fromVariant(values)));
-    // the Appearance page keeps what it shows
-    for (const auto id : appearanceSettings())
-        if (const auto found = values.constFind(qs(id)); found != values.cend())
-            refreshed.insert(qs(id), *found);
-    return refreshed;
+}
+
+QStringList Application::settingsStyles() const
+{
+    return qList(m_optionsLists.styles);
 }
 
 QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int index)

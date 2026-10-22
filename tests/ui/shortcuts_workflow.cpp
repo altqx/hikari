@@ -39,22 +39,22 @@ protected:
             mouseClick("mainWindow/fileMenuBarItem");
             wait(300ms);
             mouseClick("mainWindow/settingsMenuItem");
-            if (waitForItem("mainWindow/settingsPages", 5s)) {
-                setStringProperty("mainWindow/settingsPages", "currentIndex", "7"); // Hotkeys (after Themes)
+            if (waitForItem("settingsDialog/settingsPages", 5s)) {
+                setStringProperty("settingsDialog/settingsPages", "currentIndex", "9"); // Hotkeys, the last page (PF1)
                 wait(300ms);
-                observed.push_back(getStringProperty("mainWindow/hotkeyList", "selectedRow")); // 1: the first row
-                mouseClick("mainWindow/hotkeyMap");
+                observed.push_back(getStringProperty("settingsDialog/hotkeyList", "selectedRow")); // 1: the first row
+                mouseClick("settingsDialog/hotkeyMap");
                 // PK1 (#301): the capture opens as a popover at Map hotkey,
-                // in the dialog's window; wait until it is shown.
-                for (int i = 0; i < 100 && getStringProperty("mainWindow/settingsHotkeyMapping", "opened") != "true"; ++i)
+                // in the Settings window (PF1); wait until it is shown.
+                for (int i = 0; i < 100 && getStringProperty("settingsDialog/settingsHotkeyMapping", "opened") != "true"; ++i)
                     wait(100ms);
-                if (waitForItem("mainWindow/hotkeyMappingText", 5s)) {
-                    observed.push_back(getStringProperty("mainWindow/settingsHotkeyMapping", "title")); // 2
-                    enterKey("mainWindow/hotkeyMappingKeys", Qt::Key_J,
+                if (waitForItem("settingsDialog/hotkeyMappingText", 5s)) {
+                    observed.push_back(getStringProperty("settingsDialog/settingsHotkeyMapping", "title")); // 2
+                    enterKey("settingsDialog/hotkeyMappingKeys", Qt::Key_J,
                              spix::KeyModifiers::Control | spix::KeyModifiers::Shift);
                     wait(300ms);
-                    observed.push_back(getStringProperty("mainWindow/settingsHotkeyMapping", "opened")); // 3: closed
-                    mouseClick("mainWindow/settingsOk");
+                    observed.push_back(getStringProperty("settingsDialog/settingsHotkeyMapping", "opened")); // 3: closed
+                    mouseClick("settingsDialog/settingsOk");
                     wait(500ms);
                     mouseClick("mainWindow/editingGrid");
                     enterKey("mainWindow/editingGrid", Qt::Key_W, spix::KeyModifiers::Control);

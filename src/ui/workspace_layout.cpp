@@ -178,6 +178,12 @@ void WorkspaceLayoutController::checkModal()
         auto *quick = qobject_cast<QQuickWindow *>(window);
         if (!quick || !quick->isVisible())
             continue;
+        // A modal window of its own (DG1's frame: PF1's Settings window, PK1's
+        // message boxes); its showing and hiding move the keyboard.
+        if (quick->modality() != Qt::NonModal) {
+            open = true;
+            continue;
+        }
         // A popup opening or closing moves its item in or out of the
         // overlay, with or without the keyboard.
         QQuickItem *overlay = overlayOf(quick);

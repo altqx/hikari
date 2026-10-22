@@ -1485,7 +1485,7 @@ private slots:
         QTRY_VERIFY(frame->custom());
         auto *dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6); // Appearance
+        showSettingsPage("appearance");
         auto *useSystem = dialogItem("settingsDialog", "appearanceSystemTitleBar");
         QVERIFY(useSystem);
         QTRY_VERIFY(useSystem->isVisible());
@@ -2954,10 +2954,19 @@ private slots:
                  QStringLiteral("{note}def"));
     }
 
+    // PF1: the Settings window, made at its first opening.
+    QObject *settingsWindow() const
+    {
+        QVariant made;
+        QMetaObject::invokeMethod(engine->rootObjects().first(), "settingsWindow", Q_RETURN_ARG(QVariant, made));
+        return made.value<QObject *>();
+    }
     // E1: a control inside a dialog (popups live in the overlay).
     QQuickItem *dialogItem(const char *dialog, const char *name) const
     {
-        auto *popup = engine->rootObjects().first()->findChild<QObject *>(QLatin1String(dialog));
+        auto *popup = qstrcmp(dialog, "settingsDialog") == 0
+                          ? settingsWindow()
+                          : engine->rootObjects().first()->findChild<QObject *>(QLatin1String(dialog));
         auto *content = popup ? popup->property("contentItem").value<QQuickItem *>() : nullptr;
         return content ? findItem(content, QLatin1String(name)) : nullptr;
     }
@@ -11526,17 +11535,34 @@ private slots:
         }
     }
 
-    // O1: File > Settings, the legacy Options dialog over the settings registry.
-    QQuickItem *settingsButton(const char *name) const
+    // O1: File > Settings, the legacy Options dialog over the settings
+    // registry; PF1: the Settings window, its buttons in its footer.
+    QQuickItem *settingsButton(const char *name) const { return dialogItem("settingsDialog", name); }
+    // PF1: the page with `id` shown ("general", "video", "hotkeys", ...).
+    void showSettingsPage(const char *id)
     {
-        auto *popup = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsDialog"));
-        auto *footer = popup ? popup->property("footer").value<QQuickItem *>() : nullptr;
-        return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+        auto *pages = dialogItem("settingsDialog", "settingsPages");
+        QVERIFY(pages);
+        const auto list = settingsWindow()->property("pages").toList();
+        for (qsizetype i = 0; i < list.size(); ++i)
+            if (list[i].toMap().value(QStringLiteral("id")).toString() == QLatin1String(id)) {
+                pages->setProperty("currentIndex", int(i));
+                return;
+            }
+        QFAIL(id);
+    }
+    // PF1: the Settings window's question (PK1's message box) answered.
+    void answerSettingsQuestion(const char *choice)
+    {
+        QObject *box = nullptr;
+        QTRY_VERIFY((box = settingsWindow()->property("question").value<QObject *>()) && box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QString::fromLatin1(choice))));
+        QTRY_VERIFY(!box->property("visible").toBool());
     }
     QObject *openSettings()
     {
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
+        auto *dialog = settingsWindow();
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("settingsMenuItem"));
         if (!dialog || !menuItem || !QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"))
             return nullptr;
@@ -11564,7 +11590,7 @@ private slots:
         // tests (Windows, HIKARI_WITH_VSFILTERMOD), never elsewhere (none at
         // all on Linux). The unset setting shows libass. Checked on the Video
         // page, where the group's visibility is its own.
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 3); // Video
+        showSettingsPage("video");
         QTRY_VERIFY(dialogItem("settingsDialog", "setting_video.zoomPercent")->isVisible());
 #ifdef HIKARI_WITH_VSFILTERMOD
         QCOMPARE(dialog->property("renderers").toStringList(),
@@ -11580,7 +11606,6 @@ private slots:
         QVERIFY(!dialogItem("settingsDialog", "settingsRendererGroup")->isVisible());
         QVERIFY(!settingsValues(dialog).contains(QStringLiteral("video.subtitleProvider")));
 #endif
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 0);
         // "Do not warn about resolution mismatch" applies on Apply, not before.
         QSignalSpy askChanged(application, &app::Application::askForBadResolutionChanged);
         auto *noWarning = dialogItem("settingsDialog", "setting_video.dontAskForBadResolution");
@@ -11626,27 +11651,43 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(settings.boolean("grid.changeActiveOnSelection"));
-        // Set default resets every option at once, even when then cancelled;
-        // the recent list is kept, as legacy writes it back at exit.
+        // PF1-staged-reset: "Reset all settings…" asks, then shows every
+        // page's defaults, and Cancel keeps the settings as they were.
         const auto recent = application->recentEntries();
         QVERIFY(openSettings());
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("cancel"); // the question's default
+        QVERIFY(dialogItem("settingsDialog", "setting_video.dontAskForBadResolution")->property("checked").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
         QVERIFY(!dialogItem("settingsDialog", "setting_video.dontAskForBadResolution")->property("checked").toBool());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!application->askForBadResolution());
+        QCOMPARE(askChanged.count(), 1);
+        QCOMPARE(settings.integer("autosave.maxFiles"), 2);
+        QVERIFY(settings.boolean("grid.duplicationDontChangeSelection"));
+        // OK after it resets every option; the recent list is kept, as
+        // legacy writes it back at exit.
+        QVERIFY(openSettings());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(application->askForBadResolution());
         QCOMPARE(askChanged.count(), 2);
         QCOMPARE(settings.integer("autosave.maxFiles"), 3);
         QVERIFY(!settings.contains("grid.duplicationDontChangeSelection"));
-        QVERIFY(!settings.contains("program.tabTextMaxChars"));
         QCOMPARE(application->recentEntries(), recent);
         QCOMPARE(settings.list("recent.subtitles").size(), qsizetype(recent.size()));
         QVERIFY(application->closeEditingTarget());
     }
 
-    // O1: every legacy ConOpt control is on its page, in the legacy order, with
-    // the legacy label (OptionsDialog.cpp opts[] arrays, OptionsPanels.cpp).
+    // O1: every legacy ConOpt control is on a page (OptionsDialog.cpp opts[]
+    // arrays, OptionsPanels.cpp); PF1-pages: on the page and in the order of
+    // the approved page map, with its label.
     void settingsDialogPagesBindTheLegacyOptions()
     {
         auto *dialog = openSettings();
@@ -11656,105 +11697,99 @@ private slots:
             const char *setting;
             const char *label; // a check box's text (nullptr: not checked)
         };
+        // PF1-pages: the flat pages, their sections in the page's order, the
+        // shorter labels.
         const std::vector<std::pair<const char *, std::vector<Control>>> pages{
-            {"settingsPageEditor",
+            {"settingsPageGeneral",
              {{"program.language", nullptr},
-              {"editor.dictionaryLanguage", nullptr},
-              {"notices.toasts", "Show notices as toasts (off: in the Log only)"}, // PK1
-              {"automation.fillLastAnswers", "Fill in my last answers"}, // AD2
-              {"grid.loadSortedSubs", "Open sorted subtitles"},
-              {"editor.spellchecker", "Turn spell checking"},
-              {"grid.autoSelectLinesFromLastTab", "Select the line with the time line\nof the previous active tab"},
-              {"editor.suggestionsOnDoubleClick", "Show suggestions by double-clicking on misspell"},
               {"subtitles.openInNewTab", "Always open subtitles in a new tab"},
-              {"editor.dontGoToNextLineOnTimesEdit", "Stay on selected line when editing times"},
-              {"video.disableLiveEditing", "Turn off edits preview on video\n(re-opening tab is required)"},
-              {"grid.setVisibleLineAfterFullScreen", "Turn searching of visible line\nafter switching from full screen"},
+              {"grid.loadSortedSubs", "Open sorted subtitles"},
               {"shiftTimes.changeValuesWithTab", "Synchronize time shifting window in all tabs"},
-              {"grid.changeActiveOnSelection", "Change active line after add to selection"},
-              {"translation.showOriginal", "Show original in translator mode"},
-              {"translation.hideOriginalOnVideo", "Hide original on video in translator mode"},
-              {"grid.duplicationDontChangeSelection", "Do not change selections when duplicating dialogue lines"},
-              {"grid.dontCenterActiveLine", "Do not vertically center the active line in the subtitle grid"},
-              {"grid.autoHideColumns", "Hide empty columns in the subtitle grid"}, // GR3
+              {"program.tabTextMaxChars", nullptr},
+              {"editor.saveAfterCharacterCount", nullptr},
+              {"autosave.maxFiles", nullptr},
+              {"notices.toasts", "Show notices as toasts"}, // PK1
+              {"fonts.externalDirectory", nullptr}}},
+            {"settingsPageAppearance", {{"program.font", nullptr}, {"program.fontSize", nullptr}}},
+            {"settingsPageLineEditor",
+             {{"editor.spellchecker", "Check spelling"},
+              {"editor.dictionaryLanguage", nullptr},
+              {"editor.suggestionsOnDoubleClick", "Show suggestions on double-click"},
+              {"editor.hideTags", "Hide tags"}, // LE3-tags-shown
+              {"editor.timesToFramesSwitch", "Show video frames instead of times"}, // LE2
+              {"editor.dontGoToNextLineOnTimesEdit", "Stay on the line when editing times"},
               {"editor.allowNumpadHotkeys", "Use numpad shortcuts in text fields"},
-              {"video.visualWarningsOff", "Turn off visual tools warning"},
-              {"video.dontAskForBadResolution", "Do not warn about resolution mismatch"},
-              {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
+              {"translation.showOriginal", "Show the original"},
+              {"translation.hideOriginalOnVideo", "Hide the original on the video"}}},
+            {"settingsPageGrid",
+             {{"grid.font", nullptr},
+              {"grid.fontSize", nullptr},
+              {"grid.autoSelectLinesFromLastTab", "Select the line at the previous tab's time"},
+              {"grid.changeActiveOnSelection", "Change the active line when adding to the selection"},
+              {"grid.duplicationDontChangeSelection", "Keep the selection when duplicating lines"},
+              {"grid.dontCenterActiveLine", "Don't center the active line"},
+              {"grid.setVisibleLineAfterFullScreen", "Find the visible line after leaving full screen"},
+              {"grid.autoHideColumns", "Hide empty columns"}, // GR3
+              {"grid.calcSpacesAndPunctuationForWraps", "Count spaces and punctuation for wraps"},
+              {"grid.calcSpacesAndPunctuationForCps", "Count spaces and punctuation for CPS"},
+              {"grid.insertStartOffset", nullptr},
+              {"grid.insertEndOffset", nullptr},
+              {"grid.tagsSwapCharacter", nullptr}}},
+            {"settingsPageVideo",
+             {{"video.pauseOnClick", "Left mouse button pauses video"},
+              {"video.fullScreenOnStart", "Open video from the context menu in full screen"},
+              {"video.openAtActiveLine", "Open video at the active line's time"},
+              {"video.moveToActiveLine", nullptr}, // VF1, the Video panel's Seek on
+              {"video.playAfterSelection", nullptr}, // and Then play
+#ifdef _WIN32
+              {"video.playbackPlayer", nullptr}, // W1, Windows only
+#endif
+              {"video.subtitleProvider", nullptr}, // W2
+              {"video.disableLiveEditing", "Turn off the edits preview"},
+              {"video.ffms2Seeking", nullptr},
+              {"video.gpuConversion", "Convert video colours on the GPU"},
+              {"video.acceptedAudioStream", nullptr},
+              {"video.zoomPercent", nullptr},
+              {"video.visualWarningsOff", "Turn off the visual tools warning"},
+              {"video.dontAskForBadResolution", "Don't warn about a resolution mismatch"},
               // Y4-playres-ask, the rewrite's own
-              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"},
-              // LE2: the Times/Frames switch, out of the Line editor
-              {"editor.timesToFramesSwitch", "Show video frames instead of times in the line editor and the subtitle grid"},
-              // LE3-tags-shown
-              {"editor.hideTags", "Hide tags in the line editor"}}},
+              {"automation.scriptResolutionFromVideo", "Set a missing script resolution from the video without asking"}}},
+            {"settingsPageAudio",
+             {{"audio.outputDevice", nullptr}, // H2-output-device
+#ifdef _WIN32
+              {"audio.outputHostApi", nullptr}, // A4-wasapi-default, Windows only
+#endif
+              {"audio.delay", nullptr},
+              {"audio.markPlayTime", nullptr},
+              {"audio.leadInValue", nullptr},
+              {"audio.leadOutValue", nullptr},
+              {"audio.lockScrollOnCursor", "Follow audio during playback"},
+              {"audio.dontPlayWhenLineChanges", "Don't play after changing the line"},
+              {"audio.autoFocus", "Hotkeys follow the panel under the pointer"}, // KB1
+              {"audio.drawTimeCursor", "Show the time beside the cursor"},
+              {"audio.drawSecondaryLines", "Show seconds markers"},
+              {"audio.drawSelectionBackground", "Show the selection background"},
+              {"audio.drawVideoPosition", "Show the video position"},
+              {"audio.drawKeyframes", "Show keyframes"},
+              {"audio.lineBoundariesThickness", nullptr},
+              {"audio.inactiveLinesDisplayMode", nullptr},
+              {"audio.snapToKeyframes", "Snap to keyframes"},
+              {"audio.snapToOtherLines", "Snap to other lines"},
+              {"audio.mergeEveryNWithSyllable", "Merge every \"n\" with the previous syllable"},
+              {"audio.karaokeMoveOnClick", "Move the syllable line after a click"},
+              {"audio.ramCache", "Load audio into RAM"},
+              {"audio.cacheFilesLimit", nullptr}}},
             {"settingsPageConversion",
              {{"convert.styleCatalog", nullptr},
               {"convert.style", nullptr},
               {"convert.fps", nullptr},
-              {"convert.fpsFromVideo", "FPS from video"},
+              {"convert.fpsFromVideo", "Frame rate from the video"},
               {"convert.newEndTimes", "New end times"},
-              {"convert.showSettings", "Show window before conversion"},
               {"convert.timePerCharacter", nullptr},
               {"convert.resolutionWidth", nullptr},
               {"convert.resolutionHeight", nullptr},
-              {"convert.assTagsToInsertInLine", nullptr}}},
-            {"settingsPageEditorAdvanced",
-             {{"grid.calcSpacesAndPunctuationForWraps", "Calculate spaces and punctation characters for wraps"},
-              {"grid.calcSpacesAndPunctuationForCps", "Calculate spaces and punctation characters for CPS"},
-              {"editor.saveAfterCharacterCount", nullptr},
-              {"autosave.maxFiles", nullptr},
-              {"grid.insertStartOffset", nullptr},
-              {"grid.insertEndOffset", nullptr},
-              {"grid.tagsSwapCharacter", nullptr},
-              {"program.tabTextMaxChars", nullptr},
-              {"automation.traceLevel", nullptr},
-              {"grid.font", nullptr},
-              {"grid.fontSize", nullptr},
-              {"program.font", nullptr},
-              {"program.fontSize", nullptr},
-              {"automation.loadingMethod", nullptr},
-              {"fonts.externalDirectory", nullptr}}},
-            {"settingsPageVideo",
-             {{"video.fullScreenOnStart", "Open video from context menu on full screen"},
-              {"video.pauseOnClick", "Left mouse button pauses video"},
-              {"video.openAtActiveLine", "Open video with time of active line"},
-              {"video.gpuConversion", "Convert video colours on the GPU (requires reloading)"},
-              {"video.moveToActiveLine", nullptr}, // VF1, the Video panel's Seek on
-              {"video.playAfterSelection", nullptr}, // and Then play
-              {"video.acceptedAudioStream", nullptr},
-              {"video.ffms2Seeking", nullptr},
-              {"video.subtitleProvider", nullptr}, // W2: shown before the zoom, bound last
-#ifdef _WIN32
-              {"video.playbackPlayer", nullptr}, // W1, Windows only
-#endif
-              {"video.zoomPercent", nullptr}}},
-            {"settingsPageAudio",
-             {{"audio.drawTimeCursor", "Show time next to cursor"},
-              {"audio.drawSecondaryLines", "Show seconds markers"},
-              {"audio.drawSelectionBackground", "Show background selection"},
-              {"audio.drawVideoPosition", "Show video position"},
-              {"audio.drawKeyframes", "Show keyframes"},
-              {"audio.lockScrollOnCursor", "Follow audio during playback"},
-              {"audio.autoFocus", "Hotkeys follow the panel under the pointer"}, // KB1
-              {"audio.snapToKeyframes", "Snap to keyframe"},
-              {"audio.snapToOtherLines", "Snap to other lines"},
-              {"audio.dontPlayWhenLineChanges", "Do not play audio after changing the line"},
-              {"audio.mergeEveryNWithSyllable", "Merge all the \"n\" with the previous syllable"},
-              {"audio.karaokeMoveOnClick", "Move syllable line after click"},
-              {"audio.ramCache", "Load audio into RAM"},
-              {"audio.outputDevice", nullptr}, // H2-output-device
-#ifdef _WIN32
-              {"audio.outputHostApi", nullptr}, // A4-wasapi-default, Windows only
-#endif
-             }},
-            {"settingsPageAudioAdvanced",
-             {{"audio.delay", nullptr},
-              {"audio.markPlayTime", nullptr},
-              {"audio.leadInValue", nullptr},
-              {"audio.leadOutValue", nullptr},
-              {"audio.lineBoundariesThickness", nullptr},
-              {"audio.cacheFilesLimit", nullptr},
-              {"audio.inactiveLinesDisplayMode", nullptr}}},
+              {"convert.assTagsToInsertInLine", nullptr},
+              {"convert.showSettings", "Show the conversion window first"}}},
             {"settingsPageSubtitleProperties",
              {{"scriptProperties.title", nullptr},
               {"scriptProperties.titleOn", nullptr},
@@ -11770,7 +11805,12 @@ private slots:
               {"scriptProperties.updateOn", nullptr},
               {"scriptProperties.askForChange", "Always ask before changing subtitle information"},
               // WS2, the rewrite's own
-              {"subtitles.layoutInFile", "Save panel layout in subtitle files"}}},
+              {"subtitles.layoutInFile", "Save the panel layout in subtitle files"}}},
+            {"settingsPageAutomation",
+             {{"automation.loadingMethod", nullptr},
+              {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
+              {"automation.traceLevel", nullptr},
+              {"automation.fillLastAnswers", "Fill in my last answers"}}}, // AD2
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -11787,11 +11827,8 @@ private slots:
             QCOMPARE(found.size(), controls.size());
             for (std::size_t i = 0; i < controls.size(); ++i) {
                 QCOMPARE(found[i]->objectName(), QLatin1String("setting_") + QLatin1String(controls[i].setting));
-                // The legacy label, its hard line breaks shown as spaces (the
-                // check box wraps in the page's width).
                 if (controls[i].label)
-                    QCOMPARE(found[i]->property("text").toString(),
-                             QString::fromUtf8(controls[i].label).replace(QLatin1Char('\n'), QLatin1Char(' ')));
+                    QCOMPARE(found[i]->property("text").toString(), QString::fromUtf8(controls[i].label));
                 shown.insert(controls[i].setting);
             }
         }
@@ -11879,27 +11916,29 @@ private slots:
         auto *method = dialogItem("settingsDialog", "setting_automation.loadingMethod");
         QVERIFY(QMetaObject::invokeMethod(method, "activated", Q_ARG(int, 3)));
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("automation.loadingMethod")).toInt(), 3);
-        // The shift times panel keeps its values through Set default.
+        // The shift times panel keeps its values through the reset.
         auto shift = application->shiftTimesSettings().settingsMap();
         shift.insert(QStringLiteral("forward"), true);
         shift.insert(QStringLiteral("timeMs"), 750);
         application->shiftTimesSettings().setSettingsMap(shift);
-        // Set default: the controls refresh as ResetDefault refreshes them,
-        // and OK then writes what they show.
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
-        QCOMPARE(settings.integer("updater.nextCheck"), 0);
-        QVERIFY(!settings.contains("automation.loadingMethod"));
+        // "Reset all settings…": the controls refresh as ResetDefault
+        // refreshes them, and OK resets the store, then writes what they
+        // show (PF1-staged-reset: nothing changes before OK).
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QCOMPARE(settings.integer("updater.nextCheck"), 200);
         QCOMPARE(dialogItem("settingsDialog", "setting_automation.loadingMethod")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.ffms2Seeking")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.inactiveLinesDisplayMode")->property("currentIndex").toInt(), -1);
         QCOMPARE(dialogItem("settingsDialog", "setting_program.tabTextMaxChars")->property("value").toInt(), 20);
         QCOMPARE(dialogItem("settingsDialog", "setting_video.zoomPercent")->property("text").toString(), QString());
         QCOMPARE(dialogItem("settingsDialog", "setting_program.language")->property("currentIndex").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.integer("updater.nextCheck"), 0);
         QVERIFY(application->shiftTimesSettings().settings().forward);
         QCOMPARE(application->shiftTimesSettings().settings().timeMs, 750);
         QVERIFY(!settings.contains("shiftTimes.time"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(settings.integer("automation.loadingMethod"), -1);
         QCOMPARE(settings.integer("video.ffms2Seeking"), -1);
         QCOMPARE(settings.integer("audio.inactiveLinesDisplayMode"), -1);
@@ -11921,18 +11960,11 @@ private slots:
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
         // "does not exist" for the catalog: the current one is shown.
-        // NT1: a warning toast titled "Settings".
+        // NT1: a warning toast titled "Settings", in the main window beside
+        // the Settings window (PF1).
         QQuickItem *warning = nullptr;
         QTRY_VERIFY((warning = toastWith(QStringLiteral("does not exist"))));
         QCOMPARE(partNamed(warning, "toastTitle")->property("text").toString(), QStringLiteral("Settings"));
-        // Over the modal dialog's dimmer: beside the window's popup overlay, above it.
-        auto *stack = item<QQuickItem>("toastStack");
-        QQuickItem *overlay = nullptr;
-        for (QQuickItem *child : stack->parentItem()->childItems())
-            if (child->inherits("QQuickOverlay"))
-                overlay = child;
-        QVERIFY(overlay && overlay->isVisible());
-        QVERIFY(stack->z() > overlay->z());
         const auto catalogs = dialog->property("catalogs").toStringList();
         QVERIFY(catalogs.contains(QStringLiteral("Conv")));
         auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
@@ -12191,7 +12223,7 @@ private slots:
         const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
         a.colourPicker().addRecent(red); // no picker yet: the option is the list
 
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QCOMPARE(settings.list("recent.video"), QStringList{QStringLiteral("/v.mkv")});
         QCOMPARE(settings.list("recent.audio"), QStringList{QStringLiteral("/a.wav")});
         QVERIFY(!settings.contains("recent.keyframes"));
@@ -12234,7 +12266,7 @@ private slots:
         // A created DialogColorPicker keeps its recent colours.
         a.colourPickerOpened();
         a.colourPicker().addRecent(red);
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("selectLines.options"));
         QVERIFY(!settings.contains("selectLines.recentSelections"));
         auto shown = a.openSelectLines();
@@ -12257,7 +12289,7 @@ private slots:
 
         // A changed program font runs DestroyDialogs: SelectLines saves its
         // options and is gone, so it reads the settings again.
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("selectLines.options"));
         QSignalSpy destroyed(&a, &app::Application::selectLinesDestroyed);
         a.applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
@@ -12290,7 +12322,7 @@ private slots:
         settings.set("find.options", 1); // CASE_SENSITIVE
         settings.set("find.styles", QStringLiteral("Sign"));
         settings.set("find.recentFinds", QStringList{QStringLiteral("old")});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_H, Qt::ControlModifier);
         QTRY_VERIFY(dock->property("isOpen").toBool());
@@ -12315,7 +12347,7 @@ private slots:
         settings.sync();
         QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/find.recentFinds")).toStringList(),
                  QStringList{QStringLiteral("alpha")});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("find.options"));
         QVERIFY(!settings.contains("find.recentFinds"));
         QVERIFY(matchCase->property("checked").toBool()); // the dialog's controls stay
@@ -12348,7 +12380,7 @@ private slots:
 
         // A changed program font: DestroyDialogs.
         matchCase->setProperty("checked", false);
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QSignalSpy findDestroyed(application, &app::Application::findReplaceDestroyed);
         QSignalSpy misspellDestroyed(application, &app::Application::misspellReplacerDestroyed);
         application->applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
@@ -12410,7 +12442,7 @@ private slots:
         // Grid, but the Line editor keeps the switch the menu turned off.
         application->setSpellingOn(false);
         QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(application->spellingOn());
         QVERIFY(!application->suggestionsOnDoubleClick());
         QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
@@ -14271,9 +14303,10 @@ private slots:
         QStringList names;
         for (const auto &p : model)
             names << p.toMap().value(QStringLiteral("name")).toString();
-        // (legacy's Themes page is K2's Appearance page, #206)
-        QCOMPARE(names, (QStringList{"Editor", "Conversion", "Advanced", "Video", "Audio", "Advanced", "Appearance",
-                                     "Hotkeys", "Subtitle properties"}));
+        // (legacy's Themes page is K2's Appearance page, #206; PF1-pages:
+        // one flat list, legacy's sub-pages are sections)
+        QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Subtitle grid", "Video", "Audio",
+                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and
@@ -14347,7 +14380,7 @@ private slots:
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 7); // Hotkeys
+        showSettingsPage("hotkeys");
         auto *mapping = captureForm("settingsHotkeyMapping");
         QVERIFY(mapping);
         const auto map = [&](const QString &text) {
@@ -14447,9 +14480,10 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
     }
 
-    // "Set default": Hkeys.ResetDefaults() in memory only; nothing is saved
-    // or installed until legacy next saves (OK with a change, a gesture).
-    void hotkeysSetDefaultResetsInMemoryOnly()
+    // PF1-staged-reset: the Hotkeys page's "Reset page" puts every row back
+    // to its default in the list; Cancel drops it, OK saves and installs it
+    // (legacy's Set default reset the bindings in memory, saved later).
+    void hotkeysResetPageIsStaged()
     {
         auto &store = *application->settingsStore();
         // Stored bindings are read as stored, however few (C04-short-file);
@@ -14477,23 +14511,108 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-J"));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        showSettingsPage("hotkeys");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
         QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-S"));
-        QVERIFY(hotkeyRow(QStringLiteral("Global Script a.lua-1")).isEmpty()); // the scripts' go too
-        QVERIFY(application->automationHotkeys().committedKeys().empty());
-        // Stored and installed bindings stay as they were, even after Cancel.
+        // the scripts' unbound, their rows listed
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Script a.lua-1")).value(QStringLiteral("accel")).toString(), QString());
+        // Stored and installed bindings stay as they were after Cancel.
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QCOMPARE(store.list("shortcuts.hotkeys"), saved);
         QCOMPARE(store.list(application::kAutomationHotkeysSetting.data()).size(), 1);
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+K"));
-        // The next save writes them (a gesture saves the main file).
-        h.gestureMap(application::hotkeyIdOf("GLOBAL_OPEN_SUBS"), QStringLiteral("Open subtitles"),
-                     QStringLiteral("Ctrl-Shift-Q"), 0, QStringLiteral("cancel"));
+        // Reset page, then OK: saved and installed.
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(hotkeyRow(QStringLiteral("Global Save")).value(QStringLiteral("accel")).toString(), QStringLiteral("Ctrl-K"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-S")));
-        QVERIFY(store.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_OPEN_SUBS G=Ctrl-Shift-Q")));
-        QCOMPARE(store.list(application::kAutomationHotkeysSetting.data()).size(), 0);
+        QVERIFY(application->automationHotkeys().committedKeys().empty());
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
+    }
+
+    // PF1-staged-reset: the Line editor's Reset page empties its tag
+    // buttons too, staged until OK like the rest of the page.
+    void lineEditorResetPageClearsTagButtons()
+    {
+        auto &buttons = application->tagButtons();
+        auto &store = *application->settingsStore();
+        buttons.setCount(2);
+        buttons.edit(0, QStringLiteral("Bold"), QStringLiteral("\\b1"), 0);
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("lineEditor");
+        QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(dialog->property("tagButtonList").toList().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(buttons.count(), 2);
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(buttons.count(), 0);
+        QCOMPARE(store.integer("editor.tagButtons"), 0);
+        QVERIFY(!store.contains("editor.tagButton1"));
+    }
+
+    // Conversion's Reset page loads the default catalog and lists its
+    // Styles, so the default Style is chosen among them.
+    void conversionResetPageLoadsTheDefaultCatalog()
+    {
+        auto &settings = *application->settingsStore();
+        auto &styles = application->styleManager();
+        QVERIFY(styles.createCatalog(QStringLiteral("Conv")));
+        styles.saveCatalog();
+        QVERIFY(styles.chooseCatalog(QStringLiteral("Default")));
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("conversion");
+        const auto catalogs = dialog->property("catalogs").toStringList();
+        auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
+        QVERIFY(QMetaObject::invokeMethod(catalog, "activated", Q_ARG(int, int(catalogs.indexOf(QStringLiteral("Conv"))))));
+        QVERIFY(dialog->property("styles").toStringList().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QCOMPARE(styles.catalog(), QStringLiteral("Default"));
+        QTRY_COMPARE(catalog->property("currentText").toString(), QStringLiteral("Default"));
+        QVERIFY(dialog->property("styles").toStringList().contains(QStringLiteral("Default")));
+        QTRY_COMPARE(dialogItem("settingsDialog", "setting_convert.style")->property("currentText").toString(),
+                     QStringLiteral("Default"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("convert.styleCatalog"), QStringLiteral("Default"));
+        QCOMPARE(settings.text("convert.style"), QStringLiteral("Default"));
+        QVERIFY(styles.deleteCatalog(QStringLiteral("Conv")));
+    }
+
+    // "Reset all settings…" keeps the page shown, where Settings opens next,
+    // and the Appearance page as it is: its program font size too.
+    void resetAllKeepsThePageShown()
+    {
+        auto &settings = *application->settingsStore();
+        settings.set("program.fontSize", 13);
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("video");
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("video"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QCOMPARE(settingsValues(dialog).value(QStringLiteral("program.fontSize")).toInt(), 13);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("video"));
+        QCOMPARE(settings.integer("program.fontSize"), 13);
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("currentPage").toString(), QStringLiteral("video"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
     // Hotkeys::OnMapHkey: Shift+click on a menu item (with the window
@@ -14627,7 +14746,7 @@ private slots:
 
     // GRID_FILTER_IGNORE_IN_ACTIONS through a hotkey toggles from the stored
     // option (SubsGrid::OnAccelerator), while the menu item toggles what the
-    // Grid shows; "Set default" resets the option only.
+    // Grid shows; "Reset all settings…" resets the option only.
     void ignoreFilteringHotkeyTogglesFromTheOption()
     {
         keysNeverRepeat();
@@ -14640,15 +14759,16 @@ private slots:
         auto &filter = application->gridFilter();
         auto &settings = *application->settingsStore();
         filter.setIgnoreInActions(true);
-        // "Set default": the option resets, the Grid keeps ignoring.
+        // "Reset all settings…" and OK: the option resets, the Grid keeps
+        // ignoring, the hotkeys stay (PF1-staged-reset).
         auto *dialog = openSettings();
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(!settings.boolean("grid.ignoreFiltering"));
         QVERIFY(filter.ignoreInActions());
-        // Set default reset the bindings in memory, not the installed ones.
         QCOMPARE(h.accelOf(QStringLiteral("GRID_FILTER_IGNORE_IN_ACTIONS"), 1), QStringLiteral("Ctrl-Shift-G"));
         item<QQuickItem>("editingGrid")->forceActiveFocus();
         press(Qt::Key_G, Qt::ControlModifier | Qt::ShiftModifier);
@@ -14979,7 +15099,7 @@ private slots:
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto &h = application->hotkeys();
         QVERIFY(!h.listFiltered());
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 7); // Hotkeys
+        showSettingsPage("hotkeys");
         QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "hotkeyFilter"), "activated", Q_ARG(int, 1)));
         QVERIFY(h.listFiltered());
         const int count = int(hotkeyRows().size());
@@ -15597,8 +15717,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(item("automationCancel"), "clicked"));
         QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
         // Settings → Hotkeys, Automation shortcuts: what the panel's menu opens.
-        auto *settingsDialog = root->findChild<QObject *>(QStringLiteral("settingsDialog"));
-        QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, 7),
+        auto *settingsDialog = settingsWindow();
+        QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, QStringLiteral("hotkeys")),
                                           Q_ARG(QVariant, 7)));
         QTRY_VERIFY(settingsDialog->property("opened").toBool());
         QCOMPARE(application->hotkeys().filterMode(), 7);
@@ -17511,7 +17631,7 @@ private slots:
             auto *shown = openSettings();
             if (!QTest::qWaitFor([&] { return shown->property("visible").toBool(); }))
                 return static_cast<QObject *>(nullptr);
-            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6); // Appearance
+            showSettingsPage("appearance");
             return shown;
         };
         auto *dialog = openAppearance();
@@ -17539,6 +17659,9 @@ private slots:
             auto *ring = background->findChild<QQuickItem *>(QStringLiteral("focusRing"));
             QVERIFY2(ring, name);
             QVERIFY2(!ring->isVisible(), name);
+            // PF1: in the Settings window, which has the keyboard.
+            control->window()->requestActivate();
+            QTRY_COMPARE(QGuiApplication::focusWindow(), control->window());
             control->forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY2(ring->isVisible(), name);
             const auto *border = ring->property("border").value<QObject *>();
@@ -17640,7 +17763,7 @@ private slots:
         QTRY_COMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
                      QStringLiteral("#123456"));
         QCOMPARE(accent(), QColor(0x12, 0x34, 0x56));
-        QTest::keyClick(window, Qt::Key_Escape);
+        QTest::keyClick(qobject_cast<QWindow *>(dialog), Qt::Key_Escape);
         QTRY_VERIFY(!themePopover->property("visible").toBool());
         QVERIFY(dialog->property("visible").toBool()); // Esc was the popover's
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(), accentBefore);
@@ -17662,9 +17785,10 @@ private slots:
         QCOMPARE(accent(), QColor(0x00, 0xFF, 0x00));
         // High contrast white keeps its own colours.
         QCOMPARE(settings.text("appearance.highContrastWhite.accent"), QStringLiteral("#0037B3"));
-        // "Set default" leaves the appearance; the reset puts the picks back.
+        // "Reset all settings…" leaves the appearance; the reset puts the picks back.
         QVERIFY((dialog = openAppearance()) != nullptr);
-        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsDefault"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
                  QStringLiteral("#00FF00"));
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.theme")).toString(), QStringLiteral("highContrastBlack"));
@@ -18418,9 +18542,9 @@ private slots:
         QCOMPARE(application->shell().statusText(), QString());
         // "Audio settings…" opens the dialog on its Audio page.
         QVERIFY(QMetaObject::invokeMethod(named("audioOutputSettings"), "triggered"));
-        dialog = named("settingsDialog");
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 4);
+        QTRY_VERIFY((dialog = settingsWindow()) && dialog->property("visible").toBool());
+        QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 5); // Audio
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("audio")); // where Settings opens next
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
@@ -22017,16 +22141,16 @@ private slots:
         QCOMPARE(url(findTab), QStringLiteral("image://hikari-icon/search/%1/%2/0").arg(normal, accent));
         QCOMPARE(url(replaceTab), QStringLiteral("image://hikari-icon/find-replace/%1/%2/0").arg(normal, accent));
         QCOMPARE(findTab->property("text").toString(), QStringLiteral("Find"));
-        // A dialog's title shows its icon.
+        // PF1: the Settings window's pages show their icons.
         auto *dialog = openSettings();
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("opened").toBool());
-        auto *title = dialog->findChild<QQuickItem *>(QStringLiteral("settingsDialogTitle"));
-        QVERIFY(title && title->isVisible());
-        QCOMPARE(title->property("text").toString(), QStringLiteral("Options"));
-        auto *titleIcon = title->findChild<QQuickItem *>(QStringLiteral("dialogIcon"));
-        QVERIFY(titleIcon && titleIcon->property("valid").toBool());
-        QCOMPARE(titleIcon->property("iconRole").toString(), QStringLiteral("settings"));
+        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Settings"));
+        auto *page = dialogItem("settingsDialog", "settingsPage_general");
+        QVERIFY(page && page->isVisible());
+        auto *pageIcon = findItem(page, QStringLiteral("settingsPageIcon"));
+        QVERIFY(pageIcon && pageIcon->property("valid").toBool());
+        QCOMPARE(pageIcon->property("iconRole").toString(), QStringLiteral("settings"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         // The windows' icons.
         for (const char *w : {"historyWindow", "styleManager"}) {
@@ -22106,15 +22230,13 @@ private slots:
             // K2: the Options dialog's Appearance page.
             auto *dialog = openSettings();
             QTRY_VERIFY(dialog->property("opened").toBool());
-            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6);
+            showSettingsPage("appearance");
             QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
             dialogItem("settingsDialog", "appearanceFollowSystem")->forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY(dialogItem("settingsDialog", "appearanceFollowSystem")->property("visualFocus").toBool());
             QTest::qWait(300);
-            const QImage dialogShot = window->grabWindow();
-            auto *dialogItemRoot = dialog->property("contentItem").value<QQuickItem *>()->parentItem();
-            QVERIFY(dialogShot.copy(crop(dialogItemRoot).adjusted(-8, -8, 8, 8).intersected(dialogShot.rect()))
-                        .save(out + QStringLiteral("/appearance-page") + suffix));
+            // PF1: the Settings window, whole.
+            QVERIFY(qobject_cast<QQuickWindow *>(dialog)->grabWindow().save(out + QStringLiteral("/appearance-page") + suffix));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
         }
@@ -22271,7 +22393,7 @@ private slots:
             // with keyboard focus.
             auto *dialog = openSettings();
             QTRY_VERIFY(dialog->property("opened").toBool());
-            dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 6);
+            showSettingsPage("appearance");
             QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageAppearance")->isVisible());
             const char *subject = ui::theme::isHighContrast(code) ? "appearanceTheme_dark" : "accent_green";
             QQuickItem *control = dialogItem("settingsDialog", subject);
@@ -22281,9 +22403,7 @@ private slots:
             QQuickItem *ring = control->property("background").value<QQuickItem *>()->findChild<QQuickItem *>(QStringLiteral("focusRing"));
             QTRY_VERIFY2(ring && ring->isVisible(), subject);
             QTest::qWait(300);
-            const QImage dialogShot = window->grabWindow();
-            auto *dialogRoot = dialog->property("contentItem").value<QQuickItem *>()->parentItem();
-            QVERIFY(save(dialogShot.copy(cropOf(dialogRoot, 8).intersected(dialogShot.rect())), QStringLiteral("swatch"), theme));
+            QVERIFY(save(qobject_cast<QQuickWindow *>(dialog)->grabWindow(), QStringLiteral("swatch"), theme));
             QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
             QTRY_VERIFY(!dialog->property("visible").toBool());
         }
@@ -24816,7 +24936,7 @@ private slots:
         values.insert(QStringLiteral("video.subtitleProvider"), 0);
         dialog->setProperty("values", values);
         QVERIFY(QMetaObject::invokeMethod(dialog, "reloaded"));
-        dialogItem("settingsDialog", "settingsPages")->setProperty("currentIndex", 3); // Video
+        showSettingsPage("video");
         QTRY_VERIFY(dialogItem("settingsDialog", "settingsRendererGroup")->property("visible").toBool());
         const auto shoot = [&](QObject *popup, const QString &name) {
             auto *content = popup->property("contentItem").value<QQuickItem *>();
@@ -24850,6 +24970,72 @@ private slots:
             QVERIFY(shoot(about, QStringLiteral("about") + suffix));
         }
         QVERIFY(QMetaObject::invokeMethod(about, "close"));
+    }
+
+    // PF1 (#225) screenshots for review (HIKARI_SETTINGS_SHOT_DIR; skipped
+    // without it): the Settings window's ten pages in the four themes
+    // (pf1-<page>-<theme>.png), the Hotkeys page searched, and the "Reset
+    // all settings…" question.
+    void settingsWindowScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SETTINGS_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SETTINGS_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        });
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        auto *window = qobject_cast<QQuickWindow *>(dialog);
+        QTRY_VERIFY(window->isVisible());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!window->isVisible());
+        const auto shoot = [&](QQuickWindow *shown, const QString &file) {
+            QTest::qWait(300);
+            QVERIFY(shown->grabWindow().save(out + QLatin1Char('/') + file));
+        };
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            QVERIFY(openSettings());
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            for (const auto &page : dialog->property("pages").toList()) {
+                const QString id = page.toMap().value(QStringLiteral("id")).toString();
+                showSettingsPage(qPrintable(id));
+                shoot(window, QStringLiteral("pf1-%1-%2.png").arg(id, code));
+                // and scrolled to its end, where the page is longer than the window
+                auto *stack = dialogItem("settingsDialog", "settingsPageStack");
+                auto *shown = stack->childItems().value(stack->property("currentIndex").toInt());
+                auto *flick = shown ? shown->property("contentItem").value<QQuickItem *>() : nullptr;
+                if (flick && flick->property("contentHeight").toReal() > flick->height()) {
+                    flick->setProperty("contentY", flick->property("contentHeight").toReal() - flick->height());
+                    shoot(window, QStringLiteral("pf1-%1-end-%2.png").arg(id, code));
+                    flick->setProperty("contentY", 0);
+                }
+            }
+            auto *search = dialogItem("settingsDialog", "hotkeySearch");
+            search->setProperty("text", QStringLiteral("save"));
+            shoot(window, QStringLiteral("pf1-hotkeys-search-%1.png").arg(code));
+            search->setProperty("text", QString());
+            QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+            QObject *box = nullptr;
+            QTRY_VERIFY((box = dialog->property("question").value<QObject *>()) && box->property("visible").toBool());
+            QVERIFY(QTest::qWaitForWindowExposed(qobject_cast<QQuickWindow *>(box)));
+            shoot(qobject_cast<QQuickWindow *>(box), QStringLiteral("pf1-reset-all-%1.png").arg(code));
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!window->isVisible());
+        }
     }
 
     // DG1 (#222) screenshots for review (HIKARI_DIALOG_SHOT_DIR; skipped
@@ -27556,8 +27742,8 @@ private slots:
         // Its "Audio settings…" leaves fullscreen for the dialog's Audio page.
         QVERIFY(QMetaObject::invokeMethod(audioSettings, "triggered"));
         QTRY_VERIFY(!fs.active());
-        auto *settingsDialog = named("settingsDialog");
-        QTRY_VERIFY(settingsDialog->property("visible").toBool());
+        QObject *settingsDialog = nullptr;
+        QTRY_VERIFY((settingsDialog = settingsWindow()) && settingsDialog->property("visible").toBool());
         QMetaObject::invokeMethod(settingsDialog, "close");
         QTRY_VERIFY(!settingsDialog->property("visible").toBool());
     }
