@@ -7,13 +7,17 @@ import Hikari.Ui
 
 // Legacy HistoryDialog (Edit › History, GLOBAL_HISTORY), PU2 (#304): a
 // resizable window on DG1's frame that does not block, so the grid stays
-// usable (PU2-history). Every step, the current one bold and tagged;
+// usable (PU2-history). It follows the editing target and names its
+// Document above the steps. Every step, the current one bold and tagged;
 // steps after it (undone, still redoable) muted. Go to step (Enter, or a
 // double-click on a step) jumps there and stays open; Close or Esc closes.
 DialogWindow {
     id: history
     objectName: "historyWindow"
     required property var editor
+    // The Document it shows: History follows the editing target, and names
+    // it (grid-operations.md; Codex review).
+    property string documentName: ""
     dialogId: "history"
     title: qsTr("History")
     resizable: true
@@ -22,6 +26,15 @@ DialogWindow {
     Component.onCompleted: IconTheme.setWindowIcon(history, "history")
     onVisibleChanged: if (visible) historyList.currentIndex = editor.historyCursor
 
+    Label {
+        objectName: "historyDocument"
+        text: history.documentName
+        visible: text.length > 0
+        font.bold: true
+        elide: Text.ElideMiddle
+        Layout.fillWidth: true
+        Layout.maximumWidth: 332
+    }
     Label {
         objectName: "historyCount"
         text: history.editor.history.length === 1 ? qsTr("1 step. Steps after the current one can be redone.")

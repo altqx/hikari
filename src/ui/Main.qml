@@ -5779,6 +5779,7 @@ ApplicationWindow {
     HistoryWindow {
         id: historyWindow
         editor: root.editor
+        documentName: root.shell.editingTitle
         settings: root.app.settings
     }
 
@@ -6833,6 +6834,22 @@ ApplicationWindow {
             groupDescription.selectAll()
         }
         onKept: if (groupDescription.text.length > 0) root.app.renameGroup(description, groupDescription.text)
+        // The group is in the tab it was opened from: with the Grid floating
+        // the main window's tabs stay usable, and another editing target
+        // closes it as Esc does, changing nothing (Codex review).
+        property var askedFor: null
+        function editingTarget() {
+            const tab = root.app.tabs[root.app.currentTab]
+            return tab ? tab.id : null
+        }
+        onOpenedChanged: if (opened) askedFor = editingTarget()
+        Connections {
+            target: root.app
+            function onTabsChanged() {
+                if (groupDescriptionPopover.opened && groupDescriptionPopover.editingTarget() !== groupDescriptionPopover.askedFor)
+                    groupDescriptionPopover.revert()
+            }
+        }
         TextField {
             id: groupDescription
             objectName: "groupDescription"

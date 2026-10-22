@@ -2581,6 +2581,18 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historyGo")), "click"));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
         QVERIFY(history->isVisible());
+        // It follows the editing target and names its Document (Codex review).
+        auto *documentLabel = history->findChild<QObject *>(QStringLiteral("historyDocument"));
+        QVERIFY(documentLabel);
+        QVERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history.ass")));
+        const int historyTab = application->currentTab();
+        QVERIFY(application->openFile(writeFile(dir, "history-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == historyTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QTRY_VERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history-other.ass")));
+        application->selectTab(historyTab);
+        QTRY_VERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history.ass")));
+        QCOMPARE(editor.historyCursor(), 0);
         // Esc closes.
         QTest::keyClick(history, Qt::Key_Escape);
         QTRY_VERIFY(!history->isVisible());
@@ -10586,6 +10598,17 @@ private slots:
         field->setProperty("text", QStringLiteral("Typing"));
         press(Qt::Key_Escape);
         QTRY_VERIFY(!popover->property("opened").toBool());
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Signs"));
+        // Another editing target closes it as Esc does (Codex review): with
+        // the Grid floating the main window's tabs stay usable.
+        openRename();
+        field->setProperty("text", QStringLiteral("Elsewhere"));
+        const int renameTab = application->currentTab();
+        QVERIFY(application->openFile(writeFile(dir, "g9-rename.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,y\n")));
+        if (application->currentTab() == renameTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QTRY_VERIFY(!popover->property("opened").toBool());
+        application->selectTab(renameTab);
         QCOMPARE(application->groupTitle(description), QStringLiteral("Signs"));
         openRename();
         field->setProperty("text", QStringLiteral("Station signs"));
