@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QColor>
+#include <QCryptographicHash>
 
 #include <algorithm>
 #include <cmath>
@@ -44,7 +45,7 @@ QString legacyHexOf(const QColor &c, bool alpha)
 AutomationDialogController::AutomationDialogController(QObject *parent) : QObject(parent) {}
 
 void AutomationDialogController::present(const QString &title, const application::DialogRequest &request,
-                                         Reply reply)
+                                         Reply reply, const QString &source)
 {
     m_request = request;
     m_reply = std::move(reply);
@@ -73,6 +74,7 @@ void AutomationDialogController::present(const QString &title, const application
             {QStringLiteral("color"), isColour(c.kind) ? colourOf(QString::fromStdString(c.text)) : QColor()},
             {QStringLiteral("numberMin"), c.numberMin},
             {QStringLiteral("numberMax"), c.numberMax},
+            {QStringLiteral("step"), c.step},
             {QStringLiteral("checked"), c.checked},
             {QStringLiteral("items"), items},
         };
@@ -84,6 +86,22 @@ void AutomationDialogController::present(const QString &title, const application
                   << QCoreApplication::translate("HikariSub.Automation", "Cancel");
     for (const auto &b : request.buttons)
         m_buttons << QString::fromStdString(b);
+    m_enterButton = 0;
+    for (std::size_t i = 0; i < request.buttonIds.size() && i < request.buttons.size(); ++i) {
+        const std::string &id = request.buttonIds[i];
+        if (id == "ok" || id == "yes" || id == "save")
+            m_enterButton = static_cast<int>(i);
+    }
+    m_dialogId.clear();
+    if (!source.isEmpty()) {
+        QCryptographicHash hash(QCryptographicHash::Sha1);
+        hash.addData(source.toUtf8());
+        for (const auto &c : request.controls) {
+            hash.addData(QByteArrayView("\n"));
+            hash.addData(QByteArray::fromStdString(c.kind + '\t' + c.name));
+        }
+        m_dialogId = QStringLiteral("automation.") + QString::fromLatin1(hash.result().toHex().left(16));
+    }
     emit changed();
 }
 
