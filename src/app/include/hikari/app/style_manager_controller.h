@@ -121,10 +121,9 @@ public:
     Q_INVOKABLE void sortStyles(bool store);
     // kind: 0 to start, 1 up, 2 down, 3 to end. Returns the new rows.
     Q_INVOKABLE QVariantList moveStyles(bool store, const QVariantList &rows, int kind);
-    // OnCleanStyles: the legacy "Styles used:\n...\nStyles deleted:\n..." text.
-    Q_INVOKABLE QString cleanStyles();
-    // SY1: the same, for the toast: {used, deleted (names), report (the
-    // legacy text, for the Log)}; {} without an ASS Document.
+    // OnCleanStyles, for SY1's toast (NT1's notice): {used, deleted (names),
+    // report (legacy's "Styles used:\n...\nStyles deleted:\n...", the
+    // toast's Details)}; {} without an ASS Document.
     Q_INVOKABLE QVariantMap deleteUnusedStyles();
 
     // StylePreview: the editor's values over the checkered background.

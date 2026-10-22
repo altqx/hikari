@@ -76,15 +76,13 @@ class VisualToolsController : public QObject, public application::visual::Visual
     // T2-T4: the family's own options (legacy VideoToolbar's second row):
     // name, kind ("toggle", "choice" or "action"), iconRole, tooltip, checked,
     // enabled, choices, index. T4: its own signal, so the row is rebuilt only
-    // when it changes. And the notice a tool gave, which the shell shows as
-    // legacy's modal "Warning" message box until OK.
+    // when it changes.
     Q_PROPERTY(QVariantList options READ options NOTIFY optionsChanged)
     // VT1: every family's options and values (by Family, empty without a
     // tool), which the inspector bar lays out unseen to keep the height of
     // the tallest at its width: the video does not resize as the tool
     // changes.
     Q_PROPERTY(QVariantList familyLayouts READ familyLayouts NOTIFY optionsChanged)
-    Q_PROPERTY(QString notice READ notice NOTIFY changed)
     // T5: the "Vector shape editing" dialog while the drawing's shape list's
     // "Edit" has it open (null otherwise).
     Q_PROPERTY(hikari::ui::ShapeEditor *shapeEditor READ shapeEditor NOTIFY shapeEditorChanged)
@@ -105,6 +103,8 @@ public:
     // Document again).
     void setPreview(std::function<void(const core::Document *)> preview) { m_preview = std::move(preview); }
     // T2: HikariLog and the Grid's "Ignore filtering in some actions".
+    // The log (legacy HikariLog) and, NT1, the notices a tool gives
+    // (legacy's "Warning" box): both a warning toast titled toolName().
     void setLog(std::function<void(const QString &)> log) { m_log = std::move(log); }
     void setIgnoreFiltered(std::function<bool()> ignore) { m_ignoreFiltered = std::move(ignore); }
     // T3: the Line editor's selection in the edited text (FindTag's mode 0).
@@ -154,7 +154,8 @@ public:
     QString copied() const { return m_copied; }
     QVariantList options() const { return m_options; }
     QVariantList familyLayouts() const;
-    QString notice() const { return m_notice; }
+    // NT1: the active tool's name (the rail's), the title of its notices.
+    QString toolName() const;
     int bells() const { return m_bells; }
 
     // The video area's logical size (the presenter's), the panel below it
@@ -195,7 +196,6 @@ public:
     Q_INVOKABLE void clearBatch();
     // A toggle (0/1), a choice's index or an action (1) of the family's options.
     Q_INVOKABLE bool setOption(const QString &name, int value);
-    Q_INVOKABLE void dismissNotice();
 
     // T4: the subtitles the video renders for a Document: as the preview
     // gives it (the staged texts and the tool's Lines added), encoded by
@@ -309,7 +309,6 @@ private:
     std::optional<std::pair<std::u8string, std::u8string>> m_seenDraft; // the active Line's draft text, translation
     std::int64_t m_seenTime = -1;
     QString m_frameWarning; // the warning the last video change notified
-    QString m_notice;
     QVariantList m_options; // the tool's buttons as last shown
     int m_bells = 0;
     std::u8string m_previewKey; // what the preview showed last

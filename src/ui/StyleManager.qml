@@ -133,7 +133,7 @@ DialogWindow {
         }
         if (problem !== "") {
             styles.endEdit()
-            showError(problem)
+            showError(qsTr("New style"), problem)
             return
         }
         editDocumentStyle(rowNamed(false, styleName))
@@ -217,7 +217,7 @@ DialogWindow {
             catalogShown()
             return
         }
-        if (boxLoader.item && boxLoader.item.visible)
+        if (messages.asking)
             return // answered first; the catalog is followed then
         ask({
             title: qsTr("Edit style"),
@@ -477,21 +477,16 @@ DialogWindow {
             settings: manager.app.settings
         }
     }
-    // PK1's message box: the questions and the errors. Made at the first.
-    function ask(options, done) {
-        boxLoader.active = true
-        boxLoader.item.ask(options, done)
+    // NT1's message host (PK1's box, made at the first): the questions and
+    // the errors, one after another.
+    function ask(options, done) { messages.ask(options, done) }
+    function showError(title, text) {
+        ask({ title: title, text: text, severity: "error" })
     }
-    function showError(text) {
-        ask({ title: qsTr("Style manager"), text: text, severity: "error" })
-    }
-    Loader {
-        id: boxLoader
-        active: false
-        sourceComponent: MessageBox {
-            objectName: "styleMessageBox"
-            settings: manager.app.settings
-        }
+    MessageHost {
+        id: messages
+        objectName: "styleMessages"
+        settings: manager.app.settings
     }
 
     // --- Catalogs -----------------------------------------------------------
@@ -674,7 +669,7 @@ DialogWindow {
         const v = editor.values()
         const problem = commitValues(v)
         if (problem !== "") {
-            showError(problem)
+            showError(qsTr("Save style"), problem)
             return false
         }
         reloadRows()

@@ -779,11 +779,6 @@ QVariantList StyleManagerController::moveStyles(bool store, const QVariantList &
     return listOf(moved);
 }
 
-QString StyleManagerController::cleanStyles()
-{
-    return deleteUnusedStyles().value(QStringLiteral("report")).toString();
-}
-
 QVariantMap StyleManagerController::deleteUnusedStyles()
 {
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;

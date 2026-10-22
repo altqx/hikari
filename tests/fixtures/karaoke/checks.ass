@@ -1,0 +1,24 @@
+[Script Info]
+; KA7: one Line per karaoke check, and Lines the checks leave alone.
+Title: Karaoke checks
+ScriptType: v4.00+
+PlayResX: 1280
+PlayResY: 720
+
+[V4+ Styles]
+Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding
+Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,20,20,20,1
+
+[Events]
+Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text
+Comment: 0,0:00:00.00,0:00:00.00,Default,,0,0,0,template line,{\k0\fad(300,200)}
+Dialogue: 0,0:00:01.00,0:00:04.00,Default,,0,0,0,,{\k50}Twin{\k50}kle {\k100}twin{\k100}kle
+Dialogue: 0,0:00:04.00,0:00:05.00,Default,,0,0,0,,{\k100}lit{\k100tle
+Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,{\k100}star{\k}
+Dialogue: 0,0:00:06.00,0:00:09.00,Default,,0,0,0,,{\k50}How {\k50}I {\kf100}won{\ko50}der
+Dialogue: 0,0:00:09.00,0:00:11.00,Default,,0,0,0,,{\k100}what {\K0}{\k100}you
+Dialogue: 0,0:00:11.00,0:00:12.00,Default,,0,0,0,,{\k100}are{\k30} so
+Dialogue: 0,0:00:12.00,0:00:13.00,Default,,0,0,0,,{\k-20}{\k120}up
+Comment: 0,0:00:13.00,0:00:14.00,Default,,0,0,0,karaoke,{\k50}a{\k25}{\k25}bove
+Dialogue: 0,0:00:14.00,0:00:16.00,Default,,0,0,0,,The world so high
+Dialogue: 0,0:00:16.00,0:00:18.00,Default,,0,0,0,,{\an8\k200}Like a diamond {\i1}in the sky

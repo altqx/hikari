@@ -598,7 +598,7 @@ private slots:
         auto &controller = application->styleManager();
         QCOMPARE(controller.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
         auto *styles = styleWindow();
-        const auto question = [styles] { return styles->findChild<QQuickWindow *>(QStringLiteral("styleMessageBox")); };
+        const auto question = [styles] { return qvariant_cast<QQuickWindow *>(styles->findChild<QObject *>(QStringLiteral("styleMessages"))->property("box")); };
         const auto answer = [&](const char *id) {
             QQuickItem *button = findItem(question()->contentItem(), QStringLiteral("messageBoxChoice_") + QLatin1String(id));
             QVERIFY(button);

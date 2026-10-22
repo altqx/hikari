@@ -255,6 +255,7 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
     QTimer::singleShot(0, &application, [&application] {
         application.updates().startUp();
         application.updates().checkOnStartup();
+        application.whatsNew().start(); // SH3: after the check, whose list it shares
     });
     // An AppImage's new version reports its window to the old one's watchdog.
     if (!startup.healthFile.empty())

@@ -112,6 +112,7 @@ private slots:
     void wholeRunReportsToTheStatusBarAndTheLog()
     {
         app::Application a(options());
+        QSignalSpy noticed(&a.log(), &ui::LogController::noticed);
         QVERIFY(templated(a, "stock-tutorials.ass"));
         int generated = 0;
         for (const auto *l : a.files().session(*a.workspace().editingTarget())->document().lines())
@@ -120,7 +121,9 @@ private slots:
             QStringLiteral("Karaoke template: %1 line(s) generated from 6 karaoke line(s) in ").arg(generated)));
         QVERIFY(a.log().history().contains(QStringLiteral("Template line 5 (template syl, T2c): ")));
         QVERIFY(a.log().history().contains(QStringLiteral("Measuring the karaoke lines: ")));
-        QVERIFY(!a.log().shown()); // silent
+        // Silent: no toast (the test profile has no dictionary, which is one).
+        for (const QList<QVariant> &notice : std::as_const(noticed))
+            QCOMPARE(notice.at(2).toString(), QStringLiteral("Spellchecker"));
         QVERIFY(!a.automation().keepLog());
     }
 

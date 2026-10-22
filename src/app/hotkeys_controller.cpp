@@ -216,7 +216,7 @@ QString retiredNotice(int id)
 } // namespace
 
 HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
-                                     std::function<void(const QString &)> log, QObject *parent)
+                                     std::function<void(const QString &, bool warning)> log, QObject *parent)
     : QObject(parent), m_scripts(scripts), m_settings(settings), m_log(std::move(log))
 {
     load();
@@ -224,7 +224,7 @@ HotkeysController::HotkeysController(AutomationHotkeysController &scripts, ui::S
     m_installedTagButtons = m_settings.integer("editor.tagButtons");
     if (m_log)
         for (const QString &notice : std::exchange(m_retiredNotices, {}))
-            m_log(notice);
+            m_log(notice, false);
     logInvalid(); // the frame's SetAccels(false) at startup
     // A change in the Automation panel (AM1; legacy's automation hotkeys
     // window's OK): SetHotkeysMap, SetAccels(true), SaveHkeys().
@@ -312,7 +312,7 @@ void HotkeysController::logInvalid() const
             continue;
         const auto bad = application::invalidHotkeyKey(hotkey.accel);
         if (!bad.empty())
-            m_log(QCoreApplication::translate("HikariSub.Hotkeys", "Shortcut \"%1\" is invalid").arg(qs(bad)));
+            m_log(QCoreApplication::translate("HikariSub.Hotkeys", "Shortcut \"%1\" is invalid").arg(qs(bad)), true);
     }
 }
 
