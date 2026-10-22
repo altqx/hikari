@@ -11702,7 +11702,7 @@ private slots:
         const QVariantMap red{{QStringLiteral("r"), 255}, {QStringLiteral("g"), 0}, {QStringLiteral("b"), 0}, {QStringLiteral("a"), 0}};
         a.colourPicker().addRecent(red); // no picker yet: the option is the list
 
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QCOMPARE(settings.list("recent.video"), QStringList{QStringLiteral("/v.mkv")});
         QCOMPARE(settings.list("recent.audio"), QStringList{QStringLiteral("/a.wav")});
         QVERIFY(!settings.contains("recent.keyframes"));
@@ -11745,7 +11745,7 @@ private slots:
         // A created DialogColorPicker keeps its recent colours.
         a.colourPickerOpened();
         a.colourPicker().addRecent(red);
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("selectLines.options"));
         QVERIFY(!settings.contains("selectLines.recentSelections"));
         auto shown = a.openSelectLines();
@@ -11768,7 +11768,7 @@ private slots:
 
         // A changed program font runs DestroyDialogs: SelectLines saves its
         // options and is gone, so it reads the settings again.
-        a.resetSettings({});
+        a.applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("selectLines.options"));
         QSignalSpy destroyed(&a, &app::Application::selectLinesDestroyed);
         a.applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
@@ -11801,7 +11801,7 @@ private slots:
         settings.set("find.options", 1); // CASE_SENSITIVE
         settings.set("find.styles", QStringLiteral("Sign"));
         settings.set("find.recentFinds", QStringList{QStringLiteral("old")});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_H, Qt::ControlModifier);
         QTRY_VERIFY(dock->property("isOpen").toBool());
@@ -11826,7 +11826,7 @@ private slots:
         settings.sync();
         QCOMPARE(QSettings(ini, QSettings::IniFormat).value(QStringLiteral("profile/find.recentFinds")).toStringList(),
                  QStringList{QStringLiteral("alpha")});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(!settings.contains("find.options"));
         QVERIFY(!settings.contains("find.recentFinds"));
         QVERIFY(matchCase->property("checked").toBool()); // the dialog's controls stay
@@ -11859,7 +11859,7 @@ private slots:
 
         // A changed program font: DestroyDialogs.
         matchCase->setProperty("checked", false);
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QSignalSpy findDestroyed(application, &app::Application::findReplaceDestroyed);
         QSignalSpy misspellDestroyed(application, &app::Application::misspellReplacerDestroyed);
         application->applySettings({{QStringLiteral("program.font"), QStringLiteral("Hikari Test Face")}});
@@ -11921,7 +11921,7 @@ private slots:
         // Grid, but the Line editor keeps the switch the menu turned off.
         application->setSpellingOn(false);
         QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
-        application->resetSettings({});
+        application->applySettings({}, true); // Reset all settings…, then OK (PF1-staged-reset)
         QVERIFY(application->spellingOn());
         QVERIFY(!application->suggestionsOnDoubleClick());
         QCOMPARE(application->editorSpellingMarks(0), QVariantList{});
@@ -17053,6 +17053,9 @@ private slots:
             auto *ring = background->findChild<QQuickItem *>(QStringLiteral("focusRing"));
             QVERIFY2(ring, name);
             QVERIFY2(!ring->isVisible(), name);
+            // PF1: in the Settings window, which has the keyboard.
+            control->window()->requestActivate();
+            QTRY_COMPARE(QGuiApplication::focusWindow(), control->window());
             control->forceActiveFocus(Qt::TabFocusReason);
             QTRY_VERIFY2(ring->isVisible(), name);
             const auto *border = ring->property("border").value<QObject *>();
@@ -17154,7 +17157,7 @@ private slots:
         QTRY_COMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(),
                      QStringLiteral("#123456"));
         QCOMPARE(accent(), QColor(0x12, 0x34, 0x56));
-        QTest::keyClick(window, Qt::Key_Escape);
+        QTest::keyClick(qobject_cast<QWindow *>(dialog), Qt::Key_Escape);
         QTRY_VERIFY(!themePopover->property("visible").toBool());
         QVERIFY(dialog->property("visible").toBool()); // Esc was the popover's
         QCOMPARE(settingsValues(dialog).value(QStringLiteral("appearance.highContrastBlack.accent")).toString(), accentBefore);

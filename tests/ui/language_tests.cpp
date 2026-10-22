@@ -919,6 +919,7 @@ private slots:
         };
         start();
         QVERIFY(application->openFile(episode));
+        QVERIFY(settingsDialog()); // PF1: the Settings window, made at its first opening
         QCoreApplication::processEvents();
         const Shown english = shown();
         application->settingsStore()->set("program.language", QStringLiteral("pl"));
