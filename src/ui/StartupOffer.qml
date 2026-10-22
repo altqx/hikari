@@ -42,6 +42,15 @@ QtObject {
             kind = k
     }
     function end() { kind = "" }
+    // Autosaves were deleted: the crash offer counts them again, and ends
+    // when it has neither a session to restore nor autosaved work left.
+    function recountAutosaves() {
+        if (kind !== "crash")
+            return
+        autosaveCount = app.recoveryBundles().length
+        if (!restorable && autosaveCount === 0)
+            kind = ""
+    }
     function restore() { offer.restoreRequested() }
     function openAutosaves() { offer.autosavesRequested() }
     // "Restore it at every start": On start: Restore (Settings › General).

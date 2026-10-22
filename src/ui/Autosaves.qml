@@ -71,6 +71,9 @@ Item {
             return qsTr("Yesterday %1").arg(time)
         return d.toLocaleDateString(Qt.locale(), Locale.ShortFormat)
     }
+    // Delete or Delete older than removed bundles (the startup offer counts
+    // them again).
+    signal bundlesDeleted()
     function reload() {
         now = new Date()
         const rows = []
@@ -107,6 +110,7 @@ Item {
             return
         app.dismissBundle(entry.key)
         reload()
+        autosaves.bundlesDeleted()
     }
     // The bundles Delete older than would delete for `cutoff` (a day).
     function olderCount(cutoff) {
@@ -116,6 +120,7 @@ Item {
     function deleteOlder(cutoff) {
         const removed = app.removeAutosavesOlderThan(day(cutoff))
         reload()
+        autosaves.bundlesDeleted()
         return removed
     }
 

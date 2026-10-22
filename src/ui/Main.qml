@@ -1733,7 +1733,7 @@ ApplicationWindow {
                     onTriggered: {
                         if (root.hotkeyGesture("GLOBAL_OPEN_AUDIO"))
                             return
-                        audioDialog.currentFolder = root.app.audioDialogFolder()
+                        audioDialog.currentFolder = root.startFolder("audio", root.app.audioDialogFolder())
                         audioDialog.open()
                     }
                 }
@@ -5763,6 +5763,11 @@ ApplicationWindow {
         const row = rows.find(r => r.startsWith(picker + "\t"))
         return row ? row.slice(picker.length + 1) : ""
     }
+    // A picker's own start (the Document's or the video's folder, legacy's
+    // rules), else the folder that kind of picker was last left in.
+    function startFolder(picker, folder) {
+        return folder.toString() !== "" ? folder : root.pickerFolder(picker)
+    }
     function rememberPickerFolder(picker, file) {
         const folder = root.app.folderOf(file)
         if (folder.length === 0)
@@ -5878,10 +5883,13 @@ ApplicationWindow {
     // format, starting at its file (or the video's, with the video name).
     // P9: for any tab's Document `id` (none: the editing target), and Save
     // all's queue of Documents that need the dialog, one after another.
-    function saveSubtitles(id) {
+    function saveSubtitles(id, overDisk) {
         const document = id ?? 0
         const route = root.app.saveRouteFor(document)
-        if (route === "dialog")
+        const marked = document === 0 ? root.currentTab().id : document
+        if (!overDisk && route !== "dialog" && route !== "readonly" && root.changedOnDisk[marked] === true)
+            diskSaveQuestion.confirm([marked], () => root.saveSubtitles(id, true))
+        else if (route === "dialog")
             openSaveDialog(document)
         else if (route === "readonly")
             readOnlyWarning.warn(document, root.tabTitle(document))
@@ -5891,7 +5899,12 @@ ApplicationWindow {
             root.app.saveDocument(document)
     }
     property var saveQueue: []
-    function saveAllTabs() {
+    function saveAllTabs(overDisk) {
+        const marked = root.app.tabs.filter(t => t.modified && root.changedOnDisk[t.id] === true).map(t => t.id)
+        if (!overDisk && marked.length > 0) {
+            diskSaveQuestion.confirm(marked, () => root.saveAllTabs(true))
+            return
+        }
         saveQueue = root.app.saveAll()
         saveNext()
     }
@@ -5951,8 +5964,9 @@ ApplicationWindow {
         videoName: () => root.currentTab().video || ""
         save: function() {
             const route = root.app.saveRoute()
+            const asks = root.changedOnDisk[root.currentTab().id] === true
             root.saveSubtitles()
-            return route === "dialog" || route === "readonly"
+            return route === "dialog" || route === "readonly" || asks
         }
     }
     // PU1-message-boxes: a Save onto a read-only file (legacy's OK-only
@@ -5979,6 +5993,37 @@ ApplicationWindow {
                     matroskaSubtitles.saveDone()
                     root.saveNext()
                 }
+            })
+        }
+    }
+
+    // PU1-disk-change-bar: a save while a Document's changed-on-disk bar
+    // shows asks first (legacy's question was modal, answered before any
+    // save); Save over it ends those bars and saves.
+    LazyMessageBox {
+        id: diskSaveQuestion
+        name: "diskSaveQuestion"
+        settings: root.app.settings
+        function confirm(ids, save) {
+            const names = ids.map(id => "“" + root.tabTitle(id) + "”").join(", ")
+            ask({
+                title: qsTranslate("HikariSub.Documents", "Save"),
+                text: ids.length === 1
+                      ? qsTranslate("HikariSub.Documents", "%1 was changed by another program.").arg(names)
+                      : qsTranslate("HikariSub.Documents", "%1 were changed by another program.").arg(names),
+                detail: qsTranslate("HikariSub.Documents", "Saving writes over those changes."),
+                severity: "warning",
+                choices: [
+                    { id: "saveOver", text: qsTranslate("HikariSub.Documents", "Save over it"), role: "destructive" },
+                    { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject", isDefault: true }
+                ]
+            }, id => {
+                if (id === "saveOver") {
+                    for (const marked of ids)
+                        root.endDiskChange(marked)
+                    save()
+                }
+                matroskaSubtitles.saveDone() // Y9: the load waits for the answer
             })
         }
     }
@@ -6040,11 +6085,17 @@ ApplicationWindow {
         objectName: "videoOpenDialog"
         nameFilters: [qsTranslate("HikariSub.Video", "Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"), qsTranslate("HikariSub.Video", "All files (*)")]
         // P9; V5: from the fullscreen window without the subtitles question.
-        onAccepted: root.videoFullscreen.active ? root.openVideoUnasked(root.app.localPath(selectedFile))
-                                                : tabCommands.openVideoFile(root.app.localPath(selectedFile))
-        // V3: the subtitles' folder, else the latest recent video's
+        onAccepted: {
+            root.rememberPickerFolder("video", selectedFile) // PU1-picker-titles
+            if (root.videoFullscreen.active)
+                root.openVideoUnasked(root.app.localPath(selectedFile))
+            else
+                tabCommands.openVideoFile(root.app.localPath(selectedFile))
+        }
+        // V3: the subtitles' folder, else the latest recent video's (else
+        // where the video picker was last left, PU1-picker-titles)
         function show() {
-            currentFolder = root.app.videoDialogFolder()
+            currentFolder = root.startFolder("video", root.app.videoDialogFolder())
             open()
         }
     }
@@ -6431,7 +6482,10 @@ ApplicationWindow {
         title: qsTranslate("HikariSub.Audio", "Choose audio file")
         nameFilters: [qsTranslate("HikariSub.Audio", "Audio and video files") + " (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)",
                       qsTranslate("HikariSub.Audio", "All files") + " (*)"]
-        onAccepted: root.audio.openAudioUrl(selectedFile)
+        onAccepted: {
+            root.rememberPickerFolder("audio", selectedFile) // PU1-picker-titles
+            root.audio.openAudioUrl(selectedFile)
+        }
     }
     // A1: legacy HikariListBox "Choose the track" (ProviderFFMS2::Init with
     // several audio tracks), on PK1's list chooser in its compact window:
@@ -6468,14 +6522,16 @@ ApplicationWindow {
         title: qsTranslate("HikariSub.Video", "Choose keyframes file") // TI1-keyframes-title
         nameFilters: [qsTranslate("HikariSub.Video", "Keyframes file (*.txt *.pass *.stats *.log)"), qsTranslate("HikariSub.Video", "All files (*)")]
         onAccepted: {
+            root.rememberPickerFolder("keyframes", selectedFile) // PU1-picker-titles
             // V3: the recent keyframes take the file too (SetRecent(3))
             const problem = root.app.openKeyframesFile(selectedFile.toString())
             if (problem.length > 0)
                 root.log.log(problem)
         }
-        // V3: the video's folder, else the latest recent keyframes'
+        // V3: the video's folder, else the latest recent keyframes' (else
+        // where the keyframes picker was last left, PU1-picker-titles)
         function show() {
-            currentFolder = root.app.keyframesDialogFolder()
+            currentFolder = root.startFolder("keyframes", root.app.keyframesDialogFolder())
             open()
         }
     }
@@ -7100,6 +7156,7 @@ ApplicationWindow {
         objectName: "autosaves"
         app: root.app
         settings: root.app.settings
+        onBundlesDeleted: sessionWindows.offer.recountAutosaves()
     }
 
     // O2: the shortcut editor. An installed binding as legacy text ("Ctrl-D"), following installs.
