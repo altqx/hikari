@@ -24,6 +24,11 @@ import Hikari.Ui
 // group of a line is not drawn) and the picker keeps its slot; the bar keeps
 // the height of the family that needs the most lines at its width, laid out
 // unseen, so a tool switch does not resize the video either.
+//
+// HY1 (#271): Hydra's change option comes after its values (Tag, the
+// values, Change), and its picker slot says which Lines a value changes
+// ("Changes 3 lines", "Changes the active line"); they are outlined on the
+// video.
 Control {
     id: bar
     objectName: "visualToolBar"
@@ -49,7 +54,23 @@ Control {
         "Change": qsTr("Change"),
         "Start": qsTr("Start"),
         "End": qsTr("End"),
-        "Origin": qsTr("Origin")
+        "Origin": qsTr("Origin"),
+        "By": qsTr("By"),
+        "Per line": qsTr("Per line"),
+        "From": qsTr("From"),
+        "To": qsTr("To")
+    })
+    // HY1: Hydra's value labels (one value: its role; several: what each is).
+    readonly property var valueLabels: ({
+        "Value": qsTr("Value"),
+        "By": qsTr("By"),
+        "Start": qsTr("Start"),
+        "Per line": qsTr("Per line"),
+        "From": qsTr("From"),
+        "To": qsTr("To"),
+        "In": qsTr("In"),
+        "Out": qsTr("Out"),
+        "End": qsTr("End")
     })
     function groupName(group) {
         return bar.groupNames[group] ?? group
@@ -65,10 +86,16 @@ Control {
         }
         return out
     }
+    // The options, the values, then the options shown after them (HY1).
+    function ordered(options, values, measuring) {
+        return groupsOf(options.filter(o => !o.afterValues), "options", measuring)
+            .concat(groupsOf(values, "values", measuring))
+            .concat(groupsOf(options.filter(o => o.afterValues), "options", measuring))
+    }
     // A family's groups for its unseen copy (its values carried whole).
     function measuredSegments(layout) {
         const values = (layout.values ?? []).map(v => ({ name: v.name, group: v.group, value: v }))
-        return groupsOf(layout.options ?? [], "options", true).concat(groupsOf(values, "values", true))
+        return ordered(layout.options ?? [], values, true)
     }
     // The values' layout changes only with the tool (or a value coming or
     // going), not with every sample, so the fields are not rebuilt (and a
@@ -79,14 +106,14 @@ Control {
             parts.push(v.name + "\u0001" + v.group + "\u0001" + v.label + "\u0001" + v.unit + "\u0001" + v.editable)
         return parts.join("\u0002")
     }
-    readonly property var valueGroups: {
+    readonly property var valueItems: {
         const shape = []
         if (valueShape.length > 0)
             for (const part of valueShape.split("\u0002")) {
                 const f = part.split("\u0001")
                 shape.push({ name: f[0], group: f[1] })
             }
-        return groupsOf(shape, "values", false)
+        return shape
     }
     function valueNamed(name) {
         for (const v of tools.values)
@@ -97,7 +124,8 @@ Control {
     // The options' layout likewise: a toggle, a greyed option or the chosen
     // entry changes no item (each reads its state by name).
     readonly property string optionShape: JSON.stringify(tools.options.map(o => ({
-        name: o.name, kind: o.kind, iconRole: o.iconRole, tooltip: o.tooltip, group: o.group, listEnds: o.listEnds
+        name: o.name, kind: o.kind, iconRole: o.iconRole, tooltip: o.tooltip, group: o.group, listEnds: o.listEnds,
+        searchable: o.searchable, afterValues: o.afterValues
     })))
     function optionNamed(name, fallback) {
         for (const o of tools.options)
@@ -105,10 +133,17 @@ Control {
                 return o
         return fallback
     }
-    readonly property var segments: groupsOf(JSON.parse(optionShape), "options", false).concat(valueGroups)
+    readonly property var segments: ordered(JSON.parse(optionShape), valueItems, false)
+    // HY1: Hydra's picker slot names the Lines a value changes.
+    readonly property bool hydra: family === 10 // Family::Hydra
+    function targetText(count) {
+        return count > 1 ? qsTr("Changes %n lines", "", count) : qsTr("Changes the active line")
+    }
     // The picker's slot, which a batch tool's groups give up.
     readonly property real pickerWidth: pick.implicitWidth + 4
-                                        + (tools.batchCount > 0 ? picked.implicitWidth + clear.implicitWidth + 8 : 0)
+                                        + (hydra ? targets.implicitWidth + 4 : 0)
+                                        + (tools.batchCount > 0 ? (hydra ? 0 : picked.implicitWidth + 4)
+                                                                  + clear.implicitWidth + 4 : 0)
     function batchFamily(f) {
         return f > 0 && (tools.families[f]?.available ?? false)
     }
@@ -118,9 +153,12 @@ Control {
     readonly property string layoutShape: JSON.stringify(tools.familyLayouts.map(l => l.options === undefined ? {} : {
         options: l.options.map(o => ({ name: o.name, kind: o.kind, iconRole: o.iconRole, tooltip: o.tooltip,
                                        group: o.group, choices: o.choices, listEnds: o.listEnds,
+                                       searchable: o.searchable, afterValues: o.afterValues,
+                                       notes: o.notes, sections: o.sections, sectionNames: o.sectionNames,
                                        checked: false, enabled: false, index: 0 })),
         values: l.values.map(v => ({ name: v.name, label: v.label, text: "", editable: v.editable,
-                                     group: v.group, unit: v.unit, step: v.step }))
+                                     group: v.group, unit: v.unit, step: v.step,
+                                     swatch: v.swatch ? "#000000" : "", marked: v.marked === undefined ? undefined : false }))
     }))
     readonly property var measuredLayouts: JSON.parse(layoutShape)
     // The height the panel can spare above its minimum (which counts only
@@ -257,11 +295,21 @@ Control {
             onClicked: bar.tools.pickBatch()
         }
         Label {
+            id: targets
+            objectName: "visualTargetCount"
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 5
+            Layout.leftMargin: 4
+            visible: bar.batchTool && bar.hydra
+            text: bar.targetText(bar.tools.targetCount)
+            font.features: { "tnum": 1 }
+        }
+        Label {
             id: picked
             objectName: "visualPickedCount"
             Layout.alignment: Qt.AlignTop
             Layout.topMargin: 5
-            visible: bar.batchTool && bar.tools.batchCount > 0
+            visible: bar.batchTool && !bar.hydra && bar.tools.batchCount > 0
             text: bar.tools.batchCount === 1 ? qsTr("1 line") : qsTr("%n lines", "", bar.tools.batchCount)
             font.features: { "tnum": 1 }
         }

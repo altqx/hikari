@@ -20,6 +20,10 @@ import Hikari.Ui
 // (listEnds) first entry ("Choose") is no shape and its last ("Edit") an
 // action after a separator, with no check; the bar names them "Free
 // drawing" and "Edit shapes…".
+//
+// HY1 (#271): a switch is a row of segments, the chosen one pushed
+// (Hydra's change option); a searchable choice is VisualTagPicker (Hydra's
+// tag list). Hydra's entries are named in the catalog.
 Loader {
     id: option
     required property var modelData
@@ -36,7 +40,28 @@ Loader {
     // video position) is named in the catalog.
     readonly property string tooltip: modelData.kind === "action" && modelData.name === "copyPosition"
                                       ? qsTr("Copy video position") : modelData.tooltip
-    sourceComponent: modelData.kind !== "choice" ? buttonComponent
+    // HY1: the entries the bar names (Hydra's switch and its choices).
+    readonly property var entryNames: ({
+        "Set": qsTr("Set"),
+        "Add": qsTr("Add"),
+        "Multiply": qsTr("Multiply"),
+        "Gradient": qsTr("Gradient"),
+        "At the cursor": qsTr("At the cursor"),
+        "At the start of the text": qsTr("At the start of the text"),
+        "Clip rectangle with \\t animation": qsTr("Clip rectangle with \\t animation"),
+        "Set by line number": qsTr("Set by line number"),
+        "Add by line number": qsTr("Add by line number"),
+        "Across characters, increasing": qsTr("Across characters, increasing"),
+        "Across characters, decreasing": qsTr("Across characters, decreasing"),
+        "Across lines, increasing": qsTr("Across lines, increasing"),
+        "Across lines, decreasing": qsTr("Across lines, decreasing")
+    })
+    function entryName(text) {
+        return option.entryNames[text] ?? text
+    }
+    sourceComponent: modelData.kind === "switch" ? switchComponent
+                     : modelData.kind !== "choice" ? buttonComponent
+                     : modelData.searchable ? pickerComponent
                      : modelData.iconRole.length === 0 ? listComponent : choiceComponent
     Layout.alignment: Qt.AlignVCenter
 
@@ -79,7 +104,7 @@ Loader {
                     return qsTr("Free drawing")
                 if (listEnds && index === model.length - 1 && index > 0)
                     return qsTr("Edit shapes…")
-                return model[index] ?? ""
+                return option.entryName(model[index] ?? "")
             }
             readonly property string role: option.modelData.iconRole
             text: option.modelData.tooltip.split("\n")[0]
@@ -198,6 +223,64 @@ Loader {
                     // The entries before the separator, the action after it.
                     onObjectAdded: (index, object) => choiceMenu.insertItem(object.isAction ? index + 1 : index, object)
                     onObjectRemoved: (index, object) => choiceMenu.removeItem(object)
+                }
+            }
+        }
+    }
+    Component {
+        id: pickerComponent
+        VisualTagPicker {
+            modelData: option.modelData
+            live: option.live
+            tools: option.tools
+            measuring: option.measuring
+        }
+    }
+    Component {
+        id: switchComponent
+        // HY1: the segments, the chosen one pushed; one click picks.
+        Row {
+            id: segments
+            objectName: option.nameOf
+            spacing: -1
+            Accessible.role: Accessible.PageTabList
+            Accessible.name: option.modelData.tooltip.split("\n")[0]
+            Repeater {
+                model: option.live.choices
+                delegate: AbstractButton {
+                    id: segment
+                    required property string modelData
+                    required property int index
+                    readonly property bool chosen: index === option.live.index
+                    objectName: option.nameOf.length > 0 ? option.nameOf + "_" + index : ""
+                    text: option.entryName(modelData)
+                    implicitHeight: 24
+                    implicitWidth: segmentText.implicitWidth + 20
+                    enabled: option.live.enabled && option.tools.railEnabled
+                    focusPolicy: Qt.NoFocus
+                    hoverEnabled: true
+                    checkable: false
+                    checked: chosen
+                    Accessible.role: Accessible.PageTab
+                    Accessible.name: text
+                    Accessible.checked: chosen
+                    ToolTip.visible: hovered && index === 0
+                    ToolTip.text: option.modelData.tooltip
+                    contentItem: Label {
+                        id: segmentText
+                        text: segment.text
+                        horizontalAlignment: Text.AlignHCenter
+                        verticalAlignment: Text.AlignVCenter
+                        color: segment.chosen ? Theme.onAccent : segment.enabled ? Theme.text : Theme.disabled
+                    }
+                    background: Rectangle {
+                        radius: 2
+                        color: segment.chosen ? Theme.accent : segment.down ? Qt.darker(Theme.raised, 1.08)
+                               : segment.hovered ? Qt.lighter(Theme.raised, 1.06) : Theme.raised
+                        border.color: segment.chosen ? Theme.accent : segment.enabled ? Theme.control : Theme.line
+                    }
+                    z: chosen ? 1 : 0
+                    onClicked: if (!chosen) option.tools.setOption(option.modelData.name, index)
                 }
             }
         }
