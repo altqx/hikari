@@ -136,14 +136,19 @@ Control {
     readonly property var segments: ordered(JSON.parse(optionShape), valueItems, false)
     // HY1: Hydra's picker slot names the Lines a value changes.
     readonly property bool hydra: family === 10 // Family::Hydra
+    // A picked Line is named as one line: it need not be the active one.
     function targetText(count) {
-        return count > 1 ? qsTr("Changes %n lines", "", count) : qsTr("Changes the active line")
+        return count > 1 || count === 0 && tools.batchCount > 0 ? qsTr("Changes %n lines", "", count)
+             : tools.batchCount > 0 ? qsTr("Changes 1 line") : qsTr("Changes the active line")
     }
-    // The picker's slot, which a batch tool's groups give up.
-    readonly property real pickerWidth: pick.implicitWidth + 4
-                                        + (hydra ? targets.implicitWidth + 4 : 0)
-                                        + (tools.batchCount > 0 ? (hydra ? 0 : picked.implicitWidth + 4)
-                                                                  + clear.implicitWidth + 4 : 0)
+    // The picker's slot, which a batch tool's groups give up: Hydra's names
+    // its Lines instead of counting the picked ones.
+    function pickerWidthOf(f) {
+        const hy = f === 10
+        return pick.implicitWidth + 4 + (hy ? targets.implicitWidth + 4 : 0)
+               + (tools.batchCount > 0 ? (hy ? 0 : picked.implicitWidth + 4) + clear.implicitWidth + 4 : 0)
+    }
+    readonly property real pickerWidth: pickerWidthOf(family)
     function batchFamily(f) {
         return f > 0 && (tools.families[f]?.available ?? false)
     }
@@ -345,7 +350,7 @@ Control {
             delegate: Flow {
                 required property var modelData
                 required property int index
-                width: Math.max(0, parent.width - (bar.batchFamily(index) ? bar.pickerWidth : 0))
+                width: Math.max(0, parent.width - (bar.batchFamily(index) ? bar.pickerWidthOf(index) : 0))
                 spacing: 6
                 ToolName {
                     visible: modelData.options !== undefined

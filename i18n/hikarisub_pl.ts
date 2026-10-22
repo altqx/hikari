@@ -9068,6 +9068,10 @@ bądź brakuje kodeków czy też splittera</translation>
         </translation>
     </message>
     <message>
+        <source>Changes 1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Changes the active line</source>
         <translation type="unfinished"></translation>
     </message>

@@ -20658,6 +20658,14 @@ private slots:
         for (const char c : {'s', 'h', 'a'})
             QTest::keyClick(window, c);
         QTRY_COMPARE(menuOf()->property("entryCount").toInt(), 3); // shadow, xshadow, yshadow
+        // The tag as the list shows it, with its backslash.
+        for (int i = 0; i < 3; ++i)
+            QTest::keyClick(window, Qt::Key_Backspace);
+        QTRY_COMPARE(menuOf()->property("entryCount").toInt(), 9);
+        for (const char c : {'\\', 'b', 'o', 'r', 'd'})
+            QTest::keyClick(window, c);
+        QTRY_COMPARE(search->property("text").toString(), QStringLiteral("\\bord"));
+        QTRY_COMPARE(menuOf()->property("entryCount").toInt(), 3); // border, xborder, yborder
         QTest::keyClick(window, Qt::Key_Escape);
         QTRY_VERIFY(!menuOf()->property("visible").toBool());
         auto *allTags = dynamic_cast<AllTagsTool *>(tools.tool());

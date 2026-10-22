@@ -127,7 +127,7 @@ AbstractButton {
         // The rows: section titles and definitions (their index), filtered
         // by the search, then the action.
         readonly property var rows: {
-            const q = search.text.trim().toLowerCase()
+            const q = search.text.trim().replace(/^\\/, "").toLowerCase() // \blur as shown
             const out = []
             if (q.length > 0) {
                 for (let i = 0; i < picker.model.length; ++i) {

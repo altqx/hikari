@@ -460,6 +460,17 @@ std::string VisualToolsController::editorHotkey(int id) const
     return m_editorHotkey ? m_editorHotkey(id) : VisualHost::editorHotkey(id);
 }
 
+int VisualToolsController::targetCount() const
+{
+    // HY1: the Lines a change edits: several picked ones less those the
+    // Grid hides (AllTagsTool::beginEdit).
+    const auto targets = batchTargets();
+    const auto shown = targets.size() > 1 ? shownLines() : std::function<bool(core::LineId)>{};
+    if (!shown)
+        return static_cast<int>(targets.size());
+    return static_cast<int>(std::ranges::count_if(targets, shown));
+}
+
 bool VisualToolsController::undoStep(std::uint64_t revision)
 {
     // HY1: the tool's own last step undone, only while it is the last thing
@@ -1035,7 +1046,9 @@ bool VisualToolsController::editLastChange(const QString &name, const QString &t
         return false;
     const std::uint64_t before = s->revision();
     const bool done = t->editLastChange(name.toStdString(), text.toStdU16String(), *this);
-    if (const auto *now = editingSession(); now && now->revision() != before && m_edited)
+    // A redone change refreshed the shell as it committed; an undo whose
+    // change could not be done again has not.
+    if (const auto *now = editingSession(); !done && now && now->revision() != before && m_edited)
         m_edited();
     updatePreview();
     emit changed();

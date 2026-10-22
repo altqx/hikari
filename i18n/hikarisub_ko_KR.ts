@@ -9019,6 +9019,10 @@ or codecs or a splitter may be missing</source>
         </translation>
     </message>
     <message>
+        <source>Changes 1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Changes the active line</source>
         <translation type="unfinished"></translation>
     </message>

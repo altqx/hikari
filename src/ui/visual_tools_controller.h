@@ -154,7 +154,7 @@ public:
     QVariantList values() const;
     bool escapable() const;
     int batchCount() const { return static_cast<int>(m_picker.picked().size()); }
-    int targetCount() const { return static_cast<int>(batchTargets().size()); }
+    int targetCount() const;
     QVariantMap lastChange() const;
     bool gestureActive() const { return m_gesture.has_value(); }
     int editTarget() const { return m_editTarget; }
