@@ -2754,7 +2754,7 @@ ApplicationWindow {
                     }
                     onOpenVideoRequested: videoDialog.open()
                     onOpenSubtitlesRequested: openDialog.open()
-                    onAspectRatioRequested: aspectRatioDialog.openAtCursor()
+                    onAspectRatioRequested: aspectRatioDialog.openAtCursor(visualOverlay)
                 }
                 Label {
                     anchors.centerIn: videoStageDock
@@ -6026,10 +6026,12 @@ ApplicationWindow {
         app: root.app
     }
 
-    // V4: VIDEO_ASPECT_RATIO.
+    // V4: VIDEO_ASPECT_RATIO (PU4: a popover from the context menus, a
+    // compact window from the hotkey).
     AspectRatioDialog {
         id: aspectRatioDialog
         view: root.videoView
+        settings: root.app.settings
     }
 
     // V5: the fullscreen video window (legacy Fullscreen). What it asks
@@ -7540,7 +7542,7 @@ ApplicationWindow {
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
         // FS1-bar-mode: Auto, Always, Never.
         case "VIDEO_FULLSCREEN_BAR": root.videoFullscreen.cycleBarMode(); return true
-        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
+        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openWindow(root.videoFullscreen.active ? videoFullscreenWindow : null); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
         case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":

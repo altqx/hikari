@@ -8673,7 +8673,7 @@ private slots:
             {"spellingNotice", QStringLiteral("Spellchecker")},
             {"mkvNoTracksMessage", QStringLiteral("Load subtitles from an MKV/OGM file")},
             {"mkvProgress", QStringLiteral("Load subtitles from an MKV/OGM file")},
-            {"aspectRatioDialog", QStringLiteral("Change aspect ratio")},
+            {"aspectRatioPopover", QStringLiteral("Change aspect ratio")},
         };
         for (const auto &[name, title] : titles) {
             QObject *popup = find(name);
@@ -8757,7 +8757,11 @@ private slots:
         find("spellingNotice")->setProperty("text", QStringLiteral("Error. Word \"wrold\" was not added."));
         for (const char *name : {"spellingNotice", "mkvNoTracksMessage", "mkvProgress", "aspectRatioDialog"}) {
             QObject *popup = find(name);
-            QVERIFY(QMetaObject::invokeMethod(popup, qstrcmp(name, "aspectRatioDialog") == 0 ? "openAtCursor" : "open"));
+            if (qstrcmp(name, "aspectRatioDialog") == 0)
+                QVERIFY(QMetaObject::invokeMethod(popup, "openAtCursor",
+                                                  Q_ARG(QVariant, QVariant::fromValue<QObject *>(window->contentItem()))));
+            else
+                QVERIFY(QMetaObject::invokeMethod(popup, "open"));
             QTRY_VERIFY2(popup->property("opened").toBool(), name);
             save(name, windowOf(popup), false);
             QVERIFY(QMetaObject::invokeMethod(popup, "close"));
@@ -25906,28 +25910,80 @@ private slots:
         press(Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier);
         QCOMPARE(view.zoomPercent(), 100);
 
-        // VIDEO_ASPECT_RATIO (no default key): the dialog at the pointer,
-        // "Aspect ratio: 1.333" for 320x240; a slider at 350000 is 0.5.
+        // Change aspect ratio (PU4-aspect-ratio). From the context menu: a
+        // popover at the pointer, "Aspect ratio: 1.333" for 320x240, set at
+        // once as the slider moves; Esc puts back the ratio it opened with,
+        // Reset gives the video's own, Enter keeps it.
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
         auto *dialog = named("aspectRatioDialog");
-        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *popover = named("aspectRatioPopover");
+        QVERIFY(dialog && popover);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "openAtCursor",
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QCOMPARE(popover->property("title").toString(), QStringLiteral("Change aspect ratio"));
+        QCOMPARE(qobject_cast<QQuickItem *>(popover->property("parent").value<QObject *>())->window(), window);
         auto *label = named("aspectRatioLabel");
         QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 1.333"));
         auto *slider = named("aspectRatioSlider");
+        QTRY_VERIFY(slider->property("activeFocus").toBool());
         QCOMPARE(slider->property("value").toInt(), 525000); // 0.75 * 700000
         slider->setProperty("value", 350000);
         QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
         QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 2.000"));
         QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "openAtCursor",
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        slider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
+        QVERIFY(QMetaObject::invokeMethod(named("aspectRatioReset"), "click"));
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f);
+        QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 1.333"));
+        QCOMPARE(slider->property("value").toInt(), 525000);
+        slider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
+        // VIDEO_ASPECT_RATIO (no default key): the same form in a compact
+        // window on DG1's frame, made at its first opening; Cancel puts the
+        // ratio back, OK keeps it.
+        QVERIFY(!dialog->property("compactWindow").value<QObject *>());
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        auto *own = dialog->property("compactWindow").value<QQuickWindow *>();
+        QVERIFY(own && own->isVisible());
+        QCOMPARE(own->title(), QStringLiteral("Change aspect ratio"));
+        QCOMPARE(own->transientParent(), window);
+        QVERIFY(!popover->property("visible").toBool());
+        auto *ownLabel = findItem(own->contentItem(), QStringLiteral("aspectRatioWindowLabel"));
+        auto *ownSlider = findItem(own->contentItem(), QStringLiteral("aspectRatioWindowSlider"));
+        QCOMPARE(ownLabel->property("text").toString(), QStringLiteral("Aspect ratio: 2.000"));
+        QCOMPARE(ownSlider->property("value").toInt(), 350000);
+        ownSlider->setProperty("value", 525000);
+        QVERIFY(QMetaObject::invokeMethod(ownSlider, "moved"));
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f);
+        QVERIFY(QMetaObject::invokeMethod(findItem(own->contentItem(), QStringLiteral("aspectRatioWindowCancel")), "click"));
+        QTRY_VERIFY(!own->isVisible());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(own->isVisible());
+        ownSlider->setProperty("value", 525000);
+        QVERIFY(QMetaObject::invokeMethod(ownSlider, "moved"));
+        ownSlider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(ownSlider, "moved"));
         const auto r = tools.videoView().videoRect();
         // Letterboxed at 2:1, to the pixel: an odd video width (the visual
         // tool rail widens by its scroll bar in a short panel) has no exact
         // half.
         QVERIFY2(std::abs(r.height() * 2 - r.width()) <= 1, qPrintable(QStringLiteral("%1x%2").arg(r.width()).arg(r.height())));
         QCOMPARE(presenter->property("videoRect").toRectF(), tools.videoRect());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(findItem(own->contentItem(), QStringLiteral("aspectRatioWindowOk")), "click"));
+        QTRY_VERIFY(!own->isVisible());
         QCOMPARE(tools.videoView().aspectRatio(), 0.5f); // until the next video opens
 
         // The volume (VIDEO_VOLUME): Num . / Num 0 step 2 below 1 and above -91.
@@ -26234,7 +26290,7 @@ private slots:
         QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Change aspect ratio\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
-        QVERIFY(!named("aspectRatioDialog")->property("visible").toBool());
+        QVERIFY(!named("aspectRatioDialog")->property("opened").toBool());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(h.accelOf(QStringLiteral("VIDEO_ASPECT_RATIO"), 3), QStringLiteral("Alt-Ctrl-J"));
@@ -26242,13 +26298,15 @@ private slots:
         h.beginOptions();
         QCOMPARE(hotkeyRow(QStringLiteral("Video Change aspect ratio")).value(QStringLiteral("accel")).toString(),
                  QStringLiteral("Alt-Ctrl-J"));
-        // The new binding opens the dialog from the Video panel.
+        // The new binding opens the compact window from the Video panel.
         QTRY_VERIFY(window->isActive());
         item("videoPanel")->forceActiveFocus();
         press(Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY(named("aspectRatioDialog")->property("visible").toBool());
+        QTRY_VERIFY(named("aspectRatioDialog")->property("opened").toBool());
+        QVERIFY(named("aspectRatioDialog")->property("compactWindow").value<QQuickWindow *>()->isVisible());
         QVERIFY(QMetaObject::invokeMethod(named("aspectRatioDialog"), "close"));
-        QTRY_VERIFY(!named("aspectRatioDialog")->property("visible").toBool());
+        QTRY_VERIFY(!named("aspectRatioDialog")->property("opened").toBool());
+        QTRY_VERIFY(window->isActive());
         // The menu key opens the menu at the pointer.
         item("videoPanel")->forceActiveFocus();
         press(Qt::Key_Menu);
