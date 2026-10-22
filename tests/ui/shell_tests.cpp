@@ -20908,6 +20908,48 @@ private slots:
         QTRY_COMPARE(list()->property("currentIndex").toInt(), 2);
         QCOMPARE(shown(), QStringLiteral("circle"));
         QCOMPARE(drawingTool->shape(), 1);
+        // It follows a rename, Replace's and its Undo included: the third
+        // preset named as the first replaces it (Codex on #349).
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 3));
+        const QString thirdName = QString::fromStdU16String(editor->edition().presets()[2].name);
+        QTRY_COMPARE(shown(), thirdName);
+        editor->select(2);
+        QCOMPARE(editor->setName(QStringLiteral("box")), int(ui::ShapeEditor::NameTaken));
+        editor->replaceNamed(QStringLiteral("box"));
+        QCOMPARE(editor->edition().presets()[1].name, std::u16string(u"box"));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 2);
+        QCOMPARE(shown(), QStringLiteral("box"));
+        QCOMPARE(drawingTool->shape(), 1);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 3);
+        QCOMPARE(shown(), thirdName);
+        QCOMPARE(drawingTool->shape(), 2);
+        // A change made while another family is shown reaches the tool: it
+        // comes back on the same preset, read again.
+        tools.selectFamily(int(application::visual::Family::Position));
+        QTRY_VERIFY(tools.tool() != drawingTool);
+        QCOMPARE(tools.shapeEditor(), editor);
+        editor->select(0);
+        QVERIFY(editor->remove()); // box, before the chosen one
+        editor->select(1);
+        QCOMPARE(editor->name(), thirdName);
+        QVERIFY(editor->setShape(QStringLiteral("m 0 0 l 10 0 10 10 0 10 0 5")));
+        tools.selectFamily(int(application::visual::Family::Drawing));
+        QTRY_VERIFY(tools.tool() == drawingTool);
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 2);
+        QCOMPARE(shown(), thirdName);
+        QCOMPARE(drawingTool->shape(), 1);
+        QCOMPARE(drawingTool->shapePoints().size(), 5u);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked")); // the drawing
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked")); // box back
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 3);
+        // Take from the active line reads the Line editor's pending text, as
+        // the video shows it.
+        QVERIFY(session->editDraftText(third, u8"{\\p1}m 0 0 l 7 0 7 7{\\p0}"));
+        QVERIFY(editor->takeFromLine());
+        QCOMPARE(editor->property("shape").toString(), QStringLiteral("m 0 0 l 7 0 7 7"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        session->discardDraft();
         QVERIFY(tools.setOption(QStringLiteral("shape"), 1)); // box again
         // The window's list follows the editor's selection after a click
         // too: Duplicate selects the copy; a key moves through the editor.
@@ -21429,6 +21471,31 @@ private slots:
             application->selectLine(third.value);
             QTRY_VERIFY(session->selection().active == third);
             QVERIFY(editor->preview().value(QStringLiteral("after")).toString().endsWith(QStringLiteral("}third")));
+        }
+        // The bar's chosen tag follows a rename and its Undo, and Hydra takes
+        // a change made while another family is shown (Codex on #349).
+        {
+            auto *hydra = dynamic_cast<application::visual::AllTagsTool *>(tools.tool());
+            QVERIFY(hydra);
+            const auto chosenTag = [&] { return hydra->toggled() & 0xFFFFF; };
+            QCOMPARE(chosenTag(), 1);
+            QCOMPARE(editor->setName(QStringLiteral("rim")), int(ui::AllTagsEditor::CheckOk));
+            QCOMPARE(chosenTag(), 1);
+            QVERIFY(QMetaObject::invokeMethod(named("tagsUndo"), "clicked"));
+            QCOMPARE(editor->name(), QStringLiteral("border"));
+            QCOMPARE(chosenTag(), 1);
+            tools.selectFamily(int(application::visual::Family::Position));
+            QTRY_VERIFY(tools.tool() != hydra);
+            QCOMPARE(tools.tagsEditor(), editor);
+            editor->select(0);
+            QVERIFY(editor->remove()); // blur, before the chosen one
+            tools.selectFamily(int(application::visual::Family::Hydra));
+            QTRY_VERIFY(tools.tool() == hydra);
+            QCOMPARE(chosenTag(), 0);
+            QCOMPARE(QString::fromStdU16String((*tools.allTagsSettings())[0].name), QStringLiteral("border"));
+            QVERIFY(QMetaObject::invokeMethod(named("tagsUndo"), "clicked"));
+            QCOMPARE(chosenTag(), 1);
+            editor->select(1);
         }
         const auto file = [&] {
             QFile saved(tagsFile);

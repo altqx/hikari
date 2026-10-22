@@ -105,8 +105,10 @@ public:
     bool setOption(const std::string &name, int value, VisualHost &host) override;
     // PU5: the presets changed in "Edit shapes" (each change kept at once):
     // the list's entry `listSelection` chosen and read again, even at the
-    // place chosen before (legacy's SetShape kept the preset it had).
-    void presetsChanged(int listSelection, VisualHost &host);
+    // place chosen before (legacy's SetShape kept the preset it had). A
+    // hidden tool (another family shown) only takes them: it reads its Line
+    // when it comes back (reset).
+    void presetsChanged(int listSelection, VisualHost &host, bool shown = true);
 
     // Legacy's state, for the tests.
     VectorEditor &editor() { return m_editor; }

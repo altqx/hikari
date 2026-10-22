@@ -94,8 +94,10 @@ public:
     void setToggled(int tool, VisualHost *host = nullptr);
     // After the definitions changed (the "Tag editing" dialog's OK): the
     // list's names again, its selection kept by name where it can be
-    // (HikariChoice::PutArray), and the tool told.
-    void definitionsChanged(const std::vector<std::u16string> &oldNames, VisualHost &host);
+    // (HikariChoice::PutArray), and the tool told. A hidden tool (another
+    // family shown) keeps the selection only: it starts over when it comes
+    // back (selected, reset).
+    void definitionsChanged(const std::vector<std::u16string> &oldNames, VisualHost &host, bool shown = true);
 
     // Legacy state, as the probe records it.
     const AllTagsSetting &actualTag() const { return m_actualTag; }

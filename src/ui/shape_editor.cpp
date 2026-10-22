@@ -172,11 +172,11 @@ int ShapeEditor::ownCount() const
     }));
 }
 
-void ShapeEditor::kept()
+void ShapeEditor::kept(const Renamed &renamed)
 {
     emit changed();
     if (m_hooks.changed)
-        m_hooks.changed(m_edition.presets());
+        m_hooks.changed(m_edition.presets(), renamed);
 }
 
 void ShapeEditor::setMode(int mode)
@@ -192,11 +192,13 @@ int ShapeEditor::setName(const QString &name)
     if (name == this->name())
         return NameOk;
     std::u16string taken;
+    Renamed renamed{m_edition.current().name, {}};
     const auto check = m_edition.setName(name.toStdU16String(), &taken);
     m_taken = qs(taken);
     if (check != ShapesEdition::NameCheck::Ok)
         return static_cast<int>(check);
-    kept();
+    renamed.to = m_edition.current().name;
+    kept(renamed);
     return NameOk;
 }
 
@@ -240,8 +242,10 @@ bool ShapeEditor::takeFromLine()
 
 void ShapeEditor::replaceNamed(const QString &name)
 {
+    Renamed renamed{m_edition.current().name, {}};
     m_edition.replaceNamed(name.toStdU16String());
-    kept();
+    renamed.to = m_edition.current().name;
+    kept(renamed);
 }
 
 void ShapeEditor::restoreDefaults()
@@ -252,22 +256,25 @@ void ShapeEditor::restoreDefaults()
 
 bool ShapeEditor::undoAll()
 {
+    const auto before = m_edition.presets();
     if (!m_edition.undoAll())
         return false;
-    kept();
+    kept(application::visual::renamedBetween(before, m_edition.presets(), application::visual::sameNameIgnoringCase));
     return true;
 }
 
 void ShapeEditor::undo()
 {
+    const auto before = m_edition.presets();
     if (m_edition.undo())
-        kept();
+        kept(application::visual::renamedBetween(before, m_edition.presets(), application::visual::sameNameIgnoringCase));
 }
 
 void ShapeEditor::redo()
 {
+    const auto before = m_edition.presets();
     if (m_edition.redo())
-        kept();
+        kept(application::visual::renamedBetween(before, m_edition.presets(), application::visual::sameNameIgnoringCase));
 }
 
 void ShapeEditor::close()

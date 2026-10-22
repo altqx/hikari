@@ -760,6 +760,41 @@ TEST(ShapesEdition, ATakenNameIsReplacedInOneStep)
     EXPECT_EQ(e.selection(), 3);
 }
 
+TEST(ShapesEdition, RenamesAreFoundThroughUndoAndRedo)
+{
+    // The toolbar's chosen preset follows a rename (Codex on #349): a
+    // rename, a replace and their Undo and Redo name the preset renamed;
+    // other steps none.
+    const auto same = [](std::u16string_view a, std::u16string_view b) { return sameNameIgnoringCase(a, b); };
+    const auto opened = defaultShapePresets();
+    ShapesEdition e(opened, 3);
+    e.replaceNamed(u"Circle");
+    const std::vector<ShapePreset> replaced = e.presets();
+    Renamed r = renamedBetween(opened, replaced, same);
+    EXPECT_EQ(r.from, opened[3].name);
+    EXPECT_EQ(r.to, u"Circle");
+    ASSERT_TRUE(e.undo());
+    r = renamedBetween(replaced, e.presets(), same);
+    EXPECT_EQ(r.from, u"Circle");
+    EXPECT_EQ(r.to, opened[3].name);
+    ASSERT_TRUE(e.redo());
+    r = renamedBetween(opened, e.presets(), same);
+    EXPECT_EQ(r.from, opened[3].name);
+    EXPECT_EQ(r.to, u"Circle");
+    ASSERT_TRUE(e.undo());
+    e.select(1);
+    ASSERT_EQ(e.setName(u"ring"), ShapesEdition::NameCheck::Ok);
+    const std::vector<ShapePreset> renamed = e.presets();
+    ASSERT_TRUE(e.undo());
+    r = renamedBetween(renamed, e.presets(), same);
+    EXPECT_EQ(r.from, u"ring");
+    EXPECT_EQ(r.to, u"circle");
+    ASSERT_TRUE(e.remove());
+    EXPECT_TRUE(renamedBetween(opened, e.presets(), same).from.empty());
+    e.duplicate();
+    EXPECT_TRUE(renamedBetween(opened, e.presets(), same).from.empty());
+}
+
 TEST(ShapesEdition, TakeFromTheActiveLineReplacesTheDrawing)
 {
     ShapesEdition e(defaultShapePresets(), 0);
@@ -979,6 +1014,14 @@ TEST(DrawingOptions, ChangedPresetsAreReadAgain)
     tool.setOption("shape", 0, host);
     tool.presetsChanged(0, host);
     EXPECT_EQ(tool.shape(), -1);
+    // A hidden tool (another family shown) takes them too, quietly; it
+    // reads its Line when it comes back (Codex on #349).
+    ASSERT_TRUE(tool.setOption("shape", 1, host));
+    host.presets[0].shape = u"m 0 0 l 100 0 100 100 0 100 0 50";
+    const int hidden = host.changes;
+    tool.presetsChanged(1, host, false);
+    EXPECT_EQ(tool.shapePoints().size(), 5u);
+    EXPECT_EQ(host.changes, hidden);
 }
 
 TEST(DrawingTool, MoveFollowsTheVideosTime)

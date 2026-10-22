@@ -718,14 +718,15 @@ void DrawingTool::changeShape(int listSelection, bool fromToolbar, VisualHost &h
     m_shapeSelection = shapeSelectionNew;
 }
 
-void DrawingTool::presetsChanged(int listSelection, VisualHost &host)
+void DrawingTool::presetsChanged(int listSelection, VisualHost &host, bool shown)
 {
     if (m_shape >= 0)
         m_shape = kNoPresetRead;
-    changeShape(listSelection, true, host);
+    changeShape(listSelection, shown, host);
     if (m_shape == kNoPresetRead)
         m_shape = -1; // no presets: free drawing
-    host.toolChanged();
+    if (shown)
+        host.toolChanged();
 }
 
 std::u16string DrawingTool::drawingBody() const

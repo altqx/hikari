@@ -13,6 +13,53 @@
 
 namespace hikari::application::visual {
 
+// A step's rename: an item's name before and after it (empty for any other
+// step), so a choice held outside the window follows the item.
+struct Renamed {
+    std::u16string from, to;
+};
+
+// A rename or a replace undone or done again, from the two lists: the one
+// item whose name alone differs at the same place (Rename), or, with one
+// item more on one side, the item that took the extra one's name (`same`:
+// names equal ignoring case, as Replace compares them), the rest of it as
+// it was (else it is a Delete). Else empty.
+template <class T, class Same>
+Renamed renamedBetween(const std::vector<T> &before, const std::vector<T> &after, Same same)
+{
+    const bool undoneReplace = after.size() == before.size() + 1;
+    const std::vector<T> &longer = undoneReplace ? after : before;
+    const std::vector<T> &shorter = undoneReplace ? before : after;
+    if (longer.size() != shorter.size() && longer.size() != shorter.size() + 1)
+        return {};
+    const bool replace = longer.size() != shorter.size();
+    for (std::size_t gone = 0; gone < (replace ? longer.size() : 1); ++gone) {
+        // `longer` without `gone` (a Replace's removed item) against `shorter`.
+        std::size_t differs = longer.size(), at = 0;
+        bool one = true;
+        for (std::size_t i = 0, j = 0; i < longer.size() && one; ++i) {
+            if (replace && i == gone)
+                continue;
+            if (longer[i].name != shorter[j].name) {
+                one = differs == longer.size();
+                differs = i;
+                at = j;
+            }
+            ++j;
+        }
+        if (!one || differs == longer.size() || (replace && !same(shorter[at].name, longer[gone].name)))
+            continue;
+        T renamed = longer[differs];
+        renamed.name = shorter[at].name;
+        if (!(renamed == shorter[at]))
+            continue;
+        if (undoneReplace)
+            return {shorter[at].name, longer[differs].name};
+        return {longer[differs].name, shorter[at].name};
+    }
+    return {};
+}
+
 template <class T>
 class EditHistory {
 public:

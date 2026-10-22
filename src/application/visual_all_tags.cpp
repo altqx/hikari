@@ -353,7 +353,7 @@ void AllTagsTool::setToggled(int tool, VisualHost *host)
         changeTool(toggled(), false, *host);
 }
 
-void AllTagsTool::definitionsChanged(const std::vector<std::u16string> &oldNames, VisualHost &host)
+void AllTagsTool::definitionsChanged(const std::vector<std::u16string> &oldNames, VisualHost &host, bool shown)
 {
     // The Edit button's OK (VideoToolbar.cpp:779-791): the list takes the
     // new names (HikariChoice::PutArray, ListControls.cpp:498-520: the
@@ -380,7 +380,8 @@ void AllTagsTool::definitionsChanged(const std::vector<std::u16string> &oldNames
         forgetValues();
     m_last.reset();
     m_listSelection = choice;
-    changeTool(toggled(), false, host);
+    if (shown)
+        changeTool(toggled(), false, host);
 }
 
 AllTagsTool::Change AllTagsTool::changeOf(int pasteMode)

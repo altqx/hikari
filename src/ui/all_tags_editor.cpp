@@ -1,5 +1,7 @@
 #include "all_tags_editor.h"
 
+#include "hikari/application/shape_presets.h"
+
 #include <QHash>
 #include <QSet>
 
@@ -116,11 +118,11 @@ int AllTagsEditor::ownCount() const
     }));
 }
 
-void AllTagsEditor::kept()
+void AllTagsEditor::kept(const Renamed &renamed)
 {
     emit changed();
     if (m_hooks.changed)
-        m_hooks.changed(m_edition.usable());
+        m_hooks.changed(m_edition.usable(), renamed);
 }
 
 int AllTagsEditor::checked(AllTagsEdition::Check check)
@@ -159,9 +161,14 @@ int AllTagsEditor::setName(const QString &name)
     if (name == this->name())
         return CheckOk;
     std::u16string taken;
+    Renamed renamed{m_edition.current().name, {}};
     const auto check = m_edition.setName(name.toStdU16String(), &taken);
     m_taken = qs(taken);
-    return checked(check);
+    if (check == AllTagsEdition::Check::Ok) {
+        renamed.to = m_edition.current().name;
+        kept(renamed);
+    }
+    return static_cast<int>(check);
 }
 
 int AllTagsEditor::setTag(const QString &tag)
@@ -217,8 +224,10 @@ bool AllTagsEditor::remove()
 
 void AllTagsEditor::replaceNamed(const QString &name)
 {
+    Renamed renamed{m_edition.current().name, {}};
     m_edition.replaceNamed(name.toStdU16String());
-    kept();
+    renamed.to = m_edition.current().name;
+    kept(renamed);
 }
 
 void AllTagsEditor::restoreDefaults()
@@ -229,22 +238,25 @@ void AllTagsEditor::restoreDefaults()
 
 bool AllTagsEditor::undoAll()
 {
+    const auto before = m_edition.usable();
     if (!m_edition.undoAll())
         return false;
-    kept();
+    kept(application::visual::renamedBetween(before, m_edition.usable(), application::visual::sameNameIgnoringCase));
     return true;
 }
 
 void AllTagsEditor::undo()
 {
+    const auto before = m_edition.usable();
     if (m_edition.undo())
-        kept();
+        kept(application::visual::renamedBetween(before, m_edition.usable(), application::visual::sameNameIgnoringCase));
 }
 
 void AllTagsEditor::redo()
 {
+    const auto before = m_edition.usable();
     if (m_edition.redo())
-        kept();
+        kept(application::visual::renamedBetween(before, m_edition.usable(), application::visual::sameNameIgnoringCase));
 }
 
 void AllTagsEditor::setPlacingOf(const QString &name, int placing)

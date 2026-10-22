@@ -469,11 +469,15 @@ std::string VisualToolsController::editorHotkey(int id) const
 std::u16string VisualToolsController::activeLineText() const
 {
     // OnGetShapeFromLine reads tab->edit->line: the Line as last sent
-    // (Dialogue::GetTextNoCopy: its translation when it has one).
+    // (Dialogue::GetTextNoCopy: its translation when it has one). Legacy's
+    // editor sent each edit (EditBox::OnEdit), so the Line editor's pending
+    // draft is the Line's text here.
     const auto *s = editingSession();
     const auto active = activeLine();
     if (!s || !active)
         return {};
+    if (const auto draft = s->draftRecord(); draft && draft->id == *active)
+        return core::toUtf16(draft->translation.empty() ? draft->text : draft->translation);
     for (const auto *line : s->document().lines())
         if (line->id == *active)
             return core::toUtf16(line->translation.empty() ? line->text : line->translation);
@@ -525,17 +529,24 @@ void VisualToolsController::openTagsEditor()
         }
         return activeLineText();
     };
-    hooks.changed = [this, allTags](const std::vector<application::visual::AllTagsSetting> &tags) {
+    hooks.changed = [this](const std::vector<application::visual::AllTagsSetting> &tags,
+                           const AllTagsEditor::Renamed &renamed) {
         // PU5: each change in "Edit tags" is kept at once (legacy's OK:
         // VideoToolbar::SetTagsSettings, the list's names again, its
-        // selection kept by name, and the tool told, ChangeTool).
-        const auto oldNames = application::visual::allTagsNames(*allTagsSettings());
+        // selection kept by name, and the tool told, ChangeTool). The chosen
+        // definition follows a rename, and Hydra takes the change while
+        // another family is shown too (the window stays open).
+        auto oldNames = application::visual::allTagsNames(*allTagsSettings());
+        if (!renamed.from.empty())
+            std::ranges::replace(oldNames, renamed.from, renamed.to);
         m_allTags = tags;
         if (m_allTags.empty())
             m_allTags = application::visual::defaultAllTags();
         saveAllTags();
-        if (allTags == tool())
-            allTags->definitionsChanged(oldNames, *this);
+        auto *hydra = dynamic_cast<application::visual::AllTagsTool *>(
+            m_tools[static_cast<std::size_t>(Family::Hydra)].get());
+        if (hydra)
+            hydra->definitionsChanged(oldNames, *this, hydra == tool());
         refreshOptions();
         emit changed();
         emit overlayChanged();
@@ -558,7 +569,6 @@ void VisualToolsController::openShapeEditor()
         emit shapeEditorChanged();
         return;
     }
-    auto *drawing = tool();
     int selection = 0;
     for (const QVariant &o : std::as_const(m_options)) {
         const QVariantMap m = o.toMap();
@@ -568,21 +578,21 @@ void VisualToolsController::openShapeEditor()
     ShapeEditor::Hooks hooks;
     hooks.activeLineText = [this] { return activeLineText(); };
     hooks.defaults = [] { return defaultShapePresets(); };
-    hooks.changed = [this, drawing](const std::vector<ShapePreset> &presets) {
+    hooks.changed = [this](const std::vector<ShapePreset> &presets, const ShapeEditor::Renamed &renamed) {
         // PU5: each change in "Edit shapes" is kept at once (legacy's OK:
         // VideoToolbar::SetShapesSettings, the list's names again, its
         // selection kept (or the last preset's), and the tool told,
         // ChangeTool -> SetShape). The chosen preset follows its name when
-        // others come or go before it, and the tool reads it again (legacy's
-        // SetShape kept the shape it had when the selection was the same).
-        int selection = 0;
-        for (const QVariant &o : std::as_const(m_options)) {
-            const QVariantMap m = o.toMap();
-            if (m.value(QStringLiteral("name")).toString() == QStringLiteral("shape"))
-                selection = m.value(QStringLiteral("index")).toInt();
-        }
+        // others come or go before it or it is renamed, and the tool reads it
+        // again (legacy's SetShape kept the shape it had when the selection
+        // was the same), also while another family is shown (the window
+        // stays open).
+        auto *drawing = dynamic_cast<DrawingTool *>(m_tools[static_cast<std::size_t>(Family::Drawing)].get());
+        int selection = drawing ? drawing->shapeSelection() : 0;
         if (selection > 0 && selection <= static_cast<int>(m_shapes.size())) {
-            const std::u16string &chosen = m_shapes[static_cast<std::size_t>(selection - 1)].name;
+            std::u16string chosen = m_shapes[static_cast<std::size_t>(selection - 1)].name;
+            if (!renamed.from.empty() && chosen == renamed.from)
+                chosen = renamed.to;
             const auto at = std::ranges::find(presets, chosen, &ShapePreset::name);
             if (at != presets.end())
                 selection = static_cast<int>(at - presets.begin()) + 1;
@@ -591,8 +601,8 @@ void VisualToolsController::openShapeEditor()
         saveShapes();
         if (selection > static_cast<int>(m_shapes.size()))
             selection = static_cast<int>(m_shapes.size());
-        if (auto *d = dynamic_cast<DrawingTool *>(drawing); d && drawing == tool())
-            d->presetsChanged(selection, *this);
+        if (drawing)
+            drawing->presetsChanged(selection, *this, drawing == tool());
         refreshOptions();
         emit optionsChanged();
         emit overlayChanged();
