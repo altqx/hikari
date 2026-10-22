@@ -1829,6 +1829,19 @@ private slots:
         QCOMPARE(editor->sourceText(), QStringLiteral("zzq"));
     }
 
+    // The picker's class is one choice: choosing another replaces every
+    // class the Effect had.
+    void choosingAClassReplacesEveryClass()
+    {
+        TemplateEditorController e;
+        QCOMPARE(e.effectWithClass(QStringLiteral("template syl furi noblank"), QStringLiteral("line")),
+                 QStringLiteral("template line noblank"));
+        QCOMPARE(e.effectWithClass(QStringLiteral("code line syl"), QStringLiteral("once")),
+                 QStringLiteral("code once"));
+        QCOMPARE(e.effectParts(QStringLiteral("template syl furi noblank")).value(QStringLiteral("modifiers")).toStringList(),
+                 QStringList{QStringLiteral("noblank")});
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

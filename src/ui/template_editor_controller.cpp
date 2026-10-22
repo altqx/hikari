@@ -203,6 +203,7 @@ const QStringList &modifierWords()
 struct EffectWords {
     QString kind;
     QStringList classWords; // the class, and a named line template's name
+    QStringList otherClasses; // combined with it
     QStringList modifiers;
 };
 
@@ -216,10 +217,14 @@ EffectWords splitEffect(const QString &effect)
     const QString kind = out.kind.toLower();
     const QStringList &classes = kind == QLatin1String("code") ? codeClasses() : templateClasses();
     // The first class word wherever it is, as the stock parser reads the
-    // words in turn; a modifier's argument is none.
+    // words in turn; a modifier's argument is none. The others it combines
+    // with it (`syl furi`, `line syl`) go with it: the picker's class is one
+    // choice.
     for (qsizetype i = 0; i < words.size(); ++i) {
         const QString word = words[i].toLower();
-        if (out.classWords.isEmpty() && classes.contains(word)) {
+        if (!out.classWords.isEmpty() && classes.contains(word)) {
+            out.otherClasses << words[i];
+        } else if (out.classWords.isEmpty() && classes.contains(word)) {
             out.classWords << words[i];
             const bool lineClass = word == QLatin1String("line") || word == QLatin1String("pre-line");
             if (kind == QLatin1String("template") && lineClass && i + 1 < words.size() &&
@@ -237,7 +242,7 @@ EffectWords splitEffect(const QString &effect)
 QString joinEffect(const EffectWords &w)
 {
     QStringList all;
-    all << w.kind << w.classWords << w.modifiers;
+    all << w.kind << w.classWords << w.otherClasses << w.modifiers;
     return all.join(QLatin1Char(' '));
 }
 
@@ -1556,6 +1561,7 @@ QString TemplateEditorController::effectWithClass(const QString &effect, const Q
         w.kind = QStringLiteral("template");
     const QString name = w.classWords.size() > 1 ? w.classWords[1] : QString();
     w.classWords.clear();
+    w.otherClasses.clear();
     if (!className.isEmpty())
         w.classWords << className;
     if (!name.isEmpty() && (className == QLatin1String("line") || className == QLatin1String("pre-line")))
