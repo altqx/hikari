@@ -29,9 +29,10 @@ Item {
         const text = filterField.text.trim().toLocaleLowerCase()
         return text.length === 0 ? rows : rows.filter(r => r.name.toLocaleLowerCase().includes(text))
     }
-    // The chosen Style, kept by name while the list is read again.
+    // The chosen Style, kept by name while the list is read again; the
+    // commands act on it only while the filter shows it.
     property string chosen: ""
-    readonly property var chosenRow: rows.find(r => r.name === chosen) ?? null
+    readonly property var chosenRow: shownRows.find(r => r.name === chosen) ?? null
     readonly property bool canApply: chosenRow !== null && editor.editable && editor.assFields
     readonly property int smallSize: Math.max(9, Math.round(Qt.application.font.pointSize * 0.9))
 
@@ -365,7 +366,7 @@ Item {
                 iconRole: "styles"
                 text: qsTr("Style manager")
                 focusPolicy: Qt.NoFocus
-                onClicked: panel.manager.showFor(panel.chosen)
+                onClicked: panel.manager.showFor(panel.chosenRow?.name ?? "")
             }
         }
         IconToolButton {
@@ -418,7 +419,7 @@ Item {
         ShellMenuItem {
             iconRole: "styles"
             text: qsTr("Style manager")
-            onTriggered: panel.manager.showFor(panel.chosen)
+            onTriggered: panel.manager.showFor(panel.chosenRow?.name ?? "")
         }
     }
 
