@@ -7,6 +7,7 @@
 #include "hikari/core/text_projection.h"
 
 #include <algorithm>
+#include <array>
 #include <cfloat>
 #include <cmath>
 #include <cstdio>
@@ -1328,8 +1329,35 @@ std::optional<std::pair<PointF, PointF>> lineBox(const Context &context, const c
     const TextSize ts = textSize(context, line, &style, true);
     if (ts.size.x <= 0 || ts.size.y <= 0)
         return std::nullopt;
-    const PointF pos = linePosition(context, line).pos;
-    const int an = alignmentOf(style, lineText(line));
+    PointF pos = linePosition(context, line).pos;
+    // A \move's position at the shown time, as libass moves it: over the
+    // whole Line without times (or both 0 or less), the earlier time first.
+    const u16 txt = lineText(line);
+    if (posRegex().matches(txt) && group(posRegex(), txt, 1) == u"move") {
+        std::array<double, 6> v{};
+        std::size_t n = 0;
+        for (const u16 &token : tokens(group(posRegex(), txt, 2), u',', false)) {
+            if (n >= v.size())
+                break;
+            if (!toDouble(token, v[n]))
+                v[n] = 0;
+            ++n;
+        }
+        if (n >= 4) {
+            const double length = endMs(line) - startMs(line);
+            double t1 = n >= 6 ? v[4] : 0, t2 = n >= 6 ? v[5] : length;
+            if (t1 <= 0 && t2 <= 0) {
+                t1 = 0;
+                t2 = length;
+            }
+            if (t1 > t2)
+                std::swap(t1, t2);
+            const double t = context.timeMs - startMs(line);
+            const double k = t <= t1 ? 0 : t >= t2 ? 1 : (t - t1) / (t2 - t1);
+            pos = {static_cast<float>(v[0] + (v[2] - v[0]) * k), static_cast<float>(v[1] + (v[3] - v[1]) * k)};
+        }
+    }
+    const int an = alignmentOf(style, txt);
     PointF a{pos.x - ts.border.x / 2, pos.y - ts.border.y / 2};
     PointF b{pos.x + ts.size.x + ts.border.x / 2, pos.y + ts.size.y + ts.border.y / 2};
     const float dx = an % 3 == 0 ? ts.size.x : an % 3 == 2 ? ts.size.x / 2 : 0;
