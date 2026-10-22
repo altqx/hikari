@@ -129,10 +129,16 @@ std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, c
     for (const auto &d : result.dialogues)
         if (d.id == 0 && d.generatedFrom != 0)
             made[d.generatedFrom].push_back(&d);
+    // A karaoke Line whose Lines are marked (selected Lines applied since)
+    // takes none of the unmarked ones, as KE1's run finds them.
+    std::set<core::LineId> marked;
+    for (const auto *l : doc.lines())
+        if (isGeneratedLine(*l) && l->generatedFrom.value != 0)
+            marked.insert(l->generatedFrom);
     std::map<core::LineId, core::LineId> owners;
     for (const auto *l : doc.lines()) {
         const auto lines = made.find(l->id.value);
-        if (lines == made.end())
+        if (lines == made.end() || marked.contains(l->id))
             continue;
         for (const auto *d : lines->second) {
             auto &list = free[lineKey(*d)];
