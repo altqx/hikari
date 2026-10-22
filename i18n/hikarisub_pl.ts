@@ -48,19 +48,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pitch is kept.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>and</source>
-        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>change the speed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Output device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -258,58 +245,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tap to time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap options</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stop tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each syllable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hold the key: releasing it leaves a gap</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Press the key: no gaps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap to vocal onsets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1%</source>
-        <extracomment>A playback speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Calibrate latency…</source>
-        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 ms</source>
-        <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -384,11 +319,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Speed: %1%</source>
-        <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Customise the audio panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -449,26 +379,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not applied: the Line cannot take these times as it is.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Every Line is tapped.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of %2 tapped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid the Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid “%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
         <translation type="unfinished"></translation>
@@ -477,101 +387,6 @@ Output device: %2</source>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stopped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ready</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This Line is one syllable. Split it first, then tap.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation type="unfinished">Cofnij</translation>
-    </message>
-    <message>
-        <source>Esc</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resume</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Space</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Revert Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start</source>
-        <translation type="unfinished">Start</translation>
-    </message>
-    <message>
-        <source>Calibrate tap latency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Press</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>on each beep.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>16 beeps at 100 BPM; the first four are practice.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of 16 beeps</source>
-        <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Your presses, in ms after each beep</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Latency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
-        <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation type="unfinished">Anuluj</translation>
-    </message>
-    <message>
-        <source>Apply</source>
-        <translation type="unfinished">Zastosuj</translation>
     </message>
 </context>
 <context>
@@ -8892,18 +8707,6 @@ after the end time in milliseconds</source>
         <translation>Wybierz plik napisów</translation>
     </message>
     <message>
-        <source>Translation mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original text</source>
-        <translation type="unfinished">Tekst oryginalny</translation>
-    </message>
-    <message>
-        <source>Original text: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9014,27 +8817,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected Lines for review</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on Translation mode for this file?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Not now</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
