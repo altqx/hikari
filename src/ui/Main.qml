@@ -2790,6 +2790,12 @@ ApplicationWindow {
                     visible: root.videoView.renderCost && root.video.hasVideo
                     cost: presenter.renderCost
                 }
+                // HY1: Hydra's last change card, in the video's top-right corner.
+                VisualLastChange {
+                    anchors { top: parent.top; right: parent.right; margins: 14 }
+                    tools: root.visualTools
+                    visible: hasChange && root.video.hasVideo && root.visualTools.activeFamily === 10 // Family::Hydra
+                }
                 }
                 VideoContextMenu {
                     id: videoContextMenu
@@ -6072,6 +6078,7 @@ ApplicationWindow {
         objectName: "automationDialog"
         controller: root.automationDialogs
         colourPicker: root.colourPicker
+        settings: root.app.settings
     }
     AutomationFilePicker {
         picker: root.automationPicker

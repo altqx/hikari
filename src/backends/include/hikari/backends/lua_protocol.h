@@ -45,8 +45,9 @@
 namespace hikari::backends::lua {
 
 // 3: RunValidated (S4); 4: HostService::Gettext (O5); 5: Validate and ScriptInfo::loadedFiles (S4-run-validation);
-// 6: MacroDialogueLine::generatedFrom and MacroResult::report (KE1); 7: the Log event's level (AD3)
-inline constexpr std::uint32_t kProtocolVersion = 7;
+// 6: MacroDialogueLine::generatedFrom and MacroResult::report (KE1); 7: DialogRequest::buttonIds (AD1);
+// 8: the Log event's level (AD3)
+inline constexpr std::uint32_t kProtocolVersion = 8;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4 };

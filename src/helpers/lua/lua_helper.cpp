@@ -505,6 +505,13 @@ std::string hexOf(const AssColor &c, bool alpha)
     return text;
 }
 
+// Aegisub's string_to_wx_id: the button ids it maps to a stock id.
+bool isButtonId(const std::string &id)
+{
+    static const char *const kIds[] = {"ok", "yes", "save", "apply", "close", "no", "cancel", "help", "context_help"};
+    return std::find_if(std::begin(kIds), std::end(kIds), [&](const char *k) { return id == k; }) != std::end(kIds);
+}
+
 DialogControl decodeControl(lua_State *L)
 {
     if (!lua_istable(L, -1))
@@ -590,12 +597,13 @@ int dialogDisplay(lua_State *L)
 {
     if (!g_responder)
         return luaL_error(L, "no macro is running");
-    // Legacy: one argument gets an empty button table; extra arguments,
-    // including the button-ID table, are dropped before decoding.
+    // Legacy: one argument gets an empty button table. AD1-button-ids: the
+    // third, the button-ID table, is read as Aegisub reads it (legacy
+    // dropped it); arguments after it are not read.
     if (lua_gettop(L) == 1)
         lua_newtable(L);
-    if (lua_gettop(L) > 2)
-        lua_settop(L, 2);
+    if (lua_gettop(L) > 3)
+        lua_settop(L, 3);
     if (!lua_istable(L, 1))
         return luaL_error(L, "Cannot create config dialog from something non-table");
 
@@ -616,6 +624,26 @@ int dialogDisplay(lua_State *L)
         }
         lua_pop(L, 1);
     }
+    request.buttonIds.assign(request.buttons.size(), std::string());
+    if (lua_gettop(L) >= 3 && lua_istable(L, 3)) {
+        // Aegisub LuaDialog: each id names the first button with that label
+        // (an error when none has it); an id it does not know names none.
+        lua_pushvalue(L, 3);
+        lua_pushnil(L);
+        while (lua_next(L, -2)) {
+            lua_pushvalue(L, -2); // a copy: lua_tostring on the key itself would upset lua_next
+            const std::string id = checkString(L, -1);
+            lua_pop(L, 1);
+            const std::string label = checkString(L, -1);
+            const auto button = std::find(request.buttons.begin(), request.buttons.end(), label);
+            if (button == request.buttons.end())
+                return luaL_error(L, "Invalid button for id %s", id.c_str());
+            request.buttonIds[static_cast<std::size_t>(button - request.buttons.begin())] =
+                isButtonId(id) ? id : std::string();
+            lua_pop(L, 1);
+        }
+        lua_pop(L, 1);
+    }
 
     Writer w;
     w.i32(static_cast<std::int32_t>(lua::Service::Dialog));
@@ -632,9 +660,11 @@ int dialogDisplay(lua_State *L)
     if (!result)
         return luaL_error(L, "the host returned a malformed dialog result");
 
-    // Button: false when closed or for the default Cancel; otherwise its label.
-    // With the ID table dropped, a custom button never maps to Cancel.
-    if (result->pressed < 0 || (request.buttons.empty() && result->pressed == 1))
+    // Button: false when closed, for the default Cancel or for the button
+    // with the cancel id (Aegisub's wxID_CANCEL); otherwise its label.
+    const auto pressed = static_cast<std::size_t>(result->pressed);
+    if (result->pressed < 0 || (request.buttons.empty() && result->pressed == 1) ||
+        (pressed < request.buttonIds.size() && request.buttonIds[pressed] == "cancel"))
         lua_pushboolean(L, false);
     else if (request.buttons.empty())
         lua_pushstring(L, "");
