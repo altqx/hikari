@@ -565,8 +565,12 @@ QVariantList HotkeysController::rows() const
     int position = 0;
     for (const int i : m_list->shown()) {
         const auto &r = m_list->row(i);
+        // PF1: "context" (the window's index) and "name" for the page's
+        // context headings, the row showing its name under its heading.
         QVariantMap row{{QStringLiteral("row"), i},
                         {QStringLiteral("text"), qs(r.text)},
+                        {QStringLiteral("context"), r.key.type},
+                        {QStringLiteral("name"), qs(r.name)},
                         {QStringLiteral("accel"), qs(r.accel)},
                         {QStringLiteral("textModified"), r.textModified},
                         {QStringLiteral("keyModified"), r.keyModified},
@@ -658,6 +662,21 @@ void HotkeysController::filter(int mode)
     emit rowsChanged();
 }
 
+void HotkeysController::search(const QString &text)
+{
+    if (!m_list)
+        return;
+    m_list->search(text.toStdString(), [this](const application::HotkeyList::Row &r) {
+        if (r.key.id < application::kFirstScriptHotkey)
+            return std::string();
+        const QVariantMap macro = m_scripts.describe(r.name);
+        return (macro.value(QStringLiteral("script")).toString() + QLatin1Char(' ') +
+                macro.value(QStringLiteral("macro")).toString())
+            .toStdString();
+    });
+    emit rowsChanged();
+}
+
 void HotkeysController::select(int position)
 {
     if (!m_list)
@@ -704,6 +723,14 @@ void HotkeysController::optionsReset()
     if (!m_list || m_list->selection() < 0)
         return;
     m_list->reset(m_list->selection(), bindings());
+    emit rowsChanged();
+}
+
+void HotkeysController::optionsResetAll()
+{
+    if (!m_list)
+        return;
+    m_list->resetAll(bindings());
     emit rowsChanged();
 }
 

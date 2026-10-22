@@ -1265,7 +1265,7 @@ void HotkeyList::addRows(const HotkeyMap &more)
         row->name = hotkey.name;
         row->accel = hotkey.accel;
         row->key = key;
-        row->visible = shownByFilter(m_filterMode, *row) ? 1 : 0;
+        row->visible = shownNow(*row) ? 1 : 0;
         m_isFiltered = m_isFiltered || !row->visible;
         m_rows.push_back(row);
         for (auto &step : m_history)
@@ -1301,6 +1301,28 @@ void HotkeyList::removeUnchangedRows(const std::function<bool(const Row &)> &gon
         m_sel = int(m_filtered.size()) - 1;
 }
 
+bool HotkeyList::shownNow(const Row &r) const
+{
+    if (!shownByFilter(m_filterMode, r))
+        return false;
+    if (m_search.empty())
+        return true;
+    const auto holds = [this](std::string_view text) {
+        std::string lower(text);
+        std::ranges::transform(lower, lower.begin(), [](char c) { return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c; });
+        return lower.find(m_search) != std::string::npos;
+    };
+    return holds(r.text) || holds(r.accel) || (m_searchAlso && holds(m_searchAlso(r)));
+}
+
+void HotkeyList::search(std::string text, const std::function<std::string(const Row &)> &also)
+{
+    std::ranges::transform(text, text.begin(), [](char c) { return c >= 'A' && c <= 'Z' ? char(c - 'A' + 'a') : c; });
+    m_search = std::move(text);
+    m_searchAlso = also;
+    filter(m_filterMode);
+}
+
 void HotkeyList::filter(int mode)
 {
     // FilterList(1, mode) with ItemHotkey::OnVisibilityChange.
@@ -1308,7 +1330,7 @@ void HotkeyList::filter(int mode)
     m_sel = 0;
     m_isFiltered = false;
     for (auto &r : m_rows) {
-        const bool visible = shownByFilter(mode, *r);
+        const bool visible = shownNow(*r);
         r->visible = visible ? 1 : 0;
         if (!visible)
             m_isFiltered = true;
@@ -1569,6 +1591,29 @@ void HotkeyList::reset(int index, const HotkeyMap &live)
     m_modified = true;
     pushHistory();
     m_copy[r.key] = Hotkey{r.name, def};
+}
+
+void HotkeyList::resetAll(const HotkeyMap &live)
+{
+    ensureCopy(live);
+    bool changed = false;
+    for (std::size_t i = 0; i < m_rows.size(); ++i) {
+        const std::string def = defaultHotkey(m_rows[i]->key);
+        if (m_rows[i]->accel == def)
+            continue;
+        const int visible = m_rows[i]->visible; // a row the filter hides stays hidden
+        auto &r = copyRow(int(i));
+        r.visible = visible;
+        r.accel = def;
+        r.keyModified = true;
+        r.textModified = true;
+        m_copy[r.key] = Hotkey{r.name, def};
+        changed = true;
+    }
+    if (!changed)
+        return;
+    m_modified = true;
+    pushHistory();
 }
 
 void HotkeyList::remove(int index, const HotkeyMap &live)

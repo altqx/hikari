@@ -122,6 +122,9 @@ public:
     // The Options page (legacy OptionsDialog's constructor, AddHotkeysOnList).
     Q_INVOKABLE void beginOptions();
     Q_INVOKABLE void filter(int mode);
+    // PF1 (#225): the page's search field (HotkeyList::search; a macro's
+    // row also by its script and macro names).
+    Q_INVOKABLE void search(const QString &text);
     Q_INVOKABLE void select(int position);
     // A click on the gutter's box after a shown position (-1: above the first).
     Q_INVOKABLE void toggleBlock(int position);
@@ -134,6 +137,9 @@ public:
     Q_INVOKABLE QVariantMap optionsConflict(const QString &accel, int type);
     Q_INVOKABLE void optionsMap(const QString &accel, int type, const QString &answer);
     Q_INVOKABLE void optionsReset();
+    // PF1-staged-reset: "Reset page" on the Hotkeys page, every row's
+    // default, kept or dropped with the dialog as the other edits.
+    Q_INVOKABLE void optionsResetAll();
     Q_INVOKABLE void optionsDelete();
     Q_INVOKABLE void optionsUndo();
     Q_INVOKABLE void optionsRedo();
