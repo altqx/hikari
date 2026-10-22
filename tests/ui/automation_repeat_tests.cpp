@@ -376,11 +376,23 @@ private slots:
         const QStringList presets{QStringLiteral("0123456789abcdef\t[{\"name\":\"Mine\",\"values\":{\"tags\":\"\\\\fs\"}}]")};
         settings.setValue(QStringLiteral("automation.dialogPresets"), presets);
         settings.setValue(QStringLiteral("automation.fillLastAnswers"), true);
-        app->applySettings({}, true); // Reset all settings…, then OK
+        // Reset all settings… shows the answers as they are, so Clear last
+        // answers stays on; then OK.
+        const QVariantMap shown = app->resetSettings(app->openSettingsDialog().value(QStringLiteral("values")).toMap());
+        QCOMPARE(shown.value(QStringLiteral("automation.dialogAnswers")).toStringList(), kept);
+        app->applySettings(shown, true);
         QCOMPARE(settings.list("automation.dialogAnswers"), kept);
         QCOMPARE(settings.list("automation.dialogPresets"), presets);
         QVERIFY(!settings.boolean("automation.fillLastAnswers"));
         QVERIFY(app->automation().canRepeat());
+
+        // Clear last answers, then Reset all settings…, then OK: cleared.
+        QVariantMap staged = app->openSettingsDialog().value(QStringLiteral("values")).toMap();
+        staged.insert(QStringLiteral("automation.dialogAnswers"), QStringList());
+        app->applySettings(app->resetSettings(staged), true);
+        QVERIFY(settings.list("automation.dialogAnswers").isEmpty());
+        QCOMPARE(settings.list("automation.dialogPresets"), presets);
+        QVERIFY(!app->automation().canRepeat());
     }
 
     // For review (HIKARI_SURFACE_SHOT_DIR; skipped without it), in the four

@@ -10,7 +10,7 @@ bool sameDialog(const DialogRequest &a, const DialogRequest &b)
 {
     const auto sameControl = [](const DialogControl &x, const DialogControl &y) {
         return x.kind == y.kind && x.name == y.name && x.x == y.x && x.y == y.y && x.width == y.width &&
-               x.height == y.height && x.items == y.items;
+               x.height == y.height && x.items == y.items && x.label == y.label && x.hint == y.hint;
     };
     return std::ranges::equal(a.controls, b.controls, sameControl) && a.buttons == b.buttons &&
            a.buttonIds == b.buttonIds;

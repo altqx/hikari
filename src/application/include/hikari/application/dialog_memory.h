@@ -20,8 +20,10 @@ namespace hikari::application {
 using NamedDialogValues = std::map<std::string, DialogValue>;
 
 // The same dialog for Repeat: the same controls in order (class, name,
-// place, span and dropdown items) and the same buttons (labels and ids).
-// The values the script sends may differ.
+// place, span, dropdown items, label and hint text) and the same buttons
+// (labels and ids). The values the script sends may differ; what the dialog
+// says may not, so a prompt naming something else (a trust question for
+// another feed, say) is shown again rather than answered as before.
 bool sameDialog(const DialogRequest &a, const DialogRequest &b);
 
 // Whether `pressed` answers the dialog as cancelled: no button (the window

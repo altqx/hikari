@@ -5590,6 +5590,9 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
                 keep(b.sizeSetting);
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
+    // AD2: script dialogs' answers are no option either; a Clear last
+    // answers staged before stays staged.
+    keep("automation.dialogAnswers");
     return refreshed;
 }
 

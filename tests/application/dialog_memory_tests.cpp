@@ -61,7 +61,7 @@ DialogResult answered(const DialogRequest &r)
 
 } // namespace
 
-TEST(DialogMemory, SameDialogIsTheSameControlsAndButtonsNotValues)
+TEST(DialogMemory, SameDialogIsTheSameControlsTextAndButtonsNotValues)
 {
     const DialogRequest last = gradient();
     DialogRequest now = gradient();
@@ -69,7 +69,6 @@ TEST(DialogMemory, SameDialogIsTheSameControlsAndButtonsNotValues)
     now.controls[1].text = "\\bord";
     now.controls[2].number = 4;
     now.controls[3].checked = false;
-    now.controls[1].hint = "a new hint";
     EXPECT_TRUE(sameDialog(last, now));
 
     const auto differs = [&](auto change) {
@@ -87,6 +86,11 @@ TEST(DialogMemory, SameDialogIsTheSameControlsAndButtonsNotValues)
     EXPECT_TRUE(differs([](DialogRequest &r) { r.buttons[0] = "Go"; }));
     EXPECT_TRUE(differs([](DialogRequest &r) { r.buttonIds[1] = "close"; }));
     EXPECT_TRUE(differs([](DialogRequest &r) { r.buttons.push_back("Help"); }));
+    // What the dialog says: a trust question naming another feed in a label
+    // is not answered as the last one was.
+    EXPECT_TRUE(differs([](DialogRequest &r) { r.controls[0].label = "From https://example.org/feed.json"; }));
+    EXPECT_TRUE(differs([](DialogRequest &r) { r.controls[3].label = "Ignore the border"; })); // a check box's
+    EXPECT_TRUE(differs([](DialogRequest &r) { r.controls[1].hint = "a new hint"; }));
 }
 
 TEST(DialogMemory, ReplaySendsTheRecordedAnswerAsTheControlsTakeIt)
