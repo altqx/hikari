@@ -105,8 +105,10 @@ public:
     Q_INVOKABLE void loadFromDirectory();
     Q_INVOKABLE void dismissOffer();
     Q_INVOKABLE void openVideo(const QString &path);
-    // PU4: the video's path (the last one asked to open; "" for none).
-    Q_INVOKABLE QString path() const { return QString::fromStdString(m_session.path()); }
+    // PU4: openRequest() for QML. Each openVideo call, the same file again
+    // too, is a new opening: an edit or question about the video shown
+    // ends with it.
+    Q_INVOKABLE qulonglong opening() const { return m_openRequest; }
     // Counts openVideo calls: each call is a new request, and a later one
     // drops what an earlier one had not yet opened.
     std::uint64_t openRequest() const { return m_openRequest; }

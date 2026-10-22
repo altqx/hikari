@@ -18,8 +18,8 @@ import Hikari.Ui
 // Close) puts back the ratio it opened with; Enter, a press outside the
 // popover or the window's OK keep it (legacy kept it on any closing). The
 // slider's ends are named, and Reset gives the video's own ratio back.
-// Another video opened meanwhile (the main window stays in use under the
-// fullscreen video window's) ends the edit: the ratio it opened with was
+// Another video opened meanwhile, or the same one again (the main window
+// stays in use under the fullscreen video window's), ends the edit: the ratio it opened with was
 // the other video's.
 Item {
     id: host
@@ -27,8 +27,8 @@ Item {
     required property VideoViewController view
     property VideoController video: null
     property SettingsStore settings: null
-    // The video the edit began on.
-    property string editedVideo: ""
+    // The video opening the edit began on (VideoController.opening).
+    property var editedOpening: 0
     // The ratio it opened with (Esc, Cancel), the slider's value and its label.
     property double before: 0
     property int sliderValue: 0
@@ -45,7 +45,7 @@ Item {
     // the other starts from it.
     function start() {
         close()
-        editedVideo = video ? video.path() : ""
+        editedOpening = video ? video.opening() : 0
         before = view.aspectRatio()
         sliderValue = Math.max(100000, Math.min(1000000, view.aspectSliderValue()))
         label = view.aspectLabel(-1)
@@ -88,7 +88,7 @@ Item {
     Connections {
         target: host.video
         function onChanged() {
-            if (host.opened && host.video.path() !== host.editedVideo)
+            if (host.opened && host.video.opening() !== host.editedOpening)
                 host.close()
         }
     }

@@ -25587,8 +25587,9 @@ private slots:
         QCOMPARE(box->property("detail").toString(), QStringLiteral("b.MKV"));
         video.openVideo(videos[2]);
         QTRY_VERIFY(!box->property("visible").toBool());
+        // (the open is asynchronous: the old video stays until the new one)
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[2], 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
-        QCOMPARE(QString::fromStdString(video.session().path()), videos[2]);
         // The same for Change aspect ratio's window: another video ends the
         // edit, and the new video keeps its own ratio (nothing put back).
         auto *root = engine->rootObjects().first();
@@ -25603,9 +25604,27 @@ private slots:
         QCOMPARE(application->visualTools().videoView().aspectRatio(), 0.5f);
         video.openVideo(videos[0]);
         QTRY_VERIFY(!aspectWindow->isVisible());
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[0], 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
-        QCOMPARE(QString::fromStdString(video.session().path()), videos[0]);
-        QCOMPARE(application->visualTools().videoView().aspectRatio(), 0.75f);
+        QTRY_COMPARE(application->visualTools().videoView().aspectRatio(), 0.75f);
+        // the same file opened again too: the reopened video's own ratio
+        // stays, Cancel's start is the other opening's
+        QTest::qWait(60);
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(aspectWindow->isVisible());
+        aspectSlider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(aspectSlider, "moved"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(qobject_cast<QQuickWindow *>(aspectWindow)->contentItem(),
+                                                   QStringLiteral("aspectRatioWindowOk")), "click"));
+        QTRY_VERIFY(!aspectWindow->isVisible());
+        QCOMPARE(application->visualTools().videoView().aspectRatio(), 0.5f);
+        QTest::qWait(60);
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(aspectWindow->isVisible());
+        video.openVideo(videos[0]);
+        QTRY_VERIFY(!aspectWindow->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QTRY_COMPARE(application->visualTools().videoView().aspectRatio(), 0.75f);
         video.openVideo(videos[2]);
         QTRY_VERIFY_WITH_TIMEOUT(QString::fromStdString(video.session().path()) == videos[2] && video.hasVideo(), 20000);
         // the walk is made only while it leads to the file the answer names
