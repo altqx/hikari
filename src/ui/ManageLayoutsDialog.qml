@@ -21,6 +21,9 @@ DialogWindow {
     required property var layouts // WorkspaceLayoutController
     title: qsTr("Manage layouts")
     dialogId: "manageLayouts"
+    // Modal to the main window, as the Dialog was: a rename or delete can't
+    // race a layout chosen meanwhile.
+    modal: true
     initialFocus: list
     defaultButton: closeButton
     readonly property var rows: layouts.savedLayouts

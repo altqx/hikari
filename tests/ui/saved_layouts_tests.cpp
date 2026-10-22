@@ -166,6 +166,8 @@ class SavedLayoutsTest : public QObject {
         trigger(QStringLiteral("viewLayoutSaveAs"));
         QObject *dialog = named("saveLayoutDialog");
         QTRY_VERIFY(dialog->property("opened").toBool());
+        // Modal to the main window: Save takes the arrangement it opened for.
+        QCOMPARE(qobject_cast<QQuickWindow *>(dialog)->modality(), Qt::WindowModal);
         QVERIFY(named("saveLayoutName")->setProperty("text", name));
         QTRY_VERIFY(named("saveLayoutSave")->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
@@ -348,6 +350,7 @@ private slots:
         auto *dialog = qobject_cast<QQuickWindow *>(named("manageLayoutsDialog"));
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("opened").toBool());
+        QCOMPARE(dialog->modality(), Qt::WindowModal); // no layout chosen meanwhile
         QObject *list = named("manageLayoutsList");
         QCOMPARE(list->property("currentIndex").toInt(), 0); // the tab's layout
         // PU7: Rename turns the current row into its name field.

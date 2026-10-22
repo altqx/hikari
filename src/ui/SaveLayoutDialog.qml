@@ -19,6 +19,9 @@ DialogWindow {
     required property var layouts // WorkspaceLayoutController
     title: qsTr("Save layout as")
     dialogId: "saveLayout"
+    // Modal to the main window, as the Dialog was: Save takes the arrangement
+    // shown, which must be the one the dialog opened for.
+    modal: true
     initialFocus: nameField
     defaultButton: saveButton
     // Both read the saved layouts too: re-evaluated when they change, not
