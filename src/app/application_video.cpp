@@ -277,12 +277,24 @@ bool Application::nextVideoFile(bool next)
 
 QString Application::nextVideoFileName(bool next) const
 {
+    return QFileInfo(nextVideoFilePath(next)).fileName();
+}
+
+QString Application::nextVideoFilePath(bool next) const
+{
     // A copy walks, so the question leaves the walk where it is.
     application::NextFileWalker walker = m_nextFile;
     const auto step = nextVideoStep(walker, next);
     if (!step || step->kind != application::NextFileStep::Kind::Open)
         return {};
-    return QFileInfo(QString::fromStdString(step->path)).fileName();
+    return QString::fromStdString(step->path);
+}
+
+bool Application::nextVideoFileIfStill(bool next, const QString &expected)
+{
+    if (nextVideoFilePath(next) != expected)
+        return false;
+    return nextVideoFile(next);
 }
 
 int Application::dummyVideoFrames(const QString &fps, int durationMs) const

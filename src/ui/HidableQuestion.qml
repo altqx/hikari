@@ -8,7 +8,10 @@
 //
 // askWith(options, done): MessageBox.ask's options (the default choice's
 // isDefault offers "Don't ask again"; `from`, the window it opens over) and
-// done(id).
+// done(id). withdraw() takes back the question still waiting for its
+// answer, as its reject choice: the caller's, when what it asks about
+// changed (a question over the fullscreen video window leaves the main
+// window in use).
 import QtQuick
 import Hikari.Ui
 
@@ -16,6 +19,8 @@ QtObject {
     id: question
     property MessageHost messages: null
     property string questionId: ""
+    // The question waiting for its answer (MessageHost.ask's), or null.
+    property var pending: null
 
     function hidden() {
         const settings = messages ? messages.settings : null
@@ -30,12 +35,19 @@ QtObject {
                 done(chosen.id)
             return
         }
-        messages.ask(Object.assign({}, options, { dontAsk: chosen !== undefined }), (id, again) => {
+        const asked = messages.ask(Object.assign({}, options, { dontAsk: chosen !== undefined }), (id, again) => {
+            if (question.pending === asked)
+                question.pending = null
             if (again && chosen && id === chosen.id)
                 hide()
             if (done)
                 done(id)
         })
+        pending = asked
+    }
+    function withdraw() {
+        if (pending)
+            messages.withdraw(pending)
     }
     function hide() {
         const settings = messages.settings

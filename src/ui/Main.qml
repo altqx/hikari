@@ -428,11 +428,16 @@ ApplicationWindow {
 
     // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first
     // (legacy; PU4-shift-question: PK1's message box, which can be hidden).
+    // The answer shifts the document it was asked for: another editing
+    // target meanwhile (the main window stays in use under the fullscreen
+    // video window's question) takes the question back.
     function runShiftTimes() {
         const which = root.shiftTimes.settings.whichTimes
         const pp = root.shiftTimes.settings.postprocessor
         if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
             const start = which === 1
+            const target = root.app.editingTargetId()
+            shiftQuestion.askedFor = target
             shiftQuestion.askWith({
                 title: qsTranslate("HikariSub.TimeShift", "Shift times"),
                 text: start ? qsTranslate("HikariSub.TimeShift", "Shift only the start times?")
@@ -447,7 +452,7 @@ ApplicationWindow {
                     { id: "cancel", text: qsTranslate("HikariSub.TimeShift", "Cancel"), role: "reject" }
                 ]
             }, id => {
-                if (id === "shift")
+                if (id === "shift" && root.app.editingTargetId() === target)
                     shiftTimesPanel.message = root.app.shiftTimes()
             })
             return
@@ -6100,6 +6105,7 @@ ApplicationWindow {
     VideoFileQuestion {
         id: videoFileQuestion
         app: root.app
+        video: root.video
         messages: root.messages
     }
     // TM1: the Translation preset's question and Translation mode's turn-off
@@ -6118,6 +6124,7 @@ ApplicationWindow {
     AspectRatioDialog {
         id: aspectRatioDialog
         view: root.videoView
+        video: root.video
         settings: root.app.settings
     }
 
@@ -6488,6 +6495,15 @@ ApplicationWindow {
         objectName: "shiftQuestion"
         messages: root.messages
         questionId: "shiftOneTime"
+        // The editing target it was asked for (App.editingTargetId).
+        property var askedFor: 0
+        property Connections targetChanges: Connections {
+            target: root.app
+            function onTabsChanged() {
+                if (shiftQuestion.pending && root.app.editingTargetId() !== shiftQuestion.askedFor)
+                    shiftQuestion.withdraw()
+            }
+        }
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.

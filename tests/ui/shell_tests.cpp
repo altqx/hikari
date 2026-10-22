@@ -9874,6 +9874,17 @@ private slots:
         application->settingsStore()->set("notices.hiddenQuestions", QStringList());
         settings.insert(QStringLiteral("whichTimes"), 1);
         application->shiftTimesSettings().setSettingsMap(settings);
+        // Another editing target while the question shows (the main window
+        // stays in use under the fullscreen window's): the question is taken
+        // back and nothing is shifted, there or here.
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_VERIFY(confirm->property("visible").toBool());
+        application->addPage();
+        QTRY_VERIFY(!confirm->property("visible").toBool());
+        QCOMPARE(session->historySize(), steps + 3);
+        QCOMPARE(application->files().session(*application->workspace().editingTarget())->historySize(), 1); // its opening state
+        application->selectTab(0);
+        QTRY_COMPARE(application->files().session(*application->workspace().editingTarget()), session);
         // A profile keeps the settings by name.
         application->shiftTimesSettings().saveProfile(QStringLiteral("Start only"));
         settings.insert(QStringLiteral("whichTimes"), 0);
@@ -25487,6 +25498,43 @@ private slots:
         QVERIFY(!box->property("visible").toBool());
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         application->settingsStore()->set("notices.hiddenQuestions", QStringList());
+        // Another video opened while the question shows (the main window
+        // stays in use under the fullscreen window's): the question is taken
+        // back, and an answer for the file it named opens nothing else.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("detail").toString(), QStringLiteral("b.MKV"));
+        video.openVideo(videos[2]);
+        QTRY_VERIFY(!box->property("visible").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QCOMPARE(QString::fromStdString(video.session().path()), videos[2]);
+        // The same for Change aspect ratio's window: another video ends the
+        // edit, and the new video keeps its own ratio (nothing put back).
+        auto *root = engine->rootObjects().first();
+        auto *aspect = named("aspectRatioDialog");
+        QTest::qWait(60); // past the video hotkeys' 50 ms repeat guard
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QWindow *aspectWindow = nullptr;
+        QTRY_VERIFY((aspectWindow = aspect->property("compactWindow").value<QWindow *>()) && aspectWindow->isVisible());
+        auto *aspectSlider = findItem(qobject_cast<QQuickWindow *>(aspectWindow)->contentItem(), QStringLiteral("aspectRatioWindowSlider"));
+        aspectSlider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(aspectSlider, "moved"));
+        QCOMPARE(application->visualTools().videoView().aspectRatio(), 0.5f);
+        video.openVideo(videos[0]);
+        QTRY_VERIFY(!aspectWindow->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QCOMPARE(QString::fromStdString(video.session().path()), videos[0]);
+        QCOMPARE(application->visualTools().videoView().aspectRatio(), 0.75f);
+        video.openVideo(videos[2]);
+        QTRY_VERIFY_WITH_TIMEOUT(QString::fromStdString(video.session().path()) == videos[2] && video.hasVideo(), 20000);
+        // the walk is made only while it leads to the file the answer names
+        const QString previous = application->nextVideoFilePath(false);
+        QCOMPARE(QFileInfo(previous).fileName(), QStringLiteral("b.MKV"));
+        QVERIFY(!application->nextVideoFileIfStill(false, videos[0]));
+        QCOMPARE(QString::fromStdString(video.session().path()), videos[2]);
+        QVERIFY(application->nextVideoFileIfStill(false, previous));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
     }
 
     // V3: the previous/next file over legacy's own NextFile capture folder

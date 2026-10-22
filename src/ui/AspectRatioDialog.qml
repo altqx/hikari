@@ -18,11 +18,17 @@ import Hikari.Ui
 // Close) puts back the ratio it opened with; Enter, a press outside the
 // popover or the window's OK keep it (legacy kept it on any closing). The
 // slider's ends are named, and Reset gives the video's own ratio back.
+// Another video opened meanwhile (the main window stays in use under the
+// fullscreen video window's) ends the edit: the ratio it opened with was
+// the other video's.
 Item {
     id: host
     objectName: "aspectRatioDialog"
     required property VideoViewController view
+    property VideoController video: null
     property SettingsStore settings: null
+    // The video the edit began on.
+    property string editedVideo: ""
     // The ratio it opened with (Esc, Cancel), the slider's value and its label.
     property double before: 0
     property int sliderValue: 0
@@ -35,6 +41,7 @@ Item {
     visible: false
 
     function start() {
+        editedVideo = video ? video.path() : ""
         before = view.aspectRatio()
         sliderValue = Math.max(100000, Math.min(1000000, view.aspectSliderValue()))
         label = view.aspectLabel(-1)
@@ -72,6 +79,14 @@ Item {
             popover.keep()
         if (compactWindow && compactWindow.visible)
             compactWindow.accept()
+    }
+
+    Connections {
+        target: host.video
+        function onChanged() {
+            if (host.opened && host.video.path() !== host.editedVideo)
+                host.close()
+        }
     }
 
     Popover {
