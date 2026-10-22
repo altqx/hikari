@@ -371,8 +371,16 @@ Output device: %2</source>
         <translation>Wszystkie pliki</translation>
     </message>
     <message>
+        <source>Choose the audio track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Otwórz</translation>
+    </message>
+    <message>
         <source>Choose the track</source>
-        <translation>Wybierz ścieżkę</translation>
+        <translation type="vanished">Wybierz ścieżkę</translation>
     </message>
     <message>
         <source>No audio open</source>
@@ -3401,7 +3409,11 @@ Nie udało się skopiować %2 czcionek.</translation>
     <name>HikariSub.Hotkeys</name>
     <message>
         <source>Hotkey mapping</source>
-        <translation>Mapowanie przycisków</translation>
+        <translation type="vanished">Mapowanie przycisków</translation>
+    </message>
+    <message>
+        <source>Keys for &quot;%1&quot;</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Global hotkey</source>
@@ -3424,32 +3436,68 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation>Skrót audio</translation>
     </message>
     <message>
+        <source>Press the keys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press the keys…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Window</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Please enter a hotkey for &quot;%1&quot;.</source>
-        <translation type="unfinished">Proszę wcisnąć klawisze skrótu dla &quot;%1&quot;.</translation>
-    </message>
-    <message>
-        <source>OK</source>
+        <source>%1 is already used by %2.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Swap with %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Swap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take it from %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep both</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">Oczyść</translation>
+    </message>
+    <message>
+        <source>Please enter a hotkey for &quot;%1&quot;.</source>
+        <translation type="obsolete">Proszę wcisnąć klawisze skrótu dla &quot;%1&quot;.</translation>
+    </message>
+    <message>
         <source>Warning</source>
-        <translation>Uwaga</translation>
+        <translation type="vanished">Uwaga</translation>
     </message>
     <message>
         <source>Switch hotkeys</source>
-        <translation>Zamień skróty</translation>
+        <translation type="vanished">Zamień skróty</translation>
     </message>
     <message>
         <source>Delete hotkey</source>
-        <translation>Usuń skrót</translation>
+        <translation type="vanished">Usuń skrót</translation>
     </message>
     <message>
         <source>Set anyway</source>
-        <translation>Ustaw mimo to</translation>
+        <translation type="vanished">Ustaw mimo to</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -3458,10 +3506,6 @@ Nie udało się skopiować %2 czcionek.</translation>
     <message>
         <source>Shortcut can be set using Shift + Click</source>
         <translation>Skrót można ustawić Shift + Klik</translation>
-    </message>
-    <message>
-        <source>&quot;%1&quot; is already assigned to %2. Press it again to replace it.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Exit</source>
@@ -4638,6 +4682,142 @@ great help testing HikariSub on a slow computer)
         <source>Application menu</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Don&apos;t ask again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy details</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Dismiss</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more notice(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Open the Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">Zamień</translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Action for every row</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">Nazwa</translation>
+    </message>
+    <message>
+        <source>Difference</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation type="unfinished">Akcja</translation>
+    </message>
+    <message>
+        <source>Action for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New name for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Zastosuj</translation>
+    </message>
+    <message>
+        <source>Choose styles</source>
+        <translation type="unfinished">Wybierz style</translation>
+    </message>
+    <message>
+        <source>Search styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No style matches</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 selected</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A week ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A month ago</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Date, as %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a date</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous month</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next month</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Today</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -4670,8 +4850,16 @@ great help testing HikariSub on a slow computer)
         <translation>Plik nie ma żadnej ścieżki z napisami.</translation>
     </message>
     <message>
+        <source>Choose the subtitle track</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Otwórz</translation>
+    </message>
+    <message>
         <source>Choose subtitle track</source>
-        <translation>Wybierz ścieżkę napisów</translation>
+        <translation type="vanished">Wybierz ścieżkę napisów</translation>
     </message>
     <message>
         <source>Loading subtitles from Matroska.</source>
@@ -4993,6 +5181,22 @@ gdy okno wyników szukania jest otwarte</translation>
     </message>
     <message>
         <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Notices</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show notices as toasts (off: in the Log only)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ask again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Brings back the questions hidden with &quot;Don&apos;t ask again&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6367,64 +6571,52 @@ bo została zedytowana.</translation>
         <translation>Usuń pliki starsze niż</translation>
     </message>
     <message>
-        <source>Day</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>January</source>
-        <translation>Styczeń</translation>
+        <translation type="vanished">Styczeń</translation>
     </message>
     <message>
         <source>February</source>
-        <translation>Luty</translation>
+        <translation type="vanished">Luty</translation>
     </message>
     <message>
         <source>March</source>
-        <translation>Marzec</translation>
+        <translation type="vanished">Marzec</translation>
     </message>
     <message>
         <source>April</source>
-        <translation>Kwiecień</translation>
+        <translation type="vanished">Kwiecień</translation>
     </message>
     <message>
         <source>May</source>
-        <translation>Maj</translation>
+        <translation type="vanished">Maj</translation>
     </message>
     <message>
         <source>June</source>
-        <translation>Czerwiec</translation>
+        <translation type="vanished">Czerwiec</translation>
     </message>
     <message>
         <source>July</source>
-        <translation>Lipiec</translation>
+        <translation type="vanished">Lipiec</translation>
     </message>
     <message>
         <source>August</source>
-        <translation>Sierpień</translation>
+        <translation type="vanished">Sierpień</translation>
     </message>
     <message>
         <source>September</source>
-        <translation>Wrzesień</translation>
+        <translation type="vanished">Wrzesień</translation>
     </message>
     <message>
         <source>October</source>
-        <translation>Październik</translation>
+        <translation type="vanished">Październik</translation>
     </message>
     <message>
         <source>November</source>
-        <translation>Listopad</translation>
+        <translation type="vanished">Listopad</translation>
     </message>
     <message>
         <source>December</source>
-        <translation>Grudzień</translation>
-    </message>
-    <message>
-        <source>Month</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Year</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Grudzień</translation>
     </message>
     <message>
         <source>Remove older auto save files</source>
@@ -6881,19 +7073,19 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Style named &quot;%1&quot; already exists. Replace?</source>
-        <translation type="unfinished">Styl o nazwie &quot;%1&quot; istnieje, podmienić go?</translation>
+        <translation type="obsolete">Styl o nazwie &quot;%1&quot; istnieje, podmienić go?</translation>
     </message>
     <message>
         <source>Yes to all</source>
-        <translation>Tak dla wszystkich</translation>
+        <translation type="vanished">Tak dla wszystkich</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation>Tak</translation>
+        <translation type="vanished">Tak</translation>
     </message>
     <message>
         <source>No</source>
-        <translation>Nie</translation>
+        <translation type="vanished">Nie</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -6910,6 +7102,78 @@ Spell checking will be disabled</source>
     <message>
         <source>Create</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>size</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>bold, italic, underline or strikeout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>colours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>outline</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>shadow</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>scale</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>alignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>margins</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>encoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 styles already exist in %3.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n more are the same as the ones there and are left as they are.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>Copy %n style(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -7020,12 +7284,20 @@ Spell checking will be disabled</source>
         <translation>Dodaj do magazynu styl z napisów</translation>
     </message>
     <message>
+        <source>the storage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Add to ASS</source>
         <translation>Dodaj do ASS</translation>
     </message>
     <message>
         <source>Copy style from storage to ASS</source>
         <translation>Dodaj do napisów styl z magazynu</translation>
+    </message>
+    <message>
+        <source>the ASS file</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Add to all open ASS files</source>
@@ -7281,7 +7553,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Choose styles</source>
-        <translation>Wybierz style</translation>
+        <translation type="vanished">Wybierz style</translation>
     </message>
     <message>
         <source>Copy of </source>
@@ -8161,7 +8433,7 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Translator mode</source>
-        <translation>Tryb tłumacza</translation>
+        <translation type="vanished">Tryb tłumacza</translation>
     </message>
     <message>
         <source>Translator mode displays and saves both foreign text and translation text</source>
@@ -8183,6 +8455,10 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Translation needs an ASS file: plain text cannot store it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

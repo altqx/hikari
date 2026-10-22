@@ -1444,6 +1444,74 @@
    ]
   },
   {
+   "role": "notice-warning",
+   "file": "notice-warning.svg",
+   "label": "Warning",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dialogs"
+   ]
+  },
+  {
+   "role": "notice-error",
+   "file": "notice-error.svg",
+   "label": "Error",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dialogs",
+    "notices"
+   ]
+  },
+  {
+   "role": "calendar",
+   "file": "calendar.svg",
+   "label": "Choose a date",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "date-picker"
+   ]
+  },
+  {
+   "role": "chevron-left",
+   "file": "chevron-left.svg",
+   "label": "Previous",
+   "accent": false,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "date-picker"
+   ]
+  },
+  {
+   "role": "chevron-right",
+   "file": "chevron-right.svg",
+   "label": "Next",
+   "accent": false,
+   "mirror": true,
+   "legacy": [],
+   "surfaces": [
+    "date-picker",
+    "dialogs"
+   ]
+  },
+  {
+   "role": "chevron-down",
+   "file": "chevron-down.svg",
+   "label": "Expanded",
+   "accent": false,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "dialogs"
+   ]
+  },
+  {
    "role": "layout",
    "file": "layout.svg",
    "label": "Layout",
@@ -1535,17 +1603,6 @@
    "legacy": [],
    "surfaces": [
     "title-bar"
-   ]
-  },
-  {
-   "role": "notice-warning",
-   "file": "notice-warning.svg",
-   "label": "Warning",
-   "accent": true,
-   "mirror": false,
-   "legacy": [],
-   "surfaces": [
-    "dialogs"
    ]
   },
   {

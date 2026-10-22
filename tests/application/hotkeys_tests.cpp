@@ -527,6 +527,8 @@ TEST(Hotkeys, ConflictsPerWindow)
         ASSERT_TRUE(c);
         EXPECT_TRUE(c->doubled);
         EXPECT_EQ(c->message, "This hotkey already exists for \"Save\".\nWhat to do?");
+        // PK1's hotkey capture names the commands alone.
+        EXPECT_EQ(c->commands, std::vector<std::string>{"Save"});
         EXPECT_TRUE(c->canSwitch);
         EXPECT_FALSE(c->canSetAnyway);
         list.map(history, "Ctrl-S", GlobalHotkey, HotkeyAnswer::Cancel, live);
@@ -566,6 +568,7 @@ TEST(Hotkeys, ConflictsPerWindow)
         EXPECT_FALSE(c->canSwitch);
         EXPECT_EQ(c->message, "This shortcut already exists in other windows as a shortcut for \"Subtitles Duplicate "
                               "lines, Editor Next untranslated line, Video Save\".\nWhat would you like to do?");
+        EXPECT_EQ(c->commands, (std::vector<std::string>{"Duplicate lines", "Next untranslated line", "Save"}));
         // Delete clears every binding found by its row (the Video copy has none).
         list.map(history, "Ctrl-R", GlobalHotkey, HotkeyAnswer::Delete, live);
         EXPECT_EQ(list.row(dup).accel, "");

@@ -2256,7 +2256,7 @@ ApplicationWindow {
                     // click selects the word: the caret stays where clicked.
                     field.deselect()
                     field.cursorPosition = position
-                    fixSuggestions.openFor(field.role, position, found.suggestions)
+                    fixSuggestions.openFor(field, field.role, position, found.suggestions)
                 }
             }
         }
@@ -5663,6 +5663,23 @@ ApplicationWindow {
         // "Modified" (said once, visual-language.md).
         saveText: root.editor.saveStatus
     }
+    // PK1 (#301): the toasts, at the bottom right of the main window above
+    // the status bar, or of the fullscreen video window (above its pinned
+    // bar) while it is open. root.notices.post(severity, title, text, options).
+    ToastStack {
+        id: notices
+        objectName: "toastStack"
+        log: root.log
+        settings: root.app.settings
+        readonly property bool inFullscreen: root.videoFullscreen.active
+        parent: inFullscreen ? videoFullscreenWindow.contentItem : root.contentItem
+        anchors.right: parent ? parent.right : undefined
+        anchors.bottom: parent ? parent.bottom : undefined
+        anchors.rightMargin: 12
+        anchors.bottomMargin: 12 + (inFullscreen ? videoFullscreenWindow.pinnedPanelHeight : 0)
+        z: 1000
+    }
+    readonly property alias notices: notices
     // WS3: Save layout as… and Manage layouts… (the switcher's and View > Layout's).
     SaveLayoutDialog {
         id: saveLayoutDialog
@@ -5811,6 +5828,7 @@ ApplicationWindow {
     MatroskaSubtitles {
         id: matroskaSubtitles
         matroska: root.matroska
+        settings: root.app.settings
         save: function() {
             const route = root.app.saveRoute()
             root.saveSubtitles()
@@ -6377,43 +6395,30 @@ ApplicationWindow {
         onAccepted: root.audio.openAudioUrl(selectedFile)
     }
     // A1: legacy HikariListBox "Choose the track" (ProviderFFMS2::Init with
-    // several audio tracks): the first row preselected, OK or a double click
-    // takes a row, Cancel opens no audio.
-    Dialog {
+    // several audio tracks), on PK1's list chooser in its compact window:
+    // the first row chosen, Open or a double click takes a row, Cancel opens
+    // no audio.
+    ListChooser {
         id: audioTrackChooser
         objectName: "audioTrackChooser"
-        title: qsTranslate("HikariSub.Audio", "Choose the track")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        ListView {
-            id: audioTrackList
-            objectName: "audioTrackList"
-            implicitWidth: 220
-            implicitHeight: 160
-            clip: true
-            model: root.audio.trackChoices
-            currentIndex: 0
-            delegate: ItemDelegate {
-                required property string modelData
-                required property int index
-                width: ListView.view.width
-                text: modelData
-                highlighted: ListView.isCurrentItem
-                onClicked: audioTrackList.currentIndex = index
-                onDoubleClicked: audioTrackChooser.accept()
-            }
-        }
-        onAccepted: root.audio.chooseTrack(Math.max(0, audioTrackList.currentIndex))
-        onRejected: root.audio.cancelTrackChoice()
+        settings: root.app.settings
         Connections {
             target: root.audio
             function onTrackChoicesChanged() {
                 if (root.audio.trackChoices.length > 0) {
-                    audioTrackList.currentIndex = 0
-                    audioTrackChooser.open()
+                    audioTrackChooser.choose({
+                        title: qsTranslate("HikariSub.Audio", "Choose the audio track"),
+                        rows: root.audio.trackChoices,
+                        acceptText: qsTranslate("HikariSub.Audio", "Open")
+                    }, row => {
+                        if (row >= 0)
+                            root.audio.chooseTrack(row)
+                        else
+                            root.audio.cancelTrackChoice()
+                    })
                 } else if (audioTrackChooser.opened) {
-                    audioTrackChooser.close()
+                    audioTrackChooser.done = null
+                    audioTrackChooser.none()
                 }
             }
         }
@@ -6892,44 +6897,24 @@ ApplicationWindow {
             spellingNotice.open()
         }
     }
-    Dialog {
+    // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK's "Fix suggestions", on PK1's list
+    // chooser as a popover at the misspelled word: a click or Enter replaces
+    // it, Esc or a press outside leaves it.
+    ListChooser {
         id: fixSuggestions
         objectName: "fixSuggestions"
-        title: qsTranslate("HikariSub.Spelling", "Fix suggestions")
-        anchors.centerIn: parent
-        modal: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        property int role: 0
-        property int position: -1
-        property var suggestions: []
-        function openFor(role, position, suggestions) {
-            fixSuggestions.role = role
-            fixSuggestions.position = position
-            fixSuggestions.suggestions = suggestions
-            fixList.currentIndex = 0
-            open()
-        }
-        onAccepted: if (fixList.currentIndex >= 0 && fixList.currentIndex < suggestions.length)
-            root.app.replaceEditorMisspell(role, position, suggestions[fixList.currentIndex])
-        ListView {
-            id: fixList
-            objectName: "fixSuggestionsList"
-            implicitWidth: 220
-            implicitHeight: 160
-            clip: true
-            model: fixSuggestions.suggestions
-            delegate: ItemDelegate {
-                required property string modelData
-                required property int index
-                width: ListView.view.width
-                text: modelData
-                highlighted: ListView.isCurrentItem
-                onClicked: fixList.currentIndex = index
-                onDoubleClicked: {
-                    fixList.currentIndex = index
-                    fixSuggestions.accept()
-                }
-            }
+        settings: root.app.settings
+        function openFor(field, role, position, suggestions) {
+            const at = field.positionToRectangle(position)
+            choose({
+                title: qsTranslate("HikariSub.Spelling", "Fix suggestions"),
+                rows: suggestions,
+                anchor: field,
+                at: Qt.rect(at.x, at.y, Math.max(1, at.width), at.height)
+            }, row => {
+                if (row >= 0 && row < suggestions.length)
+                    root.app.replaceEditorMisspell(role, position, suggestions[row])
+            })
         }
     }
     ScriptPropertiesDialog {
@@ -7180,13 +7165,11 @@ ApplicationWindow {
             // Legacy default: a month before today.
             const before = new Date()
             before.setMonth(before.getMonth() - 1)
-            olderDay.currentIndex = before.getDate() - 1
-            olderMonth.currentIndex = before.getMonth()
-            olderYear.text = before.getFullYear()
+            olderDate.date = olderDate.day(before)
             show()
         }
         function cutoff() {
-            return new Date(parseInt(olderYear.text), olderMonth.currentIndex, olderDay.currentIndex + 1)
+            return olderDate.day(olderDate.date)
         }
         ColumnLayout {
             id: temporaryContent
@@ -7243,14 +7226,12 @@ ApplicationWindow {
             }
             RowLayout {
                 Label { text: qsTranslate("HikariSub.Session", "Remove files older than") }
-                ComboBox { id: olderDay; model: 31; displayText: currentIndex + 1; Accessible.name: qsTranslate("HikariSub.Session", "Day") }
-                ComboBox {
-                    id: olderMonth
-                    model: [qsTranslate("HikariSub.Session", "January"), qsTranslate("HikariSub.Session", "February"), qsTranslate("HikariSub.Session", "March"), qsTranslate("HikariSub.Session", "April"), qsTranslate("HikariSub.Session", "May"), qsTranslate("HikariSub.Session", "June"),
-                            qsTranslate("HikariSub.Session", "July"), qsTranslate("HikariSub.Session", "August"), qsTranslate("HikariSub.Session", "September"), qsTranslate("HikariSub.Session", "October"), qsTranslate("HikariSub.Session", "November"), qsTranslate("HikariSub.Session", "December")]
-                    Accessible.name: qsTranslate("HikariSub.Session", "Month")
+                // PK1: the date field with its calendar (legacy's day, month and year boxes).
+                DatePicker {
+                    id: olderDate
+                    objectName: "olderDate"
+                    accessibleName: qsTranslate("HikariSub.Session", "Remove files older than")
                 }
-                TextField { id: olderYear; Layout.preferredWidth: 60; validator: IntValidator { bottom: 2012 } Accessible.name: qsTranslate("HikariSub.Session", "Year") }
                 Button {
                     objectName: "removeOlderAutosaves"
                     text: qsTranslate("HikariSub.Session", "Remove older auto save files")
@@ -7694,9 +7675,13 @@ ApplicationWindow {
             return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
-    HotkeyMapping {
+    // PK1's hotkey capture: Shift+click on a command opens it in its
+    // compact window.
+    HotkeyCapture {
         id: hotkeyMapping
+        objectName: "hotkeyMapping"
         hotkeys: root.hotkeys
+        settings: root.app.settings
     }
     // GLOBAL_STYLE_MANAGER_CLEAN_STYLE: StyleStore::OnCleanStyles's message
     // (stylestore.cpp:738-775).
@@ -7738,69 +7723,6 @@ ApplicationWindow {
         objectName: "legacyHotkeysDialog"
         nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
         onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
-    }
-    // Legacy HkeysDialog ("Hotkey mapping").
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: hotkeyCapture
-        objectName: "hotkeyCapture"
-        title: qsTranslate("HikariSub.Hotkeys", "Hotkey mapping")
-        width: 420
-        height: 150
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        property string name: ""
-        property string keys: ""
-        property string conflictWith: ""
-        function capture(n) {
-            name = n
-            keys = ""
-            conflictWith = ""
-            show()
-            captureArea.forceActiveFocus()
-        }
-        function accept(k) {
-            const other = root.automationHotkeys.conflict(name, k)
-            if (other.length > 0 && conflictWith !== other) {
-                keys = k
-                conflictWith = other // asks before replacing, as legacy does
-                return
-            }
-            root.automationHotkeys.setKeys(name, k)
-            close()
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: hotkeyCapture.conflictWith.length
-                      ? qsTranslate("HikariSub.Hotkeys", "\"%1\" is already assigned to %2. Press it again to replace it.").arg(hotkeyCapture.keys).arg(hotkeyCapture.conflictWith)
-                      : qsTranslate("HikariSub.Hotkeys", "Please enter a hotkey for \"%1\".").arg(hotkeyCapture.name)
-            }
-            Item {
-                id: captureArea
-                objectName: "hotkeyCaptureArea"
-                Layout.fillWidth: true
-                Layout.preferredHeight: 30
-                focus: true
-                Keys.onPressed: event => {
-                    const k = root.automationHotkeys.keysOf(event.key, event.modifiers)
-                    if (k.length > 0) {
-                        if (hotkeyCapture.conflictWith.length && k === hotkeyCapture.keys)
-                            hotkeyCapture.conflictWith = "" // confirmed: replace
-                        hotkeyCapture.accept(k)
-                    }
-                    event.accepted = true
-                }
-            }
-            Button {
-                Layout.alignment: Qt.AlignRight
-                text: qsTranslate("HikariSub.Hotkeys", "Cancel")
-                onClicked: hotkeyCapture.close()
-            }
-        }
     }
 
     Window {

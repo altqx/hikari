@@ -137,6 +137,9 @@ constexpr OptionsBinding kBindings[] = {
     // syllable, on the Audio page after the karaoke options.
     {"audio.karaokeDoubleConsonantApart", Check, Audio},
     {"audio.karaokeKfThreshold", Number, Audio, 10, 10000},
+    // PK1 (#301): notices as toasts, or in the Log only, on the Editor page's
+    // Notices group.
+    {"notices.toasts", Check, Editor},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.

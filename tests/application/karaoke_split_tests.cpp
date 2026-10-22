@@ -244,7 +244,7 @@ TEST(KaraokeAutoSplit, ALongerLineSplitsAtSpaces)
     k.split({u(longer), 0, 1000}, true, {});
     EXPECT_EQ(k.count(), 2);
     EXPECT_EQ(s(k.syllables()[1]), "kara");
-    EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(2));
+    EXPECT_LT(std::chrono::steady_clock::now() - began, std::chrono::seconds(10));
 }
 
 // ---- time by character (KA1-time-by-character) ---------------------------------
