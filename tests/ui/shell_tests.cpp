@@ -25347,6 +25347,11 @@ private slots:
         auto &video = application->video();
         video.openVideo(own.filePath(QStringLiteral("Frieren - 26 [1080p].mkv")));
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        // The fixture's 320 × 240 against the script's 1280 × 720: not this card's.
+        auto *mismatch = named("mismatchDialog");
+        QTRY_VERIFY(mismatch->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(mismatch, "reject"));
+        QTRY_VERIFY(!mismatch->property("visible").toBool());
         auto map = application->shiftTimesSettings().settingsMap();
         map.insert(QStringLiteral("whichTimes"), 1);
         application->shiftTimesSettings().setSettingsMap(map);
@@ -25378,7 +25383,9 @@ private slots:
             QTRY_VERIFY(!fps->isVisible());
             // Change aspect ratio: the context menu's popover at the
             // pointer, then the hotkey's window.
-            QTest::mouseMove(window, overlay->mapToScene(QPointF(overlay->width() / 3, overlay->height() / 3)).toPoint());
+            const QPoint at = overlay->mapToScene(QPointF(overlay->width() / 3, overlay->height() / 3)).toPoint();
+            QTest::mouseMove(window, at);
+            QCursor::setPos(window->screen(), window->mapToGlobal(at));
             QVERIFY(QMetaObject::invokeMethod(aspect, "openAtCursor", Q_ARG(QVariant, QVariant::fromValue<QObject *>(overlay))));
             QTRY_VERIFY(named("aspectRatioPopover")->property("opened").toBool());
             save(window, QStringLiteral("aspect-popover-") + code);
