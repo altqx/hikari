@@ -143,6 +143,9 @@ private:
     // The Lines a change edits: several picked ones less those the Grid
     // hides (the last change's own, unfiltered, when it is done again).
     std::vector<core::LineId> editedTargets(const VisualHost &host) const;
+    // The active Line is a comment or not shown: the controller takes no
+    // pointer events then, and the strip's values write nothing either.
+    bool blocked(const VisualHost &host) const;
     void legacyPointer(const Pointer &event, VisualHost &host);
     bool legacyKey(const Key &event, VisualHost &host);
 

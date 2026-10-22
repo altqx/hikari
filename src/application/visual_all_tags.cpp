@@ -10,6 +10,7 @@
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
+#include <map>
 
 // Built without floating-point contraction, as visual_view.cpp.
 
@@ -726,6 +727,17 @@ std::vector<core::LineId> AllTagsTool::editedTargets(const VisualHost &host) con
     if (const auto shown = host.shownLines())
         std::erase_if(targets, [&](core::LineId id) { return !shown(id); });
     return targets;
+}
+
+bool AllTagsTool::blocked(const VisualHost &host) const
+{
+    const auto *session = host.session();
+    const auto active = host.activeLine();
+    if (!session || !active)
+        return false;
+    const auto draft = session->draftRecord();
+    const core::LineRecord *line = draft && draft->id == *active ? &*draft : findLine(session->document(), *active);
+    return line && lineWarning(Family::Hydra, *line, host.videoTimeMs()) != LineWarning::None;
 }
 
 float AllTagsTool::diffValue(const Slider &slider) const
@@ -1528,7 +1540,7 @@ bool AllTagsTool::setValue(const std::string &name, const std::u16string &text, 
     // VT1: a typed value (Enter) or a scrub's release applies the change as
     // one step; a scrub's samples preview it.
     // Without video the tool has not read the active Line (reset).
-    if (m_legacySliders || host.gesture() && !m_sample || !host.view().hasVideo())
+    if (m_legacySliders || host.gesture() && !m_sample || !host.view().hasVideo() || blocked(host))
         return false;
     double parsed = 0;
     if (!parseValue(text, parsed))
@@ -1607,7 +1619,7 @@ bool AllTagsTool::editLastChange(const std::string &name, const std::u16string &
     // The card's value: the last step undone and the change done again with
     // it, on the Lines it changed, so it is still one step. Anything else
     // that changed the Document since (or an open gesture) closes the card.
-    if (!m_last || m_last->tag != m_currentTag || m_last->mode != m_mode || !host.view().hasVideo())
+    if (!m_last || m_last->tag != m_currentTag || m_last->mode != m_mode || !host.view().hasVideo() || blocked(host))
         return false;
     if (host.session() != m_last->session) {
         m_last.reset();
@@ -1888,11 +1900,14 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
     const auto draft = session ? session->draftRecord() : std::nullopt;
     std::u8string draftKey;
     if (draft)
-        for (const std::u8string *field : {&draft->text, &draft->style, &draft->start.lexeme, &draft->end.lexeme,
+        for (const std::u8string *field : {&draft->text, &draft->translation, &draft->style, &draft->start.lexeme,
+                                           &draft->end.lexeme,
                                            &draft->layer.lexeme, &draft->marginLeft.lexeme, &draft->marginRight.lexeme,
                                            &draft->marginVertical.lexeme})
             draftKey += *field + u8'\x01';
-    const bool fresh = m_outlines && session && m_outlines->revision == session->revision() &&
+    // A drag's or a scrub's samples move the Lines: outlined as staged, not kept.
+    const Gesture *gesture = const_cast<VisualHost &>(host).gesture(); // read only: the host has no const accessor
+    const bool fresh = !gesture && m_outlines && session && m_outlines->revision == session->revision() &&
                        m_outlines->time == time && m_outlines->targets == targets && m_outlines->draft == draftKey &&
                        m_outlines->coeffW == view.coeffW() && m_outlines->coeffH == view.coeffH() &&
                        m_outlines->zoomMove == view.zoomMove() && m_outlines->zoomScale == view.zoomScale();
@@ -1911,13 +1926,34 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
             return PointF{((p.x / o.coeffW) - o.zoomMove.x) * o.zoomScale.x,
                           ((p.y / o.coeffH) - o.zoomMove.y) * o.zoomScale.y};
         };
+        // The targets' records in one pass over the Document (a batch can
+        // hold every Line; this runs for each shown frame while playing).
+        std::map<core::LineId, std::size_t> at;
+        for (std::size_t i = 0; i < targets.size(); ++i)
+            at.emplace(targets[i], i);
+        std::vector<const core::LineRecord *> records(targets.size(), nullptr);
+        for (const core::LineRecord *record : session->document().lines())
+            if (const auto it = at.find(record->id); it != at.end())
+                records[it->second] = record;
         constexpr std::size_t kMostOutlined = 64;
         std::size_t outlined = 0;
         for (std::size_t i = 0; i < targets.size() && outlined < kMostOutlined; ++i) {
             // The active Line's draft is what the video shows.
-            const core::LineRecord *line =
-                draft && draft->id == targets[i] ? &*draft : findLine(session->document(), targets[i]);
-            if (!line || lineWarning(Family::Hydra, *line, time) != LineWarning::None)
+            const core::LineRecord *found = draft && draft->id == targets[i] ? &*draft : records[i];
+            if (!found)
+                continue;
+            core::LineRecord staged;
+            const core::LineRecord *line = found;
+            if (gesture) {
+                const auto text = gesture->staged(targets[i]), translation = gesture->staged(targets[i], true);
+                if (text || translation) {
+                    staged = *found;
+                    staged.text = text.value_or(staged.text);
+                    staged.translation = translation.value_or(staged.translation);
+                    line = &staged;
+                }
+            }
+            if (lineWarning(Family::Hydra, *line, time) != LineWarning::None)
                 continue;
             const auto box = lineBox(ctx, *line);
             if (!box)
@@ -1933,9 +1969,12 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
                 o.overlay.texts.push_back({IntRect{x, y, x + w, y + h}, number, kOutline, true, 0});
             }
         }
-        m_outlines = std::move(o);
+        if (gesture)
+            out = std::move(o.overlay);
+        else
+            m_outlines = std::move(o);
     }
-    if (m_outlines)
+    if (m_outlines && !gesture)
         out = m_outlines->overlay;
     if (m_drag && m_drag->active && m_sample) {
         const u16 text = m_actualTag.name + u"  " + valueText(m_drag->from) + u" \u2192 " +

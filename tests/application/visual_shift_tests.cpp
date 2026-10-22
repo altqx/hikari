@@ -1527,6 +1527,54 @@ TEST(HydraStrip, TheOutlinesFollowWhatIsEditedAndShown)
     EXPECT_NEAR((moved.polygons[0].points[0].x + moved.polygons[0].points[1].x) / 2, 600.f / 3, 1.f);
 }
 
+// HY1 (Codex on #339): outside the active Line's time (the warning, no
+// pointer events) the strip's values write nothing either.
+TEST(HydraStrip, ABlockedLineTakesNoValue)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\blur2}Hello"}, false));
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    ASSERT_TRUE(tags.setValue("by0", u"1", host));
+    ASSERT_TRUE(tags.lastChange(host));
+    host.time = 5000; // the Line ends at 2.0 s
+    const std::size_t steps = host.s->historySize();
+    EXPECT_FALSE(tags.setValue("by0", u"2", host, ValueEdit::Sample));
+    EXPECT_FALSE(tags.setValue("by0", u"2", host));
+    EXPECT_FALSE(tags.editLastChange("by0", u"4", host));
+    EXPECT_EQ(host.s->historySize(), steps);
+    EXPECT_EQ(textOf(*host.s, host.targets.front()), "{\\blur3}Hello");
+}
+
+// HY1 (Codex on #339): during a drag the outline follows the staged
+// preview; Esc puts it back.
+TEST(HydraStrip, ADragsOutlineFollowsItsPreview)
+{
+    TestHost host;
+    Case c = hydraCase({"{\\pos(900,500)}Hello"}, false);
+    setUp(host, c);
+    AllTagsTool tags;
+    tags.setToggled((PasteAdd << 20) + 20); // position
+    tags.selected(host);
+    tags.reset(host);
+    ASSERT_EQ(tags.actualTag().tag, u"pos");
+    ASSERT_TRUE(tags.markValue("by0", host));
+    const auto centre = [&] {
+        const Overlay o = tags.overlay(host);
+        EXPECT_FALSE(o.polygons.empty());
+        return o.polygons.empty() ? 0.f : (o.polygons[0].points[0].x + o.polygons[0].points[1].x) / 2;
+    };
+    EXPECT_NEAR(centre(), 900.f / 3, 1.f);
+    ASSERT_TRUE(tags.setValue("by0", u"300", host, ValueEdit::Sample));
+    ASSERT_TRUE(host.g);
+    EXPECT_NEAR(centre(), 1200.f / 3, 1.f);
+    host.cancelGesture();
+    tags.reset(host);
+    EXPECT_NEAR(centre(), 900.f / 3, 1.f);
+}
+
 // HY1-time-keys-set: the Line editor's "Insert difference from the start"
 // key puts the video's time from the Line's start into \fad's first value,
 // as Set does, whatever the switch shows; one step.
