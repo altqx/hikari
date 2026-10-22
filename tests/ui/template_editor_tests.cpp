@@ -684,6 +684,42 @@ private slots:
         QCOMPARE(fileLines(*source), kept);
     }
 
+    // A file opened without marks where a karaoke Line made no Lines (its
+    // template came after): its first preview stands before the Lines of
+    // the karaoke Lines after it, as a whole Apply writes them.
+    void aFirstPreviewInAnUnmarkedFileStandsBeforeLaterLines()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.out.ass"));
+        std::optional<core::LineId> source;
+        for (const auto *l : doc.lines())
+            if (!source && application::isKaraokeLine(*l) && !application::templateKindOf(*l) && l->style == u8"T1b")
+                source = l->id;
+        QVERIFY(source);
+        QCOMPARE(doc.removeLinesIf([](const core::LineRecord &l) {
+            return application::isGeneratedLine(l) && l.style == u8"T1b";
+        }), std::size_t{1});
+        openDocument(std::move(doc), true);
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && !previewTexts().isEmpty(); }, 20'000));
+        QTest::qWait(500);
+        QVERIFY(settled());
+        const auto shown = editor->videoDocument(session->document(), 0, true); // every Line
+        QVERIFY(shown);
+        const QStringList preview = previewTexts();
+        int first = -1, later = -1, at = 0;
+        for (const auto *x : shown->lines()) {
+            const QString text = QString::fromStdString(lineText(*x)).section(QLatin1Char(','), 9);
+            if (first < 0 && preview.contains(text))
+                first = at;
+            if (later < 0 && application::isGeneratedLine(*x) && x->style == u8"T2a")
+                later = at;
+            ++at;
+        }
+        QVERIFY(first >= 0 && later >= 0);
+        QVERIFY2(first < later, qPrintable(QStringLiteral("preview at %1, T2a's Lines at %2").arg(first).arg(later)));
+    }
+
     // A matching run that answers after another tab is chosen is that
     // tab's no more: the new one matches for itself.
     void aMatchFromAnotherTabIsDropped()

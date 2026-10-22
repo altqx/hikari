@@ -45,7 +45,8 @@ std::optional<core::LineId> templatePreviewSource(const core::Document &doc, std
 // Line selected; nothing without karaoke Lines.
 std::optional<MacroSnapshot> templateOwnersSnapshot(const core::Document &doc);
 // The karaoke Line of each unmarked generated Line, from that run's result;
-// none when a Line the templates give now is not in the file.
+// none when the file holds only some of the Lines the templates give a
+// karaoke Line now (one it holds none of takes none).
 std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, const MacroResult &result);
 
 // The snapshot a preview runs on: the Script Info, the Styles, the template
@@ -84,9 +85,12 @@ TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, s
 // Lines in `replaced` (a file's unmarked generated Lines found to be its),
 // left out, and the source itself when `preview` has Lines (Apply comments
 // it out then); `preview` put in; only the Lines over `window` kept.
+// `owners` gives the karaoke Line of each unmarked generated Line when it is
+// known (templateOwners), which places a source's first Lines.
 core::Document templatePreviewDocument(const core::Document &doc, core::LineId source,
                                        const std::vector<core::LineRecord> &preview,
-                                       const std::set<core::LineId> &replaced, TemplatePreviewWindow window);
+                                       const std::set<core::LineId> &replaced, TemplatePreviewWindow window,
+                                       const std::map<core::LineId, core::LineId> &owners = {});
 
 // The host services a preview run may use: the ones that only read (text
 // extents, frame times, the video's size, the project's properties).

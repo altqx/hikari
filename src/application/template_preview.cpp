@@ -135,10 +135,16 @@ std::map<core::LineId, core::LineId> templateOwners(const core::Document &doc, c
     for (const auto *l : doc.lines())
         if (isGeneratedLine(*l) && l->generatedFrom.value != 0)
             marked.insert(l->generatedFrom);
+    // One the file holds none of the Lines of made none when it was written
+    // (a template since gives it Lines): it takes none either.
+    std::set<std::string> held;
+    for (const auto &[key, list] : free)
+        held.insert(key);
     std::map<core::LineId, core::LineId> owners;
     for (const auto *l : doc.lines()) {
         const auto lines = made.find(l->id.value);
-        if (lines == made.end() || marked.contains(l->id))
+        if (lines == made.end() || marked.contains(l->id) ||
+            std::ranges::none_of(lines->second, [&](const auto *d) { return held.contains(lineKey(*d)); }))
             continue;
         for (const auto *d : lines->second) {
             auto &list = free[lineKey(*d)];
@@ -225,7 +231,8 @@ TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, s
 
 core::Document templatePreviewDocument(const core::Document &doc, core::LineId source,
                                        const std::vector<core::LineRecord> &preview,
-                                       const std::set<core::LineId> &replaced, TemplatePreviewWindow window)
+                                       const std::set<core::LineId> &replaced, TemplatePreviewWindow window,
+                                       const std::map<core::LineId, core::LineId> &owners)
 {
     core::Document out = doc;
     // The source too when its templates make Lines: Apply turns it into a
@@ -240,16 +247,19 @@ core::Document templatePreviewDocument(const core::Document &doc, core::LineId s
     // The preview stands where the Lines it replaces stood, as Apply writes
     // it (read order decides collisions and stacking): before the first Line
     // after them that stays. With none, before the first Line of a karaoke
-    // Line after the source (Apply writes the Lines in karaoke Line order);
-    // at the end when there is none either.
+    // Line after the source (Apply writes the Lines in karaoke Line order;
+    // an unmarked Line's karaoke Line from `owners`); at the end when there
+    // is none either.
     std::map<core::LineId, std::size_t> place;
     for (const auto *l : doc.lines())
         place.emplace(l->id, place.size());
     const bool replacing = std::ranges::any_of(doc.lines(), [&](const core::LineRecord *l) { return replacedHere(*l); });
     const auto later = [&](const core::LineRecord &l) {
-        const auto from = place.find(l.generatedFrom);
-        return l.generatedFrom.value != 0 && from != place.end() && place.contains(source) &&
-               from->second > place.at(source);
+        core::LineId owner = l.generatedFrom;
+        if (const auto known = owners.find(l.id); owner.value == 0 && known != owners.end())
+            owner = known->second;
+        const auto from = place.find(owner);
+        return owner.value != 0 && from != place.end() && place.contains(source) && from->second > place.at(source);
     };
     std::optional<core::LineId> before;
     bool past = false;

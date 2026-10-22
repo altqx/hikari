@@ -882,10 +882,11 @@ std::optional<core::Document> TemplateEditorController::videoDocument(const core
     if (!videoPreview())
         return std::nullopt;
     const auto replaced = m_replaced.find(*m_source);
-    return application::templatePreviewDocument(doc, *m_source, *m_preview,
-                                                replaced == m_replaced.end() ? std::set<core::LineId>{}
-                                                                             : replaced->second,
-                                                videoWindow(timeMs, playing));
+    const auto *s = session();
+    const bool ownersKnown = s && m_ownersRevision == s->revision();
+    return application::templatePreviewDocument(
+        doc, *m_source, *m_preview, replaced == m_replaced.end() ? std::set<core::LineId>{} : replaced->second,
+        videoWindow(timeMs, playing), ownersKnown ? m_owners : std::map<core::LineId, core::LineId>{});
 }
 
 bool TemplateEditorController::canApply() const
@@ -1349,6 +1350,14 @@ void TemplateEditorController::runChain(std::uint64_t generation)
         });
         return;
     }
+    // The source's first Lines in such a file stand before those of the
+    // karaoke Lines after it (templatePreviewDocument): which those are is
+    // found first. The preview runs again once they are.
+    const auto *s = session();
+    const auto replaced = m_replaced.find(source);
+    if (!marked && !unmarked.empty() && (replaced == m_replaced.end() || replaced->second.empty()) && s &&
+        m_ownersRevision != s->revision() && askOwners())
+        return;
     const auto snapshot = *m_previewSnapshot;
     m_templater->preview(snapshot, [self, generation, snapshot](application::KaraokeTemplaterPort::Preview p) {
         if (self && generation == self->m_generation)

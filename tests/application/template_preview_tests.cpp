@@ -189,7 +189,8 @@ TEST_F(TemplatePreview, ATemplateThatIsAlsoAKaraokeLineIsBoth)
 
 // A file's unmarked generated Lines go to the karaoke Lines that give them
 // now, identical ones in file order, as KE1's selected-Lines run matches
-// them; a Line the templates no longer give leaves them all unknown.
+// them; a karaoke Line the file holds only some of the Lines of leaves them
+// all unknown.
 TEST_F(TemplatePreview, AFilesGeneratedLinesGoToTheKaraokeLinesThatGiveThem)
 {
     const auto file = load("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
@@ -231,7 +232,12 @@ TEST_F(TemplatePreview, AFilesGeneratedLinesGoToTheKaraokeLinesThatGiveThem)
     result.dialogues.push_back(made(id[3], 1000, "{\\pos(1,1)}b"));
     EXPECT_EQ(templateOwners(file, result),
               (std::map<core::LineId, core::LineId>{{id[4], id[3]}, {id[5], id[1]}, {id[6], id[2]}}));
-    result.dialogues.back().text = "{\\pos(2,2)}b"; // the template changed since
+    // A karaoke Line the file holds none of the Lines of made none when it
+    // was written (a template since gives it Lines): it takes none.
+    result.dialogues.back().text = "{\\pos(2,2)}b";
+    EXPECT_EQ(templateOwners(file, result), (std::map<core::LineId, core::LineId>{{id[5], id[1]}, {id[6], id[2]}}));
+    // One that holds some of them: the templates changed since.
+    result.dialogues.push_back(made(id[1], 0, "{\\pos(3,3)}a"));
     EXPECT_TRUE(templateOwners(file, result).empty());
 }
 
@@ -363,6 +369,12 @@ TEST_F(TemplatePreview, ANewPreviewStandsBeforeLaterKaraokeLinesLines)
     a.text = u8"{\\pos(9,9)}ha";
     b.text = u8"{\\pos(9,9)}ru";
     EXPECT_EQ(textsOf(templatePreviewDocument(none, ids[4], {a, b}, {}, {1000, 5000})),
+              (std::vector<std::u8string>{u8"{\\k50}ka{\\k50}ze", u8"{\\pos(9,9)}ha", u8"{\\pos(9,9)}ru",
+                                          u8"{\\pos(1,2)}ka"}));
+    // A file opened without marks: the later karaoke Line's Lines are known
+    // by the run that found each unmarked Line's karaoke Line.
+    ASSERT_TRUE(none.editLine(ids[8], [](core::LineRecord &l) { l.generatedFrom = {}; }, core::ChangeMark::Kept));
+    EXPECT_EQ(textsOf(templatePreviewDocument(none, ids[4], {a, b}, {}, {1000, 5000}, {{ids[8], ids[7]}})),
               (std::vector<std::u8string>{u8"{\\k50}ka{\\k50}ze", u8"{\\pos(9,9)}ha", u8"{\\pos(9,9)}ru",
                                           u8"{\\pos(1,2)}ka"}));
 }
