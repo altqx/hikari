@@ -267,6 +267,7 @@ DialogWindow {
                                                                  : qsTr("%1 here, %2 in the file").arg(row.here).arg(row.there),
                                        suggestion: suggest(row.name) })),
             added: r.total - r.rows.length - r.same,
+            namePattern: /.*/, // a catalog name may hold a comma
             nameTaken: (name, row) => {
                 const key = name.toLowerCase()
                 const review = reviewLoader.item

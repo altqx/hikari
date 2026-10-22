@@ -180,6 +180,11 @@ public:
     // italic, underline, strikeOut} on the preview Style, drawn by the
     // subtitle renderer at `width` x `height`.
     Q_INVOKABLE void renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height);
+    // The characters renderSample draws for `text`, on one line: when `ass`,
+    // without override blocks and what \p drawing mode draws, \N and \n
+    // as spaces, \h as a no-break space, \{ and \} as braces; otherwise
+    // as written.
+    Q_INVOKABLE QString samplePlain(const QString &text, bool ass) const;
 
     // F47-refresh: the installed and external fonts are read again now.
     Q_INVOKABLE void refreshFonts();
@@ -190,7 +195,10 @@ public:
     // when a newer one comes is replaced and never answered. With
     // `documentFonts`, the editing target's attached fonts come first, as
     // its renderer has them.
-    Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts = false);
+    // `text`: the characters that need glyphs (the preview's); empty for
+    // the sample "AaBbCcDdEeFfGg 0123456789".
+    Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts = false,
+                                  const QString &text = QString());
 
     // The external fonts' bytes, for renderer contexts.
     std::vector<application::FontLease> externalFontLeases() const;

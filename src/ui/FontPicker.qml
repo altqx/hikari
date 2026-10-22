@@ -179,7 +179,10 @@ DialogWindow {
     // identities stay distinct, fonts.md).
     function resolve() {
         resolution = ({}) // until this request's answer: no other face is said
-        resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true)
+        // The characters the preview draws need the glyphs (a CJK Line, a CJK face).
+        const own = sampleText.trim().length > 0
+        resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true,
+                                                own ? catalogs.samplePlain(sampleText, sampleAss) : "")
     }
     function render() {
         const own = sampleText.trim().length > 0

@@ -53,7 +53,8 @@ Rectangle {
                 Accessible.checkable: true
                 Accessible.checked: checked
                 ToolTip.visible: hovered && (modelData.tip || "").length > 0
-                ToolTip.text: modelData.tip || ""
+                // Plain, as IconToolButton's tip.
+                ToolTip.text: (modelData.tip || "").replace(/</g, "<\u2060").replace(/&lt;/g, "&\u2060lt;")
                 onClicked: {
                     if (index !== group.currentIndex)
                         group.activated(index)

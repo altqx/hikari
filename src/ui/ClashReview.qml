@@ -42,6 +42,9 @@ DialogWindow {
     // nameTaken(name, row): true when a rename's name is taken (the
     // review's owner knows which names are); none: only an empty name stops it.
     property var nameTaken: null
+    // What a rename's name may hold: by default a style name, which has
+    // no comma (legacy excludes it; the style editor's field refuses it).
+    property var namePattern: /[^,]*/
     property var done: null
     readonly property int written: added + actions.filter(a => a !== "skip").length
     // The actions offered, in order, with their buttons' names.
@@ -63,6 +66,7 @@ DialogWindow {
         added = o.added || 0
         acceptText = o.acceptText || null
         nameTaken = o.nameTaken || null
+        namePattern = o.namePattern || /[^,]*/
         const first = o.action || "replace"
         rows = o.rows || []
         actions = rows.map(() => first)
@@ -215,9 +219,7 @@ DialogWindow {
                         visible: review.actions[clash.index] === "rename"
                         text: review.names[clash.index] || ""
                         Accessible.name: qsTr("New name for %1").arg(clash.modelData.name)
-                        // A style name has no comma (legacy excludes it; the
-                        // style editor's name field refuses it too).
-                        validator: RegularExpressionValidator { regularExpression: /[^,]*/ }
+                        validator: RegularExpressionValidator { regularExpression: review.namePattern }
                         Layout.fillWidth: true
                         Layout.minimumWidth: 120
                         onTextEdited: review.setName(clash.index, text)

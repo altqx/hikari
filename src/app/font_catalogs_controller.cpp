@@ -467,6 +467,49 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
     emit previewChanged();
 }
 
+QString FontCatalogsController::samplePlain(const QString &text, bool ass) const
+{
+    QString out;
+    out.reserve(text.size());
+    bool drawing = false; // \p1 and up: vector drawing until \p0
+    static const QRegularExpression drawingTag(QStringLiteral("\\\\p(-?\\d+)"));
+    for (qsizetype i = 0; i < text.size(); ++i) {
+        const QChar c = text[i];
+        if (c == QLatin1Char('\n')) {
+            if (!drawing)
+                out += QLatin1Char(' ');
+            continue;
+        }
+        if (!ass) {
+            out += c;
+            continue;
+        }
+        if (c == QLatin1Char('{')) {
+            const qsizetype close = text.indexOf(QLatin1Char('}'), i + 1);
+            if (close >= 0) { // an override block (an unclosed '{' is text)
+                const QString block = text.mid(i + 1, close - i - 1);
+                for (auto it = drawingTag.globalMatch(block); it.hasNext();)
+                    drawing = it.next().captured(1).toInt() > 0;
+                i = close;
+                continue;
+            }
+        }
+        if (drawing)
+            continue;
+        if (c == QLatin1Char('\\') && i + 1 < text.size()) {
+            const QChar next = text[i + 1];
+            if (next == QLatin1Char('N') || next == QLatin1Char('n') || next == QLatin1Char('h')
+                || next == QLatin1Char('{') || next == QLatin1Char('}')) {
+                out += next == QLatin1Char('h') ? QChar(0x00A0) : next == QLatin1Char('N') || next == QLatin1Char('n') ? QChar(u' ') : next;
+                ++i;
+                continue;
+            }
+        }
+        out += c;
+    }
+    return out.trimmed();
+}
+
 void FontCatalogsController::renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height)
 {
     if (width < 1 || height < 1)
@@ -480,20 +523,11 @@ void FontCatalogsController::renderSample(const QVariantMap &font, const QString
     style.italic = font.value(QStringLiteral("italic")).toBool();
     style.underline = font.value(QStringLiteral("underline")).toBool();
     style.strikeOut = font.value(QStringLiteral("strikeOut")).toBool();
-    // The Line's text on one line: an ASS Line without its override
-    // blocks; any other format's braces and backslashes kept as written
-    // (\{ and \}, and a word joiner after each backslash so that the
-    // renderer reads no escape).
-    QString plain = text;
-    if (ass) {
-        plain.remove(QRegularExpression(QStringLiteral("\\{[^}]*\\}")));
-        plain.replace(QStringLiteral("\\N"), QStringLiteral(" ")).replace(QStringLiteral("\\n"), QStringLiteral(" "));
-        plain.replace(QStringLiteral("\\h"), QStringLiteral("\u00A0"));
-    } else {
-        plain.replace(QLatin1Char('\\'), QStringLiteral("\\\u2060"));
-        plain.replace(QLatin1Char('{'), QStringLiteral("\\{")).replace(QLatin1Char('}'), QStringLiteral("\\}"));
-    }
-    plain.replace(QLatin1Char('\n'), QLatin1Char(' '));
+    // The characters as written for the renderer: braces as \{ and \},
+    // and a word joiner after each backslash so that it reads no escape.
+    QString plain = samplePlain(text, ass);
+    plain.replace(QLatin1Char('\\'), QStringLiteral("\\\u2060"));
+    plain.replace(QLatin1Char('{'), QStringLiteral("\\{")).replace(QLatin1Char('}'), QStringLiteral("\\}"));
     // The fonts as the Line's renderer has them: the Document's attached
     // fonts, then the external ones.
     std::vector<application::FontLease> fonts = m_hooks.documentFonts ? m_hooks.documentFonts() : std::vector<application::FontLease>();
@@ -585,7 +619,8 @@ void FontCatalogsController::settingChanged(const QString &id)
     }
 }
 
-int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts)
+int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts,
+                                          const QString &text)
 {
     application::FontEnvironment environment = m_families->environment();
     if (documentFonts && m_hooks.documentFonts)
@@ -597,7 +632,9 @@ int FontCatalogsController::resolveFamily(const QString &family, bool bold, bool
     {
         std::lock_guard lock(m_resolveMutex);
         m_resolveJob = ResolveJob{request, m_service, std::move(environment),
-                                  application::FontRequest{family.toStdString(), bold, italic, "AaBbCcDdEeFfGg 0123456789"}};
+                                  application::FontRequest{family.toStdString(), bold, italic,
+                                                           text.trimmed().isEmpty() ? std::string("AaBbCcDdEeFfGg 0123456789")
+                                                                                    : text.toStdString()}};
     }
     m_resolveWake.notify_one();
     if (!m_resolver.joinable())

@@ -72,6 +72,7 @@
 #include <QQmlContext>
 #include <QQmlExpression>
 #include <QQmlProperty>
+#include <QRegularExpression>
 #include <QSettings>
 #include <QScopeGuard>
 #include <QTemporaryDir>
@@ -3218,6 +3219,13 @@ private slots:
         // The renderer's selection for the name: substituted, in words.
         QTRY_VERIFY(in("fontResolutionText")->property("text").toString().contains(QStringLiteral("DejaVu Sans")));
         QVERIFY(in("fontResolutionText")->property("text").toString().startsWith(QStringLiteral("Not installed")));
+        // The preview's characters: an ASS Line's text without its blocks
+        // and what drawing mode draws; another format's as written.
+        auto &fonts = application->fontCatalogs();
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0 l 100 100{\\p0}Hello\\Nthere\\h\\{x\\}"), true),
+                 QStringLiteral("Hello there\u00A0{x}"));
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\pos(1,2)}a{\\p2}m 0 0{\\p0}b"), true), QStringLiteral("ab"));
+        QCOMPARE(fonts.samplePlain(QStringLiteral("Use {name} \\N"), false), QStringLiteral("Use {name} \\N"));
         // The preview is drawn by the subtitle renderer.
         QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
         QVERIFY(!application->fontCatalogs().sample().isNull());
@@ -3306,6 +3314,11 @@ private slots:
             QVERIFY2(seen > 0, where);
         };
         checkPlain(picker->contentItem(), "picker");
+        // A family named so (a Style's or \\fn's) in the + button's tooltip.
+        QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, markup)));
+        auto *add = dialogItem("fontPicker", "fontPickerAdd");
+        const QString tip = QQmlProperty::read(add, QStringLiteral("ToolTip.text"), qmlContext(add)).toString();
+        QVERIFY2(tip.contains(QStringLiteral("Bold")) && !Qt::mightBeRichText(tip), qPrintable(tip));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCatalog"), "click"));
         auto *menu = named("fontPickerCatalogMenu");
         QTRY_VERIFY(menu->property("visible").toBool());
@@ -3651,6 +3664,12 @@ private slots:
         }
         QVERIFY(QMetaObject::invokeMethod(review, "setName", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("a (2)"))));
         QVERIFY(review->property("complete").toBool());
+        // A catalog name may hold a comma (a style name may not).
+        auto *nameField = findItem(qobject_cast<QQuickWindow *>(review)->contentItem(), QStringLiteral("clashName0"));
+        QVERIFY(nameField);
+        const QRegularExpression namePattern =
+            nameField->property("validator").value<QObject *>()->property("regularExpression").toRegularExpression();
+        QVERIFY(QRegularExpression(QRegularExpression::anchoredPattern(namePattern.pattern())).match(QStringLiteral("Latin, CJK")).hasMatch());
         QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
         QTRY_VERIFY(!review->property("visible").toBool());
         QCOMPARE(catalogs.catalogNames().join(QLatin1Char('|')), QStringLiteral("A|B|a (2)|D"));
