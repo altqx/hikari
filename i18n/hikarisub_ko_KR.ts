@@ -48,19 +48,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pitch is kept.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>and</source>
-        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>change the speed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Output device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -258,58 +245,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tap to time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap options</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stop tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each syllable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hold the key: releasing it leaves a gap</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Press the key: no gaps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap to vocal onsets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1%</source>
-        <extracomment>A playback speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Calibrate latency…</source>
-        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 ms</source>
-        <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -384,11 +319,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Speed: %1%</source>
-        <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Customise the audio panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -449,26 +379,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not applied: the Line cannot take these times as it is.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Every Line is tapped.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of %2 tapped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid the Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid “%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
         <translation type="unfinished"></translation>
@@ -477,101 +387,6 @@ Output device: %2</source>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stopped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ready</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This Line is one syllable. Split it first, then tap.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation type="unfinished">실행 취소</translation>
-    </message>
-    <message>
-        <source>Esc</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resume</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Space</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Revert Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start</source>
-        <translation type="unfinished">시작 시간</translation>
-    </message>
-    <message>
-        <source>Calibrate tap latency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Press</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>on each beep.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>16 beeps at 100 BPM; the first four are practice.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of 16 beeps</source>
-        <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Your presses, in ms after each beep</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Latency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
-        <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
-    </message>
-    <message>
-        <source>Apply</source>
-        <translation type="unfinished">적용</translation>
     </message>
 </context>
 <context>
@@ -3314,31 +3129,7 @@ Failed to copy %2 fonts.</source>
         <translation>MKV / OGM 파일 자막 불러오기</translation>
     </message>
     <message>
-        <source>Line group description</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add description</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This would leave lines outside their line group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing was changed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This would break the line group “%1”.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3347,18 +3138,26 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Tree description</source>
-        <translation type="vanished">트리 이름</translation>
+        <translation>트리 이름</translation>
     </message>
     <message>
         <source>Set tree name</source>
-        <translation type="vanished">트리 이름</translation>
+        <translation>트리 이름</translation>
     </message>
     <message>
         <source>Change tree name</source>
-        <translation type="vanished">트리 이름 변경</translation>
+        <translation>트리 이름 변경</translation>
     </message>
     <message>
         <source>Line group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This would leave group members outside a line group. Nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3504,38 +3303,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Line wraps</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paste the clipboard into these columns of the selected line:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paste the clipboard into these columns of the %1 selected lines:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy these columns of the selected line:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy these columns of the %1 selected lines:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select all</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation type="unfinished">없음</translation>
-    </message>
-    <message>
-        <source>Paste</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">복사</translation>
     </message>
 </context>
 <context>
@@ -4378,8 +4145,16 @@ Failed to copy %2 fonts.</source>
         <translation type="vanished">적용 가능</translation>
     </message>
     <message>
+        <source>History (1 element)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History (%1 elements)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Set</source>
-        <translation type="vanished">선택까지 되돌리기</translation>
+        <translation>선택까지 되돌리기</translation>
     </message>
     <message>
         <source>OK</source>
@@ -5221,26 +4996,6 @@ great help testing HikariSub on a slow computer)
         <source>Today</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
-        <source>1 step. Steps after the current one can be redone.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 steps. Steps after the current one can be redone.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1, current</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Current</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Go to step</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -5309,7 +5064,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Rule editing</source>
-        <translation type="vanished">규칙 편집</translation>
+        <translation>규칙 편집</translation>
     </message>
     <message>
         <source>Rule description</source>
@@ -5317,35 +5072,11 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Search phrase (regular expresions)</source>
-        <translation type="vanished">구문 검색 (정규식)</translation>
+        <translation>구문 검색 (정규식)</translation>
     </message>
     <message>
         <source>Replace phrase</source>
         <translation>구문 변경</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5353,23 +5084,23 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Change to lower case</source>
-        <translation type="vanished">소문자로 변경</translation>
+        <translation>소문자로 변경</translation>
     </message>
     <message>
         <source>Change to upper case</source>
-        <translation type="vanished">대문자로 변경</translation>
+        <translation>대문자로 변경</translation>
     </message>
     <message>
         <source>Dont change case</source>
-        <translation type="vanished">대문자 표시 변경 안 함</translation>
+        <translation>대문자 표시 변경 안 함</translation>
     </message>
     <message>
         <source>Replace only in tags</source>
-        <translation type="vanished">태그만 변경</translation>
+        <translation>태그만 변경</translation>
     </message>
     <message>
         <source>Replace only in text</source>
-        <translation type="vanished">글자만 변경</translation>
+        <translation>글자만 변경</translation>
     </message>
     <message>
         <source>Rules</source>
@@ -5377,15 +5108,15 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Description</source>
-        <translation type="vanished">설명</translation>
+        <translation>설명</translation>
     </message>
     <message>
         <source>Rule find</source>
-        <translation type="vanished">규칙 찾기</translation>
+        <translation>규칙 찾기</translation>
     </message>
     <message>
         <source>Rule replace</source>
-        <translation type="vanished">규칙 변경</translation>
+        <translation>규칙 변경</translation>
     </message>
     <message>
         <source>Which lines</source>
@@ -5394,10 +5125,6 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>All lines</source>
         <translation>모든 줄</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation type="unfinished">검색 위치</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -5416,138 +5143,6 @@ great help testing HikariSub on a slow computer)
         <translation>스타일 선택</translation>
     </message>
     <message>
-        <source>Update rule</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of %2 rules on</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished">이름</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation type="unfinished">찾기</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation type="unfinished">모두 변경</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 errors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>in %1 files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished">모두</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation type="unfinished">없음</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 checked</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Styles</source>
         <translation>스타일</translation>
     </message>
@@ -5557,7 +5152,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Edit rule</source>
-        <translation type="vanished">규칙 편집</translation>
+        <translation>규칙 편집</translation>
     </message>
     <message>
         <source>Delete rule</source>
@@ -5565,31 +5160,31 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Find error</source>
-        <translation type="vanished">찾기</translation>
+        <translation>찾기</translation>
     </message>
     <message>
         <source>Find errors
 in current tab</source>
-        <translation type="vanished">현재 탭에서 찾기</translation>
+        <translation>현재 탭에서 찾기</translation>
     </message>
     <message>
         <source>Find errors
 in all tabs</source>
-        <translation type="vanished">모든 탭에서 찾기</translation>
+        <translation>모든 탭에서 찾기</translation>
     </message>
     <message>
         <source>Replace error</source>
-        <translation type="vanished">변경</translation>
+        <translation>변경</translation>
     </message>
     <message>
         <source>Replace all errors
 in current tab</source>
-        <translation type="vanished">현재 탭 변경</translation>
+        <translation>현재 탭 변경</translation>
     </message>
     <message>
         <source>Replace all errors
 in all tabs</source>
-        <translation type="vanished">모든 탭 변경</translation>
+        <translation>모든 탭 변경</translation>
     </message>
     <message>
         <source>Search results</source>
@@ -5601,11 +5196,11 @@ in all tabs</source>
     </message>
     <message>
         <source>Check all</source>
-        <translation type="vanished">모두 확인</translation>
+        <translation>모두 확인</translation>
     </message>
     <message>
         <source>Uncheck all</source>
-        <translation type="vanished">모두 선택 해제</translation>
+        <translation>모두 선택 해제</translation>
     </message>
     <message>
         <source>Replace</source>
@@ -6780,30 +6375,6 @@ and will be changed to the default</source>
         <translation>모두 선택 해제</translation>
     </message>
     <message>
-        <source>Search from the start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation type="unfinished">멈춤</translation>
-    </message>
-    <message>
-        <source>Drop the missing styles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Search every style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep them</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace in the files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Replace</source>
         <translation>교체</translation>
     </message>
@@ -6813,23 +6384,27 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
-        <translation type="vanished">존재하지 않는 스타일 제거</translation>
+        <translation>존재하지 않는 스타일 제거</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove styles</source>
-        <translation type="vanished">스타일 삭제</translation>
+        <translation>스타일 삭제</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation type="vanished">예</translation>
+        <translation>예</translation>
     </message>
     <message>
         <source>Ignore</source>
-        <translation type="vanished">무시</translation>
+        <translation>무시</translation>
     </message>
     <message>
         <source>No</source>
-        <translation type="vanished">아니오</translation>
+        <translation>아니오</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -6837,13 +6412,13 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Reached end. Search from the beginning?</source>
-        <translation type="vanished">검색 완료. 처음부터 검색 하시겠습니까?</translation>
+        <translation>검색 완료. 처음부터 검색 하시겠습니까?</translation>
     </message>
     <message>
         <source>Styles named &quot;%1&quot; do not exist in the subtitles being searched,
 which may significantly reduce the number of search results.
 What would you like to do?</source>
-        <translation type="obsolete">&quot;%1&quot;라는 스타일이 검색 문자열에 없습니다.
+        <translation type="unfinished">&quot;%1&quot;라는 스타일이 검색 문자열에 없습니다.
 검색 결과 수를 크게 줄일 수 있습니다.
 어떻게 할까요?</translation>
     </message>
@@ -6851,34 +6426,38 @@ What would you like to do?</source>
         <source>None of the selected styles exist in the subtitles being searched,
 so nothing will be found.
 What would you like to do?</source>
-        <translation type="vanished">선택한 스타일이 모두 존재하지 않으며 아무 것도 찾을 수 없습니다.
+        <translation>선택한 스타일이 모두 존재하지 않으며 아무 것도 찾을 수 없습니다.
 어떻게 하시겠습니까?</translation>
     </message>
     <message>
         <source>Are you sure you want to make changes in all subtitle files?
 If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</source>
-        <translation type="vanished">폴더 내 모든 자막 파일을 바꾸시겠습니까?
+        <translation>폴더 내 모든 자막 파일을 바꾸시겠습니까?
 바꾸기 전 파일은 &apos;ReplaceBackup&apos; 폴더에 있습니다.</translation>
     </message>
     <message>
+        <source>Could not find the specified phrase &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replaced %1 times.</source>
-        <translation type="obsolete">%1 번 교체했습니다.</translation>
+        <translation type="unfinished">%1 번 교체했습니다.</translation>
     </message>
     <message>
         <source>Search path is invalid</source>
-        <translation type="vanished">탐색 경로가 잘못됨</translation>
+        <translation>탐색 경로가 잘못됨</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="vanished">확인해주세요</translation>
+        <translation>확인해주세요</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation type="vanished">알림</translation>
+        <translation>알림</translation>
     </message>
     <message>
         <source>Find and Replace</source>
-        <translation type="vanished">검색 바꾸기</translation>
+        <translation>검색 바꾸기</translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -6938,10 +6517,6 @@ cause it was edited.</source>
         <translation>포함하지 않음</translation>
     </message>
     <message>
-        <source>Lines with or without the text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Search text:</source>
         <translation>검색 글자:</translation>
     </message>
@@ -6956,10 +6531,6 @@ cause it was edited.</source>
     <message>
         <source>Regular expressions</source>
         <translation>정규식</translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>In field</source>
@@ -6991,7 +6562,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Dialogue / comments</source>
-        <translation type="vanished">자막 / 주석</translation>
+        <translation>자막 / 주석</translation>
     </message>
     <message>
         <source>Dialogue</source>
@@ -7020,14 +6591,6 @@ cause it was edited.</source>
     <message>
         <source>Do nothing</source>
         <translation>아무것도 하지 않음</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation type="unfinished">검색 위치</translation>
-    </message>
-    <message>
-        <source>Then</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy</source>
@@ -7060,6 +6623,10 @@ cause it was edited.</source>
     <message>
         <source>Close</source>
         <translation>닫기</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -8941,18 +8508,6 @@ after the end time in milliseconds</source>
         <translation>번역본</translation>
     </message>
     <message>
-        <source>Translation mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original text</source>
-        <translation type="unfinished">원본</translation>
-    </message>
-    <message>
-        <source>Original text: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Choose subtitle file</source>
         <translation>자막 파일 선택</translation>
     </message>
@@ -8965,14 +8520,6 @@ after the end time in milliseconds</source>
         <translation>일치하는 줄 옵션</translation>
     </message>
     <message>
-        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;Translation&lt;/b&gt;: the text pasted in, moved line by line until each one sits beside its original.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Original</source>
         <translation>원본</translation>
     </message>
@@ -8981,45 +8528,17 @@ after the end time in milliseconds</source>
         <translation>줄 추가</translation>
     </message>
     <message>
-        <source>A blank line before the selected one; the original moves down. Time the new line.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A blank line before the selected one; the translation moves down.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Joins the selected line with the next one; the original moves up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Joins the selected line with the next one; the translation moves up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Deletes the selected line; the original moves up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Deletes the selected line; the translation moves up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">닫기</translation>
-    </message>
-    <message>
         <source>Adds a blank line before the selected line.
 Moves the original one line down.
 The added line must be timed.</source>
-        <translation type="vanished">빈 줄을 추가합니다.
+        <translation>빈 줄을 추가합니다.
 원래 줄을 아래로 이동합니다.
 추가된 줄의 시간을 맞춰야 합니다.</translation>
     </message>
     <message>
         <source>Adds a blank line before the selected line.
 Moves the translation one line down.</source>
-        <translation type="vanished">빈 줄을 추가합니다.
+        <translation>빈 줄을 추가합니다.
 번역줄은 한 줄 아래로 이동합니다.</translation>
     </message>
     <message>
@@ -9029,13 +8548,13 @@ Moves the translation one line down.</source>
     <message>
         <source>Joins the selected line with the next line.
 Moves the original one line up.</source>
-        <translation type="vanished">선택한 줄을 다음 줄과 병합합니다.
+        <translation>선택한 줄을 다음 줄과 병합합니다.
 원본을 한 줄 위로 이동합니다.</translation>
     </message>
     <message>
         <source>Joins the selected line with the next line.
 Moves the translation one line up.</source>
-        <translation type="vanished">선택한 줄을 다음 줄과 병합합니다.
+        <translation>선택한 줄을 다음 줄과 병합합니다.
 번역을 한 줄 위로 이동합니다.</translation>
     </message>
     <message>
@@ -9045,18 +8564,24 @@ Moves the translation one line up.</source>
     <message>
         <source>Deletes the selected line.
 Moves the original one line up.</source>
-        <translation type="vanished">선택한 줄을 삭제합니다.
+        <translation>선택한 줄을 삭제합니다.
 원본을 한 줄 위로 이동합니다.</translation>
     </message>
     <message>
         <source>Deletes the selected line.
 Moves the translation one line up.</source>
-        <translation type="vanished">선택한 줄을 삭제합니다.
+        <translation>선택한 줄을 삭제합니다.
 번역을 한 줄 위로 이동합니다.</translation>
     </message>
     <message>
         <source>Description</source>
-        <translation type="vanished">설명</translation>
+        <translation>설명</translation>
+    </message>
+    <message>
+        <source>Description:
+Original - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.
+Translation - text pasted into subtitles with correct timing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Not confirmed</source>
@@ -9076,12 +8601,12 @@ Moves the translation one line up.</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="vanished">확인해주세요</translation>
+        <translation>확인해주세요</translation>
     </message>
     <message>
         <source>Are you sure you want to turn off translation mode?
 Foreign language text will be deleted.</source>
-        <translation type="vanished">번역 모드를 끄시겠습니까?
+        <translation>번역 모드를 끄시겠습니까?
 원본 글자가 삭제되고 번역 글자만 남게됩니다.</translation>
     </message>
     <message>
@@ -9093,43 +8618,7 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected Lines for review</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on Translation mode for this file?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Not now</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn off Translation mode?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each translated Line keeps its Translated text; its Original text is deleted.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn off</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep it on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -10328,73 +9817,6 @@ or codecs or a splitter may be missing</source>
     <name>QGuiApplication</name>
     <message>
         <source>QT_LAYOUT_DIRECTION</source>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
-<context>
-    <name>hikari::app::Application</name>
-    <message>
-        <source>Find and replace</source>
-        <translation type="unfinished">찾아서 바꾸기</translation>
-    </message>
-    <message>
-        <source>Reached the end of the subtitles.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Search again from the first line?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 or %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>, </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 has no style named %2.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The other chosen styles are there. Searching with the missing ones finds fewer lines.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 has none of the chosen styles.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Searching only these styles would find nothing.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace in subtitles</source>
-        <translation type="unfinished">자막에서 바꾸기</translation>
-    </message>
-    <message>
-        <source>Replace in every matching file in “%1”?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The files are changed on disk; Undo cannot bring them back. A copy of each file goes to the ReplaceBackup folder first.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Could not find “%1”.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replaced %1 times.</source>
-        <translation type="unfinished">%1 번 교체했습니다.</translation>
-    </message>
-    <message>
-        <source>The search folder does not exist</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
