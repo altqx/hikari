@@ -100,6 +100,12 @@ struct FindQuestion {
     std::u8string argument; // NotFound: the phrase; Replaced: the count; Styles: the missing styles
     std::u8string title;    // the legacy caption
     Info info = Info::None;
+    // PU2 (#304): what the shell's message box names. Styles and NoStyles:
+    // the Document searched (its tab name) and, for Styles, each missing
+    // style; ConfirmFiles and InvalidPath: the search folder.
+    std::u8string document;
+    std::vector<std::u8string> missing;
+    std::u8string folder;
 };
 enum class FindAnswer { Ok, Yes, No, Cancel };
 

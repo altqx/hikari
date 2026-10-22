@@ -618,6 +618,7 @@ void FindReplace::checkStyles(DocumentId document, Then then)
     if (m_stylesAsText.empty())
         return then(false);
     std::u8string notFound, found;
+    std::vector<std::u8string> missing;
     // wxStringTokenizer(styles, ",", wxTOKEN_STRTOK) and SubsFile::FindStyle.
     const std::u8string all = window.styles;
     for (std::size_t from = 0; from < all.size();) {
@@ -628,8 +629,10 @@ void FindReplace::checkStyles(DocumentId document, Then then)
             const std::u8string name(all.substr(from, to - from));
             if (hasStyle(tab->session->document(), name))
                 found += name + u8",";
-            else
+            else {
                 notFound += name + u8", ";
+                missing.push_back(name);
+            }
         }
         from = to + 1;
     }
@@ -654,7 +657,9 @@ void FindReplace::checkStyles(DocumentId document, Then then)
                              u8"significantly reduce the number of search results.\nWhat would you like to do?",
                              u8"%s", notFound),
                     notFound, u8"Confirmation"};
+        question.missing = std::move(missing);
     }
+    question.document = tab->name;
     ask(question, [this, found, done, then](FindAnswer answer) {
         if (answer == FindAnswer::Ok) {
             m_stylesAsText = u"," + u16(found);
@@ -1377,7 +1382,7 @@ void FindReplace::replaceInFiles(const FindReplaceSettings &window)
     ask({FindQuestion::Kind::ConfirmFiles,
          u8"Are you sure you want to make changes in all subtitle files?\nIf you make a mistake, backups are in the "
          u8"'ReplaceBackup' folder.",
-         {}, u8"Info"},
+         {}, u8"Info", FindQuestion::Info::None, {}, {}, window.folder},
         [this](FindAnswer answer) {
             if (answer == FindAnswer::Yes)
                 findReplaceInFiles(false);
@@ -1399,7 +1404,8 @@ void FindReplace::findReplaceInFiles(bool find)
     for (std::size_t i = 0; i < tokens.size(); ++i) {
         const auto found = m_host.listFiles(window.folder, tokens[i], window.subfolders, window.hiddenFolders);
         if (!found) {
-            tell({FindQuestion::Kind::Message, u8"Search path is invalid", {}, {}, FindQuestion::Info::InvalidPath});
+            tell({FindQuestion::Kind::Message, u8"Search path is invalid", {}, {}, FindQuestion::Info::InvalidPath, {}, {},
+                  window.folder});
             break;
         }
         paths.insert(paths.end(), found->begin(), found->end());
