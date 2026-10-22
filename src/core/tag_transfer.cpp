@@ -1248,10 +1248,17 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     std::vector<int> labels(segments.size(), 0); // a run, 0 for the base, -1 for the translator's own
     std::vector<bool> used(tags.runs.size(), false);
     const auto groups = groupsOf(segments);
+    // Each group set against a run is charged: many groups against many
+    // runs alike in all but their last value.
+    const auto compared = [&](const TagRun &run) { return budget.spend(unitsOf(run.differs) + 1); };
     for (const auto &group : groups) {
         int label = -1;
         for (std::size_t r = 0; r < tags.runs.size(); ++r) {
-            if (!used[r] && tags.runs[r].differs == segments[group.first].differs) {
+            if (used[r])
+                continue;
+            if (!compared(tags.runs[r]))
+                return plain;
+            if (tags.runs[r].differs == segments[group.first].differs) {
                 used[r] = true;
                 label = tags.runs[r].number;
                 break;
@@ -1268,11 +1275,15 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
             continue;
         const auto &differs = segments[group.first].differs;
         for (std::size_t r = 0; r < tags.runs.size(); ++r) {
+            if (used[r])
+                continue;
+            if (!compared(tags.runs[r]))
+                return plain;
             const bool within = std::ranges::all_of(tags.runs[r].differs, [&](const auto &value) {
                 const auto it = differs.find(value.first);
                 return it != differs.end() && it->second == value.second;
             });
-            if (!used[r] && within) {
+            if (within) {
                 used[r] = true;
                 std::fill(under.begin() + group.first, under.begin() + group.last + 1, tags.runs[r].number);
                 break;
@@ -1351,6 +1362,8 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
             int label = -1;
             if (next < order.size()) {
                 if (const TagRun *run = runAt(tags, order[next]); run && !taken[run->number - 1]) {
+                    if (!compared(*run))
+                        return plain;
                     const bool within = std::ranges::all_of(run->differs, [&](const auto &value) {
                         const auto it = differs.find(value.first);
                         return it != differs.end() && it->second == value.second;

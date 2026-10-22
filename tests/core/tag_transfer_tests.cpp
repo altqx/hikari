@@ -685,6 +685,36 @@ TEST(TagTransfer, ResetStyleLookupsAreBounded)
     EXPECT_TRUE(readOriginalTags(names, &styles[0], styles).malformed);
 }
 
+TEST(TagTransfer, GroupsSetAgainstRunsAreBounded)
+{
+    const auto numbered = [](std::u16string prefix, std::size_t i) {
+        for (const char c : std::to_string(i))
+            prefix += static_cast<char16_t>(c);
+        return prefix;
+    };
+    // Runs alike in all but their font, and the translator's own fonts on
+    // every group but the last, which is the last run's.
+    const auto lines = [&](std::size_t count) {
+        std::u16string original = u"w", translation;
+        for (std::size_t i = 0; i < count; ++i) {
+            original += u"{\\fn" + numbered(u"F", i) + u"}a{\\fn}w";
+            translation += i + 1 < count ? u"{\\fn" + numbered(u"G", i) + u"}y{\\fn} " : u"{\\fn" + numbered(u"F", i) + u"}z{\\fn}";
+        }
+        return std::pair{original, translation};
+    };
+    const auto [few, fewTranslated] = lines(20);
+    const auto fewTags = readOriginalTags(few);
+    ASSERT_EQ(fewTags.runs.size(), 20u);
+    EXPECT_EQ(readTranslation(fewTags, fewTranslated).placements.size(), 1u);
+    // Every group against every run is past the budget: read as plain text.
+    const auto [many, manyTranslated] = lines(500);
+    const auto manyTags = readOriginalTags(many);
+    ASSERT_EQ(manyTags.runs.size(), 500u);
+    const auto read = readTranslation(manyTags, manyTranslated);
+    EXPECT_TRUE(read.placements.empty());
+    EXPECT_TRUE(read.body == manyTranslated);
+}
+
 TEST(TagTransfer, RunsSideBySideAcrossTheTranslatorsTagsReadBack)
 {
     const auto tags = readOriginalTags(u"x {\\i1}a{\\i0} y {\\b1}b{\\b0} z");
