@@ -182,7 +182,7 @@ struct Tag {
 
 constexpr u16v kNames[] = {u"xbord", u"ybord", u"xshad", u"yshad", u"fscx", u"fscy", u"bord", u"shad",
                            u"move",  u"pos",   u"org",   u"frx",   u"fry",  u"frz",  u"fax",  u"fay",
-                           u"an",    u"fr",    u"fs",    u"fn",    u"p",    u"a",    u"t"};
+                           u"an",    u"fr",    u"fs",    u"fn",    u"p",    u"a",    u"t",    u"r"};
 
 u16v nameOf(u16v token)
 {
@@ -195,7 +195,7 @@ u16v nameOf(u16v token)
                 return name;
             continue;
         }
-        if (name == u"fn")
+        if (name == u"fn" || name == u"r") // a font or Style name follows
             return name;
         if (rest.empty() || !letter(rest.front()))
             return name;
@@ -494,6 +494,19 @@ Leading leadingOf(u16v text)
     return out;
 }
 
+// The Style a \r resets to: the one it names, else the Line's (libass's
+// reset_render_context with a Style it cannot find).
+core::StyleValues resetStyle(const transform::Context &ctx, const core::StyleValues &lineStyle, u16v name)
+{
+    if (!name.empty()) {
+        const std::u8string wanted = core::toUtf8(u16(name));
+        for (const core::StyleValues &s : ctx.styles)
+            if (s.name == wanted)
+                return s;
+    }
+    return lineStyle;
+}
+
 std::optional<Box> measureBox(const VisualHost &host, const transform::Context &ctx, const core::LineRecord &line,
                               u16v text, const core::StyleValues &style, const Leading &lead)
 {
@@ -528,7 +541,11 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
     s.scaleX = u8"100";
     s.scaleY = u8"100";
     for (const Tag &tag : lead.tags) {
-        if (tag.name == u"fs" && number(tag.value))
+        if (tag.name == u"r") {
+            s = resetStyle(ctx, style, tag.value);
+            s.scaleX = u8"100";
+            s.scaleY = u8"100";
+        } else if (tag.name == u"fs" && number(tag.value))
             s.fontsize = core::toUtf8(fmt(*number(tag.value), 4));
         else if (tag.name == u"fn" && !tag.value.empty())
             s.fontname = core::toUtf8(tag.value);
@@ -549,17 +566,21 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
         plain.push_back(text[i]);
         ++i;
     }
+    // \n breaks a line only with WrapStyle 2; otherwise it is a space
+    // (libass), as \h is a hard one.
+    const bool softBreaks = ctx.document && ctx.document->scriptInfo(u8"WrapStyle").value_or(u8"") == u8"2";
     double width = 0, height = 0;
     std::size_t from = 0;
     while (true) {
         std::size_t br = plain.find(u"\\N", from);
         const std::size_t brn = plain.find(u"\\n", from);
-        if (brn != u16v::npos && (br == u16v::npos || brn < br) && ctx.document &&
-            ctx.document->scriptInfo(u8"WrapStyle").value_or(u8"") == u8"2")
+        if (softBreaks && brn != u16v::npos && (br == u16v::npos || brn < br))
             br = brn;
         u16 piece = plain.substr(from, br == u16v::npos ? u16v::npos : br - from);
         for (std::size_t h = piece.find(u"\\h"); h != u16v::npos; h = piece.find(u"\\h", h + 1))
             piece.replace(h, 2, u" ");
+        for (std::size_t n = piece.find(u"\\n"); n != u16v::npos; n = piece.find(u"\\n", n + 1))
+            piece.replace(n, 2, u" ");
         const std::u8string utf8 = core::toUtf8(piece.empty() ? u16(u" ") : piece);
         const auto e = measure->measure(fields, std::string(utf8.begin(), utf8.end()));
         if (!e)
@@ -586,13 +607,18 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line)
     t.an = static_cast<int>(transform::styleNumber(style.alignment, 2));
     if (t.an < 1 || t.an > 9)
         t.an = 2;
-    t.frz = transform::styleNumber(style.angle, 0);
-    t.fscx = transform::styleNumber(style.scaleX, 100);
-    t.fscy = transform::styleNumber(style.scaleY, 100);
-    const float bord = static_cast<float>(transform::styleNumber(style.outlineWidth, 0));
-    const float shad = static_cast<float>(transform::styleNumber(style.shadow, 0));
-    t.bord = {bord, bord};
-    t.shad = {shad, shad};
+    // A Style's values (the Line's, or one a \r resets to).
+    const auto styleValues = [&t](const core::StyleValues &st) {
+        t.frx = t.fry = t.fax = t.fay = 0;
+        t.frz = transform::styleNumber(st.angle, 0);
+        t.fscx = transform::styleNumber(st.scaleX, 100);
+        t.fscy = transform::styleNumber(st.scaleY, 100);
+        const float bord = static_cast<float>(transform::styleNumber(st.outlineWidth, 0));
+        const float shad = static_cast<float>(transform::styleNumber(st.shadow, 0));
+        t.bord = {bord, bord};
+        t.shad = {shad, shad};
+    };
+    styleValues(style);
 
     // The first \pos, \move, \org and \an anywhere.
     std::optional<V2> pos, org;
@@ -649,9 +675,13 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line)
         }
     }
 
-    // The leading block's values, the last of each.
+    // The leading blocks' values, the last of each; a \r resets them.
     const Leading lead = leadingOf(text);
     for (const Tag &tag : lead.tags) {
+        if (tag.name == u"r") {
+            styleValues(resetStyle(ctx, style, tag.value));
+            continue;
+        }
         const auto v = number(tag.value);
         if (!v)
             continue;
@@ -710,54 +740,69 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     if (out.empty() || out.front() != u'{' || out.find(u'}') == u16::npos)
         out.insert(0, u"{}");
 
-    // A \move anywhere is moved (its first), else \pos goes in.
+    // The Line's first \pos or \move decides, as readTags reads it: a \move
+    // is moved, a \pos (or none) is written again.
     bool moved = false;
-    if (movedFrom) {
-        for (const auto &[open, close] : blocksOf(out)) {
-            for (const Tag &tag : tagsOf(u16v(out).substr(open + 1, close - open - 1))) {
-                if (tag.name == u"pos")
+    bool decided = false;
+    for (const auto &[open, close] : blocksOf(out)) {
+        for (const Tag &tag : tagsOf(u16v(out).substr(open + 1, close - open - 1))) {
+            if (tag.name != u"pos" && tag.name != u"move")
+                continue;
+            const auto a = arguments(tag.value);
+            if (tag.name == u"pos") {
+                if (a.size() >= 2 && finite(a[0]) && finite(a[1]))
+                    decided = true;
+                if (decided)
                     break;
-                if (tag.name != u"move")
-                    continue;
-                const auto a = arguments(tag.value);
-                if (a.size() < 4)
-                    break;
-                const double dx = t.pos.x - movedFrom->x, dy = t.pos.y - movedFrom->y;
-                u16 move = u"\\move(" + fmt(a[0] + dx, 2) + u"," + fmt(a[1] + dy, 2) + u"," + fmt(a[2] + dx, 2) +
-                           u"," + fmt(a[3] + dy, 2);
-                if (a.size() >= 6)
-                    move += u"," + fmt(a[4], 0) + u"," + fmt(a[5], 0);
-                move += u")";
-                out.replace(open + 1 + tag.from, tag.to - tag.from, move);
-                moved = true;
-                break;
+                continue;
             }
-            if (moved)
+            if (a.size() < 4 || !finite(a[0]) || !finite(a[1]) || !finite(a[2]) || !finite(a[3]))
+                continue;
+            decided = true;
+            if (!movedFrom)
                 break;
+            const double dx = t.pos.x - movedFrom->x, dy = t.pos.y - movedFrom->y;
+            u16 move = u"\\move(" + fmt(a[0] + dx, 2) + u"," + fmt(a[1] + dy, 2) + u"," + fmt(a[2] + dx, 2) + u"," +
+                       fmt(a[3] + dy, 2);
+            if (a.size() >= 6)
+                move += u"," + fmt(a[4], 0) + u"," + fmt(a[5], 0);
+            move += u")";
+            out.replace(open + 1 + tag.from, tag.to - tag.from, move);
+            moved = true;
+            break;
         }
+        if (decided)
+            break;
     }
 
-    const std::size_t close = out.find(u'}');
-    const u16v block = u16v(out).substr(1, close - 1);
-    static constexpr u16v kWritten[] = {u"fax", u"fay",  u"fscx", u"fscy",  u"frx",   u"fry",   u"frz",  u"fr",
-                                        u"bord", u"xbord", u"ybord", u"shad", u"xshad", u"yshad", u"pos", u"org"};
-    u16 kept;
-    std::size_t insertAt = u16::npos;
-    for (const Tag &tag : tagsOf(block)) {
-        if (std::find(std::begin(kWritten), std::end(kWritten), tag.name) != std::end(kWritten))
-            continue;
-        if (tag.name == u"t" && insertAt == u16::npos)
-            insertAt = kept.size();
-        kept += block.substr(tag.from, tag.to - tag.from);
+    // The leading blocks (those before the text, which readTags reads).
+    std::vector<std::pair<std::size_t, std::size_t>> leading;
+    for (std::size_t i = 0; i < out.size() && out[i] == u'{';) {
+        const std::size_t close = out.find(u'}', i);
+        if (close == u16::npos)
+            break;
+        leading.emplace_back(i, close);
+        i = close + 1;
     }
-    // Text before the block's first backslash (a comment) stays first.
-    const std::size_t firstTag = block.find(u'\\');
-    const u16 lead(block.substr(0, firstTag == u16v::npos ? block.size() : firstTag));
+    // The tags go after the last \r among them (which would reset them),
+    // else into the first block before its first \t.
+    std::size_t target = 0;
+    bool afterReset = false;
+    for (std::size_t b = 0; b < leading.size(); ++b) {
+        const auto [open, close] = leading[b];
+        for (const Tag &tag : tagsOf(u16v(out).substr(open + 1, close - open - 1)))
+            if (tag.name == u"r") {
+                target = b;
+                afterReset = true;
+            }
+    }
 
     u16 tags;
-    const auto put = [&tags](u16v name, double value, int precision, double initial) {
+    // After a \r the base is the Style it names, so every tag is written;
+    // otherwise one at the Line's Style's value is left out.
+    const auto put = [&tags, afterReset](u16v name, double value, int precision, double initial) {
         const u16 v = fmt(value, precision);
-        if (v != fmt(initial, precision))
+        if (afterReset || v != fmt(initial, precision))
             tags += u16(u"\\") + u16(name) + v;
     };
     if (!moved)
@@ -776,11 +821,38 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     put(u"xshad", t.shad.x, 2, shad);
     put(u"yshad", t.shad.y, 2, shad);
 
-    if (insertAt == u16::npos)
-        kept += tags;
-    else
-        kept.insert(insertAt, tags);
-    out.replace(1, close - 1, lead + kept);
+    // Every leading block loses the tags written (the last block first, so
+    // the earlier ones' places hold); the target block takes the new ones.
+    static constexpr u16v kWritten[] = {u"fax", u"fay",  u"fscx", u"fscy",  u"frx",   u"fry",   u"frz",  u"fr",
+                                        u"bord", u"xbord", u"ybord", u"shad", u"xshad", u"yshad", u"pos", u"org"};
+    for (std::size_t b = leading.size(); b-- > 0;) {
+        const auto [open, close] = leading[b];
+        const u16v block = u16v(out).substr(open + 1, close - open - 1);
+        u16 kept;
+        std::size_t insertAt = u16::npos;
+        for (const Tag &tag : tagsOf(block)) {
+            if (std::find(std::begin(kWritten), std::end(kWritten), tag.name) != std::end(kWritten))
+                continue;
+            if (!afterReset && tag.name == u"t" && insertAt == u16::npos)
+                insertAt = kept.size();
+            kept += block.substr(tag.from, tag.to - tag.from);
+            if (afterReset && tag.name == u"r")
+                insertAt = kept.size(); // after the last one
+        }
+        if (b == target) {
+            if (insertAt == u16::npos)
+                kept += tags;
+            else
+                kept.insert(insertAt, tags);
+        }
+        // Text before the block's first backslash (a comment) stays first.
+        const std::size_t firstTag = block.find(u'\\');
+        const u16 lead(block.substr(0, firstTag == u16v::npos ? block.size() : firstTag));
+        if (b != target && lead.empty() && kept.empty())
+            out.erase(open, close - open + 1); // emptied
+        else
+            out.replace(open + 1, close - open - 1, lead + kept);
+    }
     return out;
 }
 
@@ -868,20 +940,61 @@ void PerspectiveTool::reset(VisualHost &host)
         host.toolChanged();
         return;
     }
-    if (m_line != ctx.active->id) {
+    const bool newLine = m_line != ctx.active->id;
+    if (newLine) {
         m_selected = -1;
         m_line = ctx.active->id;
-        const auto plane = m_planes.find(*m_line);
-        m_c1 = plane != m_planes.end() ? plane->second.first : PointF{0.25f, 0.25f};
-        m_c2 = plane != m_planes.end() ? plane->second.second : PointF{0.75f, 0.75f};
+        m_c1 = {0.25f, 0.25f};
+        m_c2 = {0.75f, 0.75f};
     }
+    m_time = host.videoTimeMs();
     if (const auto state = readLine(host, *ctx.active)) {
         m_state = *state;
         m_screenZ = screenZ(host.view().scriptHeight(), layoutHeight(host));
         m_inner = textToQuad(m_state.transform, m_state.box, m_screenZ);
         m_valid = convex(m_inner);
     }
+    if (newLine)
+        restorePlane();
     host.toolChanged();
+}
+
+void PerspectiveTool::restorePlane()
+{
+    // arch1t3cht's: the inner quad's corners in the saved quad's plane, so
+    // the plane stays where it was set when the inner quad changed since.
+    if (!m_line || !m_valid)
+        return;
+    const auto saved = m_planes.find(*m_line);
+    if (saved == m_planes.end())
+        return;
+    const PointF c1 = toUV(saved->second, m_inner[0]), c2 = toUV(saved->second, m_inner[2]);
+    if (std::isfinite(c1.x) && std::isfinite(c1.y) && std::isfinite(c2.x) && std::isfinite(c2.y) && c1.x < c2.x &&
+        c1.y < c2.y) {
+        m_c1 = c1;
+        m_c2 = c2;
+    }
+}
+
+void PerspectiveTool::follow(const VisualHost &host) const
+{
+    // The controller only redraws when the time changes; the position read
+    // is the time's, so it is read again (not during an edit, which works
+    // from where it began).
+    if (!m_valid || !m_state.hasMove || host.videoTimeMs() == m_time || m_drag != Drag::None || m_valueEdit ||
+        m_keyEdit)
+        return;
+    m_time = host.videoTimeMs();
+    const transform::Context ctx = transform::context(host);
+    if (!ctx.active)
+        return;
+    if (const auto state = readLine(host, *ctx.active)) {
+        const Quad inner = textToQuad(state->transform, state->box, m_screenZ);
+        if (convex(inner)) {
+            m_state = *state;
+            m_inner = inner;
+        }
+    }
 }
 
 bool PerspectiveTool::beginEdit(VisualHost &host)
@@ -923,7 +1036,7 @@ void PerspectiveTool::rememberPlane(VisualHost &host)
         return;
     if (Gesture *g = host.gesture())
         for (const core::LineId &id : g->targets())
-            m_planes[id] = {m_c1, m_c2};
+            m_planes[id] = outer();
 }
 
 bool PerspectiveTool::finish(VisualHost &host)
@@ -1102,6 +1215,7 @@ PointF PerspectiveTool::axisLock(int corner, PointF d) const
 
 void PerspectiveTool::pointer(const Pointer &event, VisualHost &host)
 {
+    follow(host);
     if (event.kind == Pointer::Kind::Wheel || !m_valid)
         return;
     const VideoView &view = host.view();
@@ -1243,6 +1357,7 @@ bool PerspectiveTool::takesKey(const Key &event) const
 
 bool PerspectiveTool::key(const Key &event, VisualHost &host)
 {
+    follow(host);
     if (!m_valid)
         return false;
     if (event.release) {
@@ -1284,6 +1399,7 @@ bool PerspectiveTool::key(const Key &event, VisualHost &host)
 
 Overlay PerspectiveTool::overlay(const VisualHost &host) const
 {
+    follow(host);
     Overlay out;
     if (!m_valid)
         return out;
@@ -1331,7 +1447,7 @@ Overlay PerspectiveTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> PerspectiveTool::values(const VisualHost &host) const
 {
-    (void)host;
+    follow(host);
     const Transform &t = m_state.transform;
     const bool keep = m_orgMode == OrgMode::Keep;
     const auto text = [this](double v, int precision) { return m_valid ? fmt(v, precision) : std::u16string(); };
@@ -1345,6 +1461,7 @@ std::vector<ToolValue> PerspectiveTool::values(const VisualHost &host) const
 
 bool PerspectiveTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
 {
+    follow(host);
     double value = 0;
     if (!host.gesture())
         m_valueEdit = false;
@@ -1355,7 +1472,8 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
         return false;
     if (org && m_orgMode != OrgMode::Keep)
         return false;
-    if (!host.gesture()) {
+    const bool opened = !host.gesture();
+    if (opened) {
         m_startInner = m_inner;
         m_startC1 = m_c1;
         m_startC2 = m_c2;
@@ -1364,6 +1482,13 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
         if (!beginEdit(host))
             return false;
     }
+    // A refused value leaves no gesture of its own open (the controller
+    // cancels a scrub's only once one of its values is taken).
+    const auto refuse = [&host, opened] {
+        if (opened)
+            host.cancelGesture();
+        return false;
+    };
     if (org) {
         // Keep: the quad stays and the tags follow the new \org.
         PointF o = m_startOrg;
@@ -1371,7 +1496,7 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
         m_state.transform.org = o;
         if (!applyInner(m_startInner, host)) {
             m_state.transform.org = m_startOrg;
-            return false;
+            return refuse();
         }
     } else {
         // An angle or the shear: the quad follows the tags.
@@ -1379,7 +1504,7 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
         (name == "frx" ? t.frx : name == "fry" ? t.fry : name == "frz" ? t.frz : t.fax) = value;
         const Quad q = textToQuad(t, m_state.box, m_screenZ);
         if (!convex(q))
-            return false;
+            return refuse();
         m_state.transform = t;
         m_inner = q;
     }
@@ -1433,14 +1558,11 @@ bool PerspectiveTool::setOption(const std::string &name, int value, VisualHost &
     if (name == "plane") {
         if (m_plane == (value != 0))
             return false;
+        if (m_plane && m_line && m_valid)
+            m_planes[*m_line] = outer(); // where it was when hidden
         m_plane = value != 0;
-        if (m_plane && m_line) {
-            const auto saved = m_planes.find(*m_line);
-            if (saved != m_planes.end()) {
-                m_c1 = saved->second.first;
-                m_c2 = saved->second.second;
-            }
-        }
+        if (m_plane)
+            restorePlane();
         if (!m_plane && (m_selected >= 4))
             m_selected = -1;
     } else if (name == "lockOuter") {

@@ -350,6 +350,65 @@ TEST(PerspectiveTags, WritesIntoTheFirstBlock)
               u"{\\move(220,130.5,420,230.5,0,1000)\\org(300,170)}Text");
 }
 
+TEST(PerspectiveTags, ReadsAStyleReset)
+{
+    Host host({"{\\frx30\\fscx50\\r}Text", "{\\frx30\\rDefault\\fry5}Text", "{\\fax1}{\\frx30\\rNone}Text"});
+    const LineState a = readTags(host, lineWith(host, 0));
+    EXPECT_EQ(a.transform.frx, 0); // the Style's, as libass renders it
+    EXPECT_EQ(a.transform.fscx, 100);
+    const LineState b = readTags(host, lineWith(host, 1));
+    EXPECT_EQ(b.transform.frx, 0);
+    EXPECT_EQ(b.transform.fry, 5); // after the reset
+    const LineState c = readTags(host, lineWith(host, 2));
+    EXPECT_EQ(c.transform.frx, 0); // a Style it cannot find: the Line's
+    EXPECT_EQ(c.transform.fax, 0); // across the leading blocks
+}
+
+TEST(PerspectiveTags, MeasuresASoftBreakAsASpace)
+{
+    Host host({"ab\\ncd"});
+    const auto a = readLine(host, lineWith(host, 0));
+    ASSERT_TRUE(a);
+    EXPECT_FLOAT_EQ(a->box.width(), 5 * 20); // "ab cd" at 40
+    EXPECT_FLOAT_EQ(a->box.height(), 40);
+    Host wrap({"ab\\ncd"}, "WrapStyle: 2");
+    const auto b = readLine(wrap, lineWith(wrap, 0));
+    ASSERT_TRUE(b);
+    EXPECT_FLOAT_EQ(b->box.width(), 2 * 20); // WrapStyle 2: a break
+    EXPECT_FLOAT_EQ(b->box.height(), 80);
+}
+
+TEST(PerspectiveTags, WritesAcrossTheLeadingBlocks)
+{
+    core::StyleValues style;
+    style.scaleX = style.scaleY = u8"100";
+    style.angle = u8"0";
+    style.outlineWidth = u8"2";
+    style.shadow = u8"1";
+    Transform t;
+    t.pos = {320, 180.5f};
+    t.org = {300, 170};
+    t.frx = 5;
+    t.fry = t.frz = t.fax = 0;
+    t.fscx = t.fscy = 100;
+    t.bord = {2, 2};
+    t.shad = {1, 1};
+    // A later leading block's tag would win: each loses it.
+    EXPECT_EQ(writeTransform(u"{\\frx10}{\\frx20\\blur1}Text", t, style),
+              u"{\\pos(320,180.5)\\org(300,170)\\frx5}{\\blur1}Text");
+    EXPECT_EQ(writeTransform(u"{\\frx10}{\\frx20}Text", t, style), u"{\\pos(320,180.5)\\org(300,170)\\frx5}Text");
+    // After a \r, every tag (the reset's base is another Style's).
+    EXPECT_EQ(writeTransform(u"{\\frx30\\r\\blur1}Text", t, style),
+              u"{\\r\\pos(320,180.5)\\org(300,170)\\fax0\\fscx100\\fscy100\\frz0\\frx5\\fry0\\xbord2\\ybord2\\xshad1"
+              u"\\yshad1\\blur1}Text");
+    EXPECT_EQ(writeTransform(u"{\\an7}{\\frx30\\rAlt}Text", t, style),
+              u"{\\an7}{\\rAlt\\pos(320,180.5)\\org(300,170)\\fax0\\fscx100\\fscy100\\frz0\\frx5\\fry0\\xbord2"
+              u"\\ybord2\\xshad1\\yshad1}Text");
+    // The first \pos decides: a later \move stays as it is.
+    EXPECT_EQ(writeTransform(u"{\\pos(10,20)}a{\\move(1,2,3,4)}", t, style, PointF{10, 20}),
+              u"{\\pos(320,180.5)\\org(300,170)\\frx5}a{\\move(1,2,3,4)}");
+}
+
 // ------------------------------------------------------------------ the tool
 
 struct Fixture {
@@ -576,6 +635,20 @@ TEST(PerspectiveTool, ThePlaneIsKeptPerLine)
     EXPECT_LT(dist(f.tool.outer()[2], {540, 220}), 0.1);
 }
 
+TEST(PerspectiveTool, AHiddenPlaneStaysWhereItWas)
+{
+    Fixture f;
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    const Quad outer = f.tool.outer();
+    ASSERT_TRUE(f.tool.setOption("plane", 0, f.host));
+    // The inner quad moves while the plane is hidden: shown again, the
+    // plane is where it was, the inner quad elsewhere in it.
+    f.drag({320, 180}, {340, 170});
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    expectQuadNear(f.tool.outer(), outer, 0.05);
+    EXPECT_LT(dist(f.tool.inner()[0], {230, 150}), 0.05);
+}
+
 TEST(PerspectiveTool, KeepLetsTheOriginBeDragged)
 {
     Fixture f;
@@ -613,6 +686,38 @@ TEST(PerspectiveTool, TheValuesAreTheTags)
     f.tool.reset(f.host);
     EXPECT_EQ(f.steps(), before + 2);
     EXPECT_NE(f.host.text().find("\\frx10"), std::string::npos) << f.host.text();
+}
+
+TEST(PerspectiveTool, ARefusedValueLeavesNoGesture)
+{
+    Fixture f;
+    const std::string text = f.host.text();
+    // Edge on, the quad folds: refused, and the gesture it opened goes.
+    EXPECT_FALSE(f.tool.setValue("fry", u"90", f.host));
+    EXPECT_FALSE(f.host.gesture());
+    EXPECT_FALSE(f.tool.setValue("fry", u"90", f.host, ValueEdit::Sample));
+    EXPECT_FALSE(f.host.gesture());
+    EXPECT_EQ(f.host.text(), text);
+    // So the next one is taken.
+    EXPECT_TRUE(f.tool.setValue("fry", u"30", f.host));
+    // A scrub's later refusal keeps what it took (the controller's to drop).
+    EXPECT_TRUE(f.tool.setValue("frx", u"5", f.host, ValueEdit::Sample));
+    EXPECT_FALSE(f.tool.setValue("frx", u"90", f.host, ValueEdit::Sample));
+    EXPECT_TRUE(f.host.gesture());
+}
+
+TEST(PerspectiveTool, AMovingQuadFollowsTheVideo)
+{
+    Fixture f({"{\\move(100,100,300,200,0,1000)}Moving"});
+    // 500 ms in: half way.
+    EXPECT_LT(dist(centre(f.tool.inner()), {200, 130}), 0.05);
+    // 1000 ms in: the end, though only the overlay is asked again.
+    f.host.time = 2000;
+    (void)f.tool.overlay(f.host);
+    EXPECT_LT(dist(centre(f.tool.inner()), {300, 180}), 0.05);
+    // A drag moves the motion by its own change, from there.
+    f.drag({300, 180}, {310, 180});
+    EXPECT_NE(f.host.text().find("\\move(110,100,310,200,0,1000)"), std::string::npos) << f.host.text();
 }
 
 TEST(PerspectiveTool, TheArrowsNudgeTheLastCorner)

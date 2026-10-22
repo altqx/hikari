@@ -159,6 +159,10 @@ private:
     PointF axisLock(int corner, PointF delta) const;
     void move(PointF delta, VisualHost &host);
     void rememberPlane(VisualHost &host);
+    // The saved outer quad of the active Line, in the inner quad's plane.
+    void restorePlane();
+    // A \move's Line: the quad goes where the video's time puts it.
+    void follow(const VisualHost &host) const;
 
     // The toolbar's state (stays when the family changes).
     bool m_plane = false, m_lock = false, m_grid = false;
@@ -167,13 +171,14 @@ private:
     // The active Line as read, the quads drawn and the plane: the inner
     // quad's rectangle c1 .. c2 in the outer quad's plane coordinates.
     bool m_valid = false;
-    perspective::LineState m_state;
-    perspective::Quad m_inner{};
+    mutable perspective::LineState m_state;
+    mutable perspective::Quad m_inner{};
+    mutable std::int64_t m_time = 0; // the video's, as read
     PointF m_c1{0.25f, 0.25f}, m_c2{0.75f, 0.75f};
     double m_screenZ = 312.5;
     std::optional<core::LineId> m_line;
     // The outer quads of the session (VT3: kept per Line in memory, not saved).
-    std::map<core::LineId, std::pair<PointF, PointF>> m_planes;
+    std::map<core::LineId, perspective::Quad> m_planes;
 
     // The drag (script coordinates).
     Drag m_drag = Drag::None;
