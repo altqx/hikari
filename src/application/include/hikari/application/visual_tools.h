@@ -1,7 +1,7 @@
 #pragma once
 
 // T1: the visual tools' shared parts (docs/qt/visual-tools.md): the eleven
-// families of legacy VideoToolbar's rail, the interface each tool implements,
+// families of legacy VideoToolbar's rail (and VT3's Perspective), the interface each tool implements,
 // the gesture transaction every tool's edit goes through and the batch
 // picker. A tool sees the Video panel through a VisualHost, which owns the
 // view's transform, the editing target and the one open gesture.
@@ -31,7 +31,8 @@ class TextMeasurePort; // automation_services.h
 
 namespace hikari::application::visual {
 
-// Legacy Visuals.h:56-68, in the rail's order.
+// Legacy Visuals.h:56-68, then VT3's Perspective (no legacy family; the rail
+// shows it after RotationXY, railOrder).
 enum class Family : int {
     Crosshair = 0, // CROSS
     Position,      // CHANGEPOS
@@ -44,8 +45,10 @@ enum class Family : int {
     Drawing,       // VECTORDRAW
     PositionShifter, // MOVEALL
     Hydra,         // ALL_TAGS
+    Perspective,   // VT3 (#273)
 };
-inline constexpr int kFamilyCount = 11; // VideoToolbar::toolsSize
+inline constexpr int kLegacyFamilyCount = 11; // VideoToolbar::toolsSize
+inline constexpr int kFamilyCount = 12;
 
 struct FamilyInfo {
     Family family;
@@ -56,6 +59,9 @@ struct FamilyInfo {
 };
 const std::array<FamilyInfo, kFamilyCount> &families();
 const FamilyInfo &familyInfo(Family family);
+// The rail's order: legacy's, with the Perspective tool after Text X / Y
+// rotation among the transforms (owner, #273).
+const std::array<Family, kFamilyCount> &railOrder();
 // VT2: the family a VIDEO_TOOL_* command chooses, if `symbol` is one.
 std::optional<Family> familyOfHotkey(std::string_view symbol);
 
