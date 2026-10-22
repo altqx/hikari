@@ -1036,6 +1036,8 @@ signals:
     // A write of the Document finished written (PU1-disk-change-bar: a Save
     // As ends the bar only then).
     void documentWritten(qulonglong document);
+    // A write of a Document that published nothing (failed or cancelled).
+    void documentWriteFailed(qulonglong document);
     // WS5: a later start handed files over, about to open (PU1-startup-cards:
     // they end the startup offer).
     void filesForwarded();
@@ -1166,6 +1168,8 @@ private:
     // The draft being typed when the read started (the question covered it).
     std::optional<core::LineId> m_matroskaDraftLine;
     std::optional<std::u8string> m_matroskaDraft;
+    std::uint64_t m_matroskaReloads = 0; // m_reloads when the read started
+    std::uint64_t m_reloads = 0;         // Reload subtitles done (a session replaced in place)
     bool m_matroskaFromHome = false; // started with no editing target
     // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);

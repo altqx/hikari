@@ -40,7 +40,8 @@ Item {
         const words = query.toLocaleLowerCase().split(" ").filter(w => w.length > 0)
         const from = rangeStart()
         return entries.filter(e => {
-            const hay = (e.name + "\n" + e.path).toLocaleLowerCase()
+            // A previous version's files are where its path is.
+            const hay = [e.name, e.path].concat(e.versions.map(v => v.file || "")).join("\n").toLocaleLowerCase()
             if (!words.every(w => hay.includes(w)))
                 return false
             if (range === "before")

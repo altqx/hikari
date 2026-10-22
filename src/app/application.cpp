@@ -832,6 +832,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_matroskaRevision = session ? session->revision() : 0;
             m_matroskaDraftLine = session ? session->draftLine() : std::nullopt;
             m_matroskaDraft = session ? session->draftText() : std::nullopt;
+            m_matroskaReloads = m_reloads;
             m_matroskaVideo = targetVideoPath();
             m_matroskaVideoRequest = m_video->openRequest();
             m_matroskaFromHome = !m_matroskaTarget;
@@ -2041,6 +2042,9 @@ void Application::writeFinished(const application::WriteResult &result)
             destination && destination->value == result.destination.value)
             recordFileTime(result.document);
         emit documentWritten(result.document.value);
+    } else if (result.outcome == application::WriteOutcome::Failed ||
+               result.outcome == application::WriteOutcome::Cancelled) {
+        emit documentWriteFailed(result.document.value);
     }
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
@@ -2561,6 +2565,7 @@ bool Application::reloadTarget()
     if (auto *session = m_files->session(*target))
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
+    ++m_reloads;
     m_videoRevision.reset();
     m_videoScript.clear();
     m_videoLine.reset();
@@ -3109,6 +3114,7 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
         auto *session = m_files->session(*m_matroskaTarget);
         newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision
             || session->draftLine() != m_matroskaDraftLine || session->draftText() != m_matroskaDraft
+            || m_reloads != m_matroskaReloads // reloaded: a new session at the same revision
             || targetVideoPath() != m_matroskaVideo
             || m_video->openRequest() != m_matroskaVideoRequest; // one asked for, still being opened
     } else if (!newTab && m_matroskaFromHome) {

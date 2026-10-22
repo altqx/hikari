@@ -983,6 +983,7 @@ ApplicationWindow {
         // change until scrollRestored(), so the model reset's transient 0
         // never replaces the tab's own scroll.
         function onDocumentWritten(id) {
+            matroskaSubtitles.written(id)
             if (root.savingAway[id] !== true)
                 return
             const away = Object.assign({}, root.savingAway)
@@ -990,6 +991,7 @@ ApplicationWindow {
             root.savingAway = away
             root.endDiskChange(id)
         }
+        function onDocumentWriteFailed(id) { matroskaSubtitles.writeFailed(id) }
         function onTabShown(scroll) {
             Qt.callLater(() => {
                 grid.contentY = scroll * grid.rowHeight
@@ -6098,6 +6100,7 @@ ApplicationWindow {
     // Y9: GRID_SUBS_FROM_MKV's question, track chooser and progress.
     MatroskaSubtitles {
         id: matroskaSubtitles
+        objectName: "matroskaSubtitles"
         matroska: root.matroska
         settings: root.app.settings
         notify: root.notify
@@ -6162,6 +6165,9 @@ ApplicationWindow {
                 if (id === "saveOver" && unread.length === 0) {
                     for (const marked of ids)
                         root.endDiskChange(marked)
+                    // Y9: an MKV load waiting for this save goes on once it
+                    // is written, and is cancelled if it fails.
+                    matroskaSubtitles.awaitWrite(ids)
                     save()
                 } else if (id === "saveOver") {
                     root.notify("warning", qsTranslate("HikariSub.Documents", "Save"),
@@ -6171,11 +6177,9 @@ ApplicationWindow {
                 } else if (cancelled) {
                     cancelled()
                 }
-                // Y9: the MKV load waited for the answer: it goes on once
-                // saved; nothing saved, it is cancelled and the work stays.
-                if (id === "saveOver" && unread.length === 0)
-                    matroskaSubtitles.saveDone()
-                else
+                // Y9: nothing saved: a waiting MKV load is cancelled and the
+                // work stays.
+                if (id !== "saveOver" || unread.length > 0)
                     matroskaSubtitles.saveCancelled()
             })
         }

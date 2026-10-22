@@ -20,6 +20,8 @@ Item {
     required property var save
     property SettingsStore settings: null
     property bool waitingForSave: false
+    // PU1-disk-change-bar: the Documents whose write the load waits for.
+    property var writes: []
     // The shell's OK-only notice: notify(severity, title, text).
     required property var notify
     // The editing target's tab name, for the question.
@@ -60,10 +62,29 @@ Item {
     // PU1-disk-change-bar: the save over a file changed on disk was not
     // made: Save and load loads nothing over the unsaved work.
     function saveCancelled() {
+        flow.writes = []
         if (!flow.waitingForSave)
             return
         flow.waitingForSave = false
         flow.matroska.cancel()
+    }
+    // Save over it was chosen: the load goes on once the write is done
+    // (written), and is cancelled if it fails, so the work it was to save
+    // is not replaced.
+    function awaitWrite(ids) {
+        if (flow.waitingForSave)
+            flow.writes = ids.slice()
+    }
+    function written(id) {
+        if (flow.writes.indexOf(id) < 0)
+            return
+        flow.writes = flow.writes.filter(w => w !== id)
+        if (flow.writes.length === 0)
+            flow.saveDone()
+    }
+    function writeFailed(id) {
+        if (flow.writes.indexOf(id) >= 0)
+            flow.saveCancelled()
     }
 
     // PU1-mkv-notices: OnMkvSubs' question (HikariMessageBox(wxYES_NO |
