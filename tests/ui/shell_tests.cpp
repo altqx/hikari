@@ -25222,10 +25222,10 @@ private slots:
                                {QStringLiteral("offer"), QLatin1String(offer)}};
         };
         auto &layouts = application->workspaceLayout();
+        QTRY_VERIFY(root->property("arrangementSettled").toBool()); // the saved layouts read
         QVERIFY(layouts.saveLayoutAs(QStringLiteral("Subtitles only")));
         QVERIFY(layouts.saveLayoutAs(QStringLiteral("Review with video")));
         auto &importer = application->settingsImport();
-        QVERIFY(importer.addRoot(legacy.path()));
         for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
                                     QStringLiteral("highContrastBlack")}) {
             setTheme(code);
@@ -25258,6 +25258,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
             auto *wizard = windowNamed("settingsImportDialog");
             QTRY_VERIFY(wizard && wizard->isVisible());
+            QVERIFY(importer.addRoot(legacy.path())); // (opening finds the installations anew)
             QQuickItem *legacyRoot = nullptr;
             const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
             QTRY_VERIFY((legacyRoot = dialogItem("settingsImportDialog", last.constData())) != nullptr);
