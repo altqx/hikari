@@ -277,7 +277,9 @@ DialogWindow {
             Label { text: qsTr("Scale from the cursor"); font.weight: Font.DemiBold; Layout.topMargin: 6 }
             SegmentedButtons {
                 objectName: "shapeMode"
+                // (Its whole width: the window opens no narrower.)
                 Layout.fillWidth: true
+                Layout.minimumWidth: implicitWidth
                 // ShapePreset::Mode; legacy's "Scaling relative to cursor".
                 choices: [{ text: qsTr("Width and height"), name: "shapeMode0" },
                           { text: qsTr("Keep aspect ratio"), name: "shapeMode1" },
