@@ -12121,6 +12121,8 @@ private slots:
     // O3: File > Import legacy settings... (a ShellMenuItem) reviews a
     // legacy installation's files, imports the chosen changes for the next
     // start and rolls them back; the legacy files are never written.
+    // PU7 (#309): through the wizard's three steps (choose, review, result),
+    // the review's Conflicts and All, and Roll back… asked in the message box.
     void legacySettingsImportThroughTheWindow()
     {
         QTemporaryDir home, legacy;
@@ -12145,43 +12147,82 @@ private slots:
         auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        auto footerButton = [&](const char *name) {
-            auto *footer = dialog->property("footer").value<QQuickItem *>();
-            return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+        auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
+        auto visibleNamed = [&](const char *name) {
+            auto *found = control(name);
+            return found && found->isVisible();
         };
-        QVERIFY(!footerButton("settingsImportImport")->property("enabled").toBool());
+        // Step 1: no installation found in this home, nothing to review yet.
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QVERIFY(visibleNamed("settingsImportNext"));
+        QVERIFY(!control("settingsImportNext")->property("enabled").toBool());
+        QVERIFY(!visibleNamed("settingsImportImport"));
 
+        // Choosing an installation reads it.
         auto &importer = application->settingsImport();
         QVERIFY(importer.addRoot(legacy.path()));
-        dialogItem("settingsImportDialog", "settingsImportRoots")->setProperty("currentIndex", importer.roots().size() - 1);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportRead"), "click"));
+        const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
+        QQuickItem *root = nullptr;
+        QTRY_VERIFY((root = control(last.constData())) != nullptr);
+        QVERIFY(QMetaObject::invokeMethod(root, "click"));
         QCOMPARE(importer.root(), QDir::cleanPath(legacy.path()));
-        auto *rows = dialogItem("settingsImportDialog", "settingsImportRows");
+        QTRY_VERIFY(control("settingsImportNext")->property("enabled").toBool());
+
+        // Step 2: the conflicts, the proposed ones ticked.
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QCOMPARE(dialog->property("step").toInt(), 2);
+        QVERIFY(visibleNamed("settingsImportBack") && visibleNamed("settingsImportImport"));
+        QVERIFY(!visibleNamed("settingsImportNext"));
+        auto *rows = control("settingsImportRows");
         QTRY_VERIFY(rows->property("count").toInt() > 0);
         QVERIFY(importer.chosen().contains("setting:grid.font"));
         QVERIFY(importer.chosen().contains("shortcut:GLOBAL_SAVE_SUBS:G"));
-        QVERIFY(dialogItem("settingsImportDialog", "settingsImportSummary")->property("text").toString().contains(
-            QStringLiteral("1 excluded")));
-        // The theme is shown, excluded, and cannot be chosen.
+        int selectable = 0;
         QVariantMap theme;
-        for (const auto &row : importer.rows())
+        for (const auto &row : importer.rows()) {
+            selectable += row.toMap().value(QStringLiteral("selectable")).toBool();
             if (row.toMap().value(QStringLiteral("key")) == QStringLiteral("PROGRAM_THEME"))
                 theme = row.toMap();
+        }
+        QCOMPARE(rows->property("count").toInt(), selectable);
+        QCOMPARE(control("settingsImportSummary")->property("text").toString(),
+                 QStringLiteral("%1 of %2 chosen").arg(importer.chosen().size()).arg(selectable));
+        QCOMPARE(control("settingsImportImport")->property("text").toString(),
+                 QStringLiteral("Import %1 setting(s)").arg(importer.chosen().size()));
+        // The theme is excluded: not a conflict, shown under All only, as
+        // "Not here" and without a tick box.
         QCOMPARE(theme.value(QStringLiteral("disposition")).toString(), QStringLiteral("excluded"));
         QVERIFY(!theme.value(QStringLiteral("selectable")).toBool());
+        const QString themeId = theme.value(QStringLiteral("id")).toString();
+        auto rowNamed = [&](const QString &name) { return findItem(rows, name); };
+        QVERIFY(!rowNamed(QStringLiteral("settingsImportRow_") + themeId));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportFilter"), "activated", Q_ARG(int, 1)));
+        QTRY_COMPARE(rows->property("count").toInt(), int(importer.rows().size()));
+        QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
+        QQuickItem *themeStatus = nullptr;
+        for (int i = 0; i < rows->property("count").toInt() && !themeStatus; ++i) {
+            QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtIndex", Q_ARG(int, i), Q_ARG(int, 0)));
+            themeStatus = rowNamed(QStringLiteral("settingsImportStatus_") + themeId);
+        }
+        QVERIFY(themeStatus);
+        QCOMPARE(themeStatus->property("text").toString(), QStringLiteral("Not here"));
+        auto *themeBox = rowNamed(QStringLiteral("settingsImportChoose_") + themeId);
+        QVERIFY(!themeBox || !themeBox->isVisible() || !themeBox->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportFilter"), "activated", Q_ARG(int, 0)));
+        QTRY_COMPARE(rows->property("count").toInt(), selectable);
         // Choosing a row far down the list keeps the list where it is
         // scrolled, and "Proposed choice" still reaches the clicked row.
         {
             const QVariantList all = importer.rows();
-            int last = int(all.size()) - 1;
-            while (last >= 0 && !all.at(last).toMap().value(QStringLiteral("selectable")).toBool())
-                --last;
-            QVERIFY(last > 0);
-            const QString id = all.at(last).toMap().value(QStringLiteral("id")).toString();
+            int lastRow = int(all.size()) - 1;
+            while (lastRow >= 0 && !all.at(lastRow).toMap().value(QStringLiteral("selectable")).toBool())
+                --lastRow;
+            QVERIFY(lastRow > 0);
+            const QString id = all.at(lastRow).toMap().value(QStringLiteral("id")).toString();
             const bool proposed = importer.chosen().contains(id.toStdString());
             QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
             QQuickItem *box = nullptr;
-            QTRY_VERIFY((box = findItem(rows, QStringLiteral("settingsImportChoose_") + id)) != nullptr);
+            QTRY_VERIFY((box = rowNamed(QStringLiteral("settingsImportChoose_") + id)) != nullptr);
             const QPointer<QQuickItem> sameBox(box);
             const qreal scrolled = rows->property("contentY").toReal();
             QVERIFY(scrolled > 0);
@@ -12191,16 +12232,32 @@ private slots:
             QVERIFY(sameBox);
             QCOMPARE(box->property("checked").toBool(), !proposed);
             QCOMPARE(rows->property("contentY").toReal(), scrolled);
-            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportProposed"), "click"));
+            QVERIFY(QMetaObject::invokeMethod(control("settingsImportProposed"), "click"));
             QVERIFY(sameBox);
             QCOMPARE(box->property("checked").toBool(), proposed);
             QCOMPARE(rows->property("contentY").toReal(), scrolled);
         }
-        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportImport"), "click"));
-        QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportStatus")->property("text").toString().contains(
-            QStringLiteral("starts again")));
+        // Back to step 1 and on again keeps the choice.
+        const auto chosen = importer.chosen();
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportBack"), "click"));
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QCOMPARE(importer.chosen(), chosen);
+
+        // Step 3: the result, in effect at the next start.
+        const int count = int(importer.chosen().size());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportImport"), "click"));
+        QTRY_COMPARE(dialog->property("step").toInt(), 3);
+        QCOMPARE(control("settingsImportResult")->property("text").toString(),
+                 QStringLiteral("%1 setting(s) imported.").arg(count));
+        QVERIFY(control("settingsImportStatus")->property("text").toString().contains(QStringLiteral("starts again")));
+        QVERIFY(visibleNamed("settingsImportClose"));
+        QVERIFY(!visibleNamed("settingsImportCancel") && !visibleNamed("settingsImportBack"));
+        QCOMPARE(visibleNamed("settingsImportRollback"), importer.canRollBack());
         // Not in effect in this session.
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
 
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Arial"));
@@ -12208,16 +12265,24 @@ private slots:
                     .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
         QVERIFY(!application->settingsStore()->isSet(QStringLiteral("program.theme")));
 
-        // Roll back, asked first, in effect at the next start.
+        // Roll back from step 1's bar, asked first in PK1's message box:
+        // Cancel keeps the import, Roll back is in effect at the next start.
         QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
         dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(footerButton("settingsImportRollback")->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportRollback"), "click"));
-        auto *question = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportRollbackQuestion"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QTRY_VERIFY(visibleNamed("settingsImportRollbackBar"));
+        QCOMPARE(control("settingsImportState")->property("text").toString(), QStringLiteral("The last import is in effect."));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("cancel"));
+        QVERIFY(!application->settingsImport().pending());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("rollback"));
         QVERIFY(application->settingsImport().pending());
+        QTRY_COMPARE(control("settingsImportState")->property("text").toString(),
+                     QStringLiteral("An import waits for the next start."));
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
         QVERIFY(!application->settingsStore()->isSet(application::kHotkeysSetting.data()));

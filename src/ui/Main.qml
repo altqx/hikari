@@ -6801,7 +6801,7 @@ ApplicationWindow {
     SettingsImportDialog {
         id: settingsImportDialog
         importer: root.settingsImport
-        anchors.centerIn: parent
+        settings: root.app.settings
     }
     // PF1 (#225): the Settings window, made at its first opening (a window
     // made at the start slows every start, PK1).
