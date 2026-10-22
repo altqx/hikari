@@ -1198,9 +1198,9 @@ bool TemplateEditorController::insertTemplate(const QString &effect)
     if (!s || !m_editable)
         return false;
     const auto lines = s->document().lines();
-    const auto first = std::ranges::find_if(lines, [](const core::LineRecord *l) {
-        return application::isKaraokeLine(*l) && !application::templateKindOf(*l);
-    });
+    // A `template line karaoke` too: the templater runs it as one.
+    const auto first =
+        std::ranges::find_if(lines, [](const core::LineRecord *l) { return application::isKaraokeLine(*l); });
     application::MacroDialogueLine d;
     d.comment = true;
     d.effect = effect.toStdString();

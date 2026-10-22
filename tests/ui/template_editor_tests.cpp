@@ -1992,6 +1992,34 @@ private slots:
         QCOMPARE(editor->text(), QString());
     }
 
+    // A `template line karaoke` is a karaoke Line too: New goes above it,
+    // in its Style, when it is the only one.
+    void newPutsATemplateAboveATemplateThatIsAlsoAKaraokeLine()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord both;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l) && l->style == u8"T2b")
+                both = *l;
+        QVERIFY(both.style == u8"T2b");
+        doc.removeLinesIf([](const core::LineRecord &l) { return application::isKaraokeLine(l); });
+        both.comment = true;
+        both.effect = u8"template line karaoke";
+        both.text = u8"{\\k50}ka";
+        const auto id = doc.appendLine(both);
+        QVERIFY(id);
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->insertTemplate(QStringLiteral("template syl")));
+        const auto lines = session->document().lines();
+        std::size_t at = 0;
+        for (std::size_t k = 0; k < lines.size(); ++k)
+            if (lines[k]->id == *id)
+                at = k;
+        QVERIFY(at > 0);
+        QCOMPARE(lines[at - 1]->id.value, editor->current());
+        QVERIFY(lines[at - 1]->style == u8"T2b");
+    }
+
     void theCurrentTemplateFollowsTheActiveTemplateLine()
     {
         open(QStringLiteral("stock-tutorials.ass"));
