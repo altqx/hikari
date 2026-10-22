@@ -936,6 +936,30 @@ private slots:
         editor->setDocumentKey({});
     }
 
+    // An edit typed before its file was reloaded has no Document left to go
+    // into: it is dropped, not committed into the reloaded one.
+    void anEditTypedBeforeAReloadIsDropped()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        std::pair<std::uint64_t, std::uint64_t> key{1, 1};
+        editor->setDocumentKey([&] { return key; });
+        editor->setSessionOf([](std::pair<std::uint64_t, std::uint64_t>) -> application::EditSession * { return nullptr; });
+        editor->refresh();
+        editor->trustDocument();
+        editor->setDelays(60'000, 60'000);
+        const QString before = editor->text();
+        editor->setText(before + QStringLiteral("{\\bord3}"));
+        session = std::make_unique<application::EditSession>(loadFile(QStringLiteral("stock-tutorials.ass")));
+        key = {1, 2}; // the same Document, loaded again
+        const std::size_t steps = session->historySize();
+        editor->refresh();
+        editor->commit();
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(editor->text(), before);
+        editor->setSessionOf({});
+        editor->setDocumentKey({});
+    }
+
     void anUndoneApplyMatchesAgain()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
