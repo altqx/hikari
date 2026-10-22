@@ -25,6 +25,7 @@
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/grid_split.h"
+#include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
 #include "hikari/application/visual_rotation.h"
 #include "hikari/application/visual_scale.h"
@@ -14306,8 +14307,8 @@ private slots:
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and VT2's eleven visual tools listed; KA2's Tap
-        // to time, Slower and Faster; KA7's "Check karaoke".
-        QCOMPARE(hotkeyRows().size(), 237);
+        // to time, Slower and Faster; VT3's Perspective; KA7's "Check karaoke".
+        QCOMPARE(hotkeyRows().size(), 238);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -16285,7 +16286,8 @@ private slots:
                  {"V", "VIDEO_TOOL_VECTOR_CLIP"},
                  {"D", "VIDEO_TOOL_DRAWING"},
                  {"A", "VIDEO_TOOL_POSITION_SHIFTER"},
-                 {"H", "VIDEO_TOOL_HYDRA"}})
+                 {"H", "VIDEO_TOOL_HYDRA"},
+                 {"Q", "VIDEO_TOOL_PERSPECTIVE"}}) // VT3 (#273)
             departures.append(QStringLiteral("Video %1: %2, legacy nothing").arg(QLatin1String(accel), QLatin1String(symbol)));
         QStringList differences;
         hotkeys.setRehearsing(true);
@@ -18622,7 +18624,8 @@ private slots:
                  QStringLiteral("VIDEO_COPY_COORDS"));
         QVERIFY(application->openFile(visualDocument("visual.ass")));
         auto &tools = application->visualTools();
-        // The rail: legacy VideoToolbar's eleven families, the crosshair on.
+        // The rail: legacy VideoToolbar's eleven families and VT3's
+        // Perspective, the crosshair on.
         for (int i = 0; i < application::visual::kFamilyCount; ++i) {
             auto *button = visualItem(qPrintable(QStringLiteral("visualTool%1").arg(i)));
             QVERIFY(button);
@@ -18652,6 +18655,7 @@ private slots:
         }
         QCOMPARE(visualItem("visualToolIcon0")->property("iconRole").toString(), QStringLiteral("tool-crosshair"));
         QCOMPARE(visualItem("visualToolIcon10")->property("iconRole").toString(), QStringLiteral("tool-all-tags"));
+        QCOMPARE(visualItem("visualToolIcon11")->property("iconRole").toString(), QStringLiteral("tool-perspective"));
         // No family name is drawn on the rail, which stays a narrow strip.
         {
             QQuickItem *rail = visualItem("visualToolRail");
@@ -18668,7 +18672,7 @@ private slots:
                     QVERIFY2(!names.contains(it->property("text").toString()), qPrintable(it->property("text").toString()));
             }
         }
-        // A Video panel too short for the eleven families: the rail shows a
+        // A Video panel too short for the twelve families: the rail shows a
         // scroll bar beside them (the families below are reached by the
         // mouse and the bar says there are more), still a narrow strip; tall
         // enough, no bar.
@@ -21176,6 +21180,193 @@ private slots:
         QCOMPARE(text(session->document().lines()[4]), QStringLiteral("{\\pos(60,60)}filtered"));
     }
 
+    // VT3 (#273): the Perspective tool through the Video panel. Its bar is
+    // Plane (Show surrounding plane, Lock outer quad greyed until the plane
+    // shows, Show grid), Origin (the \org mode as text, then X and Y under
+    // the same label), Rotation and Shear. A drag of the quad's corner is one
+    // "Visual perspective tool" step writing \org, \frx and \fry; the arrows
+    // nudge that corner, its own step; Esc during a drag drops it.
+    void visualPerspectiveThroughThePanel()
+    {
+        using namespace application::visual;
+        QVERIFY(application->openFile(visualDocument(
+            "perspective.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an7\\pos(100,80)\\p1}m 0 0 l 120 0 120 60 0 60\n")));
+        auto &tools = application->visualTools();
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const core::LineId third = session->document().lines()[2]->id;
+        application->selectLine(third.value);
+        QTRY_VERIFY(session->selection().active == third);
+
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualTool11"), "click"));
+        QCOMPARE(tools.activeFamily(), 11);
+        QTRY_VERIFY(visualItem("visualOption_plane"));
+        const auto option = [&](const char *name) {
+            return visualItem(qPrintable(QStringLiteral("visualOption_") + QLatin1String(name)));
+        };
+        QCOMPARE(option("plane")->property("iconRole").toString(), QStringLiteral("perspective-plane"));
+        QCOMPARE(option("lockOuter")->property("iconRole").toString(), QStringLiteral("perspective-lock-outer"));
+        QCOMPARE(option("grid")->property("iconRole").toString(), QStringLiteral("perspective-grid"));
+        QVERIFY(!option("lockOuter")->isEnabled());
+        QVERIFY(option("orgMode")->inherits("QQuickComboBox"));
+        QCOMPARE(option("orgMode")->property("currentIndex").toInt(), 0);
+        for (const char *value : {"frx", "fry", "frz", "fax"})
+            QVERIFY2(visualItem(qPrintable(QStringLiteral("visualValue_") + QLatin1String(value))), value);
+        // "Origin" once: the values continue the mode's group.
+        {
+            int origins = 0;
+            QList<QQuickItem *> pending{visualItem("visualToolGroups")};
+            while (!pending.isEmpty()) {
+                QQuickItem *it = pending.takeLast();
+                pending << it->childItems();
+                origins += it->isVisible() && it->inherits("QQuickText") && it->property("text").toString() == QLatin1String("Origin");
+            }
+            QCOMPARE(origins, 1);
+        }
+        // ... and X and Y share the mode's item of the Flow: a wrap cannot
+        // part them from it.
+        const auto flowItem = [](QQuickItem *item) {
+            while (item && item->parentItem() && item->parentItem()->objectName() != QLatin1String("visualToolGroups"))
+                item = item->parentItem();
+            return item;
+        };
+        QVERIFY(flowItem(option("orgMode")));
+        QCOMPARE(flowItem(visualItem("visualValue_orgx")), flowItem(option("orgMode")));
+        QCOMPARE(flowItem(visualItem("visualValue_orgy")), flowItem(option("orgMode")));
+        QVERIFY(flowItem(visualItem("visualValue_frx")) != flowItem(option("orgMode")));
+        // The plane on: Lock outer quad can be pushed.
+        QVERIFY(QMetaObject::invokeMethod(option("plane"), "click"));
+        QTRY_VERIFY(option("plane")->property("checked").toBool());
+        QTRY_VERIFY(option("lockOuter")->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(option("plane"), "click"));
+        QTRY_VERIFY(!option("lockOuter")->isEnabled());
+
+        auto *tool = dynamic_cast<PerspectiveTool *>(tools.tool());
+        QVERIFY(tool && tool->hasQuad());
+        const auto &view = tools.videoView();
+        const auto corner = [&](int i) {
+            const PointF d = view.scriptToView(tool->inner()[static_cast<std::size_t>(i)]);
+            return videoPoint(QPointF(view.toLogical(d.x), view.toLogical(d.y)));
+        };
+        QCOMPARE(tool->inner()[2].x, 220.f);
+        QCOMPARE(tool->inner()[2].y, 140.f);
+        // Esc during a drag drops it.
+        const QString before = text(session->document().lines()[2]);
+        std::size_t steps = session->historySize();
+        QPoint p = corner(2);
+        QTest::mouseMove(window, p);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        QTest::mouseMove(window, p + QPoint(6, 4));
+        QTest::mouseMove(window, p + QPoint(12, 8));
+        QTRY_VERIFY(tools.gestureActive());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p + QPoint(12, 8));
+        QTRY_VERIFY(!tools.gestureActive());
+        QCOMPARE(session->historySize(), steps);
+        QCOMPARE(text(session->document().lines()[2]), before);
+        // A drag: one step, and the quad follows the pointer.
+        p = corner(2);
+        QTest::mouseMove(window, p);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, p);
+        QTest::mouseMove(window, p + QPoint(6, 4));
+        QTest::mouseMove(window, p + QPoint(12, 8));
+        QTRY_VERIFY(tools.gestureActive());
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, p + QPoint(12, 8));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual perspective tool"));
+        const QString dragged = text(session->document().lines()[2]);
+        QVERIFY2(dragged.contains(QLatin1String("\\org(")) && dragged.contains(QLatin1String("\\frx"))
+                     && dragged.contains(QLatin1String("\\fry")) && dragged.startsWith(QLatin1String("{\\an7\\p1\\pos("))
+                     && dragged.endsWith(QLatin1String("}m 0 0 l 120 0 120 60 0 60")),
+                 qPrintable(dragged));
+        QTRY_VERIFY((corner(2) - (p + QPoint(12, 8))).manhattanLength() <= 2);
+        QCOMPARE(tool->selectedCorner(), 2);
+        // Right nudges the corner a script pixel, its own step.
+        const PointF was = tool->inner()[2];
+        visualItem("videoPanel")->forceActiveFocus();
+        steps = session->historySize();
+        QTest::keyClick(window, Qt::Key_Right);
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Visual perspective tool"));
+        QTRY_VERIFY(std::abs(tool->inner()[2].x - was.x - 1) < 0.05 && std::abs(tool->inner()[2].y - was.y) < 0.05);
+        // A typed angle: one step, the quad follows.
+        auto *fry = visualItem("visualValue_fry");
+        steps = session->historySize();
+        QVERIFY(tools.setValue(QStringLiteral("fry"), QStringLiteral("30")));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        QVERIFY2(text(session->document().lines()[2]).contains(QLatin1String("\\fry30")),
+                 qPrintable(text(session->document().lines()[2])));
+        QTRY_COMPARE(fry->property("text").toString(), QStringLiteral("30"));
+    }
+
+    // VT3: the Perspective tool in the four themes (with
+    // HIKARI_SURFACE_SHOT_DIR): the Video panel with the quad turned, then
+    // with the surrounding plane and the grid, and the \org mode's list.
+    void visualPerspectiveScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        auto &settings = *application->settingsStore();
+        auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        window->resize(1280, 1000);
+        auto &tools = application->visualTools();
+        QVERIFY(application->openFile(visualDocument(
+            "vt3-shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an5\\pos(160,110)\\org(160,110)"
+                             "\\frx20\\fry-30\\frz6\\fscx120\\1c&H2050F0&\\bord0\\p1}m 0 0 l 120 0 120 70 0 70\n")));
+        application->settingsStore()->set("video.openAtActiveLine", true);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(!tools.videoRect().isEmpty(), 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().frame() == 24, 20000);
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->selectLine(session->document().lines()[2]->id.value);
+        const auto crop = [](QQuickItem *item) {
+            const qreal dpr = item->window()->effectiveDevicePixelRatio();
+            const QRectF r = item->mapRectToScene(QRectF(0, 0, item->width(), item->height()));
+            return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
+        };
+        const auto shoot = [&](const QString &name) {
+            QTest::qWait(300);
+            const QImage shot = window->grabWindow();
+            QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QLatin1Char('/') + name));
+        };
+        auto *root = engine->rootObjects().first();
+        for (const char *code : {"light", "dark", "highContrastBlack", "highContrastWhite"}) {
+            settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + QString::fromLatin1(code) + QStringLiteral(".png");
+            tools.selectFamily(11);
+            QTRY_VERIFY(visualItem("visualOption_plane"));
+            QTest::mouseMove(window, QPoint(1, 1));
+            shoot(QStringLiteral("vt3-perspective") + suffix);
+            QVERIFY(tools.setOption(QStringLiteral("plane"), 1));
+            QVERIFY(tools.setOption(QStringLiteral("grid"), 1));
+            QTRY_VERIFY(visualItem("visualOption_grid")->property("checked").toBool());
+            shoot(QStringLiteral("vt3-perspective-plane") + suffix);
+            QQuickItem *mode = visualItem("visualOption_orgMode");
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                              mode->mapToScene(QPointF(mode->width() / 2, mode->height() / 2)).toPoint());
+            auto *popup = mode->property("popup").value<QObject *>();
+            QTRY_VERIFY(popup->property("opened").toBool());
+            QTest::qWait(300);
+            const QImage shot = window->grabWindow();
+            const QRect menuRect = crop(popup->property("contentItem").value<QQuickItem *>()).united(crop(mode));
+            QVERIFY(shot.copy(menuRect.adjusted(-8, -8, 8, 8).intersected(shot.rect()))
+                        .save(out + QStringLiteral("/vt3-origin-mode") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+            QTRY_VERIFY(!popup->property("visible").toBool());
+            QVERIFY(tools.setOption(QStringLiteral("plane"), 0));
+            QVERIFY(tools.setOption(QStringLiteral("grid"), 0));
+            tools.selectFamily(0);
+        }
+    }
+
     // T6: the all-tags tool through the Video panel. Its row is legacy
     // AllTagsItem as icons with their menus: the tag list ("blur" first),
     // the change options (Insert) and Edit. The sliders are drawn over the
@@ -21467,7 +21658,7 @@ private slots:
         tools.setAllTagsFile({});
     }
 
-    // A Video panel too short for the eleven families scrolls the rail so the
+    // A Video panel too short for the twelve families scrolls the rail so the
     // on family stays in view (the shifter and the all-tags tool are the last
     // two), and a family chosen above the fold scrolls it back.
     // VT2 (#270): each visual tool's single key (a VIDEO_TOOL_* command,
@@ -21529,7 +21720,7 @@ private slots:
             QTest::keyClick(window, key);
             QTRY_COMPARE(tools.activeFamily(), 0); // the crosshair's own key stays on it
         }
-        QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H"}));
+        QCOMPARE(keys, (QStringList{"X", "P", "G", "S", "R", "T", "C", "V", "D", "A", "H", "Q"}));
         QCOMPARE(QQmlProperty(visualItem("visualTool0"), QStringLiteral("ToolTip.text"), qmlContext(visualItem("visualTool0")))
                          .read()
                          .toString(),
