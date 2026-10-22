@@ -69,6 +69,7 @@
 #include <QTimer>
 #include <QObject>
 #include <QUrl>
+#include <QFileInfo>
 #include <QVariantMap>
 
 #include <functional>
@@ -219,9 +220,13 @@ public:
     // Close review (P1; accepted L58-write-close). `then` is "close" (the
     // editing target), "new" (replace it with an Untitled Document, legacy
     // "Remove subtitles from the editor") or "quit" (every Document). Returns
-    // one row per Document with unsaved work: {id, title, untitled}. With
-    // none, call finishClose() to carry `then` out at once.
+    // one row per Document with unsaved work: {id, title, untitled, folder
+    // (its file's, native; "" when untitled)}. With none, call finishClose()
+    // to carry `then` out at once.
     Q_INVOKABLE QVariantList reviewClose(const QString &then);
+    // PU1-unsaved-window: the `then` of the review in progress ("" without
+    // one), so the window and its buttons name the command that asked.
+    Q_INVOKABLE QString closeKind() const { return m_closeThen; }
     // One choice per row: {id, save: bool, path: Save As destination for an
     // Untitled Document}. Save commits the draft and writes; Discard drops the
     // draft. Nothing is closed until every save is acknowledged Written, and a
@@ -304,11 +309,27 @@ public:
     // Reloads the editing target from its file with fresh history; a failed
     // or stale reload keeps the Document as it is (L58-staged-replacement).
     Q_INVOKABLE bool reloadTarget();
+    // PU1-disk-change-bar: the changed-on-disk bar's Compare. The editing
+    // target's file, as it is on disk now, opens as the protected reference
+    // (read only, so neither copy can be saved over the other) and Subtitle
+    // comparison compares the two; false when it could not be read.
+    Q_INVOKABLE bool compareWithFileOnDisk();
 
     // Saves the editing target to a new destination (GLOBAL_SAVE_SUBS_AS).
     Q_INVOKABLE bool saveAs(const QString &path);
     Q_INVOKABLE bool saveAsUrl(const QUrl &url) { return saveAs(url.toLocalFile()); }
     Q_INVOKABLE QString localPath(const QUrl &url) const { return url.toLocalFile(); }
+    // PU1-picker-titles: the URL of the folder a file is in, for the
+    // pickers' remembered folders ("" for anything but a local file, or a
+    // folder that does not exist).
+    Q_INVOKABLE QUrl fileUrl(const QString &path) const { return QUrl::fromLocalFile(path); }
+    Q_INVOKABLE QString folderOf(const QUrl &file) const
+    {
+        if (!file.isLocalFile())
+            return {};
+        const QString folder = QFileInfo(file.toLocalFile()).absolutePath();
+        return QFileInfo(folder).isDir() ? QUrl::fromLocalFile(folder).toString() : QString();
+    }
     // The editing target has no file yet (its first save needs Save As).
     Q_INVOKABLE bool targetUntitled() const;
     // P7: legacy HikariSubFrame::Save. saveRoute is "dialog" when Save asks
@@ -863,6 +884,19 @@ public:
     // names when the last session has no Document with a file.
     Q_INVOKABLE QVariantMap lastSessionSummary() const;
     Q_INVOKABLE bool lastSessionCrashed() const;
+    // PU1-startup-cards: what the start offers instead of legacy's prompts,
+    // as a Home card, or as the startup bar when files were opened from the
+    // command line (legacy asked nothing then): "crash" (the last session did
+    // not end with "[Close session]", or autosaved work was left), "ask"
+    // (On start: Ask), or "". It asks nothing and holds nothing back.
+    Q_INVOKABLE QString startupOffer() const;
+    // The offer is about the last session as it was when this program
+    // started (a start with files writes the session before the window
+    // shows): its Documents' names (as lastSessionSummary's), and Restore's
+    // review (as reviewSession's).
+    Q_INVOKABLE QStringList startupOfferNames() const;
+    Q_INVOKABLE QVariantMap reviewStartupSession();
+    Q_INVOKABLE bool startedWithPaths() const { return m_startedWithPaths; }
     void setStartedWithPaths(bool paths) { m_startedWithPaths = paths; }
     // The unresolved entry `row`: try again, choose another file, or forget it.
     Q_INVOKABLE bool retryRestore(int row);
@@ -898,7 +932,7 @@ public:
     // finishClose() closes them all and the Home page shows (SH2).
     Q_INVOKABLE QVariantList reviewCloseAll();
     // P9: GLOBAL_OPEN_AUTO_SAVE's legacy autosaves (the Subs folder, read
-    // only): [{name, versions: [{written, file}]}], and the Files list's
+    // only): [{name, versions: [{written, time (ISO), file}]}], and the Files list's
     // filter (AutoSaveOpen::FindFiles: the names to show, by index).
     Q_INVOKABLE QVariantList legacyAutosaves();
     Q_INVOKABLE QVariantList filterLegacyAutosaves(const QVariantList &files, const QString &query, bool allWords) const;
@@ -1082,6 +1116,11 @@ private:
     // until the Document has a destination.
     std::map<std::uint64_t, QString> m_matroskaPaths;
     bool m_keepVideoOnEnter = false; // replaceTarget(keepMedia) until the tab is entered
+    // PU1-mkv-notices: the editing target and its revision when a load
+    // began; a load that would replace a Document changed (or left) since
+    // then opens in a new tab instead.
+    std::optional<application::DocumentId> m_matroskaTarget;
+    std::uint64_t m_matroskaRevision = 0;
     // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);
     std::unique_ptr<ui::LogController> m_log;
@@ -1377,6 +1416,11 @@ private:
     bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
     bool m_startedWithPaths = false;
+    // PU1-startup-cards: LastSession.txt's text when this program started.
+    std::optional<std::string> m_startSession;
+    void rememberStartSession();
+    static QStringList sessionNames(const std::optional<std::string> &text);
+    QVariantMap reviewSessionText(const std::optional<std::string> &text);
     mutable bool m_startupSessionPending = false; // WS5: startupSession() asked, not yet carried out
     int m_tabTextMax = 40; // legacy maxCharPerTab, read once at start
     void leaveTabMedia(std::optional<application::DocumentId> document);

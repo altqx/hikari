@@ -527,6 +527,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
+    rememberStartSession(); // PU1: before anything writes the session
     // R6-dictionary-location: user dictionaries in the settings folder's
     // Dictionary, bundled ones in the program folder's (legacy's only one).
     if (!m_settingsFile.isEmpty())
@@ -783,6 +784,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         };
         hooks.apply = [this](application::MatroskaLoaded loaded, bool newTab) {
             applyMatroska(std::move(loaded), newTab);
+        };
+        hooks.started = [this] {
+            m_matroskaTarget = m_workspace.editingTarget();
+            auto *session = targetSession();
+            m_matroskaRevision = session ? session->revision() : 0;
         };
         hooks.log = [this](const QString &text) { m_log->log(text); };
         m_matroska = std::make_unique<MatroskaController>(
@@ -1831,9 +1837,12 @@ QVariantList Application::reviewClose(const QString &then)
             continue;
         const std::string *title = m_workspace.title(id);
         const auto destination = m_files->destination(id);
+        const bool untitled = !destination || destination->value.empty();
         rows << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
                             {QStringLiteral("title"), title ? QString::fromStdString(*title) : QString()},
-                            {QStringLiteral("untitled"), !destination || destination->value.empty()}};
+                            {QStringLiteral("untitled"), untitled},
+                            {QStringLiteral("folder"), untitled ? QString()
+                                                                : QDir::toNativeSeparators(QFileInfo(QString::fromStdString(destination->value)).absolutePath())}};
     }
     return rows;
 }
@@ -2389,6 +2398,17 @@ bool Application::reloadTarget()
     return true;
 }
 
+bool Application::compareWithFileOnDisk()
+{
+    const auto target = m_workspace.editingTarget();
+    const auto destination = target ? m_files->destination(*target) : std::nullopt;
+    if (!destination || destination->value.empty())
+        return false;
+    if (!openReference(QString::fromStdString(destination->value)))
+        return false;
+    return compareWithReference();
+}
+
 bool Application::saveAs(const QString &path)
 {
     const auto target = m_workspace.editingTarget();
@@ -2890,6 +2910,14 @@ QVariantList Application::recoveryBundles() const
 
 void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 {
+    // PU1-mkv-notices: the window stayed usable while the track was read. A
+    // tab that is no longer the editing target, or whose Document changed
+    // since, keeps what was typed: the subtitles open in a new tab.
+    if (!newTab && m_matroskaTarget) {
+        auto *session = m_files->session(*m_matroskaTarget);
+        newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision;
+    }
+    m_matroskaTarget.reset();
     if (newTab) {
         // File > Open: InsertTab then OnMkvSubs in it (HikariSubFrame.cpp:
         // 1021-1028): a new tab after the last one, with no media, takes the
@@ -3006,8 +3034,14 @@ QVariantList Application::legacyAutosaves()
     for (const auto &file : files) {
         QVariantList versions;
         for (const auto &version : file.versions)
+        {
+            const QString path = QString::fromStdU16String(version.file.u16string());
+            // PU1-autosaves-window: the time as recoveryBundles() gives it,
+            // for the Autosaves window's date filter and order.
             versions << QVariantMap{{QStringLiteral("written"), QString::fromStdString(version.written)},
-                                    {QStringLiteral("file"), QString::fromStdU16String(version.file.u16string())}};
+                                    {QStringLiteral("time"), QFileInfo(path).lastModified().toString(Qt::ISODate)},
+                                    {QStringLiteral("file"), path}};
+        }
         rows << QVariantMap{{QStringLiteral("name"), QString::fromStdU16String(file.name)},
                             {QStringLiteral("versions"), versions}};
     }
