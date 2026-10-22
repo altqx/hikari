@@ -69,12 +69,14 @@ Control {
     }
     // The options' groups, then the values'. VT3: values that go on the
     // last option's group (the Perspective tool's Origin mode, then its X
-    // and Y) continue it, without a rule or the label again.
+    // and Y) join that group, one item of the Flow, so a wrap cannot part
+    // them.
     function joined(options, values) {
         if (options.length > 0 && values.length > 0 && options[options.length - 1].group.length > 0
                 && options[options.length - 1].group === values[0].group) {
-            values = values.slice()
-            values[0] = Object.assign({}, values[0], { continues: true })
+            options = options.slice()
+            options[options.length - 1] = Object.assign({}, options[options.length - 1], { values: values[0].items })
+            values = values.slice(1)
         }
         return options.concat(values)
     }
@@ -183,10 +185,8 @@ Control {
                         : modelData.kind === "options" ? "visualOptionGroup" + index : "visualValueGroup" + index
             height: 26
             spacing: 3
-            // The rule before a group; none at the start of a line or
-            // within a group the values continue.
+            // The rule before a group; none at the start of a line.
             Rectangle {
-                visible: !(segment.modelData.continues ?? false)
                 Layout.preferredWidth: 1
                 Layout.preferredHeight: 18
                 Layout.rightMargin: 3
@@ -195,7 +195,7 @@ Control {
                 opacity: segment.x > 0 ? 1 : 0
             }
             Label {
-                visible: segment.modelData.group.length > 0 && !(segment.modelData.continues ?? false)
+                visible: segment.modelData.group.length > 0
                 Layout.alignment: Qt.AlignVCenter
                 Layout.rightMargin: 3
                 text: bar.groupName(segment.modelData.group)
@@ -210,7 +210,7 @@ Control {
                 }
             }
             Repeater {
-                model: segment.modelData.kind === "values" ? segment.modelData.items : []
+                model: segment.modelData.kind === "values" ? segment.modelData.items : (segment.modelData.values ?? [])
                 delegate: VisualValueField {
                     required property var modelData
                     Layout.alignment: Qt.AlignVCenter

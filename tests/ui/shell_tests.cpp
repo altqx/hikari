@@ -20614,6 +20614,17 @@ private slots:
             }
             QCOMPARE(origins, 1);
         }
+        // ... and X and Y share the mode's item of the Flow: a wrap cannot
+        // part them from it.
+        const auto flowItem = [](QQuickItem *item) {
+            while (item && item->parentItem() && item->parentItem()->objectName() != QLatin1String("visualToolGroups"))
+                item = item->parentItem();
+            return item;
+        };
+        QVERIFY(flowItem(option("orgMode")));
+        QCOMPARE(flowItem(visualItem("visualValue_orgx")), flowItem(option("orgMode")));
+        QCOMPARE(flowItem(visualItem("visualValue_orgy")), flowItem(option("orgMode")));
+        QVERIFY(flowItem(visualItem("visualValue_frx")) != flowItem(option("orgMode")));
         // The plane on: Lock outer quad can be pushed.
         QVERIFY(QMetaObject::invokeMethod(option("plane"), "click"));
         QTRY_VERIFY(option("plane")->property("checked").toBool());
