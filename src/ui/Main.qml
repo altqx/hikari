@@ -1973,7 +1973,7 @@ ApplicationWindow {
                 iconRole: "font-collector"
                 text: qsTr("Font collector")
                 enabled: root.shell.hasEditingTarget && root.shell.assColumns
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
             }
             ShellMenuItem {
                 help: qsTr("Resample subtitles") // HikariSubFrame.cpp:340
@@ -5428,7 +5428,7 @@ ApplicationWindow {
                         ShellMenuItem {
                             iconRole: "font-collector"
                             objectName: "gridFontCollector"; text: qsTranslate("HikariSub.Grid", "Font collector"); enabled: root.shell.assColumns
-                            onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) fontCollectorDialog.showOnce()
+                            onTriggered: if (!root.gridGesture(this, "GLOBAL_OPEN_FONT_COLLECTOR")) root.openFontCollector()
                         }
                         // Y9: SubsGrid.cpp:289, enabled for a ".mkv" or ".ogm" video.
                         ShellMenuItem {
@@ -6875,20 +6875,28 @@ ApplicationWindow {
         tagButtons: root.tagButtons
         anchors.centerIn: parent
     }
-    // Y8: the font collector; a double click on a Style in its log opens the
+    // Y8: the font collector, PU6: a window on DG1's frame made at its first
+    // opening (as KA7's); a double click on a Style in its log opens the
     // Style editor (StyleStore::ShowStyleEdit).
-    FontCollectorDialog {
-        id: fontCollectorDialog
-        collector: root.fontCollector
-        anchors.centerIn: parent
-        Connections {
-            target: root.fontCollector
-            function onStyleRequested(style) {
-                styleManagerWindow.showFor(style)
-                const row = styleManagerWindow.styles.documentStyles.indexOf(style)
-                if (row >= 0)
-                    styleManagerWindow.beginEditing(styleManagerWindow.styles.beginEdit(false, row), false)
-            }
+    Loader {
+        id: fontCollectorLoader
+        active: false
+        sourceComponent: FontCollectorDialog {
+            collector: root.fontCollector
+            settings: root.app.settings
+        }
+    }
+    function openFontCollector() {
+        fontCollectorLoader.active = true
+        fontCollectorLoader.item.showOnce()
+    }
+    Connections {
+        target: root.fontCollector
+        function onStyleRequested(style) {
+            styleManagerWindow.showFor(style)
+            const row = styleManagerWindow.styles.documentStyles.indexOf(style)
+            if (row >= 0)
+                styleManagerWindow.beginEditing(styleManagerWindow.styles.beginEdit(false, row), false)
         }
     }
     SelectLinesDialog {

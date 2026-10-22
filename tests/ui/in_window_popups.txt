@@ -13,8 +13,6 @@ FontCatalogWindow.qml:window
 FontCatalogWindow.qml:edition
 FontCatalogWindow.qml:clash
 FontCatalogWindow.qml:deleteQuestion
-FontCollectorDialog.qml:dialog
-FontCollectorDialog.qml:replaceQuestion
 FontDialog.qml:dialog
 FontsFromSubtitlesDialog.qml:dialog
 Main.qml:shiftConfirm

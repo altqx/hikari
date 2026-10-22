@@ -2901,10 +2901,16 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(saveBox, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!saveBox->isVisible());
             for (const auto &[host, part, options] : boxes) {
-                // The Search tool's message box comes with its panel.
+                // The Search tool's message box comes with its panel, the
+                // Font collector's with its window (PU6).
                 const bool search = qstrcmp(host, "findMessages") == 0;
+                const bool collector = qstrcmp(host, "fontCollectorMessages") == 0;
                 if (search) {
                     QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
+                    QTRY_VERIFY(named(host));
+                }
+                if (collector) {
+                    QVERIFY(QMetaObject::invokeMethod(root, "openFontCollector"));
                     QTRY_VERIFY(named(host));
                 }
                 QObject *found = named(host);
@@ -2919,6 +2925,8 @@ private slots:
                 QTRY_VERIFY(!shown->isVisible());
                 if (search)
                     QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "close"));
+                if (collector)
+                    QVERIFY(QMetaObject::invokeMethod(named("fontCollectorDialog"), "close"));
             }
         }
     }
@@ -7621,12 +7629,12 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
                                  30000);
         auto &collector = application->fontCollector();
-        auto *dialog = named("fontCollectorDialog");
+        QObject *dialog = nullptr;
         QVERIFY(QMetaObject::invokeMethod(named("fontCollectorMenuItem"), "triggered"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
+        QTRY_VERIFY((dialog = named("fontCollectorDialog")) && dialog->property("visible").toBool());
         auto *fromMkv = dialogItem("fontCollectorDialog", "fontCollectorFromMkv");
         QVERIFY(fromMkv);
-        QCOMPARE(fromMkv->property("text").toString(), QStringLiteral("Demux fonts from loaded MKV file"));
+        QCOMPARE(fromMkv->property("text").toString(), QStringLiteral("Take the fonts from the loaded MKV file"));
         // Enabled for an MKV video whatever the Options choice (at open).
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorOption0")->property("checked").toBool());
         QVERIFY(fromMkv->property("enabled").toBool());
@@ -7783,18 +7791,21 @@ private slots:
         collector.setFontService(std::move(fonts));
         QString revealed;
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("fontCollectorDialog"));
-        QVERIFY(dialog);
+        // PU6: the window is made at its first opening.
+        QVERIFY(!root->findChild<QObject *>(QStringLiteral("fontCollectorDialog")));
         auto *menuItem = named("fontCollectorMenuItem");
         QVERIFY(menuItem && menuItem->property("enabled").toBool());
-        // K1: the item and the window's title show the set's font-collector icon.
+        // K1: the item shows the set's font-collector icon.
         QQmlExpression iconSource(qmlContext(menuItem), menuItem, QStringLiteral("icon.source.toString()"));
         QVERIFY(iconSource.evaluate().toString().startsWith(QLatin1String("image://hikari-icon/font-collector/")));
         QVERIFY(QMetaObject::invokeMethod(menuItem, "triggered"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        auto *title = dialog->findChild<QQuickItem *>(QStringLiteral("fontCollectorDialogTitle"));
-        QVERIFY(title);
-        QCOMPARE(title->property("iconRole").toString(), QStringLiteral("font-collector"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("fontCollectorDialog"))) &&
+                    dialog->property("visible").toBool());
+        // PU6: the action's hint and the empty log's line.
+        QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorActionHint")->property("text").toString(),
+                 QStringLiteral("Lists the fonts the subtitles use and whether this computer has each one."));
+        QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorLogEmpty")->isVisible());
         // FONT_COLLECTOR_ACTION 0: the path controls are disabled.
         QVERIFY(dialogItem("fontCollectorDialog", "fontCollectorOption0")->property("checked").toBool());
         QVERIFY(!dialogItem("fontCollectorDialog", "fontCollectorPath")->property("enabled").toBool());
@@ -7933,29 +7944,27 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
             f.write("previous archive");
         }
-        auto *replaceQuestion = root->findChild<QObject *>(QStringLiteral("fontCollectorReplaceQuestion"));
-        QVERIFY(replaceQuestion);
         const auto readZip = [&] {
             QFile f(zipPath);
             return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
         };
+        // PU6: a message box, Replace or Cancel (the default); Cancel runs nothing.
+        const QString exists = QStringLiteral("“collected.zip” already exists.");
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
-        QTRY_VERIFY(replaceQuestion->property("visible").toBool());
-        QCOMPARE(replaceQuestion->property("text").toString(), QStringLiteral("The zip file already exists, delete it?"));
-        QCOMPARE(replaceQuestion->property("title").toString(), QStringLiteral("Confirmation"));
-        QVERIFY(QMetaObject::invokeMethod(replaceQuestion, "accept"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"), exists, QStringLiteral("cancel"));
+        QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"), exists, QStringLiteral("replace"));
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
         QCOMPARE(readZip(), QByteArray("previous archive"));
         collector.close();
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Options));
         QCOMPARE(readZip(), QByteArray("previous archive"));
-        // Yes again; the incomplete review is not acknowledged, so Apply is
-        // refused and the archive stays.
-        QTRY_VERIFY(!replaceQuestion->property("visible").toBool());
+        // Replace again; the incomplete review is not acknowledged, so Apply
+        // is refused and the archive stays.
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
-        QTRY_VERIFY(replaceQuestion->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(replaceQuestion, "accept"));
+        answerMessage("fontCollectorMessages", QStringLiteral("Font collector"), exists, QStringLiteral("replace"));
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Review));
         collector.apply(false);
@@ -7966,7 +7975,6 @@ private slots:
         QVERIFY(collector.waitIdle());
         QCOMPARE(collector.stage(), int(app::FontCollectorController::Done));
         QVERIFY(readZip().startsWith(QByteArray("PK\x03\x04", 4)));
-        QTRY_VERIFY(!replaceQuestion->property("visible").toBool());
 
         // "Save to video / subtitles folder.": a folder beside the subtitles
         // named in the interface language, "Fonts" in English (FC-czcionki;
