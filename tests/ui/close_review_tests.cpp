@@ -231,6 +231,42 @@ private slots:
         QVERIFY(readAll(good).contains(",,unsaved"));
     }
 
+    // Two Untitled rows: the second's picker doesn't start on the file
+    // picked for the first (both would save to it).
+    void eachUntitledRowStartsWithoutTheFileBefore()
+    {
+        app::Application a;
+        a.addPage();
+        edit(a, u8"first work");
+        a.addPage();
+        edit(a, u8"second work");
+        QQmlApplicationEngine engine;
+        hikari::ui::attachDocking(engine);
+        engine.setInitialProperties(a.qmlProperties());
+        engine.loadFromModule("Hikari.Ui", "Main");
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        window->close();
+        QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeReview")));
+        const auto named = [window](const char *name) { return find(window, name); };
+        QTRY_VERIFY(named("closeSaveAndClose"));
+        QVERIFY(QMetaObject::invokeMethod(named("closeSaveAndClose"), "clicked"));
+        QObject *picker = named("closeSaveAs");
+        QTRY_VERIFY(picker->property("visible").toBool());
+        const QUrl first = QUrl::fromLocalFile(dir.filePath(QStringLiteral("first.ass")));
+        picker->setProperty("selectedFile", first);
+        QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
+        QTRY_VERIFY(picker->property("visible").toBool()); // the second row's turn
+        QVERIFY(picker->property("selectedFile").toUrl() != first);
+        picker->setProperty("selectedFile", QUrl::fromLocalFile(dir.filePath(QStringLiteral("second.ass"))));
+        QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
+        QMetaObject::invokeMethod(picker, "close");
+        QTRY_VERIFY(a.quitApproved());
+        a.waitForWrites();
+        QVERIFY(readAll(dir.filePath(QStringLiteral("first.ass"))).contains("first work"));
+        QVERIFY(readAll(dir.filePath(QStringLiteral("second.ass"))).contains("second work"));
+    }
+
     void cancelKeepsEverything()
     {
         app::Application a;

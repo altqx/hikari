@@ -7607,6 +7607,40 @@ private slots:
         QCOMPARE(kept->document().lines().size(), std::size_t(1));
     }
 
+    // A tab left and come back to while the file is read is unchanged (its
+    // video opened again): the track replaces its Document.
+    void anMkvReadReplacesATabLeftAndComeBackTo()
+    {
+        auto &matroska = application->matroska();
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(chooser);
+        const QString subs = writeFile(dir, "mkvback.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
+        QVERIFY(application->openFile(subs));
+        const auto source = *application->workspace().editingTarget();
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        const auto ready = [&] {
+            return QTest::qWaitFor([&] {
+                return application->video().session().state() == application::VideoSession::State::Ready &&
+                       QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())) == mkv;
+            }, 30000);
+        };
+        application->video().openVideo(mkv);
+        QVERIFY(ready());
+        QTRY_VERIFY(matroska.available());
+        QVERIFY(matroska.start()); // a clean tab: no question
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->addPage();
+        const auto tabs = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(tabs, source) - tabs.begin()));
+        QVERIFY(ready()); // its video again
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->files().session(source), 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs.size());
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*application->workspace().editingTarget())),
+                 QStringLiteral("mkvextract.ass"));
+    }
+
     // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
     // 20d647c4) on an MKV file: OnMkvSubs on that file (Demux reads its
     // subtitle track, every block of it) instead of reading the Matroska

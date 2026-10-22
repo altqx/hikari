@@ -5,6 +5,7 @@
 // on the Home page (PU1-startup-cards).
 
 #include "hikari/app/application.h"
+#include "hikari/app/matroska_controller.h"
 #include "docking.h"
 #include "theme.h"
 
@@ -455,12 +456,22 @@ private slots:
     // An MKV load's Save and load over a file changed on disk (Y9): the load
     // goes on once the save is written; a write that fails cancels it, so
     // the work it was to save is not replaced.
+private:
+    // The MKV load's states once Save and load was chosen: 1 (listing) when
+    // it went on.
+    QList<int> mkvStates;
     QObject *saveOverForAnMkvLoad(const QString &path, const std::function<void()> &beforeAnswer)
     {
         start();
         QObject *flow = named("matroskaSubtitles");
         if (!flow || !application->openFile(path))
             return nullptr;
+        // File > Open's MKV (none there: a load that goes on lists nothing).
+        if (!application->matroska().beginFile(dir.filePath(QStringLiteral("none.mkv"))))
+            return nullptr;
+        mkvStates.clear();
+        connect(&application->matroska(), &app::MatroskaController::stateChanged, this,
+                [this] { mkvStates << application->matroska().state(); });
         changeOnDisk(path, "theirs");
         QMetaObject::invokeMethod(window, "checkExternalChange");
         if (!QTest::qWaitFor([&] { return shown("diskChangeBar"); }))
@@ -474,6 +485,8 @@ private slots:
         QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("saveOver")));
         return flow;
     }
+
+private slots:
     void anMkvLoadGoesOnOnceTheSaveOverIsWritten()
     {
         const QString path = writeAss(dir.filePath(QStringLiteral("mkvwait/written.ass")), "mine");
@@ -483,6 +496,31 @@ private slots:
         application->waitForWrites();
         QTRY_VERIFY(!flow->property("waitingForSave").toBool());
         QCOMPARE(readAll(path).count("mine"), qsizetype(2));
+        QVERIFY(mkvStates.contains(1));
+    }
+    // Another tab chosen while the save is written, or work typed after it
+    // started: the load is cancelled (it would act on another tab, or
+    // replace what wasn't saved).
+    void anMkvLoadIsCancelledWhenAnotherTabIsChosenDuringTheSave()
+    {
+        const QString path = writeAss(dir.filePath(QStringLiteral("mkvwait/switched.ass")), "mine");
+        QObject *flow = saveOverForAnMkvLoad(path, [] {});
+        QVERIFY(flow);
+        application->addPage();
+        application->waitForWrites();
+        QTRY_VERIFY(!flow->property("waitingForSave").toBool());
+        QVERIFY(!mkvStates.contains(1));
+    }
+    void anMkvLoadIsCancelledByWorkTheSaveDidNotCover()
+    {
+        const QString path = writeAss(dir.filePath(QStringLiteral("mkvwait/newer.ass")), "mine");
+        QObject *flow = saveOverForAnMkvLoad(path, [] {});
+        QVERIFY(flow);
+        application->duplicateLines(); // after the save started
+        application->waitForWrites();
+        QTRY_VERIFY(!flow->property("waitingForSave").toBool());
+        QVERIFY(!mkvStates.contains(1));
+        QVERIFY(target()->isDirty());
     }
     void anMkvLoadIsCancelledWhenTheSaveOverFails()
     {
@@ -504,7 +542,7 @@ private slots:
         application->waitForWrites();
         QTRY_VERIFY(!flow->property("waitingForSave").toBool());
         QCOMPARE(flow->property("writes").toList().size(), 0);
-        QCOMPARE(application->matroska().state(), 0);
+        QVERIFY(!mkvStates.contains(1));
         QVERIFY(target()->isDirty());
         QVERIFY(readAll(path).contains("theirs"));
     }
