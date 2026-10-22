@@ -20,6 +20,8 @@
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
+#include <algorithm>
+
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
 using namespace hikari;
@@ -180,7 +182,9 @@ private slots:
         QTRY_VERIFY(application->workspace().reference().has_value());
         QCOMPARE(application->workspace().tabs().size(), tabs);
         QCOMPARE(application->workspace().documents().size(), documents + 1);
-        // Keep mine: the bar goes; the work stays.
+        // Keep mine: the bar goes; the work stays. A second change made while
+        // the bar showed is the one accepted: it isn't asked about again.
+        changeOnDisk(path, "theirs twice");
         QVERIFY(QMetaObject::invokeMethod(named("reloadNo"), "clicked"));
         QTRY_VERIFY(!bar->property("visible").toBool());
         QCOMPARE(target()->document().lines().size(), std::size_t(2));
@@ -221,6 +225,31 @@ private slots:
         application->waitForWrites();
         QTRY_COMPARE(readAll(path).count("theirs again"), qsizetype(2));
         QVERIFY(!readAll(path).contains("theirs third"));
+    }
+
+    // Compared, then reloaded: the comparison is made again with the file as
+    // it now is (the reloaded Document matches the copy from disk).
+    void aReloadComparesAgain()
+    {
+        start();
+        const QString path = writeAss(dir.filePath(QStringLiteral("disk/compared.ass")), "mine");
+        QVERIFY(application->openFile(path));
+        const auto document = *application->workspace().editingTarget();
+        changeOnDisk(path, "theirs");
+        QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
+        QTRY_VERIFY(shown("diskChangeBar"));
+        QVERIFY(QMetaObject::invokeMethod(named("diskChangeCompare"), "clicked"));
+        QTRY_VERIFY(application->comparison().active());
+        const auto differs = [&] {
+            const auto *table = application->comparison().table(document);
+            return table && std::ranges::any_of(*table, [](const auto &line) { return !line.match(); });
+        };
+        QVERIFY(differs());
+        QVERIFY(QMetaObject::invokeMethod(named("reloadYes"), "clicked"));
+        QTRY_VERIFY(!shown("diskChangeBar"));
+        QCOMPARE(firstLine(), QStringLiteral("theirs"));
+        QVERIFY(application->comparison().table(document));
+        QVERIFY(!differs());
     }
 
     // PU1-picker-titles: a picker with no folder of its own (no video, no

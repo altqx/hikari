@@ -7502,7 +7502,8 @@ private slots:
         QCOMPARE(application->files().session(drafted)->draftText(), std::optional<std::u8string>(u8"typed"));
 
         // Another video opened in the tab meanwhile keeps the tab: the track
-        // is the old video's, so it opens in a new tab.
+        // is the old video's, so it opens in a new tab, also while that video
+        // is still being opened.
         QVERIFY(draftSession->commitDraft());
         const auto reopened = application->workspace().tabs();
         application->selectTab(int(std::ranges::find(reopened, drafted) - reopened.begin()));
@@ -7515,7 +7516,6 @@ private slots:
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         application->video().openVideo(nativeFixture("cfr.mkv"));
-        QVERIFY(videoReady(nativeFixture("cfr.mkv")));
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
         QTRY_COMPARE(matroska.state(), 0);
