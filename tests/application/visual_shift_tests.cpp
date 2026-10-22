@@ -2032,3 +2032,46 @@ TEST(VisualCapture, ReplaysTheLegacyT6Probe)
     EXPECT_GT(states, 140);
     EXPECT_GT(drawings, 30);
 }
+
+// HY2 (#272, folded into PU5): every option Edit tags shows behind
+// Advanced (range, step, decimal places, count, change option, placing) and
+// its default values survive the definitions file both ways, in legacy's
+// layout, beside the definitions it did not touch.
+TEST(AllTagsEdition, EveryAdvancedOptionRoundTripsThroughTheFile)
+{
+    using Number = AllTagsEdition::Number;
+    AllTagsEdition edition(defaultAllTags(), 0);
+    edition.addTag();
+    ASSERT_EQ(edition.setName(u"glow edge"), AllTagsEdition::Check::Ok);
+    ASSERT_EQ(edition.setTag(u"\\be"), AllTagsEdition::Check::Ok);
+    ASSERT_EQ(edition.setNumber(Number::Min, u"-20,5"), AllTagsEdition::Check::Ok);
+    ASSERT_EQ(edition.setNumber(Number::Max, u"300"), AllTagsEdition::Check::Ok);
+    ASSERT_EQ(edition.setNumber(Number::Step, u"0.25"), AllTagsEdition::Check::Ok);
+    ASSERT_EQ(edition.setNumber(Number::Digits, u"3"), AllTagsEdition::Check::Ok);
+    edition.setCount(4);
+    for (const auto [field, text] : {std::pair{Number::Value0, u"1.5"}, std::pair{Number::Value1, u"-2"},
+                                     std::pair{Number::Value2, u"3.75"}, std::pair{Number::Value3, u"4"}})
+        ASSERT_EQ(edition.setNumber(field, text), AllTagsEdition::Check::Ok);
+    edition.setChangeOption(PasteGradientLineIncrease);
+    edition.setPlacing(2);
+    const AllTagsSetting &edited = edition.current();
+    EXPECT_EQ(edited.rangeMin, -20.5f);
+    EXPECT_EQ(edited.rangeMax, 300.f);
+    EXPECT_EQ(edited.step, 0.25f);
+    EXPECT_EQ(edited.digitsAfterDot, 3);
+    EXPECT_EQ(edited.numOfValues, 4);
+    EXPECT_EQ(edited.values, (std::array<float, 4>{1.5f, -2.f, 3.75f, 4.f}));
+    EXPECT_EQ(edited.tagMode, PasteGradientLineIncrease);
+    EXPECT_EQ(edited.mode, 2);
+
+    const std::u16string text = writeAllTags(edition.usable());
+    EXPECT_TRUE(text.starts_with(u"HYDRA2.0\nTag: blur, blur, "));
+    EXPECT_TRUE(text.ends_with(u"Tag: glow edge, be, -20.500000, 300.000000, 1.500000, 0.250000, 3, 2, 6, "
+                               u"-2.000000, 3.750000, 4.000000\n"))
+        << std::string(text.begin(), text.end());
+    bool write = true;
+    EXPECT_EQ(parseAllTags(text, &write), edition.usable());
+    EXPECT_FALSE(write);
+    // And back: the defaults, edited nowhere, are written as they were read.
+    EXPECT_EQ(writeAllTags(parseAllTags(writeAllTags(defaultAllTags()))), writeAllTags(defaultAllTags()));
+}

@@ -21341,6 +21341,21 @@ private slots:
         QVERIFY(editor);
         QCOMPARE(editor->selection(), 1); // the list's selection
         QCOMPARE(editor->tag(), QStringLiteral("bord"));
+        // HY2 (#272, folded into PU5): the name, the tag and its default
+        // first; range, step, decimal places, count and the change option
+        // behind Advanced, folded at each opening.
+        QObject *advanced = named("tagsAdvanced");
+        QVERIFY(advanced);
+        QVERIFY(!advanced->property("expanded").toBool());
+        for (const char *shown : {"tagsName", "tagCode", "tagValue0"})
+            QVERIFY2(named(shown)->property("visible").toBool(), shown);
+        const char *advancedFields[] = {"tagMin", "tagMax", "tagStep", "tagDigits", "tagCount", "tagChange"};
+        for (const char *folded : advancedFields)
+            QVERIFY2(!named(folded)->property("visible").toBool(), folded);
+        QVERIFY(QMetaObject::invokeMethod(named("tagsAdvancedHeader"), "clicked"));
+        QTRY_VERIFY(advanced->property("expanded").toBool());
+        for (const char *field : advancedFields)
+            QVERIFY2(named(field)->property("visible").toBool(), field);
         QCOMPARE(named("tagMax")->property("text").toString(), QStringLiteral("50"));
         QCOMPARE(named("tagCount")->property("currentIndex").toInt(), 0);
         QVERIFY(!named("tagValue1")->property("visible").toBool());
@@ -21400,6 +21415,16 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("tagVariant"), "activated", Q_ARG(int, 3)));
         QCOMPARE(editor->changeOption(), static_cast<int>(PasteGradientLineDecrease));
         QTRY_VERIFY(file().endsWith("Tag: wide, fscx, 0.000000, 400.000000, 0.000000, 1.000000, 0, 0, 7, 0.000000\n"));
+        // Duplicate, then Delete: each a step the strip and the file follow.
+        QVERIFY(QMetaObject::invokeMethod(named("duplicateTag"), "clicked"));
+        QCOMPARE(editor->name(), QStringLiteral("wide copy"));
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 24);
+        QTRY_VERIFY(file().contains("Tag: wide copy, fscx, "));
+        QVERIFY(QMetaObject::invokeMethod(named("deleteTag"), "clicked"));
+        QCOMPARE(editor->items().size(), 23);
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 23);
+        QTRY_VERIFY(!file().contains("Tag: wide copy"));
+        QCOMPARE(named("tagsUndo")->property("tip").toString(), QStringLiteral("Undo “Delete tag”"));
         // Undo all changes (⋯): one step back to the list as it opened.
         QVERIFY(QMetaObject::invokeMethod(named("tagsUndoAll"), "triggered"));
         QCOMPARE(editor->items().size(), 22);
@@ -21428,6 +21453,12 @@ private slots:
         QTRY_VERIFY(!dialog->isVisible());
         QTRY_VERIFY(!tools.tagsEditor());
         QCOMPARE(option("tag")->property("model").toStringList().size(), 22);
+        // Opened again: Advanced folded again.
+        QVERIFY(openEditTags());
+        QTRY_VERIFY(dialog->isVisible());
+        QVERIFY(!named("tagsAdvanced")->property("expanded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("tagsClose"), "clicked"));
+        QTRY_VERIFY(!dialog->isVisible());
         tools.setAllTagsFile({});
     }
 
@@ -21714,6 +21745,12 @@ private slots:
             QTest::qWait(300);
             QTRY_VERIFY((shot = dialog->grabWindow(), !shot.isNull() && shot.width() > 0));
             QVERIFY(shot.save(out + QStringLiteral("/tags-edition-dialog") + suffix));
+            // HY2: Advanced opened.
+            QVERIFY(QMetaObject::invokeMethod(named("tagsAdvancedHeader"), "clicked"));
+            QTRY_VERIFY(named("tagsAdvanced")->property("expanded").toBool());
+            QTest::qWait(300);
+            QTRY_VERIFY((shot = dialog->grabWindow(), !shot.isNull() && shot.width() > 0));
+            QVERIFY(shot.save(out + QStringLiteral("/tags-edition-dialog-advanced") + suffix));
             QVERIFY(QMetaObject::invokeMethod(named("tagsClose"), "clicked"));
             QTRY_VERIFY(!dialog->isVisible());
         }

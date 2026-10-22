@@ -9,9 +9,11 @@ import Hikari.Ui
 // editing" (AllTagsEdition, VisualAllTagsEdition.cpp:155-455), opened by
 // Hydra's "Edit tags…". The same window as "Edit shapes": the definitions on
 // the left in the strip's sections (Common, More folded, Your tags) with a
-// search, New tag, Duplicate, Delete and ⋯ under them; the selected one in
-// three sections, Tag, Values and Change, in the strip's words (HY1); the
-// preview under them: the strip as Hydra shows the tag, and what Set writes
+// search, New tag, Duplicate, Delete and ⋯ under them; the selected one's
+// name, tag and default value, then behind Advanced (folded; HY2 #272,
+// folded into PU5) its range, step, decimal places, count and change
+// option with Set's placing, in the strip's words (HY1); the preview under
+// them: the strip as Hydra shows the tag, and what Set writes
 // on the active Line. Each change is kept as it is made; Undo and Redo walk
 // the window's steps; Close and Esc keep them. A value the tool cannot use
 // is said under its field and the definition keeps its last good one; a
@@ -35,6 +37,9 @@ DialogWindow {
     readonly property var multiplyNames: [qsTr("Set by line number"), qsTr("Add by line number")]
     readonly property var gradientNames: [qsTr("Across characters, increasing"), qsTr("Across characters, decreasing"),
                                           qsTr("Across lines, increasing"), qsTr("Across lines, decreasing")]
+    // HY2: Advanced is folded at each opening of the window.
+    property bool advancedOpen: false
+    onVisibleChanged: if (visible) advancedOpen = false
     readonly property int changeOption: editor ? editor.changeOption : 1
     readonly property int change: changeOption === 1 ? 0 : changeOption === 0 ? 1 : changeOption <= 3 ? 2 : 3
     readonly property var variants: change === 0 ? placingNames : change === 2 ? multiplyNames
@@ -231,8 +236,11 @@ DialogWindow {
             Accessible.name: valueEdit.label
         }
     }
+    // (One width, so the Advanced rows line up with the ones above.)
     component RowLabel: Label {
         color: Theme.muted
+        horizontalAlignment: Text.AlignRight
+        Layout.preferredWidth: 80
         Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
     }
     component SectionTitle: Label {
@@ -458,7 +466,8 @@ DialogWindow {
                 x: 20
                 spacing: 8
 
-                Label { text: qsTr("Tag"); font.weight: Font.DemiBold }
+                // HY2 (#272, folded into PU5): the name, the tag and its
+                // default first; the rest behind Advanced, folded.
                 GridLayout {
                     columns: 2
                     columnSpacing: 12
@@ -488,59 +497,9 @@ DialogWindow {
                     }
                     Item { implicitWidth: 1; visible: tagCodeError.visible }
                     FieldError { id: tagCodeError; objectName: "tagCodeError"; text: tagCode.error; Layout.fillWidth: true }
-                }
-
-                Rule {}
-                SectionTitle { text: qsTr("Values") }
-                GridLayout {
-                    columns: 2
-                    columnSpacing: 12
-                    rowSpacing: 8
-                    RowLabel { text: qsTr("Range") }
-                    RowLayout {
-                        spacing: 8
-                        NumberEdit { id: rangeMin; objectName: "tagMin"; field: "min"; Accessible.name: qsTr("Minimum") }
-                        Label { text: qsTr("to"); color: Theme.muted }
-                        NumberEdit { id: rangeMax; objectName: "tagMax"; field: "max"; Accessible.name: qsTr("Maximum") }
-                    }
-                    Item { implicitWidth: 1; visible: rangeError.visible }
-                    FieldError {
-                        id: rangeError
-                        objectName: "tagRangeError"
-                        text: rangeMin.error || rangeMax.error
-                        Layout.fillWidth: true
-                    }
-                    RowLabel { text: qsTr("Step") }
-                    RowLayout {
-                        spacing: 8
-                        NumberEdit { id: stepField; objectName: "tagStep"; field: "step"; Accessible.name: qsTr("Step") }
-                        Label { text: qsTr("Decimal places"); color: Theme.muted; Layout.leftMargin: 10 }
-                        NumberEdit {
-                            id: digitsField
-                            objectName: "tagDigits"
-                            field: "digits"
-                            Layout.preferredWidth: 52
-                            Accessible.name: qsTr("Decimal places")
-                        }
-                    }
-                    Item { implicitWidth: 1; visible: stepError.visible }
-                    FieldError {
-                        id: stepError
-                        objectName: "tagStepError"
-                        text: stepField.error || digitsField.error
-                        Layout.fillWidth: true
-                    }
-                    RowLabel { text: qsTr("Count") }
-                    SegmentedButtons {
-                        objectName: "tagCount"
-                        // Legacy's "No / One / Two / Three additional values".
-                        choices: [1, 2, 3, 4].map(n => ({ text: String(n), name: "tagCount" + n,
-                                                          tip: qsTr("The tag takes %n value(s)", "", n) }))
-                        currentIndex: dialog.editor ? dialog.editor.count - 1 : 0
-                        Accessible.name: qsTr("Count")
-                        onActivated: index => dialog.editor.count = index + 1
-                    }
-                    RowLabel { text: qsTr("Starts at") }
+                    // The value the strip starts at (each, named as the
+                    // strip names them, for a tag taking several).
+                    RowLabel { text: qsTr("Default") }
                     Flow {
                         Layout.fillWidth: true
                         spacing: 8
@@ -558,32 +517,82 @@ DialogWindow {
                     }
                 }
 
-                Rule {}
-                SectionTitle { text: qsTr("Change") }
-                GridLayout {
-                    columns: 2
-                    columnSpacing: 12
-                    rowSpacing: 8
-                    RowLabel { text: qsTr("Starts on") }
-                    ColumnLayout {
-                        spacing: 8
-                        SegmentedButtons {
-                            objectName: "tagChange"
-                            choices: dialog.changeNames.map((n, i) => ({ text: n, name: "tagChange" + i }))
-                            currentIndex: dialog.change
-                            Accessible.name: qsTr("Starts on")
-                            onActivated: index => dialog.setChange(index)
+                FormSection {
+                    id: advanced
+                    objectName: "tagsAdvanced"
+                    title: qsTr("Advanced")
+                    expanded: dialog.advancedOpen
+                    Layout.topMargin: 6
+                    onToggled: open => dialog.advancedOpen = open
+                    GridLayout {
+                        columns: 2
+                        columnSpacing: 12
+                        rowSpacing: 8
+                        RowLabel { text: qsTr("Range") }
+                        RowLayout {
+                            spacing: 8
+                            NumberEdit { id: rangeMin; objectName: "tagMin"; field: "min"; Accessible.name: qsTr("Minimum") }
+                            Label { text: qsTr("to"); color: Theme.muted }
+                            NumberEdit { id: rangeMax; objectName: "tagMax"; field: "max"; Accessible.name: qsTr("Maximum") }
                         }
-                        ComboBox {
-                            objectName: "tagVariant"
-                            visible: dialog.variants.length > 0
-                            model: dialog.variants
-                            currentIndex: dialog.variant
-                            Layout.preferredWidth: 280
-                            Accessible.name: dialog.change === 0 ? qsTr("Where the tag goes in the text")
-                                           : dialog.change === 2 ? qsTr("How each Line's number changes the value")
-                                           : qsTr("What the gradient runs across")
-                            onActivated: index => dialog.setVariant(index)
+                        Item { implicitWidth: 1; visible: rangeError.visible }
+                        FieldError {
+                            id: rangeError
+                            objectName: "tagRangeError"
+                            text: rangeMin.error || rangeMax.error
+                            Layout.fillWidth: true
+                        }
+                        RowLabel { text: qsTr("Step") }
+                        RowLayout {
+                            spacing: 8
+                            NumberEdit { id: stepField; objectName: "tagStep"; field: "step"; Accessible.name: qsTr("Step") }
+                            Label { text: qsTr("Decimal places"); color: Theme.muted; Layout.leftMargin: 10 }
+                            NumberEdit {
+                                id: digitsField
+                                objectName: "tagDigits"
+                                field: "digits"
+                                Layout.preferredWidth: 52
+                                Accessible.name: qsTr("Decimal places")
+                            }
+                        }
+                        Item { implicitWidth: 1; visible: stepError.visible }
+                        FieldError {
+                            id: stepError
+                            objectName: "tagStepError"
+                            text: stepField.error || digitsField.error
+                            Layout.fillWidth: true
+                        }
+                        RowLabel { text: qsTr("Count") }
+                        SegmentedButtons {
+                            objectName: "tagCount"
+                            // Legacy's "No / One / Two / Three additional values".
+                            choices: [1, 2, 3, 4].map(n => ({ text: String(n), name: "tagCount" + n,
+                                                              tip: qsTr("The tag takes %n value(s)", "", n) }))
+                            currentIndex: dialog.editor ? dialog.editor.count - 1 : 0
+                            Accessible.name: qsTr("Count")
+                            onActivated: index => dialog.editor.count = index + 1
+                        }
+                        RowLabel { text: qsTr("Starts on") }
+                        ColumnLayout {
+                            spacing: 8
+                            SegmentedButtons {
+                                objectName: "tagChange"
+                                choices: dialog.changeNames.map((n, i) => ({ text: n, name: "tagChange" + i }))
+                                currentIndex: dialog.change
+                                Accessible.name: qsTr("Starts on")
+                                onActivated: index => dialog.setChange(index)
+                            }
+                            ComboBox {
+                                objectName: "tagVariant"
+                                visible: dialog.variants.length > 0
+                                model: dialog.variants
+                                currentIndex: dialog.variant
+                                Layout.preferredWidth: 280
+                                Accessible.name: dialog.change === 0 ? qsTr("Where the tag goes in the text")
+                                               : dialog.change === 2 ? qsTr("How each Line's number changes the value")
+                                               : qsTr("What the gradient runs across")
+                                onActivated: index => dialog.setVariant(index)
+                            }
                         }
                     }
                 }
