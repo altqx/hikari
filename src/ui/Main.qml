@@ -5648,25 +5648,32 @@ ApplicationWindow {
     // PK1 (#301): the toasts, at the bottom right of the main window above
     // the status bar, or of the fullscreen video window (above its pinned
     // bar) while it is open. root.notices.post(severity, title, text, options);
-    // C++ gives them through LogController::notice (NT1).
+    // C++ gives them through LogController::notice (NT1). NT1: beside the
+    // window's popup overlay and above it, so a modal dialog's dimmer does
+    // not hide them (Settings' warnings).
     ToastStack {
         id: notices
         objectName: "toastStack"
         log: root.log
         settings: root.app.settings
         readonly property bool inFullscreen: root.videoFullscreen.active
-        parent: inFullscreen ? videoFullscreenWindow.contentItem : root.contentItem
+        parent: inFullscreen ? videoFullscreenWindow.contentItem : root.Overlay.overlay.parent
         anchors.right: parent ? parent.right : undefined
         anchors.bottom: parent ? parent.bottom : undefined
         anchors.rightMargin: 12
-        anchors.bottomMargin: 12 + (inFullscreen ? videoFullscreenWindow.pinnedPanelHeight : 0)
-        z: 1000
+        anchors.bottomMargin: 12 + (inFullscreen ? videoFullscreenWindow.pinnedPanelHeight : root.footer.height)
+        z: 1000002
     }
     readonly property alias notices: notices
-    // NT1: a toast's Details (and "N more notices") opens the Log panel.
+    // NT1: a toast's Details (and "N more notices") opens the Log panel,
+    // out of fullscreen (as the fullscreen's Audio settings).
     Connections {
         target: root.log
-        function onRevealRequested() { root.showPanel(logDock) }
+        function onRevealRequested() {
+            if (root.videoFullscreen.active)
+                root.videoFullscreen.leave()
+            root.showPanel(logDock)
+        }
     }
     // NT1 (#302): the message box for the notices that need an answer
     // (root.messages.ask(options, done), MessageHost.qml).

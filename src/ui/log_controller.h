@@ -93,8 +93,10 @@ public:
     int errorCount() const { return m_counts[Error]; }
     int marked() const { return m_marked; }
 
-    // HikariLogSilent: into the Log only.
-    Q_INVOKABLE void log(const QString &text);
+    // HikariLogSilent: into the Log only (an error whose toast another
+    // message stands for: a severity and a title).
+    Q_INVOKABLE void log(const QString &text, hikari::ui::LogController::Severity severity = Info,
+                         const QString &title = {});
     // HikariLog: into the Log, and a toast (`noticed`).
     Q_INVOKABLE void notice(hikari::ui::LogController::Severity severity, const QString &title, const QString &text,
                             const QString &details = {});

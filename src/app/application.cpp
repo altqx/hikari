@@ -722,11 +722,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_replaceBackup = QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/ReplaceBackup");
     // S4: validation errors go to the Log (NT1: a menu run's as an error
     // toast); the script editor setting.
-    m_automation->setLog([this](const QString &line, bool silent) {
-        if (silent)
-            m_log->log(line);
-        else
-            m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Automation", "Automation"), line);
+    m_automation->setLog([this](const QString &line, AutomationShell::LogLine kind) {
+        const QString title = QCoreApplication::translate("HikariSub.Automation", "Automation");
+        switch (kind) {
+        case AutomationShell::LogLine::Notice: m_log->notice(ui::LogController::Error, title, line); break;
+        case AutomationShell::LogLine::Quiet: m_log->log(line); break;
+        case AutomationShell::LogLine::QuietError: m_log->log(line, ui::LogController::Error, title); break;
+        }
     });
     m_automation->setSettings(m_settings.get());
     m_automationHotkeys = std::make_unique<AutomationHotkeysController>(*m_automation, *m_settings);

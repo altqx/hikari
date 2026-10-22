@@ -702,7 +702,7 @@ void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
             m_shell.setStatusText(QString());
     });
     if (m_logLine)
-        m_logLine(ui::karaokeReportDetails(report), true);
+        m_logLine(ui::karaokeReportDetails(report), LogLine::Quiet);
     m_keepLog = report.problems > 0;
 }
 
@@ -792,10 +792,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         // loaded script" say validation failed (HikariSubFrame.cpp:929, 2641).
         // A dependency's failed validation is said the same way, naming
         // the dependency (S4-run-validation).
-        // NT1: the runtime error is the box's Details, and goes into the
+        // NT1: the runtime error is the box's Details, and an error of the
         // Log; the menu's run only logged it, now an error toast.
         if (!message.isEmpty() && m_logLine)
-            m_logLine(message, run.origin != RunOrigin::Menu);
+            m_logLine(message, run.origin == RunOrigin::Menu ? LogLine::Notice : LogLine::QuietError);
         if (run.origin != RunOrigin::Menu)
             emit notice(QStringLiteral("error"),
                         run.origin == RunOrigin::LastScript

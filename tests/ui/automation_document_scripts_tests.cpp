@@ -219,6 +219,8 @@ private slots:
         QVERIFY(!open("invalid.ass", "|" + QDir::toNativeSeparators(script).toUtf8()).isEmpty());
         QSignalSpy done(&app->automation(), &app::AutomationShell::runCompleted);
         QSignalSpy notices(&app->automation(), &app::AutomationShell::notice);
+        QSignalSpy toasts(&app->log(), &ui::LogController::noticed);
+        const int errorsBefore = app->log().errorCount();
         const auto steps = session().historySize();
         app->automation().runLastLoadedScript();
         QTRY_COMPARE_WITH_TIMEOUT(done.size(), 1, 30'000);
@@ -231,6 +233,10 @@ private slots:
         QVERIFY(notices.first().at(3).toString().contains(QStringLiteral("no way")));
         QVERIFY(app->log().history().contains(QStringLiteral("Runtime error in Lua macro validation function:")));
         QVERIFY(app->log().history().contains(QStringLiteral("no way")));
+        // An error of the Log (its filter finds it), with no toast: the box says it.
+        QCOMPARE(app->log().errorCount(), errorsBefore + 1);
+        QVERIFY(app->log().history().contains(QStringLiteral("Automation: Runtime error in Lua macro validation function:")));
+        QCOMPARE(toasts.size(), 0);
         QCOMPARE(firstText(), std::string("Gate"));
         QCOMPARE(session().historySize(), steps);
         QVERIFY(!session().isReadOnly());

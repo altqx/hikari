@@ -11619,6 +11619,9 @@ private slots:
         QQuickItem *warning = nullptr;
         QTRY_VERIFY((warning = toastWith(QStringLiteral("does not exist"))));
         QCOMPARE(partNamed(warning, "toastTitle")->property("text").toString(), QStringLiteral("Settings"));
+        // Over the modal dialog's dimmer: the topmost thing where it shows.
+        const QPointF centre = warning->mapToScene(QPointF(warning->width() / 2, warning->height() / 2));
+        QCOMPARE(warning->window()->contentItem()->childAt(centre.x(), centre.y()), item<QQuickItem>("toastStack"));
         const auto catalogs = dialog->property("catalogs").toStringList();
         QVERIFY(catalogs.contains(QStringLiteral("Conv")));
         auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
@@ -26967,6 +26970,29 @@ private slots:
         QTRY_VERIFY(!fs.active());
         QTRY_VERIFY(editorDock->property("isOpen").toBool());
         QTRY_VERIFY(item("editorPanel")->hasActiveFocus());
+    }
+
+    // NT1: a toast shows in the fullscreen window; its Details leave
+    // fullscreen for the Log panel in the main window.
+    void videoFullscreenToastDetailsLeaveForTheLog()
+    {
+        restartWithoutSound();
+        QTemporaryDir &folder = testFolder();
+        QVERIFY(v5Open(folder));
+        auto &fs = application->videoFullscreen();
+        QObject *logDock = named("logDock");
+        QVERIFY(!logDock->property("isOpen").toBool());
+        QVERIFY(fs.toggle(0));
+        QQuickWindow *fsWindow = fullscreenWindow();
+        QTRY_VERIFY(fsWindow->isExposed());
+        application->log().notice(ui::LogController::Error, QStringLiteral("Save"), QStringLiteral("nt1 fullscreen notice"),
+                                  QStringLiteral("disk full"));
+        QQuickItem *toast = nullptr;
+        QTRY_VERIFY((toast = toastWith(QStringLiteral("nt1 fullscreen notice"))));
+        QCOMPARE(toast->window(), fsWindow);
+        QVERIFY(QMetaObject::invokeMethod(partNamed(toast, "toastDetails"), "clicked"));
+        QTRY_VERIFY(!fs.active());
+        QTRY_VERIFY(logDock->property("isOpen").toBool());
     }
 
     // V5-volume-slider: the fullscreen panel shows the Video panel's volume

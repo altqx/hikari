@@ -142,13 +142,13 @@ int LogController::add(Severity severity, const QString &title, const QString &t
     return id;
 }
 
-void LogController::log(const QString &text)
+void LogController::log(const QString &text, Severity severity, const QString &title)
 {
     if (QThread::currentThread() != thread()) {
-        QMetaObject::invokeMethod(this, [this, text] { log(text); }, Qt::QueuedConnection);
+        QMetaObject::invokeMethod(this, [=, this] { log(text, severity, title); }, Qt::QueuedConnection);
         return;
     }
-    add(Info, {}, text, {});
+    add(severity, title, text, {});
 }
 
 void LogController::notice(Severity severity, const QString &title, const QString &text, const QString &details)

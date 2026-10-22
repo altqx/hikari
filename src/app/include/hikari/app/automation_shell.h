@@ -78,7 +78,10 @@ public:
     void setAudioBox(std::function<const application::AudioBox *()> box);
     // The Log (legacy HikariLog, a notice; silent: HikariLogSilent) and the
     // settings (AUTOMATION_SCRIPT_EDITOR).
-    void setLog(std::function<void(const QString &, bool silent)> log) { m_logLine = std::move(log); }
+    // A line for the Log: a notice (an error toast), a quiet line, or a
+    // quiet error (a message box says it).
+    enum class LogLine { Notice, Quiet, QuietError };
+    void setLog(std::function<void(const QString &, LogLine)> log) { m_logLine = std::move(log); }
     void setSettings(ui::SettingsStore *settings) { m_settings = settings; }
 
     // How a run was asked for: legacy validates every run first
@@ -220,7 +223,7 @@ private:
     application::DocumentScripts m_documentScripts;
     std::set<std::string> m_readScriptInfo; // the values addFromDocument read
     std::optional<std::string> m_pendingLast; // waiting for this script to load
-    std::function<void(const QString &, bool)> m_logLine;
+    std::function<void(const QString &, LogLine)> m_logLine;
     ui::SettingsStore *m_settings = nullptr;
     QString m_title, m_task, m_log, m_lastMessage, m_lastOutcome;
     double m_progress = 0;
