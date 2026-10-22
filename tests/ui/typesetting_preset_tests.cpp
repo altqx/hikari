@@ -18,6 +18,7 @@
 #include <QColor>
 #include <QDir>
 #include <QFile>
+#include <QJSValue>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -377,6 +378,57 @@ private slots:
         stop();
     }
 
+    // The chosen Style renamed in the Style manager stays chosen under its
+    // new name, whatever Style the current line uses.
+    void aRenamedStyleStaysChosen()
+    {
+        start();
+        openEpisode();
+        applyPreset("Typesetting");
+        auto *panel = item<QObject>("stylesTool");
+        QTRY_COMPARE(panel->property("rows").toList().size(), 4);
+        panel->setProperty("chosen", QStringLiteral("Unused"));
+        QCOMPARE(panel->property("chosenAt").toInt(), 3);
+        auto &styles = application->styleManager();
+        styles.refreshLists();
+        auto values = styles.beginEdit(false, 3);
+        values.insert(QStringLiteral("name"), QStringLiteral("Spare"));
+        QCOMPARE(styles.commitEdit(values, {3}, false, false), QString());
+        styles.endEdit();
+        QTRY_COMPARE(panel->property("chosen").toString(), QStringLiteral("Spare"));
+        QCOMPARE(panel->property("chosenAt").toInt(), 3);
+        stop();
+    }
+
+    // A Style named "" is listed, but neither the panel nor the Line
+    // editor's Style choice applies it.
+    void anEmptyNamedStyleIsNotApplied()
+    {
+        start();
+        const QString path = dir.filePath(QStringLiteral("blank.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n"
+                "Style: ,Arial,30,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,first\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        applyPreset("Typesetting");
+        auto *panel = item<QObject>("stylesTool");
+        QTRY_COMPARE(panel->property("rows").toList().size(), 2);
+        item("stylesList")->setProperty("currentIndex", 1);
+        QCOMPARE(panel->property("chosenAt").toInt(), 1);
+        QVERIFY(!item<QObject>("stylesApply")->property("enabled").toBool());
+        item("stylesList")->setProperty("currentIndex", 0);
+        QVERIFY(item<QObject>("stylesApply")->property("enabled").toBool());
+        stop();
+    }
+
     // Two Styles of one name (a file may hold them): the commands act on the
     // row chosen, not the first of that name.
     void aDuplicateNameActsOnTheRowChosen()
@@ -646,6 +698,17 @@ private slots:
         QVERIFY(manager);
         QTRY_VERIFY(manager->property("visible").toBool());
         QVERIFY(manager->property("editing").toBool());
+        // Bringing the manager forward keeps the edit's selections.
+        const auto list = [manager](const char *name) {
+            const QVariant v = manager->property(name);
+            return v.metaType() == QMetaType::fromType<QJSValue>() ? v.value<QJSValue>().toVariant().toList() : v.toList();
+        };
+        manager->setProperty("storeSelected", QVariant::fromValue(QVariantList{2, 5}));
+        QCOMPARE(list("storeSelected"), (QVariantList{2, 5}));
+        const auto ass = list("assSelected");
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("stylesManager"), "clicked"));
+        QCOMPARE(list("storeSelected"), (QVariantList{2, 5}));
+        QCOMPARE(list("assSelected"), ass);
         // The edit in progress is not replaced or changed under it from here.
         for (const char *name : {"stylesNew", "stylesEdit", "stylesDuplicate", "stylesDelete"})
             QVERIFY2(!item<QObject>(name)->property("enabled").toBool(), name);
