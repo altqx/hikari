@@ -615,6 +615,9 @@ void AutomationShell::cancelRun()
 {
     if (m_run && !m_cancelling) {
         m_cancelling = true;
+        // Cancelling…, and Force stop if it does not stop, are in the card:
+        // a cancel before the card's second (in a validation) opens it.
+        showCard();
         emit progressChanged();
     }
     m_manager.cancel();

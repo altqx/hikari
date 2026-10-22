@@ -190,18 +190,28 @@ void AutomationRuns::note(int id, const QString &text, int kind)
     const int first = static_cast<int>(r->lines.size());
     // An error's text is the script's too: bounded as its output is
     // (kMaxNoteLines lines of the first kMaxChars characters).
-    QString body = text.left(kMaxChars);
+    QString body = text;
     while (body.endsWith(QLatin1Char('\n')))
         body.chop(1);
+    bool cut = body.size() > kMaxChars;
+    body.truncate(kMaxChars);
     // Its first line carries the kind; a traceback's lines follow without one.
     qsizetype from = 0;
-    for (int i = 0; i < kMaxNoteLines; ++i) {
+    for (int i = 0;; ++i) {
+        if (i == kMaxNoteLines) {
+            cut = true;
+            break;
+        }
         const qsizetype newline = body.indexOf(QLatin1Char('\n'), from);
         r->lines.push_back({i == 0 ? kind : kNoLevel, at, body.mid(from, newline < 0 ? -1 : newline - from)});
         if (newline < 0)
             break;
         from = newline + 1;
     }
+    // What was cut is said, as a flooded log says it.
+    if (cut)
+        r->lines.push_back({kHostInfo, at,
+                            QCoreApplication::translate("HikariSub.Automation", "The rest of this message is not kept.")});
     r->open = false;
     emit linesAdded(id, first, static_cast<int>(r->lines.size()) - 1, -1);
     changedRow(id, {LineCountRole});

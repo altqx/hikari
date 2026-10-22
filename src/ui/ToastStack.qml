@@ -16,8 +16,9 @@ pragma Translator: "HikariSub.MainWindow"
 // Those given before the stack was made show when it is.
 //
 // AD3 (#312): what is declared in it (the macro run's progress card) sits
-// at the bottom, under the toasts, and shows whatever "Show notices as
-// toasts" says, while its `shown` is true.
+// at the bottom, under the toasts, while its `shown` is true. It shows with
+// "Show notices as toasts" off too: it is the run's control (Cancel, Force
+// stop), as legacy's progress window was, not a notice.
 //
 // post(severity, title, text, options): severity "info", "warning" or
 // "error"; title the command that gave it; options.details, more lines for

@@ -87,3 +87,8 @@ aegisub.register_macro("Work a second", "", function()
     local t = os.clock()
     while os.clock() - t < 1 do end
 end)
+
+-- Its first progress is 0: the bar is known, at its start.
+aegisub.register_macro("Set zero", "", function()
+    aegisub.progress.set(0)
+end)

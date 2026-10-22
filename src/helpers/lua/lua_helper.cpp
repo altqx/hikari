@@ -40,6 +40,7 @@ extern "C" {
 #include <cstring>
 #include <new>
 #include <filesystem>
+#include <limits>
 #include <regex>
 #include <system_error>
 #include <type_traits>
@@ -74,7 +75,9 @@ Script g_script;
 bool g_topLevel = false; // the script's top level runs (Load)
 Responder *g_responder = nullptr; // the running request
 Responder *g_services = nullptr;  // host services: the running request, or the Load while the top level runs
-int g_lastProgress = 0;
+// Below any progress: a run's first set is always sent (set(0) included).
+constexpr int kNoProgress = std::numeric_limits<int>::min();
+int g_lastProgress = kNoProgress;
 char g_cancelTag; // its address identifies aegisub.cancel()
 
 std::string toUtf8(const std::filesystem::path &p)
@@ -2366,7 +2369,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     g_subs = &staged;
     g_responder = &r;
     g_services = &r;
-    g_lastProgress = 0;
+    g_lastProgress = kNoProgress;
     installSink(L);
     lua_getglobal(L, "aegisub");
     // Legacy AutoToFile's constructor, made for each run: these three stay

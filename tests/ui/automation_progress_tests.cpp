@@ -100,6 +100,18 @@ private slots:
     }
     void cleanupTestCase() { application.reset(); }
 
+    // A test that failed midway leaves no run behind for the next ones.
+    void cleanup()
+    {
+        if (!automation().running())
+            return;
+        if (automation().dialogs()->isOpen())
+            automation().dialogs()->finish(0, {});
+        automation().cancelRun();
+        QVERIFY(ended());
+        automation().dismissCard();
+    }
+
     // A run that ends at once and logs nothing: the notice, then nothing.
     void aShortRunShowsOnlyTheNotice()
     {
@@ -265,10 +277,11 @@ private slots:
     }
 
     // Time in a dialog pauses the second, it does not restart it: 1.5 s of
-    // a 2 s second before the dialog, the card about 0.5 s after it.
+    // a 4 s second before the dialog (its work is CPU time, longer on a busy
+    // machine), the card at most 2.5 s after it, not the 4 s of a restart.
     void theSecondResumesAfterADialog()
     {
-        automation().setCardDelay(2000);
+        automation().setCardDelay(4000);
         QVERIFY(start("Work, ask, work"));
         auto *dialogs = automation().dialogs();
         QTRY_VERIFY_WITH_TIMEOUT(dialogs->isOpen(), 10'000);
@@ -278,7 +291,7 @@ private slots:
         timer.start();
         dialogs->finish(0, {});
         QTRY_COMPARE_WITH_TIMEOUT(automation().cardState(), QStringLiteral("running"), 10'000);
-        QVERIFY2(timer.elapsed() < 1500, qPrintable(QString::number(timer.elapsed())));
+        QVERIFY2(timer.elapsed() < 3500, qPrintable(QString::number(timer.elapsed())));
         automation().cancelRun();
         QVERIFY(ended());
         automation().dismissCard();
@@ -307,6 +320,30 @@ private slots:
         automation().cancelRun();
         QVERIFY(ended());
         automation().dismissCard();
+    }
+
+    // Cancel during the validation opens the card: Cancelling…, and Force
+    // stop if it does not stop, are in the card.
+    void cancellingDuringValidationOpensTheCard()
+    {
+        automation().setCardDelay(60'000);
+        QVERIFY(start("Slow to validate"));
+        QCOMPARE(automation().cardState(), QStringLiteral("notice"));
+        automation().cancelRun();
+        QCOMPARE(automation().cardState(), QStringLiteral("running"));
+        QVERIFY(automation().cancelling());
+        QVERIFY(ended());
+        QCOMPARE(automation().cardState(), QStringLiteral("cancelled"));
+        automation().dismissCard();
+    }
+
+    // A first progress of 0 is a known progress (the bar, at its start).
+    void aFirstProgressOfZeroIsKnown()
+    {
+        QVERIFY(start("Set zero"));
+        QVERIFY(ended());
+        QVERIFY(automation().progressKnown());
+        QCOMPARE(automation().progress(), 0.0);
     }
 
     // A script's task is kept up to kMaxText characters.

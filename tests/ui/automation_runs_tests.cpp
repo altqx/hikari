@@ -136,11 +136,25 @@ private slots:
         QCOMPARE(line->lines.size(), std::size_t(2));
         QCOMPARE(line->lines.front().text.size(), AutomationRuns::kMaxChars);
         QCOMPARE(line->lines.back().level, AutomationRuns::kHostInfo);
-        // An endless error keeps its first kMaxNoteLines lines.
+        // An endless error keeps its first kMaxNoteLines lines, and says
+        // the rest is not kept.
         const int failed = runs.begin(QStringLiteral("Fail"), QStringLiteral("a.lua"), {});
         runs.note(failed, QStringLiteral("boom\n").repeated(100'000), AutomationRuns::kHostError);
-        QCOMPARE(runs.run(failed)->lines.size(), std::size_t(AutomationRuns::kMaxNoteLines));
-        QCOMPARE(runs.run(failed)->lines.front().level, AutomationRuns::kHostError);
+        const auto *cut = runs.run(failed);
+        QCOMPARE(cut->lines.size(), std::size_t(AutomationRuns::kMaxNoteLines + 1));
+        QCOMPARE(cut->lines.front().level, AutomationRuns::kHostError);
+        QCOMPARE(cut->lines.back().level, AutomationRuns::kHostInfo);
+        QCOMPARE(cut->lines.back().text, QStringLiteral("The rest of this message is not kept."));
+        // A note of exactly kMaxNoteLines lines is whole.
+        const int whole = runs.begin(QStringLiteral("Whole"), QStringLiteral("a.lua"), {});
+        runs.note(whole, QStringLiteral("line\n").repeated(AutomationRuns::kMaxNoteLines), AutomationRuns::kHostInfo);
+        QCOMPARE(runs.run(whole)->lines.size(), std::size_t(AutomationRuns::kMaxNoteLines));
+        QCOMPARE(runs.run(whole)->lines.back().text, QStringLiteral("line"));
+        // One cut at kMaxChars says so too.
+        const int wideNote = runs.begin(QStringLiteral("Wide note"), QStringLiteral("a.lua"), {});
+        runs.note(wideNote, QString(AutomationRuns::kMaxChars + 1, QLatin1Char('n')), AutomationRuns::kHostError);
+        QCOMPARE(runs.run(wideNote)->lines.size(), std::size_t(2));
+        QCOMPARE(runs.run(wideNote)->lines.back().text, QStringLiteral("The rest of this message is not kept."));
     }
 
     void theSessionKeepsTwentyRunsAndNeverTheRunningOne()
