@@ -148,6 +148,9 @@ public:
     // nullopt when either is missing. Legacy loaded that catalog as the
     // current one on the way; the current catalog is left alone here.
     std::optional<core::StyleValues> find(const std::u8string &catalog, const std::u8string &style) const;
+    // The Styles of catalog `catalog` (PU6: the conversion's Style choice);
+    // nullopt for a catalog that is not there.
+    std::optional<StyleList> list(const std::u8string &catalog) const;
     bool save();
 
 private:

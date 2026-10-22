@@ -4172,7 +4172,43 @@ QVariantMap Application::spellCheckState(bool changed, const QString &problem)
     if (current)
         for (const auto &s : current->suggestions)
             suggestions << qstr(s);
+    // PU6: the panel names the word's Line (the Grid's number) and shows the
+    // text around it as the Line editor does (tags hidden or not, \N as a
+    // space), at most kContext characters a side.
+    int row = 0;
+    QString before, after;
+    if (const auto *session = current ? targetSession() : nullptr) {
+        const auto lines = session->document().lines();
+        for (std::size_t i = 0; i < lines.size(); ++i)
+            if (lines[i]->id == current->line)
+                row = static_cast<int>(i) + 1;
+        const auto raw = session->selection().active == current->line ? editorRaw(spellingRole()) : std::nullopt;
+        if (raw) {
+            QString text = qstr(*raw);
+            int from = current->start, to = current->end + 1;
+            if (!m_editor->showTags()) {
+                const auto projection = core::project(*raw);
+                if (const auto range = displayRange(projection, current->start, current->end)) {
+                    text = QString::fromStdU16String(projection.text);
+                    from = range->first;
+                    to = range->second;
+                }
+            }
+            if (from >= 0 && to <= text.size() && from <= to) {
+                constexpr int kContext = 40;
+                const auto plain = [](QString s) {
+                    return s.replace(QLatin1String("\\N"), QLatin1String(" ")).replace(QLatin1String("\\n"), QLatin1String(" "));
+                };
+                before = plain(text.left(from).right(kContext));
+                after = plain(text.mid(to).left(kContext));
+            }
+        }
+    }
     return {{QStringLiteral("found"), current != nullptr},
+            {QStringLiteral("available"), m_spellChecker && m_spellChecker->ready()},
+            {QStringLiteral("line"), row},
+            {QStringLiteral("before"), before},
+            {QStringLiteral("after"), after},
             {QStringLiteral("word"), current ? qstr(current->word) : QString()},
             {QStringLiteral("suggestions"), suggestions},
             {QStringLiteral("replacement"), suggestions.isEmpty() ? QString() : suggestions.front()},
@@ -4620,12 +4656,14 @@ QVariantMap Application::resampleValues() const
         return {};
     const auto subs = application::scriptResolution(session->document());
     application::Resolution video = subs;
-    if (m_video->session().state() == application::VideoSession::State::Ready && m_video->session().lastFrame())
+    const bool hasVideo = m_video->session().state() == application::VideoSession::State::Ready && m_video->session().lastFrame();
+    if (hasVideo)
         video = {m_video->session().lastFrame()->width, m_video->session().lastFrame()->height};
     return {{QStringLiteral("subsWidth"), subs.width},
             {QStringLiteral("subsHeight"), subs.height},
             {QStringLiteral("videoWidth"), video.width},
-            {QStringLiteral("videoHeight"), video.height}};
+            {QStringLiteral("videoHeight"), video.height},
+            {QStringLiteral("hasVideo"), hasVideo}};
 }
 
 bool Application::resample(int subsWidth, int subsHeight, int width, int height, bool stretch)
@@ -4752,6 +4790,15 @@ QStringList Application::conversionTargets() const
     return out;
 }
 
+QStringList Application::conversionStyles(const QString &catalog) const
+{
+    QStringList out;
+    if (const auto styles = m_styleManager->catalogStore().list(utf8(catalog)))
+        for (const auto &style : *styles)
+            out << QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), qsizetype(style.name.size()));
+    return out;
+}
+
 QVariantMap Application::previewConversion(const QString &targetName)
 {
     m_conversionPlan.reset();
@@ -4772,6 +4819,7 @@ QVariantMap Application::previewConversion(const QString &targetName)
                       : o.value(QStringLiteral("fps")).toString().toDouble();
     if (options.fps < 1)
         return {{QStringLiteral("ok"), false},
+                {QStringLiteral("fpsInvalid"), true},
                 {QStringLiteral("problem"),
                  QCoreApplication::translate("HikariSub.Conversion", "Invalid FPS. Correct it in options and try again.")}};
     options.videoFps = hasVideo && frameMs > 0.f ? 1000.0 / frameMs : 23.976;
@@ -4798,37 +4846,49 @@ QVariantMap Application::previewConversion(const QString &targetName)
                  QCoreApplication::translate("HikariSub.Conversion", "This document can't be converted to that format.")}};
     const auto &r = result->report;
     QStringList losses;
+    // PU6: what each one is, "warning" for what the conversion removes.
+    QStringList kinds;
+    const auto add = [&](const QString &text, bool removes) {
+        losses << text;
+        kinds << (removes ? QStringLiteral("warning") : QStringLiteral("info"));
+    };
     if (r.headerDropped)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "The script properties and styles are removed.");
+        add(QCoreApplication::translate("HikariSub.Conversion", "The script properties and styles are removed."), true);
     if (r.commentsRemoved)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved);
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n comment line(s) removed.", nullptr, r.commentsRemoved), true);
     if (r.drawingsCleared)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared);
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n drawing(s) removed.", nullptr, r.drawingsCleared), true);
     if (r.emptyRemoved)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved);
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n line(s) left without text removed.", nullptr, r.emptyRemoved), true);
     if (r.duplicatesRemoved)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved);
+        add(QCoreApplication::translate("HikariSub.Conversion", "%n duplicate line(s) removed.", nullptr, r.duplicatesRemoved), true);
     if (r.reordered)
-        losses << QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time.");
+        add(QCoreApplication::translate("HikariSub.Conversion", "Lines are sorted by time."), false);
     if (r.textChanged)
-        losses << QCoreApplication::translate("HikariSub.Conversion",
-                                              "Formatting tags converted or removed in %n line(s).", nullptr, r.textChanged);
+        add(QCoreApplication::translate("HikariSub.Conversion", "Formatting tags converted or removed in %n line(s).", nullptr,
+                                        r.textChanged),
+            false);
     if (r.fieldsDropped)
-        losses << (*target == core::SubtitleFormat::Ass
-                       ? QCoreApplication::translate("HikariSub.Conversion",
-                                                     "%n line(s) get the conversion style \"%1\".", nullptr, r.fieldsDropped)
-                             .arg(o.value(QStringLiteral("style")).toString())
-                       : QCoreApplication::translate("HikariSub.Conversion",
-                                                     "Layer, style, actor, margins or effect removed from %n line(s).", nullptr, r.fieldsDropped));
+        add(*target == core::SubtitleFormat::Ass
+                ? QCoreApplication::translate("HikariSub.Conversion", "%n line(s) get the conversion style \"%1\".", nullptr,
+                                              r.fieldsDropped)
+                      .arg(o.value(QStringLiteral("style")).toString())
+                : QCoreApplication::translate("HikariSub.Conversion",
+                                              "Layer, style, actor, margins or effect removed from %n line(s).", nullptr,
+                                              r.fieldsDropped),
+            *target != core::SubtitleFormat::Ass);
     if (r.markersDropped)
-        losses << QCoreApplication::translate("HikariSub.Conversion",
-                                              "Bookmarks, hidden lines and groups removed from %n line(s).", nullptr, r.markersDropped);
+        add(QCoreApplication::translate("HikariSub.Conversion", "Bookmarks, hidden lines and groups removed from %n line(s).",
+                                        nullptr, r.markersDropped),
+            true);
     if (r.timesChanged)
-        losses << QCoreApplication::translate("HikariSub.Conversion",
-                                              "Times changed (rounding, frames or new end times) in %n line(s).", nullptr, r.timesChanged);
+        add(QCoreApplication::translate("HikariSub.Conversion",
+                                        "Times changed (rounding, frames or new end times) in %n line(s).", nullptr,
+                                        r.timesChanged),
+            false);
     m_conversionPlan = std::make_unique<ConversionPlan>(
         ConversionPlan{m_workspace.editingTarget()->value, session->revision(), o, std::move(result->document)});
-    return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}};
+    return {{QStringLiteral("ok"), true}, {QStringLiteral("losses"), losses}, {QStringLiteral("kinds"), kinds}};
 }
 
 bool Application::acceptConversion()

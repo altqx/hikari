@@ -459,17 +459,21 @@ public:
     // The formats the editing target can be converted to ("ass", "srt",
     // "mdvd", "mpl2", "tmp"); none in translation mode.
     Q_INVOKABLE QStringList conversionTargets() const;
+    // PU6: the Style names of a catalog, for the conversion's Style choice
+    // (empty for a catalog that is not there).
+    Q_INVOKABLE QStringList conversionStyles(const QString &catalog) const;
     // Y1: the active Line's Style, which the Style manager selects when it opens.
     Q_INVOKABLE QString activeLineStyle() const;
     // C02-loss-preview: converts a copy and lists what it removes or
-    // synthesizes ({ok, problem, losses}); acceptConversion applies that
-    // plan as one "Subtitles conversion" step unless the Document or the
-    // options changed since.
+    // synthesizes ({ok, problem, fpsInvalid, losses, kinds}, kinds "warning"
+    // for what is removed, else "info"); acceptConversion applies that plan
+    // as one "Subtitles conversion" step unless the Document or the options
+    // changed since.
     Q_INVOKABLE QVariantMap previewConversion(const QString &target);
     Q_INVOKABLE bool acceptConversion();
     // Y4: GLOBAL_OPEN_SUBS_RESAMPLE ("Change resolution"): {subsWidth,
-    // subsHeight, videoWidth, videoHeight}, the video's being the subtitles'
-    // without a video; empty for a Document that is not ASS.
+    // subsHeight, videoWidth, videoHeight, hasVideo}, the video's being the
+    // subtitles' without a video; empty for a Document that is not ASS.
     Q_INVOKABLE QVariantMap resampleValues() const;
     // OK: nothing when the sizes match, else "Changing subtitles resolution".
     Q_INVOKABLE bool resample(int subsWidth, int subsHeight, int width, int height, bool stretch);
@@ -558,10 +562,13 @@ public:
     Q_INVOKABLE QVariantMap editorMisspellAt(int role, int position);
     Q_INVOKABLE bool replaceEditorMisspell(int role, int position, const QString &replacement);
     Q_INVOKABLE bool addEditorWord(const QString &word);
-    // GLOBAL_OPEN_SPELLCHECKER: the Spellchecker window. Each call takes the
-    // window's {ignoreComments, ignoreUpperCase} and returns its state
-    // {found, word, suggestions, replacement, changed, problem, unchanged,
-    // restarted}; found false is "No spelling errors were found". unchanged:
+    // GLOBAL_OPEN_SPELLCHECKER: the Spellchecker panel (PU6). Each call takes
+    // the panel's {ignoreComments, ignoreUpperCase} and returns its state
+    // {found, available, line, before, after, word, suggestions, replacement,
+    // changed, problem, unchanged, restarted}; found false is "No spelling
+    // errors were found", available false that no dictionary is loaded; line
+    // is the word's Line (the Grid's number), before and after the text
+    // around the word as the Line editor shows it. unchanged:
     // the action did nothing (legacy returns without touching the window).
     // restarted: the active Line or its text changed since the word was
     // shown (the editor's draft commits when the window acts), so the walk
