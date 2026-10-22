@@ -1586,6 +1586,27 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // An unmarked generated Line the Line editor's draft makes a karaoke
+    // Line is the one Apply runs on: its old karaoke Line no longer counts.
+    void aDraftThatEndsAnUnmarkedLinesOutputPreviewsIt()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        std::optional<core::LineId> clicked;
+        for (const auto *g : session->document().lines())
+            if (!clicked && application::isGeneratedLine(*g))
+                clicked = g->id;
+        QVERIFY(clicked);
+        editor->setShown(true);
+        activate(*clicked);
+        QVERIFY(QTest::qWaitFor([&] { return editor->source() != 0 && settled(); }, 20'000));
+        QVERIFY(editor->source() != clicked->value);
+        application::DraftChange effect;
+        effect.effect = u8"karaoke";
+        QVERIFY(session->editDraft(*clicked, effect));
+        editor->refresh();
+        QCOMPARE(editor->source(), clicked->value);
+    }
+
     // Only the Lines the templater runs give trusted Actor and Style
     // values, each in its own role: a value a comment held, or a Style's
     // name, put as a runnable Line's Actor asks first.

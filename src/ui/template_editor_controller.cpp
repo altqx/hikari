@@ -526,8 +526,13 @@ void TemplateEditorController::updateSource()
     // found first; the preview stays until then. One no karaoke Line gives
     // has none, and no other Line stands in for it.
     const auto active = s ? s->selection().active : std::nullopt;
+    const core::LineRecord *activeLine = nullptr; // as the draft has it
+    if (active && doc)
+        for (const auto *l : doc->lines())
+            if (l->id == *active)
+                activeLine = l;
     bool unknown = false;
-    if (const auto *l = active ? line(*active) : nullptr;
+    if (const auto *l = activeLine;
         l && application::isGeneratedLine(*l) && l->generatedFrom.value == 0) {
         if (m_ownersRevision == s->revision()) {
             const auto owner = m_owners.find(*active);
