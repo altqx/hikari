@@ -37,8 +37,12 @@ Window {
 
     function showFor(styleName) {
         styles.refreshLists()
-        const row = styles.documentStyles.indexOf(styleName)
-        assSelected = [Math.max(0, row)]
+        showAt(styles.documentStyles.indexOf(styleName))
+    }
+    // TP1: the Styles panel's rows are the Document's, a name possibly twice.
+    function showAt(row) {
+        styles.refreshLists()
+        assSelected = [Math.max(0, Math.min(row, styles.documentStyles.length - 1))]
         storeSelected = styles.storeStyles.length > 0 ? [0] : []
         show()
         raise()
@@ -70,16 +74,19 @@ Window {
         showFor("")
         beginEditing(styles.beginNew(false), false)
     }
-    function duplicateDocumentStyle(styleName) {
-        showFor(styleName)
-        const row = styles.documentStyles.indexOf(styleName)
-        if (row >= 0)
+    function editStyleAt(row) {
+        showAt(row)
+        if (row >= 0 && row < styles.documentStyles.length)
+            editDocumentStyle(row)
+    }
+    function duplicateDocumentStyle(row) {
+        showAt(row)
+        if (row >= 0 && row < styles.documentStyles.length)
             beginEditing(styles.beginCopy(false, row), false)
     }
-    function copyToCatalog(styleName) {
-        showFor(styleName)
-        const row = styles.documentStyles.indexOf(styleName)
-        if (row < 0)
+    function copyToCatalog(row) {
+        showAt(row)
+        if (row < 0 || row >= styles.documentStyles.length)
             return
         reviewClashes(styles.transferClashes(true, [row]), 1, qsTr("the storage"), function(choices) {
             manager.storeSelected = manager.styles.addToStore([row], choices)

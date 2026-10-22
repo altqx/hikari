@@ -24,25 +24,34 @@ Item {
     readonly property Item toolbar: tools
     property bool live: false
 
+    // Each row carries `row`, its place in the Document: a file may hold two
+    // Styles of one name, and the commands act on the one chosen.
     property var rows: []
     readonly property var shownRows: {
         const text = filterField.text.trim().toLocaleLowerCase()
         return text.length === 0 ? rows : rows.filter(r => r.name.toLocaleLowerCase().includes(text))
     }
-    // The chosen Style, kept by name while the list is read again; the
-    // commands act on it only while the filter shows it.
+    // The chosen Style, kept by name (and row) while the list is read again;
+    // the commands act on it only while the filter shows it.
     property string chosen: ""
-    readonly property var chosenRow: shownRows.find(r => r.name === chosen) ?? null
+    property int chosenAt: -1
+    readonly property var chosenRow: shownRows.find(r => r.row === chosenAt) ?? null
+    onChosenChanged: {
+        if (rows[chosenAt]?.name !== chosen)
+            chosenAt = rows.findIndex(r => r.name === chosen)
+    }
     readonly property bool canApply: chosenRow !== null && editor.editable && editor.assFields
     readonly property int smallSize: Math.max(9, Math.round(Qt.application.font.pointSize * 0.9))
 
     function reload() {
         if (!live)
             return
-        rows = styles.panelRows()
+        rows = styles.panelRows().map((r, i) => Object.assign({row: i}, r))
         if (!rows.some(r => r.name === chosen))
             chosen = rows.some(r => r.name === editor.style) ? editor.style : (rows.length > 0 ? rows[0].name : "")
-        list.currentIndex = shownRows.findIndex(r => r.name === chosen)
+        else if (rows[chosenAt]?.name !== chosen)
+            chosenAt = rows.findIndex(r => r.name === chosen)
+        list.currentIndex = shownRows.findIndex(r => r.row === chosenAt)
     }
     onLiveChanged: reload()
     Connections {
@@ -50,16 +59,14 @@ Item {
         function onDocumentChanged() { panel.reload() }
         function onChanged() { panel.reload() }
     }
-    onShownRowsChanged: list.currentIndex = shownRows.findIndex(r => r.name === chosen)
+    onShownRowsChanged: list.currentIndex = shownRows.findIndex(r => r.row === chosenAt)
 
     function apply(name) {
         if (name.length > 0 && editor.editable && editor.assFields)
             editor.chooseStyle(name)
     }
-    function documentRow(name) { return rows.findIndex(r => r.name === name) }
-    function remove(name) {
-        const row = documentRow(name)
-        if (row >= 0)
+    function remove(row) {
+        if (row >= 0 && row < rows.length)
             styles.removeStyles(false, [row])
     }
 
@@ -123,7 +130,12 @@ Item {
                 else if (currentIndex < 0 && count > 0)
                     currentIndex = 0
             }
-            onCurrentIndexChanged: if (currentIndex >= 0 && currentIndex < panel.shownRows.length) panel.chosen = panel.shownRows[currentIndex].name
+            onCurrentIndexChanged: {
+                if (currentIndex >= 0 && currentIndex < panel.shownRows.length) {
+                    panel.chosenAt = panel.shownRows[currentIndex].row
+                    panel.chosen = panel.shownRows[currentIndex].name
+                }
+            }
             Keys.onPressed: event => {
                 const row = panel.shownRows[currentIndex]
                 if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
@@ -132,11 +144,11 @@ Item {
                     event.accepted = true
                 } else if (event.key === Qt.Key_Delete) {
                     if (row)
-                        panel.remove(row.name)
+                        panel.remove(row.row)
                     event.accepted = true
                 } else if (event.key === Qt.Key_Menu || (event.key === Qt.Key_F10 && event.modifiers & Qt.ShiftModifier)) {
                     if (row && currentItem)
-                        rowMenu.show(row.name, currentItem, 12, currentItem.height)
+                        rowMenu.show(row, currentItem, 12, currentItem.height)
                     event.accepted = true
                 } else if (event.key === Qt.Key_Home) {
                     currentIndex = 0
@@ -206,7 +218,7 @@ Item {
                     onTapped: eventPoint => {
                         list.currentIndex = row.index
                         list.forceActiveFocus(Qt.MouseFocusReason)
-                        rowMenu.show(row.modelData.name, row, eventPoint.position.x, eventPoint.position.y)
+                        rowMenu.show(row.modelData, row, eventPoint.position.x, eventPoint.position.y)
                     }
                 }
                 RowLayout {
@@ -342,7 +354,7 @@ Item {
                 text: qsTr("Edit style")
                 focusPolicy: Qt.NoFocus
                 enabled: panel.chosenRow !== null
-                onClicked: panel.manager.editStyle(panel.chosen)
+                onClicked: panel.manager.editStyleAt(panel.chosenAt)
             }
             IconToolButton {
                 objectName: "stylesDuplicate"
@@ -350,7 +362,7 @@ Item {
                 text: qsTr("Duplicate")
                 focusPolicy: Qt.NoFocus
                 enabled: panel.chosenRow !== null
-                onClicked: panel.manager.duplicateDocumentStyle(panel.chosen)
+                onClicked: panel.manager.duplicateDocumentStyle(panel.chosenAt)
             }
             IconToolButton {
                 objectName: "stylesDelete"
@@ -358,7 +370,7 @@ Item {
                 text: qsTr("Delete")
                 focusPolicy: Qt.NoFocus
                 enabled: panel.chosenRow !== null
-                onClicked: panel.remove(panel.chosen)
+                onClicked: panel.remove(panel.chosenAt)
             }
             ToolSeparator { Layout.preferredHeight: 18 }
             IconToolButton {
@@ -366,7 +378,7 @@ Item {
                 iconRole: "styles"
                 text: qsTr("Style manager")
                 focusPolicy: Qt.NoFocus
-                onClicked: panel.manager.showFor(panel.chosenRow?.name ?? "")
+                onClicked: panel.manager.showAt(panel.chosenRow ? panel.chosenAt : -1)
             }
         }
         IconToolButton {
@@ -401,25 +413,25 @@ Item {
             iconRole: "edit"
             text: qsTr("Edit style")
             enabled: panel.chosenRow !== null
-            onTriggered: panel.manager.editStyle(panel.chosen)
+            onTriggered: panel.manager.editStyleAt(panel.chosenAt)
         }
         ShellMenuItem {
             iconRole: "duplicate"
             text: qsTr("Duplicate")
             enabled: panel.chosenRow !== null
-            onTriggered: panel.manager.duplicateDocumentStyle(panel.chosen)
+            onTriggered: panel.manager.duplicateDocumentStyle(panel.chosenAt)
         }
         ShellMenuItem {
             iconRole: "delete"
             text: qsTr("Delete")
             enabled: panel.chosenRow !== null
-            onTriggered: panel.remove(panel.chosen)
+            onTriggered: panel.remove(panel.chosenAt)
         }
         MenuSeparator {}
         ShellMenuItem {
             iconRole: "styles"
             text: qsTr("Style manager")
-            onTriggered: panel.manager.showFor(panel.chosenRow?.name ?? "")
+            onTriggered: panel.manager.showAt(panel.chosenRow ? panel.chosenAt : -1)
         }
     }
 
@@ -428,8 +440,10 @@ Item {
         id: rowMenu
         objectName: "stylesRowMenu"
         property string name: ""
-        function show(name, item, x, y) {
-            rowMenu.name = name
+        property int row: -1 // its place in the Document
+        function show(entry, item, x, y) {
+            rowMenu.name = entry.name
+            rowMenu.row = entry.row
             rowMenu.popup(item, x, y)
         }
         ShellMenuItem {
@@ -444,19 +458,19 @@ Item {
             objectName: "stylesMenuEdit"
             iconRole: "edit"
             text: qsTr("Edit…")
-            onTriggered: panel.manager.editStyle(rowMenu.name)
+            onTriggered: panel.manager.editStyleAt(rowMenu.row)
         }
         ShellMenuItem {
             objectName: "stylesMenuDuplicate"
             iconRole: "duplicate"
             text: qsTr("Duplicate")
-            onTriggered: panel.manager.duplicateDocumentStyle(rowMenu.name)
+            onTriggered: panel.manager.duplicateDocumentStyle(rowMenu.row)
         }
         ShellMenuItem {
             objectName: "stylesMenuDelete"
             iconRole: "delete"
             text: qsTr("Delete") + "\tDel"
-            onTriggered: panel.remove(rowMenu.name)
+            onTriggered: panel.remove(rowMenu.row)
         }
         MenuSeparator {}
         ShellMenuItem {
@@ -469,14 +483,14 @@ Item {
             objectName: "stylesMenuCopyToCatalog"
             iconRole: "copy-to-storage"
             text: qsTr("Copy to the catalog…")
-            onTriggered: panel.manager.copyToCatalog(rowMenu.name)
+            onTriggered: panel.manager.copyToCatalog(rowMenu.row)
         }
         MenuSeparator {}
         ShellMenuItem {
             objectName: "stylesMenuManager"
             iconRole: "styles"
             text: qsTr("Open in Style manager")
-            onTriggered: panel.manager.showFor(rowMenu.name)
+            onTriggered: panel.manager.showAt(rowMenu.row)
         }
     }
 }
