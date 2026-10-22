@@ -1507,6 +1507,26 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // The Style picks the karaoke Lines a template runs on, and so whose
+    // Actor goes into its `$actor`: a Style changed outside the panel asks
+    // first.
+    void aTemplatesStyleChangedElsewhereAsksFirst()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> templ;
+        for (const auto *l : doc.lines())
+            if (application::templateKindOf(*l) && !templ)
+                templ = l->id;
+        QVERIFY(templ);
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*templ, [](core::LineRecord &l) { l.style = u8"T1b"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

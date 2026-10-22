@@ -856,8 +856,10 @@ TemplateEditorController::TemplateLines TemplateEditorController::templateLines(
 
 std::string TemplateEditorController::formOf(const core::LineRecord &line)
 {
+    // The Style too: it picks the karaoke Lines the template runs on, and so
+    // whose Actor goes into its `$actor`.
     const auto m = application::macroLineOf(line);
-    return m.effect + '\n' + m.text;
+    return std::to_string(m.style.size()) + ':' + m.style + m.effect + '\n' + m.text;
 }
 
 std::set<std::string> TemplateEditorController::sourceFields() const
