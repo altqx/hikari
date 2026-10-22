@@ -99,8 +99,13 @@ DialogWindow {
             hotkeys.filter(hotkeyFilter.currentIndex)
         }
         open()
+        rememberPage() // a deep link's page is the one shown last
         warnings = r.warnings
         showWarning()
+    }
+    function rememberPage() {
+        if (visible && settings && pageList.currentIndex >= 0)
+            settings.setValue("workspace.settingsPage", pages[pageList.currentIndex].id)
     }
     // O5: Apply switched the interface language: the dictionary choice's
     // entry for an empty Dictionary folder in the new language.
@@ -160,6 +165,8 @@ DialogWindow {
         values = app.resetSettingsPage(values, currentPage)
         if (currentPage === "appearance")
             Theme.preview(values)
+        if (currentPage === "lineEditor")
+            tagButtonList = [] // the page's tag buttons too, staged
         reloaded()
     }
     // "Reset all settings…", after its question: every page but the
@@ -485,10 +492,7 @@ DialogWindow {
                     Accessible.role: Accessible.PageTabList
                     Accessible.name: dialog.title
                     // The page shown last, where the window opens next.
-                    onCurrentIndexChanged: {
-                        if (dialog.visible && dialog.settings && currentIndex >= 0)
-                            dialog.settings.setValue("workspace.settingsPage", dialog.pages[currentIndex].id)
-                    }
+                    onCurrentIndexChanged: dialog.rememberPage()
                     delegate: ItemDelegate {
                         id: pageItem
                         required property var modelData

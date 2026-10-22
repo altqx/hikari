@@ -14012,6 +14012,34 @@ private slots:
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_SAVE_SUBS")).toString(), QStringLiteral("Ctrl+S"));
     }
 
+    // PF1-staged-reset: the Line editor's Reset page empties its tag
+    // buttons too, staged until OK like the rest of the page.
+    void lineEditorResetPageClearsTagButtons()
+    {
+        auto &buttons = application->tagButtons();
+        auto &store = *application->settingsStore();
+        buttons.setCount(2);
+        buttons.edit(0, QStringLiteral("Bold"), QStringLiteral("\\b1"), 0);
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("lineEditor");
+        QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(dialog->property("tagButtonList").toList().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(buttons.count(), 2);
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("tagButtonList").toList().size(), 2);
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(buttons.count(), 0);
+        QCOMPARE(store.integer("editor.tagButtons"), 0);
+        QVERIFY(!store.contains("editor.tagButton1"));
+    }
+
     // Hotkeys::OnMapHkey: Shift+click on a menu item (with the window
     // choice) or a mapped button (its own window) maps at once.
     void hotkeyGestureOnMappedButtonAndMenu()
@@ -17938,6 +17966,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("audioOutputSettings"), "triggered"));
         QTRY_VERIFY((dialog = settingsWindow()) && dialog->property("visible").toBool());
         QCOMPARE(dialogItem("settingsDialog", "settingsPages")->property("currentIndex").toInt(), 5); // Audio
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("audio")); // where Settings opens next
         QCOMPARE(dialogItem("settingsDialog", "setting_audio.outputDevice")->property("currentIndex").toInt(), 0);
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
