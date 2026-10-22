@@ -1520,10 +1520,14 @@ void TemplateEditorController::runValues(std::uint64_t generation)
             probe.text += kValueSeparator;
         probe.text += std::string("$") + v.name;
     }
-    // The templates' places stay, so the source keeps its index ($li).
+    // The templates' places stay, so the source keeps its index ($li); a
+    // `template line karaoke` source is only a karaoke Line here, so its
+    // own template writes nothing before the probe's Line.
     for (auto &d : snapshot->dialogues)
         if (d.id != m_source->value)
             d = application::templatePlaceholder();
+        else if (application::templateKindOf(*source))
+            d.effect = "karaoke";
     snapshot->dialogues.push_back(probe);
     QPointer<TemplateEditorController> self = this;
     const core::LineId id = *m_source;

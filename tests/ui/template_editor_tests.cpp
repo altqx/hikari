@@ -2061,6 +2061,31 @@ private slots:
         QVERIFY(QTest::qWaitFor([&] { return editor->source() == templ->value; }, 5'000));
     }
 
+    // The `$` values of a `template line karaoke` source come from the probe
+    // alone: its own template writes nothing in their place.
+    void theValuesOfATemplateThatIsAlsoAKaraokeLine()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord both;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                both = *l;
+        both.comment = true;
+        both.effect = u8"template line karaoke";
+        both.text = u8"{\\k50}ka{\\k50}ze";
+        both.actor = u8"plain";
+        const auto id = doc.appendLine(both);
+        QVERIFY(id);
+        openDocument(std::move(doc), true);
+        activate(*id);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && editor->source() == id->value; }, 20'000));
+        editor->requestValues();
+        QVERIFY(QTest::qWaitFor([&] { return !editor->values().isEmpty(); }, 20'000));
+        QCOMPARE(editor->values().value(QStringLiteral("actor")).toString(), QStringLiteral("plain"));
+        QCOMPARE(editor->values().value(QStringLiteral("style")).toString(), QString::fromStdString(std::string(both.style.begin(), both.style.end())));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
