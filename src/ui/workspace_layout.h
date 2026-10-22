@@ -115,10 +115,12 @@ public:
 
     // After the shell built its default arrangement: what Reset layout returns to.
     Q_INVOKABLE void captureDefault();
-    // TP1 (#274): after the shell built a preset's own arrangement from the
-    // default one, that arrangement is the preset's (applyPreset, Reset this
-    // layout); the default arrangement is shown again.
-    Q_INVOKABLE void capturePreset(const QString &name);
+    // TP1 (#274): a preset whose arrangement the shell builds itself
+    // (Typesetting). The first time it is shown (applyPreset, Reset this
+    // layout) the default arrangement is restored and buildArrangement asks
+    // the shell to arrange it; what the shell built is the preset's from then
+    // on. Nothing is built at start, before anyone chooses it.
+    Q_INVOKABLE void buildsArrangement(const QString &name);
     // At start: the saved layout, if it validates and restores; false (with a
     // notice when a file was there) leaves the default arrangement.
     Q_INVOKABLE bool restoreSaved();
@@ -132,7 +134,7 @@ public:
     Q_INVOKABLE bool saveForQuit();
     Q_INVOKABLE bool resetLayout();
     // A built-in template (Editing, Timing, Translation, Typesetting) for the
-    // current tab: its own arrangement (Typesetting's, capturePreset), else
+    // current tab: its own arrangement (Typesetting's, buildsArrangement), else
     // the default arrangement with the panels it leaves closed.
     Q_INVOKABLE bool applyPreset(const QString &name);
     // A preset's name as the user reads it.
@@ -239,6 +241,9 @@ public:
 
 signals:
     void changed();
+    // TP1: arrange preset `name` now, from the default arrangement shown
+    // (buildsArrangement); the controller keeps what the handler leaves.
+    void buildArrangement(const QString &name);
     void focusWindowChanged();
     void menuHasFocusChanged();
     void modalOpenChanged();
@@ -320,7 +325,8 @@ private:
 
     QString m_file;
     QByteArray m_default;
-    std::map<QString, QByteArray> m_presetPayloads; // TP1: capturePreset
+    QStringList m_builtPresets;                      // TP1: buildsArrangement
+    std::map<QString, QByteArray> m_presetPayloads; // their arrangements, once built
     QByteArray m_lastSaved;
     // The notices of the panel layout (restore failures: a layout chosen
     // after them answers them) and of the saved layouts (files kept aside,

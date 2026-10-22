@@ -644,12 +644,10 @@ void WorkspaceLayoutController::captureDefault()
     m_default = KDDockWidgets::LayoutSaver().serializeLayout();
 }
 
-void WorkspaceLayoutController::capturePreset(const QString &name)
+void WorkspaceLayoutController::buildsArrangement(const QString &name)
 {
-    if (!presets().contains(name) || m_default.isEmpty())
-        return;
-    m_presetPayloads[name] = KDDockWidgets::LayoutSaver().serializeLayout();
-    restorePayload(m_default, true);
+    if (presets().contains(name) && !m_builtPresets.contains(name))
+        m_builtPresets << name;
 }
 
 bool WorkspaceLayoutController::restorePayload(const QByteArray &payload, bool inPlace)
@@ -806,9 +804,14 @@ bool WorkspaceLayoutController::buildPreset(const QString &name, bool inPlace)
     if (const auto own = m_presetPayloads.find(name); own != m_presetPayloads.end())
         return restorePayload(own->second, inPlace);
     const bool done = restorePayload(m_default, inPlace);
+    if (done && m_builtPresets.contains(name)) {
+        emit buildArrangement(name);
+        m_presetPayloads[name] = KDDockWidgets::LayoutSaver().serializeLayout();
+        return true;
+    }
     // The Editing arrangement with the panels the preset leaves closed
     // (docs/qt/ux/workspaces.md): Timing without Video, Translation (and
-    // Typesetting before the shell built its own) without Audio.
+    // Typesetting without a shell to build its own) without Audio.
     QString closed;
     if (name == QLatin1String("Timing"))
         closed = QStringLiteral("Video");

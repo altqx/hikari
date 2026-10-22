@@ -434,17 +434,30 @@ private slots:
     {
         start();
         openEpisode();
+        // The default window's size, whatever the screen (a small one folds
+        // the header, checked below).
+        window()->resize(1280, 800);
+        QTRY_COMPARE(window()->width(), 1280);
         applyPreset("Typesetting");
         auto *panel = item<QObject>("stylesTool");
         QTRY_COMPARE(panel->property("rows").toList().size(), 4);
         auto *buttons = item("stylesButtons");
         QTRY_VERIFY(buttons && buttons->isVisible());
+        QVERIFY(!item("stylesMore")->isVisible());
         for (const char *name : {"stylesApply", "stylesNew", "stylesEdit", "stylesDuplicate", "stylesDelete", "stylesManager"}) {
             auto *button = item<QObject>(name);
             QVERIFY2(button, name);
             QVERIFY2(!button->property("text").toString().isEmpty(), name);
             QCOMPARE(button->property("display").toInt(), 0); // icon only (AbstractButton.IconOnly)
         }
+        // A narrow panel folds them into More, which holds the same six.
+        QVERIFY(docking()->resizeInLayout(QStringLiteral("Styles"), -(int(item("stylesPanel")->width()) - 150), 0, 0, 0));
+        QTRY_VERIFY(item("stylesMore")->isVisible());
+        QVERIFY(!buttons->isVisible());
+        auto *more = item<QObject>("stylesMoreMenu");
+        QCOMPARE(more->property("count").toInt(), 8); // and two separators
+        QVERIFY(docking()->resizeInLayout(QStringLiteral("Styles"), 200, 0, 0, 0));
+        QTRY_VERIFY(buttons->isVisible());
         panel->setProperty("chosen", QStringLiteral("Unused"));
         QVERIFY(QMetaObject::invokeMethod(item<QObject>("stylesDelete"), "clicked"));
         QTRY_COMPARE(panel->property("rows").toList().size(), 3);

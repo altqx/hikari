@@ -261,8 +261,8 @@ ApplicationWindow {
     }
 
     // TP1 (#274): the Typesetting preset's own arrangement (owner-approved
-    // mockup 2026-10-22), built from the default one once it is laid out and
-    // kept as the preset's (capturePreset). The Video panel leads the upper
+    // mockup 2026-10-22), built from the default one the first time the
+    // preset is chosen and kept as the preset's (buildsArrangement). The Video panel leads the upper
     // row, about two thirds of the height, with Styles on its right in about
     // a quarter of the width; below, the Line editor at its natural height
     // beside a short Grid. Audio is closed; it and the Original text panel
@@ -293,6 +293,13 @@ ApplicationWindow {
         const natural = Math.ceil(editorColumn.implicitHeight) + 8 + lower - editorPanel.height
         if (lower !== natural)
             Docking.resizeInLayout("Video", 0, 0, 0, lower - natural)
+    }
+    Connections {
+        target: root.workspaceLayout
+        function onBuildArrangement(name) {
+            if (name === "Typesetting")
+                root.typesettingLayout()
+        }
     }
     Connections {
         target: root.shell
@@ -5580,8 +5587,7 @@ ApplicationWindow {
             panel.reportMinimumSize()
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
-        root.typesettingLayout() // TP1
-        root.workspaceLayout.capturePreset("Typesetting")
+        root.workspaceLayout.buildsArrangement("Typesetting") // TP1: when first chosen
         root.workspaceLayout.restoreSaved()
         root.placeOriginal() // TM1: a TLMode file opened before the first frame
         Docking.guardClose(root, root.admitClose)

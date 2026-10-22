@@ -5976,9 +5976,7 @@ private slots:
                                         .arg(panel->height()).arg(minimum.width()).arg(minimum.height())));
             const QSize engineMinimum = docking->minimumSize(panel->property("dockName").toString());
             QVERIFY2(engineMinimum.width() >= minimum.width() && engineMinimum.height() >= minimum.height(), name);
-            // (Once laid out: building Typesetting's arrangement (TP1) at the
-            // first frame leaves the panels' rows to the next polish.)
-            QTRY_VERIFY2(clippedIn(panel).isEmpty(), qPrintable(QLatin1String(name) + QLatin1Char(' ') + clippedIn(panel).join(u"; ")));
+            QVERIFY2(clippedIn(panel).isEmpty(), qPrintable(QLatin1String(name) + QLatin1Char(' ') + clippedIn(panel).join(u"; ")));
         }
         // Each panel squeezed as far as the separators go, from its right
         // and bottom edges, then its left and top ones: the engine stops at
