@@ -954,6 +954,33 @@ TEST(DrawingOptions, SixModesAndTheShapeList)
     EXPECT_EQ(tool.editor().mode, 5);
 }
 
+// PU5: "Edit shapes" keeps each change at once, so the tool reads the
+// chosen preset again even at the place chosen before (legacy's SetShape
+// kept the one it had; its edits came only at OK).
+TEST(DrawingOptions, ChangedPresetsAreReadAgain)
+{
+    TestHost host;
+    setUp(host);
+    DrawingTool tool;
+    tool.reset(host);
+    ASSERT_TRUE(tool.setOption("shape", 1, host)); // rectangle
+    const std::size_t rectangle = tool.shapePoints().size();
+    ASSERT_NE(rectangle, 3u);
+    host.presets[0].shape = u"m 0 0 l 100 0 0 100";
+    tool.setOption("shape", 1, host); // legacy's SetShape: the same place, nothing read
+    EXPECT_EQ(tool.shapePoints().size(), rectangle);
+    const int changes = host.changes;
+    tool.presetsChanged(1, host);
+    EXPECT_EQ(tool.shape(), 0);
+    EXPECT_EQ(tool.shapeSelection(), 1);
+    EXPECT_EQ(tool.shapePoints().size(), 3u);
+    EXPECT_EQ(host.changes, changes + 1);
+    // Free drawing stays so.
+    tool.setOption("shape", 0, host);
+    tool.presetsChanged(0, host);
+    EXPECT_EQ(tool.shape(), -1);
+}
+
 TEST(DrawingTool, MoveFollowsTheVideosTime)
 {
     TestHost host;

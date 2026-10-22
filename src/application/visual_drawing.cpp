@@ -718,6 +718,16 @@ void DrawingTool::changeShape(int listSelection, bool fromToolbar, VisualHost &h
     m_shapeSelection = shapeSelectionNew;
 }
 
+void DrawingTool::presetsChanged(int listSelection, VisualHost &host)
+{
+    if (m_shape >= 0)
+        m_shape = kNoPresetRead;
+    changeShape(listSelection, true, host);
+    if (m_shape == kNoPresetRead)
+        m_shape = -1; // no presets: free drawing
+    host.toolChanged();
+}
+
 std::u16string DrawingTool::drawingBody() const
 {
     // DrawingAndClip::GetVisual for VECTORDRAW (VisualClips.cpp:298-363).
