@@ -3505,16 +3505,21 @@ private slots:
         // button or label narrower than its text. A screen narrower than
         // 1280 x 800 at 150 % (853 pixels) scrolls the editor sideways, its
         // bar shown; a wider one does not.
-        const qreal right = scroll->property("contentWidth").toReal();
-        const qreal view = scroll->property("availableWidth").toReal();
+        // The grid reports its narrowest a frame later (Qt.callLater), and
+        // the sidebar narrows to it after: waited for, on a slow machine.
+        const auto contentRight = [&] { return scroll->property("contentWidth").toReal(); };
+        const auto viewWidth = [&] { return scroll->property("availableWidth").toReal(); };
         QQuickItem *sideways = nullptr;
         for (QQuickItem *bar : scroll->findChildren<QQuickItem *>())
             if (bar->inherits("QQuickScrollBar") && bar->property("orientation").toInt() == Qt::Horizontal)
                 sideways = bar;
         QVERIFY(sideways);
         if (manager->screen()->geometry().width() >= 853)
-            QVERIFY2(right <= view + 0.5, qPrintable(QStringLiteral("%1 in %2").arg(right).arg(view)));
-        else if (right > view + 0.5)
+            QTRY_VERIFY2(contentRight() <= viewWidth() + 0.5,
+                         qPrintable(QStringLiteral("%1 in %2").arg(contentRight()).arg(viewWidth())));
+        const qreal right = contentRight();
+        const qreal view = viewWidth();
+        if (manager->screen()->geometry().width() < 853 && right > view + 0.5)
             QTRY_VERIFY(sideways->isVisible() && sideways->property("size").toReal() < 1);
         std::function<void(QQuickItem *)> check = [&](QQuickItem *item) {
             for (QQuickItem *child : item->childItems()) {
