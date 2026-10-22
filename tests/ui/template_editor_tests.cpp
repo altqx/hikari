@@ -2277,6 +2277,37 @@ private slots:
         QCOMPARE(editor->values().value(QStringLiteral("syln")).toString(), QStringLiteral("3"));
     }
 
+    // A `template line karaoke` both chosen and previewed keeps its own
+    // Lines marked: the run that tells them apart still has it as the
+    // karaoke Line.
+    void aTemplateThatIsAlsoTheKaraokeLineMarksItsOwnLines()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord both;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                both = *l;
+        both.comment = true;
+        both.effect = u8"template line karaoke";
+        both.text = u8"{\\k50}ka{\\k50}ze";
+        const auto id = doc.appendLine(both);
+        QVERIFY(id);
+        openDocument(std::move(doc), true);
+        activate(*id);
+        editor->setShown(true);
+        editor->setCurrent(id->value);
+        QVERIFY(QTest::qWaitFor(
+            [&] {
+                if (!settled() || editor->source() != id->value || editor->current() != id->value)
+                    return false;
+                for (const QVariant &v : editor->previewLines())
+                    if (v.toMap().value(QStringLiteral("own")).toBool())
+                        return true;
+                return false;
+            },
+            20'000));
+    }
+
     // A Line editor draft of the template that changes nothing goes away at
     // the commit, and the panel's edit goes in then, not after a pause.
     void aPanelEditGoesInOverADraftThatChangesNothing()

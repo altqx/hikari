@@ -1464,7 +1464,12 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
         finishChain(generation);
         return;
     }
-    *at = application::templatePlaceholder(); // the source keeps its index
+    // The source keeps its index; a `template line karaoke` source stays
+    // the karaoke Line, only its template goes.
+    if (m_source && *m_source == *m_current)
+        at->effect = "karaoke";
+    else
+        *at = application::templatePlaceholder();
     QPointer<TemplateEditorController> self = this;
     m_templater->preview(without, [self, generation](application::KaraokeTemplaterPort::Preview other) {
         if (self && generation == self->m_generation)
