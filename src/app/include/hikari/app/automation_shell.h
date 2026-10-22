@@ -76,7 +76,7 @@ public:
     // The audio box whose audio aegisub.get_frequency_peaks reads, and whose
     // presence aegisub.get_audio_selection checks (null: none).
     void setAudioBox(std::function<const application::AudioBox *()> box);
-    // The log window (legacy HikariLog; silent: HikariLogSilent) and the
+    // The Log (legacy HikariLog, a notice; silent: HikariLogSilent) and the
     // settings (AUTOMATION_SCRIPT_EDITOR).
     void setLog(std::function<void(const QString &, bool silent)> log) { m_logLine = std::move(log); }
     void setSettings(ui::SettingsStore *settings) { m_settings = settings; }
@@ -161,8 +161,10 @@ signals:
     void progressChanged();
     // A macro ended: its outcome and, when it changed nothing, why.
     void runCompleted(bool ok, const QString &message);
-    // A legacy message box (HikariMessageBox: title, text, OK).
-    void notice(const QString &title, const QString &text);
+    // A legacy message box (HikariMessageBox) or Log pop-up (HikariLog),
+    // NT1: severity "info" (a toast) or "error" (a message box: the command
+    // stopped), titled with the command, the technical text in `details`.
+    void notice(const QString &severity, const QString &title, const QString &text, const QString &details);
     // Legacy "Select a script editor" (a program to open `script` with).
     void chooseScriptEditor(const QString &script);
 

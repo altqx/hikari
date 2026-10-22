@@ -314,7 +314,7 @@ void Application::loadAssociations(application::DocumentId document, const appli
         const QString keyframes = QDir::toNativeSeparators(qs(load.keyframes));
         if (shown) {
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(qs(load.keyframes))); !problem.isEmpty())
-                m_log->log(problem);
+                m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
         } else {
             media.keyframes = keyframes;
         }
@@ -456,7 +456,7 @@ QVariantMap Application::openDropped(const QList<QUrl> &urls)
         case application::OpenKind::Keyframes:
             // KeyframesPath = filename; OpenKeyframes; SetRecent(3).
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
-                m_log->log(problem);
+                m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
             break;
         case application::OpenKind::Refused: break;
         }
@@ -500,7 +500,8 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
         const QString &path = pending.subtitlePaths[i];
         auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
         if (!staged) {
-            m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
+            m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open subtitles"),
+                          QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
                            .arg(QFileInfo(path).fileName()));
             pending.count = i;
             break;
@@ -548,7 +549,8 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             } else if (auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()})) {
                 openInNewTab(std::move(*staged), file);
             } else {
-                m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
+                m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open subtitles"),
+                          QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
                                .arg(QFileInfo(file).fileName()));
             }
             return openResult(QString());
@@ -562,7 +564,7 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             if (!untouched)
                 addPage();
             if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
-                m_log->log(problem);
+                m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
             return openResult(QString());
         default: // a script (the Automation manager's, no tab's) or a refused file: as when dropped
             return openDropped({QUrl::fromLocalFile(file)});

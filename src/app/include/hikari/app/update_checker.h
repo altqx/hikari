@@ -108,8 +108,9 @@ signals:
     // `interactive` only "available" is reported. `offer` is "install",
     // "notify", "requirement" or "aur".
     void finished(const QString &outcome, const QVariantMap &release, bool interactive);
-    // A message for the user: the last update's failure, or a download's.
-    void notice(const QString &message);
+    // A message for the user: a download's failure, or (`atStart`) the last
+    // update's, which the installer left (NT1: titled "Install update").
+    void notice(const QString &message, bool atStart);
 
 private:
     struct Run;

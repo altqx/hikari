@@ -86,17 +86,20 @@ void Application::logVideoFailure()
         const auto &failure = session.openFailure();
         const QString text = failure ? QString::fromStdString(failure->message) : QString();
         using application::OpenStage;
+        const auto notice = [this](const QString &problem) {
+            m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.Video", "Open video"), problem);
+        };
         if (failure && failure->stage == OpenStage::Indexing)
-            m_log->log(QCoreApplication::translate("HikariSub.Video", "Indexing error occurred: %1").arg(text));
+            notice(QCoreApplication::translate("HikariSub.Video", "Indexing error occurred: %1").arg(text));
         else if (failure && failure->stage == OpenStage::Source)
-            m_log->log(QCoreApplication::translate("HikariSub.Video", "Cannot create VideoSource."));
+            notice(QCoreApplication::translate("HikariSub.Video", "Cannot create VideoSource."));
         else if (failure && failure->stage == OpenStage::Convert)
-            m_log->log(QCoreApplication::translate("HikariSub.Video", "Cannot convert video to RGBA"));
+            notice(QCoreApplication::translate("HikariSub.Video", "Cannot convert video to RGBA"));
         else {
             if (failure && failure->stage == OpenStage::Indexer)
                 qDebug().noquote() << QCoreApplication::translate("HikariSub.Video", "Indexing error occurred: %1")
                                           .arg(text); // HikariLogDebug
-            m_log->log(m_video->status());
+            notice(m_video->status());
         }
     }
     m_videoFailureLogged = failed;
