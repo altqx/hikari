@@ -9483,6 +9483,14 @@ private slots:
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
         QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Spelling settings…"));
+        // It opens PF1's Settings at the Line editor page, which holds the
+        // dictionary.
+        QVERIFY(QMetaObject::invokeMethod(spellItem("spellEmptyAction"), "click"));
+        auto *settingsWindow = qobject_cast<QWindow *>(this->settingsWindow());
+        QTRY_VERIFY(settingsWindow && settingsWindow->isVisible());
+        QCOMPARE(settingsWindow->property("currentPage").toString(), QStringLiteral("lineEditor"));
+        settingsWindow->close();
+        QTRY_VERIFY(!settingsWindow->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
         QTRY_VERIFY(!dock->property("isOpen").toBool());
         application->editor().discard();
