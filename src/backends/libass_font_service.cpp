@@ -850,7 +850,7 @@ std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
     const auto size = FT_Long(bytes.size());
     long count = 0;
     if (FT_Face probe = nullptr; !FT_New_Memory_Face(ft, data, size, -1, &probe)) {
-        count = std::min(probe->num_faces, FT_Long(kMaxFaces));
+        count = (std::min)(probe->num_faces, FT_Long(kMaxFaces));
         FT_Done_Face(probe);
     }
     std::size_t records = 0, bytesLeft = kMaxNameBytes;
