@@ -1492,6 +1492,7 @@ ApplicationWindow {
             // AD3: the progress card's Cancel from the menu (it has no
             // hotkey of its own).
             ShellMenuItem {
+                iconRole: "run-cancelled"
                 objectName: "cancelMacroMenuItem"
                 visible: root.automation.running
                 height: visible ? implicitHeight : 0

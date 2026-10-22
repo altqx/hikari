@@ -1556,7 +1556,8 @@
    "legacy": [],
    "surfaces": [
     "automation",
-    "notices"
+    "notices",
+    "menu:automation"
    ]
   },
   {

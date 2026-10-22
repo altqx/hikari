@@ -541,7 +541,7 @@ icon("run-busy", "Running", [], ["automation", "notices"],
      stroke("M8 1.5a6.5 6.5 0 1 0 6.5 6.5") + accent(stroke("M8 1.5a6.5 6.5 0 0 1 6.5 6.5")))
 icon("run-applied", "Applied", [], ["automation", "notices"],
      circle(8, 8, 6.5) + accent(stroke("M5 8.25l2 2 4-4.5")))
-icon("run-cancelled", "Cancelled", [], ["automation", "notices"],
+icon("run-cancelled", "Cancelled", [], ["automation", "notices", AUTO],
      circle(8, 8, 6.5) + accent(stroke("M4.5 11.5L11.5 4.5")))
 
 # Layouts (WS3 #217: the layout switcher and View > Layout, which replace
