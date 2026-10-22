@@ -6100,7 +6100,7 @@ ApplicationWindow {
     VideoFileQuestion {
         id: videoFileQuestion
         app: root.app
-        settings: root.app.settings
+        messages: root.messages
     }
     // TM1: the Translation preset's question and Translation mode's turn-off
     // confirmation (Subtitles > Translation mode).
@@ -6486,9 +6486,8 @@ ApplicationWindow {
     HidableQuestion {
         id: shiftQuestion
         objectName: "shiftQuestion"
-        settings: root.app.settings
+        messages: root.messages
         questionId: "shiftOneTime"
-        boxName: "shiftConfirm"
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.

@@ -6,7 +6,8 @@
 // another child of its content and change its size.
 //
 // ask(options, done): MessageBox.ask's options (title, text, detail,
-// details, severity, choices, dontAsk) and done(id, dontAskAgain).
+// details, severity, choices, dontAsk, and PU4's `from`, the window it opens
+// over instead) and done(id, dontAskAgain).
 import QtQuick
 import Hikari.Ui
 

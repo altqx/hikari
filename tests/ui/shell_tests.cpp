@@ -2751,6 +2751,12 @@ private slots:
         QObject *found = named(host);
         return found ? qvariant_cast<QQuickWindow *>(found->property("box")) : nullptr;
     }
+    // PU4: an item of the application's message box (NT1's "messages").
+    QQuickItem *messageBoxItem(const char *name) const
+    {
+        QQuickWindow *box = messageBox("messages");
+        return box ? findItem(box->contentItem(), QLatin1String(name)) : nullptr;
+    }
     // NT1: the message box of `host` shows `text` under `title`; OK closes it.
     void answerMessage(const char *host, const QString &title, const QString &text, const QString &choice = QStringLiteral("ok"))
     {
@@ -9833,7 +9839,7 @@ private slots:
         const auto steps = session->historySize();
         QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
         QObject *confirm = nullptr;
-        QTRY_VERIFY((confirm = root->findChild<QObject *>(QStringLiteral("shiftConfirm"))) && confirm->property("visible").toBool());
+        QTRY_VERIFY((confirm = messageBox("messages")) && confirm->property("visible").toBool());
         QCOMPARE(confirm->property("title").toString(), QStringLiteral("Shift times"));
         QCOMPARE(confirm->property("text").toString(), QStringLiteral("Shift only the start times?"));
         QCOMPARE(confirm->property("severity").toString(), QStringLiteral("warning"));
@@ -9858,7 +9864,7 @@ private slots:
         QCOMPARE(confirm->property("text").toString(), QStringLiteral("Shift only the end times?"));
         QCOMPARE(confirm->property("defaultButton").value<QObject *>()->property("text").toString(),
                  QStringLiteral("Shift end times"));
-        dialogItem("shiftConfirm", "messageBoxDontAsk")->setProperty("checked", true);
+        messageBoxItem("messageBoxDontAsk")->setProperty("checked", true);
         QVERIFY(QMetaObject::invokeMethod(confirm, "answer", Q_ARG(QVariant, QStringLiteral("shift"))));
         QTRY_COMPARE(session->historySize(), steps + 2);
         QCOMPARE(application->settingsStore()->list("notices.hiddenQuestions"), QStringList{QStringLiteral("shiftOneTime")});
@@ -25305,16 +25311,14 @@ private slots:
         auto &video = application->video();
         video.openVideo(videos[0]);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
-        // PU4-file-question: PK1's message box, made at the first question,
-        // titled with the command and naming the file it opens.
+        // PU4-file-question: the application's message box (NT1), titled
+        // with the command and naming the file it opens.
         auto *question = named("videoFileQuestion");
         QVERIFY(question);
-        QVERIFY(!question->property("box").value<QObject *>());
         // Cancel: nothing happens
         QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
         QObject *box = nullptr;
-        QTRY_VERIFY((box = question->property("box").value<QObject *>()) && box->property("visible").toBool());
-        QCOMPARE(box->objectName(), QStringLiteral("videoFileQuestionBox"));
+        QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
         QCOMPARE(box->property("title").toString(), QStringLiteral("Next file"));
         QCOMPARE(box->property("text").toString(), QStringLiteral("Open the next video in this folder?"));
         QCOMPARE(box->property("detail").toString(), QStringLiteral("b.MKV"));
@@ -25352,7 +25356,7 @@ private slots:
         QCOMPARE(box->property("title").toString(), QStringLiteral("Previous file"));
         QCOMPARE(box->property("text").toString(), QStringLiteral("Open the previous video in this folder?"));
         QCOMPARE(box->property("detail").toString(), QStringLiteral("b.MKV"));
-        dialogItem("videoFileQuestionBox", "messageBoxDontAsk")->setProperty("checked", true);
+        messageBoxItem("messageBoxDontAsk")->setProperty("checked", true);
         QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("open"))));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
@@ -25639,7 +25643,7 @@ private slots:
         for (const char *button : {"nextFile", "previousFile"}) {
             QVERIFY(QMetaObject::invokeMethod(visualItem(button), "click"));
             QObject *box = nullptr;
-            QTRY_VERIFY((box = question->property("box").value<QObject *>()) && box->property("visible").toBool());
+            QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
             QCOMPARE(box->property("detail").toString(), QString());
             QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("open"))));
             QTRY_VERIFY(!box->property("visible").toBool());
@@ -27735,7 +27739,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(fullscreenItem("fullscreenNextFile"), "clicked"));
         auto *question = named("videoFileQuestion");
         QObject *box = nullptr;
-        QTRY_VERIFY((box = question->property("box").value<QObject *>()) && box->property("visible").toBool());
+        QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
         QCOMPARE(qobject_cast<QWindow *>(box)->transientParent(), fsWindow);
         QCOMPARE(qobject_cast<QWindow *>(box)->modality(), Qt::WindowModal);
         QCOMPARE(box->property("title").toString(), QStringLiteral("Next file"));
@@ -27758,7 +27762,7 @@ private slots:
         application->shiftTimesSettings().setSettingsMap(shiftSettings);
         QVERIFY(QMetaObject::invokeMethod(root, "runShiftTimes"));
         QObject *shift = nullptr;
-        QTRY_VERIFY((shift = named("shiftConfirm")) && shift->property("visible").toBool());
+        QTRY_VERIFY((shift = messageBox("messages")) && shift->property("visible").toBool());
         QCOMPARE(qobject_cast<QWindow *>(shift)->transientParent(), fsWindow);
         QVERIFY(QMetaObject::invokeMethod(shift, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!shift->property("visible").toBool());
