@@ -6693,6 +6693,47 @@ private slots:
         QCOMPARE(application->conversionOptions().value(QStringLiteral("timePerCharacter")).toInt(), 600);
         QVERIFY2(losses().contains(QStringLiteral("Times changed")), qPrintable(losses()));
         QVERIFY(!dialog->property("previous").toStringList().join(u'|').contains(QStringLiteral("Times changed")));
+        // A time per character being typed (under 30 ms) is not stored, the
+        // field says so and Convert waits for it.
+        perLetter->setProperty("text", QStringLiteral("5"));
+        QVERIFY(QMetaObject::invokeMethod(perLetter, "textEdited"));
+        QCOMPARE(application->conversionOptions().value(QStringLiteral("timePerCharacter")).toInt(), 600);
+        QVERIFY(perLetter->property("invalid").toBool());
+        QVERIFY(!accept->property("enabled").toBool());
+        perLetter->setProperty("text", QStringLiteral("600"));
+        QVERIFY(QMetaObject::invokeMethod(perLetter, "textEdited"));
+        QVERIFY(accept->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "conversionCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+
+        // To ASS: a stored catalog that no longer exists becomes the one
+        // shown, and an emptied resolution is not stored and holds Convert.
+        const QString srt = writeFile(dir, "convert-live.srt", "1\n00:00:01,000 --> 00:00:02,000\none two\n\n");
+        application->addPage(false);
+        QVERIFY(application->openFile(srt));
+        QVERIFY2(application->conversionTargets().contains(QStringLiteral("ass")),
+                 qPrintable(application->conversionTargets().join(u',')));
+        application->setConversionOptions({{QStringLiteral("styleCatalog"), QStringLiteral("No such catalog")},
+                                           {QStringLiteral("resolutionWidth"), QStringLiteral("1920")},
+                                           {QStringLiteral("resolutionHeight"), QStringLiteral("1080")}});
+        QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("ass")),
+                                          Q_ARG(QVariant, QStringLiteral("Convert to ASS"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        const QStringList catalogs = dialog->property("catalogs").toStringList();
+        QVERIFY(!catalogs.isEmpty());
+        QCOMPARE(application->conversionOptions().value(QStringLiteral("styleCatalog")).toString(), catalogs.front());
+        QCOMPARE(dialogItem("conversionDialog", "convCatalog")->property("currentIndex").toInt(), 0);
+        QVERIFY(accept->property("enabled").toBool());
+        auto *width = dialogItem("conversionDialog", "convWidth");
+        width->setProperty("text", QString());
+        QVERIFY(QMetaObject::invokeMethod(width, "textEdited"));
+        QCOMPARE(application->conversionOptions().value(QStringLiteral("resolutionWidth")).toString(), QStringLiteral("1920"));
+        QVERIFY(width->property("invalid").toBool());
+        QVERIFY(!accept->property("enabled").toBool());
+        width->setProperty("text", QStringLiteral("1280"));
+        QVERIFY(QMetaObject::invokeMethod(width, "textEdited"));
+        QCOMPARE(application->conversionOptions().value(QStringLiteral("resolutionWidth")).toString(), QStringLiteral("1280"));
+        QVERIFY(accept->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "conversionCancel"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         application->setConversionOptions(kept);

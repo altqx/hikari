@@ -30,6 +30,10 @@ DialogWindow {
     property var previous: null
     readonly property bool toAss: target === "ass"
     readonly property bool frameRate: target === "mdvd" || preview.fpsInvalid === true
+    // A number being typed that is not one yet (an empty resolution, a time
+    // per character under 30 ms) is not stored; Convert waits for it.
+    readonly property bool inputsValid: (!toAss || (resWidth.acceptableInput && resHeight.acceptableInput))
+                                        && (!perLetter.visible || !newEnds.checked || perLetter.acceptableInput)
 
     function openFor(t, label) {
         target = t
@@ -37,7 +41,15 @@ DialogWindow {
         const o = app.conversionOptions()
         fps.text = o.fps
         fpsFromVideo.checked = o.fpsFromVideo
-        catalog.currentIndex = Math.max(0, catalogs.indexOf(o.styleCatalog))
+        // The catalog shown is the one converted with: a stored name that
+        // differs only by case, or a deleted catalog's, becomes the shown one.
+        let shown = catalogs.indexOf(o.styleCatalog)
+        if (shown < 0)
+            shown = catalogs.findIndex(c => c.toLowerCase() === String(o.styleCatalog).toLowerCase())
+        shown = Math.max(0, shown)
+        catalog.currentIndex = shown
+        if (catalogs.length > 0 && catalogs[shown] !== o.styleCatalog)
+            app.setConversionOptions({styleCatalog: catalogs[shown]})
         styleBox.editText = o.style
         newEnds.checked = o.newEndTimes
         perLetter.text = o.timePerCharacter
@@ -70,10 +82,18 @@ DialogWindow {
         color: Theme.muted
         font: dialog.fontAt(12)
     }
+    // `invalid`: outlined in the danger colour.
     component NumberBox: TextField {
+        id: box
+        property bool invalid: false
         Layout.preferredWidth: 72
         horizontalAlignment: TextInput.AlignRight
         selectByMouse: true
+        background: Rectangle {
+            color: Theme.field
+            border.width: box.invalid || box.activeFocus ? 2 : 1
+            border.color: box.invalid ? Theme.danger : box.activeFocus ? Theme.focus : Theme.control
+        }
     }
 
     RowLayout {
@@ -154,7 +174,8 @@ DialogWindow {
                             objectName: "convWidth"
                             validator: IntValidator { bottom: 1; top: 100000 }
                             Accessible.name: qsTr("Width")
-                            onTextEdited: dialog.set("resolutionWidth", text)
+                            invalid: !acceptableInput
+                            onTextEdited: if (acceptableInput) dialog.set("resolutionWidth", text)
                         }
                         Label { text: "×" }
                         NumberBox {
@@ -162,7 +183,8 @@ DialogWindow {
                             objectName: "convHeight"
                             validator: IntValidator { bottom: 1; top: 100000 }
                             Accessible.name: qsTr("Height")
-                            onTextEdited: dialog.set("resolutionHeight", text)
+                            invalid: !acceptableInput
+                            onTextEdited: if (acceptableInput) dialog.set("resolutionHeight", text)
                         }
                     }
                     Item { implicitWidth: 1 }
@@ -187,13 +209,8 @@ DialogWindow {
                             objectName: "convFps"
                             Accessible.name: qsTr("Frame rate")
                             Accessible.description: fpsHint.text
+                            invalid: dialog.preview.fpsInvalid === true
                             onTextEdited: dialog.set("fps", text)
-                            background: Rectangle {
-                                color: Theme.field
-                                border.width: dialog.preview.fpsInvalid === true || fps.activeFocus ? 2 : 1
-                                border.color: dialog.preview.fpsInvalid === true ? Theme.danger
-                                    : fps.activeFocus ? Theme.focus : Theme.control
-                            }
                         }
                         Label { text: qsTr("fps"); color: Theme.muted }
                         CheckBox {
@@ -238,6 +255,7 @@ DialogWindow {
                             objectName: "convPerLetter"
                             validator: IntValidator { bottom: 30; top: 1000 }
                             Accessible.name: qsTr("Per character")
+                            invalid: newEnds.checked && !acceptableInput
                             onTextEdited: if (acceptableInput) dialog.set("timePerCharacter", Number(text))
                         }
                         Label { text: qsTr("ms"); color: Theme.muted }
@@ -335,7 +353,7 @@ DialogWindow {
             id: acceptButton
             objectName: "conversionAccept"
             text: qsTr("Convert")
-            enabled: dialog.preview.ok === true
+            enabled: dialog.preview.ok === true && dialog.inputsValid
             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
             onClicked: dialog.convert()
         },
