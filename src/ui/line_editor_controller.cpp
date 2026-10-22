@@ -926,6 +926,12 @@ bool LineEditorController::setRaw(int role, std::u8string raw, const std::option
     }
     if (!s->editDraft(r->id, change))
         return false;
+    // TM1: the runs placed keep their numbers through a raw edit of the
+    // translation (text typed inside a run with tags shown): equal runs read
+    // back as the ones the translator chose. (A caller giving the order
+    // before composed the new one already.)
+    if (role == 1 && !orderBefore && c && order && change.translation && sameRuns(*order->tags, c->tags))
+        noteRunOrder(r->id, RunOrder{*change.translation, order->order, order->tags});
     m_draftUndo.push_back({real->text, real->translation, typed, std::move(order)});
     m_draftRedo.clear();
     m_attempted.clear();

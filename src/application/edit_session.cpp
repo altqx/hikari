@@ -312,8 +312,11 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Co
             updated.startFrame = record->startFrame;
         if (cells.endFrame)
             updated.endFrame = record->endFrame;
-        // TM1: another Line's own translation follows its new text or Style.
-        if (cells.translationCarried && line->id != edited && companion)
+        // TM1: another Line's own translation follows its new text or Style,
+        // the edited Line's carried or untranslated (a translation typed goes
+        // to every Line, as above).
+        if (line->id != edited && companion &&
+            (cells.translationCarried || (!cells.translation && (cells.text || cells.style))))
             companion(*line, updated);
         // Leaving under the legacy preference: SetLine sets the edited Line's
         // End before its Start to the Start.

@@ -11495,6 +11495,14 @@ private slots:
         QVERIFY(!session->draftLine());
         QVERIFY(application->editor().placeRun(2, 2, 3));
         QTRY_VERIFY(placed(2));
+        // Text typed inside the run with tags shown: still run 2.
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(item("translationText")->property("text").toString(), QStringLiteral("w {\\i1}x{\\i0} y z"));
+        application->editor().translationEdited(QStringLiteral("w {\\i1}x!{\\i0} y z"), 9);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("w {\\i1}x!{\\i0} y z"));
+        QVERIFY(placed(2));
+        QVERIFY(!placed(1));
+        application->editor().setShowTags(false);
         application->editor().discard();
         QTRY_VERIFY(placed(1));
         QVERIFY(!placed(2));
@@ -11888,6 +11896,36 @@ private slots:
         QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("Brama"));
         QCOMPARE(q8(session->document().lines()[1]->text), drawing);
         QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("Wieza"));
+    }
+
+    // TM1: with an untranslated Line active, an Original edit to several
+    // selected Lines still carries each translated one's new tags.
+    void tagsFromOriginalUntranslatedActiveLineCarriesTheOthers()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-untranslated.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}Gate\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,{\\an8}Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\an8}Wieza\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\an8}Gate"));
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().textEdited(QStringLiteral("{\\an7}Gate"), 10);
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QString());
+        QCOMPARE(q8(session->document().lines()[1]->text), QStringLiteral("{\\an7}Gate"));
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an7}Wieza"));
     }
 
     // TM1: the font dialog on several Lines changes each translation's own

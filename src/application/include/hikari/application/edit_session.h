@@ -148,7 +148,7 @@ public:
     // Line (EditBox::SetLine on the next Line). A carried translation cell
     // (DraftChange::translationCarried) is not copied: each other Line keeps
     // its own, which `companion` may then write again from the Line before
-    // and after.
+    // and after; so too when only the text or Style changed.
     using Companion = std::function<void(const core::LineRecord &before, core::LineRecord &after)>;
     bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false, const Companion &companion = {});
     void discardDraft();
