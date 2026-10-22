@@ -12,6 +12,7 @@
 #include <QRegularExpression>
 
 #include <algorithm>
+#include <cctype>
 
 namespace hikari::ui {
 
@@ -966,12 +967,14 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
     // A template that puts an Actor or Style into an expression (`!$actor!`:
     // the template brings the `!`s) makes any of them Lua, run or not as the
     // rest of its Line decides: then every karaoke Line is the whole Line.
+    // The templater reads the name in any case (`$ACTOR`), so this does too.
     bool whole = false;
     forEachRunLine(s, [&](const core::LineRecord &l) {
         if (application::templateKindOf(l)) {
             const std::string form = formOf(l);
             out.templates += std::to_string(l.id.value) + ':' + std::to_string(form.size()) + ':' + form;
-            const std::string text = application::macroLineOf(l).text;
+            std::string text = application::macroLineOf(l).text;
+            std::ranges::transform(text, text.begin(), [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
             whole = whole || (text.find('!') != std::string::npos &&
                               (text.find("$actor") != std::string::npos || text.find("$style") != std::string::npos));
         }
