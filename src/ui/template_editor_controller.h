@@ -222,6 +222,9 @@ public:
     // The Effect with the modifier `word` (and its argument, as "loop 3")
     // added or removed.
     Q_INVOKABLE QString effectWithModifier(const QString &effect, const QString &word, bool on) const;
+    // Whether the Effect has the modifier `word` (its first word), an
+    // argument of another modifier aside.
+    Q_INVOKABLE bool hasModifier(const QString &effect, const QString &word) const;
 
 signals:
     void changed();

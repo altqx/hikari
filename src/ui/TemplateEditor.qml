@@ -1046,8 +1046,7 @@ Pane {
                { word: "fx name", text: qsTr("Only syllables marked with an effect") },
                { word: "notext", text: qsTr("No text, tags only") }]
         function hasModifier(word) {
-            const head = word.split(" ")[0]
-            return parts.modifiers.some(m => m.toLowerCase() === head)
+            return root.controller.hasModifier(root.controller.effect, word)
         }
         background: Rectangle {
             color: Theme.panel

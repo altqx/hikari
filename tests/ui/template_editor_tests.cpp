@@ -1685,6 +1685,21 @@ private slots:
         QCOMPARE(editor->sourceEndMs(), end + 1000);
     }
 
+    // A modifier's argument may be a modifier's word (`fx loop`: the
+    // syllables marked `loop`); the picker leaves it alone.
+    void aModifiersArgumentIsNotAModifier()
+    {
+        TemplateEditorController e;
+        QVERIFY(!e.hasModifier(QStringLiteral("template syl fx loop"), QStringLiteral("loop 2")));
+        QVERIFY(e.hasModifier(QStringLiteral("template syl fx loop"), QStringLiteral("fx name")));
+        QCOMPARE(e.effectWithModifier(QStringLiteral("template syl fx loop"), QStringLiteral("loop 2"), false),
+                 QStringLiteral("template syl fx loop"));
+        QCOMPARE(e.effectWithModifier(QStringLiteral("template syl fx loop"), QStringLiteral("loop 2"), true),
+                 QStringLiteral("template syl fx loop loop 2"));
+        QCOMPARE(e.effectWithModifier(QStringLiteral("template syl fx loop loop 2"), QStringLiteral("loop 2"), false),
+                 QStringLiteral("template syl fx loop"));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

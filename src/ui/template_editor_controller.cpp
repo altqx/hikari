@@ -1546,20 +1546,36 @@ QString TemplateEditorController::effectWithModifier(const QString &effect, cons
     const QStringList given = word.split(QLatin1Char(' '), Qt::SkipEmptyParts);
     if (given.isEmpty())
         return effect;
-    // Remove the modifier (with its argument) wherever it is.
+    // Remove the modifier (with its argument) wherever it is; another
+    // modifier's argument (`fx loop`) is not one.
     QStringList kept;
     for (qsizetype k = 0; k < w.modifiers.size(); ++k) {
+        const bool argument = takesArgument(w.modifiers[k]) && k + 1 < w.modifiers.size();
         if (w.modifiers[k].compare(given.front(), Qt::CaseInsensitive) == 0) {
-            if (takesArgument(given.front()) && k + 1 < w.modifiers.size())
-                ++k;
+            k += argument;
             continue;
         }
         kept << w.modifiers[k];
+        if (argument)
+            kept << w.modifiers[++k];
     }
     w.modifiers = kept;
     if (on)
         w.modifiers << given;
     return joinEffect(w);
+}
+
+bool TemplateEditorController::hasModifier(const QString &effect, const QString &word) const
+{
+    const QStringList given = word.split(QLatin1Char(' '), Qt::SkipEmptyParts);
+    const QStringList modifiers = splitEffect(effect).modifiers;
+    for (qsizetype k = 0; !given.isEmpty() && k < modifiers.size(); ++k) {
+        if (modifiers[k].compare(given.front(), Qt::CaseInsensitive) == 0)
+            return true;
+        if (takesArgument(modifiers[k]))
+            ++k; // its argument, not a modifier
+    }
+    return false;
 }
 
 } // namespace hikari::ui
