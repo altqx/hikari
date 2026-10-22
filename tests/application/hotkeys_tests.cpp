@@ -218,7 +218,7 @@ TEST(Hotkeys, DefaultsAreLoadDefault)
     HotkeyMap main, audio;
     loadDefaultHotkeys(main, false);
     loadDefaultHotkeys(audio, true);
-    EXPECT_EQ(main.size(), 73u);
+    EXPECT_EQ(main.size(), 74u); // VT3: Q
     EXPECT_EQ(audio.size(), 23u + 3u); // KA2's three
     for (const auto &[k, h] : audio)
         EXPECT_EQ(k.type, AudioHotkey);
@@ -397,8 +397,8 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     // The names table from the highest id down; no GLOBAL_QUIT.
     // V3, AM1: no "Open video with FFMS2" or "Open shortcut mapping window"
     // row; WS3: none for the five View arrangements and the editor switch;
-    // LE3's, KE1's, FS1's, TM1's and VT2's commands and KA2's three have their own.
-    ASSERT_EQ(list.rowCount(), 236u);
+    // LE3's, KE1's, FS1's, TM1's, VT2's and VT3's commands and KA2's three have their own.
+    ASSERT_EQ(list.rowCount(), 237u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
