@@ -6687,6 +6687,10 @@ ApplicationWindow {
         if (sizes.videoWidth / sizes.subsWidth !== sizes.videoHeight / sizes.subsHeight)
             choices.push({ id: "stretch", text: qsTranslate("HikariSub.Conversion", "Resample and stretch"), role: "action" })
         choices.push({ id: "resample", text: qsTranslate("HikariSub.Conversion", "Resample"), role: "accept", isDefault: true })
+        // The answer acts on the Document the video opened for; with another
+        // tab active by then (the box is modal to its window only), it does
+        // nothing.
+        const document = root.app.editingDocument()
         root.messages.ask({
             title: qsTranslate("HikariSub.Conversion", "Open video"),
             text: qsTranslate("HikariSub.Conversion", "The video is %1 × %2 and the subtitles are %3 × %4.")
@@ -6699,7 +6703,7 @@ ApplicationWindow {
             if (dontAskAgain)
                 root.app.askForBadResolution = false
             const option = ({ only: 0, resample: 1, stretch: 2 })[id]
-            if (option !== undefined)
+            if (option !== undefined && root.app.editingDocument() === document)
                 root.app.matchVideoResolution(option)
         })
     }

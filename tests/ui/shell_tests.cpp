@@ -6463,6 +6463,37 @@ private slots:
         QCOMPARE(d.scriptInfo(u8"PlayResX"), std::optional<std::u8string>(u8"1280"));
         QCOMPARE(d.scriptInfo(u8"PlayResY"), std::optional<std::u8string>(u8"360")); // height not edited
         QCOMPARE(d.scriptInfo(u8"Title"), std::optional<std::u8string>(u8"Show"));
+
+        // PU6: another tab becoming the editing target (the main window stays
+        // usable beside a floating panel the window opened from) closes the
+        // window and the resample window, and writes nothing to either
+        // Document.
+        const int first = application->currentTab();
+        application->addPage(false);
+        const int second = application->currentTab();
+        QVERIFY(second != first);
+        auto *other = application->files().session(*application->workspace().editingTarget());
+        application->selectTab(first);
+        QCOMPARE(application->currentTab(), first);
+        const auto ours = session->historySize(), theirs = other->historySize();
+        QVariant opened;
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+        QVERIFY(opened.toBool());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *title = dialogItem("scriptPropertiesDialog", "propTitle");
+        title->setProperty("text", QStringLiteral("Elsewhere"));
+        QVERIFY(QMetaObject::invokeMethod(title, "textEdited"));
+        application->selectTab(second);
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+        auto *resample = qobject_cast<QWindow *>(named("resampleDialog"));
+        QVERIFY(resample);
+        QTRY_VERIFY(resample->isVisible());
+        application->selectTab(first);
+        QTRY_VERIFY(!resample->isVisible());
+        QCOMPARE(session->historySize(), ours);
+        QCOMPARE(other->historySize(), theirs);
+        QCOMPARE(session->document().scriptInfo(u8"Title"), std::optional<std::u8string>(u8"Show"));
         application->editor().discard();
     }
 

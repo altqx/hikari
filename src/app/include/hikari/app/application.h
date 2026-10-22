@@ -858,6 +858,10 @@ public:
     QVariantList tabs() const;
     bool home() const { return m_workspace.tabs().empty() && !m_workspace.reference(); }
     int currentTab() const;
+    // PU6: the editing target's id (a tab row's `id`), 0 without one. A
+    // document window remembers it at its opening and applies to that
+    // Document only (tabsChanged tells when it changes).
+    Q_INVOKABLE qulonglong editingDocument() const;
     int sessionRestore() const;
     void setSessionRestore(int value);
     QVariantList unresolvedRestores() const;

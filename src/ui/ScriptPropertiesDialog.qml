@@ -23,6 +23,18 @@ DialogWindow {
     initialFocus: titleField
     property var initial: ({})
     property var edits: ({})
+    // The Document it opened for. Opened from a floating panel, it is modal
+    // to that panel only and another tab can become the editing target:
+    // that closes it rather than writing these values to the other
+    // Document.
+    property var document: 0
+    Connections {
+        target: dialog.app
+        function onTabsChanged() {
+            if (dialog.visible && dialog.app.editingDocument() !== dialog.document)
+                dialog.reject()
+        }
+    }
 
     // False for a Document that is not ASS.
     function openFor() {
@@ -48,6 +60,7 @@ DialogWindow {
         collisionBox.currentIndex = p.reverseCollisions ? 1 : 0
         borderBox.checked = p.scaledBorderAndShadow
         edits = ({})
+        document = app.editingDocument()
         open()
         return true
     }
@@ -64,7 +77,10 @@ DialogWindow {
                  matrix: matrixBox.currentIndex, wrapStyle: wrapBox.currentIndex,
                  reverseCollisions: collisionBox.currentIndex === 1, scaledBorderAndShadow: borderBox.checked }
     }
-    onAccepted: app.applyScriptProperties(values(), edits, linkBox.checked)
+    onAccepted: {
+        if (app.editingDocument() === document)
+            app.applyScriptProperties(values(), edits, linkBox.checked)
+    }
 
     component FieldLabel: Label { Layout.preferredWidth: 104 }
     component WideField: TextField { Layout.fillWidth: true; Layout.preferredWidth: 300 }

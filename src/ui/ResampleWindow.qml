@@ -25,6 +25,16 @@ DialogWindow {
     property var initial: ({})
     // Stretch chosen (legacy's "Stretch" radio).
     property bool stretch: false
+    // The Document it opened for; another editing target closes it (as
+    // ScriptPropertiesDialog).
+    property var document: 0
+    Connections {
+        target: dialog.app
+        function onTabsChanged() {
+            if (dialog.visible && dialog.app.editingDocument() !== dialog.document)
+                dialog.reject()
+        }
+    }
 
     function openDialog() {
         const v = app.resampleValues()
@@ -36,6 +46,7 @@ DialogWindow {
         targetWidth.value = v.videoWidth
         targetHeight.value = v.videoHeight
         stretch = false
+        document = app.editingDocument()
         open()
     }
     // The stretch choice only means something when the aspect ratio changes.
@@ -49,7 +60,7 @@ DialogWindow {
         return w / a <= 32 && h / a <= 32 ? (w / a) + ":" + (h / a) : scale(w / h) + ":1"
     }
     function resample() {
-        if (same)
+        if (same || app.editingDocument() !== document)
             return
         app.resample(subsWidth.value, subsHeight.value, targetWidth.value, targetHeight.value, aspectChanges && stretch)
         close()
