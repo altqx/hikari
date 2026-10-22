@@ -309,6 +309,9 @@ public:
     // Reloads the editing target from its file with fresh history; a failed
     // or stale reload keeps the Document as it is (L58-staged-replacement).
     Q_INVOKABLE bool reloadTarget();
+    // PU1-disk-change-bar: Keep mine (and Save over it) for the Document `id`
+    // (0: the editing target): its next save writes over the change shown.
+    Q_INVOKABLE bool acceptFileOnDisk(qulonglong id);
     // PU1-disk-change-bar: the changed-on-disk bar's Compare. The editing
     // target's file, as it is on disk now, opens as the protected reference
     // (read only, so neither copy can be saved over the other) and Subtitle

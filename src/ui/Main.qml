@@ -5661,8 +5661,8 @@ ApplicationWindow {
         // PU1-disk-change-bar: the editing target's file was changed by another
         // program (legacy's modal "Subtitles were modified by another program.
         // Reload?"): Reload reads it again, Compare opens it as the protected
-        // reference and compares, Keep mine ends the bar (a save then writes
-        // over the file).
+        // reference and compares, Keep mine ends the bar and accepts the
+        // change (a save then writes over the file).
         InlineBar {
             id: diskChangeBar
             objectName: "diskChangeBar"
@@ -5690,7 +5690,10 @@ ApplicationWindow {
             Button {
                 objectName: "reloadNo"
                 text: qsTranslate("HikariSub.Documents", "Keep mine")
-                onClicked: root.endDiskChange(diskChangeBar.tab.id)
+                onClicked: {
+                    root.app.acceptFileOnDisk(diskChangeBar.tab.id)
+                    root.endDiskChange(diskChangeBar.tab.id)
+                }
             }
         }
         // PU1-session-entries-bar: what a restore could not find for this tab,
@@ -5999,7 +6002,8 @@ ApplicationWindow {
 
     // PU1-disk-change-bar: a save while a Document's changed-on-disk bar
     // shows asks first (legacy's question was modal, answered before any
-    // save); Save over it ends those bars and saves.
+    // save); Save over it accepts the change, ends those bars and saves
+    // (otherwise the save is refused: the file is not what was read).
     LazyMessageBox {
         id: diskSaveQuestion
         name: "diskSaveQuestion"
@@ -6019,8 +6023,10 @@ ApplicationWindow {
                 ]
             }, id => {
                 if (id === "saveOver") {
-                    for (const marked of ids)
+                    for (const marked of ids) {
+                        root.app.acceptFileOnDisk(marked)
                         root.endDiskChange(marked)
+                    }
                     save()
                 }
                 matroskaSubtitles.saveDone() // Y9: the load waits for the answer

@@ -2381,6 +2381,12 @@ QString Application::externalChange()
     return known == m_fileTimes.end() ? QString() : QStringLiteral("modified");
 }
 
+bool Application::acceptFileOnDisk(qulonglong id)
+{
+    const auto document = documentOf(id);
+    return document && m_files->acceptExternalChange(*document);
+}
+
 bool Application::reloadTarget()
 {
     const auto target = m_workspace.editingTarget();
