@@ -11,6 +11,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -353,6 +354,31 @@ private slots:
         QTRY_VERIFY(application->quitApproved());
         application->waitForWrites();
         QCOMPARE(readAll(path).count("mine"), qsizetype(2));
+    }
+
+    // The file gone after its bar showed: Reload and Save over it can't
+    // use it, and the bar stays for Keep mine or Save as.
+    void aFileGoneAfterItsBarKeepsTheBar()
+    {
+        start();
+        const QString path = writeAss(dir.filePath(QStringLiteral("disk/gone.ass")), "mine");
+        QVERIFY(application->openFile(path));
+        changeOnDisk(path, "theirs");
+        QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
+        QTRY_VERIFY(shown("diskChangeBar"));
+        application->duplicateLines();
+        QVERIFY(QFile::remove(path));
+        QVERIFY(QMetaObject::invokeMethod(named("reloadYes"), "clicked"));
+        QTest::qWait(200);
+        QVERIFY(shown("diskChangeBar"));
+        QCOMPARE(target()->document().lines().size(), std::size_t(2));
+        QVERIFY(QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
+        QTRY_VERIFY(shown("diskSaveQuestion"));
+        QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("saveOver"))));
+        QTRY_VERIFY(!shown("diskSaveQuestion"));
+        application->waitForWrites();
+        QVERIFY(shown("diskChangeBar"));
+        QVERIFY(!QFileInfo::exists(path));
     }
 
     // Saved under another name, the bar about the file it came from goes.
