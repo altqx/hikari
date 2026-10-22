@@ -108,7 +108,8 @@ struct Context {
     bool editorIsTranslation = false;
     std::function<void(std::u16string_view)> log;
 };
-Context context(const VisualHost &host);
+// `withStyles` false leaves `styles` empty, for a caller keeping them decoded.
+Context context(const VisualHost &host, bool withStyles = true);
 
 // Dialogue::GetTextNoCopy / SetText (SubsDialogue.cpp:216-232).
 std::u16string lineText(const core::LineRecord &line);

@@ -643,7 +643,7 @@ int changeText(u16 &text, u16v what, bool inBracket, long x, long y)
     return 0;
 }
 
-Context context(const VisualHost &host)
+Context context(const VisualHost &host, bool withStyles)
 {
     Context c;
     const EditSession *session = host.session();
@@ -657,7 +657,8 @@ Context context(const VisualHost &host)
     if (!session)
         return c;
     c.document = &session->document();
-    c.styles = core::decodeStyles(session->document());
+    if (withStyles)
+        c.styles = core::decodeStyles(session->document());
     if (const auto active = host.activeLine()) {
         const auto draft = session->draftRecord();
         if (draft && draft->id == *active)

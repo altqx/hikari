@@ -31,6 +31,7 @@
 
 #include <array>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
 
@@ -111,18 +112,33 @@ struct LineState {
     bool hasMove = false;
     std::array<double, 4> move{0, 0, 0, 0}; // \move's points
     std::u16string moveTimes;               // its times, as written (",t1,t2" or empty)
-    bool stacks = false; // no \pos, \move or \org: libass moves it clear of others
+    bool stacks = false; // no \pos, \move, \org or \t: libass moves it clear of others
     bool ownOrg = false; // an \org of its own (else libass turns it about its position)
 };
+// The Script's Styles decoded and by name, kept while the session's
+// revision holds: the tool reads the active Line again each frame, and a
+// Script can hold very many Styles.
+class StyleCache {
+public:
+    struct Decoded;
+    std::shared_ptr<const Decoded> get(const VisualHost &host);
+
+private:
+    std::uint64_t m_session = 0, m_revision = 0;
+    const void *m_document = nullptr;
+    std::shared_ptr<const Decoded> m_decoded;
+};
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line);
+std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line, StyleCache &styles);
 // The same without the box.
 LineState readTags(const VisualHost &host, const core::LineRecord &line);
 
 // `text` with `t` written into its first block (a block put in when it has
 // none): \pos (or the Line's \move moved by `t`.pos less `movedFrom`), \org,
 // \fax, \fscx, \fscy, \frz, \frx, \fry, \xbord, \ybord, \xshad, \yshad, the
-// block's \fay, \fr, \bord and \shad removed, a tag at its Style's value
-// (\fax, \frx and \fry at 0) left out. Tags inside \t(...) are not touched.
+// leading blocks' \fay, \fr, \fsc, \bord and \shad (and \move, when a
+// \pos is written) removed, a tag at its Style's value (\fax, \frx and \fry
+// at 0) left out. Tags inside \t(...) are not touched.
 // A \move Line without an \org keeps libass's origin, its moving position,
 // when `t` does not turn it or turns it about `t`.pos: no \org is written.
 std::u16string writeTransform(std::u16string_view text, const Transform &t, const core::StyleValues &style,
@@ -200,6 +216,7 @@ private:
     double m_screenZ = 312.5;
     std::optional<core::LineId> m_line;
     std::uint64_t m_session = 0; // EditSession::serial of m_line and m_planes
+    mutable perspective::StyleCache m_styles;
     // The outer quads of the session (VT3: kept per Line in memory, not saved).
     std::map<core::LineId, perspective::Quad> m_planes;
 

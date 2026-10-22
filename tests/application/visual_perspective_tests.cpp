@@ -14,6 +14,7 @@
 #include <chrono>
 #include <cmath>
 #include <cstring>
+#include <set>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -193,13 +194,14 @@ public:
         lastBold = style[7];
         lastItalic = style[8];
         lastSpacing = style[13];
+        lastText = text;
         const std::u16string u = core::toUtf16(std::u8string(text.begin(), text.end()));
         TextExtents e;
         e.width = static_cast<float>(static_cast<double>(u.size()) * fs * 0.5);
         e.height = static_cast<float>(fs);
         return e;
     }
-    std::string lastScaleX, lastFont, lastBold, lastItalic, lastSpacing;
+    std::string lastScaleX, lastFont, lastBold, lastItalic, lastSpacing, lastText;
     int calls = 0;
 };
 
@@ -213,9 +215,19 @@ std::string scriptOf(const std::vector<std::string> &texts, const std::string &e
                     "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,"
                     "2,10,10,10,1\n" + extraStyles +
                     "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
-    for (const std::string &t : texts)
-        s += "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,," + t + "\n";
+    for (const std::string &t : texts) // a whole Dialogue line, or its text
+        s += t.starts_with("Dialogue:") ? t + "\n" : "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,," + t + "\n";
     return s;
+}
+
+// The texts each on a Layer of its own, which libass does not stack on
+// another: a Line's reading then does not take the others'.
+std::vector<std::string> apart(const std::vector<std::string> &texts)
+{
+    std::vector<std::string> out;
+    for (std::size_t i = 0; i < texts.size(); ++i)
+        out.push_back("Dialogue: " + std::to_string(i) + ",0:00:01.00,0:00:03.00,Default,,0,0,0,," + texts[i]);
+    return out;
 }
 
 class Host : public VisualHost {
@@ -283,6 +295,14 @@ public:
     std::int64_t videoTimeMs() const override { return time; }
     LegacyTimebase timebase() const override { return {}; }
     TextMeasurePort *textMeasure() const override { return withMeasure ? &measure : nullptr; }
+    std::set<std::string> leased; // ASCII lower case
+    bool fontLeased(const std::string &name) const override
+    {
+        std::string lower = name;
+        for (char &c : lower)
+            c = static_cast<char>(std::tolower(static_cast<unsigned char>(c)));
+        return leased.contains(lower);
+    }
 };
 
 core::LineRecord lineWith(const Host &host, std::size_t i = 0) { return *host.s->document().lines()[i]; }
@@ -323,7 +343,7 @@ TEST(PerspectiveTags, ReadsTheFirstBlockAndTheFirstPosition)
 
 TEST(PerspectiveTags, MeasuresTheTextAtAScaleOf100)
 {
-    Host host({"{\\fscx200\\fs20\\fnMono}Hello\\Nab", "{\\p1}m 10 20 l 110 20 110 70 10 70", "{\\p2}m 0 0 l 100 50"});
+    Host host(apart({"{\\fscx200\\fs20\\fnMono}Hello\\Nab", "{\\p1}m 10 20 l 110 20 110 70 10 70", "{\\p2}m 0 0 l 100 50"}));
     const auto a = readLine(host, lineWith(host, 0));
     ASSERT_TRUE(a);
     EXPECT_EQ(host.measure.lastScaleX, "100");
@@ -480,9 +500,9 @@ TEST(PerspectiveTags, ReadsThePositionAsLibass)
 
 TEST(PerspectiveTags, MeasuresTheTextAsLibassShowsIt)
 {
-    Host host({"{\\q2}ab\\ncd", "Hello \\{w\\}", "{\\fs+10}ab", "{\\fs0}ab", "{\\fs-5}ab", "a{b",
-               "{\\p1}m 0 0 l 10 0 10 10{\\c&HFF&}l 100 100", "{\\p1}m 0 0 l 10 0 10 10{\\p0}",
-               "ab{\\p1}m 0 0 l 1 1{\\p0}"});
+    Host host(apart({"{\\q2}ab\\ncd", "Hello \\{w\\}", "{\\fs+10}ab", "{\\fs0}ab", "{\\fs-5}ab", "a{b",
+                     "{\\p1}m 0 0 l 10 0 10 10{\\c&HFF&}l 100 100", "{\\p1}m 0 0 l 10 0 10 10{\\p0}",
+                     "ab{\\p1}m 0 0 l 1 1{\\p0}"}));
     const auto box = [&host](std::size_t i) { return readLine(host, lineWith(host, i)); };
     ASSERT_TRUE(box(0));
     EXPECT_FLOAT_EQ(box(0)->box.height(), 80); // \q2: \n breaks
@@ -534,7 +554,7 @@ TEST(PerspectiveTags, AHostileLineTakesLinearTime)
     std::string blocks;
     for (int i = 0; i < 100000; ++i)
         blocks += "{\\frx1}";
-    Host host({braces, escapes, blocks + "x"}, "WrapStyle: 2"); // unwrapped: measured
+    Host host(apart({braces, escapes, blocks + "x"}), "WrapStyle: 2"); // unwrapped: measured
     const auto started = std::chrono::steady_clock::now();
     for (std::size_t i = 0; i < 3; ++i) {
         // The braces and the hard spaces are past the shown characters'
@@ -571,7 +591,7 @@ TEST(PerspectiveTags, ManyResetsAndStylesTakeLinearTime)
 
 TEST(PerspectiveTags, AGlyphChangeAfterTheTextIsNotMeasured)
 {
-    Host host({"A{\\fs80}B", "A{\\c&HFF&}B", "\\N{\\fscx50}B", "A{\\rDefault}B", "{\\fs80}A"});
+    Host host(apart({"A{\\fs80}B", "A{\\c&HFF&}B", "\\N{\\fscx50}B", "A{\\rDefault}B", "{\\fs80}A"}));
     const auto box = [&host](std::size_t i) { return readLine(host, lineWith(host, i)); };
     EXPECT_FALSE(box(0)); // libass sizes B at 80
     ASSERT_TRUE(box(1));  // a colour changes no glyph
@@ -585,7 +605,7 @@ TEST(PerspectiveTags, AGlyphChangeAfterTheTextIsNotMeasured)
 TEST(PerspectiveTags, ALineLibassWrapsIsNotMeasured)
 {
     const std::string wide(40, 'a'); // 800 wide, the room 620
-    Host host({wide, "{\\q2}" + wide, "{\\fscx50}" + wide});
+    Host host(apart({wide, "{\\q2}" + wide, "{\\fscx50}" + wide}));
     EXPECT_FALSE(readLine(host, lineWith(host, 0)));
     EXPECT_TRUE(readLine(host, lineWith(host, 1))); // \q2: no wrapping
     EXPECT_TRUE(readLine(host, lineWith(host, 2))); // 400 at half the width
@@ -696,6 +716,166 @@ TEST(PerspectiveTags, AMovingLineWithoutAnOriginKeepsIt)
               std::u16string::npos);
     // A \pos Line's is always written.
     EXPECT_NE(writeTransform(u"{\\pos(150,100)}a", t, st).find(u"\\org(150,100)"), std::u16string::npos);
+}
+
+TEST(PerspectiveTags, TheStylesAreDecodedOnceARevision)
+{
+    // The tool reads the active Line each frame: the Styles (a Script can
+    // hold very many) are decoded again only when the Script changes.
+    Host host({"{\\pos(320,200)}Text"});
+    StyleCache cache;
+    const auto first = cache.get(host);
+    EXPECT_EQ(cache.get(host).get(), first.get());
+    ASSERT_TRUE(readLine(host, lineWith(host), cache));
+    EXPECT_EQ(cache.get(host).get(), first.get());
+    ASSERT_TRUE(host.beginGesture(host.targets, "edit"));
+    host.gesture()->stage(host.line(0), u8"{\\pos(10,10)}Text", false);
+    ASSERT_TRUE(host.commitGesture());
+    EXPECT_NE(cache.get(host).get(), first.get());
+}
+
+TEST(PerspectiveTags, ScalesOutlinesAndShadowsAreHeldAsLibassHoldsThem)
+{
+    // libass holds \fscx, \fscy, the outlines and \shad at 0 and above (not
+    // \xshad or \yshad), and a Style's scales, spacing, outline and shadow.
+    const std::string neg = "Style: Neg,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,-50,-20,-5,0,1,"
+                            "-2,-1,2,10,10,10,1\n";
+    Host host({"{\\pos(320,200)\\fscx-50\\fscy-1\\bord-3\\shad-2}Text",
+               "{\\pos(320,200)\\xbord-1\\ybord-1\\xshad-2\\yshad-3}Text",
+               "Dialogue: 0,0:00:01.00,0:00:03.00,Neg,,0,0,0,,{\\pos(320,200)}Text"},
+              {}, neg);
+    const Transform a = readTags(host, lineWith(host, 0)).transform;
+    EXPECT_EQ(a.fscx, 0);
+    EXPECT_EQ(a.fscy, 0);
+    EXPECT_EQ(a.bord.x, 0);
+    EXPECT_EQ(a.bord.y, 0);
+    EXPECT_EQ(a.shad.x, 0);
+    EXPECT_EQ(a.shad.y, 0);
+    const Transform b = readTags(host, lineWith(host, 1)).transform;
+    EXPECT_EQ(b.bord.x, 0);
+    EXPECT_EQ(b.bord.y, 0);
+    EXPECT_EQ(b.shad.x, -2);
+    EXPECT_EQ(b.shad.y, -3);
+    const Transform c = readTags(host, lineWith(host, 2)).transform;
+    EXPECT_EQ(c.fscx, 0);
+    EXPECT_EQ(c.fscy, 0);
+    EXPECT_EQ(c.bord.x, 0);
+    EXPECT_EQ(c.shad.y, 0);
+    ASSERT_TRUE(readLine(host, lineWith(host, 2)));
+    EXPECT_EQ(host.measure.lastSpacing, "0");
+    // Collapsed, the text has no quad to edit.
+    PerspectiveTool tool;
+    tool.reset(host);
+    EXPECT_FALSE(tool.hasQuad());
+}
+
+TEST(PerspectiveTags, ArgumentsAreSplitAsLibassSplitsThem)
+{
+    // libass trims each argument and leaves an empty one out (\pos(100,)
+    // has one, and is skipped); spaces may follow the backslash.
+    Host host({"{\\pos(100,)\\org(5, )}Text", "{\\pos( 100 , 50 )\\ frx20}Text", "{\\move(1,2,3,4,,0,1000)}Text",
+               "{\\move(1,2,,3,4)}Text"});
+    const LineState a = readTags(host, lineWith(host, 0));
+    EXPECT_TRUE(a.stacks); // no \pos and no \org
+    EXPECT_FALSE(a.ownOrg);
+    const LineState b = readTags(host, lineWith(host, 1));
+    EXPECT_EQ(b.transform.pos.x, 100);
+    EXPECT_EQ(b.transform.pos.y, 50);
+    EXPECT_EQ(b.transform.frx, 20);
+    const LineState c = readTags(host, lineWith(host, 2));
+    EXPECT_TRUE(c.hasMove);
+    EXPECT_EQ(c.moveTimes, u",0,1000");
+    const LineState d = readTags(host, lineWith(host, 3));
+    EXPECT_TRUE(d.hasMove);
+    EXPECT_EQ(d.move, (std::array<double, 4>{1, 2, 3, 4}));
+}
+
+TEST(PerspectiveTags, ANameEndsBeforeItsSpaces)
+{
+    // libass looks a \r's Style and a \fn's font up without the spaces
+    // after the name; \fn0 is the Style's font.
+    const std::string other = "Style: Other,Other Face,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,50,100,"
+                              "0,0,1,2,1,2,10,10,10,1\n";
+    Host host({"{\\pos(320,200)\\rOther \\frx20}Text", "{\\pos(320,200)\\fnSome Face  \\frx1}Text",
+               "{\\pos(320,200)\\fn0}Text"},
+              {}, other);
+    const LineState a = readTags(host, lineWith(host, 0));
+    EXPECT_EQ(a.transform.fscx, 50); // Other's
+    EXPECT_EQ(a.transform.frx, 20);
+    ASSERT_TRUE(readLine(host, lineWith(host, 0)));
+    EXPECT_EQ(host.measure.lastFont, "Other Face");
+    ASSERT_TRUE(readLine(host, lineWith(host, 1)));
+    EXPECT_EQ(host.measure.lastFont, "Some Face");
+    ASSERT_TRUE(readLine(host, lineWith(host, 2)));
+    EXPECT_EQ(host.measure.lastFont, "Arial");
+}
+
+TEST(PerspectiveTags, AWeightTheMeasureCannotTakeIsNotMeasured)
+{
+    // libass renders \b500 at that weight; the measure has normal and bold.
+    Host host({"{\\pos(320,200)\\b500}AB", "{\\pos(320,200)\\b700}AB", "{\\pos(320,200)\\b400}AB",
+               "{\\pos(320,200)\\b50}AB", "{\\pos(320,200)\\b900}AB"});
+    EXPECT_FALSE(readLine(host, lineWith(host, 0)));
+    ASSERT_TRUE(readLine(host, lineWith(host, 1)));
+    EXPECT_NE(host.measure.lastBold, "0");
+    ASSERT_TRUE(readLine(host, lineWith(host, 2)));
+    EXPECT_EQ(host.measure.lastBold, "0");
+    ASSERT_TRUE(readLine(host, lineWith(host, 3)));
+    EXPECT_EQ(host.measure.lastBold, "0"); // no weight: the Style's
+    EXPECT_FALSE(readLine(host, lineWith(host, 4)));
+}
+
+TEST(PerspectiveTags, FscResetsBothScales)
+{
+    Host host({"{\\pos(320,200)\\fscx50\\fscy70\\fsc}T", "{\\pos(320,200)}Te{\\fsc}xt", "{\\pos(320,200)\\t(\\fsc)}T"});
+    const LineState a = readTags(host, lineWith(host, 0));
+    EXPECT_EQ(a.transform.fscx, 100);
+    EXPECT_EQ(a.transform.fscy, 100);
+    EXPECT_FALSE(readLine(host, lineWith(host, 1))); // a scale change after the text
+    EXPECT_FALSE(readLine(host, lineWith(host, 2))); // animated
+    // Written over, it leaves the leading blocks with the scales.
+    Transform t;
+    t.pos = {1, 2};
+    t.org = t.pos;
+    const std::u16string out = writeTransform(u"{\\fscx50\\fsc}a", t, core::StyleValues{});
+    for (std::size_t i = out.find(u"\\fsc"); i != std::u16string::npos; i = out.find(u"\\fsc", i + 1))
+        EXPECT_TRUE(out[i + 4] == u'x' || out[i + 4] == u'y') << core::toUtf8(out).size();
+}
+
+TEST(PerspectiveTags, ATabIsMeasuredAsASpace)
+{
+    Host host({"{\\pos(320,200)}A\tB"});
+    ASSERT_TRUE(readLine(host, lineWith(host)));
+    EXPECT_EQ(host.measure.lastText, "A B");
+}
+
+TEST(PerspectiveTags, AWrittenPositionStaysAheadOfAMove)
+{
+    // libass takes the first \pos or \move: a \move after the \pos written
+    // would come first once the \pos is moved to the end of the block.
+    Transform t;
+    t.pos = {10, 20};
+    t.org = t.pos;
+    for (const std::u16string text : {u"{\\pos(1,2)\\move(1,2,3,4)}a", u"{\\pos(1,2)}{\\move(1,2,3,4)}a"}) {
+        const std::u16string out = writeTransform(text, t, core::StyleValues{});
+        EXPECT_EQ(out.find(u"\\move"), std::u16string::npos);
+        const std::u8string u8 = core::toUtf8(out);
+        Host host({std::string(u8.begin(), u8.end())});
+        const LineState read = readTags(host, lineWith(host));
+        EXPECT_FALSE(read.hasMove);
+        EXPECT_EQ(read.transform.pos.x, 10);
+    }
+}
+
+TEST(PerspectiveTags, AFontOnlyTheRendererSeesIsNotMeasured)
+{
+    // An attached or external font is the renderer's alone: the measure
+    // would take another in its place. A vertical font (@) is laid out down.
+    Host host({"{\\pos(320,200)}Text", "{\\pos(320,200)\\fnOther}Text", "{\\pos(320,200)\\fn@Other}Text"});
+    host.leased = {"arial"};
+    EXPECT_FALSE(readLine(host, lineWith(host, 0))); // Default's Arial
+    EXPECT_TRUE(readLine(host, lineWith(host, 1)));
+    EXPECT_FALSE(readLine(host, lineWith(host, 2)));
 }
 
 struct Fixture {
@@ -1151,8 +1331,8 @@ TEST(PerspectiveTool, TheOptions)
 TEST(PerspectiveTool, TheStackTakesTheOtherLinesScaleAndOutline)
 {
     // The first Line's rectangle at its own \fscy and \bord (Default's
-    // outline 2 and shadow 1): 40 + 4 + 1 high, 80 + 4 + 1 at \fscy200,
-    // 40 + 12 + 1 at \bord6; the second goes above it by that.
+    // outline 2; libass's rectangle has no shadow): 40 + 4 high, 80 + 4 at
+    // \fscy200, 40 + 12 at \bord6; the second goes above it by that.
     const auto second = [](const std::string &first) {
         Fixture f({first, "Second"});
         f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
@@ -1224,6 +1404,40 @@ TEST(PerspectiveTool, ThePlaneIsShownWhereItHolds)
         EXPECT_TRUE(convex(f.tool.outer()));
     }
     EXPECT_TRUE(found);
+}
+
+TEST(PerspectiveTool, TheStackIsLibassCollisions)
+{
+    const auto second = [](const std::string &first, const std::string &mine = "Second") -> std::optional<float> {
+        Fixture f({first, mine});
+        f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
+        f.host.targets = {f.host.line(1)};
+        f.tool.reset(f.host);
+        if (!f.tool.hasQuad())
+            return std::nullopt;
+        return f.tool.inner()[2].y;
+    };
+    const std::string at = "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,";
+    const float plain = second("First").value_or(0);
+    const float nominal = second("{\\pos(0,0)}First").value_or(0); // nothing to stack on
+    ASSERT_LT(plain, nominal - 1);
+    // The shadow is not in the rectangle, a negative one neither.
+    EXPECT_NEAR(second("{\\yshad-20}First").value_or(0), plain, 0.05);
+    EXPECT_NEAR(second("{\\shad30}First").value_or(0), plain, 0.05);
+    // Another Layer, a \t or a scrolling effect: no collision (Scroll up;
+    // without its three values is no effect).
+    EXPECT_NEAR(second("Dialogue: 1,0:00:01.00,0:00:03.00,Default,,0,0,0,,First").value_or(0), nominal, 0.05);
+    EXPECT_NEAR(second("{\\t(\\c&HFF&)}First").value_or(0), nominal, 0.05);
+    EXPECT_NEAR(second(at + "Scroll up;0;100;10,First").value_or(0), nominal, 0.05);
+    EXPECT_NEAR(second(at + "Scroll up;10,First").value_or(0), plain, 0.05);
+    // A \t keeps the Line itself out too.
+    EXPECT_NEAR(second("First", "{\\t(\\c&HFF&)}Second").value_or(0), nominal, 0.05);
+    // Nothing shown is no obstacle.
+    EXPECT_NEAR(second("{\\c&HFF&}").value_or(0), nominal, 0.05);
+    // An obstacle that cannot be measured: where the Line goes is not known.
+    EXPECT_FALSE(second("A{\\fs80}B"));
+    // A scrolling Line moves with the time: no quad.
+    EXPECT_FALSE(second("First", at + "Banner;10,Second"));
 }
 
 TEST(PerspectiveTool, IsTheTwelfthFamily)
