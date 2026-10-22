@@ -116,6 +116,9 @@ public:
     Q_INVOKABLE bool undoAll();
     Q_INVOKABLE void undo();
     Q_INVOKABLE void redo();
+    // The strip's placing for the definition named `name` (HY1), a step
+    // here while the window is open.
+    void setPlacingOf(const QString &name, int placing);
     // The window closed: the changes are kept already.
     Q_INVOKABLE void close();
 

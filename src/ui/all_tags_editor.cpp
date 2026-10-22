@@ -246,6 +246,19 @@ void AllTagsEditor::redo()
         kept();
 }
 
+void AllTagsEditor::setPlacingOf(const QString &name, int placing)
+{
+    const auto &tags = m_edition.tags();
+    const auto it = std::ranges::find_if(tags, [&](const AllTagsSetting &t) { return qs(t.name) == name; });
+    if (it == tags.end() || it->mode == placing)
+        return;
+    const int was = selection();
+    m_edition.select(static_cast<int>(it - tags.begin()));
+    m_edition.setPlacing(placing);
+    m_edition.select(was);
+    kept();
+}
+
 void AllTagsEditor::close()
 {
     if (m_done)

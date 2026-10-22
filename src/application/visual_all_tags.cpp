@@ -402,16 +402,8 @@ std::vector<int> AllTagsTool::sectionsOf(const VisualHost &host) const
 {
     // HY1: the built-in definitions (legacy's default names) everyday ones
     // first (0, Common), the rest of them under More (1), the user's own
-    // last (2).
-    static const std::vector<u16> common{u"blur",      u"blur edge", u"border", u"shadow", u"font size",
-                                         u"spacing",   u"alpha",     u"color1", u"color3"};
-    static const std::vector<u16> builtIn = allTagsNames(defaultAllTags());
-    std::vector<int> out;
-    for (const AllTagsSetting &tag : tags(host))
-        out.push_back(std::ranges::contains(common, tag.name)    ? 0
-                      : std::ranges::contains(builtIn, tag.name) ? 1
-                                                                 : 2);
-    return out;
+    // last (2); Edit tags lists them the same way (PU5).
+    return allTagsSections(tags(host));
 }
 
 std::vector<int> AllTagsTool::listOrder(const VisualHost &host) const
