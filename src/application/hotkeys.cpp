@@ -1569,6 +1569,7 @@ void HotkeyList::map(int index, const std::string &accel, int type, HotkeyAnswer
         m_copy[HotkeyId{current.key.id, type}] = Hotkey{current.name, accel};
         m_modified = true;
         pushHistory();
+        rerunSearch();
         return;
     }
     auto &r = copyRow(index);
@@ -1578,6 +1579,7 @@ void HotkeyList::map(int index, const std::string &accel, int type, HotkeyAnswer
     m_copy[current.key] = Hotkey{current.name, accel};
     m_modified = true;
     pushHistory();
+    rerunSearch();
 }
 
 void HotkeyList::reset(int index, const HotkeyMap &live)
@@ -1591,6 +1593,7 @@ void HotkeyList::reset(int index, const HotkeyMap &live)
     m_modified = true;
     pushHistory();
     m_copy[r.key] = Hotkey{r.name, def};
+    rerunSearch();
 }
 
 void HotkeyList::resetAll(const HotkeyMap &live)
@@ -1614,9 +1617,7 @@ void HotkeyList::resetAll(const HotkeyMap &live)
         return;
     m_modified = true;
     pushHistory();
-    // A search shows the rows that match their new bindings.
-    if (!m_search.empty())
-        filter(m_filterMode);
+    rerunSearch();
 }
 
 void HotkeyList::remove(int index, const HotkeyMap &live)
@@ -1628,6 +1629,7 @@ void HotkeyList::remove(int index, const HotkeyMap &live)
     m_modified = true;
     pushHistory();
     m_copy[r.key] = Hotkey{r.name, std::string()};
+    rerunSearch();
 }
 
 void HotkeyList::moveInHistory(int to)
@@ -1644,6 +1646,24 @@ void HotkeyList::moveInHistory(int to)
         }
     m_rows = std::move(actual);
     rebuildFiltered();
+    rerunSearch();
+}
+
+void HotkeyList::rerunSearch()
+{
+    if (m_search.empty())
+        return;
+    const int selected = selection();
+    const std::optional<HotkeyId> key = selected >= 0 ? std::optional(m_rows[std::size_t(selected)]->key) : std::nullopt;
+    filter(m_filterMode);
+    m_sel = -1;
+    if (!key)
+        return;
+    for (std::size_t i = 0; i < m_filtered.size(); ++i)
+        if (m_filtered[i]->key == *key)
+            m_sel = int(i);
+    if (m_sel < 0 && !m_filtered.empty())
+        m_sel = 0; // the edited row left the results
 }
 
 void HotkeyList::undo()

@@ -253,7 +253,7 @@ public:
     // whose Function or Hotkey column holds `text` (ASCII letters in any
     // case; the macros' rows also by their script and macro, `also`) show.
     // Empty shows every row the filter shows. The selection goes to the
-    // first shown row.
+    // first shown row. Edits, Undo and Redo search again.
     void search(std::string text, const std::function<std::string(const Row &)> &also = {});
     const std::string &searchText() const { return m_search; }
     // GetSelection: the selected row, or -1.
@@ -307,6 +307,9 @@ private:
     void rebuildFiltered();
     int findShown(int row) const; // FindId
     void moveInHistory(int to);
+    // After an edit, while searching: the rows matching their bindings now,
+    // the selected row kept if it still matches.
+    void rerunSearch();
     std::vector<HotkeyId> conflicts(int row, const std::string &accel) const;
 
     HotkeyMap &m_copy;

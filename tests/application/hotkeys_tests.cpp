@@ -551,6 +551,33 @@ TEST(Hotkeys, ResetAllRerunsTheSearch)
     EXPECT_TRUE(std::ranges::any_of(list.shown(), [&](int i) { return i == history; }));
 }
 
+// So do Map hotkey, Delete, Undo and Redo; the selection stays on the
+// edited row while it still matches.
+TEST(Hotkeys, EditsRerunTheSearch)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    const auto live = defaultHotkeys();
+    list.build(live);
+    const int history = list.find("Global History");
+    const auto shown = [&](int row) { return std::ranges::any_of(list.shown(), [&](int i) { return i == row; }); };
+    list.search("history");
+    list.map(history, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Cancel, live);
+    EXPECT_TRUE(shown(history)); // still "History"
+    EXPECT_EQ(list.selection(), history);
+    list.search("ctrl-shift-j");
+    ASSERT_TRUE(shown(history));
+    list.remove(history, live);
+    EXPECT_FALSE(shown(history));
+    list.undo();
+    EXPECT_TRUE(shown(history));
+    list.redo();
+    EXPECT_FALSE(shown(history));
+    list.undo();
+    list.map(history, "Ctrl-Shift-K", GlobalHotkey, HotkeyAnswer::Cancel, live);
+    EXPECT_FALSE(shown(history));
+}
+
 TEST(Hotkeys, MapSetsTheBindingAndCommitWritesTheCopy)
 {
     HotkeyMap copy;
