@@ -256,7 +256,7 @@ TEST_F(LuaHelper, ScriptDialogsAnswerAsInAegisub)
     ASSERT_TRUE(runToEnd(*host, "Affirmative ids"));
     EXPECT_EQ(asked->buttonIds, (std::vector<std::string>{"", "yes", "save", "close"}));
     ASSERT_TRUE(runToEnd(*host, "SemiColorCalc"));
-    ASSERT_EQ(asked->controls.size(), 10u);
+    ASSERT_EQ(asked->controls.size(), 11u); // 4 labels, 4 checkboxes, 2 colours, 1 floatedit
     for (const auto &c : asked->controls)
         if (c.kind == "floatedit")
             EXPECT_DOUBLE_EQ(c.step, 1.0) << "AD1-float-step: the step reaches the dialog";
