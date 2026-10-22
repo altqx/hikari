@@ -6997,6 +6997,14 @@ Spell checking will be disabled</source>
 <context>
     <name>HikariSub.Styles</name>
     <message>
+        <source>Styles</source>
+        <translation type="unfinished">스타일</translation>
+    </message>
+    <message>
+        <source>Styles: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Status of deleted styles</source>
         <translation>삭제된 스타일 상태</translation>
     </message>
@@ -7513,6 +7521,86 @@ Styles deleted:
 %1
 스타일 삭제:
 %2</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">필터</translation>
+    </message>
+    <message>
+        <source>Filter styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">검색 위치</translation>
+    </message>
+    <message>
+        <source>No styles: the file has no ASS styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the current line&apos;s style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The current line&apos;s style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to the selected lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply to the selected lines: sets their style (Enter, or double-click a style)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select lines with this style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to the catalog…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in Style manager</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

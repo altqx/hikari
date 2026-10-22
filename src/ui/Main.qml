@@ -249,13 +249,50 @@ ApplicationWindow {
         dockingArea.addDockWidget(referenceDock, KDDW.KDDockWidgets.Location_OnBottom, gridDock, Qt.size(0, 160))
         if (!root.shell.hasReference)
             referenceDock.close()
-        // Tools start closed (docs/qt/ux/workspaces.md); Timing and
-        // Automation tab with the editor.
+        // Tools start closed (docs/qt/ux/workspaces.md); Timing,
+        // Automation and Styles tab with the editor.
         editorDock.addDockWidgetAsTab(timingDock)
         editorDock.addDockWidgetAsTab(automationDock)
+        editorDock.addDockWidgetAsTab(stylesDock)
         editorDock.setAsCurrentTab()
         timingDock.close()
         automationDock.close()
+        stylesDock.close()
+    }
+
+    // TP1 (#274): the Typesetting preset's own arrangement (owner-approved
+    // mockup 2026-10-22), built from the default one once it is laid out and
+    // kept as the preset's (capturePreset). The Video panel leads the upper
+    // row, about two thirds of the height, with Styles on its right in about
+    // a quarter of the width; below, the Line editor at its natural height
+    // beside a short Grid. Audio is closed; it and the Original text panel
+    // keep their places above the Line editor, as in Editing.
+    function typesettingLayout() {
+        const area = root.workspaceLayout.panelSize(gridDock).width
+        // The Line editor leaves the right column for the Grid's row, on
+        // its left; Audio and the Original text go above it (shown for the
+        // move, then closed again).
+        dockingArea.addDockWidget(editorDock, KDDW.KDDockWidgets.Location_OnLeft, gridDock,
+                                  Qt.size(Math.round(area * 0.44), 0))
+        const original = originalDock.isOpen
+        originalDock.open()
+        dockingArea.addDockWidget(audioDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 200))
+        dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnTop, editorDock, Qt.size(0, 140))
+        audioDock.close()
+        if (!original)
+            originalDock.close()
+        dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
+                                  Qt.size(Math.round(area * 0.24), 0))
+        // The lower row at the Line editor's natural height at its new
+        // width (its rows whole, as fitAudioBox measures them, below its
+        // header), the rest to the upper row. The Video panel's bottom edge
+        // moves: the Line editor's top edge is the closed Audio and Original
+        // places', which the engine doesn't move.
+        editorColumn.ensurePolished()
+        const lower = root.workspaceLayout.panelSize(editorDock).height
+        const natural = Math.ceil(editorColumn.implicitHeight) + 8 + lower - editorPanel.height
+        if (lower !== natural)
+            Docking.resizeInLayout("Video", 0, 0, 0, lower - natural)
     }
     Connections {
         target: root.shell
@@ -319,10 +356,10 @@ ApplicationWindow {
 
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel]
+                                          timingPanel, searchPanel, automationPanel, stylesPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock]
+                                     searchDock, automationDock, stylesDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -5488,6 +5525,35 @@ ApplicationWindow {
             }
         }
 
+        // TP1 (#274): the Styles panel, the editing target's Styles, beside
+        // the video in the Typesetting preset.
+        KDDW.DockWidget {
+            id: stylesDock
+            objectName: "stylesDock"
+            uniqueName: "Styles"
+            title: qsTranslate("HikariSub.Styles", "Styles")
+            Panel {
+                id: stylesPanel
+                objectName: "stylesPanel"
+                dockName: "Styles"
+                minimumBodySize: Qt.size(180, 120)
+                anchors.fill: parent
+                title: shell.hasEditingTarget ? qsTranslate("HikariSub.Styles", "Styles: %1").arg(shell.editingTitle)
+                                              : qsTranslate("HikariSub.Styles", "Styles")
+                accessibleName: qsTranslate("HikariSub.Styles", "Styles")
+                StylesPanel {
+                    id: stylesTool
+                    objectName: "stylesTool"
+                    anchors.fill: parent
+                    styles: root.styleManager
+                    editor: root.editor
+                    app: root.app
+                    manager: styleManagerWindow
+                    live: stylesDock.isOpen
+                }
+            }
+        }
+
         Component.onCompleted: {
             // D3: the horizontal panels keep a one-tab header even alone;
             // the Reference tray's toolbar sits in its header.
@@ -5495,6 +5561,7 @@ ApplicationWindow {
             Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
             Docking.setPanelHeader("Search", true, null)
             Docking.setPanelHeader("Original", true, originalTools) // TM1
+            Docking.setPanelHeader("Styles", true, stylesTool.toolbar) // TP1
             root.defaultLayout()
         }
     }
@@ -5512,6 +5579,8 @@ ApplicationWindow {
             panel.reportMinimumSize()
         root.fitAudioBox()
         root.workspaceLayout.captureDefault()
+        root.typesettingLayout() // TP1
+        root.workspaceLayout.capturePreset("Typesetting")
         root.workspaceLayout.restoreSaved()
         root.placeOriginal() // TM1: a TLMode file opened before the first frame
         Docking.guardClose(root, root.admitClose)

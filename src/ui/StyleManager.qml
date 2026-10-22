@@ -62,6 +62,27 @@ Window {
             createQuestion.open()
         }
     }
+    // TP1 (#274): the Styles panel's New, Duplicate and Copy to the catalog,
+    // as the window's own buttons do them on the Document's list.
+    function newDocumentStyle() {
+        showFor("")
+        beginEditing(styles.beginNew(false), false)
+    }
+    function duplicateDocumentStyle(styleName) {
+        showFor(styleName)
+        const row = styles.documentStyles.indexOf(styleName)
+        if (row >= 0)
+            beginEditing(styles.beginCopy(false, row), false)
+    }
+    function copyToCatalog(styleName) {
+        showFor(styleName)
+        const row = styles.documentStyles.indexOf(styleName)
+        if (row < 0)
+            return
+        reviewClashes(styles.transferClashes(true, [row]), 1, qsTr("the storage"), function(choices) {
+            manager.storeSelected = manager.styles.addToStore([row], choices)
+        })
+    }
     function editDocumentStyle(row) {
         assSelected = [row]
         beginEditing(styles.beginEdit(false, row), false)
