@@ -1,291 +1,479 @@
-// A script's dialog (N8): fixed controls placed on the script's grid cells.
-// Values go back through the controller, which types them per control.
-// Closing the window answers with no button.
+// A script's dialog (N8, AD1 #310): fixed controls placed on the script's
+// grid cells, on DG1's frame. Values go back through the controller, which
+// types them per control; a script gets Aegisub's values and button results
+// (docs/qt/automation.md). Closing the window answers with no button.
 //
-// Keys follow the legacy dialog (HikariDialog and the Hikari controls at
-// 20d647c4); script button IDs are dropped, so the first button is the
-// enter button:
-// - the enter button has the focus when the dialog shows (HikariDialog::Show);
-// - Return presses the focused button (MappedButton's Return accelerator) and,
-//   with a checkbox or a dropdown focused, ends the dialog without a button
-//   (HikariDialog::OnCharHook clicks the enter ID on the dialog itself, whose
-//   OnEnter ends it with no button pushed: the script gets false); Escape ends
-//   it without a button wherever the focus is, except in a text field;
-// - in a text field (edit, textbox, int and float edits) Return and Escape go
-//   to the field (OnCharHook skips them for a HikariTextCtrl): a single-line
-//   field does nothing, the textbox takes Return as a new line;
-// - Space does nothing on a button, a colour button, a checkbox or a dropdown
-//   (none handles keys);
-// - the arrows on a control that does not take them (buttons, colour buttons,
-//   checkboxes, Left/Right on a dropdown) move the focus: on Windows to the
-//   previous (Up/Left) or next (Down/Right) control in creation order,
-//   wrapping (wx's dialog navigation, HikariDialog::SetNextControl); elsewhere
-//   GTK's directional focus (the nearest control in that direction that
-//   overlaps the focused one), as the Linux build's GtkWindow does;
-// - Return with a colour button focused does nothing on Windows (its
-//   accelerator is not handled) and opens the colour picker elsewhere (wxGTK
-//   retries an unhandled accelerator as a button click);
-// - keypad Enter matches the Return accelerators on Windows only.
+// AD1 (owner, 2026-10-22, the mockup on #310):
+// - a resizable DG1 window titled with the macro, its size and place kept per
+//   script and dialog (controller.dialogId); never larger than the screen's
+//   free area: past that the grid scrolls and the hint strip and the
+//   buttons stay. Columns holding an edit, a textbox, a dropdown or a colour
+//   take the extra width, rows holding a textbox the extra height;
+// - the hint strip above the buttons shows the hovered control's hint, else
+//   the focused one's (with a number's range), at one height while open;
+//   the hint is the control's tooltip and accessible description;
+// - numbers take any typing and clamp when committed; the arrows, the wheel,
+//   Up / Down and Page Up / Page Down step them (a floatedit by its step,
+//   AD1-float-step; without one it is a plain number field);
+// - a colour is a swatch, which opens the shared colour popover, and a field
+//   taking #RRGGBB, RRGGBB or ASS &HBBGGRR& (with alpha for coloralpha);
+// - a dropdown of more than 10 items filters as you type;
+// - keys (AD1-keyboard), one set on every platform: Tab follows the grid,
+//   row by row, then the buttons in the script's order; Enter presses the
+//   focused button, else the Enter button (controller.enterButton), and
+//   Ctrl+Enter does so from a textbox; Esc ends the dialog with no button
+//   from anywhere (an open list or popover takes it first); Space ticks a
+//   check box and presses a button; Alt with a label's `&` letter presses
+//   the button, ticks the check box or (a label) moves to the control after
+//   it, the letters underlined while Alt is held.
+pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-Window {
-    color: Theme.panel // K2: a Window draws white unless told
+DialogWindow {
     id: window
     required property AutomationDialogController controller
     // SY2: the colour controls' popover.
     required property ColourPickerController colourPicker
-    // Which legacy build's keyboard navigation to follow ("windows" or not).
-    property string navigationPlatform: Qt.platform.os
 
     title: controller.title
-    visible: controller.open
-    modality: Qt.ApplicationModal
-    flags: Qt.Dialog
-    width: Math.max(320, content.implicitWidth + 24)
-    height: content.implicitHeight + 24
+    dialogId: controller.dialogId
+    resizable: true
+    modal: true
 
-    readonly property bool windowsKeys: navigationPlatform === "windows"
+    // Alt is held: the `&` letters are underlined.
+    property bool altHeld: false
+    // The controls in Tab order (the grid's rows, then its columns), each
+    // {spec, index} with its place in the script's list.
+    readonly property var cellsInOrder: {
+        const list = controller.controls.map((spec, index) => ({ spec: spec, index: index }))
+        list.sort((a, b) => a.spec.y - b.spec.y || a.spec.x - b.spec.x || a.index - b.index)
+        return list
+    }
+    // The columns that take the extra width: those of an edit, a textbox, a
+    // dropdown or a colour one column wide, and the columns of a wider one
+    // when none of its columns does already.
+    readonly property var growingColumns: {
+        const grows = {}
+        const growing = controller.controls.filter(c => ["edit", "textbox", "dropdown", "color", "coloralpha"]
+                                                   .indexOf(c.kind) >= 0)
+        for (const c of growing)
+            if (c.width === 1)
+                grows[c.x] = true
+        for (const c of growing) {
+            let any = false
+            for (let x = c.x; x < c.x + c.width; ++x)
+                any = any || grows[x] === true
+            if (!any)
+                for (let x = c.x; x < c.x + c.width; ++x)
+                    grows[x] = true
+        }
+        return grows
+    }
+    readonly property bool hasTextbox: controller.controls.some(c => c.kind === "textbox")
+    property Item hoveredCell: null
+    property Item focusedCell: null
+    readonly property string hintText: hoveredCell && hoveredCell.stripText !== "" ? hoveredCell.stripText
+                                       : focusedCell ? focusedCell.stripText : ""
+    // Every hint (and number range) the strip can show; none: no strip.
+    readonly property var stripTexts: {
+        const out = []
+        for (let i = 0; i < cells.count; ++i) {
+            const cell = cells.itemAt(i)
+            if (cell && cell.longestStripText !== "")
+                out.push(cell.longestStripText)
+        }
+        return out
+    }
 
     function values() {
-        const out = [];
+        const out = []
         for (let i = 0; i < cells.count; ++i) {
-            const cell = cells.itemAt(i);
-            out.push(cell && cell.item ? cell.item.readValue() : undefined);
+            const cell = cells.itemAt(i)
+            out[cell.controlIndex] = cell.item ? cell.item.readValue() : undefined
         }
-        return out;
+        return out
     }
-    function press(index) { controller.finish(index, values()); }
-    // HikariDialog::OnEnter / OnEscape: EndModal with no button pushed.
-    function endWithoutButton() { controller.finish(-1, values()); }
-    // Legacy HikariDialog::Show: FindWindow(enterId)->SetFocus(), where
-    // LuaDialog::CreateWindow made the first OK/Yes/Save button the enter
-    // button, else the first button; without the IDs, the first.
-    function focusEnterButton() {
-        const button = buttonRepeater.itemAt(0);
-        if (button)
-            button.forceActiveFocus(Qt.OtherFocusReason);
-    }
-    onVisibleChanged: if (visible) Qt.callLater(focusEnterButton)
-
-    onClosing: function(close) {
-        if (controller.open)
-            controller.finish(-1, values());
+    function press(index) { controller.finish(index, values()) }
+    function pressEnterButton() {
+        const b = madeButtons[controller.enterButton]
+        if (b)
+            b.click()
     }
 
-    function unmodified(event) { return (event.modifiers & ~Qt.KeypadModifier) === Qt.NoModifier; }
+    // The grid cell holding `item`, or null.
+    function cellOf(item) {
+        for (let p = item; p; p = p.parent)
+            if (p.hasOwnProperty("controlIndex") && p.hasOwnProperty("stripText"))
+                return p
+        return null
+    }
+    onActiveFocusItemChanged: {
+        // The footer's box is a focus scope of its own, but no control: on
+        // the window's activation it can keep the keyboard its button had.
+        if (activeFocusItem && (activeFocusItem === buttonBox || activeFocusItem === buttonBox.contentItem)
+                && defaultButton && defaultButton.Window.window === window) {
+            defaultButton.forceActiveFocus(Qt.TabFocusReason)
+            return
+        }
+        const cell = cellOf(activeFocusItem)
+        if (cell)
+            focusedCell = cell
+        else if (activeFocusItem && madeButtons.indexOf(activeFocusItem) >= 0)
+            focusedCell = null
+        if (cell && cell.item)
+            grid.reveal(activeFocusItem)
+    }
+    onActiveChanged: if (!active) altHeld = false
+    function trackAlt(event, down) {
+        if (event.key === Qt.Key_Alt)
+            altHeld = down
+        event.accepted = false
+    }
 
-    // The keyboard-focusable controls in legacy creation order: the controls
-    // in the script's order, then the buttons.
-    function focusables() {
-        const out = [];
+    // The label's `&` letter, the label without its `&`s, and the label
+    // with that letter underlined (`&&` is one `&`).
+    function mnemonic(label) {
+        const m = /&([^&])/.exec(String(label).replace(/&&/g, "\u0001\u0001"))
+        return m ? m[1] : ""
+    }
+    function plain(label) { return String(label).replace(/&(.)/g, "$1") }
+    function underlined(label) {
+        let out = ""
+        let marked = false
+        const s = String(label)
+        for (let i = 0; i < s.length; ++i) {
+            let ch = s[i]
+            if (ch === "&" && i + 1 < s.length) {
+                ch = s[++i]
+                const esc = ch === "<" ? "&lt;" : ch === ">" ? "&gt;" : ch === "&" ? "&amp;" : ch
+                out += !marked && ch !== "&" ? "<u>" + esc + "</u>" : esc
+                marked = marked || ch !== "&"
+                continue
+            }
+            out += ch === "<" ? "&lt;" : ch === ">" ? "&gt;" : ch === "&" ? "&amp;" : ch
+        }
+        return out
+    }
+    function shownLabel(label) { return altHeld ? underlined(label) : underlined(plain(label).replace(/&/g, "&&")) }
+
+    // A label's `&` letter: the control after it in Tab order.
+    function focusAfter(cell) {
         for (let i = 0; i < cells.count; ++i) {
-            const cell = cells.itemAt(i);
-            if (cell && cell.item && cell.item.focusTarget)
-                out.push(cell.item.focusTarget);
+            const c = cells.itemAt(i)
+            if (c.index > cell.index && c.item && c.item.focusTargets && c.item.focusTargets.length > 0) {
+                c.item.focusTargets[0].forceActiveFocus(Qt.ShortcutFocusReason)
+                return
+            }
         }
-        for (let i = 0; i < buttonRepeater.count; ++i)
-            out.push(buttonRepeater.itemAt(i));
-        return out;
     }
-    function rect(item) {
-        const p = item.mapToItem(window.contentItem, 0, 0);
-        return { x: Math.round(p.x), y: Math.round(p.y), w: Math.round(item.width), h: Math.round(item.height) };
+    // The name a control is read with: the label just before it in its row.
+    function nameFor(spec) {
+        let best = null
+        for (const c of controller.controls)
+            if (c.kind === "label" && c.y === spec.y && c.x + c.width <= spec.x && (!best || c.x > best.x))
+                best = c
+        const label = best ? plain(best.label).trim().replace(/:$/, "") : ""
+        return label !== "" ? label : spec.kind === "checkbox" ? plain(spec.label) : spec.name
     }
-    // GTK 3 gtk_container_focus_sort_up_down / _left_right and
-    // gtk_container_focus_move over one container: candidates must overlap
-    // the focused control across the direction and lie on its side; they are
-    // sorted by their centres along it (ties by distance from the focused
-    // control's centre), and the first after the focused control takes the
-    // focus. Without one the focus stays.
-    function gtkDirectional(from, key) {
-        const vertical = key === Qt.Key_Up || key === Qt.Key_Down;
-        const reverse = key === Qt.Key_Up || key === Qt.Key_Left;
-        const o = rect(from);
-        const list = [];
-        for (const item of focusables()) {
-            if (!item.visible || !item.enabled)
-                continue;
-            const c = rect(item);
-            if (item !== from) {
-                if (vertical) {
-                    if (c.x + c.w <= o.x || c.x >= o.x + o.w)
-                        continue;
-                    if (key === Qt.Key_Down && c.y + c.h < o.y + o.h)
-                        continue;
-                    if (key === Qt.Key_Up && c.y > o.y)
-                        continue;
-                } else {
-                    if (c.y + c.h <= o.y || c.y >= o.y + o.h)
-                        continue;
-                    if (key === Qt.Key_Right && c.x + c.w < o.x + o.w)
-                        continue;
-                    if (key === Qt.Key_Left && c.x > o.x)
-                        continue;
+
+    function show() {
+        makeButtons()
+        // The footer's list places the new buttons on its next layout: now,
+        // so the Enter button is in the window when open() gives it the keys.
+        if (buttonBox.contentItem && typeof buttonBox.contentItem.forceLayout === "function")
+            buttonBox.contentItem.forceLayout()
+        if (visible) {
+            raise()
+            if (defaultButton)
+                defaultButton.forceActiveFocus(Qt.TabFocusReason)
+        } else {
+            open()
+        }
+    }
+    Connections {
+        target: window.controller
+        function onChanged() {
+            if (window.controller.open)
+                Qt.callLater(window.show)
+            else if (window.visible)
+                window.close()
+        }
+    }
+    onRejected: if (controller.open) controller.finish(-1, values())
+
+    // The script's buttons in its order at the trailing edge (all one role,
+    // so the footer keeps the order), the Enter button in the accent.
+    property var madeButtons: []
+    function makeButtons() {
+        for (const b of madeButtons) {
+            buttonBox.removeItem(b)
+            b.destroy()
+        }
+        const list = []
+        controller.buttons.forEach((label, i) => {
+            const kind = i === controller.enterButton ? primaryButton : plainButton
+            const b = kind.createObject(null, { label: label, index: i, objectName: "dialogButton" + i })
+            buttonBox.addItem(b)
+            list.push(b)
+        })
+        madeButtons = list
+        defaultButton = list[controller.enterButton] || null
+    }
+    Component {
+        id: primaryButton
+        PrimaryButton {
+            id: b
+            required property string label
+            required property int index
+            text: window.plain(label)
+            DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+            contentItem: Label {
+                text: window.shownLabel(b.label)
+                textFormat: Text.StyledText
+                color: b.enabled ? Theme.onAccent : Theme.disabled
+                font.weight: Font.DemiBold
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            onClicked: window.press(index)
+            Keys.onPressed: event => window.trackAlt(event, true)
+            Keys.onReleased: event => window.trackAlt(event, false)
+        }
+    }
+    Component {
+        id: plainButton
+        Button {
+            id: b
+            required property string label
+            required property int index
+            text: window.plain(label)
+            DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+            contentItem: Label {
+                text: window.shownLabel(b.label)
+                textFormat: Text.StyledText
+                color: b.enabled ? b.palette.buttonText : Theme.disabled
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
+            }
+            onClicked: window.press(index)
+            Keys.onPressed: event => window.trackAlt(event, true)
+            Keys.onReleased: event => window.trackAlt(event, false)
+        }
+    }
+
+    Item {
+        id: keys
+        objectName: "automationDialogContent"
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        implicitWidth: scroll.implicitWidth
+        implicitHeight: scroll.implicitHeight + (strip.visible ? strip.implicitHeight + 12 : 0)
+        // Alt held: the letters show (no control takes Alt; the buttons,
+        // outside this item, track it too). Tab needs no help: the cells are
+        // made in Tab order, then come the buttons.
+        Keys.onPressed: event => window.trackAlt(event, true)
+        Keys.onReleased: event => window.trackAlt(event, false)
+
+        // The buttons' `&` letters.
+        Repeater {
+            model: window.controller.buttons
+            delegate: Item {
+                id: key
+                required property string modelData
+                required property int index
+                Shortcut {
+                    sequence: window.mnemonic(key.modelData) !== "" ? "Alt+" + window.mnemonic(key.modelData) : ""
+                    enabled: sequence !== "" && window.visible
+                    onActivated: {
+                        const b = window.madeButtons[key.index]
+                        if (b)
+                            b.click()
+                    }
                 }
             }
-            list.push({ item: item, r: c });
         }
-        const cx = vertical ? Math.trunc((o.x + o.x + o.w) / 2) : o.x + Math.trunc(o.w / 2);
-        const cy = vertical ? o.y + Math.trunc(o.h / 2) : Math.trunc((o.y + o.y + o.h) / 2);
-        list.sort(function(a, b) {
-            const a1 = vertical ? a.r.y + Math.trunc(a.r.h / 2) : a.r.x + Math.trunc(a.r.w / 2);
-            const b1 = vertical ? b.r.y + Math.trunc(b.r.h / 2) : b.r.x + Math.trunc(b.r.w / 2);
-            if (a1 !== b1)
-                return a1 < b1 ? -1 : 1;
-            const a2 = vertical ? Math.abs(a.r.x + Math.trunc(a.r.w / 2) - cx) : Math.abs(a.r.y + Math.trunc(a.r.h / 2) - cy);
-            const b2 = vertical ? Math.abs(b.r.x + Math.trunc(b.r.w / 2) - cx) : Math.abs(b.r.y + Math.trunc(b.r.h / 2) - cy);
-            if (reverse)
-                return a2 < b2 ? 1 : a2 === b2 ? 0 : -1;
-            return a2 < b2 ? -1 : a2 === b2 ? 0 : 1;
-        });
-        if (reverse)
-            list.reverse();
-        let seen = false;
-        for (const entry of list) {
-            if (entry.item === from) {
-                seen = true;
-                continue;
+
+        Flickable {
+            id: scroll
+            objectName: "automationDialogScroll"
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            anchors.bottom: strip.visible ? strip.top : parent.bottom
+            anchors.bottomMargin: strip.visible ? 12 : 0
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            readonly property bool overflows: contentHeight > height + 0.5
+            readonly property int barWidth: 6
+            implicitWidth: grid.implicitWidth + barWidth + 4
+            implicitHeight: grid.implicitHeight
+            contentWidth: Math.max(grid.implicitWidth, width - barWidth - 4)
+            contentHeight: window.hasTextbox ? Math.max(grid.implicitHeight, height) : grid.implicitHeight
+            ScrollBar.vertical: ScrollBar {
+                objectName: "automationDialogScrollBar"
+                parent: scroll
+                x: scroll.width - width
+                y: 0
+                height: scroll.height
+                width: scroll.barWidth
+                padding: 0
+                policy: scroll.overflows ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                focusPolicy: Qt.NoFocus
+                background: Rectangle {
+                    implicitWidth: scroll.barWidth
+                    radius: scroll.barWidth / 2
+                    color: Theme.field
+                    border.color: Theme.line
+                }
+                contentItem: Rectangle {
+                    implicitWidth: scroll.barWidth
+                    implicitHeight: 12
+                    radius: scroll.barWidth / 2
+                    color: parent.pressed ? Theme.text : Theme.muted
+                    opacity: parent.pressed || parent.hovered ? 0.9 : 0.6
+                }
             }
-            if (seen) {
-                entry.item.forceActiveFocus(Qt.TabFocusReason);
-                return;
+            ScrollBar.horizontal: ScrollBar {
+                policy: scroll.contentWidth > scroll.width - scroll.barWidth - 4 + 0.5 ? ScrollBar.AlwaysOn : ScrollBar.AlwaysOff
+                focusPolicy: Qt.NoFocus
             }
-        }
-    }
-    // Arrow keys on a control that does not take them.
-    function navigate(from, event) {
-        if (window.windowsKeys) {
-            // wxWindowMSW::MSWProcessMessage: Ctrl+arrow is not navigation.
-            if (event.modifiers & Qt.ControlModifier)
-                return;
-            const list = focusables();
-            const at = list.indexOf(from);
-            if (at < 0 || list.length === 0)
-                return;
-            const back = event.key === Qt.Key_Up || event.key === Qt.Key_Left;
-            list[(at + (back ? -1 : 1) + list.length) % list.length].forceActiveFocus(Qt.TabFocusReason);
-            return;
-        }
-        // GtkWindow's move-focus bindings: the arrows alone or with Ctrl.
-        if ((event.modifiers & ~(Qt.KeypadModifier | Qt.ControlModifier)) === Qt.NoModifier)
-            gtkDirectional(from, event.key);
-    }
-    function isArrow(key) {
-        return key === Qt.Key_Up || key === Qt.Key_Down || key === Qt.Key_Left || key === Qt.Key_Right;
-    }
-    // Return, Escape and Space on a control that takes no keys of its own
-    // (checkbox, dropdown): OnCharHook ends the dialog for Return and Escape.
-    function plainControlKey(item, event, arrows) {
-        if (event.key === Qt.Key_Return || event.key === Qt.Key_Escape) {
-            event.accepted = true;
-            if (window.unmodified(event))
-                window.endWithoutButton();
-        } else if (event.key === Qt.Key_Enter || event.key === Qt.Key_Space) {
-            event.accepted = true; // not Return to OnCharHook, no handler
-        } else if (arrows && isArrow(event.key)) {
-            event.accepted = true;
-            window.navigate(item, event);
-        } else {
-            event.accepted = false;
-        }
-    }
-    // A text field: Return and Escape go to the field, which ignores them
-    // (single line) or takes Return as a new line (the textbox).
-    function textFieldKey(event, multiline) {
-        if (event.key === Qt.Key_Escape) {
-            event.accepted = true;
-        } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-            // HikariTextCtrl's Return accelerator: multiline only; keypad
-            // Enter matches it on Windows only.
-            const newLine = multiline && (event.key === Qt.Key_Return || window.windowsKeys);
-            event.accepted = !newLine;
-        } else {
-            event.accepted = false;
-        }
-    }
 
-    ColumnLayout {
-        id: content
-        anchors.fill: parent
-        anchors.margins: 12
-        spacing: 8
+            GridLayout {
+                id: grid
+                objectName: "automationDialogGrid"
+                width: scroll.contentWidth
+                height: scroll.contentHeight
+                columns: Math.max(1, window.controller.columns)
+                rowSpacing: 6
+                columnSpacing: 8
 
-        GridLayout {
-            columns: window.controller.columns
-            rowSpacing: 4
-            columnSpacing: 4
+                // Brings the focused control into view.
+                function reveal(item) {
+                    const p = item.mapToItem(grid, 0, 0)
+                    if (p.y < scroll.contentY)
+                        scroll.contentY = Math.max(0, p.y - 4)
+                    else if (p.y + item.height > scroll.contentY + scroll.height)
+                        scroll.contentY = Math.min(scroll.contentHeight - scroll.height, p.y + item.height - scroll.height + 4)
+                }
 
-            Repeater {
-                id: cells
-                model: window.controller.controls
-                delegate: Loader {
-                    required property var modelData
-                    required property int index
-                    objectName: "control_" + index
-                    Layout.row: modelData.y
-                    Layout.column: modelData.x
-                    Layout.rowSpan: modelData.height
-                    Layout.columnSpan: modelData.width
-                    Layout.fillWidth: modelData.kind !== "label" && modelData.kind !== "checkbox"
-                    sourceComponent: {
-                        switch (modelData.kind) {
-                        case "label": return labelControl;
-                        case "textbox": return textboxControl;
-                        case "intedit": return intControl;
-                        case "floatedit": return floatControl;
-                        case "dropdown": return dropdownControl;
-                        case "checkbox": return checkControl;
-                        case "color":
-                        case "coloralpha": return colorControl;
-                        default: return editControl; // edit, alpha
+                Repeater {
+                    id: cells
+                    model: window.cellsInOrder
+                    delegate: Loader {
+                        id: cell
+                        required property var modelData
+                        required property int index
+                        readonly property var spec: modelData.spec
+                        readonly property int controlIndex: modelData.index
+                        readonly property bool numeric: spec.kind === "intedit" || spec.kind === "floatedit"
+                        // What the strip shows for it: its hint, and a number's range.
+                        readonly property string stripText: {
+                            const parts = []
+                            if (spec.hint)
+                                parts.push(spec.hint)
+                            if (numeric && item && item.rangeText)
+                                parts.push(item.rangeText + (item.overflowText ? ". " + item.overflowText : "."))
+                            return parts.join(" ")
+                        }
+                        // Its longest: a number's with the out-of-range sentence.
+                        readonly property string longestStripText: {
+                            const parts = []
+                            if (spec.hint)
+                                parts.push(spec.hint)
+                            if (numeric && item && item.rangeText)
+                                parts.push(item.rangeText + ". " + item.overflowLongest)
+                            return parts.join(" ")
+                        }
+                        objectName: "control_" + controlIndex
+                        Layout.row: spec.y
+                        Layout.column: spec.x
+                        Layout.rowSpan: spec.height
+                        Layout.columnSpan: spec.width
+                        Layout.fillWidth: {
+                            if (spec.kind === "label" || spec.kind === "checkbox")
+                                return false
+                            for (let x = spec.x; x < spec.x + spec.width; ++x)
+                                if (window.growingColumns[x])
+                                    return true
+                            return false
+                        }
+                        Layout.fillHeight: spec.kind === "textbox"
+                        Layout.alignment: spec.kind === "label" ? Qt.AlignLeft | Qt.AlignVCenter
+                                          : spec.kind === "checkbox" ? Qt.AlignLeft | Qt.AlignVCenter : 0
+                        sourceComponent: {
+                            switch (spec.kind) {
+                            case "label": return labelControl
+                            case "textbox": return textboxControl
+                            case "intedit":
+                            case "floatedit": return numberControl
+                            case "dropdown": return dropdownControl
+                            case "checkbox": return checkControl
+                            case "color":
+                            case "coloralpha": return colourControl
+                            default: return editControl // edit, alpha
+                            }
+                        }
+                        HoverHandler {
+                            onHoveredChanged: {
+                                if (hovered)
+                                    window.hoveredCell = cell
+                                else if (window.hoveredCell === cell)
+                                    window.hoveredCell = null
+                            }
                         }
                     }
-                    property var spec: modelData
                 }
             }
         }
 
-        // The script's buttons in its order (legacy centres them,
-        // AutomationDialog.cpp:480-509), at the trailing edge as every footer.
-        RowLayout {
-            Layout.alignment: Qt.AlignRight
+        // The hint strip: one height while open, the tallest text it holds
+        // up to three lines; no strip when nothing has a hint or a range.
+        Item {
+            id: strip
+            objectName: "automationHints"
+            visible: window.stripTexts.length > 0
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            implicitWidth: 0
+            implicitHeight: 9 + Math.min(3 * lineHeight.height, tallest())
+            function tallest() {
+                let h = lineHeight.height
+                for (let i = 0; i < measures.count; ++i)
+                    h = Math.max(h, measures.itemAt(i).implicitHeight)
+                return h
+            }
+            Rectangle {
+                width: parent.width
+                height: 1
+                color: Theme.line
+            }
+            Label {
+                id: hintLabel
+                objectName: "automationHintText"
+                y: 9
+                width: parent.width
+                text: window.hintText
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
+                maximumLineCount: 3
+                elide: Text.ElideRight
+                color: Theme.muted
+            }
+            Label { id: lineHeight; visible: false; text: "X" }
             Repeater {
-                id: buttonRepeater
-                model: window.controller.buttons
-                delegate: Button {
-                    id: dialogButton
+                id: measures
+                model: window.stripTexts
+                delegate: Label {
                     required property string modelData
-                    required property int index
-                    objectName: "dialogButton" + index
+                    visible: false
+                    width: strip.width
                     text: modelData
-                    onClicked: window.press(index)
-                    // MappedButton: Return (and on Windows keypad Enter) is
-                    // its accelerator; Escape reaches OnCharHook; Space and the
-                    // rest are not handled.
-                    Keys.onPressed: function(event) {
-                        if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                            event.accepted = true;
-                            if (window.unmodified(event) && (event.key === Qt.Key_Return || window.windowsKeys))
-                                window.press(index);
-                        } else if (event.key === Qt.Key_Escape) {
-                            event.accepted = true;
-                            if (window.unmodified(event))
-                                window.endWithoutButton();
-                        } else if (event.key === Qt.Key_Space) {
-                            event.accepted = true;
-                        } else if (window.isArrow(event.key)) {
-                            event.accepted = true;
-                            window.navigate(dialogButton, event);
-                        } else {
-                            event.accepted = false;
-                        }
-                    }
-                    Keys.onReleased: function(event) {
-                        event.accepted = event.key === Qt.Key_Space; // no click on release either
-                    }
+                    textFormat: Text.PlainText
+                    wrapMode: Text.Wrap
                 }
             }
         }
@@ -294,10 +482,17 @@ Window {
     Component {
         id: labelControl
         Label {
+            id: label
             readonly property var spec: parent ? parent.spec : ({})
-            readonly property Item focusTarget: null
-            text: spec.label
-            function readValue() { return undefined; }
+            readonly property var focusTargets: []
+            text: window.shownLabel(spec.label)
+            textFormat: Text.StyledText
+            function readValue() { return undefined }
+            Shortcut {
+                sequence: window.mnemonic(label.spec.label) !== "" ? "Alt+" + window.mnemonic(label.spec.label) : ""
+                enabled: sequence !== "" && window.visible
+                onActivated: window.focusAfter(label.parent)
+            }
         }
     }
     Component {
@@ -305,13 +500,15 @@ Window {
         TextField {
             id: edit
             readonly property var spec: parent ? parent.spec : ({})
-            readonly property Item focusTarget: edit
+            readonly property var focusTargets: [edit]
             text: spec.text
-            Accessible.name: spec.hint || spec.name
+            selectByMouse: true
+            font.family: spec.kind === "alpha" ? "monospace" : font.family
+            Accessible.name: window.nameFor(spec)
+            Accessible.description: spec.hint
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
-            Keys.onPressed: function(event) { window.textFieldKey(event, false); }
-            function readValue() { return text; }
+            function readValue() { return text }
         }
     }
     Component {
@@ -319,156 +516,469 @@ Window {
         TextArea {
             id: textbox
             readonly property var spec: parent ? parent.spec : ({})
-            readonly property Item focusTarget: textbox
+            readonly property var focusTargets: [textbox]
             text: spec.text
-            implicitHeight: Math.max(30, contentHeight + topPadding + bottomPadding)
-            Accessible.name: spec.hint || spec.name
+            selectByMouse: true
+            wrapMode: TextEdit.NoWrap
+            // At least two lines (Aegisub: 30 pixels).
+            implicitHeight: Math.max(2 * font.pixelSize * 1.5 + topPadding + bottomPadding,
+                                     contentHeight + topPadding + bottomPadding)
+            Accessible.name: window.nameFor(spec)
+            Accessible.description: spec.hint
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
-            Keys.onPressed: function(event) { window.textFieldKey(event, true); }
-            function readValue() { return text; }
+            // Enter is a new line here; Ctrl+Enter presses the Enter button.
+            // Tab moves on (a script's textbox takes no tabs, as in Aegisub).
+            Keys.onPressed: event => {
+                if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter)
+                        && (event.modifiers & Qt.ControlModifier)) {
+                    event.accepted = true
+                    window.pressEnterButton()
+                } else if ((event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
+                           && !(event.modifiers & Qt.ControlModifier)) {
+                    event.accepted = true
+                    const back = event.key === Qt.Key_Backtab || (event.modifiers & Qt.ShiftModifier) !== 0
+                    textbox.nextItemInFocusChain(!back).forceActiveFocus(back ? Qt.BacktabFocusReason : Qt.TabFocusReason)
+                }
+            }
+            function readValue() { return text }
         }
     }
     Component {
-        id: intControl
-        // Legacy NumCtrl (the int constructor): a text field taking digits,
-        // and '-' when the range goes below zero, at most 10 characters; no
-        // key steps it (Up and Down move the caret). The mouse wheel adds a
-        // notch at a time, and dragging with the right button held changes it
-        // by 1 per 8 pixels up or down and by 10 per 10 pixels sideways.
+        id: numberControl
+        // AD1-number-commit: any text can be typed; the value is clamped to
+        // the range when the field is committed (Enter, leaving it, a button).
+        // The arrows, the wheel, Up / Down and Page Up / Page Down step it by
+        // 1 / 10 steps: an intedit by 1, a floatedit by its step
+        // (AD1-float-step); a floatedit without one is a plain number field.
+        // An intedit keeps legacy NumCtrl's right-button drag: 1 per 8 pixels
+        // up or down, 10 per 10 pixels sideways.
         TextField {
-            id: intField
+            id: num
+            objectName: "numberField"
             readonly property var spec: parent ? parent.spec : ({})
-            readonly property Item focusTarget: intField
-            // NumCtrl::value: the last number parsed or stepped to.
-            property real value: Math.min(Math.max(spec.intValue, spec.intMin), spec.intMax)
+            readonly property var focusTargets: [num]
+            readonly property bool isInt: spec.kind === "intedit"
+            readonly property real lo: isInt ? spec.intMin : spec.numberMin
+            readonly property real hi: isInt ? spec.intMax : spec.numberMax
+            readonly property real step: isInt ? 1 : spec.step
+            readonly property bool steps: step > 0
+            readonly property bool hasLo: isInt ? lo > -2147483648 : lo > -1.7976931348623157e308
+            readonly property bool hasHi: isInt ? hi < 2147483647 : hi < 1.7976931348623157e308
+            // The committed value.
+            property real value: isInt ? spec.intValue : spec.number
+            readonly property real typed: parse(text)
+            readonly property bool outOfRange: !isNaN(typed) && (typed < lo || typed > hi)
+            readonly property string rangeText: {
+                if (hasLo && hasHi)
+                    return steps && !isInt ? qsTr("%1 to %2, in steps of %3").arg(shown(lo)).arg(shown(hi)).arg(shown(step))
+                                           : qsTr("%1 to %2").arg(shown(lo)).arg(shown(hi))
+                if (hasLo)
+                    return qsTr("At least %1").arg(shown(lo))
+                if (hasHi)
+                    return qsTr("At most %1").arg(shown(hi))
+                return ""
+            }
+            readonly property string overflowText: outOfRange
+                ? qsTr("%1 becomes %2 when you leave the field.").arg(text).arg(shown(clamp(typed))) : ""
+            readonly property string overflowLongest: qsTr("%1 becomes %2 when you leave the field.")
+                .arg(shown(hasHi ? hi : lo)).arg(shown(hasHi ? hi : lo))
             property bool holding: false
             property real oldX: 0
             property real oldY: 0
-            Component.onCompleted: text = String(value) // shown once; the value may leave the range
-            maximumLength: 10
-            validator: RegularExpressionValidator {
-                regularExpression: intField.spec.intMin < 0 ? /^[0-9-]*$/ : /^[0-9]*$/
+
+            function parse(t) {
+                const s = String(t).trim().replace(",", ".")
+                if (s === "" || s === "-" || s === "." || s === "-.")
+                    return NaN
+                const n = Number(s)
+                return isFinite(n) ? (isInt ? Math.trunc(n) : n) : NaN
             }
-            Accessible.name: spec.hint || spec.name
+            function clamp(n) { return Math.min(Math.max(n, lo), hi) }
+            // Plain digits (no exponent for ordinary numbers), no float noise.
+            function shown(n) {
+                if (isInt)
+                    return String(Math.trunc(n))
+                const r = Number(Number(n).toPrecision(12))
+                return Math.abs(r) < 1e15 && (r === 0 || Math.abs(r) >= 1e-6) ? String(r) : String(n)
+            }
+            function commit() {
+                const n = parse(text)
+                value = isNaN(n) ? value : clamp(n)
+                text = shown(value)
+            }
+            function stepBy(n) {
+                const base = parse(text)
+                value = clamp((isNaN(base) ? value : clamp(base)) + n * step)
+                value = isInt ? Math.round(value) : Number(value.toPrecision(12))
+                text = shown(value)
+            }
+            function readValue() {
+                const n = parse(text)
+                return shown(isNaN(n) ? value : clamp(n))
+            }
+
+            Component.onCompleted: text = shown(value)
+            selectByMouse: true
+            rightPadding: steps ? arrows.width + 4 : 8
+            placeholderText: rangeText.replace(/ to /, " – ")
+            placeholderTextColor: Theme.muted
+            color: outOfRange ? Theme.danger : palette.text
+            validator: RegularExpressionValidator {
+                regularExpression: num.isInt ? /^-?[0-9]*$/ : /^-?[0-9]*([.,][0-9]*)?([eE][-+]?[0-9]*)?$/
+            }
+            Accessible.name: window.nameFor(spec)
+            Accessible.description: spec.hint
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
-            Keys.onPressed: function(event) { window.textFieldKey(event, false); }
-            // NumCtrl::OnNumWrite: a typed number becomes the value.
-            onTextEdited: {
-                const n = Number(text.replace(",", "."));
-                if (text !== "" && text !== "-" && !isNaN(n))
-                    value = n;
+            onEditingFinished: commit()
+            onActiveFocusChanged: if (!activeFocus) commit()
+            Keys.onPressed: event => {
+                if (!steps)
+                    return
+                const n = event.key === Qt.Key_Up ? 1 : event.key === Qt.Key_Down ? -1
+                        : event.key === Qt.Key_PageUp ? 10 : event.key === Qt.Key_PageDown ? -10 : 0
+                if (n !== 0) {
+                    event.accepted = true
+                    stepBy(n)
+                }
             }
-            function show(n) { text = String(n); }
-            function readValue() { return text; }
-            MouseArea {
+            implicitWidth: Math.max(96, contentWidth + leftPadding + rightPadding)
+            Rectangle {
+                objectName: "numberOutOfRange"
                 anchors.fill: parent
-                acceptedButtons: Qt.RightButton
-                preventStealing: true
-                onPressed: function(mouse) {
-                    intField.holding = true;
-                    intField.oldX = mouse.x;
-                    intField.oldY = mouse.y;
-                    intField.forceActiveFocus(Qt.MouseFocusReason);
-                }
-                onReleased: {
-                    intField.holding = false;
-                    intField.forceActiveFocus(Qt.MouseFocusReason);
-                }
-                onPositionChanged: function(mouse) {
-                    if (!intField.holding)
-                        return;
-                    const f = intField;
-                    const absy = Math.abs(Math.trunc(mouse.y) - Math.trunc(f.oldY));
-                    const absx = Math.abs(Math.trunc(mouse.x) - Math.trunc(f.oldX));
-                    if (absy >= absx) {
-                        if (absy >= 8) {
-                            const n = f.oldY < mouse.y ? f.value - 1 : f.value + 1;
-                            if (n < f.spec.intMin || n > f.spec.intMax)
-                                return;
-                            f.show(n);
-                            f.oldY = mouse.y;
-                            f.oldX = mouse.x;
-                            f.value = n;
+                visible: num.outOfRange
+                color: "transparent"
+                border.width: 2
+                border.color: Theme.danger
+                radius: 1
+            }
+            Column {
+                id: arrows
+                visible: num.steps
+                anchors.right: parent.right
+                anchors.top: parent.top
+                anchors.bottom: parent.bottom
+                anchors.margins: 1
+                width: 18
+                Repeater {
+                    model: [1, -1]
+                    delegate: Rectangle {
+                        id: arrow
+                        required property int modelData
+                        objectName: modelData > 0 ? "numberUp" : "numberDown"
+                        width: arrows.width
+                        height: arrows.height / 2
+                        color: press.pressed ? Theme.select : press.containsMouse ? Theme.raised : Theme.panel
+                        border.color: Theme.line
+                        border.width: 0
+                        Rectangle { width: 1; height: parent.height; color: Theme.line }
+                        Rectangle { visible: arrow.modelData < 0; width: parent.width; height: 1; color: Theme.line }
+                        Icon {
+                            anchors.centerIn: parent
+                            iconRole: "chevron-down"
+                            size: 12
+                            rotation: arrow.modelData > 0 ? 180 : 0
                         }
-                    } else if (absx >= 10) {
-                        let n = f.oldX > mouse.x ? f.value - 10 : f.value + 10;
-                        if ((f.value === f.spec.intMin && n < f.spec.intMin) || (f.value === f.spec.intMax && n > f.spec.intMax))
-                            return;
-                        n = Math.min(Math.max(n, f.spec.intMin), f.spec.intMax);
-                        f.show(n);
-                        f.oldX = mouse.x;
-                        f.oldY = mouse.y;
-                        f.value = n;
+                        MouseArea {
+                            id: press
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            onPressed: {
+                                num.forceActiveFocus(Qt.MouseFocusReason)
+                                num.stepBy(arrow.modelData)
+                            }
+                            onPressAndHold: repeat.start()
+                            onReleased: repeat.stop()
+                            onCanceled: repeat.stop()
+                            Timer {
+                                id: repeat
+                                interval: 60
+                                repeat: true
+                                onTriggered: num.stepBy(arrow.modelData)
+                            }
+                        }
                     }
                 }
-                onWheel: function(wheel) {
-                    // value += rotation / delta; outside the range nothing is
-                    // shown, but the value keeps the step.
-                    intField.value += Math.trunc(wheel.angleDelta.y / 120);
-                    if (intField.value < intField.spec.intMin || intField.value > intField.spec.intMax)
-                        return;
-                    intField.show(intField.value);
+            }
+            MouseArea {
+                anchors.fill: parent
+                anchors.rightMargin: num.steps ? arrows.width : 0
+                acceptedButtons: num.isInt ? Qt.RightButton : Qt.NoButton
+                preventStealing: true
+                cursorShape: Qt.IBeamCursor
+                onPressed: mouse => {
+                    num.holding = true
+                    num.oldX = mouse.x
+                    num.oldY = mouse.y
+                    num.forceActiveFocus(Qt.MouseFocusReason)
+                }
+                onReleased: num.holding = false
+                onPositionChanged: mouse => {
+                    if (!num.holding)
+                        return
+                    const absy = Math.abs(Math.trunc(mouse.y) - Math.trunc(num.oldY))
+                    const absx = Math.abs(Math.trunc(mouse.x) - Math.trunc(num.oldX))
+                    if (absy >= absx && absy >= 8) {
+                        num.stepBy(num.oldY < mouse.y ? -1 : 1)
+                        num.oldY = mouse.y
+                        num.oldX = mouse.x
+                    } else if (absx > absy && absx >= 10) {
+                        num.stepBy(num.oldX > mouse.x ? -10 : 10)
+                        num.oldX = mouse.x
+                        num.oldY = mouse.y
+                    }
+                }
+                onWheel: wheel => {
+                    if (!num.steps) {
+                        wheel.accepted = false
+                        return
+                    }
+                    num.stepBy(Math.trunc(wheel.angleDelta.y / 120))
                 }
             }
-        }
-    }
-    Component {
-        id: floatControl
-        TextField {
-            id: floatField
-            readonly property var spec: parent ? parent.spec : ({})
-            readonly property Item focusTarget: floatField
-            text: String(spec.number)
-            // As legacy NumCtrl: digits with a point or comma; no step (legacy
-            // ignores it; its float edit has no wheel or drag either); the
-            // controller clamps to the range.
-            validator: RegularExpressionValidator { regularExpression: /^-?[0-9]*([.,][0-9]*)?$/ }
-            Accessible.name: spec.hint || spec.name
-            ToolTip.text: spec.hint
-            ToolTip.visible: hovered && spec.hint !== ""
-            Keys.onPressed: function(event) { window.textFieldKey(event, false); }
-            function readValue() { return text; }
         }
     }
     Component {
         id: dropdownControl
+        // Ten items or fewer: a plain list (a letter jumps to the next item
+        // starting with it). More: typing opens the list with a filter field;
+        // the matches keep the script's order, the first is current, Enter
+        // picks it, Esc closes the list only. The keyboard stays on the
+        // dropdown while its list is open (the list may be a window of its
+        // own, which the dropdown would close on losing the keys). A value
+        // that is none of the items shows blank and is returned untouched
+        // (legacy).
         ComboBox {
             id: dropdown
             readonly property var spec: parent ? parent.spec : ({})
-            readonly property Item focusTarget: dropdown
+            readonly property var focusTargets: [dropdown]
+            readonly property bool filters: spec.items.length > 10
+            property string filter: ""
+            readonly property var matches: {
+                const out = []
+                const f = filter.toLowerCase()
+                spec.items.forEach((item, i) => {
+                    if (f === "" || item.toLowerCase().indexOf(f) >= 0)
+                        out.push(i)
+                })
+                return out
+            }
             model: spec.items
             currentIndex: spec.items.indexOf(spec.text)
-            Accessible.name: spec.hint || spec.name
+            Accessible.name: window.nameFor(spec)
+            Accessible.description: spec.hint
             ToolTip.text: spec.hint
-            ToolTip.visible: hovered && spec.hint !== ""
-            // HikariChoice: Up/Down are its accelerators (previous/next
-            // choice); Left/Right are dialog navigation.
-            Keys.onPressed: function(event) {
-                window.plainControlKey(dropdown, event, false);
-                if (!event.accepted && (event.key === Qt.Key_Left || event.key === Qt.Key_Right)) {
-                    event.accepted = true;
-                    window.navigate(dropdown, event);
+            ToolTip.visible: hovered && spec.hint !== "" && !popup.visible
+            function readValue() { return currentIndex >= 0 ? currentText : spec.text }
+            // The list opens below the dropdown, or above it when there is
+            // more room there, at most as tall as that room (it scrolls) and
+            // no wider than the dialog.
+            function fit() {
+                const top = dropdown.mapToItem(null, 0, 0).y
+                const below = window.height - (top + dropdown.height + 2) - 4
+                const above = top - 2 - 4
+                list.above = above > below && list.wanted > below
+                list.room = Math.max(60, list.above ? above : below)
+                list.roomRight = window.width - dropdown.mapToItem(null, 0, 0).x - 8
+            }
+            onPressedChanged: if (pressed && !popup.visible) fit()
+            Keys.onPressed: event => {
+                if (popup.visible) {
+                    listKey(event)
+                    return
+                }
+                fit()
+                if (filters && event.text.length === 1 && event.text >= " "
+                        && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier))) {
+                    event.accepted = true
+                    openFiltered(event.text)
                 }
             }
-            Keys.onReleased: function(event) { event.accepted = event.key === Qt.Key_Space; }
-            function readValue() { return currentIndex >= 0 ? currentText : spec.text; }
+            // A key while the list is open: it moves the current row, picks
+            // it (Enter, Space without a filter), closes the list (Esc) or,
+            // with a filter, edits the filter.
+            function listKey(event) {
+                const view = popup.contentItem.view
+                event.accepted = true
+                if (event.key === Qt.Key_Down || event.key === Qt.Key_Up)
+                    view.currentIndex = Math.max(0, Math.min(view.count - 1,
+                                        view.currentIndex + (event.key === Qt.Key_Down ? 1 : -1)))
+                else if (event.key === Qt.Key_PageDown || event.key === Qt.Key_PageUp)
+                    view.currentIndex = Math.max(0, Math.min(view.count - 1,
+                                        view.currentIndex + (event.key === Qt.Key_PageDown ? 8 : -8)))
+                else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter
+                         || (event.key === Qt.Key_Space && filter === ""))
+                    view.pick(view.currentIndex)
+                else if (event.key === Qt.Key_Escape)
+                    popup.close()
+                else if (filters && event.key === Qt.Key_Backspace)
+                    setFilter(filter.slice(0, -1))
+                else if (filters && event.text.length === 1 && event.text >= " "
+                         && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)))
+                    setFilter(filter + event.text)
+                else {
+                    // Tab closes the list and moves on; the rest are the dropdown's.
+                    if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab)
+                        popup.close()
+                    event.accepted = false
+                    return
+                }
+                if (popup.visible)
+                    view.positionViewAtIndex(view.currentIndex, ListView.Contain)
+            }
+            function setFilter(text) {
+                filter = text
+                popup.contentItem.view.currentIndex = 0
+            }
+            function openFiltered(text) {
+                filter = text
+                popup.open()
+            }
+            popup: Popup {
+                id: list
+                // Set by fit() before each opening.
+                property bool above: false
+                property real room: 320
+                property real roomRight: 180
+                readonly property real wanted: Math.min(contentItem.implicitHeight + topPadding + bottomPadding, 320)
+                y: above ? -height - 2 : dropdown.height + 2
+                width: Math.max(dropdown.width, Math.min(180, roomRight))
+                implicitHeight: Math.min(wanted, room)
+                padding: 4
+                focus: false // the keys stay on the dropdown
+                closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
+                onAboutToShow: {
+                    if (!dropdown.filters)
+                        dropdown.filter = ""
+                    view.currentIndex = dropdown.filters && dropdown.filter !== "" ? 0
+                                        : Math.max(0, dropdown.matches.indexOf(dropdown.currentIndex))
+                }
+                onOpened: view.positionViewAtIndex(view.currentIndex, ListView.Contain)
+                onClosed: dropdown.filter = ""
+                background: PopoverBackground {}
+                contentItem: ColumnLayout {
+                    readonly property alias view: view
+                    spacing: 4
+                    // Shows the filter the dropdown's keys type (it takes no keys).
+                    TextField {
+                        id: filterField
+                        objectName: "dropdownFilter"
+                        visible: dropdown.filters
+                        Layout.fillWidth: true
+                        text: dropdown.filter
+                        readOnly: true
+                        focusPolicy: Qt.NoFocus
+                        activeFocusOnPress: false
+                        cursorVisible: true
+                        cursorPosition: text.length
+                        placeholderText: qsTr("Type to filter")
+                    }
+                    ListView {
+                        id: view
+                        objectName: "dropdownList"
+                        Layout.fillWidth: true
+                        Layout.preferredHeight: Math.min(contentHeight, 260)
+                        Layout.fillHeight: true
+                        implicitHeight: contentHeight
+                        clip: true
+                        model: dropdown.matches
+                        highlightMoveDuration: 0
+                        function pick(row) {
+                            if (row >= 0 && row < dropdown.matches.length) {
+                                dropdown.currentIndex = dropdown.matches[row]
+                                dropdown.activated(dropdown.currentIndex)
+                            }
+                            list.close()
+                        }
+                        delegate: ItemDelegate {
+                            required property int modelData
+                            required property int index
+                            width: ListView.view.width
+                            text: dropdown.spec.items[modelData]
+                            highlighted: ListView.isCurrentItem
+                            focusPolicy: Qt.NoFocus
+                            onClicked: view.pick(index)
+                        }
+                        ScrollBar.vertical: ScrollBar {}
+                    }
+                }
+            }
         }
     }
     Component {
-        id: colorControl
-        RowLayout {
-            id: colorRow
+        id: checkControl
+        CheckBox {
+            id: check
             readonly property var spec: parent ? parent.spec : ({})
-            readonly property Item focusTarget: pickButton
+            readonly property var focusTargets: [check]
+            text: window.plain(spec.label)
+            checked: spec.checked
+            Accessible.name: window.plain(spec.label)
+            Accessible.description: spec.hint
+            ToolTip.text: spec.hint
+            ToolTip.visible: hovered && spec.hint !== ""
+            contentItem: Label {
+                leftPadding: check.indicator.width + check.spacing
+                text: window.shownLabel(check.spec.label)
+                textFormat: Text.StyledText
+                verticalAlignment: Text.AlignVCenter
+                color: check.enabled ? check.palette.windowText : Theme.disabled
+            }
+            function readValue() { return checked }
+            Shortcut {
+                sequence: window.mnemonic(check.spec.label) !== "" ? "Alt+" + window.mnemonic(check.spec.label) : ""
+                enabled: sequence !== "" && window.visible
+                onActivated: {
+                    check.forceActiveFocus(Qt.ShortcutFocusReason)
+                    check.toggle()
+                }
+            }
+        }
+    }
+    Component {
+        id: colourControl
+        // A swatch, which opens the colour popover, and a field taking
+        // #RRGGBB, RRGGBB or ASS &HBBGGRR& (and the alpha: #RRGGBBAA or
+        // &HAABBGGRR& for coloralpha; AA is the ASS transparency, 0 opaque).
+        // The script gets the value as before (the controller's legacy hex).
+        RowLayout {
+            id: colourRow
+            readonly property var spec: parent ? parent.spec : ({})
+            readonly property var focusTargets: [pickButton, hexField]
             property color value: spec.color
             readonly property bool alpha: spec.kind === "coloralpha"
-            function readValue() { return value; }
+            property bool editing: false
+            spacing: 6
+            function readValue() { return value }
+            function hex2(n) { return ("0" + Math.round(n).toString(16).toUpperCase()).slice(-2) }
+            function shownText(c) {
+                return "#" + hex2(c.r * 255) + hex2(c.g * 255) + hex2(c.b * 255)
+                       + (alpha ? hex2(255 - c.a * 255) : "")
+            }
+            // A typed colour, or null.
+            function parsed(text) {
+                const t = String(text).trim()
+                let m = /^#?([0-9A-Fa-f]{6})([0-9A-Fa-f]{2})?$/.exec(t)
+                if (m && (!m[2] || alpha)) {
+                    const v = parseInt(m[1], 16)
+                    const tr = m[2] ? parseInt(m[2], 16) : 0
+                    return Qt.rgba(((v >> 16) & 255) / 255, ((v >> 8) & 255) / 255, (v & 255) / 255, (255 - tr) / 255)
+                }
+                m = /^&[Hh]([0-9A-Fa-f]{2})?([0-9A-Fa-f]{6})&?$/.exec(t)
+                if (m && (!m[1] || alpha)) {
+                    const v = parseInt(m[2], 16)
+                    const tr = m[1] ? parseInt(m[1], 16) : 0
+                    return Qt.rgba((v & 255) / 255, ((v >> 8) & 255) / 255, ((v >> 16) & 255) / 255, (255 - tr) / 255)
+                }
+                return null
+            }
+            onValueChanged: if (!editing) hexField.text = shownText(value)
+            Component.onCompleted: hexField.text = shownText(value)
             // SY2: the colour popover at the value; its alpha is the ASS
             // transparency (255 - the colour's own alpha).
             function pick() {
-                const row = colorRow
+                const row = colourRow
                 let before = null
                 colourPopover.openFor(pickButton, {
                     changeColour: c => row.value = Qt.rgba(c.r / 255, c.g / 255, c.b / 255, row.alpha ? (255 - c.a) / 255 : 1),
@@ -479,60 +989,79 @@ Window {
                     window.colourPicker.opened("automation")
                     return { r: Math.round(before.r * 255), g: Math.round(before.g * 255), b: Math.round(before.b * 255),
                              a: row.alpha ? 255 - Math.round(before.a * 255) : 0 }
-                }, { title: spec.hint || spec.name, alpha: alpha, focus: pickButton })
-            }
-            Rectangle {
-                implicitWidth: 28
-                implicitHeight: 20
-                color: colorRow.value
-                border.color: palette.mid
-                Accessible.name: colorRow.spec.hint || colorRow.spec.name
+                }, { title: window.nameFor(spec), alpha: alpha, focus: pickButton })
             }
             Button {
                 id: pickButton
                 objectName: "colorPick"
-                text: "…"
-                ToolTip.text: colorRow.spec.hint
-                ToolTip.visible: hovered && colorRow.spec.hint !== ""
-                onClicked: colorRow.pick()
-                // ButtonColorPicker (a MappedButton): its Return accelerator
-                // is not handled on Windows; wxGTK retries it as a click.
-                Keys.onPressed: function(event) {
-                    if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter) {
-                        event.accepted = true;
-                        if (event.key === Qt.Key_Return && window.unmodified(event) && !window.windowsKeys)
-                            colorRow.pick();
-                    } else if (event.key === Qt.Key_Escape) {
-                        event.accepted = true;
-                        if (window.unmodified(event))
-                            window.endWithoutButton();
-                    } else if (event.key === Qt.Key_Space) {
-                        event.accepted = true;
-                    } else if (window.isArrow(event.key)) {
-                        event.accepted = true;
-                        window.navigate(pickButton, event);
-                    } else {
-                        event.accepted = false;
+                implicitWidth: 40
+                Accessible.name: window.nameFor(colourRow.spec)
+                Accessible.description: colourRow.spec.hint
+                ToolTip.text: colourRow.spec.hint
+                ToolTip.visible: hovered && colourRow.spec.hint !== ""
+                onClicked: colourRow.pick()
+                contentItem: Item {
+                    implicitWidth: 28
+                    implicitHeight: 16
+                    Canvas {
+                        id: checkerboard
+                        anchors.centerIn: parent
+                        width: 28
+                        height: 16
+                        visible: colourRow.alpha
+                        onPaint: {
+                            const ctx = getContext("2d")
+                            for (let y = 0; y < height; y += 4)
+                                for (let x = 0; x < width; x += 4) {
+                                    ctx.fillStyle = ((x + y) / 4) % 2 ? "#bbbbbb" : "#ffffff"
+                                    ctx.fillRect(x, y, 4, 4)
+                                }
+                        }
+                    }
+                    Rectangle {
+                        objectName: "colorSwatch"
+                        anchors.centerIn: parent
+                        width: 28
+                        height: 16
+                        color: colourRow.value
+                        border.color: Theme.control
                     }
                 }
-                Keys.onReleased: function(event) { event.accepted = event.key === Qt.Key_Space; }
             }
-        }
-    }
-    Component {
-        id: checkControl
-        CheckBox {
-            id: check
-            readonly property var spec: parent ? parent.spec : ({})
-            readonly property Item focusTarget: check
-            text: spec.label
-            checked: spec.checked
-            ToolTip.text: spec.hint
-            ToolTip.visible: hovered && spec.hint !== ""
-            // HikariCheckBox handles no keys: Space does not toggle it.
-            Keys.onPressed: function(event) { window.plainControlKey(check, event, true); }
-            Keys.onReleased: function(event) { event.accepted = event.key === Qt.Key_Space; }
-            function readValue() { return checked; }
+            TextField {
+                id: hexField
+                objectName: "colorText"
+                Layout.fillWidth: true
+                Layout.minimumWidth: 96
+                font.family: "monospace"
+                selectByMouse: true
+                readonly property bool bad: colourRow.editing && colourRow.parsed(text) === null
+                color: bad ? Theme.danger : palette.text
+                Accessible.name: window.nameFor(colourRow.spec)
+                Accessible.description: colourRow.spec.hint
+                ToolTip.text: colourRow.spec.hint
+                ToolTip.visible: hovered && colourRow.spec.hint !== ""
+                onTextEdited: {
+                    colourRow.editing = true
+                    const c = colourRow.parsed(text)
+                    if (c)
+                        colourRow.value = c
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    visible: hexField.bad
+                    color: "transparent"
+                    border.width: 2
+                    border.color: Theme.danger
+                    radius: 1
+                }
+                onEditingFinished: done()
+                onActiveFocusChanged: if (!activeFocus) done()
+                function done() {
+                    colourRow.editing = false
+                    text = colourRow.shownText(colourRow.value)
+                }
+            }
         }
     }
     ColourPopover {
