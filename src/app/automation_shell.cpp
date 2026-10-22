@@ -304,12 +304,19 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
         emit progressChanged();
     });
     connect(&m_manager, &backends::AutomationManager::taskChanged, this, [this](const QString &, const QString &t) {
-        m_task = t;
+        m_task = t.left(ui::AutomationRuns::kMaxText);
         if (m_run)
-            m_runs.setTask(m_runId, t);
+            m_runs.setTask(m_runId, m_task);
         emit progressChanged();
     });
     m_cardTimer.setSingleShot(true);
+    connect(&m_manager, &backends::AutomationManager::macroStarted, this, [this](const QString &path) {
+        if (!m_run || m_run->active != m_run->path || path.toStdString() != m_run->path)
+            return;
+        m_macroStarted = true;
+        m_cardTimer.stop();
+        updateCardTimer();
+    });
     // AD3: an ended run's card goes with its run (Clear runs).
     connect(&m_runs, &ui::AutomationRuns::removed, this, [this](int id) {
         if (id == m_runId && !m_run && !m_cardState.isEmpty()) {
@@ -326,7 +333,7 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_resolutionPrompt, &ui::ScriptResolutionPromptController::changed, this,
             &AutomationShell::updateCardTimer);
     connect(&m_manager, &backends::AutomationManager::titleChanged, this, [this](const QString &, const QString &t) {
-        m_title = t;
+        m_title = t.left(ui::AutomationRuns::kMaxText);
         emit progressChanged();
     });
     connect(&m_manager, &backends::AutomationManager::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
@@ -636,7 +643,7 @@ void AutomationShell::finishCard(const QString &ended, const QString &text, cons
                                                                    : ui::AutomationRuns::kHostInfo);
     m_runs.finish(m_runId, state, said);
     // The card says the first lines; the run's log keeps the rest.
-    m_cardText = said.left(4000);
+    m_cardText = said.left(ui::AutomationRuns::kMaxText);
     // A run that applied and logged nothing, or whose script-resolution
     // question was declined, leaves no card.
     if (ended == QLatin1String("declined") || (state == QLatin1String("applied") && !m_logged))
@@ -742,7 +749,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_cardState = QStringLiteral("notice");
     m_cardText.clear();
     m_runId = m_runs.begin(m_title, prettyName(path), m_shell.editingTitle());
-    updateCardTimer(); // the macro may have started already (no validations)
+    updateCardTimer();
     if (m_documentChanged)
         m_documentChanged();
     emit progressChanged();
@@ -764,12 +771,9 @@ bool AutomationShell::startStep(Run &run)
         return m_manager.validate(v.path, v.ordinal, run.snapshot);
     }
     run.active = run.path;
-    if (!m_manager.run(run.path, run.ordinal, run.snapshot, true))
-        return false;
-    m_macroStarted = true;
-    m_cardTimer.stop();
-    updateCardTimer();
-    return true;
+    // The card's second starts when the helper says the macro itself has
+    // (macroStarted), after its validation function.
+    return m_manager.run(run.path, run.ordinal, run.snapshot, true);
 }
 
 void AutomationShell::resolveScriptResolution(const application::ScriptResolutionRequest &request,
@@ -889,6 +893,13 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                 text = refusalText(applied.error());
             else if (const auto report = ui::readKaraokeReport(host->lastResult()->report))
                 karaokeReport(*report);
+        } else if (!s) {
+            // AD3: the card and the run's log say why nothing was applied.
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "Its Document was closed while the macro ran; nothing was changed.");
+        } else {
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "The macro's changes could not be applied; nothing was changed.");
         }
         ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
         break;

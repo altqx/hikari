@@ -15700,6 +15700,28 @@ private slots:
         QTRY_VERIFY(!card->hasActiveFocus());
         for (QObject *dock : reopen)
             QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        // From a floating panel's window: the main window is activated, then
+        // the card takes the keys.
+        auto *dock = item<QObject>("automationDock");
+        if (!dock->property("isOpen").toBool())
+            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        dock->setProperty("isFloating", true);
+        auto *panel = item("automationPanel");
+        QTRY_VERIFY(panel->window() != window);
+        QVERIFY(QMetaObject::invokeMethod(root, "focusPanel", Q_ARG(QVariant, QVariant::fromValue<QObject *>(panel)),
+                                          Q_ARG(QVariant, int(Qt::OtherFocusReason))));
+        QTRY_COMPARE(QGuiApplication::focusWindow(), panel->window());
+        for (int i = 0; i < 12 && !card->hasActiveFocus(); ++i) {
+            QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+            QTest::qWait(50);
+        }
+        QTRY_VERIFY(card->hasActiveFocus());
+        QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(window));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        dock->setProperty("isFloating", false);
+        QTRY_COMPARE(panel->window(), static_cast<QQuickWindow *>(window));
         automation.dismissCard();
         QTRY_VERIFY(!card->isVisible());
     }

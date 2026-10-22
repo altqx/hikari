@@ -46,12 +46,13 @@ namespace hikari::backends::lua {
 
 // 3: RunValidated (S4); 4: HostService::Gettext (O5); 5: Validate and ScriptInfo::loadedFiles (S4-run-validation);
 // 6: MacroDialogueLine::generatedFrom and MacroResult::report (KE1); 7: DialogRequest::buttonIds (AD1);
-// 8: the Log event's level (AD3)
+// 8: the Log event's level and the Started event (AD3)
 inline constexpr std::uint32_t kProtocolVersion = 8;
 inline constexpr char kHelperName[] = "hikari-lua-helper";
 
 enum class Command : std::int32_t { Load = 1, Run = 2, RunValidated = 3, Validate = 4 };
-enum class ProgressEvent : std::int32_t { Log = 1, Set = 2, Task = 3, Title = 4 };
+// Started (AD3): the macro itself begins, after its validation function.
+enum class ProgressEvent : std::int32_t { Log = 1, Set = 2, Task = 3, Title = 4, Started = 5 };
 enum class Service : std::int32_t { Dialog = 1, Host = 2 };
 
 std::vector<std::byte> encodeInfo(const application::ScriptInfo &info);

@@ -67,3 +67,23 @@ aegisub.register_macro("Empty log", "", function()
     aegisub.log("")
     aegisub.debug.out(2, "")
 end)
+
+-- Its validation takes 1.5 s, then it works until cancelled.
+aegisub.register_macro("Slow to validate", "", function()
+    while not aegisub.progress.is_cancelled() do end
+end, function()
+    local t = os.clock()
+    while os.clock() - t < 1.5 do end
+    return true
+end)
+
+-- A task far over what a run keeps, then ends.
+aegisub.register_macro("Long task", "", function()
+    aegisub.progress.task(string.rep("t", 100000))
+end)
+
+-- Works a second, then ends well.
+aegisub.register_macro("Work a second", "", function()
+    local t = os.clock()
+    while os.clock() - t < 1 do end
+end)

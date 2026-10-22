@@ -294,6 +294,31 @@ private slots:
         QCOMPARE(automation().cardState(), QString());
     }
 
+    // The macro's validation function does not count toward the second: the
+    // card opens about a second after the macro itself began.
+    void validationTimeDoesNotCount()
+    {
+        automation().setCardDelay(1000);
+        QElapsedTimer timer;
+        timer.start();
+        QVERIFY(start("Slow to validate"));
+        QTRY_COMPARE_WITH_TIMEOUT(automation().cardState(), QStringLiteral("running"), 10'000);
+        QVERIFY2(timer.elapsed() >= 2400, qPrintable(QString::number(timer.elapsed())));
+        automation().cancelRun();
+        QVERIFY(ended());
+        automation().dismissCard();
+    }
+
+    // A script's task is kept up to kMaxText characters.
+    void aTaskIsBounded()
+    {
+        QVERIFY(start("Long task"));
+        QVERIFY(ended());
+        auto *runs = automation().runs();
+        QCOMPARE(runs->run(automation().runId())->task.size(), AutomationRuns::kMaxText);
+        QCOMPARE(automation().task().size(), AutomationRuns::kMaxText);
+    }
+
     // The session keeps the last 20 runs, newest first.
     void runsKeepTheLastTwenty()
     {
@@ -307,6 +332,23 @@ private slots:
         QCOMPARE(runs->idAt(0), automation().runId());
         runs->clear();
         QCOMPARE(runs->count(), 0);
+    }
+
+    // The Document closed under a run (last: it closes the test's
+    // Document): failed, saying why nothing was applied.
+    void aClosedDocumentSaysWhy()
+    {
+        automation().setCardDelay(60'000);
+        QVERIFY(start("Work a second"));
+        QVERIFY(application->closeEditingTarget());
+        QVERIFY(ended());
+        QCOMPARE(automation().cardState(), QStringLiteral("failed"));
+        QCOMPARE(automation().cardText(),
+                 QStringLiteral("Its Document was closed while the macro ran; nothing was changed."));
+        AutomationRunLines lines;
+        lines.setRuns(automation().runs());
+        lines.setRun(automation().runId());
+        QCOMPARE(lines.shownText(), QStringLiteral("Its Document was closed while the macro ran; nothing was changed.\n"));
     }
 };
 

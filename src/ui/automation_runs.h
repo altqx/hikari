@@ -39,6 +39,8 @@ public:
     static constexpr qsizetype kMaxChars = 4'000'000;
     // HikariSub's own line (a run's error and traceback) kept at most.
     static constexpr int kMaxNoteLines = 200;
+    // A run's names, task and outcome kept at most (the script gives them).
+    static constexpr qsizetype kMaxText = 4'000;
     static constexpr int kNoLevel = -1;
     static constexpr int kHostError = -2;
     static constexpr int kHostInfo = -3;

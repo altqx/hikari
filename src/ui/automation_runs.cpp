@@ -118,9 +118,9 @@ int AutomationRuns::begin(const QString &macro, const QString &script, const QSt
     }
     Run r;
     r.id = m_nextId++;
-    r.macro = macro;
-    r.script = script;
-    r.document = document;
+    r.macro = macro.left(kMaxText);
+    r.script = script.left(kMaxText);
+    r.document = document.left(kMaxText);
     r.started = m_wallClock ? m_wallClock() : QDateTime::currentDateTime();
     r.startedAt = now();
     beginInsertRows({}, 0, 0);
@@ -209,8 +209,8 @@ void AutomationRuns::note(int id, const QString &text, int kind)
 
 void AutomationRuns::setTask(int id, const QString &task)
 {
-    if (Run *r = find(id); r && r->task != task) {
-        r->task = task;
+    if (Run *r = find(id); r && r->task != task.left(kMaxText)) {
+        r->task = task.left(kMaxText);
         changedRow(id, {TaskRole});
     }
 }
@@ -229,7 +229,7 @@ void AutomationRuns::finish(int id, const QString &state, const QString &message
     if (!r)
         return;
     r->state = state;
-    r->message = message;
+    r->message = message.left(kMaxText);
     r->duration = now() - r->startedAt;
     r->open = false;
     changedRow(id, {StateRole, MessageRole, DurationRole});

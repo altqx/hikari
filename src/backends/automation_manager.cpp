@@ -112,6 +112,7 @@ void AutomationManager::attach(const std::string &path, Entry &entry)
     connect(host, &LuaScriptHost::logged, this, [this, qpath](const QString &t, int level) { emit logged(qpath, t, level); });
     connect(host, &LuaScriptHost::progressChanged, this, [this, qpath](double p) { emit progressChanged(qpath, p); });
     connect(host, &LuaScriptHost::taskChanged, this, [this, qpath](const QString &t) { emit taskChanged(qpath, t); });
+    connect(host, &LuaScriptHost::macroStarted, this, [this, qpath] { emit macroStarted(qpath); });
     connect(host, &LuaScriptHost::titleChanged, this, [this, qpath](const QString &t) { emit titleChanged(qpath, t); });
     connect(host, &LuaScriptHost::dialogWithdrawn, this, [this, qpath] { emit dialogWithdrawn(qpath); });
     connect(host, &LuaScriptHost::servicesWithdrawn, this, [this, qpath] { emit servicesWithdrawn(qpath); });

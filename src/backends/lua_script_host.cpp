@@ -240,6 +240,10 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
     case Kind::Progress: {
         Reader r(event->payload);
         const auto type = static_cast<lua::ProgressEvent>(r.i32());
+        if (type == lua::ProgressEvent::Started) {
+            emit macroStarted();
+            return;
+        }
         if (type == lua::ProgressEvent::Set) {
             const double percent = r.f64();
             if (r.ok())

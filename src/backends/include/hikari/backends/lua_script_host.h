@@ -94,6 +94,8 @@ signals:
     // (0 fatal … 5 trace; -1 none).
     void logged(const QString &text, int level);
     void progressChanged(double percent);
+    // The macro itself begins, after its validation function (AD3).
+    void macroStarted();
     void taskChanged(const QString &task);
     void titleChanged(const QString &title);
     void finished(hikari::backends::LuaScriptHost::RunOutcome outcome, const QString &message);

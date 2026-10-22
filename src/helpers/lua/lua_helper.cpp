@@ -2412,6 +2412,12 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
         if (staged.lists.active)
             staged.lists.active += shift;
     }
+    // AD3: the macro itself begins (its validation, if any, has answered).
+    {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(lua::ProgressEvent::Started));
+        r.progress(w.take());
+    }
     lua_pushcfunction(L, addStackTrace);
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);
     lua_getfield(L, -1, "run");

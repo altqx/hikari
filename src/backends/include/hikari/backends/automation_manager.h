@@ -62,6 +62,7 @@ signals:
     void logged(const QString &path, const QString &text, int level);
     void progressChanged(const QString &path, double percent);
     void taskChanged(const QString &path, const QString &task);
+    void macroStarted(const QString &path);
     void titleChanged(const QString &path, const QString &title);
     void dialogWithdrawn(const QString &path);
     void servicesWithdrawn(const QString &path);

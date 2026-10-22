@@ -926,6 +926,10 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Its Document was closed while the macro ran; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The macro was force stopped; reload the script to use it again.</source>
         <translation type="unfinished"></translation>
     </message>

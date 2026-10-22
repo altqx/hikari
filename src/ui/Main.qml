@@ -747,7 +747,7 @@ ApplicationWindow {
         // Every panel closed: the card is the one region, or there is none.
         if (shown.length === 0) {
             if (card)
-                card.enter(null)
+                root.enterCard(null)
             return
         }
         // The panel with focus in the focus window: the main one or a
@@ -762,7 +762,7 @@ ApplicationWindow {
         if (current < 0 && focusWindow)
             current = shown.indexOf(panelOf(focusWindow.activeFocusItem))
         if (card && current >= 0 && current + step >= shown.length || card && current + step < 0 && current >= 0) {
-            card.enter(shown[current])
+            root.enterCard(shown[current])
             return
         }
         const next = current < 0 ? (step > 0 ? 0 : shown.length - 1)
@@ -770,8 +770,24 @@ ApplicationWindow {
         root.focusPanel(shown[next], Qt.TabFocusReason)
     }
 
-    // The panel waiting for its window's activation (focusPanel).
+    // The panel waiting for its window's activation (focusPanel), or what
+    // takes the focus then ({window, focus}: enterCard).
     property var pendingFocus: null
+
+    // AD3: F6 into the progress card, whose window (the main one, or the
+    // fullscreen video's) is activated first when the keys are elsewhere,
+    // as focusPanel does for a panel.
+    function enterCard(from) {
+        const w = automationProgress.Window.window
+        const take = () => automationProgress.enter(from)
+        root.pendingFocus = null
+        if (w && root.workspaceLayout.focusWindow !== w) {
+            root.pendingFocus = { window: w, focus: take }
+            w.raise()
+            w.requestActivate()
+        }
+        take()
+    }
 
     // TM1: a question of the main window's (a dialog in its overlay) asked
     // from a floating panel's window, the Translation mode hotkey's say: the
@@ -815,10 +831,11 @@ ApplicationWindow {
                 return
             }
             root.pendingFocus = null
-            pending.panel.forceActiveFocus(pending.reason)
+            const take = pending.focus || (() => pending.panel.forceActiveFocus(pending.reason))
+            take()
             // Again after the other activation handlers (the docking layer
             // focuses its own frame when a floating window activates).
-            Qt.callLater(() => pending.panel.forceActiveFocus(pending.reason))
+            Qt.callLater(take)
         }
     }
 
