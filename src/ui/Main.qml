@@ -256,6 +256,9 @@ ApplicationWindow {
         editorDock.setAsCurrentTab()
         timingDock.close()
         automationDock.close()
+        // PU2: Fix minor errors at the right edge, full height, 420 wide.
+        dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
+        misspellDock.close()
     }
     Connections {
         target: root.shell
@@ -319,10 +322,10 @@ ApplicationWindow {
 
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel]
+                                          timingPanel, searchPanel, automationPanel, misspellPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock]
+                                     searchDock, automationDock, misspellDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -483,11 +486,23 @@ ApplicationWindow {
     function panelAvailable(dock) {
         return dock !== originalDock || root.editor.translationMode
     }
+    // Edit › Fix minor errors shows or hides its panel (legacy
+    // MR->Show(!MR->IsShown())).
+    function toggleMisspellPanel() {
+        if (misspellDock.isOpen)
+            misspellDock.close()
+        else
+            root.showPanel(misspellDock)
+    }
     function showPanel(dock) {
         if (!root.panelAvailable(dock))
             return
         if (dock === originalDock)
             root.openOriginal()
+        else if (dock === misspellDock && !Docking.hasPlace("FixMinorErrors"))
+            // An arrangement saved before the panel (registry 5) has no
+            // place for it: the right edge, as the Classic arrangement.
+            dockingArea.addDockWidget(misspellDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(420, 0))
         else
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
@@ -1342,7 +1357,7 @@ ApplicationWindow {
                     id: historyAction
                     text: qsTr("&History")
                     enabled: root.editor.hasLine
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.show()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_HISTORY")) historyWindow.open()
                 }
             }
             ShellMenuItem {
@@ -1352,7 +1367,7 @@ ApplicationWindow {
                 action: Action {
                     id: misspellAction
                     text: qsTr("Fix minor errors (experimental)")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) misspellDialog.toggle()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_MISSPELLS_REPLACER")) root.toggleMisspellPanel()
                 }
             }
             ShellMenuItem {
@@ -5024,6 +5039,7 @@ ApplicationWindow {
                     onGroupToggleRequested: id => root.app.toggleGroup(id)
                     onGroupMenuRequested: (id, x, y) => {
                         groupMenu.description = id
+                        groupMenu.at = Qt.point(x, y)
                         groupMenu.popup(grid, x, y)
                     }
                     // Legacy tree description menu (ContextMenuTree).
@@ -5031,12 +5047,13 @@ ApplicationWindow {
                         id: groupMenu
                         objectName: "groupMenu"
                         property var description: 0
+                        property point at: Qt.point(0, 0) // where the menu was asked for, in the grid
                         ShellMenuItem { iconRole: "tree-add-lines"; objectName: "groupAddLines"; text: qsTranslate("HikariSub.Grid", "Add lines"); onTriggered: root.app.addLinesToGroup(groupMenu.description) }
                         ShellMenuItem { iconRole: "edit-copy"; objectName: "groupCopy"; text: qsTranslate("HikariSub.Grid", "Copy tree"); onTriggered: root.app.copyGroup(groupMenu.description) }
                         ShellMenuItem {
                             iconRole: "edit"
                             objectName: "groupRename"; text: qsTranslate("HikariSub.Grid", "Change description")
-                            onTriggered: groupDescriptionDialog.edit(groupMenu.description)
+                            onTriggered: groupDescriptionPopover.edit(groupMenu.description, grid, groupMenu.at)
                         }
                         ShellMenuItem { iconRole: "tree-select"; objectName: "groupSelect"; text: qsTranslate("HikariSub.Grid", "Select tree lines"); onTriggered: root.app.selectGroup(groupMenu.description) }
                         ShellMenuItem { iconRole: "delete"; objectName: "groupDelete"; text: qsTranslate("HikariSub.Grid", "Delete"); onTriggered: root.app.removeGroup(groupMenu.description) }
@@ -5200,7 +5217,7 @@ ApplicationWindow {
                             objectName: "translationDialog"
                             text: qsTranslate("HikariSub.Grid", "Dialogue shifting window")
                             enabled: gridMenu.canShiftTranslation
-                            onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.show()
+                            onTriggered: if (!root.gridGesture(this, "GRID_TRANSLATION_DIALOG")) translationShiftWindow.open()
                         }
                         ShellMenuItem { iconRole: "hide"; objectName: "hideSelectedLines"; text: qsTranslate("HikariSub.Grid", "Hide selected lines"); onTriggered: if (!root.gridGesture(this, "GRID_HIDE_SELECTED")) root.app.hideSelectedLines() }
                         // Legacy Filtering submenu (GRID_FILTER_*).
@@ -5454,6 +5471,7 @@ ApplicationWindow {
                     id: searchTool
                     anchors.fill: parent
                     app: root.app
+                    notify: root.notify
                 }
             }
         }
@@ -5484,6 +5502,35 @@ ApplicationWindow {
                     refreshAction: reloadAutoloadAction
                     documentName: root.shell.editingTitle
                     documentTab: root.app.currentTab
+                }
+            }
+        }
+
+        // PU2 (#304): the Fix minor errors panel (legacy Multireplacer and
+        // its Search results), shown and hidden by Edit › Fix minor errors.
+        KDDW.DockWidget {
+            id: misspellDock
+            objectName: "misspellDock"
+            uniqueName: "FixMinorErrors"
+            title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
+            // MR->Show() read Rules.txt again at each showing.
+            onIsOpenChanged: if (isOpen) misspellTool.reloadRules()
+            Panel {
+                id: misspellPanel
+                objectName: "misspellPanel"
+                dockName: "FixMinorErrors"
+                minimumBodySize: misspellTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.MisspellReplacer", "Fix minor errors")
+                FixMinorErrors {
+                    id: misspellTool
+                    anchors.fill: parent
+                    app: root.app
+                    // DestroyDialogs (a changed program font): MR->Destroy().
+                    Connections {
+                        target: root.app
+                        function onMisspellReplacerDestroyed() { misspellTool.reset() }
+                    }
                 }
             }
         }
@@ -5622,6 +5669,10 @@ ApplicationWindow {
         z: 1000
     }
     readonly property alias notices: notices
+    // PU2 (#304): the one call for an OK-only notice (a find's "Could not
+    // find", Select lines' count, ...): PK1's toast until NT1 (#302) lands,
+    // whose toasts take it over here.
+    function notify(severity, title, text) { notices.post(severity, title, text || "") }
     // WS3: Save layout as… and Manage layouts… (the switcher's and View > Layout's).
     SaveLayoutDialog {
         id: saveLayoutDialog
@@ -5638,67 +5689,11 @@ ApplicationWindow {
         audio: root.audio
     }
 
-    // Legacy HistoryDialog: every step, the current one selected; Set and a
-    // double-click jump there and stay open, OK jumps and closes.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
+    // Legacy HistoryDialog (PU2: HistoryWindow.qml).
+    HistoryWindow {
         id: historyWindow
-        objectName: "historyWindow"
-        // K1: the set's history icon as the window's (as legacy's dialogs show theirs, SetIcon).
-        Component.onCompleted: IconTheme.setWindowIcon(historyWindow, "history")
-        title: root.editor.history.length === 1 ? qsTr("History (1 element)")
-                                                : qsTr("History (%1 elements)").arg(root.editor.history.length)
-        width: 360
-        height: 420
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        onVisibleChanged: if (visible) historyList.currentIndex = root.editor.historyCursor
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 6
-            ListView {
-                id: historyList
-                objectName: "historyList"
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                focus: true
-                model: root.editor.history
-                keyNavigationEnabled: true
-                Accessible.role: Accessible.List
-                Accessible.name: historyWindow.title
-                delegate: ItemDelegate {
-                    required property int index
-                    required property string modelData
-                    width: ListView.view.width
-                    text: modelData
-                    highlighted: ListView.isCurrentItem
-                    font.bold: index === root.editor.historyCursor
-                    onClicked: historyList.currentIndex = index
-                    onDoubleClicked: root.editor.goToHistory(index)
-                }
-            }
-            WindowFooter {
-                Button {
-                    objectName: "historySet"
-                    text: qsTr("Set")
-                    DialogButtonBox.buttonRole: DialogButtonBox.ApplyRole
-                    onClicked: root.editor.goToHistory(historyList.currentIndex)
-                }
-                Button {
-                    objectName: "historyOk"
-                    text: qsTr("OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: { root.editor.goToHistory(historyList.currentIndex); historyWindow.close() }
-                }
-                Button {
-                    objectName: "historyCancel"
-                    text: qsTr("Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: historyWindow.close()
-                }
-            }
-        }
+        editor: root.editor
+        settings: root.app.settings
     }
 
     // Legacy HikariSubFrame::Save: "Save subtitle file" for the Document's
@@ -6120,68 +6115,11 @@ ApplicationWindow {
         }
     }
 
-    // The column choice for Copy columns / Paste columns (legacy Stylelistbox),
-    // checked as last chosen.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
+    // The column choice for Copy columns / Paste columns (PU2: ColumnsWindow.qml).
+    ColumnsWindow {
         id: columnsWindow
-        objectName: "columnsWindow"
-        title: paste ? qsTranslate("HikariSub.Grid", "Paste columns") : qsTranslate("HikariSub.Grid", "Copy columns")
-        width: 320
-        height: 420
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        property bool paste: false
-        property var rows: []
-        function choose(forPaste) {
-            paste = forPaste
-            rows = root.app.columnChoices(forPaste)
-            show()
-        }
-        function chosen() {
-            let bits = 0
-            for (let i = 0; i < columnRepeater.count; ++i)
-                if (columnRepeater.itemAt(i).checked)
-                    bits |= rows[i].bit
-            return bits
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Repeater {
-                id: columnRepeater
-                model: columnsWindow.rows
-                delegate: CheckBox {
-                    required property var modelData
-                    required property int index
-                    objectName: "column" + index
-                    text: modelData.label
-                    checked: modelData.checked
-                }
-            }
-            Item { Layout.fillHeight: true }
-            WindowFooter {
-                Button {
-                    objectName: "columnsOk"
-                    text: qsTranslate("HikariSub.Grid", "OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        const bits = columnsWindow.chosen()
-                        columnsWindow.close()
-                        if (columnsWindow.paste)
-                            root.app.pasteColumns(bits)
-                        else
-                            root.app.copyColumns(bits)
-                    }
-                }
-                Button {
-                    objectName: "columnsCancel"
-                    text: qsTranslate("HikariSub.Grid", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: columnsWindow.close()
-                }
-            }
-        }
+        app: root.app
+        settings: root.app.settings
     }
 
     // Legacy LogWindow: a message pops it up with just that message; the File
@@ -6388,59 +6326,11 @@ ApplicationWindow {
         nameFilters: [qsTranslate("HikariSub.Translation", "Subtitle files (*.ass *.srt *.sub *.txt)")]
         onAccepted: root.app.pasteTranslationFile(selectedFile)
     }
-    // Legacy TLDialog: moves the translation or the original against the
-    // other from the first selected Line; it stays open while working.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
+    // Legacy TLDialog (PU2: TranslationShiftWindow.qml).
+    TranslationShiftWindow {
         id: translationShiftWindow
-        objectName: "translationShiftWindow"
-        title: qsTranslate("HikariSub.Translation", "Translation matching options")
-        width: 360
-        height: 250
-        transientParent: root
-        flags: Qt.Dialog
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            RowLayout {
-                Label { text: qsTranslate("HikariSub.Translation", "Original"); Layout.fillWidth: true }
-                Label { text: qsTranslate("HikariSub.Translation", "Translation"); Layout.fillWidth: true }
-            }
-            GridLayout {
-                columns: 2
-                Layout.fillWidth: true
-                Repeater {
-                    // Legacy layout: Original left, Translation right; mode is MoveTextTL's.
-                    model: [
-                        { mode: 2, name: qsTranslate("HikariSub.Translation", "Add line"), tip: qsTranslate("HikariSub.Translation", "Adds a blank line before the selected line.\nMoves the original one line down.\nThe added line must be timed.") },
-                        { mode: 3, name: qsTranslate("HikariSub.Translation", "Add line"), tip: qsTranslate("HikariSub.Translation", "Adds a blank line before the selected line.\nMoves the translation one line down.") },
-                        { mode: 4, name: qsTranslate("HikariSub.Translation", "Join lines"), tip: qsTranslate("HikariSub.Translation", "Joins the selected line with the next line.\nMoves the original one line up.") },
-                        { mode: 1, name: qsTranslate("HikariSub.Translation", "Join lines"), tip: qsTranslate("HikariSub.Translation", "Joins the selected line with the next line.\nMoves the translation one line up.") },
-                        { mode: 5, name: qsTranslate("HikariSub.Translation", "Delete line"), tip: qsTranslate("HikariSub.Translation", "Deletes the selected line.\nMoves the original one line up.") },
-                        { mode: 0, name: qsTranslate("HikariSub.Translation", "Delete line"), tip: qsTranslate("HikariSub.Translation", "Deletes the selected line.\nMoves the translation one line up.") }
-                    ]
-                    Button {
-                        required property var modelData
-                        objectName: "translationMove" + modelData.mode
-                        text: modelData.name
-                        Layout.fillWidth: true
-                        Accessible.description: modelData.tip
-                        ToolTip.visible: hovered
-                        ToolTip.text: modelData.tip
-                        onClicked: root.app.shiftTranslation(modelData.mode)
-                    }
-                }
-            }
-            // Legacy's description, behind an info button rather than
-            // printed under the buttons for good.
-            IconToolButton {
-                objectName: "translationShiftDescription"
-                Layout.alignment: Qt.AlignRight
-                iconRole: "about"
-                text: qsTranslate("HikariSub.Translation", "Description")
-                tip: qsTranslate("HikariSub.Translation", "Description:\nOriginal - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.\nTranslation - text pasted into subtitles with correct timing.")
-            }
-        }
+        app: root.app
+        settings: root.app.settings
     }
     Dialog {
         id: shiftConfirm
@@ -6774,7 +6664,8 @@ ApplicationWindow {
     SelectLinesDialog {
         id: selectLinesDialog
         app: root.app
-        anchors.centerIn: parent
+        settings: root.app.settings
+        notify: root.notify
         // DestroyDialogs (a changed program font): SaveOptions, then gone.
         Connections {
             target: root.app
@@ -6782,18 +6673,6 @@ ApplicationWindow {
                 if (selectLinesDialog.visible)
                     selectLinesDialog.close()
             }
-        }
-    }
-    MisspellReplacerDialog {
-        id: misspellDialog
-        app: root.app
-        // The main window's client origin is below its menu bar (legacy's
-        // native menu bar was outside the client area).
-        clientTop: root.menuBar ? root.menuBar.height : 0
-        // DestroyDialogs (a changed program font): MR->Destroy().
-        Connections {
-            target: root.app
-            function onMisspellReplacerDestroyed() { misspellDialog.destroyDialog() }
         }
     }
     // F3: the Spellchecker window, legacy's spelling message boxes and the
@@ -6891,106 +6770,80 @@ ApplicationWindow {
         }, { title: button ? button.text : "", dropper: !leftClick, focus: field })
     }
 
-    // Legacy TreeDialog ("Tree description").
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: groupDescriptionDialog
-        objectName: "groupDescriptionDialog"
-        title: qsTranslate("HikariSub.Grid", "Tree description")
-        width: 440
-        height: 120
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
+    // Legacy TreeDialog ("Tree description"), PU2 (#304): a popover under
+    // the line group's row, opened from its menu's Change description, as
+    // PK1's spelling suggestions open at the word (PU2-group-description).
+    // Enter, Rename or a press outside renames; Esc changes nothing.
+    Popover {
+        id: groupDescriptionPopover
+        objectName: "groupDescriptionPopover"
+        title: qsTranslate("HikariSub.Grid", "Line group description")
+        showTitle: true
+        initialFocus: groupDescription
         property var description: 0
-        function edit(id) {
+        property bool titled: false
+        // Opens under the row at `at` in `grid` (the menu's place).
+        function edit(id, grid, at) {
             description = id
+            titled = root.app.groupTitle(id).length > 0
             groupDescription.text = root.app.groupTitle(id)
-            show()
+            const row = grid.rowAt(at.y)
+            let top = at.y
+            for (let k = 0; k < grid.rowHeight && top > 0 && grid.rowAt(top - 1) === row; ++k)
+                --top
+            openAt(grid, null, Qt.rect(Math.max(0, at.x - 24), top, 1, grid.rowHeight))
             groupDescription.selectAll()
-            groupDescription.forceActiveFocus()
         }
-        function accept() {
-            if (groupDescription.text.length > 0 && root.app.renameGroup(description, groupDescription.text))
-                close()
+        onKept: if (groupDescription.text.length > 0) root.app.renameGroup(description, groupDescription.text)
+        TextField {
+            id: groupDescription
+            objectName: "groupDescription"
+            Layout.preferredWidth: 280
+            maximumLength: 500
+            Accessible.name: groupDescriptionPopover.title
         }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            TextField {
-                id: groupDescription
-                objectName: "groupDescription"
-                Layout.fillWidth: true
-                maximumLength: 500
-                Accessible.name: qsTranslate("HikariSub.Grid", "Tree description")
-                onAccepted: groupDescriptionDialog.accept()
-            }
-            WindowFooter {
-                Button {
-                    objectName: "groupDescriptionOk"
-                    text: root.app.groupTitle(groupDescriptionDialog.description).length === 0 ? qsTranslate("HikariSub.Grid", "Set tree name") : qsTranslate("HikariSub.Grid", "Change tree name")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: groupDescriptionDialog.accept()
-                }
-                Button {
-                    objectName: "groupDescriptionCancel"
-                    text: qsTranslate("HikariSub.Grid", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: groupDescriptionDialog.close()
-                }
+        RowLayout {
+            Layout.fillWidth: true
+            Item { Layout.fillWidth: true }
+            PrimaryButton {
+                objectName: "groupDescriptionRename"
+                text: groupDescriptionPopover.titled ? qsTranslate("HikariSub.Grid", "Rename")
+                                                     : qsTranslate("HikariSub.Grid", "Add description")
+                enabled: groupDescription.text.length > 0
+                onClicked: groupDescriptionPopover.keep()
             }
         }
     }
 
-    // G56-contiguity: a command that would break a Line group is refused;
-    // Cancel, or remove the group (its description Line is deleted) and retry.
+    // G56-contiguity: a command that would break a Line group is refused.
+    // PU2 (#304): a message box to remove the group (its description Line
+    // is deleted) or cancel; without a group to remove, a warning toast
+    // (PU2-group-break).
     Connections {
         target: root.app
         function onGroupBreakRefused(description, title) {
-            groupBreakDialog.description = description
-            groupBreakDialog.title2 = title
-            groupBreakDialog.show()
+            if (!description) {
+                root.notify("warning", qsTranslate("HikariSub.Grid", "This would leave lines outside their line group"),
+                            qsTranslate("HikariSub.Grid", "Nothing was changed."))
+                return
+            }
+            groupBreakBox.ask({
+                title: qsTranslate("HikariSub.Grid", "Line group"),
+                severity: "warning",
+                text: qsTranslate("HikariSub.Grid", "This would break the line group “%1”.").arg(title),
+                detail: qsTranslate("HikariSub.Grid", "Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel."),
+                choices: [{ id: "remove", text: qsTranslate("HikariSub.Grid", "Remove group"), role: "destructive" },
+                          { id: "cancel", text: qsTranslate("HikariSub.Grid", "Cancel"), role: "reject", isDefault: true }]
+            }, answer => {
+                if (answer === "remove")
+                    root.app.removeGroup(description)
+            })
         }
     }
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: groupBreakDialog
-        objectName: "groupBreakDialog"
-        title: qsTranslate("HikariSub.Grid", "Line group")
-        width: 460
-        height: 150
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        property var description: 0
-        property string title2: ""
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: groupBreakDialog.description
-                      ? qsTranslate("HikariSub.Grid", "This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.").arg(groupBreakDialog.title2)
-                      : qsTranslate("HikariSub.Grid", "This would leave group members outside a line group. Nothing was changed.")
-            }
-            WindowFooter {
-                FooterButton {
-                    objectName: "groupBreakRemove"
-                    visible: groupBreakDialog.description
-                    text: qsTranslate("HikariSub.Grid", "Remove group")
-                    DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
-                    onClicked: {
-                        root.app.removeGroup(groupBreakDialog.description)
-                        groupBreakDialog.close()
-                    }
-                }
-                Button {
-                    objectName: "groupBreakCancel"
-                    text: qsTranslate("HikariSub.Grid", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: groupBreakDialog.close()
-                }
-            }
-        }
+    MessageBox {
+        id: groupBreakBox
+        objectName: "groupBreakBox"
+        settings: root.app.settings
     }
 
     // P3: work left by a session that did not close cleanly. Each bundle opens
@@ -7598,7 +7451,7 @@ ApplicationWindow {
                 translationFileDialog.open()
             }
             return true
-        case "GRID_TRANSLATION_DIALOG": if (root.app.canShiftTranslation()) translationShiftWindow.show(); return true
+        case "GRID_TRANSLATION_DIALOG": if (root.app.canShiftTranslation()) translationShiftWindow.open(); return true
         }
         if (action.startsWith("EDITBOX_"))
             return root.runEditorHotkey(action, root.editedField())

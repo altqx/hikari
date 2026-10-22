@@ -1,26 +1,26 @@
 // E5: turning Translation mode off asks first, as SubsGrid::SetTlMode
 // (SubsGridBase.cpp:1339-1342) does, with No as the default answer. TM1
 // (#232): asked by Subtitles > Translation mode (GLOBAL_TRANSLATION_MODE),
-// which replaced the Line editor's "Translator mode" check box.
+// which replaced the Line editor's "Translator mode" check box. PU2 (#304):
+// a PK1 message box with verb buttons, Keep it on the default
+// (PU2-translation-mode-off).
 pragma Translator: "HikariSub.Translation"
 import QtQuick
-import QtQuick.Controls
+import Hikari.Ui
 
-Dialog {
+MessageBox {
     id: dialog
     required property var app
     objectName: "translatorModeOffConfirm"
-    parent: Overlay.overlay
-    anchors.centerIn: parent
-    title: qsTr("Confirmation")
-    modal: true
-    standardButtons: Dialog.Yes | Dialog.No
-    Label {
-        text: qsTr("Are you sure you want to turn off translation mode?\nForeign language text will be deleted.")
-    }
-    // HikariMessageBox(..., wxYES_NO, ..., wxNO): No is the default.
+    settings: app.settings
+    title: qsTr("Translation mode")
+    severity: "warning"
+    text: qsTr("Turn off Translation mode?")
+    detail: qsTr("Each translated Line keeps its Translated text; its Original text is deleted.")
+    choices: [{ id: "turnOff", text: qsTr("Turn off"), role: "destructive" },
+              { id: "keepOn", text: qsTr("Keep it on"), role: "reject", isDefault: true }]
     // The answer is for the tab it was asked in: another editing target
-    // (Ctrl+PgUp, Ctrl+PgDn, a click on a tab) closes the dialog unanswered.
+    // (Ctrl+PgUp, Ctrl+PgDn, a click on a tab) closes it unanswered.
     property var askedFor: null
     function editingTarget() {
         const tab = dialog.app.tabs[dialog.app.currentTab]
@@ -29,11 +29,10 @@ Dialog {
     Connections {
         target: dialog.app
         function onTabsChanged() {
-            if (dialog.opened && dialog.editingTarget() !== dialog.askedFor)
+            if (dialog.visible && dialog.editingTarget() !== dialog.askedFor)
                 dialog.close()
         }
     }
-    onAboutToShow: askedFor = editingTarget()
-    onOpened: standardButton(Dialog.No).forceActiveFocus()
+    onVisibleChanged: if (visible) askedFor = editingTarget()
     onAccepted: dialog.app.turnOffTranslationMode()
 }
