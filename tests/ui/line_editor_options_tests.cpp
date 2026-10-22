@@ -578,7 +578,7 @@ private slots:
     }
 
     // SY1: the catalog chosen last is the Style manager's at the next start.
-    // Settings loading the conversion catalog is not a choice.
+    // Settings loading the conversion catalog is not a choice, nor its Reset.
     void styleManagerKeepsTheLastCatalog()
     {
         QVERIFY(application->styleManager().createCatalog(QStringLiteral("Kept")));
@@ -586,6 +586,10 @@ private slots:
         application->styleManager().saveCatalog(); // the manager's close writes the new catalog
         application->settingsStore()->set("convert.styleCatalog", QStringLiteral("Default"));
         application->openSettingsDialog();
+        QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
+        QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("Kept"));
+        // Nor is the Conversion page's Reset, which loads its default catalog.
+        application->resetSettingsPage(QVariantMap{}, QStringLiteral("conversion"));
         QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
         QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("Kept"));
         restart();

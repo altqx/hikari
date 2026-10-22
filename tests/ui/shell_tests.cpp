@@ -7222,6 +7222,115 @@ private slots:
         application->editor().discard();
     }
 
+    // SY1 (#247): the main window may show another tab while the manager
+    // asks something. A question or a clash review answered then does
+    // nothing to the file shown now; the switch picks a Style the filter
+    // shows.
+    void styleManagerActsOnlyWhereAsked()
+    {
+        QVERIFY(application->openFile(writeStyled("where-a.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,a\n")));
+        QVERIFY(application->openFile(writeStyled("where-b.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,b\n")));
+        const auto showTab = [&](const char *title) {
+            const QVariantList tabs = application->tabs();
+            for (int i = 0; i < tabs.size(); ++i)
+                if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String(title))
+                    application->selectTab(i);
+        };
+        showTab("where-b.ass"); // openFile shows no tab
+        auto *second = targetSession();
+        showTab("where-a.ass");
+        auto *first = targetSession();
+        QVERIFY(first != second);
+        auto &styles = application->styleManager();
+        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        auto *content = manager->contentItem();
+        const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
+        const auto edit = [&](const char *name, const QString &text) {
+            field(name)->setProperty("text", text);
+            QVERIFY(QMetaObject::invokeMethod(field(name), "textEdited"));
+        };
+        const auto box = [&] { return qvariant_cast<QQuickWindow *>(manager->findChild<QObject *>(QStringLiteral("styleMessages"))->property("box")); };
+        const auto answer = [&](const char *id) {
+            QTRY_VERIFY(box() && box()->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(findItem(box()->contentItem(), QStringLiteral("messageBoxChoice_") + QLatin1String(id)),
+                                              "click"));
+        };
+        const auto pick = [&](bool store, const QVariantList &rows) {
+            QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, store), Q_ARG(QVariant, QVariant(rows))));
+        };
+        const auto size = [&](application::EditSession *session, const char8_t *name) {
+            for (const auto &s : *application::documentStyles(*session))
+                if (s.name == name)
+                    return s.fontsize;
+            return std::u8string();
+        };
+        const auto count = [&](application::EditSession *session) { return application::documentStyles(*session)->size(); };
+
+        // The filter hides the first Style: another tab selects the first
+        // it shows.
+        pick(false, {0});
+        field("styleFilter")->setProperty("text", QStringLiteral("sign"));
+        showTab("where-b.ass");
+        QTRY_COMPARE(targetSession(), second);
+        QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{1});
+        QCOMPARE(field("styleName")->property("text").toString(), QStringLiteral("Sign"));
+        field("styleFilter")->setProperty("text", QString());
+
+        // A New asked about over an edit, then another tab: the answer is
+        // a Cancel and the switch asks its own; nothing new in either file.
+        showTab("where-a.ass");
+        QTRY_COMPARE(targetSession(), first);
+        pick(false, {1}); // Sign
+        edit("styleSize", QStringLiteral("44"));
+        QVERIFY(QMetaObject::invokeMethod(manager, "startNew", Q_ARG(QVariant, false), Q_ARG(QVariant, false)));
+        QTRY_VERIFY(box() && box()->isVisible());
+        showTab("where-b.ass");
+        QTRY_COMPARE(targetSession(), second);
+        answer("apply");
+        QVERIFY(!manager->property("pendingNew").toBool());
+        QTRY_VERIFY(box() && box()->isVisible());
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("You edited it in the file shown before."));
+        answer("apply");
+        QTRY_VERIFY(!manager->property("awaitingSwitch").toBool());
+        QCOMPARE(size(first, u8"Sign"), std::u8string(u8"44"));
+        QCOMPARE(size(second, u8"Sign"), std::u8string(u8"20"));
+        QCOMPARE(count(first), std::size_t(3));
+        QCOMPARE(count(second), std::size_t(3));
+        QVERIFY(!manager->property("pendingNew").toBool());
+
+        // Add to file's clash review, then another tab: accepted, nothing
+        // is copied there, and it says so.
+        showTab("where-a.ass");
+        QTRY_COMPARE(targetSession(), first);
+        QVERIFY(styles.createCatalog(QStringLiteral("SY1 where")));
+        styles.addToStore({1}, {}); // Sign 44
+        styles.addToStore({0}, {}); // Default 20
+        QVERIFY(QMetaObject::invokeMethod(manager, "refresh"));
+        QVERIFY(QMetaObject::invokeMethod(manager, "choose", Q_ARG(QVariant, true), Q_ARG(QVariant, QVariantList{0})));
+        edit("styleSize", QStringLiteral("45"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click")); // the catalog's Sign differs now
+        QVERIFY(QMetaObject::invokeMethod(manager, "copyToFile", Q_ARG(QVariant, false)));
+        auto *review = qobject_cast<QQuickWindow *>(named("styleClashReview"));
+        QTRY_VERIFY(review && review->isVisible());
+        showTab("where-b.ass");
+        QTRY_COMPARE(targetSession(), second);
+        QVERIFY(QMetaObject::invokeMethod(findItem(review->contentItem(), QStringLiteral("clashReviewApply")), "click"));
+        QTRY_VERIFY(!review->isVisible());
+        QTRY_VERIFY(box() && box()->isVisible());
+        QCOMPARE(box()->property("text").toString(), QStringLiteral("The styles changed while this was open. Nothing was copied."));
+        answer("ok");
+        QCOMPARE(size(second, u8"Sign"), std::u8string(u8"20"));
+        QCOMPARE(count(second), std::size_t(3));
+        QCOMPARE(size(first, u8"Sign"), std::u8string(u8"44"));
+
+        QVERIFY(styles.deleteCatalog(QStringLiteral("SY1 where")));
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        QTRY_VERIFY(!manager->isVisible());
+        application->editor().discard();
+    }
+
     // Y5: Convert to SRT previews its losses, applies the plan as one step,
     // refuses a stale plan, and Save then asks for a file.
     void conversionPreviewsAndAppliesThePlan()
@@ -10995,7 +11104,8 @@ private slots:
                                              {QStringLiteral("fields"), QVariantList()},
                                              {QStringLiteral("suggestion"), QStringLiteral("Default (2)")}}};
         QVERIFY(QMetaObject::invokeMethod(named("styleManager"), "reviewClashes", Q_ARG(QVariant, clash), Q_ARG(QVariant, 1),
-                                          Q_ARG(QVariant, QStringLiteral("Default.sty")), Q_ARG(QVariant, QVariant())));
+                                          Q_ARG(QVariant, QStringLiteral("Default.sty")), Q_ARG(QVariant, QVariant()),
+                                          Q_ARG(QVariant, QVariant())));
         auto *clashes = qobject_cast<QWindow *>(named("styleClashReview"));
         QVERIFY(clashes);
         for (const Buttons &buttons : footers) {

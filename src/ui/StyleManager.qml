@@ -72,9 +72,9 @@ DialogWindow {
             refresh()
             const row = rowNamed(false, styleName)
             if (styles.available)
-                choose(false, row >= 0 ? [row] : assRows.length > 0 ? [0] : [])
+                choose(false, row >= 0 ? [row] : shownOf(false, [0]))
             else
-                choose(true, storeRows.length > 0 ? [0] : [])
+                choose(true, shownOf(true, [0]))
         }
         if (shown())
             guard(go)
@@ -105,7 +105,7 @@ DialogWindow {
         refresh()
         const row = rowNamed(false, styleName)
         if (row < 0)
-            choose(false, assRows.length > 0 ? [0] : [])
+            choose(false, shownOf(false, [0]))
         open()
         go()
     }
@@ -116,13 +116,14 @@ DialogWindow {
         nameField.selectAll()
     }
     function askCreate(styleName) {
+        const key = styles.listsKey()
         ask({
             title: qsTr("Edit style"),
             text: qsTr("This file has no style named “%1”.").arg(styleName),
             detail: qsTr("Create it from Default and edit it?"),
             choices: [{ id: "create", text: qsTr("Create"), role: "accept", isDefault: true },
                       { id: "cancel", text: qsTr("Cancel"), role: "reject" }]
-        }, id => { if (id === "create") manager.createStyle(styleName) })
+        }, id => { if (id === "create" && manager.styles.listsKey() === key) manager.createStyle(styleName) })
     }
     function createStyle(styleName) {
         const v = styles.beginNamed(styleName)
@@ -377,6 +378,7 @@ DialogWindow {
             next()
             return
         }
+        const key = styles.listsKey()
         ask({
             title: qsTr("Edit style"),
             text: multi ? qsTr("Apply the changes to the %n selected styles?", "", editedRows.length)
@@ -386,6 +388,10 @@ DialogWindow {
                       { id: "apply", text: qsTr("Apply"), role: "accept", isDefault: true },
                       { id: "cancel", text: qsTr("Cancel"), role: "reject" }]
         }, id => {
+            // The lists changed under the question (the main window showed
+            // another tab, say): a Cancel; the switch asks its own.
+            if (manager.styles.listsKey() !== key)
+                return
             if (id === "apply") {
                 if (manager.commit(false))
                     next()
@@ -416,6 +422,7 @@ DialogWindow {
         guard(() => {
             loadDialog.toStore = store
             loadDialog.anchor = anchor
+            loadDialog.key = manager.styles.listsKey()
             loadDialog.open()
         })
     }
@@ -489,8 +496,10 @@ DialogWindow {
         return text.length > 0 ? text.charAt(0).toLocaleUpperCase() + text.slice(1) : ""
     }
     // `clashes` from the controller (transferClashes, fileClashes); `total`
-    // the Styles copied; `into` names where they go. done(choices).
-    function reviewClashes(clashes, total, into, done) {
+    // the Styles copied; `into` names where they go. done(choices), only
+    // while the lists are as they were at `key` (listsKey: by default now).
+    function reviewClashes(clashes, total, into, done, key) {
+        const since = key !== undefined ? key : styles.listsKey()
         const listed = clashes.filter(c => !c.same)
         const same = clashes.length - listed.length
         if (listed.length === 0) {
@@ -505,7 +514,16 @@ DialogWindow {
             rows: listed.map(c => ({ name: c.name, occurrence: c.occurrence, difference: manager.fieldNames(c.fields), suggestion: c.suggestion })),
             added: total - clashes.length,
             acceptText: count => qsTr("Copy %n style(s)", "", count)
-        }, results => { if (results) done(results) })
+        }, results => {
+            if (!results)
+                return
+            if (manager.styles.listsKey() !== since) {
+                // The rows and the clashes were of the lists then.
+                manager.showError(qsTr("Copy styles"), qsTr("The styles changed while this was open. Nothing was copied."))
+                return
+            }
+            done(results)
+        })
     }
     // Add to file, Add to catalog, Add to all open files: the selection's
     // Styles; the copies are selected in the list they went to.
@@ -561,7 +579,7 @@ DialogWindow {
     // the catalog.
     function catalogShown() {
         if (editing && editingStore)
-            choose(true, storeRows.length > 0 ? [0] : [])
+            choose(true, shownOf(true, [0]))
         else
             storeSelected = []
     }
@@ -814,9 +832,9 @@ DialogWindow {
             const shown = () => {
                 manager.refresh()
                 if (onFile)
-                    manager.choose(false, manager.assRows.length > 0 ? [0] : [])
+                    manager.choose(false, manager.shownOf(false, [0])) // the first the filter shows
                 else if (onStore && catalogMoves)
-                    manager.choose(true, manager.storeRows.length > 0 ? [0] : [])
+                    manager.choose(true, manager.shownOf(true, [0]))
                 else
                     manager.assSelected = [] // a catalog Style stays open
             }
@@ -2139,6 +2157,7 @@ DialogWindow {
         id: loadDialog
         property bool toStore: false
         property Item anchor: null
+        property string key // listsKey when Load was clicked
         title: qsTr("Choose ASS file")
         nameFilters: [qsTr("ASS subtitle files(*.ass)") + " (*.ass)"]
         onAccepted: {
@@ -2153,12 +2172,17 @@ DialogWindow {
         onActed: names => {
             const toStore = loadDialog.toStore
             const file = chooseLoaded.file
+            const key = loadDialog.key
+            if (manager.styles.listsKey() !== key) {
+                manager.showError(qsTr("Copy styles"), qsTr("The styles changed while this was open. Nothing was copied."))
+                return
+            }
             manager.reviewClashes(manager.styles.fileClashes(toStore, file, names), names.length,
                                   toStore ? qsTr("the catalog") : qsTr("this file"), function(choices) {
                 // Added at the end, or in place of a clash: the rows stay.
                 manager.own(() => manager.styles.loadFromFile(toStore, file, names, choices))
                 manager.followRows(toStore, toStore ? manager.storeSelected : manager.assSelected)
-            })
+            }, key)
         }
     }
 }

@@ -104,6 +104,11 @@ public:
     // SY1: the catalog a catalog Style's edit goes to, which Settings may
     // have replaced in the lists since ("" without one).
     Q_INVOKABLE QString editCatalog() const;
+    // SY1: what the lists are of: the target Document, the catalog and the
+    // names in both lists. A question or a review opened over them acts on
+    // its answer only while the key is the same (the main window may
+    // switch the tab or change the Styles meanwhile).
+    Q_INVOKABLE QString listsKey() const;
 
     // PK1's clash review: the clashes a transfer has, in order
     // ([{name, fields (the style_field flags that differ), same, suggestion}]).

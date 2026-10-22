@@ -8156,6 +8156,10 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The styles changed while this was open. Nothing was copied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>this file</source>
         <translation type="unfinished"></translation>
     </message>

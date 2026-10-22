@@ -547,6 +547,30 @@ QString StyleManagerController::editCatalog() const
     return m_edit && m_edit->store ? qs(m_edit->catalog) : QString();
 }
 
+QString StyleManagerController::listsKey() const
+{
+    const auto number = [](std::uint64_t n) {
+        const auto text = std::to_string(n);
+        return std::u8string(text.begin(), text.end());
+    };
+    const auto target = m_hooks.targetDocument ? m_hooks.targetDocument() : std::nullopt;
+    std::u8string key = target ? number(target->value) : std::u8string(u8"-");
+    key += u8'\n';
+    key += m_catalogs.current();
+    for (const bool store : {true, false}) {
+        std::optional<StyleList> doc;
+        const auto *styles = list(store, doc);
+        key += u8'\n';
+        key += number(styles ? styles->size() : 0); // the count first: no name runs into the next list
+        if (styles)
+            for (const auto &style : *styles) {
+                key += u8'\n';
+                key += style.name;
+            }
+    }
+    return qs(key);
+}
+
 void StyleManagerController::pin(Edit edit)
 {
     if (!edit.store && m_hooks.targetDocument)

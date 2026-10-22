@@ -5606,7 +5606,7 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
     // choosing it does, so the default Style is found among them.
     if (*which == application::OptionsPage::Conversion)
         if (const auto load = application::optionsCatalogToLoad(defaults, m_optionsLists)) {
-            m_styleManager->chooseCatalog(QString::fromStdString(*load));
+            m_styleManager->loadCatalog(QString::fromStdString(*load)); // not the manager's choice (SY1)
             m_optionsLists.currentCatalog = *load;
             m_optionsLists.styles = stdList(m_styleManager->storeStyles());
         }
