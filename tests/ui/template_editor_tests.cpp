@@ -1816,6 +1816,19 @@ private slots:
             }
     }
 
+    // The preview's heading names the Line as the draft has it.
+    void thePreviewsHeadingReadsTheDraft()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto source = firstKaraoke();
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(session->editDraftText(*source, u8"{\\k50}zzq"));
+        editor->refresh();
+        QCOMPARE(editor->sourceText(), QStringLiteral("zzq"));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

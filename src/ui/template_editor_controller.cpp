@@ -783,13 +783,13 @@ int TemplateEditorController::sourceNumber() const
 
 QString TemplateEditorController::sourceStyle() const
 {
-    const auto *l = m_source ? line(*m_source) : nullptr;
+    const auto l = sourceRecord();
     return l ? qs(l->style) : QString();
 }
 
 QString TemplateEditorController::sourceText() const
 {
-    const auto *l = m_source ? line(*m_source) : nullptr;
+    const auto l = sourceRecord();
     // In TLMode the run reads the translation (macroLineOf).
     return l ? withoutTags(l->translation.empty() ? l->text : l->translation) : QString();
 }
