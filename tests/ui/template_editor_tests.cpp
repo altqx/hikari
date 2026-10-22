@@ -1903,6 +1903,50 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
+    // A Line editor draft of the template goes in before a panel edit of
+    // another field: the draft is not the user's choice, so it still asks.
+    void aDraftCommittedWithAPanelEditStillAsks()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->current() != 0; }, 20'000));
+        QVERIFY(editor->trusted());
+        const core::LineId templ{editor->current()};
+        QVERIFY(session->editDraftText(templ, u8"!_G.marker = 1!"));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        editor->setLayer(editor->layer() + 1);
+        QVERIFY(!session->draftLine());
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        // An Actor drafted on a `template line karaoke`, then its Style
+        // changed in the panel: the drafted pairing asks too.
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord both;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                both = *l;
+        both.comment = true;
+        both.effect = u8"template line karaoke";
+        both.text = u8"{\\bord2}";
+        both.actor = u8"plain";
+        const auto id = doc.appendLine(both);
+        QVERIFY(id);
+        openDocument(std::move(doc), true);
+        editor->setCurrent(id->value);
+        QVERIFY(editor->trusted());
+        application::DraftChange actor;
+        actor.actor = u8"!_G.marker = 1!";
+        QVERIFY(session->editDraft(*id, actor));
+        QVERIFY(editor->style() != QStringLiteral("T1a"));
+        editor->setStyle(QStringLiteral("T1a"));
+        editor->commit();
+        QVERIFY(!session->draftLine());
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

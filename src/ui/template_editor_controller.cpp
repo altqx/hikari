@@ -1072,12 +1072,14 @@ void TemplateEditorController::commit()
     if (!m_pending)
         return;
     auto *s = pendingSession();
-    const core::LineRecord *was = nullptr;
-    if (s)
-        for (const auto *l : s->document().lines())
-            if (l->id == m_pending->line)
-                was = l;
     const Pending change = *m_pending;
+    const auto lineOf = [&]() -> const core::LineRecord * {
+        for (const auto *l : s->document().lines())
+            if (l->id == change.line)
+                return l;
+        return nullptr;
+    };
+    const core::LineRecord *was = s ? lineOf() : nullptr;
     if (!was || keyOf(edited(*was, change)) == keyOf(*was)) {
         // Its Document closed, or typing that ended where it began: no step.
         m_pending.reset();
@@ -1085,17 +1087,23 @@ void TemplateEditorController::commit()
         emit changed();
         return;
     }
-    // The user's edit of a form they chose to run is theirs to run too.
-    const auto key = m_trusted.find(change.document);
-    const bool trustedForm = application::templateKindOf(*was) && key != m_trusted.end() &&
-                             key->second.lines.contains(change.line) &&
-                             key->second.lines.at(change.line).contains(formOf(*was));
     // A Line editor draft of this Line goes in first, as its own step (the
     // run would, and then find the revision moved).
-    if (s->draftLine() == change.line && !s->commitDraft()) {
-        m_commitTimer.start(); // a draft that can't go in yet
-        return;
+    if (s->draftLine() == change.line) {
+        if (!s->commitDraft()) {
+            m_commitTimer.start(); // a draft that can't go in yet
+            return;
+        }
+        was = lineOf();
     }
+    // The user's edit of a form they chose to run is theirs to run too; a
+    // draft that went in with it is not, so the form is read after it.
+    const auto key = m_trusted.find(change.document);
+    const bool trustedForm = was && application::templateKindOf(*was) && key != m_trusted.end() &&
+                             key->second.lines.contains(change.line) &&
+                             key->second.lines.at(change.line).contains(formOf(*was));
+    const bool trustedField = trustedForm && (!application::isKaraokeLine(*was) ||
+                                              key->second.fields.contains(fieldOf(*was)));
     application::Command command;
     command.name = "Edit template";
     command.expectedRevision = s->revision();
@@ -1119,7 +1127,7 @@ void TemplateEditorController::commit()
         // pairing.
         key->second.orders.insert(templateOrderOf(*s));
         for (const auto *l : s->document().lines())
-            if (l->id == change.line && application::isKaraokeLine(*l))
+            if (l->id == change.line && application::isKaraokeLine(*l) && trustedField)
                 key->second.fields.insert(fieldOf(*l));
     }
     if (s == session()) {
