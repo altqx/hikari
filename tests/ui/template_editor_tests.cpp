@@ -2482,6 +2482,26 @@ private slots:
         QCOMPARE(editor->layer(), 7);
     }
 
+    // New with the Line editor's draft on the karaoke Line it goes above:
+    // the draft goes in, then the template.
+    void newGoesInOverADraftOfTheLineBelow()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto first = firstKaraoke();
+        activate(*first);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        const int count = editor->templateCount();
+        QVERIFY(session->editDraftText(*first, u8"{\\k50}zzq"));
+        editor->refresh();
+        QVERIFY(editor->insertTemplate(QStringLiteral("template syl")));
+        QCOMPARE(editor->templateCount(), count + 1);
+        QVERIFY(!session->draftLine());
+        for (const auto *l : session->document().lines())
+            if (l->id == *first)
+                QCOMPARE(QString::fromStdString(std::string(l->text.begin(), l->text.end())), QStringLiteral("{\\k50}zzq"));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

@@ -1251,10 +1251,17 @@ bool TemplateEditorController::insertTemplate(const QString &effect)
     auto *s = session();
     if (!s || !m_editable)
         return false;
-    const auto lines = s->document().lines();
     // A `template line karaoke` too: the templater runs it as one.
-    const auto first =
-        std::ranges::find_if(lines, [](const core::LineRecord *l) { return application::isKaraokeLine(*l); });
+    const auto firstOf = [](const auto &lines) {
+        return std::ranges::find_if(lines, [](const core::LineRecord *l) { return application::isKaraokeLine(*l); });
+    };
+    // A Line editor draft of the Line it goes above goes in first, as the
+    // run would (and then find the revision moved); the Line is read after.
+    if (const auto lines = s->document().lines(); firstOf(lines) != lines.end() && s->draftLine() == (*firstOf(lines))->id)
+        if (!s->commitDraft() && s->draftLine())
+            return false; // a draft that can't go in yet
+    const auto lines = s->document().lines();
+    const auto first = firstOf(lines);
     application::MacroDialogueLine d;
     d.comment = true;
     d.effect = effect.toStdString();
