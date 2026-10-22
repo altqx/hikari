@@ -117,17 +117,22 @@ public:
         }
         tagged += QStringView(markdown).sliced(at);
         static const QRegularExpression linkedImage = [] {
-            // A destination, bare or in <>, and a quoted title; no backtick.
-            const QString destination = QStringLiteral(
-                "\\s*(?:<[^<>`\\n]*>|[^\\s()<>`]*)(?:\\s+(?:\"[^\"`\\n]*\"|'[^'`\\n]*'))?\\s*");
-            return QRegularExpression(QStringLiteral("\\[!\\[((?:[^\\[\\]\\\\`\\n]|\\\\[^`\\n])*)\\]\\(") + destination +
-                                      QStringLiteral("\\)\\](\\(") + destination + QStringLiteral("\\))"));
+            // A destination, in <> or bare (escapes, balanced parentheses: the
+            // group recurses), and a quoted title; no backtick.
+            const QString bare = QStringLiteral("[^\\s()<>`\\\\]|\\\\[^\\s`]");
+            const QString destination = QStringLiteral("\\s*(?:<[^<>`\\n]*>|(?:") + bare + QStringLiteral("|(\\((?:") +
+                                        bare + QStringLiteral("|(?-1))*\\)))*)") +
+                                        QStringLiteral("(?:\\s+(?:\"[^\"`\\n]*\"|'[^'`\\n]*'))?\\s*");
+            const QString alt = QStringLiteral("(?<alt>(?:[^\\[\\]\\\\`\\n]|\\\\[^`\\n])*)");
+            return QRegularExpression(QStringLiteral("\\[!\\[") + alt + QStringLiteral("\\]\\(") + destination +
+                                      QStringLiteral("\\)\\](?<outer>\\(") + destination + QStringLiteral("\\))"));
         }();
         QString linked;
         at = 0;
         for (auto m = linkedImage.globalMatch(tagged); m.hasNext();) {
             const QRegularExpressionMatch found = m.next();
-            const QString shown = QLatin1Char('[') + found.captured(1) + QLatin1Char(']') + found.captured(2);
+            const QString shown =
+                QLatin1Char('[') + found.captured(u"alt") + QLatin1Char(']') + found.captured(u"outer");
             const QChar marker = markerFor(found.captured(), shown, QString());
             linked += QStringView(tagged).sliced(at, found.capturedStart() - at);
             linked += marker.isNull() ? found.captured() : marker + shown;

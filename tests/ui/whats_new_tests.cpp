@@ -638,6 +638,13 @@ private slots:
         QVERIFY(!badges.contains(QStringLiteral("href=\"https://example.com/c")));
         QVERIFY(badges.contains(QStringLiteral("[![d](e.svg)](https://example.com/f) \\&lt;g\\&gt;")));
         QVERIFY(!badges.contains(QStringLiteral("href=\"https://example.com/f")));
+        // A destination may hold balanced or escaped parentheses.
+        const QString parens = copy->whatsNew->render(
+            QStringLiteral("[![Build](b_(1).svg)](https://example.com/build_(linux)) and "
+                           "[![Test](t.svg)](https://example.com/t\\(x)"),
+            muted, link, code);
+        QVERIFY2(parens.contains(QStringLiteral("href=\"https://example.com/build_(linux)\"")), qPrintable(parens));
+        QVERIFY(parens.contains(QStringLiteral("href=\"https://example.com/t(x\"")));
         // Many marks in one paragraph stay linear too.
         QString many;
         for (int i = 0; i < 5000; ++i)
