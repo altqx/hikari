@@ -112,6 +112,9 @@ DialogWindow {
             Label {
                 objectName: "messageBoxText"
                 text: box.text
+                // Messages quote file names: never markup (an <img> would
+                // fetch its URL as the box opens).
+                textFormat: Text.PlainText
                 font: box.fontAt(14, Font.DemiBold)
                 wrapMode: Text.Wrap
                 Accessible.role: Accessible.StaticText
@@ -121,6 +124,7 @@ DialogWindow {
                 objectName: "messageBoxDetail"
                 visible: box.detail.length > 0
                 text: box.detail
+                textFormat: Text.PlainText
                 color: Theme.muted
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true

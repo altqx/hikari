@@ -25464,6 +25464,47 @@ private slots:
         QTRY_VERIFY(!box->isVisible());
     }
 
+    // PU4: a file's name in the message box is text, never markup (Codex
+    // security review: an <img> name would fetch its URL as the box opens).
+    void fileQuestionShowsAMarkupNameAsText()
+    {
+        for (const char *name : {"messageBoxText", "messageBoxDetail"}) {
+            auto *messages = named("messages");
+            const QVariantMap any{{QStringLiteral("title"), QStringLiteral("t")}, {QStringLiteral("text"), QStringLiteral("x")},
+                                  {QStringLiteral("detail"), QStringLiteral("y")}};
+            QVERIFY(QMetaObject::invokeMethod(messages, "ask", Q_ARG(QVariant, any), Q_ARG(QVariant, QVariant())));
+            QQuickWindow *box = nullptr;
+            QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+            QCOMPARE(messageBoxItem(name)->property("textFormat").toInt(), int(Qt::PlainText));
+            QCOMPARE(findItem(box->contentItem(), QStringLiteral("dialogTitleBarTitle"))->property("textFormat").toInt(), int(Qt::PlainText));
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("ok"))));
+            QTRY_VERIFY(!box->isVisible());
+        }
+#ifdef Q_OS_WIN
+        QSKIP("Windows file names cannot hold < or >");
+#else
+        restartWithoutSound();
+        QTemporaryDir &own = testFolder();
+        QVERIFY(own.isValid());
+        // (no "/" in a file name: the URL's are entities, as an attacker's would be)
+        const QString markup = QStringLiteral("<img src=\"http:&#47;&#47;127.0.0.1:9&#47;x\">.mkv");
+        for (const QString &name : {QStringLiteral("0.mkv"), markup}) // "0" before "<"
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(name)));
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        video.openVideo(own.filePath(QStringLiteral("0.mkv")));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        auto *detail = messageBoxItem("messageBoxDetail");
+        QCOMPARE(detail->property("text").toString(), markup);
+        QCOMPARE(detail->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+#endif
+    }
+
     void nextFileWalksTheVideosFolder()
     {
         restartWithoutSound();
