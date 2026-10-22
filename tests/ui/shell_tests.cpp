@@ -25171,17 +25171,24 @@ private slots:
         if (out.isEmpty())
             QSKIP("HIKARI_PU7_SHOT_DIR is not set");
         QVERIFY(QDir().mkpath(out));
-        QTemporaryDir legacy;
-        QVERIFY(legacy.isValid());
+        // A settings file of its own: the import needs one (as
+        // legacySettingsImportThroughTheWindow's).
+        QTemporaryDir home, legacy;
+        QVERIFY(home.isValid() && legacy.isValid());
         QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\nPROGRAM_THEME=Mine\r\nAUTOSAVE_MAX_FILES=5\r\nGRID_LOAD_SORTED_SUBS=1\r\n";
         for (const auto &[name, bytes] :
-             {std::pair{"Config/Config.txt", QByteArray("[HikariSub v0.0.1-rc.1]\r\nGRID_FONT=Arial\r\nPROGRAM_THEME=Mine\r\n"
-                                                        "AUTOSAVE_MAX_FILES=5\r\nGRID_LOAD_SORTED_SUBS=1\r\n")},
+             {std::pair{"Config/Config.txt", config},
               std::pair{"Config/Hotkeys.txt", QByteArray("[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n")}}) {
             QFile f(legacy.filePath(QLatin1String(name)));
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write(bytes);
         }
+        restartWithSpelling(home.path(), false);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
         QVERIFY(application->openFile(episode));
         auto &settings = *application->settingsStore();
         auto *root = engine->rootObjects().first();
@@ -25263,6 +25270,7 @@ private slots:
             const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
             QTRY_VERIFY((legacyRoot = dialogItem("settingsImportDialog", last.constData())) != nullptr);
             QVERIFY(QMetaObject::invokeMethod(legacyRoot, "click"));
+            QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportNext")->isEnabled());
             grab(wizard, file("import-1"));
             QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportNext"), "click"));
             grab(wizard, file("import-2-conflicts"));
