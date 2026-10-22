@@ -21129,33 +21129,34 @@ private slots:
         const auto centreOf = [](QQuickItem *item) {
             return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
         };
-        struct Row {
-            const char *name, *role, *accessibleName, *description;
+        // An item the test reads: named in the log when it is missing.
+        const auto must = [&](const char *name) {
+            QQuickItem *found = visualItem(name);
+            if (!found)
+                qWarning("missing item %s", name);
+            return found;
         };
-        for (const Row &r : {Row{"tag", "tag-list", "List of tags that can edit visual tool", "blur"},
-                             Row{"changeOption", "tag-change-option", "Tag change options:", "Insert"},
-                             Row{"edit", "tag-edit", "Edit listed tags and create new ones", ""}}) {
-            QQuickItem *b = option(r.name);
-            QVERIFY2(b, r.name);
-            QVERIFY(!b->inherits("QQuickComboBox"));
-            // VT1-choice-text: the tag list and the change options are
-            // dropdowns in the bar's Tag and Change groups showing the chosen
-            // entry as text; Edit stays an icon button.
-            if (*r.description) {
-                QVERIFY(b->property("asText").toBool());
-                QCOMPARE(b->property("role").toString(), QLatin1String(r.role));
-                QCOMPARE(visualItem(qPrintable(b->objectName() + QStringLiteral("_text")))->property("text").toString(),
-                         QLatin1String(r.description));
-            } else {
-                QCOMPARE(b->property("iconRole").toString(), QLatin1String(r.role));
-                QCOMPARE(b->property("display").toInt(), iconOnly);
-            }
-            QVERIFY(!b->property("checked").toBool());
-            QCOMPARE(QAccessible::queryAccessibleInterface(b)->text(QAccessible::Name), QLatin1String(r.accessibleName));
-            if (*r.description)
-                QCOMPARE(QAccessible::queryAccessibleInterface(b)->text(QAccessible::Description),
-                         QLatin1String(r.description));
-        }
+        // HY1: the tag list is a searchable picker showing the definition
+        // and its tag; Change is a switch with Set's placing beside it, after
+        // the values; the picker slot names the Lines a value changes.
+        QVERIFY(!visualItem("visualOption_changeOption"));
+        QVERIFY(!visualItem("visualOption_edit"));
+        QCOMPARE(must("visualOption_tag_text")->property("text").toString(), QStringLiteral("blur"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(option("tag"))->text(QAccessible::Name),
+                 QStringLiteral("List of tags that can edit visual tool"));
+        QCOMPARE(QAccessible::queryAccessibleInterface(option("tag"))->text(QAccessible::Description),
+                 QStringLiteral("blur"));
+        QTRY_VERIFY(visualItem("visualOption_change_0"));
+        QVERIFY(must("visualOption_change_0")->property("chosen").toBool()); // Set: blur's Insert
+        QCOMPARE(must("visualOption_change_3")->property("text").toString(), QStringLiteral("Gradient"));
+        QCOMPARE(must("visualOption_variant_text")->property("text").toString(), QStringLiteral("At the cursor"));
+        QCOMPARE(must("visualTargetCount")->property("text").toString(), QStringLiteral("Changes the active line"));
+        QVERIFY(!must("visualPickedCount")->isVisible());
+        // Tag, the values, then Change.
+        QVERIFY(visualItem("visualValue_value0"));
+        QVERIFY(must("visualValue_value0")->mapToScene(QPointF()).x() < option("change")->mapToScene(QPointF()).x()
+                || must("visualValue_value0")->mapToScene(QPointF()).y() < option("change")->mapToScene(QPointF()).y());
+        QVERIFY(must("visualValueMark_value0")->property("opacity").toReal() > 0.5);
         // The row's place settles with the panel's layout.
         QRectF lastRow;
         QVERIFY(QTest::qWaitFor([&] {
@@ -21165,56 +21166,101 @@ private slots:
             lastRow = r;
             return same;
         }, 5000));
-        // The tag list's menu: legacy's 22 definitions, no separator.
-        // The row's items are made again whenever the tool's options change:
-        // the menu is looked up each time.
+        // The tag list: search on top, Common's nine, More folded with its
+        // count, Edit tags… at the end. The row's items are made again
+        // whenever the tool's options change: the menu is looked up each time.
         const auto menuOf = [&] { return option("tag")->findChild<QObject *>(QStringLiteral("visualOption_tag_menu")); };
+        // The list's rows are in the popup, outside the window's items.
+        const auto inMenu = [&](const char *name) -> QQuickItem * {
+            auto *content = menuOf() ? menuOf()->property("contentItem").value<QQuickItem *>() : nullptr;
+            return content ? findItem(content, QLatin1String(name)) : nullptr;
+        };
         QVERIFY(menuOf());
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(option("tag")));
         QTRY_VERIFY(menuOf()->property("opened").toBool());
-        QCOMPARE(menuOf()->property("count").toInt(), 23); // the hidden separator and the entries
-        QVERIFY(QMetaObject::invokeMethod(menuOf(), "close"));
+        QCOMPARE(menuOf()->property("entryCount").toInt(), 9);
+        QVERIFY(inMenu("visualOption_tag_menu_section1"));
+        QVERIFY(inMenu("visualOption_tag_menu_edit"));
+        auto *search = inMenu("visualOption_tag_menu_search");
+        QVERIFY(search);
+        QTRY_VERIFY(search->hasActiveFocus());
+        for (const char c : {'s', 'h', 'a'})
+            QTest::keyClick(window, c);
+        QTRY_COMPARE(menuOf()->property("entryCount").toInt(), 3); // shadow, xshadow, yshadow
+        // The tag as the list shows it, with its backslash.
+        for (int i = 0; i < 3; ++i)
+            QTest::keyClick(window, Qt::Key_Backspace);
+        QTRY_COMPARE(menuOf()->property("entryCount").toInt(), 9);
+        for (const char c : {'\\', 'b', 'o', 'r', 'd'})
+            QTest::keyClick(window, c);
+        QTRY_COMPARE(search->property("text").toString(), QStringLiteral("\\bord"));
+        QTRY_COMPARE(menuOf()->property("entryCount").toInt(), 3); // border, xborder, yborder
+        QTest::keyClick(window, Qt::Key_Escape);
         QTRY_VERIFY(!menuOf()->property("visible").toBool());
         auto *allTags = dynamic_cast<AllTagsTool *>(tools.tool());
         QVERIFY(allTags);
         QCOMPARE(allTags->actualTag().tag, std::u16string(u"blur"));
         QCOMPARE(allTags->mode(), static_cast<int>(PasteInsert));
-        QCOMPARE(allTags->sliders()[0].thumbValue, 2.f);
-        // The slider over the video: its track and thumb.
+        // The active Line outlined on the video, no slider.
         int polygons = 0;
         for (const QVariant &shape : tools.overlay())
             polygons += shape.toMap().value(QStringLiteral("type")).toString() == QLatin1String("polygon");
-        QCOMPARE(polygons, 2);
+        QCOMPARE(polygons, 1);
 
-        // The thumb dragged 58 device pixels right: \blur 12 at the caret's
-        // block, one step.
+        // Set's Value typed (Enter): \blur 12 at the caret's block, one step.
         application->editor().setShowTags(true);
         auto *field = item("lineText");
         QTRY_COMPARE(field->property("text").toString(), QStringLiteral("{\\blur2}third"));
         QVERIFY(QMetaObject::invokeMethod(field, "select", Q_ARG(int, 3), Q_ARG(int, 3)));
-        const auto &view = tools.videoView();
-        const auto &slider = allTags->sliders()[0];
-        const float coeff = (slider.right - slider.left) / 100.f;
-        const float thumbX = (2.f * coeff) + slider.left;
-        const QPoint thumb = videoPoint(QPointF(view.toLogical(thumbX), view.toLogical(slider.top - 2)));
-        const std::size_t steps = session->historySize();
-        QTest::mouseMove(window, thumb);
-        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, thumb);
-        const int to = static_cast<int>(std::lround(view.toLogical(10.f * coeff)));
-        QTest::mouseMove(window, thumb + QPoint(to / 2, 0));
-        QTest::mouseMove(window, thumb + QPoint(to, 0));
-        QTRY_VERIFY(tools.gestureActive());
-        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\blur2}third")); // not yet
-        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, thumb + QPoint(to, 0));
+        QTRY_COMPARE(must("visualValue_value0")->property("text").toString(), QStringLiteral("2"));
+        std::size_t steps = session->historySize();
+        QVERIFY(tools.setValue(QStringLiteral("value0"), QStringLiteral("12")));
         QTRY_COMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Visual Hydra tool"));
-        static const QRegularExpression written(QStringLiteral(R"(^\{\\blur([0-9.]+)\}third$)"));
-        const auto m = written.match(text(session->document().lines()[2]));
-        QVERIFY2(m.hasMatch(), qPrintable(text(session->document().lines()[2])));
-        QVERIFY(std::abs(m.captured(1).toDouble() - 12.0) < 0.6);
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\blur12}third"));
         // The editor takes the text, its caret at the tag.
         QTRY_COMPARE(field->property("text").toString(), text(session->document().lines()[2]));
         QTRY_COMPARE(field->property("cursorPosition").toInt(), 1);
+
+        // Add, then a drag sideways over the video: By previews, the release
+        // applies it as one step, and the last change card shows it.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_change_1"), "click"));
+        QTRY_COMPARE(allTags->mode(), static_cast<int>(PasteAdd));
+        QTRY_VERIFY(visualItem("visualValue_by0"));
+        const auto &view = tools.videoView();
+        const QPoint from = videoPoint(tools.videoRect().center());
+        const int to = static_cast<int>(std::lround(view.toLogical(8.f))); // 8 device pixels: By 4
+        steps = session->historySize();
+        QTest::mouseMove(window, from);
+        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, from);
+        QTest::mouseMove(window, from + QPoint(to / 2, 0));
+        QTest::mouseMove(window, from + QPoint(to, 0));
+        QTRY_VERIFY(tools.gestureActive());
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\blur12}third")); // not yet
+        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, from + QPoint(to, 0));
+        QTRY_COMPARE(session->historySize(), steps + 1);
+        static const QRegularExpression written(QStringLiteral(R"(^\{\\blur([0-9.]+)\}third$)"));
+        auto m = written.match(text(session->document().lines()[2]));
+        QVERIFY2(m.hasMatch(), qPrintable(text(session->document().lines()[2])));
+        const double dragged = m.captured(1).toDouble();
+        QVERIFY2(dragged > 12.4 && dragged < 17, qPrintable(text(session->document().lines()[2])));
+        auto *card = visualItem("visualLastChange");
+        QVERIFY(card);
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(must("visualLastChangeSummary")->property("text").toString(),
+                 QStringLiteral("blur · Add · 1 line"));
+        // The card's By: the step done again in its place.
+        auto *again = visualItem("visualLastChange_by0");
+        QVERIFY(again);
+        QVERIFY(tools.editLastChange(QStringLiteral("by0"), QStringLiteral("1")));
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\blur13}third"));
+        // The same field (not made again by the refresh) shows the value.
+        QCOMPARE(visualItem("visualLastChange_by0"), again);
+        QTRY_COMPARE(again->property("text").toString(), QStringLiteral("1"));
+        QVERIFY(application->editor().undo()); // through the editor, so the views follow
+        QCOMPARE(text(session->document().lines()[2]), QStringLiteral("{\\blur12}third"));
+        QTRY_VERIFY(!card->isVisible()); // an undo closes it
         application->editor().setShowTags(false);
 
         // "fading" and the Line editor's "Insert difference from the start"
@@ -21227,28 +21273,65 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(25), 20000);
         const int since = static_cast<int>(tools.videoTimeMs()) - 1000;
         const std::size_t keySteps = session->historySize();
-        visualItem("videoPanel")->forceActiveFocus();
+        must("videoPanel")->forceActiveFocus();
         QTest::keyClick(window, Qt::Key_Comma, Qt::ControlModifier);
-        QTRY_COMPARE(session->historySize(), keySteps + 1);
+        // The undo above left a redo step, which this step replaces: the
+        // history's size stays.
+        QTRY_VERIFY2(text(session->document().lines()[2]).contains(QStringLiteral("\\fad(%1,0)").arg(since)),
+                     qPrintable(text(session->document().lines()[2])));
+        QCOMPARE(session->historySize(), keySteps);
         QCOMPARE(session->history().back().name, std::string("Visual Hydra tool"));
-        QVERIFY2(text(session->document().lines()[2]).contains(QStringLiteral("\\fad(%1,0)").arg(since)),
-                 qPrintable(text(session->document().lines()[2])));
-        QVERIFY(session->undo());
+        QVERIFY(application->editor().undo());
 
-        // Choosing "border" brings its change option (Add).
+        // Choosing "border" from the list brings its change option (Add).
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(option("tag")));
         QTRY_VERIFY(menuOf()->property("opened").toBool());
-        QObject *border = menuOf()->findChild<QObject *>(QStringLiteral("visualOption_tag_1"));
-        QVERIFY(border);
-        QVERIFY(QMetaObject::invokeMethod(border, "triggered"));
+        QTRY_VERIFY(inMenu("visualOption_tag_menu_1"));
+        QTest::mouseMove(window, centreOf(inMenu("visualOption_tag_menu_1")));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(inMenu("visualOption_tag_menu_1")));
         QTRY_COMPARE(allTags->actualTag().tag, std::u16string(u"bord"));
         QCOMPARE(allTags->mode(), static_cast<int>(PasteAdd));
-        QTRY_COMPARE(QAccessible::queryAccessibleInterface(option("changeOption"))->text(QAccessible::Description),
-                     QStringLiteral("Add"));
+        QTRY_VERIFY(must("visualOption_change_1")->property("chosen").toBool());
         QTRY_VERIFY(!menuOf()->property("visible").toBool());
 
-        // PU5 (#307): Edit opens "Edit tags" on the definition the tool has.
-        QVERIFY(QMetaObject::invokeMethod(option("edit"), "click"));
+        // Set's placing is the definition's: saved to AllTagsSettings.txt.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_change_0"), "click"));
+        QTRY_VERIFY(visualItem("visualOption_variant"));
+        QVERIFY(!QFile::exists(tagsFile));
+        QVERIFY(tools.setOption(QStringLiteral("variant"), 1));
+        QTRY_VERIFY(QFile::exists(tagsFile));
+        {
+            QFile placed(tagsFile);
+            QVERIFY(placed.open(QIODevice::ReadOnly));
+            QString border;
+            for (const QString &line : QString::fromUtf8(placed.readAll()).split(QLatin1Char('\n')))
+                if (line.startsWith(QStringLiteral("Tag: border, bord, ")))
+                    border = line;
+            QCOMPARE(border.split(QStringLiteral(", ")).value(7), QStringLiteral("1")); // the mode
+        }
+        QVERIFY(tools.setOption(QStringLiteral("variant"), 0));
+        QVERIFY(QFile::remove(tagsFile));
+        // PU5 (#307): Edit tags… at the list's end opens "Edit tags" on the
+        // definition the tool has.
+        const auto openEditTags = [&] {
+            // A change of the bar's options makes its items again: the old
+            // picker goes with the deferred deletes, so the lookup finds the
+            // one shown.
+            QTest::qWait(50);
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(option("tag")));
+            if (!QTest::qWaitFor([&] { return menuOf()->property("opened").toBool(); })) {
+                qWarning("the tag list did not open");
+                return false;
+            }
+            QQuickItem *edit = inMenu("visualOption_tag_menu_edit");
+            if (!edit) {
+                qWarning("no Edit tags… row");
+                return false;
+            }
+            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(edit));
+            return true;
+        };
+        QVERIFY(openEditTags());
         auto *dialog = qobject_cast<QQuickWindow *>(named("tagsEditionDialog"));
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->isVisible());
@@ -21611,8 +21694,9 @@ private slots:
             QTest::qWait(300);
             shot = window->grabWindow();
             QVERIFY(shot.copy(crop(visualItem("videoPanel"))).save(out + QStringLiteral("/alltags-video-panel") + suffix));
-            QQuickItem *button = visualItem("visualOption_changeOption");
-            auto *menu = button->findChild<QObject *>(QStringLiteral("visualOption_changeOption_menu"));
+            // HY1: the tag list (search, sections, Edit tags…).
+            QQuickItem *button = visualItem("visualOption_tag");
+            auto *menu = button->findChild<QObject *>(QStringLiteral("visualOption_tag_menu"));
             QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
                               button->mapToScene(QPointF(button->width() / 2, button->height() / 2)).toPoint());
             QTRY_VERIFY(menu->property("opened").toBool());
@@ -21620,7 +21704,7 @@ private slots:
             shot = window->grabWindow();
             const QRect menuRect = crop(menu->property("background").value<QQuickItem *>()).united(crop(button));
             QVERIFY(shot.copy(menuRect.adjusted(-8, -8, 8, 8).intersected(shot.rect()))
-                        .save(out + QStringLiteral("/alltags-change-menu") + suffix));
+                        .save(out + QStringLiteral("/alltags-tag-list") + suffix));
             QVERIFY(QMetaObject::invokeMethod(menu, "close"));
             QTRY_VERIFY(!menu->property("visible").toBool());
             // PU5: the "Edit tags" window.
@@ -21716,6 +21800,46 @@ private slots:
             tools.selectFamily(10);
             QTRY_VERIFY(visualItem("visualOption_tag"));
             shoot(QStringLiteral("vt1-all-tags") + suffix);
+            // HY1: the Lines picked and outlined under Add, a drag on the
+            // video with its value, the last change card, the tag list.
+            session->setSelection({lines[2]->id, {lines[0]->id, lines[1]->id, lines[2]->id}, lines[2]->id, {}});
+            tools.pickBatch();
+            QVERIFY(tools.setOption(QStringLiteral("change"), 1));
+            QTRY_VERIFY(visualItem("visualValue_by0"));
+            shoot(QStringLiteral("hy1-picked") + suffix);
+            {
+                const QPoint from = videoPoint(tools.videoRect().center());
+                QTest::mouseMove(window, from);
+                QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, from);
+                QTest::mouseMove(window, from + QPoint(6, 0));
+                QTest::mouseMove(window, from + QPoint(24, 0));
+                QTRY_VERIFY(tools.gestureActive());
+                shoot(QStringLiteral("hy1-dragging") + suffix);
+                QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, from + QPoint(24, 0));
+                QTRY_VERIFY(!tools.gestureActive());
+                QTRY_VERIFY(visualItem("visualLastChange") && visualItem("visualLastChange")->isVisible());
+                QTest::mouseMove(window, QPoint(1, 1));
+                shoot(QStringLiteral("hy1-last-change") + suffix);
+            }
+            {
+                QQuickItem *tagButton = visualItem("visualOption_tag");
+                auto *list = tagButton->findChild<QObject *>(QStringLiteral("visualOption_tag_menu"));
+                QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                                  tagButton->mapToScene(QPointF(tagButton->width() / 2, tagButton->height() / 2)).toPoint());
+                QTRY_VERIFY(list->property("opened").toBool());
+                QTest::qWait(300);
+                const QImage shot = window->grabWindow();
+                const QRect listRect = crop(list->property("background").value<QQuickItem *>()).united(crop(tagButton));
+                QVERIFY(shot.copy(listRect.adjusted(-8, -8, 8, 8).intersected(shot.rect()))
+                            .save(out + QStringLiteral("/hy1-tag-list") + suffix));
+                QTest::keyClick(window, Qt::Key_Escape);
+                QTRY_VERIFY(!list->property("visible").toBool());
+            }
+            tools.dismissLastChange();
+            tools.clearBatch();
+            QVERIFY(application->editor().undo());
+            QVERIFY(tools.setOption(QStringLiteral("change"), 0)); // the next theme's shots as the first's
+            application->selectLine(lines[2]->id.value);
             // Scale on a narrow window: the groups wrap.
             tools.selectFamily(3);
             QTRY_VERIFY(visualItem("visualValue_fscx"));

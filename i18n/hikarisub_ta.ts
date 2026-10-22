@@ -9346,6 +9346,45 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>By</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Per line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Changes %n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changes 1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Pick selected lines (1 line picked: the tools edit it, not the active line)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9384,58 +9423,6 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Edit tags</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Set</source>
-        <translation type="unfinished">அமை</translation>
-    </message>
-    <message>
-        <source>Add</source>
-        <translation type="unfinished">கூட்டு</translation>
-    </message>
-    <message>
-        <source>Multiply</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Gradient</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>At the cursor</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>At the start of the text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Clip rectangle with %1 animation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Set by line number</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add by line number</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Across characters, increasing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Across characters, decreasing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Across lines, increasing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Across lines, decreasing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9558,16 +9545,16 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Search tags</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The list keeps at least one tag</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Values</source>
+        <source>Default</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished">மேம்பட்ட</translation>
     </message>
     <message>
         <source>Range</source>
@@ -9597,10 +9584,6 @@ or codecs or a splitter may be missing</source>
         </translation>
     </message>
     <message>
-        <source>Starts at</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Starts on</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9622,14 +9605,6 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Set writes, on the active line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Common</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Your tags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9744,10 +9719,6 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>More</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Name</source>
         <translation>பெயர்</translation>
     </message>
@@ -9820,10 +9791,6 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Close</source>
-        <translation type="unfinished">மூடு</translation>
-    </message>
-    <message>
         <source>Restore default shapes…</source>
         <translation type="unfinished"></translation>
     </message>
@@ -9846,6 +9813,10 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Value:</source>
         <translation type="vanished">மதிப்பு:</translation>
+    </message>
+    <message>
+        <source>Value</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Step:</source>
@@ -9968,6 +9939,42 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished">வீடியோ நிலையை நகலெடுக்கவும்</translation>
     </message>
     <message>
+        <source>At the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At the start of the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clip rectangle with %1 animation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set by line number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add by line number</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across characters, increasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across characters, decreasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across lines, increasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Across lines, decreasing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Free drawing</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10002,6 +10009,54 @@ or codecs or a splitter may be missing</source>
     <message>
         <source>Clear</source>
         <translation type="obsolete">தெளிவான</translation>
+    </message>
+    <message>
+        <source>Common</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit tags…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set</source>
+        <translation type="unfinished">அமை</translation>
+    </message>
+    <message>
+        <source>Add</source>
+        <translation type="unfinished">கூட்டு</translation>
+    </message>
+    <message>
+        <source>Multiply</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Gradient</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Last change</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">மூடு</translation>
+    </message>
+    <message>
+        <source>Change a value to redo it in place of that step</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>

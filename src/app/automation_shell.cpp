@@ -276,7 +276,8 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
         m_router.handle(r, std::move(reply));
     });
     m_manager.setDialogHandler([this](const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply) {
-        m_dialogs.present(m_title, request, std::move(reply));
+        const QString source = m_run ? QString::fromStdString(m_run->path + '\n' + m_run->macro) : QString();
+        m_dialogs.present(m_title, request, std::move(reply), source);
     });
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
