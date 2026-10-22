@@ -131,10 +131,22 @@ ApplicationWindow {
         else
             root.openSubtitles(path)
     }
-    // Legacy ReloadSubsIfModified when the window becomes active.
+    // Legacy ReloadSubsIfModified when the window becomes active (and
+    // ChangePage's on a tab change): a bar on that Document instead of a
+    // modal question (PU1-disk-change-bar). Documents whose bar shows, by id.
+    property var changedOnDisk: ({})
     function checkExternalChange() {
-        if (root.app.externalChange() === "modified")
-            reloadPrompt.show()
+        const id = root.currentTab().id
+        if (root.app.externalChange() === "modified" && id !== undefined) {
+            const shown = Object.assign({}, root.changedOnDisk)
+            shown[id] = true
+            root.changedOnDisk = shown
+        }
+    }
+    function endDiskChange(id) {
+        const shown = Object.assign({}, root.changedOnDisk)
+        delete shown[id]
+        root.changedOnDisk = shown
     }
     onActiveChanged: {
         if (active)
@@ -183,7 +195,7 @@ ApplicationWindow {
                 if (root.app.quitApproved)
                     root.close()
             } else {
-                closeReview.problem = problem
+                closeReview.fail(problem)
             }
         }
         // F1: a file result opens into the changed Untitled Document.
@@ -932,6 +944,8 @@ ApplicationWindow {
         id: sessionWindows
         app: root.app
         review: rows => closeReview.review(rows)
+        pickerFolder: picker => root.pickerFolder(picker)
+        rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
     }
     Connections {
         target: root.app
@@ -1018,7 +1032,7 @@ ApplicationWindow {
                     action: Action {
                         id: openAction
                         text: qsTr("&Open…")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.open()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SUBS")) openDialog.show()
                     }
                 }
                 ShellMenu {
@@ -1160,7 +1174,7 @@ ApplicationWindow {
                     action: Action {
                         id: openAutoSaveAction
                         text: qsTr("Open auto save")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) recoveryWindow.showBundles()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_AUTO_SAVE")) autosaves.show()
                     }
                 }
                 ShellMenuItem {
@@ -1170,7 +1184,7 @@ ApplicationWindow {
                     action: Action {
                         id: removeTemporaryAction
                         text: qsTr("Remove temporary files")
-                        onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) temporaryFilesWindow.showFiles()
+                        onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) autosaves.show(true)
                     }
                 }
                 ShellMenuItem {
@@ -2518,6 +2532,8 @@ ApplicationWindow {
         onOpenRequested: openAction.trigger()
         onOpenVideoRequested: openVideoAction.trigger()
         onRestoreRequested: sessionWindows.load()
+        offer: sessionWindows.offer
+        onAutosavesRequested: autosaves.show()
         // P9: Ctrl+click shows the file in its folder, as in File > Recent.
         onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
         onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
@@ -2722,7 +2738,7 @@ ApplicationWindow {
                         popup(visualOverlay, point)
                     }
                     onOpenVideoRequested: videoDialog.open()
-                    onOpenSubtitlesRequested: openDialog.open()
+                    onOpenSubtitlesRequested: openDialog.show()
                     onAspectRatioRequested: aspectRatioDialog.openAtCursor()
                 }
                 Label {
@@ -5590,6 +5606,123 @@ ApplicationWindow {
                 root.close()
             }
         }
+        // PU1-startup-cards: the startup offer while a Document is open (files
+        // from the command line); Home shows it as a card.
+        InlineBar {
+            id: startupBar
+            objectName: "startupBar"
+            readonly property StartupOffer offer: sessionWindows.offer
+            visible: offer.active && !root.app.home
+            severity: offer.kind === "crash" ? "warning" : "info"
+            text: offer.barText
+            Layout.fillWidth: true
+            onClosed: offer.end()
+            Button {
+                objectName: "startupRestore"
+                visible: startupBar.offer.restorable
+                text: startupBar.offer.kind === "crash" ? qsTranslate("HikariSub.Session", "Restore session")
+                                                        : qsTranslate("HikariSub.Session", "Restore")
+                onClicked: startupBar.offer.restore()
+            }
+            Button {
+                objectName: "startupAutosaves"
+                visible: startupBar.offer.kind === "crash" && startupBar.offer.autosaveCount > 0
+                text: qsTranslate("HikariSub.Session", "Autosaves…")
+                onClicked: autosaves.show()
+            }
+        }
+        // PU1-mkv-notices: subtitles read from an MKV (legacy's modal
+        // ProgresDialog "Loading subtitles from Matroska.": the gauge, "Time
+        // elapsed", Cancel), a bar while the window stays usable.
+        InlineBar {
+            objectName: "mkvProgress"
+            visible: root.matroska.state === 3
+            closable: false
+            text: qsTranslate("HikariSub.Matroska", "Loading subtitles from %1").arg(root.matroska.source)
+            Layout.fillWidth: true
+            ProgressBar {
+                objectName: "mkvProgressBar"
+                from: 0
+                to: 100
+                value: root.matroska.progress
+                Layout.preferredWidth: 180
+            }
+            Label {
+                objectName: "mkvElapsed"
+                text: root.matroska.elapsed
+                color: Theme.muted
+            }
+            Button {
+                objectName: "mkvCancel"
+                text: qsTranslate("HikariSub.Matroska", "Cancel")
+                onClicked: root.matroska.cancel()
+            }
+        }
+        // PU1-disk-change-bar: the editing target's file was changed by another
+        // program (legacy's modal "Subtitles were modified by another program.
+        // Reload?"): Reload reads it again, Compare opens it as the protected
+        // reference and compares, Keep mine ends the bar (a save then writes
+        // over the file).
+        InlineBar {
+            id: diskChangeBar
+            objectName: "diskChangeBar"
+            readonly property var tab: root.currentTab()
+            visible: tab.id !== undefined && root.changedOnDisk[tab.id] === true
+            severity: tab.modified ? "warning" : "info"
+            closable: false
+            text: tab.modified
+                  ? qsTranslate("HikariSub.Documents", "%1 was changed by another program. Reloading drops the changes you made here.").arg(tab.title)
+                  : qsTranslate("HikariSub.Documents", "%1 was changed by another program.").arg(tab.title)
+            Layout.fillWidth: true
+            Button {
+                objectName: "reloadYes"
+                text: qsTranslate("HikariSub.Documents", "Reload")
+                onClicked: {
+                    root.endDiskChange(diskChangeBar.tab.id)
+                    root.app.reloadTarget()
+                }
+            }
+            Button {
+                objectName: "diskChangeCompare"
+                text: qsTranslate("HikariSub.Documents", "Compare")
+                onClicked: root.app.compareWithFileOnDisk()
+            }
+            Button {
+                objectName: "reloadNo"
+                text: qsTranslate("HikariSub.Documents", "Keep mine")
+                onClicked: root.endDiskChange(diskChangeBar.tab.id)
+            }
+        }
+        // PU1-session-entries-bar: what a restore could not find for this tab,
+        // one bar each, with Retry, Relink… and Remove (they stay until then).
+        Repeater {
+            model: root.app.unresolvedRestores.filter(e => e.tab === root.app.currentTab)
+            delegate: InlineBar {
+                id: entryBar
+                required property var modelData
+                required property int index
+                objectName: "unresolvedBar" + index
+                severity: "warning"
+                closable: false
+                text: sessionWindows.entryText(modelData)
+                Layout.fillWidth: true
+                Button {
+                    objectName: "restoreRetry" + entryBar.index
+                    text: qsTranslate("HikariSub.Session", "Retry")
+                    onClicked: sessionWindows.retry(entryBar.modelData)
+                }
+                Button {
+                    objectName: "restoreRelink" + entryBar.index
+                    text: qsTranslate("HikariSub.Session", "Relink…")
+                    onClicked: sessionWindows.relink(entryBar.modelData)
+                }
+                Button {
+                    objectName: "restoreRemove" + entryBar.index
+                    text: qsTranslate("HikariSub.Session", "Remove")
+                    onClicked: sessionWindows.remove(entryBar.modelData)
+                }
+            }
+        }
     }
 
     // P10: legacy's status bar, the window's bottom row. Its first field is
@@ -5608,6 +5741,39 @@ ApplicationWindow {
     // PK1 (#301): the toasts, at the bottom right of the main window above
     // the status bar, or of the fullscreen video window (above its pinned
     // bar) while it is open. root.notices.post(severity, title, text, options).
+    // PU1: the OK-only notices of the file and session popups go through
+    // notify(), the one call NT1's notices replace.
+    // The editing target's row of app.tabs ({} without one).
+    function currentTab() {
+        const tabs = root.app.tabs
+        return root.app.currentTab >= 0 && root.app.currentTab < tabs.length ? tabs[root.app.currentTab] : ({})
+    }
+    // PU1-picker-titles: the folder a file picker was last left in
+    // ("subtitles", "sessions", "video", "audio", "keyframes"), kept in
+    // workspace.pickerFolders; "" when none was.
+    function pickerFolder(picker) {
+        const rows = root.app.settings.value("workspace.pickerFolders") || []
+        const row = rows.find(r => r.startsWith(picker + "\t"))
+        return row ? row.slice(picker.length + 1) : ""
+    }
+    function rememberPickerFolder(picker, file) {
+        const folder = root.app.folderOf(file)
+        if (folder.length === 0)
+            return
+        const rows = (root.app.settings.value("workspace.pickerFolders") || []).filter(r => !r.startsWith(picker + "\t"))
+        rows.push(picker + "\t" + folder)
+        root.app.settings.setValue("workspace.pickerFolders", rows)
+    }
+    // The tab name of the Document `id` (0: the editing target's).
+    function tabTitle(id) {
+        if (!id)
+            return root.currentTab().title || ""
+        const row = root.app.tabs.find(t => t.id === id)
+        return row ? row.title : ""
+    }
+    function notify(severity, title, text, options) {
+        return notices.post(severity, title, text, options)
+    }
     ToastStack {
         id: notices
         objectName: "toastStack"
@@ -5710,10 +5876,9 @@ ApplicationWindow {
         const route = root.app.saveRouteFor(document)
         if (route === "dialog")
             openSaveDialog(document)
-        else if (route === "readonly") {
-            readOnlyWarning.document = document
-            readOnlyWarning.open()
-        } else if (document === 0)
+        else if (route === "readonly")
+            readOnlyWarning.warn(document, root.tabTitle(document))
+        else if (document === 0)
             root.editor.save()
         else
             root.app.saveDocument(document)
@@ -5729,8 +5894,7 @@ ApplicationWindow {
         const next = saveQueue[0]
         saveQueue = saveQueue.slice(1)
         if (next.route === "readonly") {
-            readOnlyWarning.document = next.id
-            readOnlyWarning.open()
+            readOnlyWarning.warn(next.id, root.tabTitle(next.id))
         } else {
             openSaveDialog(next.id)
         }
@@ -5738,9 +5902,14 @@ ApplicationWindow {
     function openSaveDialog(id) {
         const v = root.app.saveDialogValuesFor(id ?? 0)
         saveAsDialog.document = id ?? 0
-        saveAsDialog.nameFilters = [v.filter]
+        // PU1-picker-titles: named for the Document; its format first
+        // (the extension is added to a name without it).
+        saveAsDialog.title = qsTranslate("HikariSub.Documents", "Save “%1” as").arg(root.tabTitle(id ?? 0))
+        saveAsDialog.nameFilters = [v.filter, qsTranslate("HikariSub.Documents", "All files (*)")]
         if (v.folder.toString() !== "")
             saveAsDialog.currentFolder = v.folder
+        else if (root.pickerFolder("subtitles").length > 0)
+            saveAsDialog.currentFolder = root.pickerFolder("subtitles")
         if (v.file.toString() !== "")
             saveAsDialog.selectedFile = v.file
         saveAsDialog.open()
@@ -5748,14 +5917,13 @@ ApplicationWindow {
     FileDialog {
         id: saveAsDialog
         objectName: "saveAsDialog"
-        title: qsTranslate("HikariSub.Documents", "Save subtitle file")
         fileMode: FileDialog.SaveFile
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitle file ") + "(*.ass)"]
         property var document: 0 // P9: the Document saved (0: the editing target)
         onAccepted: {
+            root.rememberPickerFolder("subtitles", selectedFile)
             if (root.app.saveChosenFor(document, selectedFile) === "readonly") {
-                readOnlyWarning.document = document
-                readOnlyWarning.open()
+                readOnlyWarning.warn(document, root.app.localPath(selectedFile).replace(/^.*[\\/]/, ""))
             } else {
                 matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
                 root.saveNext()
@@ -5771,22 +5939,41 @@ ApplicationWindow {
         id: matroskaSubtitles
         matroska: root.matroska
         settings: root.app.settings
+        notify: root.notify
+        documentTitle: () => root.currentTab().title || ""
+        videoName: () => root.currentTab().video || ""
         save: function() {
             const route = root.app.saveRoute()
             root.saveSubtitles()
             return route === "dialog" || route === "readonly"
         }
     }
-    Dialog {
+    // PU1-message-boxes: a Save onto a read-only file (legacy's OK-only
+    // "Warning", whose OK opened the Save dialog again): Save as… opens it,
+    // Cancel ends this save as the Save dialog's Cancel does.
+    LazyMessageBox {
         id: readOnlyWarning
-        objectName: "readOnlyWarning"
-        title: qsTranslate("HikariSub.Documents", "Warning")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { text: qsTranslate("HikariSub.Documents", "Chosen file is read only,\nplease save with different name or change file attribute.") }
-        property var document: 0
-        onClosed: root.openSaveDialog(document)
+        name: "readOnlyWarning"
+        settings: root.app.settings
+        function warn(document, name) {
+            ask({
+                title: qsTranslate("HikariSub.Documents", "Save"),
+                text: qsTranslate("HikariSub.Documents", "“%1” is read-only.").arg(name),
+                detail: qsTranslate("HikariSub.Documents", "Save it under another name, or make the file writable and save again."),
+                severity: "warning",
+                choices: [
+                    { id: "saveAs", text: qsTranslate("HikariSub.Documents", "Save as…"), role: "accept", isDefault: true },
+                    { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject" }
+                ]
+            }, id => {
+                if (id === "saveAs") {
+                    root.openSaveDialog(document)
+                } else {
+                    matroskaSubtitles.saveDone()
+                    root.saveNext()
+                }
+            })
+        }
     }
 
     // P9: Close all tabs' question and a video's same-named subtitles.
@@ -5806,125 +5993,17 @@ ApplicationWindow {
         }
     }
 
-    // The accepted close review: every affected Document with Save or Discard,
-    // Save all, Discard all and Cancel. Nothing closes until every save is
-    // acknowledged as written.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
+    // The accepted close review (P1), on the popup kit (PU1-unsaved-window):
+    // a window with every affected Document, or a message box for one.
+    // Nothing closes until every save is acknowledged as written.
+    UnsavedChanges {
         id: closeReview
-        objectName: "closeReview"
-        title: qsTranslate("HikariSub.Documents", "Unsaved changes")
-        width: 480
-        height: 320
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        property var rows: []
-        property var choices: []
-        property string problem: ""
-        // Closing the window is Cancel (a waiting file result is then shown).
-        // ADR 0019: a cancelled quit takes "Restart now" back.
-        onClosing: {
-            if (!root.app.quitApproved)
-                root.updates.installer.cancelRestart()
-            root.app.cancelClose()
-        }
-        function review(list) {
-            choices = list.map(r => ({ id: r.id, save: true, path: "" }))
-            rows = list
-            problem = ""
-            show()
-        }
-        function proceed() {
-            for (let i = 0; i < rows.length; ++i)
-                if (choices[i].save && rows[i].untitled && choices[i].path.length === 0) {
-                    problem = qsTranslate("HikariSub.Documents", "Choose where to save %1.").arg(rows[i].title)
-                    return
-                }
-            root.app.resolveClose(choices)
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                text: qsTranslate("HikariSub.Documents", "These documents have unsaved changes:")
-            }
-            Repeater {
-                model: closeReview.rows
-                delegate: RowLayout {
-                    id: rowItem
-                    required property int index
-                    required property var modelData
-                    Label {
-                        text: rowItem.modelData.title
-                        Layout.fillWidth: true
-                    }
-                    RadioButton {
-                        objectName: "closeSave" + rowItem.index
-                        text: qsTranslate("HikariSub.Documents", "Save")
-                        checked: closeReview.choices[rowItem.index].save
-                        onToggled: closeReview.choices[rowItem.index].save = checked
-                    }
-                    RadioButton {
-                        objectName: "closeDiscard" + rowItem.index
-                        text: qsTranslate("HikariSub.Documents", "Discard")
-                        checked: !closeReview.choices[rowItem.index].save
-                        onToggled: closeReview.choices[rowItem.index].save = !checked
-                    }
-                    Button {
-                        visible: rowItem.modelData.untitled
-                        text: qsTranslate("HikariSub.Documents", "Save as…")
-                        onClicked: {
-                            closeSaveAs.row = rowItem.index
-                            closeSaveAs.open()
-                        }
-                    }
-                }
-            }
-            Label {
-                objectName: "closeReviewProblem"
-                text: closeReview.problem
-                visible: text.length > 0
-                color: Theme.danger
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
-            }
-            Item { Layout.fillHeight: true }
-            WindowFooter {
-                Button {
-                    objectName: "closeSaveAll"
-                    text: qsTranslate("HikariSub.Documents", "Save all")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: { closeReview.choices.forEach(c => c.save = true); closeReview.proceed() }
-                }
-                Button {
-                    objectName: "closeDiscardAll"
-                    text: qsTranslate("HikariSub.Documents", "Discard all")
-                    DialogButtonBox.buttonRole: DialogButtonBox.DestructiveRole
-                    onClicked: { closeReview.choices.forEach(c => c.save = false); closeReview.proceed() }
-                }
-                Button {
-                    objectName: "closeContinue"
-                    text: qsTranslate("HikariSub.Documents", "Continue")
-                    DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                    onClicked: closeReview.proceed()
-                }
-                Button {
-                    objectName: "closeCancel"
-                    text: qsTranslate("HikariSub.Documents", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: { root.app.cancelClose(); closeReview.close() }
-                }
-            }
-        }
-        FileDialog {
-            id: closeSaveAs
-            objectName: "closeSaveAs"
-            title: qsTranslate("HikariSub.Documents", "Save subtitle file")
-            property int row: -1
-            fileMode: FileDialog.SaveFile
-            nameFilters: [qsTranslate("HikariSub.Documents", "ASS subtitles (*.ass)"), qsTranslate("HikariSub.Documents", "All files (*)")]
-            onAccepted: closeReview.choices[row].path = root.app.localPath(selectedFile)
-        }
+        objectName: "unsavedChanges"
+        app: root.app
+        updates: root.updates
+        settings: root.app.settings
+        pickerFolder: picker => root.pickerFolder(picker)
+        rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
     }
 
     // Automation windows (S1): the fixed script dialog and picker, the
@@ -6000,7 +6079,7 @@ ApplicationWindow {
         shell: root
         controller: root.videoFullscreen
         onOpenVideoRequested: videoDialog.show()
-        onOpenSubtitlesRequested: openDialog.open()
+        onOpenSubtitlesRequested: openDialog.show()
         onAspectRatioRequested: aspectRatioDialog.openAtCursor()
         onFileQuestionRequested: next => videoFileQuestion.ask(next)
         // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
@@ -6059,11 +6138,22 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         objectName: "subtitlesOpenDialog"
+        title: qsTranslate("HikariSub.Documents", "Open subtitles") // PU1-picker-titles
+        // Where the subtitle pickers were last left.
+        function show() {
+            const folder = root.pickerFolder("subtitles")
+            if (folder.length > 0)
+                currentFolder = folder
+            open()
+        }
         // Legacy's second filter, "Videos with embedded subtitles".
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
                       qsTranslate("HikariSub.Documents", "All files (*)")]
-        onAccepted: root.openChosenSubtitles(root.app.localPath(selectedFile))
+        onAccepted: {
+            root.rememberPickerFolder("subtitles", selectedFile)
+            root.openChosenSubtitles(root.app.localPath(selectedFile))
+        }
     }
 
     // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
@@ -6993,202 +7083,16 @@ ApplicationWindow {
         }
     }
 
-    // P3: work left by a session that did not close cleanly. Each bundle opens
-    // as a new unsaved copy (L58-recovery-copy) or is dismissed.
-    Component.onCompleted: {
-        root.applyMenuShortcuts()
-        if (root.app.recoveryBundles().length > 0)
-            recoveryWindow.showBundles()
-    }
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: recoveryWindow
-        objectName: "recoveryWindow"
-        title: qsTranslate("HikariSub.Session", "Open auto save")
-        width: 560
-        height: 560
-        flags: Qt.Dialog
-        property var bundles: []
-        function showBundles() {
-            bundles = root.app.recoveryBundles()
-            legacyAutosaves.reload() // P9
-            show()
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: recoveryWindow.bundles.length > 0
-                      ? qsTranslate("HikariSub.Session", "Unsaved work from a session that did not close. Each opens as a new unsaved copy; the original file is not changed.")
-                      : qsTranslate("HikariSub.Session", "There is no unsaved work to recover.")
-            }
-            ListView {
-                objectName: "recoveryList"
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                // 1 inside the clipped list: its rows' focus rings show whole.
-                leftMargin: 1
-                rightMargin: 1
-                topMargin: 1
-                bottomMargin: 1
-                model: recoveryWindow.bundles
-                delegate: RowLayout {
-                    required property var modelData
-                    required property int index
-                    width: ListView.view.width - 2
-                    Label {
-                        Layout.fillWidth: true
-                        elide: Text.ElideMiddle
-                        text: qsTranslate("HikariSub.Session", "%1 — %2").arg(modelData.title).arg(modelData.written)
-                        ToolTip.visible: hovered
-                        ToolTip.text: modelData.original
-                    }
-                    ComboBox {
-                        id: generationChoice
-                        objectName: "recoveryGeneration" + index
-                        model: modelData.generations.map(g => g.written)
-                        Accessible.name: qsTranslate("HikariSub.Session", "Autosave")
-                    }
-                    Button {
-                        objectName: "recoverBundle" + index
-                        text: qsTranslate("HikariSub.Session", "Open copy")
-                        onClicked: {
-                            if (root.app.recoverBundle(modelData.key, modelData.generations[generationChoice.currentIndex].generation))
-                                recoveryWindow.close()
-                        }
-                    }
-                    Button {
-                        objectName: "dismissBundle" + index
-                        text: qsTranslate("HikariSub.Session", "Dismiss")
-                        onClicked: {
-                            root.app.dismissBundle(modelData.key)
-                            recoveryWindow.bundles = root.app.recoveryBundles()
-                        }
-                    }
-                }
-            }
-            // P9: the legacy Subs/ autosaves, read only.
-            LegacyAutosaveList {
-                id: legacyAutosaves
-                app: root.app
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                onOpened: recoveryWindow.close()
-            }
-            Button {
-                Layout.alignment: Qt.AlignRight
-                objectName: "recoveryClose"
-                text: qsTranslate("HikariSub.Session", "Close")
-                onClicked: recoveryWindow.close()
-            }
-        }
-    }
-
-    // P4: legacy AutoSavesRemoving for the autosaves this application keeps
-    // (no index or audio caches are written to disk).
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: temporaryFilesWindow
-        objectName: "temporaryFilesWindow"
-        title: qsTranslate("HikariSub.Session", "Remove temporary files")
-        // As wide as its rows need (the last row's button was cut at 520).
-        width: Math.max(520, temporaryContent.implicitWidth + 16)
-        minimumWidth: temporaryContent.implicitWidth + 16
-        height: 380
-        flags: Qt.Dialog
-        property var bundles: []
-        property var checked: ({})
-        function showFiles() {
-            bundles = root.app.recoveryBundles()
-            checked = ({})
-            // Legacy default: a month before today.
-            const before = new Date()
-            before.setMonth(before.getMonth() - 1)
-            olderDate.date = olderDate.day(before)
-            show()
-        }
-        function cutoff() {
-            return olderDate.day(olderDate.date)
-        }
-        ColumnLayout {
-            id: temporaryContent
-            anchors.fill: parent
-            anchors.margins: 8
-            Label { text: qsTranslate("HikariSub.Session", "Auto save") }
-            Label {
-                visible: temporaryFilesWindow.bundles.length === 0
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                color: Theme.muted
-                text: qsTranslate("HikariSub.Session", "No auto save files")
-            }
-            ListView {
-                visible: temporaryFilesWindow.bundles.length > 0
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                // 1 inside the clipped list: its rows' focus rings show whole.
-                leftMargin: 1
-                rightMargin: 1
-                topMargin: 1
-                bottomMargin: 1
-                model: temporaryFilesWindow.bundles
-                delegate: CheckBox {
-                    required property var modelData
-                    required property int index
-                    objectName: "autosave" + index
-                    text: qsTranslate("HikariSub.Session", "%1 — %2").arg(modelData.title).arg(modelData.written)
-                    onToggled: temporaryFilesWindow.checked[modelData.key] = checked
-                }
-            }
-            RowLayout {
-                Button {
-                    objectName: "removeSelectedAutosaves"
-                    text: qsTranslate("HikariSub.Session", "Remove selected autosave files")
-                    onClicked: {
-                        for (const key in temporaryFilesWindow.checked)
-                            if (temporaryFilesWindow.checked[key])
-                                root.app.dismissBundle(key)
-                        temporaryFilesWindow.showFiles()
-                    }
-                }
-                Button {
-                    objectName: "removeAllAutosaves"
-                    text: qsTranslate("HikariSub.Session", "Remove all auto save files")
-                    onClicked: {
-                        root.app.removeAutosavesOlderThan(new Date(NaN))
-                        temporaryFilesWindow.showFiles()
-                    }
-                }
-            }
-            RowLayout {
-                Label { text: qsTranslate("HikariSub.Session", "Remove files older than") }
-                // PK1: the date field with its calendar (legacy's day, month and year boxes).
-                DatePicker {
-                    id: olderDate
-                    objectName: "olderDate"
-                    accessibleName: qsTranslate("HikariSub.Session", "Remove files older than")
-                }
-                Button {
-                    objectName: "removeOlderAutosaves"
-                    text: qsTranslate("HikariSub.Session", "Remove older auto save files")
-                    onClicked: {
-                        root.app.removeAutosavesOlderThan(temporaryFilesWindow.cutoff())
-                        temporaryFilesWindow.showFiles()
-                    }
-                }
-            }
-            Button {
-                Layout.alignment: Qt.AlignRight
-                text: qsTranslate("HikariSub.Session", "Close")
-                onClicked: temporaryFilesWindow.close()
-            }
-        }
+    Component.onCompleted: root.applyMenuShortcuts()
+    // P3, P4 and P9 in one window (PU1-autosaves-window): the work left by a
+    // session that did not close cleanly, the previous version's autosaves,
+    // and removing them. It no longer opens by itself at the start: the
+    // Home page's crash card or the startup bar offers it.
+    Autosaves {
+        id: autosaves
+        objectName: "autosaves"
+        app: root.app
+        settings: root.app.settings
     }
 
     // O2: the shortcut editor. An installed binding as legacy text ("Ctrl-D"), following installs.
@@ -7665,42 +7569,5 @@ ApplicationWindow {
         objectName: "legacyHotkeysDialog"
         nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
         onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
-    }
-
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: reloadPrompt
-        objectName: "reloadPrompt"
-        title: qsTranslate("HikariSub.Documents", "Reloading")
-        width: 420
-        height: 120
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: qsTranslate("HikariSub.Documents", "Subtitles were modified by another program. Reload?")
-            }
-            WindowFooter {
-                Button {
-                    objectName: "reloadYes"
-                    text: qsTranslate("HikariSub.Documents", "Yes")
-                    DialogButtonBox.buttonRole: DialogButtonBox.YesRole
-                    onClicked: {
-                        reloadPrompt.close()
-                        root.app.reloadTarget()
-                    }
-                }
-                Button {
-                    objectName: "reloadNo"
-                    text: qsTranslate("HikariSub.Documents", "No")
-                    DialogButtonBox.buttonRole: DialogButtonBox.NoRole
-                    onClicked: reloadPrompt.close()
-                }
-            }
-        }
     }
 }

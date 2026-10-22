@@ -5,19 +5,27 @@ import QtQuick.Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
-// P6: session restore. The startup prompts (legacy hikarisubApp::OnInit),
-// the session file dialogs (legacy OnExternalSession) and the unresolved
-// entries a restore left (the accepted lifecycle choice: they stay visible
-// with Retry, Relink and Remove).
+// P6: session restore. The startup offer (legacy hikarisubApp::OnInit's
+// prompts, PU1-startup-cards), the session file pickers (legacy
+// OnExternalSession) and the actions on the entries a restore left (the
+// accepted lifecycle choice: they stay visible with Retry, Relink and
+// Remove, as bars on their Document).
 Item {
     id: windows
     required property var app
     // The close review of the open tabs: a function(rows).
     required property var review
+    // The shell's remembered picker folders (PU1-picker-titles).
+    property var pickerFolder: picker => ""
+    property var rememberPickerFolder: (picker, file) => {}
 
     // GLOBAL_LOAD_LAST_SESSION (no file) or GLOBAL_LOAD_EXTERNAL_SESSION.
     function load(file) {
-        const result = windows.app.reviewSession(file === undefined ? "" : file)
+        windows.go(windows.app.reviewSession(file === undefined ? "" : file))
+    }
+    // The startup offer's Restore: the session as it was at the start.
+    function restoreStart() { windows.go(windows.app.reviewStartupSession()) }
+    function go(result) {
         if (!result.ok)
             return
         if (result.rows.length === 0)
@@ -25,177 +33,136 @@ Item {
         else
             windows.review(result.rows)
     }
-    function chooseSessionToLoad() { loadDialog.open() }
-    function chooseSessionToSave() { saveDialog.open() }
+    function chooseSessionToLoad() { windows.openPicker(loadDialog) }
+    function chooseSessionToSave() { windows.openPicker(saveDialog) }
+    // PU1-picker-titles: the session pickers start where one was last left,
+    // else in the sessions folder (legacy Options.configPath).
+    function openPicker(dialog) {
+        const folder = windows.pickerFolder("sessions")
+        dialog.currentFolder = folder.length > 0 ? folder : windows.app.sessionFolder()
+        dialog.open()
+    }
 
-    // WS5: files another start hands over wait until this is settled, so
-    // that the session does not replace their tabs.
-    function startupDecided(load) {
-        if (load)
-            windows.load()
-        windows.app.startupSessionDecided()
+    // PU1-startup-cards: the startup prompts are an offer (StartupOffer) on
+    // the Home page or the startup bar; only On start: Restore loads at
+    // once. Nothing is held back (WS5's wait for the prompts' answer ends at
+    // once), so files another start hands over open straight away.
+    readonly property StartupOffer offer: StartupOffer {
+        app: windows.app
+        onRestoreRequested: windows.restoreStart()
     }
     Component.onCompleted: {
         const kind = windows.app.startupSession()
         if (kind === "load")
-            Qt.callLater(() => windows.startupDecided(true))
-        else if (kind === "ask")
-            askPrompt.open()
-        else if (kind === "crash")
-            crashPrompt.open()
+            Qt.callLater(() => {
+                windows.load()
+                windows.app.startupSessionDecided()
+            })
+        else
+            windows.app.startupSessionDecided()
+        windows.offer.begin(kind === "load")
     }
 
-    Connections {
-        target: windows.app
-        function onSessionRestored(unresolved) {
-            if (unresolved > 0)
-                unresolvedWindow.show()
-        }
-    }
-
-    MessageDialog {
-        id: askPrompt
-        objectName: "loadSessionPrompt"
-        title: qsTr("Prompt")
-        text: qsTr("Load last session?")
-        buttons: MessageDialog.Yes | MessageDialog.No
-        onButtonClicked: (button, role) => {
-            if (button === MessageDialog.Yes)
-                windows.startupDecided(true)
-            else if (windows.app.lastSessionCrashed())
-                crashPrompt.open()
-            else
-                windows.startupDecided(false)
-        }
-        // Closed without a button (Esc): as No without the crash check.
-        onRejected: {
-            if (!crashPrompt.visible)
-                windows.startupDecided(false)
-        }
-    }
-    MessageDialog {
-        id: crashPrompt
-        objectName: "crashSessionPrompt"
-        title: qsTr("Prompt")
-        text: qsTr("The program crashed or was closed improperly.\nLoad the last session with the latest autosaved subtitles?")
-        buttons: MessageDialog.Yes | MessageDialog.No
-        onButtonClicked: (button, role) => windows.startupDecided(button === MessageDialog.Yes)
-        onRejected: windows.startupDecided(false)
-    }
     FileDialog {
         id: loadDialog
-        title: qsTr("Choose session file")
-        currentFolder: windows.app.sessionFolder()
-        nameFilters: [qsTr("Session file (*.kls)")]
+        objectName: "sessionLoadDialog"
+        title: qsTr("Load session")
+        nameFilters: [qsTr("Sessions (*.kls)"), qsTr("All files (*)")]
         fileMode: FileDialog.OpenFile
-        onAccepted: windows.load(selectedFile)
+        onAccepted: {
+            windows.rememberPickerFolder("sessions", selectedFile)
+            windows.load(selectedFile)
+        }
     }
     FileDialog {
         id: saveDialog
-        title: qsTr("Save session file")
-        currentFolder: windows.app.sessionFolder()
-        nameFilters: [qsTr("Session file (*.kls)")]
+        objectName: "sessionSaveDialog"
+        title: qsTr("Save session")
+        nameFilters: [qsTr("Sessions (*.kls)")]
         defaultSuffix: "kls"
         fileMode: FileDialog.SaveFile
         onAccepted: {
+            windows.rememberPickerFolder("sessions", selectedFile)
             if (windows.app.saveSessionTo(selectedFile) === "readonly")
-                readOnlyNotice.open()
+                readOnlyNotice.warn(selectedFile)
         }
     }
-    MessageDialog {
+    // PU1-message-boxes: Save session onto a read-only file (legacy's OK-only
+    // "Warning", whose OK opened the dialog again): Save as… opens it again.
+    LazyMessageBox {
         id: readOnlyNotice
-        title: qsTr("Warning")
-        text: qsTr("Chosen file is read only,\nplease save with different name or change file attribute.")
-        buttons: MessageDialog.Ok
-        onButtonClicked: saveDialog.open()
+        name: "sessionReadOnly"
+        settings: windows.app.settings
+        function warn(file) {
+            ask({
+                title: qsTr("Save session"),
+                text: qsTr("“%1” is read-only.").arg(windows.app.localPath(file).replace(/^.*[\\/]/, "")),
+                detail: qsTr("Save the session under another name, or make the file writable and save again."),
+                severity: "warning",
+                choices: [
+                    { id: "saveAs", text: qsTr("Save as…"), role: "accept", isDefault: true },
+                    { id: "cancel", text: qsTr("Cancel"), role: "reject" }
+                ]
+            }, id => {
+                if (id === "saveAs")
+                    windows.openPicker(saveDialog)
+            })
+        }
     }
 
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: unresolvedWindow
-        objectName: "unresolvedRestores"
-        title: qsTr("Session entries not restored")
-        width: 560
-        height: 300
-        flags: Qt.Dialog
-        property int relinkRow: -1
-        function kindName(kind) {
-            switch (kind) {
-            case "subtitles": return qsTr("Subtitles")
-            case "video": return qsTr("Video")
-            case "audio": return qsTr("Audio")
-            case "keyframes": return qsTr("Keyframes")
-            }
-            return kind
+    // PU1-session-entries-bar: the entries a restore could not resolve stay
+    // visible as bars on their Document (the shell's), each with Retry,
+    // Relink… and Remove (the accepted lifecycle choice).
+    function kindName(kind) {
+        switch (kind) {
+        case "subtitles": return qsTr("subtitles")
+        case "video": return qsTr("video")
+        case "audio": return qsTr("audio")
+        case "keyframes": return qsTr("keyframes")
         }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                text: qsTr("These files of the session could not be found. The tabs stay open; retry, choose the file, or remove the entry.")
-                wrapMode: Text.Wrap
-                Layout.fillWidth: true
-            }
-            ListView {
-                id: unresolvedList
-                objectName: "unresolvedList"
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                clip: true
-                // 1 inside the clipped list: its rows' focus rings show whole.
-                leftMargin: 1
-                rightMargin: 1
-                topMargin: 1
-                bottomMargin: 1
-                model: windows.app.unresolvedRestores
-                Accessible.role: Accessible.List
-                Accessible.name: unresolvedWindow.title
-                delegate: RowLayout {
-                    id: entry
-                    required property int index
-                    required property var modelData
-                    width: ListView.view.width - 2
-                    Label {
-                        text: qsTr("Tab %1 (%2) – %3: %4").arg(entry.modelData.tab + 1).arg(entry.modelData.title)
-                              .arg(unresolvedWindow.kindName(entry.modelData.kind)).arg(entry.modelData.path)
-                        elide: Text.ElideMiddle
-                        Layout.fillWidth: true
-                    }
-                    Button {
-                        objectName: "restoreRetry" + entry.index
-                        text: qsTr("Retry")
-                        onClicked: windows.app.retryRestore(entry.modelData.row)
-                    }
-                    Button {
-                        objectName: "restoreRelink" + entry.index
-                        text: qsTr("Relink…")
-                        onClicked: {
-                            unresolvedWindow.relinkRow = entry.modelData.row
-                            relinkDialog.open()
-                        }
-                    }
-                    Button {
-                        objectName: "restoreRemove" + entry.index
-                        text: qsTr("Remove")
-                        onClicked: windows.app.removeRestore(entry.modelData.row)
-                    }
-                }
-            }
-            RowLayout {
-                Layout.alignment: Qt.AlignRight
-                Button {
-                    objectName: "unresolvedClose"
-                    text: qsTr("Close")
-                    onClicked: unresolvedWindow.close()
-                }
-            }
+        return kind
+    }
+    // "<file>, this tab's <kind>, was not found."
+    function entryText(entry) {
+        const name = entry.path.replace(/^.*[\\/]/, "")
+        switch (entry.kind) {
+        case "subtitles": return qsTr("%1, this tab’s subtitles, was not found.").arg(name)
+        case "video": return qsTr("%1, this tab’s video, was not found.").arg(name)
+        case "audio": return qsTr("%1, this tab’s audio, was not found.").arg(name)
+        case "keyframes": return qsTr("%1, this tab’s keyframes, was not found.").arg(name)
         }
-        FileDialog {
-            id: relinkDialog
-            title: qsTr("Choose the file")
-            fileMode: FileDialog.OpenFile
-            onAccepted: windows.app.relinkRestore(unresolvedWindow.relinkRow, selectedFile)
+        return qsTr("%1 was not found.").arg(name)
+    }
+    function retry(entry) { windows.app.retryRestore(entry.row) }
+    function remove(entry) { windows.app.removeRestore(entry.row) }
+    function relink(entry) {
+        relinkDialog.row = entry.row
+        relinkDialog.kind = entry.kind
+        relinkDialog.title = qsTr("Find “%1”").arg(entry.path.replace(/^.*[\\/]/, ""))
+        relinkDialog.nameFilters = [({
+            subtitles: qsTr("Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
+            video: qsTr("Video (*.mkv *.mp4 *.avi *.mov *.webm *.ts *.m2ts *.wmv)"),
+            audio: qsTr("Audio and video files (*.wav *.w64 *.flac *.ac3 *.aac *.ogg *.mp3 *.mp4 *.m4a *.mkv *.avi)"),
+            keyframes: qsTr("Keyframes file (*.txt *.pass *.stats *.log)")
+        })[entry.kind] || qsTr("All files (*)"), qsTr("All files (*)")]
+        // The missing file's folder when it is there, else that kind's.
+        const missing = windows.app.folderOf(windows.app.fileUrl(entry.path))
+        const kept = windows.pickerFolder(entry.kind)
+        if (missing.length > 0)
+            relinkDialog.currentFolder = missing
+        else if (kept.length > 0)
+            relinkDialog.currentFolder = kept
+        relinkDialog.open()
+    }
+    FileDialog {
+        id: relinkDialog
+        objectName: "relinkDialog"
+        property int row: -1
+        property string kind: ""
+        fileMode: FileDialog.OpenFile
+        onAccepted: {
+            windows.rememberPickerFolder(kind, selectedFile)
+            windows.app.relinkRestore(row, selectedFile)
         }
     }
-    function showUnresolved() { unresolvedWindow.show() }
 }
