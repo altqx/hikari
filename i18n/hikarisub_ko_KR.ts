@@ -697,7 +697,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Info</source>
-        <translation>알림</translation>
+        <translation type="vanished">알림</translation>
     </message>
     <message>
         <source>This subtitle file does not have any scripts added</source>
@@ -705,7 +705,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Error</source>
-        <translation>오류</translation>
+        <translation type="vanished">오류</translation>
     </message>
     <message>
         <source>Error loading Lua script: %1
@@ -715,7 +715,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Automation error</source>
-        <translation>자동화 스크립트에 오류가 있음</translation>
+        <translation type="vanished">자동화 스크립트에 오류가 있음</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -1297,6 +1297,12 @@ Match the resolution to the video?
 in tag &apos;%3&apos;</source>
         <translation type="unfinished">%1 줄에서 &apos;%2&apos;를 조정할 수 없음, 태그:&apos;%3&apos;</translation>
     </message>
+    <message numerus="yes">
+        <source>%n value(s) could not be scaled.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>This document can&apos;t be converted to that format.</source>
         <translation type="unfinished"></translation>
@@ -1392,7 +1398,7 @@ in tag &apos;%3&apos;</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>경고</translation>
+        <translation type="vanished">경고</translation>
     </message>
     <message>
         <source>Chosen file is read only,
@@ -1502,6 +1508,10 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Could not open %1; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reload subtitles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1754,6 +1764,10 @@ Should not exceed 15 characters per second</source>
     <message>
         <source>&amp;Add word &quot;%1&quot; to dictionary</source>
         <translation type="unfinished">사전에 &quot;%1&quot; 단어 추가[&amp;A]</translation>
+    </message>
+    <message>
+        <source>Add word to dictionary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
@@ -2232,7 +2246,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Info</source>
-        <translation>알림</translation>
+        <translation type="vanished">알림</translation>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
@@ -3613,7 +3627,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Show / Hide log window</source>
-        <translation>기록 창 열기/닫기</translation>
+        <translation type="vanished">기록 창 열기/닫기</translation>
     </message>
     <message>
         <source>Last session</source>
@@ -4220,6 +4234,10 @@ Failed to copy %2 fonts.</source>
         <translation>영상/소리 열기</translation>
     </message>
     <message>
+        <source>Install update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
         <translation type="vanished">2시간 30분 길이의 빈 오디오를 엽니다</translation>
     </message>
@@ -4273,7 +4291,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Log window</source>
-        <translation>기록 창</translation>
+        <translation type="vanished">기록 창</translation>
     </message>
     <message>
         <source>Log</source>
@@ -4293,7 +4311,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Update</source>
-        <translation>업데이트</translation>
+        <translation type="vanished">업데이트</translation>
     </message>
     <message>
         <source>A new version is available</source>
@@ -4769,6 +4787,42 @@ great help testing HikariSub on a slow computer)
         <source>Today</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">필터</translation>
+    </message>
+    <message>
+        <source>Filter the Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">복사</translation>
+    </message>
+    <message>
+        <source>Copy the entries shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No entries match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing logged yet</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -5065,6 +5119,10 @@ when find results window is open</source>
     <message>
         <source>Set default</source>
         <translation>기본값으로 설정</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>OK</source>
@@ -5704,7 +5762,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>경고</translation>
+        <translation type="vanished">경고</translation>
     </message>
     <message>
         <source>Red</source>
@@ -6221,6 +6279,10 @@ If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</sou
         <translation>탐색 경로가 잘못됨</translation>
     </message>
     <message>
+        <source>Find in files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Confirmation</source>
         <translation>확인해주세요</translation>
     </message>
@@ -6396,10 +6458,6 @@ cause it was edited.</source>
     <message>
         <source>Close</source>
         <translation>닫기</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -6588,13 +6646,25 @@ Load the last session with the latest autosaved subtitles?</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>경고</translation>
+        <translation type="vanished">경고</translation>
+    </message>
+    <message>
+        <source>Save session</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Chosen file is read only,
 please save with different name or change file attribute.</source>
         <translation>선택한 파일은 읽기 전용이며,
 다른 이름으로 저장하거나 파일 속성을 변경하십시오.</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
     </message>
     <message>
         <source>Session entries not restored</source>
@@ -6663,6 +6733,10 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Session file is corrupt</source>
         <translation>잘못된 파일 세션</translation>
+    </message>
+    <message>
+        <source>Restore session</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not find %1</source>
@@ -6919,7 +6993,7 @@ in uppercase</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>경고</translation>
+        <translation type="vanished">경고</translation>
     </message>
     <message>
         <source>Words added to dictionary</source>
@@ -6998,7 +7072,7 @@ Spell checking will be disabled</source>
     <name>HikariSub.Styles</name>
     <message>
         <source>Status of deleted styles</source>
-        <translation>삭제된 스타일 상태</translation>
+        <translation type="vanished">삭제된 스타일 상태</translation>
     </message>
     <message>
         <source>Style manager</source>
@@ -7030,6 +7104,10 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7107,6 +7185,10 @@ Spell checking will be disabled</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Save style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -7505,6 +7587,16 @@ Spell checking will be disabled</source>
         <translation>없음</translation>
     </message>
     <message>
+        <source>No unused styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n style(s) deleted: %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Styles used:
 %1
 Styles deleted:
@@ -7513,6 +7605,10 @@ Styles deleted:
 %1
 스타일 삭제:
 %2</translation>
+    </message>
+    <message>
+        <source>Delete unused styles</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8383,6 +8479,10 @@ Foreign language text will be deleted.</source>
 원본 글자가 삭제되고 번역 글자만 남게됩니다.</translation>
     </message>
     <message>
+        <source>Paste translation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8595,7 +8695,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>경고</translation>
+        <translation type="vanished">경고</translation>
     </message>
     <message>
         <source>All files (*)</source>
@@ -9232,7 +9332,7 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Warning</source>
-        <translation>경고</translation>
+        <translation type="vanished">경고</translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>
