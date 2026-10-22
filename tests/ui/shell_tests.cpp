@@ -7052,6 +7052,7 @@ private slots:
         // With the video name, a differently named Document asks, starting at the video.
         application->setSaveWithVideoName(true);
         QCOMPARE(application->saveRoute(), QString()); // no video yet
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->exactTimebase(), 20000);
         QCOMPARE(application->saveRoute(), QStringLiteral("dialog"));
@@ -11578,6 +11579,7 @@ private slots:
         // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
         // default opens it at its first frame, VideoBox.cpp:407-410).
         application->settingsStore()->set("video.openAtActiveLine", true);
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         // The active Line's start frame: 24 at 1.001 s (24000/1001 fps).
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(24), 20000);
@@ -11598,6 +11600,7 @@ private slots:
         // V6: the video opens at the active Line (OPEN_VIDEO_AT_ACTIVE_LINE; legacy's
         // default opens it at its first frame, VideoBox.cpp:407-410).
         application->settingsStore()->set("video.openAtActiveLine", true);
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame().has_value(), 20000);
         item("editingGrid")->forceActiveFocus();
@@ -22647,6 +22650,7 @@ private slots:
         QVERIFY(start && end);
         QVERIFY(!start->property("enabled").toBool()); // OnMenuOpened: a video and the editor
         QVERIFY(!application->setTimeFromVideo(false));
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
         QVERIFY(start->property("enabled").toBool());
@@ -22695,6 +22699,7 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         const auto lines = session->document().lines();
         QVERIFY(!application->selectLineFromVideo()); // no video: nothing
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         application->video().openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(application->video().session().shownFrame() == std::optional<int>(0), 20000);
         QVERIFY(application->video().showFrameAt(34)); // 34 * 1001 / 24 = 1417 ms
@@ -22766,6 +22771,7 @@ private slots:
         press(Qt::Key_Home);
         press(Qt::Key_Down); // b
         QVERIFY(!application->snapToKeyframe(true)); // no audio box, no video
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         application->video().openVideo(nativeFixture("audiodelay.mkv")); // keyframes every 12 frames
         auto &audio = application->audio();
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
@@ -22903,6 +22909,7 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         const auto lines = session->document().lines();
         auto &video = application->video();
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         video.openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame() == std::optional<int>(0), 20000); // not at a's start
         item("editingGrid")->forceActiveFocus();
@@ -22973,6 +22980,7 @@ private slots:
         const auto lines = session->document().lines();
         const auto a = lines[0]->id, b = lines[1]->id, c = lines[2]->id;
         auto &video = application->video();
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         video.openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame() == std::optional<int>(0), 20000);
         settings.set("video.moveToActiveLine", 4); // "Editing line when paused"
@@ -23019,6 +23027,7 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto &video = application->video();
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         video.openVideo(nativeFixture("cfr.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(video.session().shownFrame() == std::optional<int>(0), 20000);
         application->settingsStore()->set("video.playAfterSelection", 2); // video to the line end
@@ -25735,6 +25744,7 @@ private slots:
         application->settingsStore()->set("video.acceptedAudioStream", QStringLiteral("eng")); // no track question
         QVERIFY(application->openFile(episode));
         auto &video = application->video();
+        application->setAskForBadResolution(false); // PU6: the resolution question is a modal message box
         video.openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/tracks.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         QTRY_COMPARE_WITH_TIMEOUT(video.chapterCount(), 2, 20000);
