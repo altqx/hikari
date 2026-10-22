@@ -320,6 +320,9 @@ const std::vector<SettingDefinition> &definitions()
         // quit; off, it only says that one exists. Legacy keeps it as
         // UPDATER_AUTO_INSTALL from 0.0.2 on, which the importer does not read.
         {"updater.autoInstall", "", Bool, Profile, Mapped, false, true},
+        // PU7 (#309): the version "Skip this version" hid from the automatic
+        // check (no "v"); empty: none. A newer release is offered again.
+        {"updater.skippedVersion", "", String, Profile, Mapped, false, std::string()},
         // TS1: the Shift times panel's collapsed sections, by section id
         // ("amount", "lines", "videoAudio", "leadInOut", "continuous", "snap");
         // all are open by default.

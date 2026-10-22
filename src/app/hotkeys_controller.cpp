@@ -536,6 +536,16 @@ void HotkeysController::relistMacros()
             more[HotkeyId{next++, application::GlobalHotkey}] = application::Hotkey{name, {}};
     if (!more.empty())
         m_list->addRows(more);
+    // A search matches the macros' rows by their script and macro too: the
+    // rows listed already are searched again, the selected one kept if it
+    // still shows.
+    if (!m_list->searchText().empty()) {
+        const int selected = m_list->selection();
+        m_list->filter(m_list->filterMode());
+        const auto shown = m_list->shown();
+        if (const auto at = std::ranges::find(shown, selected); at != shown.end())
+            m_list->selectShown(int(at - shown.begin()));
+    }
     // The rows listed already show their macro by name, or why it is
     // missing, from the registrations: a script that loads changes them too.
     emit rowsChanged();
@@ -756,6 +766,29 @@ void HotkeysController::optionsRedo()
         return;
     m_list->redo();
     emit rowsChanged();
+}
+
+bool HotkeysController::optionsModified() const
+{
+    return m_list && m_list->modified();
+}
+
+QVariantMap HotkeysController::importLegacyScripts(const QString &path)
+{
+    if (optionsModified())
+        return {{QStringLiteral("read"), false}};
+    QVariantMap result = m_scripts.importLegacy(path);
+    if (m_list && result.value(QStringLiteral("added")).toInt() > 0) {
+        const int mode = m_list->filterMode();
+        // The staged copy an applied edit left is the bindings before the
+        // import: the next edit stages from the bindings now, import included.
+        m_copy.clear();
+        m_list->clear();
+        m_list->build(listed());
+        m_list->filter(mode);
+        emit rowsChanged();
+    }
+    return result;
 }
 
 void HotkeysController::commitOptions()

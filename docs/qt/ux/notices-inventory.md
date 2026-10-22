@@ -47,6 +47,11 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 notices were already windows of their own (DG1); UpdateMessage.qml is gone. A11 and A14 put the script's
 error text under Details.
 
+PU7 ([#309](https://github.com/altqx/hikari/issues/309)): Settings > Hotkeys' Import legacy hotkeys… tells
+its result in a toast titled "Import legacy hotkeys": info with how many bindings were added, kept and
+skipped (the skipped ones, with their keys, under Details), an error when the file cannot be read. The AUR
+notice (UpdateAurNotice.qml) is gone: an AUR install's release opens the update window (PU7-aur-command).
+
 ## B. Messages that pop the Log window up (49 call-site groups)
 
 Each is a toast with the severity below, titled with the command, and a Log entry; the text is unchanged. ★

@@ -51,6 +51,9 @@ struct UpdateEnvironment {
     QString glibcVersion; // glibc's version
     QString executable;   // the running program (NSIS: its folder is the install dir)
     QString pkexec;       // empty: none, the manual fallback
+    // PU7 (#309): the AUR helper the update window's command names, the
+    // first of yay and paru on PATH (an AUR install only); empty: none found.
+    QString aurHelper;
     QString helper = QStringLiteral("/opt/hikarisub/libexec/hikarisub-update-helper");
     QString relaunch = QStringLiteral("/usr/bin/hikarisub"); // deb, rpm
     int healthTimeoutMs = 60 * 1000;

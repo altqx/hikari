@@ -409,7 +409,7 @@ ApplicationWindow {
         else
             dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
-    // KE2: the Template editor's, in one saved before it (registry 7 or
+    // KE2: the Template editor's, in one saved before it (registry 8 or
     // earlier), the same way.
     function addTemplate() {
         if (editorDock.isOpen)
@@ -6147,10 +6147,12 @@ ApplicationWindow {
     SaveLayoutDialog {
         id: saveLayoutDialog
         layouts: root.workspaceLayout
+        settings: root.app.settings
     }
     ManageLayoutsDialog {
         id: manageLayoutsDialog
         layouts: root.workspaceLayout
+        settings: root.app.settings
     }
 
     // KA2 (#277): Calibrate latency…, from the audio panel's Tap menu.
@@ -6713,20 +6715,21 @@ ApplicationWindow {
     }
 
     // D1: every drag placement from the keyboard, and numeric resizing.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
+    // PU7 (#309): a compact window on DG1's frame, the panel, then a Move
+    // section and a Resize section, each with its own button; it stays open
+    // to move or resize again.
+    DialogWindow {
         id: placementWindow
         objectName: "placementWindow"
         title: qsTranslate("HikariSub.Workspace", "Move panel")
-        width: 420
-        height: 260
-        transientParent: root
-        flags: Qt.Dialog
+        dialogId: "movePanel"
+        settings: root.app.settings
+        initialFocus: placementPanel
+        defaultButton: placementClose
         function openFor(dock) {
             placementPanel.currentIndex = Math.max(0, root.dockList.indexOf(dock))
             refreshSize()
-            show()
-            requestActivate()
+            open()
             placementPanel.forceActiveFocus()
         }
         function refreshSize() {
@@ -6734,11 +6737,10 @@ ApplicationWindow {
             placementWidth.value = size.width
             placementHeight.value = size.height
         }
-        GridLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            columns: 2
-            Label { text: qsTranslate("HikariSub.Workspace", "Panel:") }
+        RowLayout {
+            spacing: 8
+            Layout.preferredWidth: 356
+            Label { text: qsTranslate("HikariSub.Workspace", "Panel"); Layout.preferredWidth: 56 }
             ComboBox {
                 id: placementPanel
                 objectName: "placementPanel"
@@ -6753,15 +6755,24 @@ ApplicationWindow {
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Panel")
                 onActivated: placementWindow.refreshSize()
             }
-            Label { text: qsTranslate("HikariSub.Workspace", "Place:") }
+        }
+        Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true; Layout.topMargin: 4 }
+        Label { text: qsTranslate("HikariSub.Workspace", "Move"); font.weight: Font.DemiBold; Accessible.role: Accessible.Heading }
+        RowLayout {
+            spacing: 8
+            Label { text: qsTranslate("HikariSub.Workspace", "Place"); Layout.preferredWidth: 56 }
             ComboBox {
                 id: placementKind
                 objectName: "placementKind"
-                Layout.fillWidth: true
+                Layout.preferredWidth: 130
                 model: [qsTranslate("HikariSub.Workspace", "Tab with"), qsTranslate("HikariSub.Workspace", "Left of"), qsTranslate("HikariSub.Workspace", "Above"), qsTranslate("HikariSub.Workspace", "Right of"), qsTranslate("HikariSub.Workspace", "Below"), qsTranslate("HikariSub.Workspace", "Float")]
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Placement")
             }
-            Label { text: qsTranslate("HikariSub.Workspace", "Next to:") }
+            Label {
+                text: qsTranslate("HikariSub.Workspace", "next to")
+                color: placementTarget.enabled ? Theme.text : Theme.disabled
+                Layout.leftMargin: 4
+            }
             ComboBox {
                 id: placementTarget
                 objectName: "placementTarget"
@@ -6773,42 +6784,62 @@ ApplicationWindow {
                 currentIndex: root.dockList.indexOf(gridDock)
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Next to panel")
             }
-            Item { Layout.fillWidth: true }
-            Button {
-                objectName: "placementMove"
-                text: qsTranslate("HikariSub.Workspace", "Move")
-                enabled: root.panelAvailable(root.dockList[placementPanel.currentIndex])
-                onClicked: {
-                    root.placePanel(root.dockList[placementPanel.currentIndex], placementKind.currentIndex,
-                                    root.dockList[placementTarget.currentIndex])
-                    placementWindow.refreshSize()
-                }
+        }
+        Button {
+            objectName: "placementMove"
+            text: qsTranslate("HikariSub.Workspace", "Move")
+            enabled: root.panelAvailable(root.dockList[placementPanel.currentIndex])
+            Layout.alignment: Qt.AlignRight
+            onClicked: {
+                root.placePanel(root.dockList[placementPanel.currentIndex], placementKind.currentIndex,
+                                root.dockList[placementTarget.currentIndex])
+                placementWindow.refreshSize()
             }
-            Label { text: qsTranslate("HikariSub.Workspace", "Width:") }
+        }
+        Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true; Layout.topMargin: 4 }
+        Label { text: qsTranslate("HikariSub.Workspace", "Resize"); font.weight: Font.DemiBold; Accessible.role: Accessible.Heading }
+        RowLayout {
+            spacing: 8
+            Label { text: qsTranslate("HikariSub.Workspace", "Width"); Layout.preferredWidth: 56 }
             SpinBox {
                 id: placementWidth
                 objectName: "placementWidth"
                 from: 0; to: 10000; stepSize: 10; editable: true
+                Layout.preferredWidth: 110
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Width")
             }
-            Label { text: qsTranslate("HikariSub.Workspace", "Height:") }
+            Label {
+                text: qsTranslate("HikariSub.Workspace", "Height")
+                Layout.leftMargin: 10
+            }
             SpinBox {
                 id: placementHeight
                 objectName: "placementHeight"
                 from: 0; to: 10000; stepSize: 10; editable: true
+                Layout.preferredWidth: 110
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Height")
             }
-            Item { Layout.fillWidth: true }
-            Button {
-                objectName: "placementResize"
-                text: qsTranslate("HikariSub.Workspace", "Resize")
-                onClicked: {
-                    root.workspaceLayout.resizePanel(root.dockList[placementPanel.currentIndex],
-                                                     placementWidth.value, placementHeight.value)
-                    placementWindow.refreshSize()
-                }
+            Label { text: qsTranslate("HikariSub.Workspace", "px"); color: Theme.muted }
+        }
+        Button {
+            objectName: "placementResize"
+            text: qsTranslate("HikariSub.Workspace", "Resize")
+            Layout.alignment: Qt.AlignRight
+            onClicked: {
+                root.workspaceLayout.resizePanel(root.dockList[placementPanel.currentIndex],
+                                                 placementWidth.value, placementHeight.value)
+                placementWindow.refreshSize()
             }
         }
+        buttons: [
+            PrimaryButton {
+                id: placementClose
+                objectName: "placementClose"
+                text: qsTranslate("HikariSub.Workspace", "Close")
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                onClicked: placementWindow.close()
+            }
+        ]
     }
 
     // A1: legacy OpenAudioInTab's dialog and filter.
@@ -6944,17 +6975,15 @@ ApplicationWindow {
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.
-    // ADR 0019: an AUR copy gets its own notice; an update that installs
-    // offers "Download and install" and, once downloaded, the ready bar.
+    // ADR 0019: an update that installs offers "Download and install" and,
+    // once downloaded, the ready bar; PU7 (#309): an AUR copy gets the same
+    // window, with its command.
     Connections {
         target: root.updates
         function onFinished(outcome, release, interactive) {
             if (outcome === "available") {
-                // The automatic check's notice takes no keyboard (DG1).
-                if (release.offer === "aur")
-                    updateAurNotice.showRelease(release, !interactive)
-                else
-                    updateAvailable.showRelease(release, !interactive)
+                // The automatic check's window takes no keyboard (DG1).
+                updateAvailable.showRelease(release, !interactive)
             } else if (outcome === "current") {
                 // NT1 (#302): toasts, titled with the command (DG1-update-titles).
                 root.notices.post("info", qsTr("Check for updates"), qsTr("You already have the latest version"))
@@ -6973,14 +7002,10 @@ ApplicationWindow {
     }
     // DG1 (#222): About, Credits and the update offers are windows of their
     // own on the dialog frame (DialogWindow.qml), modeless.
-    UpdateAurNotice {
-        id: updateAurNotice
-        updates: root.updates
-        settings: root.app.settings
-    }
     UpdateAvailable {
         id: updateAvailable
         updates: root.updates
+        app: root.app
         whatsNew: root.whatsNew
         settings: root.app.settings
     }
@@ -7237,7 +7262,7 @@ ApplicationWindow {
     SettingsImportDialog {
         id: settingsImportDialog
         importer: root.settingsImport
-        anchors.centerIn: parent
+        settings: root.app.settings
     }
     // PF1 (#225): the Settings window, made at its first opening (a window
     // made at the start slows every start, PK1).
@@ -7250,6 +7275,7 @@ ApplicationWindow {
                 app: root.app
                 notices: root.notices
                 hotkeys: root.hotkeys
+                updates: root.updates
                 colourPicker: root.colourPicker
                 tagButtons: root.tagButtons
             }

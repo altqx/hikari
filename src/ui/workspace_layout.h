@@ -104,7 +104,7 @@ public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    static constexpr int kPanelRegistry = 8; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Log (NT1), 7: Styles (TP1), 8: Template (KE2)
+    static constexpr int kPanelRegistry = 9; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Log (NT1), 7: Styles (TP1), 9: Template (KE2); 8 is PU2's
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
