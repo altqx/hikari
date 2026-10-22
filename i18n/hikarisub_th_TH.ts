@@ -48,6 +48,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Pitch is kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>and</source>
+        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>change the speed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Output device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -245,6 +258,58 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Tap to time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold the key: releasing it leaves a gap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press the key: no gaps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to vocal onsets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1%</source>
+        <extracomment>A playback speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Calibrate latency…</source>
+        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -319,6 +384,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Speed: %1%</source>
+        <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Customise the audio panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -379,6 +449,26 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not applied: the Line cannot take these times as it is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every Line is tapped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid the Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
         <translation type="unfinished"></translation>
@@ -387,6 +477,101 @@ Output device: %2</source>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This Line is one syllable. Split it first, then tap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">เลิกทำ</translation>
+    </message>
+    <message>
+        <source>Esc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Space</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">เริ่มต้น</translation>
+    </message>
+    <message>
+        <source>Calibrate tap latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on each beep.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>16 beeps at 100 BPM; the first four are practice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of 16 beeps</source>
+        <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your presses, in ms after each beep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
+        <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">นำไปใช้</translation>
     </message>
 </context>
 <context>
@@ -1160,15 +1345,31 @@ to the color selection location</source>
     </message>
     <message>
         <source>Choose new FPS</source>
-        <translation>เลือก FPS ใหม่</translation>
+        <translation type="vanished">เลือก FPS ใหม่</translation>
+    </message>
+    <message>
+        <source>Set new FPS</source>
+        <translation type="unfinished">กำหนดค่า FPS ใหม่</translation>
     </message>
     <message>
         <source>Subtitles FPS</source>
         <translation>FPS คำบรรยาย</translation>
     </message>
     <message>
+        <source>Type a frame rate, such as 25.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New FPS</source>
         <translation>FPS คำบรรยายใหม่</translation>
+    </message>
+    <message>
+        <source>Every start and end time × %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change FPS</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Width</source>
@@ -8568,19 +8769,19 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>การยืนยัน</translation>
+        <translation type="vanished">การยืนยัน</translation>
     </message>
     <message>
         <source>Do you really want to shift only %1 times?</source>
-        <translation type="unfinished">ต้องการเลื่อนเฉพาะเวลา%1หรือไม่?</translation>
+        <translation type="obsolete">ต้องการเลื่อนเฉพาะเวลา%1หรือไม่?</translation>
     </message>
     <message>
         <source>start</source>
-        <translation>เริ่มต้น</translation>
+        <translation type="vanished">เริ่มต้น</translation>
     </message>
     <message>
         <source>end</source>
-        <translation>สิ้นสุด</translation>
+        <translation type="vanished">สิ้นสุด</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -8602,6 +8803,34 @@ after the end time in milliseconds</source>
         <source>The times could not be shifted.</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Shift only the start times?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift only the end times?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift start times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift end times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Translation</name>
@@ -8612,6 +8841,18 @@ after the end time in milliseconds</source>
     <message>
         <source>Choose subtitle file</source>
         <translation>เลือกแฟ้มคำบรรยาย</translation>
+    </message>
+    <message>
+        <source>Translation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original text</source>
+        <translation type="unfinished">ข้อความต้นฉบับ</translation>
+    </message>
+    <message>
+        <source>Original text: %1</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
@@ -8724,14 +8965,50 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not confirmed: marks the selected Lines for review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on Translation mode for this file?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
     <name>HikariSub.Video</name>
     <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wider</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8828,7 +9105,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Dummy video options</source>
-        <translation>ตัวเลือกวิดีโอจำลอง</translation>
+        <translation type="vanished">ตัวเลือกวิดีโอจำลอง</translation>
     </message>
     <message>
         <source>This gives %1 frames</source>
@@ -8836,7 +9113,19 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Video resolution:</source>
-        <translation>ความละเอียดวิดีโอ:</translation>
+        <translation type="vanished">ความละเอียดวิดีโอ:</translation>
+    </message>
+    <message>
+        <source>Open dummy video</source>
+        <translation type="unfinished">เปิดวิดีโอจำลอง</translation>
+    </message>
+    <message>
+        <source>Video resolution</source>
+        <translation type="unfinished">ความละเอียดวิดีโอ</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Width</source>
@@ -8847,8 +9136,28 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">เฟรมต่อวินาที</translation>
+    </message>
+    <message>
+        <source>Must be from 15 to 120.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a time such as 0:25:00.00.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Color:</source>
-        <translation>สี:</translation>
+        <translation type="vanished">สี:</translation>
     </message>
     <message>
         <source>Choose the colour</source>
@@ -8860,11 +9169,11 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Frames per second:</source>
-        <translation>เฟรมต่อวินาที:</translation>
+        <translation type="vanished">เฟรมต่อวินาที:</translation>
     </message>
     <message>
         <source>Duration:</source>
-        <translation>ระยะเวลา:</translation>
+        <translation type="vanished">ระยะเวลา:</translation>
     </message>
     <message>
         <source>Previous frame</source>
@@ -9052,15 +9361,15 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>การยืนยัน</translation>
+        <translation type="vanished">การยืนยัน</translation>
     </message>
     <message>
         <source>Are you sure you want to index the next video?</source>
-        <translation>ต้องการสร้างดัชนีวิดีโอถัดไปหรือไม่?</translation>
+        <translation type="vanished">ต้องการสร้างดัชนีวิดีโอถัดไปหรือไม่?</translation>
     </message>
     <message>
         <source>Are you sure you want to index the previous video?</source>
-        <translation>ต้องการสร้างดัชนีวิดีโอก่อนหน้าหรือไม่?</translation>
+        <translation type="vanished">ต้องการสร้างดัชนีวิดีโอก่อนหน้าหรือไม่?</translation>
     </message>
     <message>
         <source>Seek on</source>
@@ -9277,6 +9586,18 @@ or codecs or a splitter may be missing</source>
         <source>%1 with blur, %2 with a vector clip</source>
         <extracomment>Over the video: of the shown events, %1 use <byte value="x8"/>lur or <byte value="x8"/>e and %2 a drawing clip or iclip</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the next video in this folder?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the previous video in this folder?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">เปิด</translation>
     </message>
 </context>
 <context>
