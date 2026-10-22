@@ -3989,6 +3989,7 @@ void Application::restartSpellChecker()
     if (m_spellChecker)
         m_spellChecker->clear();
     m_spellingStarted = false;
+    emit spellCheckerRestarted();
 }
 
 void Application::spellingRefresh()

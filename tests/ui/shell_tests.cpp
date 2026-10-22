@@ -9601,6 +9601,17 @@ private slots:
             application->setDictionaryLanguage(QStringLiteral("en_US"));
             QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
             QVERIFY(spellItem("spellColumns")->isVisible());
+            // Another dictionary while a word shows: the check starts again
+            // with it (here "wrold" is a word and "good" is not).
+            {
+                QFile aff(bare.path() + QStringLiteral("/Dictionary/en_GB.aff"));
+                QVERIFY(aff.open(QIODevice::WriteOnly));
+                QFile dic(bare.path() + QStringLiteral("/Dictionary/en_GB.dic"));
+                QVERIFY(dic.open(QIODevice::WriteOnly));
+                dic.write("2\nHello\nwrold\n");
+            }
+            application->setDictionaryLanguage(QStringLiteral("en_GB"));
+            QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("good"));
             QVERIFY(QMetaObject::invokeMethod(dock, "close"));
             QTRY_VERIFY(!dock->property("isOpen").toBool());
             application->editor().discard();

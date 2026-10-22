@@ -127,19 +127,28 @@ FocusScope {
             show(next)
     }
     onActiveFocusChanged: if (activeFocus) Qt.callLater(activate)
-    // A dictionary chosen while the check waits for one (Spelling settings…,
-    // the editor's language menu: restartSpellChecker and spellingChanged)
-    // starts it from the active Line. Later, as openSpellChecker's own
-    // spellingChanged comes during the call.
-    function retryDictionary() {
-        if (checking && current.available === false)
-            show(app.openSpellChecker(options()))
+    // The check starts again from the active Line with another dictionary
+    // (Spelling settings…, the editor's language menu: restartSpellChecker),
+    // its word and suggestions the new checker's; and while it waits for a
+    // dictionary, spelling turned on starts it too. Later, and not again
+    // from openSpellChecker's own spellingChanged.
+    property bool restarting: false
+    function restartCheck() {
+        if (!checking)
+            return
+        restarting = true
+        show(app.openSpellChecker(options()))
+        restarting = false
     }
     Connections {
         target: panel.app
+        function onSpellCheckerRestarted() {
+            if (panel.checking && !panel.restarting)
+                Qt.callLater(panel.restartCheck)
+        }
         function onSpellingChanged() {
-            if (panel.checking && panel.current.available === false)
-                Qt.callLater(panel.retryDictionary)
+            if (panel.checking && !panel.restarting && panel.current.available === false)
+                Qt.callLater(panel.restartCheck)
         }
     }
 

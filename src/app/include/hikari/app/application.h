@@ -104,6 +104,9 @@ signals:
     // when the spell checker cannot start, legacy's message box is a toast
     // (NT1).
     void spellingChanged();
+    // PU6: the spell checker was made again (another dictionary): a check
+    // going on starts again with it.
+    void spellCheckerRestarted();
     // W1: the chosen player changed (video.playbackPlayer).
     void playbackPlayerChanged();
     // AV1: the route both audio paths follow changed.
