@@ -9259,6 +9259,144 @@ private slots:
         application->editor().discard();
     }
 
+    // PU6 (#308) screenshots for review (HIKARI_SURFACE_SHOT_DIR; skipped
+    // without it), in the four themes (pu6-<part>-<theme>.png): the
+    // Spellchecker panel with a word and its added words window, the Font
+    // collector checked and with a copy's review, the archive question,
+    // Convert to SRT and to MDVD with an invalid frame rate, Resample
+    // subtitles to another aspect ratio, ASS file properties and the
+    // resolution question.
+    void pu6Screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        auto *main = qobject_cast<QQuickWindow *>(root);
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const QVariantMap kept = application->conversionOptions();
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            application->setConversionOptions(kept);
+        });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto save = [&](QQuickWindow *w, const QString &name) {
+            QVERIFY(QTest::qWaitForWindowExposed(w));
+            QTest::qWait(400);
+            QVERIFY(w->grabWindow().save(out + QStringLiteral("/pu6-") + name + QStringLiteral(".png")));
+        };
+        const auto shown = [&](const char *name) {
+            QQuickWindow *w = nullptr;
+            [&] { QTRY_VERIFY((w = qobject_cast<QQuickWindow *>(named(name))) && w->isVisible()); }();
+            return w;
+        };
+        const auto hide = [&](QQuickWindow *w) {
+            w->close();
+            QTRY_VERIFY(!w->isVisible());
+        };
+        main->resize(1280, 800);
+        const QString path = writeFile(dir, "episode-03.ass",
+                                       "[Script Info]\nScriptType: v4.00+\nPlayResX: 1280\nPlayResY: 720\n\n[Events]\n"
+                                       "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                                       "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,Hello Mei world\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:05.00,Default,,0,0,0,,The good {\\i1}text{\\i0}\n"
+                                       "Comment: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,Hello\n"
+                                       "Dialogue: 0,0:00:06.00,0:00:08.00,Default,,0,0,0,,Hello tehm good text\n");
+        QVERIFY(application->openFile(path));
+        const QString archive = dir.filePath(QStringLiteral("pu6-fonts.zip"));
+        {
+            QFile f(archive);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("an archive");
+        }
+        auto &collector = application->fontCollector();
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            // The Spellchecker panel at "tehm" ("Mei" added the first time),
+            // and its added words.
+            auto *dock = item<QObject>("spellDock");
+            QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QTRY_VERIFY(spellItem("spellColumns")->isVisible());
+            if (spellItem("spellMisspell")->property("text").toString() == QLatin1String("Mei"))
+                QVERIFY(QMetaObject::invokeMethod(spellItem("spellAddWord"), "click"));
+            QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("tehm"));
+            save(main, QStringLiteral("spellchecker-") + code);
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("spellCheckerPanel"), "openAddedWords"));
+            save(shown("spellAddedWords"), QStringLiteral("added-words-") + code);
+            hide(shown("spellAddedWords"));
+            QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+            QTRY_VERIFY(!dock->property("isOpen").toBool());
+            // The Font collector: checked, then a copy's review.
+            collector.changeOptions(0, false);
+            QVERIFY(QMetaObject::invokeMethod(root, "openFontCollector"));
+            auto *fonts = shown("fontCollectorDialog");
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+            QVERIFY(collector.waitIdle());
+            save(fonts, QStringLiteral("font-collector-check-") + code);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
+            dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", dir.filePath(QStringLiteral("pu6-fonts")));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+            QVERIFY(collector.waitIdle());
+            save(fonts, QStringLiteral("font-collector-review-") + code);
+            // The archive question.
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption2"), "click"));
+            dialogItem("fontCollectorDialog", "fontCollectorPath")->setProperty("text", archive);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorStart"), "click"));
+            QQuickWindow *question = nullptr;
+            QTRY_VERIFY((question = messageBox("fontCollectorMessages")) && question->isVisible());
+            save(question, QStringLiteral("archive-question-") + code);
+            QVERIFY(QMetaObject::invokeMethod(question, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!question->isVisible());
+            collector.changeOptions(0, false);
+            hide(fonts);
+            // Convert to SRT; Convert to MDVD with a frame rate of 0.
+            application->setConversionOptions(kept);
+            QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("srt")),
+                                              Q_ARG(QVariant, QStringLiteral("Convert to SRT"))));
+            save(shown("conversionDialog"), QStringLiteral("convert-srt-") + code);
+            hide(shown("conversionDialog"));
+            application->setConversionOptions({{QStringLiteral("fps"), QStringLiteral("0")}, {QStringLiteral("fpsFromVideo"), false}});
+            QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("mdvd")),
+                                              Q_ARG(QVariant, QStringLiteral("Convert to MDVD"))));
+            save(shown("conversionDialog"), QStringLiteral("convert-mdvd-invalid-") + code);
+            hide(shown("conversionDialog"));
+            application->setConversionOptions(kept);
+            // Resample subtitles to 1440 × 1080 (another aspect ratio).
+            QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+            auto *resample = shown("resampleDialog");
+            dialogItem("resampleDialog", "resampleWidth")->setProperty("value", 1440);
+            dialogItem("resampleDialog", "resampleHeight")->setProperty("value", 1080);
+            save(resample, QStringLiteral("resample-") + code);
+            hide(resample);
+            // ASS file properties.
+            QVariant opened;
+            QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, opened)));
+            save(shown("scriptPropertiesDialog"), QStringLiteral("properties-") + code);
+            hide(shown("scriptPropertiesDialog"));
+            // The resolution question (a 4:3 video: with Resample and stretch).
+            const QVariant sizes = QVariantMap{{QStringLiteral("videoWidth"), 1440}, {QStringLiteral("videoHeight"), 1080},
+                                               {QStringLiteral("subsWidth"), 1280}, {QStringLiteral("subsHeight"), 720}};
+            QVERIFY(QMetaObject::invokeMethod(root, "askResolutionMismatch", Q_ARG(QVariant, sizes)));
+            QQuickWindow *box = nullptr;
+            QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+            save(box, QStringLiteral("resolution-question-") + code);
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("keep"))));
+            QTRY_VERIFY(!box->isVisible());
+        }
+        application->editor().discard();
+    }
+
     // PU6 (#308): the Spellchecker panel. Shown from View > Panels it starts
     // at the active Line: the word, its Line and the text around it. Its
     // "⋯" items are the two options and "Words added to dictionary…", whose
