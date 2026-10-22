@@ -74,9 +74,9 @@ bool isCode(const QTextBlock &block, const QTextCharFormat &format)
 // HTML went: in code as written, elsewhere as meant.
 // - A bracket written escaped ("\\<", "&lt;", "&#62;") is text, but md4c
 //   hands it over as the raw one: the marker stands for it.
-// - A linked image ("[![alt](badge.svg)](url)") loses its link in Qt's
-//   import: it is read as "[alt](url)" after its marker. On one line and
-//   without a backtick it is all code or none.
+// - A linked image ("[![alt](badge.svg)](url)", or by reference) loses its
+//   link in Qt's import: it is read as "[alt](url)" ("[alt][label]") after
+//   its marker. On one line and without a backtick it is all code or none.
 // - A raw tag over a hard line break ends up in two blocks: its marker goes
 //   back before the raw HTML goes (restoreTags), the tag on one line.
 class SourceMarks
@@ -124,8 +124,11 @@ public:
                                         bare + QStringLiteral("|(?-1))*\\)))*)") +
                                         QStringLiteral("(?:\\s+(?:\"[^\"`\\n]*\"|'[^'`\\n]*'))?\\s*");
             const QString alt = QStringLiteral("(?<alt>(?:[^\\[\\]\\\\`\\n]|\\\\[^`\\n])*)");
-            return QRegularExpression(QStringLiteral("\\[!\\[") + alt + QStringLiteral("\\]\\(") + destination +
-                                      QStringLiteral("\\)\\](?<outer>\\(") + destination + QStringLiteral("\\))"));
+            // Or a reference: "[label]" (the image may also take "[]").
+            const QString label = QStringLiteral("\\[(?:[^\\[\\]\\\\`\\n]|\\\\[^`\\n])+\\]");
+            return QRegularExpression(QStringLiteral("\\[!\\[") + alt + QStringLiteral("\\](?:\\(") + destination +
+                                      QStringLiteral("\\)|") + label + QStringLiteral("|\\[\\])\\](?<outer>\\(") +
+                                      destination + QStringLiteral("\\)|") + label + QStringLiteral(")"));
         }();
         QString linked;
         at = 0;

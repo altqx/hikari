@@ -645,6 +645,18 @@ private slots:
             muted, link, code);
         QVERIFY2(parens.contains(QStringLiteral("href=\"https://example.com/build_(linux)\"")), qPrintable(parens));
         QVERIFY(parens.contains(QStringLiteral("href=\"https://example.com/t(x\"")));
+        // Linked by reference, the image inline or by reference too.
+        const QString referenced = copy->whatsNew->render(
+            QStringLiteral("[![Build](badge.svg)][build] and [![Test][tbadge]][test] and [![Lint][]][test]\n\n"
+                           "[build]: https://example.com/build\n[test]: https://example.com/test\n[tbadge]: t.svg\n"
+                           "[Lint]: l.svg\n"),
+            muted, link, code);
+        QVERIFY2(referenced.contains(QStringLiteral("href=\"https://example.com/build\"")), qPrintable(referenced));
+        QVERIFY(referenced.contains(QStringLiteral("href=\"https://example.com/test\"")));
+        QVERIFY(referenced.contains(QStringLiteral("Build")));
+        QVERIFY(referenced.contains(QStringLiteral("Test")));
+        QVERIFY(referenced.contains(QStringLiteral("Lint")));
+        QCOMPARE(referenced.count(QStringLiteral("href=\"https://example.com/test\"")), 2);
         // Many marks in one paragraph stay linear too.
         QString many;
         for (int i = 0; i < 5000; ++i)
