@@ -8279,6 +8279,8 @@ private slots:
         QVERIFY(window);
         QCOMPARE(window->modality(), Qt::NonModal);
         QCOMPARE(window->title(), QStringLiteral("Select lines"));
+        // DG1's settings: the title bar choice and the remembered place (Codex review).
+        QCOMPARE(dialog->property("settings").value<QObject *>(), static_cast<QObject *>(application->settingsStore()));
         QCOMPARE(dialog->property("defaultButton").value<QObject *>()->objectName(), QStringLiteral("selectRun"));
         auto *toasts = root->findChild<QObject *>(QStringLiteral("toastStack"));
         QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
@@ -10605,6 +10607,22 @@ private slots:
         QCOMPARE(breakBox->property("defaultButton").value<QObject *>(), cancel);
         QVERIFY(QString::fromLatin1(remove->metaObject()->className()).startsWith(QLatin1String("DangerButton")));
         QCOMPARE(session->historySize(), steps);
+        // The box is for the tab that refused (Codex review): with the Grid
+        // floating the main window's tabs stay usable, and another editing
+        // target closes it unanswered, nothing removed.
+        const int groupTab = application->currentTab();
+        QVERIFY(application->openFile(writeFile(dir, "g9-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == groupTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QVERIFY(application->currentTab() != groupTab);
+        QTRY_VERIFY(!breakBox->isVisible());
+        application->selectTab(groupTab);
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Station signs"));
+        QCOMPARE(session->historySize(), steps);
+        QVERIFY(!application->sortLines(QStringLiteral("start"), false));
+        QTRY_VERIFY(breakBox->isVisible());
+        remove = findItem(breakBox->contentItem(), QStringLiteral("messageBoxChoice_remove"));
+        QVERIFY(remove);
         // Remove group deletes the description; the sort then works (a lands between m1 and m2).
         QVERIFY(QMetaObject::invokeMethod(remove, "click"));
         QTRY_VERIFY(!breakBox->isVisible());
@@ -10621,6 +10639,58 @@ private slots:
                  QStringLiteral("This would leave lines outside their line group"));
         QVERIFY(!breakBox->isVisible());
         QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+    }
+
+    // PU2 (#304): Copy / Paste columns names how many Lines it acts on;
+    // Paste columns skips the selected Lines the Grid hides (a folded
+    // group), as the paste does, and the window is for the tab it was
+    // opened in (Codex review).
+    void columnsWindowCountsItsLinesAndKeepsToItsTab()
+    {
+        const QString path = writeFile(dir, "c9.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Signs\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,m1\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,[tree_opened],0,0,0,,m2\n");
+        QVERIFY(application->openFile(path));
+        const int columnsTab = application->currentTab();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        std::set<core::LineId> all;
+        for (const auto &line : lines)
+            all.insert(line->id);
+        session->setSelection(application::Selection{lines[0]->id, all, lines[0]->id, {}});
+        QCOMPARE(application->selectedLineCount(), 4);
+        QCOMPARE(application->selectedLineCount(true), 4);
+        // A click on the description row folds the group: m1 and m2 are hidden.
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
+        const double rh = grid->property("rowHeight").toDouble();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 2);
+        session->setSelection(application::Selection{lines[0]->id, all, lines[0]->id, {}});
+        QCOMPARE(application->selectedLineCount(), 4);
+        QCOMPARE(application->selectedLineCount(true), 2);
+        auto *columns = qobject_cast<QQuickWindow *>(engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("columnsWindow")));
+        QVERIFY(columns);
+        QVERIFY(QMetaObject::invokeMethod(columns, "choose", Q_ARG(QVariant, true)));
+        QTRY_VERIFY(columns->isVisible());
+        QCOMPARE(columns->property("lineCount").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(columns, "close"));
+        QTRY_VERIFY(!columns->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(columns, "choose", Q_ARG(QVariant, false)));
+        QTRY_VERIFY(columns->isVisible());
+        QCOMPARE(columns->property("lineCount").toInt(), 4);
+        // Another editing target closes it unchosen.
+        QVERIFY(application->openFile(writeFile(dir, "c9-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == columnsTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QVERIFY(application->currentTab() != columnsTab);
+        QTRY_VERIFY(!columns->isVisible());
+        // Unfold the group again for the tests that follow.
+        application->selectTab(columnsTab);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 4);
     }
 
     void enterOnTheLastLineAppendsOne()

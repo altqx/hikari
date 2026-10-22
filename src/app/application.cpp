@@ -2731,10 +2731,17 @@ bool Application::pasteLines()
     return done;
 }
 
-int Application::selectedLineCount() const
+int Application::selectedLineCount(bool shownOnly) const
 {
     auto *session = targetSession();
-    return session ? int(session->selection().selected.size()) : 0;
+    if (!session)
+        return 0;
+    const auto &selected = session->selection().selected;
+    if (!shownOnly)
+        return int(selected.size());
+    // Paste columns skips the selected lines the filter hides (Codex review).
+    const auto shown = shownLines();
+    return int(std::ranges::count_if(selected, [&](core::LineId id) { return shown(id); }));
 }
 
 QVariantList Application::columnChoices(bool paste)

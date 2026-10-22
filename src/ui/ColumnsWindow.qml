@@ -24,8 +24,24 @@ DialogWindow {
     function choose(forPaste) {
         paste = forPaste
         rows = app.columnChoices(forPaste)
-        lineCount = app.selectedLineCount()
+        lineCount = app.selectedLineCount(forPaste)
+        askedFor = editingTarget()
         open()
+    }
+    // The choice is for the tab it was opened in: with the Grid floating
+    // the main window's tabs stay usable, and another editing target closes
+    // it unchosen (Codex review), as Translation mode's questions.
+    property var askedFor: null
+    function editingTarget() {
+        const tab = app.tabs[app.currentTab]
+        return tab ? tab.id : null
+    }
+    Connections {
+        target: columns.app
+        function onTabsChanged() {
+            if (columns.visible && columns.editingTarget() !== columns.askedFor)
+                columns.close()
+        }
     }
     function chosen() {
         let bits = 0

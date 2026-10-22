@@ -6865,6 +6865,7 @@ ApplicationWindow {
                             qsTranslate("HikariSub.Grid", "Nothing was changed."))
                 return
             }
+            groupBreakBox.askedFor = groupBreakBox.editingTarget()
             groupBreakBox.ask({
                 title: qsTranslate("HikariSub.Grid", "Line group"),
                 severity: "warning",
@@ -6873,7 +6874,7 @@ ApplicationWindow {
                 choices: [{ id: "remove", text: qsTranslate("HikariSub.Grid", "Remove group"), role: "destructive" },
                           { id: "cancel", text: qsTranslate("HikariSub.Grid", "Cancel"), role: "reject", isDefault: true }]
             }, answer => {
-                if (answer === "remove")
+                if (answer === "remove" && groupBreakBox.editingTarget() === groupBreakBox.askedFor)
                     root.app.removeGroup(description)
             })
         }
@@ -6882,6 +6883,21 @@ ApplicationWindow {
         id: groupBreakBox
         objectName: "groupBreakBox"
         settings: root.app.settings
+        // The group is in the tab that refused: with the Grid floating the
+        // main window's tabs stay usable, and another editing target closes
+        // the box unanswered (Codex review), as Translation mode's questions.
+        property var askedFor: null
+        function editingTarget() {
+            const tab = root.app.tabs[root.app.currentTab]
+            return tab ? tab.id : null
+        }
+        Connections {
+            target: root.app
+            function onTabsChanged() {
+                if (groupBreakBox.visible && groupBreakBox.editingTarget() !== groupBreakBox.askedFor)
+                    groupBreakBox.close()
+            }
+        }
     }
 
     // P3: work left by a session that did not close cleanly. Each bundle opens

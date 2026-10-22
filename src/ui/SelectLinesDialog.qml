@@ -15,6 +15,8 @@ DialogWindow {
     id: dialog
     objectName: "selectLinesDialog"
     required property var app
+    // DG1: the title bar choice and the remembered place (Codex review).
+    settings: app.settings
     // NT1 (#302): where the count goes ("%1 lines selected.", an info
     // toast titled with the command).
     property ToastStack notices: null
@@ -42,20 +44,20 @@ DialogWindow {
         open()
         findText.forceActiveFocus()
     }
-    function settings() {
+    function searchSettings() {
         return {find: findText.editText, with: withChoice.currentIndex === 0, matchCase: matchCase.checked,
                 regex: regex.checked, field: fields.currentIndex, dialogues: dialogues.checked,
                 comments: comments.checked, mode: modes.currentIndex, action: actions.currentIndex}
     }
     function run(allTabs) {
         const text = findText.editText
-        const message = app.selectLines(settings(), allTabs)
+        const message = app.selectLines(searchSettings(), allTabs)
         recent = app.selectLinesSettings().recent
         findText.editText = text
         if (notices && message.length > 0)
             notices.post("info", qsTr("Select lines"), message)
     }
-    onVisibleChanged: if (!visible) app.saveSelectLinesSettings(settings())
+    onVisibleChanged: if (!visible) app.saveSelectLinesSettings(searchSettings())
 
     component RowLabel: Label {
         Layout.preferredWidth: 72

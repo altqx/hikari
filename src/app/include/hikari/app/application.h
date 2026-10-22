@@ -660,8 +660,9 @@ public:
     // checked}, checked as last chosen (COPY_COLLUMS_SELECTIONS /
     // PASTE_COLUMNS_SELECTION); copy and paste offer different lists.
     Q_INVOKABLE QVariantList columnChoices(bool paste);
-    // PU2: how many Lines the editing target has selected (Copy / Paste columns says it).
-    Q_INVOKABLE int selectedLineCount() const;
+    // PU2: how many Lines the editing target has selected (Copy / Paste columns says it);
+    // shownOnly: those the filter shows, the ones Paste columns changes.
+    Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
     // Copies or pastes the chosen columns (bits OR'ed) and remembers the choice.
     Q_INVOKABLE bool copyColumns(int columns);
     Q_INVOKABLE bool pasteColumns(int columns);
