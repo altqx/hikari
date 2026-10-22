@@ -293,6 +293,7 @@ private:
     std::optional<core::LineRecord> sourceRecord() const; // with the Line editor's draft
     // What the templater runs of a template or code Line.
     static std::string formOf(const core::LineRecord &line);
+    static std::string fieldOf(const core::LineRecord &line); // its Style and Actor pairing
     // The Actor and Style values, each with its role, of the Lines the
     // templater runs templates on (the karaoke Lines; a comment or a
     // generated Line is none), which it puts into templates ($actor,

@@ -943,18 +943,22 @@ std::string TemplateEditorController::formOf(const core::LineRecord &line)
     return std::to_string(m.style.size()) + ':' + m.style + m.effect + '\n' + m.text;
 }
 
+std::string TemplateEditorController::fieldOf(const core::LineRecord &line)
+{
+    // The pairing: the Style picks the templates the Actor goes into
+    // ($actor), so a trusted Actor under another Style, or a Style's name as
+    // an Actor, is new.
+    const auto m = application::macroLineOf(line);
+    return std::to_string(m.style.size()) + ':' + m.style + m.actor;
+}
+
 std::set<std::string> TemplateEditorController::sourceFields() const
 {
     std::set<std::string> out;
     if (const auto *s = session())
         forEachRunLine(*s, [&](const core::LineRecord &l) {
-            if (application::isKaraokeLine(l)) { // a `template line karaoke` too
-                // The pairing: the Style picks the templates the Actor goes
-                // into ($actor), so a trusted Actor under another Style, or a
-                // Style's name as an Actor, is new.
-                const auto m = application::macroLineOf(l);
-                out.insert(std::to_string(m.style.size()) + ':' + m.style + m.actor);
-            }
+            if (application::isKaraokeLine(l)) // a `template line karaoke` too
+                out.insert(fieldOf(l));
         });
     return out;
 }
@@ -1110,8 +1114,12 @@ void TemplateEditorController::commit()
             if (l->id == change.line && application::templateKindOf(*l))
                 key->second.lines[change.line].insert(formOf(*l));
         // An Effect that takes it out of the templates, or brings it back,
-        // changes the order too.
+        // changes the order too; a `template line karaoke`'s Style its
+        // pairing.
         key->second.orders.insert(templateOrderOf(*s));
+        for (const auto *l : s->document().lines())
+            if (l->id == change.line && application::isKaraokeLine(*l))
+                key->second.fields.insert(fieldOf(*l));
     }
     if (s == session()) {
         m_seenRevision = s->revision();

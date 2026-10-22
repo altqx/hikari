@@ -1842,6 +1842,31 @@ private slots:
                  QStringList{QStringLiteral("noblank")});
     }
 
+    // A `template line karaoke` the panel moves to another Style is the
+    // user's own edit: its new Style and Actor pairing is theirs too.
+    void aPanelStyleOnATemplateThatIsAlsoAKaraokeLineKeepsTheChoice()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord both;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                both = *l;
+        both.comment = true;
+        both.effect = u8"template line karaoke";
+        both.text = u8"{\\bord2}";
+        both.actor = u8"plain";
+        const auto id = doc.appendLine(both);
+        QVERIFY(id);
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        editor->setCurrent(id->value);
+        QVERIFY(editor->style() != QStringLiteral("T1a"));
+        editor->setStyle(QStringLiteral("T1a")); // no T1a karaoke Line has the Actor `plain`
+        editor->commit();
+        editor->refresh();
+        QVERIFY(editor->trusted());
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
