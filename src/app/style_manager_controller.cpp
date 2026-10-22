@@ -291,6 +291,15 @@ bool StyleManagerController::available() const
     return session && application::documentStyles(*session).has_value();
 }
 
+void StyleManagerController::documentEdited()
+{
+    if (const bool now = available(); now != m_available) {
+        m_available = now;
+        emit changed();
+    }
+    emit documentChanged();
+}
+
 void StyleManagerController::refreshLists()
 {
     if (auto *session = m_hooks.target ? m_hooks.target() : nullptr) {
