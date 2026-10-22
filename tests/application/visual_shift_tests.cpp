@@ -174,6 +174,13 @@ public:
         return [this](core::LineId line) { return !hidden.contains(line); };
     }
     const std::vector<AllTagsSetting> *allTagsSettings() const override { return &tags; }
+    // HY1: the controller's (the tool's own last step, nothing since).
+    bool undoStep(std::uint64_t revision) override
+    {
+        if (!s || g || s->revision() != revision || s->draftLine() || !s->canUndo())
+            return false;
+        return s->undo();
+    }
 };
 
 std::string assTime(int ms)
@@ -714,6 +721,8 @@ TEST(VisualShiftEdit, EscEndsTheDragWithoutAStep)
     }
     {
         AllTagsTool tags;
+    tags.setLegacySliders(true); // the sliders' coordinates
+        tags.setLegacySliders(true); // the sliders' coordinates
         tags.setToggled(0); // Add, blur
         tags.selected(host);
         tags.reset(host);
@@ -786,6 +795,8 @@ TEST(VisualShiftEdit, ALargeBatchAsksForTheShownLinesOnce)
     }
     {
         AllTagsTool tags;
+    tags.setLegacySliders(true); // the sliders' coordinates
+        tags.setLegacySliders(true); // the sliders' coordinates
         tags.setToggled(0); // Add, blur
         tags.selected(host);
         tags.reset(host);
@@ -857,6 +868,7 @@ TEST(VisualShiftDeparture, TheTextGradientKeepsAHardSpaceAfterABlock)
     TestHost host;
     setUp(host, departureCase({"\\hAb c{\\i1}d\\Ne\\h"}));
     AllTagsTool tags;
+    tags.setLegacySliders(true); // the sliders' coordinates
     tags.setToggled(PasteGradientTextIncrease << 20); // blur
     tags.selected(host);
     tags.reset(host);
@@ -882,6 +894,7 @@ TEST(VisualShiftDeparture, TheTextGradientKeepsALineBreakAfterABlock)
     TestHost host;
     setUp(host, departureCase({"A{\\i1}\\Nb c"}));
     AllTagsTool tags;
+    tags.setLegacySliders(true); // the sliders' coordinates
     tags.setToggled(PasteGradientTextIncrease << 20); // blur
     tags.selected(host);
     tags.reset(host);
@@ -948,6 +961,7 @@ TEST(VisualShiftDeparture, OneWheelStepIsOneHistoryStep)
     c.caretFrom = c.caretTo = 1;
     setUp(host, c);
     AllTagsTool tags;
+    tags.setLegacySliders(true); // the sliders' coordinates
     tags.setToggled((PasteInsert << 20) + 7); // Insert, 1c
     tags.selected(host);
     tags.reset(host);
@@ -958,6 +972,311 @@ TEST(VisualShiftDeparture, OneWheelStepIsOneHistoryStep)
     EXPECT_EQ(host.s->historySize(), steps + 1);
     EXPECT_EQ(host.sent.size(), 1u);
     EXPECT_EQ(lineOf(*host.s, *host.s->selection().active)->text, u8"{\\1c&H112131&}Colour");
+}
+
+namespace {
+
+// HY1: three Lines picked (the first active), the probe's usual view.
+Case hydraCase(std::vector<std::string> texts, bool picked)
+{
+    Case c = departureCase(std::move(texts));
+    if (picked)
+        for (int i = 0; i < static_cast<int>(c.lines.size()); ++i)
+            c.select.push_back(i);
+    return c;
+}
+
+const ToolValue *valueNamed(const std::vector<ToolValue> &values, const std::string &name)
+{
+    for (const ToolValue &v : values)
+        if (v.name == name)
+            return &v;
+    return nullptr;
+}
+
+std::u16string u16(const std::string &s)
+{
+    return std::u16string(s.begin(), s.end());
+}
+
+std::string textOf(const EditSession &s, core::LineId id)
+{
+    const std::u8string t = lineOf(s, id)->text;
+    return std::string(t.begin(), t.end());
+}
+
+} // namespace
+
+// HY1 (#271): every built-in definition takes every change option through
+// the strip: a value typed for the change's marked field is one history
+// step ("Visual Hydra tool") that puts the tag in each picked Line.
+TEST(HydraStrip, EveryDefinitionTakesEveryChangeOption)
+{
+    const auto defaults = defaultAllTags();
+    ASSERT_EQ(defaults.size(), 22u);
+    for (std::size_t def = 0; def < defaults.size(); ++def) {
+        for (int mode = PasteAdd; mode <= PasteGradientLineDecrease; ++mode) {
+            SCOPED_TRACE(std::string(defaults[def].tag.begin(), defaults[def].tag.end()) + " mode " +
+                         std::to_string(mode));
+            TestHost host;
+            setUp(host, hydraCase({"{\\pos(960,540)}Hello there", "Second line", "{\\an7}Third line"}, true));
+            AllTagsTool tags;
+            tags.setToggled((mode << 20) + static_cast<int>(def));
+            tags.selected(host);
+            tags.reset(host);
+            const auto values = tags.values(host);
+            ASSERT_FALSE(values.empty());
+            const auto marked = std::ranges::find_if(values, [](const ToolValue &v) { return v.marked; });
+            ASSERT_NE(marked, values.end());
+            double now = 0;
+            ASSERT_TRUE(parseValue(marked->text, now));
+            const AllTagsSetting &d = defaults[def];
+            // A move of three steps, inside the tag's range for the values
+            // that are kept there.
+            double to = now + 3 * d.step;
+            if (marked->name.starts_with("value") || marked->name.starts_with("to"))
+                to = to > d.rangeMax ? now - 3 * d.step : to;
+            const std::size_t steps = host.s->historySize();
+            EXPECT_TRUE(tags.setValue(marked->name, u16(std::to_string(to)), host));
+            EXPECT_EQ(host.s->historySize(), steps + 1);
+            EXPECT_EQ(host.s->history().back().name, "Visual Hydra tool");
+            EXPECT_FALSE(host.g);
+            const std::string tag = "\\" + std::string(d.tag.begin(), d.tag.end());
+            for (const core::LineId id : host.targets)
+                EXPECT_NE(textOf(*host.s, id).find(tag), std::string::npos) << textOf(*host.s, id);
+        }
+    }
+}
+
+// HY1: Set's three placings for each definition on the active Line: at the
+// caret, at the text's start, and the clip rectangle with \t; each is one
+// step. With several Lines the placing is greyed (the tag goes at their
+// text's start).
+TEST(HydraStrip, SetsPlacingsOnTheActiveLine)
+{
+    const auto defaults = defaultAllTags();
+    for (std::size_t def = 0; def < defaults.size(); ++def) {
+        for (int placing = 0; placing < 3; ++placing) {
+            const AllTagsSetting &d = defaults[def];
+            SCOPED_TRACE(std::string(d.tag.begin(), d.tag.end()) + " placing " + std::to_string(placing));
+            TestHost host;
+            Case c = hydraCase({"{\\pos(960,540)}Hello there"}, false);
+            c.caretFrom = c.caretTo = 20;
+            setUp(host, c);
+            host.caret = {20, 20};
+            AllTagsTool tags;
+            tags.setToggled((PasteInsert << 20) + static_cast<int>(def));
+            tags.selected(host);
+            tags.reset(host);
+            const auto options = tags.options(host);
+            const auto variant = std::ranges::find_if(options, [](const ToolOption &o) { return o.name == "variant"; });
+            ASSERT_NE(variant, options.end());
+            EXPECT_TRUE(variant->enabled);
+            EXPECT_EQ(variant->choices.size(), 3u);
+            // The host changes and saves the definition (the controller).
+            host.tags[def].mode = static_cast<unsigned char>(placing);
+            ASSERT_TRUE(tags.setOption("variant", placing, host));
+            EXPECT_EQ(static_cast<int>(tags.actualTag().mode), placing) << "the placing is the definition's";
+            const ToolValue *value = valueNamed(tags.values(host), "value0");
+            ASSERT_TRUE(value);
+            double now = 0;
+            ASSERT_TRUE(parseValue(value->text, now));
+            const double to = now + d.step <= d.rangeMax ? now + d.step : now - d.step;
+            const std::size_t steps = host.s->historySize();
+            EXPECT_TRUE(tags.setValue("value0", u16(std::to_string(to)), host));
+            EXPECT_EQ(host.s->historySize(), steps + 1);
+            const std::string text = textOf(*host.s, host.targets.front());
+            EXPECT_NE(text.find("\\" + std::string(d.tag.begin(), d.tag.end())), std::string::npos) << text;
+        }
+    }
+    TestHost host;
+    setUp(host, hydraCase({"A", "B"}, true));
+    AllTagsTool tags;
+    tags.setToggled(PasteInsert << 20);
+    tags.selected(host);
+    tags.reset(host);
+    const auto options = tags.options(host);
+    const auto variant = std::ranges::find_if(options, [](const ToolOption &o) { return o.name == "variant"; });
+    ASSERT_NE(variant, options.end());
+    EXPECT_FALSE(variant->enabled);
+}
+
+// HY1: the change switch and what each entry shows beside it; the values
+// say what they do.
+TEST(HydraStrip, TheSwitchNamesTheValues)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\blur2\\1c&H302010&}Hello"}, false));
+    AllTagsTool tags;
+    tags.setToggled(PasteInsert << 20); // blur
+    tags.selected(host);
+    tags.reset(host);
+    const auto names = [&] {
+        std::vector<std::string> out;
+        for (const ToolValue &v : tags.values(host))
+            out.push_back(v.name + "=" + std::string(v.label.begin(), v.label.end()) + "/" +
+                          std::string(v.group.begin(), v.group.end()) + "/" +
+                          std::string(v.text.begin(), v.text.end()) + (v.marked ? "*" : ""));
+        return out;
+    };
+    EXPECT_EQ(names(), std::vector<std::string>{"value0=Value//2*"});
+    const auto option = [&](const std::string &name) {
+        for (const ToolOption &o : tags.options(host))
+            if (o.name == name)
+                return o;
+        return ToolOption{};
+    };
+    EXPECT_EQ(option("change").kind, ToolOption::Kind::Switch);
+    EXPECT_EQ(option("change").index, 0);
+    EXPECT_TRUE(option("change").afterValues);
+    EXPECT_TRUE(option("tag").searchable);
+    EXPECT_EQ(option("tag").notes.front(), u"\\blur");
+    ASSERT_TRUE(tags.setOption("change", 1, host)); // Add
+    EXPECT_EQ(tags.mode(), static_cast<int>(PasteAdd));
+    EXPECT_EQ(names(), std::vector<std::string>{"by0=By//0*"});
+    EXPECT_TRUE(option("variant").name.empty());
+    ASSERT_TRUE(tags.setOption("change", 2, host)); // Multiply
+    EXPECT_EQ(names(), (std::vector<std::string>{"start0=Start//2", "perLine0=Per line//0*"}));
+    ASSERT_TRUE(tags.setOption("variant", 1, host)); // Add by line number
+    EXPECT_EQ(tags.mode(), static_cast<int>(PasteMultiplyPlus));
+    EXPECT_EQ(names(), std::vector<std::string>{"perLine0=Per line//0*"});
+    ASSERT_TRUE(tags.setOption("change", 3, host)); // Gradient
+    EXPECT_EQ(names(), (std::vector<std::string>{"from0=From//2", "to0=To//2*"}));
+    EXPECT_TRUE(tags.markValue("from0", host));
+    EXPECT_FALSE(tags.markValue("by0", host));
+    EXPECT_EQ(names(), (std::vector<std::string>{"from0=From//2*", "to0=To//2"}));
+    // A colour: R G B under the role, the swatch on the first.
+    ASSERT_TRUE(tags.setOption("tag", 7, host)); // color1
+    ASSERT_TRUE(tags.setOption("change", 0, host));
+    const auto values = tags.values(host);
+    ASSERT_EQ(values.size(), 3u);
+    EXPECT_EQ(values[0].label, u"R");
+    EXPECT_EQ(values[0].text, u"16");
+    EXPECT_EQ(values[2].text, u"48");
+    EXPECT_EQ(values[0].swatch, 0xFF102030u);
+    EXPECT_EQ(values[1].swatch, 0u);
+}
+
+// HY1: the picked Lines are counted and outlined (numbered) before a change.
+TEST(HydraStrip, ThePickedLinesAreOutlinedAndNumbered)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\pos(400,200)}One", "{\\pos(900,500)}Two", "{\\pos(1400,800)}Three"}, true));
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    const Overlay o = tags.overlay(host);
+    ASSERT_EQ(o.polygons.size(), 3u);
+    for (const auto &p : o.polygons) {
+        EXPECT_EQ(p.fill, 0u);
+        EXPECT_EQ(p.border, 0xFF6FD3FFu);
+        EXPECT_EQ(p.points.size(), 4u);
+    }
+    ASSERT_EQ(o.texts.size(), 3u);
+    EXPECT_EQ(o.texts[0].text, u"1");
+    EXPECT_EQ(o.texts[2].text, u"3");
+    // \pos(400,200) at the coefficient 3, \an2: the box's bottom centre.
+    EXPECT_NEAR((o.polygons[0].points[0].x + o.polygons[0].points[1].x) / 2, 400.f / 3, 1.f);
+    EXPECT_NEAR(o.polygons[0].points[2].y, 200.f / 3, 1.f);
+    // The active Line alone: one outline, no number.
+    host.targets = {host.targets.front()};
+    tags.targetsChanged(host);
+    const Overlay one = tags.overlay(host);
+    EXPECT_EQ(one.polygons.size(), 1u);
+    EXPECT_TRUE(one.texts.empty());
+}
+
+// HY1: a drag sideways over the video changes the marked value, previewing
+// it, and applies it on release as one step; Esc drops it. The wheel steps
+// the value; Shift and the wheel step through the list's order.
+TEST(HydraStrip, ADragOrTheWheelChangesTheMarkedValue)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\blur2}Hello"}, false));
+    host.caret = {3, 3};
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20); // blur, step 0.5
+    tags.selected(host);
+    tags.reset(host);
+    const core::LineId line = host.targets.front();
+    const std::size_t steps = host.s->historySize();
+    tags.pointer(pointerAt(Pointer::Kind::Press, 300, 200, Pointer::Button::Left, true), host);
+    tags.pointer(pointerAt(Pointer::Kind::Move, 301, 200, Pointer::Button::None, true), host);
+    EXPECT_FALSE(host.g); // under three pixels
+    tags.pointer(pointerAt(Pointer::Kind::Move, 310, 200, Pointer::Button::None, true), host);
+    ASSERT_TRUE(host.g);
+    EXPECT_EQ(textOf(*host.s, line), "{\\blur2}Hello"); // staged only
+    EXPECT_EQ(valueNamed(tags.values(host), "by0")->text, u"5");
+    const Overlay hud = tags.overlay(host);
+    ASSERT_FALSE(hud.texts.empty());
+    EXPECT_EQ(hud.texts.back().text, u"blur  0 → 5");
+    tags.pointer(pointerAt(Pointer::Kind::Release, 310, 200, Pointer::Button::Left), host);
+    EXPECT_FALSE(host.g);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(textOf(*host.s, line), "{\\blur7}Hello");
+    // Esc in a drag: nothing written.
+    tags.pointer(pointerAt(Pointer::Kind::Press, 300, 200, Pointer::Button::Left, true), host);
+    tags.pointer(pointerAt(Pointer::Kind::Move, 320, 200, Pointer::Button::None, true), host);
+    ASSERT_TRUE(host.g);
+    host.cancelGesture();
+    tags.reset(host);
+    tags.pointer(pointerAt(Pointer::Kind::Release, 320, 200, Pointer::Button::Left), host);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(textOf(*host.s, line), "{\\blur7}Hello");
+    // The wheel: one step of the marked value, one history step.
+    Pointer wheel = pointerAt(Pointer::Kind::Wheel, 300, 200);
+    wheel.wheelSteps = 1;
+    tags.pointer(wheel, host);
+    EXPECT_EQ(host.s->historySize(), steps + 2);
+    EXPECT_EQ(textOf(*host.s, line), "{\\blur7.5}Hello"); // By's one step, not By again
+    EXPECT_EQ(valueNamed(tags.values(host), "by0")->text, u"5"); // what Enter applies
+    // Shift and the wheel: the next tag in the list's order (Common first).
+    wheel.shift = true;
+    wheel.wheelSteps = -1;
+    tags.pointer(wheel, host);
+    EXPECT_EQ(tags.actualTag().name, u"border"); // Common in the file's order
+}
+
+// HY1: the last change card: a value typed there undoes the change's step
+// and does it again with the value on the same Lines, still one step; the
+// card closes once anything else changed the Document.
+TEST(HydraStrip, TheLastChangeIsDoneAgainInPlaceOfItsStep)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\blur1}One", "{\\blur2}Two", "Three"}, true));
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    EXPECT_FALSE(tags.lastChange(host));
+    const std::size_t steps = host.s->historySize();
+    ASSERT_TRUE(tags.setValue("by0", u"2", host));
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    const auto all = ids(*host.s);
+    EXPECT_EQ(textOf(*host.s, all[0]), "{\\blur3}One");
+    EXPECT_EQ(textOf(*host.s, all[1]), "{\\blur4}Two");
+    const auto last = tags.lastChange(host);
+    ASSERT_TRUE(last);
+    EXPECT_EQ(last->tag, u"blur");
+    EXPECT_EQ(last->change, 1);
+    EXPECT_EQ(last->lines, 3);
+    ASSERT_EQ(last->values.size(), 1u);
+    EXPECT_EQ(last->values[0].text, u"2");
+    // The picker changes: the card still does the change on its Lines.
+    host.targets = {all[0]};
+    ASSERT_TRUE(tags.editLastChange("by0", u"5", host));
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(textOf(*host.s, all[0]), "{\\blur6}One");
+    EXPECT_EQ(textOf(*host.s, all[1]), "{\\blur7}Two");
+    EXPECT_EQ(tags.lastChange(host)->values[0].text, u"5");
+    // One undo brings the Lines back as they were before the change.
+    ASSERT_TRUE(host.s->undo());
+    EXPECT_EQ(textOf(*host.s, all[0]), "{\\blur1}One");
+    EXPECT_EQ(textOf(*host.s, all[1]), "{\\blur2}Two");
+    EXPECT_FALSE(tags.editLastChange("by0", u"1", host)); // undone: the card is gone
+    EXPECT_FALSE(tags.lastChange(host));
+    EXPECT_EQ(textOf(*host.s, all[0]), "{\\blur1}One");
 }
 
 namespace {
@@ -1114,6 +1433,7 @@ TEST(VisualCapture, ReplaysTheLegacyT6Probe)
                     tool = std::move(t);
                 } else {
                     auto t = std::make_unique<AllTagsTool>();
+                    t->setLegacySliders(true); // HY1: the probe drives legacy's sliders
                     t->setToggled(bits);
                     tool = std::move(t);
                 }

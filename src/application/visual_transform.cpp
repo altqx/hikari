@@ -1319,6 +1319,28 @@ PointF drawArrow(Overlay &out, PointF from, PointF to, int diff)
     return pend;
 }
 
+std::optional<std::pair<PointF, PointF>> lineBox(const Context &context, const core::LineRecord &line)
+{
+    // HY1: Scale's sizing rectangle (SetSecondRectScale) for any Line: its
+    // position, its text's size with the border round it, placed by its
+    // alignment.
+    const core::StyleValues style = lineStyle(context, line.style);
+    const TextSize ts = textSize(context, line, &style, true);
+    if (ts.size.x <= 0 || ts.size.y <= 0)
+        return std::nullopt;
+    const PointF pos = linePosition(context, line).pos;
+    const int an = alignmentOf(style, lineText(line));
+    PointF a{pos.x - ts.border.x / 2, pos.y - ts.border.y / 2};
+    PointF b{pos.x + ts.size.x + ts.border.x / 2, pos.y + ts.size.y + ts.border.y / 2};
+    const float dx = an % 3 == 0 ? ts.size.x : an % 3 == 2 ? ts.size.x / 2 : 0;
+    const float dy = an < 4 ? ts.size.y : an < 7 ? ts.size.y / 2 : 0;
+    a.x -= dx;
+    b.x -= dx;
+    a.y -= dy;
+    b.y -= dy;
+    return std::pair(a, b);
+}
+
 void drawRect(Overlay &out, PointF pos, bool selected, float size)
 {
     // Visuals::DrawRect (Visuals.cpp:357-374).
