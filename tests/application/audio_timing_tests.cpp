@@ -552,6 +552,37 @@ TEST_F(CommitTest, AnActiveOnlyCommitLeavesTheOtherSelectedLinesAlone)
     EXPECT_EQ(lastStep(), "Tap timing");
 }
 
+// KA1: without AUDIO_AUTO_COMMIT the active Line's syllables wait in the
+// draft; a later Commit, from the panel or the editor, sends them to that
+// Line alone (Codex)
+TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
+{
+    select({a, c}, a);
+    AudioCommitRequest draft{500, 900, false, false};
+    draft.karaokeText = u"{\\k20}ka{\\k20}ra";
+    draft.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, draft, shown));
+    EXPECT_TRUE(session.draftKeptToItsLine());
+    ASSERT_TRUE(commitAudioTimes(session, {500, 900, true, false}, shown));
+    EXPECT_EQ(line(0).text, u8"{\\k20}ka{\\k20}ra");
+    EXPECT_EQ(ms(line(0).start.value), 500);
+    EXPECT_EQ(line(2).text, u8"c");
+    EXPECT_EQ(ms(line(2).start.value), 6500);
+
+    // the editor's Commit (Send) the same
+    ASSERT_TRUE(commitAudioTimes(session, draft, shown));
+    session.editDraft(a, DraftChange{.text = u8"{\\k20}ki{\\k20}ra"});
+    ASSERT_TRUE(session.commitDraftToSelected());
+    EXPECT_EQ(line(0).text, u8"{\\k20}ki{\\k20}ra");
+    EXPECT_EQ(line(2).text, u8"c");
+
+    // a draft of the times alone still goes to every selected Line
+    ASSERT_TRUE(commitAudioTimes(session, {700, 900, false, false}, shown));
+    EXPECT_FALSE(session.draftKeptToItsLine());
+    ASSERT_TRUE(commitAudioTimes(session, {700, 900, true, false}, shown));
+    EXPECT_EQ(ms(line(2).start.value), 700);
+}
+
 TEST_F(CommitTest, AnEndBeforeTheStartIsBlockedUnlessLegacyCommitsIt)
 {
     select({b}, b);

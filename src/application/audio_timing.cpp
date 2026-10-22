@@ -604,6 +604,10 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     if ((fields.start || fields.end || fields.startFrame || fields.endFrame || fields.text || fields.translation) &&
         !session.editDraft(*active, fields))
         return std::unexpected(session.isReadOnly() ? CommandRefusal::ReadOnly : CommandRefusal::Protected);
+    // KA1: the active Line's text waiting in the draft (no AUDIO_AUTO_COMMIT)
+    // stays the active Line's when Commit sends it later (Codex)
+    if (request.activeOnly && session.draftLine() == *active)
+        session.keepDraftToItsLine();
 
     // The Line the Alt release moves (CopyDialogueWithOffset with the grid's active Line)
     std::optional<core::LineId> adjacent;
@@ -675,7 +679,7 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     // SubsGrid::ChangeLine: one Line, or every selected Line with several selected
     std::vector<core::LineId> targets;
     const auto &selected = session.selection().selected;
-    if (selected.size() < 2 || request.activeOnly) {
+    if (selected.size() < 2 || request.activeOnly || (record && session.draftKeptToItsLine())) {
         targets.push_back(*active);
     } else {
         for (const auto *l : lines)

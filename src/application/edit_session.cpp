@@ -255,8 +255,9 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
     if (!m_draft)
         return false;
     // SubsGrid::ChangeLine (SubsGridBase.cpp:133-155): fewer than two
-    // selected Lines change the edited Line only.
-    if (m_selection.selected.size() < 2)
+    // selected Lines change the edited Line only, as does a draft kept to
+    // its Line (KA1).
+    if (m_selection.selected.size() < 2 || m_draft->ownLine)
         return commit(leaving, std::move(name));
     auto record = draftRecord();
     if (!record) {
@@ -343,6 +344,12 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
 void EditSession::discardDraft()
 {
     m_draft.reset();
+}
+
+void EditSession::keepDraftToItsLine()
+{
+    if (m_draft)
+        m_draft->ownLine = true;
 }
 
 std::expected<void, CommandRefusal> EditSession::run(const Command &command)

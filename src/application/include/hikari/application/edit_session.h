@@ -144,6 +144,11 @@ public:
     // Line (EditBox::SetLine on the next Line).
     bool commitDraftToSelected(std::string name = "Edit Line", bool leaving = false);
     void discardDraft();
+    // KA1: the pending draft is sent to its own Line alone, however many
+    // Lines are selected, until it is committed or discarded (a karaoke
+    // commit's text that waits for Commit is that Line's syllables)
+    void keepDraftToItsLine();
+    bool draftKeptToItsLine() const { return m_draft && m_draft->ownLine; }
 
     std::expected<void, CommandRefusal> run(const Command &command);
 
@@ -214,6 +219,7 @@ private:
     struct Draft {
         core::LineId line;
         DraftChange change;
+        bool ownLine = false; // KA1: keepDraftToItsLine
     };
 
     void pushState(core::Document document, std::string name);
