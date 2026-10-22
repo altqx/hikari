@@ -1658,6 +1658,42 @@ private slots:
         }
     }
 
+    // A named template's parts are joined before the templater runs them:
+    // an expression split across two parts is Lua too.
+    void anExpressionSplitAcrossNamedPartsTrustsWholeLines()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::vector<core::LineId> templates, karaoke;
+        for (const auto *l : doc.lines()) {
+            if (application::templateKindOf(*l))
+                templates.push_back(l->id);
+            else if (application::isKaraokeLine(*l))
+                karaoke.push_back(l->id);
+        }
+        QVERIFY(templates.size() >= 2 && !karaoke.empty());
+        for (const auto id : templates)
+            QVERIFY(doc.editLine(id, [](core::LineRecord &l) { l.text = u8"{\\bord1}"; }));
+        QVERIFY(doc.editLine(templates[0], [](core::LineRecord &l) {
+            l.effect = u8"template line joined";
+            l.text = u8"{\\bord1}!$act";
+        }));
+        QVERIFY(doc.editLine(templates[1], [&](core::LineRecord &l) {
+            l.effect = u8"template line joined";
+            l.text = u8"or!";
+        }));
+        QVERIFY(doc.editLine(karaoke.front(), [](core::LineRecord &l) {
+            l.text.clear();
+            l.actor = u8"_G.marker = 1";
+        }));
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(karaoke.front(), [](core::LineRecord &l) { l.text = u8"{\\k50}ka"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     // Whether a karaoke Line's Actor reaches the templates hangs on its other
     // fields too (a blank Line `noblank` passes over): an Actor or Style
     // holding `!` is trusted with the whole Line, so a new text asks again.
