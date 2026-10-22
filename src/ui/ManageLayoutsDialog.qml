@@ -49,10 +49,11 @@ DialogWindow {
     function rename() {
         if (!current || problem.length > 0)
             return
+        const from = current.name
         const name = newName.trim()
-        if (name !== current.name && layouts.renameSavedLayout(current.name, name))
-            list.currentIndex = rows.findIndex(r => r.name === name)
         endRename()
+        if (name !== from && layouts.renameSavedLayout(from, name))
+            list.currentIndex = rows.findIndex(r => r.name === name)
     }
     function askDelete() {
         if (!current)
@@ -123,6 +124,9 @@ DialogWindow {
                 required property var modelData
                 required property int index
                 readonly property bool editing: highlighted && dialog.renaming
+                // The list gives its current row the focus: the field keeps
+                // none of it once the row is a row again (Esc closes then).
+                onEditingChanged: if (!editing) nameField.focus = false
                 width: ListView.view.width
                 height: modelData.usable ? 32 : 44
                 highlighted: ListView.isCurrentItem

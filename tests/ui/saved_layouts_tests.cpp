@@ -30,6 +30,7 @@
 #include <QTemporaryDir>
 #include <QtTest>
 
+#include <functional>
 #include <memory>
 
 using namespace hikari;
@@ -118,6 +119,21 @@ class SavedLayoutsTest : public QObject {
         return nullptr;
     }
     QObject *named(const char *name) const { return named(QLatin1String(name)); }
+    // PU7: a part of Manage layouts' current row (a ListView delegate is no
+    // QObject child of the window).
+    QQuickItem *inManage(const char *name) const
+    {
+        auto *manage = qobject_cast<QQuickWindow *>(named("manageLayoutsDialog"));
+        std::function<QQuickItem *(QQuickItem *)> find = [&](QQuickItem *item) -> QQuickItem * {
+            if (item->objectName() == QLatin1String(name))
+                return item;
+            for (QQuickItem *child : item->childItems())
+                if (QQuickItem *found = find(child))
+                    return found;
+            return nullptr;
+        };
+        return manage ? find(manage->contentItem()) : nullptr;
+    }
     QObject *dock(const char *name) const { return named(name); }
     bool isOpen(const char *name) const { return dock(name)->property("isOpen").toBool(); }
     void close(const char *name)
@@ -335,13 +351,13 @@ private slots:
         QObject *list = named("manageLayoutsList");
         QCOMPARE(list->property("currentIndex").toInt(), 0); // the tab's layout
         // PU7: Rename turns the current row into its name field.
-        QVERIFY(!named("manageLayoutsName"));
-        QVERIFY(QMetaObject::invokeMethod(named("manageLayoutsRename"), "clicked"));
+        QVERIFY(!inManage("manageLayoutsName"));
+        QVERIFY(QMetaObject::invokeMethod(inManage("manageLayoutsRename"), "clicked"));
         QObject *name = nullptr;
-        QTRY_VERIFY((name = named("manageLayoutsName")) != nullptr);
+        QTRY_VERIFY((name = inManage("manageLayoutsName")) != nullptr);
         QCOMPARE(name->property("text").toString(), QStringLiteral("First"));
         QTRY_VERIFY(name->property("activeFocus").toBool());
-        QVERIFY(!named("manageLayoutsRename")); // the row's buttons give way to the field
+        QVERIFY(!inManage("manageLayoutsRename")->isVisible()); // the row's buttons give way to the field
         const auto type = [&](const QString &text) {
             QTest::keyClick(dialog, Qt::Key_A, Qt::ControlModifier);
             for (const QChar c : text) // (no keyClicks for a QWindow)
@@ -353,25 +369,25 @@ private slots:
         type(QStringLiteral("second"));
         QTRY_VERIFY(named("manageLayoutsProblem")->property("text").toString().contains(QStringLiteral("Second")));
         QTest::keyClick(dialog, Qt::Key_Return);
-        QVERIFY(named("manageLayoutsName"));
+        QVERIFY(inManage("manageLayoutsName"));
         QCOMPARE(namesInFile(layoutsFile()), (QStringList{QStringLiteral("First"), QStringLiteral("Second")}));
         type(QStringLiteral("Timing"));
         QTRY_VERIFY(!named("manageLayoutsProblem")->property("text").toString().isEmpty());
         // Esc puts the name back and keeps the window.
         QTest::keyClick(dialog, Qt::Key_Escape);
-        QTRY_VERIFY(!named("manageLayoutsName"));
+        QTRY_VERIFY(!inManage("manageLayoutsName"));
         QVERIFY(dialog->isVisible());
         QVERIFY(named("manageLayoutsProblem")->property("text").toString().isEmpty());
         QCOMPARE(namesInFile(layoutsFile()), (QStringList{QStringLiteral("First"), QStringLiteral("Second")}));
-        QVERIFY(QMetaObject::invokeMethod(named("manageLayoutsRename"), "clicked"));
-        QTRY_VERIFY((name = named("manageLayoutsName")) != nullptr);
+        QVERIFY(QMetaObject::invokeMethod(inManage("manageLayoutsRename"), "clicked"));
+        QTRY_VERIFY((name = inManage("manageLayoutsName")) != nullptr);
         type(QStringLiteral("  Main  "));
         QTRY_VERIFY(named("manageLayoutsProblem")->property("text").toString().isEmpty());
         QTest::keyClick(dialog, Qt::Key_Return);
         QTRY_COMPARE(switcherText(), QStringLiteral("Main"));
         QCOMPARE(namesInFile(layoutsFile()), (QStringList{QStringLiteral("Main"), QStringLiteral("Second")}));
         QCOMPARE(list->property("currentIndex").toInt(), 0);
-        QTRY_VERIFY(!named("manageLayoutsName"));
+        QTRY_VERIFY(!inManage("manageLayoutsName"));
         QVERIFY(savedItem("switcher", QStringLiteral("Main"))->property("checked").toBool());
 
         // From the keyboard, as the dialog opens: F2 goes to the name, Return
@@ -384,7 +400,7 @@ private slots:
         QTRY_VERIFY(dialog->property("opened").toBool());
         QTRY_VERIFY(list->property("activeFocus").toBool());
         QTest::keyClick(dialog, Qt::Key_F2);
-        QTRY_VERIFY((name = named("manageLayoutsName")) != nullptr);
+        QTRY_VERIFY((name = inManage("manageLayoutsName")) != nullptr);
         QTRY_VERIFY(name->property("activeFocus").toBool());
         QTest::keyClick(dialog, Qt::Key_A, Qt::ControlModifier);
         for (const char c : {'l', 'e', 'a', 'd'})
@@ -417,6 +433,7 @@ private slots:
         QTest::keyClick(dialog, Qt::Key_Delete);
         answer(QStringLiteral("lead"), "cancel");
         QCOMPARE(namesInFile(layoutsFile()), (QStringList{QStringLiteral("lead"), QStringLiteral("Second")}));
+        QTRY_VERIFY(list->property("activeFocus").toBool()); // back from the question
         QTest::keyClick(dialog, Qt::Key_Delete);
         answer(QStringLiteral("lead"), "delete");
         QTRY_COMPARE(namesInFile(layoutsFile()), QStringList{QStringLiteral("Second")});
@@ -424,7 +441,7 @@ private slots:
         QVERIFY(!isOpen("audioDock"));
         QVERIFY(dialog->property("visible").toBool()); // one is left
         QCOMPARE(list->property("currentIndex").toInt(), 0);
-        QVERIFY(QMetaObject::invokeMethod(named("manageLayoutsDelete"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(inManage("manageLayoutsDelete"), "clicked"));
         answer(QStringLiteral("Second"), "delete");
         QTRY_VERIFY(!dialog->property("visible").toBool()); // none is left
         QVERIFY(namesInFile(layoutsFile()).isEmpty());
