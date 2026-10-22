@@ -13,9 +13,14 @@
 #include "theme.h"
 #include "workspace_layout.h"
 
+#include <kddockwidgets/LayoutSaver.h>
+
 #include <QColor>
 #include <QDir>
 #include <QFile>
+#include <QJsonArray>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -247,6 +252,59 @@ private slots:
         stop();
     }
 
+    // An arrangement saved before the Styles panel existed has no place for
+    // it; opening it then tabs it with the Line editor, as the default does.
+    void stylesOpenWithTheEditorFromAnOlderArrangement()
+    {
+        start();
+        QJsonObject payload = QJsonDocument::fromJson(KDDockWidgets::LayoutSaver().serializeLayout()).object();
+        QVERIFY(!isOpen("stylesDock"));
+        QJsonArray closed, all;
+        for (const auto &name : payload.value(QStringLiteral("closedDockWidgets")).toArray())
+            if (name.toString() != QLatin1String("Styles"))
+                closed.append(name);
+        for (const auto &d : payload.value(QStringLiteral("allDockWidgets")).toArray())
+            if (d.toObject().value(QStringLiteral("uniqueName")).toString() != QLatin1String("Styles"))
+                all.append(d);
+        payload.insert(QStringLiteral("closedDockWidgets"), closed);
+        payload.insert(QStringLiteral("allDockWidgets"), all);
+        QVERIFY(KDDockWidgets::LayoutSaver().restoreLayout(QJsonDocument(payload).toJson(QJsonDocument::Compact)));
+        QVERIFY(!docking()->hasPlace(QStringLiteral("Styles")));
+        QVERIFY(QMetaObject::invokeMethod(window(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock("stylesDock")))));
+        QTRY_VERIFY(isOpen("stylesDock"));
+        QVERIFY(!isFloating("stylesDock"));
+        QTRY_VERIFY(item("stylesPanel")->isVisible());
+        QVERIFY(!item("editorPanel")->isVisible()); // the tab behind it
+        QCOMPARE(docking()->tabCount(QStringLiteral("Styles")), docking()->tabCount(QStringLiteral("Editor")));
+        QVERIFY(docking()->tabCount(QStringLiteral("Styles")) > 1);
+        stop();
+    }
+
+    // A preset is the window's arrangement at the window's size now:
+    // chosen after a resize, Typesetting (built before, or not) and Timing
+    // leave the main window as it is.
+    void presetsKeepTheWindowsSize()
+    {
+        start();
+        window()->resize(1280, 800);
+        QTRY_COMPARE(window()->width(), 1280);
+        applyPreset("Typesetting");
+        verifyTypesettingArrangement();
+        window()->resize(1100, 720);
+        QTRY_COMPARE(window()->width(), 1100);
+        applyPreset("Timing");
+        QCOMPARE(window()->size(), QSize(1100, 720));
+        window()->resize(1200, 760);
+        QTRY_COMPARE(window()->width(), 1200);
+        applyPreset("Typesetting");
+        QCOMPARE(window()->size(), QSize(1200, 760));
+        verifyTypesettingArrangement();
+        QVERIFY(QMetaObject::invokeMethod(window(), "resetLayout"));
+        QCOMPARE(window()->size(), QSize(1200, 760));
+        verifyTypesettingArrangement();
+        stop();
+    }
+
     // The rows: the editing target's Styles in order, with their font, size,
     // colours and how many Lines use each; the current line's style marked.
     void theStylesPanelListsTheDocumentsStyles()
@@ -423,8 +481,16 @@ private slots:
         QTRY_COMPARE(item("stylesFilter")->property("text").toString(), QStringLiteral("it"));
         QVERIFY(item("stylesFilter")->hasActiveFocus());
         QCOMPARE(panel->property("shownRows").toList().size(), 1); // Italic
+        // A chosen Style the filter hides is not acted on: the commands wait
+        // for one that is shown.
+        QVERIFY(item<QObject>("stylesDelete")->property("enabled").toBool());
+        panel->setProperty("chosen", QStringLiteral("Unused"));
+        QVERIFY(!item<QObject>("stylesApply")->property("enabled").toBool());
+        for (const char *name : {"stylesEdit", "stylesDuplicate", "stylesDelete"})
+            QVERIFY2(!item<QObject>(name)->property("enabled").toBool(), name);
         QTest::keyClick(window(), Qt::Key_Escape);
         QTRY_COMPARE(panel->property("shownRows").toList().size(), 4);
+        QTRY_VERIFY(item<QObject>("stylesDelete")->property("enabled").toBool());
         stop();
     }
 
