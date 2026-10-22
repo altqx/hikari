@@ -5477,6 +5477,10 @@ private slots:
             {main, QStringLiteral("root.app.replaceEditorMisspell"), QStringLiteral("a spelling suggestion")},
             {QStringLiteral("MainTitleBar.qml"), QStringLiteral("bar.foldFrom + index"),
              QStringLiteral("a menu of the title bar folded into More (the menus have no icons)")},
+            {QStringLiteral("FontPicker.qml"), QStringLiteral(R"(text: qsTr("No catalogs yet"))"),
+             QStringLiteral("the empty list's placeholder")},
+            {QStringLiteral("FontCatalogBar.qml"), QStringLiteral(R"(text: qsTr("No catalogs yet"))"),
+             QStringLiteral("the empty list's placeholder")},
         };
         const QStringList problems = menu_icon_scan::itemsWithoutIcons(QStringLiteral(HIKARI_UI_SOURCE_DIR), exemptions);
         if (!problems.isEmpty())

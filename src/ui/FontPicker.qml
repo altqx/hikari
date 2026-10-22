@@ -478,6 +478,7 @@ DialogWindow {
         MenuSeparator {}
         ShellMenuItem {
             objectName: "fontPickerCatalogManage"
+            iconRole: "styles"
             text: qsTr("Manage catalogs…")
             onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(picker.family, picker)
         }
@@ -516,6 +517,7 @@ DialogWindow {
         MenuSeparator {}
         ShellMenuItem {
             objectName: "fontPickerNewCatalog"
+            iconRole: "add"
             text: qsTr("New catalog…")
             onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.startNew(picker.family, picker)
         }

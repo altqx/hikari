@@ -184,6 +184,7 @@ RowLayout {
         }
         ShellMenuItem {
             objectName: "styleEditorNewCatalog"
+            iconRole: "add"
             text: qsTr("New catalog…")
             visible: addMenu.names.length === 0
             height: visible ? implicitHeight : 0
