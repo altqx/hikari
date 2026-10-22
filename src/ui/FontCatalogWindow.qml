@@ -230,18 +230,20 @@ DialogWindow {
         reviewLoader.item.review({
             title: qsTr("Load font catalogs"),
             text: qsTr("%1 of %2 catalogs in “%3” already exist.").arg(r.rows.length).arg(r.total).arg(r.file),
-            detail: [r.total - r.rows.length - r.same > 0 ? qsTr("New catalogs are added: %1.").arg(r.total - r.rows.length - r.same) : "",
-                     r.same > 0 ? qsTr("Catalogs with the same fonts as yours are left as they are: %1.").arg(r.same) : ""]
+            detail: [r.total - r.rows.length - r.same > 0 ? qsTr("The file’s new catalogs are added.") : "",
+                     r.same > 0 ? qsTr("Those with the same fonts as yours are left as they are.") : ""]
                     .filter(t => t.length > 0).join(" "),
             canMerge: true,
             action: "merge",
             nameHeading: qsTr("Catalog"),
             differenceHeading: qsTr("Fonts"),
             rows: r.rows.map(row => ({ name: row.name,
-                                       difference: qsTr("%1 here, %2 in the file (%3 new)").arg(row.here).arg(row.there).arg(row.added),
+                                       // The fonts here, and those the file would add (or its count when it adds none).
+                                       difference: row.added > 0 ? qsTr("%1 here, +%2 new").arg(row.here).arg(row.added)
+                                                                 : qsTr("%1 here, %2 in the file").arg(row.here).arg(row.there),
                                        suggestion: suggest(row.name) })),
             added: r.total - r.rows.length - r.same,
-            acceptText: count => qsTr("Load %n catalog(s)", "", count)
+            acceptText: count => count === 1 ? qsTr("Load 1 catalog") : qsTr("Load %n catalogs", "", count)
         }, results => {
             if (results)
                 loaded(catalogs.loadReviewed(results.map(x => ({ name: x.name, action: x.action, newName: x.newName }))), r.file)
@@ -411,7 +413,7 @@ DialogWindow {
                     objectName: "fontCatalogFind"
                     placeholderText: qsTr("Search fonts")
                     Accessible.name: qsTr("Search fonts")
-                    Layout.preferredWidth: 220
+                    Layout.fillWidth: true
                     leftPadding: 28
                     onTextEdited: window.select(0)
                     Keys.onDownPressed: list.forceActiveFocus()
@@ -422,18 +424,6 @@ DialogWindow {
                         anchors.verticalCenter: parent.verticalCenter
                     }
                 }
-                Label { text: qsTr("Show"); color: Theme.muted; Layout.leftMargin: 6 }
-                SegmentedButtons {
-                    objectName: "fontCatalogShow"
-                    currentIndex: window.show
-                    choices: [{ text: qsTr("All fonts"), name: "fontCatalogShowAll" },
-                              { text: window.chosen.length > 0 ? qsTr("In “%1”").arg(window.chosen) : qsTr("In the catalog"),
-                                name: "fontCatalogShowIn", enabled: window.chosen.length > 0 },
-                              { text: qsTr("Not in a catalog"), name: "fontCatalogShowNone" }]
-                    Accessible.name: qsTr("Show")
-                    onActivated: index => { window.show = index; window.select(0) }
-                }
-                Item { Layout.fillWidth: true }
                 IconToolButton {
                     objectName: "fontCatalogRefreshFonts"
                     iconRole: "refresh"
@@ -445,6 +435,28 @@ DialogWindow {
                         window.fonts = window.catalogs.allFonts()
                         window.selectFont(font)
                     }
+                }
+            }
+            // Show, on its own row: its choices keep their words.
+            RowLayout {
+                spacing: 8
+                Label { text: qsTr("Show"); color: Theme.muted }
+                SegmentedButtons {
+                    id: showChoice
+                    objectName: "fontCatalogShow"
+                    currentIndex: window.show
+                    choices: [{ text: qsTr("All fonts"), name: "fontCatalogShowAll" },
+                              { text: window.chosen.length > 0 ? qsTr("In “%1”").arg(window.chosen) : qsTr("In the catalog"),
+                                name: "fontCatalogShowIn", enabled: window.chosen.length > 0 },
+                              { text: qsTr("Not in a catalog"), name: "fontCatalogShowNone" }]
+                    Accessible.name: qsTr("Show")
+                    // The cells share the widest choice's width (in bold, as when chosen).
+                    readonly property real widest: Math.max(...choices.map(c => showMetrics.advanceWidth(c.text)))
+                    Layout.preferredWidth: choices.length * (widest + 24) + 2
+                    Layout.maximumWidth: Layout.preferredWidth
+                    Layout.fillWidth: true
+                    onActivated: index => { window.show = index; window.select(0) }
+                    FontMetrics { id: showMetrics; font.bold: true }
                 }
             }
             Rectangle {

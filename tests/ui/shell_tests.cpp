@@ -3007,6 +3007,7 @@ private slots:
         QVERIFY(in("fontResolutionText")->property("text").toString().startsWith(QStringLiteral("Not installed")));
         // The preview is drawn by the subtitle renderer.
         QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
+        QVERIFY(!application->fontCatalogs().sample().isNull());
         QTRY_VERIFY(in("fontPickerPreview")->property("source").toString().startsWith(QStringLiteral("image://fontcatalogpreview/sample/")));
         QVERIFY(QMetaObject::invokeMethod(in("fontPickerCancel"), "click"));
         QTRY_VERIFY(!picker->property("visible").toBool());
@@ -3249,7 +3250,7 @@ private slots:
         const QVariantList rows = review->property("rows").toList();
         QCOMPARE(rows.size(), 1);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("A"));
-        QCOMPARE(rows[0].toMap().value(QStringLiteral("difference")).toString(), QStringLiteral("3 here, 1 in the file (1 new)"));
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("difference")).toString(), QStringLiteral("3 here, +1 new"));
         QCOMPARE(review->property("actions").toStringList(), QStringList{"merge"});
         QCOMPARE(review->property("kinds").toStringList(), (QStringList{"merge", "replace", "rename", "skip"}));
         // Rename: the file's A comes in as "A (2)".
@@ -3472,6 +3473,7 @@ private slots:
         if (out.isEmpty())
             QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
         QVERIFY(QDir().mkpath(out));
+        app::attachFontCatalogPreview(*engine, application->fontCatalogs()); // the previews, as the app has them
         usePickerFonts();
         auto &settings = *application->settingsStore();
         auto *root = engine->rootObjects().first();

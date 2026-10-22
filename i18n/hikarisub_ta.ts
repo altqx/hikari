@@ -2234,11 +2234,11 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>New catalogs are added: %1.</source>
+        <source>The file’s new catalogs are added.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Catalogs with the same fonts as yours are left as they are: %1.</source>
+        <source>Those with the same fonts as yours are left as they are.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2246,11 +2246,19 @@ Should not exceed 15 characters per second</source>
         <translation>பட்டியல்</translation>
     </message>
     <message>
-        <source>%1 here, %2 in the file (%3 new)</source>
+        <source>%1 here, +%2 new</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 here, %2 in the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load 1 catalog</source>
         <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
-        <source>Load %n catalog(s)</source>
+        <source>Load %n catalogs</source>
         <translation type="unfinished">
             <numerusform></numerusform>
             <numerusform></numerusform>
