@@ -118,7 +118,9 @@ DialogWindow {
         if (working)
             close.accepted = false
     }
-    onVisibleChanged: if (!visible) collector.close()
+    // Closed, not hidden while its frame is made again (a title bar change):
+    // a run or a review waiting goes on then.
+    onVisibleChanged: if (!visible && !WindowFrame.remaking(dialog)) collector.close()
 
     GridLayout {
         columns: 2
