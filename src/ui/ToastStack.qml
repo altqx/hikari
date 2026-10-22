@@ -178,8 +178,11 @@ Item {
                     ColumnLayout {
                         spacing: 3
                         Layout.fillWidth: true
+                        // Notices quote files (a lyrics excerpt): never
+                        // markup, which could fetch an <img> (KA6).
                         Label {
                             objectName: "toastTitle"
+                            textFormat: Text.PlainText
                             text: toast.modelData.title
                             font.weight: Font.DemiBold
                             wrapMode: Text.Wrap
@@ -188,6 +191,7 @@ Item {
                         Label {
                             objectName: "toastText"
                             visible: text.length > 0
+                            textFormat: Text.PlainText
                             text: toast.modelData.text
                             color: Theme.muted
                             wrapMode: Text.Wrap
