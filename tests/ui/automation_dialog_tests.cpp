@@ -516,7 +516,9 @@ private slots:
                                           .numberMax = 10, .step = 0.05},
                             DialogControl{.kind = "floatedit", .name = "g", .y = 2, .number = 0.6, .numberMin = 0,
                                           .numberMax = 20},
-                            DialogControl{.kind = "intedit", .name = "j", .y = 3, .intValue = 5, .intMin = 0, .intMax = 30}};
+                            DialogControl{.kind = "intedit", .name = "j", .y = 3, .intValue = 5, .intMin = 0, .intMax = 30},
+                            DialogControl{.kind = "floatedit", .name = "p", .y = 4, .number = 1.23456789012345},
+                            DialogControl{.kind = "intedit", .name = "u", .y = 5, .intValue = 7}};
         std::optional<DialogResult> result;
         showDialog(request, result);
         QQuickItem *i = controlItem(0);
@@ -580,6 +582,14 @@ private slots:
         QCOMPARE(f->property("text").toString(), QStringLiteral("0.1"));
 
         QQuickItem *g = controlItem(2);
+        QCOMPARE(controlItem(4)->property("text").toString(), QStringLiteral("1.23456789012345")); // every digit
+        QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2)); // off f's arrows
+        controlItem(5)->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("4x")); // no range: the strip still says what happens
+        QTRY_VERIFY2(hint().contains(QStringLiteral("4x becomes 7")), qPrintable(hint()));
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(controlItem(5)->property("text").toString(), QStringLiteral("7"));
         QVERIFY(!qobject_cast<QQuickItem *>(findNamed(g, QStringLiteral("numberUp")))->isVisible());
         g->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(window, Qt::Key_Up);
@@ -592,6 +602,7 @@ private slots:
         QCOMPARE(std::get<int>(result->values[0]), 497);
         QCOMPARE(std::get<double>(result->values[1]), 0.1);
         QCOMPARE(std::get<double>(result->values[2]), 20.0);
+        QCOMPARE(std::get<double>(result->values[4]), 1.23456789012345); // opened and accepted: unchanged
 
         showDialog(request, result);
         QQuickItem *j = controlItem(3);
@@ -714,6 +725,7 @@ private slots:
         QCOMPARE(listItem->window(), static_cast<QQuickWindow *>(window));
         const QRectF at = listItem->mapRectToScene(QRectF(0, 0, listItem->width(), listItem->height()));
         QVERIFY2(at.top() >= 0 && at.bottom() <= window->height(), qPrintable(QString::number(at.bottom())));
+        QVERIFY2(at.right() <= window->width(), qPrintable(QString::number(at.right())));
         QVERIFY(m->hasActiveFocus()); // the keys stay on the dropdown
         type(window, QStringLiteral("ad"));
         QCOMPARE(m->property("filter").toString(), QStringLiteral("fad"));

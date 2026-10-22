@@ -381,7 +381,9 @@ DialogWindow {
                             if (spec.hint)
                                 parts.push(spec.hint)
                             if (numeric && item && item.rangeText)
-                                parts.push(item.rangeText + (item.overflowText ? ". " + item.overflowText : "."))
+                                parts.push(item.rangeText + ".")
+                            if (numeric && item && item.overflowText)
+                                parts.push(item.overflowText)
                             return parts.join(" ")
                         }
                         // Its longest: a number's with the out-of-range sentence.
@@ -390,7 +392,9 @@ DialogWindow {
                             if (spec.hint)
                                 parts.push(spec.hint)
                             if (numeric && item && item.rangeText)
-                                parts.push(item.rangeText + ". " + item.overflowLongest)
+                                parts.push(item.rangeText + ".")
+                            if (numeric && item)
+                                parts.push(item.overflowLongest)
                             return parts.join(" ")
                         }
                         objectName: "control_" + controlIndex
@@ -596,7 +600,7 @@ DialogWindow {
                 ? qsTr("%1 becomes %2 when you leave the field.").arg(text).arg(shown(outOfRange ? clamp(typed) : value))
                 : ""
             readonly property string overflowLongest: qsTr("%1 becomes %2 when you leave the field.")
-                .arg(shown(hasHi ? hi : lo)).arg(shown(hasHi ? hi : lo))
+                .arg(shown(hasHi ? hi : hasLo ? lo : value)).arg(shown(hasHi ? hi : hasLo ? lo : value))
             property bool holding: false
             property real wheelRest: 0
             property real oldX: 0
@@ -610,13 +614,8 @@ DialogWindow {
                 return isFinite(n) ? (isInt ? Math.trunc(n) : n) : NaN
             }
             function clamp(n) { return Math.min(Math.max(n, lo), hi) }
-            // Plain digits (no exponent for ordinary numbers), no float noise.
-            function shown(n) {
-                if (isInt)
-                    return String(Math.trunc(n))
-                const r = Number(Number(n).toPrecision(12))
-                return Math.abs(r) < 1e15 && (r === 0 || Math.abs(r) >= 1e-6) ? String(r) : String(n)
-            }
+            // The shortest text that reads back as the same number.
+            function shown(n) { return isInt ? String(Math.trunc(n)) : String(Number(n)) }
             function commit() {
                 const n = parse(text)
                 value = isNaN(n) ? value : clamp(n)
@@ -625,7 +624,8 @@ DialogWindow {
             function stepBy(n) {
                 const base = parse(text)
                 value = clamp((isNaN(base) ? value : clamp(base)) + n * step)
-                value = isInt ? Math.round(value) : Number(value.toPrecision(12))
+                // (15 digits drop the sum's float noise, 1.3000000000000003.)
+                value = isInt ? Math.round(value) : Number(value.toPrecision(15))
                 text = shown(value)
             }
             function readValue() {
@@ -860,7 +860,7 @@ DialogWindow {
                 property real roomRight: 180
                 readonly property real wanted: Math.min(contentItem.implicitHeight + topPadding + bottomPadding, 320)
                 y: above ? -height - 2 : dropdown.height + 2
-                width: Math.max(dropdown.width, Math.min(180, roomRight))
+                width: Math.max(60, Math.min(Math.max(dropdown.width, 180), roomRight))
                 implicitHeight: Math.min(wanted, room)
                 padding: 4
                 focus: false // the keys stay on the dropdown
