@@ -136,6 +136,16 @@ const FontCatalogs::Catalog *FontCatalogs::find(u16v name) const
     return nullptr;
 }
 
+const FontCatalogs::Catalog *FontCatalogs::findNoCase(u16v name) const
+{
+    if (const Catalog *exact = find(name))
+        return exact;
+    for (const auto &c : m_catalogs)
+        if (sameNoCase(c.name, name, m_lower))
+            return &c;
+    return nullptr;
+}
+
 FontCatalogs::Catalog &FontCatalogs::insert(u16v name)
 {
     // fontCatalogs[name] = new wxArrayString, kept in map order.
@@ -143,11 +153,12 @@ FontCatalogs::Catalog &FontCatalogs::insert(u16v name)
     return *m_catalogs.insert(at, Catalog{u16(name), {}});
 }
 
-void FontCatalogs::load(u16v text)
+std::vector<FontCatalogs::Catalog> FontCatalogs::parse(u16v text)
 {
+    std::vector<Catalog> out;
     // wxStringTokenizer(text, "\n", wxTOKEN_STRTOK): no empty tokens.
     bool block = false;
-    Catalog *current = nullptr;
+    std::size_t current = 0;
     std::size_t start = 0;
     while (start <= text.size()) {
         const std::size_t end = std::min(text.find(u'\n', start), text.size());
@@ -160,9 +171,10 @@ void FontCatalogs::load(u16v text)
             block = true;
             // token.BeforeLast('='): empty when there is no '='.
             const std::size_t eq = token.rfind(u'=');
-            const u16 name(eq == u16v::npos ? u16v() : token.substr(0, eq));
-            addCatalog(name);
-            current = findMutable(name);
+            const u16v name = eq == u16v::npos ? u16v() : token.substr(0, eq);
+            current = std::find_if(out.begin(), out.end(), [&](const Catalog &c) { return c.name == name; }) - out.begin();
+            if (current == out.size())
+                out.push_back(Catalog{u16(name), {}});
             continue;
         }
         if (!block)
@@ -172,8 +184,32 @@ void FontCatalogs::load(u16v text)
             continue;
         }
         token = trimLeft(token); // token.Trim(false)
-        if (current && !token.empty() && !containsExact(current->fonts, token))
-            current->fonts.emplace_back(token);
+        if (!token.empty() && !containsExact(out[current].fonts, token))
+            out[current].fonts.emplace_back(token);
+    }
+    return out;
+}
+
+void FontCatalogs::load(u16v text)
+{
+    // LoadCatalogs: AddCatalog per block, then each font it lacks.
+    apply(parse(text), {});
+}
+
+void FontCatalogs::apply(const std::vector<Catalog> &file, const std::vector<LoadChoice> &choices)
+{
+    for (std::size_t i = 0; i < file.size(); ++i) {
+        const LoadChoice choice = i < choices.size() ? choices[i] : LoadChoice{};
+        if (choice.action == LoadAction::Skip)
+            continue;
+        const u16 name = choice.action == LoadAction::Rename ? choice.newName : file[i].name;
+        addCatalog(name);
+        Catalog *target = findMutable(name);
+        if (choice.action == LoadAction::Replace)
+            target->fonts.clear();
+        for (const auto &font : file[i].fonts)
+            if (!containsExact(target->fonts, font))
+                target->fonts.push_back(font);
     }
 }
 
