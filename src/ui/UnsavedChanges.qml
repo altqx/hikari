@@ -41,8 +41,9 @@ Item {
     visible: false
 
     function review(list) {
-        rows = list
+        // The choices first: the rows' delegates read them.
         choices = list.map(r => ({ id: r.id, save: true, path: "" }))
+        rows = list
         problem = ""
         kind = app.closeKind()
         if (list.length === 1)
@@ -69,6 +70,8 @@ Item {
         windowLoader.active = true
         window.open()
     }
+    // Row i's choice (a row's delegate may outlive the review it showed).
+    function choiceAt(i) { return choices[i] || { save: false, path: "" } }
     function setSave(i, save) {
         const list = choices.slice()
         list[i] = Object.assign({}, list[i], { save: save })
@@ -277,12 +280,12 @@ Item {
                                     Label {
                                         objectName: "closeFolder" + row.index
                                         text: row.modelData.untitled
-                                              ? (unsaved.choices[row.index].path.length > 0
-                                                 ? unsaved.choices[row.index].path : qsTr("Not saved yet"))
+                                              ? (unsaved.choiceAt(row.index).path.length > 0
+                                                 ? unsaved.choiceAt(row.index).path : qsTr("Not saved yet"))
                                               : row.modelData.folder
                                         font: {
                                             const f = unsaved.window.fontAt(12)
-                                            f.italic = row.modelData.untitled && unsaved.choices[row.index].path.length === 0
+                                            f.italic = row.modelData.untitled && unsaved.choiceAt(row.index).path.length === 0
                                             return f
                                         }
                                         color: Theme.muted
@@ -302,7 +305,7 @@ Item {
                                 objectName: "closeChoice" + row.index
                                 choices: [{ text: qsTr("Save"), name: "closeSave" + row.index },
                                           { text: qsTr("Don’t save"), name: "closeDiscard" + row.index }]
-                                currentIndex: unsaved.choices[row.index].save ? 0 : 1
+                                currentIndex: unsaved.choiceAt(row.index).save ? 0 : 1
                                 Accessible.name: qsTr("Save %1").arg(row.modelData.title)
                                 onActivated: index => unsaved.setSave(row.index, index === 0)
                             }

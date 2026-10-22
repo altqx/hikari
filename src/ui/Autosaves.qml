@@ -237,18 +237,23 @@ Item {
                             ColumnLayout {
                                 spacing: 2
                                 Layout.fillWidth: true
-                                RowLayout {
-                                    spacing: 8
+                                // The name at its width, the tag after it.
+                                Item {
+                                    Layout.fillWidth: true
+                                    implicitHeight: nameLabel.implicitHeight
                                     Label {
+                                        id: nameLabel
                                         objectName: "autosaveName" + row.index
                                         text: row.modelData.name
                                         font.weight: Font.DemiBold
                                         elide: Text.ElideRight
-                                        Layout.maximumWidth: implicitWidth
-                                        Layout.fillWidth: true
+                                        width: Math.min(implicitWidth, parent.width - (tag.visible ? tag.implicitWidth + 8 : 0))
                                     }
                                     Label {
+                                        id: tag
                                         visible: row.legacy
+                                        x: nameLabel.width + 8
+                                        anchors.verticalCenter: nameLabel.verticalCenter
                                         text: qsTr("Previous version")
                                         color: Theme.muted
                                         font: autosavesWindow.fontAt(11)
