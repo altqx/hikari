@@ -1,81 +1,144 @@
 // Y6: legacy GetFontsFromASSDialog "Add fonts from subtitles"
-// (FontCatalogList.cpp:840-905 at 20d647c4): the catalog choice with Add,
-// "Remove all contents of catalog", "Add fonts from all open subtitles", OK
-// and Cancel. OK collects every Style's font and each \fn of the active
-// tab's Lines (or every tab's) into the chosen catalog and saves the
-// catalogs (CollectFontsFromSubtitles).
+// (FontCatalogList.cpp:840-905 at 20d647c4). Add fonts collects every
+// Style's font and each \fn of the active tab's Lines (or every tab's) into
+// the chosen catalog and saves the catalogs (CollectFontsFromSubtitles).
+//
+// PU3 (#305): a compact window on DG1's frame, modal to its opener, one for
+// the program (FontWindows). The catalog is chosen or typed, a new name
+// making it (PU3-from-subtitles: legacy's Add button did, and OK without a
+// chosen entry did nothing); "From" (This file / All open files) and
+// "Replace the catalog's fonts" replace legacy's two check boxes, a hint
+// says what will happen, "Add fonts" replaces OK, and the result is a
+// toast.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
 import Hikari.Ui
 
-Dialog {
+DialogWindow {
     id: dialog
     objectName: "fontsFromSubtitlesDialog"
     required property var catalogs
+    property var notices: null // ToastStack
+    // The open files, and the name of the one in use, for the hint.
+    property int openFiles: 1
+    property string fileName: ""
+    property var done: null
     title: qsTr("Add fonts from subtitles")
+    dialogId: "fontsFromSubtitles"
     modal: true
-    // The editable choice's selection: SetSelection(0) at the start, a pick
-    // from the list, and -1 once its text is typed (SetSelectionByPartialName).
-    property int selection: -1
-    signal collected(string catalog)
+    initialFocus: catalog
 
-    function openFor(names) {
+    // Opens from `opener` (a window) with `name` chosen (a catalog, or the
+    // first); done(catalog) once fonts were added.
+    function openFor(name, callback, opener) {
+        const names = catalogs.catalogNames
         catalog.model = names
-        catalog.currentIndex = names.length > 0 ? 0 : -1
-        catalog.editText = names.length > 0 ? names[0] : ""
-        selection = names.length > 0 ? 0 : -1
-        emptyCatalog.checked = false
-        allSubs.checked = false
-        open()
+        const at = names.indexOf(name || "")
+        catalog.currentIndex = at >= 0 ? at : names.length > 0 ? 0 : -1
+        catalog.editText = catalog.currentIndex >= 0 ? names[catalog.currentIndex] : ""
+        from.currentIndex = 0
+        replace.checked = false
+        done = callback || null
+        openFrom(opener || null)
+    }
+    readonly property string chosen: catalog.editText.trim()
+    // The catalog the name stands for, ignoring case, else the new name
+    // (read while shown: the catalogs load at their first use).
+    readonly property string target: {
+        if (!visible)
+            return chosen
+        const existing = catalogs.existingName(chosen)
+        return existing.length > 0 ? existing : chosen
+    }
+    function add() {
+        const name = target
+        if (name.length === 0)
+            return
+        const made = catalogs.existingName(name).length === 0
+        if (made)
+            catalogs.addCatalog(name, false) // the dialog's Add: no autosave
+        const before = replace.checked ? 0 : catalogs.catalogSize(name)
+        if (!catalogs.collectFromSubtitles(name, replace.checked, from.currentIndex === 1))
+            return
+        const added = catalogs.catalogSize(name) - before
+        const callback = done
+        done = null
+        accept()
+        if (notices)
+            notices.post("info", (added === 1 ? qsTr("Added 1 font to “%1”") : qsTr("Added %n fonts to “%1”", "", added)).arg(name),
+                         from.currentIndex === 1 ? qsTr("From the styles and %1 tags of the open files.").arg("\\fn")
+                                                 : qsTr("From the styles and %1 tags of %2.").arg("\\fn").arg(fileName))
+        if (callback)
+            callback(name)
+    }
+    onRejected: done = null
+
+    GridLayout {
+        columns: 2
+        columnSpacing: 10
+        rowSpacing: 8
+        Layout.topMargin: 8
+        Label { text: qsTr("Catalog") }
+        ComboBox {
+            id: catalog
+            objectName: "fontsFromSubtitlesCatalog"
+            editable: true
+            Layout.preferredWidth: 260
+            Accessible.name: qsTr("Catalog")
+        }
+        Item { width: 1; height: 1 }
+        Label {
+            text: qsTr("Choose a catalog or type a new name.")
+            color: Theme.muted
+            font: dialog.fontAt(12)
+        }
+        Label { text: qsTr("From") }
+        SegmentedButtons {
+            id: from
+            objectName: "fontsFromSubtitlesFrom"
+            choices: [{ text: qsTr("This file"), name: "fontsFromSubtitlesThisFile" },
+                      { text: qsTr("All open files"), name: "fontsFromSubtitlesAllFiles" }]
+            Accessible.name: qsTr("From")
+            onActivated: index => currentIndex = index
+        }
+        Item { width: 1; height: 1 }
+        CheckBox {
+            id: replace
+            objectName: "fontsFromSubtitlesReplace"
+            text: qsTr("Replace the catalog’s fonts")
+        }
+        Item { width: 1; height: 1 }
+        Label {
+            objectName: "fontsFromSubtitlesHint"
+            readonly property int size: dialog.visible ? dialog.catalogs.catalogSize(dialog.target) : 0
+            text: (from.currentIndex === 1 && dialog.openFiles > 1
+                       ? qsTr("The fonts of every style and every %1 tag in all %n open files.", "", dialog.openFiles).arg("\\fn")
+                       : qsTr("The fonts of every style and every %1 tag in %2.").arg("\\fn").arg(dialog.fileName))
+                  + (replace.checked && size > 0 ? " " + qsTr("The fonts “%1” holds now are removed first.").arg(dialog.target) : "")
+            color: Theme.muted
+            font: dialog.fontAt(12)
+            wrapMode: Text.Wrap
+            Layout.preferredWidth: 260
+        }
     }
 
-    contentItem: ColumnLayout {
-        RowLayout {
-            Label { text: qsTr("Catalogs:") }
-            ComboBox {
-                id: catalog
-                objectName: "fontsFromSubtitlesCatalog"
-                editable: true
-                Layout.fillWidth: true
-                Layout.preferredWidth: 220
-                Accessible.name: qsTr("Catalogs:")
-                onActivated: index => dialog.selection = index
-                Connections {
-                    target: catalog.contentItem
-                    ignoreUnknownSignals: true
-                    function onTextEdited() { dialog.selection = -1 }
-                }
-            }
-            Button {
-                objectName: "fontsFromSubtitlesAdd"
-                text: qsTr("Add")
-                // AddCatalog(ctlg, nullptr, false) and Append: no autosave.
-                onClicked: {
-                    const name = catalog.editText
-                    if (name.length > 0) {
-                        dialog.catalogs.addCatalog(name, false)
-                        catalog.model = catalog.model.concat([name])
-                        catalog.editText = name
-                    }
-                }
-            }
+    buttons: [
+        PrimaryButton {
+            id: addButton
+            objectName: "fontsFromSubtitlesOk"
+            text: qsTr("Add fonts")
+            enabled: dialog.chosen.length > 0
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            onClicked: dialog.add()
+        },
+        Button {
+            objectName: "fontsFromSubtitlesCancel"
+            text: qsTr("Cancel")
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: dialog.reject()
         }
-        CheckBox { id: emptyCatalog; objectName: "fontsFromSubtitlesClear"; text: qsTr("Remove all contents of catalog") }
-        CheckBox { id: allSubs; objectName: "fontsFromSubtitlesAllTabs"; text: qsTr("Add fonts from all open subtitles") }
-    }
-    footer: DialogButtonBox {
-        Button { objectName: "fontsFromSubtitlesOk"; text: qsTr("OK"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
-        Button { text: qsTr("Cancel"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
-    }
-    // ShowGetFromAssDialog: nothing without a selection; the editable
-    // choice's text names the catalog (HikariChoice::GetString).
-    onAccepted: {
-        if (selection < 0)
-            return
-        const name = catalog.editText
-        catalogs.collectFromSubtitles(name, emptyCatalog.checked, allSubs.checked)
-        collected(name)
-    }
+    ]
+    defaultButton: addButton
 }

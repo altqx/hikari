@@ -1,14 +1,24 @@
+pragma ComponentBehavior: Bound
 // Y6: legacy FontCatalogList "Manage font catalogs" (FontCatalogList.cpp:
-// 94-360 at 20d647c4), a modeless resizable window: the catalog choice with
-// Add, Edit, Delete and Load; Find, the filter text and "Save filter"; every
-// installed font with its mark, its catalog (a menu of the catalogs) and a
-// sample; the preview; the status bar. Edits are autosaved to
-// FontCatalogsAutosave0..2.txt 20 s after the first, and FontCatalogs.txt is
-// written when the window is shown or hidden (CATALOG_CHANGED) and, once a
-// window was made, when the application ends (~FontCatalogList).
+// 94-360 at 20d647c4), a modeless resizable window. Edits are autosaved to
+// FontCatalogsAutosave0..2.txt 20 s after the first, and FontCatalogs.txt
+// is written when the window is shown or hidden (CATALOG_CHANGED) and, once
+// a window was made, when the application ends (~FontCatalogList).
 //
-// "Refresh fonts" (the card's explicit refresh, F47-refresh) reads the
-// installed and external fonts again at once.
+// PU3 (#305): one window on DG1's frame for the program (FontWindows), never
+// made inside the font picker or the Style manager that open it:
+// * the catalogs on the leading side with their sizes, under one icon
+//   strip: New and Rename (popovers at the button, their name errors
+//   inline), Delete (a message box), Load from a file (the clash review for
+//   the catalogs that exist) and Add fonts from subtitles;
+// * every installed font with a check saying whether the chosen catalog
+//   holds it (Space toggles the selected rows), its catalogs and a sample
+//   (PU3-catalog-membership: legacy's mark column and per-row catalog
+//   menu); Show narrows the list; "Refresh fonts" (F47-refresh) reads the
+//   fonts again;
+// * the selected font's preview by the subtitle renderer;
+// * "Saved" in the footer while the safety copy is fresh, the file in its
+//   tooltip (legacy's status bar and its sentence), and Close.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
@@ -16,421 +26,701 @@ import QtQuick.Dialogs as Dialogs
 import QtQuick.Layouts
 import Hikari.Ui
 
-Dialog {
+DialogWindow {
     id: window
     objectName: "fontCatalogWindow"
     required property var catalogs // FontCatalogsController
+    property var notices: null // ToastStack
     title: qsTr("Manage font catalogs")
-    modal: false
-    width: 760
-    height: 640
+    dialogId: "fontCatalogs"
+    resizable: true
     property bool created: false
     property var fonts: []        // GetFonts when the window was made
-    property var rowCatalogs: []  // the Catalog column
-    property var marked: []       // each row's mark (FontItem::modified)
+    property string chosen: ""    // the catalog on the leading side
+    property int revision: 0      // the catalogs changed
+    property int show: 0          // 0 all fonts, 1 in the chosen catalog, 2 in none
+    property var selected: ({})   // the selected rows' fonts
+    property int resolveRequest: -1
+    property var resolution: ({})
     // CATALOG_CHANGED, sent when the window is shown and when it is hidden.
     signal catalogChanged()
 
-    // GenerateList(styleFont): every font, its catalog, the Style's font
-    // selected (the first equal ignoring case, else the first).
-    function create(styleFont) {
+    // The fonts the chosen catalog holds, by name.
+    readonly property var members: {
+        revision
+        const set = Object.create(null)
+        for (const f of fonts)
+            if (chosen.length > 0 && catalogs.isFontInCatalog(chosen, f))
+                set[f] = true
+        return set
+    }
+    readonly property var shown: {
+        revision
+        const term = search.text.trim().toLowerCase()
+        return fonts.filter(f => (term.length === 0 || f.toLowerCase().indexOf(term) >= 0)
+                                 && (show !== 1 || members[f] === true)
+                                 && (show !== 2 || catalogs.catalogOf(f).length === 0))
+    }
+    readonly property string currentFont: list.currentIndex >= 0 && list.currentIndex < shown.length ? shown[list.currentIndex] : ""
+
+    // GenerateList(styleFont): every font, the font given selected (the
+    // first equal ignoring case, else the first), and the first catalog
+    // holding it chosen.
+    function create(font) {
         fonts = catalogs.allFonts()
-        rowCatalogs = fonts.map(f => catalogs.catalogOf(f))
-        marked = fonts.map(() => false)
-        catalogField.model = catalogs.catalogNames
-        catalogField.currentIndex = -1
-        catalogField.editText = ""
-        seek.text = ""
-        filterField.text = catalogs.filterText
         created = true
         catalogs.windowMade() // ~FontCatalogList saves at the end
-        select(catalogs.styleFontIndex(fonts, styleFont))
-        refreshPreview()
+        const holding = catalogs.catalogsOf(font || "")
+        chosen = holding.length > 0 ? holding[0] : catalogs.catalogNames.length > 0 ? catalogs.catalogNames[0] : ""
+        show = 0
+        search.text = ""
+        selectFont(font)
     }
-    // SetStyleFont: FindItem(0, styleFont), selected when listed.
-    function setStyleFont(font) {
-        const i = fonts.indexOf(font)
-        if (i >= 0)
-            select(i)
+    // Opened from the picker or the Style editor (`opener`, their window)
+    // with their font.
+    function openFor(font, opener) {
+        if (!created)
+            create(font)
+        else if (!visible)
+            selectFont(font)
+        openFrom(opener || null)
+    }
+    // + › New catalog… in the picker: the window, then New's popover.
+    function startNew(font, opener) {
+        openFor(font, opener)
+        Qt.callLater(() => newPopover.openFor(newButton))
+    }
+    function selectFont(font) {
+        const row = font ? catalogs.styleFontIndex(shown, font) : 0
+        select(row)
     }
     function select(row) {
         list.currentIndex = row
         list.positionViewAtIndex(Math.max(0, row - 2), ListView.Beginning) // ScrollTo(sel - 2)
-    }
-    // RefreshList: each row's catalog again, and the choice's names.
-    function refreshList() {
-        rowCatalogs = fonts.map(f => catalogs.catalogOf(f))
-        const text = catalogField.editText
-        catalogField.model = catalogs.catalogNames
-        catalogField.editText = text
+        const f = row >= 0 && row < shown.length ? shown[row] : ""
+        const set = Object.create(null)
+        if (f.length > 0)
+            set[f] = true
+        selected = set
+        refreshPreview()
     }
     function refreshPreview() {
-        if (list.currentIndex >= 0 && list.currentIndex < fonts.length)
-            catalogs.renderPreview(fonts[list.currentIndex], Math.max(1, preview.width), Math.max(1, preview.height))
+        if (currentFont.length === 0)
+            return
+        catalogs.renderPreview(currentFont, Math.max(1, preview.width), Math.max(1, preview.height))
+        resolveRequest = catalogs.resolveFamily(currentFont, false, false)
     }
-    function findIndex(text) {
-        // HikariChoice::FindString: ignoring case, -1 for an empty text.
-        if (text.length === 0)
-            return -1
-        const lower = text.toLowerCase()
-        return catalogField.model.findIndex(n => n.toLowerCase() === lower)
+    // The selected fonts join or leave the chosen catalog (CatalogList's
+    // menu over the marked rows).
+    function setMembership(names, add) {
+        if (chosen.length === 0 || names.length === 0)
+            return
+        catalogs.setFontsInCatalog(chosen, names, add)
     }
-    // CatalogList's menu chose `catalog` for the selected row: the row and
-    // the marked rows join or leave it; their marks clear.
-    function chooseCatalog(row, catalog, add) {
-        const font = fonts[row]
-        const others = []
-        for (let i = 0; i < fonts.length; ++i)
-            if (marked[i] && i !== row)
-                others.push(i)
-        catalogs.setFontsInCatalog(catalog, [font].concat(others.map(i => fonts[i])), add)
-        const cats = rowCatalogs.slice()
-        const marks = marked.slice()
-        for (const i of others) {
-            cats[i] = add ? catalog : ""
-            marks[i] = false
-        }
-        marks[row] = false
-        cats[row] = add ? catalog : catalogs.catalogOf(font)
-        rowCatalogs = cats
-        marked = marks
+    function toggleSelected() {
+        const names = shown.filter(f => selected[f] === true)
+        setMembership(names, !(members[currentFont] === true))
     }
-
-    onOpened: catalogChanged()
-    onClosed: catalogChanged()
-
-    contentItem: ColumnLayout {
-        RowLayout {
-            Label { text: qsTr("Catalogs:") }
-            ComboBox {
-                id: catalogField
-                objectName: "fontCatalogField"
-                editable: true
-                Layout.fillWidth: true
-                Accessible.name: qsTr("Catalogs:")
-                // Legacy leaves the choice empty until a catalog is typed or
-                // chosen; the empty field says what goes in it (the style's
-                // combo box field draws no placeholder of its own).
-                Label {
-                    objectName: "fontCatalogFieldPlaceholder"
-                    z: 10 // over the field
-                    x: catalogField.leftPadding + 4
-                    anchors.verticalCenter: parent.verticalCenter
-                    visible: catalogField.editText.length === 0
-                    text: qsTr("Choose or type a catalog name")
-                    color: Theme.muted
-                    Accessible.ignored: true
-                }
-            }
-            IconToolButton {
-                objectName: "fontCatalogAddCatalog"
-                iconRole: "add"
-                text: qsTr("Add")
-                tip: qsTr("Add a catalog with this name")
-                onClicked: {
-                    const name = catalogField.editText
-                    if (name.length > 0) {
-                        window.catalogs.addCatalog(name, true)
-                        catalogField.model = catalogField.model.concat([name]) // Append
-                        catalogField.editText = name
-                    }
-                }
-            }
-            IconToolButton {
-                objectName: "fontCatalogEdit"
-                iconRole: "edit"
-                text: qsTr("Edit")
-                tip: qsTr("Edit the catalog")
-                onClicked: edition.openFor(window.findIndex(catalogField.editText))
-            }
-            IconToolButton {
-                objectName: "fontCatalogDelete"
-                iconRole: "delete"
-                text: qsTr("Delete")
-                tip: qsTr("Delete the catalog")
-                onClicked: {
-                    const name = catalogField.editText
-                    const index = window.findIndex(name)
-                    if (name.length > 0 && index !== -1) {
-                        deleteQuestion.name = name
-                        deleteQuestion.index = index
-                        deleteQuestion.open()
-                    }
-                }
-            }
-            IconToolButton {
-                objectName: "fontCatalogLoad"
-                iconRole: "import"
-                text: qsTr("Load")
-                tip: qsTr("Load a catalog from a file")
-                onClicked: loadDialog.open()
-            }
-            IconToolButton {
-                objectName: "fontCatalogRefreshFonts"
-                iconRole: "refresh"
-                text: qsTr("Refresh fonts")
-                tip: qsTr("Refresh fonts: reads the installed and external fonts again")
-                onClicked: {
-                    window.catalogs.refreshFonts()
-                    const font = list.currentIndex >= 0 ? window.fonts[list.currentIndex] : ""
-                    window.create(font)
-                }
-            }
+    function clickRow(row, modifiers) {
+        const f = shown[row]
+        if (modifiers & Qt.ControlModifier) {
+            const set = Object.assign(Object.create(null), selected)
+            if (set[f])
+                delete set[f]
+            else
+                set[f] = true
+            selected = set
+            list.currentIndex = row
+        } else if ((modifiers & Qt.ShiftModifier) && list.currentIndex >= 0) {
+            const set = Object.create(null)
+            for (let i = Math.min(row, list.currentIndex); i <= Math.max(row, list.currentIndex); ++i)
+                set[shown[i]] = true
+            selected = set
+        } else {
+            select(row)
+            return
         }
-        RowLayout {
-            Label { text: qsTr("Find:") }
-            TextField {
-                id: seek
-                objectName: "fontCatalogFind"
-                Layout.fillWidth: true
-                Accessible.name: qsTr("Find:")
-                onTextEdited: window.select(window.catalogs.catalogListIndex(window.fonts, text))
-            }
-            TextField {
-                id: filterField
-                objectName: "fontCatalogFilterText"
-                Layout.fillWidth: true
-                Accessible.name: qsTr("Filter")
-            }
-            Button {
-                objectName: "fontCatalogSaveFilter"
-                text: qsTr("Save filter")
-                onClicked: window.catalogs.saveFilterText(filterField.text)
-            }
-        }
-        RowLayout {
-            Label { text: qsTr("Font name"); Layout.preferredWidth: 290 }
-            Label { text: qsTr("Catalog"); Layout.preferredWidth: 140 }
-            Label {
-                text: qsTr("Sample")
-                Layout.fillWidth: true
-                // fonts.md: a Qt-drawn sample is labelled as one.
-                ToolTip.visible: sampleHover.hovered
-                ToolTip.text: qsTr("Drawn by Qt, not by the subtitle renderer")
-                HoverHandler { id: sampleHover }
-            }
-        }
-        ListView {
-            id: list
-            objectName: "fontCatalogList"
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.minimumHeight: 200
-            clip: true
-            model: window.fonts
-            currentIndex: -1
-            highlightMoveDuration: 0
-            Accessible.name: qsTr("Fonts")
-            ScrollBar.vertical: ScrollBar {}
-            delegate: ItemDelegate {
-                id: row
-                required property string modelData
-                required property int index
-                width: ListView.view.width
-                highlighted: ListView.isCurrentItem
-                onClicked: { // LIST_ITEM_LEFT_CLICK: the preview
-                    list.currentIndex = index
-                    window.refreshPreview()
-                }
-                contentItem: RowLayout {
-                    CheckBox {
-                        objectName: "fontCatalogMark"
-                        checked: window.marked[row.index] === true
-                        Accessible.name: qsTr("Mark %1").arg(row.modelData)
-                        onToggled: {
-                            const marks = window.marked.slice()
-                            marks[row.index] = checked
-                            window.marked = marks
-                        }
-                    }
-                    // On the selection, the selection's text colour (the
-                    // label kept the window text colour on the highlight).
-                    Label {
-                        text: row.modelData
-                        elide: Text.ElideRight
-                        Layout.preferredWidth: 260
-                        color: row.highlighted ? row.palette.highlightedText : row.palette.windowText
-                    }
-                    // A flat cell: the catalog's name, or a muted dash for
-                    // none; it shows as a button on hover (a column of
-                    // raised buttons read as a wall of buttons).
-                    Button {
-                        id: cell
-                        objectName: "fontCatalogCell"
-                        readonly property bool none: !window.rowCatalogs[row.index]
-                        text: window.rowCatalogs[row.index] || "\u2014"
-                        flat: true
-                        enabled: true
-                        Layout.preferredWidth: 140
-                        contentItem: Label {
-                            text: cell.text
-                            elide: Text.ElideRight
-                            horizontalAlignment: Text.AlignLeft
-                            verticalAlignment: Text.AlignVCenter
-                            color: row.highlighted && !cell.hovered ? row.palette.highlightedText
-                                                                    : cell.none ? Theme.muted : row.palette.windowText
-                        }
-                        Accessible.name: qsTr("Catalog of %1").arg(row.modelData)
-                        onClicked: {
-                            list.currentIndex = row.index
-                            cellMenu.row = row.index
-                            cellMenu.names = window.catalogs.catalogNames
-                            cellMenu.popup(this, 0, height)
-                        }
-                    }
-                    Label {
-                        text: window.catalogs.previewText
-                        font.family: row.modelData
-                        elide: Text.ElideRight
-                        Layout.fillWidth: true
-                        color: row.highlighted ? row.palette.highlightedText : row.palette.windowText
-                    }
-                }
-            }
-        }
-        // The selected font's preview, framed, drawn again at its size (it
-        // was drawn before the window had one, and stayed blank).
-        Frame {
-            Layout.fillWidth: true
-            Layout.preferredHeight: 160
-            padding: 1
-            Image {
-                id: preview
-                objectName: "fontCatalogPreview"
-                anchors.fill: parent
-                cache: false
-                fillMode: Image.Pad
-                source: window.catalogs.previewKey > 0 ? "image://fontcatalogpreview/" + window.catalogs.previewKey : ""
-                onWidthChanged: window.refreshPreview()
-                onHeightChanged: window.refreshPreview()
-            }
-        }
-        // The footer: the autosave note in the muted colour, and Close
-        // (the window is not modal).
-        RowLayout {
-            Label { objectName: "fontCatalogStatus"; text: window.catalogs.autosaveStatus; color: Theme.muted }
-            Label {
-                text: qsTr("The catalog list has autosave; files are stored in the \"Config\" folder.")
-                color: Theme.muted
-                Layout.fillWidth: true
-                elide: Text.ElideRight
-            }
-            Button { objectName: "fontCatalogClose"; text: qsTr("Close"); onClicked: window.close() }
-        }
+        refreshPreview()
     }
 
-    // CatalogList::OnMouseEvent's menu: the catalogs, checked where the font is.
-    ShellMenu {
-        id: cellMenu
-        objectName: "fontCatalogCellMenu"
-        property int row: -1
-        property var names: []
-        Instantiator {
-            model: cellMenu.names
-            delegate: ShellMenuItem {
-                required property string modelData
-                text: modelData
-                checkable: true
-                checked: cellMenu.row >= 0 && window.catalogs.isFontInCatalog(modelData, window.fonts[cellMenu.row])
-                keepsMenuOpen: false // ITEM_CHECK_AND_HIDE (FontCatalogList.cpp:393)
-                onTriggered: window.chooseCatalog(cellMenu.row, modelData, checked)
-            }
-            onObjectAdded: (index, object) => cellMenu.insertItem(index, object)
-            onObjectRemoved: (index, object) => cellMenu.removeItem(object)
-        }
+    // --- Catalogs -------------------------------------------------------
+    // The name typed is taken when a catalog has it ignoring case (other
+    // than the one renamed).
+    function nameProblem(name, renaming) {
+        const n = name.trim()
+        if (n.length === 0)
+            return renaming ? qsTr("Enter a name for the catalog.") : ""
+        const existing = catalogs.existingName(n)
+        if (existing.length === 0 || existing === renaming)
+            return ""
+        return renaming ? "" : qsTr("“%1” already exists.").arg(existing)
     }
-
-    // CatalogEdition "Select the name of the profile".
-    Dialog {
-        id: edition
-        objectName: "catalogEditionDialog"
-        title: qsTr("Select the name of the profile")
-        modal: true
-        anchors.centerIn: parent
-        function openFor(index) {
-            current.model = window.catalogs.catalogNames
-            current.currentIndex = index !== -1 ? index : 0
-            replacement.text = ""
-            open()
+    function createCatalog(name) {
+        catalogs.addCatalog(name, true)
+        chosen = name
+    }
+    // ChangeCatalogName: onto another catalog's name, the question first.
+    function renameCatalog(oldName, newName) {
+        const existing = catalogs.existingName(newName)
+        if (existing.length > 0 && existing !== oldName) {
+            ask({
+                title: qsTr("Rename font catalog"),
+                text: qsTr("A catalog named “%1” already exists.").arg(existing),
+                detail: qsTr("Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.").arg(oldName).arg(existing),
+                severity: "warning",
+                choices: [{ id: "replace", text: qsTr("Replace"), role: "destructive" },
+                          { id: "merge", text: qsTr("Merge"), role: "accept", isDefault: true },
+                          { id: "cancel", text: qsTr("Cancel"), role: "reject" }]
+            }, id => {
+                if (id === "merge" || id === "replace")
+                    renamed(oldName, existing, id === "merge" ? 0 : 1)
+            })
+            return
         }
-        contentItem: GroupBox {
-            title: qsTr("Choose new catalog name")
-            RowLayout {
-                ComboBox { id: current; objectName: "catalogEditionCurrent"; Layout.fillWidth: true; Accessible.name: qsTr("Catalog") }
-                Label { text: qsTr("Replace with:") }
-                TextField { id: replacement; objectName: "catalogEditionNewName"; Layout.fillWidth: true; Accessible.name: qsTr("Replace with:") }
-            }
-        }
-        footer: DialogButtonBox {
-            Button {
-                objectName: "catalogEditionOk"
-                text: qsTr("OK")
-                onClicked: {
-                    if (replacement.text.length === 0) {
-                        info.open() // "Enter a name for the new catalog"
-                        return
-                    }
-                    edition.close()
-                    const oldName = current.currentIndex >= 0 ? current.currentText : ""
-                    if (window.catalogs.catalogExists(replacement.text)) {
-                        clash.oldName = oldName
-                        clash.newName = replacement.text
-                        clash.open()
-                    } else {
-                        window.renamed(oldName, replacement.text, 0)
-                    }
-                }
-            }
-            Button { text: qsTr("Cancel"); onClicked: edition.close() }
-        }
+        renamed(oldName, newName, 0)
     }
     function renamed(oldName, newName, answer) {
-        if (catalogs.renameCatalog(oldName, newName, answer)) {
-            refreshList()
-            catalogField.editText = newName // catalog->SetValue
+        if (catalogs.renameCatalog(oldName, newName, answer))
+            chosen = newName
+    }
+    function askDelete() {
+        const name = chosen
+        if (name.length === 0)
+            return
+        const size = catalogs.catalogSize(name)
+        ask({
+            title: qsTr("Delete font catalog"),
+            text: qsTr("Delete the catalog “%1”?").arg(name),
+            detail: size === 0 ? qsTr("It holds no fonts.") : qsTr("Its fonts stay installed and in their other catalogs."),
+            severity: "warning",
+            choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, id => {
+            if (id !== "delete")
+                return
+            const names = catalogs.catalogNames
+            const at = names.indexOf(name)
+            catalogs.removeCatalog(name)
+            const left = catalogs.catalogNames
+            chosen = left.length > 0 ? left[Math.min(at, left.length - 1)] : ""
+        })
+    }
+    // Load (PU3-load-review): the file's catalogs; those that exist with
+    // other fonts go to the clash review, Merge (legacy's) first.
+    function load(file) {
+        const r = catalogs.reviewCatalogFile(file)
+        if (!r.ok) {
+            if (notices)
+                notices.post("warning", qsTr("Cannot read “%1”").arg(r.file), qsTr("The file holds no font catalog."))
+            return
+        }
+        if (r.rows.length === 0) {
+            loaded(catalogs.loadReviewed([]), r.file)
+            return
+        }
+        const taken = catalogs.catalogNames.map(n => n.toLowerCase())
+        const suggest = name => {
+            for (let i = 2; ; ++i) {
+                const n = qsTr("%1 (%2)").arg(name).arg(i)
+                if (taken.indexOf(n.toLowerCase()) < 0)
+                    return n
+            }
+        }
+        reviewLoader.active = true
+        reviewLoader.item.review({
+            title: qsTr("Load font catalogs"),
+            text: qsTr("%1 of %2 catalogs in “%3” already exist.").arg(r.rows.length).arg(r.total).arg(r.file),
+            detail: [r.total - r.rows.length - r.same > 0 ? qsTr("New catalogs are added: %1.").arg(r.total - r.rows.length - r.same) : "",
+                     r.same > 0 ? qsTr("Catalogs with the same fonts as yours are left as they are: %1.").arg(r.same) : ""]
+                    .filter(t => t.length > 0).join(" "),
+            canMerge: true,
+            action: "merge",
+            nameHeading: qsTr("Catalog"),
+            differenceHeading: qsTr("Fonts"),
+            rows: r.rows.map(row => ({ name: row.name,
+                                       difference: qsTr("%1 here, %2 in the file (%3 new)").arg(row.here).arg(row.there).arg(row.added),
+                                       suggestion: suggest(row.name) })),
+            added: r.total - r.rows.length - r.same,
+            acceptText: count => qsTr("Load %n catalog(s)", "", count)
+        }, results => {
+            if (results)
+                loaded(catalogs.loadReviewed(results.map(x => ({ name: x.name, action: x.action, newName: x.newName }))), r.file)
+        })
+    }
+    function loaded(result, file) {
+        if (notices && result.loaded > 0) {
+            const parts = []
+            if (result.added > 0) parts.push(qsTr("%n new", "", result.added))
+            if (result.merged > 0) parts.push(qsTr("%n merged", "", result.merged))
+            if (result.replaced > 0) parts.push(qsTr("%n replaced", "", result.replaced))
+            if (result.renamed > 0) parts.push(qsTr("%n renamed", "", result.renamed))
+            notices.post("info", result.loaded === 1 ? qsTr("Loaded 1 font catalog")
+                                                     : qsTr("Loaded %n font catalogs", "", result.loaded),
+                         qsTr("From %1: %2.").arg(file).arg(parts.join(", ")))
         }
     }
-    Dialog {
-        id: info
-        title: qsTr("Info")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { text: qsTr("Enter a name for the new catalog") }
-        onClosed: edition.open()
+    // PK1's message box: made at the first question.
+    function ask(options, done) {
+        boxLoader.active = true
+        boxLoader.item.ask(options, done)
     }
-    // ChangeCatalogName's question: Merge (Yes), Delete (No), Cancel.
-    Dialog {
-        id: clash
-        objectName: "catalogClashQuestion"
-        property string oldName
-        property string newName
-        title: qsTr("Prompt")
-        modal: true
-        anchors.centerIn: parent
-        Label { text: qsTr("Catalog named \"%1\" already exists. What to do?").arg(clash.newName) }
-        footer: DialogButtonBox {
-            Button { objectName: "catalogClashMerge"; text: qsTr("Merge"); onClicked: { clash.close(); window.renamed(clash.oldName, clash.newName, 0) } }
-            Button { objectName: "catalogClashDelete"; text: qsTr("Delete"); onClicked: { clash.close(); window.renamed(clash.oldName, clash.newName, 1) } }
-            Button { objectName: "catalogClashCancel"; text: qsTr("Cancel"); onClicked: clash.close() }
+
+    onVisibleChanged: {
+        if (!created)
+            return
+        catalogs.save()
+        catalogChanged()
+    }
+    Connections {
+        target: window.catalogs
+        function onCatalogsChanged() {
+            window.revision++
+            if (window.chosen.length > 0 && !window.catalogs.catalogExists(window.chosen))
+                window.chosen = window.catalogs.catalogNames.length > 0 ? window.catalogs.catalogNames[0] : ""
+        }
+        // FontEnum's observers: a font change lists the fonts again.
+        function onFontsChanged() {
+            if (!window.created)
+                return
+            const font = window.currentFont
+            window.fonts = window.catalogs.allFonts()
+            window.selectFont(font)
+        }
+        function onResolutionReady(requestId, result) {
+            if (requestId === window.resolveRequest)
+                window.resolution = result
         }
     }
-    Dialog {
-        id: deleteQuestion
-        objectName: "catalogDeleteQuestion"
-        property string name
-        property int index: -1
-        title: qsTr("Prompt")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Yes | Dialog.No
-        Label { text: qsTr("Are you sure you want to delete this catalog?") }
-        onAccepted: {
-            window.catalogs.removeCatalog(name)
-            const names = catalogField.model.slice()
-            names.splice(index, 1) // catalog->Delete(index)
-            catalogField.model = names
-            catalogField.editText = "" // SetValue("")
+
+    RowLayout {
+        spacing: 16
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.topMargin: 6
+        // The catalogs.
+        ColumnLayout {
+            spacing: 6
+            Layout.preferredWidth: 200
+            Layout.maximumWidth: 200
+            Layout.fillHeight: true
+            Label { text: qsTr("Catalogs"); color: Theme.muted; font: window.fontAt(11) }
+            RowLayout {
+                spacing: 2
+                IconToolButton {
+                    id: newButton
+                    objectName: "fontCatalogNew"
+                    iconRole: "add"
+                    text: qsTr("New catalog")
+                    onClicked: newPopover.openFor(newButton)
+                }
+                IconToolButton {
+                    id: renameButton
+                    objectName: "fontCatalogRename"
+                    iconRole: "edit"
+                    text: qsTr("Rename")
+                    enabled: window.chosen.length > 0
+                    onClicked: renamePopover.openFor(renameButton)
+                }
+                IconToolButton {
+                    objectName: "fontCatalogDelete"
+                    iconRole: "delete"
+                    text: qsTr("Delete")
+                    enabled: window.chosen.length > 0
+                    onClicked: window.askDelete()
+                }
+                Rectangle { width: 1; height: 18; color: Theme.line; Layout.leftMargin: 4; Layout.rightMargin: 4 }
+                IconToolButton {
+                    objectName: "fontCatalogLoad"
+                    iconRole: "import"
+                    text: qsTr("Load from a file")
+                    onClicked: loadDialog.open()
+                }
+                IconToolButton {
+                    objectName: "fontCatalogFromSubtitles"
+                    iconRole: "fonts-from-subtitles"
+                    text: qsTr("Add fonts from subtitles")
+                    onClicked: if (FontWindows.fromSubtitles)
+                                   FontWindows.fromSubtitles.openFor(window.chosen, name => window.chosen = name, window)
+                }
+            }
+            Rectangle {
+                color: Theme.field
+                border.color: Theme.line
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: 120
+                Label {
+                    visible: catalogList.count === 0
+                    anchors.fill: parent
+                    anchors.margins: 10
+                    text: qsTr("No catalogs yet")
+                    color: Theme.muted
+                    wrapMode: Text.Wrap
+                }
+                ListView {
+                    id: catalogList
+                    objectName: "fontCatalogCatalogs"
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    clip: true
+                    // Read once made: the catalogs load at their first use.
+                    model: window.created ? window.catalogs.catalogNames : []
+                    currentIndex: model.indexOf(window.chosen)
+                    highlightMoveDuration: 0
+                    Accessible.name: qsTr("Catalogs")
+                    ScrollBar.vertical: ScrollBar {}
+                    delegate: ItemDelegate {
+                        id: catalogRow
+                        required property string modelData
+                        required property int index
+                        width: ListView.view.width
+                        height: 28
+                        highlighted: ListView.isCurrentItem
+                        Accessible.name: modelData
+                        onClicked: window.chosen = modelData
+                        background: Rectangle {
+                            color: catalogRow.highlighted ? Theme.select : catalogRow.hovered ? Theme.raised : "transparent"
+                            Rectangle { visible: catalogRow.highlighted; width: 3; height: parent.height; color: Theme.accent }
+                        }
+                        contentItem: RowLayout {
+                            Label {
+                                text: catalogRow.modelData
+                                font.weight: catalogRow.highlighted ? Font.DemiBold : Font.Normal
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                            }
+                            Label {
+                                text: window.revision >= 0 ? window.catalogs.catalogSize(catalogRow.modelData) : ""
+                                color: Theme.muted
+                                font: window.fontAt(12)
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        // The fonts.
+        ColumnLayout {
+            spacing: 8
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            RowLayout {
+                spacing: 6
+                TextField {
+                    id: search
+                    objectName: "fontCatalogFind"
+                    placeholderText: qsTr("Search fonts")
+                    Accessible.name: qsTr("Search fonts")
+                    Layout.preferredWidth: 220
+                    leftPadding: 28
+                    onTextEdited: window.select(0)
+                    Keys.onDownPressed: list.forceActiveFocus()
+                    Icon {
+                        iconRole: "search"
+                        anchors.left: parent.left
+                        anchors.leftMargin: 7
+                        anchors.verticalCenter: parent.verticalCenter
+                    }
+                }
+                Label { text: qsTr("Show"); color: Theme.muted; Layout.leftMargin: 6 }
+                SegmentedButtons {
+                    objectName: "fontCatalogShow"
+                    currentIndex: window.show
+                    choices: [{ text: qsTr("All fonts"), name: "fontCatalogShowAll" },
+                              { text: window.chosen.length > 0 ? qsTr("In “%1”").arg(window.chosen) : qsTr("In the catalog"),
+                                name: "fontCatalogShowIn", enabled: window.chosen.length > 0 },
+                              { text: qsTr("Not in a catalog"), name: "fontCatalogShowNone" }]
+                    Accessible.name: qsTr("Show")
+                    onActivated: index => { window.show = index; window.select(0) }
+                }
+                Item { Layout.fillWidth: true }
+                IconToolButton {
+                    objectName: "fontCatalogRefreshFonts"
+                    iconRole: "refresh"
+                    text: qsTr("Refresh fonts")
+                    tip: qsTr("Refresh fonts: reads the installed and external fonts again")
+                    onClicked: {
+                        const font = window.currentFont
+                        window.catalogs.refreshFonts()
+                        window.fonts = window.catalogs.allFonts()
+                        window.selectFont(font)
+                    }
+                }
+            }
+            Rectangle {
+                color: Theme.field
+                border.color: Theme.line
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                Layout.minimumHeight: 200
+                Layout.preferredWidth: 600
+                Layout.preferredHeight: 340
+                Rectangle {
+                    id: header
+                    x: 1; y: 1
+                    width: parent.width - 2
+                    height: 26
+                    color: Theme.raised
+                    Rectangle { anchors.bottom: parent.bottom; width: parent.width; height: 1; color: Theme.line }
+                    RowLayout {
+                        anchors.fill: parent
+                        anchors.leftMargin: 10
+                        spacing: 10
+                        Item { implicitWidth: 20 }
+                        Label { text: qsTr("Font"); color: Theme.muted; font: window.fontAt(12); Layout.preferredWidth: 170 }
+                        Label { text: qsTr("Catalogs"); color: Theme.muted; font: window.fontAt(12); Layout.preferredWidth: 130 }
+                        Label {
+                            text: qsTr("Sample")
+                            color: Theme.muted
+                            font: window.fontAt(12)
+                            Layout.fillWidth: true
+                            // fonts.md: a Qt-drawn sample is labelled as one.
+                            ToolTip.visible: sampleHover.hovered
+                            ToolTip.text: qsTr("Drawn by Qt, not by the subtitle renderer")
+                            HoverHandler { id: sampleHover }
+                        }
+                    }
+                }
+                Label {
+                    visible: window.shown.length === 0
+                    x: 12; y: header.height + 10
+                    text: qsTr("No fonts match")
+                    color: Theme.muted
+                }
+                ListView {
+                    id: list
+                    objectName: "fontCatalogList"
+                    x: 1
+                    y: header.height + 1
+                    width: parent.width - 2
+                    height: parent.height - header.height - 2
+                    clip: true
+                    model: window.shown
+                    currentIndex: -1
+                    highlightMoveDuration: 0
+                    keyNavigationEnabled: true
+                    Accessible.name: qsTr("Fonts")
+                    ScrollBar.vertical: ScrollBar {}
+                    onCurrentIndexChanged: if (activeFocus) window.select(currentIndex)
+                    Keys.onSpacePressed: window.toggleSelected()
+                    delegate: ItemDelegate {
+                        id: row
+                        required property string modelData
+                        required property int index
+                        readonly property bool isSelected: window.selected[modelData] === true
+                        objectName: "fontCatalogRow"
+                        width: ListView.view.width
+                        height: 28
+                        highlighted: isSelected
+                        Accessible.name: modelData
+                        background: Rectangle {
+                            color: row.isSelected ? Theme.select : row.hovered ? Theme.raised : "transparent"
+                            Rectangle { visible: row.isSelected && row.ListView.isCurrentItem; width: 3; height: parent.height; color: Theme.accent }
+                            // A click selects; Ctrl adds or removes, Shift a range.
+                            MouseArea {
+                                anchors.fill: parent
+                                onClicked: mouse => {
+                                    list.forceActiveFocus()
+                                    window.clickRow(row.index, mouse.modifiers)
+                                }
+                            }
+                        }
+                        contentItem: RowLayout {
+                            spacing: 10
+                            CheckBox {
+                                objectName: "fontCatalogMember"
+                                padding: 0
+                                enabled: window.chosen.length > 0
+                                checked: window.members[row.modelData] === true
+                                Accessible.name: qsTr("“%1” in “%2”").arg(row.modelData).arg(window.chosen)
+                                onToggled: window.setMembership([row.modelData], checked)
+                            }
+                            Label {
+                                text: row.modelData
+                                elide: Text.ElideRight
+                                Layout.preferredWidth: 170
+                            }
+                            Label {
+                                readonly property var held: window.revision >= 0 ? window.catalogs.catalogsOf(row.modelData) : []
+                                text: held.length > 0 ? held.join(", ") : "—"
+                                color: Theme.muted
+                                font: window.fontAt(12)
+                                elide: Text.ElideRight
+                                Layout.preferredWidth: 130
+                            }
+                            Label {
+                                text: window.catalogs.previewText
+                                font.family: row.modelData
+                                font.pixelSize: 15
+                                elide: Text.ElideRight
+                                Layout.fillWidth: true
+                                Accessible.ignored: true
+                            }
+                        }
+                    }
+                }
+            }
+            // The selected font's preview, by the subtitle renderer.
+            Rectangle {
+                color: Theme.field
+                border.color: Theme.line
+                Layout.fillWidth: true
+                Layout.preferredHeight: 100
+                Image {
+                    id: preview
+                    objectName: "fontCatalogPreview"
+                    anchors.fill: parent
+                    anchors.margins: 1
+                    cache: false
+                    fillMode: Image.Pad
+                    source: window.catalogs.previewKey > 0 ? "image://fontcatalogpreview/" + window.catalogs.previewKey : ""
+                    onWidthChanged: window.refreshPreview()
+                    onHeightChanged: window.refreshPreview()
+                }
+            }
+            FontResolutionNote {
+                objectName: "fontCatalogResolution"
+                resolution: window.resolution
+                Layout.fillWidth: true
+            }
+        }
+    }
+
+    leadingActions: [
+        Label {
+            objectName: "fontCatalogStatus"
+            visible: window.catalogs.autosaveStatus.length > 0
+            text: qsTr("Saved")
+            color: Theme.muted
+            ToolTip.visible: savedHover.hovered
+            ToolTip.text: qsTr("The catalogs are saved automatically to FontCatalogs.txt in the \"Config\" folder.")
+            HoverHandler { id: savedHover }
+        }
+    ]
+    buttons: [
+        PrimaryButton {
+            id: closeButton
+            objectName: "fontCatalogClose"
+            text: qsTr("Close")
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: window.reject()
+        }
+    ]
+    defaultButton: closeButton
+
+    // New and Rename: the name in a popover at the button.
+    Popover {
+        id: newPopover
+        objectName: "fontCatalogNewPopover"
+        title: qsTr("New catalog")
+        showTitle: true
+        initialFocus: newName
+        readonly property string problem: window.nameProblem(newName.text, "")
+        function openFor(anchorItem) {
+            newName.text = ""
+            openAt(anchorItem)
+        }
+        function create() {
+            const name = newName.text.trim()
+            if (name.length === 0 || problem !== "")
+                return
+            keep()
+            window.createCatalog(name)
+        }
+        TextField {
+            id: newName
+            objectName: "fontCatalogNewName"
+            placeholderText: qsTr("Catalog name")
+            Accessible.name: qsTr("Catalog name")
+            Layout.preferredWidth: 240
+            onAccepted: newPopover.create()
+        }
+        Label {
+            objectName: "fontCatalogNewProblem"
+            visible: newPopover.problem !== ""
+            text: newPopover.problem
+            color: Theme.danger
+            wrapMode: Text.Wrap
+            Layout.preferredWidth: 240
+        }
+        RowLayout {
+            Layout.alignment: Qt.AlignRight
+            PrimaryButton {
+                objectName: "fontCatalogNewCreate"
+                text: qsTr("Create")
+                enabled: newName.text.trim().length > 0 && newPopover.problem === ""
+                onClicked: newPopover.create()
+            }
+            Button { text: qsTr("Cancel"); onClicked: newPopover.revert() }
+        }
+    }
+    Popover {
+        id: renamePopover
+        objectName: "fontCatalogRenamePopover"
+        title: qsTr("Rename “%1”").arg(renamePopover.oldName)
+        showTitle: true
+        initialFocus: renameField
+        property string oldName: ""
+        readonly property string problem: window.nameProblem(renameField.text, oldName)
+        function openFor(anchorItem) {
+            oldName = window.chosen
+            renameField.text = oldName
+            renameField.selectAll()
+            openAt(anchorItem)
+        }
+        function rename() {
+            const name = renameField.text.trim()
+            if (problem !== "")
+                return
+            keep()
+            if (name !== oldName)
+                window.renameCatalog(oldName, name)
+        }
+        TextField {
+            id: renameField
+            objectName: "fontCatalogRenameName"
+            Accessible.name: qsTr("Catalog name")
+            Layout.preferredWidth: 240
+            onAccepted: renamePopover.rename()
+        }
+        Label {
+            objectName: "fontCatalogRenameProblem"
+            visible: renamePopover.problem !== ""
+            text: renamePopover.problem
+            color: Theme.danger
+            wrapMode: Text.Wrap
+            Layout.preferredWidth: 240
+        }
+        RowLayout {
+            Layout.alignment: Qt.AlignRight
+            PrimaryButton {
+                objectName: "fontCatalogRenameOk"
+                text: qsTr("Rename")
+                enabled: renamePopover.problem === ""
+                onClicked: renamePopover.rename()
+            }
+            Button { text: qsTr("Cancel"); onClicked: renamePopover.revert() }
+        }
+    }
+
+    Loader {
+        id: boxLoader
+        visible: false // a window: no room in the layout
+        active: false
+        sourceComponent: MessageBox {
+            objectName: "fontCatalogMessageBox"
+            settings: window.settings
+        }
+    }
+    // PK1: made at the first clash.
+    Loader {
+        id: reviewLoader
+        visible: false
+        active: false
+        sourceComponent: ClashReview {
+            objectName: "fontCatalogClashReview"
+            dialogId: "fontCatalogClashes"
+            settings: window.settings
         }
     }
     // OnLoadCatalogs (FontCatalogList.cpp:315-316): "Text files (*.txt)",
@@ -442,9 +732,6 @@ Dialog {
         title: qsTr("Choose font catalog file")
         nameFilters: [qsTr("Text files (*.txt)")]
         fileMode: Dialogs.FileDialog.OpenFile
-        onAccepted: {
-            window.catalogs.loadCatalogsFrom(selectedFile)
-            window.refreshList()
-        }
+        onAccepted: window.load(selectedFile)
     }
 }

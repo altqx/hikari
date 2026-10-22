@@ -1,15 +1,13 @@
-// Y6: the font catalog choice, Add, Manage and the Filter toggle of the font
-// dialog (FontDialog "Filtering and font catalogs", FontDialog.cpp:422-486)
-// and of the Style editor (StyleChange.cpp:78-130) at 20d647c4. `fonts` is
-// the list ChangeCatalog made; the owner shows it and selects in it when
-// listMade() is signalled.
+// Y6: the font catalog choice, Add, Manage and the Filter toggle of the
+// Style editor (StyleChange.cpp:78-130 at 20d647c4). `fonts` is the list
+// ChangeCatalog made; the owner shows it and selects in it when listMade()
+// is signalled. The Style editor reads the filter text when it opens and
+// asks the catalog window to select its font when it is opened again.
+// "Without catalog" removes the catalogs' fonts (Y6-without-catalog).
 //
-// The two windows differ where legacy did: the font dialog reads
-// STYLE_EDIT_FILTER_TEXT each time and keeps its choice within the list when
-// the catalogs change; the Style editor reads the filter text when it opens
-// and asks the catalog window to select its font when it is opened again.
-// "Without catalog" removes the catalogs' fonts in both (Y6-without-catalog:
-// legacy's font dialog removed its first font per catalog entry).
+// PU3 (#305): the font picker has its own chips instead; Manage and "Add
+// fonts from subtitles" open the program's one window of each
+// (FontWindows), never made inside the Style manager.
 pragma Translator: "HikariSub.Fonts"
 import QtQuick
 import QtQuick.Controls
@@ -18,9 +16,8 @@ import Hikari.Ui
 
 RowLayout {
     id: bar
-    objectName: fontDialog ? "fontDialogCatalogBar" : "styleEditorCatalogBar"
+    objectName: "styleEditorCatalogBar"
     required property var catalogs // FontCatalogsController
-    property bool fontDialog: false
     // GetFontName / styleFont->GetValue(): the font Add and Manage act on.
     property string fontName: ""
     property var fonts: []
@@ -52,20 +49,16 @@ RowLayout {
             catalogs.setFilterOn(filter.checked)
         const value = staleText !== "" ? staleText
                     : choice.currentIndex >= 0 && choice.currentIndex < choices.length ? choices[choice.currentIndex] : ""
-        fonts = catalogs.fontList(choice.currentIndex, value, filter.checked,
-                                  fontDialog ? catalogs.filterText : filterTextAtOpen)
+        fonts = catalogs.fontList(choice.currentIndex, value, filter.checked, filterTextAtOpen)
         listMade()
     }
     // CATALOG_CHANGED (the catalog window shown or hidden): the choice made
-    // again around its selection, the list, then SaveCatalogs.
-    // The font dialog clamps the choice to the last entry (FontDialog.cpp:
-    // 466-474); the Style editor does not (StyleChange.cpp:98-104).
+    // again around its selection, the list, then SaveCatalogs. The Style
+    // editor does not clamp the choice (StyleChange.cpp:98-104).
     function catalogsChangedByWindow() {
         let sel = choice.currentIndex
         const before = choices
         choices = catalogs.catalogChoices()
-        if (fontDialog && sel >= choices.length)
-            sel = choices.length - 1
         if (sel < choices.length) {
             choice.currentIndex = sel // SetSelection(sel): its text follows
             staleText = ""
@@ -97,13 +90,10 @@ RowLayout {
         changeCatalog(false)
         catalogs.save()
     }
-    // AddToCatalog: with no catalog legacy logged where to make one; else the
-    // menu of "Add fonts from subtitles" and a check per catalog.
+    // AddToCatalog: the menu of "Add fonts from subtitles" and a check per
+    // catalog; with none, "No catalogs yet" and New catalog… (PU3-no-catalog:
+    // legacy logged where to make one).
     function addToCatalog() {
-        if (catalogs.catalogNames.length === 0) {
-            catalogs.noCatalogToAddTo()
-            return
-        }
         addMenu.targetFont = fontName
         addMenu.names = catalogs.catalogNames
         addMenu.popup(addButton, 0, addButton.height)
@@ -150,14 +140,9 @@ RowLayout {
         objectName: "fontCatalogManage"
         iconRole: "settings"
         text: qsTr("Manage")
-        tip: bar.fontDialog ? qsTr("Manages font catalogs") : qsTr("Allows managing font catalogs")
-        onClicked: {
-            if (!manageWindow.created)
-                manageWindow.create(bar.fontName)
-            else if (!bar.fontDialog)
-                manageWindow.setStyleFont(bar.fontName) // FCL->SetStyleFont
-            manageWindow.open()
-        }
+        tip: qsTr("Allows managing font catalogs")
+        // FCL->SetStyleFont: the window selects the Style's font.
+        onClicked: if (FontWindows.catalogWindow) FontWindows.catalogWindow.openFor(bar.fontName, bar.Window.window)
     }
     IconToolButton {
         id: filter
@@ -180,14 +165,29 @@ RowLayout {
 
     ShellMenu {
         id: addMenu
-        objectName: bar.fontDialog ? "fontDialogCatalogAddMenu" : "styleEditorCatalogAddMenu"
+        objectName: "styleEditorCatalogAddMenu"
         property string targetFont: ""
         property var names: []
         ShellMenuItem {
             iconRole: "fonts-from-subtitles"
-            objectName: "fontsFromSubtitlesItem"
-            text: qsTr("Add fonts from subtitles")
-            onTriggered: fromSubtitles.openFor(bar.catalogs.catalogNames)
+            objectName: "styleEditorFromSubtitlesItem"
+            text: qsTr("Add fonts from subtitles…")
+            onTriggered: if (FontWindows.fromSubtitles)
+                             FontWindows.fromSubtitles.openFor("", catalog => bar.collectedInto(catalog), bar.Window.window)
+        }
+        ShellMenuItem {
+            objectName: "styleEditorNoCatalogs"
+            text: qsTr("No catalogs yet")
+            enabled: false
+            visible: addMenu.names.length === 0
+            height: visible ? implicitHeight : 0
+        }
+        ShellMenuItem {
+            objectName: "styleEditorNewCatalog"
+            text: qsTr("New catalog…")
+            visible: addMenu.names.length === 0
+            height: visible ? implicitHeight : 0
+            onTriggered: if (FontWindows.catalogWindow) FontWindows.catalogWindow.startNew(bar.fontName, bar.Window.window)
         }
         Instantiator {
             model: addMenu.names
@@ -204,20 +204,12 @@ RowLayout {
             onObjectRemoved: (index, object) => addMenu.removeItem(object)
         }
     }
-    FontsFromSubtitlesDialog {
-        id: fromSubtitles
-        objectName: bar.fontDialog ? "fontDialogFromSubtitles" : "styleEditorFromSubtitles"
-        catalogs: bar.catalogs
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        onCollected: catalog => bar.collectedInto(catalog)
-    }
-    FontCatalogWindow {
-        id: manageWindow
-        objectName: bar.fontDialog ? "fontDialogCatalogWindow" : "styleEditorCatalogWindow"
-        catalogs: bar.catalogs
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        onCatalogChanged: bar.catalogsChangedByWindow()
+    Connections {
+        target: FontWindows.catalogWindow
+        ignoreUnknownSignals: true
+        function onCatalogChanged() {
+            if (bar.listed)
+                bar.catalogsChangedByWindow()
+        }
     }
 }

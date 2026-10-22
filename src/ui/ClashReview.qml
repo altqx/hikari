@@ -11,8 +11,11 @@ pragma Translator: "HikariSub.MainWindow"
 //
 // review(options, done): title, text, detail, rows ([{name, occurrence,
 // difference, suggestion}]: occurrence, which of the Styles of that name
-// sent the row is), canRename (default true), action (each row's first, default
-// "replace"), acceptText(count of rows written, added) and added;
+// sent the row is), canRename (default true), canMerge (PU3: a Merge action
+// first, for font catalogs; default false), action (each row's first,
+// default "replace"), nameHeading and differenceHeading (the columns'
+// headings, default "Name" and "Difference"), acceptText(count of rows
+// written, added) and added;
 // done([{name, occurrence, action, newName}]), or done(null) when cancelled.
 import QtQuick
 import QtQuick.Controls
@@ -28,6 +31,9 @@ DialogWindow {
     property string detail: ""
     property var rows: []
     property bool canRename: true
+    property bool canMerge: false
+    property string nameHeading: qsTr("Name")
+    property string differenceHeading: qsTr("Difference")
     // Each row's action ("replace", "rename", "skip") and new name.
     property var actions: []
     property var names: []
@@ -36,9 +42,9 @@ DialogWindow {
     property var done: null
     readonly property int written: added + actions.filter(a => a !== "skip").length
     // The actions offered, in order, with their buttons' names.
-    readonly property var kinds: canRename ? ["replace", "rename", "skip"] : ["replace", "skip"]
+    readonly property var kinds: (canMerge ? ["merge"] : []).concat(canRename ? ["replace", "rename", "skip"] : ["replace", "skip"])
     function choicesFor(prefix) {
-        const text = { replace: qsTr("Replace"), rename: qsTr("Rename"), skip: qsTr("Skip") }
+        const text = { merge: qsTr("Merge"), replace: qsTr("Replace"), rename: qsTr("Rename"), skip: qsTr("Skip") }
         return kinds.map(k => ({ text: text[k], name: prefix + "_" + k }))
     }
 
@@ -48,6 +54,9 @@ DialogWindow {
         text = o.text || ""
         detail = o.detail || ""
         canRename = o.canRename !== false
+        canMerge = o.canMerge === true
+        nameHeading = o.nameHeading || qsTr("Name")
+        differenceHeading = o.differenceHeading || qsTr("Difference")
         added = o.added || 0
         acceptText = o.acceptText || null
         const first = o.action || "replace"
@@ -136,8 +145,8 @@ DialogWindow {
                 anchors.fill: parent
                 anchors.leftMargin: 10
                 spacing: 10
-                Label { text: qsTr("Name"); color: Theme.muted; Layout.preferredWidth: 120 }
-                Label { text: qsTr("Difference"); color: Theme.muted; Layout.preferredWidth: 150 }
+                Label { text: review.nameHeading; color: Theme.muted; Layout.preferredWidth: 120 }
+                Label { text: review.differenceHeading; color: Theme.muted; Layout.preferredWidth: 150 }
                 Label { text: qsTr("Action"); color: Theme.muted; Layout.fillWidth: true }
             }
         }

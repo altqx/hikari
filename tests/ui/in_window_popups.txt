@@ -11,16 +11,9 @@ AllTagsEditionDialog.qml:questionBox
 AspectRatioDialog.qml:dialog
 AutomationNotices.qml:notice
 DummyVideoDialog.qml:dialog
-FontCatalogWindow.qml:window
-FontCatalogWindow.qml:edition
-FontCatalogWindow.qml:info
-FontCatalogWindow.qml:clash
-FontCatalogWindow.qml:deleteQuestion
 FontCollectorDialog.qml:dialog
 FontCollectorDialog.qml:message
 FontCollectorDialog.qml:replaceQuestion
-FontDialog.qml:dialog
-FontsFromSubtitlesDialog.qml:dialog
 Main.qml:readOnlyWarning
 Main.qml:shiftConfirm
 Main.qml:conversionDialog

@@ -2755,7 +2755,9 @@ private slots:
         return content ? findItem(content, QLatin1String(name)) : nullptr;
     }
 
-    void fontDialogTagsTheSelectionAndCancelTakesItBack()
+    // PU3 (#305): the font picker from the Line editor (E1's font dialog):
+    // each change tags the selection at once, and Cancel takes it back.
+    void fontPickerTagsTheSelectionAndCancelTakesItBack()
     {
         const QString path = dir.filePath(QStringLiteral("font.ass"));
         {
@@ -2779,40 +2781,46 @@ private slots:
         press(Qt::Key_Home);
         auto *text = item("lineText");
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("abc"));
-        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("fontDialog"));
-        QVERIFY(dialog);
+        auto *picker = named("fontPicker");
+        QVERIFY(picker);
 
         // Bold on the selection with tags hidden: the tag, and the Style's
         // value after it, in the raw text; the field still shows "abc".
         text->forceActiveFocus();
         QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("fontDialog", "fontName")->property("text").toString(), QStringLiteral("Arial"));
-        QCOMPARE(dialogItem("fontDialog", "fontSize")->property("text").toString(), QStringLiteral("20"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontBold"), "click"));
+        QTRY_VERIFY(picker->property("visible").toBool());
+        QCOMPARE(picker->property("title").toString(), QStringLiteral("Font selection"));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Arial"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("20"));
+        // The preview draws the selected text.
+        QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(),
+                 QStringLiteral("The Line’s selected text"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerBold"), "click"));
         QTRY_COMPARE(QString::fromUtf8(reinterpret_cast<const char *>(session->draftText().value_or(u8"").c_str())),
                      QStringLiteral("{\\b1}abc{\\b0}"));
         QCOMPARE(text->property("text").toString(), QStringLiteral("abc"));
         application->editor().setShowTags(true);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\b1}abc{\\b0}"));
-        // A later change in the same dialog replaces the tag in place.
-        dialogItem("fontDialog", "fontSize")->setProperty("text", QStringLiteral("30"));
+        // A later change in the same picker replaces the tag in place.
+        dialogItem("fontPicker", "fontPickerSize")->setProperty("text", QStringLiteral("30"));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\fs30\\b1}abc{\\fs20\\b0}"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerOk"), "click"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
 
-        // Cancel takes the dialog's changes back and leaves no draft behind.
+        // Cancel takes the picker's changes back and leaves no draft behind.
         QVERIFY(application->editor().commit());
         const auto steps = session->historySize();
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
         QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("fontDialog", "fontSize")->property("text").toString(), QStringLiteral("30"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontItalic"), "click"));
+        QTRY_VERIFY(picker->property("visible").toBool());
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSize")->property("text").toString(), QStringLiteral("30"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The Line’s text"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerItalic"), "click"));
         QTRY_VERIFY(text->property("text").toString().contains(QStringLiteral("\\i1")));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCancel"), "click"));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\fs30\\b1}abc{\\fs20\\b0}"));
         QVERIFY(!session->draftLine());
         QCOMPARE(session->historySize(), steps);
@@ -2851,7 +2859,7 @@ private slots:
         f.write(events);
         return path;
     }
-    QObject *openFontDialog(const QString &path)
+    QObject *openFontPicker(const QString &path)
     {
         if (!application->openFile(path))
             return nullptr;
@@ -2862,228 +2870,425 @@ private slots:
             return nullptr;
         text->forceActiveFocus();
         text->setProperty("cursorPosition", 0);
-        auto *dialog = named("fontDialog");
+        auto *picker = named("fontPicker");
         QMetaObject::invokeMethod(visualItem("changeFont"), "click");
-        return QTest::qWaitFor([&] { return dialog->property("visible").toBool(); }) ? dialog : nullptr;
+        return QTest::qWaitFor([&] { return picker->property("visible").toBool(); }) ? picker : nullptr;
     }
     static void choose(QObject *combo, int index)
     {
         combo->setProperty("currentIndex", index);
         QMetaObject::invokeMethod(combo, "activated", Q_ARG(int, index));
     }
+    // A popup menu's entry by object name and text.
+    static QQuickItem *menuEntry(QObject *menu, const QString &name, const QString &text = QString())
+    {
+        for (QQuickItem *entry : menuItems(menu))
+            if (entry && entry->objectName() == name && (text.isEmpty() || entry->property("text").toString() == text))
+                return entry;
+        return nullptr;
+    }
+    // The last notice posted on the toast stack (the first of its entries),
+    // as "title|text".
+    QString lastNotice() const
+    {
+        const QVariantList entries = named("toastStack")->property("entries").toList();
+        if (entries.isEmpty())
+            return QString();
+        const QVariantMap last = entries.first().toMap();
+        return last.value(QStringLiteral("title")).toString() + QLatin1Char('|') + last.value(QStringLiteral("text")).toString();
+    }
 
-    // Y6: the font dialog's list comes from the FontService through the
-    // catalog choice (FontDialog::ChangeCatalog, FontDialog.cpp:656-695) and
-    // the Filter (GetFontsTable); the renderer reports what it selected.
-    void fontDialogListsCatalogsAndTheFilter()
+    // PU3 (#305): the picker's list comes from the FontService through the
+    // catalog chip (FontDialog::ChangeCatalog, FontDialog.cpp:656-695) and the
+    // characters chip (GetFontsTable); the search filters as you type
+    // (PU3-font-search), a name no font answers to can be used anyway, and
+    // the renderer reports what it selected.
+    void fontPickerSearchesAndFiltersTheFamilies()
     {
         usePickerFonts();
-        auto *dialog = openFontDialog(fontAss("picker.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        auto *list = dialogItem("fontDialog", "fontList");
-        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
+        auto *picker = openFontPicker(fontAss("picker.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(picker);
+        const auto in = [this](const char *name) { return dialogItem("fontPicker", name); };
+        const auto shown = [picker] { return picker->property("shown").toStringList(); };
         const QStringList all{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"};
-        QCOMPARE(list->property("model").toStringList(), all);
-        QCOMPARE(list->property("currentIndex").toInt(), 3); // SetSelectionByName("Tahoma")
-        QCOMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B"}));
+        QCOMPARE(shown(), all);
+        QCOMPARE(in("fontPickerList")->property("currentIndex").toInt(), 3); // the Style's Tahoma
+        QCOMPARE(in("fontPickerCount")->property("text").toString(), QStringLiteral("5 fonts"));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B"}));
+        // Each family's catalogs at the row's trailing edge.
+        QString verdanaNote;
+        auto *rows = in("fontPickerList")->property("contentItem").value<QQuickItem *>();
+        for (QQuickItem *row : rows->childItems())
+            if (row->objectName() == QLatin1String("fontPickerRow") && row->property("family").toString() == QLatin1String("Verdana"))
+                verdanaNote = row->property("note").toString();
+        QCOMPARE(verdanaNote, QStringLiteral("A"));
+
+        // The catalog chip: a menu of the choices with their sizes.
+        auto *catalogChip = in("fontPickerCatalog");
+        QCOMPARE(catalogChip->property("text").toString(), QStringLiteral("All fonts"));
+        QVERIFY(!catalogChip->property("on").toBool());
+        QVERIFY(QMetaObject::invokeMethod(catalogChip, "click"));
+        auto *menu = named("fontPickerCatalogMenu");
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QStringList sizes;
+        for (QQuickItem *entry : menuItems(menu))
+            if (entry && entry->objectName() == QLatin1String("fontPickerCatalogItem"))
+                sizes << entry->property("text").toString() + QLatin1Char(' ') + entry->property("shortcutText").toString();
+        QCOMPARE(sizes, (QStringList{"All fonts 5", "Without catalog 2", "A 3", "B 1"}));
+        QVERIFY(menuEntry(menu, QStringLiteral("fontPickerCatalogManage")));
         // A catalog: its installed fonts, sorted (GetCatalogFonts); the
-        // Style's font is not among them, so the partial-name search picks.
-        choose(choice, 2);
-        QCOMPARE(list->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
-        QCOMPARE(list->property("currentIndex").toInt(), 1); // "tahoma": past "arial", at "verdana"
-        // "Without catalog": the fonts no catalog holds, as in the Style
-        // editor (Y6-without-catalog; legacy's FontList::FindString answered
-        // 0, removing the first font per catalog entry).
-        choose(choice, 1);
-        QCOMPARE(list->property("model").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
-        // The Filter: the fonts with a glyph for each of STYLE_EDIT_FILTER_TEXT's
-        // characters, and STYLE_EDIT_FILTER_TEXT_ON saved.
-        choose(choice, 0);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontFilter"), "toggle"));
-        QMetaObject::invokeMethod(dialogItem("fontDialog", "fontFilter"), "toggled");
-        QCOMPARE(list->property("model").toStringList(), (QStringList{"Arial", "Tahoma"}));
+        // Style's Tahoma is not among them, so nothing is selected.
+        QVERIFY(QMetaObject::invokeMethod(menuEntry(menu, QStringLiteral("fontPickerCatalogItem"), QStringLiteral("A")), "triggered"));
+        QTRY_VERIFY(!menu->property("visible").toBool());
+        QCOMPARE(shown(), (QStringList{"Arial", "Verdana"}));
+        QCOMPARE(catalogChip->property("text").toString(), QStringLiteral("A"));
+        QVERIFY(catalogChip->property("on").toBool());
+        QCOMPARE(in("fontPickerList")->property("currentIndex").toInt(), -1);
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(in("fontPickerCount")->property("text").toString(), QStringLiteral("2 of 5 fonts"));
+        // "Without catalog": the fonts no catalog holds (Y6-without-catalog).
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 1)));
+        QCOMPARE(shown(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 0)));
+
+        // The characters chip (PU3-character-chip): the text in a popover,
+        // Apply keeping it in STYLE_EDIT_FILTER_TEXT and turning the filter
+        // on (STYLE_EDIT_FILTER_TEXT_ON), Clear turning it off.
+        auto *characters = in("fontPickerCharacters");
+        QCOMPARE(characters->property("text").toString(), QStringLiteral("Characters"));
+        QVERIFY(QMetaObject::invokeMethod(characters, "click"));
+        auto *popover = named("fontPickerCharactersPopover");
+        QTRY_VERIFY(popover->property("visible").toBool());
+        auto *field = named("fontPickerCharactersText");
+        QCOMPARE(field->property("text").toString(), QStringLiteral("ą"));
+        QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersApply"), "click"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(shown(), (QStringList{"Arial", "Tahoma"}));
         QVERIFY(application->settingsStore()->boolean("styles.editFilterTextOn"));
-        // Typing selects as FontList::SetSelectionByPartialName.
-        dialogItem("fontDialog", "fontName")->setProperty("text", QStringLiteral("ta"));
-        QCOMPARE(list->property("currentIndex").toInt(), 1);
-        // The renderer's selection for the typed name: substituted.
-        QTRY_VERIFY(dialogItem("fontDialog", "fontResolution")->property("text").toString().contains(QStringLiteral("DejaVu Sans")));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(characters->property("text").toString(), QStringLiteral("Has “ą”"));
+        QVERIFY(characters->property("on").toBool());
+        QVERIFY(QMetaObject::invokeMethod(characters, "click"));
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersClear"), "click"));
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(shown(), all);
+        QVERIFY(!application->settingsStore()->boolean("styles.editFilterTextOn"));
+        QCOMPARE(application->settingsStore()->text("styles.editFilterText"), QStringLiteral("ą"));
+
+        // The search filters as you type and picks the family it names, else
+        // the first starting with it, else the first shown.
+        auto *search = in("fontPickerSearch");
+        search->setProperty("text", QStringLiteral("a"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "pickTyped"));
+        QCOMPARE(shown(), (QStringList{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"}));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Arial"));
+        search->setProperty("text", QStringLiteral("ta"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "pickTyped"));
+        QCOMPARE(shown(), QStringList{"Tahoma"});
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(in("fontPickerCount")->property("text").toString(), QStringLiteral("1 of 5 fonts"));
+        // Up and Down move in the list while the search keeps the keyboard.
+        search->setProperty("text", QString());
+        QVERIFY(QMetaObject::invokeMethod(picker, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Verdana"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "step", Q_ARG(QVariant, 1)));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Verdana"));
+        // A name no installed font answers to: said so, and usable anyway.
+        search->setProperty("text", QStringLiteral("Futura"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "pickTyped"));
+        QCOMPARE(shown(), QStringList());
+        QCOMPARE(picker->property("unlisted").toString(), QStringLiteral("Futura"));
+        QCOMPARE(in("fontPickerEmpty")->property("text").toString(), QStringLiteral("No installed font is called “Futura”."));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Verdana"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, QStringLiteral("Futura"))));
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Futura"));
+        // The renderer's selection for the name: substituted, in words.
+        QTRY_VERIFY(in("fontResolutionText")->property("text").toString().contains(QStringLiteral("DejaVu Sans")));
+        QVERIFY(in("fontResolutionText")->property("text").toString().startsWith(QStringLiteral("Not installed")));
+        // The preview is drawn by the subtitle renderer.
+        QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
+        QTRY_VERIFY(in("fontPickerPreview")->property("source").toString().startsWith(QStringLiteral("image://fontcatalogpreview/sample/")));
+        QVERIFY(QMetaObject::invokeMethod(in("fontPickerCancel"), "click"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
         application->fontCatalogs().waitResolved();
     }
 
-    // Y6: "Manage font catalogs" (FontCatalogList.cpp): the fonts with their
-    // catalogs, Add with its autosave copy, the Catalog column's menu over
-    // the marked rows, rename with Merge, and FontCatalogs.txt written when
-    // the window hides (CATALOG_CHANGED).
+    // PU3 (#305): + adds the picker's family to a catalog (legacy's Add
+    // menu, AddToCatalog), its rows' catalogs following.
+    void fontPickerAddsTheFamilyToACatalog()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        auto *picker = openFontPicker(fontAss("picker-add.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("family").toString(), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerAdd"), "click"));
+        auto *menu = named("fontPickerAddMenu");
+        QTRY_VERIFY(menu->property("visible").toBool());
+        QVERIFY(!menuEntry(menu, QStringLiteral("fontPickerNoCatalogs"))->isVisible());
+        auto *a = menuEntry(menu, QStringLiteral("fontPickerAddItem"), QStringLiteral("A"));
+        QVERIFY(a);
+        QVERIFY(!a->property("checked").toBool());
+        QVERIFY(menuEntry(menu, QStringLiteral("fontPickerNewCatalog")));
+        QVERIFY(menuEntry(menu, QStringLiteral("fontsFromSubtitlesItem")));
+        QVERIFY(QMetaObject::invokeMethod(a, "toggle"));
+        QVERIFY(QMetaObject::invokeMethod(a, "triggered"));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
+        const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
+        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("\tTahoma\r\n}\r\nB={"));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"A"});
+        // The catalog chip's choice follows: A now lists Tahoma.
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2)));
+        QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Arial", "Tahoma", "Verdana"}));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
+    // PU3 (#305): "Manage font catalogs" is one window for the program,
+    // never made inside the font picker or the Style manager that open it:
+    // the same window from both, transient for its opener.
+    void fontCatalogWindowIsOneWindowOfItsOwn()
+    {
+        usePickerFonts();
+        auto *root = engine->rootObjects().first();
+        auto *window = qobject_cast<QQuickWindow *>(named("fontCatalogWindow"));
+        QVERIFY(window);
+        QVERIFY(qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog")));
+        auto *picker = qobject_cast<QQuickWindow *>(openFontPicker(fontAss("one-window.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n")));
+        QVERIFY(picker);
+        QVERIFY(!picker->findChild<QObject *>(QStringLiteral("fontCatalogWindow")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerManage"), "click"));
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->transientParent(), picker);
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("A")); // Tahoma is in no catalog: the first
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        application->fontCatalogs().waitResolved();
+
+        // From the Style editor's catalog bar: the same window.
+        auto *manager = root->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("styleManagerMenuItem")), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        QVERIFY(!manager->findChild<QObject *>(QStringLiteral("fontCatalogWindow")));
+        const QVariantMap values = application->styleManager().beginEdit(false, 0);
+        QVERIFY(QMetaObject::invokeMethod(manager, "beginEditing", Q_ARG(QVariant, values), Q_ARG(QVariant, false)));
+        auto *bar = findItem(manager->contentItem(), QStringLiteral("styleEditorCatalogBar"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->transientParent(), manager);
+        QCOMPARE(qobject_cast<QQuickWindow *>(named("fontCatalogWindow")), window);
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        application->fontCatalogs().waitResolved();
+    }
+
+    // PU3 (#305, PU3-catalog-membership): the catalog window's catalogs on
+    // the leading side, New in a popover with its name error inline, each
+    // font's check for the chosen catalog (Ctrl adds rows, Space toggles
+    // them), Show, Rename onto a taken name through PK1's message box
+    // (Merge, Replace, Cancel), Delete through another, the "Saved" status
+    // with the autosave copy, and FontCatalogs.txt written when the window
+    // hides (CATALOG_CHANGED).
     void fontCatalogWindowManagesTheCatalogs()
     {
         usePickerFonts();
         auto &catalogs = application->fontCatalogs();
         catalogs.setAutosaveInterval(20);
-        auto *dialog = openFontDialog(fontAss("manage.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
-        auto *window = named("fontDialogCatalogWindow");
-        QVERIFY(window);
+        auto *window = named("fontCatalogWindow");
+        const auto in = [this](const char *name) { return dialogItem("fontCatalogWindow", name); };
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Verdana")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
         const QStringList all{"Arial", "Comic Sans MS", "Impact", "Tahoma", "Verdana"};
         QCOMPARE(window->property("fonts").toStringList(), all);
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"A", "", "B", "", "A"}));
-        QCOMPARE(dialogItem("fontDialogCatalogWindow", "fontCatalogList")->property("currentIndex").toInt(), 3);
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("A")); // the first catalog holding Verdana
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Verdana"));
+        QCOMPARE(in("fontCatalogCatalogs")->property("model").toStringList(), (QStringList{"A", "B"}));
+        QCOMPARE(in("fontCatalogCatalogs")->property("currentIndex").toInt(), 0);
         // Load's chooser is titled for catalog files (Y6-load-title).
         auto *load = window->findChild<QObject *>(QStringLiteral("fontCatalogLoadDialog"));
         QVERIFY(load);
         QCOMPARE(load->property("title").toString(), QStringLiteral("Choose font catalog file"));
-        // Add: a new catalog in the choice, saved to FontCatalogsAutosave0.txt.
-        auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
-        // The empty choice (legacy's) says what goes in it; typing hides that.
-        auto *placeholder = dialogItem("fontDialogCatalogWindow", "fontCatalogFieldPlaceholder");
-        QVERIFY(placeholder);
-        QCOMPARE(field->property("editText").toString(), QString());
-        QVERIFY(placeholder->isVisible());
-        field->setProperty("editText", QStringLiteral("C"));
-        QVERIFY(!placeholder->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogAddCatalog"), "click"));
+        QVERIFY(!in("fontCatalogStatus")->isVisible());
+
+        // New: a name another catalog has, ignoring case, is said inline.
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogNew"), "click"));
+        auto *newPopover = named("fontCatalogNewPopover");
+        QTRY_VERIFY(newPopover->property("visible").toBool());
+        auto *newName = named("fontCatalogNewName");
+        newName->setProperty("text", QStringLiteral("b"));
+        QCOMPARE(named("fontCatalogNewProblem")->property("text").toString(), QStringLiteral("“B” already exists."));
+        QVERIFY(!named("fontCatalogNewCreate")->property("enabled").toBool());
+        newName->setProperty("text", QStringLiteral("C"));
+        QVERIFY(!qobject_cast<QQuickItem *>(named("fontCatalogNewProblem"))->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(named("fontCatalogNewCreate"), "click"));
+        QTRY_VERIFY(!newPopover->property("visible").toBool());
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("C"));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
         QTRY_VERIFY(readAll(dirPath + QStringLiteral("/FontCatalogsAutosave0.txt")).contains("C={\r\n}\r\n"));
         QCOMPARE(catalogs.autosaveStatus(), QStringLiteral("Autosave"));
-        // The Catalog column's menu on Comic Sans MS with Tahoma marked: both join C.
-        QVariantList marks{false, false, false, true, false};
-        window->setProperty("marked", marks);
-        QVERIFY(QMetaObject::invokeMethod(window, "chooseCatalog", Q_ARG(QVariant, 1), Q_ARG(QVariant, QStringLiteral("C")),
-                                          Q_ARG(QVariant, true)));
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"A", "C", "B", "C", "A"}));
-        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Tahoma")));
-        // Edit: C onto the existing B, merged; C leaves the choices.
-        QVERIFY(catalogs.catalogExists(QStringLiteral("B")));
-        QVERIFY(QMetaObject::invokeMethod(window, "renamed", Q_ARG(QVariant, QStringLiteral("C")), Q_ARG(QVariant, QStringLiteral("B")),
-                                          Q_ARG(QVariant, 0)));
-        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B"}));
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"A", "B", "B", "B", "A"}));
-        // Hiding the window saves FontCatalogs.txt (the font dialog's CATALOG_CHANGED).
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
-        QTRY_COMPARE(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")),
-                     QByteArray("\xEF\xBB\xBF" "A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\n"
-                                "B={\r\n\tImpact\r\n\tComic Sans MS\r\n\tTahoma\r\n}\r\n"));
-        QCOMPARE(dialogItem("fontDialog", "fontCatalogChoice")->property("model").toStringList(),
-                 (QStringList{"All fonts", "Without catalog", "A", "B"}));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
-        application->fontCatalogs().waitResolved();
-    }
+        QTRY_VERIFY(in("fontCatalogStatus")->isVisible());
+        QCOMPARE(in("fontCatalogStatus")->property("text").toString(), QStringLiteral("Saved"));
 
-    // Y6: the catalog window's Edit and Delete through their questions
-    // (FontCatalogList.cpp:126-150, ChangeCatalogName at 739-776): Cancel
-    // keeps both catalogs, Delete drops the existing list for the renamed
-    // one's, and "Are you sure" removes a catalog. The font dialog keeps its
-    // choice within the list when the window hides (FontDialog.cpp:466-474).
-    void fontCatalogWindowEditAndDeleteAsk()
-    {
-        usePickerFonts();
-        auto &catalogs = application->fontCatalogs();
-        auto *dialog = openFontDialog(fontAss("edit.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
-        choose(choice, 3); // B
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
-        auto *window = named("fontDialogCatalogWindow");
-        QTRY_VERIFY(window->property("visible").toBool());
-        const auto in = [window](const char *name) { return window->findChild<QObject *>(QLatin1String(name)); };
-        auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
-        // Edit with B in the field: the question opens on B.
-        field->setProperty("editText", QStringLiteral("b"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogEdit"), "click"));
-        auto *edition = in("catalogEditionDialog");
-        QTRY_VERIFY(edition->property("visible").toBool());
-        QCOMPARE(in("catalogEditionCurrent")->property("currentIndex").toInt(), 1);
-        // A onto the existing B: the question; Cancel changes nothing.
-        in("catalogEditionCurrent")->setProperty("currentIndex", 0);
-        in("catalogEditionNewName")->setProperty("text", QStringLiteral("B"));
-        QVERIFY(QMetaObject::invokeMethod(in("catalogEditionOk"), "click"));
-        auto *clash = in("catalogClashQuestion");
-        QTRY_VERIFY(clash->property("visible").toBool());
-        QVERIFY(!edition->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(in("catalogClashCancel"), "click"));
-        QTRY_VERIFY(!clash->property("visible").toBool());
+        // Comic Sans MS, then Tahoma with Ctrl: Space puts both in C.
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 1), Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(window, "clickRow", Q_ARG(QVariant, 3), Q_ARG(QVariant, int(Qt::ControlModifier))));
+        QVERIFY(QMetaObject::invokeMethod(window, "toggleSelected"));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Comic Sans MS")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Tahoma")));
+        // Show "In “C”": only its fonts; "Not in a catalog": every font is in one now.
+        window->setProperty("show", 1);
+        QCOMPARE(window->property("shown").toStringList(), (QStringList{"Comic Sans MS", "Tahoma"}));
+        window->setProperty("show", 2);
+        QCOMPARE(window->property("shown").toStringList(), QStringList());
+        window->setProperty("show", 0);
+        // A row's check takes it out again.
+        QVERIFY(QMetaObject::invokeMethod(window, "setMembership", Q_ARG(QVariant, QStringList{"Tahoma"}), Q_ARG(QVariant, false)));
+        QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("C"), QStringLiteral("Tahoma")));
+        QVERIFY(QMetaObject::invokeMethod(window, "setMembership", Q_ARG(QVariant, QStringList{"Tahoma"}), Q_ARG(QVariant, true)));
+
+        // Rename: an empty name is said inline; onto B (any case) asks.
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogRename"), "click"));
+        auto *renamePopover = named("fontCatalogRenamePopover");
+        QTRY_VERIFY(renamePopover->property("visible").toBool());
+        auto *renameName = named("fontCatalogRenameName");
+        QCOMPARE(renameName->property("text").toString(), QStringLiteral("C"));
+        renameName->setProperty("text", QStringLiteral(" "));
+        QCOMPARE(named("fontCatalogRenameProblem")->property("text").toString(), QStringLiteral("Enter a name for the catalog."));
+        QVERIFY(!named("fontCatalogRenameOk")->property("enabled").toBool());
+        renameName->setProperty("text", QStringLiteral("b"));
+        QVERIFY(QMetaObject::invokeMethod(named("fontCatalogRenameOk"), "click"));
+        QTRY_VERIFY(!renamePopover->property("visible").toBool());
+        auto *box = named("fontCatalogMessageBox");
+        QVERIFY(box);
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Rename font catalog"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("A catalog named “B” already exists."));
+        // Cancel changes nothing.
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->property("visible").toBool());
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "C"}));
+        // Merge: C's fonts join B, C goes, B is chosen.
+        QVERIFY(QMetaObject::invokeMethod(window, "renameCatalog", Q_ARG(QVariant, QStringLiteral("C")), Q_ARG(QVariant, QStringLiteral("b"))));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("merge"))));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B"}));
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("B"));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Impact")));
-        // Again, answering Delete: B's list goes, A's fonts become B's.
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogEdit"), "click"));
-        QTRY_VERIFY(edition->property("visible").toBool());
-        in("catalogEditionCurrent")->setProperty("currentIndex", 0);
-        in("catalogEditionNewName")->setProperty("text", QStringLiteral("B"));
-        QVERIFY(QMetaObject::invokeMethod(in("catalogEditionOk"), "click"));
-        QTRY_VERIFY(clash->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(in("catalogClashDelete"), "click"));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Tahoma")));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Comic Sans MS")), QStringList{"B"});
+        // Replace: A onto B drops B's list first.
+        QVERIFY(QMetaObject::invokeMethod(window, "renameCatalog", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QStringLiteral("B"))));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("replace"))));
         QCOMPARE(catalogs.catalogNames(), QStringList{"B"});
         QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Impact")));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Verdana")));
-        QCOMPARE(field->property("editText").toString(), QStringLiteral("B")); // catalog->SetValue
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"B", "", "", "", "B"}));
-        // Hiding: the choice's B at 3 is past the new end, so the font dialog
-        // takes the last entry (B, now at 2).
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
-        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "B"}));
-        QCOMPARE(choice->property("currentIndex").toInt(), 2);
-        QCOMPARE(choice->property("displayText").toString(), QStringLiteral("B"));
-        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
-        // Delete asks "Are you sure"; No keeps the catalog, Yes removes it.
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
+        // A free name: renamed in place, chosen.
+        QVERIFY(QMetaObject::invokeMethod(window, "renameCatalog", Q_ARG(QVariant, QStringLiteral("B")), Q_ARG(QVariant, QStringLiteral("Latin"))));
+        QCOMPARE(catalogs.catalogNames(), QStringList{"Latin"});
+        QCOMPARE(window->property("chosen").toString(), QStringLiteral("Latin"));
+
+        // Hiding the window saves FontCatalogs.txt (CATALOG_CHANGED).
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogClose"), "click"));
+        QTRY_VERIFY(!window->property("visible").toBool());
+        QTRY_COMPARE(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")),
+                     QByteArray("\xEF\xBB\xBF" "Latin={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n}\r\n"));
+
+        // Delete asks; Cancel keeps the catalog, Delete removes it.
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
-        field->setProperty("editText", QStringLiteral("B"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogDelete"), "click"));
-        auto *question = in("catalogDeleteQuestion");
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "reject"));
-        QCOMPARE(catalogs.catalogNames(), QStringList{"B"});
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogDelete"), "click"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Delete font catalog"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Delete the catalog “Latin”?"));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QCOMPARE(catalogs.catalogNames(), QStringList{"Latin"});
+        QVERIFY(QMetaObject::invokeMethod(in("fontCatalogDelete"), "click"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("delete"))));
         QCOMPARE(catalogs.catalogNames(), QStringList{});
-        QCOMPARE(field->property("editText").toString(), QString());
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
-        // With no catalog, Insert's clamp puts "Without catalog" first
-        // (ListControls.cpp:685-688); 2 is clamped to the last entry.
-        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"Without catalog", "All fonts"}));
-        QCOMPARE(choice->property("currentIndex").toInt(), 1);
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        QCOMPARE(window->property("chosen").toString(), QString());
+        QVERIFY(!in("fontCatalogRename")->property("enabled").toBool());
+        QVERIFY(!in("fontCatalogDelete")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();
     }
 
-    // Y6-rename-listed: Edit renaming a catalog to a free name lists the new
-    // name at once, in the old one's place: in the window's choice and, when
-    // the window hides, in the font dialog's (legacy ChangeCatalogName,
-    // FontCatalogList.cpp:739-776, dropped the old name and listed the new
-    // one only after a restart).
-    void fontCatalogRenameIsListedAtOnce()
+    // PU3 (#305, PU3-load-review): Load reads the file's catalogs; the new
+    // ones are added, those the same as yours left, and those that exist
+    // with other fonts reviewed in PK1's clash review (Merge, legacy's, by
+    // default; Replace, Rename or Skip each). An unreadable file is a notice.
+    void fontCatalogLoadReviewsTheClashes()
     {
         usePickerFonts();
         auto &catalogs = application->fontCatalogs();
-        auto *dialog = openFontDialog(fontAss("rename.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
-        auto *window = named("fontDialogCatalogWindow");
+        auto *window = named("fontCatalogWindow");
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
-        const auto in = [window](const char *name) { return window->findChild<QObject *>(QLatin1String(name)); };
-        auto *field = dialogItem("fontDialogCatalogWindow", "fontCatalogField");
-        field->setProperty("editText", QStringLiteral("A"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogEdit"), "click"));
-        QTRY_VERIFY(in("catalogEditionDialog")->property("visible").toBool());
-        QCOMPARE(in("catalogEditionCurrent")->property("currentIndex").toInt(), 0);
-        in("catalogEditionNewName")->setProperty("text", QStringLiteral("Latin"));
-        QVERIFY(QMetaObject::invokeMethod(in("catalogEditionOk"), "click"));
-        QCOMPARE(catalogs.catalogNames(), (QStringList{"Latin", "B"}));
-        QCOMPARE(field->property("model").toStringList(), (QStringList{"Latin", "B"}));
-        QCOMPARE(field->property("editText").toString(), QStringLiteral("Latin"));
-        QCOMPARE(window->property("rowCatalogs").toStringList(), (QStringList{"Latin", "", "B", "", "Latin"}));
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
-        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
-        QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "Latin", "B"}));
-        choose(choice, 2);
-        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList(), (QStringList{"Arial", "Verdana"}));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        const auto catalogFile = [this](const char *name, const char *text) {
+            const QString path = dir.filePath(QLatin1String(name));
+            QFile f(path);
+            if (f.open(QIODevice::WriteOnly))
+                f.write(text);
+            return path;
+        };
+        const QString file = catalogFile("more-catalogs.txt", "A={\n\tTahoma\n}\nB={\n\tImpact\n}\nD={\n\tComic Sans MS\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
+        auto *review = named("fontCatalogClashReview");
+        QVERIFY(review);
+        QTRY_VERIFY(review->property("visible").toBool());
+        QCOMPARE(review->property("title").toString(), QStringLiteral("Load font catalogs"));
+        QCOMPARE(review->property("text").toString(), QStringLiteral("1 of 3 catalogs in “more-catalogs.txt” already exist."));
+        QCOMPARE(review->property("nameHeading").toString(), QStringLiteral("Catalog"));
+        const QVariantList rows = review->property("rows").toList();
+        QCOMPARE(rows.size(), 1);
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("name")).toString(), QStringLiteral("A"));
+        QCOMPARE(rows[0].toMap().value(QStringLiteral("difference")).toString(), QStringLiteral("3 here, 1 in the file (1 new)"));
+        QCOMPARE(review->property("actions").toStringList(), QStringList{"merge"});
+        QCOMPARE(review->property("kinds").toStringList(), (QStringList{"merge", "replace", "rename", "skip"}));
+        // Rename: the file's A comes in as "A (2)".
+        QVERIFY(QMetaObject::invokeMethod(review, "setAction", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("rename"))));
+        QCOMPARE(review->property("names").toStringList(), QStringList{"A (2)"});
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QTRY_VERIFY(!review->property("visible").toBool());
+        QCOMPARE(catalogs.catalogNames().join(QLatin1Char('|')), QStringLiteral("A|B|A (2)|D"));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), QStringList{"A (2)"});
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 3);
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("B")), 1);
+        QCOMPARE(lastNotice(), QStringLiteral("Loaded 2 font catalogs|From more-catalogs.txt: 1 new, 1 renamed."));
+        // Again with Merge: the file's Tahoma joins A; D, now the same, is left.
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
+        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("A")), 4);
+        QCOMPARE(lastNotice(), QStringLiteral("Loaded 1 font catalog|From more-catalogs.txt: 1 merged."));
+        // Cancel loads nothing.
+        const QString other = catalogFile("other-catalogs.txt", "B={\n\tArial\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
+        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, false)));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Arial")), QStringList{"A"});
+        // Replace: B holds the file's fonts only.
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
+        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(review, "setAll", Q_ARG(QVariant, QStringLiteral("replace"))));
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Impact")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Arial")));
+        // A file with no catalog in it: a warning, nothing loaded.
+        const QString empty = catalogFile("no-catalogs.txt", "nothing here\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(empty))));
+        QCOMPARE(lastNotice(), QStringLiteral("Cannot read “no-catalogs.txt”|The file holds no font catalog."));
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "A (2)", "D"}));
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+        QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();
     }
 
@@ -3109,7 +3314,7 @@ private slots:
     }
 
     // Y6: ~FontCatalogList saves the catalogs (FontCatalogList.cpp:218-221):
-    // once a catalog window was made, the application's end writes
+    // once the catalog window was made, the application's end writes
     // FontCatalogs.txt with the edits made while it is still open. Without
     // a window the file is left as it was (not rewritten with a BOM).
     void fontCatalogsAreSavedAtTheEndOnceAWindowWasMade()
@@ -3127,24 +3332,20 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write(plain);
         }
-        auto *dialog = openFontDialog(fontAss("end-none.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        QCOMPARE(dialogItem("fontDialog", "fontCatalogChoice")->property("model").toStringList(),
-                 (QStringList{"All fonts", "Without catalog", "A"}));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        auto *picker = openFontPicker(fontAss("end-none.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A"}));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         application->fontCatalogs().waitResolved();
         restartWith(options);
         QCOMPARE(readAll(file), plain);
 
         usePickerFonts();
-        dialog = openFontDialog(fontAss("end-open.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,abc\n"));
-        QVERIFY(dialog);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogManage"), "click"));
-        auto *window = named("fontDialogCatalogWindow");
+        auto *window = named("fontCatalogWindow");
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Arial")), Q_ARG(QVariant, QVariant())));
         QTRY_VERIFY(window->property("visible").toBool());
-        dialogItem("fontDialogCatalogWindow", "fontCatalogField")->setProperty("editText", QStringLiteral("C"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialogCatalogWindow", "fontCatalogAddCatalog"), "click"));
-        QVERIFY(!readAll(file).contains("C={")); // written when shown, before Add
+        QVERIFY(QMetaObject::invokeMethod(window, "createCatalog", Q_ARG(QVariant, QStringLiteral("C"))));
+        QVERIFY(!readAll(file).contains("C={")); // written when shown, before New
         application->fontCatalogs().waitResolved();
         delete engine;
         engine = nullptr;
@@ -3155,7 +3356,7 @@ private slots:
         restartWith(app::Application::Options());
     }
 
-    // Y6: the font dialog's renderer report resolves on one worker thread:
+    // Y6: the font picker's renderer report resolves on one worker thread:
     // asking never waits for an earlier resolution, a request still waiting
     // is replaced by a newer one, and waitResolved waits for the latest.
     void fontResolutionDoesNotBlockAndAnswersTheLatest()
@@ -3193,46 +3394,154 @@ private slots:
         QCOMPARE(entered->load(), 2);
     }
 
-    // Y6: Add > "Add fonts from subtitles" (GetFontsFromASSDialog,
-    // CollectFontsFromSubtitles): the Style fonts and \fn names join the
-    // catalog, the catalogs are saved, and the choice is left with the catalog
-    // with "All fonts" and "Without catalog" and the catalog chosen
-    // (Y6-collect-choice; legacy's PutArray left the names alone).
+    // Y6, PU3 (#305, PU3-from-subtitles): "Add fonts from subtitles"
+    // (GetFontsFromASSDialog, CollectFontsFromSubtitles) from the picker's
+    // +: the Style fonts and \fn names join the catalog chosen or typed (a
+    // new name makes it), the catalogs are saved, a notice says how many
+    // fonts were added, and the picker shows that catalog
+    // (Y6-collect-choice).
     void fontsFromSubtitlesFillTheChosenCatalog()
     {
         usePickerFonts();
         auto &catalogs = application->fontCatalogs();
-        auto *dialog = openFontDialog(fontAss("collect.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\fnImpact}abc\n"
+        auto *picker = openFontPicker(fontAss("collect.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\fnImpact}abc\n"
                                                              "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\fnSkipped}x\n"));
-        QVERIFY(dialog);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("fontDialog", "fontCatalogAdd"), "click"));
-        auto *menu = named("fontDialogCatalogAddMenu");
-        QTRY_VERIFY(menu->property("visible").toBool());
-        QCOMPARE(menu->property("count").toInt(), 3); // the dialog's item and A, B
-        QQuickItem *first = nullptr;
-        QVERIFY(QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, first), Q_ARG(int, 0)));
-        QCOMPARE(first->objectName(), QStringLiteral("fontsFromSubtitlesItem"));
-        QVERIFY(QMetaObject::invokeMethod(first, "triggered"));
-        auto *from = named("fontDialogFromSubtitles");
-        QTRY_VERIFY(from->property("visible").toBool());
-        QCOMPARE(dialogItem("fontDialogFromSubtitles", "fontsFromSubtitlesCatalog")->property("editText").toString(), QStringLiteral("A"));
-        QVERIFY(QMetaObject::invokeMethod(from, "accept"));
-        QCOMPARE(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")), true);
-        QCOMPARE(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Impact")), true);
-        QCOMPARE(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Skipped")), false);
+        QVERIFY(picker);
+        auto *from = qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog"));
+        QVERIFY(from);
+        const auto in = [this](const char *name) { return dialogItem("fontsFromSubtitlesDialog", name); };
+        const auto openFrom = [&] {
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerAdd"), "click"));
+            auto *menu = named("fontPickerAddMenu");
+            QTRY_VERIFY(menu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(menuEntry(menu, QStringLiteral("fontsFromSubtitlesItem")), "triggered"));
+            QTRY_VERIFY(from->isVisible());
+        };
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2))); // A
+        openFrom();
+        QCOMPARE(from->transientParent(), qobject_cast<QWindow *>(picker));
+        QCOMPARE(in("fontsFromSubtitlesCatalog")->property("editText").toString(), QStringLiteral("A"));
+        QVERIFY(in("fontsFromSubtitlesHint")->property("text").toString().startsWith(
+            QStringLiteral("The fonts of every style and every \\fn tag in collect")));
+        QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
+        QTRY_VERIFY(!from->isVisible());
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Tahoma")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Impact")));
+        QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("A"), QStringLiteral("Skipped")));
         const QString dirPath = QString::fromStdU16String(catalogs.catalogDir().u16string());
-        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("A={\r\n\tVerdana\r\n\tArial\r\n\tNot Installed\r\n\tTahoma\r\n\tImpact\r\n}"));
-        auto *choice = dialogItem("fontDialog", "fontCatalogChoice");
-        QCOMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B"}));
-        QCOMPARE(choice->property("currentIndex").toInt(), 2);
-        QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
-        // The catalog's installed fonts, sorted.
-        QCOMPARE(dialogItem("fontDialog", "fontList")->property("model").toStringList(),
-                 (QStringList{"Arial", "Impact", "Tahoma", "Verdana"}));
-        // A check in the Add menu adds the font and saves (AddToCatalog).
-        catalogs.toggleFontInCatalog(QStringLiteral("B"), QStringLiteral("Tahoma"), true);
-        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("B={\r\n\tImpact\r\n\tTahoma\r\n}"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "reject"));
+        // A's fonts sorted: the picker listed A (GetCatalogFonts sorts in place).
+        QVERIFY(readAll(dirPath + QStringLiteral("/FontCatalogs.txt")).contains("A={\r\n\tArial\r\n\tNot Installed\r\n\tVerdana\r\n\tTahoma\r\n\tImpact\r\n}"));
+        QVERIFY(lastNotice().startsWith(QStringLiteral("Added 2 fonts to “A”|")));
+        QCOMPARE(picker->property("choice").toInt(), 2);
+        QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Arial", "Impact", "Tahoma", "Verdana"}));
+
+        // A new name makes the catalog, which the picker then shows.
+        openFrom();
+        in("fontsFromSubtitlesCatalog")->setProperty("editText", QStringLiteral("Mine"));
+        QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
+        QTRY_VERIFY(!from->isVisible());
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "Mine"}));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Impact")), (QStringList{"A", "B", "Mine"}));
+        QVERIFY(lastNotice().startsWith(QStringLiteral("Added 2 fonts to “Mine”|")));
+        QCOMPARE(picker->property("choices").toStringList(), (QStringList{"All fonts", "Without catalog", "A", "B", "Mine"}));
+        QCOMPARE(picker->property("choice").toInt(), 4);
+        QCOMPARE(picker->property("shown").toStringList(), (QStringList{"Impact", "Tahoma"}));
+
+        // A name typed in another case is that catalog; Replace empties it first.
+        openFrom();
+        in("fontsFromSubtitlesCatalog")->setProperty("editText", QStringLiteral("b"));
+        in("fontsFromSubtitlesReplace")->setProperty("checked", true);
+        QVERIFY(in("fontsFromSubtitlesHint")->property("text").toString().endsWith(
+            QStringLiteral(" The fonts “B” holds now are removed first.")));
+        QVERIFY(QMetaObject::invokeMethod(in("fontsFromSubtitlesOk"), "click"));
+        QTRY_VERIFY(!from->isVisible());
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "Mine"}));
+        QCOMPARE(catalogs.catalogsOf(QStringLiteral("Tahoma")), (QStringList{"A", "B", "Mine"}));
+        QVERIFY(lastNotice().startsWith(QStringLiteral("Added 2 fonts to “B”|")));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        application->fontCatalogs().waitResolved();
+    }
+
+    // PU3 (#305): the font picker, its characters popover, the catalog
+    // window with New's popover, the rename question and the load review,
+    // and Add fonts from subtitles in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (font-<popup>-<theme>.png).
+    void fontPopupsScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        usePickerFonts();
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        auto *picker = qobject_cast<QQuickWindow *>(openFontPicker(fontAss("shots.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Fonts for every sign\n")));
+        QVERIFY(picker);
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->isVisible());
+        const auto shoot = [&](QQuickWindow *w, const QString &name) {
+            QTest::qWait(300);
+            QVERIFY(w->grabWindow().save(out + QStringLiteral("/font-") + name));
+        };
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        for (const auto code : ui::theme::kCodes) {
+            settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            const QString suffix = QLatin1Char('-') + ui::theme::codeName(code) + QStringLiteral(".png");
+            // The picker on the catalog A, Verdana chosen.
+            item("lineText")->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(visualItem("changeFont"), "click"));
+            QTRY_VERIFY(picker->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2)));
+            QVERIFY(QMetaObject::invokeMethod(picker, "pick", Q_ARG(QVariant, QStringLiteral("Verdana"))));
+            QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
+            shoot(picker, QStringLiteral("picker") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCharacters"), "click"));
+            QTRY_VERIFY(named("fontPickerCharactersPopover")->property("opened").toBool());
+            shoot(picker, QStringLiteral("picker-characters") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersPopover"), "revert"));
+            // The catalog window from the picker, New's popover open.
+            auto *window = qobject_cast<QQuickWindow *>(named("fontCatalogWindow"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerManage"), "click"));
+            QTRY_VERIFY(window->isVisible());
+            shoot(window, QStringLiteral("catalogs") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCatalogWindow", "fontCatalogNew"), "click"));
+            QTRY_VERIFY(named("fontCatalogNewPopover")->property("opened").toBool());
+            named("fontCatalogNewName")->setProperty("text", QStringLiteral("b"));
+            shoot(window, QStringLiteral("catalogs-new") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(named("fontCatalogNewPopover"), "revert"));
+            // Rename A onto B: the question.
+            QVERIFY(QMetaObject::invokeMethod(window, "renameCatalog", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QStringLiteral("B"))));
+            auto *box = qobject_cast<QQuickWindow *>(named("fontCatalogMessageBox"));
+            QTRY_VERIFY(box && box->isVisible());
+            shoot(box, QStringLiteral("rename-question") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            // Load: the review of the catalogs that exist.
+            const QString file = dir.filePath(QStringLiteral("shot-catalogs.txt"));
+            {
+                QFile f(file);
+                QVERIFY(f.open(QIODevice::WriteOnly));
+                f.write("A={\n\tTahoma\n}\nB={\n\tImpact\n\tComic Sans MS\n}\nLatin={\n\tArial\n}\n");
+            }
+            QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
+            auto *review = qobject_cast<QQuickWindow *>(named("fontCatalogClashReview"));
+            QTRY_VERIFY(review && review->isVisible());
+            shoot(review, QStringLiteral("load-review") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, false)));
+            QVERIFY(QMetaObject::invokeMethod(window, "reject"));
+            QTRY_VERIFY(!window->isVisible());
+            // Add fonts from subtitles, from the picker's +.
+            auto *from = qobject_cast<QQuickWindow *>(named("fontsFromSubtitlesDialog"));
+            QVERIFY(QMetaObject::invokeMethod(from, "openFor", Q_ARG(QVariant, QStringLiteral("A")), Q_ARG(QVariant, QVariant()),
+                                              Q_ARG(QVariant, QVariant::fromValue<QObject *>(picker))));
+            QTRY_VERIFY(from->isVisible());
+            shoot(from, QStringLiteral("from-subtitles") + suffix);
+            QVERIFY(QMetaObject::invokeMethod(from, "reject"));
+            QTRY_VERIFY(!from->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+            QTRY_VERIFY(!picker->isVisible());
+        }
         application->fontCatalogs().waitResolved();
     }
 
@@ -3465,19 +3774,14 @@ private slots:
         choose(choice, 3); // B
         QCOMPARE(font->property("model").toStringList(), QStringList{"Impact"});
         QVERIFY(QMetaObject::invokeMethod(findItem(bar, QStringLiteral("fontCatalogManage")), "click"));
-        QObject *window = nullptr;
-        for (QObject *o : editor->findChildren<QObject *>())
-            if (o->objectName() == QLatin1String("styleEditorCatalogWindow"))
-                window = o;
-        QVERIFY(window);
+        auto *window = named("fontCatalogWindow");
         QTRY_VERIFY(window->property("visible").toBool());
-        auto *content = window->property("contentItem").value<QQuickItem *>();
-        findItem(content, QStringLiteral("fontCatalogField"))->setProperty("editText", QStringLiteral("B"));
-        QVERIFY(QMetaObject::invokeMethod(findItem(content, QStringLiteral("fontCatalogDelete")), "click"));
-        auto *question = window->findChild<QObject *>(QStringLiteral("catalogDeleteQuestion"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
-        QVERIFY(QMetaObject::invokeMethod(window, "close"));
+        window->setProperty("chosen", QStringLiteral("B"));
+        QVERIFY(QMetaObject::invokeMethod(window, "askDelete"));
+        auto *box = named("fontCatalogMessageBox");
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("delete"))));
+        QVERIFY(QMetaObject::invokeMethod(window, "reject"));
         QTRY_COMPARE(choice->property("model").toStringList(), (QStringList{"All fonts", "Without catalog", "A"}));
         QCOMPARE(choice->property("currentIndex").toInt(), 0);
         QCOMPARE(choice->property("displayText").toString(), QStringLiteral("A"));
@@ -9905,6 +10209,9 @@ private slots:
             {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}}, // PK1
             {{"listChooserTake", Accept}, {"listChooserCancel", Reject}}, // PK1
             {{"styleCreateYes", Accept}, {"styleCreateCancel", Reject}}, // LE6
+            {{"fontPickerOk", Accept}, {"fontPickerCancel", Reject}}, // PU3
+            {{"fontCatalogClose", Reject}},
+            {{"fontsFromSubtitlesOk", Accept}, {"fontsFromSubtitlesCancel", Reject}},
         };
         // The find question lives in the Search tool's dock: open it. The
         // Automation panel's Reassign question has no items until it opens.
