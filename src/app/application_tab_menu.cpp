@@ -543,6 +543,7 @@ QVariantMap Application::openForwarded(const QStringList &paths)
     const QStringList files = sortedFiles(paths);
     if (files.isEmpty())
         return openResult(QString());
+    emit filesForwarded();
     const bool untouched = targetUntouched();
     if (files.size() == 1) {
         const QString &file = files.front();

@@ -95,5 +95,8 @@ QtObject {
     property Connections restored: Connections {
         target: offer.app
         function onSessionRestored() { offer.sessionLoaded() }
+        // Files another start handed over (a start with files keeps no
+        // offer once more come).
+        function onFilesForwarded() { offer.end() }
     }
 }

@@ -1029,6 +1029,9 @@ signals:
     // A write of the Document finished written (PU1-disk-change-bar: a Save
     // As ends the bar only then).
     void documentWritten(qulonglong document);
+    // WS5: a later start handed files over, about to open (PU1-startup-cards:
+    // they end the startup offer).
+    void filesForwarded();
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);

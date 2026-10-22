@@ -57,6 +57,14 @@ Item {
         flow.waitingForSave = false
         flow.matroska.start()
     }
+    // PU1-disk-change-bar: the save over a file changed on disk was not
+    // made: Save and load loads nothing over the unsaved work.
+    function saveCancelled() {
+        if (!flow.waitingForSave)
+            return
+        flow.waitingForSave = false
+        flow.matroska.cancel()
+    }
 
     // PU1-mkv-notices: OnMkvSubs' question (HikariMessageBox(wxYES_NO |
     // wxCANCEL) under "Confirmation") on the kit's message box: Save and load

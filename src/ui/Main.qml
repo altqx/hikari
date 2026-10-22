@@ -139,15 +139,16 @@ ApplicationWindow {
     // Documents saved under another name while their bar showed: the bar
     // goes once that write is done (a failed one leaves it).
     property var savingAway: ({})
-    // PU1-mkv-notices: the tab an MKV read started on.
+    // PU1-mkv-notices: the tab an MKV load started on (taken as it starts,
+    // before its tracks are listed, as the application takes its target).
     property var mkvTab: undefined
     Connections {
         target: root.matroska
         function onStateChanged() {
-            if (root.matroska.state === 3 && root.mkvTab === undefined)
-                root.mkvTab = root.currentTab().id
-            else if (root.matroska.state !== 3)
+            if (root.matroska.state === 0)
                 root.mkvTab = undefined
+            else if (root.mkvTab === undefined)
+                root.mkvTab = root.currentTab().id
         }
     }
     function checkExternalChange() {
@@ -5748,8 +5749,13 @@ ApplicationWindow {
                 objectName: "reloadNo"
                 text: qsTranslate("HikariSub.Documents", "Keep mine")
                 onClicked: {
-                    root.app.acceptFileOnDisk(diskChangeBar.tab.id)
-                    root.endDiskChange(diskChangeBar.tab.id)
+                    // A file that can't be read now can't be kept over: the
+                    // bar stays (Save as… still saves the work).
+                    if (root.app.acceptFileOnDisk(diskChangeBar.tab.id))
+                        root.endDiskChange(diskChangeBar.tab.id)
+                    else
+                        root.notify("warning", qsTranslate("HikariSub.Documents", "Keep mine"),
+                                    qsTranslate("HikariSub.Editor", "The file changed on disk since it was opened. Reload it, or save elsewhere."))
                 }
             }
         }
@@ -6100,7 +6106,12 @@ ApplicationWindow {
                 } else if (cancelled) {
                     cancelled()
                 }
-                matroskaSubtitles.saveDone() // Y9: the load waits for the answer
+                // Y9: the MKV load waited for the answer: it goes on once
+                // saved; nothing saved, it is cancelled and the work stays.
+                if (id === "saveOver" && unread.length === 0)
+                    matroskaSubtitles.saveDone()
+                else
+                    matroskaSubtitles.saveCancelled()
             })
         }
     }
