@@ -566,6 +566,51 @@ TEST(TagTransfer, AScaleForTwoOpensTheOneARunChanges)
     expectRoundTrip(tags, draft(u"x yw z", {{2, 3, 2}, {3, 4, 1}}));
 }
 
+TEST(TagTransfer, SpacesBeforeALeadingTagStayBeforeIt)
+{
+    // The \h before \fs40 is at the base size: Paste all keeps it there.
+    const std::u16string original = u"\\h{\\fs40}a{\\r}";
+    const auto tags = readOriginalTags(original);
+    EXPECT_EQ(u8(tags.leading), "\\h{\\fs40}");
+    const auto pasted = draftOfOriginal(original, tags);
+    EXPECT_EQ(u8(pasted.body), "a");
+    EXPECT_EQ(u8(composeTranslation(tags, pasted)), u8(original));
+    expectRoundTrip(tags, draft(u"b"));
+    // Spaces after the last leading tag are the body's, as before.
+    const auto after = readOriginalTags(u"{\\fs40}\\h{}a");
+    EXPECT_EQ(u8(after.leading), "{\\fs40}");
+    EXPECT_EQ(u8(draftOfOriginal(u"{\\fs40}\\h{}a", after).body), "\\ha");
+}
+
+TEST(TagTransfer, AColourMayBeSigned)
+{
+    StyleValues style;
+    style.name = u8"Default";
+    const std::vector<StyleValues> styles{style};
+    // libass reads it with strtoll: -1 is 0xFFFFFFFF, white over black.
+    const auto tags = readOriginalTags(u"a {\\c-1}b{\\c} c", &style, styles);
+    ASSERT_EQ(tags.runs.size(), 1u);
+    EXPECT_EQ(u8(tags.runs[0].differs.at(u"1c")), "FFFFFF");
+    EXPECT_EQ(u8(readOriginalTags(u"a {\\1a+FF}b{\\1a} c", &style, styles).runs.at(0).differs.at(u"1a")), "FF");
+}
+
+TEST(TagTransfer, LongStyleValuesAndTheirComparisonsAreBounded)
+{
+    StyleValues style;
+    style.name = u8"Default";
+    style.fontname = std::u8string(kMaxTagTransferUnits + 1, u8'f');
+    std::vector<StyleValues> styles{style};
+    EXPECT_TRUE(readOriginalTags(u"a {\\i1}b{\\i0} c", &style, styles).malformed);
+    // Under the bound, every tag compared against a long state is charged.
+    style.fontname = std::u8string(8000, u8'f');
+    styles = {style};
+    std::u16string many = u"a {";
+    for (int i = 0; i < 200; ++i)
+        many += u"\\i0";
+    many += u"}b {\\i1}c{\\i0} d";
+    EXPECT_TRUE(readOriginalTags(many, &style, styles).malformed);
+}
+
 TEST(TagTransfer, ARunOfSpacesAloneIsNoRun)
 {
     // A non-breaking space is no space to hasVisible, but trimmed like one.

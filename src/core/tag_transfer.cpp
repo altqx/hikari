@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <functional>
+#include <limits>
 #include <optional>
 #include <ranges>
 #include <set>
@@ -290,11 +291,22 @@ std::u16string normalised(Kind kind, std::u16string_view arg)
     case Kind::Colour:
     case Kind::Alpha: {
         // As libass's parse_color_tag: past '&' and an uppercase 'H' only,
-        // and no digits is 0 (black, opaque).
+        // then strtoll's signed hexadecimal clamped to 32 bits (-1 is
+        // 0xFFFFFFFF); no digits is 0 (black, opaque).
         while (first != last && (*first == '&' || *first == 'H'))
             ++first;
-        unsigned long n = 0;
-        std::from_chars(first, last, n, 16);
+        const bool negative = first != last && *first == '-';
+        if (first != last && (*first == '-' || *first == '+'))
+            ++first;
+        if (last - first > 2 && first[0] == '0' && (first[1] == 'x' || first[1] == 'X'))
+            first += 2;
+        unsigned long long magnitude = 0;
+        if (std::from_chars(first, last, magnitude, 16).ec == std::errc::result_out_of_range)
+            magnitude = std::numeric_limits<unsigned long long>::max();
+        const long long limit = negative ? -static_cast<long long>(INT32_MIN) : INT32_MAX;
+        const long long signedValue = negative ? -static_cast<long long>(std::min<unsigned long long>(magnitude, limit))
+                                               : static_cast<long long>(std::min<unsigned long long>(magnitude, limit));
+        const auto n = static_cast<std::uint32_t>(static_cast<std::int32_t>(signedValue));
         return kind == Kind::Colour ? hex(n & 0xFFFFFF, 6) : hex(n & 0xFF, 2);
     }
     case Kind::Integer: {
@@ -474,6 +486,12 @@ struct Budget {
 bool isEmptyTransform(const Tag &tag)
 {
     return tag.name == u"t" && tag.args.find(u'\\') == std::u16string::npos;
+}
+
+// Whether applying `tag` may change the formatting state.
+bool changesState(const Tag &tag)
+{
+    return effectOf(tag.name).kind != Kind::None && !isEmptyTransform(tag);
 }
 
 // Applies `tag`, appending what it set to `history` when given. Returns the
@@ -776,7 +794,9 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
 {
     OriginalTags out;
     out.defaults = defaultsFor(style);
-    if (original.size() > kMaxTagTransferUnits) {
+    // A Style's values past the text's bound (a font name) would be copied
+    // with every state read against it.
+    if (original.size() > kMaxTagTransferUnits || unitsOf(out.defaults) > kMaxTagTransferUnits) {
         out.malformed = true;
         return out;
     }
@@ -828,7 +848,18 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
     bool baseSet = false;
     History history;
     std::map<std::u16string, TagSetter> leadingSetters;
-    std::u16string leading, hoisted, trailing, trailingDone;
+    std::u16string leading, hoisted, trailing, trailingDone, leadingDone, leadingPending;
+    // Spaces before a leading tag stay before it (a \h at the base size).
+    auto lead = [&](std::u16string_view tag) {
+        if (!leadingPending.empty()) {
+            leadingDone += braced(leading);
+            leadingDone += leadingPending;
+            out.leadingSpaces += leadingPending.size();
+            leading.clear();
+            leadingPending.clear();
+        }
+        leading += tag;
+    };
     std::vector<Segment> segments;
     std::size_t tagsSeen = 0;
     bool deviated = false; // since the last segment
@@ -842,6 +873,8 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         if (!piece.block) {
             // Spaces after a trailing tag stay after it (a \h at the base
             // size, a \N's row after a reset).
+            if (isLeading)
+                leadingPending += original.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
             if (isTrailing && (!trailing.empty() || !trailingDone.empty())) {
                 const auto spaces = original.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
                 trailingDone += braced(trailing);
@@ -862,12 +895,15 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             if (isKaraoke(tag.name) || isEmptyTransform(tag))
                 continue;
             if (isLineWide(tag.name)) {
-                (isLeading ? leading : hoisted) += tag.text;
+                if (isLeading)
+                    lead(tag.text);
+                else
+                    hoisted += tag.text;
                 continue;
             }
             const auto effect = effectOf(tag.name);
             if (isLeading) {
-                leading += tag.text;
+                lead(tag.text);
                 for (const auto &component : effect.components)
                     leadingSetters[component] = {tag.order, tag.text};
             } else if (isTrailing) {
@@ -878,8 +914,13 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             }
             if (!budget.spend(apply(state, tag, out.defaults, out.named, &history)))
                 return tooMuch();
-            // (The segments hold their whole state until read.)
-            deviated = deviated || (!segments.empty() && state != segments.back().differs);
+            // (The segments hold their whole state until read.) Charged as
+            // the copy it is in cost, a long font name's too.
+            if (!deviated && !segments.empty() && changesState(tag)) {
+                if (!budget.spend(unitsOf(state)))
+                    return tooMuch();
+                deviated = state != segments.back().differs;
+            }
             // A leading reset sets every value of the state it gives (a
             // named one another Style's): it is what restores them after a
             // run, and what a trailing reset undoes.
@@ -893,7 +934,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
     }
     if (!baseSet)
         out.base = state;
-    out.leading = braced(leading + hoisted);
+    out.leading = leadingDone + braced(leading + hoisted);
     out.trailing = trailingDone + braced(trailing);
 
     for (auto &segment : segments)
@@ -972,9 +1013,14 @@ TranslationDraft draftOfOriginal(std::u16string_view original, const OriginalTag
         return draft;
     }
     std::map<std::size_t, std::size_t> starts, ends; // raw text piece bounds -> body offsets
+    std::size_t carriedLead = tags.leadingSpaces;
     for (const auto &piece : tokens.pieces) {
         if (piece.block)
             continue;
+        if (carriedLead >= piece.rawEnd - piece.rawStart) { // carried
+            carriedLead -= piece.rawEnd - piece.rawStart;
+            continue;
+        }
         starts[piece.rawStart] = draft.body.size();
         draft.body += original.substr(piece.rawStart, piece.rawEnd - piece.rawStart);
         ends[piece.rawEnd] = draft.body.size();
@@ -1052,7 +1098,11 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
             for (const auto &tag : piece.tags) {
                 if (!budget.spend(apply(state, tag, tags.defaults, tags.named, nullptr)))
                     return plain;
-                deviated = deviated || (!segments.empty() && state != atText);
+                if (!deviated && !segments.empty() && changesState(tag)) {
+                    if (!budget.spend(unitsOf(state)))
+                        return plain;
+                    deviated = state != atText;
+                }
             }
         } else {
             segments.push_back({piece.rawStart, piece.rawEnd, 0, differences(state, tags.base), true, deviated});
