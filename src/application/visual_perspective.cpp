@@ -29,6 +29,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <string_view>
+#include <unordered_map>
 
 namespace hikari::application::visual {
 
@@ -183,7 +184,7 @@ struct Tag {
 constexpr u16v kNames[] = {u"xbord", u"ybord", u"xshad", u"yshad", u"fscx", u"fscy", u"bord", u"shad",
                            u"move",  u"pos",   u"org",   u"frx",   u"fry",  u"frz",  u"fax",  u"fay",
                            u"an",    u"fr",    u"fs",    u"fn",    u"p",    u"a",    u"t",    u"r",
-                           u"q"};
+                           u"q",     u"fsp",   u"b",     u"i"};
 
 u16v nameOf(u16v token)
 {
@@ -556,20 +557,50 @@ Leading leadingOf(u16v text)
     return out;
 }
 
+// The context's Styles by name, read once: a Line's Style is the first of
+// its name (lineStyle), a \r's the last (libass's lookup_style_strict).
+struct StyleIndex {
+    explicit StyleIndex(const transform::Context &context)
+        : ctx(context)
+    {
+        for (const core::StyleValues &s : ctx.styles) {
+            first.try_emplace(s.name, &s);
+            last.insert_or_assign(s.name, &s);
+        }
+    }
+    core::StyleValues line(std::u8string_view name) const
+    {
+        if (const auto it = first.find(name); !name.empty() && it != first.end())
+            return *it->second;
+        return transform::lineStyle(ctx, {});
+    }
+    const transform::Context &ctx;
+    std::unordered_map<std::u8string_view, const core::StyleValues *> first, last;
+};
+
 // The Style a \r resets to: the one it names, else the Line's (libass's
 // reset_render_context with a Style it cannot find).
-core::StyleValues resetStyle(const transform::Context &ctx, const core::StyleValues &lineStyle, u16v name)
+core::StyleValues resetStyle(const StyleIndex &styles, const core::StyleValues &lineStyle, u16v name)
 {
     if (!name.empty()) {
         const std::u8string wanted = core::toUtf8(u16(name));
-        for (const core::StyleValues &s : ctx.styles)
-            if (s.name == wanted)
-                return s;
+        if (const auto it = styles.last.find(wanted); it != styles.last.end())
+            return *it->second;
     }
     return lineStyle;
 }
 
-std::optional<Box> measureBox(const VisualHost &host, const transform::Context &ctx, const core::LineRecord &line,
+// Where the leading tags that count start: after the last \r, which resets
+// the ones before it (0 without one).
+std::size_t afterLastReset(const std::vector<Tag> &tags)
+{
+    std::size_t from = tags.size();
+    while (from > 0 && tags[from - 1].name != u"r")
+        --from;
+    return from;
+}
+
+std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
                               u16v text, const core::StyleValues &style, const Leading &lead)
 {
     if (lead.p > 0) {
@@ -603,13 +634,13 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
     // The Style at a scale of 100 with the leading \fs and \fn, as libass
     // applies them: a signed \fs is relative, one at 0 or below and an
     // empty \fn go back to the current Style's.
-    core::StyleValues current = style, s = style;
-    double size = transform::styleNumber(style.fontsize, 0);
-    for (const Tag &tag : lead.tags) {
-        if (tag.name == u"r") {
-            current = s = resetStyle(ctx, style, tag.value);
-            size = transform::styleNumber(current.fontsize, 0);
-        } else if (tag.name == u"fs") {
+    const std::size_t from = afterLastReset(lead.tags);
+    const core::StyleValues current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
+    core::StyleValues s = current;
+    double size = transform::styleNumber(current.fontsize, 0);
+    for (std::size_t k = from; k < lead.tags.size(); ++k) {
+        const Tag &tag = lead.tags[k];
+        if (tag.name == u"fs") {
             u16v v = tag.value;
             while (!v.empty() && v.front() == u' ')
                 v.remove_prefix(1);
@@ -630,7 +661,10 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
     // The shown text, line by line, in one pass as libass reads it: \N
     // breaks a line, \n too under wrap style 2 (the script's WrapStyle, or
     // the last \q before it) and is a space otherwise, \h a hard space,
-    // \{ and \} braces. A drawing within the text is not measured.
+    // \{ and \} braces. A drawing within the text, or a tag changing the
+    // glyphs after some (their size, font, scale, spacing, weight, slant or
+    // angles, or a \r), is not measured: one Style's run does not hold it.
+    const transform::Context &ctx = styles.ctx;
     const auto wrapOf = [&ctx] {
         const auto v = ctx.document ? ctx.document->scriptInfo(u8"WrapStyle") : std::nullopt;
         const int n = v ? std::atoi(std::string(v->begin(), v->end()).c_str()) : 0;
@@ -639,6 +673,9 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
     int wrap = wrapOf();
     std::vector<u16> lines(1);
     const std::size_t lastClose = text.rfind(u'}'); // a { before it opens a block
+    static constexpr u16v kGlyphTags[] = {u"fs",  u"fn",  u"fscx", u"fscy", u"fsp", u"b",  u"i",
+                                          u"frx", u"fry", u"frz",  u"fr",   u"fax", u"fay", u"r"};
+    bool started = false; // something shown, or a line broken
     for (std::size_t i = 0; i < text.size();) {
         const char16_t ch = text[i];
         if (ch == u'{' && lastClose != u16v::npos && i < lastClose) {
@@ -649,6 +686,9 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
                     wrap = n && *n >= 0 && *n <= 3 ? static_cast<int>(*n) : wrapOf();
                 } else if (tag.name == u"p" && number(tag.value).value_or(0) > 0) {
                     return std::nullopt;
+                } else if (started && std::find(std::begin(kGlyphTags), std::end(kGlyphTags), tag.name) !=
+                                          std::end(kGlyphTags)) {
+                    return std::nullopt;
                 }
             }
             i = close + 1;
@@ -658,16 +698,19 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
             const char16_t next = text[i + 1];
             if (next == u'N' || (next == u'n' && wrap == 2)) {
                 lines.emplace_back();
+                started = true;
                 i += 2;
                 continue;
             }
             if (next == u'n' || next == u'h' || next == u'{' || next == u'}') {
                 lines.back().push_back(next == u'n' ? u' ' : next == u'h' ? u'\u00A0' : next);
+                started = true;
                 i += 2;
                 continue;
             }
         }
         lines.back().push_back(ch);
+        started = true;
         ++i;
     }
     double width = 0, height = 0;
@@ -683,8 +726,8 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
     return Box{{0, 0}, {static_cast<float>(width), static_cast<float>(height)}};
 }
 
-// A Line's alignment and whether it is positioned (\pos or \move), as
-// readTags reads them.
+// A Line's alignment and whether libass keeps it out of collisions (a valid
+// \pos, \move or \org), as readTags reads them.
 std::pair<int, bool> placement(u16v text, const core::StyleValues &style)
 {
     int an = static_cast<int>(transform::styleNumber(style.alignment, 2));
@@ -693,7 +736,7 @@ std::pair<int, bool> placement(u16v text, const core::StyleValues &style)
     bool haveAn = false, positioned = false;
     for (const auto &[open, close] : blocksOf(text)) {
         for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1))) {
-            if ((tag.name == u"pos" || tag.name == u"move") && positional(tag)) {
+            if ((tag.name == u"pos" || tag.name == u"move" || tag.name == u"org") && positional(tag)) {
                 positioned = true;
             } else if ((tag.name == u"an" || tag.name == u"a") && !haveAn) {
                 haveAn = true;
@@ -710,9 +753,10 @@ std::pair<int, bool> placement(u16v text, const core::StyleValues &style)
 // with it: legacy's GetDialogueAdditionalPosition (Visuals.cpp:143-215),
 // the rule the other tools place such a Line by, over this tool's own
 // reading, which takes linear time (legacy's tag parse does not).
-double stackOffset(const VisualHost &host, const transform::Context &ctx, const core::LineRecord &line, int an,
+double stackOffset(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line, int an,
                    const Box &box)
 {
+    const transform::Context &ctx = styles.ctx;
     const std::int64_t time = host.videoTimeMs();
     const auto shown = [time](const core::LineRecord &l) {
         return time >= transform::startMs(l) && time < transform::endMs(l);
@@ -736,7 +780,7 @@ double stackOffset(const VisualHost &host, const transform::Context &ctx, const 
         return std::array<double, 4>{x, y, x + w, y + h};
     };
     const int band = static_cast<int>(an / 3.1f);
-    const auto mine = rect(line, transform::lineStyle(ctx, line.style), an, box);
+    const auto mine = rect(line, styles.line(line.style), an, box);
     double offset = 0;
     int placesForText = 0, placesTaken = 0;
     for (const core::LineRecord *dial : ctx.document->lines()) {
@@ -747,11 +791,11 @@ double stackOffset(const VisualHost &host, const transform::Context &ctx, const 
         if (!shown(*dial))
             continue;
         const u16 text = transform::lineText(*dial);
-        const core::StyleValues style = transform::lineStyle(ctx, dial->style);
+        const core::StyleValues style = styles.line(dial->style);
         const auto [a, positioned] = placement(text, style);
         if (positioned || static_cast<int>(a / 3.1f) != band)
             continue;
-        const auto other = measureBox(host, ctx, *dial, text, style, leadingOf(text));
+        const auto other = measureBox(host, styles, *dial, text, style, leadingOf(text));
         if (!other)
             continue;
         const auto r = rect(*dial, style, a, *other);
@@ -768,13 +812,11 @@ double stackOffset(const VisualHost &host, const transform::Context &ctx, const 
     return offset;
 }
 
-} // namespace
-
-LineState readTags(const VisualHost &host, const core::LineRecord &line)
+LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line)
 {
-    const transform::Context ctx = transform::context(host);
+    const transform::Context &ctx = styles.ctx;
     const u16 text = transform::lineText(line);
-    const core::StyleValues style = transform::lineStyle(ctx, line.style);
+    const core::StyleValues style = styles.line(line.style);
     LineState out;
     Transform &t = out.transform;
     t.an = static_cast<int>(transform::styleNumber(style.alignment, 2));
@@ -850,13 +892,14 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line)
         }
     }
 
-    // The leading blocks' values, the last of each; a \r resets them.
+    // The leading blocks' values, the last of each; the last \r resets the
+    // ones before it.
     const Leading lead = leadingOf(text);
-    for (const Tag &tag : lead.tags) {
-        if (tag.name == u"r") {
-            styleValues(resetStyle(ctx, style, tag.value));
-            continue;
-        }
+    const std::size_t from = afterLastReset(lead.tags);
+    if (from > 0)
+        styleValues(resetStyle(styles, style, lead.tags[from - 1].value));
+    for (std::size_t k = from; k < lead.tags.size(); ++k) {
+        const Tag &tag = lead.tags[k];
         const auto v = number(tag.value);
         if (!v)
             continue;
@@ -897,18 +940,26 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line)
     return out;
 }
 
+} // namespace
+
+LineState readTags(const VisualHost &host, const core::LineRecord &line)
+{
+    const transform::Context ctx = transform::context(host);
+    return readTagsIn(host, StyleIndex(ctx), line);
+}
+
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line)
 {
-    LineState out = readTags(host, line);
     const transform::Context ctx = transform::context(host);
+    const StyleIndex styles(ctx);
+    LineState out = readTagsIn(host, styles, line);
     const u16 text = transform::lineText(line);
-    const auto box =
-        measureBox(host, ctx, line, text, transform::lineStyle(ctx, line.style), leadingOf(text));
+    const auto box = measureBox(host, styles, line, text, styles.line(line.style), leadingOf(text));
     if (!box)
         return std::nullopt;
     out.box = *box;
     if (out.stacks) {
-        out.transform.pos.y += static_cast<float>(stackOffset(host, ctx, line, out.transform.an, *box));
+        out.transform.pos.y += static_cast<float>(stackOffset(host, styles, line, out.transform.an, *box));
         out.transform.org = out.transform.pos;
     }
     return out;
@@ -1178,9 +1229,19 @@ void PerspectiveTool::follow(const VisualHost &host) const
         return;
     if (const auto state = readLine(host, *ctx.active)) {
         const Quad inner = textToQuad(state->transform, state->box, m_screenZ);
-        if (convex(inner)) {
-            m_state = *state;
-            m_inner = inner;
+        if (!convex(inner))
+            return;
+        // A plane shown stays where it is matched to the shot.
+        const std::optional<Quad> plane = m_plane ? std::optional<Quad>(outer()) : std::nullopt;
+        m_state = *state;
+        m_inner = inner;
+        if (plane) {
+            const PointF c1 = toUV(*plane, m_inner[0]), c2 = toUV(*plane, m_inner[2]);
+            if (std::isfinite(c1.x) && std::isfinite(c1.y) && std::isfinite(c2.x) && std::isfinite(c2.y) &&
+                c1.x < c2.x && c1.y < c2.y) {
+                m_c1 = c1;
+                m_c2 = c2;
+            }
         }
     }
 }
@@ -1201,18 +1262,19 @@ void PerspectiveTool::stageAll(VisualHost &host)
     if (!g)
         return;
     const transform::Context ctx = transform::context(host);
+    const StyleIndex styles(ctx); // once: the targets can be many, the Styles too
     for (const core::LineId &id : g->targets()) {
         const core::LineRecord &line = g->before(id);
         // Each target's own outline and shadow, scaled as the active
         // Line's; its \move moved by the active Line's change of position.
         Transform t = m_state.transform;
-        const LineState own = readTags(host, line);
+        const LineState own = readTagsIn(host, styles, line);
         const double kx = m_startTransform.fscx != 0 ? t.fscx / m_startTransform.fscx : 1;
         const double ky = m_startTransform.fscy != 0 ? t.fscy / m_startTransform.fscy : 1;
         t.bord = {static_cast<float>(own.transform.bord.x * kx), static_cast<float>(own.transform.bord.y * ky)};
         t.shad = {static_cast<float>(own.transform.shad.x * kx), static_cast<float>(own.transform.shad.y * ky)};
         const u16 text = transform::lineText(line);
-        const core::StyleValues style = transform::lineStyle(ctx, line.style);
+        const core::StyleValues style = styles.line(line.style);
         g->stage(id, u8(writeTransform(text, t, style, m_startTransform.pos)), transform::editsTranslation(line));
     }
     host.toolChanged();
@@ -1691,6 +1753,8 @@ bool PerspectiveTool::setValue(const std::string &name, const std::u16string &te
         // An angle or the shear: the quad follows the tags.
         Transform t = m_startTransform;
         (name == "frx" ? t.frx : name == "fry" ? t.fry : name == "frz" ? t.frz : t.fax) = value;
+        t.fay = 0; // the tool writes no \fay, as a corner's edit
+
         const Quad q = textToQuad(t, m_state.box, m_screenZ);
         if (!convex(q))
             return refuse();

@@ -175,7 +175,7 @@ private:
     mutable perspective::LineState m_state;
     mutable perspective::Quad m_inner{};
     mutable std::int64_t m_time = 0; // the video's, as read
-    PointF m_c1{0.25f, 0.25f}, m_c2{0.75f, 0.75f};
+    mutable PointF m_c1{0.25f, 0.25f}, m_c2{0.75f, 0.75f}; // follow() keeps a shown plane
     double m_screenZ = 312.5;
     std::optional<core::LineId> m_line;
     std::uint64_t m_session = 0; // EditSession::serial of m_line and m_planes

@@ -185,15 +185,16 @@ public:
     std::string lastScaleX, lastFont;
 };
 
-std::string scriptOf(const std::vector<std::string> &texts, const std::string &extraInfo = {})
+std::string scriptOf(const std::vector<std::string> &texts, const std::string &extraInfo = {},
+                     const std::string &extraStyles = {})
 {
     std::string s = "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n" + extraInfo +
                     "\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
                     "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
                     "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
                     "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,"
-                    "2,10,10,10,1\n\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, "
-                    "Effect, Text\n";
+                    "2,10,10,10,1\n" + extraStyles +
+                    "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
     for (const std::string &t : texts)
         s += "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,," + t + "\n";
     return s;
@@ -210,13 +211,14 @@ public:
     bool withMeasure = true;
     int changes = 0;
 
-    explicit Host(const std::vector<std::string> &texts, const std::string &extraInfo = {})
+    explicit Host(const std::vector<std::string> &texts, const std::string &extraInfo = {},
+                  const std::string &extraStyles = {})
     {
         v.setClient(640, 400, 40);
         v.setScript(640, 360);
         v.open({1280, 720, 0, 1});
         v.refreshToolTransform();
-        script = scriptOf(texts, extraInfo);
+        script = scriptOf(texts, extraInfo, extraStyles);
         reopen();
     }
     // The script again in a new session (its LineIds start over).
@@ -503,6 +505,39 @@ TEST(PerspectiveTags, AHostileLineTakesLinearTime)
     EXPECT_LT(ms, 5000); // quadratic, each took minutes
 }
 
+TEST(PerspectiveTags, ManyResetsAndStylesTakeLinearTime)
+{
+    // Every \r looked up among every Style was their product.
+    std::string styles;
+    for (int i = 0; i < 20000; ++i)
+        styles += "Style: S" + std::to_string(i) +
+                  ",Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n";
+    std::string resets = "{";
+    for (int i = 0; i < 20000; ++i)
+        resets += "\\rNone";
+    Host host({resets + "\\frx5}x"}, {}, styles);
+    const auto started = std::chrono::steady_clock::now();
+    const auto state = readLine(host, lineWith(host, 0));
+    const auto ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
+    ASSERT_TRUE(state);
+    EXPECT_EQ(state->transform.frx, 5); // after the last reset
+    EXPECT_LT(ms, 2000);
+}
+
+TEST(PerspectiveTags, AGlyphChangeAfterTheTextIsNotMeasured)
+{
+    Host host({"A{\\fs80}B", "A{\\c&HFF&}B", "\\N{\\fscx50}B", "A{\\rDefault}B", "{\\fs80}A"});
+    const auto box = [&host](std::size_t i) { return readLine(host, lineWith(host, i)); };
+    EXPECT_FALSE(box(0)); // libass sizes B at 80
+    ASSERT_TRUE(box(1));  // a colour changes no glyph
+    EXPECT_FLOAT_EQ(box(1)->box.width(), 2 * 20);
+    EXPECT_FALSE(box(2));
+    EXPECT_FALSE(box(3));
+    ASSERT_TRUE(box(4)); // before the text: the run's
+    EXPECT_FLOAT_EQ(box(4)->box.width(), 40);
+}
+
 // ------------------------------------------------------------------ the tool
 
 struct Fixture {
@@ -785,6 +820,41 @@ TEST(PerspectiveTool, AnUnpositionedLineIsWhereItIsStacked)
     // Shown with the first, the second goes above it, as the other tools
     // place it.
     EXPECT_LT(f.tool.inner()[2].y, first - 1);
+}
+
+TEST(PerspectiveTool, AnOriginKeepsALineOutOfTheStack)
+{
+    // libass places a Line with \org without collisions, and its place
+    // takes none from the others.
+    Fixture f({"{\\org(1,1)}First", "Second"});
+    const float nominal = f.tool.inner()[2].y;
+    f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
+    f.host.targets = {f.host.line(1)};
+    f.tool.reset(f.host);
+    EXPECT_NEAR(f.tool.inner()[2].y, nominal, 0.05);
+}
+
+TEST(PerspectiveTool, AValueEditDropsTheShearItDoesNotWrite)
+{
+    Fixture f({"{\\pos(320,200)\\fay0.1}Perspective"});
+    EXPECT_TRUE(f.tool.setValue("frx", u"5", f.host, ValueEdit::Sample));
+    const Quad shown = f.tool.inner();
+    EXPECT_TRUE(f.tool.setValue("frx", u"5", f.host, ValueEdit::Commit));
+    f.tool.reset(f.host);
+    EXPECT_EQ(f.host.text().find("\\fay"), std::string::npos) << f.host.text();
+    expectQuadNear(f.tool.inner(), shown, 0.05); // the Line renders what was shown
+}
+
+TEST(PerspectiveTool, AShownPlaneStaysAsTheQuadMoves)
+{
+    Fixture f({"{\\move(100,100,300,200,0,1000)}Moving"});
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    const Quad plane = f.tool.outer();
+    const PointF was = centre(f.tool.inner());
+    f.host.time = 2000;
+    (void)f.tool.overlay(f.host);
+    EXPECT_GT(dist(centre(f.tool.inner()), was), 50); // the quad followed
+    expectQuadNear(f.tool.outer(), plane, 0.05);
 }
 
 TEST(PerspectiveTool, KeepLetsTheOriginBeDragged)
