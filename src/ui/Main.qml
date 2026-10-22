@@ -6032,6 +6032,7 @@ ApplicationWindow {
         objectName: "automationDialog"
         controller: root.automationDialogs
         colourPicker: root.colourPicker
+        settings: root.app.settings
     }
     AutomationFilePicker {
         picker: root.automationPicker

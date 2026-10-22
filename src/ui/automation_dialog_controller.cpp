@@ -2,6 +2,7 @@
 
 #include <QCoreApplication>
 #include <QColor>
+#include <QCryptographicHash>
 
 #include <algorithm>
 #include <cmath>
@@ -12,6 +13,10 @@ using application::DialogResult;
 using application::DialogValueType;
 
 namespace {
+
+// A script's grid is at most 256 cells each way: a place or span as large
+// as 2^31 would lay out that many empty columns first.
+constexpr int kGridCells = 256;
 
 bool isColour(const std::string &kind)
 {
@@ -44,7 +49,7 @@ QString legacyHexOf(const QColor &c, bool alpha)
 AutomationDialogController::AutomationDialogController(QObject *parent) : QObject(parent) {}
 
 void AutomationDialogController::present(const QString &title, const application::DialogRequest &request,
-                                         Reply reply)
+                                         Reply reply, const QString &source)
 {
     m_request = request;
     m_reply = std::move(reply);
@@ -59,10 +64,10 @@ void AutomationDialogController::present(const QString &title, const application
             {QStringLiteral("kind"), QString::fromStdString(c.kind)},
             {QStringLiteral("name"), QString::fromStdString(c.name)},
             {QStringLiteral("hint"), QString::fromStdString(c.hint)},
-            {QStringLiteral("x"), std::max(0, c.x)},
-            {QStringLiteral("y"), std::max(0, c.y)},
-            {QStringLiteral("width"), std::max(1, c.width)},
-            {QStringLiteral("height"), std::max(1, c.height)},
+            {QStringLiteral("x"), std::clamp(c.x, 0, kGridCells - 1)},
+            {QStringLiteral("y"), std::clamp(c.y, 0, kGridCells - 1)},
+            {QStringLiteral("width"), std::clamp(c.width, 1, kGridCells)},
+            {QStringLiteral("height"), std::clamp(c.height, 1, kGridCells)},
             {QStringLiteral("label"), QString::fromStdString(c.label)},
             {QStringLiteral("text"), QString::fromStdString(c.text)},
             {QStringLiteral("intValue"), c.intValue},
@@ -73,10 +78,11 @@ void AutomationDialogController::present(const QString &title, const application
             {QStringLiteral("color"), isColour(c.kind) ? colourOf(QString::fromStdString(c.text)) : QColor()},
             {QStringLiteral("numberMin"), c.numberMin},
             {QStringLiteral("numberMax"), c.numberMax},
+            {QStringLiteral("step"), c.step},
             {QStringLiteral("checked"), c.checked},
             {QStringLiteral("items"), items},
         };
-        m_columns = std::max(m_columns, std::max(0, c.x) + std::max(1, c.width));
+        m_columns = std::max(m_columns, std::clamp(c.x, 0, kGridCells - 1) + std::clamp(c.width, 1, kGridCells));
     }
     m_buttons.clear();
     if (request.buttons.empty())
@@ -84,6 +90,22 @@ void AutomationDialogController::present(const QString &title, const application
                   << QCoreApplication::translate("HikariSub.Automation", "Cancel");
     for (const auto &b : request.buttons)
         m_buttons << QString::fromStdString(b);
+    m_enterButton = 0;
+    for (std::size_t i = 0; i < request.buttonIds.size() && i < request.buttons.size(); ++i) {
+        const std::string &id = request.buttonIds[i];
+        if (id == "ok" || id == "yes" || id == "save")
+            m_enterButton = static_cast<int>(i);
+    }
+    m_dialogId.clear();
+    if (!source.isEmpty()) {
+        QCryptographicHash hash(QCryptographicHash::Sha1);
+        hash.addData(source.toUtf8());
+        for (const auto &c : request.controls) {
+            hash.addData(QByteArrayView("\n"));
+            hash.addData(QByteArray::fromStdString(c.kind + '\t' + c.name));
+        }
+        m_dialogId = QStringLiteral("automation.") + QString::fromLatin1(hash.result().toHex().left(16));
+    }
     emit changed();
 }
 
