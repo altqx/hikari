@@ -491,6 +491,12 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     auto *styles = m_edit->store ? list(true, doc) : doc ? &*doc : nullptr;
     if (!styles)
         return QCoreApplication::translate("HikariSub.Styles", "The document has no styles to edit.");
+    // SY1: the catalog the edit opened in, for the commit; the one shown
+    // comes back after it (choose saves the edited one).
+    const std::u8string shown = m_catalogs.current();
+    const bool away = m_edit->store && m_edit->catalog != shown;
+    if (away && !m_catalogs.choose(m_edit->catalog))
+        return QCoreApplication::translate("HikariSub.Styles", "The catalog “%1” no longer exists.").arg(qs(m_edit->catalog));
     application::StyleEdit edit;
     edit.row = m_edit->row;
     edit.style = styleOf(values, m_edit->opened);
@@ -499,10 +505,15 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
     edit.fields = applyToSelected ? application::compareStyles(m_edit->opened, edit.style) | fieldsOf(resolved) : 0;
     const StyleList before = *styles;
     const auto row = application::commitStyle(*styles, edit);
-    if (!row)
+    if (!row) {
+        if (away)
+            m_catalogs.choose(shown);
         return QCoreApplication::translate("HikariSub.Styles", "Style named \"%1\" already exists.").arg(qs(row.error()));
+    }
     if (m_edit->store) {
         m_catalogs.markChanged();
+        if (away)
+            m_catalogs.choose(shown);
         emit changed();
     } else {
         std::vector<std::optional<std::size_t>> origin;
@@ -524,10 +535,35 @@ void StyleManagerController::endEdit()
     m_edit.reset();
 }
 
+bool StyleManagerController::editOpen() const
+{
+    return m_edit && (m_edit->store || editSession());
+}
+
+QString StyleManagerController::editCatalog() const
+{
+    return m_edit && m_edit->store ? qs(m_edit->catalog) : QString();
+}
+
+void StyleManagerController::rebindEdit(int row)
+{
+    if (m_edit && m_edit->row && row >= 0)
+        m_edit->row = static_cast<std::size_t>(row);
+}
+
+void StyleManagerController::documentClosing(const application::EditSession *session)
+{
+    // A later Document may take its address.
+    if (m_edit && !m_edit->store && m_edit->session == session)
+        m_edit->session = nullptr;
+}
+
 void StyleManagerController::pin(Edit edit)
 {
     if (!edit.store && m_hooks.target)
         edit.session = m_hooks.target();
+    if (edit.store)
+        edit.catalog = m_catalogs.current();
     m_edit = std::move(edit);
 }
 

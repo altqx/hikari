@@ -6696,6 +6696,181 @@ private slots:
         QTRY_VERIFY(!manager->isVisible());
     }
 
+    // SY1 (#247): the editor follows its Styles. A mixed Emphasis toggle
+    // is marked and its label resets it; a mixed colour's Cancel puts
+    // "Multiple values" back; after an undo the selection follows its
+    // Styles by name, an edit not applied with them; Apply as the lists
+    // move on keeps what it can (a taken name is put back) and says what it
+    // can't (a file closed); Settings loading another catalog under a
+    // catalog edit asks, and Apply writes to the catalog it was made in.
+    void styleManagerFollowsItsStyles()
+    {
+        QVERIFY(application->openFile(writeStyled("follow.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Sign,,0,0,0,,a\n")));
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(application->editor().hasLine());
+        auto &styles = application->styleManager();
+        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        auto *content = manager->contentItem();
+        const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
+        const auto click = [&](const char *name) { QVERIFY(QMetaObject::invokeMethod(field(name), "click")); };
+        const auto edit = [&](const char *name, const QString &text) {
+            field(name)->setProperty("text", text);
+            QVERIFY(QMetaObject::invokeMethod(field(name), "textEdited"));
+        };
+        const auto box = [&] { return manager->findChild<QQuickWindow *>(QStringLiteral("styleMessageBox")); };
+        const auto answer = [&](const char *id) {
+            QTRY_VERIFY(box() && box()->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(findItem(box()->contentItem(), QStringLiteral("messageBoxChoice_") + QLatin1String(id)),
+                                              "click"));
+            QTRY_VERIFY(!box()->isVisible());
+        };
+        const auto pick = [&](bool store, const QVariantList &rows) {
+            QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, store), Q_ARG(QVariant, QVariant(rows))));
+        };
+        const auto style = [&](application::EditSession *session, const char8_t *name) {
+            for (const auto &s : *application::documentStyles(*session))
+                if (s.name == name)
+                    return s;
+            return core::StyleValues{};
+        };
+        const auto mixed = [&] { return manager->property("mixed").toStringList(); };
+        const auto resolved = [&] { return manager->property("resolved").toStringList(); };
+        const auto mark = [&](const char *toggle) { return findItem(field(toggle), QStringLiteral("styleMixedMark"))->isVisible(); };
+        auto *toasts = named("toastStack");
+        const auto toast = [&] { return toasts->property("entries").toList().value(0).toMap(); };
+        auto *first = targetSession();
+
+        // Emphasis: a mixed toggle is marked; set by hand, the label's reset
+        // brings "Multiple values" back.
+        pick(false, {1}); // Sign
+        click("styleBold");
+        QTRY_VERIFY(field("styleReset_emphasis")->isVisible());
+        click("styleEditorApply");
+        QVERIFY(style(first, u8"Sign").bold);
+        pick(false, {0, 1}); // Default, Sign
+        QVERIFY(mixed().contains(QStringLiteral("bold")));
+        QVERIFY(!field("styleBold")->property("checked").toBool());
+        QVERIFY(mark("styleBold") && !mark("styleItalic"));
+        QVERIFY(!field("styleReset_emphasis")->isVisible());
+        click("styleBold");
+        QVERIFY(!mixed().contains(QStringLiteral("bold")) && resolved().contains(QStringLiteral("bold")));
+        QVERIFY(!mark("styleBold"));
+        QTRY_VERIFY(field("styleReset_emphasis")->isVisible());
+        click("styleReset_emphasis");
+        QVERIFY(mixed().contains(QStringLiteral("bold")) && resolved().isEmpty());
+        QVERIFY(mark("styleBold"));
+        QVERIFY(!manager->property("dirty").toBool());
+
+        // A mixed colour: Cancel puts "Multiple values" back, nothing to
+        // apply. (The edit made outside is followed: the editor reopens.)
+        QVariantMap values = styles.beginEdit(false, 0);
+        QVariantMap primary = values.value(QStringLiteral("primary")).toMap();
+        primary.insert(QStringLiteral("r"), 1);
+        values.insert(QStringLiteral("primary"), primary);
+        QCOMPARE(styles.commitEdit(values, {}, false, false), QString());
+        QTRY_VERIFY(mixed().contains(QStringLiteral("primary")));
+        QCOMPARE(manager->property("assSelected").toList(), (QVariantList{0, 1}));
+        auto *popover = manager->findChild<QObject *>(QStringLiteral("styleColourPopover"));
+        manager->requestActivate();
+        QVERIFY(becomesFocusWindow(manager));
+        click("styleColour1");
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(popover, "setRgb", Q_ARG(QVariant, 9), Q_ARG(QVariant, 9), Q_ARG(QVariant, 9)));
+        QTRY_VERIFY(resolved().contains(QStringLiteral("primary")));
+        QTest::keyClick(manager, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QVERIFY(mixed().contains(QStringLiteral("primary")));
+        QVERIFY(!resolved().contains(QStringLiteral("primary")));
+        QVERIFY(!manager->property("dirty").toBool());
+
+        // An undo moves the Styles under an edit not applied: the selection
+        // follows them by name, and Apply writes to them alone.
+        QVERIFY(QMetaObject::invokeMethod(manager, "sortList", Q_ARG(QVariant, false)));
+        QTRY_COMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Alpha"), QStringLiteral("Default"), QStringLiteral("Sign")}));
+        QCOMPARE(manager->property("assSelected").toList(), (QVariantList{1, 2}));
+        edit("styleShadow", QStringLiteral("9"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(styles.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign"), QStringLiteral("Alpha")}));
+        QTRY_COMPARE(manager->property("assSelected").toList(), (QVariantList{0, 1}));
+        QVERIFY(manager->property("dirty").toBool());
+        click("styleEditorApply");
+        QCOMPARE(style(first, u8"Default").shadow, std::u8string(u8"9"));
+        QCOMPARE(style(first, u8"Sign").shadow, std::u8string(u8"9"));
+        QCOMPARE(style(first, u8"Alpha").shadow, std::u8string(u8"2"));
+        // Not applied, and its Style gone with an undo: said in a toast.
+        values = styles.beginNamed(QStringLiteral("Gone"));
+        QCOMPARE(styles.commitEdit(values, {}, false, false), QString());
+        QTRY_COMPARE(styles.documentStyles().size(), 4);
+        pick(false, {3});
+        QCOMPARE(field("styleName")->property("text").toString(), QStringLiteral("Gone"));
+        edit("styleSize", QStringLiteral("32"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(styles.documentStyles().size(), 3);
+        QTRY_COMPARE(toast().value(QStringLiteral("title")).toString(), QStringLiteral("Changes to “Gone” not applied"));
+        QCOMPARE(toast().value(QStringLiteral("text")).toString(), QStringLiteral("The style is gone."));
+        QVERIFY(!manager->property("editing").toBool());
+
+        // Another tab with a taken name and a size not applied: Apply keeps
+        // the name, writes the size and says so.
+        pick(false, {1}); // Sign
+        edit("styleName", QStringLiteral("Default"));
+        edit("styleSize", QStringLiteral("41"));
+        QVERIFY(application->openFile(writeStyled("follow-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n")));
+        const QVariantList tabs = application->tabs();
+        for (int i = 0; i < tabs.size(); ++i)
+            if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String("follow-other.ass"))
+                application->selectTab(i);
+        answer("apply");
+        QCOMPARE(style(first, u8"Sign").fontsize, std::u8string(u8"41"));
+        QCOMPARE(style(first, u8"Default").fontsize, std::u8string(u8"20"));
+        QTRY_COMPARE(toast().value(QStringLiteral("title")).toString(), QStringLiteral("Style not renamed"));
+        QVERIFY(toast().value(QStringLiteral("text")).toString().startsWith(QStringLiteral("“Sign” keeps its name;")));
+        auto *second = targetSession();
+        QVERIFY(second != first);
+
+        // Its file closed under an edit not applied: nothing to ask; a toast.
+        QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{0});
+        edit("styleSize", QStringLiteral("50"));
+        QVERIFY(application->closeEditingTarget());
+        QTRY_COMPARE(targetSession(), first);
+        QTRY_COMPARE(toast().value(QStringLiteral("text")).toString(), QStringLiteral("Its file was closed."));
+        QVERIFY(!box() || !box()->isVisible());
+        QVERIFY(!manager->property("dirty").toBool());
+
+        // Settings loads another catalog under a catalog edit: asked; Apply
+        // writes to the catalog it was made in.
+        QVERIFY(styles.createCatalog(QStringLiteral("SY1 b")));
+        styles.addToStore({1}, {});
+        styles.saveCatalog();
+        QVERIFY(styles.createCatalog(QStringLiteral("SY1 a")));
+        styles.addToStore({1}, {});
+        styles.saveCatalog();
+        QVERIFY(QMetaObject::invokeMethod(manager, "refresh"));
+        pick(true, {0});
+        QCOMPARE(field("styleName")->property("text").toString(), QStringLiteral("Sign"));
+        edit("styleSize", QStringLiteral("66"));
+        application->settingsStore()->set("convert.styleCatalog", QStringLiteral("SY1 b"));
+        application->openSettingsDialog();
+        QCOMPARE(styles.catalog(), QStringLiteral("SY1 b"));
+        QTRY_VERIFY(box() && box()->isVisible());
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("The catalog “SY1 b” is shown now; the changes go to “SY1 a”."));
+        answer("apply");
+        QCOMPARE(styles.catalogStore().find(u8"SY1 a", u8"Sign")->fontsize, std::u8string(u8"66"));
+        QCOMPARE(styles.catalogStore().find(u8"SY1 b", u8"Sign")->fontsize, std::u8string(u8"41"));
+        QCOMPARE(styles.catalog(), QStringLiteral("SY1 b"));
+        QVERIFY(manager->property("editingStore").toBool());
+        QVERIFY(!manager->property("dirty").toBool());
+        application->settingsStore()->set("convert.styleCatalog", QStringLiteral("Default"));
+        QVERIFY(styles.deleteCatalog(QStringLiteral("SY1 a")));
+        QVERIFY(styles.deleteCatalog(QStringLiteral("SY1 b")));
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        QTRY_VERIFY(!manager->isVisible());
+        application->editor().discard();
+    }
+
     // Y5: Convert to SRT previews its losses, applies the plan as one step,
     // refuses a stale plan, and Save then asks for a file.
     void conversionPreviewsAndAppliesThePlan()

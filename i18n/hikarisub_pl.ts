@@ -7400,6 +7400,14 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The style is gone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog “%1” is shown now; the changes go to “%2”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Discard</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7476,6 +7484,22 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Its file was closed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style not renamed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” keeps its name; the other changes were applied. %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes to “%1” not applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>The file shown now uses the catalog “%1”.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7493,6 +7517,10 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Multiple values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: multiple values</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7877,6 +7905,10 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>The document has no styles to edit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog “%1” no longer exists.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -55,6 +55,11 @@ DialogWindow {
     readonly property bool multi: editing && !pendingNew && editedRows.length > 1
     property var storeRows: []
     property var assRows: []
+    // The catalog storeRows came from.
+    property string listedCatalog: ""
+    // The manager's own change of a list (a commit, a delete): it sets the
+    // selections itself.
+    property bool ownChange: false
     readonly property string filterText: filterField.text.trim().toLowerCase()
 
     // --- Opening ----------------------------------------------------------
@@ -119,7 +124,13 @@ DialogWindow {
         const v = styles.beginNamed(styleName)
         if (v.name === undefined)
             return
-        const problem = styles.commitEdit(v, [], false, false)
+        ownChange = true
+        let problem
+        try {
+            problem = styles.commitEdit(v, [], false, false)
+        } finally {
+            ownChange = false
+        }
         if (problem !== "") {
             styles.endEdit()
             showError(problem)
@@ -143,6 +154,84 @@ DialogWindow {
     function reloadRows() {
         storeRows = styles.styleRows(true)
         assRows = styles.styleRows(false)
+        listedCatalog = styles.catalog
+    }
+    function sameRows(a, b) { return a.length === b.length && a.every((r, i) => r === b[i]) }
+    // The lists again after a change made elsewhere (an undo, a move,
+    // Settings' catalog): the selections follow their Styles by name and
+    // the editor with them; an edit not applied stays on its Style while it
+    // is there.
+    function reloadFollowing() {
+        if (ownChange || !visible) {
+            reloadRows()
+            return
+        }
+        const namesOf = (rows, list) => rows.filter(r => r < list.length).map(r => list[r].name)
+        const storeNames = namesOf(storeSelected, storeRows)
+        const assNames = namesOf(assSelected, assRows)
+        const catalogBefore = listedCatalog
+        reloadRows()
+        if (editing && editingStore && styles.editCatalog() !== styles.catalog) {
+            catalogMoved()
+            return
+        }
+        const storeFound = catalogBefore === listedCatalog ? sorted(rowsNamed(true, storeNames)) : []
+        const assFound = sorted(rowsNamed(false, assNames))
+        if (!editing || pendingNew) {
+            storeSelected = storeFound
+            assSelected = assFound
+            return
+        }
+        const store = editingStore
+        const found = store ? storeFound : assFound
+        const own = rowsNamed(store, [values.name])
+        if (dirty && own.length > 0) {
+            storeSelected = storeFound
+            assSelected = assFound
+            styles.rebindEdit(own[0])
+            return
+        }
+        if (dirty)
+            dropped(values.name, qsTr("The style is gone."))
+        const other = store ? assFound : storeFound
+        if (found.length > 0 && sameRows(found, editedRows)) {
+            // Opened again only when its values moved (an edit, say, at
+            // each Line typed would cost a preview).
+            const map = styles.beginEdit(store, found[0])
+            const fields = found.length > 1 ? styles.mixedFields(store, found) : []
+            if (Object.keys(map).some(k => !same(map[k], values[k])) || !sameRows(fields.slice().sort(), mixed.slice().sort()))
+                beginMixed(map, store, fields)
+        } else {
+            choose(store, found)
+        }
+        if (store)
+            assSelected = other
+        else
+            storeSelected = other
+    }
+    // Settings loaded another catalog under an edit of a catalog Style: the
+    // edit is asked about (Apply writes it to its own catalog), then the
+    // catalog shown is.
+    function catalogMoved() {
+        if (!dirty) {
+            catalogShown()
+            return
+        }
+        if (boxLoader.item && boxLoader.item.visible)
+            return // answered first; the catalog is followed then
+        ask({
+            title: qsTr("Edit style"),
+            text: qsTr("Apply the changes to “%1”?").arg(pendingNew ? nameField.text : values.name),
+            detail: qsTr("The catalog “%1” is shown now; the changes go to “%2”.").arg(styles.catalog).arg(styles.editCatalog()),
+            severity: "warning",
+            choices: [{ id: "discard", text: qsTr("Discard"), role: "destructive" },
+                      { id: "apply", text: qsTr("Apply"), role: "accept", isDefault: true }]
+        }, id => {
+            if (id === "apply")
+                manager.applyAway()
+            manager.revert()
+            manager.catalogShown()
+        })
     }
     function rowNamed(store, name) {
         const rows = store ? storeRows : assRows
@@ -257,7 +346,14 @@ DialogWindow {
         const rows = store ? storeSelected : assSelected
         if (rows.length === 0)
             return
-        const left = shownOf(store, styles.removeStyles(store, rows))
+        ownChange = true
+        let removed
+        try {
+            removed = styles.removeStyles(store, rows)
+        } finally {
+            ownChange = false
+        }
+        const left = shownOf(store, removed)
         if (editing && editingStore === store)
             choose(store, left)
         else if (store)
@@ -499,13 +595,20 @@ DialogWindow {
             out[key] = true
         changedKeys = out
     }
-    // A field's reset: the value it had when the editor opened.
-    function resetField(key) {
-        const v = editor.values()
-        v[key] = values[key]
-        if (resolved.indexOf(key) >= 0) { // back to "Multiple values"
-            resolved = resolved.filter(k => k !== key)
+    // A field set by hand back to "Multiple values".
+    function unresolve(key) {
+        if (resolved.indexOf(key) < 0)
+            return
+        resolved = resolved.filter(k => k !== key)
+        if (!isMixed(key))
             mixed = mixed.concat([key])
+    }
+    // A label's reset: its fields' values when the editor opened.
+    function resetFields(keys) {
+        const v = editor.values()
+        for (const key of keys) {
+            v[key] = values[key]
+            unresolve(key)
         }
         editor.load(v)
         refreshChanges()
@@ -568,10 +671,8 @@ DialogWindow {
         }
         const store = editingStore
         const rows = editedRows
-        const many = multi
         const v = editor.values()
-        const problem = styles.commitEdit(v, many ? rows : [], many, renameBox.visible && renameBox.checked,
-                                          many ? resolved : [])
+        const problem = commitValues(v)
         if (problem !== "") {
             showError(problem)
             return false
@@ -583,6 +684,47 @@ DialogWindow {
         }
         choose(store, pendingNew ? [rowNamed(store, v.name)] : rows)
         return true
+    }
+    // The editor's values to the controller: "" or the refusal.
+    function commitValues(v) {
+        const many = multi
+        ownChange = true
+        try {
+            return styles.commitEdit(v, many ? editedRows : [], many, renameBox.visible && renameBox.checked,
+                                     many ? resolved : [])
+        } finally {
+            ownChange = false
+        }
+    }
+    // Apply as the lists move on (another tab, another catalog): a name
+    // refused is put back and the other changes go in; what can't be
+    // applied is said in a toast.
+    function applyAway() {
+        const name = pendingNew ? nameField.text : values.name
+        if (!styles.editOpen()) {
+            dropped(name, qsTr("Its file was closed."))
+            return
+        }
+        let problem = !multi && nameField.text.trim().length === 0 ? qsTr("A style needs a name.")
+                                                                    : commitValues(editor.values())
+        if (problem !== "" && !pendingNew && !multi && nameField.text !== values.name) {
+            const refused = nameField.text
+            nameField.text = values.name
+            if (commitValues(editor.values()) === "") {
+                if (notices)
+                    notices.post("warning", qsTr("Style not renamed"),
+                                 qsTr("“%1” keeps its name; the other changes were applied. %2").arg(values.name).arg(problem),
+                                 { details: refused })
+                return
+            }
+        }
+        if (problem !== "")
+            dropped(name, problem)
+    }
+    // An edit not applied, and why.
+    function dropped(name, why) {
+        if (notices)
+            notices.post("warning", qsTr("Changes to “%1” not applied").arg(name), why)
     }
     function fromFilter() {
         const list = assList.enabled && assList.count > 0 ? assList : storeList
@@ -603,12 +745,12 @@ DialogWindow {
     // not applied is asked about, and applied to the file it was made in).
     Connections {
         target: manager.styles
-        function onChanged() { manager.reloadRows() }
+        function onChanged() { manager.reloadFollowing() }
         function onTargetEdited(switched) {
             if (!manager.visible)
                 return
             if (!switched) {
-                manager.reloadRows()
+                manager.reloadFollowing()
                 return
             }
             // The new tab may name another catalog (Last Style Storage).
@@ -631,6 +773,13 @@ DialogWindow {
                 shown()
                 return
             }
+            // The file it was made in is closed: nothing to ask.
+            if (onFile && !manager.styles.editOpen()) {
+                manager.dropped(manager.pendingNew ? nameField.text : manager.values.name, qsTr("Its file was closed."))
+                manager.revert()
+                shown()
+                return
+            }
             manager.ask({
                 title: qsTr("Edit style"),
                 text: qsTr("Apply the changes to “%1”?").arg(manager.pendingNew ? nameField.text : manager.values.name),
@@ -643,7 +792,7 @@ DialogWindow {
                 // Only Apply writes it: Discard, or the question closed,
                 // drops the edit.
                 if (id === "apply")
-                    manager.commit(false)
+                    manager.applyAway()
                 manager.revert()
                 shown()
             })
@@ -684,12 +833,15 @@ DialogWindow {
         Layout.columnSpan: 4
         Layout.topMargin: 12
     }
-    // A field's label, with a reset button while the field differs from
-    // the value it opened with.
+    // A field's label, with a reset button while the field (or one of its
+    // `keys`) differs from the value it opened with.
     component FieldLabel: RowLayout {
         id: fieldLabel
         property string text
         property string key
+        property var keys: key.length > 0 ? [key] : []
+        property string resetName: key
+        readonly property var changed: keys.filter(k => manager.changedKeys[k] === true)
         spacing: 2
         Layout.fillWidth: true
         Layout.topMargin: 4
@@ -702,8 +854,8 @@ DialogWindow {
             Layout.minimumWidth: implicitWidth
         }
         IconToolButton {
-            objectName: "styleReset_" + fieldLabel.key
-            visible: fieldLabel.key.length > 0 && manager.changedKeys[fieldLabel.key] === true && !manager.pendingNew
+            objectName: "styleReset_" + fieldLabel.resetName
+            visible: fieldLabel.changed.length > 0 && !manager.pendingNew
             iconRole: "undo"
             iconSize: 14
             padding: 0
@@ -711,7 +863,7 @@ DialogWindow {
             implicitWidth: 16
             text: qsTr("Reset %1").arg(fieldLabel.text)
             tip: qsTr("Put back the value it had")
-            onClicked: manager.resetField(fieldLabel.key)
+            onClicked: manager.resetFields(fieldLabel.changed)
         }
     }
     // A field of the editor, "Multiple values" while the Styles differ, a
@@ -734,6 +886,28 @@ DialogWindow {
             anchors.right: parent.right
             anchors.rightMargin: 8
             anchors.verticalCenter: parent.verticalCenter
+        }
+    }
+    // Bold, Italic, Underline or Strikethrough: a toggle, with a dash under
+    // its icon while the Styles differ.
+    component EmphasisToggle: IconToolButton {
+        id: toggle
+        property string key
+        readonly property bool isMixed: manager.isMixed(key)
+        checkable: true
+        tip: isMixed ? qsTr("%1: multiple values").arg(text) : text
+        Accessible.description: isMixed ? qsTr("Multiple values") : ""
+        onToggled: manager.edited(key)
+        Rectangle {
+            objectName: "styleMixedMark"
+            visible: toggle.isMixed
+            width: 8
+            height: 2
+            radius: 1
+            color: Theme.muted
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 3
         }
     }
     // A Style's colour: its swatch (the hex in a chip; hatched while the
@@ -1545,7 +1719,7 @@ DialogWindow {
                     }
                     StyleField { id: sizeField; objectName: "styleSize"; key: "fontsize"; Accessible.name: qsTr("Size") }
                     FieldLabel { text: qsTr("Font catalog"); Layout.columnSpan: 2 }
-                    FieldLabel { text: qsTr("Emphasis"); key: "" }
+                    FieldLabel { text: qsTr("Emphasis"); keys: ["bold", "italic", "underline", "strikeOut"]; resetName: "emphasis" }
                     FieldLabel { text: qsTr("Text encoding"); key: "encoding" }
                     // Y6: the font catalogs and the Filter (StyleChange's filtersizer).
                     FontCatalogBar {
@@ -1577,22 +1751,10 @@ DialogWindow {
                             id: emphasisRow
                             x: 1
                             y: 1
-                            IconToolButton {
-                                id: boldBox; objectName: "styleBold"; iconRole: "tag-bold"; text: qsTr("Bold")
-                                checkable: true; onToggled: manager.edited("bold")
-                            }
-                            IconToolButton {
-                                id: italicBox; objectName: "styleItalic"; iconRole: "tag-italic"; text: qsTr("Italic")
-                                checkable: true; onToggled: manager.edited("italic")
-                            }
-                            IconToolButton {
-                                id: underlineBox; objectName: "styleUnderline"; iconRole: "tag-underline"; text: qsTr("Underline")
-                                checkable: true; onToggled: manager.edited("underline")
-                            }
-                            IconToolButton {
-                                id: strikeBox; objectName: "styleStrikeout"; iconRole: "tag-strikeout"; text: qsTr("Strikethrough")
-                                checkable: true; onToggled: manager.edited("strikeOut")
-                            }
+                            EmphasisToggle { id: boldBox; objectName: "styleBold"; key: "bold"; iconRole: "tag-bold"; text: qsTr("Bold") }
+                            EmphasisToggle { id: italicBox; objectName: "styleItalic"; key: "italic"; iconRole: "tag-italic"; text: qsTr("Italic") }
+                            EmphasisToggle { id: underlineBox; objectName: "styleUnderline"; key: "underline"; iconRole: "tag-underline"; text: qsTr("Underline") }
+                            EmphasisToggle { id: strikeBox; objectName: "styleStrikeout"; key: "strikeOut"; iconRole: "tag-strikeout"; text: qsTr("Strikethrough") }
                         }
                     }
                     ComboBox {
@@ -1673,6 +1835,7 @@ DialogWindow {
                             Layout.fillWidth: true
                             Layout.minimumWidth: implicitWidth
                             text: qsTr("Opaque box")
+                            Accessible.description: checkState === Qt.PartiallyChecked ? qsTr("Multiple values") : ""
                             onToggled: manager.edited("borderStyle")
                         }
                         // The 3 × 3 alignment grid (the numpad's places).
@@ -1687,6 +1850,8 @@ DialogWindow {
                             radius: 2
                             Accessible.role: Accessible.Grouping
                             Accessible.name: qsTr("Alignment")
+                            // No place checked: the Styles differ.
+                            Accessible.description: manager.isMixed("alignment") ? qsTr("Multiple values") : ""
                             ButtonGroup { id: alignmentGroup }
                             Grid {
                                 id: alignGrid
@@ -1854,7 +2019,7 @@ DialogWindow {
                 return
             changeColour(lastColour)
             if (wasMixed) {
-                manager.mixed = manager.mixed.concat([colours.itemAt(number - 1).key])
+                manager.unresolve(colours.itemAt(number - 1).key)
                 manager.refreshChanges()
             }
         }

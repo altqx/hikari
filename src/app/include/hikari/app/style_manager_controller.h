@@ -92,6 +92,16 @@ public:
     Q_INVOKABLE QString commitEdit(const QVariantMap &values, const QVariantList &selected, bool applyToSelected,
                                    bool renameLines, const QStringList &resolved = {});
     Q_INVOKABLE void endEdit();
+    // SY1: the edit can still be applied (its file is open; a catalog edit
+    // always can).
+    Q_INVOKABLE bool editOpen() const;
+    // SY1: the catalog a catalog Style's edit goes to, which Settings may
+    // have replaced in the lists since ("" without one).
+    Q_INVOKABLE QString editCatalog() const;
+    // SY1: the edited Style's row after its list changed (an undo, a move).
+    Q_INVOKABLE void rebindEdit(int row);
+    // SY1: a Document closing: an edit pinned to it can no longer be applied.
+    void documentClosing(const application::EditSession *session);
 
     // PK1's clash review: the clashes a transfer has, in order
     // ([{name, fields (the style_field flags that differ), same, suggestion}]).
@@ -133,6 +143,9 @@ private:
         // SY1: the Document the editor opened on, so Apply after a tab
         // switch still goes to it.
         application::EditSession *session = nullptr;
+        // SY1: a catalog Style's catalog, so Apply goes to it when Settings
+        // loaded another since.
+        std::u8string catalog;
     };
     application::StyleList *list(bool store, std::optional<application::StyleList> &document) const;
     void catalogChosen();
