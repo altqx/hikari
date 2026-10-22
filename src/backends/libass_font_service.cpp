@@ -10,6 +10,7 @@
 #include <cstdio>
 #include <cstring>
 #include <map>
+#include <unordered_set>
 
 extern "C" {
 #include <ass/ass.h>
@@ -835,7 +836,12 @@ bool charsetCovers(const FcCharSet *set, const std::u32string &characters)
 
 std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
 {
+    // A Script's attachment can be anything: its faces and their names are
+    // bounded, and each name is checked against those kept in constant time.
+    constexpr long kMaxFaces = 256;
+    constexpr std::size_t kMaxNames = 4096;
     std::vector<std::string> out;
+    std::unordered_set<std::string> seen;
     FT_Library ft = nullptr;
     if (bytes.empty() || FT_Init_FreeType(&ft))
         return out;
@@ -843,18 +849,18 @@ std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
     const auto size = FT_Long(bytes.size());
     long count = 0;
     if (FT_Face probe = nullptr; !FT_New_Memory_Face(ft, data, size, -1, &probe)) {
-        count = probe->num_faces;
+        count = std::min(probe->num_faces, FT_Long(kMaxFaces));
         FT_Done_Face(probe);
     }
-    const auto add = [&out](std::string name) {
-        if (!name.empty() && std::find(out.begin(), out.end(), name) == out.end())
+    const auto add = [&out, &seen](std::string name) {
+        if (out.size() < kMaxNames && !name.empty() && seen.insert(name).second)
             out.push_back(std::move(name));
     };
-    for (long i = 0; i < count; ++i) {
+    for (long i = 0; i < count && out.size() < kMaxNames; ++i) {
         FT_Face f = nullptr;
         if (FT_New_Memory_Face(ft, data, size, i, &f))
             continue;
-        for (FT_UInt n = 0, total = FT_Get_Sfnt_Name_Count(f); n < total; ++n) {
+        for (FT_UInt n = 0, total = FT_Get_Sfnt_Name_Count(f); n < total && out.size() < kMaxNames; ++n) {
             FT_SfntName name;
             if (!FT_Get_Sfnt_Name(f, n, &name) &&
                 (name.name_id == TT_NAME_ID_FONT_FAMILY || name.name_id == TT_NAME_ID_TYPOGRAPHIC_FAMILY ||
