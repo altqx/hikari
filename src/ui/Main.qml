@@ -367,6 +367,17 @@ ApplicationWindow {
         dockingArea.addDockWidget(logDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
     }
 
+    // TP1 (#274): the Styles panel's place when it opens in an arrangement
+    // saved before it existed (panel registry 6 or earlier): its default
+    // one, a tab with the Line editor, or the window's right side when the
+    // Line editor is closed.
+    function addStyles() {
+        if (editorDock.isOpen)
+            editorDock.addDockWidgetAsTab(stylesDock)
+        else
+            dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
+    }
+
     // AM1: a macro started while the Automation panel is closed opens it
     // (its run status holds Cancel and the log), without taking the focus.
     readonly property bool automationRunning: root.automation.running
@@ -550,6 +561,8 @@ ApplicationWindow {
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace("Log"))
             root.addLog()
+        else if (dock === stylesDock && !Docking.hasPlace("Styles"))
+            root.addStyles()
         else
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
