@@ -1614,6 +1614,9 @@ void HotkeyList::resetAll(const HotkeyMap &live)
         return;
     m_modified = true;
     pushHistory();
+    // A search shows the rows that match their new bindings.
+    if (!m_search.empty())
+        filter(m_filterMode);
 }
 
 void HotkeyList::remove(int index, const HotkeyMap &live)

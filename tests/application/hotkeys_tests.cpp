@@ -534,6 +534,23 @@ TEST(Hotkeys, ResetAllIsOneStep)
     EXPECT_EQ(list.row(open).accel, "Ctrl-O");
 }
 
+// A search by the Hotkey column follows the reset bindings.
+TEST(Hotkeys, ResetAllRerunsTheSearch)
+{
+    HotkeyMap copy;
+    HotkeyList list(copy);
+    const auto live = defaultHotkeys();
+    list.build(live);
+    const int history = list.find("Global History");
+    list.map(history, "Ctrl-Shift-J", GlobalHotkey, HotkeyAnswer::Cancel, live);
+    list.search("ctrl-shift-j");
+    ASSERT_TRUE(std::ranges::any_of(list.shown(), [&](int i) { return i == history; }));
+    list.resetAll(live);
+    EXPECT_TRUE(std::ranges::none_of(list.shown(), [&](int i) { return i == history; }));
+    list.search("ctrl-shift-h");
+    EXPECT_TRUE(std::ranges::any_of(list.shown(), [&](int i) { return i == history; }));
+}
+
 TEST(Hotkeys, MapSetsTheBindingAndCommitWritesTheCopy)
 {
     HotkeyMap copy;
