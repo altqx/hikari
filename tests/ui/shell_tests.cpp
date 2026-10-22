@@ -10334,8 +10334,8 @@ private slots:
             {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
             {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
             {{"saveTag", Accept}, {"cancelTag", Reject}},
-            {{"updateOffer", Accept}, {"updateClose", Reject}}, // DG1: Remind me in a week at the leading edge
-            {{"updateAurRemind", No}, {"updateAurClose", Reject}},
+            {{"updateOffer", Accept}, {"updateClose", Reject}, {"updateRemind", No}}, // PU7: Skip this version at the leading edge
+            {{"saveLayoutSave", Accept}, {"saveLayoutCancel", Reject}}, // PU7
             {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
             {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
              {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},

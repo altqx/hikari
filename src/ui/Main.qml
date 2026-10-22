@@ -5718,10 +5718,12 @@ ApplicationWindow {
     SaveLayoutDialog {
         id: saveLayoutDialog
         layouts: root.workspaceLayout
+        settings: root.app.settings
     }
     ManageLayoutsDialog {
         id: manageLayoutsDialog
         layouts: root.workspaceLayout
+        settings: root.app.settings
     }
 
     // KA2 (#277): Calibrate latency…, from the audio panel's Tap menu.
