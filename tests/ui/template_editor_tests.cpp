@@ -1586,6 +1586,31 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // The stock selected-Lines run takes karaoke Lines and the generated
+    // Lines marked with theirs: with only a file's unmarked Lines selected
+    // it would refuse, so the panel offers it only when it can run.
+    void applyToTheSelectedLinesNeedsAKaraokeLineSelected()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        std::optional<core::LineId> unmarked;
+        for (const auto *g : session->document().lines())
+            if (!unmarked && application::isGeneratedLine(*g) && g->generatedFrom.value == 0)
+                unmarked = g->id;
+        QVERIFY(unmarked);
+        editor->setShown(true);
+        activate(*unmarked);
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApply(); }, 20'000));
+        QVERIFY(!editor->canApplySelected());
+        activate(*firstKaraoke());
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApplySelected(); }, 20'000));
+        // A Line marked with its karaoke Line counts too.
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*unmarked, [&](core::LineRecord &l) { l.generatedFrom = *firstKaraoke(); });
+        }));
+        activate(*unmarked);
+        QVERIFY(QTest::qWaitFor([&] { return editor->canApplySelected(); }, 20'000));
+    }
+
     // An unmarked generated Line the Line editor's draft makes a karaoke
     // Line is the one Apply runs on: its old karaoke Line no longer counts.
     void aDraftThatEndsAnUnmarkedLinesOutputPreviewsIt()

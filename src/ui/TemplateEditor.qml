@@ -973,7 +973,10 @@ Pane {
             objectName: "templateApplySelected"
             iconRole: "select-lines"
             text: qsTr("Apply to the selected Lines")
-            help: qsTr("KE1's regenerate-selected: the other Lines' output stays as it is.")
+            help: root.controller.canApplySelected
+                ? qsTr("KE1's regenerate-selected: the other Lines' output stays as it is.")
+                : qsTr("Select a karaoke Line, or a Line generated from one since the file was opened.")
+            enabled: root.controller.canApplySelected
             onTriggered: root.controller.apply(true)
         }
     }

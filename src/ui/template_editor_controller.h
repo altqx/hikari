@@ -89,6 +89,7 @@ class TemplateEditorController : public QObject {
     Q_PROPERTY(bool previewOnVideo READ previewOnVideo WRITE setPreviewOnVideo NOTIFY changed)
     Q_PROPERTY(bool videoPreview READ videoPreview NOTIFY previewChanged)
     Q_PROPERTY(bool canApply READ canApply NOTIFY changed)
+    Q_PROPERTY(bool canApplySelected READ canApplySelected NOTIFY changed)
     // The Document's templates and code may run for previews: the user chose
     // to preview them or applied them, and nothing they read has come since
     // another way. A file's code, and its Actor and Style values the
@@ -185,6 +186,9 @@ public:
     void setPreviewOnVideo(bool on);
     bool videoPreview() const;
     bool canApply() const;
+    // canApply, and the selection holds a karaoke Line or a generated Line
+    // marked with one, as the stock selected-Lines run needs.
+    bool canApplySelected() const;
     bool trusted() const;
     Q_INVOKABLE void trustDocument();
     // The current text's preview has not come yet (waiting or running).

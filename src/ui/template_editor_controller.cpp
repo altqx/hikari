@@ -1149,6 +1149,24 @@ void TemplateEditorController::commit()
     emit changed();
 }
 
+bool TemplateEditorController::canApplySelected() const
+{
+    const auto *s = session();
+    if (!canApply() || !s)
+        return false;
+    // macro_apply_templates_to_selection: a karaoke Line, or a generated
+    // Line whose mark names one (a file's unmarked Lines name none).
+    const core::Document doc = runDocument();
+    std::set<core::LineId> karaoke;
+    for (const auto *l : doc.lines())
+        if (application::isKaraokeLine(*l))
+            karaoke.insert(l->id);
+    return std::ranges::any_of(doc.lines(), [&](const core::LineRecord *l) {
+        return s->selection().selected.contains(l->id) &&
+               (karaoke.contains(l->id) || (application::isGeneratedLine(*l) && karaoke.contains(l->generatedFrom)));
+    });
+}
+
 bool TemplateEditorController::apply(bool selectedOnly)
 {
     commit();
@@ -1158,7 +1176,7 @@ bool TemplateEditorController::apply(bool selectedOnly)
         m_previewTimer.stop();
         runPreview();
     }
-    if (!canApply() || m_pending)
+    if (!(selectedOnly ? canApplySelected() : canApply()) || m_pending)
         return false;
     return m_templater->apply(selectedOnly);
 }
