@@ -76,7 +76,7 @@ DialogWindow {
             else
                 choose(true, storeRows.length > 0 ? [0] : [])
         }
-        if (visible)
+        if (shown())
             guard(go)
         else
             go()
@@ -95,7 +95,7 @@ DialogWindow {
                 askCreate(styleName)
             }
         }
-        if (visible) {
+        if (shown()) {
             open() // raised
             guard(go)
             return
@@ -137,8 +137,11 @@ DialogWindow {
         editDocumentStyle(rowNamed(false, styleName))
     }
     function closeManager() { close() }
+    // Open, or hidden only while its frame is made again (Wayland,
+    // MainWindowFrame::apply), which is no closing.
+    function shown() { return visible || WindowFrame.remaking(manager) }
     onVisibleChanged: {
-        if (visible)
+        if (shown())
             return
         styles.saveCatalog() // OnClose saves the store
         endEditing()
@@ -184,27 +187,28 @@ DialogWindow {
     }
     function sameRows(a, b) { return a.length === b.length && a.every((r, i) => r === b[i]) }
     // The lists again after a change made elsewhere (an undo, a move,
-    // Settings' catalog): the selections follow their Styles by name and
-    // the editor with them; an edit not applied stays on its Style while it
-    // is there.
+    // Settings' catalog): the selections follow their Styles by name (a
+    // repeated name's by its copy) and the editor with them; an edit not
+    // applied stays on its Style while it is there.
     function reloadFollowing() {
         if (awaitingSwitch)
             return
-        if (ownChange || !visible) {
+        if (ownChange || !shown()) {
             reloadRows()
             return
         }
-        const namesOf = (rows, list) => rows.filter(r => r < list.length).map(r => list[r].name)
-        const storeNames = namesOf(storeSelected, storeRows)
-        const assNames = namesOf(assSelected, assRows)
+        const storeKeys = keysOf(true, storeSelected)
+        const assKeys = keysOf(false, assSelected)
+        const opened = editing && !pendingNew ? keysOf(editingStore, editedRows.slice(0, 1)) : []
+        const ownKey = opened.length > 0 && opened[0].name === values.name ? opened[0] : { name: values.name, copy: 0 }
         const catalogBefore = listedCatalog
         reloadRows()
         if (editing && editingStore && styles.editCatalog() !== styles.catalog) {
             catalogMoved()
             return
         }
-        const storeFound = catalogBefore === listedCatalog ? sorted(rowsNamed(true, storeNames)) : []
-        const assFound = sorted(rowsNamed(false, assNames))
+        const storeFound = catalogBefore === listedCatalog ? sorted(rowsOfKeys(true, storeKeys)) : []
+        const assFound = sorted(rowsOfKeys(false, assKeys))
         if (!editing || pendingNew) {
             storeSelected = storeFound
             assSelected = assFound
@@ -212,7 +216,7 @@ DialogWindow {
         }
         const store = editingStore
         const found = store ? storeFound : assFound
-        const own = rowsNamed(store, [values.name])
+        const own = rowsOfKeys(store, [ownKey])
         if (dirty && own.length > 0) {
             storeSelected = storeFound
             assSelected = assFound
@@ -290,21 +294,41 @@ DialogWindow {
         const rows = store ? storeRows : assRows
         return rows.findIndex(r => r.name === name)
     }
-    // The rows of `names` (each name's next row for a repeated name), in one
-    // pass: a file may hold thousands of Styles.
-    function rowsNamed(store, names) {
-        const rows = store ? storeRows : assRows
+    // Each of `rows` as its name and its copy of the name (0 for the first
+    // "Dup", 1 for the second), to be found again after a change; in one
+    // pass, as rowsOfKeys: a file may hold thousands of Styles.
+    function keysOf(store, rows) {
+        const list = store ? storeRows : assRows
+        const wanted = Object.create(null)
+        for (const r of rows)
+            wanted[r] = true
+        const seen = Object.create(null)
         const at = Object.create(null)
-        for (let i = 0; i < rows.length; ++i)
-            (at[rows[i].name] = at[rows[i].name] || []).push(i)
-        const used = Object.create(null)
+        for (let i = 0; i < list.length; ++i) {
+            const copy = seen[list[i].name] || 0
+            seen[list[i].name] = copy + 1
+            if (wanted[i])
+                at[i] = { name: list[i].name, copy: copy }
+        }
+        return rows.filter(r => at[r] !== undefined).map(r => at[r])
+    }
+    // The rows of `keys` (keysOf) now, each once: a name's copy at its
+    // place, or its last copy when the name has fewer now.
+    function rowsOfKeys(store, keys) {
+        const list = store ? storeRows : assRows
+        const at = Object.create(null)
+        for (let i = 0; i < list.length; ++i)
+            (at[list[i].name] = at[list[i].name] || []).push(i)
+        const taken = Object.create(null)
         const out = []
-        for (const name of names) {
-            const list = at[name]
-            const n = used[name] || 0
-            if (list && n < list.length) {
-                out.push(list[n])
-                used[name] = n + 1
+        for (const key of keys) {
+            const copies = at[key.name]
+            if (!copies)
+                continue
+            const r = copies[Math.min(key.copy, copies.length - 1)]
+            if (!taken[r]) {
+                taken[r] = true
+                out.push(r)
             }
         }
         return out
@@ -413,20 +437,19 @@ DialogWindow {
             return
         followRows(store, own(() => styles.moveStyles(store, rows, kind)))
     }
-    // The selection follows its Styles by name (the sort is stable: a
-    // repeated name's Styles keep their order).
+    // The selection follows its Styles by name and copy (the sort is
+    // stable: a repeated name's Styles keep their order).
     function sortList(store) {
-        const rows = store ? storeRows : assRows
-        const names = (store ? storeSelected : assSelected).map(r => rows[r].name)
+        const keys = keysOf(store, store ? storeSelected : assSelected)
         own(() => styles.sortStyles(store))
-        followRows(store, sorted(rowsNamed(store, names)))
+        followRows(store, sorted(rowsOfKeys(store, keys)))
     }
     // SY1-clean-toast: Delete unused styles (the file's ⋯ menu and the
     // Subtitles menu's command): a toast with the Styles deleted and the
     // legacy report in the Log, where StyleStore showed a message.
     function deleteUnused() {
         const done = () => {
-            const names = assSelected.filter(r => r < assRows.length).map(r => assRows[r].name)
+            const keys = keysOf(false, assSelected) // a name's copies go or stay together
             const result = own(() => styles.deleteUnusedStyles())
             if (result.deleted === undefined)
                 return
@@ -438,13 +461,13 @@ DialogWindow {
                              deleted.length === 0 ? qsTr("Every style is used by a line.")
                                                   : deleted.join(", ") + "\n" + qsTr("Ctrl+Z puts them back."),
                              { details: result.report })
-            const found = rowsNamed(false, names)
-            if (visible && editing && !editingStore)
+            const found = rowsOfKeys(false, keys)
+            if (shown() && editing && !editingStore)
                 choose(false, shownOf(false, found.length > 0 ? found : [0]))
             else
                 assSelected = sorted(found)
         }
-        if (visible && editing && !editingStore)
+        if (shown() && editing && !editingStore)
             guard(done)
         else
             done()
@@ -778,7 +801,7 @@ DialogWindow {
         target: manager.styles
         function onChanged() { manager.reloadFollowing() }
         function onTargetEdited(switched) {
-            if (!manager.visible || manager.awaitingSwitch)
+            if (!manager.shown() || manager.awaitingSwitch)
                 return // (a question open: its answer shows the tab then)
             if (!switched) {
                 manager.reloadFollowing()

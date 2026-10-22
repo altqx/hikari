@@ -7194,6 +7194,29 @@ private slots:
         QCOMPARE(field("styleSize")->property("text").toString(), QStringLiteral("26"));
         QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
         QCOMPARE(sizes(), (QStringList{QStringLiteral("Mid 40"), QStringLiteral("Dup 30"), QStringLiteral("Dup 26")}));
+
+        // An undo under an edit not applied on the second copy: the edit
+        // stays on that copy (by its place among the name's), not the first.
+        edit("styleShadow", QStringLiteral("5"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(sizes(), (QStringList{QStringLiteral("Mid 40"), QStringLiteral("Dup 30"), QStringLiteral("Dup 25")}));
+        QTRY_COMPARE(field("styleSize")->property("text").toString(), QStringLiteral("25"));
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{2});
+        QVERIFY(manager->property("dirty").toBool());
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        const auto shadows = [&] {
+            QStringList out;
+            for (const auto &s : *application::documentStyles(*targetSession()))
+                out << QString::fromUtf8(reinterpret_cast<const char *>(s.shadow.c_str()));
+            return out;
+        };
+        QCOMPARE(sizes(), (QStringList{QStringLiteral("Mid 40"), QStringLiteral("Dup 30"), QStringLiteral("Dup 25")}));
+        QCOMPARE(shadows(), (QStringList{QStringLiteral("2"), QStringLiteral("2"), QStringLiteral("5")}));
+        // A sort: the selection and the editor stay on the second copy.
+        QVERIFY(QMetaObject::invokeMethod(manager, "sortList", Q_ARG(QVariant, false)));
+        QTRY_COMPARE(sizes(), (QStringList{QStringLiteral("Dup 30"), QStringLiteral("Dup 25"), QStringLiteral("Mid 40")}));
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{1});
+        QCOMPARE(field("styleSize")->property("text").toString(), QStringLiteral("25"));
         QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
         QTRY_VERIFY(!manager->isVisible());
         application->editor().discard();
