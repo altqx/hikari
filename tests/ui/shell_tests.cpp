@@ -3216,6 +3216,23 @@ private slots:
         QCOMPARE(picker->property("family").toString(), QStringLiteral("Verdana"));
         QVERIFY(QMetaObject::invokeMethod(picker, "step", Q_ARG(QVariant, 1)));
         QCOMPARE(picker->property("family").toString(), QStringLiteral("Verdana"));
+        // Names are one ignoring case as the catalogs compare them (unit by
+        // unit: no final sigma).
+        QVariant at;
+        const QStringList sigma{QStringLiteral("x"), QStringLiteral("\u03B1\u03C3")};
+        QVERIFY(QMetaObject::invokeMethod(picker, "indexIn", Q_RETURN_ARG(QVariant, at), Q_ARG(QVariant, sigma),
+                                          Q_ARG(QVariant, QStringLiteral("\u0391\u03A3"))));
+        QCOMPARE(at.toInt(), 1);
+        // An installed name the catalog leaves out: said so, not offered
+        // as a name to use anyway.
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 2))); // A
+        search->setProperty("text", QStringLiteral("Tahoma"));
+        QCOMPARE(shown(), QStringList());
+        QCOMPARE(picker->property("unlisted").toString(), QString());
+        QCOMPARE(picker->property("leftOut").toString(), QStringLiteral("Tahoma"));
+        QCOMPARE(in("fontPickerEmpty")->property("text").toString(), QStringLiteral("“Tahoma” is installed but not in this list."));
+        QVERIFY(!in("fontPickerUseUnlisted")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 0)));
         // A name no installed font answers to: said so, and usable anyway.
         search->setProperty("text", QStringLiteral("Futura"));
         QVERIFY(QMetaObject::invokeMethod(picker, "pickTyped"));
@@ -3383,6 +3400,21 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(window, "reject"));
         QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();
+    }
+
+    // PU3 (#305): a header with no '=' in FontCatalogs.txt (a catalog with
+    // no name, which nothing could choose or manage) is not loaded.
+    void fontCatalogsWithNoNameAreNotLoaded()
+    {
+        usePickerFonts();
+        {
+            QFile f(QString::fromStdU16String((application->fontCatalogs().catalogDir() / u"FontCatalogs.txt").u16string()));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("Nameless{\r\n\tArial\r\n}\r\nX={\r\n\tTahoma\r\n}\r\n");
+        }
+        auto &catalogs = application->fontCatalogs();
+        QCOMPARE(catalogs.catalogNames(), QStringList{"X"});
+        QCOMPARE(catalogs.catalogOf(QStringLiteral("Arial")), QString());
     }
 
     // PU3 (#305): names from files (a catalog's, an attached font's file)

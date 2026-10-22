@@ -54,7 +54,8 @@ DialogWindow {
     property var choices: []
     property int choice: 0
     property var listed: [] // ChangeCatalog's list for the choice and the characters
-    property int total: 0   // every installed font
+    property var installed: [] // every installed font
+    readonly property int total: installed.length
     property var resolution: ({})
     property int resolveRequest: -1
     property string resolvedFor: "" // the characters the last lookup asked for
@@ -64,10 +65,16 @@ DialogWindow {
         return term.length === 0 ? listed : listed.filter(f => f.toLowerCase().indexOf(term) >= 0)
     }
     readonly property int familyIndex: indexIn(shown, family)
-    // The search text names no family shown: it can be used as it is.
+    // The search text names no installed family: it can be used as it is.
     readonly property string unlisted: {
         const term = search.text.trim()
-        return term.length > 0 && indexIn(shown, term) < 0 ? term : ""
+        return term.length > 0 && indexIn(shown, term) < 0 && indexIn(installed, term) < 0 ? term : ""
+    }
+    // The search text names an installed family the catalog or the
+    // characters leave out.
+    readonly property string leftOut: {
+        const term = search.text.trim()
+        return term.length > 0 && indexIn(shown, term) < 0 && indexIn(installed, term) >= 0 ? term : ""
     }
     readonly property bool catalogChosen: choice > 1
 
@@ -130,18 +137,15 @@ DialogWindow {
         const c = catalogs.catalogChoices()
         return c.length === 2 && catalogs.catalogNames.length === 0 ? [c[1], c[0]] : c
     }
+    // The same family ignoring case as the catalogs compare names.
     function indexIn(list, name) {
-        const lower = name.toLowerCase()
-        for (let i = 0; i < list.length; ++i)
-            if (list[i].toLowerCase() === lower)
-                return i
-        return -1
+        return catalogs.sameNameIndex(list, name)
     }
     // ChangeCatalog: the list for the choice and the characters filter.
     function relist() {
         const value = choice >= 0 && choice < choices.length ? choices[choice] : ""
         listed = catalogs.fontList(choice, value, catalogs.filterOn, catalogs.filterText)
-        total = catalogs.allFonts().length
+        installed = catalogs.allFonts()
     }
     function chooseCatalog(index) {
         choice = index
@@ -211,9 +215,8 @@ DialogWindow {
     function catalogsEdited() {
         const was = choice >= 0 && choice < choices.length ? choices[choice] : ""
         choices = catalogChoices()
-        const key = was.toLowerCase()
-        const at = choice > 1 ? choices.findIndex(c => c.toLowerCase() === key) : choice
-        choice = at >= 0 ? at : 0
+        const at = choice > 1 ? catalogs.sameNameIndex(choices.slice(2), was) : choice
+        choice = at < 0 ? 0 : choice > 1 ? at + 2 : at
         relist()
     }
 
@@ -342,6 +345,7 @@ DialogWindow {
                     textFormat: Text.PlainText
                     objectName: "fontPickerEmpty"
                     text: picker.unlisted.length > 0 ? qsTr("No installed font is called “%1”.").arg(picker.unlisted)
+                        : picker.leftOut.length > 0 ? qsTr("“%1” is installed but not in this list.").arg(picker.leftOut)
                         : picker.catalogChosen ? qsTr("No installed font is in “%1”.").arg(picker.choices[picker.choice])
                         : qsTr("No fonts match")
                     color: Theme.muted

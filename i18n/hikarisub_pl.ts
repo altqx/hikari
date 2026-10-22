@@ -2670,6 +2670,10 @@ przy wyciąganiu czcionek z pliku MKV.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” is installed but not in this list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No installed font is in “%1”.</source>
         <translation type="unfinished"></translation>
     </message>

@@ -159,6 +159,10 @@ void FontCatalogsController::ensureLoaded()
     m_loaded = true;
     if (const auto text = application::readFontCatalogFile(catalogPath(m_dir, application::kFontCatalogsFile)))
         m_catalogs.load(*text);
+    // A header with no '=' read as a catalog with no name: nothing could
+    // choose or manage it (as Load leaves it out).
+    if (m_catalogs.find(u""))
+        m_catalogs.remove(u"");
 }
 
 QStringList FontCatalogsController::catalogNames() const

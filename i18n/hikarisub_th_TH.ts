@@ -2627,6 +2627,10 @@ when demuxing fonts from an MKV file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” is installed but not in this list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>No installed font is in “%1”.</source>
         <translation type="unfinished"></translation>
     </message>
