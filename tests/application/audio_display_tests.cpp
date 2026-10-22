@@ -877,6 +877,7 @@ TEST(AudioBox, DelayShiftsTheAudioAsLegacyCachesIt)
         EXPECT_EQ(f.box.delayFrames(), 0);
         ASSERT_EQ(f.logged.size(), 1u);
         EXPECT_EQ(f.logged[0].first, "Delay failed, it's longer than audio duration time");
+        EXPECT_EQ(f.logged[0].second, AudioBox::LogLevel::Warning); // NT1: the audio still opened
     }
 }
 

@@ -45,7 +45,8 @@ void Application::switchLanguage()
     // failed" message boxes, hikarisubApp.cpp:347,365; here in the log, on
     // every platform).
     if (!m_localisation->setLanguage(m_settings->text("program.language")))
-        m_log->log(QCoreApplication::translate("HikariSub.Options", "Cannot find translation, language change failed"));
+        m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Options", "Language"),
+                      QCoreApplication::translate("HikariSub.Options", "Cannot find translation, language change failed"));
 }
 
 // Retranslation refreshes what QML binds with qsTr; the strings the

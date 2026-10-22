@@ -514,6 +514,10 @@ icon("about", "About", ["About.png"], [HELP, "about", "translation-matching"],
      circle(8, 8, 6.5) + stroke("M8 7.5v4") + dot(8, 5, 0.75))
 icon("credits", "Credits", ["Helpers.png"], [HELP, "credits"],
      circle(6, 5, 2.5) + stroke("M1.5 13.5a4.5 4.5 0 0 1 9 0") + accent(circle(11.5, 5.5, 2), stroke("M12 9.5a3 3 0 0 1 2.5 3")))
+# SH3 (#223): Help > What's new and the Home page's What's new: a page of
+# notes with a spark.
+icon("whats-new", "What's new", [], [HELP, "home"],
+     stroke("M9.5 2.5h-6v11h9v-6") + stroke("M5.5 9.5h5M5.5 11.5h3") + accent(stroke("M12.5 1v4M10.5 3h4")))
 
 # Notices (DG1 #222 and PK1 #301: the message box, toasts and the inline bar):
 # the severity in the accent layer, which the notice draws in the warning or

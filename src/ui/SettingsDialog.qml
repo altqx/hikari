@@ -45,7 +45,7 @@ DialogWindow {
     property var renderers: [] // W2: the CSRI renderers' names and "libass", VSFilterMod last
     property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
     property var outputDevices: [] // H2: System default, the connected devices, a missing choice
-    property var warnings: []
+    property ToastStack notices: null
     // LE5: the tag buttons as the Line editor page holds them, {name, tag,
     // type, icon} each, written on OK or Apply where they differ.
     property var tagButtonList: []
@@ -100,8 +100,11 @@ DialogWindow {
         }
         open()
         rememberPage() // a deep link's page is the one shown last
-        warnings = r.warnings
-        showWarning()
+        // NT1 (#302): the legacy constructor's "does not exist" message
+        // boxes, one at a time; warning toasts now.
+        if (notices)
+            for (const warning of r.warnings)
+                notices.post("warning", qsTr("Settings"), warning)
     }
     function rememberPage() {
         if (visible && settings && pageList.currentIndex >= 0)
@@ -118,14 +121,6 @@ DialogWindow {
     function ask(options, done) {
         questionLoader.active = true
         questionLoader.item.ask(options, done)
-    }
-    // The legacy constructor's "does not exist" messages, one at a time.
-    function showWarning() {
-        if (warnings.length === 0)
-            return
-        const text = warnings[0]
-        warnings = warnings.slice(1)
-        ask({ title: dialog.title, text: text, severity: "warning" }, () => dialog.showWarning())
     }
     function put(setting, value) {
         const v = Object.assign({}, values)
@@ -1493,7 +1488,7 @@ DialogWindow {
         settings: dialog.app ? dialog.app.settings : null
     }
 
-    // PK1's message box: the legacy warnings and the "Reset all settings…" question.
+    // PK1's message box: the "Reset all settings…" question.
     Loader {
         id: questionLoader
         active: false

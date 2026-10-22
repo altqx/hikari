@@ -387,6 +387,65 @@ bool isAllowedDownloadHost(std::string_view host)
     return false;
 }
 
+std::vector<ReleaseEntry> whatsNewReleases(const std::vector<ReleaseEntry> &releases, std::string_view since,
+                                           std::string_view installed)
+{
+    const auto top = parseSemVer(installed);
+    if (!top)
+        return {};
+    auto after = parseSemVer(since);
+    if (after && (codebaseOfVersion(since) != Codebase::Qt || compareSemVer(*after, *top) >= 0))
+        after.reset(); // a first start, a downgrade, the legacy app: the installed version alone
+    std::vector<std::pair<SemVer, const ReleaseEntry *>> found;
+    for (const auto &release : releases) {
+        if (release.draft)
+            continue;
+        const auto version = candidateVersion(release.tag);
+        if (!version || codebaseOfVersion(withoutV(release.tag)) != Codebase::Qt)
+            continue;
+        const int toTop = compareSemVer(*version, *top);
+        if (toTop > 0 || (after ? compareSemVer(*version, *after) <= 0 : toTop != 0))
+            continue;
+        const bool seen = std::any_of(found.begin(), found.end(),
+                                      [&](const auto &f) { return compareSemVer(f.first, *version) == 0; });
+        if (!seen)
+            found.emplace_back(*version, &release);
+    }
+    std::stable_sort(found.begin(), found.end(),
+                     [](const auto &a, const auto &b) { return compareSemVer(a.first, b.first) > 0; });
+    std::vector<ReleaseEntry> out;
+    for (const auto &f : found)
+        out.push_back(*f.second);
+    return out;
+}
+
+WhatsNewShown whatsNewShown(const std::vector<ReleaseEntry> &releases, std::string_view installed, bool stableOnly)
+{
+    // As updateCandidates: "stable only" holds on a stable build.
+    const bool skipPrereleases = stableOnly && !isPrereleaseTag(installed);
+    WhatsNewShown shown;
+    for (const auto &release : releases) {
+        if (skipPrereleases && isPrerelease(release))
+            continue;
+        if (shown.releases.size() < kMaxWhatsNew)
+            shown.releases.push_back(release);
+        else
+            ++shown.more;
+    }
+    return shown;
+}
+
+std::string whatsNewSince(std::string_view lastRun, std::string_view storedSince, std::string_view installed)
+{
+    const std::string_view since = lastRun == installed ? storedSince : lastRun;
+    // As whatsNewReleases: a Qt version below the installed one, else none.
+    const auto after = parseSemVer(since);
+    const auto top = parseSemVer(installed);
+    if (!after || !top || codebaseOfVersion(since) != Codebase::Qt || compareSemVer(*after, *top) >= 0)
+        return {};
+    return std::string(since);
+}
+
 bool isPrerelease(const ReleaseEntry &release)
 {
     return release.prerelease || isPrereleaseTag(release.tag);
@@ -679,12 +738,12 @@ std::string appImageStagingPath(std::string_view appImage, std::string_view vers
            std::string(version) + ".update";
 }
 
-std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
+namespace {
+// The kind, then the path's FNV-1a hash.
+std::string keyWithPath(std::string_view kindToken, std::string_view path)
 {
-    if (kindToken != packageKindToken(PackageKind::AppImage, false))
-        return std::string(kindToken);
     std::uint64_t hash = 14695981039346656037ULL;
-    for (const unsigned char c : appImage) {
+    for (const unsigned char c : path) {
         hash ^= c;
         hash *= 1099511628211ULL;
     }
@@ -692,6 +751,19 @@ std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
     for (int shift = 60; shift >= 0; shift -= 4)
         key += "0123456789abcdef"[(hash >> shift) & 0xF];
     return key;
+}
+} // namespace
+
+std::string updateCopyKey(std::string_view kindToken, std::string_view appImage)
+{
+    if (kindToken != packageKindToken(PackageKind::AppImage, false))
+        return std::string(kindToken);
+    return keyWithPath(kindToken, appImage);
+}
+
+std::string whatsNewCopyKey(std::string_view kindToken, std::string_view path)
+{
+    return path.empty() ? std::string(kindToken) : keyWithPath(kindToken, path);
 }
 
 std::string manualInstallCommand(std::string_view helper, std::string_view file, std::string_view version)

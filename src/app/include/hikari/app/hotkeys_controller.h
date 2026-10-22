@@ -71,7 +71,7 @@ class HotkeysController : public QObject {
 public:
     // `log`: HikariLog (the log window), for GetHKey's 'Shortcut "%s" is invalid'.
     HotkeysController(AutomationHotkeysController &scripts, ui::SettingsStore &settings,
-                      std::function<void(const QString &)> log = {}, QObject *parent = nullptr);
+                      std::function<void(const QString &, bool warning)> log = {}, QObject *parent = nullptr);
     ~HotkeysController() override;
 
     QVariantMap keys() const;
@@ -212,7 +212,7 @@ private:
     bool m_lastClickShift = false;     // Shift alone
     bool m_lastClickShiftHeld = false; // Shift with any other modifiers
     bool m_lastClickCtrlHeld = false;  // Ctrl with any other modifiers
-    std::function<void(const QString &)> m_log;
+    std::function<void(const QString &, bool warning)> m_log;
     bool m_rehearsing = false;
     QStringList m_retiredNotices; // V3: retired bindings dropped by load()
     std::function<qint64()> m_keyClock;
