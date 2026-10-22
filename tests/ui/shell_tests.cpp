@@ -11908,6 +11908,12 @@ private slots:
              {{"automation.loadingMethod", nullptr},
               {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
               {"automation.traceLevel", nullptr}}},
+            // PU7 (#309): the options that left the update window (the
+            // skipped version is a row of its own, below).
+            {"settingsPageUpdates",
+             {{"updater.autoCheck", "Check for updates automatically"},
+              {"updater.checkForStable", "Stable versions only"},
+              {"updater.autoInstall", "Install updates automatically"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -11936,6 +11942,9 @@ private slots:
             if (!b.sizeSetting.empty())
                 bound.insert(std::string(b.sizeSetting));
         }
+        // PU7: the skipped version's row, named with Offer it again.
+        QVERIFY(bound.erase("updater.skippedVersion"));
+        QVERIFY(dialogItem("settingsDialog", "settingsOfferAgain"));
         QCOMPARE(shown, bound);
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
@@ -11946,6 +11955,7 @@ private slots:
                 bound.insert(std::string(s.id));
         // and PK1's questions hidden with "Don't ask again" (Ask again).
         bound.insert("notices.hiddenQuestions");
+        bound.insert("updater.skippedVersion"); // PU7: held, shown in its row
 #ifndef HIKARI_WITH_VSFILTERMOD
         // W2: "Subtitle display filter" holds a value only when it is offered
         // (a CSRI renderer besides libass); its control stays in the page.

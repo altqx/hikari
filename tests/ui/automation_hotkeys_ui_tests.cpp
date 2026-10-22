@@ -499,7 +499,7 @@ private slots:
         QVERIFY(!refreshed.isEmpty());
         QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W")); // in effect at once
         QCOMPARE(h.filterMode(), 7);
-        QCOMPARE(accel(kWait), QStringLiteral("Ctrl-Alt-W"));
+        QCOMPARE(accel(kWait), QStringLiteral("Alt-Ctrl-W")); // legacy's order
         QVERIFY(!h.optionsModified());
         h.commitOptions();
         QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W"));
