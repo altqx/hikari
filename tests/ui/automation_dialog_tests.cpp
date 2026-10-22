@@ -523,7 +523,9 @@ private slots:
                                           .numberMax = 20},
                             DialogControl{.kind = "intedit", .name = "j", .y = 3, .intValue = 5, .intMin = 0, .intMax = 30},
                             DialogControl{.kind = "floatedit", .name = "p", .y = 4, .number = 1.23456789012345},
-                            DialogControl{.kind = "intedit", .name = "u", .y = 5, .intValue = 7}};
+                            DialogControl{.kind = "intedit", .name = "u", .y = 5, .intValue = 7},
+                            DialogControl{.kind = "floatedit", .name = "q", .y = 6, .number = 1234567890123456,
+                                          .step = 1}};
         std::optional<DialogResult> result;
         showDialog(request, result);
         QQuickItem *i = controlItem(0);
@@ -595,6 +597,15 @@ private slots:
         QTRY_VERIFY2(hint().contains(QStringLiteral("4x becomes 7")), qPrintable(hint()));
         QTest::keyClick(window, Qt::Key_Tab);
         QCOMPARE(controlItem(5)->property("text").toString(), QStringLiteral("7"));
+        controlItem(5)->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_A, Qt::ControlModifier);
+        type(window, QStringLiteral("0x10")); // decimal only, as the controller reads it
+        QVERIFY(controlItem(5)->property("bad").toBool());
+        QTest::keyClick(window, Qt::Key_Tab);
+        QCOMPARE(controlItem(5)->property("text").toString(), QStringLiteral("7"));
+        controlItem(6)->forceActiveFocus(Qt::TabFocusReason);
+        QTest::keyClick(window, Qt::Key_Up); // one step, every digit kept
+        QCOMPARE(controlItem(6)->property("text").toString(), QStringLiteral("1234567890123457"));
         QVERIFY(!qobject_cast<QQuickItem *>(findNamed(g, QStringLiteral("numberUp")))->isVisible());
         g->forceActiveFocus(Qt::TabFocusReason);
         QTest::keyClick(window, Qt::Key_Up);
@@ -754,7 +765,12 @@ private slots:
         QQuickItem *s = controlItem(1);
         QVERIFY(!s->property("filters").toBool());
         s->forceActiveFocus(Qt::TabFocusReason);
-        QTest::keyClick(window, Qt::Key_B);
+        auto *shortList = s->property("popup").value<QObject *>();
+        QTest::keyClick(window, Qt::Key_Space); // opens the short list
+        QTRY_VERIFY(shortList->property("opened").toBool());
+        QTest::keyClick(window, Qt::Key_B); // its type-ahead moves the highlight
+        QTest::keyClick(window, Qt::Key_Return); // and Enter picks that row
+        QTRY_VERIFY(!shortList->property("visible").toBool());
         QCOMPARE(s->property("currentText").toString(), QStringLiteral("b"));
         QCOMPARE(controlItem(2)->property("currentIndex").toInt(), -1);
         press(0);

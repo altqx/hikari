@@ -606,12 +606,21 @@ DialogWindow {
             property real oldX: 0
             property real oldY: 0
 
+            // Decimal text only (a comma for the point; an exponent for a
+            // floatedit), as the controller reads it: not 0x10 or Infinity.
             function parse(t) {
                 const s = String(t).trim().replace(",", ".")
-                if (s === "" || s === "-" || s === "." || s === "-.")
+                const decimal = isInt ? /^[-+]?[0-9]+$/ : /^[-+]?([0-9]+\.?[0-9]*|\.[0-9]+)([eE][-+]?[0-9]+)?$/
+                if (!decimal.test(s))
                     return NaN
                 const n = Number(s)
-                return isFinite(n) ? (isInt ? Math.trunc(n) : n) : NaN
+                return isFinite(n) ? n : NaN
+            }
+            // The digits after the point a number is written with (-1: in
+            // exponent form).
+            function decimals(n) {
+                const s = String(n)
+                return s.indexOf("e") >= 0 ? -1 : (s.split(".")[1] || "").length
             }
             function clamp(n) { return Math.min(Math.max(n, lo), hi) }
             // The shortest text that reads back as the same number.
@@ -623,9 +632,14 @@ DialogWindow {
             }
             function stepBy(n) {
                 const base = parse(text)
-                value = clamp((isNaN(base) ? value : clamp(base)) + n * step)
-                // (15 digits drop the sum's float noise, 1.3000000000000003.)
-                value = isInt ? Math.round(value) : Number(value.toPrecision(15))
+                const from = isNaN(base) ? value : clamp(base)
+                let next = from + n * step
+                // The sum to the digits its terms are written with: no float
+                // noise (1.3000000000000003), nothing more dropped.
+                const places = Math.max(decimals(from), decimals(step))
+                if (!isInt && decimals(from) >= 0 && decimals(step) >= 0 && places <= 100)
+                    next = Number(next.toFixed(places))
+                value = clamp(isInt ? Math.round(next) : next)
                 text = shown(value)
             }
             function readValue() {
@@ -829,6 +843,9 @@ DialogWindow {
                     view.pick(view.currentIndex)
                 else if (event.key === Qt.Key_Escape)
                     popup.close()
+                else if (!filters && event.text.length === 1 && event.text > " "
+                         && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier)))
+                    typeAhead(event.text.toLowerCase())
                 else if (filters && event.key === Qt.Key_Backspace)
                     setFilter(filter.slice(0, -1))
                 else if (filters && event.text.length === 1 && event.text >= " "
@@ -843,6 +860,18 @@ DialogWindow {
                 }
                 if (popup.visible)
                     view.positionViewAtIndex(view.currentIndex, ListView.Contain)
+            }
+            // A letter in a short open list: the next row starting with it.
+            function typeAhead(letter) {
+                const view = popup.contentItem.view
+                const n = matches.length
+                for (let k = 1; k <= n; ++k) {
+                    const row = (Math.max(0, view.currentIndex) + k) % n
+                    if (spec.items[matches[row]].toLowerCase().startsWith(letter)) {
+                        view.currentIndex = row
+                        return
+                    }
+                }
             }
             function setFilter(text) {
                 filter = text
