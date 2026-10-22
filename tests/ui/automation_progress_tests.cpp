@@ -220,6 +220,25 @@ private slots:
         automation().dismissCard();
     }
 
+    // Clear runs takes an ended run's card with its run; a running one
+    // stays, card and all.
+    void clearingTheRunsTakesItsCard()
+    {
+        automation().setCardDelay(60'000);
+        QVERIFY(start("Fail"));
+        QVERIFY(ended());
+        QCOMPARE(automation().cardState(), QStringLiteral("failed"));
+        automation().runs()->clear();
+        QCOMPARE(automation().cardState(), QString());
+        QVERIFY(start("Talk then wait"));
+        QTRY_COMPARE_WITH_TIMEOUT(automation().cardState(), QStringLiteral("running"), 10'000);
+        automation().runs()->clear();
+        QCOMPARE(automation().cardState(), QStringLiteral("running"));
+        automation().cancelRun();
+        QVERIFY(ended());
+        automation().dismissCard();
+    }
+
     // Validation that says no: failed, in a sentence.
     void aMacroThatIsNotValidFails()
     {

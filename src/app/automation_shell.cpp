@@ -310,6 +310,13 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
         emit progressChanged();
     });
     m_cardTimer.setSingleShot(true);
+    // AD3: an ended run's card goes with its run (Clear runs).
+    connect(&m_runs, &ui::AutomationRuns::removed, this, [this](int id) {
+        if (id == m_runId && !m_run && !m_cardState.isEmpty()) {
+            m_cardState.clear();
+            emit progressChanged();
+        }
+    });
     connect(&m_cardTimer, &QTimer::timeout, this, [this] {
         if (m_run && !waitingForUser())
             showCard();

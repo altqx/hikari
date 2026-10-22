@@ -744,6 +744,12 @@ ApplicationWindow {
                 root.focusPanel(shown[step > 0 ? 0 : shown.length - 1], Qt.TabFocusReason)
             return
         }
+        // Every panel closed: the card is the one region, or there is none.
+        if (shown.length === 0) {
+            if (card)
+                card.enter(null)
+            return
+        }
         // The panel with focus in the focus window: the main one or a
         // floating panel group (D1). Window.active cannot tell them apart:
         // Qt reports a floating panel's window active whenever its transient
@@ -5748,7 +5754,14 @@ ApplicationWindow {
             width: parent ? parent.width : implicitWidth
             automation: root.automation
             onOpenRun: runId => root.openAutomationRun(runId)
-            onFocusReturned: panel => { if (panel) root.focusPanel(panel, Qt.OtherFocusReason) }
+            // Back to the panel F6 came from; with none (every panel
+            // closed), to the window itself.
+            onFocusReturned: panel => {
+                if (panel)
+                    root.focusPanel(panel, Qt.OtherFocusReason)
+                else
+                    root.contentItem.forceActiveFocus(Qt.OtherFocusReason)
+            }
         }
     }
     readonly property alias notices: notices

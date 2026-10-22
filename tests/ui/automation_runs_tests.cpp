@@ -129,6 +129,8 @@ private slots:
         QCOMPARE(run->lines.size(), std::size_t(AutomationRuns::kMaxLines) + 1);
         const int wide = runs.begin(QStringLiteral("Wide"), QStringLiteral("a.lua"), {});
         runs.append(wide, QString(AutomationRuns::kMaxChars + 10, QLatin1Char('y')));
+        // Said at once, not at the next output.
+        QCOMPARE(runs.run(wide)->lines.size(), std::size_t(2));
         runs.append(wide, QStringLiteral("z\n"));
         const auto *line = runs.run(wide);
         QCOMPARE(line->lines.size(), std::size_t(2));

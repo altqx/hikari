@@ -151,6 +151,9 @@ void AutomationRuns::append(int id, const QString &text, int level)
         const qsizetype newline = text.indexOf(QLatin1Char('\n'), from);
         const qsizetype end = newline < 0 ? text.size() : newline;
         const qsizetype length = std::min<qsizetype>(end - from, kMaxChars - r->chars);
+        // A line cut short at the limit: the rest is not kept, said now.
+        if (length < end - from)
+            r->full = true;
         const QString piece = text.mid(from, length);
         r->chars += length;
         if (from == 0 && r->open && !r->lines.empty()) {
@@ -160,7 +163,7 @@ void AutomationRuns::append(int id, const QString &text, int level)
             r->lines.push_back({level, at, piece});
         }
         r->open = newline < 0;
-        if (newline < 0)
+        if (newline < 0 || r->full)
             break;
         from = newline + 1;
         if (from == text.size())

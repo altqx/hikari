@@ -15649,6 +15649,61 @@ private slots:
         dock->setProperty("isFloating", false);
     }
 
+    // AD3: F6 reaches the progress card as the region after the panels, and
+    // Esc gives the keyboard back; with every panel closed it is the one
+    // region.
+    void f6ReachesTheProgressCard()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &automation = application->automation();
+        const std::string fixture = HIKARI_LUA_FIXTURES "/progress-fixture.lua";
+        automation.load(fixture);
+        int fail = -1;
+        QTRY_VERIFY_WITH_TIMEOUT([&] {
+            for (const auto &s : automation.scripts())
+                if (s.path == fixture && s.state == application::ScriptStatus::State::Ready)
+                    for (std::size_t i = 0; i < s.info.macros.size(); ++i)
+                        if (s.info.macros[i].name == "Fail")
+                            fail = static_cast<int>(i);
+            return fail >= 0;
+        }(), 30000);
+        QVERIFY(automation.run(fixture, fail));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        auto *card = item("automationCard");
+        QTRY_VERIFY(card->isVisible());
+        QVERIFY(card->property("reachable").toBool());
+        QVERIFY(!card->hasActiveFocus());
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "focusPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("gridPanel"))),
+                                          Q_ARG(QVariant, int(Qt::OtherFocusReason))));
+        // F6 past the last panel shown.
+        for (int i = 0; i < 12 && !card->hasActiveFocus(); ++i)
+            QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+        QVERIFY(card->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        QVERIFY(card->isVisible());
+        // Every panel closed.
+        QList<QObject *> reopen;
+        const auto docks = root->property("dockList").toList();
+        for (const QVariant &d : docks) {
+            auto *dock = d.value<QObject *>();
+            if (dock->property("isOpen").toBool()) {
+                reopen << dock;
+                QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+            }
+        }
+        QTRY_VERIFY(std::ranges::none_of(docks, [](const QVariant &d) { return d.value<QObject *>()->property("isOpen").toBool(); }));
+        QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+        QTRY_VERIFY(card->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        for (QObject *dock : reopen)
+            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        automation.dismissCard();
+        QTRY_VERIFY(!card->isVisible());
+    }
+
     // AD3: the progress card and the Runs view in the four themes, written
     // to HIKARI_AUTOMATION_SHOT_DIR when it is set (tools/review): the notice
     // (automation-notice-<theme>.png), the card running with its log
