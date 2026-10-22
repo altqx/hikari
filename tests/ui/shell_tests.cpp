@@ -7114,6 +7114,8 @@ private slots:
         const auto order = application->workspace().tabs();
         application->selectTab(int(std::ranges::find(order, drafted) - order.begin()));
         QTRY_VERIFY(target() == drafted);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000); // its video opens again
+        QTRY_VERIFY(item->property("enabled").toBool());
         auto *draftSession = application->files().session(drafted);
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
         QTRY_VERIFY(mkvQuestionShown());

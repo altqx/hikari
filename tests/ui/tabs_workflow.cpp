@@ -67,15 +67,18 @@ protected:
             observed.push_back(targets()); // 4: two.ass
             typeAndCommit(" edited");
             observed.push_back(getStringProperty("mainWindow/documentTab1", "text")); // 5: "1*two.ass"
-            // The active tab's close mark reviews it; Cancel keeps it.
-            mouseClick("mainWindow/documentTabClose1");
+            // The active tab's close mark reviews it; Cancel keeps it. Pressed,
+            // not clicked: spix's mouse events carry the pointer's screen
+            // position, and under Xvfb the close question (centred) opened
+            // under it and took the same click on Don't save.
+            invokeMethod("mainWindow/documentTabClose1", "clicked", {});
             observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review"); // 6
             mouseClick("closeQuestion/messageBoxChoice_cancel");
             wait(300ms);
             observed.push_back(targets()); // 7: two.ass
             // Ctrl+W and Discard all: the tab after it shows.
             enterKey("mainWindow/lineText", Qt::Key_W, spix::KeyModifiers::Control);
-            wait(500ms);
+            waitForItem("closeQuestion/messageBoxChoice_discard", 5s);
             mouseClick("closeQuestion/messageBoxChoice_discard");
             wait(500ms);
             observed.push_back(targets()); // 8: three.ass
