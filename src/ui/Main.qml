@@ -1957,7 +1957,7 @@ ApplicationWindow {
                 objectName: "checkKaraokeMenuItem"
                 text: qsTr("Check karaoke")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) karaokeCheckDialog.openDialog()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
             }
             MenuSeparator {}
             // TM1 (#232): the editing target's Translation mode, which the
@@ -6846,11 +6846,20 @@ ApplicationWindow {
         app: root.app
         anchors.centerIn: parent
     }
-    // KA7: the Karaoke check window.
-    KaraokeCheckDialog {
-        id: karaokeCheckDialog
-        app: root.app
-        settings: root.app.settings
+    // KA7: the Karaoke check window, made at its first opening, as PK1's
+    // windows are: every window made at the start costs it (on Windows a
+    // native event filter apiece).
+    Loader {
+        id: karaokeCheckLoader
+        active: false
+        sourceComponent: KaraokeCheckDialog {
+            app: root.app
+            settings: root.app.settings
+        }
+    }
+    function openKaraokeCheck() {
+        karaokeCheckLoader.active = true
+        karaokeCheckLoader.item.openDialog()
     }
     Dialog {
         id: spellingNotice

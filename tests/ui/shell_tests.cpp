@@ -8284,8 +8284,8 @@ private slots:
         const auto lines = session->document().lines();
 
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("karaokeCheckDialog"));
-        QVERIFY(dialog);
+        // Made at its first opening, as PK1's windows are.
+        QVERIFY(!root->findChild<QObject *>(QStringLiteral("karaokeCheckDialog")));
         // Subtitles > Check karaoke, right after Check spelling.
         auto *item = root->findChild<QObject *>(QStringLiteral("checkKaraokeMenuItem"));
         const auto entries = menuItems(item->property("menu").value<QObject *>());
@@ -8297,6 +8297,8 @@ private slots:
         };
         QCOMPARE(at("checkKaraokeMenuItem"), at("checkSpellingMenuItem") + 1);
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("karaokeCheckDialog"))));
         QTRY_VERIFY(dialog->property("visible").toBool());
         auto *list = dialogItem("karaokeCheckDialog", "karaokeProblems");
         QVERIFY(list);
