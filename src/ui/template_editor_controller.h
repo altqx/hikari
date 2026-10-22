@@ -298,7 +298,9 @@ private:
     std::optional<core::LineRecord> sourceRecord() const; // with the Line editor's draft
     // What the templater runs of a template or code Line.
     static std::string formOf(const core::LineRecord &line);
-    static std::string fieldOf(const core::LineRecord &line); // its Style and Actor pairing
+    // Its Style and Actor pairing; the whole Line when `whole` or either holds
+    // a `!`.
+    static std::string fieldOf(const core::LineRecord &line, bool whole = false);
     // A Document as far as running it goes: its template and code Lines in
     // file order (a named template joins its Lines' text in that order, and
     // code Lines run in it), each with what the templater runs of it, and

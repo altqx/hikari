@@ -945,7 +945,7 @@ std::string TemplateEditorController::formOf(const core::LineRecord &line)
     return std::to_string(m.style.size()) + ':' + m.style + m.effect + '\n' + m.text;
 }
 
-std::string TemplateEditorController::fieldOf(const core::LineRecord &line)
+std::string TemplateEditorController::fieldOf(const core::LineRecord &line, bool whole)
 {
     // The pairing: the Style picks the templates the Actor goes into
     // ($actor), so a trusted Actor under another Style, or a Style's name as
@@ -955,7 +955,7 @@ std::string TemplateEditorController::fieldOf(const core::LineRecord &line)
     // A `!` in either can make an expression of what the templates write;
     // whether it runs hangs on the rest of the Line (a blank one `noblank`
     // passes over, its Effect, its times), so the whole Line is the choice.
-    if (field.find('!') != std::string::npos)
+    if (whole || field.find('!') != std::string::npos)
         field += '\n' + m.raw + '\x1f' + m.text + '\x1f' + m.translation;
     return field;
 }
@@ -963,13 +963,22 @@ std::string TemplateEditorController::fieldOf(const core::LineRecord &line)
 TemplateEditorController::TrustState TemplateEditorController::stateOf(const application::EditSession &s)
 {
     TrustState out;
+    // A template that puts an Actor or Style into an expression (`!$actor!`:
+    // the template brings the `!`s) makes any of them Lua, run or not as the
+    // rest of its Line decides: then every karaoke Line is the whole Line.
+    bool whole = false;
     forEachRunLine(s, [&](const core::LineRecord &l) {
         if (application::templateKindOf(l)) {
             const std::string form = formOf(l);
             out.templates += std::to_string(l.id.value) + ':' + std::to_string(form.size()) + ':' + form;
+            const std::string text = application::macroLineOf(l).text;
+            whole = whole || (text.find('!') != std::string::npos &&
+                              (text.find("$actor") != std::string::npos || text.find("$style") != std::string::npos));
         }
+    });
+    forEachRunLine(s, [&](const core::LineRecord &l) {
         if (application::isKaraokeLine(l)) // a `template line karaoke` too
-            out.fields.insert(fieldOf(l));
+            out.fields.insert(fieldOf(l, whole));
     });
     return out;
 }

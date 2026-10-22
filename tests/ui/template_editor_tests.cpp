@@ -1554,6 +1554,35 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
+    // A template that puts an Actor or Style into an expression (`!$actor!`)
+    // makes any Actor Lua: then every karaoke Line is trusted as a whole, so
+    // a blank one given text asks again.
+    void aTemplateRunningActorsTrustsWholeLines()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> tl;
+        std::vector<core::LineId> karaoke;
+        for (const auto *l : doc.lines()) {
+            if (!tl && application::templateKindOf(*l) == application::TemplateKind::Template)
+                tl = l->id;
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                karaoke.push_back(l->id);
+        }
+        QVERIFY(tl && !karaoke.empty());
+        QVERIFY(doc.editLine(*tl, [](core::LineRecord &l) { l.text = u8"{\\bord1}!$actor!"; }));
+        QVERIFY(doc.editLine(karaoke.front(), [](core::LineRecord &l) {
+            l.text.clear();
+            l.actor = u8"_G.marker = 1";
+        }));
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(karaoke.front(), [](core::LineRecord &l) { l.text = u8"{\\k50}ka"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     // Whether a karaoke Line's Actor reaches the templates hangs on its other
     // fields too (a blank Line `noblank` passes over): an Actor or Style
     // holding `!` is trusted with the whole Line, so a new text asks again.
