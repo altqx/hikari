@@ -17202,10 +17202,25 @@ private slots:
         QCOMPARE(audio.karaokeModel().count(), 4);
         QCOMPARE(session->document().lines()[0]->text, std::u8string(u8"{\\kf15}s{\\kf15}a{\\kf30}ku"));
         audio.commit();
-        store->setValue(QStringLiteral("audio.autoCommit"), true);
         const auto committed = session->document().lines();
         QCOMPARE(text(committed[0]).count(QStringLiteral("{\\k")), 4); // the new syllable is a \k one
         QCOMPARE(committed[1]->text, std::u8string(u8"{\\k60}hana"));
+
+        // the editor's Commit the same, with an Actor typed for both Lines
+        // still going to both
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 4);
+        QVERIFY(session->editDraft(lines[0]->id, application::DraftChange{.actor = u8"Kara"}));
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 5);
+        QVERIFY(application->editor().commit());
+        store->setValue(QStringLiteral("audio.autoCommit"), true);
+        const auto sent = session->document().lines();
+        QCOMPARE(text(sent[0]).count(QStringLiteral("{\\k")), 5);
+        QCOMPARE(sent[1]->text, std::u8string(u8"{\\k60}hana"));
+        QCOMPARE(sent[0]->actor, std::u8string(u8"Kara"));
+        QCOMPARE(sent[1]->actor, std::u8string(u8"Kara"));
     }
 
     // KA2 (#277, KA2-tap-to-time): tap-to-time in Karaoke mode with the real

@@ -562,7 +562,8 @@ TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
     draft.karaokeText = u"{\\k20}ka{\\k20}ra";
     draft.activeOnly = true;
     ASSERT_TRUE(commitAudioTimes(session, draft, shown));
-    EXPECT_TRUE(session.draftKeptToItsLine());
+    ASSERT_TRUE(session.draftOwnFields());
+    EXPECT_TRUE(session.draftOwnFields()->text);
     ASSERT_TRUE(commitAudioTimes(session, {500, 900, true, false}, shown));
     EXPECT_EQ(line(0).text, u8"{\\k20}ka{\\k20}ra");
     EXPECT_EQ(ms(line(0).start.value), 500);
@@ -570,17 +571,53 @@ TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
     EXPECT_EQ(ms(line(2).start.value), 6500);
 
     // the editor's Commit (Send) the same
-    ASSERT_TRUE(commitAudioTimes(session, draft, shown));
-    session.editDraft(a, DraftChange{.text = u8"{\\k20}ki{\\k20}ra"});
+    AudioCommitRequest again = draft;
+    again.karaokeText = u"{\\k20}ki{\\k20}ra";
+    ASSERT_TRUE(commitAudioTimes(session, again, shown));
     ASSERT_TRUE(session.commitDraftToSelected());
     EXPECT_EQ(line(0).text, u8"{\\k20}ki{\\k20}ra");
     EXPECT_EQ(line(2).text, u8"c");
 
     // a draft of the times alone still goes to every selected Line
     ASSERT_TRUE(commitAudioTimes(session, {700, 900, false, false}, shown));
-    EXPECT_FALSE(session.draftKeptToItsLine());
+    EXPECT_FALSE(session.draftOwnFields()->start);
     ASSERT_TRUE(commitAudioTimes(session, {700, 900, true, false}, shown));
     EXPECT_EQ(ms(line(2).start.value), 700);
+
+    // a pending edit for every selected Line keeps its scope when an
+    // active-only text joins the draft (Codex): the Start goes to both, the
+    // syllables to the active Line
+    ASSERT_TRUE(session.editDraft(a, DraftChange{.start = core::DocumentTime(300'000)}));
+    AudioCommitRequest joined{300, 900, false, false};
+    joined.karaokeText = u"{\\k30}ka{\\k30}ru";
+    joined.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, joined, shown));
+    EXPECT_FALSE(session.draftOwnFields()->start);
+    ASSERT_TRUE(commitAudioTimes(session, {300, 900, true, false}, shown));
+    EXPECT_EQ(ms(line(0).start.value), 300);
+    EXPECT_EQ(line(0).text, u8"{\\k30}ka{\\k30}ru");
+    EXPECT_EQ(ms(line(2).start.value), 300);
+    EXPECT_EQ(line(2).text, u8"c");
+
+    // and through the editor's Commit; an active-only time it changes is the
+    // active Line's too, and a later edit of the text shares it again
+    ASSERT_TRUE(session.editDraft(a, DraftChange{.actor = u8"Kara"}));
+    AudioCommitRequest moved{250, 900, false, false};
+    moved.karaokeText = u"{\\k35}ka{\\k30}ru";
+    moved.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, moved, shown));
+    EXPECT_TRUE(session.draftOwnFields()->start);
+    ASSERT_TRUE(session.commitDraftToSelected());
+    EXPECT_EQ(ms(line(0).start.value), 250);
+    EXPECT_EQ(line(0).actor, u8"Kara");
+    EXPECT_EQ(ms(line(2).start.value), 300);
+    EXPECT_EQ(line(2).actor, u8"Kara");
+    EXPECT_EQ(line(2).text, u8"c");
+    ASSERT_TRUE(commitAudioTimes(session, moved, shown));
+    ASSERT_TRUE(session.editDraftText(a, u8"shared"));
+    EXPECT_FALSE(session.draftOwnFields()->text);
+    ASSERT_TRUE(session.commitDraftToSelected());
+    EXPECT_EQ(line(2).text, u8"shared");
 }
 
 TEST_F(CommitTest, AnEndBeforeTheStartIsBlockedUnlessLegacyCommitsIt)

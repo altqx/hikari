@@ -604,10 +604,13 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     if ((fields.start || fields.end || fields.startFrame || fields.endFrame || fields.text || fields.translation) &&
         !session.editDraft(*active, fields))
         return std::unexpected(session.isReadOnly() ? CommandRefusal::ReadOnly : CommandRefusal::Protected);
-    // KA1: the active Line's text waiting in the draft (no AUDIO_AUTO_COMMIT)
-    // stays the active Line's when Commit sends it later (Codex)
+    // KA1: what an active-only request writes into the draft (no
+    // AUDIO_AUTO_COMMIT) stays the active Line's when Commit sends it later:
+    // its text, and the times the draft did not hold (`current` is the
+    // draft's); a pending edit's other fields still go to every selected
+    // Line (Codex)
     if (request.activeOnly && session.draftLine() == *active)
-        session.keepDraftToItsLine();
+        session.keepDraftFieldsToItsLine(fields);
 
     // The Line the Alt release moves (CopyDialogueWithOffset with the grid's active Line)
     std::optional<core::LineId> adjacent;
@@ -679,7 +682,7 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     // SubsGrid::ChangeLine: one Line, or every selected Line with several selected
     std::vector<core::LineId> targets;
     const auto &selected = session.selection().selected;
-    if (selected.size() < 2 || request.activeOnly || (record && session.draftKeptToItsLine())) {
+    if (selected.size() < 2 || request.activeOnly) {
         targets.push_back(*active);
     } else {
         for (const auto *l : lines)
@@ -709,6 +712,8 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     if (append)
         touches.insert(lines.back()->id);
     const auto saved = draft;
+    // KA1: the draft's fields kept to the active Line (keepDraftFieldsToItsLine)
+    const DraftChange own = record && session.draftOwnFields() ? *session.draftOwnFields() : DraftChange{};
     if (draft && draft->first == *active)
         session.discardDraft();
     std::optional<core::LineId> added;
@@ -721,32 +726,33 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
             moveAdjacent(d);
             for (const auto &target : targets)
                 d.editLine(target, [&](core::LineRecord &l) {
-                    if (textChanged)
+                    const bool other = target != *active;
+                    if (textChanged && !(other && own.text))
                         l.text = record->text;
-                    if (translationChanged)
+                    if (translationChanged && !(other && own.translation))
                         l.translation = record->translation;
-                    if (startChanged)
+                    if (startChanged && !(other && own.start))
                         l.start.value = record->start.value;
-                    if (endChanged)
+                    if (endChanged && !(other && own.end))
                         l.end.value = record->end.value;
-                    if (marginLChanged)
+                    if (marginLChanged && !(other && own.marginLeft))
                         l.marginLeft.value = std::clamp<std::int64_t>(record->marginLeft.value, 0, kMarginMax);
-                    if (marginRChanged)
+                    if (marginRChanged && !(other && own.marginRight))
                         l.marginRight.value = std::clamp<std::int64_t>(record->marginRight.value, 0, kMarginMax);
-                    if (marginVChanged)
+                    if (marginVChanged && !(other && own.marginVertical))
                         l.marginVertical.value =
                             std::clamp<std::int64_t>(record->marginVertical.value, 0, kMarginMax);
-                    if (commentChanged)
+                    if (commentChanged && !(other && own.comment))
                         l.comment = record->comment;
-                    if (layerChanged)
+                    if (layerChanged && !(other && own.layer))
                         l.layer.value = record->layer.value;
-                    if (styleChanged)
+                    if (styleChanged && !(other && own.style))
                         l.style = record->style;
-                    if (actorChanged)
+                    if (actorChanged && !(other && own.actor))
                         l.actor = record->actor;
-                    if (effectChanged)
+                    if (effectChanged && !(other && own.effect))
                         l.effect = record->effect;
-                    if (framesChanged) {
+                    if (framesChanged && !(other && (own.startFrame || own.endFrame))) {
                         l.startFrame = record->startFrame;
                         l.endFrame = record->endFrame;
                     }
