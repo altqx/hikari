@@ -854,6 +854,16 @@ TemplateEditorController::TemplateLines TemplateEditorController::templateLines(
     return out;
 }
 
+std::vector<core::LineId> TemplateEditorController::templateOrder() const
+{
+    std::vector<core::LineId> out;
+    if (const auto *doc = document())
+        for (const auto *l : doc->lines())
+            if (application::templateKindOf(*l))
+                out.push_back(l->id);
+    return out;
+}
+
 std::string TemplateEditorController::formOf(const core::LineRecord &line)
 {
     // The Style too: it picks the karaoke Lines the template runs on, and so
@@ -882,6 +892,7 @@ void TemplateEditorController::trust(const TemplateLines &lines, const std::set<
     auto &trusted = m_trusted[documentKey()];
     for (const auto &[id, runs] : lines)
         trusted.lines[id].insert(runs);
+    trusted.orders.insert(templateOrder());
     trusted.fields.insert(fields.begin(), fields.end());
 }
 
@@ -890,9 +901,10 @@ bool TemplateEditorController::trusted() const
     // A template or code Line come or changed since another way (a paste,
     // an import, a translation pasted over it) is Lua the user has not
     // chosen to run; so is a new Actor or Style the templates put into
-    // theirs.
+    // theirs. A named template joins its Lines' text in file order, and
+    // code Lines run in it, so the order is part of what was chosen.
     const auto it = session() ? m_trusted.find(documentKey()) : m_trusted.end();
-    if (it == m_trusted.end())
+    if (it == m_trusted.end() || !it->second.orders.contains(templateOrder()))
         return false;
     const auto &lines = it->second.lines;
     return std::ranges::all_of(templateLines(),

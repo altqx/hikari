@@ -1527,6 +1527,24 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // A named template joins its Lines' text in file order, and code Lines
+    // run in it: the same Lines in another order are other Lua, so a sort
+    // or a move outside the panel asks first.
+    void templatesReorderedElsewhereAskFirst()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::vector<core::LineId> templ;
+        for (const auto *l : doc.lines())
+            if (application::templateKindOf(*l))
+                templ.push_back(l->id);
+        QVERIFY(templ.size() >= 2);
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        QVERIFY(change([&](core::Document &d) { return d.moveLine(templ[1], templ[0]); }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

@@ -279,6 +279,7 @@ private:
     // runs of it (its Effect and the text it reads).
     using TemplateLines = std::map<core::LineId, std::string>;
     TemplateLines templateLines() const;
+    std::vector<core::LineId> templateOrder() const;
     // What the templater runs of a template or code Line.
     static std::string formOf(const core::LineRecord &line);
     // The Actor and Style values, each with its role, of the Lines the
@@ -303,6 +304,7 @@ private:
     // the user previewed or applied.
     struct Trust {
         std::map<core::LineId, std::set<std::string>> lines;
+        std::set<std::vector<core::LineId>> orders; // of the template and code Lines
         std::set<std::string> fields;
     };
     std::map<DocumentKey, Trust> m_trusted;
