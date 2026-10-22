@@ -338,10 +338,42 @@ private slots:
         openEpisode();
         applyPreset("Typesetting");
         QTRY_VERIFY(item<QObject>("stylesNew")->property("enabled").toBool());
-        // Opened files always have ASS Styles (SSA's are converted on open).
+        // The last tab closed: no editing target, so no ASS Styles.
         QVERIFY(application->closeEditingTarget());
         QTRY_VERIFY(!item<QObject>("stylesNew")->property("enabled").toBool());
         QTRY_VERIFY(item("stylesEmpty")->property("text").toString().startsWith(QStringLiteral("No styles: the file")));
+        stop();
+    }
+
+    // Another tab whose Styles lack the chosen one: the panel chooses the
+    // active Line's Style there, not the first.
+    void anotherTabChoosesItsActiveLinesStyle()
+    {
+        start();
+        openEpisode();
+        applyPreset("Typesetting");
+        auto *panel = item<QObject>("stylesTool");
+        QTRY_COMPARE(panel->property("rows").toList().size(), 4);
+        panel->setProperty("chosen", QStringLiteral("Unused"));
+        const QString path = dir.filePath(QStringLiteral("other.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: First,Arial,48,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n"
+                "Style: Song,Georgia,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n\n"
+                "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Song,,0,0,0,,la la\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        // It opens in a tab of its own, behind; shown, it is the editing target.
+        const int last = int(application->workspace().tabs().size()) - 1;
+        QCOMPARE(application->tabDocument(last), application->workspace().tabs().back().value);
+        application->selectTab(last);
+        QTRY_COMPARE(panel->property("rows").toList().size(), 2);
+        QCOMPARE(panel->property("chosen").toString(), QStringLiteral("Song"));
         stop();
     }
 
@@ -466,7 +498,11 @@ private slots:
         QCOMPARE(session()->selection().active, std::optional<core::LineId>(lineId(3)));
         QCOMPARE(session()->selection().anchor, std::optional<core::LineId>(lineId(3)));
         QVERIFY(!session()->selection().extent);
+        // No Line uses it: as Select mode, the old selection goes and the
+        // active Line stays.
         QVERIFY(!application->selectLinesWithStyle(QStringLiteral("Italic") + QStringLiteral("x")));
+        QVERIFY(selected().empty());
+        QCOMPARE(session()->selection().active, std::optional<core::LineId>(lineId(3)));
         stop();
     }
 
@@ -610,6 +646,10 @@ private slots:
         QVERIFY(manager);
         QTRY_VERIFY(manager->property("visible").toBool());
         QVERIFY(manager->property("editing").toBool());
+        // The edit in progress is not replaced or changed under it from here.
+        for (const char *name : {"stylesNew", "stylesEdit", "stylesDuplicate", "stylesDelete"})
+            QVERIFY2(!item<QObject>(name)->property("enabled").toBool(), name);
+        QVERIFY(!item<QObject>("stylesMenuDelete")->property("enabled").toBool());
         stop();
     }
 
