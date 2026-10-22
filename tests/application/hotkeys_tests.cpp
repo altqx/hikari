@@ -509,7 +509,7 @@ TEST(Hotkeys, SearchNarrowsTheFilter)
     ASSERT_EQ(list.shown().size(), 1u);
     EXPECT_EQ(list.row(list.shown()[0]).text, "Global Save");
     list.search("");
-    EXPECT_EQ(list.shown().size(), 236u);
+    EXPECT_EQ(list.shown().size(), list.rowCount()); // every row again
 }
 
 // PF1-staged-reset: "Reset page" on the Hotkeys page, every row back to
