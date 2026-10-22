@@ -38,8 +38,9 @@ Window {
     // the 24-wide margins (a window with a side list, Settings); the footer
     // keeps them.
     property bool flush: false
-    // PU7 (#309): false: no Close on the title bar, and Esc and the window
-    // system's close do nothing (a wait the window cannot end).
+    // PU7 (#309): false: no Close on the title bar, the window system's
+    // frame included (DialogFrame drops its close hint), and Esc and the
+    // window system's close do nothing (a wait the window cannot end).
     property bool closable: true
     property T.AbstractButton defaultButton: null
     property Item initialFocus: null
@@ -208,6 +209,7 @@ Window {
         id: frame
         window: dialog
         resizable: dialog.resizable
+        closable: dialog.closable
         // (customAvailable is read for its notification: the desktop can change in tests.)
         custom: WindowFrame.customAvailable && !WindowFrame.usesSystemTitleBar(dialog.titleBarChoice)
         // A shown dialog on its screen with the new frame's room: now, and

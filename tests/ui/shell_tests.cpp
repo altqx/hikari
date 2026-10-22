@@ -6866,6 +6866,9 @@ private slots:
                  QStringLiteral("Installing HikariSub 1.4.0…"));
         QVERIFY(!window->property("closable").toBool());
         QVERIFY(window->property("settings").value<QObject *>());
+        // The window system's frame offers no Close either (its hints alone).
+        QVERIFY(!window->flags().testFlag(Qt::WindowCloseButtonHint));
+        QVERIFY(window->flags().testFlag(Qt::CustomizeWindowHint));
         QVERIFY(QTest::qWaitForWindowExposed(window.get()));
         window->requestActivate();
         QTRY_COMPARE(QGuiApplication::focusWindow(), window.get());
