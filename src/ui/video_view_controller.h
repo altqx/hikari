@@ -132,10 +132,14 @@ public:
     Q_INVOKABLE void toggleMute();
 
     // AspectRatioDialog: the slider's value for the current aspect ratio,
-    // the label for a value, and a moved slider.
+    // the label for a value, and a moved slider. PU4: the ratio itself, set
+    // back exactly (Esc, Cancel), and the video's own ratio again (Reset).
     Q_INVOKABLE int aspectSliderValue() const;
     Q_INVOKABLE QString aspectLabel(int sliderValue) const;
     Q_INVOKABLE void setAspectFromSlider(int sliderValue);
+    Q_INVOKABLE double aspectRatio() const;
+    Q_INVOKABLE void setAspectRatio(double ratio);
+    Q_INVOKABLE void resetAspectRatio();
 
     // VIDEO_HIDE_PROGRESS_BAR (VideoBox::OnHidePB): needs a video.
     Q_INVOKABLE bool toggleProgressBar();
