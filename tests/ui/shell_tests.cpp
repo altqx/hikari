@@ -1182,13 +1182,17 @@ private slots:
             collectAccessible(child, out);
         }
     }
-    void closeMismatchQuestion()
+    // (Y4's resolution question, which comes a moment after the video: a
+    // message box since PU6, kept as it is; `wait` how long it may take)
+    void closeMismatchQuestion(int wait = 3000)
     {
-        // (Y4's resolution question, which comes a moment after the video)
-        auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
-        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000)) {
-            QMetaObject::invokeMethod(mismatch, "close");
-            QTRY_VERIFY(!mismatch->property("visible").toBool());
+        QQuickWindow *box = nullptr;
+        if (QTest::qWaitFor([&] {
+                box = messageBox("messages");
+                return box && box->isVisible() && box->title() == QLatin1String("Open video");
+            }, wait)) {
+            QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("keep")));
+            QTRY_VERIFY(!box->isVisible());
         }
     }
 
@@ -2851,6 +2855,23 @@ private slots:
                         {QStringLiteral("role"), QStringLiteral("reject")}}};
         QVariantMap sessionReadOnly = box(QStringLiteral("Save session"), readOnly, QStringLiteral("warning"));
         sessionReadOnly.insert(QStringLiteral("choices"), readOnlyChoices);
+        // PU6: the incompatible resolution question.
+        QVariantMap resolution = box(QStringLiteral("Open video"),
+                                     QStringLiteral("The video is 1920 × 1080 and the subtitles are 1280 × 720."), QStringLiteral("info"));
+        resolution.insert(QStringLiteral("detail"),
+                          QStringLiteral("Resample the subtitles to the video? Subtitles › Resample subtitles does it later too."));
+        resolution.insert(QStringLiteral("dontAsk"), true);
+        resolution.insert(QStringLiteral("choices"),
+                          QVariantList{QVariantMap{{QStringLiteral("id"), QStringLiteral("keep")},
+                                                   {QStringLiteral("text"), QStringLiteral("Keep as is")},
+                                                   {QStringLiteral("role"), QStringLiteral("reject")}},
+                                       QVariantMap{{QStringLiteral("id"), QStringLiteral("only")},
+                                                   {QStringLiteral("text"), QStringLiteral("Change resolution only")},
+                                                   {QStringLiteral("role"), QStringLiteral("action")}},
+                                       QVariantMap{{QStringLiteral("id"), QStringLiteral("resample")},
+                                                   {QStringLiteral("text"), QStringLiteral("Resample")},
+                                                   {QStringLiteral("role"), QStringLiteral("accept")},
+                                                   {QStringLiteral("isDefault"), true}}});
         const std::vector<std::tuple<const char *, QString, QVariantMap>> boxes{
             {"messages", QStringLiteral("load-script"),
              box(QStringLiteral("Run the last loaded script"), QStringLiteral("Error loading Lua script: karaoke.lua"),
@@ -2858,8 +2879,7 @@ private slots:
             {"messages", QStringLiteral("edit-script"),
              box(QStringLiteral("Edit script"), QStringLiteral("Cannot start editor."), QStringLiteral("error"))},
             {"sessionMessages", QStringLiteral("save-session"), sessionReadOnly},
-            {"spellMessages", QStringLiteral("spell-replace"),
-             box(QStringLiteral("Replace"), QStringLiteral("The edited line cannot be committed."), QStringLiteral("error"))},
+            {"messages", QStringLiteral("resolution"), resolution},
             {"styleMessages", QStringLiteral("new-style"),
              box(QStringLiteral("New style"), QStringLiteral("The document has no styles to edit."), QStringLiteral("error"))},
             {"tagsMessages", QStringLiteral("tag-editing"),
@@ -6412,10 +6432,10 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
-        QVERIFY(dialog);
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
+                    dialog->property("visible").toBool());
         QCOMPARE(dialogItem("scriptPropertiesDialog", "propTitle")->property("text").toString(), QStringLiteral("Show"));
         QCOMPARE(dialogItem("scriptPropertiesDialog", "propWidth")->property("value").toInt(), 640);
         auto *translator = dialogItem("scriptPropertiesDialog", "propTranslator");
@@ -6546,10 +6566,16 @@ private slots:
         QCOMPARE(application->conversionTargets(),
                  (QStringList{QStringLiteral("srt"), QStringLiteral("mdvd"), QStringLiteral("mpl2"), QStringLiteral("tmp")}));
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("conversionDialog"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "openFor", Q_ARG(QVariant, QStringLiteral("srt")),
+        QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("srt")),
                                           Q_ARG(QVariant, QStringLiteral("Convert to SRT"))));
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("conversionDialog"));
+        QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
+        // PU6: to SRT only End times acts; the removals are warnings.
+        QVERIFY(!dialogItem("conversionDialog", "convStyleSection")->isVisible());
+        QVERIFY(!dialogItem("conversionDialog", "convFrameRateSection")->isVisible());
+        QVERIFY(dialogItem("conversionDialog", "convEndTimesSection")->isVisible());
+        QCOMPARE(dialog->property("preview").toMap().value(QStringLiteral("kinds")).toStringList().value(0), QStringLiteral("warning"));
         const QStringList losses = dialog->property("preview").toMap().value(QStringLiteral("losses")).toStringList();
         QVERIFY2(losses.contains(QStringLiteral("1 comment line(s) removed.")) ||
                      losses.join(u'|').contains(QStringLiteral("comment")),
@@ -6578,6 +6604,60 @@ private slots:
         application->editor().discard();
     }
 
+    // PU6 (#308): the conversion window shows the sections that act on the
+    // conversion, its preview follows each keystroke and tick, and a frame
+    // rate below 1 is said under its field with Convert off.
+    void conversionWindowFollowsEachChange()
+    {
+        const QString path = writeFile(dir, "convert-live.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}one two{\\i0}\n");
+        QVERIFY(application->openFile(path));
+        const QVariantMap kept = application->conversionOptions();
+        application->setConversionOptions({{QStringLiteral("fps"), QStringLiteral("25")},
+                                           {QStringLiteral("fpsFromVideo"), false},
+                                           {QStringLiteral("newEndTimes"), false}});
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("mdvd")),
+                                          Q_ARG(QVariant, QStringLiteral("Convert to MDVD"))));
+        auto *dialog = root->findChild<QObject *>(QStringLiteral("conversionDialog"));
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Convert to MDVD"));
+        QVERIFY(dialogItem("conversionDialog", "convFrameRateSection")->isVisible());
+        QVERIFY(dialogItem("conversionDialog", "convEndTimesSection")->isVisible());
+        QVERIFY(!dialogItem("conversionDialog", "convStyleSection")->isVisible());
+        QVERIFY(!dialogItem("conversionDialog", "convResolutionSection")->isVisible());
+        const auto losses = [&] { return dialog->property("preview").toMap().value(QStringLiteral("losses")).toStringList().join(u'|'); };
+        auto *accept = dialogItem("conversionDialog", "conversionAccept");
+        QVERIFY(accept->property("enabled").toBool());
+        QVERIFY(!losses().contains(QStringLiteral("Times changed")));
+        // A frame rate of 0, typed: said under the field, Convert off.
+        auto *fps = dialogItem("conversionDialog", "convFps");
+        fps->setProperty("text", QStringLiteral("0"));
+        QVERIFY(QMetaObject::invokeMethod(fps, "textEdited"));
+        QVERIFY(dialog->property("preview").toMap().value(QStringLiteral("fpsInvalid")).toBool());
+        QVERIFY(!accept->property("enabled").toBool());
+        QCOMPARE(dialogItem("conversionDialog", "convFpsHint")->property("text").toString(),
+                 QStringLiteral("Enter a frame rate of 1 or more."));
+        QCOMPARE(dialogItem("conversionDialog", "conversionProblem")->property("text").toString(),
+                 QStringLiteral("Nothing to show until the frame rate is valid."));
+        fps->setProperty("text", QStringLiteral("25"));
+        QVERIFY(QMetaObject::invokeMethod(fps, "textEdited"));
+        QVERIFY(accept->property("enabled").toBool());
+        // New end times at 600 ms a character: the times row comes at once.
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "convNewEnds"), "click"));
+        auto *perLetter = dialogItem("conversionDialog", "convPerLetter");
+        perLetter->setProperty("text", QStringLiteral("600"));
+        QVERIFY(QMetaObject::invokeMethod(perLetter, "textEdited"));
+        QCOMPARE(application->conversionOptions().value(QStringLiteral("timePerCharacter")).toInt(), 600);
+        QVERIFY2(losses().contains(QStringLiteral("Times changed")), qPrintable(losses()));
+        QVERIFY(!dialog->property("previous").toStringList().join(u'|').contains(QStringLiteral("Times changed")));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("conversionDialog", "conversionCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        application->setConversionOptions(kept);
+        application->editor().discard();
+    }
+
     // Y4: a video of another size offers to match it; Resample subtitles changes it.
     void resolutionMismatchAndResample()
     {
@@ -6592,31 +6672,48 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        auto *mismatch = root->findChild<QObject *>(QStringLiteral("mismatchDialog"));
-        QVERIFY(mismatch);
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
-        QTRY_VERIFY_WITH_TIMEOUT(mismatch->property("visible").toBool(), 20000);
+        // PU6: a message box titled with the command that found it.
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY_WITH_TIMEOUT((box = messageBox("messages")) && box->isVisible(), 20000);
         const auto values = application->resampleValues();
         const int width = values.value(QStringLiteral("videoWidth")).toInt();
         const int height = values.value(QStringLiteral("videoHeight")).toInt();
         QVERIFY(width > 0 && height > 0);
-        QVERIFY(dialogItem("mismatchDialog", "mismatchText")->property("text").toString().contains(
-            QStringLiteral("Video resolution: %1 x %2\nSubtitle resolution: 100 x 100").arg(width).arg(height)));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mismatchDialog", "mismatchChange"), "click"));
-        QTRY_VERIFY(!mismatch->property("visible").toBool());
+        QVERIFY(values.value(QStringLiteral("hasVideo")).toBool());
+        QCOMPARE(box->title(), QStringLiteral("Open video"));
+        QCOMPARE(box->property("text").toString(),
+                 QStringLiteral("The video is %1 × %2 and the subtitles are 100 × 100.").arg(width).arg(height));
+        QVERIFY(box->property("offerDontAsk").toBool());
+        // Resample and stretch only when the aspect ratio differs (100 × 100 is square).
+        QStringList ids;
+        for (const QVariant &c : box->property("choices").toList())
+            ids << c.toMap().value(QStringLiteral("id")).toString();
+        QCOMPARE(ids, width == height ? (QStringList{QStringLiteral("keep"), QStringLiteral("only"), QStringLiteral("resample")})
+                                      : (QStringList{QStringLiteral("keep"), QStringLiteral("only"), QStringLiteral("stretch"),
+                                                     QStringLiteral("resample")}));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("resample"))));
+        QTRY_VERIFY(!box->isVisible());
         QCOMPARE(session->history().back().name, std::string("Changing subtitles resolution"));
         QCOMPARE(session->document().scriptInfo(u8"PlayResX"), std::optional(std::u8string(
             reinterpret_cast<const char8_t *>(QByteArray::number(width).constData()))));
         const auto &text = session->document().lines()[0]->text;
         QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(text.data()), qsizetype(text.size())),
                  QStringLiteral("{\\pos(%1,%2)}a").arg(width / 10).arg(height / 10));
-        // Resample subtitles back to 100x100 through the dialog.
-        auto *resample = root->findChild<QObject *>(QStringLiteral("resampleDialog"));
+        // Resample subtitles back to 100x100 through the window.
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("resampleMenuItem")), "triggered"));
-        QTRY_VERIFY(resample->property("visible").toBool());
+        QObject *resample = nullptr;
+        QTRY_VERIFY((resample = root->findChild<QObject *>(QStringLiteral("resampleDialog"))) && resample->property("visible").toBool());
         QCOMPARE(dialogItem("resampleDialog", "resampleSubsWidth")->property("value").toInt(), width);
+        // PU6: the same resolutions: Resample is off, From video too (already there).
+        QVERIFY(!dialogItem("resampleDialog", "resampleOk")->property("enabled").toBool());
+        QVERIFY(!dialogItem("resampleDialog", "resampleTargetFromVideoButton")->property("enabled").toBool());
+        QVERIFY(!dialogItem("resampleDialog", "resampleTargetFromSubtitlesButton")->property("enabled").toBool());
         dialogItem("resampleDialog", "resampleWidth")->setProperty("value", 100);
         dialogItem("resampleDialog", "resampleHeight")->setProperty("value", 100);
+        QVERIFY(dialogItem("resampleDialog", "resampleOk")->property("enabled").toBool());
+        QVERIFY(dialogItem("resampleDialog", "resampleTargetFromVideoButton")->property("enabled").toBool());
+        QCOMPARE(dialogItem("resampleDialog", "resampleAspectSection")->isVisible(), width != height);
         QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleOk"), "click"));
         QTRY_VERIFY(!resample->property("visible").toBool());
         QCOMPARE(session->document().scriptInfo(u8"PlayResY"), std::optional(std::u8string(u8"100")));
@@ -10346,16 +10443,18 @@ private slots:
             {{"reloadYes", Yes}, {"reloadNo", No}},
             {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
              {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
-            {{"conversionAccept", Accept}, {"Cancel", Reject}},
-            {{"resampleOk", Accept}, {"Cancel", Reject}},
-            {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
+            {{"conversionAccept", Accept}, {"conversionCancel", Reject}}, // PU6
+            {{"resampleOk", Accept}, {"resampleCancel", Reject}},          // PU6
+            {{"scriptPropertiesSave", Accept}, {"scriptPropertiesCancel", Reject}}, // PU6
+            {{"spellAddedRemove", Destructive}, {"spellAddedClose", Reject}},       // PU6
             {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
             {{"saveTag", Accept}, {"cancelTag", Reject}},
             {{"updateOffer", Accept}, {"updateClose", Reject}}, // DG1: Remind me in a week at the leading edge
             {{"updateAurRemind", No}, {"updateAurClose", Reject}},
             {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
-            {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
-             {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
+            // PU6: Show folder at the leading edge.
+            {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Action}, {"fontCollectorCancel", Reject},
+             {"fontCollectorClose", Reject}},
             {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
             {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}}, // PK1
@@ -10385,6 +10484,18 @@ private slots:
                                           Q_ARG(QVariant, QStringLiteral("Default.sty")), Q_ARG(QVariant, QVariant())));
         auto *clashes = qobject_cast<QWindow *>(named("styleClashReview"));
         QVERIFY(clashes);
+        // PU6's windows too.
+        QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("srt")),
+                                          Q_ARG(QVariant, QStringLiteral("Convert to SRT"))));
+        QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+        QVariant propertiesOpened;
+        QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, propertiesOpened)));
+        QVERIFY(QMetaObject::invokeMethod(root, "openFontCollector"));
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("spellCheckerPanel"), "openAddedWords"));
+        const char *pu6Windows[] = {"conversionDialog", "resampleDialog", "scriptPropertiesDialog", "fontCollectorDialog",
+                                    "spellAddedWords"};
+        for (const char *name : pu6Windows)
+            QVERIFY2(named(name), name);
         for (const Buttons &buttons : footers) {
             const char *first = buttons.front().first;
             QObject *found = named(first);
@@ -10410,6 +10521,11 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, QVariant())));
         clashes->close();
         QTRY_VERIFY(!clashes->isVisible());
+        for (const char *name : pu6Windows) {
+            auto *pu6 = qobject_cast<QWindow *>(named(name));
+            pu6->close();
+            QTRY_VERIFY(!pu6->isVisible());
+        }
 
         // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
         auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
@@ -15026,10 +15142,9 @@ private slots:
         QVERIFY(stop);
         QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop\nShortcut can be set using Shift + Click"));
         // (the subtitles' resolution question first: kept as it is)
-        auto *mismatch = named("mismatchDialog");
-        QTRY_VERIFY_WITH_TIMEOUT(mismatch->property("visible").toBool(), 20000);
-        QVERIFY(QMetaObject::invokeMethod(mismatch, "reject"));
-        QTRY_VERIFY(!mismatch->property("visible").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(messageBox("messages") && messageBox("messages")->isVisible(), 20000);
+        closeMismatchQuestion();
+        QVERIFY(!messageBox("messages")->isVisible());
         clickWith(stop, Qt::ShiftModifier | Qt::ControlModifier);
         QTRY_VERIFY(mapping->isVisible());
         QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Stop\""));
@@ -16430,10 +16545,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
         QTRY_VERIFY(video.session().shownFrame());
         // (the resolution question the video asks, which comes a moment later)
-        auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
-        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000))
-            QMetaObject::invokeMethod(mismatch, "close");
-        QTRY_VERIFY(!mismatch || !mismatch->property("visible").toBool());
+        closeMismatchQuestion();
         QTest::mouseMove(window, kOverNoPanel); // the pointer away from the display
         auto *toggle = qobject_cast<QQuickItem *>(named("audioSyncVideo"));
         QVERIFY(toggle);
@@ -22021,10 +22133,7 @@ private slots:
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
         application->video().stepFrames(1);
         // (the resolution question the video asks, which comes a moment later)
-        auto *mismatch = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mismatchDialog"));
-        if (mismatch && QTest::qWaitFor([&] { return mismatch->property("visible").toBool(); }, 3000))
-            QMetaObject::invokeMethod(mismatch, "close");
-        QTRY_VERIFY(!mismatch || !mismatch->property("visible").toBool());
+        closeMismatchQuestion();
         application->audio().openDummy();
         QTRY_VERIFY(application->audio().ready());
         QTRY_VERIFY(item("audioButtons")->isVisible());
@@ -26633,9 +26742,10 @@ private slots:
         QVERIFY(near(pixel(), bt709));
         // Script properties (Y3): the matrix changed to TV.601 (index 1).
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
+                    dialog->property("visible").toBool());
         auto *matrix = dialogItem("scriptPropertiesDialog", "propMatrix");
         QCOMPARE(matrix->property("currentText").toString(), QStringLiteral("TV.709"));
         matrix->setProperty("currentIndex", 1);
@@ -26697,10 +26807,11 @@ private slots:
         QVERIFY2(near(pixel(), bt709), "the untagged HD frame is converted as BT.709, its name");
         // Script properties: TV.601 converts it as BT.601, TV.709 back as BT.709.
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"));
         auto choose = [&](int index, const QString &name) {
             QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
-            QTRY_VERIFY(dialog->property("visible").toBool());
+            QObject *dialog = nullptr;
+            QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
+                        dialog->property("visible").toBool());
             auto *matrix = dialogItem("scriptPropertiesDialog", "propMatrix");
             matrix->setProperty("currentIndex", index);
             QCOMPARE(matrix->property("currentText").toString(), name);
