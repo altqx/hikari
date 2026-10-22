@@ -791,6 +791,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_matroskaTarget = m_workspace.editingTarget();
             auto *session = targetSession();
             m_matroskaRevision = session ? session->revision() : 0;
+            m_matroskaVideo = m_video->session().path();
         };
         hooks.log = [this](const QString &text) { m_log->log(text); };
         m_matroska = std::make_unique<MatroskaController>(
@@ -3003,11 +3004,12 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
     // PU1-mkv-notices: the window stayed usable while the track was read. A
     // tab that is no longer the editing target, or whose Document changed
     // since, keeps what was typed: the subtitles open in a new tab. A draft
-    // being typed doesn't move the revision, so a pending one counts too.
+    // being typed doesn't move the revision, so a pending one counts too; a
+    // tab that opened another video meanwhile keeps that video's subtitles.
     if (!newTab && m_matroskaTarget) {
         auto *session = m_files->session(*m_matroskaTarget);
         newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision
-            || session->draftLine();
+            || session->draftLine() || m_video->session().path() != m_matroskaVideo;
     }
     m_matroskaTarget.reset();
     if (newTab) {

@@ -1148,6 +1148,7 @@ private:
     // then opens in a new tab instead.
     std::optional<application::DocumentId> m_matroskaTarget;
     std::uint64_t m_matroskaRevision = 0;
+    std::string m_matroskaVideo; // the tab's video when the read started
     // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);
     std::unique_ptr<ui::LogController> m_log;
