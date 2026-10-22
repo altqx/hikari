@@ -2658,9 +2658,11 @@ private slots:
         QVERIFY(textOf(QStringLiteral("templateStatus")).endsWith(QStringLiteral("Undo removes them in one step.")));
         QVERIFY(session->undo());
         QCOMPARE(bytesOf(session->document()), before);
-        // The arrow: the selected Lines, once the Undo's preview came.
-        editor->refresh();
+        // The arrow: the selected Lines (a karaoke Line), once the Undo's
+        // preview came.
+        activate(*firstKaraoke());
         QTRY_VERIFY(item(QStringLiteral("templateApplyArrow"))->isEnabled());
+        QTRY_VERIFY(editor->canApplySelected());
         click(item(QStringLiteral("templateApplyArrow")));
         auto *menu = object(QStringLiteral("templateApplyMenu"));
         QTRY_VERIFY(menu->property("opened").toBool());
