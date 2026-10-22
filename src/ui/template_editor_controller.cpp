@@ -1394,12 +1394,16 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
 void TemplateEditorController::markOwn(std::uint64_t generation, application::KaraokeTemplaterPort::Preview without)
 {
     if (without.result && m_preview && m_source) {
+        // A TLMode Line's are told apart by their translations.
+        const auto keyOf = [](const core::LineRecord &l) {
+            return core::legacy::assLineText(l) + u8'\x1f' + l.translation;
+        };
         std::multiset<std::u8string> others;
         for (const auto &l : application::templatePreviewLines(*without.result, *m_source))
-            others.insert(core::legacy::assLineText(l));
+            others.insert(keyOf(l));
         m_own.assign(m_preview->size(), false);
         for (std::size_t k = 0; k < m_preview->size(); ++k) {
-            const auto it = others.find(core::legacy::assLineText((*m_preview)[k]));
+            const auto it = others.find(keyOf((*m_preview)[k]));
             if (it == others.end())
                 m_own[k] = true;
             else

@@ -1715,6 +1715,40 @@ private slots:
         QVERIFY(editor->trusted());
     }
 
+    // A TLMode Line's generated Lines differ in their translations only:
+    // the current template's own are told apart by them.
+    void aTranslatedLinesOwnLinesAreMarked()
+    {
+        const auto own = [&] {
+            QList<bool> out;
+            for (const QVariant &v : editor->previewLines())
+                out << v.toMap().value(QStringLiteral("own")).toBool();
+            return out;
+        };
+        open(QStringLiteral("stock-environment.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && own().contains(true); }, 20'000));
+        QTest::qWait(300);
+        const QList<bool> plain = own();
+        QVERIFY(plain.contains(false));
+        core::Document doc = loadFile(QStringLiteral("stock-environment.ass"));
+        std::optional<core::LineId> source;
+        for (const auto *l : doc.lines())
+            if (!source && application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                source = l->id;
+        QVERIFY(doc.editLine(*source, [](core::LineRecord &l) {
+            l.translation = l.text;
+            l.text = u8"original";
+        }));
+        openDocument(std::move(doc), true);
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && own().contains(true); }, 20'000));
+        QTest::qWait(300);
+        QCOMPARE(own(), plain);
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
