@@ -56,6 +56,15 @@ char16_t lowerUnit(char16_t c)
 
 const application::FontNameLower kLower = lowerUnit;
 
+// Plain characters as written for the renderer: braces as \{ and \}, and
+// a word joiner after each backslash so that it reads no escape.
+QString rendererText(QString plain)
+{
+    plain.replace(QLatin1Char('\\'), QStringLiteral("\\\u2060"));
+    plain.replace(QLatin1Char('{'), QStringLiteral("\\{")).replace(QLatin1Char('}'), QStringLiteral("\\}"));
+    return plain.trimmed();
+}
+
 // FontCatalogList's preview Style (FontCatalogList.cpp:191).
 constexpr char8_t kFontPreviewStyle[] = u8"Style: FontPreview,Arial,80,&H00FFFFFF,&HFF0000FF,&H00301946,&H7A301946,-1,0,"
                                         u8"0,0,100,100,1.13208,0,1,3.5,0,2,120,120,40,1";
@@ -474,7 +483,10 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
         return;
     core::StyleValues style = core::legacy::decodeStyle(kFontPreviewStyle, false);
     style.fontname = core::toUtf8(u16(font));
-    m_preview = renderStylePreview(m_renderer, style, width, height, previewText(), externalFontLeases());
+    // The preview text's characters only: an override in it ({\\fn…},
+    // {\\b0}) would draw another face than the one the note names.
+    m_preview = renderStylePreview(m_renderer, style, width, height, rendererText(samplePlain(previewText(), true)),
+                                   externalFontLeases());
     ++m_previewKey;
     emit previewChanged();
 }
@@ -564,17 +576,13 @@ void FontCatalogsController::renderSample(const QVariantMap &font, const QString
     style.italic = font.value(QStringLiteral("italic")).toBool();
     style.underline = font.value(QStringLiteral("underline")).toBool();
     style.strikeOut = font.value(QStringLiteral("strikeOut")).toBool();
-    // The characters as written for the renderer: braces as \{ and \},
-    // and a word joiner after each backslash so that it reads no escape.
-    QString plain = samplePlain(text, ass);
-    plain.replace(QLatin1Char('\\'), QStringLiteral("\\\u2060"));
-    plain.replace(QLatin1Char('{'), QStringLiteral("\\{")).replace(QLatin1Char('}'), QStringLiteral("\\}"));
+    const QString plain = rendererText(samplePlain(text, ass));
     // The fonts as the Line's renderer has them: the Document's attached
     // fonts, then the external ones.
     std::vector<application::FontLease> fonts = m_hooks.documentFonts ? m_hooks.documentFonts() : std::vector<application::FontLease>();
     for (auto &font : externalFontLeases())
         fonts.push_back(std::move(font));
-    m_sample = renderStylePreview(m_renderer, style, width, height, plain.trimmed(), std::move(fonts));
+    m_sample = renderStylePreview(m_renderer, style, width, height, plain, std::move(fonts));
     ++m_sampleKey;
     emit sampleChanged();
 }

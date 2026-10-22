@@ -192,8 +192,16 @@ std::vector<FontCatalogs::Catalog> FontCatalogs::parse(u16v text)
 
 void FontCatalogs::load(u16v text)
 {
-    // LoadCatalogs: AddCatalog per block, then each font it lacks.
-    apply(parse(text), {});
+    // LoadCatalogs: AddCatalog per block, then each font it lacks. Names
+    // are exact here (catalogs once saved as A and a stay two); only the
+    // reviewed Load (apply) takes another case as the same catalog.
+    for (const auto &c : parse(text)) {
+        addCatalog(c.name);
+        Catalog *target = findMutable(c.name);
+        for (const auto &font : c.fonts)
+            if (!containsExact(target->fonts, font))
+                target->fonts.push_back(font);
+    }
 }
 
 void FontCatalogs::apply(const std::vector<Catalog> &file, const std::vector<LoadChoice> &choices)

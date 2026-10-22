@@ -200,6 +200,13 @@ TEST(FontCatalogs, LoadReadsWhatLegacyRead)
     // The bytes written back are legacy's own form of what it read.
     EXPECT_EQ(c.serialize(), "\xEF\xBB\xBF={\r\n\tVerdana\r\n}\r\n  Spaced ={\r\n\tArial\r\n\tARIAL\r\n}\r\n"
                              "Empty={\r\n}\r\nSecond={\r\n\tThird={\r\n}\r\n");
+    // Names are exact: catalogs saved as A and a stay two (the reviewed
+    // Load alone takes another case as the same catalog).
+    FontCatalogs cased(kLower);
+    cased.load(u"A={\n\tArial\n}\na={\n\tTahoma\n}\n");
+    EXPECT_EQ(cased.names(), (std::vector<std::u16string>{u"A", u"a"}));
+    EXPECT_EQ(fontsOf(cased, u"A"), std::vector<std::u16string>{u"Arial"});
+    EXPECT_EQ(fontsOf(cased, u"a"), std::vector<std::u16string>{u"Tahoma"});
 }
 
 // FileOpen(path, text, false): wxConvAuto: a BOM decides (UTF-16 here),

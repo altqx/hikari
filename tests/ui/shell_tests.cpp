@@ -3352,6 +3352,14 @@ private slots:
         QTRY_VERIFY(window->property("visible").toBool());
         QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Arial"));
         QCOMPARE(window->property("resolvedFor").toString(), QStringLiteral("日本"));
+        // The window's preview draws those characters only: an override in
+        // the preview text draws no other face than the one named.
+        application->settingsStore()->set("styles.previewText", QStringLiteral("AB"));
+        catalogs.renderPreview(QStringLiteral("Arial"), 300, 80);
+        const QImage plain = catalogs.preview();
+        application->settingsStore()->set("styles.previewText", QStringLiteral("{\\fnImpact\\b0}AB"));
+        catalogs.renderPreview(QStringLiteral("Arial"), 300, 80);
+        QCOMPARE(catalogs.preview(), plain);
         QVERIFY(QMetaObject::invokeMethod(window, "reject"));
         QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();
