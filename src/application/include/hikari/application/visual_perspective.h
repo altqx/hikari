@@ -59,8 +59,12 @@ struct Transform {
 // lines' heights, or a drawing's points), relative to where the text starts.
 struct Box {
     PointF topLeft{0, 0}, bottomRight{0, 0};
+    // The line libass aligns, when not the ink's height: a drawing whose
+    // \pbo is above its height or below 0.
+    double lineHeight = -1;
     double width() const { return bottomRight.x - topLeft.x; }
     double height() const { return bottomRight.y - topLeft.y; }
+    double layoutHeight() const { return lineHeight >= 0 ? lineHeight : height(); }
 };
 
 // libass's camera distance in script units: 20000 / 64 in the layout's

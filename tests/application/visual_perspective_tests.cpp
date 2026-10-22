@@ -176,13 +176,16 @@ public:
         const double fs = std::strtod(style[2].c_str(), nullptr);
         lastScaleX = style[11];
         lastFont = style[1];
+        lastBold = style[7];
+        lastItalic = style[8];
+        lastSpacing = style[13];
         const std::u16string u = core::toUtf16(std::u8string(text.begin(), text.end()));
         TextExtents e;
         e.width = static_cast<float>(static_cast<double>(u.size()) * fs * 0.5);
         e.height = static_cast<float>(fs);
         return e;
     }
-    std::string lastScaleX, lastFont;
+    std::string lastScaleX, lastFont, lastBold, lastItalic, lastSpacing;
 };
 
 std::string scriptOf(const std::vector<std::string> &texts, const std::string &extraInfo = {},
@@ -324,6 +327,29 @@ TEST(PerspectiveTags, MeasuresTheTextAtAScaleOf100)
     host.withMeasure = false;
     EXPECT_FALSE(readLine(host, lineWith(host, 0)));
     EXPECT_TRUE(readLine(host, lineWith(host, 1))); // a drawing needs no measure
+}
+
+TEST(PerspectiveTags, ABaselineOffsetMovesADrawingsBox)
+{
+    // libass: ascent height - \pbo and descent \pbo, neither below 0 on the
+    // line; \r leaves \pbo, and \p2 halves it with the points.
+    Host host({"{\\pbo20\\p1}m 0 0 l 100 0 100 40 0 40", "{\\pbo50\\r\\p1}m 0 0 l 100 0 100 40 0 40",
+               "{\\pbo-10\\p1}m 0 0 l 100 0 100 40 0 40", "{\\pbo100\\p2}m 0 0 l 200 0 200 80 0 80"});
+    const auto inside = readLine(host, lineWith(host, 0));
+    ASSERT_TRUE(inside);
+    EXPECT_EQ(inside->box.topLeft.y, 0);
+    EXPECT_EQ(inside->box.layoutHeight(), 40);
+    for (const int i : {1, 3}) {
+        const auto below = readLine(host, lineWith(host, i));
+        ASSERT_TRUE(below);
+        EXPECT_EQ(below->box.topLeft.y, 10);
+        EXPECT_EQ(below->box.bottomRight.y, 50);
+        EXPECT_EQ(below->box.layoutHeight(), 50);
+    }
+    const auto above = readLine(host, lineWith(host, 2));
+    ASSERT_TRUE(above);
+    EXPECT_EQ(above->box.topLeft.y, 0);
+    EXPECT_EQ(above->box.layoutHeight(), 50);
 }
 
 TEST(PerspectiveTags, WritesIntoTheFirstBlock)
@@ -492,7 +518,7 @@ TEST(PerspectiveTags, AHostileLineTakesLinearTime)
     std::string blocks;
     for (int i = 0; i < 100000; ++i)
         blocks += "{\\frx1}";
-    Host host({braces, escapes, blocks + "x"});
+    Host host({braces, escapes, blocks + "x"}, "WrapStyle: 2"); // unwrapped: measured
     const auto started = std::chrono::steady_clock::now();
     for (std::size_t i = 0; i < 3; ++i) {
         const auto state = readLine(host, lineWith(host, i));
@@ -536,6 +562,56 @@ TEST(PerspectiveTags, AGlyphChangeAfterTheTextIsNotMeasured)
     EXPECT_FALSE(box(3));
     ASSERT_TRUE(box(4)); // before the text: the run's
     EXPECT_FLOAT_EQ(box(4)->box.width(), 40);
+}
+
+TEST(PerspectiveTags, ALineLibassWrapsIsNotMeasured)
+{
+    const std::string wide(40, 'a'); // 800 wide, the room 620
+    Host host({wide, "{\\q2}" + wide, "{\\fscx50}" + wide});
+    EXPECT_FALSE(readLine(host, lineWith(host, 0)));
+    EXPECT_TRUE(readLine(host, lineWith(host, 1))); // \q2: no wrapping
+    EXPECT_TRUE(readLine(host, lineWith(host, 2))); // 400 at half the width
+    Host unwrapped({wide}, "WrapStyle: 2");
+    EXPECT_TRUE(readLine(unwrapped, lineWith(unwrapped, 0)));
+}
+
+TEST(PerspectiveTags, MeasuresWithTheLeadingSpacingWeightAndSlant)
+{
+    // One Line a Host: the stacking measures the Lines shown with it too.
+    Host host({"{\\fsp20\\b1\\i1}AB"});
+    ASSERT_TRUE(readLine(host, lineWith(host, 0)));
+    EXPECT_EQ(host.measure.lastSpacing, "20");
+    EXPECT_NE(host.measure.lastBold, "0");
+    EXPECT_NE(host.measure.lastItalic, "0");
+    Host reset({"{\\b1\\b\\i1\\i}AB"});
+    ASSERT_TRUE(readLine(reset, lineWith(reset, 0)));
+    EXPECT_EQ(reset.measure.lastBold, "0"); // without a value: the Style's
+    EXPECT_EQ(reset.measure.lastItalic, "0");
+}
+
+TEST(PerspectiveTags, AnAnimatedQuadIsNotMeasured)
+{
+    Host host({"{\\t(0,1000,\\frx60)}Text", "{\\t(0,1000,\\fs80)}Text", "Te{\\t(\\fscx50)}xt",
+               "{\\t(0,1000,\\c&HFF&)}Text", "{\\p1\\t(\\frz30)}m 0 0 l 10 0 10 10"});
+    EXPECT_FALSE(readLine(host, lineWith(host, 0)));
+    EXPECT_FALSE(readLine(host, lineWith(host, 1)));
+    EXPECT_FALSE(readLine(host, lineWith(host, 2)));
+    EXPECT_TRUE(readLine(host, lineWith(host, 3))); // a colour moves nothing
+    EXPECT_FALSE(readLine(host, lineWith(host, 4)));
+}
+
+TEST(PerspectiveTags, AValuelessTagResets)
+{
+    Host host({"{\\frx30\\frx\\fry20\\fry\\fax0.2\\fax}T", "{\\fscx50\\fscx\\frz20\\frz\\bord5\\bord\\shad3\\shad}T"});
+    const LineState a = readTags(host, lineWith(host, 0));
+    EXPECT_EQ(a.transform.frx, 0);
+    EXPECT_EQ(a.transform.fry, 0);
+    EXPECT_EQ(a.transform.fax, 0);
+    const LineState b = readTags(host, lineWith(host, 1));
+    EXPECT_EQ(b.transform.fscx, 100); // the Style's
+    EXPECT_EQ(b.transform.frz, 0);
+    EXPECT_EQ(b.transform.bord.x, 2);
+    EXPECT_EQ(b.transform.shad.y, 1);
 }
 
 // ------------------------------------------------------------------ the tool
@@ -854,6 +930,22 @@ TEST(PerspectiveTool, AShownPlaneStaysAsTheQuadMoves)
     f.host.time = 2000;
     (void)f.tool.overlay(f.host);
     EXPECT_GT(dist(centre(f.tool.inner()), was), 50); // the quad followed
+    expectQuadNear(f.tool.outer(), plane, 0.05);
+}
+
+TEST(PerspectiveTool, AnEditOfTheLineKeepsThePlane)
+{
+    Fixture f;
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    const Quad plane = f.tool.outer();
+    // The Line editor (or an Undo) changes the text: a wider quad, the
+    // same plane.
+    auto g = f.host.beginGesture(f.host.targets, "Edit");
+    ASSERT_TRUE(g);
+    (*g)->stage(f.host.line(0), u8"{\\pos(320,200)}Perspective!!", false);
+    ASSERT_TRUE(f.host.commitGesture());
+    f.tool.reset(f.host);
+    EXPECT_GT(f.tool.inner()[2].x, 431); // it grew
     expectQuadNear(f.tool.outer(), plane, 0.05);
 }
 

@@ -3,7 +3,8 @@
 // maths gives for a quad is painted onto that quad within a pixel, at the
 // script's size and at twice it (libass lays out at the rendered frame's
 // size, so its camera distance in script units halves), for each alignment,
-// a drawing not at its origin, and quads the tags were found for.
+// a drawing not at its origin, a baseline offset, and quads the tags were
+// found for.
 
 #include "hikari/application/visual_perspective.h"
 #include "hikari/backends/libass_renderer.h"
@@ -14,6 +15,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstring>
+#include <string>
 
 using namespace hikari;
 using namespace hikari::application;
@@ -231,6 +233,41 @@ TEST(PerspectiveRender, ADrawingAwayFromItsOrigin)
         t.org = {150, 100};
         expectInkOnQuad(lineWith(t, drawing), textToQuad(t, box, screenZ(kScriptH, kScriptH)), kScriptW, kScriptH);
     }
+}
+
+// \pbo: libass takes a drawing's ascent as its height less \pbo and its
+// descent as \pbo, neither below 0 on the line, so an offset past the height
+// drops the ink and one outside 0..height grows the line the alignment uses.
+TEST(PerspectiveRender, ABaselineOffsetMovesTheBox)
+{
+    const std::u16string drawing = u"m 0 0 l 100 0 100 40 0 40";
+    const std::pair<std::u16string, Box> offsets[] = {
+        {u"20", Box{{0, 0}, {100, 40}}},
+        {u"50", Box{{0, 10}, {100, 50}, 50}},
+        {u"-10", Box{{0, 0}, {100, 40}, 50}},
+    };
+    for (const auto &[pbo, box] : offsets)
+        for (const int an : {7, 5, 2}) {
+            Transform t;
+            t.frx = 15;
+            t.fry = -20;
+            t.an = an;
+            t.pos = {160, 90};
+            t.org = {160, 90};
+            const std::u16string text = writeTransform(
+                u"{\\an" + std::u16string(1, char16_t(u'0' + an)) + u"\\p1\\pbo" + pbo + u"}" + drawing, t, style());
+            expectInkOnQuad(text, textToQuad(t, box, screenZ(kScriptH, kScriptH)), kScriptW, kScriptH);
+            // And the tags found for that quad paint it.
+            Transform from;
+            from.an = an;
+            const Quad quad = textToQuad(t, box, screenZ(kScriptH, kScriptH));
+            const auto found = quadToTransform(quad, box, OrgMode::Center, from, screenZ(kScriptH, kScriptH));
+            ASSERT_TRUE(found);
+            const std::u16string again = writeTransform(
+                u"{\\an" + std::u16string(1, char16_t(u'0' + an)) + u"\\p1\\pbo" + pbo + u"}" + drawing, *found,
+                style());
+            expectInkOnQuad(again, quad, kScriptW, kScriptH);
+        }
 }
 
 // What a drag writes: the tags found for a quad paint that quad.

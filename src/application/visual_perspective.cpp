@@ -184,7 +184,7 @@ struct Tag {
 constexpr u16v kNames[] = {u"xbord", u"ybord", u"xshad", u"yshad", u"fscx", u"fscy", u"bord", u"shad",
                            u"move",  u"pos",   u"org",   u"frx",   u"fry",  u"frz",  u"fax",  u"fay",
                            u"an",    u"fr",    u"fs",    u"fn",    u"p",    u"a",    u"t",    u"r",
-                           u"q",     u"fsp",   u"b",     u"i"};
+                           u"q",     u"fsp",   u"b",     u"i",     u"pbo"};
 
 u16v nameOf(u16v token)
 {
@@ -344,7 +344,7 @@ Quad textToQuad(const Transform &t, const Box &box, double z)
     // TextToPersp: the box sheared about its top, moved to the alignment
     // point, scaled, put at \pos, turned about \org and projected.
     const PointF shift = anchorShift(t.an);
-    const double w = std::max(box.width(), 1.), h = std::max(box.height(), 1.);
+    const double w = std::max(box.width(), 1.), h = std::max(box.layoutHeight(), 1.);
     const V2 corners[4] = {{box.topLeft.x, box.topLeft.y},
                            {box.bottomRight.x, box.topLeft.y},
                            {box.bottomRight.x, box.bottomRight.y},
@@ -498,7 +498,7 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
     const PointF shift = anchorShift(from.an);
     const V2 start{box.topLeft.x + box.topLeft.y * t.fax, box.topLeft.y};
     t.pos = pf(org + V2{r[0].x, r[0].y} - V2{scalex * start.x, scaley * start.y} +
-               V2{quadwidth * shift.x, quadheight * shift.y});
+               V2{quadwidth * shift.x, scaley * std::max(box.layoutHeight(), 1.) * shift.y});
     // The outline and shadow keep their proportion to the text.
     const double kx = from.fscx != 0 ? t.fscx / from.fscx : 1, ky = from.fscy != 0 ? t.fscy / from.fscy : 1;
     t.bord = pf(V2{from.bord.x * kx, from.bord.y * ky});
@@ -519,6 +519,7 @@ struct Leading {
     std::vector<Tag> tags; // of the blocks before the text
     std::u16string drawing;
     int p = 0;
+    double pbo = 0; // the drawing's baseline offset, in its points
     bool more = false; // something shown after the drawing
 };
 
@@ -537,6 +538,8 @@ Leading leadingOf(u16v text)
     for (const Tag &tag : out.tags) {
         if (tag.name == u"p")
             out.p = static_cast<int>(number(tag.value).value_or(0));
+        else if (tag.name == u"pbo") // not reset by \r
+            out.pbo = number(tag.value).value_or(0);
     }
     if (out.p > 0) {
         // libass's drawing runs to the next {. Text or another drawing
@@ -600,9 +603,30 @@ std::size_t afterLastReset(const std::vector<Tag> &tags)
     return from;
 }
 
+// Whether a \t animates what the box or its transform is read from
+// (libass evaluates it at the frame; one box does not hold its frames).
+bool animatesTheQuad(const Tag &tag)
+{
+    static constexpr u16v kAnimated[] = {u"fs",  u"fscx", u"fscy", u"fsp", u"frx",  u"fry",  u"frz",   u"fr",
+                                         u"fax", u"fay",  u"bord", u"shad", u"xbord", u"ybord", u"xshad", u"yshad"};
+    if (tag.name != u"t")
+        return false;
+    const std::size_t first = tag.value.find(u'\\');
+    if (first == u16v::npos)
+        return false;
+    for (const Tag &inner : tagsOf(tag.value.substr(first)))
+        if (std::find(std::begin(kAnimated), std::end(kAnimated), inner.name) != std::end(kAnimated))
+            return true;
+    return false;
+}
+
 std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
                               u16v text, const core::StyleValues &style, const Leading &lead)
 {
+    for (const auto &[open, close] : blocksOf(text))
+        for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1)))
+            if (animatesTheQuad(tag))
+                return std::nullopt;
     if (lead.p > 0) {
         if (lead.more)
             return std::nullopt;
@@ -624,23 +648,43 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         }
         if (!any)
             return std::nullopt;
-        return Box{{static_cast<float>(minx), static_cast<float>(miny)},
-                   {static_cast<float>(maxx), static_cast<float>(maxy)}};
+        // libass sets the drawing's ascent to its height less \pbo and its
+        // descent to \pbo; the line holds neither below 0, so a \pbo past
+        // the height drops the ink and one outside 0..height grows the line.
+        const double height = maxy - miny, pbo = lead.pbo * k;
+        const double dy = std::max(0., pbo - height);
+        Box box{{static_cast<float>(minx), static_cast<float>(miny + dy)},
+                {static_cast<float>(maxx), static_cast<float>(maxy + dy)}};
+        if (pbo < 0 || pbo > height)
+            box.lineHeight = std::max(height - pbo, 0.) + std::max(pbo, 0.);
+        return box;
     }
-    (void)line;
     TextMeasurePort *measure = host.textMeasure();
     if (!measure)
         return std::nullopt;
-    // The Style at a scale of 100 with the leading \fs and \fn, as libass
-    // applies them: a signed \fs is relative, one at 0 or below and an
-    // empty \fn go back to the current Style's.
+    // The Style at a scale of 100 with the leading \fs, \fn, \fsp, \b and
+    // \i, as libass applies them: a signed \fs is relative; one at 0 or
+    // below, and any of them without a value it takes, go back to the
+    // current Style's. \fscx is kept for the wrap.
     const std::size_t from = afterLastReset(lead.tags);
     const core::StyleValues current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
     core::StyleValues s = current;
     double size = transform::styleNumber(current.fontsize, 0);
+    double scaleX = transform::styleNumber(current.scaleX, 100);
     for (std::size_t k = from; k < lead.tags.size(); ++k) {
         const Tag &tag = lead.tags[k];
-        if (tag.name == u"fs") {
+        const auto n = number(tag.value);
+        if (tag.name == u"fsp") {
+            s.spacing = n ? core::toUtf8(fmt(*n, 4)) : current.spacing;
+        } else if (tag.name == u"b") {
+            const int w = n ? static_cast<int>(*n) : -1;
+            s.bold = w == 0 || w == 1 || w >= 100 ? (w == 1 || w >= 700) : current.bold;
+        } else if (tag.name == u"i") {
+            const int v = n ? static_cast<int>(*n) : -1;
+            s.italic = v == 0 || v == 1 ? v == 1 : current.italic;
+        } else if (tag.name == u"fscx") {
+            scaleX = n ? std::max(0.0, *n) : transform::styleNumber(current.scaleX, 100);
+        } else if (tag.name == u"fs") {
             u16v v = tag.value;
             while (!v.empty() && v.front() == u' ')
                 v.remove_prefix(1);
@@ -722,6 +766,17 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         if (!piece.empty())
             width = std::max(width, e->width);
         height += e->height;
+    }
+    // Wider than the room between its margins, libass wraps it (but under
+    // wrap style 2): rows this box does not hold.
+    if (wrap != 2) {
+        const auto margin = [](std::int64_t own, const std::u8string &styleMargin) {
+            return own != 0 ? static_cast<double>(own) : transform::styleNumber(styleMargin, 0);
+        };
+        const double room = ctx.width - margin(line.marginLeft.value, current.marginLeft) -
+                            margin(line.marginRight.value, current.marginRight);
+        if (width * scaleX / 100 > room)
+            return std::nullopt;
     }
     return Box{{0, 0}, {static_cast<float>(width), static_cast<float>(height)}};
 }
@@ -896,13 +951,30 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
     // ones before it.
     const Leading lead = leadingOf(text);
     const std::size_t from = afterLastReset(lead.tags);
+    const core::StyleValues current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
     if (from > 0)
-        styleValues(resetStyle(styles, style, lead.tags[from - 1].value));
+        styleValues(current);
     for (std::size_t k = from; k < lead.tags.size(); ++k) {
         const Tag &tag = lead.tags[k];
-        const auto v = number(tag.value);
-        if (!v)
-            continue;
+        auto v = number(tag.value);
+        if (!v) {
+            // Without a value libass resets it: the angles X and Y and the
+            // shears to 0, the rest to the current Style's.
+            if (tag.name == u"frx" || tag.name == u"fry" || tag.name == u"fax" || tag.name == u"fay")
+                v = 0.0;
+            else if (tag.name == u"frz" || tag.name == u"fr")
+                v = transform::styleNumber(current.angle, 0);
+            else if (tag.name == u"fscx")
+                v = transform::styleNumber(current.scaleX, 100);
+            else if (tag.name == u"fscy")
+                v = transform::styleNumber(current.scaleY, 100);
+            else if (tag.name == u"bord" || tag.name == u"xbord" || tag.name == u"ybord")
+                v = transform::styleNumber(current.outlineWidth, 0);
+            else if (tag.name == u"shad" || tag.name == u"xshad" || tag.name == u"yshad")
+                v = transform::styleNumber(current.shadow, 0);
+            else
+                continue;
+        }
         if (tag.name == u"frx")
             t.frx = *v;
         else if (tag.name == u"fry")
@@ -1194,7 +1266,9 @@ void PerspectiveTool::reset(VisualHost &host)
         m_inner = textToQuad(m_state.transform, m_state.box, m_screenZ);
         m_valid = convex(m_inner);
     }
-    if (newLine)
+    // A saved plane holds on any reading again (an edit, an Undo, a new
+    // Style), not only on another Line's; an edit open keeps its own.
+    if (newLine || (m_drag == Drag::None && !m_valueEdit && !m_keyEdit && !host.gesture()))
         restorePlane();
     host.toolChanged();
 }
@@ -1814,8 +1888,11 @@ bool PerspectiveTool::setOption(const std::string &name, int value, VisualHost &
         if (m_plane && m_line && m_valid)
             m_planes[*m_line] = outer(); // where it was when hidden
         m_plane = value != 0;
-        if (m_plane)
+        if (m_plane) {
             restorePlane();
+            if (m_line && m_valid)
+                m_planes[*m_line] = outer(); // absolute from now on
+        }
         if (!m_plane && (m_selected >= 4))
             m_selected = -1;
     } else if (name == "lockOuter") {
