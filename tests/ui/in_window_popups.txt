@@ -28,7 +28,6 @@ Main.qml:resampleDialog
 Main.qml:mismatchDialog
 Main.qml:spellingNotice
 Main.qml:playerNotice
-Main.qml:cleanStylesMessage
 ManageLayoutsDialog.qml:dialog
 MatroskaSubtitles.qml:saveQuestion
 MatroskaSubtitles.qml:noTracksMessage
@@ -54,12 +53,6 @@ ShapesEditionDialog.qml:clashBox
 SpellCheckerDialog.qml:dialog
 SpellCheckerDialog.qml:message
 SpellCheckerDialog.qml:addedWords
-StyleManager.qml:createQuestion
-StyleManager.qml:message
-StyleManager.qml:multiQuestion
-StyleManager.qml:renameQuestion
-StyleManager.qml:newCatalog
-StyleManager.qml:deleteCatalogQuestion
 TabCommands.qml:closeAllPrompt
 TabCommands.qml:subtitlesPrompt
 TranslationModeOffConfirm.qml:dialog

@@ -34,6 +34,9 @@ Window {
     property SettingsStore settings: null
     property bool resizable: false
     property bool modal: false
+    // SY1: the body fills the window between the title bar and the footer
+    // (a sidebar of its own), and a line parts it from the footer.
+    property bool flush: false
     property T.AbstractButton defaultButton: null
     property Item initialFocus: null
     readonly property bool opened: visible
@@ -247,9 +250,15 @@ Window {
                 spacing: 12
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.leftMargin: 24
-                Layout.rightMargin: 24
-                Layout.topMargin: frame.custom ? 12 : 24
+                Layout.leftMargin: dialog.flush ? 0 : 24
+                Layout.rightMargin: dialog.flush ? 0 : 24
+                Layout.topMargin: dialog.flush ? 0 : frame.custom ? 12 : 24
+            }
+            Rectangle {
+                visible: dialog.flush && footer.visible
+                color: Theme.line
+                implicitHeight: 1
+                Layout.fillWidth: true
             }
             RowLayout {
                 id: footer
@@ -257,7 +266,9 @@ Window {
                 visible: closing.count > 0 || leading.visibleChildren.length > 0
                 spacing: 8
                 Layout.fillWidth: true
-                Layout.margins: 24
+                Layout.margins: dialog.flush ? 20 : 24
+                Layout.leftMargin: 24
+                Layout.rightMargin: 24
                 RowLayout {
                     id: leading
                     spacing: 8

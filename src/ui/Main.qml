@@ -891,17 +891,18 @@ ApplicationWindow {
         }
     }
     // Application-wide, so F6 also leaves a floating panel group (D1); a
-    // Global binding of the same keys comes first.
+    // Global binding of the same keys comes first. Off in a dialog's window
+    // (the Style manager's F6 goes from list to list, SY1).
     Shortcut {
         sequences: ["F6"]
         context: Qt.ApplicationShortcut
-        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("F6")
+        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("F6")
         onActivated: root.cyclePanels(1)
     }
     Shortcut {
         sequences: ["Shift+F6"]
         context: Qt.ApplicationShortcut
-        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("Shift+F6")
+        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
     }
     // Windows hands Shift+F10 to the system when no shortcut wants it; the
@@ -6741,6 +6742,7 @@ ApplicationWindow {
         catalogs: root.fontCatalogs
         colourPicker: root.colourPicker
         app: root.app
+        notices: root.notices
     }
     SettingsImportDialog {
         id: settingsImportDialog
@@ -6764,10 +6766,7 @@ ApplicationWindow {
         Connections {
             target: root.fontCollector
             function onStyleRequested(style) {
-                styleManagerWindow.showFor(style)
-                const row = styleManagerWindow.styles.documentStyles.indexOf(style)
-                if (row >= 0)
-                    styleManagerWindow.beginEditing(styleManagerWindow.styles.beginEdit(false, row), false)
+                styleManagerWindow.showFor(style) // SY1: the editor is on it
             }
         }
     }
@@ -7398,11 +7397,9 @@ ApplicationWindow {
                 root.video.playActualLine()
             }
             return true
-        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles
-            if (editing) {
-                cleanStylesMessage.text = root.styleManager.cleanStyles()
-                cleanStylesMessage.open()
-            }
+        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles; SY1-clean-toast
+            if (editing)
+                styleManagerWindow.deleteUnused()
             return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
@@ -7625,19 +7622,6 @@ ApplicationWindow {
         hotkeys: root.hotkeys
         settings: root.app.settings
     }
-    // GLOBAL_STYLE_MANAGER_CLEAN_STYLE: StyleStore::OnCleanStyles's message
-    // (stylestore.cpp:738-775).
-    Dialog {
-        id: cleanStylesMessage
-        objectName: "cleanStylesMessage"
-        property alias text: cleanStylesLabel.text
-        title: qsTranslate("HikariSub.Styles", "Status of deleted styles")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { id: cleanStylesLabel }
-    }
-
     // S2: committed automation shortcuts, application-wide.
     Repeater {
         model: root.automationHotkeys.shortcuts
