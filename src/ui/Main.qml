@@ -286,6 +286,12 @@ ApplicationWindow {
             originalDock.close()
         dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, videoDock,
                                   Qt.size(Math.round(area * 0.24), 0))
+        // Wide enough for its header's commands whatever the font (the
+        // title's width varies), with a little room to spare.
+        const tools = stylesTool.toolbar
+        const short = Math.ceil(tools.implicitWidth + 12 - tools.width)
+        if (tools.visible && short > 0)
+            Docking.resizeInLayout("Styles", short, 0, 0, 0)
         // The lower row at the Line editor's natural height at its new
         // width (its rows whole, as fitAudioBox measures them, below its
         // header), the rest to the upper row. The Video panel's bottom edge
