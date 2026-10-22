@@ -53,13 +53,13 @@ protected:
         if (waitForItem("mainWindow/editingGrid", 5s)) {
             typeAndCommit(" edited");
             enterKey("mainWindow/lineText", Qt::Key_W, spix::KeyModifiers::Control);
-            observed.push_back(waitForItem("closeReview/closeCancel", 5s) ? "review" : "no review"); // 0
-            mouseClick("closeReview/closeCancel");
+            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review"); // 0
+            mouseClick("closeQuestion/messageBoxChoice_cancel");
             wait(300ms);
             observed.push_back(targets()); // 1: still open
             enterKey("mainWindow/lineText", Qt::Key_W, spix::KeyModifiers::Control);
             wait(500ms);
-            mouseClick("closeReview/closeDiscardAll");
+            mouseClick("closeQuestion/messageBoxChoice_discard");
             wait(500ms);
             observed.push_back(targets()); // 2: closed
             // Another Document, edited, then the window is closed.
@@ -67,8 +67,8 @@ protected:
             wait(300ms);
             typeAndCommit(" saved");
             invokeMethod("mainWindow", "close", {});
-            observed.push_back(waitForItem("closeReview/closeSaveAll", 5s) ? "quit review" : "no quit review"); // 3
-            mouseClick("closeReview/closeSaveAll");
+            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_save", 5s) ? "quit review" : "no quit review"); // 3
+            mouseClick("closeQuestion/messageBoxChoice_save");
             // The window hides once the write is acknowledged and the quit approved.
             std::string visible = "true";
             for (int i = 0; i < 50 && visible != "false"; ++i) {

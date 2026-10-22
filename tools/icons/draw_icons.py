@@ -1010,6 +1010,13 @@ icon("ui-colours", "UI colors", [], ["settings-dialog"],
      + accent(frect(2, 3, 3, 3), frect(2, 10, 3, 3)), mirror=True)
 icon("restore-default", "Restore default", [], ["settings-dialog"],
      stroke("M2.5 8a5.5 5.5 0 1 0 1.75-4") + stroke("M2.5 1.5v3h3") + accent(dot(8, 8, 1.5)), mirror=True)
+# PF1's pages and rows without an icon above: the Subtitle grid page, the
+# hidden questions' row.
+icon("settings-grid", "Subtitle grid", [], ["settings-dialog"],
+     rect(1.5, 2.5, 13, 11, 1) + stroke("M1.5 5.5h13M5.5 2.5v11") + accent(stroke("M7.5 8.25h5M7.5 10.75h3")),
+     mirror=True)
+icon("notices", "Notices", [], ["settings-dialog"],
+     rect(1.5, 5.5, 13, 8, 1) + stroke("M4 8.5h6M4 10.75h4") + accent(stroke("M3.5 3.5h9")), mirror=True)
 
 # Translation mode (TM1 #232): the Original text panel's actions and the
 # Subtitles menu's switch. Drawn by hand for TM1 and brought into the set
@@ -1032,6 +1039,12 @@ icon("moving-tags", "Moving tags", [], ["original-panel"],
 icon("translation-mode", "Translation mode", [], [SUBS],
      stroke("M1.5 3.5h8M1.5 6h5") + accent(stroke("M1.5 10.5h8M1.5 13h5M12.5 3v9M11 10.5l1.5 1.5 1.5-1.5")),
      mirror=True)
+
+# TP1 (#274): the Styles panel's Apply to the selected lines: a Style's
+# swatch over two Lines, the arrow bringing it down to them.
+icon("style-apply", "Apply to the selected lines", [], ["styles-panel"],
+     rect(1.5, 1.5, 6, 6, 1) + stroke("M1.5 11.5h7M1.5 14h7")
+     + accent(stroke("M12 2.5v7M9.5 7.5l2.5 2.5 2.5-2.5M10.5 12.5h4M10.5 14.5h4")), mirror=True)
 
 # The legacy bitmaps the set does not replace, and why (the card's Excluded:
 # the application and file-type icons stay, and controls Qt draws itself).
@@ -1059,9 +1072,6 @@ NOT_REPLACED = {
 # other role to be named by the QML, and a pending role not to be).
 PENDING = {}
 for card, roles in {
-    # IC1's Options icons, for the primary options of each page
-    "PF1 #225": ["language", "ui-font", "renderer", "video-seek", "audio-device", "audio-delay", "theme",
-                 "accent-colour", "ui-colours", "restore-default"],
 }.items():
     for role in roles:
         PENDING[role] = card

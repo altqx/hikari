@@ -34,6 +34,10 @@ Window {
     property SettingsStore settings: null
     property bool resizable: false
     property bool modal: false
+    // PF1 (#225): the content from edge to edge under the title bar, without
+    // the 24-wide margins (a window with a side list, Settings); the footer
+    // keeps them.
+    property bool flush: false
     property T.AbstractButton defaultButton: null
     property Item initialFocus: null
     readonly property bool opened: visible
@@ -247,9 +251,9 @@ Window {
                 spacing: 12
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                Layout.leftMargin: 24
-                Layout.rightMargin: 24
-                Layout.topMargin: frame.custom ? 12 : 24
+                Layout.leftMargin: dialog.flush ? 0 : 24
+                Layout.rightMargin: dialog.flush ? 0 : 24
+                Layout.topMargin: dialog.flush ? 0 : frame.custom ? 12 : 24
             }
             RowLayout {
                 id: footer

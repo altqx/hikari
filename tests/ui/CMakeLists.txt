@@ -173,6 +173,8 @@ hikari_add_spix_test(hikari_ui_history_workflow SOURCES history_workflow.cpp LIB
 hikari_add_spix_test(hikari_ui_audio_timing_workflow SOURCES audio_timing_workflow.cpp LIBRARIES hikari_composition)
 # P1: close review (L58-write-close).
 hikari_add_qttest(hikari_ui_close_review_tests SOURCES close_review_tests.cpp LIBRARIES hikari_composition)
+# PU1: the changed-on-disk bar, the restore's entry bars and the startup offer.
+hikari_add_qttest(hikari_ui_file_session_popups_tests SOURCES file_session_popups_tests.cpp LIBRARIES hikari_composition)
 # K2 / W1: the popups take the theme's palette from the first engine's start.
 hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
@@ -290,6 +292,9 @@ target_include_directories(hikari_ui_file_layouts_tests PRIVATE "${PROJECT_SOURC
 # TM1 (#232): Translation mode through the Translation preset, the Original
 # text panel and Subtitles > Translation mode.
 hikari_add_qttest(hikari_ui_translation_preset_tests SOURCES translation_preset_tests.cpp
+    LIBRARIES hikari_composition KDAB::kddockwidgets)
+# TP1 (#274): the Typesetting preset's own arrangement and the Styles panel.
+hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_tests.cpp
     LIBRARIES hikari_composition KDAB::kddockwidgets)
 # WS3 (#217): the layout presets and saved layouts (save, apply, rename,
 # delete, persistence) and the retired View arrangements and editor switch.

@@ -322,6 +322,7 @@ void VideoController::openVideo(const QString &path)
 void VideoController::open(const QString &path)
 {
     const std::uint64_t request = ++m_openRequest;
+    m_requestedVideo = path;
     auto asVideo = [self = QPointer<VideoController>(this), request, path](application::IndexRequest index) {
         if (!self || request != self->m_openRequest)
             return;
