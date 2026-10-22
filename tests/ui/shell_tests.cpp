@@ -3225,6 +3225,7 @@ private slots:
         QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0 l 100 100{\\p0}Hello\\Nthere\\h\\{x\\}"), true),
                  QStringLiteral("Hello there\u00A0{x}"));
         QCOMPARE(fonts.samplePlain(QStringLiteral("{\\pos(1,2)}a{\\p2}m 0 0{\\p0}b"), true), QStringLiteral("ab"));
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\t(0,500,\\p1)}Hello"), true), QStringLiteral("Hello")); // \p inside \t: no drawing
         QCOMPARE(fonts.samplePlain(QStringLiteral("Use {name} \\N"), false), QStringLiteral("Use {name} \\N"));
         // The preview is drawn by the subtitle renderer.
         QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
@@ -3319,6 +3320,12 @@ private slots:
         auto *add = dialogItem("fontPicker", "fontPickerAdd");
         const QString tip = QQmlProperty::read(add, QStringLiteral("ToolTip.text"), qmlContext(add)).toString();
         QVERIFY2(tip.contains(QStringLiteral("Bold")) && !Qt::mightBeRichText(tip), qPrintable(tip));
+        // Typed in the search, no font is called so: "Use “…” anyway", plain.
+        auto *search = dialogItem("fontPicker", "fontPickerSearch");
+        search->setProperty("text", markup);
+        QTRY_VERIFY(dialogItem("fontPicker", "fontPickerUseUnlisted")->isVisible());
+        checkPlain(dialogItem("fontPicker", "fontPickerUseUnlisted"), "use anyway");
+        search->setProperty("text", QString());
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontPicker", "fontPickerCatalog"), "click"));
         auto *menu = named("fontPickerCatalogMenu");
         QTRY_VERIFY(menu->property("visible").toBool());
@@ -3708,13 +3715,21 @@ private slots:
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D", "N"}));
         QCOMPARE(catalogs.catalogSize(QStringLiteral("N")), 2);
         QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 2 font catalogs|From cased-catalogs.txt: 1 new, 1 merged."));
-        // Loaded into an empty list: the first catalog is chosen.
+        // Loaded into an empty list: the first catalog is chosen. (The last
+        // deleted while Show is "In …": every font is shown again.)
+        window->setProperty("show", 1);
         for (const QString &name : catalogs.catalogNames())
             catalogs.removeCatalog(name);
         QCOMPARE(window->property("chosen").toString(), QString());
+        QCOMPARE(window->property("show").toInt(), 0);
+        QVERIFY(!window->property("shown").toStringList().isEmpty());
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(other))));
         QCOMPARE(catalogs.catalogNames(), QStringList{"B"});
         QCOMPARE(window->property("chosen").toString(), QStringLiteral("B"));
+        // A header with no '=' is a catalog with no name: not loaded.
+        const QString nameless = catalogFile("nameless-catalogs.txt", "Nameless{\n\tArial\n}\nX={\n\tTahoma\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(nameless))));
+        QCOMPARE(catalogs.catalogNames(), (QStringList{"B", "X"}));
         QVERIFY(QMetaObject::invokeMethod(window, "reject"));
         QTRY_VERIFY(!window->property("visible").toBool());
         catalogs.waitResolved();

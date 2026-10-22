@@ -366,6 +366,12 @@ DialogWindow {
                     highlighted: picker.family === picker.unlisted
                     text: qsTr("Use “%1” anyway").arg(picker.unlisted)
                     onClicked: picker.pick(picker.unlisted)
+                    contentItem: Label { // the typed name as written, never markup
+                        text: parent.text
+                        textFormat: Text.PlainText
+                        elide: Text.ElideRight
+                        verticalAlignment: Text.AlignVCenter
+                    }
                 }
             }
         }

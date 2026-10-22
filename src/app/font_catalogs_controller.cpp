@@ -329,6 +329,9 @@ QVariantMap FontCatalogsController::reviewCatalogFile(const QUrl &file)
     m_reviewed.clear();
     if (const auto text = application::readFontCatalogFile(std::filesystem::path(path.toStdU16String())))
         m_reviewed = application::FontCatalogs::parse(*text);
+    // A header with no '=' parses as a catalog with no name (LoadCatalogs):
+    // nothing could choose or manage it, so it is not loaded.
+    std::erase_if(m_reviewed, [](const auto &c) { return c.name.empty(); });
     QVariantList rows;
     QStringList names;
     int same = 0;
@@ -472,7 +475,6 @@ QString FontCatalogsController::samplePlain(const QString &text, bool ass) const
     QString out;
     out.reserve(text.size());
     bool drawing = false; // \p1 and up: vector drawing until \p0
-    static const QRegularExpression drawingTag(QStringLiteral("\\\\p(-?\\d+)"));
     for (qsizetype i = 0; i < text.size(); ++i) {
         const QChar c = text[i];
         if (c == QLatin1Char('\n')) {
@@ -487,9 +489,28 @@ QString FontCatalogsController::samplePlain(const QString &text, bool ass) const
         if (c == QLatin1Char('{')) {
             const qsizetype close = text.indexOf(QLatin1Char('}'), i + 1);
             if (close >= 0) { // an override block (an unclosed '{' is text)
+                // A top-level \pN only: one inside \t(…) or another tag's
+                // parentheses does not switch drawing mode (as the renderer
+                // and core::project read it).
                 const QString block = text.mid(i + 1, close - i - 1);
-                for (auto it = drawingTag.globalMatch(block); it.hasNext();)
-                    drawing = it.next().captured(1).toInt() > 0;
+                int depth = 0;
+                for (qsizetype k = 0; k < block.size(); ++k) {
+                    const QChar b = block[k];
+                    if (b == QLatin1Char('('))
+                        ++depth;
+                    else if (b == QLatin1Char(')'))
+                        depth = std::max(0, depth - 1);
+                    else if (depth == 0 && b == QLatin1Char('\\') && k + 1 < block.size() && block[k + 1] == QLatin1Char('p')) {
+                        qsizetype digits = k + 2;
+                        if (digits < block.size() && block[digits] == QLatin1Char('-'))
+                            ++digits;
+                        qsizetype end = digits;
+                        while (end < block.size() && block[end].isDigit())
+                            ++end;
+                        if (end > digits)
+                            drawing = block.mid(k + 2, end - k - 2).toInt() > 0;
+                    }
+                }
                 i = close;
                 continue;
             }

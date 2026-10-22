@@ -309,8 +309,11 @@ DialogWindow {
         function onCatalogsChanged() {
             window.revision++
             // A catalog gone, or the first loaded into an empty list: the first.
-            if (window.created && !window.catalogs.catalogExists(window.chosen))
+            if (window.created && !window.catalogs.catalogExists(window.chosen)) {
                 window.chosen = window.catalogs.catalogNames.length > 0 ? window.catalogs.catalogNames[0] : ""
+                if (window.chosen.length === 0 && window.show === 1)
+                    window.show = 0 // no catalog to show the fonts of: every font
+            }
             // Show "In …" or "Not in a catalog": a membership change takes rows
             // out or in; the current font stays if it is still listed.
             if (window.created && window.show !== 0)
