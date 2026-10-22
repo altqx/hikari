@@ -2277,6 +2277,29 @@ private slots:
         QCOMPARE(editor->values().value(QStringLiteral("syln")).toString(), QStringLiteral("3"));
     }
 
+    // A Line editor draft of the template that changes nothing goes away at
+    // the commit, and the panel's edit goes in then, not after a pause.
+    void aPanelEditGoesInOverADraftThatChangesNothing()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->current() != 0; }, 20'000));
+        const core::LineId templ{editor->current()};
+        editor->setDelays(60'000, 60'000);
+        const QString committed = editor->text();
+        QVERIFY(session->editDraftText(templ, u8"{\\bord9}"));
+        const QByteArray back = committed.toUtf8();
+        QVERIFY(session->editDraftText(templ, std::u8string(back.begin(), back.end())));
+        QCOMPARE(session->draftLine(), std::optional(templ));
+        editor->setText(committed + QStringLiteral("x"));
+        editor->commit();
+        QVERIFY(!session->draftLine());
+        for (const auto *l : session->document().lines())
+            if (l->id == templ)
+                QCOMPARE(QString::fromStdString(std::string(l->text.begin(), l->text.end())), committed + QStringLiteral("x"));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

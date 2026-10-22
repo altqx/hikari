@@ -1125,7 +1125,8 @@ void TemplateEditorController::commit()
     // run would, and then find the revision moved); the panel's edit goes
     // over it, one that ends at the committed text too.
     if (s->draftLine() == change.line) {
-        if (!s->commitDraft()) {
+        // false also for a draft that changed nothing, gone now.
+        if (!s->commitDraft() && s->draftLine() == change.line) {
             m_commitTimer.start(); // a draft that can't go in yet
             return;
         }
