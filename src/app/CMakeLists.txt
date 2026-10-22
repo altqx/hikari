@@ -13,6 +13,7 @@ add_library(hikari_composition STATIC composition.cpp application.cpp include/hi
     update_checker.cpp include/hikari/app/update_checker.h
     update_installer.cpp include/hikari/app/update_installer.h # ADR 0019: download, verify, hand-off
     update_apply.cpp include/hikari/app/update_apply.h # ADR 0019: the Windows installing side
+    whats_new.cpp include/hikari/app/whats_new.h # SH3: What's new from the release notes
     package_kind.cpp include/hikari/app/package_kind.h
     style_manager_controller.cpp include/hikari/app/style_manager_controller.h)
 set_target_properties(hikari_composition PROPERTIES AUTOMOC ON)

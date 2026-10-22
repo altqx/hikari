@@ -6480,6 +6480,150 @@ private slots:
         QTRY_VERIFY(!credits->isVisible());
     }
 
+    // SH3 (#223): What's new on Home and in Help, from the recorded release
+    // list: nothing asked for while update checks are off, the dialog saying
+    // why; Help > What's new fetches once they are on; the Home card then
+    // shows the notes since the version run before, beside the recent list
+    // (under it in a narrow window). With HIKARI_SURFACE_SHOT_DIR, both in the
+    // four themes (whats-new-home-<theme>.png, whats-new-dialog-<theme>.png).
+    void whatsNewOnHomeAndInHelp()
+    {
+        const QString root = dir.filePath(QStringLiteral("whats-new"));
+        QVERIFY(QDir().mkpath(root + QStringLiteral("/feed")));
+        QFile::remove(root + QStringLiteral("/feed/releases.json"));
+        QVERIFY(QFile::copy(QStringLiteral(HIKARI_GITHUB_RELEASES), root + QStringLiteral("/feed/releases.json")));
+        app::Application::Options options;
+        options.settingsFile = root + QStringLiteral("/hikari.ini");
+        options.playbackAudio = false;
+        options.appVersion = QStringLiteral("0.1.3");
+        options.updateFeed = app::UpdateFeed::local(QUrl::fromLocalFile(root + QStringLiteral("/feed/")));
+        // The copy's cache: 0.1.1 ran last.
+        options.updateEnvironment.cacheDir = root + QStringLiteral("/cache");
+        QVERIFY(QDir().mkpath(options.updateEnvironment.cacheDir));
+        {
+            QFile cache(app::WhatsNew::cacheFileIn(options.updateEnvironment));
+            QVERIFY(cache.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            cache.write(R"({"installed":"0.1.1","since":""})");
+        }
+        restartWith(options);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("updater.autoCheck"), false);
+        settings.setValue(QStringLiteral("updater.nextCheck"), QDateTime::currentSecsSinceEpoch() + 86400);
+        application->updates().reload();
+        auto &whatsNew = application->whatsNew();
+        whatsNew.start();
+        hikari::test::desktop::clear();
+
+        // Off: no card, and the dialog says why.
+        auto *top = engine->rootObjects().first();
+        QVERIFY(item("homePage")->isVisible());
+        QVERIFY(!item("homeWhatsNew")->isVisible());
+        QVERIFY(!window->findChild<QObject *>(QStringLiteral("whatsNewCard")));
+        auto *dialog = top->findChild<QQuickWindow *>(QStringLiteral("whatsNewDialog"));
+        QVERIFY(dialog);
+        auto *menuItem = top->findChild<QObject *>(QStringLiteral("whatsNewMenuItem"));
+        QVERIFY(menuItem);
+        QCOMPARE(menuItem->property("iconRole").toString(), QStringLiteral("whats-new"));
+        auto *action = menuItem->property("action").value<QObject *>();
+        QCOMPARE(action->property("text").toString(), QStringLiteral("What's &new"));
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(dialog->isVisible());
+        QCOMPARE(dialog->title(), QStringLiteral("What's new"));
+        QCOMPARE(dialog->modality(), Qt::NonModal);
+        QVERIFY(dialog->property("resizable").toBool());
+        QCOMPARE(whatsNew.state(), QStringLiteral("off"));
+        QVERIFY(dialogItem("whatsNewDialog", "whatsNewEmpty")->isVisible());
+        QVERIFY(!dialogItem("whatsNewDialog", "whatsNewDialogNotes")->isVisible());
+        QCOMPARE(dialogItem("whatsNewDialog", "whatsNewEmptyTitle")->property("text").toString(),
+                 QStringLiteral("No release notes yet"));
+        QVERIFY(dialogItem("whatsNewDialog", "whatsNewEmptyText")->property("text").toString().contains(
+            QStringLiteral("Check for updates automatically")));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+        QTRY_VERIFY(!dialog->isVisible());
+
+        // On: opening it fetches; Fetching while the list is read, then the
+        // notes since 0.1.1 on the stable channel.
+        application->updates().setAutoCheck(true);
+        QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        QTRY_VERIFY(dialog->isVisible());
+        if (whatsNew.state() == QLatin1String("fetching")) {
+            QCOMPARE(dialogItem("whatsNewDialog", "whatsNewEmptyTitle")->property("text").toString(),
+                     QStringLiteral("Fetching the release notes…"));
+            QVERIFY(!item("homeWhatsNew")->isVisible()); // hidden during the first fetch
+        }
+        QTRY_COMPARE(whatsNew.state(), QStringLiteral("ready"));
+        QTRY_VERIFY(dialogItem("whatsNewDialog", "whatsNewDialogNotes")->isVisible());
+        QVERIFY(!dialogItem("whatsNewDialog", "whatsNewEmpty")->isVisible());
+        QCOMPARE(dialogItem("whatsNewDialog", "whatsNewIntro")->property("text").toString(),
+                 QStringLiteral("Changes since version 0.1.1, the one you used before."));
+        QCOMPARE(dialogItem("whatsNewDialog", "whatsNewDialogNotes")->property("count").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("whatsNewDialog", "whatsNewAllReleaseNotes"), "click"));
+        QCOMPARE(hikari::test::desktop::opened(), QList<QUrl>{app::WhatsNew::allReleaseNotesUrl(options.updateFeed)});
+        hikari::test::desktop::clear();
+        QVERIFY(QTest::qWaitForWindowExposed(dialog));
+        QTRY_VERIFY(dialog->contentItem()->width() > 0);
+        QVERIFY(QTest::qWaitForWindowActive(dialog));
+        QTest::keyClick(dialog, Qt::Key_Escape);
+        QTRY_VERIFY(!dialog->isVisible());
+
+        // The Home card: beside the recent list, the newest first.
+        QTRY_VERIFY(item("homeWhatsNew")->isVisible());
+        window->resize(1280, 800);
+        QQuickItem *card = item("whatsNewCard");
+        QVERIFY(card);
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(item<QObject>("whatsNewSince")->property("text").toString(), QStringLiteral("Since 0.1.1"));
+        QCOMPARE(item("whatsNewNotes")->property("count").toInt(), 2);
+        QQuickItem *newest = findItem(card, QStringLiteral("releaseNotes0"));
+        QVERIFY(newest);
+        QCOMPARE(findItem(newest, QStringLiteral("releaseName"))->property("text").toString(), QStringLiteral("HikariSub 0.1.3"));
+        // A release's name is GitHub's text: never read as markup.
+        QCOMPARE(findItem(newest, QStringLiteral("releaseName"))->property("textFormat").toInt(), int(Qt::PlainText));
+        QQuickItem *older = findItem(card, QStringLiteral("releaseNotes1"));
+        QVERIFY(older);
+        QCOMPARE(findItem(older, QStringLiteral("releaseName"))->property("text").toString(), QStringLiteral("HikariSub 0.1.2"));
+        QVERIFY(!findItem(older, QStringLiteral("releasePrerelease"))->isVisible());
+        // The notes as plain rich text: no Markdown marks, no image loaded.
+        const QString text = findItem(newest, QStringLiteral("releaseText"))->property("text").toString();
+        QVERIFY2(!text.contains(QStringLiteral("<img")) && !text.contains(QStringLiteral("## ")), qPrintable(text));
+        QVERIFY(QMetaObject::invokeMethod(item("whatsNewAll"), "click"));
+        QCOMPARE(hikari::test::desktop::opened(), QList<QUrl>{app::WhatsNew::allReleaseNotesUrl(options.updateFeed)});
+        QQuickItem *recent = item("homeRecent");
+        QTRY_VERIFY(card->mapToScene(QPointF()).x() >= recent->mapToScene(QPointF(recent->width(), 0)).x());
+        // No recent files: the list's title and "No recent files" stay at
+        // its top as the card makes the row tall.
+        QQuickItem *none = item("homeNoRecent");
+        QVERIFY(none->isVisible());
+        QVERIFY2(none->mapToItem(recent, QPointF()).y() < 80, qPrintable(QString::number(none->mapToItem(recent, QPointF()).y())));
+        // Narrow: under the list, as wide as it.
+        window->resize(900, 680);
+        QTRY_VERIFY(card->mapToScene(QPointF()).y() >= recent->mapToScene(QPointF(0, recent->height())).y());
+        QTRY_COMPARE(card->width(), recent->width());
+
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (!out.isEmpty()) {
+            QVERIFY(QDir().mkpath(out));
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            window->resize(1280, 800);
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = top->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(200);
+                QVERIFY(window->grabWindow().save(out + QStringLiteral("/whats-new-home-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+                QVERIFY(QMetaObject::invokeMethod(dialog, "open"));
+                QVERIFY(QTest::qWaitForWindowExposed(dialog));
+                QTest::qWait(300);
+                QVERIFY(dialog->grabWindow().save(out + QStringLiteral("/whats-new-dialog-") + ui::theme::codeName(code) +
+                                                  QStringLiteral(".png")));
+                QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+                QTRY_VERIFY(!dialog->isVisible());
+            }
+        }
+        restartWith(app::Application::Options());
+    }
+
     // P8, ADR 0019, DG1 (#222): the update check's results and notices open
     // on the dialog frame, modeless: the check's messages titled "Check for
     // updates" (a failure with the warning glyph), the installer's "Update";
@@ -6522,14 +6666,23 @@ private slots:
         const QVariantMap release{{QStringLiteral("name"), QStringLiteral("HikariSub 9.0.0")},
                                   {QStringLiteral("tag"), QStringLiteral("v9.0.0")},
                                   {QStringLiteral("version"), QStringLiteral("9.0.0")},
-                                  {QStringLiteral("notes"), QStringLiteral("New\n- everything")},
+                                  {QStringLiteral("notes"), QStringLiteral("## New\n- everything")},
                                   {QStringLiteral("offer"), QStringLiteral("page")}};
         QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
                                           Q_ARG(QVariantMap, release), Q_ARG(bool, false)));
         QTRY_VERIFY(available->isVisible());
         QVERIFY(available->property("resizable").toBool());
         QCOMPARE(dialogItem("updateAvailable", "updateName")->property("text").toString(), QStringLiteral("HikariSub 9.0.0"));
-        QCOMPARE(dialogItem("updateAvailable", "updateNotes")->property("text").toString(), QStringLiteral("New\n- everything"));
+        QCOMPARE(dialogItem("updateAvailable", "updateName")->property("textFormat").toInt(), int(Qt::PlainText));
+        // SH3: the notes as plain rich text, the Markdown gone.
+        auto *notes = dialogItem("updateAvailable", "updateNotes");
+        QCOMPARE(notes->property("notes").toString(), QStringLiteral("## New\n- everything"));
+        QString shownNotes;
+        QVERIFY(QMetaObject::invokeMethod(notes, "getText", Q_RETURN_ARG(QString, shownNotes), Q_ARG(int, 0),
+                                          Q_ARG(int, notes->property("length").toInt())));
+        QVERIFY2(shownNotes.contains(QStringLiteral("New")) && shownNotes.contains(QStringLiteral("everything")),
+                 qPrintable(shownNotes));
+        QVERIFY(!shownNotes.contains(QStringLiteral("##")));
         QVERIFY(dialogItem("updateAvailable", "updateOffer")->isVisible());
         QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateOffer"));
         QVERIFY(!dialogItem("updateAvailable", "updateRequirement")->isVisible());
