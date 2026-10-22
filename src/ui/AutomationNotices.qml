@@ -1,71 +1,51 @@
 // S4: the automation shell's legacy message boxes (HikariMessageBox: "Run
 // the last loaded script", validation and load failures, "Cannot start
-// editor.") and Automation::OnEdit's "Select a script editor" picker. As
+// editor.") and Automation::OnEdit's "Select a script editor" picker. NT1
+// (#302): an "info" notice is a toast, an "error" one (the command stopped)
+// the application's message box, its technical text under Details. As
 // legacy's boxes are modal and come first, the picker asked for while a box
 // shows opens once the box is closed.
 pragma Translator: "HikariSub.Automation"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Dialogs as Dialogs
+import Hikari.Ui
 
 Item {
     id: notices
     required property QtObject automation
+    property ToastStack toasts: null
+    property MessageHost messages: null
 
-    property var queue: []
+    property int asking: 0
     property string pendingScript: ""
-
-    function showNext() {
-        if (notice.visible || queue.length === 0)
-            return
-        const next = queue[0]
-        queue = queue.slice(1)
-        notice.title = next.title
-        notice.text = next.text
-        notice.open()
-    }
 
     Connections {
         target: notices.automation
-        function onNotice(title, text) {
-            notices.queue = notices.queue.concat([{ title: title, text: text }])
-            notices.showNext()
+        function onNotice(severity, title, text, details) {
+            if (severity !== "error") {
+                if (notices.toasts)
+                    notices.toasts.post(severity, title, text, { details: details })
+                return
+            }
+            if (!notices.messages)
+                return
+            ++notices.asking
+            notices.messages.ask({ title: title, text: text, details: details, severity: severity }, () => {
+                if (--notices.asking === 0 && notices.pendingScript.length > 0) {
+                    editorDialog.script = notices.pendingScript
+                    notices.pendingScript = ""
+                    editorDialog.open()
+                }
+            })
         }
         function onChooseScriptEditor(script) {
-            if (notice.visible) {
+            if (notices.asking > 0) {
                 notices.pendingScript = script
                 return
             }
             editorDialog.script = script
             editorDialog.open()
-        }
-    }
-
-    Dialog {
-        id: notice
-        objectName: "automationNotice"
-        property alias text: noticeLabel.text
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        // A fixed width the text wraps in (a width from the text loops with the title's).
-        width: Math.min(420, parent ? parent.width - 32 : 420)
-        modal: true // legacy HikariMessageBox is modal
-        standardButtons: Dialog.Ok
-        Label {
-            id: noticeLabel
-            objectName: "automationNoticeText"
-            width: notice.availableWidth
-            wrapMode: Text.Wrap
-            Accessible.role: Accessible.AlertMessage
-        }
-        onClosed: {
-            if (notices.queue.length > 0) {
-                notices.showNext()
-            } else if (notices.pendingScript.length > 0) {
-                editorDialog.script = notices.pendingScript
-                notices.pendingScript = ""
-                editorDialog.open()
-            }
         }
     }
 

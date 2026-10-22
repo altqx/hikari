@@ -158,9 +158,29 @@ private slots:
         QCOMPARE(failed.at(0).at(0).toString(), QStringLiteral("failed"));
         UpdateChecker garbage({}, feed("{\"message\": \"rate limited\"}", QStringLiteral("garbage")), QStringLiteral("0.1.0"));
         QSignalSpy none(&garbage, &UpdateChecker::finished);
+        QSignalSpy listed(&garbage, &UpdateChecker::releasesRead);
         garbage.checkNow();
         QVERIFY(none.wait(5000));
         QCOMPARE(none.at(0).at(0).toString(), QStringLiteral("current")); // legacy: no array, nothing newer
+        // SH3: but the list was not read (What's new does not take it).
+        QCOMPARE(listed.count(), 1);
+        QCOMPARE(listed.at(0).at(0).toBool(), false);
+        // An entry that is no release (no object, no tag name) makes the
+        // list unread too.
+        UpdateChecker malformed({}, feed("[null, {\"tag_name\": 7}]", QStringLiteral("malformed")),
+                                QStringLiteral("0.1.0"));
+        QSignalSpy malformedDone(&malformed, &UpdateChecker::finished);
+        QSignalSpy malformedListed(&malformed, &UpdateChecker::releasesRead);
+        malformed.checkNow();
+        QVERIFY(malformedDone.wait(5000));
+        QCOMPARE(malformedDone.at(0).at(0).toString(), QStringLiteral("current"));
+        QCOMPARE(malformedListed.count(), 1);
+        QCOMPARE(malformedListed.at(0).at(0).toBool(), false);
+        UpdateChecker untagged({}, feed("[{\"tag_name\": \"\"}]", QStringLiteral("untagged")), QStringLiteral("0.1.0"));
+        QSignalSpy untaggedListed(&untagged, &UpdateChecker::releasesRead);
+        untagged.checkNow();
+        QVERIFY(untaggedListed.wait(5000));
+        QCOMPARE(untaggedListed.at(0).at(0).toBool(), false);
     }
 
     void automaticCheckFollowsTheOptionAndTheSchedule()

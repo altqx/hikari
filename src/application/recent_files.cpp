@@ -118,6 +118,8 @@ OpenKind openKindOf(std::string_view path, bool single)
     }
     if (ext == "ass" || ext == "ssa" || ext == "txt" || ext == "srt" || ext == "sub")
         return OpenKind::Subtitles;
+    if (ext == "lrc" || ext == "ttml") // KA6: lyrics, imported as karaoke Lines
+        return OpenKind::Subtitles;
     return OpenKind::Video;
 }
 

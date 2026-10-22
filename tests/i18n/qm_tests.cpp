@@ -271,8 +271,12 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // with the karaoke templater's report, its summary, its problems and
         // its template Lines (KE1). 20 with the inspector bar's picked count
         // beside its picker, "%n lines" (VT1). 23 with the popup kit's "%n
-        // more notice(s)" and the style copy's count and clash summary (PK1).
-        ASSERT_EQ(numerus, 23) << language.toStdString();
+        // more notice(s)" and the style copy's count and clash summary (PK1);
+        // 24 with What's new's "And %n earlier versions" (SH3). 25 with the
+        // karaoke check's problems not listed (KA7). 27 with the notices' "%n
+        // value(s) could not be scaled." and "%n style(s) deleted: %1." (NT1).
+        // 28 with Hydra's "Changes %n lines" (HY1).
+        ASSERT_EQ(numerus, 28) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

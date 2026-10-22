@@ -283,6 +283,8 @@ constexpr HotkeyAction kActions[] = {
         {"VIDEO_TOOL_HYDRA", 2032},
         // VT3 (#273): the Perspective tool.
         {"VIDEO_TOOL_PERSPECTIVE", 2033},
+        // KA7: the Karaoke check window.
+        {"GLOBAL_CHECK_KARAOKE", 5172},
 };
 
 struct NameRow {
@@ -517,7 +519,7 @@ constexpr NameRow kNames[] = {
         {2019, "Save frame with subtitles as PNG"}, // VIDEO_SAVE_SUBBED_FRAME_TO_PNG
         {2001, "Stop"}, // VIDEO_STOP
         // The rewrite's own (LE3-tags-shown, KE1-render-cost-overlay, FS1-bar-mode,
-        // VT2: the visual tools as the rail names them).
+        // VT2: the visual tools as the rail names them, KA7).
         {5169, "Hide tags in the line editor"}, // GLOBAL_EDITOR_HIDE_TAGS
         {5170, "Show / hide render cost"}, // GLOBAL_VIDEO_RENDER_COST
         {2021, "Full screen bar: Auto / Always / Never"}, // VIDEO_FULLSCREEN_BAR
@@ -537,6 +539,7 @@ constexpr NameRow kNames[] = {
         {2031, "Position shifter"}, // VIDEO_TOOL_POSITION_SHIFTER
         {2032, "Hydra"}, // VIDEO_TOOL_HYDRA
         {2033, "Perspective"}, // VIDEO_TOOL_PERSPECTIVE (VT3)
+        {5172, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
 };
 
 struct DefaultRow {
