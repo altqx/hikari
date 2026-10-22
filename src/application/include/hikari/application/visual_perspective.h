@@ -189,6 +189,9 @@ private:
     // targets (it does not turn them, or turns the active one about its
     // position), as writeTransform writes it.
     bool keepsMovingOrigins(const perspective::Transform &t, VisualHost &host, bool explicitOrg) const;
+    // The tool scales the outline and shadow in the leading blocks: a
+    // change of scale is refused while a target changes them after its text.
+    bool scalesEveryOutline(const perspective::Transform &t, VisualHost &host) const;
     // A shown plane that holds for the inner quad (the saved one, else the
     // largest of the defaults that does).
     void fitPlane() const;
@@ -208,7 +211,7 @@ private:
 
     // The active Line as read, the quads drawn and the plane: the inner
     // quad's rectangle c1 .. c2 in the outer quad's plane coordinates.
-    bool m_valid = false;
+    mutable bool m_valid = false; // follow() drops the quad where the Line cannot be read
     mutable perspective::LineState m_state;
     mutable perspective::Quad m_inner{};
     mutable std::int64_t m_time = 0; // the video's, as read

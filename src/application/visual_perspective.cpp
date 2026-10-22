@@ -201,6 +201,9 @@ constexpr u16v kNames[] = {u"xbord", u"ybord", u"xshad", u"yshad", u"fscx", u"fs
                            u"an",    u"fr",    u"fs",    u"fn",    u"p",    u"a",    u"t",    u"r",
                            u"q",     u"fsp",   u"b",     u"i",     u"pbo",  u"fsc"};
 
+// The outline and shadow, which the tool scales in the leading blocks.
+constexpr u16v kOutlineTags[] = {u"bord", u"xbord", u"ybord", u"shad", u"xshad", u"yshad"};
+
 u16v nameOf(u16v token)
 {
     for (const u16v name : kNames) {
@@ -604,9 +607,9 @@ Leading leadingOf(u16v text)
 
 struct StyleCache::Decoded {
     std::vector<core::StyleValues> all;
-    // A Line's Style is the first of its name (lineStyle), a \r's the last
-    // (libass's lookup_style_strict).
-    std::unordered_map<std::u8string_view, const core::StyleValues *> first, last;
+    // The last Style of each name, as libass looks a Line's and a \r's up
+    // (a Style without a name is Default to libass).
+    std::unordered_map<std::u8string_view, const core::StyleValues *> last;
 };
 
 std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const VisualHost &host)
@@ -619,10 +622,9 @@ std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const VisualHost &hos
         return m_decoded;
     auto decoded = std::make_shared<Decoded>();
     decoded->all = core::decodeStyles(*document);
-    for (const core::StyleValues &s : decoded->all) {
-        decoded->first.try_emplace(s.name, &s);
-        decoded->last.insert_or_assign(s.name, &s);
-    }
+    for (const core::StyleValues &s : decoded->all)
+        decoded->last.insert_or_assign(s.name.empty() ? std::u8string_view(u8"Default") : std::u8string_view(s.name),
+                                       &s);
     m_session = session->serial();
     m_revision = session->revision();
     m_document = document;
@@ -635,32 +637,81 @@ namespace {
 // The context (read without its Styles) with the Styles of a cache.
 struct StyleIndex {
     StyleIndex(const transform::Context &context, const StyleCache::Decoded &decoded)
-        : ctx(context), first(decoded.first), last(decoded.last), all(decoded.all)
+        : ctx(context), last(decoded.last)
     {
+    }
+    // A Line's Style as libass's ass_lookup_style finds it: without its
+    // leading *s, "default" in any case being Default, the last of the
+    // name, else the last Default. Null: libass's own Default, which no
+    // Style of the Script holds.
+    const core::StyleValues *find(std::u8string_view name) const
+    {
+        while (name.starts_with(u8'*'))
+            name.remove_prefix(1);
+        const auto isDefault = [](std::u8string_view n) {
+            constexpr std::u8string_view d = u8"default";
+            if (n.size() != d.size())
+                return false;
+            for (std::size_t i = 0; i < n.size(); ++i)
+                if ((n[i] >= u8'A' && n[i] <= u8'Z' ? n[i] - u8'A' + u8'a' : n[i]) != d[i])
+                    return false;
+            return true;
+        };
+        if (isDefault(name))
+            name = u8"Default";
+        if (const auto it = last.find(name); it != last.end())
+            return it->second;
+        if (const auto it = last.find(u8"Default"); it != last.end())
+            return it->second;
+        return nullptr;
     }
     core::StyleValues line(std::u8string_view name) const
     {
-        if (const auto it = first.find(name); !name.empty() && it != first.end())
-            return *it->second;
-        return all.empty() ? transform::lineStyle(ctx, {}) : all.front();
+        const core::StyleValues *s = find(name);
+        return s ? *s : builtin();
+    }
+    // libass's own Default (set_default_style): Arial 18 at weight 200,
+    // outline 2, shadow 3, margins 20.
+    static const core::StyleValues &builtin()
+    {
+        static const core::StyleValues s = [] {
+            core::StyleValues v;
+            v.name = u8"Default";
+            v.fontname = u8"Arial";
+            v.fontsize = u8"18";
+            v.scaleX = v.scaleY = u8"100";
+            v.spacing = v.angle = u8"0";
+            v.outlineWidth = u8"2";
+            v.shadow = u8"3";
+            v.alignment = u8"2";
+            v.marginLeft = v.marginRight = v.marginVertical = u8"20";
+            v.complete = true;
+            return v;
+        }();
+        return s;
     }
     const transform::Context &ctx;
-    const std::unordered_map<std::u8string_view, const core::StyleValues *> &first, &last;
-    const std::vector<core::StyleValues> &all;
+    const std::unordered_map<std::u8string_view, const core::StyleValues *> &last;
 };
 
 // The Style a \r resets to: the one it names (without the spaces after
-// it), else the Line's (libass's reset_render_context with a Style it
-// cannot find).
-core::StyleValues resetStyle(const StyleIndex &styles, const core::StyleValues &lineStyle, u16v name)
+// it; Default without a Default Style is libass's own), else the Line's
+// (libass's reset_render_context with a Style it cannot find).
+const core::StyleValues *resetTarget(const StyleIndex &styles, u16v name)
 {
     name = trimEnd(name);
-    if (!name.empty()) {
-        const std::u8string wanted = core::toUtf8(u16(name));
-        if (const auto it = styles.last.find(wanted); it != styles.last.end())
-            return *it->second;
-    }
-    return lineStyle;
+    if (name.empty())
+        return nullptr;
+    const std::u8string wanted = core::toUtf8(u16(name));
+    if (const auto it = styles.last.find(wanted); it != styles.last.end())
+        return it->second;
+    return wanted == u8"Default" ? &StyleIndex::builtin() : nullptr;
+}
+
+core::StyleValues resetStyle(const StyleIndex &styles, const core::StyleValues &lineStyle, u16v name)
+{
+    const core::StyleValues *s = resetTarget(styles, name);
+    return s ? *s : lineStyle;
 }
 
 // Where the leading tags that count start: after the last \r, which resets
@@ -691,8 +742,10 @@ bool animatesTheQuad(const Tag &tag)
     return false;
 }
 
+// `edited`: the Line the tool writes, whose outline and shadow are scaled
+// in its leading blocks only, so a later change of them is not taken.
 std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
-                              u16v text, const core::StyleValues &style, const Leading &lead)
+                              u16v text, const core::StyleValues &style, const Leading &lead, bool edited)
 {
     for (const auto &[open, close] : blocksOf(text))
         for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1)))
@@ -739,6 +792,13 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     // current Style's (whose spacing is not below 0). \fscx is kept for
     // the wrap.
     const std::size_t from = afterLastReset(lead.tags);
+    // On libass's own Default (the Line's, or a \rDefault's without a
+    // Default Style) the weight is 200, which only a \b the measure takes
+    // replaces.
+    bool builtin = !styles.find(line.style);
+    if (from > 0)
+        if (const core::StyleValues *reset = resetTarget(styles, lead.tags[from - 1].value))
+            builtin = reset == &StyleIndex::builtin();
     const core::StyleValues current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
     const auto styleSpacing = [&current] {
         return core::toUtf8(fmt(std::max(0.0, transform::styleNumber(current.spacing, 0)), 4));
@@ -757,12 +817,14 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
             // libass takes 0 or 400 as normal, 1 or 700 as bold and another
             // weight from 100 as that weight, which the measure cannot.
             const int w = n ? static_cast<int>(*n) : -1;
-            if (w == 0 || w == 1 || w == 400 || w == 700)
+            if (w == 0 || w == 1 || w == 400 || w == 700) {
                 s.bold = w == 1 || w == 700;
-            else if (w >= 100)
+                builtin = false;
+            } else if (w >= 100) {
                 return std::nullopt;
-            else
+            } else {
                 s.bold = current.bold;
+            }
         } else if (tag.name == u"i") {
             const int v = n ? static_cast<int>(*n) : -1;
             s.italic = v == 0 || v == 1 ? v == 1 : current.italic;
@@ -790,7 +852,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     // A vertical font (@name) lays the text out down, which the measure
     // does not; a font the renderer is given (an attachment, an external
     // font) the measure cannot see, and would measure another in its place.
-    if (s.fontname.starts_with(u8"@") || host.fontLeased(std::string(s.fontname.begin(), s.fontname.end())))
+    if (builtin || s.fontname.starts_with(u8"@") || host.fontLeased(std::string(s.fontname.begin(), s.fontname.end())))
         return std::nullopt;
     s.fontsize = core::toUtf8(fmt(size, 4));
     s.scaleX = u8"100";
@@ -835,6 +897,10 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
                     return std::nullopt;
                 } else if (started && std::find(std::begin(kGlyphTags), std::end(kGlyphTags), tag.name) !=
                                           std::end(kGlyphTags)) {
+                    return std::nullopt;
+                } else if (started && edited &&
+                           std::find(std::begin(kOutlineTags), std::end(kOutlineTags), tag.name) !=
+                               std::end(kOutlineTags)) {
                     return std::nullopt;
                 }
             }
@@ -889,6 +955,24 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
             return std::nullopt;
     }
     return Box{{0, 0}, {static_cast<float>(width), static_cast<float>(height)}};
+}
+
+// Whether an outline or shadow tag comes after the leading blocks, which
+// the tool does not scale.
+bool outlineAfterText(u16v text)
+{
+    std::size_t k = 0;
+    bool leading = true;
+    for (const auto &[open, close] : blocksOf(text)) {
+        leading = leading && open == k;
+        k = close + 1;
+        if (leading)
+            continue;
+        for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1)))
+            if (std::find(std::begin(kOutlineTags), std::end(kOutlineTags), tag.name) != std::end(kOutlineTags))
+                return true;
+    }
+    return false;
 }
 
 // libass's scrolling effects: Banner;, and Scroll up; or Scroll down; with
@@ -956,8 +1040,8 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             continue;
         if (dial->id == line.id)
             break;
-        if (!shown(*dial) || dial->layer.value != line.layer.value)
-            continue;
+        if (dial->comment || !shown(*dial) || dial->layer.value != line.layer.value)
+            continue; // libass renders no Comment
         const LineState other = readTagsIn(host, styles, *dial);
         if (!other.stacks || static_cast<int>(other.transform.an / 3.1f) != band)
             continue;
@@ -965,7 +1049,7 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             break;
         const u16 text = transform::lineText(*dial);
         const core::StyleValues style = styles.line(dial->style);
-        const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text));
+        const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text), false);
         if (!otherBox)
             return std::nullopt;
         if (otherBox->width() <= 0)
@@ -1163,7 +1247,7 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
     const StyleIndex styles(ctx, *decoded);
     LineState out = readTagsIn(host, styles, line);
     const u16 text = transform::lineText(line);
-    const auto box = measureBox(host, styles, line, text, styles.line(line.style), leadingOf(text));
+    const auto box = measureBox(host, styles, line, text, styles.line(line.style), leadingOf(text), true);
     if (!box)
         return std::nullopt;
     out.box = *box;
@@ -1412,9 +1496,9 @@ void PerspectiveTool::reset(VisualHost &host)
         m_c2 = {0.75f, 0.75f};
     }
     m_time = host.videoTimeMs();
+    m_screenZ = screenZ(host.view().scriptHeight(), layoutHeight(host));
     if (const auto state = readLine(host, *ctx.active, m_styles)) {
         m_state = *state;
-        m_screenZ = screenZ(host.view().scriptHeight(), layoutHeight(host));
         m_inner = textToQuad(m_state.transform, m_state.box, m_screenZ);
         m_valid = convex(m_inner);
     }
@@ -1461,30 +1545,35 @@ void PerspectiveTool::follow(const VisualHost &host) const
 {
     // The controller only redraws when the time changes; a \move's position
     // and an unpositioned Line's stacking are the time's, so the Line is read
-    // again (not during an edit, which works from where it began).
-    if (!m_valid || host.videoTimeMs() == m_time || m_drag != Drag::None || m_valueEdit || m_keyEdit)
+    // again (not during an edit, which works from where it began). Where it
+    // cannot be read (an obstacle the stacking cannot measure, say) or would
+    // fold, it has no quad until it can be again.
+    if (!m_line || host.videoTimeMs() == m_time || m_drag != Drag::None || m_valueEdit || m_keyEdit)
         return;
     m_time = host.videoTimeMs();
     const transform::Context ctx = transform::context(host, false);
-    if (!ctx.active)
+    if (!ctx.active || ctx.active->id != *m_line)
         return;
-    if (const auto state = readLine(host, *ctx.active, m_styles)) {
-        const Quad inner = textToQuad(state->transform, state->box, m_screenZ);
-        if (!convex(inner))
-            return;
-        // A plane shown stays where it is matched to the shot.
-        const std::optional<Quad> plane = m_plane ? std::optional<Quad>(outer()) : std::nullopt;
-        m_state = *state;
-        m_inner = inner;
-        if (plane) {
-            const PointF c1 = toUV(*plane, m_inner[0]), c2 = toUV(*plane, m_inner[2]);
-            if (planeHolds(m_inner, c1, c2)) {
-                m_c1 = c1;
-                m_c2 = c2;
-            }
-            fitPlane();
+    const auto state = readLine(host, *ctx.active, m_styles);
+    const Quad inner = state ? textToQuad(state->transform, state->box, m_screenZ) : Quad{};
+    if (!state || !convex(inner)) {
+        m_valid = false;
+        return;
+    }
+    // A plane shown stays where it is matched to the shot.
+    const std::optional<Quad> plane = m_plane && m_valid ? std::optional<Quad>(outer()) : std::nullopt;
+    m_state = *state;
+    m_inner = inner;
+    m_valid = true;
+    if (plane) {
+        const PointF c1 = toUV(*plane, m_inner[0]), c2 = toUV(*plane, m_inner[2]);
+        if (planeHolds(m_inner, c1, c2)) {
+            m_c1 = c1;
+            m_c2 = c2;
         }
     }
+    if (m_plane)
+        fitPlane();
 }
 
 bool PerspectiveTool::beginEdit(VisualHost &host)
@@ -1579,7 +1668,7 @@ bool PerspectiveTool::applyInner(const Quad &inner, VisualHost &host, bool expli
         }
         t = about;
     }
-    if (!t || !keepsMovingOrigins(*t, host, explicitOrg))
+    if (!t || !keepsMovingOrigins(*t, host, explicitOrg) || !scalesEveryOutline(*t, host))
         return false;
     m_inner = inner;
     m_state.transform = *t;
@@ -1611,6 +1700,19 @@ bool PerspectiveTool::keepsMovingOrigins(const Transform &t, VisualHost &host, b
         if (own.hasMove && !own.ownOrg)
             return false;
     }
+    return true;
+}
+
+bool PerspectiveTool::scalesEveryOutline(const Transform &t, VisualHost &host) const
+{
+    if (t.fscx == m_startTransform.fscx && t.fscy == m_startTransform.fscy)
+        return true; // nothing to scale
+    const Gesture *g = host.gesture();
+    if (!g)
+        return true;
+    for (const core::LineId &id : g->targets())
+        if (outlineAfterText(transform::lineText(g->before(id))))
+            return false;
     return true;
 }
 

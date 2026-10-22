@@ -206,17 +206,21 @@ public:
 };
 
 std::string scriptOf(const std::vector<std::string> &texts, const std::string &extraInfo = {},
-                     const std::string &extraStyles = {})
+                     const std::string &extraStyles = {}, bool withDefault = true)
 {
     std::string s = "[Script Info]\nScriptType: v4.00+\nPlayResX: 640\nPlayResY: 360\n" + extraInfo +
                     "\n[V4+ Styles]\nFormat: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, "
                     "OutlineColour, BackColour, Bold, Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, "
-                    "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n"
-                    "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,"
-                    "2,10,10,10,1\n" + extraStyles +
+                    "BorderStyle, Outline, Shadow, Alignment, MarginL, MarginR, MarginV, Encoding\n" +
+                    std::string(withDefault ? "Style: Default,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,"
+                                   "100,0,0,1,2,1,2,10,10,10,1\n"
+                                            : "") +
+                    extraStyles +
                     "\n[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n";
-    for (const std::string &t : texts) // a whole Dialogue line, or its text
-        s += t.starts_with("Dialogue:") ? t + "\n" : "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,," + t + "\n";
+    for (const std::string &t : texts) // a whole Dialogue or Comment line, or its text
+        s += t.starts_with("Dialogue:") || t.starts_with("Comment:")
+                 ? t + "\n"
+                 : "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,," + t + "\n";
     return s;
 }
 
@@ -242,13 +246,13 @@ public:
     int changes = 0;
 
     explicit Host(const std::vector<std::string> &texts, const std::string &extraInfo = {},
-                  const std::string &extraStyles = {})
+                  const std::string &extraStyles = {}, bool withDefault = true)
     {
         v.setClient(640, 400, 40);
         v.setScript(640, 360);
         v.open({1280, 720, 0, 1});
         v.refreshToolTransform();
-        script = scriptOf(texts, extraInfo, extraStyles);
+        script = scriptOf(texts, extraInfo, extraStyles, withDefault);
         reopen();
     }
     // The script again in a new session (its LineIds start over).
@@ -878,6 +882,55 @@ TEST(PerspectiveTags, AFontOnlyTheRendererSeesIsNotMeasured)
     EXPECT_FALSE(readLine(host, lineWith(host, 2)));
 }
 
+TEST(PerspectiveTags, AStyleIsFoundAsLibassFindsIt)
+{
+    // libass takes the last Style of a name, drops leading *s, reads
+    // "default" in any case as Default, and gives a missing name the last
+    // Default; with none, its own Default: Arial 18 at weight 200 (text
+    // then has no quad but at a weight the measure takes; a drawing has),
+    // outline 2, shadow 3.
+    const std::string style = "Style: %s,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,%d,100,0,0,1,2,"
+                              "1,2,10,10,10,1\n";
+    const auto styleLine = [&style](const char *name, int scale) {
+        char buf[256];
+        std::snprintf(buf, sizeof buf, style.c_str(), name, scale);
+        return std::string(buf);
+    };
+    const std::string at = "Dialogue: 0,0:00:01.00,0:00:03.00,";
+    const std::string styles = styleLine("Twice", 50) + styleLine("Twice", 70) + styleLine("Default", 90);
+    const auto read = [&](const std::string &styleName, bool withDefault = true) {
+        Host h({at + styleName + ",,0,0,0,,{\\pos(320,200)}T"}, {}, styles, withDefault);
+        return std::pair{readTags(h, lineWith(h)).transform.fscx, readLine(h, lineWith(h)).has_value()};
+    };
+    EXPECT_EQ(read("Twice").first, 70);        // the last of the name
+    EXPECT_EQ(read("*Twice").first, 70);       // without its *
+    EXPECT_EQ(read("dEfAuLt").first, 90);      // the last Default
+    EXPECT_EQ(read("Missing").first, 90);      // missing: the last Default
+    EXPECT_TRUE(read("Missing").second);
+    const std::string noDefault = styleLine("Twice", 50);
+    Host bare(apart({"{\\pos(320,200)}T", "{\\pos(320,200)\\rTwice\\rDefault}T", "{\\pos(320,200)\\b1}T",
+                     "{\\pos(320,200)\\p1}m 0 0 l 10 0 10 10"}),
+              {}, noDefault, false);
+    EXPECT_FALSE(readLine(bare, lineWith(bare, 0))); // libass's own Default
+    EXPECT_FALSE(readLine(bare, lineWith(bare, 1)));
+    ASSERT_TRUE(readLine(bare, lineWith(bare, 2)));
+    EXPECT_EQ(bare.measure.lastFont, "Arial");
+    const auto drawing = readLine(bare, lineWith(bare, 3));
+    ASSERT_TRUE(drawing);
+    EXPECT_EQ(drawing->transform.bord.x, 2);
+    EXPECT_EQ(drawing->transform.shad.y, 3);
+}
+
+TEST(PerspectiveTags, AnOutlineChangedAfterTheTextIsNotTaken)
+{
+    // The tool scales the outline and shadow of the leading blocks only.
+    Host host(apart({"{\\pos(320,200)\\bord2}A{\\bord10}B", "{\\pos(320,200)\\bord2}A{\\yshad3}B",
+                     "{\\pos(320,200)\\bord2}A{\\c&HFF&}B"}));
+    EXPECT_FALSE(readLine(host, lineWith(host, 0)));
+    EXPECT_FALSE(readLine(host, lineWith(host, 1)));
+    EXPECT_TRUE(readLine(host, lineWith(host, 2)));
+}
+
 struct Fixture {
     Host host;
     PerspectiveTool tool;
@@ -1438,6 +1491,54 @@ TEST(PerspectiveTool, TheStackIsLibassCollisions)
     EXPECT_FALSE(second("A{\\fs80}B"));
     // A scrolling Line moves with the time: no quad.
     EXPECT_FALSE(second("First", at + "Banner;10,Second"));
+}
+
+TEST(PerspectiveTool, ACommentIsNoObstacle)
+{
+    // libass renders no Comment: the Line after it is not moved for it.
+    const auto second = [](const std::string &first) {
+        Fixture f({first, "Second"});
+        f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
+        f.host.targets = {f.host.line(1)};
+        f.tool.reset(f.host);
+        return f.tool.inner()[2].y;
+    };
+    EXPECT_NEAR(second("Comment: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,,First"), second("{\\pos(0,0)}First"), 0.05);
+}
+
+TEST(PerspectiveTool, AQuadTheTimeCannotReadIsDropped)
+{
+    // From 2 s an obstacle the stacking cannot measure is shown: no quad
+    // then, and the quad again once it is gone.
+    Fixture f({"Dialogue: 0,0:00:02.00,0:00:02.50,Default,,0,0,0,,A{\\fs80}B", "Second"});
+    f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
+    f.host.targets = {f.host.line(1)};
+    f.tool.reset(f.host);
+    ASSERT_TRUE(f.tool.hasQuad());
+    const Quad before = f.tool.inner();
+    f.host.time = 2200;
+    (void)f.tool.overlay(f.host);
+    EXPECT_FALSE(f.tool.hasQuad());
+    const std::size_t steps = f.steps();
+    f.drag(before[2], add(before[2], {10, 10}));
+    EXPECT_EQ(f.steps(), steps); // no edit from where it was
+    f.host.time = 2700;
+    (void)f.tool.overlay(f.host);
+    EXPECT_TRUE(f.tool.hasQuad());
+    expectQuadNear(f.tool.inner(), before, 0.05);
+}
+
+TEST(PerspectiveTool, ARescaleIsRefusedWhileATargetChangesItsOutlineAfterItsText)
+{
+    Fixture f({"{\\pos(320,200)}Perspective", "{\\pos(320,200)\\bord2}A{\\bord10}B"});
+    f.host.targets = {f.host.line(0), f.host.line(1)};
+    const std::size_t steps = f.steps();
+    f.drag({430, 200}, {450, 230});
+    EXPECT_EQ(f.steps(), steps);
+    EXPECT_EQ(f.host.text(1), "{\\pos(320,200)\\bord2}A{\\bord10}B");
+    // An angle keeps the scale: taken.
+    EXPECT_TRUE(f.tool.setValue("frz", u"10", f.host));
+    EXPECT_EQ(f.steps(), steps + 1);
 }
 
 TEST(PerspectiveTool, IsTheTwelfthFamily)
