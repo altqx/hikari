@@ -836,10 +836,11 @@ bool charsetCovers(const FcCharSet *set, const std::u32string &characters)
 
 std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
 {
-    // A Script's attachment can be anything: its faces and their names are
-    // bounded, and each name is checked against those kept in constant time.
+    // A Script's attachment can be anything: its faces, the name records
+    // looked at and the bytes of the names read are bounded together, and
+    // each name is checked against those kept in constant time.
     constexpr long kMaxFaces = 256;
-    constexpr std::size_t kMaxNames = 4096;
+    constexpr std::size_t kMaxNames = 4096, kMaxRecords = 16384, kMaxNameBytes = std::size_t(1) << 20;
     std::vector<std::string> out;
     std::unordered_set<std::string> seen;
     FT_Library ft = nullptr;
@@ -852,24 +853,36 @@ std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
         count = std::min(probe->num_faces, FT_Long(kMaxFaces));
         FT_Done_Face(probe);
     }
+    std::size_t records = 0, bytesLeft = kMaxNameBytes;
+    const auto open = [&] { return out.size() < kMaxNames && records < kMaxRecords && bytesLeft > 0; };
+    // Whether `length` more bytes may be read; once one may not, none is.
+    const auto take = [&bytesLeft](std::size_t length) {
+        if (length > bytesLeft) {
+            bytesLeft = 0;
+            return false;
+        }
+        bytesLeft -= length;
+        return true;
+    };
     const auto add = [&out, &seen](std::string name) {
         if (out.size() < kMaxNames && !name.empty() && seen.insert(name).second)
             out.push_back(std::move(name));
     };
-    for (long i = 0; i < count && out.size() < kMaxNames; ++i) {
+    for (long i = 0; i < count && open(); ++i) {
         FT_Face f = nullptr;
         if (FT_New_Memory_Face(ft, data, size, i, &f))
             continue;
-        for (FT_UInt n = 0, total = FT_Get_Sfnt_Name_Count(f); n < total && out.size() < kMaxNames; ++n) {
+        for (FT_UInt n = 0, total = FT_Get_Sfnt_Name_Count(f); n < total && open(); ++n, ++records) {
             FT_SfntName name;
             if (!FT_Get_Sfnt_Name(f, n, &name) &&
                 (name.name_id == TT_NAME_ID_FONT_FAMILY || name.name_id == TT_NAME_ID_TYPOGRAPHIC_FAMILY ||
-                 name.name_id == TT_NAME_ID_FULL_NAME || name.name_id == TT_NAME_ID_PS_NAME))
+                 name.name_id == TT_NAME_ID_FULL_NAME || name.name_id == TT_NAME_ID_PS_NAME) &&
+                take(name.string_len))
                 add(decodeName(name));
         }
-        if (f->family_name)
+        if (f->family_name && take(std::strlen(f->family_name)))
             add(f->family_name);
-        if (const char *ps = FT_Get_Postscript_Name(f))
+        if (const char *ps = FT_Get_Postscript_Name(f); ps && take(std::strlen(ps)))
             add(ps);
         FT_Done_Face(f);
     }
