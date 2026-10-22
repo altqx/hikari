@@ -1110,16 +1110,17 @@ void TemplateEditorController::commit()
                 return l;
         return nullptr;
     };
-    const core::LineRecord *was = s ? lineOf() : nullptr;
-    if (!was || keyOf(edited(*was, change)) == keyOf(*was)) {
-        // Its Document closed, or typing that ended where it began: no step.
+    const auto drop = [&] {
         m_pending.reset();
         m_commitTimer.stop();
         emit changed();
-        return;
-    }
+    };
+    const core::LineRecord *was = s ? lineOf() : nullptr;
+    if (!was)
+        return drop(); // its Document closed
     // A Line editor draft of this Line goes in first, as its own step (the
-    // run would, and then find the revision moved).
+    // run would, and then find the revision moved); the panel's edit goes
+    // over it, one that ends at the committed text too.
     if (s->draftLine() == change.line) {
         if (!s->commitDraft()) {
             m_commitTimer.start(); // a draft that can't go in yet
@@ -1127,6 +1128,8 @@ void TemplateEditorController::commit()
         }
         was = lineOf();
     }
+    if (!was || keyOf(edited(*was, change)) == keyOf(*was))
+        return drop(); // typing that ended where it began: no step
     // The user's edit of a state they chose to run is theirs to run too; a
     // draft that went in with it is not, so the state is read after it.
     const bool chosen = was && application::templateKindOf(*was) && trustedIn(*s, change.document);

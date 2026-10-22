@@ -2059,6 +2059,27 @@ private slots:
     }
 
     // The preview's heading names the Line as the draft has it.
+    // Panel typing that ends at the committed text still overrides a Line
+    // editor draft of that template: the draft goes in, then the panel's.
+    void aPanelEditBackToTheCommittedTextOverridesTheDraft()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->current() != 0; }, 20'000));
+        const core::LineId templ{editor->current()};
+        editor->setDelays(60'000, 60'000);
+        const QString committed = editor->text();
+        QVERIFY(session->editDraftText(templ, u8"{\\bord9}"));
+        editor->setText(committed + QStringLiteral("x"));
+        editor->setText(committed);
+        editor->commit();
+        QVERIFY(!session->draftLine());
+        for (const auto *l : session->document().lines())
+            if (l->id == templ)
+                QCOMPARE(QString::fromStdString(std::string(l->text.begin(), l->text.end())), committed);
+    }
+
     void thePreviewsHeadingReadsTheDraft()
     {
         open(QStringLiteral("stock-tutorials.ass"));
