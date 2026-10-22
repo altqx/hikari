@@ -341,6 +341,13 @@ DialogWindow {
             window.fonts = window.catalogs.allFonts()
             window.selectFont(font)
         }
+        // The preview text changed (the Style editor's, shared): the image
+        // and the lookup follow its characters.
+        function onFilterChanged() {
+            if (window.created && window.visible && window.currentFont.length > 0
+                    && window.catalogs.samplePlain(window.catalogs.previewText, true) !== window.resolvedFor)
+                window.refreshPreview()
+        }
         function onResolutionReady(requestId, result) {
             if (requestId === window.resolveRequest)
                 window.resolution = result

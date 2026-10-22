@@ -110,6 +110,9 @@ public:
     Q_INVOKABLE void setPreviewText(const QString &text);
     // "Save filter": STYLE_EDIT_FILTER_TEXT.
     Q_INVOKABLE void saveFilterText(const QString &text);
+    // The picker's characters chip: saved, and the filtered list made with
+    // it now (legacy's keeps the first until the fonts are read again).
+    Q_INVOKABLE void applyFilterText(const QString &text);
     // Every installed font, sorted (FontEnum.GetFonts).
     Q_INVOKABLE QStringList allFonts();
 

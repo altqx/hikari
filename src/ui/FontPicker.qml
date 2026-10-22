@@ -590,7 +590,7 @@ DialogWindow {
         }
         function apply() {
             keep()
-            picker.catalogs.saveFilterText(charactersField.text)
+            picker.catalogs.applyFilterText(charactersField.text)
             picker.catalogs.setFilterOn(charactersField.text.length > 0)
             picker.relist()
         }

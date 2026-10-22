@@ -206,6 +206,9 @@ void FontCatalogs::load(u16v text)
 
 void FontCatalogs::apply(const std::vector<Catalog> &file, const std::vector<LoadChoice> &choices)
 {
+    // Replace empties a catalog once: the file's names for it in other
+    // cases (one catalog here) each bring their fonts after that.
+    std::vector<u16> replaced;
     for (std::size_t i = 0; i < file.size(); ++i) {
         const LoadChoice choice = i < choices.size() ? choices[i] : LoadChoice{};
         if (choice.action == LoadAction::Skip)
@@ -216,8 +219,10 @@ void FontCatalogs::apply(const std::vector<Catalog> &file, const std::vector<Loa
             name = existing->name;
         addCatalog(name);
         Catalog *target = findMutable(name);
-        if (choice.action == LoadAction::Replace)
+        if (choice.action == LoadAction::Replace && !containsExact(replaced, name)) {
             target->fonts.clear();
+            replaced.push_back(name);
+        }
         for (const auto &font : file[i].fonts)
             if (!containsExact(target->fonts, font))
                 target->fonts.push_back(font);

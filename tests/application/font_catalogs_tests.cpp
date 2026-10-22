@@ -281,6 +281,11 @@ TEST(FontCatalogs, LoadingAFileCanReplaceRenameOrSkipEachCatalog)
     renamedCased.apply({file[1]}, {{A::Rename, u"ANIME"}});
     EXPECT_EQ(renamedCased.find(u"ANIME"), nullptr);
     EXPECT_EQ(fontsOf(renamedCased, u"Anime").back(), u"Tahoma");
+    // Two of the file's names for one catalog, both Replace: emptied once,
+    // then the fonts of both.
+    FontCatalogs replacedCased = c;
+    replacedCased.apply(FontCatalogs::parse(u"ANIME={\n\tArial\n}\nanime={\n\tTahoma\n}\n"), {{A::Replace, {}}, {A::Replace, {}}});
+    EXPECT_EQ(fontsOf(replacedCased, u"Anime"), (std::vector<std::u16string>{u"Arial", u"Tahoma"}));
 }
 
 // SaveCatalogs' OpenWrite: the folder is made, the file replaced; no
@@ -462,6 +467,10 @@ TEST(FontPicker, FamiliesAreListedFilteredAndKeptAsLegacyDid)
     families.enumerate(); // a font change: the last filter applies
     EXPECT_EQ(families.filteredFonts(u"b"), (std::vector<std::u16string>{u"arial", u"Comic", u"Times"}));
     EXPECT_EQ(service.checked.back(), U"b");
+    // The picker's chip applies its text at once.
+    families.refilter(u"a");
+    EXPECT_EQ(families.filteredFonts(u"a"), (std::vector<std::u16string>{u"arial", u"Times"}));
+    EXPECT_EQ(service.checked.back(), U"a");
 }
 
 // CheckGlyphsExists' characters: Windows skips UTF-16 surrogates (so a

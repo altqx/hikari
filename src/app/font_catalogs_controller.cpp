@@ -203,6 +203,13 @@ void FontCatalogsController::saveFilterText(const QString &text)
     m_settings.set("styles.editFilterText", text);
 }
 
+void FontCatalogsController::applyFilterText(const QString &text)
+{
+    ensureLoaded();
+    saveFilterText(text);
+    m_families->refilter(u16(text));
+}
+
 QStringList FontCatalogsController::allFonts()
 {
     return list(m_families->fonts());

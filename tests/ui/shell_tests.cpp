@@ -3181,6 +3181,15 @@ private slots:
         QVERIFY(application->settingsStore()->boolean("styles.editFilterTextOn"));
         QCOMPARE(characters->property("text").toString(), QStringLiteral("Has “ą”"));
         QVERIFY(characters->property("on").toBool());
+        // Other characters apply at once (legacy's list kept the first).
+        for (const auto &[text, expected] : {std::pair{QStringLiteral("a"), all}, std::pair{QStringLiteral("ą"), QStringList{"Arial", "Tahoma"}}}) {
+            QVERIFY(QMetaObject::invokeMethod(characters, "click"));
+            QTRY_VERIFY(popover->property("visible").toBool());
+            field->setProperty("text", text);
+            QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersApply"), "click"));
+            QTRY_VERIFY(!popover->property("visible").toBool());
+            QCOMPARE(shown(), expected);
+        }
         QVERIFY(QMetaObject::invokeMethod(characters, "click"));
         QTRY_VERIFY(popover->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(named("fontPickerCharactersClear"), "click"));
@@ -3352,6 +3361,12 @@ private slots:
         QTRY_VERIFY(window->property("visible").toBool());
         QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Arial"));
         QCOMPARE(window->property("resolvedFor").toString(), QStringLiteral("日本"));
+        // The preview text edited while the window is open: the image and
+        // the lookup follow.
+        const int previewKey = catalogs.property("previewKey").toInt();
+        catalogs.setPreviewText(QStringLiteral("Zz"));
+        QTRY_COMPARE(window->property("resolvedFor").toString(), QStringLiteral("Zz"));
+        QVERIFY(catalogs.property("previewKey").toInt() > previewKey);
         // The window's preview draws those characters only: an override in
         // the preview text draws no other face than the one named.
         application->settingsStore()->set("styles.previewText", QStringLiteral("AB"));
