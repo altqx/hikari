@@ -304,8 +304,9 @@ private slots:
             }
         }
         // Every card that placed roles has landed but PF1 (#225), whose
-        // Settings pages take the Options icons IC1 drew.
-        QCOMPARE(pending, 10);
+        // Settings pages take the Options icons IC1 drew; PU5 (#307) placed
+        // restore-default in Edit shapes' and Edit tags' menus.
+        QCOMPARE(pending, 9);
     }
 
     // The glyphs that stood in for icons, alone or as a prefix before words.

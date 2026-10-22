@@ -97,6 +97,11 @@ DialogWindow {
                 editor.endTyping()
             return
         }
+        // Closing with a taken name keeps the last good one, unasked.
+        if (!visible) {
+            showFields()
+            return
+        }
         if (editor.setName(tagName.text) !== AllTagsEditor.CheckTaken) {
             showFields()
             return

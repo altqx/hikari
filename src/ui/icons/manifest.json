@@ -3498,8 +3498,7 @@
    "legacy": [],
    "surfaces": [
     "settings-dialog"
-   ],
-   "pending": "PF1 #225"
+   ]
   },
   {
    "role": "paste-selection-translation",
