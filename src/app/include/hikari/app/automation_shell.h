@@ -184,7 +184,7 @@ public:
     bool progressKnown() const { return m_progressKnown; }
     int problems() const { return m_problems; }
     // Tests: how long the macro runs before the notice becomes the card.
-    void setCardDelay(int ms) { m_cardTimer.setInterval(ms); }
+    void setCardDelay(int ms) { m_cardDelay = ms; }
 
     ui::AutomationManagerController *managerController() { return m_managerController.get(); }
     ui::AutomationDialogController *dialogs() { return &m_dialogs; }
@@ -277,6 +277,10 @@ private:
     int m_runId = 0;
     QString m_cardState, m_cardText;
     QTimer m_cardTimer;
+    // The macro's own time the card waits for, and what is left of it (time
+    // in a dialog, picker or prompt does not count).
+    int m_cardDelay = 1000;
+    int m_cardLeft = 1000;
     bool m_macroStarted = false; // the run's own macro (not a validation) runs
     bool m_logged = false;       // the run wrote to its log
     bool m_cancelling = false;

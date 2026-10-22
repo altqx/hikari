@@ -1510,7 +1510,11 @@ ApplicationWindow {
                     onTriggered: root.showPanel(automationDock)
                 }
             }
-            MenuSeparator {}
+            // The macros go after it, whatever static items come before.
+            MenuSeparator {
+                id: macrosSeparator
+                objectName: "macrosSeparator"
+            }
             Instantiator {
                 model: root.macroItems
                 delegate: ShellMenuItem {
@@ -1531,7 +1535,12 @@ ApplicationWindow {
                         }
                     }
                 }
-                onObjectAdded: (index, object) => automationMenu.insertItem(5 + index, object)
+                onObjectAdded: (index, object) => {
+                    let at = 0
+                    while (at < automationMenu.count && automationMenu.itemAt(at) !== macrosSeparator)
+                        ++at
+                    automationMenu.insertItem(at + 1 + index, object)
+                }
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }

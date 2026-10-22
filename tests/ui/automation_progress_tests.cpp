@@ -245,6 +245,36 @@ private slots:
         QCOMPARE(automation().cardState(), QString());
     }
 
+    // Time in a dialog pauses the second, it does not restart it: 1.5 s of
+    // a 2 s second before the dialog, the card about 0.5 s after it.
+    void theSecondResumesAfterADialog()
+    {
+        automation().setCardDelay(2000);
+        QVERIFY(start("Work, ask, work"));
+        auto *dialogs = automation().dialogs();
+        QTRY_VERIFY_WITH_TIMEOUT(dialogs->isOpen(), 10'000);
+        QTest::qWait(1000);
+        QCOMPARE(automation().cardState(), QStringLiteral("notice"));
+        QElapsedTimer timer;
+        timer.start();
+        dialogs->finish(0, {});
+        QTRY_COMPARE_WITH_TIMEOUT(automation().cardState(), QStringLiteral("running"), 10'000);
+        QVERIFY2(timer.elapsed() < 1500, qPrintable(QString::number(timer.elapsed())));
+        automation().cancelRun();
+        QVERIFY(ended());
+        automation().dismissCard();
+    }
+
+    // Writing nothing is not logging: no card after it applied.
+    void anEmptyWriteLeavesNoCard()
+    {
+        automation().setCardDelay(60'000);
+        QVERIFY(start("Empty log"));
+        QVERIFY(ended());
+        QCOMPARE(runState(), QStringLiteral("applied"));
+        QCOMPARE(automation().cardState(), QString());
+    }
+
     // The session keeps the last 20 runs, newest first.
     void runsKeepTheLastTwenty()
     {

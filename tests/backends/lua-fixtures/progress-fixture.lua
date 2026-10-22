@@ -53,3 +53,17 @@ aegisub.register_macro("Retime karaoke", "", function()
     aegisub.debug.out(1, "Line 31: overlapping syllables\n")
     while not aegisub.progress.is_cancelled() do end
 end)
+
+-- Works 1.5 s, asks, then works until cancelled.
+aegisub.register_macro("Work, ask, work", "", function()
+    local t = os.clock()
+    while os.clock() - t < 1.5 do end
+    aegisub.dialog.display({ { class = "label", label = "Go on?", x = 0, y = 0 } })
+    while not aegisub.progress.is_cancelled() do end
+end)
+
+-- Writes nothing, twice.
+aegisub.register_macro("Empty log", "", function()
+    aegisub.log("")
+    aegisub.debug.out(2, "")
+end)

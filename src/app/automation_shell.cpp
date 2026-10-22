@@ -285,7 +285,8 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::logged, this,
             [this](const QString &, const QString &text, int level) {
                 m_log += text;
-                if (m_run) {
+                // An empty write adds nothing to read: the run has not logged.
+                if (m_run && !text.isEmpty()) {
                     m_runs.append(m_runId, text, level);
                     m_logged = true;
                     // AD3: output opens the card at once.
@@ -307,7 +308,6 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
         emit progressChanged();
     });
     m_cardTimer.setSingleShot(true);
-    m_cardTimer.setInterval(1000);
     connect(&m_cardTimer, &QTimer::timeout, this, [this] {
         if (m_run && !waitingForUser())
             showCard();
@@ -652,10 +652,15 @@ void AutomationShell::updateCardTimer()
 {
     if (!m_run || !m_macroStarted || m_cardState != QLatin1String("notice"))
         return;
-    if (waitingForUser())
-        m_cardTimer.stop();
-    else if (!m_cardTimer.isActive())
-        m_cardTimer.start();
+    // Paused while the user is asked: what was left of the second resumes.
+    if (waitingForUser()) {
+        if (m_cardTimer.isActive()) {
+            m_cardLeft = std::max(0, m_cardTimer.remainingTime());
+            m_cardTimer.stop();
+        }
+    } else if (!m_cardTimer.isActive()) {
+        m_cardTimer.start(m_cardLeft);
+    }
 }
 
 void AutomationShell::showCard()
@@ -706,6 +711,7 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     started.validations = application::dependencyValidations(m_manager.scripts(), path);
     m_macroStarted = false;
     m_cardTimer.stop();
+    m_cardLeft = m_cardDelay;
     if (!startStep(started)) {
         s->setReadOnly(false);
         return false;
@@ -811,8 +817,12 @@ void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
         if (serial == m_statusSerial && m_shell.statusText() == summary)
             m_shell.setStatusText(QString());
     });
+    const QString details = ui::karaokeReportDetails(report);
     if (m_logLine)
-        m_logLine(ui::karaokeReportDetails(report), LogLine::Quiet);
+        m_logLine(details, LogLine::Quiet);
+    // AD3: the run's log has it too, so a run naming problems shows them
+    // (the run has ended: its id is still the card's).
+    m_runs.note(m_runId, details, ui::AutomationRuns::kHostInfo);
     m_keepLog = report.problems > 0;
     m_problems = report.problems;
 }

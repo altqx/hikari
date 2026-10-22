@@ -478,6 +478,7 @@ Pane {
                         required property int index
                         required property int runId
                         required property string macro
+                        required property string script
                         required property string document
                         required property string started
                         required property string runState
@@ -496,7 +497,7 @@ Pane {
                         focusPolicy: Qt.NoFocus
                         highlighted: chosen
                         Accessible.role: Accessible.ListItem
-                        Accessible.name: macro + ", " + runRow.summary
+                        Accessible.name: macro + " (" + script + "), " + runRow.summary
                         readonly property string summary: {
                             if (runState === "running")
                                 return progress >= 0 ? task.length > 0 ? task + " · " + Math.round(progress) + " %"
@@ -548,11 +549,22 @@ Pane {
                                 Layout.fillWidth: true
                                 RowLayout {
                                     Layout.fillWidth: true
+                                    // The macro, then its script: two
+                                    // scripts' macros may share a name.
                                     Label {
                                         text: runRow.macro
                                         textFormat: Text.PlainText
                                         font.weight: Font.DemiBold
                                         elide: Text.ElideRight
+                                        Layout.maximumWidth: implicitWidth
+                                        Layout.fillWidth: true
+                                    }
+                                    Label {
+                                        objectName: "runScript"
+                                        text: runRow.script
+                                        textFormat: Text.PlainText
+                                        color: Theme.muted
+                                        elide: Text.ElideMiddle
                                         Layout.fillWidth: true
                                     }
                                     Label {

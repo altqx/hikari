@@ -15457,6 +15457,24 @@ private slots:
         // The running macro's row carries the busy mark.
         QTRY_VERIFY(visualItem(name("macroBusy", 1).constData()) && visualItem(name("macroBusy", 1).constData())->isVisible());
         QVERIFY(!visualItem(name("macroBusy", 0).constData())->isVisible());
+        // The Automation menu keeps its commands, Cancel macro among them,
+        // above the separator and the macros below it.
+        {
+            auto *menu = named("automationMenu");
+            const auto at = [&](const char *objectName) {
+                for (int i = 0; i < menu->property("count").toInt(); ++i) {
+                    QQuickItem *entry = nullptr;
+                    QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i));
+                    if (entry && entry->objectName() == QLatin1String(objectName))
+                        return i;
+                }
+                return -1;
+            };
+            QVERIFY(at("cancelMacroMenuItem") >= 0);
+            QVERIFY(at("cancelMacroMenuItem") < at("automationManagerMenuItem"));
+            QCOMPARE(at("macrosSeparator"), at("automationManagerMenuItem") + 1);
+            QVERIFY(at("macro_Wait for cancel") > at("macrosSeparator"));
+        }
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
         QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
         automation.dismissCard();
@@ -15532,6 +15550,9 @@ private slots:
         QCOMPARE(automation.cardState(), QStringLiteral("problems"));
         QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
         QVERIFY(card->property("logOpen").toBool());
+        // The report is in the run's log, which the card shows.
+        QTRY_VERIFY(item("automationCardLogToggle")->isVisible());
+        QVERIFY(item<QObject>("automationCardLog")->property("count").toInt() > 0);
         // Open in panel: the panel's Runs at that run.
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
         QTRY_VERIFY(!dock->property("isOpen").toBool());
@@ -15539,6 +15560,10 @@ private slots:
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QCOMPARE(tool->property("view").toString(), QStringLiteral("runs"));
         QCOMPARE(item<QObject>("runLines")->property("run").toInt(), automation.runId());
+        // The row names the macro's script too.
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY((row = findItem(item("automationPanel"), QStringLiteral("run_%1").arg(automation.runId()))));
+        QCOMPARE(findItem(row, QStringLiteral("runScript"))->property("text").toString(), QStringLiteral("templated.lua"));
         QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
         QTRY_VERIFY(!card->isVisible());
         tool->setProperty("view", QStringLiteral("scripts"));
