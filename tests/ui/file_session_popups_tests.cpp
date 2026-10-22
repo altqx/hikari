@@ -38,6 +38,12 @@ QString writeAss(const QString &path, const char *text)
     return path;
 }
 
+QByteArray readAll(const QString &path)
+{
+    QFile f(path);
+    return f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+}
+
 QStringList titles(const app::Application &a)
 {
     QStringList out;
@@ -162,9 +168,17 @@ private slots:
         application->selectTab(0);
         QTRY_VERIFY(bar->property("visible").toBool());
         // Compare: the file as it is on disk, the protected reference.
+        const auto documents = application->workspace().documents().size();
         QVERIFY(QMetaObject::invokeMethod(named("diskChangeCompare"), "clicked"));
         QTRY_VERIFY(application->workspace().reference().has_value());
         QVERIFY(bar->property("visible").toBool());
+        QCOMPARE(application->workspace().documents().size(), documents + 1);
+        // Again: the earlier copy goes, no tab is left of it.
+        const auto tabs = application->workspace().tabs().size();
+        QVERIFY(QMetaObject::invokeMethod(named("diskChangeCompare"), "clicked"));
+        QTRY_VERIFY(application->workspace().reference().has_value());
+        QCOMPARE(application->workspace().tabs().size(), tabs);
+        QCOMPARE(application->workspace().documents().size(), documents + 1);
         // Keep mine: the bar goes; the work stays.
         QVERIFY(QMetaObject::invokeMethod(named("reloadNo"), "clicked"));
         QTRY_VERIFY(!bar->property("visible").toBool());
@@ -178,6 +192,49 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("reloadYes"), "clicked"));
         QTRY_VERIFY(!bar->property("visible").toBool());
         QCOMPARE(firstLine(), QStringLiteral("theirs again"));
+        // A save while the bar shows asks first; Cancel writes nothing.
+        changeOnDisk(path, "theirs third");
+        QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
+        QTRY_VERIFY(bar->property("visible").toBool());
+        const auto save = [this] {
+            return QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant()));
+        };
+        QVERIFY(save());
+        QTRY_VERIFY(shown("diskSaveQuestion"));
+        QCOMPARE(named("diskSaveQuestion")->property("text").toString(), QStringLiteral("“changed.ass” was changed by another program."));
+        QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!shown("diskSaveQuestion"));
+        application->waitForWrites();
+        QVERIFY(readAll(path).contains("theirs third"));
+        QVERIFY(bar->property("visible").toBool());
+        // Save over it: the bar goes and the file is this copy.
+        QVERIFY(save());
+        QTRY_VERIFY(shown("diskSaveQuestion"));
+        QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("saveOver"))));
+        QTRY_VERIFY(!bar->property("visible").toBool());
+        application->waitForWrites();
+        QTRY_VERIFY(readAll(path).contains("theirs again"));
+        QVERIFY(!readAll(path).contains("theirs third"));
+    }
+
+    // PU1-picker-titles: a picker with no folder of its own (no video, no
+    // recent file) starts where its kind was last left.
+    void pickersStartWhereTheirKindWasLeft()
+    {
+        start();
+        const QString keyframes = writeAss(dir.filePath(QStringLiteral("frames/keys.txt")), "x");
+        QObject *dialog = named("keyframesDialog");
+        QVERIFY(dialog);
+        dialog->setProperty("selectedFile", QUrl::fromLocalFile(keyframes));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accepted"));
+        const QStringList rows = application->settingsStore()->value(QStringLiteral("workspace.pickerFolders")).toStringList();
+        QVERIFY2(rows.contains(QStringLiteral("keyframes\t") + QUrl::fromLocalFile(dir.filePath(QStringLiteral("frames"))).toString()),
+                 qPrintable(rows.join(u'|')));
+        application->settingsStore()->setValue(QStringLiteral("workspace.pickerFolders"),
+                                         QStringList{QStringLiteral("video\t") + QUrl::fromLocalFile(dir.path()).toString()});
+        QVERIFY(QMetaObject::invokeMethod(named("videoOpenDialog"), "show"));
+        QCOMPARE(named("videoOpenDialog")->property("currentFolder").toUrl(), QUrl::fromLocalFile(dir.path()));
+        QVERIFY(QMetaObject::invokeMethod(named("videoOpenDialog"), "close"));
     }
 
     // What a restore could not find stays on its tab: a bar each, with

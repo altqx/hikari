@@ -7107,6 +7107,21 @@ private slots:
         QCOMPARE(application->workspace().tabs().size(), tabs + 1);
         QVERIFY(application->files().session(edited));
         QCOMPARE(application->files().session(edited)->document().lines().size(), std::size_t(2));
+
+        // A draft typed meanwhile, not yet committed, keeps the tab too.
+        const auto drafted = target();
+        auto *draftSession = application->files().session(drafted);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(draftSession->editDraftText(draftSession->document().lines()[0]->id, u8"typed"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 2);
+        QVERIFY(application->files().session(drafted));
+        QCOMPARE(application->files().session(drafted)->draftText(), std::optional<std::u8string>(u8"typed"));
     }
 
     // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at

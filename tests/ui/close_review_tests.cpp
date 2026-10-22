@@ -9,6 +9,7 @@
 
 #include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -358,13 +359,15 @@ private slots:
         QTRY_VERIFY(picker->property("visible").toBool());
         QCOMPARE(picker->property("title").toString(), QStringLiteral("Save “Untitled” as"));
         QVERIFY(!a.quitApproved()); // nothing written before the file is chosen
+        // A name without the extension gets the format's, as Save as gives it.
         const QString chosen = dir.filePath(QStringLiteral("chosen.ass"));
-        picker->setProperty("selectedFile", QUrl::fromLocalFile(chosen));
+        picker->setProperty("selectedFile", QUrl::fromLocalFile(dir.filePath(QStringLiteral("chosen"))));
         QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
         QMetaObject::invokeMethod(picker, "close");
         QTRY_VERIFY(a.quitApproved());
         a.waitForWrites();
         QVERIFY(readAll(chosen).contains("new work"));
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("chosen"))));
         QVERIFY(readAll(dir.filePath(QStringLiteral("named.ass"))).contains("named work"));
     }
 };

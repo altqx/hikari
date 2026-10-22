@@ -358,7 +358,8 @@ private slots:
 
     // PU1-autosaves-window: Remove temporary files opens the window with
     // Delete older than…; its button counts what goes and deletes at once.
-    // Started with files, the crash is the startup bar.
+    // Started with files, the crash is the startup bar, which ends when the
+    // autosaves it offered are deleted.
     void deleteOlderThanDeletesInOneStep()
     {
         const QString path = writeFile(dir.filePath(QStringLiteral("older.ass")), "original");
@@ -393,7 +394,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(now, "clicked"));
         QTRY_VERIFY(a.recoveryBundles().isEmpty());
         QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 0);
-        QVERIFY(QMetaObject::invokeMethod(bar, "closed"));
+        // Its only reason gone (no session to restore), the offer ends.
         QTRY_VERIFY(!bar->property("visible").toBool());
     }
 
