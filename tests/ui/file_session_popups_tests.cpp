@@ -21,6 +21,7 @@
 #include <QtTest>
 
 #include <algorithm>
+#include <functional>
 
 Q_IMPORT_QML_PLUGIN(Hikari_UiPlugin)
 
@@ -448,6 +449,63 @@ private slots:
         QTRY_VERIFY(shown("diskSaveQuestion"));
         QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!shown("diskSaveQuestion"));
+        QVERIFY(readAll(path).contains("theirs"));
+    }
+
+    // An MKV load's Save and load over a file changed on disk (Y9): the load
+    // goes on once the save is written; a write that fails cancels it, so
+    // the work it was to save is not replaced.
+    QObject *saveOverForAnMkvLoad(const QString &path, const std::function<void()> &beforeAnswer)
+    {
+        start();
+        QObject *flow = named("matroskaSubtitles");
+        if (!flow || !application->openFile(path))
+            return nullptr;
+        changeOnDisk(path, "theirs");
+        QMetaObject::invokeMethod(window, "checkExternalChange");
+        if (!QTest::qWaitFor([&] { return shown("diskChangeBar"); }))
+            return nullptr;
+        application->duplicateLines();
+        flow->setProperty("waitingForSave", true); // Save and load was chosen
+        QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant()));
+        if (!QTest::qWaitFor([&] { return shown("diskSaveQuestion"); }))
+            return nullptr;
+        beforeAnswer();
+        QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("saveOver")));
+        return flow;
+    }
+    void anMkvLoadGoesOnOnceTheSaveOverIsWritten()
+    {
+        const QString path = writeAss(dir.filePath(QStringLiteral("mkvwait/written.ass")), "mine");
+        QObject *flow = saveOverForAnMkvLoad(path, [] {});
+        QVERIFY(flow);
+        QVERIFY(flow->property("waitingForSave").toBool()); // the write is not done yet
+        application->waitForWrites();
+        QTRY_VERIFY(!flow->property("waitingForSave").toBool());
+        QCOMPARE(readAll(path).count("mine"), qsizetype(2));
+    }
+    void anMkvLoadIsCancelledWhenTheSaveOverFails()
+    {
+        const QString locked = dir.filePath(QStringLiteral("mkvlocked"));
+        const QString path = writeAss(locked + QStringLiteral("/failing.ass"), "mine");
+        auto writable = qScopeGuard([&] {
+            QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner | QFileDevice::ExeOwner);
+        });
+        bool rootWrites = false;
+        QObject *flow = saveOverForAnMkvLoad(path, [&] {
+            // The folder can't be written: the save fails.
+            QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::ExeOwner);
+            rootWrites = QFileInfo(locked).isWritable(); // root (CI containers) writes read-only folders
+        });
+        QVERIFY(flow);
+        if (rootWrites)
+            QSKIP("Read-only folders are writable for this user");
+        QVERIFY(flow->property("waitingForSave").toBool());
+        application->waitForWrites();
+        QTRY_VERIFY(!flow->property("waitingForSave").toBool());
+        QCOMPARE(flow->property("writes").toList().size(), 0);
+        QCOMPARE(application->matroska().state(), 0);
+        QVERIFY(target()->isDirty());
         QVERIFY(readAll(path).contains("theirs"));
     }
 

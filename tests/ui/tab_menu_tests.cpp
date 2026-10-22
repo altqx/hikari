@@ -905,6 +905,11 @@ private slots:
         QTRY_VERIFY(recovery->property("visible").toBool());
         named("autosavesSearch")->setProperty("text", QStringLiteral("episode"));
         QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 1);
+        // The search finds a previous version by its files' path too.
+        named("autosavesSearch")->setProperty("text", QStringLiteral("subs"));
+        QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 2);
+        named("autosavesSearch")->setProperty("text", QStringLiteral("subs episode"));
+        QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 1);
         QTRY_VERIFY(named("autosaveVersion0"));
         QObject *versionList = named("autosaveVersion0");
         QTRY_COMPARE(versionList->property("count").toInt(), 2);

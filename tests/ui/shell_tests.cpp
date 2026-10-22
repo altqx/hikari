@@ -7579,6 +7579,34 @@ private slots:
                  QStringLiteral("mkvextract.ass"));
     }
 
+    // PU1-mkv-notices: a tab reloaded while the file is read keeps what was
+    // reloaded, and the track opens in a new tab.
+    void anMkvReadKeepsATabReloadedMeanwhile()
+    {
+        auto &matroska = application->matroska();
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(chooser);
+        const QString subs = writeFile(dir, "mkvreload.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
+        QVERIFY(application->openFile(subs));
+        const auto reloaded = *application->workspace().editingTarget();
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
+                                 30000);
+        QTRY_VERIFY(matroska.available());
+        const auto tabs = application->workspace().tabs().size();
+        QVERIFY(matroska.start()); // a clean tab: no question
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(application->reloadTarget());
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != reloaded, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        auto *kept = application->files().session(reloaded);
+        QVERIFY(kept);
+        QCOMPARE(kept->document().lines().size(), std::size_t(1));
+    }
+
     // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
     // 20d647c4) on an MKV file: OnMkvSubs on that file (Demux reads its
     // subtitle track, every block of it) instead of reading the Matroska
