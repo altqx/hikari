@@ -7,6 +7,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QRegularExpression>
 #include <QTimer>
 #include <QUrl>
 
@@ -567,22 +568,12 @@ bool AutomationShell::rerunLast()
     return m_last && run(m_last->first, m_last->second);
 }
 
-void AutomationShell::setSettings(ui::SettingsStore *settings)
+void AutomationShell::forgetRepeat()
 {
-    if (m_settings)
-        disconnect(m_settings, nullptr, this, nullptr);
-    m_settings = settings;
-    m_dialogMemory.setSettings(settings);
-    if (!settings)
+    if (!m_repeat)
         return;
-    // Settings > Clear last answers: Repeat's record goes with them.
-    connect(settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
-        if (id == QLatin1String("automation.dialogAnswers") && m_settings &&
-            m_settings->list("automation.dialogAnswers").isEmpty() && m_repeat) {
-            m_repeat.reset();
-            emit progressChanged();
-        }
-    });
+    m_repeat.reset();
+    emit progressChanged();
 }
 
 bool AutomationShell::repeatLast()
@@ -590,7 +581,28 @@ bool AutomationShell::repeatLast()
     if (!m_repeat)
         return false;
     RepeatRecord record = *m_repeat;
-    if (!run(record.path, record.ordinal))
+    // The script may have been reloaded since: the recorded macro by name,
+    // at its old place first; gone, the record goes too.
+    std::optional<int> ordinal;
+    for (const auto &script : m_manager.scripts()) {
+        if (script.path != record.path)
+            continue;
+        const auto &macros = script.info.macros;
+        if (record.ordinal >= 0 && static_cast<std::size_t>(record.ordinal) < macros.size() &&
+            macros[static_cast<std::size_t>(record.ordinal)].name == record.macro)
+            ordinal = record.ordinal;
+        for (std::size_t i = 0; !ordinal && i < macros.size(); ++i)
+            if (macros[i].name == record.macro)
+                ordinal = static_cast<int>(i);
+    }
+    if (!ordinal) {
+        m_repeat.reset();
+        m_lastMessage = QCoreApplication::translate("HikariSub.Automation",
+                                                    "The last run's macro is no longer loaded, so it can't be repeated.");
+        emit progressChanged();
+        return false;
+    }
+    if (!run(record.path, *ordinal))
         return false;
     m_run->repeat = std::move(record.dialogs);
     m_run->replaying = true;
@@ -613,7 +625,7 @@ QString AutomationShell::repeatText() const
                                ? QCoreApplication::translate("HikariSub.Automation", "OK")
                                : QString::fromStdString(pressed < last.request.buttons.size() ? last.request.buttons[pressed] : std::string());
     return QCoreApplication::translate("HikariSub.Automation", "Repeat last run: %1, as %2 with the same answers")
-        .arg(macro, QString(button).remove(QLatin1Char('&')));
+        .arg(macro, QString(button).replace(QRegularExpression(QStringLiteral("&(.)")), QStringLiteral("\\1")));
 }
 
 void AutomationShell::presentDialog(const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply)

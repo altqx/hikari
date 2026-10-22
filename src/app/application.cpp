@@ -5404,7 +5404,7 @@ QVariantMap Application::openSettingsDialog()
     // PK1 (#301): the questions hidden with "Don't ask again", which the
     // Editor page's Ask again empties.
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
-    // AD2 (#311): script dialogs' last answers, which the Editor page's
+    // AD2 (#311): script dialogs' last answers, which the Automation page's
     // Clear last answers empties.
     values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
     // W2: the renderers as the choice shows them; VSFilterMod says what it
@@ -5506,10 +5506,13 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         if (list != m_settings->list("notices.hiddenQuestions"))
             m_settings->setValue(QStringLiteral("notices.hiddenQuestions"), list);
     }
-    // AD2: Clear last answers, saved by OK or Apply.
+    // AD2: Clear last answers, saved by OK or Apply; Repeat's record goes
+    // with them.
     if (const auto answers = values.constFind(QStringLiteral("automation.dialogAnswers"));
-        answers != values.cend() && answers->toStringList().isEmpty() && !m_settings->list("automation.dialogAnswers").isEmpty())
+        answers != values.cend() && answers->toStringList().isEmpty() && !m_settings->list("automation.dialogAnswers").isEmpty()) {
         m_settings->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
+        m_automation->forgetRepeat();
+    }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
@@ -5638,7 +5641,11 @@ void Application::resetAllSettings()
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting,
                                        // PF1: the Settings window's page shown last, no option either
-                                       "workspace.settingsPage"};
+                                       "workspace.settingsPage",
+                                       // AD2: script dialogs' answers and presets, no options
+                                       // either (Clear last answers… and ⋯ › Delete preset
+                                       // forget them)
+                                       "automation.dialogAnswers", "automation.dialogPresets"};
     const auto appearance = appearanceSettings();
     keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)

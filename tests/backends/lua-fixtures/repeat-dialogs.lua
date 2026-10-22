@@ -33,3 +33,10 @@ aegisub.register_macro("Two dialogs", "", function(subs, sel)
     }, { "Yes", "No" }, { ok = "Yes", cancel = "No" })
     report("second", again, s)
 end)
+
+-- A button label with an escaped "&&" and a mnemonic, for Repeat's tooltip.
+aegisub.register_macro("Save and close", "", function()
+    local button = aegisub.dialog.display({ { class = "label", label = "Done?", x = 0, y = 0 } },
+        { "Save && &Close", "Cancel" }, { ok = "Save && &Close", cancel = "Cancel" })
+    aegisub.debug.out(string.format("button=%s\n", tostring(button)))
+end)

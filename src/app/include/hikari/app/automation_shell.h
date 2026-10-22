@@ -88,7 +88,11 @@ public:
     // quiet error (a message box says it).
     enum class LogLine { Notice, Quiet, QuietError };
     void setLog(std::function<void(const QString &, LogLine)> log) { m_logLine = std::move(log); }
-    void setSettings(ui::SettingsStore *settings);
+    void setSettings(ui::SettingsStore *settings)
+    {
+        m_settings = settings;
+        m_dialogMemory.setSettings(settings);
+    }
 
     // How a run was asked for: legacy validates every run first
     // (LuaCommand::RunScript, OnRunScript, GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT)
@@ -150,6 +154,8 @@ public:
     // (applied, refused or failed) with no dialog answered by its cancel
     // button or Esc; the record lasts for the session.
     Q_INVOKABLE bool repeatLast();
+    // Settings > Clear last answers: the record goes with the answers.
+    void forgetRepeat();
     Q_INVOKABLE void cancelRun() { m_manager.cancel(); }
     Q_INVOKABLE bool forceStopRun();
 

@@ -291,8 +291,96 @@ private slots:
         run();
         QVERIFY(app->automation().canRepeat());
         QVERIFY(!app->settingsStore()->list("automation.dialogAnswers").isEmpty());
-        app->settingsStore()->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
+        // Clear last answers…, then OK.
+        app->applySettings({{QStringLiteral("automation.dialogAnswers"), QStringList()}}, false);
+        QVERIFY(app->settingsStore()->list("automation.dialogAnswers").isEmpty());
         QVERIFY(!app->automation().canRepeat());
+    }
+
+    // The script reloaded since: Repeat runs the recorded macro by name
+    // wherever it now is, and with it gone the record goes too.
+    void repeatFollowsTheMacroAcrossAReload()
+    {
+        const QString copy = dir.filePath(QStringLiteral("moving.lua"));
+        QFile from(kScript);
+        QVERIFY(from.open(QIODevice::ReadOnly));
+        const QByteArray source = from.readAll();
+        const auto write = [&copy](const QByteArray &text) {
+            QFile f(copy);
+            QVERIFY(f.open(QIODevice::WriteOnly | QIODevice::Truncate));
+            f.write(text);
+        };
+        auto &shell = app->automation();
+        const auto macros = [&shell, &copy] {
+            for (const auto &s : shell.scripts())
+                if (s.path == copy.toStdString() && s.state == application::ScriptStatus::State::Ready) {
+                    QStringList names;
+                    for (const auto &m : s.info.macros)
+                        names << QString::fromStdString(m.name);
+                    return names;
+                }
+            return QStringList();
+        };
+        write(source);
+        shell.load(copy.toStdString());
+        QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Two dialogs"), QStringLiteral("Save and close")}), 30'000);
+        select(1);
+        answers = {{0, {}}, {0, {}}};
+        QVERIFY(ran([&] { return shell.run(copy.toStdString(), 0); }).startsWith(QStringLiteral("first button=Apply")));
+        QVERIFY(shell.canRepeat());
+
+        // Another macro registered before it.
+        QByteArray moved = source;
+        moved.replace("aegisub.register_macro(\"Two dialogs\"",
+                      "aegisub.register_macro(\"Other\", \"\", function() aegisub.debug.out(\"other ran\\n\") end)\n"
+                      "aegisub.register_macro(\"Two dialogs\"");
+        write(moved);
+        QVERIFY(shell.reload(copy.toStdString()));
+        QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Other"), QStringLiteral("Two dialogs"),
+                                                  QStringLiteral("Save and close")}),
+                                  30'000);
+        QVERIFY(repeat().startsWith(QStringLiteral("Repeated with the last answers\nfirst button=Apply")));
+
+        // Renamed: nothing to repeat.
+        QByteArray renamed = source;
+        renamed.replace("\"Two dialogs\"", "\"Renamed\"");
+        write(renamed);
+        QVERIFY(shell.reload(copy.toStdString()));
+        QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Renamed"), QStringLiteral("Save and close")}), 30'000);
+        QCOMPARE(repeat(), QStringLiteral("not started"));
+        QVERIFY(!shell.canRepeat());
+        QCOMPARE(shell.lastMessage(), QStringLiteral("The last run's macro is no longer loaded, so it can't be repeated."));
+    }
+
+    // The tooltip names the button as the dialog showed it: "&&" is an "&",
+    // a lone "&" marks the mnemonic.
+    void repeatTextShowsTheButtonAsShown()
+    {
+        answers = {{0, {}}};
+        QCOMPARE(ran([this] { return app->automation().run(kScript.toStdString(), 1); }),
+                 QStringLiteral("button=Save && &Close\n"));
+        QCOMPARE(app->automation().repeatText(),
+                 QStringLiteral("Repeat last run: Save and close, as Save & Close with the same answers"));
+    }
+
+    // Settings > Reset all settings resets "Fill in my last answers" but
+    // keeps the answers, the presets and so Repeat: none is an option.
+    void resetAllSettingsKeepsAnswersAndPresets()
+    {
+        select(1);
+        answers = {{0, {}}, {0, {}}};
+        run();
+        auto &settings = *app->settingsStore();
+        const QStringList kept = settings.list("automation.dialogAnswers");
+        QVERIFY(!kept.isEmpty());
+        const QStringList presets{QStringLiteral("0123456789abcdef\t[{\"name\":\"Mine\",\"values\":{\"tags\":\"\\\\fs\"}}]")};
+        settings.setValue(QStringLiteral("automation.dialogPresets"), presets);
+        settings.setValue(QStringLiteral("automation.fillLastAnswers"), true);
+        app->applySettings({}, true); // Reset all settings…, then OK
+        QCOMPARE(settings.list("automation.dialogAnswers"), kept);
+        QCOMPARE(settings.list("automation.dialogPresets"), presets);
+        QVERIFY(!settings.boolean("automation.fillLastAnswers"));
+        QVERIFY(app->automation().canRepeat());
     }
 
     // For review (HIKARI_SURFACE_SHOT_DIR; skipped without it), in the four
@@ -323,6 +411,11 @@ private slots:
         settings.setValue(QStringLiteral("appearance.followSystem"), false);
         auto restore = qScopeGuard([&] { settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark")); });
         const auto named = [&](const char *name) { return root->findChild<QObject *>(QLatin1String(name)); };
+        // The earlier apps of this case left their session open: No to the
+        // crash prompt, which (a modal) keeps the macro commands off.
+        if (auto *prompt = named("crashSessionPrompt"); prompt && prompt->property("visible").toBool())
+            QVERIFY(QMetaObject::invokeMethod(prompt, "reject"));
+        QTRY_VERIFY(!root->property("workspaceLayout").value<QObject *>()->property("modalOpen").toBool());
         const auto save = [&](const QString &name) {
             QTest::qWait(400);
             QImage image = QGuiApplication::platformName() == QLatin1String("xcb")
@@ -362,13 +455,17 @@ private slots:
             QTRY_VERIFY(dialog->property("visible").toBool());
             auto *group = qobject_cast<QQuickItem *>(dialog->findChild<QObject *>(QStringLiteral("settingsScriptDialogsGroup")));
             QVERIFY(group);
-            // The page scrolled to the group.
-            auto *page = dialog->findChild<QObject *>(QStringLiteral("settingsPageAutomation"));
-            auto *flick = page->property("contentItem").value<QObject *>();
-            QTRY_VERIFY(group->height() > 0);
-            flick->setProperty("contentY", group->mapToItem(flick->property("contentItem").value<QQuickItem *>(),
-                                                            QPointF(0, 0)).y() - 12);
-            save(QStringLiteral("settings-") + code);
+            QTRY_VERIFY(group->isVisible() && group->height() > 0);
+            {
+                QTest::qWait(400);
+                auto *settingsWindow = qobject_cast<QQuickWindow *>(dialog);
+                QVERIFY(settingsWindow);
+                const QRect area = settingsWindow->frameGeometry();
+                QImage image = QGuiApplication::platformName() == QLatin1String("xcb")
+                                   ? settingsWindow->screen()->grabWindow(0, area.x(), area.y(), area.width(), area.height()).toImage()
+                                   : settingsWindow->grabWindow();
+                QVERIFY(image.save(out + QStringLiteral("/ad2-settings-") + code + QStringLiteral(".png")));
+            }
             auto *clear = dialog->findChild<QObject *>(QStringLiteral("settingsClearAnswers"));
             QVERIFY(clear->property("enabled").toBool());
             QVERIFY(QMetaObject::invokeMethod(clear, "clicked"));
