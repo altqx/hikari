@@ -213,46 +213,53 @@ public:
     {
         using K = application::FindQuestion::Kind;
         using I = application::FindQuestion::Info;
-        const auto tr = [](const char *text) { return QCoreApplication::translate("HikariSub.Search", text); };
-        const QString findAndReplace = tr("Find and replace");
+        const QString findAndReplace = QCoreApplication::translate("HikariSub.Search", "Find and replace");
         const QString document = qs(q.document);
         QString title = findAndReplace, text, detail, severity = QStringLiteral("info");
         switch (q.kind) {
         case K::Wrap:
-            text = tr("Reached the end of the subtitles.");
-            detail = tr("Search again from the first line?");
+            text = QCoreApplication::translate("HikariSub.Search", "Reached the end of the subtitles.");
+            detail = QCoreApplication::translate("HikariSub.Search", "Search again from the first line?");
             break;
         case K::Styles: {
             // “A”, “B” or “C”.
             QStringList quoted;
             for (const auto &name : q.missing)
-                quoted << tr("“%1”").arg(qs(name));
+                quoted << QCoreApplication::translate("HikariSub.Search", "“%1”").arg(qs(name));
             QString names = quoted.isEmpty() ? QString() : quoted.takeLast();
             if (!quoted.isEmpty())
-                names = tr("%1 or %2").arg(quoted.join(tr(", ")), names);
-            text = tr("%1 has no style named %2.").arg(document, names);
-            detail = tr("The other chosen styles are there. Searching with the missing ones finds fewer lines.");
+                names = QCoreApplication::translate("HikariSub.Search", "%1 or %2")
+                            .arg(quoted.join(QCoreApplication::translate("HikariSub.Search", ", ")), names);
+            text = QCoreApplication::translate("HikariSub.Search", "%1 has no style named %2.").arg(document, names);
+            detail = QCoreApplication::translate("HikariSub.Search", "The other chosen styles are there. Searching with "
+                                                                     "the missing ones finds fewer lines.");
             severity = QStringLiteral("warning");
             break;
         }
         case K::NoStyles:
-            text = tr("%1 has none of the chosen styles.").arg(document);
-            detail = tr("Searching only these styles would find nothing.");
+            text = QCoreApplication::translate("HikariSub.Search", "%1 has none of the chosen styles.").arg(document);
+            detail = QCoreApplication::translate("HikariSub.Search", "Searching only these styles would find nothing.");
             severity = QStringLiteral("warning");
             break;
         case K::ConfirmFiles:
-            title = tr("Replace in subtitles");
-            text = tr("Replace in every matching file in “%1”?").arg(qs(q.folder));
-            detail = tr("The files are changed on disk; Undo cannot bring them back. A copy of each file goes to the "
-                        "ReplaceBackup folder first.");
+            title = QCoreApplication::translate("HikariSub.Search", "Replace in subtitles");
+            text = QCoreApplication::translate("HikariSub.Search", "Replace in every matching file in “%1”?")
+                       .arg(qs(q.folder));
+            detail = QCoreApplication::translate("HikariSub.Search",
+                                                 "The files are changed on disk; Undo cannot bring them back. A copy "
+                                                 "of each file goes to the ReplaceBackup folder first.");
             severity = QStringLiteral("warning");
             break;
         case K::Message:
             switch (q.info) {
-            case I::NotFound: text = tr("Could not find “%1”.").arg(qs(q.argument)); break;
-            case I::Replaced: text = tr("Replaced %1 times.").arg(qs(q.argument)); break;
+            case I::NotFound:
+                text = QCoreApplication::translate("HikariSub.Search", "Could not find “%1”.").arg(qs(q.argument));
+                break;
+            case I::Replaced:
+                text = QCoreApplication::translate("HikariSub.Search", "Replaced %1 times.").arg(qs(q.argument));
+                break;
             case I::InvalidPath:
-                text = tr("The search folder does not exist");
+                text = QCoreApplication::translate("HikariSub.Search", "The search folder does not exist");
                 detail = qs(q.folder);
                 severity = QStringLiteral("warning");
                 break;

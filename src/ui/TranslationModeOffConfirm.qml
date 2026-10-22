@@ -16,7 +16,7 @@ MessageBox {
     title: qsTr("Translation mode")
     severity: "warning"
     text: qsTr("Turn off Translation mode?")
-    detail: qsTr("Each translated Line keeps its Translated text; its Original text is deleted.")
+    detail: qsTr("Each translated line keeps its Translated text; its Original text is deleted.")
     choices: [{ id: "turnOff", text: qsTr("Turn off"), role: "destructive" },
               { id: "keepOn", text: qsTr("Keep it on"), role: "reject", isDefault: true }]
     // The answer is for the tab it was asked in: another editing target
