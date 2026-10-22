@@ -136,6 +136,20 @@ ApplicationWindow {
     // ChangePage's on a tab change): a bar on that Document instead of a
     // modal question (PU1-disk-change-bar). Documents whose bar shows, by id.
     property var changedOnDisk: ({})
+    // Documents saved under another name while their bar showed: the bar
+    // goes once that write is done (a failed one leaves it).
+    property var savingAway: ({})
+    // PU1-mkv-notices: the tab an MKV read started on.
+    property var mkvTab: undefined
+    Connections {
+        target: root.matroska
+        function onStateChanged() {
+            if (root.matroska.state === 3 && root.mkvTab === undefined)
+                root.mkvTab = root.currentTab().id
+            else if (root.matroska.state !== 3)
+                root.mkvTab = undefined
+        }
+    }
     function checkExternalChange() {
         const id = root.currentTab().id
         if (root.app.externalChange() === "modified" && id !== undefined) {
@@ -955,6 +969,14 @@ ApplicationWindow {
         // The application ignores the Grid's scroll reports from the tab
         // change until scrollRestored(), so the model reset's transient 0
         // never replaces the tab's own scroll.
+        function onDocumentWritten(id) {
+            if (root.savingAway[id] !== true)
+                return
+            const away = Object.assign({}, root.savingAway)
+            delete away[id]
+            root.savingAway = away
+            root.endDiskChange(id)
+        }
         function onTabShown(scroll) {
             Qt.callLater(() => {
                 grid.contentY = scroll * grid.rowHeight
@@ -5667,7 +5689,9 @@ ApplicationWindow {
         // elapsed", Cancel), a bar while the window stays usable.
         InlineBar {
             objectName: "mkvProgress"
-            visible: root.matroska.state === 3
+            // With the tab the read started on (it goes on while another
+            // tab, or Home, shows).
+            visible: root.matroska.state === 3 && !root.app.home && root.currentTab().id === root.mkvTab
             closable: false
             text: qsTranslate("HikariSub.Matroska", "Loading subtitles from %1").arg(root.matroska.source)
             Layout.fillWidth: true
@@ -5709,8 +5733,10 @@ ApplicationWindow {
                 objectName: "reloadYes"
                 text: qsTranslate("HikariSub.Documents", "Reload")
                 onClicked: {
-                    root.endDiskChange(diskChangeBar.tab.id)
-                    root.app.reloadTarget()
+                    // The bar stays when the file can't be read now.
+                    const id = diskChangeBar.tab.id
+                    if (root.app.reloadTarget())
+                        root.endDiskChange(id)
                 }
             }
             Button {
@@ -5981,9 +6007,10 @@ ApplicationWindow {
                 readOnlyWarning.warn(document, root.app.localPath(selectedFile).replace(/^.*[\\/]/, ""))
             } else {
                 // PU1-disk-change-bar: saved under another name, the bar
-                // about the file it came from goes.
-                if (result === "")
-                    root.endDiskChange(document === 0 ? root.currentTab().id : document)
+                // about the file it came from goes once that write is done.
+                const id = document === 0 ? root.currentTab().id : document
+                if (result === "" && root.changedOnDisk[id] === true)
+                    root.savingAway = Object.assign({}, root.savingAway, { [id]: true })
                 matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
                 root.saveNext()
             }
@@ -6058,12 +6085,18 @@ ApplicationWindow {
                     { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject", isDefault: true }
                 ]
             }, id => {
-                if (id === "saveOver") {
-                    for (const marked of ids) {
-                        root.app.acceptFileOnDisk(marked)
+                // A file that can't be read now (gone, unreadable) can't be
+                // saved over: its bar stays, and nothing is saved.
+                const unread = id === "saveOver" ? ids.filter(marked => !root.app.acceptFileOnDisk(marked)) : []
+                if (id === "saveOver" && unread.length === 0) {
+                    for (const marked of ids)
                         root.endDiskChange(marked)
-                    }
                     save()
+                } else if (id === "saveOver") {
+                    root.notify("warning", qsTranslate("HikariSub.Documents", "Save"),
+                                qsTranslate("HikariSub.Editor", "The file changed on disk since it was opened. Reload it, or save elsewhere."))
+                    if (cancelled)
+                        cancelled()
                 } else if (cancelled) {
                     cancelled()
                 }
