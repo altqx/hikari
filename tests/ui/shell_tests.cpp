@@ -69,6 +69,7 @@
 #include <QGuiApplication>
 #include <QSignalSpy>
 #include <QQmlApplicationEngine>
+#include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlExpression>
 #include <QQmlProperty>
@@ -2848,7 +2849,7 @@ private slots:
             return QVariantMap{{QStringLiteral("title"), title}, {QStringLiteral("text"), text},
                                {QStringLiteral("severity"), severity}, {QStringLiteral("details"), details}};
         };
-        const QString readOnly = QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute.");
+        const QString readOnly = QStringLiteral("“episode.ass” is read-only.");
         const QVariantList readOnlyChoices{
             QVariantMap{{QStringLiteral("id"), QStringLiteral("saveAs")}, {QStringLiteral("text"), QStringLiteral("Save as…")},
                         {QStringLiteral("role"), QStringLiteral("accept")}, {QStringLiteral("isDefault"), true}},
@@ -2915,7 +2916,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(item<QObject>("logDock"), "close"));
             QVERIFY(QMetaObject::invokeMethod(stack, "clear"));
             // The read-only save, as Save asks it.
-            QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+            QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
             QQuickWindow *saveBox = nullptr;
             QTRY_VERIFY((saveBox = messageBox("messages")) && saveBox->isVisible());
             save(saveBox, QStringLiteral("box-save-") + code);
@@ -2989,6 +2990,18 @@ private slots:
                  QStringLiteral("{note}def"));
     }
 
+    // PU1-message-boxes: answers the MKV save question, made when first
+    // asked ("save", "load", "cancel").
+    bool mkvAnswer(const char *id) const
+    {
+        auto *box = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mkvSaveQuestion"));
+        return box && QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QLatin1String(id)));
+    }
+    bool mkvQuestionShown() const
+    {
+        auto *box = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mkvSaveQuestion"));
+        return box && box->property("visible").toBool();
+    }
     // PF1: the Settings window, made at its first opening.
     QObject *settingsWindow() const
     {
@@ -5391,23 +5404,25 @@ private slots:
 
     // PK1: Remove temporary files' age is a date field with its calendar
     // (legacy's day, month and year boxes), a month before today when it
-    // opens (legacy's default); the cutoff is the day picked.
+    // opens (legacy's default). PU1-autosaves-window: it opens the Autosaves
+    // window with the Delete older than… popover open.
     void temporaryFilesTakeTheirAgeFromADatePicker()
     {
-        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("temporaryFilesWindow"));
+        QObject *autosaves = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("autosaves"));
+        QVERIFY(autosaves);
+        QVERIFY(QMetaObject::invokeMethod(autosaves, "show", Q_ARG(QVariant, true)));
+        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("autosavesWindow"));
         QVERIFY(window);
-        QVERIFY(QMetaObject::invokeMethod(window, "showFiles"));
         auto close = qScopeGuard([&] { window->close(); });
         QVERIFY(QTest::qWaitForWindowExposed(window));
-        auto *picker = findItem(window->contentItem(), QStringLiteral("olderDate"));
+        auto *popover = window->findChild<QObject *>(QStringLiteral("autosavesDeleteOlderPopover"));
+        QVERIFY(popover);
+        QTRY_VERIFY(popover->property("visible").toBool());
+        auto *picker = window->findChild<QObject *>(QStringLiteral("olderDate"));
         QVERIFY(picker);
         QDate monthAgo = QDate::currentDate().addMonths(-1);
         QCOMPARE(picker->property("date").toDateTime().date(), monthAgo);
-        QVERIFY(QMetaObject::invokeMethod(picker, "setDate", Q_ARG(QVariant, QDateTime(QDate(2026, 3, 4), QTime(15, 30)))));
-        QVariant cutoff;
-        QVERIFY(QMetaObject::invokeMethod(window, "cutoff", Q_RETURN_ARG(QVariant, cutoff)));
-        QCOMPARE(cutoff.toDateTime(), QDateTime(QDate(2026, 3, 4), QTime(0, 0)));
-        QVERIFY(findItem(window->contentItem(), QStringLiteral("datePickerOpen")));
+        QVERIFY(window->findChild<QObject *>(QStringLiteral("datePickerOpen")));
     }
 
     // IC1 (#226): every menu and context-menu item that runs a command shows
@@ -7163,11 +7178,49 @@ private slots:
         restartWith(app::Application::Options());
     }
 
+    // PU7 (#309): the window shown while the installer runs is titled
+    // "Install update", names the version and cannot be closed: no Close on
+    // its title bar, and Esc and the window system's close do nothing. It
+    // reads "Use system title bar" as every dialog does.
+    QQuickWindow *installingWindow(const QString &version)
+    {
+        QQmlComponent component(engine);
+        component.loadFromModule("Hikari.Ui", "UpdateInstallingWindow");
+        auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties(
+            {{QStringLiteral("version"), version},
+             {QStringLiteral("settings"), QVariant::fromValue(static_cast<QObject *>(application->settingsStore()))}}));
+        if (!window)
+            qWarning() << component.errorString();
+        return window;
+    }
+    void installingWindowCannotBeClosed()
+    {
+        std::unique_ptr<QQuickWindow> window(installingWindow(QStringLiteral("1.4.0")));
+        QVERIFY(window);
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("Install update"));
+        QCOMPARE(findItem(window->contentItem(), QStringLiteral("updateInstallingText"))->property("text").toString(),
+                 QStringLiteral("Installing HikariSub 1.4.0…"));
+        QVERIFY(!window->property("closable").toBool());
+        QVERIFY(window->property("settings").value<QObject *>());
+        // The window system's frame offers no Close either (its hints alone).
+        QVERIFY(!window->flags().testFlag(Qt::WindowCloseButtonHint));
+        QVERIFY(window->flags().testFlag(Qt::CustomizeWindowHint));
+        QVERIFY(QTest::qWaitForWindowExposed(window.get()));
+        window->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window.get());
+        QTest::keyClick(window.get(), Qt::Key_Escape);
+        QVERIFY(!window->close());
+        QCoreApplication::processEvents();
+        QVERIFY(window->isVisible());
+    }
+
     // P8, ADR 0019, DG1 (#222): the update check's results are toasts (NT1,
     // #302), titled "Check for updates" (a failure a warning), the
     // installer's errors "Download and install" or, at the start, "Install
     // update"; a newer release opens on the dialog frame, modeless, in the
-    // resizable notice with its notes, or in the AUR notice for an AUR copy.
+    // resizable notice with its notes; PU7 (#309): an AUR copy's in the same
+    // window, with its command; Skip this version and Remind me later.
     void updateNoticesOpenOnTheDialogFrame()
     {
         // Keys sent before a new window has taken its first show (its
@@ -7241,17 +7294,55 @@ private slots:
         QTest::keyClick(available, Qt::Key_Escape);
         QTRY_VERIFY(!available->isVisible());
 
-        auto *aur = root->findChild<QQuickWindow *>(QStringLiteral("updateAurNotice"));
+        // PU7 (#309): an AUR copy gets the same window: the command to copy,
+        // no offer, Close the default.
         QVariantMap fromAur = release;
         fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
+        fromAur.insert(QStringLiteral("aurCarries"), true);
         QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
                                           Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
-        QTRY_VERIFY(aur->isVisible());
-        QVERIFY(dialogItem("updateAurNotice", "updateAurText")->property("text").toString().contains(QStringLiteral("yay -Syu")));
-        QVERIFY(!available->isVisible());
-        settled(aur);
-        QTest::keyClick(aur, Qt::Key_Escape);
-        QTRY_VERIFY(!aur->isVisible());
+        QTRY_VERIFY(available->isVisible());
+        auto *command = dialogItem("updateAvailable", "updateAurCommand");
+        QTRY_VERIFY(command->isVisible());
+        QVERIFY(command->property("text").toString().contains(QStringLiteral(" -Syu")));
+        QVERIFY(!dialogItem("updateAvailable", "updateOffer")->isVisible());
+        QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateClose"));
+        auto *copy = dialogItem("updateAvailable", "updateAurCopy");
+        QVERIFY(QMetaObject::invokeMethod(copy, "click"));
+        QCOMPARE(QGuiApplication::clipboard()->text(), command->property("text").toString());
+        QCOMPARE(copy->property("text").toString(), QStringLiteral("Copied"));
+        settled(available);
+        QTest::keyClick(available, Qt::Key_Escape);
+        QTRY_VERIFY(!available->isVisible());
+        // A prerelease the AUR package does not carry: the release page.
+        fromAur.insert(QStringLiteral("aurCarries"), false);
+        fromAur.insert(QStringLiteral("url"), QStringLiteral("https://example.invalid/v9.0.0"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QTRY_VERIFY(dialogItem("updateAvailable", "updateAurPrerelease")->isVisible());
+        QVERIFY(!dialogItem("updateAvailable", "updateAurCommand")->isVisible());
+        QCOMPARE(dialogItem("updateAvailable", "updateOffer")->property("text").toString(), QStringLiteral("Open the release page"));
+        QVERIFY(QMetaObject::invokeMethod(available, "close"));
+        QTRY_VERIFY(!available->isVisible());
+        // Skip this version: the version kept as skipped, the window closed;
+        // Settings > Updates offers it again.
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("updateAvailable", "updateSkip"), "click"));
+        QTRY_VERIFY(!available->isVisible());
+        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QCOMPARE(application->settingsStore()->text("updater.skippedVersion"), QStringLiteral("9.0.0"));
+        // Remind me later: the next automatic check a week away.
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        const qint64 before = QDateTime::currentSecsSinceEpoch();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("updateAvailable", "updateRemind"), "click"));
+        QTRY_VERIFY(!available->isVisible());
+        QVERIFY(updates.nextCheck() >= before + 7 * 24 * 60 * 60);
+        updates.skipVersion(QString());
     }
 
     // P7: the legacy Save routes: the video name, the extension, Save
@@ -7321,11 +7412,11 @@ private slots:
             QSKIP("Read-only files are writable for this user");
         QCOMPARE(application->saveChosen(QUrl::fromLocalFile(locked)), QStringLiteral("readonly"));
         QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
-        // NT1: the question is PK1's message box, Save as… (the Save dialog
-        // again) or Cancel (nothing more).
+        // NT1, PU1-message-boxes: the question is PK1's message box, Save
+        // as… (the Save dialog again) or Cancel (nothing more).
         auto *root = engine->rootObjects().first();
         auto *saveAs = named("saveAsDialog");
-        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
         QQuickWindow *box = nullptr;
         QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
         QCOMPARE(box->property("severity").toString(), QStringLiteral("warning"));
@@ -7334,14 +7425,12 @@ private slots:
         QCOMPARE(choices.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Save as…"));
         QCOMPARE(choices.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Cancel"));
         answerMessage("messages", QStringLiteral("Save"),
-                      QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute."),
-                      QStringLiteral("cancel"));
+                      QStringLiteral("“locked.ass” is read-only."), QStringLiteral("cancel"));
         QTest::qWait(50);
         QVERIFY(!saveAs->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
         answerMessage("messages", QStringLiteral("Save"),
-                      QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute."),
-                      QStringLiteral("saveAs"));
+                      QStringLiteral("“locked.ass” is read-only."), QStringLiteral("saveAs"));
         QTRY_VERIFY(saveAs->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(saveAs, "close"));
         QTRY_VERIFY(!saveAs->property("visible").toBool());
@@ -7693,18 +7782,17 @@ private slots:
         QTRY_VERIFY(matroska.available());
         application->duplicateLines();
         QVERIFY(application->files().session(before)->isDirty());
-        auto *question = named("mkvSaveQuestion");
         auto *chooser = named("mkvTrackChooser");
-        QVERIFY(question && chooser);
+        QVERIFY(chooser);
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("cancel"));
+        QTRY_VERIFY(!mkvQuestionShown());
         QCOMPARE(matroska.state(), 0);
         // No: the tracks, then "Choose subtitle track"; its Cancel reads nothing.
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose the subtitle track"));
         QCOMPARE(chooser->property("rows").toStringList(),
@@ -7725,8 +7813,8 @@ private slots:
         // Yes saves the Document to its file first (Hikari->Save(false)); OK
         // on the first row: the ASS track replaces the tab's Document.
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveYes"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("save"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != before, 20000);
@@ -7771,8 +7859,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root, "runGridHotkey", Q_RETURN_ARG(QVariant, handled),
                                           Q_ARG(QVariant, QStringLiteral("GRID_SUBS_FROM_MKV"))));
         QVERIFY(handled.toBool());
-        QTRY_VERIFY(question->property("visible").toBool()); // the loaded Document is unsaved
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown()); // the loaded Document is unsaved
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         chooser->setProperty("current", 1);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
@@ -7784,6 +7872,174 @@ private slots:
         QCOMPARE(srt->document().lines()[0]->start.value.microseconds(), 500'000);
         QCOMPARE(srt->document().lines()[0]->end.value.microseconds(), 1'500'000);
         QCOMPARE(QString::fromStdString(*application->workspace().title(target())), QStringLiteral("mkvextract.srt"));
+
+        // PU1-mkv-notices: the window stays usable while the file is read;
+        // work done in the tab meanwhile keeps it, and the track opens in a
+        // new tab.
+        const auto edited = target();
+        const auto tabs = application->workspace().tabs().size();
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->duplicateLines();
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != edited, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        QVERIFY(application->files().session(edited));
+        QCOMPARE(application->files().session(edited)->document().lines().size(), std::size_t(2));
+
+        // A draft typed before the load, which the question covered, goes
+        // with the tab's Document (Load without saving): the track takes the
+        // tab (the edited tab again, which has the video).
+        const auto listed = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(listed, edited) - listed.begin()));
+        QTRY_VERIFY(target() == edited);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000); // its video opens again
+        QTRY_VERIFY(item->property("enabled").toBool());
+        auto *editedSession = application->files().session(edited);
+        QVERIFY(editedSession->editDraftText(*editedSession->selection().active, u8"before"));
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != edited, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        QVERIFY(!application->files().session(edited));
+
+        // A draft typed meanwhile, not yet committed, keeps the tab too.
+        const auto drafted = target();
+        const auto order = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(order, drafted) - order.begin()));
+        QTRY_VERIFY(target() == drafted);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000); // its video opens again
+        QTRY_VERIFY(item->property("enabled").toBool());
+        auto *draftSession = application->files().session(drafted);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(draftSession->editDraftText(*draftSession->selection().active, u8"typed"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 2);
+        QVERIFY(application->files().session(drafted));
+        QCOMPARE(application->files().session(drafted)->draftText(), std::optional<std::u8string>(u8"typed"));
+
+        // Another video opened in the tab meanwhile keeps the tab: the track
+        // is the old video's, so it opens in a new tab, also while that video
+        // is still being opened.
+        QVERIFY(draftSession->commitDraft());
+        const auto reopened = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(reopened, drafted) - reopened.begin()));
+        QTRY_VERIFY(target() == drafted);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000);
+        QTRY_VERIFY(item->property("enabled").toBool());
+        const auto lines = draftSession->document().lines().size();
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 3);
+        QCOMPARE(application->files().session(drafted)->document().lines().size(), lines);
+    }
+
+    // PU1-mkv-notices: a load File > Open started on Home has its progress
+    // there; a Document opened while the file is read keeps its tab, and
+    // the track opens in a new one.
+    void anMkvOpenedOnHomeKeepsADocumentOpenedMeanwhile()
+    {
+        auto &matroska = application->matroska();
+        auto *dialog = named("subtitlesOpenDialog");
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(dialog && chooser);
+        auto *root = engine->rootObjects().first();
+        QVERIFY(!application->workspace().editingTarget());
+        dialog->setProperty("selectedFile", QUrl::fromLocalFile(nativeFixture("mkvextract.mkv")));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accepted"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QCOMPARE(root->property("mkvTab").toString(), QStringLiteral("home"));
+        QVERIFY(application->openFile(writeFile(dir, "home.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,kept\n")));
+        const auto opened = *application->workspace().editingTarget();
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != opened, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(2));
+        auto *kept = application->files().session(opened);
+        QVERIFY(kept);
+        QCOMPARE(kept->document().lines().size(), std::size_t(1));
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*application->workspace().editingTarget())),
+                 QStringLiteral("mkvextract.ass"));
+    }
+
+    // PU1-mkv-notices: a tab reloaded while the file is read keeps what was
+    // reloaded, and the track opens in a new tab.
+    void anMkvReadKeepsATabReloadedMeanwhile()
+    {
+        auto &matroska = application->matroska();
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(chooser);
+        const QString subs = writeFile(dir, "mkvreload.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
+        QVERIFY(application->openFile(subs));
+        const auto reloaded = *application->workspace().editingTarget();
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
+                                 30000);
+        QTRY_VERIFY(matroska.available());
+        const auto tabs = application->workspace().tabs().size();
+        QVERIFY(matroska.start()); // a clean tab: no question
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(application->reloadTarget());
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != reloaded, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        auto *kept = application->files().session(reloaded);
+        QVERIFY(kept);
+        QCOMPARE(kept->document().lines().size(), std::size_t(1));
+    }
+
+    // A tab left and come back to while the file is read is unchanged (its
+    // video opened again): the track replaces its Document.
+    void anMkvReadReplacesATabLeftAndComeBackTo()
+    {
+        auto &matroska = application->matroska();
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(chooser);
+        const QString subs = writeFile(dir, "mkvback.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
+        QVERIFY(application->openFile(subs));
+        const auto source = *application->workspace().editingTarget();
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        const auto ready = [&] {
+            return QTest::qWaitFor([&] {
+                return application->video().session().state() == application::VideoSession::State::Ready &&
+                       QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())) == mkv;
+            }, 30000);
+        };
+        application->video().openVideo(mkv);
+        QVERIFY(ready());
+        QTRY_VERIFY(matroska.available());
+        QVERIFY(matroska.start()); // a clean tab: no question
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->addPage();
+        const auto tabs = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(tabs, source) - tabs.begin()));
+        QVERIFY(ready()); // its video again
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->files().session(source), 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs.size());
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*application->workspace().editingTarget())),
+                 QStringLiteral("mkvextract.ass"));
     }
 
     // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
@@ -7804,9 +8060,8 @@ private slots:
             dialog->setProperty("selectedFile", QUrl::fromLocalFile(path));
             return QMetaObject::invokeMethod(dialog, "accepted");
         };
-        auto *question = named("mkvSaveQuestion");
         auto *chooser = named("mkvTrackChooser");
-        QVERIFY(question && chooser);
+        QVERIFY(chooser);
         const auto target = [&] { return application->workspace().editingTarget(); };
         const auto tabs = [&] { return application->workspace().tabs().size(); };
         const auto ass = [&](application::DocumentId id) {
@@ -7837,7 +8092,7 @@ private slots:
         QCOMPARE(tabs(), std::size_t(1));
         QVERIFY(choose(mkv));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!mkvQuestionShown());
         QCOMPARE(chooser->property("rows").toStringList(),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
@@ -7863,7 +8118,7 @@ private slots:
         QVERIFY(QFile::copy(mkv, upper));
         QVERIFY(choose(upper));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!mkvQuestionShown());
         QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(target(), first);
@@ -7901,15 +8156,15 @@ private slots:
         QVERIFY(application->files().session(untitled)->isDirty());
         const auto count = tabs();
         QVERIFY(choose(mkv));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("cancel"));
+        QTRY_VERIFY(!mkvQuestionShown());
         QCOMPARE(matroska.state(), 0);
         QVERIFY(!matroska.start()); // no video in the tab, and the file is forgotten
         QCOMPARE(target(), untitled);
         QVERIFY(choose(mkv));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != untitled, 20000);
@@ -9196,8 +9451,6 @@ private slots:
             {"keyframesDialog", QStringLiteral("Choose keyframes file")},
             {"fontsFolderDialog", QStringLiteral("Choose external font folder")},
             {"findFolderDialog", QStringLiteral("Choose subtitle search folder")},
-            {"closeSaveAs", QStringLiteral("Save subtitle file")},
-            {"mkvProgress", QStringLiteral("Load subtitles from an MKV/OGM file")},
             {"aspectRatioDialog", QStringLiteral("Change aspect ratio")},
         };
         for (const auto &[name, title] : titles) {
@@ -9264,7 +9517,6 @@ private slots:
                     out << w;
             return out;
         };
-        named("closeReview")->setProperty("visible", true);
         for (const char *name : {"keyframesDialog", "fontsFolderDialog", "findFolderDialog", "closeSaveAs"}) {
             QObject *dialog = find(name);
             const QSet<QWindow *> before = shown();
@@ -9277,7 +9529,6 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
             QTRY_VERIFY(!own->isVisible());
         }
-        named("closeReview")->setProperty("visible", false);
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
         for (const char *name : {"mkvProgress", "aspectRatioDialog"}) {
             QObject *popup = find(name);
@@ -10345,23 +10596,26 @@ private slots:
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("folder"), folder.path()}});
         QCOMPARE(application->findResults().size(), 2);
-        auto *review = item<QObject>("closeReview");
-        QVERIFY(review);
+        // PU1-unsaved-window: one Document is asked about in a message box.
+        const auto question = [&] { return item<QObject>("closeQuestion"); };
+        const auto answer = [&](const char *id) {
+            return QMetaObject::invokeMethod(question(), "answer", Q_ARG(QVariant, QLatin1String(id)));
+        };
         // Cancel: the Untitled Document stays, its row 0 is the result's Line.
         application->showFindResult(1);
-        QTRY_VERIFY(review->property("visible").toBool());
+        QTRY_VERIFY(question() && question()->property("visible").toBool());
         QVERIFY(application->findBusy());
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("closeCancel"), "click"));
-        QTRY_VERIFY(!review->property("visible").toBool());
+        QVERIFY(answer("cancel"));
+        QTRY_VERIFY(!question()->property("visible").toBool());
         QVERIFY(!application->findBusy());
         QVERIFY(application->targetUntitled());
         QVERIFY(untitled->isDirty());
         QCOMPARE(untitled->selection().active, std::optional(untitled->document().lines()[0]->id));
         // Discard: the file is loaded into that tab and its Line is shown.
         application->showFindResult(1);
-        QTRY_VERIFY(review->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("closeDiscardAll"), "click"));
-        QTRY_VERIFY(!review->property("visible").toBool());
+        QTRY_VERIFY(question()->property("visible").toBool());
+        QVERIFY(answer("discard"));
+        QTRY_VERIFY(!question()->property("visible").toBool());
         QVERIFY(!application->findBusy());
         QVERIFY(!application->targetUntitled());
         QCOMPARE(application->workspace().documents().size(), std::size_t(1));
@@ -10861,12 +11115,10 @@ private slots:
         using Buttons = std::vector<std::pair<const char *, Role>>;
         const std::vector<Buttons> footers{
             {{"historySet", Apply}, {"historyOk", Accept}, {"historyCancel", Reject}},
-            {{"closeSaveAll", Accept}, {"closeDiscardAll", Destructive}, {"closeContinue", Action}, {"closeCancel", Reject}},
             {{"automationReassignOk", Accept}, {"automationReassignKeepBoth", Action}, {"automationReassignCancel", Reject}},
             {{"fpsOk", Accept}, {"fpsCancel", Reject}},
             {{"columnsOk", Accept}, {"columnsCancel", Reject}},
             {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
-            {{"reloadYes", Yes}, {"reloadNo", No}},
             {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
              {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
             {{"conversionAccept", Accept}, {"conversionCancel", Reject}}, // PU6
@@ -10875,13 +11127,12 @@ private slots:
             {{"spellAddedRemove", Destructive}, {"spellAddedClose", Reject}},       // PU6
             {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
             {{"saveTag", Accept}, {"cancelTag", Reject}},
-            {{"updateOffer", Accept}, {"updateClose", Reject}}, // DG1: Remind me in a week at the leading edge
-            {{"updateAurRemind", No}, {"updateAurClose", Reject}},
+            {{"updateOffer", Accept}, {"updateClose", Reject}, {"updateRemind", No}}, // PU7: Skip this version at the leading edge
+            {{"saveLayoutSave", Accept}, {"saveLayoutCancel", Reject}}, // PU7
             {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
             // PU6: Show folder at the leading edge.
             {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Action}, {"fontCollectorCancel", Reject},
              {"fontCollectorClose", Reject}},
-            {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
             {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}}, // PK1
             {{"listChooserTake", Accept}, {"listChooserCancel", Reject}}, // PK1
@@ -12209,6 +12460,38 @@ private slots:
     }
     QVariantMap settingsValues(QObject *dialog) const { return dialog->property("values").toMap(); }
 
+    // PU7 (#309): the update options on Settings > Updates, staged like
+    // every page's: OK writes them and the checker reads them at once; the
+    // skipped version is named there with Offer it again.
+    void settingsUpdatesPageKeepsTheUpdateOptions()
+    {
+        auto &updates = application->updates();
+        const bool autoCheck = updates.autoCheck();
+        updates.skipVersion(QStringLiteral("9.0.0"));
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("updates");
+        QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageUpdates")->isVisible());
+        auto *check = dialogItem("settingsDialog", "setting_updater.autoCheck");
+        QVERIFY(check);
+        QCOMPARE(check->property("checked").toBool(), autoCheck);
+        QCOMPARE(dialogItem("settingsDialog", "settingsSkippedVersion")->property("text").toString(), QStringLiteral("9.0.0"));
+        QVERIFY(dialogItem("settingsDialog", "settingsInstallNote"));
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "settingsOfferAgain"), "click"));
+        QVERIFY(!dialogItem("settingsDialog", "settingsSkippedVersion")->isVisible());
+        // Staged until OK.
+        QCOMPARE(updates.autoCheck(), autoCheck);
+        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(updates.autoCheck(), !autoCheck);
+        QVERIFY(updates.skippedVersion().isEmpty());
+        QCOMPARE(application->settingsStore()->boolean("updater.autoCheck"), !autoCheck);
+        updates.setAutoCheck(autoCheck);
+    }
+
     void settingsDialogAppliesChangedValuesLive()
     {
         auto &settings = *application->settingsStore();
@@ -12416,6 +12699,8 @@ private slots:
               {"audio.snapToOtherLines", "Snap to other lines"},
               {"audio.mergeEveryNWithSyllable", "Merge every \"n\" with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move the syllable line after a click"},
+              {"audio.karaokeDoubleConsonantApart", "Give a double consonant its own syllable (so|ma|t|ta)"}, // KA1
+              {"audio.karaokeKfThreshold", nullptr},                                                         // KA1
               {"audio.ramCache", "Load audio into RAM"},
               {"audio.cacheFilesLimit", nullptr}}},
             {"settingsPageConversion",
@@ -12449,6 +12734,12 @@ private slots:
              {{"automation.loadingMethod", nullptr},
               {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
               {"automation.traceLevel", nullptr}}},
+            // PU7 (#309): the options that left the update window (the
+            // skipped version is a row of its own, below).
+            {"settingsPageUpdates",
+             {{"updater.autoCheck", "Check for updates automatically"},
+              {"updater.checkForStable", "Stable versions only"},
+              {"updater.autoInstall", "Install updates automatically"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -12477,6 +12768,9 @@ private slots:
             if (!b.sizeSetting.empty())
                 bound.insert(std::string(b.sizeSetting));
         }
+        // PU7: the skipped version's row, named with Offer it again.
+        QVERIFY(bound.erase("updater.skippedVersion"));
+        QVERIFY(dialogItem("settingsDialog", "settingsOfferAgain"));
         QCOMPARE(shown, bound);
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
@@ -12487,6 +12781,7 @@ private slots:
                 bound.insert(std::string(s.id));
         // and PK1's questions hidden with "Don't ask again" (Ask again).
         bound.insert("notices.hiddenQuestions");
+        bound.insert("updater.skippedVersion"); // PU7: held, shown in its row
 #ifndef HIKARI_WITH_VSFILTERMOD
         // W2: "Subtitle display filter" holds a value only when it is offered
         // (a CSRI renderer besides libass); its control stays in the page.
@@ -12662,6 +12957,8 @@ private slots:
     // O3: File > Import legacy settings... (a ShellMenuItem) reviews a
     // legacy installation's files, imports the chosen changes for the next
     // start and rolls them back; the legacy files are never written.
+    // PU7 (#309): through the wizard's three steps (choose, review, result),
+    // the review's Conflicts and All, and Roll back… asked in the message box.
     void legacySettingsImportThroughTheWindow()
     {
         QTemporaryDir home, legacy;
@@ -12686,43 +12983,82 @@ private slots:
         auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        auto footerButton = [&](const char *name) {
-            auto *footer = dialog->property("footer").value<QQuickItem *>();
-            return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+        auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
+        auto visibleNamed = [&](const char *name) {
+            auto *found = control(name);
+            return found && found->isVisible();
         };
-        QVERIFY(!footerButton("settingsImportImport")->property("enabled").toBool());
+        // Step 1: no installation found in this home, nothing to review yet.
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QVERIFY(visibleNamed("settingsImportNext"));
+        QVERIFY(!control("settingsImportNext")->property("enabled").toBool());
+        QVERIFY(!visibleNamed("settingsImportImport"));
 
+        // Choosing an installation reads it.
         auto &importer = application->settingsImport();
         QVERIFY(importer.addRoot(legacy.path()));
-        dialogItem("settingsImportDialog", "settingsImportRoots")->setProperty("currentIndex", importer.roots().size() - 1);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportRead"), "click"));
+        const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
+        QQuickItem *root = nullptr;
+        QTRY_VERIFY((root = control(last.constData())) != nullptr);
+        QVERIFY(QMetaObject::invokeMethod(root, "click"));
         QCOMPARE(importer.root(), QDir::cleanPath(legacy.path()));
-        auto *rows = dialogItem("settingsImportDialog", "settingsImportRows");
+        QTRY_VERIFY(control("settingsImportNext")->property("enabled").toBool());
+
+        // Step 2: the conflicts, the proposed ones ticked.
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QCOMPARE(dialog->property("step").toInt(), 2);
+        QVERIFY(visibleNamed("settingsImportBack") && visibleNamed("settingsImportImport"));
+        QVERIFY(!visibleNamed("settingsImportNext"));
+        auto *rows = control("settingsImportRows");
         QTRY_VERIFY(rows->property("count").toInt() > 0);
         QVERIFY(importer.chosen().contains("setting:grid.font"));
         QVERIFY(importer.chosen().contains("shortcut:GLOBAL_SAVE_SUBS:G"));
-        QVERIFY(dialogItem("settingsImportDialog", "settingsImportSummary")->property("text").toString().contains(
-            QStringLiteral("1 excluded")));
-        // The theme is shown, excluded, and cannot be chosen.
+        int selectable = 0;
         QVariantMap theme;
-        for (const auto &row : importer.rows())
+        for (const auto &row : importer.rows()) {
+            selectable += row.toMap().value(QStringLiteral("selectable")).toBool();
             if (row.toMap().value(QStringLiteral("key")) == QStringLiteral("PROGRAM_THEME"))
                 theme = row.toMap();
+        }
+        QCOMPARE(rows->property("count").toInt(), selectable);
+        QCOMPARE(control("settingsImportSummary")->property("text").toString(),
+                 QStringLiteral("%1 of %2 chosen").arg(importer.chosen().size()).arg(selectable));
+        QCOMPARE(control("settingsImportImport")->property("text").toString(),
+                 QStringLiteral("Import %1 setting(s)").arg(importer.chosen().size()));
+        // The theme is excluded: not a conflict, shown under All only, as
+        // "Not here" and without a tick box.
         QCOMPARE(theme.value(QStringLiteral("disposition")).toString(), QStringLiteral("excluded"));
         QVERIFY(!theme.value(QStringLiteral("selectable")).toBool());
+        const QString themeId = theme.value(QStringLiteral("id")).toString();
+        auto rowNamed = [&](const QString &name) { return findItem(rows, name); };
+        QVERIFY(!rowNamed(QStringLiteral("settingsImportRow_") + themeId));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportFilter"), "activated", Q_ARG(int, 1)));
+        QTRY_COMPARE(rows->property("count").toInt(), int(importer.rows().size()));
+        QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
+        QQuickItem *themeStatus = nullptr;
+        for (int i = 0; i < rows->property("count").toInt() && !themeStatus; ++i) {
+            QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtIndex", Q_ARG(int, i), Q_ARG(int, 0)));
+            themeStatus = rowNamed(QStringLiteral("settingsImportStatus_") + themeId);
+        }
+        QVERIFY(themeStatus);
+        QCOMPARE(themeStatus->property("text").toString(), QStringLiteral("Not here"));
+        auto *themeBox = rowNamed(QStringLiteral("settingsImportChoose_") + themeId);
+        QVERIFY(!themeBox || !themeBox->isVisible() || !themeBox->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportFilter"), "activated", Q_ARG(int, 0)));
+        QTRY_COMPARE(rows->property("count").toInt(), selectable);
         // Choosing a row far down the list keeps the list where it is
         // scrolled, and "Proposed choice" still reaches the clicked row.
         {
             const QVariantList all = importer.rows();
-            int last = int(all.size()) - 1;
-            while (last >= 0 && !all.at(last).toMap().value(QStringLiteral("selectable")).toBool())
-                --last;
-            QVERIFY(last > 0);
-            const QString id = all.at(last).toMap().value(QStringLiteral("id")).toString();
+            int lastRow = int(all.size()) - 1;
+            while (lastRow >= 0 && !all.at(lastRow).toMap().value(QStringLiteral("selectable")).toBool())
+                --lastRow;
+            QVERIFY(lastRow > 0);
+            const QString id = all.at(lastRow).toMap().value(QStringLiteral("id")).toString();
             const bool proposed = importer.chosen().contains(id.toStdString());
             QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
             QQuickItem *box = nullptr;
-            QTRY_VERIFY((box = findItem(rows, QStringLiteral("settingsImportChoose_") + id)) != nullptr);
+            QTRY_VERIFY((box = rowNamed(QStringLiteral("settingsImportChoose_") + id)) != nullptr);
             const QPointer<QQuickItem> sameBox(box);
             const qreal scrolled = rows->property("contentY").toReal();
             QVERIFY(scrolled > 0);
@@ -12732,16 +13068,32 @@ private slots:
             QVERIFY(sameBox);
             QCOMPARE(box->property("checked").toBool(), !proposed);
             QCOMPARE(rows->property("contentY").toReal(), scrolled);
-            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportProposed"), "click"));
+            QVERIFY(QMetaObject::invokeMethod(control("settingsImportProposed"), "click"));
             QVERIFY(sameBox);
             QCOMPARE(box->property("checked").toBool(), proposed);
             QCOMPARE(rows->property("contentY").toReal(), scrolled);
         }
-        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportImport"), "click"));
-        QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportStatus")->property("text").toString().contains(
-            QStringLiteral("starts again")));
+        // Back to step 1 and on again keeps the choice.
+        const auto chosen = importer.chosen();
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportBack"), "click"));
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QCOMPARE(importer.chosen(), chosen);
+
+        // Step 3: the result, in effect at the next start.
+        const int count = int(importer.chosen().size());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportImport"), "click"));
+        QTRY_COMPARE(dialog->property("step").toInt(), 3);
+        QCOMPARE(control("settingsImportResult")->property("text").toString(),
+                 QStringLiteral("%1 setting(s) imported.").arg(count));
+        QVERIFY(control("settingsImportStatus")->property("text").toString().contains(QStringLiteral("starts again")));
+        QVERIFY(visibleNamed("settingsImportClose"));
+        QVERIFY(!visibleNamed("settingsImportCancel") && !visibleNamed("settingsImportBack"));
+        QCOMPARE(visibleNamed("settingsImportRollback"), importer.canRollBack());
         // Not in effect in this session.
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
 
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Arial"));
@@ -12749,16 +13101,24 @@ private slots:
                     .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
         QVERIFY(!application->settingsStore()->isSet(QStringLiteral("program.theme")));
 
-        // Roll back, asked first, in effect at the next start.
+        // Roll back from step 1's bar, asked first in PK1's message box:
+        // Cancel keeps the import, Roll back is in effect at the next start.
         QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
         dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(footerButton("settingsImportRollback")->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportRollback"), "click"));
-        auto *question = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportRollbackQuestion"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QTRY_VERIFY(visibleNamed("settingsImportRollbackBar"));
+        QCOMPARE(control("settingsImportState")->property("text").toString(), QStringLiteral("The last import is in effect."));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("cancel"));
+        QVERIFY(!application->settingsImport().pending());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("rollback"));
         QVERIFY(application->settingsImport().pending());
+        QTRY_COMPARE(control("settingsImportState")->property("text").toString(),
+                     QStringLiteral("An import waits for the next start."));
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
         QVERIFY(!application->settingsStore()->isSet(application::kHotkeysSetting.data()));
@@ -12766,6 +13126,56 @@ private slots:
         QFile f(legacy.filePath(QStringLiteral("Config/Config.txt")));
         QVERIFY(f.open(QIODevice::ReadOnly));
         QCOMPARE(f.readAll(), config);
+    }
+
+    // PU7 (#309): a folder that holds no legacy installation says why on the
+    // wizard's first step; Roll back… from the result says it rolled back,
+    // and the import it undid never takes effect.
+    void settingsImportWizardSaysWhyAndWhatItRolledBack()
+    {
+        QTemporaryDir home, legacy, empty;
+        QVERIFY(home.isValid() && legacy.isValid() && empty.isValid());
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\n";
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        {
+            QFile f(legacy.filePath(QStringLiteral("Config/Config.txt")));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(config);
+        }
+        restartWithSpelling(home.path(), false);
+        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
+        // The folder dialog's choice (a closed FolderDialog keeps no folder
+        // set from outside): an empty folder is refused, with why.
+        auto addFolder = [&](const QString &path) {
+            return QMetaObject::invokeMethod(dialog, "addFolder", Q_ARG(QVariant, QUrl::fromLocalFile(path).toString()));
+        };
+        QVERIFY(addFolder(empty.path()));
+        QTRY_VERIFY(control("settingsImportRootProblem")->isVisible());
+        QCOMPARE(control("settingsImportRootProblem")->property("text").toString(), application->settingsImport().status());
+        QVERIFY(!control("settingsImportRootProblem")->property("text").toString().isEmpty());
+        // A readable one: the problem goes.
+        QVERIFY(addFolder(legacy.path()));
+        QTRY_VERIFY(control("settingsImportNext")->isEnabled());
+        QVERIFY(!control("settingsImportRootProblem")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QVERIFY(application->settingsImport().chosen().contains("setting:grid.font"));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportImport"), "click"));
+        QTRY_COMPARE(dialog->property("step").toInt(), 3);
+        QVERIFY(application->settingsImport().pending());
+        QVERIFY(control("settingsImportRollback")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollback"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("rollback"));
+        QTRY_COMPARE(control("settingsImportResult")->property("text").toString(),
+                     QStringLiteral("Rolled back to the settings before the last import."));
+        restartWithSpelling(home.path(), false);
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
     }
 
     // R6-dictionary-location: the Main page lists the settings folder's
@@ -13643,6 +14053,7 @@ private slots:
         };
         QVERIFY2(split->isVisible(), qPrintable(rowWidths()));
         QVERIFY(tap->isVisible());
+        QVERIFY2(item("audioKaraokeSplitArrow")->isVisible(), qPrintable(rowWidths())); // KA1: room for the arrow
         QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
         // KA2-karaoke-row-fold: with Tap the three toggles go into ⋯ first;
@@ -13672,6 +14083,9 @@ private slots:
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
         QVERIFY(!item("audioMoreTapOptions")->isVisible());
+        // KA1: the syllable commands are Auto split's arrow's while it shows
+        QVERIFY(!item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(!item("audioMoreKaraokeKf")->isVisible());
         closeMore();
         auto *moreAutoScroll = item<QObject>("audioMoreAutoScroll");
         QVERIFY(moreAutoScroll->property("checked").toBool());
@@ -13710,7 +14124,19 @@ private slots:
         QVERIFY(item("audioMoreKaraoke")->isVisible());
         QVERIFY(item("audioMoreTap")->isVisible());
         QVERIFY(item("audioMoreTapOptions")->isVisible());
+        // KA1: and Auto split's syllable commands
+        QVERIFY(item("audioMoreKaraokeSplit")->isVisible());
+        QVERIFY(item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(item("audioMoreKaraokeKf")->isVisible());
         closeMore();
+        // ⋯'s Auto split switches it once, the folded button's face following (Codex)
+        const bool splitMode = audio.karaokeSplitMode();
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplit"), "triggered"));
+        QCOMPARE(audio.karaokeSplitMode(), !splitMode);
+        QCOMPARE(item("audioKaraokeSplit")->property("checked").toBool(), !splitMode);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplit"), "triggered"));
+        QCOMPARE(audio.karaokeSplitMode(), splitMode);
+        QCOMPARE(item("audioKaraokeSplit")->property("checked").toBool(), splitMode);
         // Tap options opens the Tap menu at ⋯: Hold or Press, the speed, the latency
         auto *tapMenu = named("audioTapMenu");
         QVERIFY(QMetaObject::invokeMethod(named("audioMoreTapOptions"), "triggered"));
@@ -14942,15 +15368,15 @@ private slots:
         // (legacy's Themes page is K2's Appearance page, #206; PF1-pages:
         // one flat list, legacy's sub-pages are sections)
         QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Subtitle grid", "Video", "Audio",
-                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys"}));
+                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys", "Updates"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and VT2's eleven visual tools listed; KA2's Tap
-        // to time, Slower and Faster; KA7's "Check karaoke".
-        QCOMPARE(hotkeyRows().size(), 237);
+        // to time, Slower and Faster; KA7's "Check karaoke"; KA1's two syllable commands.
+        QCOMPARE(hotkeyRows().size(), 239);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -14984,7 +15410,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(settings.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-K")));
-        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 26); // KA2: with AUDIO_TAP and the speeds
+        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 28); // KA2: with AUDIO_TAP and the speeds; KA1: K and Shift-K
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+K"));
         // The shell's table (every Global binding, the menus' too) follows.
         QVERIFY(application->hotkeys().globalShortcuts().contains(
@@ -15701,10 +16127,10 @@ private slots:
         QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Stop\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
-        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_K);
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
         QTRY_VERIFY(!mapping->isVisible());
-        QCOMPARE(h.accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("K"));
-        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (K)\nShortcut can be set using Shift + Click"));
+        QCOMPARE(h.accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("U"));
+        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (U)\nShortcut can be set using Shift + Click"));
         // The frame keys are GLOBAL_PREVIOUS_FRAME / GLOBAL_NEXT_FRAME:
         // from the Grid too, and remapped they follow the registry.
         QTRY_VERIFY(window->isActive());
@@ -17208,46 +17634,46 @@ private slots:
         // remapped through the registry (the Options page's Hotkeys list, OK)
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Audio Scroll left")));      // AUDIO_SCROLL_RIGHT, A
-        h.optionsMap(QStringLiteral("K"), 4, QStringLiteral("cancel"));
+        h.optionsMap(QStringLiteral("U"), 4, QStringLiteral("cancel"));
         h.select(hotkeyPosition(QStringLiteral("Audio Play line alt")));    // R
-        h.optionsMap(QStringLiteral("U"), 4, QStringLiteral("cancel")); // (KA2: Y is Tap to time)
+        h.optionsMap(QStringLiteral("I"), 4, QStringLiteral("cancel")); // (KA2: Y is Tap to time; KA1: K splits)
         h.select(hotkeyPosition(QStringLiteral("Audio Commit")));           // Enter
         h.optionsMap(QStringLiteral("J"), 4, QStringLiteral("cancel"));
         h.commitOptions();
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("K"));
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("U"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("U"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("I"));
         QCOMPARE(h.accelOf(QStringLiteral("AUDIO_COMMIT"), 4), QStringLiteral("J"));
-        QVERIFY(application->settingsStore()->list("shortcuts.audioHotkeys").contains(QStringLiteral("AUDIO_SCROLL_RIGHT A=K")));
+        QVERIFY(application->settingsStore()->list("shortcuts.audioHotkeys").contains(QStringLiteral("AUDIO_SCROLL_RIGHT A=U")));
 
-        // in the display: K scrolls back 50 columns, A no longer does
+        // in the display: U scrolls back 50 columns, A no longer does
         item("audioDisplay")->forceActiveFocus();
         audio.setHorizontalZoom(0); // the most columns
         audio.setScrollPosition(10);
         const auto at = view.position();
         QVERIFY(at >= 100);
-        press(Qt::Key_K);
+        press(Qt::Key_U);
         QCOMPARE(view.position(), at - 50);
         press(Qt::Key_A);
         QCOMPARE(view.position(), at - 50);
         // in the Grid too
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_K);
+        press(Qt::Key_U);
         QCOMPARE(view.position(), at - 100);
         press(Qt::Key_A);
         QCOMPARE(view.position(), at - 100);
 
-        // U plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
+        // I plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
         using application::PlayRange;
         auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
         item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_R);
         QVERIFY(!audio.lastPlayRange());
-        press(Qt::Key_U);
+        press(Qt::Key_I);
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         press(Qt::Key_H);
         // from the Grid, the display takes the focus (the play handlers' SetFocus)
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_U);
+        press(Qt::Key_I);
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
         press(Qt::Key_H);
@@ -17427,16 +17853,16 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, {}, at(split, 8));
         QCOMPARE(audio.karaokeModel().count(), 4);
         QCOMPARE(audio.currentSyllable(), 2);
-        QCOMPARE(audio.karaokeModel().times()[2], 950); // ZEROIT(700 + 500 / 2)
+        QCOMPARE(audio.karaokeModel().times()[2], 860); // KA1-time-by-character: ZEROIT(700 + 500 / 3)
         QCOMPARE(editor.history().size(), steps + 2);
-        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k25}o{\\k25}ke")));
+        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k16}o{\\k34}ke")));
         // below the letters the cursor is back
         QTest::mouseMove(window, at(okeEnd - 3, y));
         QVERIFY(audio.cursor());
 
         // a middle click on the new boundary joins the syllables again
-        QTest::mouseMove(window, at(int(view.xAtMs(950)), y));
-        QTest::mouseClick(window, Qt::MiddleButton, {}, at(int(view.xAtMs(950)), y));
+        QTest::mouseMove(window, at(int(view.xAtMs(860)), y));
+        QTest::mouseClick(window, Qt::MiddleButton, {}, at(int(view.xAtMs(860)), y));
         QCOMPARE(audio.karaokeModel().count(), 3);
         QCOMPARE(editor.history().size(), steps + 3);
         QVERIFY(editor.text().endsWith(QStringLiteral("{\\k50}oke")));
@@ -17448,7 +17874,7 @@ private slots:
         QTest::mouseMove(window, kOverNoPanel);
         // Undo takes the join back
         QVERIFY(editor.undo());
-        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k25}o{\\k25}ke")));
+        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k16}o{\\k34}ke")));
 
         // Next past the last syllable: the next Line, split automatically
         // (AUDIO_KARAOKE_SPLIT_MODE is on by default)
@@ -17459,7 +17885,7 @@ private slots:
         QCOMPARE(editor.text(), QStringLiteral("kara oke"));
         QCOMPARE(audio.currentSyllable(), 0);
         QCOMPARE(audio.karaokeModel().count(), 4); // ka ra o ke
-        QCOMPARE(range(), (PlayRange{62400, 7200}));
+        QCOMPARE(range(), (PlayRange{62400, 8160})); // KA1-time-by-character: 2 of 7 letters, 170 ms
         click("audioKaraokeSplit"); // the switch: at spaces only
         QVERIFY(!audio.karaokeSplitMode());
         QVERIFY(!store->boolean("audio.karaokeSplitMode"));
@@ -17474,6 +17900,374 @@ private slots:
         QVERIFY(!store->boolean("audio.karaoke"));
         QCOMPARE(store->integer("audio.horizontalZoom"), 50);
         press(Qt::Key_H);
+    }
+
+    // KA1 (#276): K splits the syllable at the waveform cursor and Shift+K
+    // switches the long ones between \k and \kf, each one step, the view
+    // staying where it is (KA1-split-keeps-view); both in Auto split's arrow
+    // menu and the narrow panel's ⋯ menu (KA1-syllable-commands); a lead-in
+    // keeps the syllables at their times (KA1-lead-in-keeps-syllables).
+    void audioKaraokeSyllableCommands()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        const QString path = writeFile(dir, "karaoke-commands.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n");
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        auto *store = application->settingsStore();
+        editor.setShowTags(true);
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        QCOMPARE(item("audioKaraokeSplitArrow")->width(), 9.0); // narrower than the other split buttons' arrows
+        // KA1 (owner 2026-10-21): the default panel has no room for the arrow
+        // beside KA2's Tap; it folds first, its commands in ⋯, the switches,
+        // Auto split and Tap still shown
+        QVERIFY(item("audioButtons")->property("splitArrowFolded").toBool());
+        QVERIFY(!item("audioButtons")->property("folded").toBool());
+        QVERIFY(!item("audioKaraokeSplitArrow")->isVisible());
+        QVERIFY(item("audioKaraokeSplit")->isVisible());
+        QVERIFY(item("audioTap")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
+        auto *moreMenu = named("audioMoreMenu");
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, item("audioMore")), Q_ARG(qreal, 0),
+                                          Q_ARG(qreal, item("audioMore")->height())));
+        QTRY_VERIFY(moreMenu->property("opened").toBool());
+        QVERIFY(item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(item("audioMoreKaraokeKf")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
+        QTRY_VERIFY(!moreMenu->property("visible").toBool());
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const auto steps = editor.history().size();
+
+        // zoomed in past the Line, 1200 ms in the middle of the view
+        audio.setHorizontalZoom(1);
+        QVERIFY(view.xAtMs(1800) - view.xAtMs(200) > view.width());
+        const auto column = [&](int ms) { return int(view.sampleAtMs(ms) / view.samples()); };
+        audio.setScrollPosition((column(1200) - view.width() / 2) / 12);
+        const int x = int(view.xAtMs(1200));
+        QVERIFY(x > 0 && x < view.width());
+        // K over the waveform: "hana" split at the cursor's time, by its letters
+        QTest::mouseMove(window, at(x - 1, 30));
+        QTest::mouseMove(window, at(x, 30));
+        QVERIFY(audio.cursor());
+        display->forceActiveFocus();
+        const int scrolled = view.position(); // (the scrollbar follows on the next draw)
+        press(Qt::Key_K);
+        const int boundary = application::legacyZeroIt(view.msAtX(x));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[1], boundary);
+        QCOMPARE(audio.currentSyllable(), 2);
+        QCOMPARE(editor.history().size(), steps + 1);
+        QCOMPARE(editor.history().last(), QStringLiteral("Changing time on audio spectrum, active line 1"));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k%1}ha{\\k%2}na")
+                                    .arg((boundary - 600) / 10)
+                                    .arg((1800 - boundary) / 10));
+        QCOMPARE(view.position(), scrolled); // the view stays
+        press(Qt::Key_B); // AUDIO_GOTO: where legacy's commit would have scrolled
+        QVERIFY(view.position() != scrolled);
+
+        // Shift+K: every syllable of 50 cs or more to \kf, and back
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 50);
+        const int now = view.position();
+        press(Qt::Key_K, Qt::ShiftModifier);
+        QCOMPARE(editor.history().size(), steps + 2);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\kf%1}ha{\\kf%2}na")
+                                    .arg((boundary - 600) / 10)
+                                    .arg((1800 - boundary) / 10));
+        QCOMPARE(view.position(), now);
+        // the arrow's menu: its items with their keys, the switch back
+        auto *kf = named("audioKaraokeKf");
+        QCOMPARE(kf->property("text").toString(), QStringLiteral("Switch long syllables between \\k and \\kf\tShift-K"));
+        QCOMPARE(named("audioKaraokeSplitAtCursor")->property("text").toString(), QStringLiteral("Split syllable at the cursor\tK"));
+        QVERIFY(QMetaObject::invokeMethod(kf, "triggered"));
+        QCOMPARE(editor.history().size(), steps + 3);
+        QVERIFY(!editor.text().contains(QStringLiteral("\\kf")));
+        // with no cursor: the current syllable's middle
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(!audio.cursor());
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 4);
+        QCOMPARE(audio.karaokeModel().times()[2], application::legacyZeroIt(boundary + (1800 - boundary) / 2));
+        QCOMPARE(editor.history().size(), steps + 4);
+        // the ⋯ menu's items do the same
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 5);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeKf"), "triggered"));
+        QCOMPARE(editor.history().size(), steps + 6);
+        QVERIFY(editor.text().contains(QStringLiteral("\\kf")));
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+
+        // at the default zoom: K over a letter splits before it, as a click
+        audio.setHorizontalZoom(50);
+        display->forceActiveFocus();
+        press(Qt::Key_B);
+        const auto middle = [&](int i) {
+            const auto [from, to] = audio.karaokeModel().syllableTimes(i, audio.selectionStart());
+            return application::legacyZeroIt(from + (to - from) / 2);
+        };
+        int letter = -1;
+        for (int lx = std::max(int(view.xAtMs(600)), 1); lx < std::min(int(view.xAtMs(1800)), view.width()) && letter < 0;
+             lx++) {
+            QTest::mouseMove(window, at(lx, 8));
+            if (audio.karaokeModel().hover == 1 && audio.karaokeModel().character == 1)
+                letter = lx;
+        }
+        QVERIFY(letter > 0);
+        press(Qt::Key_K);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k30}h{\\k90}ana"));
+        QVERIFY(editor.undo());
+        // a letter the mouse has left: the current syllable's middle
+        QTest::mouseMove(window, at(letter - 1, 8));
+        QTest::mouseMove(window, at(letter, 8));
+        QCOMPARE(audio.karaokeModel().hover, 1);
+        QTest::mouseMove(window, kOverNoPanel);
+        int current = audio.currentSyllable();
+        int expected = middle(current);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[current], expected);
+        QVERIFY(editor.undo());
+        // a cursor past the Line's syllables: the current syllable's middle too
+        const int past = int(view.xAtMs(2200));
+        QVERIFY(past > 0 && past < view.width());
+        QTest::mouseMove(window, at(past - 1, 30));
+        QTest::mouseMove(window, at(past, 30));
+        QVERIFY(audio.cursor());
+        display->forceActiveFocus();
+        current = audio.currentSyllable();
+        expected = middle(current);
+        press(Qt::Key_K);
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[current], expected);
+        QVERIFY(editor.undo());
+        QTest::mouseMove(window, kOverNoPanel);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+
+        // AUDIO_LEAD_IN (200 ms): the time before the syllables is a lead syllable
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        display->forceActiveFocus();
+        audio.leadIn();
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k20}{\\k40}sakura{\\k120}hana"));
+        // a lead-in of no whole centiseconds (Codex): the text is written for
+        // the start the Line keeps, 95 ms kept as 90
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 105);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        // and the panel takes that start, so the syllables are drawn and
+        // played from it (Codex)
+        QCOMPARE(audio.selectionStart(), 90);
+        QCOMPARE(audio.karaokeModel().syllableTimes(0, audio.selectionStart()), std::pair(90, 200));
+        // the commands measure from that kept start (Codex): the lead
+        // syllable is 11 cs from 90 ms, not 10.5 from the panel's 95
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 11);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
+        QCOMPARE(editor.text(), QStringLiteral("{\\kf11}{\\kf40}sakura{\\kf120}hana"));
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+        // a start off the 10 ms grid that the Line was not read again for
+        // (a 103 ms lead-in: 97 kept as 90; the lead then joined to
+        // "sakura"), then another lead-in (Codex): the new lead runs to the
+        // kept start, and "sakura" keeps its 51 cs from there
+        store->setValue(QStringLiteral("audio.leadInValue"), 103);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        audio.setHorizontalZoom(1); // the lead wide enough to click its end
+        audio.setScrollPosition((column(200) - view.width() / 2) / 12);
+        const int lead = int(view.xAtMs(200));
+        QVERIFY(lead > 0 && lead < view.width());
+        QTest::mouseMove(window, at(lead, 30));
+        QTest::mouseClick(window, Qt::MiddleButton, {}, at(lead, 30));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k51}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 50);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k5}{\\k51}sakura{\\k120}hana"));
+        QTest::mouseMove(window, kOverNoPanel);
+        store->setValue(QStringLiteral("audio.leadInValue"), 200);
+        audio.setHorizontalZoom(50);
+        press(Qt::Key_H);
+    }
+
+    // KA1 (Codex): Add lead-in in Karaoke mode with several Lines selected
+    // writes no \k text, which the commit would give every selected Line:
+    // each keeps its own (legacy, as Line mode's start moves)
+    void audioKaraokeLeadInSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lead-several.ass",
+                                       "Dialogue: 0,0:00:00.40,0:00:01.00,Default,,0,0,0,,{\\k30}sa{\\k30}ku\n"
+                                       "Dialogue: 0,0:00:01.20,0:00:01.80,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        audio.leadIn();
+        // the panel's syllables as the kept text reads from the new start (Codex)
+        QCOMPARE(audio.karaokeModel().times(), (std::vector<int>{500, 800}));
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->text, std::u8string(u8"{\\k30}sa{\\k30}ku"));
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+        QCOMPARE(after[0]->start.value.microseconds(), 200000);
+    }
+
+    // KA1 (Codex): a start the right button carries the syllables with, its
+    // drag cut short (the grab lost), commits them as its release would: the
+    // Line keeps its syllables' lengths, not the times its own tags read
+    void audioKaraokeLostCaptureKeepsTheCarriedSyllables()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lost-capture.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:02.60,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const int from = int(view.xAtMs(200));
+        QTest::mouseMove(window, at(from, 40));
+        QTest::mousePress(window, Qt::RightButton, {}, at(from, 40));
+        QTest::mouseMove(window, at(int(view.xAtMs(300)), 40));
+        const int by = application::legacyZeroIt(audio.selectionStart()) - 200; // as the commit writes it
+        QVERIFY(by > 50);
+        QCOMPARE(audio.karaokeModel().times(), (std::vector<int>{600 + by, 1800}));
+        display->ungrabMouse();
+        QTest::mouseRelease(window, Qt::RightButton, {}, at(int(view.xAtMs(300)), 40));
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->start.value.microseconds() / 1000, std::int64_t(200 + by));
+        // "sakura" carried whole; "hana" ends with the Line (its own tags
+        // would have kept "sakura" at its old end)
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(after[0]->text.c_str())),
+                 QStringLiteral("{\\k40}sakura{\\k%1}hana").arg((1200 - by) / 10));
+    }
+
+    // KA1 (Codex): a right drag of the start cut short with several Lines
+    // selected commits the carried syllables to the active Line alone
+    void audioKaraokeLostCaptureSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lost-several.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:02.60,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const int from = int(view.xAtMs(200));
+        QTest::mouseMove(window, at(from, 40));
+        QTest::mousePress(window, Qt::RightButton, {}, at(from, 40));
+        QTest::mouseMove(window, at(int(view.xAtMs(300)), 40));
+        QVERIFY(audio.selectionStart() > 250);
+        display->ungrabMouse();
+        QTest::mouseRelease(window, Qt::RightButton, {}, at(int(view.xAtMs(300)), 40));
+        audio.commit();
+        const auto after = session->document().lines();
+        QVERIFY(after[0]->text != std::u8string(u8"{\\k40}sakura{\\k120}hana")); // the carried syllables
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+    }
+
+    // KA1 (Codex): K and Shift+K with several Lines selected write the
+    // active Line's syllables to it alone; the others keep their texts
+    void audioKaraokeCommandsSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-commands-several.ass",
+                                       "Dialogue: 0,0:00:00.40,0:00:01.00,Default,,0,0,0,,{\\k30}sa{\\k30}ku\n"
+                                       "Dialogue: 0,0:00:01.20,0:00:01.80,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        auto *store = application->settingsStore();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 15);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->text, std::u8string(u8"{\\kf15}s{\\kf15}a{\\kf30}ku"));
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+
+        // KA1: without AUDIO_AUTO_COMMIT the split waits in the draft, and
+        // Commit sends it to the active Line alone (Codex)
+        store->setValue(QStringLiteral("audio.autoCommit"), false);
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 3);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 4);
+        QCOMPARE(session->document().lines()[0]->text, std::u8string(u8"{\\kf15}s{\\kf15}a{\\kf30}ku"));
+        audio.commit();
+        const auto committed = session->document().lines();
+        QCOMPARE(text(committed[0]).count(QStringLiteral("{\\k")), 4); // the new syllable is a \k one
+        QCOMPARE(committed[1]->text, std::u8string(u8"{\\k60}hana"));
+
+        // the editor's Commit the same, with an Actor typed for both Lines
+        // still going to both
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 4);
+        QVERIFY(session->editDraft(lines[0]->id, application::DraftChange{.actor = u8"Kara"}));
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 5);
+        QVERIFY(application->editor().commit());
+        store->setValue(QStringLiteral("audio.autoCommit"), true);
+        const auto sent = session->document().lines();
+        QCOMPARE(text(sent[0]).count(QStringLiteral("{\\k")), 5);
+        QCOMPARE(sent[1]->text, std::u8string(u8"{\\k60}hana"));
+        QCOMPARE(sent[0]->actor, std::u8string(u8"Kara"));
+        QCOMPARE(sent[1]->actor, std::u8string(u8"Kara"));
     }
 
     // KA2 (#277, KA2-tap-to-time): tap-to-time in Karaoke mode with the real
@@ -17545,6 +18339,12 @@ private slots:
         QCOMPARE(text("audioTapNext"), QStringLiteral("› koro"));
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
         QVERIFY(visualItem("audioTapLane")->isVisible());
+        // KA1: the syllable commands' menu items wait while tapping, as their
+        // keys do (Codex)
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeKf"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(editor.history().size(), steps);
 
         // Hold: ki, a gap, mi and no back to back; Space reaches tap mode,
         // not the video's play (VIDEO_PLAY_PAUSE)
@@ -25673,7 +26473,7 @@ private slots:
     }
 
     // DG1 (#222) screenshots for review (HIKARI_DIALOG_SHOT_DIR; skipped
-    // without it): About, Credits, a newer release and the AUR notice in the
+    // without it): About, Credits and a newer release in the
     // four themes on HikariSub's title bar (where the platform has one: X11,
     // Wayland, Windows), then About with "Use system title bar" (the update
     // check's warning is a toast since NT1).
@@ -25703,17 +26503,13 @@ private slots:
                                                                            "window.\n- About and Credits stay open beside the editor.\n\nFixed\n"
                                                                            "- The update notice remembers its size.")},
                                   {QStringLiteral("offer"), QStringLiteral("page")}};
-        QVariantMap fromAur = release;
-        fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
-        // Each opener leaves its dialog shown; the name is its window's.
+        // Each opener leaves its dialog shown; the name is its window's (the
+        // AUR variant is PU7's, pu7Screenshots).
         const std::vector<std::pair<QString, std::function<void()>>> dialogs{
             {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutDialog")), "open"); }},
             {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsDialog")), "open"); }},
             {QStringLiteral("updateAvailable"), [&] {
                  QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, release), Q_ARG(bool, true));
-             }},
-            {QStringLiteral("updateAurNotice"), [&] {
-                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true));
              }},
         };
         const auto shoot = [&](const QString &name, const QString &file) {
@@ -25744,6 +26540,155 @@ private slots:
                 open();
                 shoot(name, QStringLiteral("dg1-%1-system-%2.png").arg(name, code));
             }
+        }
+    }
+
+    // PU7 (#309): every popup the card redesigned, in the four themes, for
+    // the card's evidence: the update window (an offer, an AUR install's
+    // command, a prerelease its package does not carry), Install update,
+    // Settings > Updates and > Hotkeys, the import wizard's three steps and
+    // its Roll back question, Save layout as, Manage layouts (renaming, the
+    // Delete question) and Move panel.
+    void pu7Screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_PU7_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_PU7_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        // A settings file of its own: the import needs one (as
+        // legacySettingsImportThroughTheWindow's).
+        QTemporaryDir home, legacy;
+        QVERIFY(home.isValid() && legacy.isValid());
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\nPROGRAM_THEME=Mine\r\nAUTOSAVE_MAX_FILES=5\r\nGRID_LOAD_SORTED_SUBS=1\r\n";
+        for (const auto &[name, bytes] :
+             {std::pair{"Config/Config.txt", config},
+              std::pair{"Config/Hotkeys.txt", QByteArray("[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n")}}) {
+            QFile f(legacy.filePath(QLatin1String(name)));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        }
+        restartWithSpelling(home.path(), false);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto grab = [&](QQuickWindow *window, const QString &file) {
+            QVERIFY(window);
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QLatin1Char('/') + file));
+        };
+        const auto windowNamed = [&](const char *name) { return root->findChild<QQuickWindow *>(QLatin1String(name)); };
+        const auto closeWindow = [&](QQuickWindow *window) {
+            QVERIFY(window->close());
+            QTRY_VERIFY(!window->isVisible());
+        };
+        auto &updates = application->updates();
+        const QString notes = QStringLiteral("New\n- Dialogs are windows of their own.\n- The update options are on "
+                                             "Settings > Updates.\n\nFixed\n- Skip this version is kept.");
+        const auto release = [&](const char *offer, bool prerelease, bool carries) {
+            const QString version = prerelease ? QStringLiteral("1.4.0-beta.2") : QStringLiteral("1.4.0");
+            return QVariantMap{{QStringLiteral("name"), QStringLiteral("HikariSub ") + version},
+                               {QStringLiteral("tag"), QStringLiteral("v") + version},
+                               {QStringLiteral("version"), version},
+                               {QStringLiteral("notes"), notes},
+                               {QStringLiteral("prerelease"), prerelease},
+                               {QStringLiteral("aurCarries"), carries},
+                               {QStringLiteral("offer"), QLatin1String(offer)}};
+        };
+        auto &layouts = application->workspaceLayout();
+        QTRY_VERIFY(root->property("arrangementSettled").toBool()); // the saved layouts read
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Subtitles only")));
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Review with video")));
+        auto &importer = application->settingsImport();
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            const auto file = [&](const char *name) { return QStringLiteral("pu7-%1-%2.png").arg(QLatin1String(name), code); };
+            // The update window.
+            for (const auto &[name, r] : {std::pair{"update-offer", release("notify", false, true)},
+                                          std::pair{"update-aur", release("aur", false, true)},
+                                          std::pair{"update-aur-prerelease", release("aur", true, false)}}) {
+                QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, r),
+                                          Q_ARG(bool, true));
+                grab(windowNamed("updateAvailable"), file(name));
+                closeWindow(windowNamed("updateAvailable"));
+            }
+            {
+                std::unique_ptr<QQuickWindow> installing(installingWindow(QStringLiteral("1.4.0")));
+                grab(installing.get(), file("install-update"));
+            }
+            // Settings > Updates and > Hotkeys.
+            auto *settingsDialog = qobject_cast<QQuickWindow *>(openSettings());
+            QVERIFY(settingsDialog);
+            QVERIFY(QMetaObject::invokeMethod(settingsDialog, "put", Q_ARG(QVariant, QStringLiteral("updater.skippedVersion")),
+                                              Q_ARG(QVariant, QStringLiteral("1.3.2"))));
+            showSettingsPage("updates");
+            grab(settingsDialog, file("settings-updates"));
+            showSettingsPage("hotkeys");
+            grab(settingsDialog, file("settings-hotkeys"));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!settingsDialog->isVisible());
+            // The import wizard: its steps, then the Roll back question.
+            QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+            auto *wizard = windowNamed("settingsImportDialog");
+            QTRY_VERIFY(wizard && wizard->isVisible());
+            QVERIFY(importer.addRoot(legacy.path())); // (opening finds the installations anew)
+            QQuickItem *legacyRoot = nullptr;
+            const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
+            QTRY_VERIFY((legacyRoot = dialogItem("settingsImportDialog", last.constData())) != nullptr);
+            QVERIFY(QMetaObject::invokeMethod(legacyRoot, "click"));
+            QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportNext")->isEnabled());
+            grab(wizard, file("import-1"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportNext"), "click"));
+            grab(wizard, file("import-2-conflicts"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportFilter"), "activated", Q_ARG(int, 1)));
+            grab(wizard, file("import-2-all"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportFilter"), "activated", Q_ARG(int, 0)));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportImport"), "click"));
+            QTRY_COMPARE(wizard->property("step").toInt(), 3);
+            grab(wizard, file("import-3"));
+            QVERIFY(QMetaObject::invokeMethod(wizard, "askRollBack"));
+            grab(messageBox("settingsImportMessages"), file("import-rollback"));
+            QVERIFY(QMetaObject::invokeMethod(messageBox("settingsImportMessages"), "answer", Q_ARG(QVariant, QStringLiteral("rollback"))));
+            closeWindow(wizard);
+            // The layout windows.
+            QVERIFY(QMetaObject::invokeMethod(named("viewLayoutSaveAs"), "triggered"));
+            findItem(windowNamed("saveLayoutDialog")->contentItem(), QStringLiteral("saveLayoutName"))
+                ->setProperty("text", QStringLiteral("Subtitles only"));
+            grab(windowNamed("saveLayoutDialog"), file("save-layout"));
+            closeWindow(windowNamed("saveLayoutDialog"));
+            auto *manage = windowNamed("manageLayoutsDialog");
+            QVERIFY(QMetaObject::invokeMethod(named("viewLayoutManage"), "triggered"));
+            grab(manage, file("manage-layouts"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "startRename"));
+            grab(manage, file("manage-layouts-rename"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "endRename"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "askDelete"));
+            grab(messageBox("manageLayoutsMessages"), file("manage-layouts-delete"));
+            QVERIFY(QMetaObject::invokeMethod(messageBox("manageLayoutsMessages"), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            closeWindow(manage);
+            // Move panel.
+            item("editingGrid")->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(named("movePanel"), "triggered"));
+            grab(windowNamed("placementWindow"), file("move-panel"));
+            closeWindow(windowNamed("placementWindow"));
         }
     }
 
@@ -28594,10 +29539,11 @@ private slots:
         application->duplicateLines();
         QVERIFY(v5Session()->isDirty());
         QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
-        auto *review = mappingWindow("closeReview");
-        QVERIFY(review);
+        // PU1-unsaved-window: one Document is asked about in a message box.
+        QTRY_VERIFY(mappingWindow("closeQuestion"));
+        auto *review = mappingWindow("closeQuestion");
         QTRY_VERIFY(review->isVisible());
-        clickButton(review, "closeCancel");
+        clickButton(review, "messageBoxChoice_cancel");
         QTRY_VERIFY(!review->isVisible());
         QVERIFY(!application->video().hasVideo());
         // The same video opened another way, later: not fullscreen.
@@ -28609,7 +29555,7 @@ private slots:
         // The review gone through (Discard all): fullscreen once shown.
         QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
         QTRY_VERIFY(review->isVisible());
-        clickButton(review, "closeDiscardAll");
+        clickButton(review, "messageBoxChoice_discard");
         QTRY_VERIFY_WITH_TIMEOUT(fs.active(), 20000);
         QTRY_VERIFY(fullscreenWindow()->isVisible());
         QVERIFY(fs.leave());

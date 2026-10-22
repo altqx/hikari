@@ -36,6 +36,8 @@ class MatroskaController : public QObject {
     Q_PROPERTY(int progress READ progress NOTIFY progressChanged)
     // ProgresDialog's "Time elapsed: %s" (SubsTime::raw of the elapsed ms).
     Q_PROPERTY(QString elapsed READ elapsed NOTIFY progressChanged)
+    // PU1: the file name of the MKV the running load reads ("" while idle).
+    Q_PROPERTY(QString source READ source NOTIFY stateChanged)
 public:
     struct Hooks {
         std::function<QString()> videoPath;  // the editing target's tab VideoPath
@@ -44,6 +46,9 @@ public:
         std::function<bool()> targetHasSubtitlesPath;
         // `newTab`: File > Open's new tab rather than the editing target.
         std::function<void(application::MatroskaLoaded loaded, bool newTab)> apply;
+        // PU1: a load began (start()); the window stays usable while it
+        // reads, so the shell notes the Document it would replace.
+        std::function<void()> started;
         std::function<void(const QString &text)> log; // HikariLog
     };
     MatroskaController(std::unique_ptr<application::MatroskaPort> port, Hooks hooks, QObject *parent = nullptr);
@@ -53,6 +58,7 @@ public:
     int state() const { return int(m_load->state()); }
     int progress() const { return m_progress; }
     QString elapsed() const { return m_elapsedText; }
+    QString source() const { return state() == 0 ? QString() : m_source; }
     // The tab or its video changed: the menu's check again.
     void refresh();
 
@@ -96,6 +102,7 @@ private:
     qint64 m_lastProgress = 0;
     QString m_file;          // beginFile's MKV file ("" for the tab's video)
     bool m_fileNewTab = false;
+    QString m_source;        // the file name start() read
 };
 
 } // namespace hikari::app

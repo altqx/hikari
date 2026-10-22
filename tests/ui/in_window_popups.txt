@@ -16,18 +16,10 @@ FontCatalogWindow.qml:deleteQuestion
 FontDialog.qml:dialog
 FontsFromSubtitlesDialog.qml:dialog
 Main.qml:shiftConfirm
-ManageLayoutsDialog.qml:dialog
-MatroskaSubtitles.qml:saveQuestion
-MatroskaSubtitles.qml:progressDialog
 MisspellReplacerDialog.qml:dialog
 MisspellReplacerDialog.qml:results
-SaveLayoutDialog.qml:dialog
 SearchTool.qml:question
 SelectLinesDialog.qml:dialog
-SessionWindows.qml:askPrompt
-SessionWindows.qml:crashPrompt
-SettingsImportDialog.qml:dialog
-SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
@@ -36,8 +28,6 @@ StyleManager.qml:multiQuestion
 StyleManager.qml:renameQuestion
 StyleManager.qml:newCatalog
 StyleManager.qml:deleteCatalogQuestion
-TabCommands.qml:closeAllPrompt
-TabCommands.qml:subtitlesPrompt
 TranslationModeOffConfirm.qml:dialog
 TranslationModeQuestion.qml:dialog
 VideoFileQuestion.qml:dialog

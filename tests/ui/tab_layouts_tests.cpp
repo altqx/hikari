@@ -383,11 +383,12 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("c.ass")))));
         float_("audioDock", true);
         // The arrangement shown: the panels it leaves closed (AM1's
-        // Automation, NT1's Log, PU6's Spellchecker and, outside Translation
-        // mode, TM1's Original text among them), not every panel.
+        // Automation, NT1's Log, PU6's Spellchecker, TP1's Styles and,
+        // outside Translation mode, TM1's Original text among them), not
+        // every panel.
         int closedShown = 0;
         for (const char *dock : {"videoDock", "audioDock", "editorDock", "gridDock", "referenceDock", "timingDock",
-                                 "searchDock", "automationDock", "originalDock", "logDock", "spellDock"})
+                                 "searchDock", "automationDock", "originalDock", "logDock", "spellDock", "stylesDock"})
             closedShown += isOpen(dock) ? 0 : 1;
         QVERIFY(closedShown < 11);
         window()->close();

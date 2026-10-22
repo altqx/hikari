@@ -104,12 +104,13 @@ public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Log (NT1), 7: Spellchecker (PU6)
-    static constexpr int kPanelRegistry = 7;
+    // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Log (NT1), 7: Styles (TP1),
+    // 10: Spellchecker (PU6; 8 and 9 are PU2's and KE2's)
+    static constexpr int kPanelRegistry = 10;
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
-    // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original, Log, Spellchecker
+    // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original, Log, Styles, Spellchecker
     static const QStringList &panelIds();
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without
@@ -118,6 +119,12 @@ public:
 
     // After the shell built its default arrangement: what Reset layout returns to.
     Q_INVOKABLE void captureDefault();
+    // TP1 (#274): a preset whose arrangement the shell builds itself
+    // (Typesetting). The first time it is shown (applyPreset, Reset this
+    // layout) the default arrangement is restored and buildArrangement asks
+    // the shell to arrange it; what the shell built is the preset's from then
+    // on. Nothing is built at start, before anyone chooses it.
+    Q_INVOKABLE void buildsArrangement(const QString &name);
     // At start: the saved layout, if it validates and restores; false (with a
     // notice when a file was there) leaves the default arrangement.
     Q_INVOKABLE bool restoreSaved();
@@ -131,7 +138,8 @@ public:
     Q_INVOKABLE bool saveForQuit();
     Q_INVOKABLE bool resetLayout();
     // A built-in template (Editing, Timing, Translation, Typesetting) for the
-    // current tab: the default arrangement with the panels it leaves closed.
+    // current tab: its own arrangement (Typesetting's, buildsArrangement), else
+    // the default arrangement with the panels it leaves closed.
     Q_INVOKABLE bool applyPreset(const QString &name);
     // A preset's name as the user reads it.
     Q_INVOKABLE static QString presetLabel(const QString &name);
@@ -237,6 +245,9 @@ public:
 
 signals:
     void changed();
+    // TP1: arrange preset `name` now, from the default arrangement shown
+    // (buildsArrangement); the controller keeps what the handler leaves.
+    void buildArrangement(const QString &name);
     void focusWindowChanged();
     void menuHasFocusChanged();
     void modalOpenChanged();
@@ -318,6 +329,8 @@ private:
 
     QString m_file;
     QByteArray m_default;
+    QStringList m_builtPresets;                      // TP1: buildsArrangement
+    std::map<QString, QByteArray> m_presetPayloads; // their arrangements, once built
     QByteArray m_lastSaved;
     // The notices of the panel layout (restore failures: a layout chosen
     // after them answers them) and of the saved layouts (files kept aside,

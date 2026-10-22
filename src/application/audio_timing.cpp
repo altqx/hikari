@@ -141,10 +141,16 @@ bool AudioTiming::setMark(int ms)
     return !std::exchange(m_hasMark, true);
 }
 
-void AudioTiming::lostCapture()
+bool AudioTiming::lostCapture(int startMs, const AudioKaraokeMouse &kara)
 {
+    const bool carried = m_hold == 1 && kara.karaoke && m_startCarries;
+    if (m_hold == 1 && kara.karaoke && !m_startCarries) {
+        const auto fieldTime = [&](int ms) { return kara.fieldTime ? kara.fieldTime(ms) : ms; };
+        kara.karaoke->moveStart(fieldTime(m_startOrigin), fieldTime(startMs));
+    }
     m_hold = 0;
     m_holding = false;
+    return carried;
 }
 
 AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Selection &selection,
@@ -162,6 +168,7 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
     // more syllables; legacy then read and wrote past the syllable times.
     // Such an index reads and moves nothing.
     auto validGrab = [&] { return hasKara && m_grabbed >= 0 && m_grabbed < karaoke->count(); };
+    const auto fieldTime = [&](int ms) { return kara.fieldTime ? kara.fieldTime(ms) : ms; };
 
     // Is inside? (AUDIO_AUTO_FOCUS and the cursor are the display's)
     bool onScale = false;
@@ -255,8 +262,11 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
             } else if (std::abs(x - m_selStart) < 6) {
                 result.sizeCursor = true;
                 m_defCursor = false;
-                if (buttonDown)
+                if (buttonDown) {
                     m_hold = 1;
+                    m_startOrigin = selection.startMs;
+                    m_startCarries = rightDown;
+                }
             } else if (hasKara && y > 20) {
                 // A5: the syllables' boundaries (legacy's "yellow lines of karaoke")
                 m_grabbed = karaoke->boundaryAt(static_cast<int>(x), view);
@@ -307,10 +317,14 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 if (const auto letter =
                         karaoke->letterAt(static_cast<int>(x), view, selection.startMs, kara.measure)) {
                     std::tie(karaoke->hover, karaoke->character) = *letter;
-                    if (leftDown && karaoke->splitSyllable(karaoke->hover, karaoke->character, selection.startMs)) {
+                    // the time measured from the start the commit writes, as
+                    // the text is written (Codex)
+                    if (leftDown &&
+                        karaoke->splitSyllable(karaoke->hover, karaoke->character, fieldTime(selection.startMs))) {
                         // a click splits the syllable before the letter
                         karaoke->current = karaoke->hover;
                         result.commit = false; // Commit()
+                        result.keepView = true; // KA1-split-keeps-view
                     }
                     if (!m_defCursor) {
                         result.sizeCursor = false;
@@ -368,6 +382,10 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                     times[static_cast<std::size_t>(m_grabbed)] = std::max(prev, std::min(newpos, next));
                     karaoke->current = m_grabbed;
                 }
+                // KA1-lead-in-keeps-syllables: the start dragged with the left
+                // button leaves the syllables at their times
+                if (m_hold == 1 && hasKara && !m_startCarries)
+                    karaoke->moveStart(fieldTime(m_startOrigin), fieldTime(selection.startMs));
                 if (m_hold != 4)
                     result.commit = m_hold == 2;
                 m_hold = 0;
@@ -403,10 +421,12 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 if (hasKara && (event.rightHeld || rightDown)) {
                     auto &times = karaoke->times();
                     const int sizes = karaoke->count() - 1;
-                    const int addtime = snapped - selection.startMs;
+                    const int addtime = fieldTime(snapped) - fieldTime(selection.startMs);
+                    // by the committed difference alone: a start off the 10 ms
+                    // grid (a MicroDVD frame's) keeps the syllables' lengths
                     for (int i = 0; i < sizes; i++) {
                         auto &t = times[static_cast<std::size_t>(i)];
-                        t = legacyZeroIt(t + addtime);
+                        t += addtime;
                         if (t > times[static_cast<std::size_t>(i) + 1])
                             t = times[static_cast<std::size_t>(i) + 1];
                     }
@@ -488,6 +508,14 @@ int legacyFieldTime(core::SubtitleFormat format, int ms)
     return static_cast<int>(fieldPrecisionTime(format, ms));
 }
 
+int committedAudioTime(const core::Document &document, int ms)
+{
+    if (document.format() == core::SubtitleFormat::MicroDvd)
+        if (const auto frame = microDvdFieldTime(ms, document.frameRate()))
+            return static_cast<int>(frame->ms);
+    return legacyFieldTime(document.format(), ms);
+}
+
 namespace {
 
 constexpr std::int64_t kMarginMax = 9999;
@@ -560,10 +588,29 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
             fields.translation = core::toUtf8(*request.karaokeText);
         else
             fields.text = core::toUtf8(*request.karaokeText);
+    } else if (fields.start && session.selection().selected.size() < 2) {
+        // KA1-lead-in-keeps-syllables: a start the panel moves (Line mode,
+        // or Add lead-in) leaves the \k syllables at their audio times; with
+        // several Lines selected each would take this one's text, so they
+        // keep theirs (legacy)
+        const auto from = static_cast<int>(current.start.value.microseconds() / 1000);
+        const auto to = static_cast<int>(start.microseconds() / 1000);
+        const auto endMs = static_cast<int>(current.end.value.microseconds() / 1000);
+        if (const auto kept = karaokeKeepSyllables(core::toUtf16(current.text), from, to, endMs))
+            fields.text = core::toUtf8(*kept);
+        if (const auto kept = karaokeKeepSyllables(core::toUtf16(current.translation), from, to, endMs))
+            fields.translation = core::toUtf8(*kept);
     }
     if ((fields.start || fields.end || fields.startFrame || fields.endFrame || fields.text || fields.translation) &&
         !session.editDraft(*active, fields))
         return std::unexpected(session.isReadOnly() ? CommandRefusal::ReadOnly : CommandRefusal::Protected);
+    // KA1: what an active-only request writes into the draft (no
+    // AUDIO_AUTO_COMMIT) stays the active Line's when Commit sends it later:
+    // its text, and the times the draft did not hold (`current` is the
+    // draft's); a pending edit's other fields still go to every selected
+    // Line (Codex)
+    if (request.activeOnly && session.draftLine() == *active)
+        session.keepDraftFieldsToItsLine(fields);
 
     // The Line the Alt release moves (CopyDialogueWithOffset with the grid's active Line)
     std::optional<core::LineId> adjacent;
@@ -632,10 +679,13 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
                        marginRChanged || marginVChanged || commentChanged || layerChanged || styleChanged ||
                        actorChanged || effectChanged || framesChanged;
 
-    // SubsGrid::ChangeLine: one Line, or every selected Line with several selected
+    // SubsGrid::ChangeLine: one Line, or every selected Line with several
+    // selected; an active-only request's own fields go to the active Line
+    // alone (KA1: keepDraftFieldsToItsLine above), a pending edit's others
+    // to every selected Line (Codex)
     std::vector<core::LineId> targets;
     const auto &selected = session.selection().selected;
-    if (selected.size() < 2 || request.activeOnly) {
+    if (selected.size() < 2) {
         targets.push_back(*active);
     } else {
         for (const auto *l : lines)
@@ -665,6 +715,8 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     if (append)
         touches.insert(lines.back()->id);
     const auto saved = draft;
+    // KA1: the draft's fields kept to the active Line (keepDraftFieldsToItsLine)
+    const DraftChange own = record && session.draftOwnFields() ? *session.draftOwnFields() : DraftChange{};
     if (draft && draft->first == *active)
         session.discardDraft();
     std::optional<core::LineId> added;
@@ -677,34 +729,37 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
             moveAdjacent(d);
             for (const auto &target : targets)
                 d.editLine(target, [&](core::LineRecord &l) {
-                    if (textChanged)
+                    const bool other = target != *active;
+                    if (textChanged && !(other && own.text))
                         l.text = record->text;
-                    if (translationChanged)
+                    if (translationChanged && !(other && own.translation))
                         l.translation = record->translation;
-                    if (startChanged)
+                    if (startChanged && !(other && own.start))
                         l.start.value = record->start.value;
-                    if (endChanged)
+                    if (endChanged && !(other && own.end))
                         l.end.value = record->end.value;
-                    if (marginLChanged)
+                    if (marginLChanged && !(other && own.marginLeft))
                         l.marginLeft.value = std::clamp<std::int64_t>(record->marginLeft.value, 0, kMarginMax);
-                    if (marginRChanged)
+                    if (marginRChanged && !(other && own.marginRight))
                         l.marginRight.value = std::clamp<std::int64_t>(record->marginRight.value, 0, kMarginMax);
-                    if (marginVChanged)
+                    if (marginVChanged && !(other && own.marginVertical))
                         l.marginVertical.value =
                             std::clamp<std::int64_t>(record->marginVertical.value, 0, kMarginMax);
-                    if (commentChanged)
+                    if (commentChanged && !(other && own.comment))
                         l.comment = record->comment;
-                    if (layerChanged)
+                    if (layerChanged && !(other && own.layer))
                         l.layer.value = record->layer.value;
-                    if (styleChanged)
+                    if (styleChanged && !(other && own.style))
                         l.style = record->style;
-                    if (actorChanged)
+                    if (actorChanged && !(other && own.actor))
                         l.actor = record->actor;
-                    if (effectChanged)
+                    if (effectChanged && !(other && own.effect))
                         l.effect = record->effect;
                     if (framesChanged) {
-                        l.startFrame = record->startFrame;
-                        l.endFrame = record->endFrame;
+                        if (!(other && own.startFrame))
+                            l.startFrame = record->startFrame;
+                        if (!(other && own.endFrame))
+                            l.endFrame = record->endFrame;
                     }
                 });
             if (append) {

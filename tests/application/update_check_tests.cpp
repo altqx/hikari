@@ -168,6 +168,12 @@ TEST(UpdateCheck, AurChannel)
     EXPECT_FALSE(aurCarries(true, AurChannel::Stable));
     EXPECT_FALSE(aurCarries(true, std::nullopt));
     EXPECT_TRUE(aurCarries(false, std::nullopt));
+
+    // PU7 (#309): the command the update window gives to copy.
+    EXPECT_EQ(aurUpdateCommand("yay", AurChannel::Beta), "yay -Syu hikarisub-beta-bin");
+    EXPECT_EQ(aurUpdateCommand("paru", AurChannel::Stable), "paru -Syu hikarisub-stable-bin");
+    EXPECT_EQ(aurUpdateCommand("", AurChannel::Stable), "yay -Syu hikarisub-stable-bin");
+    EXPECT_EQ(aurUpdateCommand("paru", std::nullopt), "paru -Syu");
 }
 
 TEST(UpdateCheck, AssetNamesTagsAndHosts)
