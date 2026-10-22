@@ -421,6 +421,15 @@ bool runTurnsOn(const core::OriginalTags &tags, const core::TagRun &run, const s
     return ok && (weight == 1 || weight >= 600);
 }
 
+// A translation longer than Tags from original reads, which it takes as
+// plain text: no run is shown or placed in it. The UTF-8 size is checked
+// first, a UTF-16 unit being three bytes at most.
+bool pastTransferLimit(std::u8string_view translation)
+{
+    return translation.size() > 3 * core::kMaxTagTransferUnits
+           || core::toUtf16(translation).size() > core::kMaxTagTransferUnits;
+}
+
 // "#rrggbb" for a run that changes the primary colour (stored as BBGGRR).
 QString runColour(const core::TagRun &run)
 {
@@ -438,7 +447,8 @@ QVariantList LineEditorController::tagRuns() const
     QVariantList out;
     const auto tags = runTags();
     const auto real = sessionRecord();
-    if (!tags || !real)
+    if (!tags || !real || tags->runs.empty() || pastTransferLimit(real->translation)
+        || pastTransferLimit(record()->translation))
         return out;
     // Where each placed run's text is: in the whole translation, then in the field.
     std::vector<core::RunPlacement> landed;
@@ -503,7 +513,7 @@ bool LineEditorController::placeRun(int number, int selectionStart, int selectio
 {
     const auto tags = runTags();
     const auto real = sessionRecord();
-    if (!editable() || !tags || !real)
+    if (!editable() || !tags || !real || pastTransferLimit(real->translation))
         return false;
     // The field's selection as projection offsets: the same text in the
     // field's raw text and in the draft's body, whose run tags are taken out.
@@ -530,6 +540,17 @@ bool LineEditorController::placeRun(int number, int selectionStart, int selectio
         return false;
     if (!core::placeRun(draft.placements, start, end, number))
         return false;
+    // A run the reader would not find again (its tags past the reader's
+    // limits) would be left as the translator's own tags. Taking one off
+    // (the same selection again) needs no reading.
+    const auto isRun = [&](const core::RunPlacement &p) { return p.run == number; };
+    if (std::ranges::any_of(draft.placements, isRun)) {
+        const auto order = core::runOrder(draft.placements);
+        auto back = core::readTranslation(*tags, core::composeTranslation(*tags, draft), order);
+        core::relabelRuns(*tags, back, order);
+        if (std::ranges::none_of(back.placements, isRun))
+            return false;
+    }
     if (!saveTranslationDraft(*tags, std::move(draft)))
         return false;
     const auto after = core::project(core::toUtf16(record()->translation));
@@ -1648,10 +1669,11 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
                         if (c && !m_showTags) {
                             auto draft = translationDraft(c->tags, l);
                             if (draft.carried && !draft.placements.empty()) {
-                                const auto at = core::rawOffset(core::project(draft.body), shown, true);
-                                auto body = core::legacy::insertTagButtonTextAt(draft.body, static_cast<long>(at), text);
-                                core::shiftPlacements(draft.placements, at, at, body.size() - draft.body.size());
-                                draft.body = std::move(body);
+                                const auto body = core::project(draft.body);
+                                const auto at = core::rawOffset(body, std::min(shown, body.text.size()), true);
+                                auto inserted = core::legacy::insertTagButtonTextAt(draft.body, static_cast<long>(at), text);
+                                core::shiftPlacements(draft.placements, at, at, inserted.size() - draft.body.size());
+                                draft.body = std::move(inserted);
                                 composedBody(c->tags, draft, l.id);
                                 field = core::toUtf8(core::composeTranslation(c->tags, draft));
                                 return;
@@ -1663,9 +1685,11 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
                         const std::size_t lead = c ? std::min(c->tags.leading.size(), units.size()) : 0;
                         const std::size_t trail = c ? std::min(c->tags.trailing.size(), units.size() - lead) : 0;
                         std::size_t at = shown;
-                        if (!m_showTags)
-                            at = core::rawOffset(core::project(std::u16string_view(units).substr(lead, units.size() - lead - trail)),
-                                                 shown, true);
+                        if (!m_showTags) {
+                            const auto visible =
+                                core::project(std::u16string_view(units).substr(lead, units.size() - lead - trail));
+                            at = core::rawOffset(visible, std::min(shown, visible.text.size()), true);
+                        }
                         at = std::min(at + lead, units.size() - trail);
                         field = core::toUtf8(core::legacy::insertTagButtonTextAt(std::move(units), static_cast<long>(at), text));
                     }))

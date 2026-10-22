@@ -12003,6 +12003,71 @@ private slots:
         QCOMPARE(q8(after[0]->translation), QStringLiteral("a{\\i1}b{\\i0}c{\\be1}d"));
     }
 
+    // TM1: a caret past the end of another selected Line's shorter text
+    // inserts at its end, with or without runs placed in it.
+    void tagsFromOriginalSeveralLinesInsertPastAShorterText()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-several-short.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,y\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,,Gate\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,abcd\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("x"), 1);
+        QVERIFY(application->editor().placeRun(1, 0, 1));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}x{\\i0}"));
+        QVERIFY(application->editor().commit());
+        const auto lines = session->document().lines();
+        session->setSelection(
+            application::Selection{lines[2]->id, {lines[0]->id, lines[1]->id, lines[2]->id}, lines[2]->id, {}});
+        application->editor().reloadFromSession();
+        // After "abc" in the active Line: at the end of "x" and of "y".
+        QVERIFY(application->editor().applyTagButton(1, QStringLiteral("{\\be1}"), 2, 3, 3));
+        const auto after = session->document().lines();
+        QCOMPARE(q8(after[2]->translation), QStringLiteral("abc{\\be1}d"));
+        QCOMPARE(q8(after[1]->translation), QStringLiteral("y{\\be1}"));
+        QCOMPARE(q8(after[0]->translation), QStringLiteral("{\\i1}x{\\i0}{\\be1}"));
+    }
+
+    // TM1: a translation past what Tags from original reads takes no run:
+    // more tags than it reads keep a run from being placed, a longer text
+    // shows no runs at all.
+    void tagsFromOriginalPastTheReadersLimits()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-limits.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        QTRY_VERIFY(item("translationText")->hasActiveFocus());
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        // The field shows the text after the carried {\i1}.
+        const QString many = QStringLiteral("Mur wysoki{") + QStringLiteral("\\u1").repeated(1100) + QStringLiteral("}");
+        application->editor().translationEdited(many, many.size());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}") + many);
+        QVERIFY(!application->editor().placeRun(1, 0, 3));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}") + many);
+        QCOMPARE(application->editor().tagRuns().size(), 1);
+        const QString longer = QStringLiteral("Mur ").repeated(4200);
+        application->editor().translationEdited(longer, 3);
+        QVERIFY(application->editor().tagRuns().isEmpty());
+        QVERIFY(!application->editor().placeRun(1, 0, 3));
+    }
+
     // TM1: a karaoke Line carries its leading tags without its \k timing,
     // and says so under the Translated text.
     void tagsFromOriginalOnAKaraokeLine()
