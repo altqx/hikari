@@ -15,12 +15,27 @@
 // the video's time. Each slider release, track click or wheel step is one
 // history step ("Hydra"), and the tool keeps its state afterwards, as legacy
 // (Visuals::SetVisual sent it with the visual dummy flag).
+//
+// HY1 (#271): the sliders leave the video for the inspector strip. The
+// change option is a switch (Set, Add, Multiply, Gradient) with the rest
+// beside it (Set's placing, Multiply's two ways, the four gradients), and
+// the values say what they do: Set's Value, Add's By, Multiply's Start and
+// Per line, a gradient's From and To. Typing one (Enter) applies the change
+// as one step; a drag sideways anywhere on the video changes the marked one
+// (◆) with a live preview and applies it on release; the wheel steps it.
+// The legacy engine writes the tags: the values are put on its sliders
+// (Set: the thumb; Add: the thumb By past the Line's value; Multiply and the
+// gradients: Per line or To - From as the thumb's move, Start or From as the
+// base). The picked Lines are outlined and numbered on the video, and the
+// last change can be done again with other values in place of its step.
+// The legacy sliders stay for the T6 probe's replay (setLegacySliders).
 
 #include "hikari/application/all_tags.h"
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_transform.h"
 
 #include <array>
+#include <cstdint>
 #include <optional>
 #include <string>
 #include <vector>
@@ -51,6 +66,25 @@ public:
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
+    std::vector<ToolValue> values(const VisualHost &host) const override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                  ValueEdit edit = ValueEdit::Commit) override;
+    bool markValue(const std::string &name, VisualHost &host) override;
+    void targetsChanged(VisualHost &host) override;
+    std::optional<LastChange> lastChange(const VisualHost &host) const override;
+    bool editLastChange(const std::string &name, const std::u16string &text, VisualHost &host) override;
+    void dismissLastChange() override { m_last.reset(); }
+
+    // HY1: the switch's entries, and which one a legacy change option is
+    // (Insert: Set; Multiply, Multiply+: Multiply; the gradients: Gradient).
+    enum class Change { Set, Add, Multiply, Gradient };
+    static Change changeOf(int pasteMode);
+    // HY1: the tag list's sections (Common, More, Your tags) by definition,
+    // and its order (Shift+wheel steps through it).
+    std::vector<int> sectionsOf(const VisualHost &host) const;
+    std::vector<int> listOrder(const VisualHost &host) const;
+    // The T6 probe's replay drives legacy's sliders over the video.
+    void setLegacySliders(bool on) { m_legacySliders = on; }
 
     // AllTagsItem::GetItemToggled: the change option << 20 plus the list's
     // selection (default: Insert, the first definition).
@@ -99,17 +133,90 @@ private:
     bool sliderMouse(int index, const Pointer &event, VisualHost &host);
     void drawSlider(Overlay &out, const VisualHost &host, const Slider &slider) const;
     float diffValue(const Slider &slider) const; // GetDiffValue
-    // Visuals::SetVisual(dummy) through a gesture.
-    void setVisual(bool dummy, VisualHost &host);
+    // Visuals::SetVisual(dummy) through a gesture: false when nothing was
+    // staged (dummy) or committed.
+    bool setVisual(bool dummy, VisualHost &host);
     bool beginEdit(VisualHost &host);
     bool finishEdit(VisualHost &host);
-    bool several(VisualHost &host) const; // EditBox::IsCursorOnStart
+    bool several(const VisualHost &host) const; // EditBox::IsCursorOnStart
+    std::vector<core::LineId> targetsFor(const VisualHost &host) const;
+    // The Lines a change edits: several picked ones less those the Grid
+    // hides (the last change's own, unfiltered, when it is done again).
+    std::vector<core::LineId> editedTargets(const VisualHost &host) const;
+    // The active Line is a comment or not shown: the controller takes no
+    // pointer events then, and the strip's values write nothing either.
+    bool blocked(const VisualHost &host) const;
+    void legacyPointer(const Pointer &event, VisualHost &host);
+    bool legacyKey(const Key &event, VisualHost &host);
+
+    // HY1: the strip's values. Set's, Start/From and To follow the active
+    // Line's value until typed (`base`); By and Per line start at 0.
+    struct Fields {
+        std::array<std::optional<float>, 4> set, start, to;
+        std::array<float, 4> by{}, perLine{};
+    };
+    int valueCount() const;
+    std::u16string valueText(float value) const;
+    void readBase(VisualHost &host);
+    float field(const Fields &f, const std::string &name, int mode) const;
+    bool putField(Fields &f, const std::string &name, float value) const;
+    std::string markedName() const;
+    bool isMove(const std::string &name) const;
+    std::vector<ToolValue> valuesOf(const Fields &f, int mode, const std::array<float, 4> &base,
+                                    const std::string &marked, bool editable) const;
+    // The values on legacy's sliders; then the change staged (preview) or
+    // committed as one step (true when a step was recorded).
+    void load(const Fields &f);
+    bool run(const Fields &f, bool commit, VisualHost &host);
+    void forgetValues();
+    // The change just committed as the last change card's (its Lines as
+    // edited, the values before it).
+    void remember(const Fields &f, const std::array<float, 4> &base, std::pair<long, long> caret, VisualHost &host);
+    void dropDrag(VisualHost &host);
     void takeView(const VideoView &view);
     const std::vector<AllTagsSetting> &tags(const VisualHost &host) const;
 
     // AllTagsItem's state.
     int m_listSelection = 0;
     int m_listMode = PasteInsert;
+
+    // HY1.
+    bool m_legacySliders = false;
+    Fields m_fields;
+    std::optional<Fields> m_sample; // a drag's or a scrub's, until it ends
+    std::array<float, 4> m_base{};
+    std::string m_marked;
+    struct Drag {
+        int x = 0, y = 0, atX = 0, atY = 0;
+        std::string name;
+        float from = 0;
+        bool active = false;
+    };
+    std::optional<Drag> m_drag;
+    struct Last {
+        int tag = 0;
+        int mode = 0;
+        Fields fields;
+        std::array<float, 4> base{};
+        std::vector<core::LineId> targets;
+        std::pair<long, long> caret;
+        std::uint64_t revision = 0;
+        std::optional<core::LineId> active;
+        const EditSession *session = nullptr; // another tab's revision can be the same
+    };
+    std::optional<Last> m_last;
+    std::optional<std::vector<core::LineId>> m_forcedTargets; // the last change's, done again
+    // The outlines of the Lines shown, kept until what they depend on changes.
+    struct Outlines {
+        std::uint64_t revision = 0;
+        std::int64_t time = -1;
+        std::vector<core::LineId> targets;
+        std::u8string draft; // the active Line's draft as the video shows it (its fields that place it)
+        float coeffW = 0, coeffH = 0;
+        PointF zoomMove, zoomScale;
+        Overlay overlay;
+    };
+    mutable std::optional<Outlines> m_outlines;
 
     // Visuals members.
     float m_coeffW = 1, m_coeffH = 1;
