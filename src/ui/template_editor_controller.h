@@ -135,8 +135,10 @@ public:
     // The host may have changed: a preview made under another state runs
     // again.
     void hostChanged();
-    // A karaoke templater run was applied (its report).
-    void applied(const std::string &report);
+    // A karaoke templater run was applied (its report) on the Document
+    // `ranOn` (the current one when not given); another's is taken when
+    // that one is current again.
+    void applied(const std::string &report, std::optional<DocumentKey> ranOn = std::nullopt);
     // The milliseconds to wait after an edit before a preview, and before
     // the edit goes into the Document as one undo step.
     void setDelays(int previewMs, int commitMs);
@@ -359,6 +361,7 @@ private:
     // saw the Document), per Document: another tab's visit keeps them.
     std::map<DocumentKey, std::map<core::LineId, std::string>> m_baselines;
     bool m_sourceUnknown = false;
+    std::map<DocumentKey, std::string> m_appliedElsewhere; // reports of Applies run on other tabs
     QVariantMap m_lastApply;
     QVariantMap m_values;
 };

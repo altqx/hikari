@@ -429,6 +429,12 @@ void TemplateEditorController::refresh()
     }
     if (!m_baselines.contains(documentKey()))
         takeBaseline(); // first seen, or reloaded
+    if (const auto it = m_appliedElsewhere.find(documentKey()); it != m_appliedElsewhere.end()) {
+        // Its Apply finished while another tab was shown.
+        const std::string report = std::move(it->second);
+        m_appliedElsewhere.erase(it);
+        applied(report);
+    }
     const auto &doc = s->document();
     // The current template follows the active Line when that is one.
     const auto active = s->selection().active;
@@ -1098,8 +1104,12 @@ bool TemplateEditorController::apply(bool selectedOnly)
     return m_templater->apply(selectedOnly);
 }
 
-void TemplateEditorController::applied(const std::string &report)
+void TemplateEditorController::applied(const std::string &report, std::optional<DocumentKey> ranOn)
 {
+    if (ranOn && *ranOn != documentKey()) {
+        m_appliedElsewhere[*ranOn] = report; // taken when it is current again
+        return;
+    }
     const QJsonObject o = reportOf(report);
     const auto *doc = document();
     if (o.isEmpty() || !doc)

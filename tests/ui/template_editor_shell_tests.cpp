@@ -444,7 +444,8 @@ private slots:
     }
 
     // Apply's report belongs to the Document it ran on: a tab chosen while
-    // the run goes on shows no Apply of its own.
+    // the run goes on shows no Apply of its own, and the tab it ran on shows
+    // it once chosen again.
     void applyOnAnotherTabLeavesThisTabsSummary()
     {
         QVERIFY(openSong("km-minimal.ass", false));
@@ -464,6 +465,12 @@ private slots:
         QVERIFY(editor().lastApply().isEmpty());
         QTest::qWait(100);
         QVERIFY(!textOf(QStringLiteral("templateStatus")).startsWith(QStringLiteral("Applied: ")));
+        // Back on the tab it ran on, its Apply is there: the summary, and
+        // nothing changed since.
+        application->selectTab(1);
+        QTRY_VERIFY(!editor().lastApply().isEmpty());
+        QCOMPARE(editor().changedCount(), 0);
+        QVERIFY(editor().trusted());
     }
 
     // For review: the panel beside the video in the four themes; a problem;

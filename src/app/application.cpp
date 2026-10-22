@@ -574,12 +574,13 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             showVideoSubtitles();
     });
     // The report is the run's Document's: another tab chosen meanwhile
-    // keeps its own.
+    // keeps its own, and the run's shows it once chosen again.
     connect(m_automation.get(), &AutomationShell::karaokeApplied, this,
             [this](quint64 document, const QByteArray &report) {
-                const auto target = m_workspace.editingTarget();
-                if (target && target->value == document)
-                    m_templateEditor->applied(report.toStdString());
+                const application::DocumentId id{document};
+                if (m_files->session(id))
+                    m_templateEditor->applied(report.toStdString(),
+                                              ui::TemplateEditorController::DocumentKey{document, m_files->generation(id)});
             });
     connect(m_automation.get(), &AutomationShell::progressChanged, m_templateEditor.get(),
             [this] { m_templateEditor->refresh(); });
