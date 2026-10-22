@@ -3283,7 +3283,12 @@ private slots:
         catalogs.renderSample(font("HikariAttachedTest"), QStringLiteral("HH"), true, 300, 80);
         const QImage attached = catalogs.sample();
         catalogs.renderSample(font("HikariNoSuchFamily"), QStringLiteral("HH"), true, 300, 80);
-        QVERIFY(attached != catalogs.sample()); // not the fallback face
+        const QImage fallback = catalogs.sample();
+        QVERIFY(attached != fallback); // not the fallback face
+        // A family with a comma is named by an \\fn override, not in the
+        // comma-separated Style line: the same fallback, nothing shifted.
+        catalogs.renderSample(font("HikariNoSuch, Family"), QStringLiteral("HH"), true, 300, 80);
+        QCOMPARE(catalogs.sample(), fallback);
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         QTRY_VERIFY(!picker->property("visible").toBool());
         catalogs.waitResolved();
@@ -3848,6 +3853,19 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
         QVERIFY(!catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Impact")));
         QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Arial")));
+        // The file's names for one catalog in other cases are one row (one
+        // catalog): Replace gives B the fonts of both, the one B already had too.
+        const QString aliases = catalogFile("alias-catalogs.txt", "B={\n\tTahoma\n}\nb={\n\tArial\n}\n");
+        QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(aliases))));
+        QTRY_VERIFY(review->property("visible").toBool());
+        QCOMPARE(review->property("rows").toList().size(), 1);
+        QCOMPARE(review->property("rows").toList()[0].toMap().value(QStringLiteral("difference")).toString(), QStringLiteral("1 here, +1 new"));
+        QVERIFY(QMetaObject::invokeMethod(review, "setAll", Q_ARG(QVariant, QStringLiteral("replace"))));
+        QVERIFY(QMetaObject::invokeMethod(review, "finish", Q_ARG(QVariant, true)));
+        QCOMPARE(catalogs.catalogSize(QStringLiteral("B")), 2);
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Tahoma")));
+        QVERIFY(catalogs.isFontInCatalog(QStringLiteral("B"), QStringLiteral("Arial")));
+        catalogs.setFontsInCatalog(QStringLiteral("B"), {QStringLiteral("Tahoma")}, false);
         // A file with no catalog in it: a warning, nothing loaded.
         const QString empty = catalogFile("no-catalogs.txt", "nothing here\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(empty))));
@@ -3858,7 +3876,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(cased))));
         QCOMPARE(catalogs.catalogNames(), (QStringList{"A", "B", "a (2)", "D", "N"}));
         QCOMPARE(catalogs.catalogSize(QStringLiteral("N")), 2);
-        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 2 font catalogs|From cased-catalogs.txt: 1 new, 1 merged."));
+        QCOMPARE(lastNotice(), QStringLiteral("Load font catalogs|Loaded 1 font catalog|From cased-catalogs.txt: 1 new."));
         // Loaded into an empty list: the first catalog is chosen. (The last
         // deleted while Show is "In …": every font is shown again.)
         window->setProperty("show", 1);

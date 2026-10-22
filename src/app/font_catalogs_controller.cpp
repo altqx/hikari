@@ -65,6 +65,17 @@ QString rendererText(QString plain)
     return plain.trimmed();
 }
 
+// The family for a preview: the Style's Fontname, or, when it holds a
+// comma (the Style line is comma-separated), an \\fn override before the
+// text, as the picker's tag names it on a Line.
+QString withFamily(core::StyleValues &style, const QString &family, const QString &text)
+{
+    if (family.contains(QLatin1Char(',')))
+        return QStringLiteral("{\\fn") + family + QLatin1Char('}') + text;
+    style.fontname = core::toUtf8(u16(family));
+    return text;
+}
+
 // FontCatalogList's preview Style (FontCatalogList.cpp:191).
 constexpr char8_t kFontPreviewStyle[] = u8"Style: FontPreview,Arial,80,&H00FFFFFF,&HFF0000FF,&H00301946,&H7A301946,-1,0,"
                                         u8"0,0,100,100,1.13208,0,1,3.5,0,2,120,120,40,1";
@@ -357,6 +368,20 @@ QVariantMap FontCatalogsController::reviewCatalogFile(const QUrl &file)
     // A header with no '=' parses as a catalog with no name (LoadCatalogs):
     // nothing could choose or manage it, so it is not loaded.
     std::erase_if(m_reviewed, [](const auto &c) { return c.name.empty(); });
+    // The file's names for one catalog in other cases are one catalog, as
+    // here: their fonts gathered under the first name.
+    std::vector<application::FontCatalogs::Catalog> one;
+    for (auto &c : m_reviewed) {
+        const auto it = std::find_if(one.begin(), one.end(), [&](const auto &o) { return application::sameNoCase(o.name, c.name, kLower); });
+        if (it == one.end()) {
+            one.push_back(std::move(c));
+            continue;
+        }
+        for (auto &font : c.fonts)
+            if (std::find(it->fonts.begin(), it->fonts.end(), font) == it->fonts.end())
+                it->fonts.push_back(std::move(font));
+    }
+    m_reviewed = std::move(one);
     QVariantList rows;
     QStringList names;
     int same = 0;
@@ -489,11 +514,10 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
     if (width < 1 || height < 1)
         return;
     core::StyleValues style = core::legacy::decodeStyle(kFontPreviewStyle, false);
-    style.fontname = core::toUtf8(u16(font));
     // The preview text's characters only: an override in it ({\\fn…},
     // {\\b0}) would draw another face than the one the note names.
-    m_preview = renderStylePreview(m_renderer, style, width, height, rendererText(samplePlain(previewText(), true)),
-                                   externalFontLeases());
+    const QString text = withFamily(style, font, rendererText(samplePlain(previewText(), true)));
+    m_preview = renderStylePreview(m_renderer, style, width, height, text, externalFontLeases());
     ++m_previewKey;
     emit previewChanged();
 }
@@ -575,7 +599,6 @@ void FontCatalogsController::renderSample(const QVariantMap &font, const QString
     if (width < 1 || height < 1)
         return;
     core::StyleValues style = core::legacy::decodeStyle(kFontPreviewStyle, false);
-    style.fontname = core::toUtf8(u16(font.value(QStringLiteral("name")).toString()));
     // The size as written, kept between legacy's preview bounds (6 to 64).
     const double size = std::clamp(font.value(QStringLiteral("size")).toString().toDouble(), 6.0, 64.0);
     style.fontsize = core::toUtf8(u16(QString::number(size)));
@@ -583,7 +606,7 @@ void FontCatalogsController::renderSample(const QVariantMap &font, const QString
     style.italic = font.value(QStringLiteral("italic")).toBool();
     style.underline = font.value(QStringLiteral("underline")).toBool();
     style.strikeOut = font.value(QStringLiteral("strikeOut")).toBool();
-    const QString plain = rendererText(samplePlain(text, ass));
+    const QString plain = withFamily(style, font.value(QStringLiteral("name")).toString(), rendererText(samplePlain(text, ass)));
     // The fonts as the Line's renderer has them: the Document's attached
     // fonts, then the external ones.
     std::vector<application::FontLease> fonts = m_hooks.documentFonts ? m_hooks.documentFonts() : std::vector<application::FontLease>();
