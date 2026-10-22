@@ -11,6 +11,10 @@ import Hikari.Ui
 // Document; the recent subtitles with their last-opened time, a missing file
 // kept, marked and removable; and a column for SH3's What's new. There is no
 // Home tab: the page goes when a Document opens.
+// PU1 (#303, PU1-startup-cards): the startup offer (StartupOffer.qml) takes
+// the Last session row's place as a card: after a crash, Restore session and
+// Autosaves… with × to dismiss; with On start: Ask, Restore and "Restore it at
+// every start".
 FocusScope {
     id: home
     required property var app
@@ -19,6 +23,9 @@ FocusScope {
     // The height of the empty space right above the page (the Document tab
     // bar, kept while Home shows).
     property real spaceAbove: 0
+    // PU1: the startup offer, shown as the card while active.
+    property StartupOffer offer: null
+    readonly property bool offerShown: offer !== null && offer.active
     // The clock "Today" and "Yesterday" count from; tests set it.
     property date now: new Date()
 
@@ -26,6 +33,7 @@ FocusScope {
     signal openRequested()
     signal openVideoRequested()
     signal restoreRequested()
+    signal autosavesRequested()
     signal recentChosen(string path)
 
     property var rows: []
@@ -159,10 +167,90 @@ FocusScope {
                 Layout.fillHeight: true
                 spacing: 16
 
+                // PU1-startup-cards: the startup offer, where the Last session row is.
+                Rectangle {
+                    id: offerCard
+                    objectName: "homeOffer"
+                    visible: home.offerShown
+                    readonly property bool crash: home.offerShown && home.offer.kind === "crash"
+                    Layout.fillWidth: true
+                    implicitHeight: offerRow.implicitHeight + 28
+                    color: Theme.panel
+                    border.color: crash ? Theme.warning : Theme.line
+                    Accessible.role: Accessible.Grouping
+                    Accessible.name: offerTitle.text
+                    RowLayout {
+                        id: offerRow
+                        anchors.fill: parent
+                        anchors.leftMargin: 14
+                        anchors.rightMargin: 8
+                        anchors.topMargin: 14
+                        anchors.bottomMargin: 14
+                        spacing: 14
+                        Icon {
+                            iconRole: offerCard.crash ? "notice-warning" : "last-session"
+                            color: offerCard.crash ? Theme.warning : IconTheme.normal
+                            accentColor: offerCard.crash ? Theme.warning : IconTheme.accent
+                            size: 32
+                            Layout.alignment: Qt.AlignTop
+                        }
+                        ColumnLayout {
+                            spacing: 4
+                            Layout.fillWidth: true
+                            Label {
+                                id: offerTitle
+                                objectName: "homeOfferTitle"
+                                text: home.offerShown ? home.offer.title : ""
+                                font.bold: true
+                                Layout.fillWidth: true
+                                wrapMode: Text.Wrap
+                            }
+                            Label {
+                                objectName: "homeOfferDetail"
+                                text: home.offerShown ? home.offer.detail : ""
+                                color: Theme.muted
+                                wrapMode: Text.Wrap
+                                Layout.fillWidth: true
+                            }
+                            RowLayout {
+                                spacing: 8
+                                Layout.topMargin: 6
+                                PrimaryButton {
+                                    objectName: "homeOfferRestore"
+                                    visible: home.offerShown && home.offer.restorable
+                                    text: offerCard.crash ? qsTr("Restore session") : qsTr("Restore")
+                                    Accessible.description: offerTitle.text
+                                    onClicked: home.offer.restore()
+                                }
+                                Button {
+                                    objectName: "homeOfferAutosaves"
+                                    visible: offerCard.crash && home.offer.autosaveCount > 0
+                                    text: qsTr("Autosaves…")
+                                    onClicked: home.autosavesRequested()
+                                }
+                                CheckBox {
+                                    objectName: "homeOfferAlways"
+                                    visible: home.offerShown && home.offer.kind === "ask"
+                                    text: qsTr("Restore it at every start")
+                                    onToggled: home.offer.setRestoreAlways(checked)
+                                }
+                            }
+                        }
+                        IconToolButton {
+                            objectName: "homeOfferDismiss"
+                            visible: offerCard.crash
+                            iconRole: "tab-close"
+                            text: qsTr("Dismiss")
+                            Layout.alignment: Qt.AlignTop
+                            onClicked: home.offer.end()
+                        }
+                    }
+                }
+
                 // The last Session, when it has a Document to restore.
                 Rectangle {
                     objectName: "homeSession"
-                    visible: home.sessionNames.length > 0
+                    visible: home.sessionNames.length > 0 && !home.offerShown
                     Layout.fillWidth: true
                     implicitHeight: sessionRow.implicitHeight + 20
                     color: Theme.panel

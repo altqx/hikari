@@ -50,6 +50,13 @@ public:
     // The window opened or the editing target changed (LoadAssStyles): the
     // catalog named by "Last Style Storage" becomes current when it exists.
     Q_INVOKABLE void refreshLists();
+    // TP1 (#274): the Styles panel's rows, the editing target's Styles in
+    // order: {name, font, size, bold, italic, primary, outline (QColor, the
+    // ASS alpha as opacity), lines (how many Lines use it)}.
+    Q_INVOKABLE QVariantList panelRows() const;
+    // The editing target or one of its Lines changed (Application::refreshViews);
+    // `available` is notified when the target now has ASS Styles or no longer has.
+    void documentEdited();
     Q_INVOKABLE bool chooseCatalog(const QString &name);
     Q_INVOKABLE bool createCatalog(const QString &name); // NewCatalog
     Q_INVOKABLE bool deleteCatalog(const QString &name);
@@ -101,6 +108,9 @@ public:
 signals:
     void changed();
     void previewChanged();
+    // TP1: the Styles panel reads panelRows() again; `retargeted` when the
+    // editing target is another Document than last time.
+    void documentChanged(bool retargeted);
 
 private:
     struct Edit {
@@ -119,6 +129,8 @@ private:
     backends::LibassRenderer m_renderer;
     QImage m_preview;
     int m_previewKey = 0;
+    bool m_available = false; // as last notified by documentEdited
+    const application::EditSession *m_notifiedTarget = nullptr; // ditto
 };
 
 // StylePreview: `style` at alignment 5 over the checkered background, the

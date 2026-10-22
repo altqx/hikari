@@ -134,6 +134,9 @@ class MainWindowFrame : public QObject {
     // Whether the window can be resized and maximised (a dialog's choice,
     // DialogFrame; the main window always can).
     Q_PROPERTY(bool resizable READ resizable WRITE setResizable NOTIFY resizableChanged FINAL)
+    // PU7 (#309): whether the window system's frame offers Close (a
+    // dialog's choice: false for a wait it cannot end).
+    Q_PROPERTY(bool closable READ closable WRITE setClosable NOTIFY closableChanged FINAL)
     // A dialog's frame (DialogFrame): no Minimise, and no Alt handling.
     Q_PROPERTY(bool dialog READ dialog CONSTANT FINAL)
 public:
@@ -165,6 +168,8 @@ public:
     bool altHeld() const { return m_altHeld; }
     bool resizable() const { return m_resizable; }
     void setResizable(bool resizable);
+    bool closable() const { return m_closable; }
+    void setClosable(bool closable);
     bool dialog() const { return m_dialog; }
 
     // What the title bar has at `position` (window coordinates): a control
@@ -191,6 +196,7 @@ signals:
     void windowMenuRequested(QPointF position);
     void altHeldChanged();
     void resizableChanged();
+    void closableChanged();
     // Alt pressed and released with nothing between: the menus take the
     // keyboard. The release goes no further (on Windows Qt's menu bar would
     // take it too, and the system would enter its menu mode).
@@ -218,6 +224,7 @@ private:
     bool m_altHeld = false;
     bool m_altAlone = false;
     bool m_resizable = true;
+    bool m_closable = true;
     const bool m_dialog = false;
     std::unique_ptr<windowframe::NativeFrame> m_native;
 };

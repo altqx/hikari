@@ -70,6 +70,7 @@
 #include <QTimer>
 #include <QObject>
 #include <QUrl>
+#include <QFileInfo>
 #include <QVariantMap>
 
 #include <functional>
@@ -221,9 +222,13 @@ public:
     // Close review (P1; accepted L58-write-close). `then` is "close" (the
     // editing target), "new" (replace it with an Untitled Document, legacy
     // "Remove subtitles from the editor") or "quit" (every Document). Returns
-    // one row per Document with unsaved work: {id, title, untitled}. With
-    // none, call finishClose() to carry `then` out at once.
+    // one row per Document with unsaved work: {id, title, untitled, folder
+    // (its file's, native; "" when untitled)}. With none, call finishClose()
+    // to carry `then` out at once.
     Q_INVOKABLE QVariantList reviewClose(const QString &then);
+    // PU1-unsaved-window: the `then` of the review in progress ("" without
+    // one), so the window and its buttons name the command that asked.
+    Q_INVOKABLE QString closeKind() const { return m_closeThen; }
     // One choice per row: {id, save: bool, path: Save As destination for an
     // Untitled Document}. Save commits the draft and writes; Discard drops the
     // draft. Nothing is closed until every save is acknowledged Written, and a
@@ -306,11 +311,30 @@ public:
     // Reloads the editing target from its file with fresh history; a failed
     // or stale reload keeps the Document as it is (L58-staged-replacement).
     Q_INVOKABLE bool reloadTarget();
+    // PU1-disk-change-bar: Keep mine (and Save over it) for the Document `id`
+    // (0: the editing target): its next save writes over the change shown.
+    Q_INVOKABLE bool acceptFileOnDisk(qulonglong id);
+    // PU1-disk-change-bar: the changed-on-disk bar's Compare. The editing
+    // target's file, as it is on disk now, opens as the protected reference
+    // (read only, so neither copy can be saved over the other) and Subtitle
+    // comparison compares the two; false when it could not be read.
+    Q_INVOKABLE bool compareWithFileOnDisk();
 
     // Saves the editing target to a new destination (GLOBAL_SAVE_SUBS_AS).
     Q_INVOKABLE bool saveAs(const QString &path);
     Q_INVOKABLE bool saveAsUrl(const QUrl &url) { return saveAs(url.toLocalFile()); }
     Q_INVOKABLE QString localPath(const QUrl &url) const { return url.toLocalFile(); }
+    // PU1-picker-titles: the URL of the folder a file is in, for the
+    // pickers' remembered folders ("" for anything but a local file, or a
+    // folder that does not exist).
+    Q_INVOKABLE QUrl fileUrl(const QString &path) const { return QUrl::fromLocalFile(path); }
+    Q_INVOKABLE QString folderOf(const QUrl &file) const
+    {
+        if (!file.isLocalFile())
+            return {};
+        const QString folder = QFileInfo(file.toLocalFile()).absolutePath();
+        return QFileInfo(folder).isDir() ? QUrl::fromLocalFile(folder).toString() : QString();
+    }
     // The editing target has no file yet (its first save needs Save As).
     Q_INVOKABLE bool targetUntitled() const;
     // P7: legacy HikariSubFrame::Save. saveRoute is "dialog" when Save asks
@@ -416,6 +440,10 @@ public:
     // PK1's Choose styles: the lines that use each style (by name), the
     // target's styles first at 0.
     Q_INVOKABLE QVariantMap styleLineCounts() const;
+    // TP1 (#274): the Styles panel's Select Lines with this Style: the
+    // editing target's shown Lines using `style` become the selection, the
+    // first of them active unless the active Line is one. False when none.
+    Q_INVOKABLE bool selectLinesWithStyle(const QString &style);
     // P3: autosave recovery. Bundles left by a session that ended without
     // closing cleanly: {key, title, original, written, generations:[{generation, written}]}.
     Q_INVOKABLE QVariantList recoveryBundles() const;
@@ -682,12 +710,21 @@ public:
     // once and loads the conversion catalog, as legacy does.
     Q_INVOKABLE QVariantMap openSettingsDialog();
     // OK/Apply (legacy SetOptions): each bound control whose value differs
-    // from the stored one is written; nothing else.
-    Q_INVOKABLE void applySettings(const QVariantMap &values);
-    // "Set default" (legacy ResetDefault): every setting at once, even if the
-    // dialog is then cancelled; returns the controls' state as legacy
-    // refreshes them (its defects included).
+    // from the stored one is written; nothing else. `resetAll`: "Reset all
+    // settings…" was chosen since the last OK or Apply, and every setting
+    // but the appearance, the hotkeys and the recent files goes back to its
+    // default first (legacy ResetDefault, PF1-staged-reset).
+    Q_INVOKABLE void applySettings(const QVariantMap &values, bool resetAll = false);
+    // "Reset all settings…": the controls' state at the defaults, as legacy
+    // ResetDefault refreshes them (its defects included); nothing is
+    // stored until OK or Apply (PF1-staged-reset).
     Q_INVOKABLE QVariantMap resetSettings(const QVariantMap &values);
+    // "Reset page": `values` with the page's controls at their defaults
+    // (page: an OptionsPage id, "general", "appearance", ...); staged too.
+    Q_INVOKABLE QVariantMap resetSettingsPage(const QVariantMap &values, const QString &page);
+    // The conversion catalog's Styles as the dialog lists them (after a
+    // Reset page on Conversion loaded the default catalog).
+    Q_INVOKABLE QStringList settingsStyles() const;
     // OnChangeCatalog: loads the catalog and returns {values, styles}.
     Q_INVOKABLE QVariantMap chooseSettingsCatalog(const QVariantMap &values, int index);
     // wxDirDialog::GetPath: the chosen folder with native separators.
@@ -877,6 +914,19 @@ public:
     // names when the last session has no Document with a file.
     Q_INVOKABLE QVariantMap lastSessionSummary() const;
     Q_INVOKABLE bool lastSessionCrashed() const;
+    // PU1-startup-cards: what the start offers instead of legacy's prompts,
+    // as a Home card, or as the startup bar when files were opened from the
+    // command line (legacy asked nothing then): "crash" (the last session did
+    // not end with "[Close session]", or autosaved work was left), "ask"
+    // (On start: Ask), or "". It asks nothing and holds nothing back.
+    Q_INVOKABLE QString startupOffer() const;
+    // The offer is about the last session as it was when this program
+    // started (a start with files writes the session before the window
+    // shows): its Documents' names (as lastSessionSummary's), and Restore's
+    // review (as reviewSession's).
+    Q_INVOKABLE QStringList startupOfferNames() const;
+    Q_INVOKABLE QVariantMap reviewStartupSession();
+    Q_INVOKABLE bool startedWithPaths() const { return m_startedWithPaths; }
     void setStartedWithPaths(bool paths) { m_startedWithPaths = paths; }
     // The unresolved entry `row`: try again, choose another file, or forget it.
     Q_INVOKABLE bool retryRestore(int row);
@@ -912,7 +962,7 @@ public:
     // finishClose() closes them all and the Home page shows (SH2).
     Q_INVOKABLE QVariantList reviewCloseAll();
     // P9: GLOBAL_OPEN_AUTO_SAVE's legacy autosaves (the Subs folder, read
-    // only): [{name, versions: [{written, file}]}], and the Files list's
+    // only): [{name, versions: [{written, time (ISO), file}]}], and the Files list's
     // filter (AutoSaveOpen::FindFiles: the names to show, by index).
     Q_INVOKABLE QVariantList legacyAutosaves();
     Q_INVOKABLE QVariantList filterLegacyAutosaves(const QVariantList &files, const QString &query, bool allWords) const;
@@ -987,6 +1037,14 @@ signals:
     void tabShown(int scroll);
     // A session finished loading with `unresolved` entries left.
     void sessionRestored(int unresolved);
+    // A write of the Document finished written (PU1-disk-change-bar: a Save
+    // As ends the bar only then).
+    void documentWritten(qulonglong document);
+    // A write of a Document that published nothing (failed or cancelled).
+    void documentWriteFailed(qulonglong document);
+    // WS5: a later start handed files over, about to open (PU1-startup-cards:
+    // they end the startup offer).
+    void filesForwarded();
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
@@ -1104,8 +1162,22 @@ private:
     // destination when the same-named video is looked for (offerAssociations).
     std::set<std::uint64_t> m_lyricsImports;
     bool m_keepVideoOnEnter = false; // replaceTarget(keepMedia) until the tab is entered
+    // PU1-mkv-notices: the editing target and its revision when a load
+    // began; a load that would replace a Document changed (or left) since
+    // then opens in a new tab instead.
+    std::optional<application::DocumentId> m_matroskaTarget;
+    std::uint64_t m_matroskaRevision = 0;
+    QString m_matroskaVideo; // the tab's video when the read started
+    QString m_matroskaRequested; // and the video last asked for then
+    // The draft being typed when the read started (the question covered it).
+    std::optional<core::LineId> m_matroskaDraftLine;
+    std::optional<std::u8string> m_matroskaDraft;
+    std::uint64_t m_matroskaReloads = 0; // m_reloads when the read started
+    std::uint64_t m_reloads = 0;         // Reload subtitles done (a session replaced in place)
+    bool m_matroskaFromHome = false; // started with no editing target
     // `newTab`: File > Open's new tab (InsertTab) rather than the editing target.
     void applyMatroska(application::MatroskaLoaded loaded, bool newTab);
+    QString targetVideoPath() const;
     std::unique_ptr<ui::LogController> m_log;
     std::unique_ptr<ui::TagButtonsController> m_tagButtons;
     std::unique_ptr<ui::ColourPickerController> m_colourPicker;
@@ -1130,6 +1202,9 @@ private:
     std::vector<application::ReplacerRule> &misspellRuleList();
     void saveMisspellRules();
     void destroyDialogs();
+    // ResetDefault's reset of the store and of what reads it at once, at OK
+    // or Apply after "Reset all settings…" (PF1-staged-reset).
+    void resetAllSettings();
     // F1
     class FindHost;
     friend class FindHost;
@@ -1394,11 +1469,18 @@ private:
     std::vector<UnresolvedRestore> m_unresolved;
     std::optional<PendingSession> m_pendingSession;
     std::optional<application::DocumentId> m_closingTab; // reviewCloseTab's
+    // PU1: the editing target a review was asked for; the command acts on it.
+    std::optional<application::DocumentId> m_closeTarget;
     QString m_keepTabAudio;  // a restored video whose audio must not replace the tab's own
     std::optional<std::pair<QString, int>> m_pendingTabSeek; // video path, ms; until the seek has landed
     bool m_tabSeekQueued = false;
     bool m_scrollRestoring = false;
     bool m_startedWithPaths = false;
+    // PU1-startup-cards: LastSession.txt's text when this program started.
+    std::optional<std::string> m_startSession;
+    void rememberStartSession();
+    static QStringList sessionNames(const std::optional<std::string> &text);
+    QVariantMap reviewSessionText(const std::optional<std::string> &text);
     mutable bool m_startupSessionPending = false; // WS5: startupSession() asked, not yet carried out
     int m_tabTextMax = 40; // legacy maxCharPerTab, read once at start
     void leaveTabMedia(std::optional<application::DocumentId> document);
