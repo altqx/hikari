@@ -2837,7 +2837,7 @@ private slots:
             return QVariantMap{{QStringLiteral("title"), title}, {QStringLiteral("text"), text},
                                {QStringLiteral("severity"), severity}, {QStringLiteral("details"), details}};
         };
-        const QString readOnly = QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute.");
+        const QString readOnly = QStringLiteral("“episode.ass” is read-only.");
         const QVariantList readOnlyChoices{
             QVariantMap{{QStringLiteral("id"), QStringLiteral("saveAs")}, {QStringLiteral("text"), QStringLiteral("Save as…")},
                         {QStringLiteral("role"), QStringLiteral("accept")}, {QStringLiteral("isDefault"), true}},
@@ -2888,7 +2888,7 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(item<QObject>("logDock"), "close"));
             QVERIFY(QMetaObject::invokeMethod(stack, "clear"));
             // The read-only save, as Save asks it.
-            QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+            QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
             QQuickWindow *saveBox = nullptr;
             QTRY_VERIFY((saveBox = messageBox("messages")) && saveBox->isVisible());
             save(saveBox, QStringLiteral("box-save-") + code);
@@ -2954,6 +2954,18 @@ private slots:
                  QStringLiteral("{note}def"));
     }
 
+    // PU1-message-boxes: answers the MKV save question, made when first
+    // asked ("save", "load", "cancel").
+    bool mkvAnswer(const char *id) const
+    {
+        auto *box = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mkvSaveQuestion"));
+        return box && QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QLatin1String(id)));
+    }
+    bool mkvQuestionShown() const
+    {
+        auto *box = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("mkvSaveQuestion"));
+        return box && box->property("visible").toBool();
+    }
     // PF1: the Settings window, made at its first opening.
     QObject *settingsWindow() const
     {
@@ -5338,23 +5350,25 @@ private slots:
 
     // PK1: Remove temporary files' age is a date field with its calendar
     // (legacy's day, month and year boxes), a month before today when it
-    // opens (legacy's default); the cutoff is the day picked.
+    // opens (legacy's default). PU1-autosaves-window: it opens the Autosaves
+    // window with the Delete older than… popover open.
     void temporaryFilesTakeTheirAgeFromADatePicker()
     {
-        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("temporaryFilesWindow"));
+        QObject *autosaves = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("autosaves"));
+        QVERIFY(autosaves);
+        QVERIFY(QMetaObject::invokeMethod(autosaves, "show", Q_ARG(QVariant, true)));
+        auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("autosavesWindow"));
         QVERIFY(window);
-        QVERIFY(QMetaObject::invokeMethod(window, "showFiles"));
         auto close = qScopeGuard([&] { window->close(); });
         QVERIFY(QTest::qWaitForWindowExposed(window));
-        auto *picker = findItem(window->contentItem(), QStringLiteral("olderDate"));
+        auto *popover = window->findChild<QObject *>(QStringLiteral("autosavesDeleteOlderPopover"));
+        QVERIFY(popover);
+        QTRY_VERIFY(popover->property("visible").toBool());
+        auto *picker = window->findChild<QObject *>(QStringLiteral("olderDate"));
         QVERIFY(picker);
         QDate monthAgo = QDate::currentDate().addMonths(-1);
         QCOMPARE(picker->property("date").toDateTime().date(), monthAgo);
-        QVERIFY(QMetaObject::invokeMethod(picker, "setDate", Q_ARG(QVariant, QDateTime(QDate(2026, 3, 4), QTime(15, 30)))));
-        QVariant cutoff;
-        QVERIFY(QMetaObject::invokeMethod(window, "cutoff", Q_RETURN_ARG(QVariant, cutoff)));
-        QCOMPARE(cutoff.toDateTime(), QDateTime(QDate(2026, 3, 4), QTime(0, 0)));
-        QVERIFY(findItem(window->contentItem(), QStringLiteral("datePickerOpen")));
+        QVERIFY(window->findChild<QObject *>(QStringLiteral("datePickerOpen")));
     }
 
     // IC1 (#226): every menu and context-menu item that runs a command shows
@@ -6997,11 +7011,11 @@ private slots:
             QSKIP("Read-only files are writable for this user");
         QCOMPARE(application->saveChosen(QUrl::fromLocalFile(locked)), QStringLiteral("readonly"));
         QFile::setPermissions(locked, QFileDevice::ReadOwner | QFileDevice::WriteOwner);
-        // NT1: the question is PK1's message box, Save as… (the Save dialog
-        // again) or Cancel (nothing more).
+        // NT1, PU1-message-boxes: the question is PK1's message box, Save
+        // as… (the Save dialog again) or Cancel (nothing more).
         auto *root = engine->rootObjects().first();
         auto *saveAs = named("saveAsDialog");
-        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
         QQuickWindow *box = nullptr;
         QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
         QCOMPARE(box->property("severity").toString(), QStringLiteral("warning"));
@@ -7010,14 +7024,12 @@ private slots:
         QCOMPARE(choices.at(0).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Save as…"));
         QCOMPARE(choices.at(1).toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Cancel"));
         answerMessage("messages", QStringLiteral("Save"),
-                      QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute."),
-                      QStringLiteral("cancel"));
+                      QStringLiteral("“locked.ass” is read-only."), QStringLiteral("cancel"));
         QTest::qWait(50);
         QVERIFY(!saveAs->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0)));
+        QVERIFY(QMetaObject::invokeMethod(root, "warnReadOnly", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("locked.ass"))));
         answerMessage("messages", QStringLiteral("Save"),
-                      QStringLiteral("Chosen file is read only,\nplease save with different name or change file attribute."),
-                      QStringLiteral("saveAs"));
+                      QStringLiteral("“locked.ass” is read-only."), QStringLiteral("saveAs"));
         QTRY_VERIFY(saveAs->property("visible").toBool());
         QVERIFY(QMetaObject::invokeMethod(saveAs, "close"));
         QTRY_VERIFY(!saveAs->property("visible").toBool());
@@ -7369,18 +7381,17 @@ private slots:
         QTRY_VERIFY(matroska.available());
         application->duplicateLines();
         QVERIFY(application->files().session(before)->isDirty());
-        auto *question = named("mkvSaveQuestion");
         auto *chooser = named("mkvTrackChooser");
-        QVERIFY(question && chooser);
+        QVERIFY(chooser);
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("cancel"));
+        QTRY_VERIFY(!mkvQuestionShown());
         QCOMPARE(matroska.state(), 0);
         // No: the tracks, then "Choose subtitle track"; its Cancel reads nothing.
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QCOMPARE(chooser->property("title").toString(), QStringLiteral("Choose the subtitle track"));
         QCOMPARE(chooser->property("rows").toStringList(),
@@ -7401,8 +7412,8 @@ private slots:
         // Yes saves the Document to its file first (Hikari->Save(false)); OK
         // on the first row: the ASS track replaces the tab's Document.
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveYes"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("save"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != before, 20000);
@@ -7447,8 +7458,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(root, "runGridHotkey", Q_RETURN_ARG(QVariant, handled),
                                           Q_ARG(QVariant, QStringLiteral("GRID_SUBS_FROM_MKV"))));
         QVERIFY(handled.toBool());
-        QTRY_VERIFY(question->property("visible").toBool()); // the loaded Document is unsaved
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown()); // the loaded Document is unsaved
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         chooser->setProperty("current", 1);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
@@ -7460,6 +7471,174 @@ private slots:
         QCOMPARE(srt->document().lines()[0]->start.value.microseconds(), 500'000);
         QCOMPARE(srt->document().lines()[0]->end.value.microseconds(), 1'500'000);
         QCOMPARE(QString::fromStdString(*application->workspace().title(target())), QStringLiteral("mkvextract.srt"));
+
+        // PU1-mkv-notices: the window stays usable while the file is read;
+        // work done in the tab meanwhile keeps it, and the track opens in a
+        // new tab.
+        const auto edited = target();
+        const auto tabs = application->workspace().tabs().size();
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->duplicateLines();
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != edited, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        QVERIFY(application->files().session(edited));
+        QCOMPARE(application->files().session(edited)->document().lines().size(), std::size_t(2));
+
+        // A draft typed before the load, which the question covered, goes
+        // with the tab's Document (Load without saving): the track takes the
+        // tab (the edited tab again, which has the video).
+        const auto listed = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(listed, edited) - listed.begin()));
+        QTRY_VERIFY(target() == edited);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000); // its video opens again
+        QTRY_VERIFY(item->property("enabled").toBool());
+        auto *editedSession = application->files().session(edited);
+        QVERIFY(editedSession->editDraftText(*editedSession->selection().active, u8"before"));
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != edited, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        QVERIFY(!application->files().session(edited));
+
+        // A draft typed meanwhile, not yet committed, keeps the tab too.
+        const auto drafted = target();
+        const auto order = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(order, drafted) - order.begin()));
+        QTRY_VERIFY(target() == drafted);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000); // its video opens again
+        QTRY_VERIFY(item->property("enabled").toBool());
+        auto *draftSession = application->files().session(drafted);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(draftSession->editDraftText(*draftSession->selection().active, u8"typed"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 2);
+        QVERIFY(application->files().session(drafted));
+        QCOMPARE(application->files().session(drafted)->draftText(), std::optional<std::u8string>(u8"typed"));
+
+        // Another video opened in the tab meanwhile keeps the tab: the track
+        // is the old video's, so it opens in a new tab, also while that video
+        // is still being opened.
+        QVERIFY(draftSession->commitDraft());
+        const auto reopened = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(reopened, drafted) - reopened.begin()));
+        QTRY_VERIFY(target() == drafted);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000);
+        QTRY_VERIFY(item->property("enabled").toBool());
+        const auto lines = draftSession->document().lines().size();
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 3);
+        QCOMPARE(application->files().session(drafted)->document().lines().size(), lines);
+    }
+
+    // PU1-mkv-notices: a load File > Open started on Home has its progress
+    // there; a Document opened while the file is read keeps its tab, and
+    // the track opens in a new one.
+    void anMkvOpenedOnHomeKeepsADocumentOpenedMeanwhile()
+    {
+        auto &matroska = application->matroska();
+        auto *dialog = named("subtitlesOpenDialog");
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(dialog && chooser);
+        auto *root = engine->rootObjects().first();
+        QVERIFY(!application->workspace().editingTarget());
+        dialog->setProperty("selectedFile", QUrl::fromLocalFile(nativeFixture("mkvextract.mkv")));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accepted"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QCOMPARE(root->property("mkvTab").toString(), QStringLiteral("home"));
+        QVERIFY(application->openFile(writeFile(dir, "home.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,kept\n")));
+        const auto opened = *application->workspace().editingTarget();
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != opened, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), std::size_t(2));
+        auto *kept = application->files().session(opened);
+        QVERIFY(kept);
+        QCOMPARE(kept->document().lines().size(), std::size_t(1));
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*application->workspace().editingTarget())),
+                 QStringLiteral("mkvextract.ass"));
+    }
+
+    // PU1-mkv-notices: a tab reloaded while the file is read keeps what was
+    // reloaded, and the track opens in a new tab.
+    void anMkvReadKeepsATabReloadedMeanwhile()
+    {
+        auto &matroska = application->matroska();
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(chooser);
+        const QString subs = writeFile(dir, "mkvreload.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
+        QVERIFY(application->openFile(subs));
+        const auto reloaded = *application->workspace().editingTarget();
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        application->video().openVideo(mkv);
+        QTRY_VERIFY_WITH_TIMEOUT(application->video().session().state() == application::VideoSession::State::Ready,
+                                 30000);
+        QTRY_VERIFY(matroska.available());
+        const auto tabs = application->workspace().tabs().size();
+        QVERIFY(matroska.start()); // a clean tab: no question
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        QVERIFY(application->reloadTarget());
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(application->workspace().editingTarget() != reloaded, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 1);
+        auto *kept = application->files().session(reloaded);
+        QVERIFY(kept);
+        QCOMPARE(kept->document().lines().size(), std::size_t(1));
+    }
+
+    // A tab left and come back to while the file is read is unchanged (its
+    // video opened again): the track replaces its Document.
+    void anMkvReadReplacesATabLeftAndComeBackTo()
+    {
+        auto &matroska = application->matroska();
+        auto *chooser = named("mkvTrackChooser");
+        QVERIFY(chooser);
+        const QString subs = writeFile(dir, "mkvback.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,disk\n");
+        QVERIFY(application->openFile(subs));
+        const auto source = *application->workspace().editingTarget();
+        const QString mkv = nativeFixture("mkvextract.mkv");
+        const auto ready = [&] {
+            return QTest::qWaitFor([&] {
+                return application->video().session().state() == application::VideoSession::State::Ready &&
+                       QDir::toNativeSeparators(QString::fromStdString(application->video().session().path())) == mkv;
+            }, 30000);
+        };
+        application->video().openVideo(mkv);
+        QVERIFY(ready());
+        QTRY_VERIFY(matroska.available());
+        QVERIFY(matroska.start()); // a clean tab: no question
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->addPage();
+        const auto tabs = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(tabs, source) - tabs.begin()));
+        QVERIFY(ready()); // its video again
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(!application->files().session(source), 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs.size());
+        QCOMPARE(QString::fromStdString(*application->workspace().title(*application->workspace().editingTarget())),
+                 QStringLiteral("mkvextract.ass"));
     }
 
     // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
@@ -7480,9 +7659,8 @@ private slots:
             dialog->setProperty("selectedFile", QUrl::fromLocalFile(path));
             return QMetaObject::invokeMethod(dialog, "accepted");
         };
-        auto *question = named("mkvSaveQuestion");
         auto *chooser = named("mkvTrackChooser");
-        QVERIFY(question && chooser);
+        QVERIFY(chooser);
         const auto target = [&] { return application->workspace().editingTarget(); };
         const auto tabs = [&] { return application->workspace().tabs().size(); };
         const auto ass = [&](application::DocumentId id) {
@@ -7513,7 +7691,7 @@ private slots:
         QCOMPARE(tabs(), std::size_t(1));
         QVERIFY(choose(mkv));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!mkvQuestionShown());
         QCOMPARE(chooser->property("rows").toStringList(),
                  (QStringList{QStringLiteral("1 Signs (eng, ass)"), QStringLiteral("2 Full (pol, srt)")}));
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
@@ -7539,7 +7717,7 @@ private slots:
         QVERIFY(QFile::copy(mkv, upper));
         QVERIFY(choose(upper));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!mkvQuestionShown());
         QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, false)));
         QTRY_COMPARE(matroska.state(), 0);
         QCOMPARE(target(), first);
@@ -7577,15 +7755,15 @@ private slots:
         QVERIFY(application->files().session(untitled)->isDirty());
         const auto count = tabs();
         QVERIFY(choose(mkv));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveCancel"), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("cancel"));
+        QTRY_VERIFY(!mkvQuestionShown());
         QCOMPARE(matroska.state(), 0);
         QVERIFY(!matroska.start()); // no video in the tab, and the file is forgotten
         QCOMPARE(target(), untitled);
         QVERIFY(choose(mkv));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("mkvSaveQuestion", "mkvSaveNo"), "click"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != untitled, 20000);
@@ -8868,8 +9046,6 @@ private slots:
             {"keyframesDialog", QStringLiteral("Choose keyframes file")},
             {"fontsFolderDialog", QStringLiteral("Choose external font folder")},
             {"findFolderDialog", QStringLiteral("Choose subtitle search folder")},
-            {"closeSaveAs", QStringLiteral("Save subtitle file")},
-            {"mkvProgress", QStringLiteral("Load subtitles from an MKV/OGM file")},
             {"aspectRatioDialog", QStringLiteral("Change aspect ratio")},
         };
         for (const auto &[name, title] : titles) {
@@ -8936,7 +9112,6 @@ private slots:
                     out << w;
             return out;
         };
-        named("closeReview")->setProperty("visible", true);
         for (const char *name : {"keyframesDialog", "fontsFolderDialog", "findFolderDialog", "closeSaveAs"}) {
             QObject *dialog = find(name);
             const QSet<QWindow *> before = shown();
@@ -8949,7 +9124,6 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
             QTRY_VERIFY(!own->isVisible());
         }
-        named("closeReview")->setProperty("visible", false);
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
         for (const char *name : {"mkvProgress", "aspectRatioDialog"}) {
             QObject *popup = find(name);
@@ -9735,23 +9909,26 @@ private slots:
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("folder"), folder.path()}});
         QCOMPARE(application->findResults().size(), 2);
-        auto *review = item<QObject>("closeReview");
-        QVERIFY(review);
+        // PU1-unsaved-window: one Document is asked about in a message box.
+        const auto question = [&] { return item<QObject>("closeQuestion"); };
+        const auto answer = [&](const char *id) {
+            return QMetaObject::invokeMethod(question(), "answer", Q_ARG(QVariant, QLatin1String(id)));
+        };
         // Cancel: the Untitled Document stays, its row 0 is the result's Line.
         application->showFindResult(1);
-        QTRY_VERIFY(review->property("visible").toBool());
+        QTRY_VERIFY(question() && question()->property("visible").toBool());
         QVERIFY(application->findBusy());
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("closeCancel"), "click"));
-        QTRY_VERIFY(!review->property("visible").toBool());
+        QVERIFY(answer("cancel"));
+        QTRY_VERIFY(!question()->property("visible").toBool());
         QVERIFY(!application->findBusy());
         QVERIFY(application->targetUntitled());
         QVERIFY(untitled->isDirty());
         QCOMPARE(untitled->selection().active, std::optional(untitled->document().lines()[0]->id));
         // Discard: the file is loaded into that tab and its Line is shown.
         application->showFindResult(1);
-        QTRY_VERIFY(review->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("closeDiscardAll"), "click"));
-        QTRY_VERIFY(!review->property("visible").toBool());
+        QTRY_VERIFY(question()->property("visible").toBool());
+        QVERIFY(answer("discard"));
+        QTRY_VERIFY(!question()->property("visible").toBool());
         QVERIFY(!application->findBusy());
         QVERIFY(!application->targetUntitled());
         QCOMPARE(application->workspace().documents().size(), std::size_t(1));
@@ -10251,12 +10428,10 @@ private slots:
         using Buttons = std::vector<std::pair<const char *, Role>>;
         const std::vector<Buttons> footers{
             {{"historySet", Apply}, {"historyOk", Accept}, {"historyCancel", Reject}},
-            {{"closeSaveAll", Accept}, {"closeDiscardAll", Destructive}, {"closeContinue", Action}, {"closeCancel", Reject}},
             {{"automationReassignOk", Accept}, {"automationReassignKeepBoth", Action}, {"automationReassignCancel", Reject}},
             {{"fpsOk", Accept}, {"fpsCancel", Reject}},
             {{"columnsOk", Accept}, {"columnsCancel", Reject}},
             {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
-            {{"reloadYes", Yes}, {"reloadNo", No}},
             {{"styleEditorOk", Accept}, {"styleManagerOk", Accept}, {"styleEditorApply", Apply},
              {"styleEditorCancel", Reject}, {"styleManagerClose", Reject}},
             {{"conversionAccept", Accept}, {"Cancel", Reject}},
@@ -10269,7 +10444,6 @@ private slots:
             {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
             {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
              {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
-            {{"mkvSaveYes", Yes}, {"mkvSaveNo", No}, {"mkvSaveCancel", Reject}},
             {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}}, // PK1
             {{"listChooserTake", Accept}, {"listChooserCancel", Reject}}, // PK1
@@ -28339,10 +28513,11 @@ private slots:
         application->duplicateLines();
         QVERIFY(v5Session()->isDirty());
         QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
-        auto *review = mappingWindow("closeReview");
-        QVERIFY(review);
+        // PU1-unsaved-window: one Document is asked about in a message box.
+        QTRY_VERIFY(mappingWindow("closeQuestion"));
+        auto *review = mappingWindow("closeQuestion");
         QTRY_VERIFY(review->isVisible());
-        clickButton(review, "closeCancel");
+        clickButton(review, "messageBoxChoice_cancel");
         QTRY_VERIFY(!review->isVisible());
         QVERIFY(!application->video().hasVideo());
         // The same video opened another way, later: not fullscreen.
@@ -28354,7 +28529,7 @@ private slots:
         // The review gone through (Discard all): fullscreen once shown.
         QVERIFY(QMetaObject::invokeMethod(root, "openSingleVideo", Q_ARG(QVariant, video)));
         QTRY_VERIFY(review->isVisible());
-        clickButton(review, "closeDiscardAll");
+        clickButton(review, "messageBoxChoice_discard");
         QTRY_VERIFY_WITH_TIMEOUT(fs.active(), 20000);
         QTRY_VERIFY(fullscreenWindow()->isVisible());
         QVERIFY(fs.leave());

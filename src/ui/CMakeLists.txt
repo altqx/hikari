@@ -59,7 +59,7 @@ qt_target_qml_sources(hikari_ui QML_FILES GridHeaderToolTip.qml)
 # The windows' closing rows (DialogButtonBox, in the platform's order).
 qt_target_qml_sources(hikari_ui QML_FILES WindowFooter.qml FooterButton.qml)
 # P9: the association question, the tab commands' questions and the legacy autosaves.
-qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml LegacyAutosaveList.qml)
+qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml)
 # ADR 0019: the update notices and the installing notice.
 qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateAurNotice.qml UpdateInstallingWindow.qml)
 # Y8: the font collector's window.
@@ -217,6 +217,9 @@ qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml Wh
 qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
     ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
     MessageHost.qml LogPanel.qml)
+# PU1: the file and session popups on the kit: the lazily made message box, Unsaved changes, Autosaves and the
+# startup offer.
+qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")
