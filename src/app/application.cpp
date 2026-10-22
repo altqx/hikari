@@ -1150,6 +1150,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.commit = [this](const application::AudioCommitRequest &request) { return commitAudioTimes(request); };
         hooks.setActive = [this](int key) { setAudioActive(key); };
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
+        hooks.fieldTime = [this](int ms) {
+            const auto *session = targetSession();
+            return session ? application::committedAudioTime(session->document(), ms) : ms;
+        };
+        hooks.severalSelected = [this] {
+            const auto *session = targetSession();
+            return session && session->selection().selected.size() > 1;
+        };
         m_audio->setTimingHooks(std::move(hooks));
     }
     // KA2-tap-to-time: the tap bar's next Line (keys as refreshAudio gives them)

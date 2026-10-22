@@ -11773,6 +11773,8 @@ private slots:
               {"audio.snapToOtherLines", "Snap to other lines"},
               {"audio.mergeEveryNWithSyllable", "Merge every \"n\" with the previous syllable"},
               {"audio.karaokeMoveOnClick", "Move the syllable line after a click"},
+              {"audio.karaokeDoubleConsonantApart", "Give a double consonant its own syllable (so|ma|t|ta)"}, // KA1
+              {"audio.karaokeKfThreshold", nullptr},                                                         // KA1
               {"audio.ramCache", "Load audio into RAM"},
               {"audio.cacheFilesLimit", nullptr}}},
             {"settingsPageConversion",
@@ -13000,6 +13002,7 @@ private slots:
         };
         QVERIFY2(split->isVisible(), qPrintable(rowWidths()));
         QVERIFY(tap->isVisible());
+        QVERIFY2(item("audioKaraokeSplitArrow")->isVisible(), qPrintable(rowWidths())); // KA1: room for the arrow
         QVERIFY(!item<QObject>("audioLineMode")->property("checked").toBool());
         QVERIFY(item<QObject>("audioKaraoke")->property("checked").toBool());
         // KA2-karaoke-row-fold: with Tap the three toggles go into ⋯ first;
@@ -13029,6 +13032,9 @@ private slots:
         QVERIFY(!item("audioMoreKaraoke")->isVisible());
         QVERIFY(!item("audioMoreTap")->isVisible());
         QVERIFY(!item("audioMoreTapOptions")->isVisible());
+        // KA1: the syllable commands are Auto split's arrow's while it shows
+        QVERIFY(!item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(!item("audioMoreKaraokeKf")->isVisible());
         closeMore();
         auto *moreAutoScroll = item<QObject>("audioMoreAutoScroll");
         QVERIFY(moreAutoScroll->property("checked").toBool());
@@ -13067,7 +13073,19 @@ private slots:
         QVERIFY(item("audioMoreKaraoke")->isVisible());
         QVERIFY(item("audioMoreTap")->isVisible());
         QVERIFY(item("audioMoreTapOptions")->isVisible());
+        // KA1: and Auto split's syllable commands
+        QVERIFY(item("audioMoreKaraokeSplit")->isVisible());
+        QVERIFY(item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(item("audioMoreKaraokeKf")->isVisible());
         closeMore();
+        // ⋯'s Auto split switches it once, the folded button's face following (Codex)
+        const bool splitMode = audio.karaokeSplitMode();
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplit"), "triggered"));
+        QCOMPARE(audio.karaokeSplitMode(), !splitMode);
+        QCOMPARE(item("audioKaraokeSplit")->property("checked").toBool(), !splitMode);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplit"), "triggered"));
+        QCOMPARE(audio.karaokeSplitMode(), splitMode);
+        QCOMPARE(item("audioKaraokeSplit")->property("checked").toBool(), splitMode);
         // Tap options opens the Tap menu at ⋯: Hold or Press, the speed, the latency
         auto *tapMenu = named("audioTapMenu");
         QVERIFY(QMetaObject::invokeMethod(named("audioMoreTapOptions"), "triggered"));
@@ -14306,8 +14324,8 @@ private slots:
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and VT2's eleven visual tools listed; KA2's Tap
-        // to time, Slower and Faster; KA7's "Check karaoke".
-        QCOMPARE(hotkeyRows().size(), 237);
+        // to time, Slower and Faster; KA7's "Check karaoke"; KA1's two syllable commands.
+        QCOMPARE(hotkeyRows().size(), 239);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -14341,7 +14359,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
         QTRY_VERIFY(!dialog->property("visible").toBool());
         QVERIFY(settings.list("shortcuts.hotkeys").contains(QStringLiteral("GLOBAL_HISTORY G=Ctrl-Shift-K")));
-        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 26); // KA2: with AUDIO_TAP and the speeds
+        QCOMPARE(settings.list("shortcuts.audioHotkeys").size(), 28); // KA2: with AUDIO_TAP and the speeds; KA1: K and Shift-K
         QCOMPARE(installedKeys("global").value(QStringLiteral("GLOBAL_HISTORY")).toString(), QStringLiteral("Ctrl+Shift+K"));
         // The shell's table (every Global binding, the menus' too) follows.
         QVERIFY(application->hotkeys().globalShortcuts().contains(
@@ -15059,10 +15077,10 @@ private slots:
         QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Stop\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
-        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_K);
+        keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_U);
         QTRY_VERIFY(!mapping->isVisible());
-        QCOMPARE(h.accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("K"));
-        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (K)\nShortcut can be set using Shift + Click"));
+        QCOMPARE(h.accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("U"));
+        QCOMPARE(stop->property("tip").toString(), QStringLiteral("Stop (U)\nShortcut can be set using Shift + Click"));
         // The frame keys are GLOBAL_PREVIOUS_FRAME / GLOBAL_NEXT_FRAME:
         // from the Grid too, and remapped they follow the registry.
         QTRY_VERIFY(window->isActive());
@@ -16569,46 +16587,46 @@ private slots:
         // remapped through the registry (the Options page's Hotkeys list, OK)
         h.beginOptions();
         h.select(hotkeyPosition(QStringLiteral("Audio Scroll left")));      // AUDIO_SCROLL_RIGHT, A
-        h.optionsMap(QStringLiteral("K"), 4, QStringLiteral("cancel"));
+        h.optionsMap(QStringLiteral("U"), 4, QStringLiteral("cancel"));
         h.select(hotkeyPosition(QStringLiteral("Audio Play line alt")));    // R
-        h.optionsMap(QStringLiteral("U"), 4, QStringLiteral("cancel")); // (KA2: Y is Tap to time)
+        h.optionsMap(QStringLiteral("I"), 4, QStringLiteral("cancel")); // (KA2: Y is Tap to time; KA1: K splits)
         h.select(hotkeyPosition(QStringLiteral("Audio Commit")));           // Enter
         h.optionsMap(QStringLiteral("J"), 4, QStringLiteral("cancel"));
         h.commitOptions();
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("K"));
-        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("U"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_SCROLL_RIGHT"), 4), QStringLiteral("U"));
+        QCOMPARE(h.accelOf(QStringLiteral("AUDIO_PLAY_LINE_ALT"), 4), QStringLiteral("I"));
         QCOMPARE(h.accelOf(QStringLiteral("AUDIO_COMMIT"), 4), QStringLiteral("J"));
-        QVERIFY(application->settingsStore()->list("shortcuts.audioHotkeys").contains(QStringLiteral("AUDIO_SCROLL_RIGHT A=K")));
+        QVERIFY(application->settingsStore()->list("shortcuts.audioHotkeys").contains(QStringLiteral("AUDIO_SCROLL_RIGHT A=U")));
 
-        // in the display: K scrolls back 50 columns, A no longer does
+        // in the display: U scrolls back 50 columns, A no longer does
         item("audioDisplay")->forceActiveFocus();
         audio.setHorizontalZoom(0); // the most columns
         audio.setScrollPosition(10);
         const auto at = view.position();
         QVERIFY(at >= 100);
-        press(Qt::Key_K);
+        press(Qt::Key_U);
         QCOMPARE(view.position(), at - 50);
         press(Qt::Key_A);
         QCOMPARE(view.position(), at - 50);
         // in the Grid too
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_K);
+        press(Qt::Key_U);
         QCOMPARE(view.position(), at - 100);
         press(Qt::Key_A);
         QCOMPARE(view.position(), at - 100);
 
-        // U plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
+        // I plays the line (AUDIO_PLAY_LINE_ALT as AUDIO_PLAY_LINE), R no longer
         using application::PlayRange;
         auto range = [&] { return audio.lastPlayRange().value_or(PlayRange{-1, -1}); };
         item("audioDisplay")->forceActiveFocus();
         press(Qt::Key_R);
         QVERIFY(!audio.lastPlayRange());
-        press(Qt::Key_U);
+        press(Qt::Key_I);
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         press(Qt::Key_H);
         // from the Grid, the display takes the focus (the play handlers' SetFocus)
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_U);
+        press(Qt::Key_I);
         QCOMPARE(range(), (PlayRange{48000, 48000}));
         QCOMPARE(focusedPanel(), QStringLiteral("audioPanel"));
         press(Qt::Key_H);
@@ -16788,16 +16806,16 @@ private slots:
         QTest::mouseClick(window, Qt::LeftButton, {}, at(split, 8));
         QCOMPARE(audio.karaokeModel().count(), 4);
         QCOMPARE(audio.currentSyllable(), 2);
-        QCOMPARE(audio.karaokeModel().times()[2], 950); // ZEROIT(700 + 500 / 2)
+        QCOMPARE(audio.karaokeModel().times()[2], 860); // KA1-time-by-character: ZEROIT(700 + 500 / 3)
         QCOMPARE(editor.history().size(), steps + 2);
-        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k25}o{\\k25}ke")));
+        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k16}o{\\k34}ke")));
         // below the letters the cursor is back
         QTest::mouseMove(window, at(okeEnd - 3, y));
         QVERIFY(audio.cursor());
 
         // a middle click on the new boundary joins the syllables again
-        QTest::mouseMove(window, at(int(view.xAtMs(950)), y));
-        QTest::mouseClick(window, Qt::MiddleButton, {}, at(int(view.xAtMs(950)), y));
+        QTest::mouseMove(window, at(int(view.xAtMs(860)), y));
+        QTest::mouseClick(window, Qt::MiddleButton, {}, at(int(view.xAtMs(860)), y));
         QCOMPARE(audio.karaokeModel().count(), 3);
         QCOMPARE(editor.history().size(), steps + 3);
         QVERIFY(editor.text().endsWith(QStringLiteral("{\\k50}oke")));
@@ -16809,7 +16827,7 @@ private slots:
         QTest::mouseMove(window, kOverNoPanel);
         // Undo takes the join back
         QVERIFY(editor.undo());
-        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k25}o{\\k25}ke")));
+        QVERIFY(editor.text().endsWith(QStringLiteral("{\\k16}o{\\k34}ke")));
 
         // Next past the last syllable: the next Line, split automatically
         // (AUDIO_KARAOKE_SPLIT_MODE is on by default)
@@ -16820,7 +16838,7 @@ private slots:
         QCOMPARE(editor.text(), QStringLiteral("kara oke"));
         QCOMPARE(audio.currentSyllable(), 0);
         QCOMPARE(audio.karaokeModel().count(), 4); // ka ra o ke
-        QCOMPARE(range(), (PlayRange{62400, 7200}));
+        QCOMPARE(range(), (PlayRange{62400, 8160})); // KA1-time-by-character: 2 of 7 letters, 170 ms
         click("audioKaraokeSplit"); // the switch: at spaces only
         QVERIFY(!audio.karaokeSplitMode());
         QVERIFY(!store->boolean("audio.karaokeSplitMode"));
@@ -16835,6 +16853,374 @@ private slots:
         QVERIFY(!store->boolean("audio.karaoke"));
         QCOMPARE(store->integer("audio.horizontalZoom"), 50);
         press(Qt::Key_H);
+    }
+
+    // KA1 (#276): K splits the syllable at the waveform cursor and Shift+K
+    // switches the long ones between \k and \kf, each one step, the view
+    // staying where it is (KA1-split-keeps-view); both in Auto split's arrow
+    // menu and the narrow panel's ⋯ menu (KA1-syllable-commands); a lead-in
+    // keeps the syllables at their times (KA1-lead-in-keeps-syllables).
+    void audioKaraokeSyllableCommands()
+    {
+        restartWithoutSound();
+        keysNeverRepeat();
+        const QString path = writeFile(dir, "karaoke-commands.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n");
+        QVERIFY(application->openFile(path));
+        auto &audio = application->audio();
+        auto &editor = application->editor();
+        auto *store = application->settingsStore();
+        editor.setShowTags(true);
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        QCOMPARE(item("audioKaraokeSplitArrow")->width(), 9.0); // narrower than the other split buttons' arrows
+        // KA1 (owner 2026-10-21): the default panel has no room for the arrow
+        // beside KA2's Tap; it folds first, its commands in ⋯, the switches,
+        // Auto split and Tap still shown
+        QVERIFY(item("audioButtons")->property("splitArrowFolded").toBool());
+        QVERIFY(!item("audioButtons")->property("folded").toBool());
+        QVERIFY(!item("audioKaraokeSplitArrow")->isVisible());
+        QVERIFY(item("audioKaraokeSplit")->isVisible());
+        QVERIFY(item("audioTap")->isVisible());
+        QVERIFY(item("audioMore")->isVisible());
+        auto *moreMenu = named("audioMoreMenu");
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "popup", Q_ARG(QQuickItem *, item("audioMore")), Q_ARG(qreal, 0),
+                                          Q_ARG(qreal, item("audioMore")->height())));
+        QTRY_VERIFY(moreMenu->property("opened").toBool());
+        QVERIFY(item("audioMoreKaraokeSplitAtCursor")->isVisible());
+        QVERIFY(item("audioMoreKaraokeKf")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(moreMenu, "close"));
+        QTRY_VERIFY(!moreMenu->property("visible").toBool());
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const auto steps = editor.history().size();
+
+        // zoomed in past the Line, 1200 ms in the middle of the view
+        audio.setHorizontalZoom(1);
+        QVERIFY(view.xAtMs(1800) - view.xAtMs(200) > view.width());
+        const auto column = [&](int ms) { return int(view.sampleAtMs(ms) / view.samples()); };
+        audio.setScrollPosition((column(1200) - view.width() / 2) / 12);
+        const int x = int(view.xAtMs(1200));
+        QVERIFY(x > 0 && x < view.width());
+        // K over the waveform: "hana" split at the cursor's time, by its letters
+        QTest::mouseMove(window, at(x - 1, 30));
+        QTest::mouseMove(window, at(x, 30));
+        QVERIFY(audio.cursor());
+        display->forceActiveFocus();
+        const int scrolled = view.position(); // (the scrollbar follows on the next draw)
+        press(Qt::Key_K);
+        const int boundary = application::legacyZeroIt(view.msAtX(x));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[1], boundary);
+        QCOMPARE(audio.currentSyllable(), 2);
+        QCOMPARE(editor.history().size(), steps + 1);
+        QCOMPARE(editor.history().last(), QStringLiteral("Changing time on audio spectrum, active line 1"));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k%1}ha{\\k%2}na")
+                                    .arg((boundary - 600) / 10)
+                                    .arg((1800 - boundary) / 10));
+        QCOMPARE(view.position(), scrolled); // the view stays
+        press(Qt::Key_B); // AUDIO_GOTO: where legacy's commit would have scrolled
+        QVERIFY(view.position() != scrolled);
+
+        // Shift+K: every syllable of 50 cs or more to \kf, and back
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 50);
+        const int now = view.position();
+        press(Qt::Key_K, Qt::ShiftModifier);
+        QCOMPARE(editor.history().size(), steps + 2);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\kf%1}ha{\\kf%2}na")
+                                    .arg((boundary - 600) / 10)
+                                    .arg((1800 - boundary) / 10));
+        QCOMPARE(view.position(), now);
+        // the arrow's menu: its items with their keys, the switch back
+        auto *kf = named("audioKaraokeKf");
+        QCOMPARE(kf->property("text").toString(), QStringLiteral("Switch long syllables between \\k and \\kf\tShift-K"));
+        QCOMPARE(named("audioKaraokeSplitAtCursor")->property("text").toString(), QStringLiteral("Split syllable at the cursor\tK"));
+        QVERIFY(QMetaObject::invokeMethod(kf, "triggered"));
+        QCOMPARE(editor.history().size(), steps + 3);
+        QVERIFY(!editor.text().contains(QStringLiteral("\\kf")));
+        // with no cursor: the current syllable's middle
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(!audio.cursor());
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 4);
+        QCOMPARE(audio.karaokeModel().times()[2], application::legacyZeroIt(boundary + (1800 - boundary) / 2));
+        QCOMPARE(editor.history().size(), steps + 4);
+        // the ⋯ menu's items do the same
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 5);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeKf"), "triggered"));
+        QCOMPARE(editor.history().size(), steps + 6);
+        QVERIFY(editor.text().contains(QStringLiteral("\\kf")));
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+
+        // at the default zoom: K over a letter splits before it, as a click
+        audio.setHorizontalZoom(50);
+        display->forceActiveFocus();
+        press(Qt::Key_B);
+        const auto middle = [&](int i) {
+            const auto [from, to] = audio.karaokeModel().syllableTimes(i, audio.selectionStart());
+            return application::legacyZeroIt(from + (to - from) / 2);
+        };
+        int letter = -1;
+        for (int lx = std::max(int(view.xAtMs(600)), 1); lx < std::min(int(view.xAtMs(1800)), view.width()) && letter < 0;
+             lx++) {
+            QTest::mouseMove(window, at(lx, 8));
+            if (audio.karaokeModel().hover == 1 && audio.karaokeModel().character == 1)
+                letter = lx;
+        }
+        QVERIFY(letter > 0);
+        press(Qt::Key_K);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k30}h{\\k90}ana"));
+        QVERIFY(editor.undo());
+        // a letter the mouse has left: the current syllable's middle
+        QTest::mouseMove(window, at(letter - 1, 8));
+        QTest::mouseMove(window, at(letter, 8));
+        QCOMPARE(audio.karaokeModel().hover, 1);
+        QTest::mouseMove(window, kOverNoPanel);
+        int current = audio.currentSyllable();
+        int expected = middle(current);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[current], expected);
+        QVERIFY(editor.undo());
+        // a cursor past the Line's syllables: the current syllable's middle too
+        const int past = int(view.xAtMs(2200));
+        QVERIFY(past > 0 && past < view.width());
+        QTest::mouseMove(window, at(past - 1, 30));
+        QTest::mouseMove(window, at(past, 30));
+        QVERIFY(audio.cursor());
+        display->forceActiveFocus();
+        current = audio.currentSyllable();
+        expected = middle(current);
+        press(Qt::Key_K);
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(audio.karaokeModel().times()[current], expected);
+        QVERIFY(editor.undo());
+        QTest::mouseMove(window, kOverNoPanel);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+
+        // AUDIO_LEAD_IN (200 ms): the time before the syllables is a lead syllable
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        display->forceActiveFocus();
+        audio.leadIn();
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(editor.text(), QStringLiteral("{\\k20}{\\k40}sakura{\\k120}hana"));
+        // a lead-in of no whole centiseconds (Codex): the text is written for
+        // the start the Line keeps, 95 ms kept as 90
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 105);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        // and the panel takes that start, so the syllables are drawn and
+        // played from it (Codex)
+        QCOMPARE(audio.selectionStart(), 90);
+        QCOMPARE(audio.karaokeModel().syllableTimes(0, audio.selectionStart()), std::pair(90, 200));
+        // the commands measure from that kept start (Codex): the lead
+        // syllable is 11 cs from 90 ms, not 10.5 from the panel's 95
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 11);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
+        QCOMPARE(editor.text(), QStringLiteral("{\\kf11}{\\kf40}sakura{\\kf120}hana"));
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+        // a start off the 10 ms grid that the Line was not read again for
+        // (a 103 ms lead-in: 97 kept as 90; the lead then joined to
+        // "sakura"), then another lead-in (Codex): the new lead runs to the
+        // kept start, and "sakura" keeps its 51 cs from there
+        store->setValue(QStringLiteral("audio.leadInValue"), 103);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        audio.setHorizontalZoom(1); // the lead wide enough to click its end
+        audio.setScrollPosition((column(200) - view.width() / 2) / 12);
+        const int lead = int(view.xAtMs(200));
+        QVERIFY(lead > 0 && lead < view.width());
+        QTest::mouseMove(window, at(lead, 30));
+        QTest::mouseClick(window, Qt::MiddleButton, {}, at(lead, 30));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k51}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 50);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k5}{\\k51}sakura{\\k120}hana"));
+        QTest::mouseMove(window, kOverNoPanel);
+        store->setValue(QStringLiteral("audio.leadInValue"), 200);
+        audio.setHorizontalZoom(50);
+        press(Qt::Key_H);
+    }
+
+    // KA1 (Codex): Add lead-in in Karaoke mode with several Lines selected
+    // writes no \k text, which the commit would give every selected Line:
+    // each keeps its own (legacy, as Line mode's start moves)
+    void audioKaraokeLeadInSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lead-several.ass",
+                                       "Dialogue: 0,0:00:00.40,0:00:01.00,Default,,0,0,0,,{\\k30}sa{\\k30}ku\n"
+                                       "Dialogue: 0,0:00:01.20,0:00:01.80,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        audio.leadIn();
+        // the panel's syllables as the kept text reads from the new start (Codex)
+        QCOMPARE(audio.karaokeModel().times(), (std::vector<int>{500, 800}));
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->text, std::u8string(u8"{\\k30}sa{\\k30}ku"));
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+        QCOMPARE(after[0]->start.value.microseconds(), 200000);
+    }
+
+    // KA1 (Codex): a start the right button carries the syllables with, its
+    // drag cut short (the grab lost), commits them as its release would: the
+    // Line keeps its syllables' lengths, not the times its own tags read
+    void audioKaraokeLostCaptureKeepsTheCarriedSyllables()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lost-capture.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:02.60,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        QCOMPARE(audio.karaokeModel().count(), 2);
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const int from = int(view.xAtMs(200));
+        QTest::mouseMove(window, at(from, 40));
+        QTest::mousePress(window, Qt::RightButton, {}, at(from, 40));
+        QTest::mouseMove(window, at(int(view.xAtMs(300)), 40));
+        const int by = application::legacyZeroIt(audio.selectionStart()) - 200; // as the commit writes it
+        QVERIFY(by > 50);
+        QCOMPARE(audio.karaokeModel().times(), (std::vector<int>{600 + by, 1800}));
+        display->ungrabMouse();
+        QTest::mouseRelease(window, Qt::RightButton, {}, at(int(view.xAtMs(300)), 40));
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->start.value.microseconds() / 1000, std::int64_t(200 + by));
+        // "sakura" carried whole; "hana" ends with the Line (its own tags
+        // would have kept "sakura" at its old end)
+        QCOMPARE(QString::fromUtf8(reinterpret_cast<const char *>(after[0]->text.c_str())),
+                 QStringLiteral("{\\k40}sakura{\\k%1}hana").arg((1200 - by) / 10));
+    }
+
+    // KA1 (Codex): a right drag of the start cut short with several Lines
+    // selected commits the carried syllables to the active Line alone
+    void audioKaraokeLostCaptureSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-lost-several.ass",
+                                       "Dialogue: 0,0:00:00.20,0:00:01.80,Default,,0,0,0,,{\\k40}sakura{\\k120}hana\n"
+                                       "Dialogue: 0,0:00:02.00,0:00:02.60,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        auto *display = item("audioDisplay");
+        const auto &view = audio.view();
+        auto at = [&](int x, int y) { return display->mapToScene(QPointF(x, y)).toPoint(); };
+        const int from = int(view.xAtMs(200));
+        QTest::mouseMove(window, at(from, 40));
+        QTest::mousePress(window, Qt::RightButton, {}, at(from, 40));
+        QTest::mouseMove(window, at(int(view.xAtMs(300)), 40));
+        QVERIFY(audio.selectionStart() > 250);
+        display->ungrabMouse();
+        QTest::mouseRelease(window, Qt::RightButton, {}, at(int(view.xAtMs(300)), 40));
+        audio.commit();
+        const auto after = session->document().lines();
+        QVERIFY(after[0]->text != std::u8string(u8"{\\k40}sakura{\\k120}hana")); // the carried syllables
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+    }
+
+    // KA1 (Codex): K and Shift+K with several Lines selected write the
+    // active Line's syllables to it alone; the others keep their texts
+    void audioKaraokeCommandsSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-commands-several.ass",
+                                       "Dialogue: 0,0:00:00.40,0:00:01.00,Default,,0,0,0,,{\\k30}sa{\\k30}ku\n"
+                                       "Dialogue: 0,0:00:01.20,0:00:01.80,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        auto *store = application->settingsStore();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 15);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->text, std::u8string(u8"{\\kf15}s{\\kf15}a{\\kf30}ku"));
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
+
+        // KA1: without AUDIO_AUTO_COMMIT the split waits in the draft, and
+        // Commit sends it to the active Line alone (Codex)
+        store->setValue(QStringLiteral("audio.autoCommit"), false);
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 3);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 4);
+        QCOMPARE(session->document().lines()[0]->text, std::u8string(u8"{\\kf15}s{\\kf15}a{\\kf30}ku"));
+        audio.commit();
+        const auto committed = session->document().lines();
+        QCOMPARE(text(committed[0]).count(QStringLiteral("{\\k")), 4); // the new syllable is a \k one
+        QCOMPARE(committed[1]->text, std::u8string(u8"{\\k60}hana"));
+
+        // the editor's Commit the same, with an Actor typed for both Lines
+        // still going to both
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 4);
+        QVERIFY(session->editDraft(lines[0]->id, application::DraftChange{.actor = u8"Kara"}));
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 5);
+        QVERIFY(application->editor().commit());
+        store->setValue(QStringLiteral("audio.autoCommit"), true);
+        const auto sent = session->document().lines();
+        QCOMPARE(text(sent[0]).count(QStringLiteral("{\\k")), 5);
+        QCOMPARE(sent[1]->text, std::u8string(u8"{\\k60}hana"));
+        QCOMPARE(sent[0]->actor, std::u8string(u8"Kara"));
+        QCOMPARE(sent[1]->actor, std::u8string(u8"Kara"));
     }
 
     // KA2 (#277, KA2-tap-to-time): tap-to-time in Karaoke mode with the real
@@ -16906,6 +17292,12 @@ private slots:
         QCOMPARE(text("audioTapNext"), QStringLiteral("› koro"));
         QCOMPARE(syllableState(0), int(ui::AudioController::TapSyllableNext));
         QVERIFY(visualItem("audioTapLane")->isVisible());
+        // KA1: the syllable commands' menu items wait while tapping, as their
+        // keys do (Codex)
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeKf"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        QCOMPARE(editor.history().size(), steps);
 
         // Hold: ki, a gap, mi and no back to back; Space reaches tap mode,
         // not the video's play (VIDEO_PLAY_PAUSE)

@@ -1039,6 +1039,16 @@ DialogWindow {
                         title: qsTr("Karaoke")
                         SettingCheck { setting: "audio.mergeEveryNWithSyllable"; text: qsTr("Merge every \"n\" with the previous syllable") }
                         SettingCheck { setting: "audio.karaokeMoveOnClick"; text: qsTr("Move the syllable line after a click") }
+                        // KA1 (#276): Auto split's double consonants, and the
+                        // length the \k and \kf switch takes as long
+                        SettingCheck { setting: "audio.karaokeDoubleConsonantApart"; text: qsTr("Give a double consonant its own syllable (so|ma|t|ta)") }
+                        SettingsRow {
+                            text: qsTr("Long syllables for %1").arg("\\kf")
+                            SettingNumber {
+                                setting: "audio.karaokeKfThreshold"; from: 10; to: 10000; unit: qsTr("cs"); name: qsTr("Long syllables for %1").arg("\\kf")
+                                tip: qsTr("Switch long syllables between %1 and %2 changes the syllables at least this long.").arg("\\k").arg("\\kf")
+                            }
+                        }
                     }
                     SettingsSection {
                         title: qsTr("Cache")

@@ -288,6 +288,12 @@ const std::vector<SettingDefinition> &definitions()
         // "nextCommit", "goto", "sliders"). Starts on AU1's row; legacy has
         // no such option, so an import leaves it as it is.
         {"audio.panelControls", "", StringList, Profile, Mapped, false, std::vector<std::string>{"playAround"}},
+        // KA1 (#276): Karaoke's Auto split gives a double consonant a
+        // syllable of its own (so|ma|t|ta; off: so|mat|ta, KM's script).
+        {"audio.karaokeDoubleConsonantApart", "", Bool, Profile, Mapped, false, false},
+        // KA1: how long a syllable is (in centiseconds) for the \k and \kf
+        // switch to take it (owner 2026-10-21: KM's 100).
+        {"audio.karaokeKfThreshold", "", Int, Profile, Mapped, false, std::int64_t{100}},
         // KA2 (#277): the audio box's playback speed in percent (25, 33, 50,
         // 75 or 100), pitch kept (KA2-slowed-playback); tap-to-time's Hold or
         // Press and the calibrated latency in ms (KA2-tap-to-time).

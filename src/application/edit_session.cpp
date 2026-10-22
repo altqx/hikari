@@ -54,6 +54,40 @@ void merge(DraftChange &into, const DraftChange &change)
         into.endFrame = change.endFrame;
 }
 
+// KA1: the fields `change` gives a new value (one the draft did not hold)
+// are no longer kept to the draft's Line.
+void unmark(DraftChange &own, const DraftChange &change, const DraftChange &before)
+{
+    if (change.text && change.text != before.text)
+        own.text.reset();
+    if (change.translation && change.translation != before.translation)
+        own.translation.reset();
+    if (change.start && change.start != before.start)
+        own.start.reset();
+    if (change.end && change.end != before.end)
+        own.end.reset();
+    if (change.marginLeft && change.marginLeft != before.marginLeft)
+        own.marginLeft.reset();
+    if (change.marginRight && change.marginRight != before.marginRight)
+        own.marginRight.reset();
+    if (change.marginVertical && change.marginVertical != before.marginVertical)
+        own.marginVertical.reset();
+    if (change.comment && change.comment != before.comment)
+        own.comment.reset();
+    if (change.layer && change.layer != before.layer)
+        own.layer.reset();
+    if (change.style && change.style != before.style)
+        own.style.reset();
+    if (change.actor && change.actor != before.actor)
+        own.actor.reset();
+    if (change.effect && change.effect != before.effect)
+        own.effect.reset();
+    if (change.startFrame && change.startFrame != before.startFrame)
+        own.startFrame.reset();
+    if (change.endFrame && change.endFrame != before.endFrame)
+        own.endFrame.reset();
+}
+
 void apply(core::LineRecord &line, const DraftChange &change)
 {
     if (change.text)
@@ -141,7 +175,9 @@ bool EditSession::editDraft(core::LineId line, const DraftChange &change)
     }
     if (!m_draft)
         m_draft = Draft{line, {}};
+    const DraftChange before = m_draft->change;
     merge(m_draft->change, change);
+    unmark(m_draft->own, change, before); // KA1: a kept field edited anew goes to every selected Line again
     m_selection.active = line;
     return true;
 }
@@ -273,6 +309,7 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
     // Send's cells are the fields the editor marked modified: those the draft
     // holds, even where a value went back to the committed one.
     const DraftChange cells = m_draft->change;
+    const DraftChange own = m_draft->own; // KA1: the fields kept to the edited Line
     const core::LineId edited = m_draft->line;
     m_draft.reset();
     core::Document next = document();
@@ -281,33 +318,34 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
         if (!m_selection.selected.contains(line->id))
             continue;
         core::LineRecord updated = *line;
-        if (cells.text)
+        const bool other = line->id != edited;
+        if (cells.text && !(other && own.text))
             updated.text = record->text;
-        if (cells.translation)
+        if (cells.translation && !(other && own.translation))
             updated.translation = record->translation;
-        if (cells.start)
+        if (cells.start && !(other && own.start))
             updated.start.value = record->start.value;
-        if (cells.end)
+        if (cells.end && !(other && own.end))
             updated.end.value = record->end.value;
-        if (cells.marginLeft)
+        if (cells.marginLeft && !(other && own.marginLeft))
             updated.marginLeft.value = record->marginLeft.value;
-        if (cells.marginRight)
+        if (cells.marginRight && !(other && own.marginRight))
             updated.marginRight.value = record->marginRight.value;
-        if (cells.marginVertical)
+        if (cells.marginVertical && !(other && own.marginVertical))
             updated.marginVertical.value = record->marginVertical.value;
-        if (cells.comment)
+        if (cells.comment && !(other && own.comment))
             updated.comment = record->comment;
-        if (cells.layer)
+        if (cells.layer && !(other && own.layer))
             updated.layer.value = record->layer.value;
-        if (cells.style)
+        if (cells.style && !(other && own.style))
             updated.style = record->style;
-        if (cells.actor)
+        if (cells.actor && !(other && own.actor))
             updated.actor = record->actor;
-        if (cells.effect)
+        if (cells.effect && !(other && own.effect))
             updated.effect = record->effect;
-        if (cells.startFrame)
+        if (cells.startFrame && !(other && own.startFrame))
             updated.startFrame = record->startFrame;
-        if (cells.endFrame)
+        if (cells.endFrame && !(other && own.endFrame))
             updated.endFrame = record->endFrame;
         // Leaving under the legacy preference: SetLine sets the edited Line's
         // End before its Start to the Start.
@@ -343,6 +381,12 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
 void EditSession::discardDraft()
 {
     m_draft.reset();
+}
+
+void EditSession::keepDraftFieldsToItsLine(const DraftChange &fields)
+{
+    if (m_draft)
+        merge(m_draft->own, fields);
 }
 
 std::expected<void, CommandRefusal> EditSession::run(const Command &command)

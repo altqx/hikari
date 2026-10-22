@@ -189,6 +189,7 @@ public:
     // The display item: its size, the mouse cursor, focus and the wheel.
     void resize(int width, int height, int timelineHeight, int scrollbarThickness);
     void setCursor(std::optional<float> x); // the mouse's; not while playing (A4)
+    void setPointerOver(bool over);         // KA1: the mouse is over the display
     std::optional<float> cursor() const { return m_cursor; }
     void setFocused(bool focused);
     // Legacy OnMouseEvent's wheel (`rotation` in eighths of a degree, 120 a
@@ -293,6 +294,14 @@ public:
     bool karaokeSplitMode() const { return m_karaAuto; }
     Q_INVOKABLE void toggleKaraoke();
     Q_INVOKABLE void toggleKaraokeSplitMode();
+    // KA1 (#276), Karaoke mode: AUDIO_KARAOKE_SPLIT splits a syllable at the
+    // hovered letter, else at the waveform cursor (the pointer's line, or the
+    // playing position), else the current syllable in the middle;
+    // AUDIO_KARAOKE_KF switches the long syllables between \k and \kf
+    // (audio.karaokeKfThreshold). Each commits as a click on the letters
+    // does, and the view stays where it is.
+    Q_INVOKABLE void splitSyllableAtCursor();
+    Q_INVOKABLE void switchLongSyllablesToKf();
     const application::AudioKaraoke &karaokeModel() const { return m_karaoke; }
     int currentSyllable() const { return m_karaoke.current; }
     // The active Line's text as legacy's SetDialogue read it (the edit box's
@@ -330,6 +339,12 @@ public:
         std::function<void(int key)> setActive;
         // tab->video->Seek (Ctrl+left or middle click).
         std::function<void(int ms)> seekVideo;
+        // KA1: the start the commit writes (committedAudioTime: 10 ms in
+        // ASS, a frame's start in MicroDVD), so the \k text is written against it.
+        std::function<int(int ms)> fieldTime;
+        // KA1: whether several Lines are selected (the commit gives them all
+        // the edited fields, so a lead-in writes no \k text then).
+        std::function<bool()> severalSelected;
         // (Playback is the box's own since A4: Play after Next/Previous
         // unless AUDIO_DONT_PLAY_WHEN_LINE_CHANGES, the middle double click's
         // Play and the player's end while a boundary is dragged.)
@@ -441,7 +456,7 @@ public:
     void showTime(int ms, bool mark);
     // The display's mouse (OnMouseEvent's timing) and lost capture.
     application::AudioMouseResult mouse(const application::AudioMouse &event);
-    void lostCapture() { m_timing.lostCapture(); }
+    void lostCapture();
     // The label font's text height, which places the mark's time.
     void setMarkTextHeight(int height) { m_markTextHeight = height; }
 
@@ -478,7 +493,8 @@ private:
     void boxChanged();
     void newView();
     void reselect();     // legacy SetDialogue
-    void update(bool moveToEnd = false); // legacy Update: follow the Line, then redraw
+    // legacy Update: follow the Line (KA1: not with `scroll` false), then redraw
+    void update(bool moveToEnd = false, bool scroll = true);
     void redraw();
     // A3
     application::AudioTimingOptions timingOptions() const;
@@ -486,7 +502,11 @@ private:
     bool commitChanges(bool nextLine, bool save, bool moveToEnd,
                        application::AudioAdjacent adjacent = application::AudioAdjacent::None,
                        std::optional<std::u16string> karaokeText = std::nullopt, const char *stepName = nullptr,
-                       bool activeOnly = false);
+                       bool activeOnly = false, bool scroll = true);
+    void commitKaraoke();       // KA1: the syllables' text committed as a letter split is, the view kept
+    int committedStart() const; // KA1: the start the commit writes (TimingHooks::fieldTime)
+    std::u16string committedKaraokeText(); // KA1: the syllables' text for it
+    void syncCommittedStart();             // KA1: in Karaoke mode the panel's start becomes it
     void makeDialogueVisible(bool force = false, bool moveToEnd = false); // legacy MakeDialogueVisible
     void splitKaraoke();                                                   // legacy Karaoke::Split
     void changeLine(int delta);
@@ -529,6 +549,7 @@ private:
     std::vector<int> m_keyframes;
     std::optional<int> m_videoMs;
     std::optional<float> m_cursor;
+    bool m_pointerOver = false; // KA1: a hovered letter counts while the mouse is over the display
     bool m_focused = false;
     bool m_fresh = true; // no audio loaded since the view was made
     int m_scrollbarThickness = 0;
