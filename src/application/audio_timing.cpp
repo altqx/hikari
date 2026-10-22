@@ -317,7 +317,10 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 if (const auto letter =
                         karaoke->letterAt(static_cast<int>(x), view, selection.startMs, kara.measure)) {
                     std::tie(karaoke->hover, karaoke->character) = *letter;
-                    if (leftDown && karaoke->splitSyllable(karaoke->hover, karaoke->character, selection.startMs)) {
+                    // the time measured from the start the commit writes, as
+                    // the text is written (Codex)
+                    if (leftDown &&
+                        karaoke->splitSyllable(karaoke->hover, karaoke->character, fieldTime(selection.startMs))) {
                         // a click splits the syllable before the letter
                         karaoke->current = karaoke->hover;
                         result.commit = false; // Commit()

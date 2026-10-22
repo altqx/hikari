@@ -13078,6 +13078,14 @@ private slots:
         QVERIFY(item("audioMoreKaraokeSplitAtCursor")->isVisible());
         QVERIFY(item("audioMoreKaraokeKf")->isVisible());
         closeMore();
+        // ⋯'s Auto split switches it once, the folded button's face following (Codex)
+        const bool splitMode = audio.karaokeSplitMode();
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplit"), "triggered"));
+        QCOMPARE(audio.karaokeSplitMode(), !splitMode);
+        QCOMPARE(item("audioKaraokeSplit")->property("checked").toBool(), !splitMode);
+        QVERIFY(QMetaObject::invokeMethod(named("audioMoreKaraokeSplit"), "triggered"));
+        QCOMPARE(audio.karaokeSplitMode(), splitMode);
+        QCOMPARE(item("audioKaraokeSplit")->property("checked").toBool(), splitMode);
         // Tap options opens the Tap menu at ⋯: Hold or Press, the speed, the latency
         auto *tapMenu = named("audioTapMenu");
         QVERIFY(QMetaObject::invokeMethod(named("audioMoreTapOptions"), "triggered"));
@@ -17020,6 +17028,27 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
         QCOMPARE(editor.text(), QStringLiteral("{\\kf11}{\\kf40}sakura{\\kf120}hana"));
         store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
+        QVERIFY(editor.undo());
+        QVERIFY(editor.undo());
+        QCOMPARE(editor.text(), QStringLiteral("{\\k40}sakura{\\k120}hana"));
+        // a start off the 10 ms grid that the Line was not read again for
+        // (a 103 ms lead-in: 97 kept as 90; the lead then joined to
+        // "sakura"), then another lead-in (Codex): the new lead runs to the
+        // kept start, and "sakura" keeps its 51 cs from there
+        store->setValue(QStringLiteral("audio.leadInValue"), 103);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        audio.setHorizontalZoom(1); // the lead wide enough to click its end
+        audio.setScrollPosition((column(200) - view.width() / 2) / 12);
+        const int lead = int(view.xAtMs(200));
+        QVERIFY(lead > 0 && lead < view.width());
+        QTest::mouseMove(window, at(lead, 30));
+        QTest::mouseClick(window, Qt::MiddleButton, {}, at(lead, 30));
+        QCOMPARE(editor.text(), QStringLiteral("{\\k51}sakura{\\k120}hana"));
+        store->setValue(QStringLiteral("audio.leadInValue"), 50);
+        audio.leadIn();
+        QCOMPARE(editor.text(), QStringLiteral("{\\k5}{\\k51}sakura{\\k120}hana"));
+        QTest::mouseMove(window, kOverNoPanel);
         store->setValue(QStringLiteral("audio.leadInValue"), 200);
         audio.setHorizontalZoom(50);
         press(Qt::Key_H);

@@ -775,6 +775,27 @@ TEST_F(KaraokeMouseTest, AClickOnTheLettersSplitsTheSyllable)
     EXPECT_EQ(karaoke.character, -1);
 }
 
+// KA1 (Codex): after a start the format moves (3010 committed as 3040), a
+// click on a letter divides the syllable's time from the committed start,
+// as the text is written
+TEST_F(KaraokeMouseTest, AClickSplitsFromTheCommittedStart)
+{
+    fieldTime = [](int ms) { return (ms + 39) / 40 * 40; };
+    karaoke = split("{\\k56}ka{\\k90}ra{\\k150}oke", 3040, 6000);
+    selection.startMs = 3010;
+    timing.drawn(view, selection);
+    int x = 100;
+    for (; x < 120; x++) {
+        send(drag(x, AudioMouse::Button::None, 10));
+        if (karaoke.hover == 0 && karaoke.character == 1)
+            break;
+    }
+    ASSERT_LT(x, 120);
+    send(press(x, 10));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3320, 3600, 4500, 6000})); // half of 3040-3600
+    EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))), "{\\k28}k{\\k28}a{\\k90}ra{\\k150}oke");
+}
+
 TEST_F(KaraokeMouseTest, AClickChoosesTheSyllableARightClickPlaysIt)
 {
     auto r = send(press(170));

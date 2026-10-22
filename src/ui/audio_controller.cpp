@@ -1273,13 +1273,15 @@ void AudioController::addLead(bool in, bool out)
     // (legacy, as in Line mode; Codex)
     std::optional<std::u16string> karaokeText;
     const bool several = m_hooks.severalSelected && m_hooks.severalSelected();
+    // the syllables are read from the start the last commit wrote (Codex)
+    const int committedBefore = m_hooks.fieldTime ? m_hooks.fieldTime(startBefore) : startBefore;
     if (m_hasKara && m_karaoke.count() && m_startMs != startBefore && !several) {
-        m_karaoke.moveStart(startBefore, committedStart());
+        m_karaoke.moveStart(committedBefore, committedStart());
         karaokeText = m_karaoke.text(committedStart());
     } else if (m_hasKara && m_karaoke.count() && m_startMs != startBefore) {
         // the text's \k tags stay, now from the new start: the syllables
         // move with it, as the text will read (Codex)
-        const int by = committedStart() - (m_hooks.fieldTime ? m_hooks.fieldTime(startBefore) : startBefore);
+        const int by = committedStart() - committedBefore;
         for (auto &time : m_karaoke.times())
             time += by;
     }
