@@ -133,6 +133,10 @@ constexpr OptionsBinding kBindings[] = {
     // and the Video page.
     {"video.moveToActiveLine", IndexChoice, Video, 0, 0, 6},
     {"video.playAfterSelection", IndexChoice, Video, 0, 0, 4},
+    // KA1: Auto split's double consonants and the \k and \kf switch's long
+    // syllable, on the Audio page after the karaoke options.
+    {"audio.karaokeDoubleConsonantApart", Check, Audio},
+    {"audio.karaokeKfThreshold", Number, Audio, 10, 10000},
     // PK1 (#301): notices as toasts, or in the Log only, on the General
     // page's Notices section.
     {"notices.toasts", Check, General},

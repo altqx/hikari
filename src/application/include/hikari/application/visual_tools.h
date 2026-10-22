@@ -153,6 +153,10 @@ struct ToolValue {
     std::u16string group;
     std::u16string unit;
     double step = 1;
+    // HY1: a colour's swatch beside its first channel (0xAARRGGBB; 0: none),
+    // and the value a drag over the video changes (Hydra's ◆).
+    std::uint32_t swatch = 0;
+    bool marked = false;
 };
 
 // A value's text as a number (a plain decimal, spaces around it and a
@@ -172,9 +176,12 @@ enum class ValueEdit { Commit, Sample };
 // or (T4) an action button. setOption takes 0/1 for a toggle, the index for
 // a choice and 1 for an action. VT1: options of one group sit together
 // after its label (Scale's Rectangle and Tags); a choice in a group shows
-// its current entry as text.
+// its current entry as text. HY1: a switch is a choice shown as a row of
+// text buttons (Hydra's Set, Add, Multiply, Gradient), and a searchable
+// choice opens with a search field, each entry with its note (Hydra's tag)
+// under one of its section names.
 struct ToolOption {
-    enum class Kind { Toggle, Choice, Action };
+    enum class Kind { Toggle, Choice, Action, Switch };
     std::string name;
     Kind kind = Kind::Toggle;
     std::string iconRole;     // the K1 set's role (toggles, actions, a choice's menu button)
@@ -187,6 +194,24 @@ struct ToolOption {
     // an action ("Edit"); the row's menu puts it after a separator.
     bool listEnds = false;
     std::u16string group;
+    // HY1: a searchable choice (Hydra's tag list): each entry's note (its
+    // tag) beside it, under its section (an index into sectionNames).
+    bool searchable = false;
+    std::vector<std::u16string> notes;
+    std::vector<int> sections;
+    std::vector<std::u16string> sectionNames;
+    bool afterValues = false; // HY1: shown after the tool's values
+};
+
+// HY1: what a tool's last edit did, which it can do again with other values
+// in place of that history step (Hydra's last change card): the tag, the
+// change option (ToolOption's switch index) and the Lines it changed, and
+// its values as the strip names them.
+struct LastChange {
+    std::u16string tag;
+    int change = 0;
+    int lines = 0;
+    std::vector<ToolValue> values;
 };
 
 // One gesture's edit (docs/qt/proposals/edit-transactions.md, accepted on
@@ -300,6 +325,14 @@ public:
     // Commits the open gesture (one step) and closes it.
     virtual std::expected<void, CommandRefusal> commitGesture() = 0;
     virtual void cancelGesture() = 0;
+    // HY1: undoes the last history step when the Document is still at
+    // `revision` (nothing changed it since the tool's own step) and no
+    // gesture is open; the tool then commits its step again in its place.
+    virtual bool undoStep(std::uint64_t revision)
+    {
+        (void)revision;
+        return false;
+    }
     // The crosshair label's size in device pixels (legacy GetTextExtent of
     // the program font + 4, or the D3DX font's DT_CALCRECT).
     virtual std::pair<int, int> measureLabel(std::u16string_view text) const = 0;
@@ -436,6 +469,30 @@ public:
         (void)host;
         return false;
     }
+    // HY1: the value a drag over the video changes (a click on its field).
+    virtual bool markValue(const std::string &name, VisualHost &host)
+    {
+        (void)name;
+        (void)host;
+        return false;
+    }
+    // HY1: the picked Lines changed (the batch picker).
+    virtual void targetsChanged(VisualHost &host) { (void)host; }
+    // HY1: the last change card, and a value edited on it (its step done
+    // again in place of the one it replaces), and its ✕.
+    virtual std::optional<LastChange> lastChange(const VisualHost &host) const
+    {
+        (void)host;
+        return std::nullopt;
+    }
+    virtual bool editLastChange(const std::string &name, const std::u16string &text, VisualHost &host)
+    {
+        (void)name;
+        (void)text;
+        (void)host;
+        return false;
+    }
+    virtual void dismissLastChange() {}
     // T3: Esc with no gesture open: true when the tool dropped a pending
     // step (RotationZ's first point of the two-point angle).
     virtual bool cancelPending(VisualHost &host)

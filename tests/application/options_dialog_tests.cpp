@@ -159,10 +159,11 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     // choice on the Audio page, LE2's Times/Frames and LE3's hidden-tag check
     // boxes on the Line editor page, WS2's panel layout in the file on the
     // Subtitle properties page, VF1's two follow lists on the Video page,
-    // PK1's notices as toasts on the General page, PU7's update options on
-    // the Updates page, then (Windows) A4-wasapi-default's output host API
-    // and W1's video player.
-    ASSERT_GT(all.size(), std::size(kLegacy) + 12);
+    // KA1's double consonants and \\kf length on the Audio page, PK1's
+    // notices as toasts on the General page, PU7's update options on the
+    // Updates page, then (Windows) A4-wasapi-default's output host API and
+    // W1's video player.
+    ASSERT_GT(all.size(), std::size(kLegacy) + 14);
     const auto &fromVideo = all[std::size(kLegacy)];
     EXPECT_EQ(fromVideo.setting, "automation.scriptResolutionFromVideo");
     EXPECT_EQ(fromVideo.control, OptionsControl::Check);
@@ -202,8 +203,18 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(play.control, OptionsControl::IndexChoice);
     EXPECT_EQ(play.page, OptionsPage::Video);
     EXPECT_EQ(play.entries, 4);
+    const auto &consonants = all[std::size(kLegacy) + 8];
+    EXPECT_EQ(consonants.setting, "audio.karaokeDoubleConsonantApart");
+    EXPECT_EQ(consonants.control, OptionsControl::Check);
+    EXPECT_EQ(consonants.page, OptionsPage::Audio);
+    const auto &kf = all[std::size(kLegacy) + 9];
+    EXPECT_EQ(kf.setting, "audio.karaokeKfThreshold");
+    EXPECT_EQ(kf.control, OptionsControl::Number);
+    EXPECT_EQ(kf.page, OptionsPage::Audio);
+    EXPECT_EQ(kf.min, 10);
+    EXPECT_EQ(std::get<std::int64_t>(findSetting("audio.karaokeKfThreshold")->defaultValue), 100);
     // PK1 (#301): notices as toasts (off: in the Log only).
-    const auto &toasts = all[std::size(kLegacy) + 8];
+    const auto &toasts = all[std::size(kLegacy) + 10];
     EXPECT_EQ(toasts.setting, "notices.toasts");
     EXPECT_EQ(toasts.control, OptionsControl::Check);
     EXPECT_EQ(toasts.page, OptionsPage::General);
@@ -213,14 +224,14 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
                                                                {"updater.autoInstall", OptionsControl::Check},
                                                                {"updater.skippedVersion", OptionsControl::Text}};
     for (std::size_t i = 0; i < std::size(updates); ++i) {
-        const auto &binding = all[std::size(kLegacy) + 9 + i];
+        const auto &binding = all[std::size(kLegacy) + 11 + i];
         EXPECT_EQ(binding.setting, updates[i].first);
         EXPECT_EQ(binding.control, updates[i].second) << updates[i].first;
         EXPECT_EQ(binding.page, OptionsPage::Updates) << updates[i].first;
     }
 #ifdef _WIN32
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 15);
-    const auto &hostApi = all[std::size(kLegacy) + 13];
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 17);
+    const auto &hostApi = all[std::size(kLegacy) + 15];
     EXPECT_EQ(hostApi.setting, "audio.outputHostApi");
     EXPECT_EQ(hostApi.control, OptionsControl::IndexChoice);
     EXPECT_EQ(hostApi.page, OptionsPage::Audio);
@@ -231,7 +242,7 @@ TEST(OptionsDialog, BindsTheLegacyControlsInOrder)
     EXPECT_EQ(all.back().entries, 2);
     const auto bindings = all.first(std::size(kLegacy));
 #else
-    ASSERT_EQ(all.size(), std::size(kLegacy) + 13);
+    ASSERT_EQ(all.size(), std::size(kLegacy) + 15);
     EXPECT_EQ(findOptionsBinding("audio.outputHostApi"), nullptr); // Windows only
     EXPECT_EQ(findOptionsBinding("video.playbackPlayer"), nullptr); // W1: Windows only
     const auto bindings = all.first(std::size(kLegacy));

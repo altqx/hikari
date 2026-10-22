@@ -212,7 +212,7 @@ TEST(KaraokeTap, ChangingTheModeDropsTheHeldSyllable)
 TEST(KaraokeTap, TargetsFromTheKaraokeModel)
 {
     AudioKaraoke karaoke;
-    karaoke.split({u"{\\k20}ki{\\k30}mi {\\k5}{\\k20} {\\kf20}no", 0, 950}, false, false);
+    karaoke.split({u"{\\k20}ki{\\k30}mi {\\k5}{\\k20} {\\kf20}no", 0, 950}, false, {}); // KA1: the split rules (everyN off)
     ASSERT_EQ(karaoke.count(), 5);
     const auto targets = Tap::targets(karaoke);
     ASSERT_EQ(targets.size(), 3u);
@@ -222,7 +222,7 @@ TEST(KaraokeTap, TargetsFromTheKaraokeModel)
     Tap tap;
     tap.begin(targets, 0);
     EXPECT_FALSE(tap.needsSplit());
-    karaoke.split({u"hibiku", 0, 950}, false, false);
+    karaoke.split({u"hibiku", 0, 950}, false, {});
     tap.begin(Tap::targets(karaoke), 0);
     EXPECT_TRUE(tap.needsSplit());
 }
