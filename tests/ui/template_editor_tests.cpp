@@ -1749,6 +1749,33 @@ private slots:
         QCOMPARE(own(), plain);
     }
 
+    // Another tab's generated Lines and their karaoke Lines are not this
+    // one's: a tab chosen finds its own.
+    void anotherTabsOwnersAreNotThisOnes()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        // A generated Line of the last karaoke Line.
+        std::optional<core::LineId> clicked;
+        for (const auto *l : session->document().lines())
+            if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0)
+                clicked = l->id;
+        editor->setShown(true);
+        activate(*clicked);
+        QVERIFY(QTest::qWaitFor([&] { return editor->source() != 0 && settled(); }, 20'000));
+        const auto owner = editor->source();
+        // The same file in another tab at the same revision, that Line no
+        // karaoke Line's there: the old tab's answer would pick its owner.
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.out.ass"));
+        QVERIFY(doc.editLine(*clicked, [](core::LineRecord &l) { l.text += u8"{\\bord9}"; }));
+        auto next = std::make_unique<application::EditSession>(std::move(doc));
+        QCOMPARE(next->revision(), session->revision());
+        session = std::move(next);
+        editor->trustDocument();
+        activate(*clicked);
+        QVERIFY(QTest::qWaitFor([&] { return editor->sourceUnknown(); }, 20'000));
+        QVERIFY(editor->source() != owner);
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()

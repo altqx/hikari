@@ -416,6 +416,8 @@ void TemplateEditorController::refresh()
         m_stats.clear();
         m_replaced.clear();
         m_matched.clear();
+        m_owners.clear(); // another Document's Line ids
+        m_ownersRevision.reset();
         m_values.clear();
         m_lastApply.clear();
         m_previewSnapshotKey.clear();
