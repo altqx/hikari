@@ -140,6 +140,12 @@ public:
     // Starts the write. overwriteExternalChange is the user's explicit choice
     // after being shown an ExternalChange refusal.
     std::expected<PermitId, SaveRefusal> startSave(SavePlan plan, bool overwriteExternalChange = false);
+    // PU1-disk-change-bar: the user kept this copy over the file another
+    // program changed (Keep mine, Save over it). The file as it is now
+    // becomes what the Document last saw there, so its next save writes over
+    // that change, and a later one is refused again. False without a
+    // destination or when the file can't be read.
+    bool acceptExternalChange(DocumentId document);
     // The WriteCoordinator's result listener must forward here.
     void onWriteResult(const WriteResult &result);
     std::optional<SaveStatus> lastSave(DocumentId document) const;
