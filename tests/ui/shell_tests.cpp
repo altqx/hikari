@@ -9474,6 +9474,31 @@ private slots:
         QCOMPARE(findItem(panel, QStringLiteral("spellEmptyAction"))->property("text").toString(), QStringLiteral("Check spelling"));
         application->editor().discard();
 
+        // No dictionary installed yet: one chosen afterwards (Settings, the
+        // editor's language menu) starts the waiting check.
+        {
+            QTemporaryDir bare;
+            QVERIFY(bare.isValid());
+            restartWithSpelling(bare.path(), true);
+            QVERIFY(application->openFile(path));
+            dock = named("spellDock");
+            QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "showPanel",
+                                              Q_ARG(QVariant, QVariant::fromValue(dock))));
+            QTRY_VERIFY(dock->property("isOpen").toBool());
+            QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
+            // As the Line editor page applies them: the failed start turned
+            // spell checking off (legacy SPELLCHECKER_ON), so on again, and
+            // the language (restartSpellChecker).
+            writeDictionary(bare.path());
+            application->setSpellingOn(true);
+            application->setDictionaryLanguage(QStringLiteral("en_US"));
+            QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
+            QVERIFY(spellItem("spellColumns")->isVisible());
+            QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+            QTRY_VERIFY(!dock->property("isOpen").toBool());
+            application->editor().discard();
+        }
+
         // No dictionary: said, with the settings.
         restartWithSpelling(home.path(), false);
         QVERIFY(application->openFile(path));
