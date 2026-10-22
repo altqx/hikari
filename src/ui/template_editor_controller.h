@@ -287,6 +287,7 @@ private:
     TemplateLines templateLines() const;
     std::vector<core::LineId> templateOrder() const;
     core::Document runDocument() const; // the Document with the Line editor's draft
+    std::optional<core::LineRecord> sourceRecord() const; // with the Line editor's draft
     // What the templater runs of a template or code Line.
     static std::string formOf(const core::LineRecord &line);
     // The Actor and Style values, each with its role, of the Lines the

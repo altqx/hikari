@@ -792,16 +792,26 @@ QString TemplateEditorController::sourceText() const
     return l ? withoutTags(l->translation.empty() ? l->text : l->translation) : QString();
 }
 
+std::optional<core::LineRecord> TemplateEditorController::sourceRecord() const
+{
+    // The preview ran on the Line editor's draft (runDocument).
+    if (const auto *s = m_source ? session() : nullptr)
+        if (const auto draft = s->draftRecord(); draft && draft->id == *m_source)
+            return draft;
+    const auto *l = m_source ? line(*m_source) : nullptr;
+    return l ? std::optional(*l) : std::nullopt;
+}
+
 int TemplateEditorController::sourceStartMs() const
 {
-    const auto *l = m_source ? line(*m_source) : nullptr;
-    return l ? static_cast<int>(msOf(l->start)) : 0;
+    const auto r = sourceRecord();
+    return r ? static_cast<int>(msOf(r->start)) : 0;
 }
 
 int TemplateEditorController::sourceEndMs() const
 {
-    const auto *l = m_source ? line(*m_source) : nullptr;
-    return l ? static_cast<int>(msOf(l->end)) : 0;
+    const auto r = sourceRecord();
+    return r ? static_cast<int>(msOf(r->end)) : 0;
 }
 
 QVariantList TemplateEditorController::previewLines() const

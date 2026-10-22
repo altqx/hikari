@@ -126,6 +126,11 @@ public:
         const auto *session = target ? m_files.session(*target) : nullptr;
         if (!session || !session->selection().active)
             return std::nullopt; // legacy always has a current Line
+        // KE2: a preview runs before Apply commits the Line editor's draft,
+        // so it reads the draft's times, as Apply's run will.
+        if (const auto draft = session->draftRecord(); draft && draft->id == *session->selection().active)
+            return std::pair<std::int64_t, std::int64_t>{draft->start.value.microseconds() / 1000,
+                                                         draft->end.value.microseconds() / 1000};
         for (const auto *line : session->document().lines())
             if (line->id == *session->selection().active)
                 return std::pair<std::int64_t, std::int64_t>{line->start.value.microseconds() / 1000,

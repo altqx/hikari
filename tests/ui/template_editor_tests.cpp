@@ -1669,6 +1669,22 @@ private slots:
         QVERIFY(!editor->hasPreview());
     }
 
+    // Loop the Line plays the times the preview ran on: the draft's.
+    void theLoopPlaysTheDraftsTimes()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        const auto source = firstKaraoke();
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        const int end = editor->sourceEndMs();
+        application::DraftChange times;
+        times.end = core::DocumentTime((static_cast<std::int64_t>(end) + 1000) * 1000);
+        QVERIFY(session->editDraft(*source, times));
+        editor->refresh();
+        QCOMPARE(editor->sourceEndMs(), end + 1000);
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
