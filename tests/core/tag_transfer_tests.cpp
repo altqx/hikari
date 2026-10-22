@@ -700,6 +700,29 @@ TEST(TagTransfer, RunsSideBySideAcrossTheTranslatorsTagsReadBack)
     EXPECT_EQ(u8(composeTranslation(tags, read)), u8(saved));
 }
 
+TEST(TagTransfer, AResetEndingARunKeepsTheBaseItUndid)
+{
+    // The carried \b1 is the base: the \r ending the underline run undoes
+    // it too, so it is set again for what follows.
+    const auto tags = readOriginalTags(u"{\\b1}x{\\u1}A{\\r}y{\\b1}z");
+    ASSERT_EQ(tags.runs.size(), 2u); // A underlined, y not bold
+    ASSERT_EQ(u8(tags.runs[0].text), "A");
+    const auto d = draft(u"AB", {{0, 1, 1}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "{\\b1}{\\u1}A{\\r\\b1}B");
+    expectRoundTrip(tags, d);
+}
+
+TEST(TagTransfer, AResetOpeningARunComesAfterTheClosings)
+{
+    // Two runs alike opened by \r over a \fs30 base: closing one (\fs30)
+    // before the next one's \r, not after it.
+    const auto tags = readOriginalTags(u"{\\fs30}x{\\r}A{\\fs30}x{\\r}B{\\fs30}x");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    const auto d = draft(u"AB", {{0, 1, 1}, {1, 2, 2}});
+    EXPECT_EQ(u8(composeTranslation(tags, d)), "{\\fs30}{\\r}A{\\fs30\\r}B{\\fs30}");
+    expectRoundTrip(tags, d);
+}
+
 TEST(TagTransfer, EscapedBracesCarryNothing)
 {
     // libass shows "\{" as a brace: no tag is read, Paste all copies it all.

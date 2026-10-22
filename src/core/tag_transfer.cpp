@@ -660,9 +660,10 @@ const TagRun *runAt(const OriginalTags &tags, int number)
 }
 
 // The tags that change the formatting from run `from` to run `to` (0 is the
-// base): the resets, then the closings, then the openings, each in the order
-// the Original text wrote them. At the body's end only the closings the
-// Original wrote are kept: the others change no glyph.
+// base): the closing resets, the closings, the opening resets, then the
+// openings, each in the order the Original text wrote them; after a reset
+// whatever of the target it changed is set again. At the body's end only the
+// closings the Original wrote are kept: the others change no glyph.
 std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd = false)
 {
     const TagRun *f = runAt(tags, from), *t = runAt(tags, to);
@@ -678,14 +679,15 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
         return valueIn(tags.base, component);
     };
     struct Part {
-        int rank; // 0 a reset, 1 a closing, 2 an opening
+        int rank; // 0 a closing reset, 1 a closing, 2 an opening reset, 3 an opening
         TagSetter setter;
     };
     std::vector<Part> parts;
     const auto isReset = [](const TagSetter &s) { return s.tag.size() > 1 && tagName(s.tag.substr(1)) == u"r"; };
+    // An opening reset goes after the closings: before them they would undo it.
     auto add = [&](const TagSetter &s, bool opening) {
         if (!s.tag.empty())
-            parts.push_back({isReset(s) ? 0 : opening ? 2 : 1, s});
+            parts.push_back({(opening ? 2 : 0) + (isReset(s) ? 0 : 1), s});
     };
     for (const auto &component : components) {
         if (valueOf(f, component) == valueOf(t, component))
@@ -705,7 +707,8 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
     }
     // A reset undoes every value: the target's values it undoes too are set
     // again after it.
-    if (t && std::ranges::any_of(parts, [](const Part &p) { return p.rank == 0; }))
+    const bool reset = std::ranges::any_of(parts, [](const Part &p) { return p.rank % 2 == 0; });
+    if (t && reset)
         for (const auto &[component, open] : t->opens)
             if (valueOf(f, component) == valueOf(t, component))
                 add(open, true);
@@ -717,6 +720,53 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
     for (const auto &part : parts)
         if (written.insert(part.setter.tag).second)
             out += part.setter.tag;
+    if (!reset || (atEnd && !t))
+        return out;
+    // What else the reset changed (a base value the target keeps: the bold
+    // of a carried leading \b1): the target run's own opening, or the value
+    // spelled out.
+    TagState state = tags.base, target = tags.base;
+    if (f)
+        for (const auto &[component, value] : f->differs)
+            state[component] = value;
+    if (t)
+        for (const auto &[component, value] : t->differs)
+            target[component] = value;
+    std::size_t order = 0;
+    for (const auto &tag : parseBlock(out, order))
+        apply(state, tag, tags.defaults, tags.named, nullptr);
+    std::set<std::u16string> all;
+    for (const auto *in : {&state, &target})
+        for (const auto &[component, value] : *in)
+            all.insert(component);
+    for (const auto &component : all) {
+        const auto value = valueIn(target, component);
+        if (component == u"t" || component == u"r" || valueIn(state, component) == value)
+            continue;
+        std::u16string setter;
+        if (t)
+            if (const auto it = t->opens.find(component); it != t->opens.end())
+                setter = it->second.tag;
+        if (setter.empty() && !value.empty()) {
+            switch (effectOf(component).kind) {
+            case Kind::Colour:
+            case Kind::Alpha:
+                setter = u"\\" + component + u"&H" + value + u"&";
+                break;
+            case Kind::Flag:
+            case Kind::Bold:
+            case Kind::Number:
+            case Kind::Integer:
+            case Kind::Text:
+                setter = u"\\" + component + value;
+                break;
+            default:
+                break;
+            }
+        }
+        if (!setter.empty() && written.insert(setter).second)
+            out += setter;
+    }
     return out;
 }
 
