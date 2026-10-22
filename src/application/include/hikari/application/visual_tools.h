@@ -362,6 +362,16 @@ public:
         (void)name;
         return false;
     }
+    // VT3: whether fonts are leased and `font` lacks a character of `text`,
+    // which libass may then take from a leased font the measure does not see.
+    virtual bool fallsBackToLeased(const std::string &font, bool bold, bool italic, std::u16string_view text) const
+    {
+        (void)font;
+        (void)bold;
+        (void)italic;
+        (void)text;
+        return false;
+    }
     virtual bool ignoreFiltered() const { return false; }
     virtual void log(std::u16string_view text) { (void)text; }
     // T3: the Line editor's selection in the text the tools edit (legacy

@@ -57,6 +57,7 @@
 #include <QScreen>
 #include <QStandardPaths>
 #include <QCursor>
+#include <QFontInfo>
 #include <QStyleHints>
 #include <QWheelEvent>
 #include <QElapsedTimer>
@@ -21176,6 +21177,14 @@ private slots:
         QVERIFY2(text(session->document().lines()[2]).contains(QLatin1String("\\fry30")),
                  qPrintable(text(session->document().lines()[2])));
         QTRY_COMPARE(fry->property("text").toString(), QStringLiteral("30"));
+        // A character the font lacks counts only while a font is leased,
+        // and by the face the font resolves to, not Qt's fallbacks.
+        const std::string family = QFontInfo(QFont()).family().toStdString();
+        QVERIFY(!tools.fallsBackToLeased(family, false, false, u"A\U0010FFFD"));
+        tools.setLeasedFonts({"HikariLeasedProbe"});
+        QVERIFY(!tools.fallsBackToLeased(family, false, false, u"A"));
+        QVERIFY(tools.fallsBackToLeased(family, false, false, u"A\U0010FFFD"));
+        tools.setLeasedFonts({});
     }
 
     // VT3: the Perspective tool in the four themes (with

@@ -240,6 +240,7 @@ public:
     application::TextMeasurePort *textMeasure() const override { return &m_measure; }
     bool ignoreFiltered() const override { return m_ignoreFiltered && m_ignoreFiltered(); }
     bool fontLeased(const std::string &name) const override;
+    bool fallsBackToLeased(const std::string &font, bool bold, bool italic, std::u16string_view text) const override;
     void log(std::u16string_view text) override;
     std::pair<long, long> editorSelection() const override;
     void setEditorSelection(long from, long to) override

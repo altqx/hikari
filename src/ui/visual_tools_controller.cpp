@@ -20,6 +20,7 @@
 #include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QQuickItem>
+#include <QRawFont>
 #include <QStringList>
 #include <QVariantMap>
 
@@ -268,6 +269,26 @@ void VisualToolsController::setLeasedFonts(const std::vector<std::string> &names
 bool VisualToolsController::fontLeased(const std::string &name) const
 {
     return m_leasedFonts.contains(asciiLower(name));
+}
+
+bool VisualToolsController::fallsBackToLeased(const std::string &font, bool bold, bool italic,
+                                              std::u16string_view text) const
+{
+    if (m_leasedFonts.empty() || text.empty())
+        return false;
+    // The face the measure resolves the name to, alone: QFontMetrics would
+    // answer for Qt's fallbacks too.
+    QFont f(QString::fromStdString(font));
+    f.setBold(bold);
+    f.setItalic(italic);
+    const QRawFont raw = QRawFont::fromFont(f);
+    if (!raw.isValid())
+        return true;
+    const QString string = QString::fromUtf16(text.data(), static_cast<qsizetype>(text.size()));
+    for (const char32_t c : string.toUcs4())
+        if (!raw.supportsCharacter(c))
+            return true;
+    return false;
 }
 
 void VisualToolsController::viewChanged()
