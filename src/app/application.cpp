@@ -835,6 +835,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             auto *session = targetSession();
             m_matroskaRevision = session ? session->revision() : 0;
             m_matroskaVideo = m_video->session().path();
+            m_matroskaVideoRequest = m_video->openRequest();
             m_matroskaFromHome = !m_matroskaTarget;
         };
         hooks.log = [this](const QString &text) {
@@ -2034,9 +2035,13 @@ void Application::writeFinished(const application::WriteResult &result)
          result.outcome == application::WriteOutcome::DurabilityUncertain) &&
         (m_workspace.editingTarget() == result.document || m_workspace.reference() == result.document))
         refreshViews();
+    // PU1-disk-change-bar: a published write, confirmed or not, moved the
+    // Document to its file.
+    if (result.outcome == application::WriteOutcome::Written ||
+        result.outcome == application::WriteOutcome::DurabilityUncertain)
+        emit documentWritten(result.document.value);
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
-        emit documentWritten(result.document.value);
         rememberRecent(result.destination.value, false); // legacy SetRecent after a save
         if (auto *session = m_files->session(result.document); session && !session->isDirty())
             discardRecovery(result.document); // the work is in the file
@@ -2528,7 +2533,10 @@ QString Application::externalChange()
 bool Application::acceptFileOnDisk(qulonglong id)
 {
     const auto document = documentOf(id);
-    return document && m_files->acceptExternalChange(*document);
+    if (!document || !m_files->acceptExternalChange(*document))
+        return false;
+    recordFileTime(*document); // the change accepted is the file as it is now
+    return true;
 }
 
 bool Application::reloadTarget()
@@ -2553,6 +2561,10 @@ bool Application::reloadTarget()
     m_videoRevision.reset();
     m_videoScript.clear();
     m_videoLine.reset();
+    // R1: a compared Document reloaded is compared again (the new session
+    // starts at the same revision as the one it replaced).
+    m_comparedRevisions.erase(target->value);
+    refreshComparison();
     m_editor->reloadFromSession();
     refreshViews();
     return true;
@@ -3084,7 +3096,8 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
     if (!newTab && m_matroskaTarget) {
         auto *session = m_files->session(*m_matroskaTarget);
         newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision
-            || session->draftLine() || m_video->session().path() != m_matroskaVideo;
+            || session->draftLine() || m_video->session().path() != m_matroskaVideo
+            || m_video->openRequest() != m_matroskaVideoRequest; // one asked for, still being opened
     } else if (!newTab && m_matroskaFromHome) {
         newTab = m_workspace.editingTarget().has_value();
     }
