@@ -112,17 +112,16 @@ AbstractButton {
         border.color: list.visible ? Theme.accent : picker.enabled ? Theme.control : Theme.line
         border.width: 1
     }
-    onClicked: list.visible ? list.close() : list.open()
+    onClicked: list.visible ? list.keep() : list.openAt(picker, null)
 
-    Popup {
+    // The kit's popover (PK1): Esc, a press outside or the button again
+    // closes it with the tag as it was; a row or Enter takes one.
+    Popover {
         id: list
         objectName: picker.objectName.length > 0 ? picker.objectName + "_menu" : ""
-        y: picker.height
-        width: Math.max(picker.width, 260)
-        padding: 1
-        focus: true
-        closePolicy: Popup.CloseOnEscape | Popup.CloseOnPressOutsideParent
-        palette: picker.palette
+        title: picker.text
+        padding: 4
+        initialFocus: search
         property bool moreOpen: false
         property int highlighted: -1
         // The rows: section titles and definitions (their index), filtered
@@ -160,7 +159,7 @@ AbstractButton {
         // The choice is taken after the click: another tag can change the
         // bar's options, which makes this picker (and its list) again.
         function choose(index) {
-            close()
+            keep()
             if (index < 0)
                 return
             const tools = picker.tools
@@ -179,18 +178,14 @@ AbstractButton {
             else if (y + 24 > rowList.contentY + rowList.height)
                 rowList.contentY = y + 24 - rowList.height
         }
-        onOpened: {
+        onAboutToShow: {
             search.text = ""
             moreOpen = false
             highlighted = picker.currentIndex
-            search.forceActiveFocus()
         }
-        background: Rectangle {
-            color: Theme.panel
-            border.color: Theme.line
-        }
-        contentItem: ColumnLayout {
+        ColumnLayout {
             spacing: 0
+            Layout.preferredWidth: Math.max(picker.width, 260)
             TextField {
                 id: search
                 objectName: list.objectName.length > 0 ? list.objectName + "_search" : ""
@@ -337,7 +332,7 @@ AbstractButton {
                     color: editTags.hovered ? Theme.select : "transparent"
                 }
                 onClicked: {
-                    list.close()
+                    list.keep()
                     const tools = picker.tools
                     Qt.callLater(() => tools.setOption("edit", 1))
                 }
