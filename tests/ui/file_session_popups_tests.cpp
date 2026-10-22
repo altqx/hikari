@@ -185,6 +185,10 @@ private slots:
         QCOMPARE(target()->document().lines().size(), std::size_t(2));
         QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
         QVERIFY(!bar->property("visible").toBool()); // asked once per change
+        // and a save writes over their change.
+        QVERIFY(QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant())));
+        application->waitForWrites();
+        QTRY_COMPARE(readAll(path).count("mine"), qsizetype(2));
         // Changed again: Reload reads it.
         changeOnDisk(path, "theirs again");
         QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
@@ -196,6 +200,7 @@ private slots:
         changeOnDisk(path, "theirs third");
         QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
         QTRY_VERIFY(bar->property("visible").toBool());
+        application->duplicateLines(); // work to save
         const auto save = [this] {
             return QMetaObject::invokeMethod(window, "saveSubtitles", Q_ARG(QVariant, QVariant()), Q_ARG(QVariant, QVariant()));
         };
@@ -213,7 +218,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("saveOver"))));
         QTRY_VERIFY(!bar->property("visible").toBool());
         application->waitForWrites();
-        QTRY_VERIFY(readAll(path).contains("theirs again"));
+        QTRY_COMPARE(readAll(path).count("theirs again"), qsizetype(2));
         QVERIFY(!readAll(path).contains("theirs third"));
     }
 

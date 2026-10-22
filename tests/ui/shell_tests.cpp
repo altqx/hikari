@@ -7108,14 +7108,18 @@ private slots:
         QVERIFY(application->files().session(edited));
         QCOMPARE(application->files().session(edited)->document().lines().size(), std::size_t(2));
 
-        // A draft typed meanwhile, not yet committed, keeps the tab too.
-        const auto drafted = target();
+        // A draft typed meanwhile, not yet committed, keeps the tab too (the
+        // edited tab again, which has the video).
+        const auto drafted = edited;
+        const auto order = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(order, drafted) - order.begin()));
+        QTRY_VERIFY(target() == drafted);
         auto *draftSession = application->files().session(drafted);
         QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
         QTRY_VERIFY(mkvQuestionShown());
         QVERIFY(mkvAnswer("load"));
         QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
-        QVERIFY(draftSession->editDraftText(draftSession->document().lines()[0]->id, u8"typed"));
+        QVERIFY(draftSession->editDraftText(*draftSession->selection().active, u8"typed"));
         QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
         QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
         QTRY_COMPARE(matroska.state(), 0);
