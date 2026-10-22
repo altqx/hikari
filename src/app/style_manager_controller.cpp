@@ -545,12 +545,6 @@ QString StyleManagerController::editCatalog() const
     return m_edit && m_edit->store ? qs(m_edit->catalog) : QString();
 }
 
-void StyleManagerController::rebindEdit(int row)
-{
-    if (m_edit && m_edit->row && row >= 0)
-        m_edit->row = static_cast<std::size_t>(row);
-}
-
 void StyleManagerController::documentClosing(const application::EditSession *session)
 {
     // A later Document may take its address.

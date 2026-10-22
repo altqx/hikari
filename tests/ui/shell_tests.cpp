@@ -7020,8 +7020,24 @@ private slots:
         QCOMPARE(toast().value(QStringLiteral("text")).toString(), QStringLiteral("The style is gone."));
         QVERIFY(!manager->property("editing").toBool());
 
+        // An undo under an edit not applied: the fields not edited take the
+        // Style's values now, so Apply doesn't put the undone size back.
+        pick(false, {1}); // Sign
+        edit("styleSize", QStringLiteral("30"));
+        click("styleEditorApply");
+        QCOMPARE(style(first, u8"Sign").fontsize, std::u8string(u8"30"));
+        edit("styleShadow", QStringLiteral("6"));
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(field("styleSize")->property("text").toString(), QStringLiteral("20"));
+        QVERIFY(manager->property("dirty").toBool());
+        QCOMPARE(field("styleShadow")->property("text").toString(), QStringLiteral("6"));
+        click("styleEditorApply");
+        QCOMPARE(style(first, u8"Sign").fontsize, std::u8string(u8"20"));
+        QCOMPARE(style(first, u8"Sign").shadow, std::u8string(u8"6"));
+
         // Another tab with a taken name and a size not applied: Apply keeps
-        // the name, writes the size and says so.
+        // the name, writes the size and says so. Until it is answered the
+        // edit stays on the file it was made in, whatever refreshes.
         pick(false, {1}); // Sign
         edit("styleName", QStringLiteral("Default"));
         edit("styleSize", QStringLiteral("41"));
@@ -7030,6 +7046,12 @@ private slots:
         for (int i = 0; i < tabs.size(); ++i)
             if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String("follow-other.ass"))
                 application->selectTab(i);
+        QTRY_VERIFY(box() && box()->isVisible());
+        styles.targetRefreshed();
+        QVERIFY(QMetaObject::invokeMethod(&styles, "changed"));
+        QVERIFY(manager->property("editing").toBool() && manager->property("dirty").toBool());
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{1});
+        QCOMPARE(manager->property("assRows").toList().size(), 3);
         answer("apply");
         QCOMPARE(style(first, u8"Sign").fontsize, std::u8string(u8"41"));
         QCOMPARE(style(first, u8"Default").fontsize, std::u8string(u8"20"));

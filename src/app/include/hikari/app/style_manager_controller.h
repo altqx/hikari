@@ -98,8 +98,6 @@ public:
     // SY1: the catalog a catalog Style's edit goes to, which Settings may
     // have replaced in the lists since ("" without one).
     Q_INVOKABLE QString editCatalog() const;
-    // SY1: the edited Style's row after its list changed (an undo, a move).
-    Q_INVOKABLE void rebindEdit(int row);
     // SY1: a Document closing: an edit pinned to it can no longer be applied.
     void documentClosing(const application::EditSession *session);
 

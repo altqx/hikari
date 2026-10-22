@@ -60,6 +60,9 @@ DialogWindow {
     // The manager's own change of a list (a commit, a delete): it sets the
     // selections itself.
     property bool ownChange: false
+    // Another tab's question about an edit not applied is open: the lists
+    // and the edit stay on the file it was made in until it is answered.
+    property bool awaitingSwitch: false
     readonly property string filterText: filterField.text.trim().toLowerCase()
 
     // --- Opening ----------------------------------------------------------
@@ -162,6 +165,8 @@ DialogWindow {
     // the editor with them; an edit not applied stays on its Style while it
     // is there.
     function reloadFollowing() {
+        if (awaitingSwitch)
+            return
         if (ownChange || !visible) {
             reloadRows()
             return
@@ -188,7 +193,7 @@ DialogWindow {
         if (dirty && own.length > 0) {
             storeSelected = storeFound
             assSelected = assFound
-            styles.rebindEdit(own[0])
+            rebase(store, own[0], found)
             return
         }
         if (dirty)
@@ -208,6 +213,29 @@ DialogWindow {
             assSelected = other
         else
             storeSelected = other
+    }
+    // An edit not applied over its Style changed elsewhere (an undo): the
+    // fields not edited take the Style's values now, the edited ones stay,
+    // so Apply writes only what was edited over them.
+    function rebase(store, row, rows) {
+        const edits = editor.values()
+        const kept = Object.keys(changedKeys)
+        const map = styles.beginEdit(store, row) // pinned again, at its values now
+        if (map.name === undefined)
+            return
+        const fields = rows.length > 1 ? styles.mixedFields(store, rows) : []
+        if (!Object.keys(map).some(k => !same(map[k], values[k])) && sameRows(fields.slice().sort(), openedMixed.slice().sort()))
+            return
+        values = map
+        openedMixed = fields
+        mixed = fields.filter(k => kept.indexOf(k) < 0)
+        resolved = resolved.filter(k => fields.indexOf(k) >= 0)
+        const v = Object.assign({}, map)
+        for (const k of kept)
+            v[k] = edits[k]
+        editor.load(v)
+        refreshChanges()
+        updatePreview()
     }
     // Settings loaded another catalog under an edit of a catalog Style: the
     // edit is asked about (Apply writes it to its own catalog), then the
@@ -742,8 +770,8 @@ DialogWindow {
         target: manager.styles
         function onChanged() { manager.reloadFollowing() }
         function onTargetEdited(switched) {
-            if (!manager.visible)
-                return
+            if (!manager.visible || manager.awaitingSwitch)
+                return // (a question open: its answer shows the tab then)
             if (!switched) {
                 manager.reloadFollowing()
                 return
@@ -775,6 +803,7 @@ DialogWindow {
                 shown()
                 return
             }
+            manager.awaitingSwitch = true
             manager.ask({
                 title: qsTr("Edit style"),
                 text: qsTr("Apply the changes to “%1”?").arg(manager.pendingNew ? nameField.text : manager.values.name),
@@ -788,6 +817,7 @@ DialogWindow {
                 // drops the edit.
                 if (id === "apply")
                     manager.applyAway()
+                manager.awaitingSwitch = false
                 manager.revert()
                 shown()
             })
