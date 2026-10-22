@@ -272,7 +272,9 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // its template Lines (KE1). 20 with the inspector bar's picked count
         // beside its picker, "%n lines" (VT1). 23 with the popup kit's "%n
         // more notice(s)" and the style copy's count and clash summary (PK1).
-        ASSERT_EQ(numerus, 23) << language.toStdString();
+        // 29 with the Style manager's rows, multi-style preview, rename,
+        // apply and catalog questions and its clean-up toast (SY1).
+        ASSERT_EQ(numerus, 29) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

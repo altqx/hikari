@@ -6998,7 +6998,7 @@ Spell checking will be disabled</source>
     <name>HikariSub.Styles</name>
     <message>
         <source>Status of deleted styles</source>
-        <translation>삭제된 스타일 상태</translation>
+        <translation type="vanished">삭제된 스타일 상태</translation>
     </message>
     <message>
         <source>Style manager</source>
@@ -7006,7 +7006,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>확인해주세요</translation>
+        <translation type="vanished">확인해주세요</translation>
     </message>
     <message>
         <source>Style named &quot;%1&quot; already exists. Replace?</source>
@@ -7029,14 +7029,6 @@ Spell checking will be disabled</source>
         <translation>취소</translation>
     </message>
     <message>
-        <source>Missing style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Create</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7054,10 +7046,6 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>colours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>outline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7110,27 +7098,27 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>질문</translation>
+        <translation type="vanished">질문</translation>
     </message>
     <message>
         <source>Change all selected styles?</source>
-        <translation>선택한 모든 스타일을 변경 하시겠습니까?</translation>
+        <translation type="vanished">선택한 모든 스타일을 변경 하시겠습니까?</translation>
     </message>
     <message>
         <source>Style name modified. Do you want to change all instances to the new name?</source>
-        <translation>스타일 이름이 수정되었습니다. 모두 새 이름으로 변경 하시겠습니까?</translation>
+        <translation type="vanished">스타일 이름이 수정되었습니다. 모두 새 이름으로 변경 하시겠습니까?</translation>
     </message>
     <message>
         <source>Styles stored:</source>
-        <translation>포함된 스타일:</translation>
+        <translation type="vanished">포함된 스타일:</translation>
     </message>
     <message>
         <source>Styles in ASS file:</source>
-        <translation>파일에 적용할 스타일:</translation>
+        <translation type="vanished">파일에 적용할 스타일:</translation>
     </message>
     <message>
         <source>Catalog:</source>
-        <translation>목록:</translation>
+        <translation type="vanished">목록:</translation>
     </message>
     <message>
         <source>Style catalog</source>
@@ -7138,11 +7126,11 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>New</source>
-        <translation>추가</translation>
+        <translation type="vanished">추가</translation>
     </message>
     <message>
         <source>New style catalog</source>
-        <translation>새로운 스타일 목록</translation>
+        <translation type="vanished">새로운 스타일 목록</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -7150,27 +7138,19 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Delete selected style catalog</source>
-        <translation>선택 스타일 목록 삭제</translation>
+        <translation type="vanished">선택 스타일 목록 삭제</translation>
     </message>
     <message>
         <source>Create new style in storage</source>
-        <translation>새로만들기</translation>
+        <translation type="vanished">새로만들기</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation>복사</translation>
-    </message>
-    <message>
-        <source>Copy the selected style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">복사</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>편집</translation>
-    </message>
-    <message>
-        <source>Edit the selected style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">편집</translation>
     </message>
     <message>
         <source>Load</source>
@@ -7178,83 +7158,63 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Load style from external ASS file to storage</source>
-        <translation>외부 ASS 파일에서 목록으로 스타일 불러오기</translation>
-    </message>
-    <message>
-        <source>Delete the selected styles</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">외부 ASS 파일에서 목록으로 스타일 불러오기</translation>
     </message>
     <message>
         <source>Sort</source>
-        <translation>정렬</translation>
-    </message>
-    <message>
-        <source>Sort the styles by name</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">정렬</translation>
     </message>
     <message>
         <source>Move selected styles to beginning</source>
-        <translation>선택한 스타일을 처음으로 이동</translation>
+        <translation type="vanished">선택한 스타일을 처음으로 이동</translation>
     </message>
     <message>
         <source>Move selected styles up</source>
-        <translation>선택한 스타일을 위로 이동</translation>
+        <translation type="vanished">선택한 스타일을 위로 이동</translation>
     </message>
     <message>
         <source>Move selected styles down</source>
-        <translation>선택한 스타일을 아래로 이동</translation>
+        <translation type="vanished">선택한 스타일을 아래로 이동</translation>
     </message>
     <message>
         <source>Move selected styles to end</source>
-        <translation>선택한 스타일을 마지막으로 이동</translation>
+        <translation type="vanished">선택한 스타일을 마지막으로 이동</translation>
     </message>
     <message>
         <source>Add to storage</source>
-        <translation>스타일 목록에 추가</translation>
+        <translation type="vanished">스타일 목록에 추가</translation>
     </message>
     <message>
         <source>Copy style from ASS to storage</source>
-        <translation>ASS 파일에서 목록으로 스타일을 복사</translation>
-    </message>
-    <message>
-        <source>the storage</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ASS 파일에서 목록으로 스타일을 복사</translation>
     </message>
     <message>
         <source>Add to ASS</source>
-        <translation>자막에 추가</translation>
+        <translation type="vanished">자막에 추가</translation>
     </message>
     <message>
         <source>Copy style from storage to ASS</source>
-        <translation>목록에서 ASS 파일로 스타일을 복사합니다</translation>
-    </message>
-    <message>
-        <source>the ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">목록에서 ASS 파일로 스타일을 복사합니다</translation>
     </message>
     <message>
         <source>Add to all open ASS files</source>
-        <translation>열려있는 모든 파일에 추가</translation>
-    </message>
-    <message>
-        <source>Copy style from storage to every open ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">열려있는 모든 파일에 추가</translation>
     </message>
     <message>
         <source>Create new ASS style</source>
-        <translation>새로만들기</translation>
+        <translation type="vanished">새로만들기</translation>
     </message>
     <message>
         <source>Load style from external ASS file</source>
-        <translation>외부 ASS 파일에서 스타일 불러오기</translation>
+        <translation type="vanished">외부 ASS 파일에서 스타일 불러오기</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation>스타일 정리</translation>
+        <translation type="vanished">스타일 정리</translation>
     </message>
     <message>
         <source>Delete unused ASS styles</source>
-        <translation>사용하지 않는 ASS 스타일 삭제</translation>
+        <translation type="vanished">사용하지 않는 ASS 스타일 삭제</translation>
     </message>
     <message>
         <source>OK</source>
@@ -7262,15 +7222,15 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Close</source>
-        <translation>닫기</translation>
+        <translation type="vanished">닫기</translation>
     </message>
     <message>
         <source>Style name:</source>
-        <translation>스타일 이름:</translation>
+        <translation type="vanished">스타일 이름:</translation>
     </message>
     <message>
         <source>Font and size:</source>
-        <translation>글꼴 / 크기:</translation>
+        <translation type="vanished">글꼴 / 크기:</translation>
     </message>
     <message>
         <source>Font</source>
@@ -7298,15 +7258,15 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Colors and transparency:</source>
-        <translation>색상과 투명도:</translation>
+        <translation type="vanished">색상과 투명도:</translation>
     </message>
     <message>
         <source>First</source>
-        <translation>첫 번째</translation>
+        <translation type="vanished">첫 번째</translation>
     </message>
     <message>
         <source>Second</source>
-        <translation>두 번째</translation>
+        <translation type="vanished">두 번째</translation>
     </message>
     <message>
         <source>Border</source>
@@ -7317,36 +7277,32 @@ Spell checking will be disabled</source>
         <translation>그림자</translation>
     </message>
     <message>
-        <source>transparency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Border:</source>
-        <translation>테두리:</translation>
+        <translation type="vanished">테두리:</translation>
     </message>
     <message>
         <source>Shadow:</source>
-        <translation>그림자:</translation>
+        <translation type="vanished">그림자:</translation>
     </message>
     <message>
         <source>Scale X:</source>
-        <translation>가로 크기:</translation>
+        <translation type="vanished">가로 크기:</translation>
     </message>
     <message>
         <source>Scale Y:</source>
-        <translation>세로 크기:</translation>
+        <translation type="vanished">세로 크기:</translation>
     </message>
     <message>
         <source>Angle:</source>
-        <translation>각도:</translation>
+        <translation type="vanished">각도:</translation>
     </message>
     <message>
         <source>Spacing:</source>
-        <translation>간격:</translation>
+        <translation type="vanished">간격:</translation>
     </message>
     <message>
         <source>Border type:</source>
-        <translation>테두리 유형:</translation>
+        <translation type="vanished">테두리 유형:</translation>
     </message>
     <message>
         <source>Opaque box</source>
@@ -7354,23 +7310,283 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Left margin:</source>
-        <translation>왼쪽 여백:</translation>
+        <translation type="vanished">왼쪽 여백:</translation>
     </message>
     <message>
         <source>Right:</source>
-        <translation>오른쪽:</translation>
+        <translation type="vanished">오른쪽:</translation>
     </message>
     <message>
         <source>Vertical:</source>
-        <translation>세로:</translation>
+        <translation type="vanished">세로:</translation>
     </message>
     <message>
         <source>Alignment:</source>
-        <translation>정렬:</translation>
+        <translation type="vanished">정렬:</translation>
     </message>
     <message>
         <source>Text encoding:</source>
-        <translation>글자 인코딩:</translation>
+        <translation type="vanished">글자 인코딩:</translation>
+    </message>
+    <message>
+        <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file has no style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create it from Default and edit it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply the changes to the %n selected styles?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Apply the changes to “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No unused styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted 1 unused style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Deleted %n unused styles</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Every style is used by a line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ctrl+Z puts them back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>border</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the catalog “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It has no styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its one style goes with it. This can’t be undone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Its %n styles go with it. This can’t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A style needs a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog already has a style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file already has a style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited it in the file shown before.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put back the value it had</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multiple values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 transparency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency, 0 (opaque) to 255</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styles in this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1, %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changes not applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up (Alt+Up)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down (Alt+Down)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load from a file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete unused styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">목록</translation>
+    </message>
+    <message>
+        <source>Add to file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected catalog styles into this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected file styles into the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to all open files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected catalog styles into every open file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tab has no ASS styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles: the preview shows %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">이름</translation>
+    </message>
+    <message>
+        <source>Rename it in the line that uses it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Rename it in the %n lines that use it</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Family</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Emphasis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text encoding</source>
+        <translation type="unfinished">글자 인코딩</translation>
     </message>
     <message>
         <source>0 - ANSI</source>
@@ -7450,7 +7666,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Style preview:</source>
-        <translation>스타일 미리보기:</translation>
+        <translation type="vanished">스타일 미리보기:</translation>
     </message>
     <message>
         <source>Preview text</source>
@@ -7469,11 +7685,115 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Colours and transparency</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Do you really want to delete the catalog named &quot;%1&quot;?</source>
+        <source>Primary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Secondary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape and position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow distance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alignment %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished">좌측.</translation>
+    </message>
+    <message>
+        <source>Middle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished">우측</translation>
+    </message>
+    <message>
+        <source>Bottom left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left margin</source>
+        <translation type="unfinished">왼쪽 여백</translation>
+    </message>
+    <message>
+        <source>Right margin</source>
+        <translation type="unfinished">오른쪽 여백</translation>
+    </message>
+    <message>
+        <source>Vertical margin</source>
+        <translation type="unfinished">세로 여백</translation>
+    </message>
+    <message>
+        <source>Revert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A catalog named “%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
