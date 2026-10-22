@@ -29,6 +29,7 @@ DialogWindow {
     settings: app ? app.settings : null
     resizable: true
     flush: true
+    footerRule: true
     defaultButton: okButton
     initialFocus: assList
 

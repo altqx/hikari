@@ -34,9 +34,13 @@ Window {
     property SettingsStore settings: null
     property bool resizable: false
     property bool modal: false
-    // SY1: the body fills the window between the title bar and the footer
-    // (a sidebar of its own), and a line parts it from the footer.
+    // PF1 (#225): the content from edge to edge under the title bar, without
+    // the 24-wide margins (a window with a side list, Settings); the footer
+    // keeps them.
     property bool flush: false
+    // SY1: a line parts the body from the footer, whose top and bottom
+    // margins are 20 (the Style manager; Settings draws its own).
+    property bool footerRule: false
     property T.AbstractButton defaultButton: null
     property Item initialFocus: null
     readonly property bool opened: visible
@@ -255,7 +259,7 @@ Window {
                 Layout.topMargin: dialog.flush ? 0 : frame.custom ? 12 : 24
             }
             Rectangle {
-                visible: dialog.flush && footer.visible
+                visible: dialog.footerRule && footer.visible
                 color: Theme.line
                 implicitHeight: 1
                 Layout.fillWidth: true
@@ -266,7 +270,7 @@ Window {
                 visible: closing.count > 0 || leading.visibleChildren.length > 0
                 spacing: 8
                 Layout.fillWidth: true
-                Layout.margins: dialog.flush ? 20 : 24
+                Layout.margins: dialog.footerRule ? 20 : 24
                 Layout.leftMargin: 24
                 Layout.rightMargin: 24
                 RowLayout {
