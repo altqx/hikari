@@ -6204,7 +6204,9 @@ ApplicationWindow {
         pickerFolder: picker => root.pickerFolder(picker)
         rememberPickerFolder: (picker, file) => root.rememberPickerFolder(picker, file)
         confirmOverDisk: (ids, then, cancelled) => {
-            const marked = ids.filter(id => root.changedOnDisk[id] === true && root.app.saveRouteFor(id) === "")
+            // The review writes each one to its own file (an Untitled one,
+            // with no bar, to the file picked).
+            const marked = ids.filter(id => root.changedOnDisk[id] === true)
             if (marked.length === 0)
                 then()
             else

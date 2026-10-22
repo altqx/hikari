@@ -811,11 +811,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     {
         // Y9: GRID_SUBS_FROM_MKV on the editing target's tab video.
         MatroskaController::Hooks hooks;
-        hooks.videoPath = [this] {
-            const auto target = m_workspace.editingTarget();
-            const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
-            return it == m_tabMedia.end() ? QString() : it->second.video;
-        };
+        hooks.videoPath = [this] { return targetVideoPath(); };
         hooks.modified = [this] {
             auto *session = targetSession();
             return session && session->isDirty();
@@ -834,7 +830,9 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             m_matroskaTarget = m_workspace.editingTarget();
             auto *session = targetSession();
             m_matroskaRevision = session ? session->revision() : 0;
-            m_matroskaVideo = m_video->session().path();
+            m_matroskaDraftLine = session ? session->draftLine() : std::nullopt;
+            m_matroskaDraft = session ? session->draftText() : std::nullopt;
+            m_matroskaVideo = targetVideoPath();
             m_matroskaVideoRequest = m_video->openRequest();
             m_matroskaFromHome = !m_matroskaTarget;
         };
@@ -2038,16 +2036,17 @@ void Application::writeFinished(const application::WriteResult &result)
     // PU1-disk-change-bar: a published write, confirmed or not, moved the
     // Document to its file.
     if (result.outcome == application::WriteOutcome::Written ||
-        result.outcome == application::WriteOutcome::DurabilityUncertain)
+        result.outcome == application::WriteOutcome::DurabilityUncertain) {
+        if (const auto destination = m_files->destination(result.document);
+            destination && destination->value == result.destination.value)
+            recordFileTime(result.document);
         emit documentWritten(result.document.value);
+    }
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
         rememberRecent(result.destination.value, false); // legacy SetRecent after a save
         if (auto *session = m_files->session(result.document); session && !session->isDirty())
             discardRecovery(result.document); // the work is in the file
-        if (const auto destination = m_files->destination(result.document);
-            destination && destination->value == result.destination.value)
-            recordFileTime(result.document);
     }
     if (result.outcome == application::WriteOutcome::Written)
         if (const std::string *title = m_workspace.title(result.document);
@@ -2097,6 +2096,10 @@ void Application::finishClose()
     m_closing.clear();
     m_closeThen.clear();
     if (!kept.isEmpty()) {
+        // PU1-unsaved-window: the review shows again with the problem; a
+        // retry finishes the same command on the same tab (Cancel ends it).
+        m_closeThen = then;
+        m_closeTarget = reviewed;
         if (then == QLatin1String("quit"))
             emit quitCancelled(); // WS5
         refreshViews();
@@ -3085,6 +3088,15 @@ QVariantList Application::recoveryBundles() const
     return out;
 }
 
+// The editing target's video, as its tab has it (the file an MKV read
+// takes, not the one the player may still be closing).
+QString Application::targetVideoPath() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+    return it == m_tabMedia.end() ? QString() : it->second.video;
+}
+
 void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 {
     // PU1-mkv-notices: the window stayed usable while the track was read. A
@@ -3096,7 +3108,8 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
     if (!newTab && m_matroskaTarget) {
         auto *session = m_files->session(*m_matroskaTarget);
         newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision
-            || session->draftLine() || m_video->session().path() != m_matroskaVideo
+            || session->draftLine() != m_matroskaDraftLine || session->draftText() != m_matroskaDraft
+            || targetVideoPath() != m_matroskaVideo
             || m_video->openRequest() != m_matroskaVideoRequest; // one asked for, still being opened
     } else if (!newTab && m_matroskaFromHome) {
         newTab = m_workspace.editingTarget().has_value();
