@@ -478,8 +478,8 @@ void AutomationShell::runLastLoadedScript()
     if (m_documentScripts.empty())
         addFromDocument();
     if (m_documentScripts.empty()) {
-        emit notice(QCoreApplication::translate("HikariSub.Automation", "Info"),
-                    QCoreApplication::translate("HikariSub.Automation", "This subtitle file does not have any scripts added"));
+        emit notice(QStringLiteral("info"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
+                    QCoreApplication::translate("HikariSub.Automation", "This subtitle file does not have any scripts added"), {});
         return;
     }
     const std::string path = m_documentScripts.scripts().back();
@@ -509,15 +509,19 @@ void AutomationShell::continueLastScript()
         const QString description = host->state() == State::LoadFailed
                                         ? host->lastError()
                                         : QString::fromStdString(host->info().description);
-        emit notice(QCoreApplication::translate("HikariSub.Automation", "Error"),
+        // NT1: the description (the load error) is the box's Details; the
+        // legacy text keeps its translations, its second line left empty.
+        emit notice(QStringLiteral("error"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
                     QCoreApplication::translate("HikariSub.Automation", "Error loading Lua script: %1\n%2")
-                        .arg(prettyName(path), description));
+                        .arg(prettyName(path), QString()).trimmed(),
+                    description);
         editScript(QString::fromStdString(path));
         return;
     }
     if (!run(path, 0, RunOrigin::LastScript) && host->state() == State::Unavailable)
-        emit notice(QCoreApplication::translate("HikariSub.Automation", "Error"),
-                    QCoreApplication::translate("HikariSub.Automation", "The script's helper ended; reload the script to use it again."));
+        emit notice(QStringLiteral("error"), QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script"),
+                    QCoreApplication::translate("HikariSub.Automation", "The script's helper ended; reload the script to use it again."),
+                    {});
 }
 
 void AutomationShell::editScript(const QString &script)
@@ -548,8 +552,8 @@ void AutomationShell::startEditor(const QString &editor, const QString &script)
 {
     // wxExecute({editor, script}) without waiting.
     if (!backends::desktop::startDetached(editor, {script}))
-        emit notice(QCoreApplication::translate("HikariSub.Automation", "Automation error"),
-                    QCoreApplication::translate("HikariSub.Automation", "Cannot start editor."));
+        emit notice(QStringLiteral("error"), QCoreApplication::translate("HikariSub.Automation", "Edit script"),
+                    QCoreApplication::translate("HikariSub.Automation", "Cannot start editor."), {});
 }
 
 void AutomationShell::unload(const std::string &path)
@@ -688,8 +692,8 @@ void AutomationShell::resolveScriptResolution(const application::ScriptResolutio
 }
 
 // KE1-template-timing: the karaoke templater's report goes to the status bar
-// (for 10 s) and, per template Line, to the log window without popping it
-// up; a run that named template problems keeps its progress window open.
+// (for 10 s) and, per template Line, to the Log without a toast; a run
+// that named template problems keeps its progress window open.
 void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
 {
     const QString summary = ui::karaokeReportSummary(report);
@@ -699,7 +703,7 @@ void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
             m_shell.setStatusText(QString());
     });
     if (m_logLine)
-        m_logLine(ui::karaokeReportDetails(report), true);
+        m_logLine(ui::karaokeReportDetails(report), LogLine::Quiet);
     m_keepLog = report.problems > 0;
 }
 
@@ -789,12 +793,18 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         // loaded script" say validation failed (HikariSubFrame.cpp:929, 2641).
         // A dependency's failed validation is said the same way, naming
         // the dependency (S4-run-validation).
+        // NT1: the runtime error is the box's Details, and an error of the
+        // Log; the menu's run only logged it, now an error toast.
         if (!message.isEmpty() && m_logLine)
-            m_logLine(message, false);
+            m_logLine(message, run.origin == RunOrigin::Menu ? LogLine::Notice : LogLine::QuietError);
         if (run.origin != RunOrigin::Menu)
-            emit notice(QCoreApplication::translate("HikariSub.Automation", "Error"),
+            emit notice(QStringLiteral("error"),
+                        run.origin == RunOrigin::LastScript
+                            ? QCoreApplication::translate("HikariSub.MainWindow", "Run the last loaded script")
+                            : QCoreApplication::translate("HikariSub.Automation", "Automation"),
                         QCoreApplication::translate("HikariSub.Automation", "Validation Lua script '%1' failed")
-                            .arg(prettyName(run.active)));
+                            .arg(prettyName(run.active)),
+                        message);
         break;
     }
     if (!text.isEmpty())

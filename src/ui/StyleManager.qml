@@ -19,6 +19,8 @@ Window {
     required property var catalogs // Y6: FontCatalogsController
     required property ColourPickerController colourPicker
     required property var app
+    // NT1: Clear's notice (a toast; Main's postCleanStyles).
+    property var postCleanStyles: null
     title: qsTr("Style manager")
     // Tall enough for the editor and its preview above the buttons, within
     // the screen's free area (1280 x 800 at 150 % leaves 853 x 533); a
@@ -75,8 +77,7 @@ Window {
         const problem = styles.commitEdit(v, [], false, false)
         if (problem !== "") {
             styles.endEdit()
-            message.text = problem
-            message.open()
+            messages.ask({ title: qsTr("New style"), text: problem, severity: "error" })
             return
         }
         editDocumentStyle(styles.documentStyles.indexOf(styleName))
@@ -145,14 +146,11 @@ Window {
             settings: manager.app.settings
         }
     }
-    Dialog {
-        id: message
-        objectName: "styleMessage"
-        property alias text: messageLabel.text
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { id: messageLabel }
+    // NT1: a refused commit, on the kit's message box.
+    MessageHost {
+        id: messages
+        objectName: "styleMessages"
+        settings: manager.app.settings
     }
 
     // --- Editor ------------------------------------------------------------
@@ -194,8 +192,7 @@ Window {
             const done = function(rename) {
                 const problem = styles.commitEdit(v, selected, applyAll, rename)
                 if (problem !== "") {
-                    message.text = problem
-                    message.open()
+                    messages.ask({ title: qsTr("Save style"), text: problem, severity: "error" })
                     return
                 }
                 if (close)
@@ -495,7 +492,7 @@ Window {
                             iconRole: "clear"
                             text: qsTr("Clear")
                             tip: qsTr("Delete unused ASS styles")
-                            onClicked: { message.title = qsTr("Status of deleted styles"); message.text = manager.styles.cleanStyles(); message.open() }
+                            onClicked: { const r = manager.styles.cleanStyles(); if (manager.postCleanStyles) manager.postCleanStyles(r) }
                         }
                         moves: [
                             IconToolButton { padding: 3; iconRole: "move-to-top"; text: qsTr("Move selected styles to beginning"); onClicked: manager.assSelected = manager.styles.moveStyles(false, manager.assSelected, 0) },

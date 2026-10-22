@@ -1,0 +1,817 @@
+[
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415484705",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415484705/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415484705/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.1.4",
+    "id": 415484705,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yw8sh",
+    "tag_name": "v0.1.4",
+    "target_commitish": "qt",
+    "name": "HikariSub 0.1.4",
+    "draft": true,
+    "immutable": false,
+    "prerelease": false,
+    "created_at": "2026-10-22T08:00:00Z",
+    "updated_at": "2026-10-22T08:00:00Z",
+    "published_at": null,
+    "assets": [],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.1.4",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.1.4",
+    "body": "Not published yet.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415484705",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415484705/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415484705/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.1.3",
+    "id": 415484705,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yw8sh",
+    "tag_name": "v0.1.3",
+    "target_commitish": "qt",
+    "name": "HikariSub 0.1.3",
+    "draft": false,
+    "immutable": false,
+    "prerelease": false,
+    "created_at": "2026-10-21T09:00:00Z",
+    "updated_at": "2026-10-21T09:00:00Z",
+    "published_at": "2026-10-21T09:00:00Z",
+    "assets": [],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.1.3",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.1.3",
+    "body": "## New\n- **Translation mode:** the original text stays beside the translation, with its own tags.\n- Karaoke check steps through the syllables against the audio ([#287](https://github.com/altqx/hikari/pull/287)).\n\n## Fixed\n- The video no longer jumps a frame when a Line is selected during playback.\n- `Shift times` keeps the selection after it runs.\n\n![The karaoke check](https://github.com/user-attachments/assets/karaoke-check.png)\n\n<img src=\"https://example.invalid/tracker.gif\"> <script>alert(1)</script>\n\n[Run this](javascript:alert(1)) or read the [file](file:///etc/passwd).\n\n| Package | Size |\n| --- | --- |\n| AppImage | 92 MB |\n\n**Full Changelog**: https://github.com/altqx/hikari/compare/v0.1.2...v0.1.3\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415484705",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415484705/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415484705/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.1.3-beta.2",
+    "id": 415484705,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yw8sh",
+    "tag_name": "v0.1.3-beta.2",
+    "target_commitish": "qt",
+    "name": "HikariSub 0.1.3-beta.2",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-17T09:00:00Z",
+    "updated_at": "2026-10-17T09:00:00Z",
+    "published_at": "2026-10-17T09:00:00Z",
+    "assets": [],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.1.3-beta.2",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.1.3-beta.2",
+    "body": "- Translation mode's preset opens the original beside the translation.\n- Known issue: the karaoke check may skip the last syllable.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415484705",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415484705/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415484705/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.1.2",
+    "id": 415484705,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yw8sh",
+    "tag_name": "v0.1.2",
+    "target_commitish": "qt",
+    "name": "HikariSub 0.1.2",
+    "draft": false,
+    "immutable": false,
+    "prerelease": false,
+    "created_at": "2026-10-09T09:00:00Z",
+    "updated_at": "2026-10-09T09:00:00Z",
+    "published_at": "2026-10-09T09:00:00Z",
+    "assets": [],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.1.2",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.1.2",
+    "body": "### Fixed\n- The audio display redraws after a theme change.\n- Opening an `.srt` with a byte order mark no longer adds an empty first Line.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415484705",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415484705/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415484705/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.1.2-rc.1",
+    "id": 415484705,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yw8sh",
+    "tag_name": "v0.1.2-rc.1",
+    "target_commitish": "qt",
+    "name": "HikariSub 0.1.2-rc.1",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-07T09:00:00Z",
+    "updated_at": "2026-10-07T09:00:00Z",
+    "published_at": "2026-10-07T09:00:00Z",
+    "assets": [],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.1.2-rc.1",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.1.2-rc.1",
+    "body": "- Release candidate for 0.1.2.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415484705",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415484705/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415484705/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.1.1",
+    "id": 415484705,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yw8sh",
+    "tag_name": "v0.1.1",
+    "target_commitish": "qt",
+    "name": "",
+    "draft": false,
+    "immutable": false,
+    "prerelease": false,
+    "created_at": "2026-10-05T09:00:00Z",
+    "updated_at": "2026-10-05T09:00:00Z",
+    "published_at": "2026-10-05T09:00:00Z",
+    "assets": [],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.1.1",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.1.1",
+    "body": "# HikariSub 0.1.1\n\nSmall fixes after the first release.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415484705",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415484705/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415484705/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.1.0",
+    "id": 415484705,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yw8sh",
+    "tag_name": "v0.1.0",
+    "target_commitish": "qt",
+    "name": "HikariSub 0.1.0",
+    "draft": false,
+    "immutable": false,
+    "prerelease": false,
+    "created_at": "2026-10-01T09:00:00Z",
+    "updated_at": "2026-10-01T09:00:00Z",
+    "published_at": "2026-10-01T09:00:00Z",
+    "assets": [],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.1.0",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.1.0",
+    "body": "The first release of the Qt rewrite.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415484705",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415484705/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415484705/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.4",
+    "id": 415484705,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yw8sh",
+    "tag_name": "v0.0.2-rc.4",
+    "target_commitish": "main",
+    "name": "v0.0.2-rc.4",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-17T00:03:54Z",
+    "updated_at": "2026-10-17T00:23:30Z",
+    "published_at": "2026-10-17T00:21:37Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/649041447",
+        "id": 649041447,
+        "node_id": "RA_kwDOUsuuy84mr5Yn",
+        "name": "hikarisub-0.0.2-rc.4-linux-amd64.deb",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/x-debian-package",
+        "state": "uploaded",
+        "size": 36231518,
+        "digest": "sha256:5e1a675cac623fe99211b67110a5e34abe837e75a9acce0ac9ce89929191d61c",
+        "download_count": 0,
+        "created_at": "2026-10-17T00:21:21Z",
+        "updated_at": "2026-10-17T00:21:23Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.2-rc.4/hikarisub-0.0.2-rc.4-linux-amd64.deb"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/649041425",
+        "id": 649041425,
+        "node_id": "RA_kwDOUsuuy84mr5YR",
+        "name": "HikariSub-0.0.2-rc.4-linux-x86_64.AppImage",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/vnd.appimage",
+        "state": "uploaded",
+        "size": 105073144,
+        "digest": "sha256:96e768796e14334690750ff3c5001be84f45f2026c4a688d77137a9f45443d71",
+        "download_count": 0,
+        "created_at": "2026-10-17T00:21:20Z",
+        "updated_at": "2026-10-17T00:21:31Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.2-rc.4/HikariSub-0.0.2-rc.4-linux-x86_64.AppImage"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.0.2-rc.4",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.0.2-rc.4",
+    "body": "Fourth release candidate for HikariSub 0.0.2. It fixes main window resizing on Windows, which [0.0.2-rc.3](https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.3) made slower. Everything in rc.3, [rc.2](https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.2) and [rc.1](https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.1) still applies.\n\n> **On 0.0.2-rc.1 to rc.3 with an installer or package?** It updates itself to this release. **Coming from 0.0.1, or using the portable zip or tar.gz?** Install 0.0.2-rc.4 by hand once.\n\n## Changes\n\n- **Main window (Windows):** resizing it is as fast as in rc.2 again. rc.3 repainted every control at each size, moved or not, so each size took about 15 to 20% longer to settle.\n- **Video and grid resizer (Windows):** the panels are laid out once when the bar is let go, without the second layout the Linux build needs. The pause after letting go stays about 40% shorter than in rc.2.\n\nLinux behaves as in rc.3. No new messages to translate in this release.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/415445979",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/415445979/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/415445979/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.3",
+    "id": 415445979,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84YwzPb",
+    "tag_name": "v0.0.2-rc.3",
+    "target_commitish": "main",
+    "name": "v0.0.2-rc.3",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-16T22:31:31Z",
+    "updated_at": "2026-10-17T00:23:31Z",
+    "published_at": "2026-10-16T22:58:39Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/648875216",
+        "id": 648875216,
+        "node_id": "RA_kwDOUsuuy84mrQzQ",
+        "name": "hikarisub-0.0.2-rc.3-linux-amd64.deb",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/x-debian-package",
+        "state": "uploaded",
+        "size": 36231540,
+        "digest": "sha256:cf728e17e6815fde58bb64b5474afcd243045472b9458811c4ae306a6127a1b8",
+        "download_count": 0,
+        "created_at": "2026-10-16T22:58:28Z",
+        "updated_at": "2026-10-16T22:58:30Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.2-rc.3/hikarisub-0.0.2-rc.3-linux-amd64.deb"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/648875201",
+        "id": 648875201,
+        "node_id": "RA_kwDOUsuuy84mrQzB",
+        "name": "HikariSub-0.0.2-rc.3-linux-x86_64.AppImage",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/vnd.appimage",
+        "state": "uploaded",
+        "size": 105073144,
+        "digest": "sha256:7909844236b716d30d3482aa6a165101e0a007a028d7c98800a543b28156d4a3",
+        "download_count": 0,
+        "created_at": "2026-10-16T22:58:28Z",
+        "updated_at": "2026-10-16T22:58:34Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.2-rc.3/HikariSub-0.0.2-rc.3-linux-x86_64.AppImage"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.0.2-rc.3",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.0.2-rc.3",
+    "body": "Third release candidate for HikariSub 0.0.2. It makes resizing smoother: the bar between the video and the subtitle grid, and the main window. Everything in [0.0.2-rc.2](https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.2) and [0.0.2-rc.1](https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.1) still applies.\n\n> **On 0.0.2-rc.1 or rc.2 with an installer or package?** It updates itself to this release. **Coming from 0.0.1, or using the portable zip or tar.gz?** Install 0.0.2-rc.3 by hand once.\n\n## Changes\n\n- **Video and grid resizer:** on Linux, dragging the bar under the video and the edit box follows the mouse. Each move took about 80 ms, so the bar lagged at about 8 updates a second; it now takes about 7 ms. On Windows, where the panels resize when the bar is let go, the pause after letting go is about 40% shorter.\n- **Main window (Linux):** resizing it repaints each control once per size instead of several times. A size settles in about 35 ms instead of 120 to 150 ms, which should stop toolbar icons, video and audio buttons and edit box controls from showing blank or white while the window is dragged.\n- **Audio display:** it no longer redraws its waveform when its size has not changed, which every layout of the editor made it do.\n\n## Known issue\n\n- On Windows, resizing the main window is slower than in rc.2: each size takes about 15 to 20% longer to settle. [0.0.2-rc.4](https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.4) fixes this.\n\nNo new messages to translate in this release.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/414623032",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/414623032/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/414623032/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.2",
+    "id": 414623032,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84YtqU4",
+    "tag_name": "v0.0.2-rc.2",
+    "target_commitish": "main",
+    "name": "v0.0.2-rc.2",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-16T06:08:21Z",
+    "updated_at": "2026-10-16T06:29:49Z",
+    "published_at": "2026-10-16T06:28:16Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/646385012",
+        "id": 646385012,
+        "node_id": "RA_kwDOUsuuy84mhw10",
+        "name": "hikarisub-0.0.2-rc.2-linux-amd64.deb",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/x-debian-package",
+        "state": "uploaded",
+        "size": 36231038,
+        "digest": "sha256:eb8d2f5c3245a7fd420f41dd5a643fdec5b2734081042e23e4957769ff7c2de9",
+        "download_count": 0,
+        "created_at": "2026-10-16T06:28:05Z",
+        "updated_at": "2026-10-16T06:28:08Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.2-rc.2/hikarisub-0.0.2-rc.2-linux-amd64.deb"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/646384984",
+        "id": 646384984,
+        "node_id": "RA_kwDOUsuuy84mhw1Y",
+        "name": "HikariSub-0.0.2-rc.2-linux-x86_64.AppImage",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/vnd.appimage",
+        "state": "uploaded",
+        "size": 105077240,
+        "digest": "sha256:3481ce8fa3aaf158608ff235070f1c1cb4e6fb53ee40b6f6036a795769d383ed",
+        "download_count": 1,
+        "created_at": "2026-10-16T06:28:05Z",
+        "updated_at": "2026-10-16T06:28:09Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.2-rc.2/HikariSub-0.0.2-rc.2-linux-x86_64.AppImage"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.0.2-rc.2",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.0.2-rc.2",
+    "body": "Second release candidate for HikariSub 0.0.2. It carries four more behaviours over from the Qt rewrite and makes the Windows build independent of Chocolatey. Everything in [0.0.2-rc.1](https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.1) still applies.\n\n> **On 0.0.2-rc.1 with an installer or package?** It updates itself to this release. **Coming from 0.0.1, or using the portable zip or tar.gz?** Install 0.0.2-rc.2 by hand once.\n\n## Changes\n\n- **Font collector:** two different fonts with the same file name are both kept. The second is saved under a name of its own, such as `same (2).ttf`, and the log says so. Before, one silently replaced the other. This works for folder and zip output.\n- **Seek bar:** dragging seeks at most every 50 ms instead of on every mouse move, and lands on the position where you let go. A click still seeks at once.\n- **Full screen:** the volume slider shows with every video player, not only some of them, and moving it moves the audio box's volume too.\n- **Line editor:**\n  - Apply with nothing changed does nothing: the script is not marked as changed and no undo step is added.\n  - An End time before the Start time is refused with \"End is before Start.\", and the line keeps its times.\n\n## Build\n\n- The Windows build gets NASM, YASM and gettext from their own release downloads, checked against pinned SHA-256s and cached, instead of from Chocolatey, whose outages had failed builds.\n\nThe new messages are translated into Polish, Korean, Thai and Tamil.\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/413625174",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/413625174/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/413625174/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.0.2-rc.1",
+    "id": 413625174,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84Yp2tW",
+    "tag_name": "v0.0.2-rc.1",
+    "target_commitish": "main",
+    "name": "v0.0.2-rc.1",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-15T08:20:28Z",
+    "updated_at": "2026-10-15T09:26:43Z",
+    "published_at": "2026-10-15T09:24:50Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/643356844",
+        "id": 643356844,
+        "node_id": "RA_kwDOUsuuy84mWNis",
+        "name": "hikarisub-0.0.2-rc.1-linux-amd64.deb",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/x-debian-package",
+        "state": "uploaded",
+        "size": 36342624,
+        "digest": "sha256:8d6f301bfd3fd862144f5e15a4151d57ef356fdaac6acb2cfe81c0d4347e333a",
+        "download_count": 1,
+        "created_at": "2026-10-15T09:24:29Z",
+        "updated_at": "2026-10-15T09:24:33Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.2-rc.1/hikarisub-0.0.2-rc.1-linux-amd64.deb"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/643356837",
+        "id": 643356837,
+        "node_id": "RA_kwDOUsuuy84mWNil",
+        "name": "HikariSub-0.0.2-rc.1-linux-x86_64.AppImage",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/vnd.appimage",
+        "state": "uploaded",
+        "size": 105023992,
+        "digest": "sha256:fc366710b465116628d9324d29dab65dc4a7c8c60a0c10ae41320ab65f8a334c",
+        "download_count": 1,
+        "created_at": "2026-10-15T09:24:29Z",
+        "updated_at": "2026-10-15T09:24:45Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.2-rc.1/HikariSub-0.0.2-rc.1-linux-x86_64.AppImage"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.0.2-rc.1",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.0.2-rc.1",
+    "body": "First release candidate for HikariSub 0.0.2. It brings installers for Windows and Linux, with updates that download and install themselves; makes libass the default subtitle renderer, built from the altqx libass fork on both systems; stops heavy subtitles from stalling playback; and fixes about fifty defects found while the Qt rewrite was checked against this app. Details: #212.\n\n> **Coming from 0.0.1 or an earlier release candidate?** Those versions can only tell you about a new release and open its page, so install 0.0.2-rc.1 by hand once, with the installer or a package below. From 0.0.2-rc.1 on, an installed copy updates itself.\n\n## Installers and updates\n\n- **Windows installer.** `HikariSub-0.0.2-rc.1-windows-x64-setup.exe` installs for **Just me** (no administrator rights) or for **All users** (after an administrator prompt). It adds a Start menu entry and, unless you untick it, opens `.ass`, `.ssa`, `.srt` and `.sub` files, without taking a file type another program already opens. A newer installer updates the installation in place, and the uninstaller removes only what it installed and keeps your settings. The zip stays for a portable copy.\n- **Linux packages.** An AppImage with everything inside (GTK, GLib and GStreamer included), a deb for Debian, Ubuntu and Mint, and an rpm for Fedora and openSUSE. All need glibc 2.35 or newer. The deb and rpm install in `/opt/hikarisub` with a menu entry and file types, and pull in the GStreamer plugins. The tar.gz stays for a portable copy.\n- **Updates install themselves.** When a newer release is out, an installed copy downloads it in the background, checks it against the SHA-256 the release lists, and asks \"Update ready: Restart now / Later\". Later installs it when you quit.\n  - Windows runs the new installer silently.\n  - The AppImage replaces itself, and puts the old file back if the new one does not start.\n  - The deb and rpm install after the system's password prompt (pkexec).\n  - The portable zip and tar.gz only tell you and open the release page, as before.\n  - Before anything is installed, the part that installs checks the download again against the release's `SHA256SUMS` on GitHub.\n- **A new option, \"Install updates automatically\"**, in File > Settings, on the Editor page, under Updates. Turned off, an installed copy only tells you about a new release.\n- **Installed copies keep their settings in your user data folder.** Portable copies keep them beside the executable, as before.\n\n## Subtitle rendering\n\n- **libass is the default renderer.** New settings use libass, and settings from an older version that stored xy-VSFilter move to libass once; choose xy-VSFilter again on the Video page and it stays. On Windows, xy-VSFilter is still available. VSFilterMod is listed last as \"VSFilterMod (slow, only for VSFilterMod tags)\" and is never chosen by default.\n- **The altqx libass fork, on both systems.** It renders heavy typesetting about twice as fast. Windows now uses libass's x86 assembly, which the build had left out. Linux builds and bundles the fork instead of the distribution's libass, so subtitles render as they do on Windows.\n- **VSFilterMod from the altqx fork** (r5.3.1-hikari.2): `\\img` offsets and `\\img` from attached images work, its subtitles show on the overlay path (the default for most video) and with DirectShow, and a DirectShow video no longer crashes it.\n- **A script's attached fonts and images reach the renderers.** `[Fonts]` and `[Graphics]` were never handed to any renderer.\n- **Style previews** draw with a libass renderer of their own, so they no longer slow the next video frame, and they no longer stay blank until a value changes.\n- On Linux, libass sees the external fonts folder.\n\n## Heavy subtitles no longer stall playback\n\n- **Windows** draws the subtitles of frames ahead of playback on a thread of its own, and skips a frame that would be shown too late. With VSFilterMod on a busy episode, playback had dropped to 11 frames a second.\n- **Linux** decodes and draws frames ahead as Windows does, scales them with cairo (2 ms instead of 17 ms a paint in full screen), and paints without holding the rendering lock. Each frame is shown at its own time instead of one frame early.\n- **Editing a large script** no longer freezes every tab and preview for 80-300 ms while libass parses it.\n- On Linux, GStreamer video shows in the window again, not only in full screen.\n\n## Fixes\n\n- **Files**\n  - Subtitles loaded from Matroska keep every line.\n  - Subtitle and chapter times from Matroska with a non-default time scale, MP4, MOV and MPEG-TS load at the right times.\n  - Aegisub keyframes files no longer gain a keyframe at frame 0, and DivX map files give keyframes.\n  - A script with only LayoutResY counts as having a layout resolution.\n  - Previous and Next file walk the folder in natural name order (\"Ep 2\" before \"Ep 10\"), and find the current video in a long folder on Windows.\n- **Editing**\n  - Time fields: Ctrl+X copies the whole time, Backspace and Ctrl+Backspace keep the separators and count as a change, the text menu checks what it pastes, and the mask holds when the Frames box is on but times are shown.\n  - The mouse wheel and drag step MPL2 times by a tenth of a second and frame numbers by one frame, and keep every number field in its range.\n  - Split keeps a wrap's tag next to a longer tag of the same start, such as `\\b1` beside `\\bord2`.\n- **Grid**\n  - Insert before fills only a gap and no longer makes a Line that ends before it starts.\n  - Next line at the end copies the last shown Line, not a hidden one.\n  - Copy columns and Paste columns label the end time \"End time\" for SRT, MicroDVD and MPL2, which showed \"The starting time\" twice.\n- **Visual tools**\n  - A `\\move` whose times are both 0 or less moves over the whole Line in the Move and Position tools and in Split by frames, as libass draws it.\n  - The Scale tool keeps its pointer when Shift changes, and the position pointer shows only over the picture.\n- **Audio**\n  - Each tab has its own audio cache file, so a second tab on the same video no longer plays silence or loses its audio.\n  - \"Go to the next line after applying changes\" is followed when turned off.\n  - No crash when a video fails to load or the video source changes while its audio is shown.\n- **Find and replace**\n  - Replace in files keeps a backup of each file of the same name in different folders.\n  - Cancelling Choose styles in Find and replace and in Shift times keeps the Styles field.\n- **Other**\n  - Deleting a style catalog asks in the interface's language, not in Polish.\n  - Clicking a menu item right after opening its menu works when the pointer crosses another menu title.\n  - Short paths in Automation's `aegisub.decode_path` no longer read past their end.\n  - xy-VSFilter no longer leaks memory each time it reuses a parsed script; changing the renderer during playback no longer draws subtitles twice.\n- **Linux**\n  - No crash opening the Style manager on Wayland, and typing a digit with wtype no longer closes it.\n  - Option groups show their captions, the Associations page no longer shows its buttons over the tree, and the colour picker and eyedropper work.\n  - The tar.gz uses the host's GStreamer, GLib and Fontconfig, and bundles x264 and x265.\n  - wxWidgets 3.3.4. The single-instance socket is renamed, so a running 0.0.1 is not asked to open files.\n\n## Translations\n\nEvery string is translated in Polish, Korean, Thai and Tamil (1884 of 1884), including the new installer and update messages, which a second pass reviewed in each language. Corrections from native speakers are welcome as [issues](https://github.com/altqx/hikari/issues).\n\n## Known issues\n\n- **The AUR packages are not published yet.** `hikarisub-beta-bin` and `hikarisub-stable-bin` are ready, but the AUR is not accepting new accounts at the moment. Until then, use the AppImage or the tar.gz on Arch.\n- **The Windows installer is not code-signed**, so SmartScreen may ask you to confirm it (\"More info\", then \"Run anyway\").\n\n## Downloads\n\n- `HikariSub-0.0.2-rc.1-windows-x64-setup.exe`: Windows x64 installer.\n- `HikariSub-0.0.2-rc.1-windows-x64.zip`: Windows x64, portable.\n- `HikariSub-0.0.2-rc.1-linux-x86_64.AppImage` (and `.zsync`): Linux x86_64, any distribution with glibc 2.35 or newer.\n- `hikarisub-0.0.2-rc.1-linux-amd64.deb`: Debian, Ubuntu and Mint.\n- `hikarisub-0.0.2-rc.1-linux-x86_64.rpm`: Fedora and openSUSE.\n- `hikarisub-0.0.2-rc.1-linux-x86_64.tar.gz`: Linux x86_64, portable.\n- `SHA256SUMS`: check a download with `sha256sum -c --ignore-missing SHA256SUMS`.\n- `hikarisub-update.json`: the update manifest installed copies read.\n\n**Full Changelog**: https://github.com/altqx/hikari/compare/v0.0.1...v0.0.2-rc.1\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/411090691",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/411090691/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/411090691/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.0.1",
+    "id": 411090691,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84YgL8D",
+    "tag_name": "v0.0.1",
+    "target_commitish": "main",
+    "name": "v0.0.1",
+    "draft": false,
+    "immutable": false,
+    "prerelease": false,
+    "created_at": "2026-10-12T23:38:29Z",
+    "updated_at": "2026-10-13T00:03:31Z",
+    "published_at": "2026-10-13T00:01:54Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/635343635",
+        "id": 635343635,
+        "node_id": "RA_kwDOUsuuy84l3pMT",
+        "name": "hikarisub-0.0.1-linux-x86_64.tar.gz",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/x-gtar",
+        "state": "uploaded",
+        "size": 79297648,
+        "digest": "sha256:13dadb8d058f7105c578a724f3a8e6ee8a70032c7f88b56c0a55d438b2791b17",
+        "download_count": 5,
+        "created_at": "2026-10-13T00:01:46Z",
+        "updated_at": "2026-10-13T00:01:50Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.1/hikarisub-0.0.1-linux-x86_64.tar.gz"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/635343662",
+        "id": 635343662,
+        "node_id": "RA_kwDOUsuuy84l3pMu",
+        "name": "HikariSub-0.0.1-windows-x64.zip",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/zip",
+        "state": "uploaded",
+        "size": 140440993,
+        "digest": "sha256:97363902e0db87f265c7433da177d9153dec73ac9717c92475b2e218eac7a046",
+        "download_count": 17,
+        "created_at": "2026-10-13T00:01:46Z",
+        "updated_at": "2026-10-13T00:01:53Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.1/HikariSub-0.0.1-windows-x64.zip"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.0.1",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.0.1",
+    "body": "HikariSub 0.0.1 is the first stable release of HikariSub, the subtitle editor that continues [Kainote](https://github.com/bjakja/Kainote). It is rc.3 with complete translations.\n\n**Coming from rc.1 or rc.2?** Those versions never tell you about new releases, so update by hand once. From 0.0.1 on, HikariSub tells you when a newer version is out.\n\n## What is in 0.0.1\n\n- **Complete translations.** The interface is in English, Polish, Korean, Thai and Tamil, and every string is now translated in each language (1838 of 1838). The Korean and Tamil catalogs were also corrected throughout: wrong or machine-made translations, missing menu accelerators and lost keyboard shortcuts. Corrections from native speakers are welcome as [issues](https://github.com/altqx/hikari/issues).\n- **A working update check** (from [rc.3](https://github.com/altqx/hikari/releases/tag/v0.0.1-rc.3)). On by default, at most once a day when the program starts; it only opens the release page and never downloads or installs anything. GitHub sees your IP address and the \"HikariSub\" user agent. Turn it off in File > Settings, on the Editor page, under Updates.\n- **160 fixes to the editor** (from [rc.2](https://github.com/altqx/hikari/releases/tag/v0.0.1-rc.2)): saves that cannot lose your work, files that load as they were written, Linux on par with Windows, and crashes and hangs fixed in find and replace, macros, the visual tools, comparison and the audio cache. The rc.2 notes list them by area.\n- **Everything from Kainote and the rename** (from [rc.1](https://github.com/altqx/hikari/releases/tag/v0.0.1-rc.1)): faster playback and editing, GPU colour conversion, wxWidgets 3.3.3 on Windows, Linux desktop integration, the HikariSub name and icons, and subtitle-only file associations.\n\n## Install\n\n- **Windows:** unpack `HikariSub-0.0.1-windows-x64.zip` and run `HikariSub_x64/HikariSub.exe` (`HikariSub_AVX.exe` is the AVX build). There is no installer yet.\n- **Linux:** unpack `hikarisub-0.0.1-linux-x86_64.tar.gz` and run `hikarisub`. `install-desktop-integration.sh` adds a menu entry, icons and the subtitle file types for your user; `--uninstall` removes them.\n\n## Downloads\n\n- `HikariSub-0.0.1-windows-x64.zip`: Windows x64.\n- `hikarisub-0.0.1-linux-x86_64.tar.gz`: Linux x86_64.\n- `SHA256SUMS`: check a download with `sha256sum -c --ignore-missing SHA256SUMS`.\n\n**Full Changelog**: https://github.com/altqx/hikari/compare/v0.0.1-rc.3...v0.0.1\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/411092439",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/411092439/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/411092439/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.0.1-rc.3",
+    "id": 411092439,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84YgMXX",
+    "tag_name": "v0.0.1-rc.3",
+    "target_commitish": "main",
+    "name": "v0.0.1-rc.3",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-12T23:36:32Z",
+    "updated_at": "2026-10-13T00:06:15Z",
+    "published_at": "2026-10-13T00:04:59Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/635349360",
+        "id": 635349360,
+        "node_id": "RA_kwDOUsuuy84l3qlw",
+        "name": "hikarisub-0.0.1-rc.3-linux-x86_64.tar.gz",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/x-gtar",
+        "state": "uploaded",
+        "size": 79291469,
+        "digest": "sha256:b169ab75671f9716670613458762d97cd315766390196912a9a643447ee18c2d",
+        "download_count": 1,
+        "created_at": "2026-10-13T00:04:53Z",
+        "updated_at": "2026-10-13T00:04:56Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.1-rc.3/hikarisub-0.0.1-rc.3-linux-x86_64.tar.gz"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/635349361",
+        "id": 635349361,
+        "node_id": "RA_kwDOUsuuy84l3qlx",
+        "name": "HikariSub-0.0.1-rc.3-windows-x64.zip",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/zip",
+        "state": "uploaded",
+        "size": 140428076,
+        "digest": "sha256:3fee6826f8e921a69babedfc87bba829437cdce2cde9dd1e5a7c2635da8e008d",
+        "download_count": 2,
+        "created_at": "2026-10-13T00:04:53Z",
+        "updated_at": "2026-10-13T00:04:58Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.1-rc.3/HikariSub-0.0.1-rc.3-windows-x64.zip"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.0.1-rc.3",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.0.1-rc.3",
+    "body": "Third release candidate for HikariSub 0.0.1. It makes the update check work for release-candidate users, who until now were never told about a newer release. Details: #210.\n\n> The stable release is out: [v0.0.1](https://github.com/altqx/hikari/releases/tag/v0.0.1). rc.3 tells you about it at its next startup check (once a day).\n\n## Update check\n\n- **On by default.** HikariSub checks for a newer release when it starts, at most once a day. A failed check, such as a start with no network, tries again in an hour.\n- **Release candidates hear about the next one.** On a release candidate, newer candidates and newer stable releases are offered whatever \"Stable versions only\" says.\n- **The settings are in File > Settings.** \"Check for updates automatically\" and \"Stable versions only\" are in an Updates box on the Editor page, and Restore defaults resets them.\n- **Help > Check for updates says more.** When \"Stable versions only\" hides a newer prerelease, it says so and offers to open its page, instead of \"You already have the latest version\". The highest newer version is offered, whatever order GitHub lists releases in.\n- **\"Remind me in a week\" lasts a week**, and closing the update dialog stops the startup check from offering that version again. The menu check still offers it.\n- **Safer and bounded.** Only a release page at github.com/altqx/hikari is opened, built from the release's tag. A check reads only from api.github.com over https, stops after two minutes, and cuts off a reply over 4 MiB. Only one check runs at a time.\n\nThe check sends GitHub your IP address and the \"HikariSub\" user agent, nothing else. Turn it off in File > Settings, on the Editor page, under Updates.\n\n## Known issues\n\n- rc.1 and rc.2 cannot be fixed after the fact: they never check at startup and hide prereleases. Update from them by hand once.\n\n## Downloads\n\n- `HikariSub-0.0.1-rc.3-windows-x64.zip`: Windows x64.\n- `hikarisub-0.0.1-rc.3-linux-x86_64.tar.gz`: Linux x86_64.\n- `SHA256SUMS`: check a download with `sha256sum -c --ignore-missing SHA256SUMS`.\n\n**Full Changelog**: https://github.com/altqx/hikari/compare/v0.0.1-rc.2...v0.0.1-rc.3\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/410945678",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/410945678/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/410945678/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.0.1-rc.2",
+    "id": 410945678,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84YfoiO",
+    "tag_name": "v0.0.1-rc.2",
+    "target_commitish": "main",
+    "name": "v0.0.1-rc.2",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-12T19:16:49Z",
+    "updated_at": "2026-10-13T00:03:43Z",
+    "published_at": "2026-10-12T19:44:27Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/634802023",
+        "id": 634802023,
+        "node_id": "RA_kwDOUsuuy84l1k9n",
+        "name": "hikarisub-0.0.1-rc.2-linux-x86_64.tar.gz",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/x-gtar",
+        "state": "uploaded",
+        "size": 79290303,
+        "digest": "sha256:8d0872e5bc1bb5fc9b1174474edca49bbadae79a0b7f2ef36b133f8ab44c3c8b",
+        "download_count": 2,
+        "created_at": "2026-10-12T19:44:20Z",
+        "updated_at": "2026-10-12T19:44:24Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.1-rc.2/hikarisub-0.0.1-rc.2-linux-x86_64.tar.gz"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/634802027",
+        "id": 634802027,
+        "node_id": "RA_kwDOUsuuy84l1k9r",
+        "name": "HikariSub-0.0.1-rc.2-windows-x64.zip",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/zip",
+        "state": "uploaded",
+        "size": 140311100,
+        "digest": "sha256:06ec0d4aacf36c5c134e2d5b13c9b415f4b3d8c9c1eb6dcf9fc0ce95fbbec622",
+        "download_count": 2,
+        "created_at": "2026-10-12T19:44:20Z",
+        "updated_at": "2026-10-12T19:44:26Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.1-rc.2/HikariSub-0.0.1-rc.2-windows-x64.zip"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.0.1-rc.2",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.0.1-rc.2",
+    "body": "Second release candidate for HikariSub 0.0.1. It fixes the 160 defects in the legacy app listed in #208, plus more found while the fixes were reviewed, and hardens how files are saved. Details: #209.\n\n> The stable release is out: [v0.0.1](https://github.com/altqx/hikari/releases/tag/v0.0.1). rc.2 does not tell you about it (see Known issues), so update by hand.\n\n## Highlights\n\n- **No more lost work on save.** A save is written to a temporary file and moved into place only once it is complete, so a full disk, a cancelled dialog or a failed write leaves the original as it was. Hard links, owner, permissions, extended attributes and symlinked targets are kept. Read-only targets are refused instead of overwritten.\n- **Files load as they were written.**\n  - Unknown ASS sections are kept.\n  - A missing YCbCr Matrix is no longer forced to TV.601.\n  - The last cue of an SRT file is no longer dropped, and its text no longer gains a trailing `\\N`.\n  - UTF-16/UTF-32 files with a BOM read correctly on both systems.\n  - Shift-JIS keeps its backslashes on Linux.\n  - Windows no longer stops reading at a Ctrl+Z byte, and no longer reads unknown charsets as Latin-1.\n- **Linux is on par with Windows.**\n  - Config, hotkeys, rules and session files with Windows line endings load fully.\n  - Saving no longer triggers \"modified by another program\".\n  - DependencyControl, SubInspector and LuaJIT's Lua 5.2 compatibility now ship, so macros that need them work.\n  - The audio playback position follows the real sound.\n- **Crashes and hangs fixed:**\n  - Replace or Find all with a pattern that matches empty text.\n  - Find in subfolders with symlink loops.\n  - Macros that show a dialog.\n  - The vector clip Invert slot.\n  - Comparison after switching documents.\n  - Audio cache failures.\n  - Several reads past the end of a list in the visual tools, karaoke and the spell checker.\n\n## Fixes by area\n\n| Area | Fixes | Examples |\n|---|---|---|\n| Files | 24 | Load session asks about unsaved tabs; Close all can be cancelled as a whole; Paste translation keeps the final SRT cue; TLMode pairs and the Unconfirmed mark survive a save |\n| Visual tools | 29 | `\\org` and Copy coordinates correct when zoomed; Position, Scale and Z rotation no longer garble tags or clips; no empty undo steps |\n| Audio | 15 | Karaoke split and join keep tags; the spectrum on tall areas; linked zoom and volume sliders no longer drift by one; Linux audio cache handling |\n| Find and replace | 15 | Replace in files keeps blank lines, Comments and line endings, and skips files with no match; case-insensitive search beyond A-Z |\n| Grid | 12 | Join no longer deletes hidden Lines between the selected ones; Sort by Effect sorts by Effect; tree edits keep their groups |\n| Fonts | 12 | Font collector copies Type 1 partner files, keeps its settings, and names its folder in your language |\n| Settings | 11 | Short or newer-version hotkey files are no longer replaced by defaults; cancelled hotkey edits stay cancelled |\n| Video | 10 | Snapshot numbering no longer overwrites; untagged HD video is converted with the matrix it is labelled with; keyframe snap reaches the next Line |\n| Editor | 8 | Font and colour buttons write correct SRT/MicroDVD tags; typed Duration applies; Not confirmed is its own undo step |\n| Automation | 6 | Dialog macros work; validation no longer edits the file without an undo step |\n| Fix minor errors | 6 | Rule chains apply in order without crashing; Rules.txt keeps its last checkbox on Linux |\n| Spell checker | 5 | Unsent typing in the Line editor is kept; turning spelling on works without a restart |\n| Comparison | 4 | Comparing a new pair clears the old one; emoji compare as one character on Windows |\n| Document | 3 | Equal times compare equal; MicroDVD frame rate is per tab; frame shift to the audio marker |\n\nFound during review and fixed as well:\n- A file that cannot be opened no longer leaves an empty tab behind. This holds for batches, drag and drop, and session restore too.\n- Loading a session while the view is split no longer crashes.\n- A failed save keeps the edited-line marks, the title and the undo history as they were.\n\n## Behaviour changes\n\n- **Private files stay private.** Autosaves, recovery copies, the audio and video index caches and Find and Replace backups are written readable by you only (owner-only ACL on Windows). If their folder cannot be made private, the feature is skipped with a log line: autosave pauses, and audio is kept in memory instead of the disk cache.\n- **Some saves are refused instead of risked:**\n  - A save whose target is swapped for a link while it runs is refused.\n  - On Linux without `/proc`, a save that has to rewrite the file in place is refused, as is a save to a FIFO.\n  - On Windows, overwriting is refused on volumes that report no file ID.\n  - Saving a private file to a share that will not keep the temporary file private is refused.\n- **Linux audio** stops and logs an error if the device stops playing for 10 s without reporting one, instead of hanging.\n- **The single-instance socket** lives in an owner-only folder in `/run/user/<uid>`, `$TMPDIR` or `/tmp`.\n\n## Known issues\n\n- **rc.2 does not tell you about newer releases.** As in rc.1, the automatic check is off by default and \"Stable versions only\" skips release candidates, and both settings live only in the dialog a found update opens. rc.3 fixes this, but rc.2 cannot be fixed after the fact: update to [0.0.1](https://github.com/altqx/hikari/releases/tag/v0.0.1) by hand once.\n\n## Downloads\n\n- `HikariSub-0.0.1-rc.2-windows-x64.zip`: Windows x64.\n- `hikarisub-0.0.1-rc.2-linux-x86_64.tar.gz`: Linux x86_64.\n- `SHA256SUMS`: check a download with `sha256sum -c --ignore-missing SHA256SUMS`.\n\n**Full Changelog**: https://github.com/altqx/hikari/compare/v0.0.1-rc.1...v0.0.1-rc.2\n"
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/401899709",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/401899709/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/401899709/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/qt-metadata-windows-6.11.2-20261002",
+    "id": 401899709,
+    "author": {
+      "login": "altqx",
+      "type": "User"
+    },
+    "node_id": "RE_kwDOUsuuy84X9IC9",
+    "tag_name": "qt-metadata-windows-6.11.2-20261002",
+    "target_commitish": "qt",
+    "name": "Qt 6.11.2 repository metadata (Windows), retained 2026-10-02",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-02T14:23:21Z",
+    "updated_at": "2026-10-02T14:42:16Z",
+    "published_at": "2026-10-02T14:42:16Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/605806020",
+        "id": 605806020,
+        "node_id": "RA_kwDOUsuuy84kG93E",
+        "name": "all_os__default_install__2026-09-28-1022_meta.7z",
+        "label": "",
+        "uploader": {
+          "login": "altqx",
+          "type": "User"
+        },
+        "content_type": "application/x-7z-compressed",
+        "state": "uploaded",
+        "size": 10602,
+        "digest": "sha256:b24863265bc05c89d74e5c8b5d8121ae29c486389b09a3fda5cca0bde95e39fc",
+        "download_count": 432,
+        "created_at": "2026-10-02T14:42:12Z",
+        "updated_at": "2026-10-02T14:42:12Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__default_install__2026-09-28-1022_meta.7z"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/605806018",
+        "id": 605806018,
+        "node_id": "RA_kwDOUsuuy84kG93C",
+        "name": "all_os__default_install__Updates.xml",
+        "label": "",
+        "uploader": {
+          "login": "altqx",
+          "type": "User"
+        },
+        "content_type": "text/xml; charset=utf-8",
+        "state": "uploaded",
+        "size": 875,
+        "digest": "sha256:31470838256dd39efee39935742f4759990aa8f15ad302f05720c4445a03af44",
+        "download_count": 432,
+        "created_at": "2026-10-02T14:42:12Z",
+        "updated_at": "2026-10-02T14:42:12Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-windows-6.11.2-20261002/all_os__default_install__Updates.xml"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/qt-metadata-windows-6.11.2-20261002",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/qt-metadata-windows-6.11.2-20261002",
+    "body": "Retained copy of the official Qt online-repository metadata pinned by `cmake/locks/qt-windows.lock.json` on the `qt` branch: 9 `Updates.xml` indexes and 9 metadata archives. Asset names are repository paths with `/` replaced by `__`.\n\nQt republishes and deletes these index files, so clean builds read them from here. Versioned payload archives are still downloaded from download.qt.io. Every file is verified against the lock's SHA-256 before use.\n\nThe files are Qt's own metadata (component descriptions, installer scripts and license texts, including LGPL v3 and third-party notices), redistributed unchanged for build reproducibility. Not a HikariSub release."
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/401790583",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/401790583/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/401790583/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/qt-metadata-linux-6.11.2-20261002",
+    "id": 401790583,
+    "author": {
+      "login": "altqx",
+      "type": "User"
+    },
+    "node_id": "RE_kwDOUsuuy84X8tZ3",
+    "tag_name": "qt-metadata-linux-6.11.2-20261002",
+    "target_commitish": "qt",
+    "name": "Qt 6.11.2 repository metadata (Linux), retained 2026-10-02",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-10-02T12:11:39Z",
+    "updated_at": "2026-10-02T12:19:12Z",
+    "published_at": "2026-10-02T12:19:12Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/605548823",
+        "id": 605548823,
+        "node_id": "RA_kwDOUsuuy84kF_EX",
+        "name": "all_os__default_install__2026-09-28-1022_meta.7z",
+        "label": "",
+        "uploader": {
+          "login": "altqx",
+          "type": "User"
+        },
+        "content_type": "application/x-7z-compressed",
+        "state": "uploaded",
+        "size": 10602,
+        "digest": "sha256:b24863265bc05c89d74e5c8b5d8121ae29c486389b09a3fda5cca0bde95e39fc",
+        "download_count": 640,
+        "created_at": "2026-10-02T12:19:08Z",
+        "updated_at": "2026-10-02T12:19:09Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__default_install__2026-09-28-1022_meta.7z"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/605548821",
+        "id": 605548821,
+        "node_id": "RA_kwDOUsuuy84kF_EV",
+        "name": "all_os__default_install__Updates.xml",
+        "label": "",
+        "uploader": {
+          "login": "altqx",
+          "type": "User"
+        },
+        "content_type": "text/xml; charset=utf-8",
+        "state": "uploaded",
+        "size": 875,
+        "digest": "sha256:31470838256dd39efee39935742f4759990aa8f15ad302f05720c4445a03af44",
+        "download_count": 646,
+        "created_at": "2026-10-02T12:19:08Z",
+        "updated_at": "2026-10-02T12:19:09Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/qt-metadata-linux-6.11.2-20261002/all_os__default_install__Updates.xml"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/qt-metadata-linux-6.11.2-20261002",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/qt-metadata-linux-6.11.2-20261002",
+    "body": "Retained copy of the official Qt online-repository metadata pinned by `cmake/locks/qt-linux.lock.json` on the `qt` branch: 9 `Updates.xml` indexes and 9 metadata archives. Asset names are repository paths with `/` replaced by `__`.\n\nQt republishes and deletes these index files (`all_os/default_install` changed on 2026-09-28 and its previous archive was removed), so clean builds read them from here. Versioned payload archives are still downloaded from download.qt.io. Every file is verified against the lock's SHA-256 before use.\n\nThe files are Qt's own metadata (component descriptions, installer scripts and license texts, including LGPL v3 and third-party notices), redistributed unchanged for build reproducibility. Not a HikariSub release."
+  },
+  {
+    "url": "https://api.github.com/repos/altqx/hikari/releases/397309487",
+    "assets_url": "https://api.github.com/repos/altqx/hikari/releases/397309487/assets",
+    "upload_url": "https://uploads.github.com/repos/altqx/hikari/releases/397309487/assets{?name,label}",
+    "html_url": "https://github.com/altqx/hikari/releases/tag/v0.0.1-rc.1",
+    "id": 397309487,
+    "author": {
+      "login": "github-actions[bot]",
+      "type": "Bot"
+    },
+    "node_id": "RE_kwDOUsuuy84XrnYv",
+    "tag_name": "v0.0.1-rc.1",
+    "target_commitish": "main",
+    "name": "v0.0.1-rc.1",
+    "draft": false,
+    "immutable": false,
+    "prerelease": true,
+    "created_at": "2026-09-26T16:05:20Z",
+    "updated_at": "2026-10-13T00:03:41Z",
+    "published_at": "2026-09-26T16:27:15Z",
+    "assets": [
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/591005642",
+        "id": 591005642,
+        "node_id": "RA_kwDOUsuuy84jOgfK",
+        "name": "hikarisub-0.0.1-rc.1-linux-x86_64.tar.gz",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/x-gtar",
+        "state": "uploaded",
+        "size": 79126538,
+        "digest": "sha256:3b1a00fd5f5291263ff48a2d3e5bee5ea76d2fdfd86b56b94e1c928729bb0931",
+        "download_count": 1,
+        "created_at": "2026-09-26T16:27:10Z",
+        "updated_at": "2026-09-26T16:27:13Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.1-rc.1/hikarisub-0.0.1-rc.1-linux-x86_64.tar.gz"
+      },
+      {
+        "url": "https://api.github.com/repos/altqx/hikari/releases/assets/591005640",
+        "id": 591005640,
+        "node_id": "RA_kwDOUsuuy84jOgfI",
+        "name": "HikariSub-0.0.1-rc.1-windows-x64.zip",
+        "label": "",
+        "uploader": {
+          "login": "github-actions[bot]",
+          "type": "Bot"
+        },
+        "content_type": "application/zip",
+        "state": "uploaded",
+        "size": 139477531,
+        "digest": "sha256:20a1b0fa164026522feab399cef521242203c6a1adaced0e6dddd3cb315e9a1e",
+        "download_count": 7,
+        "created_at": "2026-09-26T16:27:10Z",
+        "updated_at": "2026-09-26T16:27:15Z",
+        "browser_download_url": "https://github.com/altqx/hikari/releases/download/v0.0.1-rc.1/HikariSub-0.0.1-rc.1-windows-x64.zip"
+      }
+    ],
+    "tarball_url": "https://api.github.com/repos/altqx/hikari/tarball/v0.0.1-rc.1",
+    "zipball_url": "https://api.github.com/repos/altqx/hikari/zipball/v0.0.1-rc.1",
+    "body": "First release candidate of HikariSub, a subtitle editor that continues [Kainote](https://github.com/bjakja/Kainote). It is Kainote with the pull requests below, which were merged upstream, plus the rename to HikariSub and the fixes listed after them. The original Kainote rc.1 release no longer exists, so this page records what it contained.\n\n> The stable release is out: [v0.0.1](https://github.com/altqx/hikari/releases/tag/v0.0.1). rc.1 does not tell you about it (see Known issues), so update by hand.\n\n## From Kainote pull requests\n\n**Faster playback, audio and editing** ([bjakja/Kainote#476](https://github.com/bjakja/Kainote/pull/476), Windows)\n- Frames decode ahead on a second thread, and scripts are parsed in the background after an edit, so Play does not wait.\n- New option \"Convert video colours on the GPU\", on by default. Without a usable GPU it falls back to the CPU.\n- Stereo sources play in stereo. Audio delay keeps millisecond precision. A finished audio cache is kept instead of being decoded again on each open.\n- The grid and editor draw on the GPU. Undo history keeps the last 500 steps. Embedded `[Fonts]` and `[Graphics]` sections survive load and save.\n\n**Timing, automation, seeking and undo fixes** ([bjakja/Kainote#475](https://github.com/bjakja/Kainote/pull/475))\n- Automation scripts get the subtitles of the right frame.\n- Frame 0 starts at 0 ms. DirectShow and GStreamer time lines the way FFMS2 does, and DirectShow can step by keyframes.\n- Seeking during playback is more reliable. A keyframes file chosen before opening a video is no longer rejected, and a huge `frame_from_ms` value no longer hangs the program.\n- \"Replace checked\" has its proper name in the undo history, and scripts that only delete lines create an undo step.\n\n**English is the source language; translations load reliably** ([bjakja/Kainote#473](https://github.com/bjakja/Kainote/pull/473))\n- Untranslated text falls back to English instead of Polish. Polish is now an ordinary, complete translation.\n- On Windows, the other languages' files load again; before, the interface stayed Polish.\n\n**Icons, update checking and Linux desktop integration** ([bjakja/Kainote#470](https://github.com/bjakja/Kainote/pull/470))\n- On Windows, subtitle file types get their icons from the program, and \"Select subtitles\" also lists `.txt`.\n- Update checking is rewritten. It finds a newer release and opens its page; nothing is downloaded or installed.\n- On Linux, `install-desktop-integration.sh` in the tarball adds a menu entry, icons and file types for your user. `--uninstall` removes them.\n\n**wxWidgets 3.3.3 on Windows** ([bjakja/Kainote#469](https://github.com/bjakja/Kainote/pull/469))\n- Windows builds use wxWidgets 3.3.3 instead of a modified 2.9.4 snapshot from 2012, with every dependency as a submodule. Linux builds use the distribution's wxWidgets.\n\n**Fixes**\n- Linux: lifetime, bounds, text-conversion, font, media and worker-thread defects from an audit are fixed, Korean format placeholders are corrected, and the runtime package lists its libraries ([bjakja/Kainote#461](https://github.com/bjakja/Kainote/pull/461)).\n- The volume slider tops out at 150% instead of 8x gain, so loud material no longer clips ([bjakja/Kainote#462](https://github.com/bjakja/Kainote/pull/462)).\n- A colour-space change during playback no longer reads a freed frame ([bjakja/Kainote#463](https://github.com/bjakja/Kainote/pull/463)).\n- Collected-font zips mark their names as UTF-8, so Explorer shows CJK names on Windows ([bjakja/Kainote#464](https://github.com/bjakja/Kainote/pull/464)).\n- MKV font attachments with non-UTF-8 names keep a usable name and extension, and stay inside the chosen folder ([bjakja/Kainote#465](https://github.com/bjakja/Kainote/pull/465)).\n- An undecodable frame ends playback instead of spinning a CPU core forever ([bjakja/Kainote#466](https://github.com/bjakja/Kainote/pull/466)).\n\n## Since then\n\n- **Renamed to HikariSub.** The program, its files and its links now use the HikariSub name. The interface is in English, with Polish, Korean, Thai and Tamil translations; the other upstream catalogs were dropped. Help opens altqx.com, and \"Report an issue\" opens this repository's tracker.\n- **New icons:** the dawn-peek set for the program and the ASS and SRT files.\n- **Subtitle file associations only.** HikariSub no longer registers itself for video files, and on start it removes any video association that still points at it.\n- **Semantic versioning,** starting at 0.0.1. Release-candidate tags look like `v0.0.1-rc.N`.\n- **Fixes:**\n  - a playback race when seeking or pausing;\n  - the subtitle name derived from a video path with dots in its folder names;\n  - a popup list that kept growing and repainting;\n  - the comparison's scroll sync and a bounds check;\n  - a use-after-free in the VSFilter renderer;\n  - changes made in Options now apply to every open tab, not only the current one.\n\n## Known issues\n\n- **rc.1 does not tell you about newer releases.** The automatic check is off by default, and \"Stable versions only\" is on, which skips release candidates. Both settings live only in the dialog that a found update opens. rc.3 fixes this, but rc.1 cannot be fixed after the fact: update to [0.0.1](https://github.com/altqx/hikari/releases/tag/v0.0.1) by hand once.\n- The Windows installer ([bjakja/Kainote#472](https://github.com/bjakja/Kainote/pull/472)) is not part of this release. Unpack the zip and run `HikariSub_x64/HikariSub.exe` (`HikariSub_AVX.exe` is the AVX build).\n\n## Downloads\n\n- `HikariSub-0.0.1-rc.1-windows-x64.zip`: Windows x64.\n- `hikarisub-0.0.1-rc.1-linux-x86_64.tar.gz`: Linux x86_64.\n- `SHA256SUMS`: check a download with `sha256sum -c --ignore-missing SHA256SUMS`.\n\n**Full Changelog**: https://github.com/altqx/hikari/commits/v0.0.1-rc.1\n"
+  }
+]

@@ -360,6 +360,13 @@ TEST(UpdateInstall, EachCopyKeepsItsOwnFiles)
     EXPECT_EQ(a.rfind("appimage-", 0), 0u);
     EXPECT_NE(a, updateCopyKey("appimage", "/home/u/Apps/HikariSub-test.AppImage"));
     EXPECT_EQ(a, updateCopyKey("appimage", "/home/u/Apps/HikariSub.AppImage"));
+    // What's new names every copy by its file: two portable folders differ.
+    const std::string portable = whatsNewCopyKey("portable-linux", "/home/u/A/hikarisub");
+    EXPECT_EQ(portable.rfind("portable-linux-", 0), 0u);
+    EXPECT_NE(portable, whatsNewCopyKey("portable-linux", "/home/u/B/hikarisub"));
+    EXPECT_EQ(portable, whatsNewCopyKey("portable-linux", "/home/u/A/hikarisub"));
+    EXPECT_EQ(whatsNewCopyKey("appimage", "/home/u/Apps/HikariSub.AppImage"), a);
+    EXPECT_EQ(whatsNewCopyKey("deb", ""), "deb");
 }
 
 TEST(UpdateInstall, StartupArguments)

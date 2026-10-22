@@ -746,6 +746,26 @@ private slots:
         QCOMPARE(QFileInfo(QString::fromStdString(application->video().session().path())).fileName(), QStringLiteral("one.mkv"));
     }
 
+    // KA6: imported lyrics are offered the video of the same name beside
+    // them, as subtitles are, though they have no file of their own yet.
+    void lyricsAreOfferedTheFoldersVideo()
+    {
+        const QString folder = dir.filePath(QStringLiteral("lyricsvideo"));
+        QDir().mkpath(folder);
+        QFile::remove(folder + QStringLiteral("/song.mkv"));
+        QVERIFY(QFile::copy(media("cfr.mkv"), folder + QStringLiteral("/song.mkv")));
+        QFile lrc(folder + QStringLiteral("/song.lrc"));
+        QVERIFY(lrc.open(QIODevice::WriteOnly));
+        lrc.write("[00:01.00]<00:01.00>la <00:02.00>la\n");
+        lrc.close();
+        QVERIFY(application->openFile(lrc.fileName()));
+        QCOMPARE(titles().last(), QStringLiteral("song.ass"));
+        QVERIFY(application->video().offering());
+        QCOMPARE(application->video().offer(), QStringLiteral("Video from directory:\nsong.mkv"));
+        application->video().dismissOffer();
+        QVERIFY(!application->video().offering());
+    }
+
     // Legacy's question was modal and Escape (its escape id) answered No.
     // The inline question does not take the focus from the Document; with
     // the focus in it (Tab, or "Apply to All" clicked) Escape answers No.
