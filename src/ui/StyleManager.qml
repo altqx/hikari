@@ -42,9 +42,10 @@ Window {
     // TP1: the Styles panel's rows are the Document's, a name possibly twice.
     function showAt(row) {
         styles.refreshLists()
-        if (!editing) // an edit in progress keeps its Style
+        if (!editing) { // an edit in progress keeps both lists' selections
             assSelected = [Math.max(0, Math.min(row, styles.documentStyles.length - 1))]
-        storeSelected = styles.storeStyles.length > 0 ? [0] : []
+            storeSelected = styles.storeStyles.length > 0 ? [0] : []
+        }
         show()
         raise()
         requestActivate()
