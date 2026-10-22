@@ -1279,6 +1279,154 @@ TEST(HydraStrip, TheLastChangeIsDoneAgainInPlaceOfItsStep)
     EXPECT_EQ(textOf(*host.s, all[0]), "{\\blur1}One");
 }
 
+// HY1 (Codex on #339): the card keeps the Lines its change edited (the
+// picked ones the Grid showed) and the values before it; done again it
+// edits those Lines, whatever the Grid shows now.
+TEST(HydraStrip, TheCardKeepsTheLinesAndValuesOfItsChange)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\blur1}One", "{\\blur2}Two", "{\\blur1}Three"}, true));
+    const auto all = ids(*host.s);
+    host.hidden.insert(all[1]);
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    ASSERT_TRUE(tags.setValue("by0", u"2", host));
+    EXPECT_EQ(textOf(*host.s, all[1]), "{\\blur2}Two");
+    ASSERT_TRUE(tags.lastChange(host));
+    EXPECT_EQ(tags.lastChange(host)->lines, 2);
+    host.hidden.clear();
+    ASSERT_TRUE(tags.editLastChange("by0", u"5", host));
+    EXPECT_EQ(textOf(*host.s, all[0]), "{\\blur6}One");
+    EXPECT_EQ(textOf(*host.s, all[1]), "{\\blur2}Two");
+    EXPECT_EQ(textOf(*host.s, all[2]), "{\\blur6}Three");
+    // A decreasing gradient leaves the active Line at To: the card's From is
+    // still what the Line had before.
+    TestHost other;
+    setUp(other, hydraCase({"{\\blur1}One", "{\\blur1}Two"}, true));
+    other.caret = {3, 3};
+    AllTagsTool gradient;
+    gradient.setToggled(PasteGradientLineDecrease << 20);
+    gradient.selected(other);
+    gradient.reset(other);
+    ASSERT_TRUE(gradient.setValue("to0", u"5", other));
+    const auto last = gradient.lastChange(other);
+    ASSERT_TRUE(last);
+    const ToolValue *from = valueNamed(last->values, "from0");
+    ASSERT_TRUE(from);
+    EXPECT_EQ(from->text, u"1");
+}
+
+// HY1 (Codex on #339): what ends the card and the strip's values: another
+// placing, the time key's own step, another change option, a definition
+// renamed in the tag editor.
+TEST(HydraStrip, OtherChangesCloseTheCard)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\fad(100,200)\\blur1}Hello"}, false));
+    host.caret = {3, 3};
+    AllTagsTool tags;
+    tags.setToggled(PasteInsert << 20); // blur, Set
+    tags.selected(host);
+    tags.reset(host);
+    ASSERT_TRUE(tags.setValue("value0", u"3", host));
+    ASSERT_TRUE(tags.lastChange(host));
+    host.tags[0].mode = 1;
+    ASSERT_TRUE(tags.setOption("variant", 1, host));
+    EXPECT_FALSE(tags.lastChange(host)) << "the card redoes its own placing only";
+    // Add's By goes back to 0 with another change option.
+    ASSERT_TRUE(tags.setOption("change", 1, host));
+    ASSERT_TRUE(tags.setValue("by0", u"2", host));
+    EXPECT_EQ(valueNamed(tags.values(host), "by0")->text, u"2");
+    ASSERT_TRUE(tags.setOption("change", 0, host));
+    ASSERT_TRUE(tags.setOption("change", 1, host));
+    EXPECT_EQ(valueNamed(tags.values(host), "by0")->text, u"0");
+    // A definition renamed: the first is chosen again from its own values.
+    ASSERT_TRUE(tags.setValue("by0", u"2", host));
+    ASSERT_TRUE(tags.lastChange(host));
+    std::vector<std::u16string> names;
+    for (const AllTagsSetting &t : host.tags)
+        names.push_back(t.name);
+    host.tags[0].name = u"soft edge";
+    tags.definitionsChanged(names, host);
+    EXPECT_FALSE(tags.lastChange(host));
+    EXPECT_EQ(valueNamed(tags.values(host), "by0")->text, u"0");
+    // The time key's step is the last one now.
+    ASSERT_TRUE(tags.setOption("tag", 10, host)); // fading, with its own Set
+    ASSERT_TRUE(tags.setOption("change", 1, host));
+    host.caret = {3, 3}; // in \fad again
+    tags.reset(host);
+    ASSERT_TRUE(tags.setValue("by0", u"10", host));
+    ASSERT_TRUE(tags.lastChange(host));
+    Key key;
+    key.key = ',';
+    key.control = true;
+    EXPECT_TRUE(tags.key(key, host));
+    EXPECT_FALSE(tags.lastChange(host));
+}
+
+// HY1 (Codex security review on #339): another tab with the same revision
+// and active Line id does not take the card: it would undo that tab's step.
+TEST(HydraStrip, TheCardStaysWithItsTab)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\blur1}One"}, false));
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    ASSERT_TRUE(tags.setValue("by0", u"2", host));
+    ASSERT_TRUE(tags.lastChange(host));
+    const auto first = std::move(host.s); // the first tab stays open
+    const std::uint64_t revision = first->revision();
+    setUp(host, hydraCase({"{\\blur1}One"}, false));
+    ASSERT_TRUE(host.s->run({"other", host.s->revision(), {ids(*host.s).front()}, [&](core::Document &d) {
+                                 return d.editLine(ids(*host.s).front(), [](core::LineRecord &l) { l.text = u8"{\\blur9}One"; });
+                             }}));
+    ASSERT_EQ(host.s->revision(), revision);
+    ASSERT_EQ(host.activeLine(), first->selection().active);
+    EXPECT_FALSE(tags.editLastChange("by0", u"5", host));
+    EXPECT_EQ(textOf(*host.s, ids(*host.s).front()), "{\\blur9}One");
+    EXPECT_FALSE(tags.lastChange(host));
+}
+
+// HY1 (Codex on #339): a press on the letterbox bars starts no drag.
+TEST(HydraStrip, ADragStartsOnThePictureOnly)
+{
+    TestHost host;
+    Case c = hydraCase({"{\\blur2}Hello"}, false);
+    c.clientH = 520; // 640x360 of picture in 640x480: bars of 60 above and below
+    setUp(host, c);
+    ASSERT_GT(host.v.videoRect().top, 20);
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    const std::size_t steps = host.s->historySize();
+    tags.pointer(pointerAt(Pointer::Kind::Press, 300, 10, Pointer::Button::Left, true), host);
+    tags.pointer(pointerAt(Pointer::Kind::Move, 340, 10, Pointer::Button::None, true), host);
+    EXPECT_FALSE(host.g);
+    tags.pointer(pointerAt(Pointer::Kind::Release, 340, 10, Pointer::Button::Left), host);
+    EXPECT_EQ(host.s->historySize(), steps);
+}
+
+// HY1 (Codex on #339): a moving Line's outline is where the Line is at the
+// video's time.
+TEST(HydraStrip, AMovingLineIsOutlinedWhereItIs)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\move(300,300,1500,300)}Moving"}, false)); // 1.0 s to 2.0 s, the video at 1.5 s
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    const Overlay o = tags.overlay(host);
+    ASSERT_EQ(o.polygons.size(), 1u);
+    // Half way: x 900 at the coefficient 3, \an2's bottom centre.
+    EXPECT_NEAR((o.polygons[0].points[0].x + o.polygons[0].points[1].x) / 2, 900.f / 3, 1.f);
+}
+
 // HY1-time-keys-set: the Line editor's "Insert difference from the start"
 // key puts the video's time from the Line's start into \fad's first value,
 // as Set does, whatever the switch shows; one step.

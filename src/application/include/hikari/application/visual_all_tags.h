@@ -163,6 +163,9 @@ private:
     void load(const Fields &f);
     bool run(const Fields &f, bool commit, VisualHost &host);
     void forgetValues();
+    // The change just committed as the last change card's (its Lines as
+    // edited, the values before it).
+    void remember(const Fields &f, const std::array<float, 4> &base, std::pair<long, long> caret, VisualHost &host);
     void dropDrag(VisualHost &host);
     void takeView(const VideoView &view);
     const std::vector<AllTagsSetting> &tags(const VisualHost &host) const;
@@ -193,6 +196,7 @@ private:
         std::pair<long, long> caret;
         std::uint64_t revision = 0;
         std::optional<core::LineId> active;
+        const EditSession *session = nullptr; // another tab's revision can be the same
     };
     std::optional<Last> m_last;
     std::optional<std::vector<core::LineId>> m_forcedTargets; // the last change's, done again

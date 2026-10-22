@@ -324,8 +324,8 @@ void AllTagsTool::reset(VisualHost &host)
     m_sample.reset();
     if (m_last) {
         const auto *session = host.session();
-        if (!session || session->revision() != m_last->revision || session->draftLine() ||
-            host.activeLine() != m_last->active)
+        if (!session || session != m_last->session || session->revision() != m_last->revision ||
+            session->draftLine() || host.activeLine() != m_last->active)
             m_last.reset();
     }
     // A reset drops a held thumb (Esc, another active Line: the gesture
@@ -373,6 +373,11 @@ void AllTagsTool::definitionsChanged(const std::vector<std::u16string> &oldNames
             choice = at == names.end() ? 0 : static_cast<int>(at - names.begin());
         }
     }
+    // HY1: another definition chosen starts from its own values; the card's
+    // tag may be gone or another.
+    if (choice != m_listSelection || choice < 0 || ce != names[static_cast<std::size_t>(choice)])
+        forgetValues();
+    m_last.reset();
     m_listSelection = choice;
     changeTool(toggled(), false, host);
 }
@@ -521,6 +526,8 @@ bool AllTagsTool::setOption(const std::string &name, int value, VisualHost &host
                 return false;
             if (const auto *own = host.allTagsSettings(); (!own || own->empty()) && beforeTag < count)
                 m_ownTags[static_cast<std::size_t>(beforeTag)].mode = static_cast<unsigned char>(value);
+            // The card redoes its change with its own placing only.
+            m_last.reset();
             break;
         case Change::Multiply:
             if (value < 0 || value > 1)
@@ -538,7 +545,7 @@ bool AllTagsTool::setOption(const std::string &name, int value, VisualHost &host
     } else {
         return false;
     }
-    if (m_listSelection != beforeTag)
+    if (m_listSelection != beforeTag || m_listMode != before)
         forgetValues();
     if (m_listMode != before || m_listSelection != beforeTag)
         m_last.reset();
@@ -936,7 +943,7 @@ bool AllTagsTool::beginEdit(VisualHost &host)
         return false;
     const bool many = severalLines(targets, host.activeLine());
     m_targets.clear();
-    if (many) {
+    if (many && !m_forcedTargets) {
         const auto shown = host.shownLines();
         for (const core::LineId id : targets)
             if (!shown || shown(id))
@@ -1258,6 +1265,13 @@ void AllTagsTool::forgetValues()
     m_marked.clear();
 }
 
+void AllTagsTool::remember(const Fields &f, const std::array<float, 4> &base, std::pair<long, long> caret,
+                           VisualHost &host)
+{
+    const EditSession *session = host.session();
+    m_last = Last{m_currentTag, m_mode, f, base, m_targets, caret, session->revision(), host.activeLine(), session};
+}
+
 void AllTagsTool::readBase(VisualHost &host)
 {
     // The active Line's values after the tool's own step (its text as the
@@ -1528,7 +1542,7 @@ bool AllTagsTool::setValue(const std::string &name, const std::u16string &text, 
         return true;
     }
     m_sample.reset();
-    const auto targets = targetsFor(host);
+    const auto base = m_base;
     const auto caret = host.editorSelection();
     const bool done = run(f, true, host);
     if (host.gesture())
@@ -1538,7 +1552,7 @@ bool AllTagsTool::setValue(const std::string &name, const std::u16string &text, 
         for (auto &v : m_fields.set)
             v.reset(); // the Lines have it now
         readBase(host);
-        m_last = Last{m_currentTag, m_mode, f, m_base, targets, caret, host.session()->revision(), host.activeLine()};
+        remember(f, base, caret, host);
     }
     host.toolChanged();
     return done;
@@ -1592,6 +1606,11 @@ bool AllTagsTool::editLastChange(const std::string &name, const std::u16string &
     // that changed the Document since (or an open gesture) closes the card.
     if (!m_last || m_last->tag != m_currentTag || m_last->mode != m_mode)
         return false;
+    if (host.session() != m_last->session) {
+        m_last.reset();
+        host.toolChanged();
+        return false;
+    }
     double parsed = 0;
     if (!parseValue(text, parsed))
         return false;
@@ -1607,6 +1626,7 @@ bool AllTagsTool::editLastChange(const std::string &name, const std::u16string &
     m_find.setSeveralLines(several(host));
     m_find.setSelection(last.caret.first, last.caret.second);
     readBase(host);
+    last.base = m_base;
     const bool done = run(last.fields, true, host);
     if (host.gesture())
         host.cancelGesture();
@@ -1663,7 +1683,7 @@ void AllTagsTool::pointer(const Pointer &event, VisualHost &host)
         const float step = m_actualTag.step > 0 ? m_actualTag.step : 1;
         if (!putField(f, name, (move ? 0.f : field(f, name, m_mode)) + (event.wheelSteps > 0 ? step : -step)))
             return;
-        const auto targets = targetsFor(host);
+        const auto base = m_base;
         const auto caret = host.editorSelection();
         if (run(f, true, host)) {
             if (!move)
@@ -1671,14 +1691,14 @@ void AllTagsTool::pointer(const Pointer &event, VisualHost &host)
             for (auto &v : m_fields.set)
                 v.reset();
             readBase(host);
-            m_last = Last{m_currentTag, m_mode, f, m_base, targets, caret, host.session()->revision(), host.activeLine()};
+            remember(f, base, caret, host);
         }
         host.toolChanged();
         return;
     }
     const bool leftDown = event.kind == Pointer::Kind::Press && event.button == Pointer::Button::Left;
     const bool leftUp = event.kind == Pointer::Kind::Release && event.button == Pointer::Button::Left;
-    if (leftDown && !host.gesture()) {
+    if (leftDown && !host.gesture() && host.view().videoRect().contains(event.x, event.y)) {
         Drag d;
         d.x = d.atX = event.x;
         d.y = d.atY = event.y;
@@ -1715,7 +1735,7 @@ void AllTagsTool::pointer(const Pointer &event, VisualHost &host)
             return;
         }
         const Fields f = *m_sample;
-        const auto targets = targetsFor(host);
+        const auto base = m_base;
         const auto caret = host.editorSelection();
         const bool done = run(f, true, host);
         if (host.gesture())
@@ -1727,7 +1747,7 @@ void AllTagsTool::pointer(const Pointer &event, VisualHost &host)
             for (auto &v : m_fields.set)
                 v.reset();
             readBase(host);
-            m_last = Last{m_currentTag, m_mode, f, m_base, targets, caret, host.session()->revision(), host.activeLine()};
+            remember(f, base, caret, host);
         }
         host.toolChanged();
     }
@@ -1772,8 +1792,10 @@ bool AllTagsTool::key(const Key &event, VisualHost &host)
         host.cancelGesture();
     m_mode = mode;
     m_replaceTagsInCursorPosition = inCursor;
-    if (done)
+    if (done) {
         readBase(host);
+        m_last.reset(); // the card's step is no longer the last
+    }
     host.toolChanged();
     return true;
 }
