@@ -69,6 +69,7 @@
 #include <QGuiApplication>
 #include <QSignalSpy>
 #include <QQmlApplicationEngine>
+#include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlExpression>
 #include <QQmlProperty>
@@ -6840,11 +6841,42 @@ private slots:
         restartWith(app::Application::Options());
     }
 
+    // PU7 (#309): the window shown while the installer runs is titled
+    // "Install update", names the version and cannot be closed: no Close on
+    // its title bar, and Esc and the window system's close do nothing.
+    QQuickWindow *installingWindow(const QString &version)
+    {
+        QQmlComponent component(engine);
+        component.loadFromModule("Hikari.Ui", "UpdateInstallingWindow");
+        auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties({{QStringLiteral("version"), version}}));
+        if (!window)
+            qWarning() << component.errorString();
+        return window;
+    }
+    void installingWindowCannotBeClosed()
+    {
+        std::unique_ptr<QQuickWindow> window(installingWindow(QStringLiteral("1.4.0")));
+        QVERIFY(window);
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("Install update"));
+        QCOMPARE(findItem(window->contentItem(), QStringLiteral("updateInstallingText"))->property("text").toString(),
+                 QStringLiteral("Installing HikariSub 1.4.0…"));
+        QVERIFY(!window->property("closable").toBool());
+        QVERIFY(QTest::qWaitForWindowExposed(window.get()));
+        window->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window.get());
+        QTest::keyClick(window.get(), Qt::Key_Escape);
+        QVERIFY(!window->close());
+        QCoreApplication::processEvents();
+        QVERIFY(window->isVisible());
+    }
+
     // P8, ADR 0019, DG1 (#222): the update check's results are toasts (NT1,
     // #302), titled "Check for updates" (a failure a warning), the
     // installer's errors "Download and install" or, at the start, "Install
     // update"; a newer release opens on the dialog frame, modeless, in the
-    // resizable notice with its notes, or in the AUR notice for an AUR copy.
+    // resizable notice with its notes; PU7 (#309): an AUR copy's in the same
+    // window, with its command; Skip this version and Remind me later.
     void updateNoticesOpenOnTheDialogFrame()
     {
         // Keys sent before a new window has taken its first show (its

@@ -38,6 +38,9 @@ Window {
     // the 24-wide margins (a window with a side list, Settings); the footer
     // keeps them.
     property bool flush: false
+    // PU7 (#309): false: no Close on the title bar, and Esc and the window
+    // system's close do nothing (a wait the window cannot end).
+    property bool closable: true
     property T.AbstractButton defaultButton: null
     property Item initialFocus: null
     readonly property bool opened: visible
@@ -141,7 +144,14 @@ Window {
         }
     }
 
-    onClosing: if (!accepting) rejected()
+    onClosing: close => {
+        if (!closable && !accepting) {
+            close.accepted = false
+            return
+        }
+        if (!accepting)
+            rejected()
+    }
     Connections {
         target: dialog.startFocus
         ignoreUnknownSignals: true
@@ -232,7 +242,8 @@ Window {
         Accessible.name: dialog.title
         Keys.onEscapePressed: event => {
             event.accepted = true
-            dialog.reject()
+            if (dialog.closable)
+                dialog.reject()
         }
         Keys.onReturnPressed: event => dialog.enter(event)
         Keys.onEnterPressed: event => dialog.enter(event)
@@ -243,6 +254,7 @@ Window {
             spacing: 0
             DialogTitleBar {
                 frame: frame
+                closable: dialog.closable
                 Layout.fillWidth: true
             }
             ColumnLayout {
