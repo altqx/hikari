@@ -71,6 +71,10 @@ bool hasStableOnlyOption(PackageKind kind, std::optional<AurChannel> channel);
 // Whether the install's AUR package carries a release: a stable one always,
 // a prerelease only hikarisub-beta-bin. The AUR notice says when it does not.
 bool aurCarries(bool prerelease, std::optional<AurChannel> channel);
+// PU7 (#309): the command the update window offers an AUR install to copy:
+// `helper` ("yay" when empty) upgrading the install's package, or the whole
+// system when the install has no channel (its package is not known).
+std::string aurUpdateCommand(std::string_view helper, std::optional<AurChannel> channel);
 
 // Every asset name, and a tag that may go into a URL.
 bool isValidAssetName(std::string_view name);

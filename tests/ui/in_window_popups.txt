@@ -21,11 +21,7 @@ Main.qml:shiftConfirm
 Main.qml:conversionDialog
 Main.qml:resampleDialog
 Main.qml:mismatchDialog
-ManageLayoutsDialog.qml:dialog
-SaveLayoutDialog.qml:dialog
 ScriptPropertiesDialog.qml:dialog
-SettingsImportDialog.qml:dialog
-SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
