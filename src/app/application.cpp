@@ -1981,6 +1981,7 @@ void Application::writeFinished(const application::WriteResult &result)
         refreshViews();
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
+        emit documentWritten(result.document.value);
         rememberRecent(result.destination.value, false); // legacy SetRecent after a save
         if (auto *session = m_files->session(result.document); session && !session->isDirty())
             discardRecovery(result.document); // the work is in the file

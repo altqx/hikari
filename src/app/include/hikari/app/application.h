@@ -1026,6 +1026,9 @@ signals:
     void tabShown(int scroll);
     // A session finished loading with `unresolved` entries left.
     void sessionRestored(int unresolved);
+    // A write of the Document finished written (PU1-disk-change-bar: a Save
+    // As ends the bar only then).
+    void documentWritten(qulonglong document);
 
 private:
     std::optional<application::DocumentId> open(const QString &path, bool asReference = false);
