@@ -12306,6 +12306,56 @@ private slots:
         QCOMPARE(f.readAll(), config);
     }
 
+    // PU7 (#309): a folder that holds no legacy installation says why on the
+    // wizard's first step; Roll back… from the result says it rolled back,
+    // and the import it undid never takes effect.
+    void settingsImportWizardSaysWhyAndWhatItRolledBack()
+    {
+        QTemporaryDir home, legacy, empty;
+        QVERIFY(home.isValid() && legacy.isValid() && empty.isValid());
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\n";
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        {
+            QFile f(legacy.filePath(QStringLiteral("Config/Config.txt")));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(config);
+        }
+        restartWithSpelling(home.path(), false);
+        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
+        // The folder dialog's choice (a closed FolderDialog keeps no folder
+        // set from outside): an empty folder is refused, with why.
+        auto addFolder = [&](const QString &path) {
+            return QMetaObject::invokeMethod(dialog, "addFolder", Q_ARG(QVariant, QUrl::fromLocalFile(path).toString()));
+        };
+        QVERIFY(addFolder(empty.path()));
+        QTRY_VERIFY(control("settingsImportRootProblem")->isVisible());
+        QCOMPARE(control("settingsImportRootProblem")->property("text").toString(), application->settingsImport().status());
+        QVERIFY(!control("settingsImportRootProblem")->property("text").toString().isEmpty());
+        // A readable one: the problem goes.
+        QVERIFY(addFolder(legacy.path()));
+        QTRY_VERIFY(control("settingsImportNext")->isEnabled());
+        QVERIFY(!control("settingsImportRootProblem")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QVERIFY(application->settingsImport().chosen().contains("setting:grid.font"));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportImport"), "click"));
+        QTRY_COMPARE(dialog->property("step").toInt(), 3);
+        QVERIFY(application->settingsImport().pending());
+        QVERIFY(control("settingsImportRollback")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollback"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("rollback"));
+        QTRY_COMPARE(control("settingsImportResult")->property("text").toString(),
+                     QStringLiteral("Rolled back to the settings before the last import."));
+        restartWithSpelling(home.path(), false);
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
+    }
+
     // R6-dictionary-location: the Main page lists the settings folder's
     // Dictionary first (user dictionaries), then the program folder's.
     void settingsDictionariesComeFromTheSettingsFolder()

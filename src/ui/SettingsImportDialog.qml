@@ -9,8 +9,10 @@
 // and three steps (PU7-import-wizard): choose the installation (choosing one
 // reads it), review (Conflicts, the rows that can be chosen, or All, every
 // record with its status; the current row's details under the table), and
-// the import's result with Roll back…, which PK1's message box asks first.
-// While an import is in effect the first step offers Roll back… too.
+// the import's result with Roll back…, which PK1's message box asks first
+// (the result then says it rolled back). While an import is in effect the
+// first step offers Roll back… too; a folder that cannot be read says why
+// there.
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.SettingsImport"
 import QtQuick
@@ -52,9 +54,16 @@ DialogWindow {
     // Settings edited since a waiting import was staged, kept at the next
     // start over the import's values (settings-import.md step 5).
     property var keptEdits: []
+    // Why the folder chosen or the installation picked cannot be read (the
+    // importer's status), shown on the first step.
+    property string rootProblem: ""
+    // The result step's last operation was Roll back, not the import.
+    property bool rolledBack: false
 
     function openDialog() {
         step = 1
+        rootProblem = ""
+        rolledBack = false
         conflictsOnly = true
         search = ""
         keptEdits = importer.keptEdits()
@@ -63,10 +72,17 @@ DialogWindow {
         if (importer.roots.length > 0)
             chooseRoot(0)
     }
+    // A folder from Choose folder…: listed and chosen, or why not.
+    function addFolder(folder) {
+        if (importer.addRoot(folder))
+            chooseRoot(importer.roots.length - 1)
+        else
+            rootProblem = importer.status
+    }
     function chooseRoot(index) {
         rootList.currentIndex = index
         if (index >= 0 && importer.available)
-            importer.choose(importer.roots[index].path)
+            rootProblem = importer.choose(importer.roots[index].path) ? "" : importer.status
     }
     // The status a record shows under All.
     function statusOf(row) {
@@ -105,8 +121,8 @@ DialogWindow {
                 { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }
             ]
         }, answer => {
-            if (answer === "rollback")
-                dialog.importer.rollback()
+            if (answer === "rollback" && dialog.importer.rollback())
+                dialog.rolledBack = true
         })
     }
 
@@ -119,10 +135,7 @@ DialogWindow {
         id: folderDialog
         objectName: "settingsImportFolderDialog"
         title: qsTr("Choose the folder of a legacy installation")
-        onAccepted: {
-            if (dialog.importer.addRoot(selectedFolder.toString()))
-                dialog.chooseRoot(dialog.importer.roots.length - 1)
-        }
+        onAccepted: dialog.addFolder(selectedFolder.toString())
     }
 
     // The steps, the current one filled in the accent, those done ticked.
@@ -283,6 +296,27 @@ DialogWindow {
                 enabled: dialog.importer.available
                 onClicked: folderDialog.open()
                 Layout.topMargin: 2
+            }
+            RowLayout {
+                visible: dialog.rootProblem.length > 0
+                spacing: 6
+                Layout.fillWidth: true
+                Icon {
+                    iconRole: "notice-error"
+                    size: 14
+                    color: Theme.danger
+                    accentColor: Theme.danger
+                    Layout.alignment: Qt.AlignTop
+                    Layout.topMargin: 2
+                }
+                Label {
+                    objectName: "settingsImportRootProblem"
+                    text: dialog.rootProblem
+                    color: Theme.danger
+                    wrapMode: Text.WordWrap
+                    Layout.fillWidth: true
+                    Accessible.role: Accessible.AlertMessage
+                }
             }
             RowLayout {
                 visible: dialog.importer.ambiguousEncoding || dialog.importer.interpretation > 0
@@ -569,9 +603,9 @@ DialogWindow {
                 spacing: 16
                 Layout.fillWidth: true
                 Icon {
-                    iconRole: dialog.importer.pending ? "commit" : "notice-warning"
+                    iconRole: dialog.rolledBack || dialog.importer.pending ? "commit" : "notice-warning"
                     size: 32
-                    color: dialog.importer.pending ? Theme.accent : Theme.warning
+                    color: dialog.rolledBack || dialog.importer.pending ? Theme.accent : Theme.warning
                     Layout.alignment: Qt.AlignTop
                 }
                 ColumnLayout {
@@ -579,8 +613,9 @@ DialogWindow {
                     Layout.fillWidth: true
                     Label {
                         objectName: "settingsImportResult"
-                        text: dialog.importer.pending ? qsTr("%n setting(s) imported.", "", dialog.imported)
-                                                      : qsTr("Nothing was imported.")
+                        text: dialog.rolledBack ? qsTr("Rolled back to the settings before the last import.")
+                            : dialog.importer.pending ? qsTr("%n setting(s) imported.", "", dialog.imported)
+                            : qsTr("Nothing was imported.")
                         font: dialog.fontAt(14, Font.DemiBold)
                         wrapMode: Text.WordWrap
                         Layout.fillWidth: true
@@ -634,6 +669,7 @@ DialogWindow {
                 const count = dialog.chosenCount
                 if (dialog.importer.importChosen()) {
                     dialog.imported = count
+                    dialog.rolledBack = false
                     dialog.step = 3
                 }
             }
