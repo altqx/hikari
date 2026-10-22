@@ -366,6 +366,7 @@ std::vector<ToolOption> AllTagsTool::options(const VisualHost &host) const
     list.tooltip = u"List of tags that can edit visual tool";
     list.choices = allTagsNames(tags(host));
     list.index = m_listSelection;
+    list.group = u"Tag"; // VT1: the bar shows the chosen entry as text
     out.push_back(std::move(list));
     ToolOption change;
     change.name = "changeOption";
@@ -375,6 +376,7 @@ std::vector<ToolOption> AllTagsTool::options(const VisualHost &host) const
     for (const auto option : allTagsChangeOptions())
         change.choices.emplace_back(option);
     change.index = m_listMode;
+    change.group = u"Change";
     out.push_back(std::move(change));
     ToolOption edit;
     edit.name = "edit";

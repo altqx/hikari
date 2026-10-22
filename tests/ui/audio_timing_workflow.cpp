@@ -138,12 +138,12 @@ int main(int argc, char **argv)
                 shown.append(nameOf(t));
         std::printf("focus window %s (shown: %s)\n", qPrintable(nameOf(w)), qPrintable(shown.join(QStringLiteral(", "))));
     });
-    // A message that is not silent opens the log window, which takes the
-    // activation from the main window.
-    QObject::connect(&application.log(), &hikari::ui::LogController::changed, &app, [&application] {
-        std::printf("log%s: %s\n", application.log().shown() ? " (shown)" : "",
-                    qPrintable(application.log().lastMessage()));
-    });
+    // A message that is not silent is a toast (NT1), which takes no keyboard.
+    QObject::connect(&application.log(), &hikari::ui::LogController::noticed, &app,
+                     [](int, hikari::ui::LogController::Severity, const QString &title, const QString &text,
+                        const QString &) { std::printf("notice: %s: %s\n", qPrintable(title), qPrintable(text)); });
+    QObject::connect(&application.log(), &hikari::ui::LogController::changed, &app,
+                     [&application] { std::printf("log: %s\n", qPrintable(application.log().lastMessage())); });
     KeyLog keys;
     app.installEventFilter(&keys);
     window->requestActivate();

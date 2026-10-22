@@ -36,6 +36,8 @@ public:
     void pointer(const Pointer &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolValue> values(const VisualHost &host) const override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                  ValueEdit edit = ValueEdit::Commit) override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
     bool cancelPending(VisualHost &host) override;
@@ -97,6 +99,8 @@ private:
     bool m_changeAllTags = false;
     bool m_isfirst = true;
     int m_grabbed = -1;
+    bool m_valueEdit = false;              // the open gesture is a scrubbed value's (VT1)
+    std::optional<float> m_typedAngle;     // the angle a typed or scrubbed value sets
 };
 
 class RotationXYTool : public VisualTool {
@@ -108,6 +112,8 @@ public:
     void pointer(const Pointer &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolValue> values(const VisualHost &host) const override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                  ValueEdit edit = ValueEdit::Commit) override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
 
@@ -163,6 +169,7 @@ private:
     int m_an = 2;
     int m_diffsX = 0, m_diffsY = 0; // wxPoint
     bool m_changeAllTags = false;
+    bool m_valueEdit = false; // the open gesture is a scrubbed value's (VT1)
 };
 
 // RotationXY::DrawVisual's projection (VisualRotationXY.cpp:37-181): a

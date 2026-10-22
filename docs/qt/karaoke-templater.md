@@ -25,7 +25,7 @@ Each change is a named departure in the [compatibility decisions](compatibility-
 | KE1-no-50-line-gate | "Apply karaoke template" is offered when any Line is a template Line. 2.1.7 looked at the first 50 dialogue lines only. As in 2.1.7, code Lines alone do not offer it: without a template they generate nothing. |
 | KE1-template-problems | Each problem with a template or code Line ends with `Template Line: N` or `Code Line: N`, N being the Line's number in the Grid. A named line template made of several Lines names the Line whose text the variable or expression is in. A run that had problems selects those Lines, the first active, and its progress window stays open so the log can be read. |
 | KE1-regenerate-selected | "Apply karaoke template to selected lines" replaces only the selected karaoke Lines' generated Lines, as one undo step. |
-| KE1-template-timing | A run reports its time and, per template or code Line, the time it took and the Lines it generated. The report goes to the status bar and the log window. |
+| KE1-template-timing | A run reports its time and, per template or code Line, the time it took and the Lines it generated. The report goes to the status bar and the Log. |
 | KE1-render-cost-overlay | "Show / hide render cost" in the Video menu and the video's context menu (GLOBAL_VIDEO_RENDER_COST) draws over the video what the shown frame's subtitles cost to draw. |
 
 The generated Lines are byte for byte 3.2.2's in every case. The macro returns a selection only when there were problems; otherwise the selection stays as it was.
@@ -60,7 +60,7 @@ The templater attaches a JSON report to its result (version 1):
 
 Times come from a steady clock in the helper, so they include waits for the host's text measurements. A selected-Lines run counts the selected Lines' work only.
 
-The app shows the summary in the status bar for 10 seconds. It writes the templates to the log window, slowest first, without popping the window up.
+The app shows the summary in the status bar for 10 seconds. It writes the templates to the Log, slowest first, without a toast.
 
 ### The render-cost overlay
 

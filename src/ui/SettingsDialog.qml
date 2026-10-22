@@ -38,11 +38,13 @@ Dialog {
     property var renderers: [] // W2: the CSRI renderers' names and "libass", VSFilterMod last
     property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
     property var outputDevices: [] // H2: System default, the connected devices, a missing choice
-    property var warnings: []
+    property ToastStack notices: null
     // LE5: the tag buttons as the Editor page holds them, {name, tag, type,
     // icon} each, written on OK or Apply where they differ.
     property var tagButtonList: []
     signal reloaded()
+    // VF1: the follow lists' texts, shared with the Video panel's menu.
+    readonly property VideoFollowChoices follow: VideoFollowChoices { settings: dialog.app.settings }
 
     // `page`: the page list's row to show (AV1's "Audio settings…" asks for
     // Audio); legacy opened on the first. AM1: `filter` is the Hotkeys page's
@@ -67,22 +69,17 @@ Dialog {
             hotkeys.filter(hotkeyFilter.currentIndex)
         }
         open()
-        warnings = r.warnings
-        showWarning()
+        // NT1 (#302): the legacy constructor's "does not exist" message
+        // boxes, one at a time; warning toasts now.
+        if (notices)
+            for (const warning of r.warnings)
+                notices.post("warning", qsTr("Settings"), warning)
     }
     // O5: Apply switched the interface language: the dictionary choice's
     // entry for an empty Dictionary folder in the new language.
     Connections {
         target: dialog.app
         function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
-    }
-    // The legacy constructor's "does not exist" message boxes, one at a time.
-    function showWarning() {
-        if (warnings.length === 0)
-            return
-        warningText.text = warnings[0]
-        warnings = warnings.slice(1)
-        warningDialog.open()
     }
     function put(setting, value) {
         const v = Object.assign({}, values)
@@ -151,22 +148,26 @@ Dialog {
     // O2: OnMapHkey for the selected row: the mapping window, then the
     // question when the keys are taken (ItemHotkey::OnMapHotkey).
     readonly property color warningColour: Theme.warning // WINDOW_WARNING_ELEMENTS
-    function mapHotkey() {
+    // PK1: the capture as a popover under the row (or under `from`).
+    function mapHotkey(from) {
         const target = hotkeys.mapTarget()
         if (target.name === undefined || hotkeys.mapProblem.length > 0)
             return
+        const row = hotkeyList.itemAtIndex(hotkeyList.selectedRow)
         settingsHotkeyMapping.capture(target.name, target.type, target.windows, (accel, window) => {
             const conflict = hotkeys.optionsConflict(accel, window)
             if (conflict.message === undefined)
                 hotkeys.optionsMap(accel, window, "cancel")
             else
                 settingsHotkeyMapping.ask(conflict, answer => hotkeys.optionsMap(accel, window, answer))
-        })
+        }, { anchor: row && row.visible ? row : from, clear: () => hotkeys.optionsDelete() })
     }
     function chooseCatalog(index) {
         const r = app.chooseSettingsCatalog(values, index)
         styles = r.styles
-        values = r.values
+        // Over the staged values: the ones without a control (Ask again's
+        // notices.hiddenQuestions) stay staged (Codex review).
+        values = Object.assign({}, values, r.values)
         reloaded()
     }
 
@@ -398,6 +399,33 @@ Dialog {
                             displayText: currentIndex >= 0 ? currentText
                                        : count > 0 ? qsTr("None chosen") : qsTr("No dictionaries found")
                             Accessible.name: qsTr("Spell checker language (\"Dictionary\" folder)")
+                        }
+                    }
+                    // PK1 (#301): notices as toasts or in the Log only, and
+                    // the questions hidden with "Don't ask again" back.
+                    GroupBox {
+                        objectName: "settingsNoticesGroup"
+                        title: qsTr("Notices")
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            SettingCheck { setting: "notices.toasts"; text: qsTr("Show notices as toasts (off: in the Log only)") }
+                            RowLayout {
+                                spacing: 8
+                                Button {
+                                    objectName: "settingsAskAgain"
+                                    text: qsTr("Ask again")
+                                    enabled: (dialog.values["notices.hiddenQuestions"] || []).length > 0
+                                    onClicked: dialog.put("notices.hiddenQuestions", [])
+                                }
+                                Label {
+                                    text: qsTr("Brings back the questions hidden with \"Don't ask again\".")
+                                    color: Theme.muted
+                                    wrapMode: Text.Wrap
+                                    Layout.fillWidth: true
+                                }
+                            }
                         }
                     }
                     SettingCheck { setting: "grid.loadSortedSubs"; text: qsTr("Open sorted subtitles") }
@@ -686,6 +714,31 @@ Dialog {
                     SettingCheck { setting: "video.pauseOnClick"; text: qsTr("Left mouse button pauses video") }
                     SettingCheck { setting: "video.openAtActiveLine"; text: qsTr("Open video with time of active line") }
                     SettingCheck { setting: "video.gpuConversion"; text: qsTr("Convert video colours on the GPU (requires reloading)") }
+                    // VF1 (#288): the Video panel's two follow lists, also in
+                    // its menu ("Seek on", "Then play"): OK and Apply store
+                    // them as the other pages', and the menu follows.
+                    GroupBox {
+                        title: dialog.follow.seekLabel
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "video.moveToActiveLine"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.follow.seekChoices
+                            Accessible.name: dialog.follow.seekLabel
+                        }
+                    }
+                    GroupBox {
+                        title: dialog.follow.playLabel
+                        Layout.fillWidth: true
+                        SettingChoice {
+                            setting: "video.playAfterSelection"
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            model: dialog.follow.playChoices
+                            Accessible.name: dialog.follow.playLabel
+                        }
+                    }
                     GroupBox {
                         title: qsTr("Preferred audio (separated by semicolons)")
                         Layout.fillWidth: true
@@ -947,7 +1000,7 @@ Dialog {
                         }
                         onDoubleClicked: {
                             dialog.hotkeys.select(index)
-                            dialog.mapHotkey()
+                            dialog.mapHotkey(hotkeyRow)
                         }
                         // AM1: a macro's row names its script and macro, and
                         // says in the warning colour why its keys do not run it.
@@ -1037,11 +1090,12 @@ Dialog {
                 RowLayout {
                     Layout.alignment: Qt.AlignHCenter
                     Button {
+                        id: hotkeyMapButton
                         objectName: "hotkeyMap"
                         text: qsTr("Map hotkey")
                         // The row's note says why (AM1: a name two loaded scripts share).
                         enabled: dialog.hotkeys.mapProblem.length === 0
-                        onClicked: dialog.mapHotkey()
+                        onClicked: dialog.mapHotkey(hotkeyMapButton)
                     }
                     Button {
                         objectName: "hotkeyRestore"
@@ -1136,21 +1190,10 @@ Dialog {
         picker: dialog.colourPicker
     }
 
-    HotkeyMapping {
+    HotkeyCapture {
         id: settingsHotkeyMapping
         objectName: "settingsHotkeyMapping"
         hotkeys: dialog.hotkeys
-    }
-
-    Dialog {
-        id: warningDialog
-        objectName: "settingsWarning"
-        title: qsTr("Warning")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        width: 420
-        Label { id: warningText; width: parent.width; wrapMode: Text.Wrap }
-        onClosed: dialog.showWarning()
+        settings: dialog.app ? dialog.app.settings : null
     }
 }

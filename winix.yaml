@@ -68,6 +68,11 @@ tasks:
     # N6 on the VM's HDA endpoint through WASAPI (the default device is DirectSound's); only silence is written.
     script: $env:HIKARI_TEST_AUDIO_DEVICE = 'Windows WASAPI'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^PortAudio(Output|Device)[.]" -V
     timeoutSeconds: 600
+  audio-slowed:
+    # KA2 (#277): slowed playback through the VM's HDA endpoint ("Speakers (High Definition Audio Device)", WASAPI): half speed
+    # keeps the pitch on Windows too. A quiet 440 Hz tone is written to the silent audiodev.
+    script: $env:HIKARI_TEST_AUDIO_DEVICE = 'High Definition Audio Device'; ./tools/winix/msvc.ps1 ctest --preset windows-x64-release -R "^BoxPlayer[.]Slowed" -V
+    timeoutSeconds: 600
   audio-hotplug:
     # N6 with real device loss: tools/winix/hotplug.sh starts this and unplugs/replugs a QEMU USB audio device through winix vm device
     # (silent audiodev; Windows names it "Speakers (Audio Device)", "(2- Audio Device)" after a replug) when the test asks. Only silence is written.

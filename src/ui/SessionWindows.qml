@@ -99,15 +99,28 @@ Item {
         fileMode: FileDialog.SaveFile
         onAccepted: {
             if (windows.app.saveSessionTo(selectedFile) === "readonly")
-                readOnlyNotice.open()
+                windows.warnReadOnly()
         }
     }
-    MessageDialog {
-        id: readOnlyNotice
-        title: qsTr("Warning")
-        text: qsTr("Chosen file is read only,\nplease save with different name or change file attribute.")
-        buttons: MessageDialog.Ok
-        onButtonClicked: saveDialog.open()
+    // NT1 (#302): Save as… or Cancel (legacy's OK opened the dialog again).
+    function warnReadOnly() {
+        readOnlyMessages.ask({
+            title: qsTr("Save session"),
+            text: qsTr("Chosen file is read only,\nplease save with different name or change file attribute."),
+            severity: "warning",
+            choices: [
+                { id: "saveAs", text: qsTr("Save as…"), role: "accept", isDefault: true },
+                { id: "cancel", text: qsTr("Cancel"), role: "reject" }
+            ]
+        }, id => {
+            if (id === "saveAs")
+                saveDialog.open()
+        })
+    }
+    MessageHost {
+        id: readOnlyMessages
+        objectName: "sessionMessages"
+        settings: windows.app.settings
     }
 
     Window {

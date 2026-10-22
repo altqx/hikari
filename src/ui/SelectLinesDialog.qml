@@ -17,6 +17,9 @@ Dialog {
     header: IconDialogHeader { objectName: "selectLinesDialogTitle"; iconRole: "select-lines"; text: dialog.title }
     modal: false
     property var recent: []
+    // NT1 (#302): the result ("%1 lines selected.") is an info toast and the
+    // window stays open (legacy's box offered Close, which closed it too).
+    property ToastStack notices: null
 
     function openDialog() {
         const s = app.openSelectLines()
@@ -45,10 +48,11 @@ Dialog {
     }
     function run(allTabs) {
         const text = findText.editText
-        result.text = app.selectLines(settings(), allTabs)
+        const message = app.selectLines(settings(), allTabs)
         recent = app.selectLinesSettings().recent
         findText.editText = text
-        result.open()
+        if (notices && message.length > 0)
+            notices.post("info", qsTr("Select lines"), message)
     }
     onClosed: app.saveSelectLinesSettings(settings())
 
@@ -79,10 +83,14 @@ Dialog {
                         Keys.onEnterPressed: dialog.run(false)
                     }
                     IconToolButton {
+                        id: selectChooseStylesButton
                         objectName: "selectChooseStyles"
                         iconRole: "styles"
                         text: qsTr("Choose styles")
-                        onClicked: stylesDialog.openWith(dialog.app.styleNames())
+                        onClicked: {
+                            stylesChooser.before = { text: findText.editText, field: fields.itemAt(1).checked, regex: regex.checked }
+                            stylesChooser.openFor(selectChooseStylesButton, dialog.app.styleNames(), [], { counts: dialog.app.styleLineCounts() })
+                        }
                     }
                 }
                 CheckBox { id: matchCase; objectName: "selectMatchCase"; text: qsTr("Match case") }
@@ -147,58 +155,25 @@ Dialog {
         }
     }
 
-    // The count after a run: "Close" also closes the Select dialog, "OK" (legacy's "Ok", its No button) keeps it.
-    Dialog {
-        id: result
-        objectName: "selectResult"
-        property alias text: resultLabel.text
-        title: qsTr("Select")
-        modal: true
-        anchors.centerIn: parent
-        Label { id: resultLabel; objectName: "selectResultText" }
-        footer: DialogButtonBox {
-            Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
-            Button { text: qsTr("OK"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
-        }
-        onAccepted: dialog.close()
-    }
-
-    // Legacy Stylelistbox "Choose styles": OK makes the checked styles a
-    // Styles regular expression. Approved F2-style-cancel (2026-10-04):
-    // Cancel changes nothing (legacy filled in "^$").
-    Dialog {
-        id: stylesDialog
-        objectName: "selectStylesDialog"
-        title: qsTr("Choose styles")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        property var names: []
-        property var checkedNames: []
-        function openWith(list) {
-            names = list
-            checkedNames = []
-            open()
-        }
-        function apply(chosen) {
-            findText.editText = dialog.app.selectStylesPattern(chosen)
-            fields.itemAt(1).checked = true
-            regex.checked = true
-        }
-        ColumnLayout {
-            Repeater {
-                model: stylesDialog.names
-                CheckBox {
-                    text: modelData
-                    onToggled: {
-                        const list = stylesDialog.checkedNames.filter(n => n !== modelData)
-                        if (checked)
-                            list.push(modelData)
-                        stylesDialog.checkedNames = list
-                    }
-                }
+    // Legacy Stylelistbox "Choose styles", now PK1's Choose styles popover:
+    // the ticks make the checked styles a Styles regular expression at once
+    // (no ticks: "^$", as legacy's empty choice); Esc puts the search as it
+    // was (approved F2-style-cancel, 2026-10-04: cancelling changes
+    // nothing; legacy filled in "^$").
+    ChooseStyles {
+        id: stylesChooser
+        objectName: "selectStylesChooser"
+        property var before: null
+        onChanged: (names, reverted) => {
+            if (reverted && before) {
+                findText.editText = before.text
+                fields.itemAt(1).checked = before.field
+                regex.checked = before.regex
+            } else {
+                findText.editText = dialog.app.selectStylesPattern(names)
+                fields.itemAt(1).checked = true
+                regex.checked = true
             }
         }
-        onAccepted: apply(names.filter(n => checkedNames.indexOf(n) >= 0))
     }
 }

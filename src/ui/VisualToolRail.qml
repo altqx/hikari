@@ -20,6 +20,8 @@ Frame {
     id: rail
     objectName: "visualToolRail"
     required property VisualToolsController tools
+    // VT2: (command) => its keys in the Video window, for the tooltips.
+    property var keyOf: symbol => ""
     // The buttons sit 1 inside the scrolled area (2 inside the frame, as
     // before the 2026-10-13 focus ring), so a focused button's 1-wide ring
     // is not clipped by it.
@@ -91,8 +93,10 @@ Frame {
                         iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][familyButton.index] ?? ""
                     }
                     ToolTip.visible: hovered || visualFocus
-                    ToolTip.text: modelData.available ? modelData.name
-                                                      : qsTr("%1 (not available yet)").arg(modelData.name)
+                    // VT2: the tool's key beside its name, as the shell's tooltips show theirs.
+                    readonly property string key: rail.keyOf(modelData.hotkey)
+                    ToolTip.text: !modelData.available ? qsTr("%1 (not available yet)").arg(modelData.name)
+                                                       : key.length ? modelData.name + " (" + key + ")" : modelData.name
                     Accessible.name: modelData.name
                     Accessible.checkable: true
                     Keys.onUpPressed: rail.focusFamily(index - 1)

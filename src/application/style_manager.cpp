@@ -5,6 +5,7 @@
 #include <map>
 #include <set>
 #include <sstream>
+#include <unordered_map>
 
 namespace hikari::application {
 
@@ -135,6 +136,87 @@ std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles
         }
     }
     return rows;
+}
+
+std::vector<std::size_t> transferStyles(StyleList &into, const StyleList &styles, const ClashChoices &choices)
+{
+    std::vector<std::size_t> rows;
+    // The first row of each name, and the free names' next suffix to try:
+    // a list of many clashes is one pass, not a scan per row and suffix.
+    std::unordered_map<u8, std::size_t> first;
+    for (std::size_t i = into.size(); i-- > 0;)
+        first[into[i].name] = i;
+    // The incoming names are reserved too: a clash renamed onto a later
+    // new Style's name would make that one a clash nobody answered.
+    StyleNames taken = namesOf(into);
+    for (const auto &style : styles)
+        taken.insert(style.name);
+    std::unordered_map<u8, int> next;
+    // Per name, the incoming rows so far: a choice belongs to its source
+    // row, so the same answers fit Documents that hold other names.
+    std::unordered_map<u8, int> seen;
+    const auto add = [&](core::StyleValues style) {
+        first.try_emplace(style.name, into.size());
+        taken.insert(style.name);
+        into.push_back(std::move(style));
+        rows.push_back(into.size() - 1);
+    };
+    for (const auto &style : styles) {
+        const int occurrence = seen[style.name]++;
+        const auto found = first.find(style.name);
+        if (found == first.end()) {
+            add(style);
+            continue;
+        }
+        const auto choice = choices.find({style.name, occurrence});
+        if (choice == choices.end() || choice->second.action == ClashAction::Skip)
+            continue;
+        if (choice->second.action == ClashAction::Replace) {
+            into[found->second] = style;
+            rows.push_back(found->second);
+            continue;
+        }
+        auto renamed = style;
+        const u8 &wanted = choice->second.newName;
+        if (taken.contains(wanted)) {
+            // The suffixes below `next` are taken already.
+            int &count = next.try_emplace(wanted, 2).first->second;
+            for (;; ++count) {
+                u8 candidate = wanted + u8" (" + fromString(std::to_string(count)) + u8")";
+                if (!taken.contains(candidate)) {
+                    renamed.name = std::move(candidate);
+                    break;
+                }
+            }
+        } else {
+            renamed.name = wanted;
+        }
+        add(std::move(renamed));
+    }
+    return rows;
+}
+
+StyleNames namesOf(const StyleList &styles)
+{
+    StyleNames out;
+    out.reserve(styles.size());
+    for (const auto &s : styles)
+        out.insert(s.name);
+    return out;
+}
+
+std::u8string freeStyleName(const StyleNames &names, std::u8string_view name)
+{
+    for (int count = 2;; ++count) {
+        u8 candidate = u8(name) + u8" (" + fromString(std::to_string(count)) + u8")";
+        if (!names.contains(candidate))
+            return candidate;
+    }
+}
+
+std::u8string freeStyleName(const StyleList &styles, std::u8string_view name)
+{
+    return freeStyleName(namesOf(styles), name);
 }
 
 std::vector<std::size_t> moveStyles(StyleList &styles, std::vector<std::size_t> rows, StyleMove move)

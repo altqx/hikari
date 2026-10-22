@@ -153,7 +153,14 @@ Item {
             search.showResults = false
         }
         function onFindResultsChanged() { search.refreshResults() }
-        function onFindQuestion(id, kind, text, title) { question.push(id, kind, text, title) }
+        // NT1 (#302): a message (an invalid search path) is PK1's message box.
+        function onFindQuestion(id, kind, text, title) {
+            if (kind === 0) {
+                search.skipActivation = true
+                messages.ask({ title: title, text: text, severity: "error" }, () => search.app.answerFindQuestion(id, 0))
+            } else
+                question.push(id, kind, text, title)
+        }
     }
 
     RowLayout {
@@ -346,12 +353,16 @@ Item {
                             RowLayout {
                                 Layout.fillWidth: true
                                 IconToolButton {
+                                    id: findChooseStylesButton
                                     objectName: "findChooseStyles"
                                     iconRole: "styles"
                                     text: qsTr("Choose styles")
                                     onClicked: {
                                         search.skipActivation = true
-                                        stylesDialog.openWith(search.app.styleNames())
+                                        stylesChooser.before = styles.text
+                                        stylesChooser.openFor(findChooseStylesButton, search.app.styleNames(),
+                                                              styles.text.split(",").map(n => n.trim()),
+                                                              { counts: search.app.styleLineCounts() })
                                     }
                                 }
                                 TextField {
@@ -547,43 +558,25 @@ Item {
         onAccepted: folderText.editText = search.app.localPath(selectedFolder)
     }
 
-    // Legacy Stylelistbox: OK lists the checked styles; Cancel empties the
-    // field (GetCheckedElements returns nothing, kept legacy quirk).
-    Dialog {
-        id: stylesDialog
-        objectName: "findStylesDialog"
-        title: qsTr("Choose styles")
-        modal: true
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        property var names: []
-        property var checkedNames: []
-        function openWith(list) {
-            names = list
-            checkedNames = []
-            open()
-        }
-        ColumnLayout {
-            Repeater {
-                model: stylesDialog.names
-                CheckBox {
-                    text: modelData
-                    onToggled: {
-                        const list = stylesDialog.checkedNames.filter(n => n !== modelData)
-                        if (checked)
-                            list.push(modelData)
-                        stylesDialog.checkedNames = list
-                    }
-                }
-            }
-        }
-        onAccepted: styles.text = names.filter(n => checkedNames.indexOf(n) >= 0).join(",")
-        onRejected: styles.text = ""
+    // Legacy Stylelistbox, now PK1's Choose styles popover: the ticks fill
+    // the field at once, joined by commas; Esc puts it back (approved
+    // PK1-choose-styles-live: legacy's Cancel emptied the field).
+    ChooseStyles {
+        id: stylesChooser
+        objectName: "findStylesChooser"
+        // Esc puts the field back as it was typed (Codex review).
+        property string before: ""
+        onChanged: (names, reverted) => styles.text = reverted ? before : names.join(",")
     }
 
-    // HikariMessageBox / HikariMessageDialog, one at a time: the search waits
-    // for a question's answer without blocking anything (no nested event loop).
+    MessageHost {
+        id: messages
+        objectName: "findMessages"
+        settings: search.app.settings
+    }
+    // HikariMessageDialog, one at a time: the search waits for a question's
+    // answer without blocking anything (no nested event loop). PU2 moves the
+    // questions onto PK1's message box.
     Dialog {
         id: question
         objectName: "findQuestion"

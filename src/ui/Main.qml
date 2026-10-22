@@ -39,6 +39,7 @@ ApplicationWindow {
     required property GridFilterController gridFilter
     required property var automationHotkeys
     required property var updates
+    required property var whatsNew // SH3: WhatsNew
     required property var styleManager
     required property var fontCollector // Y8: FontCollectorController
     required property var fontCatalogs // Y6: FontCatalogsController
@@ -260,6 +261,8 @@ ApplicationWindow {
         timingDock.close()
         automationDock.close()
         templateDock.close()
+        // NT1: the Log has no place until it first opens (addLog), so the
+        // arrangement keeps the sizes it had without it.
     }
     Connections {
         target: root.shell
@@ -311,6 +314,13 @@ ApplicationWindow {
             dockingArea.addDockWidget(originalDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(400, 0))
     }
 
+    // NT1 (#302): the Log's place when it opens in an arrangement that has
+    // none for it (every preset, an older saved layout): along the bottom,
+    // the whole width.
+    function addLog() {
+        dockingArea.addDockWidget(logDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
+    }
+
     // AM1: a macro started while the Automation panel is closed opens it
     // (its run status holds Cancel and the log), without taking the focus.
     readonly property bool automationRunning: root.automation.running
@@ -323,10 +333,10 @@ ApplicationWindow {
 
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel, templatePanel]
+                                          timingPanel, searchPanel, automationPanel, logPanel, templatePanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, templateDock]
+                                     searchDock, automationDock, logDock, templateDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -338,8 +348,9 @@ ApplicationWindow {
         fallbackTarget: videoPanel
         fallbackAccepts: (key, modifiers) => root.hotkeys.actionFor(3, key, modifiers) === "VIDEO_PLAY_PAUSE"
         // AUDIO_AUTO_FOCUS folded in: legacy's audio took the focus under
-        // the pointer; now no panel does, and the hotkeys follow it.
-        followsPointer: () => root.app.settings.value("audio.autoFocus")
+        // the pointer; now no panel does, and the hotkeys follow it. KA2:
+        // not while tap mode is on, so its taps stay the audio panel's.
+        followsPointer: () => root.app.settings.value("audio.autoFocus") && !root.audio.tapOn
         Component.onCompleted: {
             for (const panel of root.panels)
                 keyRouter.addPanel(panel, panel.keyTarget)
@@ -491,6 +502,8 @@ ApplicationWindow {
             return
         if (dock === originalDock)
             root.openOriginal()
+        else if (dock === logDock && !Docking.hasPlace("Log"))
+            root.addLog()
         else
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
@@ -559,6 +572,21 @@ ApplicationWindow {
                       iconRole: "import", run: () => legacyHotkeysDialog.open() }]
         return []
     }
+    // VF1 (#288): a panel's own submenus, after its own items: an item's
+    // `items` are radio choices, its `iconRole` the submenu's. The Video
+    // panel's "Seek on" and "Then play" (legacy VideoToolbar's two lists,
+    // which left the panel).
+    readonly property VideoFollowChoices videoFollow: VideoFollowChoices { settings: root.app.settings }
+    function panelOwnMenus(dock) {
+        if (dock === videoDock)
+            return [{ name: "videoSeekOn", text: root.videoFollow.seekName, iconRole: "video-to-start-time",
+                      items: root.videoFollow.seekChoices.map((text, i) => ({
+                          text: text, checked: () => root.videoFollow.seek === i, run: () => root.videoFollow.setSeek(i) })) },
+                    { name: "videoThenPlay", text: root.videoFollow.playName, iconRole: "play-line",
+                      items: root.videoFollow.playChoices.map((text, i) => ({
+                          text: text, checked: () => root.videoFollow.play === i, run: () => root.videoFollow.setPlay(i) })) }]
+        return []
+    }
     function closePanel(dock) {
         if (dock === referenceDock)
             root.app.closeReference()
@@ -578,6 +606,7 @@ ApplicationWindow {
         objectName: "panelOptionsMenu"
         property var dock: null
         readonly property var ownItems: dock ? root.panelOwnItems(dock) : []
+        readonly property var ownMenus: dock ? root.panelOwnMenus(dock) : []
         readonly property bool closable: dock !== null
                                          && (dock.options & KDDW.KDDockWidgets.DockWidgetOption_NotClosable) === 0
         readonly property bool dockable: dock !== null
@@ -619,9 +648,40 @@ ApplicationWindow {
             onObjectAdded: (index, object) => panelOptionsMenu.insertItem(index, object)
             onObjectRemoved: (index, object) => panelOptionsMenu.removeItem(object)
         }
+        Instantiator {
+            model: panelOptionsMenu.ownMenus
+            delegate: ShellMenu {
+                id: ownMenu
+                required property var modelData
+                objectName: "panelOptions_" + modelData.name
+                iconRole: modelData.iconRole
+                title: modelData.text
+                Instantiator {
+                    model: ownMenu.modelData.items
+                    delegate: ShellMenuItem {
+                        required property var modelData
+                        required property int index
+                        objectName: ownMenu.objectName + "_" + index
+                        text: modelData.text
+                        checkable: true
+                        checked: modelData.checked()
+                        keepsMenuOpen: false // a choice among items closes the menu (ITEM_RADIO)
+                        onTriggered: {
+                            modelData.run()
+                            checked = Qt.binding(() => modelData.checked())
+                        }
+                    }
+                    onObjectAdded: (index, object) => ownMenu.insertItem(index, object)
+                    onObjectRemoved: (index, object) => ownMenu.removeItem(object)
+                }
+            }
+            // After the own items, whichever Instantiator fills first.
+            onObjectAdded: (index, object) => panelOptionsMenu.insertMenu(panelOptionsMenu.ownItems.length + index, object)
+            onObjectRemoved: (index, object) => panelOptionsMenu.removeMenu(object)
+        }
         MenuSeparator {
             objectName: "panelOptionsSeparator"
-            visible: panelOptionsMenu.ownItems.length > 0
+            visible: panelOptionsMenu.ownItems.length + panelOptionsMenu.ownMenus.length > 0
             height: visible ? implicitHeight : 0
         }
         ShellMenuItem {
@@ -1129,12 +1189,18 @@ ApplicationWindow {
                         onTriggered: if (!root.hotkeyGesture("GLOBAL_DELETE_TEMPORARY_FILES")) temporaryFilesWindow.showFiles()
                     }
                 }
+                // NT1: the Log panel, shown or hidden (legacy's place in File).
                 ShellMenuItem {
                     iconRole: "log"
                     objectName: "logMenuItem"
                     action: Action {
-                        text: qsTr("Show / Hide log window")
-                        onTriggered: root.log.toggleWindow()
+                        text: qsTr("Log")
+                        onTriggered: {
+                            if (logDock.isOpen)
+                                logDock.close()
+                            else
+                                root.showPanel(logDock)
+                        }
                     }
                 }
                 // P6: legacy "Last session" submenu.
@@ -1489,7 +1555,7 @@ ApplicationWindow {
                 onChosen: path => {
                     const problem = root.app.openKeyframesFile(path)
                     if (problem.length > 0)
-                        root.log.log(problem)
+                        root.notices.post("error", qsTr("Open keyframes"), problem)
                 }
             }
             ShellMenuItem {
@@ -1904,6 +1970,16 @@ ApplicationWindow {
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
             }
+            // KA7: the Karaoke check window, after Check spelling.
+            ShellMenuItem {
+                help: qsTr("Checks the karaoke syllables of every line")
+                id: checkKaraokeItem
+                iconRole: "karaoke"
+                objectName: "checkKaraokeMenuItem"
+                text: qsTr("Check karaoke")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
+            }
             MenuSeparator {}
             // TM1 (#232): the editing target's Translation mode, which the
             // Line editor's "Translator mode" check box switched in legacy
@@ -1991,6 +2067,17 @@ ApplicationWindow {
                     text: qsTr("Check for &updates")
                     enabled: !root.updates.checking
                     onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_FOR_UPDATES")) root.updates.checkNow()
+                }
+            }
+            // SH3 (#223): the release notes since the version used before; no hotkey.
+            ShellMenuItem {
+                help: qsTr("Shows the release notes of the versions since the one you used before")
+                iconRole: "whats-new"
+                objectName: "whatsNewMenuItem"
+                action: Action {
+                    id: whatsNewAction
+                    text: qsTr("What's &new")
+                    onTriggered: whatsNewDialog.open()
                 }
             }
             ShellMenuItem {
@@ -2185,10 +2272,9 @@ ApplicationWindow {
                 visible: !!field.misspell.word
                 height: visible ? implicitHeight : 0
                 onTriggered: {
-                    if (!root.app.addEditorWord(field.misspell.word)) {
-                        spellingNotice.text = qsTranslate("HikariSub.Editor", "Error. Word \"%1\" was not added.").arg(field.misspell.word)
-                        spellingNotice.open()
-                    }
+                    if (!root.app.addEditorWord(field.misspell.word))
+                        root.notices.post("error", qsTranslate("HikariSub.Editor", "Add word to dictionary"),
+                                          qsTranslate("HikariSub.Editor", "Error. Word \"%1\" was not added.").arg(field.misspell.word))
                 }
             }
             ShellMenuItem {
@@ -2212,7 +2298,7 @@ ApplicationWindow {
                     // click selects the word: the caret stays where clicked.
                     field.deselect()
                     field.cursorPosition = position
-                    fixSuggestions.openFor(field.role, position, found.suggestions)
+                    fixSuggestions.openFor(field, field.role, position, found.suggestions)
                 }
             }
         }
@@ -2474,10 +2560,19 @@ ApplicationWindow {
         onOpenRequested: openAction.trigger()
         onOpenVideoRequested: openVideoAction.trigger()
         onRestoreRequested: sessionWindows.load()
+        // SH3: What's new, while there are notes to show.
+        whatsNew: root.whatsNew.releases.length > 0 ? whatsNewCard : null
         // P9: Ctrl+click shows the file in its folder, as in File > Recent.
         onRecentChosen: path => { if (!root.app.revealRecent(path)) root.openSubtitles(path) }
         onVisibleChanged: visible ? Qt.callLater(takeFocus) : Qt.callLater(root.focusAfterHome)
         Component.onCompleted: if (visible) Qt.callLater(takeFocus)
+    }
+    Component {
+        id: whatsNewCard
+        WhatsNewCard {
+            whatsNew: root.whatsNew
+            smallFont: homePage.smallFont
+        }
     }
     // The first Document opened from Home: the focus, left nowhere when the
     // page went, goes to the Grid (else the first shown panel), unless the
@@ -2511,10 +2606,33 @@ ApplicationWindow {
                 anchors.fill: parent
                 objectName: "videoPanel"
                 dockName: "Video"
-                // The controls below the video at their narrowest (the
-                // follow choices wrap), above two rail buttons' height.
-                minimumBodySize: Qt.size(Math.max(videoTransport.implicitWidth, videoFollow.minimumWidth),
-                                         videoControls.implicitHeight + 72)
+                // The controls below the video at their narrowest, above
+                // two rail buttons' height. The
+                // inspector bar counts with its tool's own lines; what it
+                // holds for a taller tool comes out of the height above that
+                // (VT1), so the minimum does not grow with it.
+                minimumBodySize: Qt.size(videoTransport.implicitWidth, controlsOwnHeight + 72)
+                // Measured, not bound (the held height follows the room this
+                // leaves), whenever the column's height or the held height
+                // changes: a switch to a tool with more lines can leave the
+                // column as tall, holding less (Codex on #293). The bar's
+                // layout and the column are laid out first, so the two
+                // numbers are of one layout.
+                property real controlsOwnHeight: 0
+                function measureControls() {
+                    videoToolBar.contentItem.ensurePolished()
+                    videoControls.ensurePolished()
+                    controlsOwnHeight = videoControls.implicitHeight - videoToolBar.held
+                }
+                Connections {
+                    target: videoControls
+                    function onImplicitHeightChanged() { Qt.callLater(videoPanel.measureControls) }
+                }
+                Connections {
+                    target: videoToolBar
+                    function onHeldChanged() { Qt.callLater(videoPanel.measureControls) }
+                }
+                Component.onCompleted: measureControls()
                 title: qsTranslate("HikariSub.Video", "Video")
                 // Frame stepping is the Global bindings GLOBAL_PREVIOUS_FRAME /
                 // GLOBAL_NEXT_FRAME (Left / Right by default), from the shell's
@@ -2523,8 +2641,11 @@ ApplicationWindow {
                 // VIDEO_PLAY_PAUSE Space, VIDEO_5_SECONDS_* L / ;,
                 // VIDEO_MINUTE_* Up / Down), before the application's shortcuts.
                 // T1: Esc cancels an open visual gesture first; keys no binding
-                // takes go to the visual tool (a nudge), as VideoBox::OnKeyPress
-                // hands them to the Visuals.
+                // takes go to the visual tool, as VideoBox::OnKeyPress hands
+                // them to the Visuals. VT2-arrow-nudge: a tool's nudge (the
+                // arrows, Shift a tenth) comes before the bindings, so they
+                // reach it over the video, focused or hovered (KB1's router
+                // asks this override).
                 // FS1: VIDEO_FULLSCREEN_BAR is the fullscreen window's; here
                 // its key (Tab) keeps moving the keyboard focus.
                 function panelAction(event) {
@@ -2532,9 +2653,15 @@ ApplicationWindow {
                     return action === "VIDEO_FULLSCREEN_BAR" ? "" : action
                 }
                 Keys.onShortcutOverride: event => event.accepted = (event.key === Qt.Key_Escape && root.visualTools.escapable)
+                                                  || root.visualTools.takesKey(event.key, event.modifiers)
                                                   || videoPanel.panelAction(event) !== ""
                 Keys.onPressed: event => {
                     if (event.key === Qt.Key_Escape && root.visualTools.escape()) {
+                        event.accepted = true
+                        return
+                    }
+                    if (root.visualTools.takesKey(event.key, event.modifiers)) {
+                        root.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)
                         event.accepted = true
                         return
                     }
@@ -2576,6 +2703,7 @@ ApplicationWindow {
                 VisualToolRail {
                     id: visualRail
                     tools: root.visualTools
+                    keyOf: symbol => root.boundKeys(symbol, 3)
                     anchors { left: parent.left; top: parent.top; bottom: videoControls.top }
                 }
                 // Where the picture sits in the panel.
@@ -2673,8 +2801,11 @@ ApplicationWindow {
                         acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
                         onWheel: event => root.videoView.panelWheel(Math.round(event.angleDelta.y / 120), event.modifiers)
                     }
-                VisualToolValues { // T1-T4: the family's options, values and batch picker
+                VisualToolBar { // VT1: the tool, its options and values, the batch picker
+                    id: videoToolBar
                     Layout.fillWidth: true
+                    dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
+                    room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
                     // push Next frame out of the panel.
@@ -2724,9 +2855,7 @@ ApplicationWindow {
                         ToolTip.visible: timesHover.hovered && text.length > 0
                         ToolTip.text: Accessible.description
                     }
-                    VisualToolReadout { tools: root.visualTools } // T1: the tool's read-only values
                 }
-                VideoFollowChoices { id: videoFollow; Layout.fillWidth: true; settings: root.app.settings } // V6
                 RowLayout {
                     id: videoTransport
                     Layout.fillWidth: true
@@ -2843,6 +2972,15 @@ ApplicationWindow {
                 // across the bottom (ButtonSizer). AU1 (#267): the sliders
                 // beside them (TopSizer) moved into the zoom and speaker
                 // popovers, so the display takes the full width.
+                // KA2 (#277, KA2-tap-to-time): the tap bar above the display
+                // while tap mode is on.
+                AudioTapBar {
+                    id: audioTapBar
+                    audio: root.audio
+                    visible: root.audio.loaded && root.audio.tapOn
+                    height: visible ? implicitHeight : 0
+                    anchors { left: parent.left; right: parent.right; top: parent.top }
+                }
                 // A1: the waveform with its time ruler and marks (legacy AudioDisplay).
                 AudioDisplay {
                     id: audioDisplay
@@ -2852,10 +2990,80 @@ ApplicationWindow {
                     focus: true
                     clip: true
                     anchors { left: parent.left; right: audioSliderColumn.visible ? audioSliderColumn.left : parent.right
-                              top: parent.top; bottom: audioScroll.top }
+                              top: audioTapBar.bottom; bottom: audioScroll.top }
                     Accessible.role: Accessible.Graphic
                     Accessible.name: qsTranslate("HikariSub.Audio", "Audio display")
                     Accessible.description: root.audio.status
+                }
+                // KA2-tap-to-time: the tapped syllables in a lane near the top
+                // of the waveform, under the karaoke letters' row, the held
+                // one growing at the playhead; a release before the next
+                // press leaves a hatched gap.
+                Item {
+                    id: audioTapLane
+                    objectName: "audioTapLane"
+                    readonly property var spans: root.audio.tapSpans
+                    visible: audioTapBar.visible
+                    clip: true
+                    x: audioDisplay.x
+                    y: audioDisplay.y + 22
+                    width: audioDisplay.width
+                    height: 22
+                    Repeater {
+                        model: audioTapLane.spans
+                        delegate: Item {
+                            id: span
+                            required property var modelData
+                            required property int index
+                            readonly property real gapStart: index > 0 ? audioTapLane.spans[index - 1].x2 : x
+                            objectName: "audioTapSpan" + index
+                            x: modelData.x1
+                            width: Math.max(1, modelData.x2 - modelData.x1)
+                            height: parent.height
+                            // the gap before this syllable, hatched
+                            Canvas {
+                                objectName: "audioTapGap"
+                                readonly property color ink: Theme.highContrast ? Theme.text : Theme.muted
+                                visible: span.x - span.gapStart > 2
+                                x: span.gapStart - span.x
+                                width: Math.max(0, span.x - span.gapStart)
+                                height: parent.height
+                                onInkChanged: requestPaint()
+                                onWidthChanged: requestPaint()
+                                onPaint: {
+                                    const ctx = getContext("2d")
+                                    ctx.reset()
+                                    ctx.strokeStyle = ink
+                                    ctx.lineWidth = 1.5
+                                    ctx.beginPath()
+                                    for (let d = -height; d < width; d += 6) {
+                                        ctx.moveTo(d, height)
+                                        ctx.lineTo(d + height, 0)
+                                    }
+                                    ctx.stroke()
+                                }
+                            }
+                            Rectangle {
+                                anchors.fill: parent
+                                // high contrast: outlined on the field, the held one filled
+                                color: Theme.highContrast && !span.modelData.held ? Theme.field
+                                     : Qt.rgba(Theme.accent.r, Theme.accent.g, Theme.accent.b, span.modelData.held || Theme.highContrast ? 0.9 : 0.5)
+                                border.width: Theme.highContrast ? 1 : 0
+                                border.color: Theme.accent
+                            }
+                            Label {
+                                objectName: "audioTapSpanText"
+                                anchors.centerIn: parent
+                                width: Math.min(implicitWidth, parent.width - 2)
+                                horizontalAlignment: Text.AlignHCenter
+                                elide: Text.ElideRight
+                                text: span.modelData.text
+                                textFormat: Text.PlainText // a Line's text, never markup (no <img> fetched)
+                                font.bold: true
+                                color: span.modelData.held ? Theme.onAccent : Theme.text
+                            }
+                        }
+                    }
                 }
                 ScrollBar {
                     id: audioScroll
@@ -3157,9 +3365,16 @@ ApplicationWindow {
                     // legacy MainSizer: a 2-pixel spacer under the buttons
                     anchors { left: parent.left; right: parent.right; bottom: parent.bottom; bottomMargin: visible ? 2 : 0 }
                     // From the fixed sizes, not the right-hand items' own,
-                    // which change as the row folds.
-                    readonly property bool folded: width < transportWidth(shownExtras) + audioSwitches.fullWidth
+                    // which change as the row folds. KA2 (#277): Karaoke
+                    // mode's row, with Tap, folds the toggles into ⋯ first
+                    // (the default 640 px panel does), the switches when
+                    // even that does not fit; Line mode folds them together.
+                    readonly property bool folded: width < transportWidth(shownExtras)
+                                                           + (root.audio.karaoke ? audioSwitches.modesWidth + 26 + spacing
+                                                                                 : audioSwitches.fullWidth)
                                                            + audioTail.unfoldedWidth + 3 * spacing
+                    readonly property bool togglesFolded: folded
+                        || width < transportWidth(shownExtras) + audioSwitches.fullWidth + audioTail.unfoldedWidth + 3 * spacing
                     // the row with the switches in ⋯ and no extra shown: the
                     // panel's least width
                     readonly property real foldedWidth: transportWidth([]) + audioTail.unfoldedWidth + 26 + 3 * spacing
@@ -3300,12 +3515,15 @@ ApplicationWindow {
                         property string tip
                         property string menuTip
                         property Menu menu
+                        // KA2: a face that shows a mode on (Tap)
+                        property bool checked: false
                         default property alias marks: splitFace.data
                         signal run()
                         AudioButton {
                             id: splitFace
                             objectName: split.name
                             text: split.tip
+                            checked: split.checked
                             iconRole: split.iconRole
                             symbol: split.symbol
                             altSymbol: split.altSymbol
@@ -3355,6 +3573,43 @@ ApplicationWindow {
                         Layout.leftMargin: 2
                         Layout.rightMargin: 2
                         color: Theme.line
+                    }
+                    // KA2: a choice of several in a menu, with a radio mark
+                    // (its circle, filled when chosen); it closes the menu.
+                    component AudioRadioItem: ShellMenuItem {
+                        id: radioItem
+                        checkable: true
+                        keepsMenuOpen: false
+                        Accessible.role: Accessible.RadioButton
+                        indicator: Rectangle {
+                            readonly property color ink: radioItem.enabled && (radioItem.down || radioItem.highlighted)
+                                                         ? radioItem.palette.highlightedText : radioItem.palette.text
+                            x: radioItem.mirrored ? radioItem.width - width - radioItem.rightPadding : radioItem.leftPadding
+                            y: radioItem.topPadding + (radioItem.availableHeight - height) / 2
+                            implicitWidth: 14
+                            implicitHeight: 14
+                            radius: 7
+                            color: "transparent"
+                            border.color: ink
+                            Rectangle {
+                                anchors.centerIn: parent
+                                width: 6
+                                height: 6
+                                radius: 3
+                                color: parent.ink
+                                visible: radioItem.checked
+                            }
+                        }
+                    }
+                    // KA2: a muted heading over a menu's group of items.
+                    component AudioMenuHeading: Label {
+                        leftPadding: 12
+                        rightPadding: 12
+                        topPadding: 4
+                        bottomPadding: 2
+                        color: Theme.muted
+                        font.bold: true
+                        font.pixelSize: Math.round(Qt.application.font.pixelSize * 0.85)
                     }
                     // A play of Play around's menu, its hotkey beside it; a
                     // Shift+click maps the hotkey (AU1: as the old button did).
@@ -3616,9 +3871,10 @@ ApplicationWindow {
                         objectName: "audioSwitches"
                         visible: !audioButtons.folded
                         spacing: 2
-                        // two switches, a separator and three toggles, and
-                        // Auto split in Karaoke mode
-                        readonly property real fullWidth: 2 * 54 + 5 + 3 * 26 + (root.audio.karaoke ? 26 + 7 * spacing : 6 * spacing)
+                        // two switches, and Auto split and Tap in Karaoke
+                        // mode; a separator and three toggles
+                        readonly property real modesWidth: 2 * 54 + 2 * spacing + (root.audio.karaoke ? 26 + 39 + 2 * spacing : 0)
+                        readonly property real fullWidth: modesWidth + 5 + 3 * 26 + 4 * spacing
                         // A5: legacy AudioBox's KaraSwitch, as a switch
                         AudioSwitch {
                             AudioSegment {
@@ -3653,6 +3909,100 @@ ApplicationWindow {
                                 checked = Qt.binding(() => root.audio.karaokeSplitMode)
                             }
                         }
+                        // KA2-tap-to-time: Tap, in Karaoke mode only. The face
+                        // turns tap mode on and off (AUDIO_TAP), the arrow
+                        // holds how a key makes a syllable, the speed and
+                        // the latency.
+                        AudioSplitButton {
+                            name: "audioTap"
+                            visible: root.audio.karaoke
+                            iconRole: "karaoke-tap"
+                            symbol: "AUDIO_TAP"
+                            tip: qsTranslate("HikariSub.Audio", "Tap to time")
+                            menuTip: qsTranslate("HikariSub.Audio", "Tap options")
+                            menu: audioTapMenu
+                            checked: root.audio.tapOn
+                            onRun: root.audio.toggleTap()
+                        }
+                        ShellMenu {
+                            id: audioTapMenu
+                            objectName: "audioTapMenu"
+                            ShellMenuItem {
+                                objectName: "audioTapStart"
+                                iconRole: "karaoke-tap"
+                                text: (root.audio.tapOn ? qsTranslate("HikariSub.Audio", "Stop tapping")
+                                                        : qsTranslate("HikariSub.Audio", "Start tapping"))
+                                      + "\t" + root.boundKeys("AUDIO_TAP", 4)
+                                onTriggered: if (!root.hotkeyGesture("AUDIO_TAP", 4, true, false)) root.audio.toggleTap()
+                            }
+                            MenuSeparator {}
+                            AudioMenuHeading {
+                                text: qsTranslate("HikariSub.Audio", "Each syllable")
+                            }
+                            AudioRadioItem {
+                                objectName: "audioTapHold"
+                                text: qsTranslate("HikariSub.Audio", "Hold the key: releasing it leaves a gap")
+                                checked: root.audio.tapHold
+                                onTriggered: {
+                                    root.audio.setTapHold(true)
+                                    checked = Qt.binding(() => root.audio.tapHold)
+                                }
+                            }
+                            AudioRadioItem {
+                                objectName: "audioTapPress"
+                                text: qsTranslate("HikariSub.Audio", "Press the key: no gaps")
+                                checked: !root.audio.tapHold
+                                onTriggered: {
+                                    root.audio.setTapHold(false)
+                                    checked = Qt.binding(() => !root.audio.tapHold)
+                                }
+                            }
+                            MenuSeparator {}
+                            // KA5 (#280, KA5-onset-snap): dragged and tapped
+                            // boundaries snap to vocal onsets
+                            ShellMenuItem {
+                                objectName: "audioOnsetSnap"
+                                text: qsTranslate("HikariSub.Audio", "Snap to vocal onsets")
+                                checkable: true
+                                checked: root.audio.onsetSnap
+                                onToggled: {
+                                    root.audio.setOnsetSnap(checked)
+                                    checked = Qt.binding(() => root.audio.onsetSnap)
+                                }
+                            }
+                            MenuSeparator {}
+                            ShellMenu {
+                                id: audioTapSpeedMenu
+                                objectName: "audioTapSpeedMenu"
+                                iconRole: "playback-speed"
+                                //: The Tap menu's Speed submenu; %1 is the speed in percent
+                                title: qsTranslate("HikariSub.Audio", "Speed") + "\t"
+                                       + qsTranslate("HikariSub.Audio", "%1%").arg(root.audio.speedPercent)
+                                Instantiator {
+                                    model: [25, 33, 50, 75, 100]
+                                    delegate: AudioRadioItem {
+                                        required property int modelData
+                                        objectName: "audioTapSpeed" + modelData
+                                        text: qsTranslate("HikariSub.Audio", "%1%").arg(modelData)
+                                        checked: root.audio.speedPercent === modelData
+                                        onTriggered: {
+                                            root.audio.setSpeedPercent(modelData)
+                                            checked = Qt.binding(() => root.audio.speedPercent === modelData)
+                                        }
+                                    }
+                                    onObjectAdded: (index, object) => audioTapSpeedMenu.insertItem(index, object)
+                                    onObjectRemoved: (index, object) => audioTapSpeedMenu.removeItem(object)
+                                }
+                            }
+                            ShellMenuItem {
+                                objectName: "audioTapCalibrate"
+                                iconRole: "tap-calibrate"
+                                //: The Tap menu's item; %1 is the tap latency in milliseconds
+                                text: qsTranslate("HikariSub.Audio", "Calibrate latency…") + "\t"
+                                      + qsTranslate("HikariSub.Audio", "%1 ms").arg(root.audio.tapLatency)
+                                onTriggered: tapCalibrationWindow.openWindow()
+                            }
+                        }
                         // A2: SpectrumMode, as a switch
                         AudioSwitch {
                             AudioSegment {
@@ -3673,13 +4023,16 @@ ApplicationWindow {
                                 onRun: { root.audio.setSpectrumOn(true); audioDisplay.forceActiveFocus() }
                             }
                         }
-                        AudioSeparator {}
+                        AudioSeparator {
+                            visible: !audioButtons.togglesFolded
+                        }
                         // A2: legacy AudioBox's AutoScroll and SpectrumNonLinear
                         // switches (each focuses the display, as legacy's
                         // handlers do); AV2 (#239): the video and audio
                         // cursors follow each other while playing.
                         AudioButton {
                             objectName: "audioAutoScroll"
+                            visible: !audioButtons.togglesFolded
                             iconRole: "auto-scroll"
                             text: qsTranslate("HikariSub.Audio", "Auto-scroll")
                             checkable: true
@@ -3689,6 +4042,7 @@ ApplicationWindow {
                         }
                         AudioButton {
                             objectName: "audioSyncVideo"
+                            visible: !audioButtons.togglesFolded
                             iconRole: "audio-video-sync"
                             text: qsTranslate("HikariSub.Audio", "Sync with video")
                             checkable: true
@@ -3698,6 +4052,7 @@ ApplicationWindow {
                         }
                         AudioButton {
                             objectName: "audioSpectrumNonLinear"
+                            visible: !audioButtons.togglesFolded
                             iconRole: "spectrum-nonlinear"
                             text: qsTranslate("HikariSub.Audio", "Speech")
                             checkable: true
@@ -3712,11 +4067,12 @@ ApplicationWindow {
                         // the separator, zoom, the speaker and Customise
                         readonly property real unfoldedWidth: 5 + audioZoomButton.implicitWidth + 2 * 26 + 3 * spacing
                         AudioSeparator {}
-                        // AU1: the switches and toggles of a narrow panel.
+                        // AU1: the switches and toggles of a narrow panel;
+                        // KA2: in Karaoke mode the toggles alone first.
                         AudioButton {
                             id: audioMoreButton
                             objectName: "audioMore"
-                            visible: audioButtons.folded
+                            visible: audioButtons.togglesFolded
                             iconRole: "panel-menu"
                             text: qsTranslate("HikariSub.Audio", "More audio options")
                             tip: text
@@ -3725,6 +4081,16 @@ ApplicationWindow {
                             ShellMenu {
                                 id: audioMoreMenu
                                 objectName: "audioMoreMenu"
+                                // the switches' check items, while they are folded too
+                                component FoldedItem: ShellMenuItem {
+                                    checkable: true
+                                    visible: audioButtons.folded
+                                    height: visible ? implicitHeight : 0
+                                }
+                                component FoldedSeparator: MenuSeparator {
+                                    visible: audioButtons.folded
+                                    height: visible ? implicitHeight : 0
+                                }
                                 // AU2: the extras the row has no room for,
                                 // first, in its order
                                 component FoldedPlay: ShellMenuItem {
@@ -3781,7 +4147,7 @@ ApplicationWindow {
                                     visible: audioButtons.kept.length < audioButtons.shownExtras.length
                                     height: visible ? implicitHeight : 0
                                 }
-                                ShellMenuItem {
+                                FoldedItem {
                                     iconRole: "audio-line-mode"
                                     text: qsTranslate("HikariSub.Audio", "Line timing")
                                     checkable: true
@@ -3792,7 +4158,7 @@ ApplicationWindow {
                                         if (root.audio.karaoke) root.audio.toggleKaraoke()
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedItem {
                                     objectName: "audioMoreKaraoke"
                                     iconRole: "karaoke"
                                     text: qsTranslate("HikariSub.Audio", "Karaoke")
@@ -3804,10 +4170,9 @@ ApplicationWindow {
                                         if (!root.audio.karaoke) root.audio.toggleKaraoke()
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedItem {
                                     objectName: "audioMoreKaraokeSplit"
-                                    visible: root.audio.karaoke
-                                    height: visible ? implicitHeight : 0
+                                    visible: audioButtons.folded && root.audio.karaoke
                                     iconRole: "karaoke-split"
                                     text: qsTranslate("HikariSub.Audio", "Auto split")
                                     checkable: true
@@ -3817,8 +4182,31 @@ ApplicationWindow {
                                         root.audio.toggleKaraokeSplitMode()
                                     }
                                 }
-                                MenuSeparator {}
-                                ShellMenuItem {
+                                FoldedItem {
+                                    objectName: "audioMoreTap"
+                                    visible: audioButtons.folded && root.audio.karaoke
+                                    iconRole: "karaoke-tap"
+                                    text: qsTranslate("HikariSub.Audio", "Tap to time") + "\t" + root.boundKeys("AUDIO_TAP", 4)
+                                    checkable: true
+                                    keepsMenuOpen: false
+                                    checked: root.audio.tapOn
+                                    onTriggered: {
+                                        checked = Qt.binding(() => root.audio.tapOn)
+                                        root.audio.toggleTap()
+                                    }
+                                }
+                                // the Tap button's menu (Hold or Press, the
+                                // speed, the latency), at ⋯ while it is folded
+                                FoldedItem {
+                                    objectName: "audioMoreTapOptions"
+                                    visible: audioButtons.folded && root.audio.karaoke
+                                    checkable: false
+                                    keepsMenuOpen: false
+                                    text: qsTranslate("HikariSub.Audio", "Tap options")
+                                    onTriggered: Qt.callLater(() => audioTapMenu.popup(audioMoreButton, 0, audioMoreButton.height))
+                                }
+                                FoldedSeparator {}
+                                FoldedItem {
                                     iconRole: "audio-waveform"
                                     text: qsTranslate("HikariSub.Audio", "Waveform")
                                     checkable: true
@@ -3829,7 +4217,7 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(false)
                                     }
                                 }
-                                ShellMenuItem {
+                                FoldedItem {
                                     objectName: "audioMoreSpectrum"
                                     iconRole: "spectrum"
                                     text: qsTranslate("HikariSub.Audio", "Spectrum")
@@ -3841,8 +4229,9 @@ ApplicationWindow {
                                         root.audio.setSpectrumOn(true)
                                     }
                                 }
-                                MenuSeparator {}
+                                FoldedSeparator {}
                                 ShellMenuItem {
+                                    objectName: "audioMoreAutoScroll"
                                     iconRole: "auto-scroll"
                                     text: qsTranslate("HikariSub.Audio", "Auto-scroll")
                                     checkable: true
@@ -3966,11 +4355,21 @@ ApplicationWindow {
                             iconRole: root.audio.volume > 66 ? "volume" : root.audio.volume > 20 ? "volume-low" : "volume-quiet"
                             text: qsTranslate("HikariSub.Audio", "Volume and output device")
                             //: The audio panel's speaker button; %1 is the volume (1 to 100), %2 the device audio plays through now
-                            tip: root.app.audioOutputName.length
-                                 ? qsTranslate("HikariSub.Audio", "Volume: %1\nOutput device: %2").arg(root.audio.volume).arg(root.app.audioOutputName)
-                                 : qsTranslate("HikariSub.Audio", "Volume: %1").arg(root.audio.volume)
+                            tip: (root.app.audioOutputName.length
+                                  ? qsTranslate("HikariSub.Audio", "Volume: %1\nOutput device: %2").arg(root.audio.volume).arg(root.app.audioOutputName)
+                                  : qsTranslate("HikariSub.Audio", "Volume: %1").arg(root.audio.volume))
+                                 //: The speaker button's tooltip, while the audio plays slowed; %1 is the speed in percent
+                                 + (root.audio.speedPercent !== 100
+                                    ? "\n" + qsTranslate("HikariSub.Audio", "Speed: %1%").arg(root.audio.speedPercent) : "")
                             down: audioOutputMenu.visible
                             onRun: audioOutputMenu.popup(audioOutputButton, 0, audioOutputButton.height)
+                            // KA2-slowed-playback: the speed, while not 100%
+                            CommitMark {
+                                objectName: "audioSpeedMark"
+                                anchors { right: parent.right; bottom: parent.bottom; rightMargin: 1; bottomMargin: 1 }
+                                glyph: root.audio.speedPercent
+                                visible: root.audio.speedPercent !== 100
+                            }
                             // 5 a notch of 120. A touchpad or high-resolution
                             // wheel sends parts of a notch (or only pixels, 15
                             // a notch): they add up until a whole notch, and a
@@ -4000,6 +4399,8 @@ ApplicationWindow {
                                 objectName: "audioOutputMenu"
                                 app: root.app
                                 audio: root.audio
+                                slowerKey: root.boundKeys("AUDIO_SPEED_DOWN", 4)
+                                fasterKey: root.boundKeys("AUDIO_SPEED_UP", 4)
                                 onSettingsRequested: settingsDialog.openDialog(4) // the Audio page
                             }
                         }
@@ -4105,11 +4506,26 @@ ApplicationWindow {
                 // while the focus is in the box; the registry routes the key
                 // (HotkeysController::actionFor), so a remapped key acts and
                 // the old one no longer does.
+                // KA2-tap-to-time: while tap mode is on, Space, Backspace and
+                // Esc are its keys (before VIDEO_PLAY_PAUSE's Space), their
+                // presses and releases.
+                function tapKey(event, pressed) {
+                    if (root.audio.tapOn && root.audio.tapKey(event.key, pressed, event.isAutoRepeat,
+                                                              (event.modifiers & Qt.ShiftModifier) !== 0))
+                        event.accepted = true
+                    return event.accepted
+                }
                 Keys.onShortcutOverride: event => {
+                    if (root.audio.tapOn && [Qt.Key_Space, Qt.Key_Backspace, Qt.Key_Escape].includes(event.key)) {
+                        event.accepted = true
+                        return
+                    }
                     event.accepted = root.audio.loaded && root.hotkeys.actionFor(4, event.key, event.modifiers) !== ""
                 }
+                Keys.onReleased: event => audioPanel.tapKey(event, false)
+                onActiveFocusChanged: if (!activeFocus) root.audio.tapFocusLost()
                 Keys.onPressed: event => {
-                    if (!root.audio.loaded)
+                    if (!root.audio.loaded || audioPanel.tapKey(event, true))
                         return
                     const action = root.hotkeys.actionFor(4, event.key, event.modifiers)
                     if (action === "")
@@ -5163,12 +5579,36 @@ ApplicationWindow {
             }
         }
 
+        // NT1 (#302): the Log panel (legacy's Log window). A toast's Details
+        // opens it at its entry; nothing else opens it by itself.
+        KDDW.DockWidget {
+            id: logDock
+            objectName: "logDock"
+            uniqueName: "Log"
+            title: qsTr("Log")
+            Panel {
+                id: logPanel
+                objectName: "logPanel"
+                dockName: "Log"
+                minimumBodySize: logView.minimumSize
+                anchors.fill: parent
+                title: qsTr("Log")
+                LogPanel {
+                    id: logView
+                    objectName: "logView"
+                    anchors.fill: parent
+                    log: root.log
+                }
+            }
+        }
+
         Component.onCompleted: {
             // D3: the horizontal panels keep a one-tab header even alone;
             // the Reference tray's toolbar sits in its header.
             Docking.setPanelHeader("Grid", true, null)
             Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
             Docking.setPanelHeader("Search", true, null)
+            Docking.setPanelHeader("Log", true, null)
             Docking.setPanelHeader("Original", true, originalTools) // TM1
             Docking.setPanelHeader("Template", false, templateTool.toolbar)
             root.defaultLayout()
@@ -5281,6 +5721,44 @@ ApplicationWindow {
         // "Modified" (said once, visual-language.md).
         saveText: root.editor.saveStatus
     }
+    // PK1 (#301): the toasts, at the bottom right of the main window above
+    // the status bar, or of the fullscreen video window (above its pinned
+    // bar) while it is open. root.notices.post(severity, title, text, options);
+    // C++ gives them through LogController::notice (NT1). NT1: beside the
+    // window's popup overlay and above it, so a modal dialog's dimmer does
+    // not hide them (Settings' warnings).
+    ToastStack {
+        id: notices
+        objectName: "toastStack"
+        log: root.log
+        settings: root.app.settings
+        readonly property bool inFullscreen: root.videoFullscreen.active
+        parent: inFullscreen ? videoFullscreenWindow.contentItem : root.Overlay.overlay.parent
+        anchors.right: parent ? parent.right : undefined
+        anchors.bottom: parent ? parent.bottom : undefined
+        anchors.rightMargin: 12
+        anchors.bottomMargin: 12 + (inFullscreen ? videoFullscreenWindow.pinnedPanelHeight : root.footer.height)
+        z: 1000002
+    }
+    readonly property alias notices: notices
+    // NT1: a toast's Details (and "N more notices") opens the Log panel,
+    // out of fullscreen (as the fullscreen's Audio settings).
+    Connections {
+        target: root.log
+        function onRevealRequested() {
+            if (root.videoFullscreen.active)
+                root.videoFullscreen.leave()
+            root.showPanel(logDock)
+        }
+    }
+    // NT1 (#302): the message box for the notices that need an answer
+    // (root.messages.ask(options, done), MessageHost.qml).
+    MessageHost {
+        id: messages
+        objectName: "messages"
+        settings: root.app.settings
+    }
+    readonly property alias messages: messages
     // WS3: Save layout as… and Manage layouts… (the switcher's and View > Layout's).
     SaveLayoutDialog {
         id: saveLayoutDialog
@@ -5289,6 +5767,12 @@ ApplicationWindow {
     ManageLayoutsDialog {
         id: manageLayoutsDialog
         layouts: root.workspaceLayout
+    }
+
+    // KA2 (#277): Calibrate latency…, from the audio panel's Tap menu.
+    TapCalibrationWindow {
+        id: tapCalibrationWindow
+        audio: root.audio
     }
 
     // Legacy HistoryDialog: every step, the current one selected; Set and a
@@ -5363,10 +5847,9 @@ ApplicationWindow {
         const route = root.app.saveRouteFor(document)
         if (route === "dialog")
             openSaveDialog(document)
-        else if (route === "readonly") {
-            readOnlyWarning.document = document
-            readOnlyWarning.open()
-        } else if (document === 0)
+        else if (route === "readonly")
+            warnReadOnly(document)
+        else if (document === 0)
             root.editor.save()
         else
             root.app.saveDocument(document)
@@ -5381,12 +5864,10 @@ ApplicationWindow {
             return
         const next = saveQueue[0]
         saveQueue = saveQueue.slice(1)
-        if (next.route === "readonly") {
-            readOnlyWarning.document = next.id
-            readOnlyWarning.open()
-        } else {
+        if (next.route === "readonly")
+            warnReadOnly(next.id)
+        else
             openSaveDialog(next.id)
-        }
     }
     function openSaveDialog(id) {
         const v = root.app.saveDialogValuesFor(id ?? 0)
@@ -5407,8 +5888,7 @@ ApplicationWindow {
         property var document: 0 // P9: the Document saved (0: the editing target)
         onAccepted: {
             if (root.app.saveChosenFor(document, selectedFile) === "readonly") {
-                readOnlyWarning.document = document
-                readOnlyWarning.open()
+                root.warnReadOnly(document)
             } else {
                 matroskaSubtitles.saveDone() // Y9: the load waits for the Save dialog
                 root.saveNext()
@@ -5423,22 +5903,34 @@ ApplicationWindow {
     MatroskaSubtitles {
         id: matroskaSubtitles
         matroska: root.matroska
+        settings: root.app.settings
+        notices: root.notices
         save: function() {
             const route = root.app.saveRoute()
             root.saveSubtitles()
             return route === "dialog" || route === "readonly"
         }
     }
-    Dialog {
-        id: readOnlyWarning
-        objectName: "readOnlyWarning"
-        title: qsTranslate("HikariSub.Documents", "Warning")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { text: qsTranslate("HikariSub.Documents", "Chosen file is read only,\nplease save with different name or change file attribute.") }
-        property var document: 0
-        onClosed: root.openSaveDialog(document)
+    // NT1 (#302): a read-only file is a question now, Save as… or Cancel
+    // (legacy's OK opened the Save dialog again, with no way out but it).
+    // Cancel goes on as a cancelled Save dialog does.
+    function warnReadOnly(document) {
+        root.messages.ask({
+            title: qsTranslate("HikariSub.Documents", "Save"),
+            text: qsTranslate("HikariSub.Documents", "Chosen file is read only,\nplease save with different name or change file attribute."),
+            severity: "warning",
+            choices: [
+                { id: "saveAs", text: qsTranslate("HikariSub.Documents", "Save as…"), role: "accept", isDefault: true },
+                { id: "cancel", text: qsTranslate("HikariSub.Documents", "Cancel"), role: "reject" }
+            ]
+        }, id => {
+            if (id === "saveAs") {
+                root.openSaveDialog(document)
+            } else {
+                matroskaSubtitles.saveDone()
+                root.saveNext()
+            }
+        })
     }
 
     // P9: Close all tabs' question and a video's same-named subtitles.
@@ -5594,6 +6086,8 @@ ApplicationWindow {
     }
     AutomationNotices {
         automation: root.automation
+        toasts: root.notices
+        messages: root.messages
     }
     FileDialog {
         id: scriptDialog
@@ -5620,7 +6114,7 @@ ApplicationWindow {
         app: root.app
         colourPicker: root.colourPicker
         anchors.centerIn: parent
-        onRefused: message => root.log.log(message)
+        onRefused: message => root.notices.post("error", qsTr("Open dummy video"), message)
     }
     VideoFileQuestion {
         id: videoFileQuestion
@@ -5711,8 +6205,10 @@ ApplicationWindow {
     FileDialog {
         id: openDialog
         objectName: "subtitlesOpenDialog"
-        // Legacy's second filter, "Videos with embedded subtitles".
+        // Legacy's second filter, "Videos with embedded subtitles". KA6:
+        // word-timed lyrics, imported as karaoke Lines, after the subtitles.
         nameFilters: [qsTranslate("HikariSub.Documents", "Subtitles (*.ass *.ssa *.srt *.sub *.txt *.mpl)"),
+                      qsTranslate("HikariSub.Documents", "Word-timed lyrics (*.lrc *.ttml)"),
                       qsTranslate("HikariSub.Documents", "Videos with embedded subtitles (*.mkv *.ogm)"),
                       qsTranslate("HikariSub.Documents", "All files (*)")]
         onAccepted: root.openChosenSubtitles(root.app.localPath(selectedFile))
@@ -5836,50 +6332,6 @@ ApplicationWindow {
         }
     }
 
-    // Legacy LogWindow: a message pops it up with just that message; the File
-    // menu entry shows the whole log.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: logWindow
-        objectName: "logWindow"
-        title: qsTr("Log window")
-        width: 520
-        height: root.log.full ? 380 : 140
-        flags: Qt.Dialog
-        visible: root.log.shown
-        onClosing: root.log.close()
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                objectName: "logLastMessage"
-                visible: !root.log.full
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                horizontalAlignment: Text.AlignHCenter
-                text: root.log.lastMessage
-            }
-            ScrollView {
-                visible: root.log.full
-                Layout.fillWidth: true
-                Layout.fillHeight: true
-                TextArea {
-                    objectName: "logHistory"
-                    readOnly: true
-                    text: root.log.history
-                    Accessible.name: qsTr("Log")
-                }
-            }
-            Item { Layout.fillHeight: !root.log.full }
-            Button {
-                objectName: "logClose"
-                Layout.alignment: Qt.AlignRight
-                text: qsTr("Close")
-                onClicked: root.log.close()
-            }
-        }
-    }
-
     // D1: every drag placement from the keyboard, and numeric resizing.
     Window {
         color: Theme.panel // K2: a Window draws white unless told
@@ -5989,43 +6441,30 @@ ApplicationWindow {
         onAccepted: root.audio.openAudioUrl(selectedFile)
     }
     // A1: legacy HikariListBox "Choose the track" (ProviderFFMS2::Init with
-    // several audio tracks): the first row preselected, OK or a double click
-    // takes a row, Cancel opens no audio.
-    Dialog {
+    // several audio tracks), on PK1's list chooser in its compact window:
+    // the first row chosen, Open or a double click takes a row, Cancel opens
+    // no audio.
+    ListChooser {
         id: audioTrackChooser
         objectName: "audioTrackChooser"
-        title: qsTranslate("HikariSub.Audio", "Choose the track")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        ListView {
-            id: audioTrackList
-            objectName: "audioTrackList"
-            implicitWidth: 220
-            implicitHeight: 160
-            clip: true
-            model: root.audio.trackChoices
-            currentIndex: 0
-            delegate: ItemDelegate {
-                required property string modelData
-                required property int index
-                width: ListView.view.width
-                text: modelData
-                highlighted: ListView.isCurrentItem
-                onClicked: audioTrackList.currentIndex = index
-                onDoubleClicked: audioTrackChooser.accept()
-            }
-        }
-        onAccepted: root.audio.chooseTrack(Math.max(0, audioTrackList.currentIndex))
-        onRejected: root.audio.cancelTrackChoice()
+        settings: root.app.settings
         Connections {
             target: root.audio
             function onTrackChoicesChanged() {
                 if (root.audio.trackChoices.length > 0) {
-                    audioTrackList.currentIndex = 0
-                    audioTrackChooser.open()
+                    audioTrackChooser.choose({
+                        title: qsTranslate("HikariSub.Audio", "Choose the audio track"),
+                        rows: root.audio.trackChoices,
+                        acceptText: qsTranslate("HikariSub.Audio", "Open")
+                    }, row => {
+                        if (row >= 0)
+                            root.audio.chooseTrack(row)
+                        else
+                            root.audio.cancelTrackChoice()
+                    })
                 } else if (audioTrackChooser.opened) {
-                    audioTrackChooser.close()
+                    audioTrackChooser.done = null
+                    audioTrackChooser.none()
                 }
             }
         }
@@ -6039,7 +6478,7 @@ ApplicationWindow {
             // V3: the recent keyframes take the file too (SetRecent(3))
             const problem = root.app.openKeyframesFile(selectedFile.toString())
             if (problem.length > 0)
-                root.log.log(problem)
+                root.notices.post("error", qsTr("Open keyframes"), problem)
         }
         // V3: the video's folder, else the latest recent keyframes'
         function show() {
@@ -6131,28 +6570,24 @@ ApplicationWindow {
                     updateAurNotice.showRelease(release, !interactive)
                 else
                     updateAvailable.showRelease(release, !interactive)
+            } else if (outcome === "current") {
+                // NT1 (#302): toasts, titled with the command (DG1-update-titles).
+                root.notices.post("info", qsTr("Check for updates"), qsTr("You already have the latest version"))
             } else {
-                // DG1: titled with the command that gave it (DG1-update-titles).
-                updateMessage.showMessage(qsTr("Check for updates"),
-                                   outcome === "current" ? qsTr("You already have the latest version")
-                                                         : qsTr("Cannot check for updates"),
-                                   outcome !== "current")
+                root.notices.post("warning", qsTr("Check for updates"), qsTr("Cannot check for updates"))
             }
         }
-        function onNotice(message) {
-            updateMessage.showMessage(qsTr("Update"), message, true)
+        function onNotice(message, atStart) {
+            root.notices.post("error", atStart ? qsTr("Install update") : qsTr("Download and install"),
+                              message)
         }
     }
     Connections {
         target: root.updates.installer
         function onReady() { updateAvailable.close() }
     }
-    // DG1 (#222): About, Credits and the update notices are windows of their
+    // DG1 (#222): About, Credits and the update offers are windows of their
     // own on the dialog frame (DialogWindow.qml), modeless.
-    UpdateMessage {
-        id: updateMessage
-        settings: root.app.settings
-    }
     UpdateAurNotice {
         id: updateAurNotice
         updates: root.updates
@@ -6161,6 +6596,12 @@ ApplicationWindow {
     UpdateAvailable {
         id: updateAvailable
         updates: root.updates
+        whatsNew: root.whatsNew
+        settings: root.app.settings
+    }
+    WhatsNewDialog {
+        id: whatsNewDialog
+        whatsNew: root.whatsNew
         settings: root.app.settings
     }
     AboutDialog {
@@ -6406,6 +6847,7 @@ ApplicationWindow {
         catalogs: root.fontCatalogs
         colourPicker: root.colourPicker
         app: root.app
+        postCleanStyles: root.postCleanStyles
     }
     SettingsImportDialog {
         id: settingsImportDialog
@@ -6415,6 +6857,7 @@ ApplicationWindow {
     SettingsDialog {
         id: settingsDialog
         app: root.app
+        notices: root.notices
         hotkeys: root.hotkeys
         colourPicker: root.colourPicker
         tagButtons: root.tagButtons
@@ -6439,6 +6882,7 @@ ApplicationWindow {
     SelectLinesDialog {
         id: selectLinesDialog
         app: root.app
+        notices: root.notices
         anchors.centerIn: parent
         // DestroyDialogs (a changed program font): SaveOptions, then gone.
         Connections {
@@ -6461,87 +6905,49 @@ ApplicationWindow {
             function onMisspellReplacerDestroyed() { misspellDialog.destroyDialog() }
         }
     }
-    // F3: the Spellchecker window, legacy's spelling message boxes and the
-    // editor's "Fix suggestions" list.
+    // F3: the Spellchecker window and the editor's "Fix suggestions" list
+    // (legacy's spelling message boxes are toasts, NT1).
     SpellCheckerDialog {
         id: spellCheckerDialog
         app: root.app
+        notices: root.notices
         anchors.centerIn: parent
     }
-    Dialog {
-        id: spellingNotice
-        objectName: "spellingNotice"
-        property alias text: spellingNoticeLabel.text
-        title: qsTranslate("HikariSub.Spelling", "Spellchecker") // TI1-popup-titles
-        anchors.centerIn: parent
-        modal: true // legacy HikariMessageBox is modal
-        standardButtons: Dialog.Ok
-        Label { id: spellingNoticeLabel; Accessible.role: Accessible.AlertMessage }
-    }
-    // W1: DirectShow could not open the video (legacy VideoBox::LoadVideo's
-    // HikariMessageBox, titled "Warning").
-    Dialog {
-        id: playerNotice
-        objectName: "playerNotice"
-        property alias text: playerNoticeLabel.text
-        title: qsTranslate("HikariSub.Video", "Warning")
-        anchors.centerIn: parent
-        modal: true
-        standardButtons: Dialog.Ok
-        Label { id: playerNoticeLabel; Accessible.role: Accessible.AlertMessage }
-    }
-    Connections {
-        target: root.app
-        function onPlayerNotice(message) {
-            playerNotice.text = message
-            playerNotice.open()
+    // KA7: the Karaoke check window, made at its first opening, as PK1's
+    // windows are: every window made at the start costs it (on Windows a
+    // native event filter apiece).
+    Loader {
+        id: karaokeCheckLoader
+        active: false
+        sourceComponent: KaraokeCheckDialog {
+            app: root.app
+            settings: root.app.settings
         }
     }
-    Connections {
-        target: root.app
-        function onSpellingNotice(message) {
-            spellingNotice.text = message
-            spellingNotice.open()
-        }
+    function openKaraokeCheck() {
+        karaokeCheckLoader.active = true
+        karaokeCheckLoader.item.openDialog()
     }
-    Dialog {
+    // W1: DirectShow could not open the video: legacy VideoBox::LoadVideo's
+    // HikariMessageBox is a warning toast (NT1, application_directshow.cpp).
+    // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK's "Fix suggestions", on PK1's list
+    // chooser as a popover at the misspelled word: a click or Enter replaces
+    // it, Esc or a press outside leaves it.
+    ListChooser {
         id: fixSuggestions
         objectName: "fixSuggestions"
-        title: qsTranslate("HikariSub.Spelling", "Fix suggestions")
-        anchors.centerIn: parent
-        modal: true
-        standardButtons: Dialog.Ok | Dialog.Cancel
-        property int role: 0
-        property int position: -1
-        property var suggestions: []
-        function openFor(role, position, suggestions) {
-            fixSuggestions.role = role
-            fixSuggestions.position = position
-            fixSuggestions.suggestions = suggestions
-            fixList.currentIndex = 0
-            open()
-        }
-        onAccepted: if (fixList.currentIndex >= 0 && fixList.currentIndex < suggestions.length)
-            root.app.replaceEditorMisspell(role, position, suggestions[fixList.currentIndex])
-        ListView {
-            id: fixList
-            objectName: "fixSuggestionsList"
-            implicitWidth: 220
-            implicitHeight: 160
-            clip: true
-            model: fixSuggestions.suggestions
-            delegate: ItemDelegate {
-                required property string modelData
-                required property int index
-                width: ListView.view.width
-                text: modelData
-                highlighted: ListView.isCurrentItem
-                onClicked: fixList.currentIndex = index
-                onDoubleClicked: {
-                    fixList.currentIndex = index
-                    fixSuggestions.accept()
-                }
-            }
+        settings: root.app.settings
+        function openFor(field, role, position, suggestions) {
+            const at = field.positionToRectangle(position)
+            choose({
+                title: qsTranslate("HikariSub.Spelling", "Fix suggestions"),
+                rows: suggestions,
+                anchor: field,
+                at: Qt.rect(at.x, at.y, Math.max(1, at.width), at.height)
+            }, row => {
+                if (row >= 0 && row < suggestions.length)
+                    root.app.replaceEditorMisspell(role, position, suggestions[row])
+            })
         }
     }
     ScriptPropertiesDialog {
@@ -6792,13 +7198,11 @@ ApplicationWindow {
             // Legacy default: a month before today.
             const before = new Date()
             before.setMonth(before.getMonth() - 1)
-            olderDay.currentIndex = before.getDate() - 1
-            olderMonth.currentIndex = before.getMonth()
-            olderYear.text = before.getFullYear()
+            olderDate.date = olderDate.day(before)
             show()
         }
         function cutoff() {
-            return new Date(parseInt(olderYear.text), olderMonth.currentIndex, olderDay.currentIndex + 1)
+            return olderDate.day(olderDate.date)
         }
         ColumnLayout {
             id: temporaryContent
@@ -6855,14 +7259,12 @@ ApplicationWindow {
             }
             RowLayout {
                 Label { text: qsTranslate("HikariSub.Session", "Remove files older than") }
-                ComboBox { id: olderDay; model: 31; displayText: currentIndex + 1; Accessible.name: qsTranslate("HikariSub.Session", "Day") }
-                ComboBox {
-                    id: olderMonth
-                    model: [qsTranslate("HikariSub.Session", "January"), qsTranslate("HikariSub.Session", "February"), qsTranslate("HikariSub.Session", "March"), qsTranslate("HikariSub.Session", "April"), qsTranslate("HikariSub.Session", "May"), qsTranslate("HikariSub.Session", "June"),
-                            qsTranslate("HikariSub.Session", "July"), qsTranslate("HikariSub.Session", "August"), qsTranslate("HikariSub.Session", "September"), qsTranslate("HikariSub.Session", "October"), qsTranslate("HikariSub.Session", "November"), qsTranslate("HikariSub.Session", "December")]
-                    Accessible.name: qsTranslate("HikariSub.Session", "Month")
+                // PK1: the date field with its calendar (legacy's day, month and year boxes).
+                DatePicker {
+                    id: olderDate
+                    objectName: "olderDate"
+                    accessibleName: qsTranslate("HikariSub.Session", "Remove files older than")
                 }
-                TextField { id: olderYear; Layout.preferredWidth: 60; validator: IntValidator { bottom: 2012 } Accessible.name: qsTranslate("HikariSub.Session", "Year") }
                 Button {
                     objectName: "removeOlderAutosaves"
                     text: qsTranslate("HikariSub.Session", "Remove older auto save files")
@@ -6980,6 +7382,7 @@ ApplicationWindow {
         GLOBAL_SHOW_SHIFT_TIMES: showShiftTimesItem, GLOBAL_SHIFT_TIMES: runShiftTimesItem,
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
+        GLOBAL_CHECK_KARAOKE: checkKaraokeItem, // KA7
     }
     }
     // The menu bar's items show their Global binding at the right (legacy
@@ -7089,8 +7492,7 @@ ApplicationWindow {
             return true
         case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles
             if (editing) {
-                cleanStylesMessage.text = root.styleManager.cleanStyles()
-                cleanStylesMessage.open()
+                root.postCleanStyles(root.styleManager.cleanStyles())
             }
             return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
@@ -7172,6 +7574,9 @@ ApplicationWindow {
         if (action.startsWith("GLOBAL_"))
             return root.runGlobalHotkey(action) // the event goes up to the frame
         if (root.hotkeys.repeatedKey(action, 50)) // VideoBox::OnAccelerator (VideoBox.cpp:1137)
+            return true
+        // VT2: the tool commands choose their visual tool.
+        if (root.visualTools.runHotkey(action))
             return true
         switch (action) {
         case "VIDEO_PLAY_PAUSE": root.video.togglePlay(); return true
@@ -7303,21 +7708,21 @@ ApplicationWindow {
             return root.runEditorHotkey(action, root.editedField())
         return action.startsWith("GRID_") && root.runGridHotkey(action)
     }
-    HotkeyMapping {
+    // PK1's hotkey capture: Shift+click on a command opens it in its
+    // compact window.
+    HotkeyCapture {
         id: hotkeyMapping
+        objectName: "hotkeyMapping"
         hotkeys: root.hotkeys
+        settings: root.app.settings
     }
-    // GLOBAL_STYLE_MANAGER_CLEAN_STYLE: StyleStore::OnCleanStyles's message
-    // (stylestore.cpp:738-775).
-    Dialog {
-        id: cleanStylesMessage
-        objectName: "cleanStylesMessage"
-        property alias text: cleanStylesLabel.text
-        title: qsTranslate("HikariSub.Styles", "Status of deleted styles")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { id: cleanStylesLabel }
+    // GLOBAL_STYLE_MANAGER_CLEAN_STYLE and the Style manager's Clear:
+    // StyleStore::OnCleanStyles's message (stylestore.cpp:738-775), a toast
+    // with the lists as its Details (NT1).
+    function postCleanStyles(result) {
+        if (result && result.text)
+            root.notices.post("info", qsTranslate("HikariSub.Styles", "Delete unused styles"), result.text,
+                              { details: result.details })
     }
 
     // S2: committed automation shortcuts, application-wide.
@@ -7347,69 +7752,6 @@ ApplicationWindow {
         objectName: "legacyHotkeysDialog"
         nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
         onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
-    }
-    // Legacy HkeysDialog ("Hotkey mapping").
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: hotkeyCapture
-        objectName: "hotkeyCapture"
-        title: qsTranslate("HikariSub.Hotkeys", "Hotkey mapping")
-        width: 420
-        height: 150
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        property string name: ""
-        property string keys: ""
-        property string conflictWith: ""
-        function capture(n) {
-            name = n
-            keys = ""
-            conflictWith = ""
-            show()
-            captureArea.forceActiveFocus()
-        }
-        function accept(k) {
-            const other = root.automationHotkeys.conflict(name, k)
-            if (other.length > 0 && conflictWith !== other) {
-                keys = k
-                conflictWith = other // asks before replacing, as legacy does
-                return
-            }
-            root.automationHotkeys.setKeys(name, k)
-            close()
-        }
-        ColumnLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            Label {
-                Layout.fillWidth: true
-                wrapMode: Text.Wrap
-                text: hotkeyCapture.conflictWith.length
-                      ? qsTranslate("HikariSub.Hotkeys", "\"%1\" is already assigned to %2. Press it again to replace it.").arg(hotkeyCapture.keys).arg(hotkeyCapture.conflictWith)
-                      : qsTranslate("HikariSub.Hotkeys", "Please enter a hotkey for \"%1\".").arg(hotkeyCapture.name)
-            }
-            Item {
-                id: captureArea
-                objectName: "hotkeyCaptureArea"
-                Layout.fillWidth: true
-                Layout.preferredHeight: 30
-                focus: true
-                Keys.onPressed: event => {
-                    const k = root.automationHotkeys.keysOf(event.key, event.modifiers)
-                    if (k.length > 0) {
-                        if (hotkeyCapture.conflictWith.length && k === hotkeyCapture.keys)
-                            hotkeyCapture.conflictWith = "" // confirmed: replace
-                        hotkeyCapture.accept(k)
-                    }
-                    event.accepted = true
-                }
-            }
-            Button {
-                Layout.alignment: Qt.AlignRight
-                text: qsTranslate("HikariSub.Hotkeys", "Cancel")
-                onClicked: hotkeyCapture.close()
-            }
-        }
     }
 
     Window {

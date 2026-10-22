@@ -115,6 +115,7 @@ Payloads remain exposed to Qt moving 6.11.2 off its online repository; retaining
 ## Phase 3 native inputs (B4, 2026-10-03)
 
 - **PortAudio** comes from the owned overlay `ports/portaudio`: upstream vcpkg's revision `147dd722…` and patches, without the jack2 dependency, with the host APIs pinned. Linux gets ALSA only (PipeWire and PulseAudio desktops reach it through their ALSA plugins); Windows gets WASAPI and DirectSound (the legacy app used DirectSound). JACK, ASIO, WDM-KS, MME and PulseAudio are off. `dependency-load` fails if the runtime host API set differs. Target: `Hikari::portaudio`.
+- **SoundTouch** (KA2-slowed-playback, #277) comes from vcpkg's `soundtouch` port at the baseline: 2.4.1, LGPL-2.1-or-later (`COPYING.TXT` installed as the port's copyright), static, float samples, without the `soundstretch` tool or the DLL wrapper. HikariSub is GPL-3.0-or-later and ships its whole source, which LGPL-2.1 §3 allows for a statically linked copy. It is used on the audio box's fill thread only, never in the output callback. Target: `Hikari::soundtouch` (the backends only).
 - **LuaJIT** comes from vcpkg's port at the baseline (2026-09-08 snapshot, static, with FFI). Its link flags export the executable's symbols (`-Wl,-E`), which Lua native modules need, so `Hikari::luajit` is for the Lua helper only, never the application. `luajit-load` runs it in its own process and checks the JIT and FFI.
 
 ## Lua helper native modules (L6, 2026-10-03)

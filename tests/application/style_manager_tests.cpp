@@ -105,6 +105,84 @@ TEST(StyleLists, NewNamesTransferMoveAndSort)
     EXPECT_EQ(names(m), (std::vector<std::u8string>{u8"a", u8"b", u8"c", u8"d"}));
 }
 
+// PK1 (#301): the clash review's answers, one per clashing name.
+TEST(StyleLists, TransferWithClashChoices)
+{
+    StyleList into{named(u8"A"), named(u8"B"), named(u8"C"), named(u8"B (2)")};
+    ClashChoices choices{{{u8"A", 0}, {ClashAction::Replace, {}}},
+                         {{u8"B", 0}, {ClashAction::Rename, u8"B (2)"}},
+                         {{u8"C", 0}, {ClashAction::Skip, {}}}};
+    const auto rows = transferStyles(
+        into, {named(u8"A", u8"Times"), named(u8"B", u8"Times"), named(u8"C", u8"Times"), named(u8"D"),
+               named(u8"E", u8"Times")},
+        choices);
+    // A replaced; B added under the first free name from its new one (B (2)
+    // is taken too); C skipped; D new; E has no choice (none listed: same
+    // both sides or not asked) but is new here, so added.
+    EXPECT_EQ(names(into), (std::vector<std::u8string>{u8"A", u8"B", u8"C", u8"B (2)", u8"B (2) (2)", u8"D", u8"E"}));
+    EXPECT_EQ(rows, (std::vector<std::size_t>{0, 4, 5, 6}));
+    EXPECT_EQ(into[0].fontname, u8"Times");
+    EXPECT_EQ(into[2].fontname, u8"Arial");
+    EXPECT_EQ(into[4].fontname, u8"Times");
+    // A clash without a choice is left out.
+    StyleList kept{named(u8"A")};
+    EXPECT_TRUE(transferStyles(kept, {named(u8"A", u8"Times")}, ClashChoices{}).empty());
+    EXPECT_EQ(kept[0].fontname, u8"Arial");
+    EXPECT_EQ(freeStyleName(StyleList{named(u8"X"), named(u8"X (2)")}, u8"X"), u8"X (3)");
+    // Several Styles of one name are answered apart, by which clash of the
+    // name each is (Codex review): the first renamed, the second left out,
+    // the third replacing.
+    StyleList apart{named(u8"X")};
+    const auto apartRows = transferStyles(apart, {named(u8"X", u8"One"), named(u8"X", u8"Two"), named(u8"X", u8"Three")},
+                                          ClashChoices{{{u8"X", 0}, {ClashAction::Rename, u8"Y"}},
+                                                       {{u8"X", 1}, {ClashAction::Skip, {}}},
+                                                       {{u8"X", 2}, {ClashAction::Replace, {}}}});
+    EXPECT_EQ(names(apart), (std::vector<std::u8string>{u8"X", u8"Y"}));
+    EXPECT_EQ(apart[0].fontname, u8"Three");
+    EXPECT_EQ(apart[1].fontname, u8"One");
+    EXPECT_EQ(apartRows, (std::vector<std::size_t>{1, 0}));
+    // A clash renamed onto a later new Style's name takes a free one, and
+    // the new Style is still copied (Codex review).
+    StyleList onto{named(u8"A")};
+    transferStyles(onto, {named(u8"A", u8"Times"), named(u8"B")},
+                   ClashChoices{{{u8"A", 0}, {ClashAction::Rename, u8"B"}}});
+    EXPECT_EQ(names(onto), (std::vector<std::u8string>{u8"A", u8"B (2)", u8"B"}));
+    // A choice belongs to its source row (Codex review): the review made
+    // where A is taken lists both A rows; where A is new the first is
+    // added and the second still takes its own answer, not the first's.
+    const ClashChoices pair{{{u8"A", 0}, {ClashAction::Replace, {}}}, {{u8"A", 1}, {ClashAction::Rename, u8"A2"}}};
+    StyleList without{named(u8"Z")};
+    transferStyles(without, {named(u8"A", u8"One"), named(u8"A", u8"Two")}, pair);
+    EXPECT_EQ(names(without), (std::vector<std::u8string>{u8"Z", u8"A", u8"A2"}));
+    EXPECT_EQ(without[1].fontname, u8"One");
+    EXPECT_EQ(without[2].fontname, u8"Two");
+}
+
+// PK1 (#301, Codex security review): a file with X, X (2)... X (n) and many
+// more X rows renamed onto X takes one pass over the names, not a scan of
+// the list for every suffix of every row (n * n * list size, a freeze).
+TEST(StyleLists, FreeNamesForAHostileListAreFound)
+{
+    constexpr int kCount = 3000;
+    StyleList into{named(u8"X")};
+    StyleList styles;
+    for (int i = 2; i <= kCount; ++i) {
+        const auto n = std::to_string(i);
+        into.push_back(named(u8"X (" + std::u8string(n.begin(), n.end()) + u8")"));
+    }
+    for (int i = 0; i < kCount; ++i)
+        styles.push_back(named(u8"X", u8"Times"));
+    const StyleNames taken = namesOf(into);
+    EXPECT_EQ(freeStyleName(taken, u8"X"), u8"X (3001)");
+    ClashChoices renames;
+    for (int i = 0; i < kCount; ++i)
+        renames[{u8"X", i}] = {ClashAction::Rename, u8"X"};
+    const auto rows = transferStyles(into, styles, renames);
+    ASSERT_EQ(rows.size(), std::size_t(kCount));
+    EXPECT_EQ(into.back().name, u8"X (6000)");
+    EXPECT_EQ(namesOf(into).size(), into.size()); // every name once
+}
+
 TEST(StyleLists, CommitRefusesTakenNamesAndAppliesMultiEdit)
 {
     StyleList l{named(u8"A"), named(u8"B"), named(u8"C")};

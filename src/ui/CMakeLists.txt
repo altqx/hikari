@@ -46,7 +46,6 @@ get_target_property(hikari_kddw_include KDAB::kddockwidgets INTERFACE_INCLUDE_DI
 target_include_directories(hikari_ui PRIVATE "${hikari_kddw_include}/kddockwidgets")
 hikari_module(hikari_ui ALLOW hikari_application hikari_core "Qt6::*" "hikari_ui*" "KDAB::*")
 # O2: the "Hotkey mapping" window and its questions.
-qt_target_qml_sources(hikari_ui QML_FILES HotkeyMapping.qml)
 # S4: the automation shell's message boxes and script editor picker.
 qt_target_qml_sources(hikari_ui QML_FILES AutomationNotices.qml)
 # Y4-playres-ask: the question a macro reading a missing script resolution asks.
@@ -65,6 +64,8 @@ qt_target_qml_sources(hikari_ui QML_FILES AssociationOffer.qml TabCommands.qml L
 qt_target_qml_sources(hikari_ui QML_FILES UpdateReadyBar.qml UpdateAurNotice.qml UpdateInstallingWindow.qml)
 # Y8: the font collector's window.
 qt_target_qml_sources(hikari_ui QML_FILES FontCollectorDialog.qml)
+# KA7: the Karaoke check window.
+qt_target_qml_sources(hikari_ui QML_FILES KaraokeCheckDialog.qml)
 # O3: the legacy settings importer's window.
 qt_target_qml_sources(hikari_ui QML_FILES SettingsImportDialog.qml)
 # Y6: Font catalogs, the catalog window and "Add fonts from subtitles".
@@ -74,11 +75,11 @@ qt_target_qml_sources(hikari_ui QML_FILES MatroskaSubtitles.qml)
 # E4: the Line editor's metadata fields, counters and \an choice; its masked time fields
 qt_target_qml_sources(hikari_ui QML_FILES LineInspector.qml LineCounters.qml AlignmentChoice.qml TimeField.qml
     NumberField.qml)
-# T1: the visual tool rail, the overlay over the Video canvas, the tool strip below it and its readout.
-qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolValues.qml VisualToolReadout.qml)
-# T2-T4: the families' options row (Position, Move, Scale, the rotations, the
-# clips' point modes and Invert clip).
-qt_target_qml_sources(hikari_ui QML_FILES VisualToolOptions.qml)
+# T1: the visual tool rail and the overlay over the Video canvas; VT1: the inspector bar below it and its fields.
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml VisualToolBar.qml VisualValueField.qml)
+# T2-T6: the families' options in the bar (Position, Move, Scale, the rotations,
+# the clips' point modes and Invert clip, ...) and the tools' dialogs.
+qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
 # T5: the drawing's "Vector shape editing" dialog.
 qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml)
 # T6: the all-tags tool's "Tag editing" dialog.
@@ -141,6 +142,9 @@ qt_target_qml_sources(hikari_ui QML_FILES VideoFollowChoices.qml)
 qt_target_qml_sources(hikari_ui QML_FILES AudioOutputMenu.qml)
 # AU1: the rows of the audio panel's zoom and speaker popovers.
 qt_target_qml_sources(hikari_ui QML_FILES AudioSliderRow.qml)
+# KA2 (#277): the audio panel's tap bar, the latency calibration window and
+# the key caps their hints show.
+qt_target_qml_sources(hikari_ui QML_FILES AudioTapBar.qml TapCalibrationWindow.qml Keycap.qml)
 # E5: the Line editor's Not confirmed and Moving tags buttons. TM1: the
 # Original text panel's toolbar, the Translation preset's question and the
 # turn-off confirmation (the Translator mode check box is gone).
@@ -203,9 +207,17 @@ if(UNIX AND NOT APPLE)
 endif()
 qt_target_qml_sources(hikari_ui QML_FILES MainTitleBar.qml MainWindowEdges.qml TitleBarMenus.qml TitleBarMenuItem.qml
     TitleBarMoveArea.qml TitleBarButton.qml)
-# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update notices on it.
+# DG1: the dialog frame (DialogWindow.qml, dialog_placement.h) and About, Credits and the update offer on it.
 qt_target_qml_sources(hikari_ui QML_FILES DialogWindow.qml DialogTitleBar.qml AboutDialog.qml CreditsDialog.qml
-    UpdateMessage.qml UpdateAvailable.qml)
+    UpdateAvailable.qml)
+# SH3: What's new from the release notes, on the Home page and in Help > What's new.
+qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml WhatsNewCard.qml WhatsNewDialog.qml)
+# PK1: the popup kit on DG1's frame (docs/qt/ux/visual-language.md "Popups"): the message box, the popover,
+# toasts and the inline bar, and the clash review, Choose styles, hotkey capture, list chooser and date picker;
+# NT1: the application's message box (MessageHost) and the Log panel.
+qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
+    ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
+    MessageHost.qml LogPanel.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")

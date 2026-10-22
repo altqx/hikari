@@ -125,7 +125,8 @@ MenuItem {
             id: keys
             objectName: "menuItemKeys"
             text: control.keysText
-            visible: text.length > 0 && !control.subMenu
+            // (a submenu's title may carry its current value, KA2's Speed)
+            visible: text.length > 0
             x: control.mirrored ? parent.arrowPadding : parent.width - width - parent.arrowPadding
             anchors.verticalCenter: parent.verticalCenter
             font: control.font

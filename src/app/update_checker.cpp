@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <optional>
 
 namespace hikari::app {
 
@@ -47,19 +48,23 @@ std::optional<std::string> text(const QJsonValue &v)
 
 // The release list as legacy FindNewerRelease reads it; anything but an
 // array gives no releases.
-std::vector<a::ReleaseEntry> releases(const QByteArray &body)
+// The page's releases; an entry that is none (no object, no tag name) is
+// left out and makes the page unreadable.
+std::vector<a::ReleaseEntry> releaseList(const QJsonArray &list, bool &unreadable)
 {
     std::vector<a::ReleaseEntry> out;
-    const QJsonDocument json = QJsonDocument::fromJson(body);
-    if (!json.isArray())
-        return out;
-    for (const QJsonValue &value : json.array()) {
+    for (const QJsonValue &value : list) {
         const QJsonObject r = value.toObject();
+        if (!value.isObject() || r.value(QStringLiteral("tag_name")).toString().isEmpty()) {
+            unreadable = true;
+            continue;
+        }
         a::ReleaseEntry entry;
         entry.tag = r.value(QStringLiteral("tag_name")).toString().toStdString();
         const QJsonValue name = r.value(QStringLiteral("name"));
         entry.name = name.isString() && !name.toString().isEmpty() ? name.toString().toStdString() : entry.tag;
         entry.notes = r.value(QStringLiteral("body")).toString().toStdString();
+        entry.published = r.value(QStringLiteral("published_at")).toString().toStdString();
         entry.draft = r.value(QStringLiteral("draft")).toBool();
         entry.prerelease = r.value(QStringLiteral("prerelease")).toBool();
         for (const QJsonValue &asset : r.value(QStringLiteral("assets")).toArray()) {
@@ -142,6 +147,11 @@ QString origin(const QUrl &url)
 
 struct UpdateChecker::Run {
     bool interactive = false;
+    bool listOnly = false; // SH3: What's new's read of the list, no check
+    // SH3: whether the list was read (m_releases is this run's), or a page
+    // was no list (an error object, say); unset while it is being read.
+    std::optional<bool> listRead;
+    bool unreadable = false;
     int page = 0;
     std::vector<a::ReleaseEntry> releases;
     std::vector<a::ReleaseEntry> candidates;
@@ -180,7 +190,7 @@ UpdateChecker::UpdateChecker(QString settingsFile, UpdateFeed feed, QString vers
       m_installer(std::make_unique<UpdateInstaller>(std::move(environment), m_version))
 {
     load();
-    connect(m_installer.get(), &UpdateInstaller::failed, this, &UpdateChecker::notice);
+    connect(m_installer.get(), &UpdateInstaller::failed, this, [this](const QString &message) { emit notice(message, false); });
 }
 
 UpdateChecker::UpdateChecker(ui::SettingsStore &settings, UpdateFeed feed, QString version,
@@ -189,7 +199,7 @@ UpdateChecker::UpdateChecker(ui::SettingsStore &settings, UpdateFeed feed, QStri
       m_installer(std::make_unique<UpdateInstaller>(std::move(environment), m_version))
 {
     load();
-    connect(m_installer.get(), &UpdateInstaller::failed, this, &UpdateChecker::notice);
+    connect(m_installer.get(), &UpdateInstaller::failed, this, [this](const QString &message) { emit notice(message, false); });
 }
 
 UpdateChecker::~UpdateChecker()
@@ -271,9 +281,28 @@ bool UpdateChecker::installsUpdates() const
     return a::installsUpdates(m_installer->environment().package.kind);
 }
 
+bool UpdateChecker::checking() const
+{
+    return m_run && !m_run->listOnly;
+}
+
+bool UpdateChecker::stableOnlyApplied() const
+{
+    const PackageInfo &package = m_installer->environment().package;
+    return a::stableOnlyFor(m_stableOnly, package.kind, package.aurChannel);
+}
+
 void UpdateChecker::checkNow()
 {
     check(true);
+}
+
+void UpdateChecker::readReleases()
+{
+    if (!m_run)
+        start(true, false);
+    else if (m_run->listRead) // checking manifests: past the list
+        emit releasesRead(*m_run->listRead);
 }
 
 bool UpdateChecker::checkOnStartup()
@@ -287,7 +316,7 @@ bool UpdateChecker::checkOnStartup()
 void UpdateChecker::startUp()
 {
     if (const QString message = m_installer->start(); !message.isEmpty())
-        emit notice(message);
+        emit notice(message, true);
 }
 
 void UpdateChecker::remindInAWeek()
@@ -356,9 +385,22 @@ QNetworkReply *UpdateChecker::get(const QUrl &url, bool api)
 
 void UpdateChecker::check(bool interactive)
 {
-    if (m_run)
+    if (m_run) {
+        // What's new's read becomes this check, from the list on.
+        if (m_run->listOnly) {
+            m_run->listOnly = false;
+            m_run->interactive = interactive;
+            emit checkingChanged();
+        }
         return;
+    }
+    start(false, interactive);
+}
+
+void UpdateChecker::start(bool listOnly, bool interactive)
+{
     m_run = std::make_unique<Run>();
+    m_run->listOnly = listOnly;
     m_run->interactive = interactive;
     m_run->deadline.setSingleShot(true);
     connect(&m_run->deadline, &QTimer::timeout, this, [this] {
@@ -367,7 +409,8 @@ void UpdateChecker::check(bool interactive)
             QTimer::singleShot(0, m_run->reply.data(), &QNetworkReply::abort);
     });
     m_run->deadline.start(kCheckDeadlineMs);
-    emit checkingChanged();
+    if (!listOnly)
+        emit checkingChanged();
     requestPage(1);
 }
 
@@ -393,24 +436,40 @@ void UpdateChecker::pageFinished()
     const QVariant status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute);
     if (reply->error() != QNetworkReply::NoError || (status.isValid() && status.toInt() != 200)) {
         end(QStringLiteral("failed"));
+        emit releasesRead(false);
         return;
     }
     const QByteArray body = reply->readAll();
     if (body.size() > kMaxListBytes) {
         end(QStringLiteral("failed"));
+        emit releasesRead(false);
         return;
     }
-    auto page = releases(body);
-    const bool full = page.size() >= std::size_t(kReleasesPerPage);
+    // Legacy: a page that is no array lists nothing, and the check goes on;
+    // but the list counts as not read (What's new takes none of it), as
+    // does one holding an entry that is no release.
+    const QJsonDocument json = QJsonDocument::fromJson(body);
+    m_run->unreadable = m_run->unreadable || !json.isArray();
+    const qsizetype listed = json.array().size();
+    auto page = releaseList(json.array(), m_run->unreadable);
+    const bool full = listed >= kReleasesPerPage;
     m_run->releases.insert(m_run->releases.end(), std::make_move_iterator(page.begin()),
                            std::make_move_iterator(page.end()));
     if (m_feed.paginate && full && m_run->page < kMaxPages) {
         requestPage(m_run->page + 1);
         return;
     }
-    const PackageInfo &package = m_installer->environment().package;
-    m_run->candidates = a::updateCandidates(m_run->releases, m_version.toStdString(),
-                                            a::stableOnlyFor(m_stableOnly, package.kind, package.aurChannel));
+    const bool read = !m_run->unreadable;
+    if (read)
+        m_releases = m_run->releases;
+    m_run->listRead = read;
+    if (m_run->listOnly) {
+        end(QString());
+        emit releasesRead(read);
+        return;
+    }
+    emit releasesRead(read);
+    m_run->candidates = a::updateCandidates(m_run->releases, m_version.toStdString(), stableOnlyApplied());
     if (m_run->candidates.size() > a::kMaxCandidates)
         m_run->candidates.resize(a::kMaxCandidates);
     m_run->next = 0;
@@ -503,12 +562,15 @@ void UpdateChecker::offer(const a::ReleaseEntry &release, const a::ReleasePackag
 void UpdateChecker::end(const QString &outcome)
 {
     const bool interactive = m_run->interactive;
+    const bool listOnly = m_run->listOnly;
     if (QNetworkReply *reply = m_run->reply) {
         reply->disconnect(this);
         reply->abort();
         reply->deleteLater();
     }
     m_run.reset();
+    if (listOnly)
+        return; // no check: nothing to report, the next check's time unchanged
     emit checkingChanged();
     // Any finished check backs the automatic one off a day, so a server
     // that is down does not mean a request on every start.

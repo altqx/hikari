@@ -7,6 +7,7 @@
 // (docs/qt/compatibility-decisions.md), whose captures stay as the old
 // evidence.
 
+#include "hikari/application/hotkeys.h"
 #include "hikari/application/visual_crosshair.h"
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_view.h"
@@ -27,8 +28,10 @@
 #include <map>
 #include <optional>
 #include <regex>
+#include <set>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <vector>
 
 using namespace hikari;
@@ -277,6 +280,66 @@ TEST(VisualFamilies, AreLegacysElevenRailItems)
     EXPECT_NE(makeVisualTool(Family::Crosshair), nullptr);
 }
 
+// VT2: each tool has a Video command, named as the rail names the tool.
+TEST(VisualFamilies, EachHasAVideoCommandNamedAsTheRail)
+{
+    std::set<int> commands;
+    for (const FamilyInfo &info : families()) {
+        const int id = hotkeyIdOf(info.hotkey);
+        EXPECT_GE(id, 2022) << info.hotkey;
+        EXPECT_EQ(hotkeyType(id), VideoHotkey) << info.hotkey;
+        EXPECT_EQ(hotkeyName(id), info.tooltip) << info.hotkey;
+        EXPECT_EQ(familyOfHotkey(info.hotkey), info.family);
+        commands.insert(id);
+    }
+    EXPECT_EQ(commands.size(), static_cast<std::size_t>(kFamilyCount));
+    EXPECT_EQ(familyOfHotkey("VIDEO_PLAY_PAUSE"), std::nullopt);
+    EXPECT_EQ(familyOfHotkey(""), std::nullopt);
+}
+
+// VT2-arrow-nudge: the tools that nudge take the arrows, Shift too, ahead of
+// the Video and Global bindings (the host claims them); Ctrl+arrows stay the
+// Global bindings', Alt+arrows are Move's end point, and the letters legacy
+// nudged with are not taken.
+TEST(VisualFamilies, TheToolsThatNudgeTakeTheArrows)
+{
+    const std::set<Family> nudging{Family::Position,      Family::Move,       Family::Scale,
+                                   Family::RectangleClip, Family::VectorClip, Family::Drawing,
+                                   Family::PositionShifter};
+    for (const FamilyInfo &info : families()) {
+        SCOPED_TRACE(std::string(info.tooltip));
+        const auto tool = makeVisualTool(info.family);
+        ASSERT_NE(tool, nullptr);
+        const bool nudges = nudging.contains(info.family);
+        for (const int arrow : {keys::Left, keys::Right, keys::Up, keys::Down}) {
+            Key key;
+            key.key = arrow;
+            EXPECT_EQ(tool->takesKey(key), nudges);
+            key.shift = true;
+            EXPECT_EQ(tool->takesKey(key), nudges);
+            key.release = true;
+            EXPECT_EQ(tool->takesKey(key), nudges);
+            Key control;
+            control.key = arrow;
+            control.control = true;
+            EXPECT_FALSE(tool->takesKey(control));
+            control.shift = true;
+            EXPECT_FALSE(tool->takesKey(control));
+            Key alt;
+            alt.key = arrow;
+            alt.alt = true;
+            EXPECT_EQ(tool->takesKey(alt), info.family == Family::Move);
+            alt.shift = true;
+            EXPECT_EQ(tool->takesKey(alt), info.family == Family::Move);
+        }
+        for (const char letter : std::string_view("ADWSJLIK")) {
+            Key key;
+            key.key = letter;
+            EXPECT_FALSE(tool->takesKey(key)) << letter;
+        }
+    }
+}
+
 TEST(VisualView, SourceAspectFollowsProviderFFMS2)
 {
     // ProviderFFMS2.cpp:366-380: 720 * 32/27 = 853 (truncated) by 480 has no
@@ -463,6 +526,16 @@ TEST(VisualCrosshair, HiddenWithoutVideoAndAfterLeaveOrRightRelease)
     EXPECT_TRUE(cross.shown());
     cross.pointer({Pointer::Kind::Release, 20, 20, Pointer::Button::Right}, host);
     EXPECT_FALSE(cross.shown());
+    // VT1: the bar's readout and Copy keep the last position past the
+    // cross (the pointer leaves the video to reach them); a reset (a new
+    // view, video or Line) drops them with it (Codex on #293).
+    EXPECT_FALSE(cross.values(host)[0].text.empty());
+    EXPECT_TRUE(cross.options(host)[0].enabled);
+    cross.reset(host);
+    EXPECT_TRUE(cross.values(host)[0].text.empty());
+    EXPECT_TRUE(cross.values(host)[1].text.empty());
+    EXPECT_FALSE(cross.options(host)[0].enabled);
+    EXPECT_TRUE(cross.copyText().empty());
     // Only on the picture: its right and bottom edges, the bars and the
     // panel are outside it (legacy IsOnVideoFrame, a8a428e4c).
     host.v.setClient(640, 400, 40); // a 640x360 window area: the 16:9 frame fills it

@@ -12,7 +12,7 @@
 | --- | --- |
 | Open auto save | autosave (new: the floppy with the recent clock) |
 | Remove temporary files | remove-temporary (new: the bin with the clock) |
-| Show / Hide log window | log (new) |
+| Log (legacy "Show / Hide log window") | log (new) |
 | Last session › Load session from file | session-open (new: the session's windows with the open plus) |
 | Last session › Save session to file | session-save (new: the floppy with the session's windows) |
 | Import legacy settings... | import |
@@ -150,7 +150,7 @@ LE5 ([#230](https://github.com/altqx/hikari/issues/230)) replaced the Manage tag
 ## Notes for other cards
 
 - **WS3 [#217](https://github.com/altqx/hikari/issues/217)** removes the View arrangements (GLOBAL_VIEW_*, roles view-all, view-video-subs, view-audio-subs, view-only-video, view-only-subs) and Enable / Disable editor. IC1 draws nothing for them. WS3 drops the view-* roles or marks them as not placed. The editor role stays: the Settings Editor page and the video menu's Open editor use it. WS3's new Save layout as… and Manage layouts… items need icons. layout-preset, layout-reset and layout-restore are there for its menu.
-- **LE2 [#227](https://github.com/altqx/hikari/issues/227)** adds a checkable Times/Frames item to the video panel's menu, and **GR3 [#236](https://github.com/altqx/hikari/issues/236)** adds a checkable auto-hide toggle under Hide columns. Check items need no icon.
+- **LE2 [#227](https://github.com/altqx/hikari/issues/227)** adds a checkable Times/Frames item to the video panel's menu, and **GR3 [#236](https://github.com/altqx/hikari/issues/236)** adds a checkable auto-hide toggle under Hide columns. Check items need no icon. **VF1 [#288](https://github.com/altqx/hikari/issues/288)** adds the Seek on and Then play submenus after it, with video-to-start-time and play-line; their choices are check items.
 - **AV1 [#238](https://github.com/altqx/hikari/issues/238)**'s speaker button and device menu can take audio-device (a loudspeaker, drawn for Settings › Audio output). Its "Audio settings…" item needs an icon: settings-audio.
 - **PF1 [#225](https://github.com/altqx/hikari/issues/225)** places the Options icons below. The manifest marks them `pending: "PF1 #225"`.
 

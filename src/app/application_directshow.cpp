@@ -88,12 +88,15 @@ void Application::choosePlayer()
                                                       [frame = std::move(frame)](application::FramePool &) { return frame; });
             });
             // Legacy: HR's HikariLogSilent for the failed step, then
-            // VideoBox::LoadVideo's warning box.
+            // VideoBox::LoadVideo's warning box (NT1: a warning toast, the
+            // failed step its Details).
             m_directShow->setOpenFailed([this](const std::string &message) {
-                m_log->log(openMessage(message), true);
-                emit playerNotice(QCoreApplication::translate("HikariSub.Video",
-                                                              "The file is not a valid video file or is corrupted,\n"
-                                                              "or codecs or a splitter may be missing"));
+                m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Video", "Open video"),
+                              QCoreApplication::translate("HikariSub.Video",
+                                                          "The file is not a valid video file or is corrupted,\n"
+                                                          "or codecs or a splitter may be missing")
+                                  .replace(QLatin1Char('\n'), QLatin1Char(' ')),
+                              openMessage(message));
             });
         }
         m_directShow->setColorSpace(m_video->session().matrix());

@@ -104,8 +104,10 @@ public:
     // number, else kDummySamples.
     static std::int64_t dummySamples(std::string_view name);
 
-    // HikariLog, or HikariLogDebug (shown only in legacy debug builds).
-    enum class LogLevel { Shown, Debug };
+    // HikariLog, or HikariLogDebug (shown only in legacy debug builds). NT1
+    // (#302): a shown message is an error (the audio did not open) or, when
+    // the audio still opened, a warning.
+    enum class LogLevel { Shown, Warning, Debug };
     using Log = std::function<void(const std::string &message, LogLevel level)>;
     // Shows the chooser's rows; answers the chosen row, or nothing on Cancel.
     using Chooser = std::function<void(const std::vector<std::string> &rows, std::function<void(std::optional<int>)> answer)>;
