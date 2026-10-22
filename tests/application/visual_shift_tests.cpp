@@ -1077,7 +1077,8 @@ TEST(HydraStrip, SetsPlacingsOnTheActiveLine)
             host.tags[def].mode = static_cast<unsigned char>(placing);
             ASSERT_TRUE(tags.setOption("variant", placing, host));
             EXPECT_EQ(static_cast<int>(tags.actualTag().mode), placing) << "the placing is the definition's";
-            const ToolValue *value = valueNamed(tags.values(host), "value0");
+            const auto values = tags.values(host); // the pointer below is into it
+            const ToolValue *value = valueNamed(values, "value0");
             ASSERT_TRUE(value);
             double now = 0;
             ASSERT_TRUE(parseValue(value->text, now));
