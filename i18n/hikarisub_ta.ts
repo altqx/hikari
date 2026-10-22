@@ -2115,7 +2115,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Manages font catalogs</source>
-        <translation>எழுத்துரு பட்டியல்களை நிர்வகிக்கிறது</translation>
+        <translation type="vanished">எழுத்துரு பட்டியல்களை நிர்வகிக்கிறது</translation>
     </message>
     <message>
         <source>Allows managing font catalogs</source>
@@ -2139,39 +2139,19 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Catalogs:</source>
-        <translation>பட்டியல்கள்:</translation>
-    </message>
-    <message>
-        <source>Choose or type a catalog name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add a catalog with this name</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">பட்டியல்கள்:</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>தொகு</translation>
-    </message>
-    <message>
-        <source>Edit the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">தொகு</translation>
     </message>
     <message>
         <source>Delete</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
-        <source>Delete the catalog</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Load</source>
-        <translation>ஏற்று</translation>
-    </message>
-    <message>
-        <source>Load a catalog from a file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ஏற்று</translation>
     </message>
     <message>
         <source>Refresh fonts</source>
@@ -2183,19 +2163,173 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Find:</source>
-        <translation>கண்டுபிடி:</translation>
+        <translation type="vanished">கண்டுபிடி:</translation>
     </message>
     <message>
         <source>Save filter</source>
-        <translation>வடிகட்டியை சேமிக்கவும்</translation>
+        <translation type="vanished">வடிகட்டியை சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Font name</source>
-        <translation>எழுத்துரு பெயர்</translation>
+        <translation type="vanished">எழுத்துரு பெயர்</translation>
+    </message>
+    <message>
+        <source>Enter a name for the catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A catalog named “%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">மாற்று</translation>
+    </message>
+    <message>
+        <source>Delete font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the catalog “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It holds no fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its fonts stay installed and in their other catalogs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cannot read “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file holds no font catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 catalogs in “%3” already exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalogs are added: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogs with the same fonts as yours are left as they are: %1.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Catalog</source>
         <translation>பட்டியல்</translation>
+    </message>
+    <message>
+        <source>%1 here, %2 in the file (%3 new)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Load %n catalog(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n new</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n merged</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n replaced</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n renamed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Loaded 1 font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Loaded %n font catalogs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>From %1: %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load from a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not in a catalog</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sample</source>
@@ -2206,20 +2340,36 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” in “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalogs are saved automatically to FontCatalogs.txt in the &quot;Config&quot; folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fonts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mark %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalog of %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
-        <translation>பட்டியல்களுக்குத் தானியங்கு சேமிப்பு உள்ளது; கோப்புகள் &quot;Config&quot; கோப்புறையில் சேமிக்கப்படும்.</translation>
+        <translation type="vanished">பட்டியல்களுக்குத் தானியங்கு சேமிப்பு உள்ளது; கோப்புகள் &quot;Config&quot; கோப்புறையில் சேமிக்கப்படும்.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -2227,15 +2377,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Select the name of the profile</source>
-        <translation>சுயவிவரத்தின் பெயரைத் தேர்ந்தெடுக்கவும்</translation>
+        <translation type="vanished">சுயவிவரத்தின் பெயரைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
         <source>Choose new catalog name</source>
-        <translation>புதிய அட்டவணை பெயரைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">புதிய அட்டவணை பெயரைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Replace with:</source>
-        <translation>இதனுடன் மாற்றவும்:</translation>
+        <translation type="vanished">இதனுடன் மாற்றவும்:</translation>
     </message>
     <message>
         <source>OK</source>
@@ -2247,19 +2397,19 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Info</source>
-        <translation>தகவல்</translation>
+        <translation type="vanished">தகவல்</translation>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
-        <translation>புதிய பட்டியலுக்கு ஒரு பெயரை உள்ளிடவும்</translation>
+        <translation type="vanished">புதிய பட்டியலுக்கு ஒரு பெயரை உள்ளிடவும்</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>கேள்வி</translation>
+        <translation type="vanished">கேள்வி</translation>
     </message>
     <message>
         <source>Catalog named &quot;%1&quot; already exists. What to do?</source>
-        <translation type="unfinished">&quot;%1&quot; என்று பெயரிடப்பட்ட பட்டியல் ஏற்கனவே உள்ளது. என்ன செய்வது?</translation>
+        <translation type="obsolete">&quot;%1&quot; என்று பெயரிடப்பட்ட பட்டியல் ஏற்கனவே உள்ளது. என்ன செய்வது?</translation>
     </message>
     <message>
         <source>Merge</source>
@@ -2267,7 +2417,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Are you sure you want to delete this catalog?</source>
-        <translation>இந்த பட்டியலை நீக்க விரும்புகிறீர்களா?</translation>
+        <translation type="vanished">இந்த பட்டியலை நீக்க விரும்புகிறீர்களா?</translation>
     </message>
     <message>
         <source>Choose font catalog file</source>
@@ -2369,11 +2519,63 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Select a font</source>
-        <translation>எழுத்துருவைத் தேர்ந்தெடுக்கவும்</translation>
+        <translation type="vanished">எழுத்துருவைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
         <source>Font</source>
         <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Font selection</source>
+        <translation type="unfinished">எழுத்துரு தேர்வு</translation>
+    </message>
+    <message>
+        <source>Search fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font catalog: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only fonts that have “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to a catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add “%1” to a catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font is called “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font is in “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No fonts match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use “%1” anyway</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Size</source>
@@ -2382,6 +2584,10 @@ when demuxing fonts from an MKV file.</source>
     <message>
         <source>Font size</source>
         <translation>எழுத்துரு அளவு</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Bold</source>
@@ -2399,20 +2605,78 @@ when demuxing fonts from an MKV file.</source>
         <source>Strikethrough</source>
         <translation>ச்ட்ரைகெத்ரோ</translation>
     </message>
-    <message>
-        <source>Filtering and font catalogs</source>
-        <translation>வடிகட்டுதல் மற்றும் எழுத்துரு பட்டியல்கள்</translation>
+    <message numerus="yes">
+        <source>%1 of %n fonts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>Preview</source>
-        <translation>முன்னோட்டம்</translation>
+        <source>1 font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n fonts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>AaBbCcDdEeFfGg 0123456789</source>
+        <source>Sample text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The subtitle renderer uses %1 (%2).</source>
+        <source>The Line’s selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Style editor’s sample text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage catalogs…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No catalogs yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalog…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts from subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only fonts that have these characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">இடு</translation>
+    </message>
+    <message>
+        <source>Filtering and font catalogs</source>
+        <translation type="vanished">வடிகட்டுதல் மற்றும் எழுத்துரு பட்டியல்கள்</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="vanished">முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Drawn by the subtitle renderer with %1 (%2).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2429,11 +2693,11 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Remove all contents of catalog</source>
-        <translation>பட்டியலின் அனைத்து உள்ளடக்கங்களையும் அகற்று</translation>
+        <translation type="vanished">பட்டியலின் அனைத்து உள்ளடக்கங்களையும் அகற்று</translation>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
-        <translation>திறந்துள்ள அனைத்து வசன வரிகளிலிருந்தும் எழுத்துருக்களைச் சேர்க்கவும்</translation>
+        <translation type="vanished">திறந்துள்ள அனைத்து வசன வரிகளிலிருந்தும் எழுத்துருக்களைச் சேர்க்கவும்</translation>
     </message>
     <message>
         <source>All fonts</source>
@@ -2447,7 +2711,7 @@ when demuxing fonts from an MKV file.</source>
         <source>For adding fonts to catalog,
 click &quot;Manage&quot; button first,
 to create new catalog.</source>
-        <translation>பட்டியலில் எழுத்துருக்களைச் சேர்ப்பதற்கு, 
+        <translation type="vanished">பட்டியலில் எழுத்துருக்களைச் சேர்ப்பதற்கு, 
 முதலில் &quot;நிர்வகி&quot; பொத்தானைக் சொடுக்கு செய்க, 
 புதிய பட்டியலை உருவாக்க.</translation>
     </message>
@@ -2803,6 +3067,64 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Completed successfully and copied %1 fonts.</source>
         <translation type="unfinished">வெற்றிகரமாக நிறைவு செய்யப்பட்டு %1 எழுத்துருக்களை நகலெடுத்தது.</translation>
+    </message>
+    <message>
+        <source>Added 1 font to “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n fonts to “%1”</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>From the styles and %1 tags of the open files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the styles and %1 tags of %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a catalog or type a new name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All open files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the catalog’s fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The fonts of every style and every %1 tag in all %n open files.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The fonts of every style and every %1 tag in %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fonts “%1” holds now are removed first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4782,6 +5104,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>Difference</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge</source>
+        <translation type="unfinished">ஒன்றிணைக்கவும்</translation>
     </message>
     <message>
         <source>Action</source>
