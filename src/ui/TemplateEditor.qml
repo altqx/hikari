@@ -1073,17 +1073,20 @@ Pane {
             contentItem: RowLayout {
                 spacing: 8
                 Label {
+                    textFormat: Text.PlainText
                     Layout.preferredWidth: 14
                     horizontalAlignment: Text.AlignHCenter
                     text: pickerRow.on ? (pickerRow.radio ? "●" : "✓") : (pickerRow.radio ? "○" : "")
                     color: pickerRow.on ? Theme.accent : Theme.muted
                 }
                 Label {
+                    textFormat: Text.PlainText
                     Layout.fillWidth: true
                     text: pickerRow.text
                     elide: Text.ElideRight
                 }
                 Label {
+                    textFormat: Text.PlainText
                     text: pickerRow.keyword
                     font: root.monoFont
                     color: Theme.muted
@@ -1094,6 +1097,7 @@ Pane {
             topPadding: 6
             bottomPadding: 6
             Label {
+                textFormat: Text.PlainText
                 leftPadding: 10
                 bottomPadding: 2
                 text: qsTr("Runs for each")
@@ -1115,6 +1119,7 @@ Pane {
                 }
             }
             Label {
+                textFormat: Text.PlainText
                 leftPadding: 10
                 topPadding: 6
                 bottomPadding: 2
@@ -1141,6 +1146,7 @@ Pane {
                 color: Theme.line
             }
             Label {
+                textFormat: Text.PlainText
                 width: effectPicker.width
                 leftPadding: 10
                 rightPadding: 10

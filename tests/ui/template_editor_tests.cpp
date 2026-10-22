@@ -2249,6 +2249,41 @@ private slots:
         }
     }
 
+    void aStyleInTheEffectPickerIsShownAsText()
+    {
+        // The "all" modifier names the template's Style, which is the file's.
+        const std::u8string img = u8"<img src=\"http://127.0.0.1:9/x\">";
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> tl;
+        for (const auto *l : doc.lines())
+            if (!tl && application::templateKindOf(*l) == application::TemplateKind::Template)
+                tl = l->id;
+        QVERIFY(tl);
+        QVERIFY(doc.editLine(*tl, [&](core::LineRecord &l) { l.style = img; }));
+        openDocument(std::move(doc), true);
+        editor->setCurrent(tl->value);
+        editor->setShown(true);
+        showPanel(900);
+        auto *popup = object(QStringLiteral("templateEffectPopover"));
+        QVERIFY(popup);
+        QMetaObject::invokeMethod(popup, "open");
+        QTRY_VERIFY(popup->property("opened").toBool());
+        int seen = 0;
+        const std::function<void(QQuickItem *)> walk = [&](QQuickItem *at) {
+            for (QQuickItem *child : at->childItems()) {
+                if (child->inherits("QQuickText") && !child->property("text").toString().isEmpty()) {
+                    if (child->property("text").toString().contains(QLatin1String("<img")))
+                        ++seen;
+                    QCOMPARE(child->property("textFormat").toInt(), int(Qt::PlainText));
+                }
+                walk(child);
+            }
+        };
+        walk(popup->property("contentItem").value<QQuickItem *>());
+        QCOMPARE(seen, 1);
+        QMetaObject::invokeMethod(popup, "close");
+    }
+
     void applyFromThePanelIsOneStepAndSaysWhatItWrote()
     {
         open(QStringLiteral("stock-tutorials.ass"));
