@@ -70,6 +70,17 @@ TEST(TagTransfer, LineWideTagsAnywhereGoToTheFront)
     EXPECT_TRUE(tags.runs.empty()); // \pos changes no glyph
 }
 
+TEST(TagTransfer, AnAnimatedClipGoesToTheFrontToo)
+{
+    // libass animates the line's clip wherever the \t stands.
+    const auto tags = readOriginalTags(u"a {\\t(\\clip(0,0,100,100))}b{\\r}c");
+    EXPECT_EQ(u8(tags.leading), "{\\t(\\clip(0,0,100,100))}");
+    EXPECT_TRUE(tags.runs.empty());
+    EXPECT_EQ(u8(composeTranslation(tags, draft(u"x y"))), "{\\t(\\clip(0,0,100,100))}x y");
+    // With a tag of the run's formatting it is the run's.
+    EXPECT_EQ(readOriginalTags(u"a {\\t(\\iclip(0,0,1,1)\\fs20)}b{\\r} c").runs.size(), 1u);
+}
+
 TEST(TagTransfer, InnerRunsComeFromFormattingState)
 {
     const auto tags = readOriginalTags(u"text0{\\i1}text1{\\i0\\b1}text2{\\b0}text3");

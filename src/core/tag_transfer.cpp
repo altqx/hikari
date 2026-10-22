@@ -174,6 +174,11 @@ bool hasVisible(std::u16string_view raw, const Piece &piece)
     return false;
 }
 
+bool isClip(std::u16string_view name)
+{
+    return name == u"clip" || name == u"iclip";
+}
+
 bool isLineWide(std::u16string_view name)
 {
     for (const auto n : {u"pos", u"move", u"org", u"fad", u"fade", u"clip", u"iclip", u"an", u"a", u"q"})
@@ -493,10 +498,27 @@ bool isEmptyTransform(const Tag &tag)
     std::size_t order = 0;
     for (const auto &nested : parseBlock(tag.args, order)) {
         const auto kind = effectOf(nested.name).kind;
-        if (kind != Kind::None && kind != Kind::Reset && kind != Kind::Transform)
+        if ((kind != Kind::None && kind != Kind::Reset && kind != Kind::Transform) || isClip(nested.name))
             return false;
     }
     return true;
+}
+
+// A \t animating only the clip: libass animates the line's clip wherever
+// it stands, a line-wide tag like \clip.
+bool isClipTransform(const Tag &tag)
+{
+    if (tag.name != u"t")
+        return false;
+    std::size_t order = 0;
+    bool clip = false;
+    for (const auto &nested : parseBlock(tag.args, order)) {
+        const auto kind = effectOf(nested.name).kind;
+        if (kind != Kind::None && kind != Kind::Reset && kind != Kind::Transform)
+            return false;
+        clip = clip || isClip(nested.name);
+    }
+    return clip;
 }
 
 // Whether applying `tag` may change the formatting state.
@@ -913,7 +935,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         for (const auto &tag : piece.tags) {
             if (isKaraoke(tag.name) || isEmptyTransform(tag))
                 continue;
-            if (isLineWide(tag.name)) {
+            if (isLineWide(tag.name) || isClipTransform(tag)) {
                 if (isLeading)
                     lead(tag.text);
                 else
