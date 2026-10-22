@@ -21017,6 +21017,46 @@ private slots:
             tools.selectFamily(10);
             QTRY_VERIFY(visualItem("visualOption_tag"));
             shoot(QStringLiteral("vt1-all-tags") + suffix);
+            // HY1: the Lines picked and outlined under Add, a drag on the
+            // video with its value, the last change card, the tag list.
+            session->setSelection({lines[2]->id, {lines[0]->id, lines[1]->id, lines[2]->id}, lines[2]->id, {}});
+            tools.pickBatch();
+            QVERIFY(tools.setOption(QStringLiteral("change"), 1));
+            QTRY_VERIFY(visualItem("visualValue_by0"));
+            shoot(QStringLiteral("hy1-picked") + suffix);
+            {
+                const QPoint from = videoPoint(tools.videoRect().center());
+                QTest::mouseMove(window, from);
+                QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, from);
+                QTest::mouseMove(window, from + QPoint(6, 0));
+                QTest::mouseMove(window, from + QPoint(24, 0));
+                QTRY_VERIFY(tools.gestureActive());
+                shoot(QStringLiteral("hy1-dragging") + suffix);
+                QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, from + QPoint(24, 0));
+                QTRY_VERIFY(!tools.gestureActive());
+                QTRY_VERIFY(visualItem("visualLastChange") && visualItem("visualLastChange")->isVisible());
+                QTest::mouseMove(window, QPoint(1, 1));
+                shoot(QStringLiteral("hy1-last-change") + suffix);
+            }
+            {
+                QQuickItem *tagButton = visualItem("visualOption_tag");
+                auto *list = tagButton->findChild<QObject *>(QStringLiteral("visualOption_tag_menu"));
+                QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier,
+                                  tagButton->mapToScene(QPointF(tagButton->width() / 2, tagButton->height() / 2)).toPoint());
+                QTRY_VERIFY(list->property("opened").toBool());
+                QTest::qWait(300);
+                const QImage shot = window->grabWindow();
+                const QRect listRect = crop(list->property("background").value<QQuickItem *>()).united(crop(tagButton));
+                QVERIFY(shot.copy(listRect.adjusted(-8, -8, 8, 8).intersected(shot.rect()))
+                            .save(out + QStringLiteral("/hy1-tag-list") + suffix));
+                QTest::keyClick(window, Qt::Key_Escape);
+                QTRY_VERIFY(!list->property("visible").toBool());
+            }
+            tools.dismissLastChange();
+            tools.clearBatch();
+            QVERIFY(application->editor().undo());
+            QVERIFY(tools.setOption(QStringLiteral("change"), 0)); // the next theme's shots as the first's
+            application->selectLine(lines[2]->id.value);
             // Scale on a narrow window: the groups wrap.
             tools.selectFamily(3);
             QTRY_VERIFY(visualItem("visualValue_fscx"));
