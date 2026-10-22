@@ -239,13 +239,24 @@ core::Document templatePreviewDocument(const core::Document &doc, core::LineId s
     };
     // The preview stands where the Lines it replaces stood, as Apply writes
     // it (read order decides collisions and stacking): before the first Line
-    // after them that stays; at the end when there were none.
+    // after them that stays. With none, before the first Line of a karaoke
+    // Line after the source (Apply writes the Lines in karaoke Line order);
+    // at the end when there is none either.
+    std::map<core::LineId, std::size_t> place;
+    for (const auto *l : doc.lines())
+        place.emplace(l->id, place.size());
+    const bool replacing = std::ranges::any_of(doc.lines(), [&](const core::LineRecord *l) { return replacedHere(*l); });
+    const auto later = [&](const core::LineRecord &l) {
+        const auto from = place.find(l.generatedFrom);
+        return l.generatedFrom.value != 0 && from != place.end() && place.contains(source) &&
+               from->second > place.at(source);
+    };
     std::optional<core::LineId> before;
     bool past = false;
     for (const auto *l : doc.lines()) {
-        if (replacedHere(*l))
+        if (replacing ? replacedHere(*l) : later(*l))
             past = true;
-        else if (past && !goes(*l)) {
+        if (past && !replacedHere(*l) && !goes(*l)) {
             before = l->id;
             break;
         }

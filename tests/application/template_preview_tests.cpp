@@ -353,6 +353,20 @@ TEST_F(TemplatePreview, ThePreviewStandsWhereTheSourcesLinesStood)
     EXPECT_EQ(textsOf(templatePreviewDocument(unmarked, ids[4], {a, b}, {ids[5], ids[6]}, {1000, 5000})), inPlace);
 }
 
+// A source that made no Lines before: Apply writes its Lines before those of
+// the karaoke Lines after it, so the preview stands there too.
+TEST_F(TemplatePreview, ANewPreviewStandsBeforeLaterKaraokeLinesLines)
+{
+    core::Document none = doc;
+    none.removeLinesIf([&](const core::LineRecord &l) { return l.id == ids[5] || l.id == ids[6]; });
+    core::LineRecord a = line(5), b = line(6);
+    a.text = u8"{\\pos(9,9)}ha";
+    b.text = u8"{\\pos(9,9)}ru";
+    EXPECT_EQ(textsOf(templatePreviewDocument(none, ids[4], {a, b}, {}, {1000, 5000})),
+              (std::vector<std::u8string>{u8"{\\k50}ka{\\k50}ze", u8"{\\pos(9,9)}ha", u8"{\\pos(9,9)}ru",
+                                          u8"{\\pos(1,2)}ka"}));
+}
+
 // The source not applied yet (a Dialogue): Apply turns it into a Comment when
 // its templates make Lines, so the frame does not draw it under them.
 TEST_F(TemplatePreview, TheSourceIsLeftOutWhenItsTemplatesMakeLines)
