@@ -1725,8 +1725,6 @@ void Application::refreshViews()
         spellChecker();
     reportGroupBreak();
     scheduleAutosave();
-    if (m_styleManager)
-        m_styleManager->documentEdited(); // TP1: the Styles panel
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -1753,6 +1751,10 @@ void Application::refreshViews()
         if (m_find)
             m_find->reset();
     }
+    // TP1: the Styles panel, once the Line editor is on the target (the
+    // panel picks the active Line's Style when its own is gone).
+    if (m_styleManager)
+        m_styleManager->documentEdited();
     refreshVideo();
     refreshAudio();
     if (m_statusBar)
@@ -2905,10 +2907,12 @@ bool Application::selectLinesWithStyle(const QString &style)
     for (const auto *line : session->document().lines())
         if (line->style == name && (!shown || shown(line->id)))
             found.push_back(line->id);
-    if (found.empty())
-        return false;
-    std::set<core::LineId> selected(found.begin(), found.end());
     const auto current = session->selection().active;
+    if (found.empty()) { // as Select mode: the old selection goes, the active Line stays
+        applySelection(application::Selection{current, {}, current, {}});
+        return false;
+    }
+    std::set<core::LineId> selected(found.begin(), found.end());
     const core::LineId active = current && selected.contains(*current) ? *current : found.front();
     // A new range: Shift extends from the active Line, as after Select lines.
     return applySelection(application::Selection{active, std::move(selected), active, {}});
