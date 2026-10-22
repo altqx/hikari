@@ -140,6 +140,9 @@ private:
     bool finishEdit(VisualHost &host);
     bool several(const VisualHost &host) const; // EditBox::IsCursorOnStart
     std::vector<core::LineId> targetsFor(const VisualHost &host) const;
+    // The Lines a change edits: several picked ones less those the Grid
+    // hides (the last change's own, unfiltered, when it is done again).
+    std::vector<core::LineId> editedTargets(const VisualHost &host) const;
     void legacyPointer(const Pointer &event, VisualHost &host);
     bool legacyKey(const Key &event, VisualHost &host);
 
@@ -205,6 +208,7 @@ private:
         std::uint64_t revision = 0;
         std::int64_t time = -1;
         std::vector<core::LineId> targets;
+        std::u8string draft; // the active Line's draft as the video shows it (its fields that place it)
         float coeffW = 0, coeffH = 0;
         PointF zoomMove, zoomScale;
         Overlay overlay;

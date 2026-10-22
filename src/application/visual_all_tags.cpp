@@ -718,6 +718,16 @@ std::vector<core::LineId> AllTagsTool::targetsFor(const VisualHost &host) const
     return m_forcedTargets ? *m_forcedTargets : host.batchTargets();
 }
 
+std::vector<core::LineId> AllTagsTool::editedTargets(const VisualHost &host) const
+{
+    auto targets = targetsFor(host);
+    if (m_forcedTargets || !severalLines(targets, host.activeLine()))
+        return targets;
+    if (const auto shown = host.shownLines())
+        std::erase_if(targets, [&](core::LineId id) { return !shown(id); });
+    return targets;
+}
+
 float AllTagsTool::diffValue(const Slider &slider) const
 {
     // AllTagsSlider::GetDiffValue (VisualAllTagsControls.cpp:346-349).
@@ -942,15 +952,7 @@ bool AllTagsTool::beginEdit(VisualHost &host)
     if (targets.empty())
         return false;
     const bool many = severalLines(targets, host.activeLine());
-    m_targets.clear();
-    if (many && !m_forcedTargets) {
-        const auto shown = host.shownLines();
-        for (const core::LineId id : targets)
-            if (!shown || shown(id))
-                m_targets.push_back(id);
-    } else {
-        m_targets = targets;
-    }
+    m_targets = editedTargets(host);
     if (m_targets.empty())
         return false;
     auto g = host.beginGesture(m_targets, std::string(familyInfo(Family::Hydra).history));
@@ -1525,7 +1527,8 @@ bool AllTagsTool::setValue(const std::string &name, const std::u16string &text, 
 {
     // VT1: a typed value (Enter) or a scrub's release applies the change as
     // one step; a scrub's samples preview it.
-    if (m_legacySliders || host.gesture() && !m_sample)
+    // Without video the tool has not read the active Line (reset).
+    if (m_legacySliders || host.gesture() && !m_sample || !host.view().hasVideo())
         return false;
     double parsed = 0;
     if (!parseValue(text, parsed))
@@ -1604,7 +1607,7 @@ bool AllTagsTool::editLastChange(const std::string &name, const std::u16string &
     // The card's value: the last step undone and the change done again with
     // it, on the Lines it changed, so it is still one step. Anything else
     // that changed the Document since (or an open gesture) closes the card.
-    if (!m_last || m_last->tag != m_currentTag || m_last->mode != m_mode)
+    if (!m_last || m_last->tag != m_currentTag || m_last->mode != m_mode || !host.view().hasVideo())
         return false;
     if (host.session() != m_last->session) {
         m_last.reset();
@@ -1878,12 +1881,19 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
     // HY1: the Lines the change edits, those shown at the video's time,
     // outlined (numbered in the order Multiply and the line gradients count
     // them when there are several), and a drag's value by the pointer.
-    const auto targets = targetsFor(host);
+    const auto targets = editedTargets(host);
     const auto *session = host.session();
     const VideoView &view = host.view();
     const std::int64_t time = host.videoTimeMs();
+    const auto draft = session ? session->draftRecord() : std::nullopt;
+    std::u8string draftKey;
+    if (draft)
+        for (const std::u8string *field : {&draft->text, &draft->style, &draft->start.lexeme, &draft->end.lexeme,
+                                           &draft->layer.lexeme, &draft->marginLeft.lexeme, &draft->marginRight.lexeme,
+                                           &draft->marginVertical.lexeme})
+            draftKey += *field + u8'\x01';
     const bool fresh = m_outlines && session && m_outlines->revision == session->revision() &&
-                       m_outlines->time == time && m_outlines->targets == targets &&
+                       m_outlines->time == time && m_outlines->targets == targets && m_outlines->draft == draftKey &&
                        m_outlines->coeffW == view.coeffW() && m_outlines->coeffH == view.coeffH() &&
                        m_outlines->zoomMove == view.zoomMove() && m_outlines->zoomScale == view.zoomScale();
     if (!fresh && session) {
@@ -1891,6 +1901,7 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
         o.revision = session->revision();
         o.time = time;
         o.targets = targets;
+        o.draft = draftKey;
         o.coeffW = view.coeffW();
         o.coeffH = view.coeffH();
         o.zoomMove = view.zoomMove();
@@ -1903,7 +1914,9 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
         constexpr std::size_t kMostOutlined = 64;
         std::size_t outlined = 0;
         for (std::size_t i = 0; i < targets.size() && outlined < kMostOutlined; ++i) {
-            const core::LineRecord *line = findLine(session->document(), targets[i]);
+            // The active Line's draft is what the video shows.
+            const core::LineRecord *line =
+                draft && draft->id == targets[i] ? &*draft : findLine(session->document(), targets[i]);
             if (!line || lineWarning(Family::Hydra, *line, time) != LineWarning::None)
                 continue;
             const auto box = lineBox(ctx, *line);

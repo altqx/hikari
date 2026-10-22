@@ -6,6 +6,7 @@
 
 #include "hikari/application/resample.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_transform.h"
 #include "hikari/core/ass_save.h"
 #include "hikari/core/text_projection.h"
 
@@ -465,7 +466,9 @@ int VisualToolsController::targetCount() const
     // HY1: the Lines a change edits: several picked ones less those the
     // Grid hides (AllTagsTool::beginEdit).
     const auto targets = batchTargets();
-    const auto shown = targets.size() > 1 ? shownLines() : std::function<bool(core::LineId)>{};
+    const auto shown = application::visual::transform::severalLines(targets, activeLine())
+                           ? shownLines()
+                           : std::function<bool(core::LineId)>{};
     if (!shown)
         return static_cast<int>(targets.size());
     return static_cast<int>(std::ranges::count_if(targets, shown));

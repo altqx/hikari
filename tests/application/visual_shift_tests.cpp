@@ -1442,6 +1442,91 @@ TEST(HydraStrip, AnOverflowingDrawingIsOutlined)
     EXPECT_LE(o.polygons.size(), 2u);
 }
 
+// HY1 (Codex on #339): on one Line a drag through several samples, or a
+// scrub, writes what typing its last value writes, once (Multiply's Lines
+// after the first are the ones it changes: none here).
+TEST(HydraStrip, ADragOnOneLineWritesItsLastValueOnce)
+{
+    const std::vector<std::pair<int, std::string>> cases{{PasteAdd, "by0"},
+                                                          {PasteInsert, "value0"},
+                                                          {PasteGradientTextIncrease, "to0"},
+                                                          {PasteGradientTextDecrease, "from0"}};
+    for (const auto &[mode, name] : cases) {
+        SCOPED_TRACE("mode " + std::to_string(mode));
+        const auto fresh = [&](TestHost &host, AllTagsTool &tags) {
+            setUp(host, hydraCase({"{\\blur2}Hello there"}, false));
+            host.caret = {3, 3};
+            tags.setToggled(mode << 20);
+            tags.selected(host);
+            tags.reset(host);
+        };
+        TestHost dragged;
+        AllTagsTool drag;
+        fresh(dragged, drag);
+        ASSERT_TRUE(drag.markValue(name, dragged));
+        drag.pointer(pointerAt(Pointer::Kind::Press, 300, 200, Pointer::Button::Left, true), dragged);
+        for (const int x : {306, 312, 318})
+            drag.pointer(pointerAt(Pointer::Kind::Move, x, 200, Pointer::Button::None, true), dragged);
+        const auto shown = drag.values(dragged);
+        const std::u16string last = valueNamed(shown, name)->text;
+        drag.pointer(pointerAt(Pointer::Kind::Release, 318, 200, Pointer::Button::Left), dragged);
+        TestHost scrubbed;
+        AllTagsTool scrub;
+        fresh(scrubbed, scrub);
+        for (const char16_t *v : {u"1", u"3"})
+            ASSERT_TRUE(scrub.setValue(name, v, scrubbed, ValueEdit::Sample));
+        ASSERT_TRUE(scrub.setValue(name, last, scrubbed, ValueEdit::Commit));
+        TestHost typed;
+        AllTagsTool type;
+        fresh(typed, type);
+        ASSERT_TRUE(type.setValue(name, last, typed));
+        const std::string want = textOf(*typed.s, typed.targets.front());
+        EXPECT_EQ(textOf(*dragged.s, dragged.targets.front()), want);
+        EXPECT_EQ(textOf(*scrubbed.s, scrubbed.targets.front()), want);
+    }
+}
+
+// HY1 (Codex on #339): without video the strip has not read the active
+// Line, so a typed value writes nothing.
+TEST(HydraStrip, NoVideoNoChange)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\blur2}Hello"}, false));
+    host.noVideo = true;
+    AllTagsTool tags;
+    tags.setToggled(PasteInsert << 20);
+    tags.selected(host);
+    tags.reset(host);
+    const std::size_t steps = host.s->historySize();
+    EXPECT_FALSE(tags.setValue("value0", u"5", host));
+    EXPECT_EQ(host.s->historySize(), steps);
+    EXPECT_EQ(textOf(*host.s, host.targets.front()), "{\\blur2}Hello");
+}
+
+// HY1 (Codex on #339): the outlines are the Lines a change edits: not the
+// picked ones the Grid hides; the active Line's draft where the video shows it.
+TEST(HydraStrip, TheOutlinesFollowWhatIsEditedAndShown)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\pos(400,200)}One", "{\\pos(900,500)}Two", "{\\pos(1400,800)}Three"}, true));
+    const auto all = ids(*host.s);
+    host.hidden.insert(all[1]);
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    const Overlay o = tags.overlay(host);
+    ASSERT_EQ(o.polygons.size(), 2u);
+    ASSERT_EQ(o.texts.size(), 2u);
+    EXPECT_EQ(o.texts[1].text, u"2");
+    EXPECT_NEAR((o.polygons[1].points[0].x + o.polygons[1].points[1].x) / 2, 1400.f / 3, 1.f);
+    // The active Line's draft moves it.
+    ASSERT_TRUE(host.s->editDraftText(all[0], u8"{\\pos(600,200)}One"));
+    const Overlay moved = tags.overlay(host);
+    ASSERT_EQ(moved.polygons.size(), 2u);
+    EXPECT_NEAR((moved.polygons[0].points[0].x + moved.polygons[0].points[1].x) / 2, 600.f / 3, 1.f);
+}
+
 // HY1-time-keys-set: the Line editor's "Insert difference from the start"
 // key puts the video's time from the Line's start into \fad's first value,
 // as Set does, whatever the switch shows; one step.
