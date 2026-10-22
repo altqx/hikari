@@ -48,6 +48,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Pitch is kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>and</source>
+        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>change the speed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Output device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -245,6 +258,58 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Tap to time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold the key: releasing it leaves a gap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press the key: no gaps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to vocal onsets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1%</source>
+        <extracomment>A playback speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Calibrate latency…</source>
+        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -319,6 +384,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Speed: %1%</source>
+        <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Customise the audio panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -379,6 +449,26 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not applied: the Line cannot take these times as it is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every Line is tapped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid the Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
         <translation type="unfinished"></translation>
@@ -387,6 +477,101 @@ Output device: %2</source>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This Line is one syllable. Split it first, then tap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">செயல்தவிர்</translation>
+    </message>
+    <message>
+        <source>Esc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Space</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">தொடங்கு</translation>
+    </message>
+    <message>
+        <source>Calibrate tap latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on each beep.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>16 beeps at 100 BPM; the first four are practice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of 16 beeps</source>
+        <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your presses, in ms after each beep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
+        <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ரத்துசெய்</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">இடு</translation>
     </message>
 </context>
 <context>
@@ -1176,6 +1361,54 @@ to the color selection location</source>
         <translation>புதிய FPS</translation>
     </message>
     <message>
+        <source>Keep as is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change resolution only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample and stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation type="unfinished">வீடியோவைத் திற</translation>
+    </message>
+    <message>
+        <source>The video is %1 × %2 and the subtitles are %3 × %4.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample the subtitles to the video? Subtitles › Resample subtitles does it later too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">பட்டியல்</translation>
+    </message>
+    <message>
+        <source>Every line gets this style.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags at start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Written at the start of every line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation type="unfinished">பகுத்தல்</translation>
+    </message>
+    <message>
         <source>Width</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1184,16 +1417,56 @@ to the color selection location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>FPS</source>
+        <source>The new file’s script resolution.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">சட்டங்கள்</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a frame rate of 1 or more.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MicroDVD counts frames: times become frames at this rate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Per character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to show until the frame rate is valid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>FPS from video</source>
-        <translation>வீடியோவிலிருந்து FPS</translation>
-    </message>
-    <message>
-        <source>Catalog for style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">வீடியோவிலிருந்து FPS</translation>
     </message>
     <message>
         <source>Style</source>
@@ -1201,7 +1474,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>Time for one letter in milliseconds</source>
-        <translation>மில்லி விநாடிகளில் ஒரு எழுத்துக்கான நேரம்</translation>
+        <translation type="vanished">மில்லி விநாடிகளில் ஒரு எழுத்துக்கான நேரம்</translation>
     </message>
     <message>
         <source>New end times</source>
@@ -1209,19 +1482,11 @@ to the color selection location</source>
     </message>
     <message>
         <source>Tags to paste at the beginning of every ASS line</source>
-        <translation>ஒவ்வொரு ASS வரியின் தொடக்கத்திலும் ஒட்ட வேண்டிய குறிச்சொற்கள்</translation>
+        <translation type="vanished">ஒவ்வொரு ASS வரியின் தொடக்கத்திலும் ஒட்ட வேண்டிய குறிச்சொற்கள்</translation>
     </message>
     <message>
         <source>Resolution when converting to ASS</source>
-        <translation>ASS ஆக மாற்றும்போது தீர்மானம்</translation>
-    </message>
-    <message>
-        <source>The conversion will:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the conversion changes</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ASS ஆக மாற்றும்போது தீர்மானம்</translation>
     </message>
     <message>
         <source>Convert</source>
@@ -1229,23 +1494,79 @@ to the color selection location</source>
     </message>
     <message>
         <source>Subtitles resolution</source>
-        <translation>வசனத் தீர்மானம்</translation>
+        <translation type="vanished">வசனத் தீர்மானம்</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">வசன வரிகள்</translation>
+    </message>
+    <message>
+        <source>Subtitles width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles height</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>From subtitles</source>
         <translation>வசனங்களிலிருந்து</translation>
     </message>
     <message>
+        <source>No video is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The resolution the lines are written for now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The same as the subtitles: nothing to resample.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Positions, sizes and margins are scaled by %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaled by %1 across and %2 down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The aspect ratio changes from %1 to %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Target resolution</source>
-        <translation>இலக்கு தீர்மானம்</translation>
+        <translation type="vanished">இலக்கு தீர்மானம்</translation>
     </message>
     <message>
         <source>Resample options</source>
-        <translation>மறுமாதிரியாக்க விருப்பங்கள்</translation>
+        <translation type="vanished">மறுமாதிரியாக்க விருப்பங்கள்</translation>
     </message>
     <message>
         <source>No stretch</source>
-        <translation>நீட்டிக்க இல்லை</translation>
+        <translation type="vanished">நீட்டிக்க இல்லை</translation>
     </message>
     <message>
         <source>Stretch</source>
@@ -1253,7 +1574,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>Incompatible resolution</source>
-        <translation>பொருந்தாத தீர்மானம்</translation>
+        <translation type="vanished">பொருந்தாத தீர்மானம்</translation>
     </message>
     <message>
         <source>The video and subtitle resolutions are different.
@@ -1264,7 +1585,7 @@ Subtitle resolution: %3 x %4
 
 Match the resolution to the video?
 </source>
-        <translation type="unfinished">வீடியோ மற்றும் வசன வரிகளின் தீர்மானங்கள் வேறுபடுகின்றன.
+        <translation type="obsolete">வீடியோ மற்றும் வசன வரிகளின் தீர்மானங்கள் வேறுபடுகின்றன.
 அவற்றை இப்போது மாற்றலாம் அல்லது &apos;வசனத் தீர்மானத்தை மாற்று&apos; என்பதைப் பயன்படுத்தலாம்.
 
 வீடியோ தீர்மானம்: %1 x %2
@@ -1275,27 +1596,27 @@ Match the resolution to the video?
     </message>
     <message>
         <source>Change only the subtitle resolution</source>
-        <translation>வசனத் தீர்மானத்தை மட்டுமே மாற்றவும்</translation>
+        <translation type="vanished">வசனத் தீர்மானத்தை மட்டுமே மாற்றவும்</translation>
     </message>
     <message>
         <source>Resample subtitles (no stretch)</source>
-        <translation>வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி இல்லை)</translation>
+        <translation type="vanished">வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி இல்லை)</translation>
     </message>
     <message>
         <source>Resample subtitles (stretch)</source>
-        <translation>வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி)</translation>
+        <translation type="vanished">வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி)</translation>
     </message>
     <message>
         <source>Change</source>
-        <translation>மாற்று</translation>
+        <translation type="vanished">மாற்று</translation>
     </message>
     <message>
         <source>Do not change</source>
-        <translation>மாற்ற வேண்டாம்</translation>
+        <translation type="vanished">மாற்ற வேண்டாம்</translation>
     </message>
     <message>
         <source>Disable warning</source>
-        <translation>எச்சரிக்கை முடக்கு</translation>
+        <translation type="vanished">எச்சரிக்கை முடக்கு</translation>
     </message>
     <message>
         <source>In line %1, value &apos;%2&apos; cannot be scaled
@@ -2366,11 +2687,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Save folder</source>
-        <translation>கோப்புறையை சேமிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Destination folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">கோப்புறையை சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Select a folder</source>
@@ -2378,40 +2695,124 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Options</source>
-        <translation>விருப்பங்கள்</translation>
+        <translation type="vanished">விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Check availability of fonts</source>
-        <translation>எழுத்துருக்களின் கிடைக்கும் தன்மையை சரிபார்க்கவும்</translation>
+        <translation type="vanished">எழுத்துருக்களின் கிடைக்கும் தன்மையை சரிபார்க்கவும்</translation>
     </message>
     <message>
         <source>Copy to selected folder</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட கோப்புறையில் நகலெடுக்கவும்</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட கோப்புறையில் நகலெடுக்கவும்</translation>
     </message>
     <message>
         <source>Zip</source>
-        <translation>சிப்</translation>
+        <translation type="vanished">சிப்</translation>
     </message>
     <message>
         <source>Save to video / subtitles folder.</source>
-        <translation>வீடியோ / வசன வரிகள் கோப்புறையில் சேமிக்கவும்.</translation>
+        <translation type="vanished">வீடியோ / வசன வரிகள் கோப்புறையில் சேமிக்கவும்.</translation>
     </message>
     <message>
         <source>Saves to the video folder
 when demuxing fonts from an MKV file.</source>
-        <translation>வீடியோ கோப்புறையில் சேமிக்கவும்
+        <translation type="vanished">வீடியோ கோப்புறையில் சேமிக்கவும்
  MKV இலிருந்து டெமக்ச் எழுத்துருக்கள்.</translation>
     </message>
     <message>
         <source>Demux fonts from loaded MKV file</source>
-        <translation>ஏற்றப்பட்ட எம்.கே.வி கோப்பிலிருந்து டெமக்ச் எழுத்துருக்கள்</translation>
+        <translation type="vanished">ஏற்றப்பட்ட எம்.கே.வி கோப்பிலிருந்து டெமக்ச் எழுத்துருக்கள்</translation>
     </message>
     <message>
         <source>Font collector log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Write this incomplete collection, labelled incomplete</source>
+        <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copies each font file the subtitles use into the folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Puts each font file the subtitles use into a zip archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writing the new archive replaces it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">மாற்று</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation type="unfinished">செயல்</translation>
+    </message>
+    <message>
+        <source>Check fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose an archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write beside the subtitles, in a “Fonts” folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beside the video when the fonts come from the MKV file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take the fonts from the loaded MKV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start lists the fonts the subtitles use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some fonts were not found, so the collection is incomplete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to write %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to copy to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write it, labelled incomplete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy it, labelled incomplete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2423,12 +2824,24 @@ when demuxing fonts from an MKV file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start on all tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Start</source>
         <translation>தொடங்கு</translation>
     </message>
     <message>
+        <source>Stop</source>
+        <translation type="unfinished">நிறுத்து</translation>
+    </message>
+    <message>
         <source>Start on tabs</source>
-        <translation>தாவல்களில் தொடங்கவும்</translation>
+        <translation type="vanished">தாவல்களில் தொடங்கவும்</translation>
     </message>
     <message>
         <source>Choose save folder</source>
@@ -6171,6 +6584,18 @@ and will be changed to the default</source>
         <translation>ASS கோப்பு பண்புகள்</translation>
     </message>
     <message>
+        <source>Credits</source>
+        <translation type="unfinished">நன்றியுரை</translation>
+    </message>
+    <message>
+        <source>Same as the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rendering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>சேமி</translation>
     </message>
@@ -6180,7 +6605,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Subtitle information</source>
-        <translation>வசன வரிகள் செய்தி</translation>
+        <translation type="vanished">வசன வரிகள் செய்தி</translation>
     </message>
     <message>
         <source>Title</source>
@@ -6239,16 +6664,12 @@ and will be changed to the default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Link the layout resolution to the subtitle resolution</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>YCbCr matrix</source>
         <translation>YCBCR மேட்ரிக்ச்</translation>
     </message>
     <message>
         <source>Options</source>
-        <translation>விருப்பங்கள்</translation>
+        <translation type="vanished">விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Wrap style</source>
@@ -7176,6 +7597,14 @@ please save with different name or change file attribute.</source>
 <context>
     <name>HikariSub.Spelling</name>
     <message>
+        <source>Ignore words in capitals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words added to dictionary…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>பரிந்துரைகளை சரிசெய்யவும்</translation>
     </message>
@@ -7189,11 +7618,11 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Misspell word:</source>
-        <translation>எழுத்துப்பிழை:</translation>
+        <translation type="vanished">எழுத்துப்பிழை:</translation>
     </message>
     <message>
         <source>Replace to:</source>
-        <translation>இதற்கு பதிலாக:</translation>
+        <translation type="vanished">இதற்கு பதிலாக:</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -7210,7 +7639,7 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Ignore words written entirely
 in uppercase</source>
-        <translation>முழுவதும் பெரிய எழுத்துகளில் எழுதப்பட்ட
+        <translation type="vanished">முழுவதும் பெரிய எழுத்துகளில் எழுதப்பட்ட
 சொற்களைப் புறக்கணிக்கவும்</translation>
     </message>
     <message>
@@ -7220,6 +7649,42 @@ in uppercase</source>
     <message>
         <source>Replace all</source>
         <translation>அனைத்தையும் மாற்றவும்</translation>
+    </message>
+    <message>
+        <source>Checks the spelling from the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No spelling errors in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spelling settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation type="unfinished">எழுத்துப்பிழை சரிபார்ப்பு</translation>
+    </message>
+    <message>
+        <source>Misspelled word: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ignore</source>
@@ -7235,11 +7700,34 @@ in uppercase</source>
     </message>
     <message>
         <source>Remove from dictionary</source>
-        <translation>அகராதியிலிருந்து அகற்று</translation>
+        <translation type="vanished">அகராதியிலிருந்து அகற்று</translation>
     </message>
     <message>
         <source>Remove from dictionary words added by user.</source>
-        <translation>பயனரால் சேர்க்கப்பட்ட அகராதி சொற்களிலிருந்து அகற்று.</translation>
+        <translation type="vanished">பயனரால் சேர்க்கப்பட்ட அகராதி சொற்களிலிருந்து அகற்று.</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">வடிப்பி</translation>
+    </message>
+    <message>
+        <source>No words added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n word(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
@@ -8638,6 +9126,18 @@ after the end time in milliseconds</source>
         <translation>வசன வரிகளைத் தேர்வுசெய்க</translation>
     </message>
     <message>
+        <source>Translation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original text</source>
+        <translation type="unfinished">அசல் உரை</translation>
+    </message>
+    <message>
+        <source>Original text: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8748,7 +9248,27 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not confirmed: marks the selected Lines for review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on Translation mode for this file?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
