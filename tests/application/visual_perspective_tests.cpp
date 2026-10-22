@@ -11,6 +11,7 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cmath>
 #include <cstring>
 
@@ -215,7 +216,12 @@ public:
         v.setScript(640, 360);
         v.open({1280, 720, 0, 1});
         v.refreshToolTransform();
-        const std::string script = scriptOf(texts, extraInfo);
+        script = scriptOf(texts, extraInfo);
+        reopen();
+    }
+    // The script again in a new session (its LineIds start over).
+    void reopen()
+    {
         std::vector<std::byte> bytes(script.size());
         std::memcpy(bytes.data(), script.data(), script.size());
         s = std::make_unique<EditSession>(core::loadAss(bytes).document);
@@ -223,6 +229,7 @@ public:
         s->setSelection({id, {id}, id, std::nullopt});
         targets = {id};
     }
+    std::string script;
     core::LineId line(std::size_t i) const { return s->document().lines()[i]->id; }
     std::string text(std::size_t i = 0) const
     {
@@ -407,6 +414,93 @@ TEST(PerspectiveTags, WritesAcrossTheLeadingBlocks)
     // The first \pos decides: a later \move stays as it is.
     EXPECT_EQ(writeTransform(u"{\\pos(10,20)}a{\\move(1,2,3,4)}", t, style, PointF{10, 20}),
               u"{\\pos(320,180.5)\\org(300,170)\\frx5}a{\\move(1,2,3,4)}");
+}
+
+TEST(PerspectiveTags, ReadsThePositionAsLibass)
+{
+    Host host({"{\\move(100,100,300,200,0,0)}Moving", "{\\a4}x", "{\\a8}x", "{\\a99\\an5}x",
+               "{\\pos(1,2,3)\\org(1,2,3)}a{\\pos(5,6)\\org(7,8)}", "{\\pos(a,7)}x"});
+    // Neither time above 0: over the Line's span, 500 ms of 2000 in.
+    const LineState a = readTags(host, lineWith(host, 0));
+    EXPECT_EQ(a.transform.pos.x, 150);
+    EXPECT_EQ(a.transform.pos.y, 125);
+    EXPECT_EQ(readTags(host, lineWith(host, 1)).transform.an, 7); // VSFilter's \a4 is \a5
+    EXPECT_EQ(readTags(host, lineWith(host, 2)).transform.an, 7);
+    EXPECT_EQ(readTags(host, lineWith(host, 3)).transform.an, 2); // the first decides: the Style's
+    // Too many values: skipped.
+    const LineState e = readTags(host, lineWith(host, 4));
+    EXPECT_EQ(e.transform.pos.x, 5);
+    EXPECT_EQ(e.transform.org.x, 7);
+    EXPECT_EQ(readTags(host, lineWith(host, 5)).transform.pos.x, 0); // a word is 0
+}
+
+TEST(PerspectiveTags, MeasuresTheTextAsLibassShowsIt)
+{
+    Host host({"{\\q2}ab\\ncd", "Hello \\{w\\}", "{\\fs+10}ab", "{\\fs0}ab", "{\\fs-5}ab", "a{b",
+               "{\\p1}m 0 0 l 10 0 10 10{\\c&HFF&}l 100 100", "{\\p1}m 0 0 l 10 0 10 10{\\p0}",
+               "ab{\\p1}m 0 0 l 1 1{\\p0}"});
+    const auto box = [&host](std::size_t i) { return readLine(host, lineWith(host, i)); };
+    ASSERT_TRUE(box(0));
+    EXPECT_FLOAT_EQ(box(0)->box.height(), 80); // \q2: \n breaks
+    ASSERT_TRUE(box(1));
+    EXPECT_FLOAT_EQ(box(1)->box.width(), 9 * 20); // "Hello {w}"
+    EXPECT_FLOAT_EQ(box(2)->box.width(), 2 * 40); // \fs+10: twice 40
+    EXPECT_FLOAT_EQ(box(3)->box.width(), 2 * 20); // \fs0: the Style's
+    EXPECT_FLOAT_EQ(box(4)->box.width(), 2 * 10); // \fs-5: half
+    EXPECT_FLOAT_EQ(box(5)->box.width(), 3 * 20); // a { with no } is text
+    // A drawing with more shown after it, or within text: not measured.
+    EXPECT_FALSE(box(6));
+    ASSERT_TRUE(box(7));
+    EXPECT_EQ(box(7)->box.bottomRight.x, 10);
+    EXPECT_FALSE(box(8));
+    Host wrap({"{\\q0}ab\\ncd"}, "WrapStyle: 2");
+    EXPECT_FLOAT_EQ(readLine(wrap, lineWith(wrap, 0))->box.height(), 40); // \q0: a space
+}
+
+TEST(PerspectiveTags, KeepsTheBlocksComments)
+{
+    core::StyleValues style;
+    style.scaleX = style.scaleY = u8"100";
+    style.angle = u8"0";
+    style.outlineWidth = u8"2";
+    style.shadow = u8"1";
+    Transform t;
+    t.pos = {320, 180.5f};
+    t.org = {300, 170};
+    t.frx = 5;
+    t.fry = t.frz = t.fax = 0;
+    t.fscx = t.fscy = 100;
+    t.bord = {2, 2};
+    t.shad = {1, 1};
+    EXPECT_EQ(writeTransform(u"{\\frx10 note\\blur1\\pos(1,2) here}Text", t, style),
+              u"{ note here\\blur1\\pos(320,180.5)\\org(300,170)\\frx5}Text");
+    EXPECT_EQ(writeTransform(u"{\\move(1,2,3,4,0,0) m}x", t, style, PointF{310, 160.5f}),
+              u"{\\move(11,22,13,24,0,0) m\\org(300,170)\\frx5}x");
+    // \pos(1,2,3) is no position: the \pos after it is.
+    EXPECT_EQ(writeTransform(u"{\\an7}a{\\pos(1,2,3)\\pos(5,6)}", t, style),
+              u"{\\an7\\pos(320,180.5)\\org(300,170)\\frx5}a{\\pos(1,2,3)\\pos(5,6)}");
+}
+
+TEST(PerspectiveTags, AHostileLineTakesLinearTime)
+{
+    const std::string braces(400000, '{');
+    std::string escapes;
+    for (int i = 0; i < 100000; ++i)
+        escapes += "\\h";
+    std::string blocks;
+    for (int i = 0; i < 100000; ++i)
+        blocks += "{\\frx1}";
+    Host host({braces, escapes, blocks + "x"});
+    const auto started = std::chrono::steady_clock::now();
+    for (std::size_t i = 0; i < 3; ++i) {
+        const auto state = readLine(host, lineWith(host, i));
+        ASSERT_TRUE(state) << i;
+        const std::u16string text = core::toUtf16(lineWith(host, i).text);
+        EXPECT_FALSE(writeTransform(text, state->transform, core::StyleValues{}).empty());
+    }
+    const auto ms =
+        std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count();
+    EXPECT_LT(ms, 5000); // quadratic, each took minutes
 }
 
 // ------------------------------------------------------------------ the tool
@@ -647,6 +741,50 @@ TEST(PerspectiveTool, AHiddenPlaneStaysWhereItWas)
     ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
     expectQuadNear(f.tool.outer(), outer, 0.05);
     EXPECT_LT(dist(f.tool.inner()[0], {230, 150}), 0.05);
+}
+
+TEST(PerspectiveTool, ALockedResizeIsKept)
+{
+    Fixture f({"{\\pos(320,200)}Perspective", "{\\pos(320,100)}Other"});
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    f.drag({430, 200}, {440, 205}); // the Line takes the tool's tags
+    ASSERT_TRUE(f.tool.setOption("lockOuter", 1, f.host));
+    const PointF corner = f.tool.outer()[2];
+    const std::size_t before = f.steps();
+    f.drag(corner, {corner.x + 30, corner.y + 20});
+    EXPECT_EQ(f.steps(), before); // no Line changes
+    const Quad resized = f.tool.outer();
+    EXPECT_LT(dist(resized[2], {corner.x + 30, corner.y + 20}), 0.1);
+    f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
+    f.tool.reset(f.host);
+    f.host.s->setSelection({f.host.line(0), {f.host.line(0)}, f.host.line(0), std::nullopt});
+    f.tool.reset(f.host);
+    expectQuadNear(f.tool.outer(), resized, 0.1);
+}
+
+TEST(PerspectiveTool, ThePlanesAreTheSessions)
+{
+    Fixture f;
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    f.drag({540, 220}, {520, 250}); // an outer corner: the plane changes
+    ASSERT_GT(dist(f.tool.outer()[2], {540, 220}), 1);
+    // Another session, its first Line with the same LineId: its own plane.
+    f.host.reopen();
+    f.tool.reset(f.host);
+    EXPECT_LT(dist(f.tool.outer()[0], {100, 140}), 0.05);
+    EXPECT_LT(dist(f.tool.outer()[2], {540, 220}), 0.05);
+}
+
+TEST(PerspectiveTool, AnUnpositionedLineIsWhereItIsStacked)
+{
+    Fixture f({"First", "Second"});
+    const float first = f.tool.inner()[2].y;
+    f.host.s->setSelection({f.host.line(1), {f.host.line(1)}, f.host.line(1), std::nullopt});
+    f.host.targets = {f.host.line(1)};
+    f.tool.reset(f.host);
+    // Shown with the first, the second goes above it, as the other tools
+    // place it.
+    EXPECT_LT(f.tool.inner()[2].y, first - 1);
 }
 
 TEST(PerspectiveTool, KeepLetsTheOriginBeDragged)

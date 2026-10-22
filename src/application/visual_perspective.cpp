@@ -182,7 +182,8 @@ struct Tag {
 
 constexpr u16v kNames[] = {u"xbord", u"ybord", u"xshad", u"yshad", u"fscx", u"fscy", u"bord", u"shad",
                            u"move",  u"pos",   u"org",   u"frx",   u"fry",  u"frz",  u"fax",  u"fay",
-                           u"an",    u"fr",    u"fs",    u"fn",    u"p",    u"a",    u"t",    u"r"};
+                           u"an",    u"fr",    u"fs",    u"fn",    u"p",    u"a",    u"t",    u"r",
+                           u"q"};
 
 u16v nameOf(u16v token)
 {
@@ -230,19 +231,64 @@ std::vector<Tag> tagsOf(u16v block)
     return out;
 }
 
-// The text's blocks: where each opens and closes.
+// Whether text[i] starts libass's escape of a brace (\{ or \}, shown).
+bool braceEscape(u16v text, std::size_t i)
+{
+    return text[i] == u'\\' && i + 1 < text.size() && (text[i + 1] == u'{' || text[i + 1] == u'}');
+}
+
+// The text's blocks: where each opens and closes. As libass, \{ shows a
+// brace and a { with no } after it is text.
 std::vector<std::pair<std::size_t, std::size_t>> blocksOf(u16v text)
 {
     std::vector<std::pair<std::size_t, std::size_t>> out;
     std::size_t i = 0;
-    while ((i = text.find(u'{', i)) != u16v::npos) {
-        const std::size_t close = text.find(u'}', i);
-        if (close == u16v::npos)
-            break;
-        out.emplace_back(i, close);
-        i = close + 1;
+    while (i < text.size()) {
+        if (braceEscape(text, i)) {
+            i += 2;
+        } else if (text[i] == u'{') {
+            const std::size_t close = text.find(u'}', i);
+            if (close == u16v::npos)
+                break;
+            out.emplace_back(i, close);
+            i = close + 1;
+        } else {
+            ++i;
+        }
     }
     return out;
+}
+
+// A positional tag's numbers as libass reads them (a word is 0), when it
+// has as many as the tag takes: \pos and \org 2, \move 4 or 6.
+std::optional<std::vector<double>> positional(const Tag &tag)
+{
+    std::vector<double> a = arguments(tag.value);
+    const bool fits = tag.name == u"move" ? (a.size() == 4 || a.size() == 6) : a.size() == 2;
+    if (!fits)
+        return std::nullopt;
+    for (double &v : a)
+        if (!finite(v))
+            v = 0;
+    return a;
+}
+
+// What follows a tag's value up to the next tag: an override block's
+// comment (libass reads \frx10 note as \frx10), kept when the tag goes.
+u16v tailOf(const Tag &tag)
+{
+    u16v v = tag.value;
+    if (!v.empty() && v.front() == u'(') {
+        const std::size_t close = v.find(u')');
+        return close == u16v::npos ? u16v{} : v.substr(close + 1);
+    }
+    std::size_t i = 0;
+    while (i < v.size() && v[i] == u' ')
+        ++i;
+    const std::string a = ascii(v.substr(i));
+    char *end = nullptr;
+    (void)std::strtod(a.c_str(), &end);
+    return v.substr(i + static_cast<std::size_t>(end - a.c_str()));
 }
 
 std::u16string fmt(double v, int precision)
@@ -263,8 +309,11 @@ std::u16string fmt(double v, int precision)
 
 int alignmentOfA(int a)
 {
-    // \a's legacy numbering: 1-3 bottom, +4 top, +8 middle.
-    const int h = (a & 3) == 0 ? 2 : (a & 3);
+    // \a's legacy numbering: 1-3 bottom, +4 top, +8 middle; libass takes
+    // VSFilter's \a4 and \a8 as \a5.
+    if ((a & 3) == 0)
+        a = 5;
+    const int h = a & 3;
     if (a & 4)
         return h + 6;
     if (a & 8)
@@ -469,6 +518,7 @@ struct Leading {
     std::vector<Tag> tags; // of the blocks before the text
     std::u16string drawing;
     int p = 0;
+    bool more = false; // something shown after the drawing
 };
 
 Leading leadingOf(u16v text)
@@ -488,8 +538,20 @@ Leading leadingOf(u16v text)
             out.p = static_cast<int>(number(tag.value).value_or(0));
     }
     if (out.p > 0) {
+        // libass's drawing runs to the next {. Text or another drawing
+        // after it is laid out beside it, which the box does not hold.
         const std::size_t end = text.find(u'{', i);
         out.drawing = std::u16string(text.substr(i, end == u16v::npos ? u16v::npos : end - i));
+        if (end != u16v::npos) {
+            const u16v rest = text.substr(end);
+            std::size_t k = 0;
+            for (const auto &[open, close] : blocksOf(rest)) {
+                if (open != k)
+                    break;
+                k = close + 1;
+            }
+            out.more = k < rest.size();
+        }
     }
     return out;
 }
@@ -511,6 +573,8 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
                               u16v text, const core::StyleValues &style, const Leading &lead)
 {
     if (lead.p > 0) {
+        if (lead.more)
+            return std::nullopt;
         // A drawing's points at its \p scale.
         const double k = std::ldexp(1., 1 - lead.p);
         double minx = 0, miny = 0, maxx = 0, maxy = 0;
@@ -536,51 +600,78 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
     TextMeasurePort *measure = host.textMeasure();
     if (!measure)
         return std::nullopt;
-    // The Style at a scale of 100 with the leading \fs and \fn.
-    core::StyleValues s = style;
-    s.scaleX = u8"100";
-    s.scaleY = u8"100";
+    // The Style at a scale of 100 with the leading \fs and \fn, as libass
+    // applies them: a signed \fs is relative, one at 0 or below and an
+    // empty \fn go back to the current Style's.
+    core::StyleValues current = style, s = style;
+    double size = transform::styleNumber(style.fontsize, 0);
     for (const Tag &tag : lead.tags) {
         if (tag.name == u"r") {
-            s = resetStyle(ctx, style, tag.value);
-            s.scaleX = u8"100";
-            s.scaleY = u8"100";
-        } else if (tag.name == u"fs" && number(tag.value))
-            s.fontsize = core::toUtf8(fmt(*number(tag.value), 4));
-        else if (tag.name == u"fn" && !tag.value.empty())
-            s.fontname = core::toUtf8(tag.value);
+            current = s = resetStyle(ctx, style, tag.value);
+            size = transform::styleNumber(current.fontsize, 0);
+        } else if (tag.name == u"fs") {
+            u16v v = tag.value;
+            while (!v.empty() && v.front() == u' ')
+                v.remove_prefix(1);
+            double val = number(v).value_or(0);
+            if (!v.empty() && (v.front() == u'+' || v.front() == u'-'))
+                val = size * (1 + val / 10);
+            size = val > 0 ? val : transform::styleNumber(current.fontsize, 0);
+        } else if (tag.name == u"fn") {
+            s.fontname = tag.value.empty() ? current.fontname : core::toUtf8(tag.value);
+        }
     }
+    s.fontsize = core::toUtf8(fmt(size, 4));
+    s.scaleX = u8"100";
+    s.scaleY = u8"100";
     std::vector<std::string> fields;
     for (const auto &f : core::legacy::styleRawFields(s))
         fields.emplace_back(f.begin(), f.end());
-    // The plain text, line by line.
-    std::u16string plain;
+    // The shown text, line by line, in one pass as libass reads it: \N
+    // breaks a line, \n too under wrap style 2 (the script's WrapStyle, or
+    // the last \q before it) and is a space otherwise, \h a hard space,
+    // \{ and \} braces. A drawing within the text is not measured.
+    const auto wrapOf = [&ctx] {
+        const auto v = ctx.document ? ctx.document->scriptInfo(u8"WrapStyle") : std::nullopt;
+        const int n = v ? std::atoi(std::string(v->begin(), v->end()).c_str()) : 0;
+        return n >= 0 && n <= 3 ? n : 0;
+    };
+    int wrap = wrapOf();
+    std::vector<u16> lines(1);
+    const std::size_t lastClose = text.rfind(u'}'); // a { before it opens a block
     for (std::size_t i = 0; i < text.size();) {
-        if (text[i] == u'{') {
+        const char16_t ch = text[i];
+        if (ch == u'{' && lastClose != u16v::npos && i < lastClose) {
             const std::size_t close = text.find(u'}', i);
-            if (close != u16v::npos) {
-                i = close + 1;
+            for (const Tag &tag : tagsOf(text.substr(i + 1, close - i - 1))) {
+                if (tag.name == u"q") {
+                    const auto n = number(tag.value);
+                    wrap = n && *n >= 0 && *n <= 3 ? static_cast<int>(*n) : wrapOf();
+                } else if (tag.name == u"p" && number(tag.value).value_or(0) > 0) {
+                    return std::nullopt;
+                }
+            }
+            i = close + 1;
+            continue;
+        }
+        if (ch == u'\\' && i + 1 < text.size()) {
+            const char16_t next = text[i + 1];
+            if (next == u'N' || (next == u'n' && wrap == 2)) {
+                lines.emplace_back();
+                i += 2;
+                continue;
+            }
+            if (next == u'n' || next == u'h' || next == u'{' || next == u'}') {
+                lines.back().push_back(next == u'n' ? u' ' : next == u'h' ? u'\u00A0' : next);
+                i += 2;
                 continue;
             }
         }
-        plain.push_back(text[i]);
+        lines.back().push_back(ch);
         ++i;
     }
-    // \n breaks a line only with WrapStyle 2; otherwise it is a space
-    // (libass), as \h is a hard one.
-    const bool softBreaks = ctx.document && ctx.document->scriptInfo(u8"WrapStyle").value_or(u8"") == u8"2";
     double width = 0, height = 0;
-    std::size_t from = 0;
-    while (true) {
-        std::size_t br = plain.find(u"\\N", from);
-        const std::size_t brn = plain.find(u"\\n", from);
-        if (softBreaks && brn != u16v::npos && (br == u16v::npos || brn < br))
-            br = brn;
-        u16 piece = plain.substr(from, br == u16v::npos ? u16v::npos : br - from);
-        for (std::size_t h = piece.find(u"\\h"); h != u16v::npos; h = piece.find(u"\\h", h + 1))
-            piece.replace(h, 2, u" ");
-        for (std::size_t n = piece.find(u"\\n"); n != u16v::npos; n = piece.find(u"\\n", n + 1))
-            piece.replace(n, 2, u" ");
+    for (const u16 &piece : lines) {
         const std::u8string utf8 = core::toUtf8(piece.empty() ? u16(u" ") : piece);
         const auto e = measure->measure(fields, std::string(utf8.begin(), utf8.end()));
         if (!e)
@@ -588,11 +679,93 @@ std::optional<Box> measureBox(const VisualHost &host, const transform::Context &
         if (!piece.empty())
             width = std::max(width, e->width);
         height += e->height;
-        if (br == u16v::npos)
-            break;
-        from = br + 2;
     }
     return Box{{0, 0}, {static_cast<float>(width), static_cast<float>(height)}};
+}
+
+// A Line's alignment and whether it is positioned (\pos or \move), as
+// readTags reads them.
+std::pair<int, bool> placement(u16v text, const core::StyleValues &style)
+{
+    int an = static_cast<int>(transform::styleNumber(style.alignment, 2));
+    if (an < 1 || an > 9)
+        an = 2;
+    bool haveAn = false, positioned = false;
+    for (const auto &[open, close] : blocksOf(text)) {
+        for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1))) {
+            if ((tag.name == u"pos" || tag.name == u"move") && positional(tag)) {
+                positioned = true;
+            } else if ((tag.name == u"an" || tag.name == u"a") && !haveAn) {
+                haveAn = true;
+                const int n = static_cast<int>(number(tag.value).value_or(0));
+                if (tag.name == u"an" ? (n >= 1 && n <= 9) : (n >= 1 && n <= 11))
+                    an = tag.name == u"an" ? n : alignmentOfA(n);
+            }
+        }
+    }
+    return {an, positioned};
+}
+
+// How far an unpositioned Line is moved clear of the Lines before it shown
+// with it: legacy's GetDialogueAdditionalPosition (Visuals.cpp:143-215),
+// the rule the other tools place such a Line by, over this tool's own
+// reading, which takes linear time (legacy's tag parse does not).
+double stackOffset(const VisualHost &host, const transform::Context &ctx, const core::LineRecord &line, int an,
+                   const Box &box)
+{
+    const std::int64_t time = host.videoTimeMs();
+    const auto shown = [time](const core::LineRecord &l) {
+        return time >= transform::startMs(l) && time < transform::endMs(l);
+    };
+    if (!ctx.document || !shown(line))
+        return 0;
+    // Its rectangle at its default position, with outline and shadow.
+    const auto rect = [&ctx](const core::LineRecord &l, const core::StyleValues &st, int a, const Box &b) {
+        const double extra = 2 * transform::styleNumber(st.outlineWidth, 0) + transform::styleNumber(st.shadow, 0);
+        const double w = b.width() + extra, h = b.height() + extra;
+        const PointF p = transform::defaultPosition(l, st, a, ctx.width, ctx.height);
+        double x = p.x, y = p.y;
+        if (a % 3 == 2)
+            x -= w / 2;
+        else if (a % 3 == 0)
+            x -= w;
+        if (a < 4)
+            y -= h;
+        else if (a < 7)
+            y -= h / 2;
+        return std::array<double, 4>{x, y, x + w, y + h};
+    };
+    const int band = static_cast<int>(an / 3.1f);
+    const auto mine = rect(line, transform::lineStyle(ctx, line.style), an, box);
+    double offset = 0;
+    int placesForText = 0, placesTaken = 0;
+    for (const core::LineRecord *dial : ctx.document->lines()) {
+        if ((!ctx.ignoreFiltered && dial->visibility == core::LineVisibility::Hidden) || dial->unparsed)
+            continue;
+        if (dial->id == line.id)
+            break;
+        if (!shown(*dial))
+            continue;
+        const u16 text = transform::lineText(*dial);
+        const core::StyleValues style = transform::lineStyle(ctx, dial->style);
+        const auto [a, positioned] = placement(text, style);
+        if (positioned || static_cast<int>(a / 3.1f) != band)
+            continue;
+        const auto other = measureBox(host, ctx, *dial, text, style, leadingOf(text));
+        if (!other)
+            continue;
+        const auto r = rect(*dial, style, a, *other);
+        if (r[2] > mine[0] && r[0] < mine[2] && r[3] > mine[1] && r[1] < mine[3]) {
+            const double h = r[3] - r[1];
+            offset += band == 2 ? h : band == 1 ? h / 2 : -h;
+            ++placesTaken;
+        } else if (placesTaken < placesForText && placesTaken > 0 && placesForText > 0) {
+            break;
+        } else {
+            ++placesForText;
+        }
+    }
+    return offset;
 }
 
 } // namespace
@@ -620,57 +793,59 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line)
     };
     styleValues(style);
 
-    // The first \pos, \move, \org and \an anywhere.
+    // The first \pos or \move, \org and \an or \a anywhere, as libass
+    // takes them: one with the wrong number of values is skipped, the first
+    // \an or \a decides even when out of range (the Style's then).
     std::optional<V2> pos, org;
     bool haveAn = false;
     for (const auto &[open, close] : blocksOf(text)) {
         for (const Tag &tag : tagsOf(u16v(text).substr(open + 1, close - open - 1))) {
-            if ((tag.name == u"pos" || tag.name == u"move") && !pos && !out.hasMove) {
-                const auto a = arguments(tag.value);
-                if (tag.name == u"pos" && a.size() >= 2 && finite(a[0]) && finite(a[1])) {
-                    pos = V2{a[0], a[1]};
-                } else if (tag.name == u"move" && a.size() >= 4 && finite(a[0]) && finite(a[1]) && finite(a[2]) &&
-                           finite(a[3])) {
-                    out.hasMove = true;
-                    out.move = {a[0], a[1], a[2], a[3]};
-                    const std::size_t comma = [&] {
-                        std::size_t c = 0, n = 0;
-                        for (std::size_t i = 0; i < tag.value.size(); ++i)
-                            if (tag.value[i] == u',' && ++n == 4)
-                                c = i;
-                        return c;
-                    }();
-                    if (comma) {
-                        const std::size_t end = tag.value.find(u')');
-                        out.moveTimes = u16(tag.value.substr(comma, end == u16v::npos ? u16v::npos : end - comma));
-                    }
-                    // The position at the video's time (libass: linear
-                    // between t1 and t2, the Line's span without them).
-                    const double lineMs = transform::endMs(line) - transform::startMs(line);
-                    double t1 = 0, t2 = lineMs;
-                    if (a.size() >= 6 && finite(a[4]) && finite(a[5])) {
-                        t1 = a[4];
-                        t2 = a[5];
-                    }
-                    if (t1 > t2)
-                        std::swap(t1, t2);
-                    const double now = static_cast<double>(host.videoTimeMs()) - transform::startMs(line);
-                    const double k = now <= t1 ? 0 : (now >= t2 || t2 == t1 ? 1 : (now - t1) / (t2 - t1));
-                    pos = V2{a[0] + (a[2] - a[0]) * k, a[1] + (a[3] - a[1]) * k};
+            if ((tag.name == u"pos" || tag.name == u"move") && !pos) {
+                const auto a = positional(tag);
+                if (!a)
+                    continue;
+                if (tag.name == u"pos") {
+                    pos = V2{(*a)[0], (*a)[1]};
+                    continue;
                 }
+                out.hasMove = true;
+                out.move = {(*a)[0], (*a)[1], (*a)[2], (*a)[3]};
+                const std::size_t comma = [&] {
+                    std::size_t c = 0, n = 0;
+                    for (std::size_t i = 0; i < tag.value.size(); ++i)
+                        if (tag.value[i] == u',' && ++n == 4)
+                            c = i;
+                    return c;
+                }();
+                if (comma) {
+                    const std::size_t end = tag.value.find(u')');
+                    out.moveTimes = u16(tag.value.substr(comma, end == u16v::npos ? u16v::npos : end - comma));
+                }
+                // The position at the video's time (libass: linear between
+                // t1 and t2, the Line's span without them or when neither
+                // is above 0).
+                double t1 = 0, t2 = 0;
+                if (a->size() == 6) {
+                    t1 = std::trunc((*a)[4]);
+                    t2 = std::trunc((*a)[5]);
+                }
+                if (t1 > t2)
+                    std::swap(t1, t2);
+                if (t1 <= 0 && t2 <= 0) {
+                    t1 = 0;
+                    t2 = static_cast<double>(transform::endMs(line) - transform::startMs(line));
+                }
+                const double now = static_cast<double>(host.videoTimeMs()) - transform::startMs(line);
+                const double k = now <= t1 ? 0 : (now >= t2 ? 1 : (now - t1) / (t2 - t1));
+                pos = V2{(*a)[0] + ((*a)[2] - (*a)[0]) * k, (*a)[1] + ((*a)[3] - (*a)[1]) * k};
             } else if (tag.name == u"org" && !org) {
-                const auto a = arguments(tag.value);
-                if (a.size() >= 2 && finite(a[0]) && finite(a[1]))
-                    org = V2{a[0], a[1]};
+                if (const auto a = positional(tag))
+                    org = V2{(*a)[0], (*a)[1]};
             } else if ((tag.name == u"an" || tag.name == u"a") && !haveAn) {
-                if (const auto v = number(tag.value)) {
-                    const int n = static_cast<int>(*v);
-                    const int an = tag.name == u"an" ? n : alignmentOfA(n);
-                    if (an >= 1 && an <= 9) {
-                        t.an = an;
-                        haveAn = true;
-                    }
-                }
+                haveAn = true;
+                const int n = static_cast<int>(number(tag.value).value_or(0));
+                if (tag.name == u"an" ? (n >= 1 && n <= 9) : (n >= 1 && n <= 11))
+                    t.an = tag.name == u"an" ? n : alignmentOfA(n);
             }
         }
     }
@@ -713,8 +888,10 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line)
             t.shad.y = static_cast<float>(*v);
     }
 
-    if (!pos)
+    if (!pos) {
         pos = v2(transform::defaultPosition(line, style, t.an, ctx.width, ctx.height));
+        out.stacks = !org; // readLine stacks it, knowing its box
+    }
     t.pos = pf(*pos);
     t.org = org ? pf(*org) : t.pos;
     return out;
@@ -730,6 +907,10 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
     if (!box)
         return std::nullopt;
     out.box = *box;
+    if (out.stacks) {
+        out.transform.pos.y += static_cast<float>(stackOffset(host, ctx, line, out.transform.an, *box));
+        out.transform.org = out.transform.pos;
+    }
     return out;
 }
 
@@ -743,32 +924,26 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     // The Line's first \pos or \move decides, as readTags reads it: a \move
     // is moved, a \pos (or none) is written again.
     bool moved = false;
-    bool decided = false;
     for (const auto &[open, close] : blocksOf(out)) {
+        bool decided = false;
         for (const Tag &tag : tagsOf(u16v(out).substr(open + 1, close - open - 1))) {
             if (tag.name != u"pos" && tag.name != u"move")
                 continue;
-            const auto a = arguments(tag.value);
-            if (tag.name == u"pos") {
-                if (a.size() >= 2 && finite(a[0]) && finite(a[1]))
-                    decided = true;
-                if (decided)
-                    break;
-                continue;
-            }
-            if (a.size() < 4 || !finite(a[0]) || !finite(a[1]) || !finite(a[2]) || !finite(a[3]))
+            const auto a = positional(tag);
+            if (!a)
                 continue;
             decided = true;
-            if (!movedFrom)
-                break;
-            const double dx = t.pos.x - movedFrom->x, dy = t.pos.y - movedFrom->y;
-            u16 move = u"\\move(" + fmt(a[0] + dx, 2) + u"," + fmt(a[1] + dy, 2) + u"," + fmt(a[2] + dx, 2) + u"," +
-                       fmt(a[3] + dy, 2);
-            if (a.size() >= 6)
-                move += u"," + fmt(a[4], 0) + u"," + fmt(a[5], 0);
-            move += u")";
-            out.replace(open + 1 + tag.from, tag.to - tag.from, move);
-            moved = true;
+            if (tag.name == u"move" && movedFrom) {
+                const double dx = t.pos.x - movedFrom->x, dy = t.pos.y - movedFrom->y;
+                u16 move = u"\\move(" + fmt((*a)[0] + dx, 2) + u"," + fmt((*a)[1] + dy, 2) + u"," +
+                           fmt((*a)[2] + dx, 2) + u"," + fmt((*a)[3] + dy, 2);
+                if (a->size() == 6)
+                    move += u"," + fmt(std::trunc((*a)[4]), 0) + u"," + fmt(std::trunc((*a)[5]), 0);
+                move += u")";
+                move += tailOf(tag);
+                out.replace(open + 1 + tag.from, tag.to - tag.from, move);
+                moved = true;
+            }
             break;
         }
         if (decided)
@@ -821,18 +996,25 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
     put(u"xshad", t.shad.x, 2, shad);
     put(u"yshad", t.shad.y, 2, shad);
 
-    // Every leading block loses the tags written (the last block first, so
-    // the earlier ones' places hold); the target block takes the new ones.
+    // The leading blocks again, in one pass: each loses the tags written
+    // (what follows one's value, a comment, goes to the block's start); the
+    // target takes the new ones; a block left empty goes.
     static constexpr u16v kWritten[] = {u"fax", u"fay",  u"fscx", u"fscy",  u"frx",   u"fry",   u"frz",  u"fr",
                                         u"bord", u"xbord", u"ybord", u"shad", u"xshad", u"yshad", u"pos", u"org"};
-    for (std::size_t b = leading.size(); b-- > 0;) {
+    u16 head;
+    for (std::size_t b = 0; b < leading.size(); ++b) {
         const auto [open, close] = leading[b];
         const u16v block = u16v(out).substr(open + 1, close - open - 1);
+        // Text before the block's first backslash (a comment) stays first.
+        const std::size_t firstTag = block.find(u'\\');
+        u16 lead(block.substr(0, firstTag == u16v::npos ? block.size() : firstTag));
         u16 kept;
         std::size_t insertAt = u16::npos;
         for (const Tag &tag : tagsOf(block)) {
-            if (std::find(std::begin(kWritten), std::end(kWritten), tag.name) != std::end(kWritten))
+            if (std::find(std::begin(kWritten), std::end(kWritten), tag.name) != std::end(kWritten)) {
+                lead += tailOf(tag);
                 continue;
+            }
             if (!afterReset && tag.name == u"t" && insertAt == u16::npos)
                 insertAt = kept.size();
             kept += block.substr(tag.from, tag.to - tag.from);
@@ -845,15 +1027,15 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
             else
                 kept.insert(insertAt, tags);
         }
-        // Text before the block's first backslash (a comment) stays first.
-        const std::size_t firstTag = block.find(u'\\');
-        const u16 lead(block.substr(0, firstTag == u16v::npos ? block.size() : firstTag));
         if (b != target && lead.empty() && kept.empty())
-            out.erase(open, close - open + 1); // emptied
-        else
-            out.replace(open + 1, close - open - 1, lead + kept);
+            continue; // emptied
+        head += u'{';
+        head += lead;
+        head += kept;
+        head += u'}';
     }
-    return out;
+    const std::size_t rest = leading.empty() ? 0 : leading.back().second + 1;
+    return head + out.substr(rest);
 }
 
 } // namespace perspective
@@ -940,6 +1122,13 @@ void PerspectiveTool::reset(VisualHost &host)
         host.toolChanged();
         return;
     }
+    // LineIds are a Document's: another session's planes are not this one's.
+    const std::uint64_t session = host.session() ? host.session()->serial() : 0;
+    if (session != m_session) {
+        m_session = session;
+        m_planes.clear();
+        m_line.reset();
+    }
     const bool newLine = m_line != ctx.active->id;
     if (newLine) {
         m_selected = -1;
@@ -978,11 +1167,10 @@ void PerspectiveTool::restorePlane()
 
 void PerspectiveTool::follow(const VisualHost &host) const
 {
-    // The controller only redraws when the time changes; the position read
-    // is the time's, so it is read again (not during an edit, which works
-    // from where it began).
-    if (!m_valid || !m_state.hasMove || host.videoTimeMs() == m_time || m_drag != Drag::None || m_valueEdit ||
-        m_keyEdit)
+    // The controller only redraws when the time changes; a \move's position
+    // and an unpositioned Line's stacking are the time's, so the Line is read
+    // again (not during an edit, which works from where it began).
+    if (!m_valid || host.videoTimeMs() == m_time || m_drag != Drag::None || m_valueEdit || m_keyEdit)
         return;
     m_time = host.videoTimeMs();
     const transform::Context ctx = transform::context(host);
@@ -1045,13 +1233,14 @@ bool PerspectiveTool::finish(VisualHost &host)
     m_valueEdit = m_keyEdit = false;
     if (!host.gesture())
         return false;
+    // A locked outer quad's resize changes no Line: kept all the same.
+    rememberPlane(host);
     // A release that changes no Line records nothing (T3-release-no-change).
     if (!host.gesture()->changesAnyLine()) {
         host.cancelGesture();
         reset(host);
         return false;
     }
-    rememberPlane(host);
     const bool committed = host.commitGesture().has_value();
     if (!committed)
         reset(host);

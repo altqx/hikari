@@ -103,6 +103,7 @@ struct LineState {
     bool hasMove = false;
     std::array<double, 4> move{0, 0, 0, 0}; // \move's points
     std::u16string moveTimes;               // its times, as written (",t1,t2" or empty)
+    bool stacks = false; // no \pos, \move or \org: libass moves it clear of others
 };
 std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord &line);
 // The same without the box.
@@ -161,7 +162,7 @@ private:
     void rememberPlane(VisualHost &host);
     // The saved outer quad of the active Line, in the inner quad's plane.
     void restorePlane();
-    // A \move's Line: the quad goes where the video's time puts it.
+    // The quad goes where the video's time puts it (a \move, the stacking).
     void follow(const VisualHost &host) const;
 
     // The toolbar's state (stays when the family changes).
@@ -177,6 +178,7 @@ private:
     PointF m_c1{0.25f, 0.25f}, m_c2{0.75f, 0.75f};
     double m_screenZ = 312.5;
     std::optional<core::LineId> m_line;
+    std::uint64_t m_session = 0; // EditSession::serial of m_line and m_planes
     // The outer quads of the session (VT3: kept per Line in memory, not saved).
     std::map<core::LineId, perspective::Quad> m_planes;
 
