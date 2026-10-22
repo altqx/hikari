@@ -448,8 +448,9 @@ DialogWindow {
                                     focusPolicy: Qt.NoFocus
                                     function isChosen() { return dialog.importer.chosenIds.indexOf(rowItem.modelData.id) >= 0 }
                                     checked: isChosen()
+                                    // (Ticking leaves the current row and the list where
+                                    // they are; a click on the row makes it current.)
                                     onToggled: {
-                                        rowList.currentIndex = rowItem.index
                                         dialog.importer.setChosen(rowItem.modelData.id, checked)
                                         // The click broke the binding: "Proposed choice" and
                                         // "All conflicts" still reach this row.
