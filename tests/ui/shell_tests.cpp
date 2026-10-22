@@ -7132,6 +7132,73 @@ private slots:
         application->editor().discard();
     }
 
+    // SY1 (#247): a repeated name. Moving the selected one keeps the
+    // editor on it, not on the other of the same name, whether an edit is
+    // waiting or not (the list's change comes before the move returns).
+    void styleManagerMovesARepeatedName()
+    {
+        const QString path = dir.filePath(QStringLiteral("repeated.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\n\n[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, Alignment, "
+                    "MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Dup,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+                    "Style: Mid,Arial,40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+                    "Style: Dup,Arial,30,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Mid,,0,0,0,,a\n");
+        }
+        QVERIFY(application->openFile(path));
+        const QVariantList tabs = application->tabs();
+        for (int i = 0; i < tabs.size(); ++i)
+            if (tabs[i].toMap().value(QStringLiteral("title")).toString() == QLatin1String("repeated.ass"))
+                application->selectTab(i);
+        auto *manager = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("styleManager"));
+        QVERIFY(QMetaObject::invokeMethod(named("styleManagerMenuItem"), "triggered"));
+        QTRY_VERIFY(manager->isVisible());
+        auto *content = manager->contentItem();
+        const auto field = [&](const char *name) { return findItem(content, QLatin1String(name)); };
+        const auto edit = [&](const char *name, const QString &text) {
+            field(name)->setProperty("text", text);
+            QVERIFY(QMetaObject::invokeMethod(field(name), "textEdited"));
+        };
+        const auto sizes = [&] {
+            QStringList out;
+            for (const auto &s : *application::documentStyles(*targetSession()))
+                out << QString::fromUtf8(reinterpret_cast<const char *>(s.name.c_str())) + QLatin1Char(' ')
+                           + QString::fromUtf8(reinterpret_cast<const char *>(s.fontsize.c_str()));
+            return out;
+        };
+        QVERIFY(QMetaObject::invokeMethod(manager, "pick", Q_ARG(QVariant, false), Q_ARG(QVariant, QVariantList{0})));
+        QCOMPARE(field("styleSize")->property("text").toString(), QStringLiteral("20"));
+
+        // No edit waiting: the editor goes with the moved Style.
+        QVERIFY(QMetaObject::invokeMethod(manager, "moveSelected", Q_ARG(QVariant, false), Q_ARG(QVariant, 2)));
+        QTRY_COMPARE(sizes(), (QStringList{QStringLiteral("Mid 40"), QStringLiteral("Dup 20"), QStringLiteral("Dup 30")}));
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{1});
+        QCOMPARE(field("styleSize")->property("text").toString(), QStringLiteral("20"));
+        edit("styleSize", QStringLiteral("25"));
+        QVERIFY(field("styleEditorApply")->isEnabled()); // its own repeated name is no clash
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        QCOMPARE(sizes(), (QStringList{QStringLiteral("Mid 40"), QStringLiteral("Dup 25"), QStringLiteral("Dup 30")}));
+
+        // An edit waiting: it stays, and Apply writes to the moved Style.
+        edit("styleSize", QStringLiteral("26"));
+        QVERIFY(QMetaObject::invokeMethod(manager, "moveSelected", Q_ARG(QVariant, false), Q_ARG(QVariant, 2)));
+        QTRY_COMPARE(sizes(), (QStringList{QStringLiteral("Mid 40"), QStringLiteral("Dup 30"), QStringLiteral("Dup 25")}));
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{2});
+        QVERIFY(manager->property("dirty").toBool());
+        QCOMPARE(field("styleSize")->property("text").toString(), QStringLiteral("26"));
+        QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
+        QCOMPARE(sizes(), (QStringList{QStringLiteral("Mid 40"), QStringLiteral("Dup 30"), QStringLiteral("Dup 26")}));
+        QVERIFY(QMetaObject::invokeMethod(manager, "closeManager"));
+        QTRY_VERIFY(!manager->isVisible());
+        application->editor().discard();
+    }
+
     // Y5: Convert to SRT previews its losses, applies the plan as one step,
     // refuses a stale plan, and Save then asks for a file.
     void conversionPreviewsAndAppliesThePlan()

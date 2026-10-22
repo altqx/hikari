@@ -278,8 +278,13 @@ std::expected<std::size_t, std::u8string> commitStyle(StyleList &styles, const S
     const auto found = lastNamed(styles, edit.style.name);
     if ((found && dummy) || (found && edit.oldName != edit.style.name && !dummy))
         return std::unexpected(edit.style.name);
-    std::optional<std::size_t> row = found;
-    if (!row && !dummy)
+    // A repeated name is edited where it was opened, not at its last copy.
+    std::optional<std::size_t> row;
+    if (!dummy && styles[*edit.row].name == edit.oldName)
+        row = edit.row;
+    else if (found)
+        row = found;
+    else if (!dummy)
         row = firstNamed(styles, edit.oldName);
     if (!row)
         dummy = true;

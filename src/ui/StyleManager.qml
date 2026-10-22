@@ -128,13 +128,7 @@ DialogWindow {
         const v = styles.beginNamed(styleName)
         if (v.name === undefined)
             return
-        ownChange = true
-        let problem
-        try {
-            problem = styles.commitEdit(v, [], false, false)
-        } finally {
-            ownChange = false
-        }
+        const problem = own(() => styles.commitEdit(v, [], false, false))
         if (problem !== "") {
             styles.endEdit()
             showError(qsTr("New style"), problem)
@@ -159,6 +153,34 @@ DialogWindow {
         storeRows = styles.styleRows(true)
         assRows = styles.styleRows(false)
         listedCatalog = styles.catalog
+    }
+    // The manager's own change of a list (a commit, a move, a copy): its
+    // rows are set by the action itself, not followed by name (a name may
+    // repeat, and the list emits its change before the action returns).
+    function own(action) {
+        ownChange = true
+        try {
+            return action()
+        } finally {
+            ownChange = false
+        }
+    }
+    // A list's rows after the manager changed it: selected, and the editor
+    // on them where it was on that list (an edit not applied stays, pinned
+    // to its Style's row now).
+    function followRows(store, rows) {
+        if (store)
+            storeSelected = rows
+        else
+            assSelected = rows
+        if (!editing || pendingNew || editingStore !== store)
+            return
+        if (rows.length === 0)
+            endEditing()
+        else if (dirty)
+            rebase(store, rows[0], rows)
+        else
+            openOn(store, rows)
     }
     function sameRows(a, b) { return a.length === b.length && a.every((r, i) => r === b[i]) }
     // The lists again after a change made elsewhere (an undo, a move,
@@ -377,14 +399,7 @@ DialogWindow {
         const rows = store ? storeSelected : assSelected
         if (rows.length === 0)
             return
-        ownChange = true
-        let removed
-        try {
-            removed = styles.removeStyles(store, rows)
-        } finally {
-            ownChange = false
-        }
-        const left = shownOf(store, removed)
+        const left = shownOf(store, own(() => styles.removeStyles(store, rows)))
         if (editing && editingStore === store)
             choose(store, left)
         else if (store)
@@ -396,22 +411,15 @@ DialogWindow {
         const rows = store ? storeSelected : assSelected
         if (rows.length === 0)
             return
-        const moved = styles.moveStyles(store, rows, kind)
-        if (store)
-            storeSelected = moved
-        else
-            assSelected = moved
+        followRows(store, own(() => styles.moveStyles(store, rows, kind)))
     }
-    // The selection follows its Styles by name.
+    // The selection follows its Styles by name (the sort is stable: a
+    // repeated name's Styles keep their order).
     function sortList(store) {
         const rows = store ? storeRows : assRows
         const names = (store ? storeSelected : assSelected).map(r => rows[r].name)
-        styles.sortStyles(store)
-        const found = rowsNamed(store, names)
-        if (store)
-            storeSelected = sorted(found)
-        else
-            assSelected = sorted(found)
+        own(() => styles.sortStyles(store))
+        followRows(store, sorted(rowsNamed(store, names)))
     }
     // SY1-clean-toast: Delete unused styles (the file's ⋯ menu and the
     // Subtitles menu's command): a toast with the Styles deleted and the
@@ -419,7 +427,7 @@ DialogWindow {
     function deleteUnused() {
         const done = () => {
             const names = assSelected.filter(r => r < assRows.length).map(r => assRows[r].name)
-            const result = styles.deleteUnusedStyles()
+            const result = own(() => styles.deleteUnusedStyles())
             if (result.deleted === undefined)
                 return
             const deleted = result.deleted
@@ -430,10 +438,11 @@ DialogWindow {
                              deleted.length === 0 ? qsTr("Every style is used by a line.")
                                                   : deleted.join(", ") + "\n" + qsTr("Ctrl+Z puts them back."),
                              { details: result.report })
-            if (visible && editing && !editingStore) {
-                const found = rowsNamed(false, names)
+            const found = rowsNamed(false, names)
+            if (visible && editing && !editingStore)
                 choose(false, shownOf(false, found.length > 0 ? found : [0]))
-            }
+            else
+                assSelected = sorted(found)
         }
         if (visible && editing && !editingStore)
             guard(done)
@@ -481,12 +490,10 @@ DialogWindow {
         guard(() => {
             const rows = storeSelected
             reviewClashes(styles.transferClashes(false, rows), rows.length, qsTr("this file"), choices => {
-                if (all) {
-                    styles.addToAllDocuments(rows, choices)
-                    manager.reloadRows()
-                } else {
-                    manager.choose(false, styles.addToDocument(rows, choices))
-                }
+                if (all)
+                    manager.own(() => styles.addToAllDocuments(rows, choices))
+                else
+                    manager.choose(false, manager.own(() => styles.addToDocument(rows, choices)))
             })
         })
     }
@@ -494,7 +501,7 @@ DialogWindow {
         guard(() => {
             const rows = assSelected
             reviewClashes(styles.transferClashes(true, rows), rows.length, qsTr("the catalog"), choices => {
-                manager.choose(true, styles.addToStore(rows, choices))
+                manager.choose(true, manager.own(() => styles.addToStore(rows, choices)))
             })
         })
     }
@@ -523,7 +530,7 @@ DialogWindow {
     // --- Catalogs -----------------------------------------------------------
     function chooseCatalog(name) {
         guard(() => {
-            if (styles.chooseCatalog(name))
+            if (manager.own(() => styles.chooseCatalog(name)))
                 manager.catalogShown()
         })
     }
@@ -537,7 +544,7 @@ DialogWindow {
     }
     function createCatalog(name) {
         guard(() => {
-            if (styles.createCatalog(name))
+            if (manager.own(() => styles.createCatalog(name)))
                 manager.catalogShown()
         })
     }
@@ -557,7 +564,7 @@ DialogWindow {
                 return
             if (manager.editing && manager.editingStore)
                 manager.endEditing()
-            if (manager.styles.deleteCatalog(name))
+            if (manager.own(() => manager.styles.deleteCatalog(name)))
                 manager.catalogShown()
         })
     }
@@ -668,6 +675,9 @@ DialogWindow {
         const name = nameField.text
         if (name.trim().length === 0)
             return qsTr("A style needs a name.")
+        // Its own name kept is no clash, a repeated one too (commitStyle).
+        if (!pendingNew && name === values.name)
+            return ""
         const rows = editingStore ? storeRows : assRows
         const own = pendingNew ? -1 : editedRows.length > 0 ? editedRows[0] : -1
         for (let i = 0; i < rows.length; ++i)
@@ -714,13 +724,8 @@ DialogWindow {
     // The editor's values to the controller: "" or the refusal.
     function commitValues(v) {
         const many = multi
-        ownChange = true
-        try {
-            return styles.commitEdit(v, many ? editedRows : [], many, renameBox.visible && renameBox.checked,
-                                     many ? resolved : [])
-        } finally {
-            ownChange = false
-        }
+        return own(() => styles.commitEdit(v, many ? editedRows : [], many, renameBox.visible && renameBox.checked,
+                                           many ? resolved : []))
     }
     // Apply as the lists move on (another tab, another catalog): a name
     // refused is put back and the other changes go in; what can't be
@@ -2127,7 +2132,9 @@ DialogWindow {
             const file = chooseLoaded.file
             manager.reviewClashes(manager.styles.fileClashes(toStore, file, names), names.length,
                                   toStore ? qsTr("the catalog") : qsTr("this file"), function(choices) {
-                manager.styles.loadFromFile(toStore, file, names, choices)
+                // Added at the end, or in place of a clash: the rows stay.
+                manager.own(() => manager.styles.loadFromFile(toStore, file, names, choices))
+                manager.followRows(toStore, toStore ? manager.storeSelected : manager.assSelected)
             })
         }
     }

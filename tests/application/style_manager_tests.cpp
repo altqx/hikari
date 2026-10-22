@@ -229,6 +229,18 @@ TEST(StyleLists, CommitRefusesTakenNamesAndAppliesMultiEdit)
     EXPECT_EQ(l[1].fontname, u8"Times");
 }
 
+TEST(StyleLists, CommitEditsTheOpenedCopyOfARepeatedName)
+{
+    StyleList l{named(u8"Dup", u8"First"), named(u8"Mid"), named(u8"Dup", u8"Last")};
+    EXPECT_EQ(*commitStyle(l, {0, named(u8"Dup", u8"Edited"), u8"Dup"}), 0u);
+    EXPECT_EQ(l[0].fontname, u8"Edited");
+    EXPECT_EQ(l[2].fontname, u8"Last");
+    // A row that no longer holds the opened name falls back to the name.
+    EXPECT_EQ(*commitStyle(l, {1, named(u8"Dup", u8"Again"), u8"Dup"}), 2u);
+    EXPECT_EQ(l[1].name, u8"Mid");
+    EXPECT_EQ(l[2].fontname, u8"Again");
+}
+
 TEST(DocumentStyles, EditsKeepUntouchedStylesAndRenameLines)
 {
     EditSession session{load(kScript)};
