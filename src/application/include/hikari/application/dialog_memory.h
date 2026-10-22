@@ -26,6 +26,11 @@ using NamedDialogValues = std::map<std::string, DialogValue>;
 // another feed, say) is shown again rather than answered as before.
 bool sameDialog(const DialogRequest &a, const DialogRequest &b);
 
+// A dialog with nothing to fill in, labels and buttons only: a question (a
+// trust prompt, a confirmation). Repeat asks it again rather than answering
+// it as before, since a button there is a decision, not typing to save.
+bool isQuestion(const DialogRequest &request);
+
 // Whether `pressed` answers the dialog as cancelled: no button (the window
 // closed, Esc), the default pair's Cancel, or a button whose id is cancel.
 bool cancelAnswer(const DialogRequest &request, int pressed);

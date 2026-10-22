@@ -323,7 +323,9 @@ private slots:
         };
         write(source);
         shell.load(copy.toStdString());
-        QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Two dialogs"), QStringLiteral("Save and close")}), 30'000);
+        QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Two dialogs"), QStringLiteral("Save and close"),
+                                                  QStringLiteral("Trust prompt")}),
+                                  30'000);
         select(1);
         answers = {{0, {}}, {0, {}}};
         QVERIFY(ran([&] { return shell.run(copy.toStdString(), 0); }).startsWith(QStringLiteral("first button=Apply")));
@@ -337,7 +339,7 @@ private slots:
         write(moved);
         QVERIFY(shell.reload(copy.toStdString()));
         QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Other"), QStringLiteral("Two dialogs"),
-                                                  QStringLiteral("Save and close")}),
+                                                  QStringLiteral("Save and close"), QStringLiteral("Trust prompt")}),
                                   30'000);
         QVERIFY(repeat().startsWith(QStringLiteral("Repeated with the last answers\nfirst button=Apply")));
 
@@ -346,7 +348,9 @@ private slots:
         renamed.replace("\"Two dialogs\"", "\"Renamed\"");
         write(renamed);
         QVERIFY(shell.reload(copy.toStdString()));
-        QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Renamed"), QStringLiteral("Save and close")}), 30'000);
+        QTRY_COMPARE_WITH_TIMEOUT(macros(), (QStringList{QStringLiteral("Renamed"), QStringLiteral("Save and close"),
+                                                  QStringLiteral("Trust prompt")}),
+                                  30'000);
         QCOMPARE(repeat(), QStringLiteral("not started"));
         QVERIFY(!shell.canRepeat());
         QCOMPARE(shell.lastMessage(), QStringLiteral("The last run's macro is no longer loaded, so it can't be repeated."));
@@ -358,9 +362,29 @@ private slots:
     {
         answers = {{0, {}}};
         QCOMPARE(ran([this] { return app->automation().run(kScript.toStdString(), 1); }),
-                 QStringLiteral("button=Save && &Close\n"));
+                 QStringLiteral("button=Save && &Close backup=true\n"));
         QCOMPARE(app->automation().repeatText(),
                  QStringLiteral("Repeat last run: Save and close, as Save & Close with the same answers"));
+    }
+
+    // A question (labels and buttons only, as a feed trust prompt) is asked
+    // again with a notice; the form after it still replays, and the tooltip
+    // names the form's button.
+    void repeatAsksQuestionsAgain()
+    {
+        answers = {{1, {}}, {0, {{QStringLiteral("tags"), QStringLiteral("\\fs")}}}};
+        QCOMPARE(ran([this] { return app->automation().run(kScript.toStdString(), 2); }),
+                 QStringLiteral("trust=Trust this time\nform=Apply tags=\\fs\n"));
+        QCOMPARE(app->automation().repeatText(),
+                 QStringLiteral("Repeat last run: Trust prompt, as Apply with the same answers"));
+        shown.clear();
+        answers = {{1, {}}};
+        QCOMPARE(repeat(), QStringLiteral("Repeated with the last answers\ntrust=Trust this time\nform=Apply tags=\\fs\n"));
+        QCOMPARE(shown.size(), 1);
+        QCOMPARE(shown[0].notice, QStringLiteral("Repeat last run asks questions again rather than answering them for you."));
+        // Cancel at the question this time: the run stops there.
+        answers = {{0, {}}};
+        QCOMPARE(repeat(), QStringLiteral("Repeated with the last answers\ntrust=false\n"));
     }
 
     // Settings > Reset all settings resets "Fill in my last answers" but

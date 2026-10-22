@@ -16,6 +16,12 @@ bool sameDialog(const DialogRequest &a, const DialogRequest &b)
            a.buttonIds == b.buttonIds;
 }
 
+bool isQuestion(const DialogRequest &request)
+{
+    return std::ranges::all_of(request.controls,
+                               [](const DialogControl &c) { return dialogValueType(c.kind) == DialogValueType::None; });
+}
+
 bool cancelAnswer(const DialogRequest &request, int pressed)
 {
     if (pressed < 0)

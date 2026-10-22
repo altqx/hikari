@@ -93,6 +93,18 @@ TEST(DialogMemory, SameDialogIsTheSameControlsTextAndButtonsNotValues)
     EXPECT_TRUE(differs([](DialogRequest &r) { r.controls[1].hint = "a new hint"; }));
 }
 
+TEST(DialogMemory, AQuestionHasNothingToFillIn)
+{
+    DialogRequest trust;
+    trust.controls = {control("label", "", 0, 0)};
+    trust.buttons = {"Cancel", "Trust this time"};
+    EXPECT_TRUE(isQuestion(trust));
+    EXPECT_TRUE(isQuestion(DialogRequest{})); // the default OK / Cancel and nothing else
+    EXPECT_FALSE(isQuestion(gradient()));
+    trust.controls.push_back(control("checkbox", "always", 0, 1));
+    EXPECT_FALSE(isQuestion(trust));
+}
+
 TEST(DialogMemory, ReplaySendsTheRecordedAnswerAsTheControlsTakeIt)
 {
     const DialogRequest r = gradient();

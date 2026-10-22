@@ -13,6 +13,7 @@
 
 #include <algorithm>
 #include <numeric>
+#include <ranges>
 #include <string_view>
 #include <unordered_set>
 
@@ -616,10 +617,13 @@ QString AutomationShell::repeatText() const
     if (!m_repeat)
         return QCoreApplication::translate("HikariSub.Automation", "Repeat last run");
     const QString macro = QString::fromStdString(m_repeat->macro);
-    if (m_repeat->dialogs.empty())
+    // The button the last dialog Repeat answers was answered with (questions
+    // are asked again).
+    const auto answers = std::ranges::find_if(m_repeat->dialogs | std::views::reverse,
+                                              [](const AnsweredDialog &d) { return !application::isQuestion(d.request); });
+    if (answers == (m_repeat->dialogs | std::views::reverse).end())
         return QCoreApplication::translate("HikariSub.Automation", "Repeat last run: %1").arg(macro);
-    // The button the last dialog was answered with.
-    const auto &last = m_repeat->dialogs.back();
+    const auto &last = *answers;
     const auto pressed = static_cast<std::size_t>(std::max(0, last.answer.pressed));
     const QString button = last.request.buttons.empty()
                                ? QCoreApplication::translate("HikariSub.Automation", "OK")
@@ -654,8 +658,16 @@ void AutomationShell::presentDialog(const application::DialogRequest &request, b
         const std::size_t at = m_run->dialogs.size();
         const auto &recorded = *m_run->repeat;
         const bool inRecord = at < recorded.size();
-        if (m_run->replaying && inRecord && application::sameDialog(recorded[at].request, request))
+        const bool same = m_run->replaying && inRecord && application::sameDialog(recorded[at].request, request);
+        if (same && !application::isQuestion(request))
             return answered(application::replayedAnswer(request, recorded[at].answer));
+        if (same) {
+            // A question is asked again; the dialogs after it still replay.
+            shown.notice = QCoreApplication::translate("HikariSub.Automation",
+                                                       "Repeat last run asks questions again rather than answering them for you.");
+            m_dialogs.present(m_title, request, std::move(answered), source, std::move(shown));
+            return;
+        }
         // Shown, filled with the last answers where the names match: this
         // dialog's own, else those of the dialog at this point last time.
         shown.notice =

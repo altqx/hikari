@@ -36,7 +36,25 @@ end)
 
 -- A button label with an escaped "&&" and a mnemonic, for Repeat's tooltip.
 aegisub.register_macro("Save and close", "", function()
-    local button = aegisub.dialog.display({ { class = "label", label = "Done?", x = 0, y = 0 } },
-        { "Save && &Close", "Cancel" }, { ok = "Save && &Close", cancel = "Cancel" })
-    aegisub.debug.out(string.format("button=%s\n", tostring(button)))
+    local button, r = aegisub.dialog.display({
+        { class = "label", label = "Done?", x = 0, y = 0 },
+        { class = "checkbox", name = "backup", label = "Keep a backup", value = true, x = 0, y = 1 },
+    }, { "Save && &Close", "Cancel" }, { ok = "Save && &Close", cancel = "Cancel" })
+    aegisub.debug.out(string.format("button=%s backup=%s\n", tostring(button), tostring(r.backup)))
+end)
+
+-- A question (labels and buttons only), as DependencyControl's feed trust
+-- prompt, then a form: Repeat asks the question again and replays the form.
+aegisub.register_macro("Trust prompt", "", function()
+    local trust = aegisub.dialog.display({
+        { class = "label", label = "Trust https://example.org/feed.json and proceed?", x = 0, y = 0 },
+    }, { "Cancel", "Trust this time" }, { cancel = "Cancel" })
+    aegisub.debug.out(string.format("trust=%s\n", tostring(trust)))
+    if not trust then
+        return
+    end
+    local button, r = aegisub.dialog.display({
+        { class = "edit", name = "tags", value = "\\blur", x = 0, y = 0 },
+    }, { "Apply", "Cancel" }, { ok = "Apply", cancel = "Cancel" })
+    aegisub.debug.out(string.format("form=%s tags=%s\n", tostring(button), tostring(r.tags)))
 end)
