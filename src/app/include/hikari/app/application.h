@@ -1204,6 +1204,8 @@ private:
     // they changed.
     bool setVideoFonts(std::optional<application::DocumentId> document);
     std::vector<application::FontLease> m_videoFonts;
+    // VT3: the names read from m_videoFonts' leases, by their bytes.
+    std::vector<std::pair<std::shared_ptr<const std::vector<std::byte>>, std::vector<std::string>>> m_leasedFontNames;
     std::unique_ptr<ui::StatusBarController> m_statusBar; // P10
     bool runFilter(const std::function<std::expected<void, application::CommandRefusal>(application::EditSession &)> &command);
     bool m_videoFailureLogged = false;

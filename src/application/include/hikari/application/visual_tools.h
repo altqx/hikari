@@ -353,6 +353,15 @@ public:
     virtual std::int64_t videoTimeMs() const { return 0; }
     virtual LegacyTimebase timebase() const { return {}; }
     virtual TextMeasurePort *textMeasure() const { return nullptr; }
+    // VT3: whether the renderer is given a font of this name (family, full
+    // or PostScript, ignoring ASCII case, as libass matches it) from the
+    // Script's attachments or the external fonts, which the text measure
+    // does not see.
+    virtual bool fontLeased(const std::string &name) const
+    {
+        (void)name;
+        return false;
+    }
     virtual bool ignoreFiltered() const { return false; }
     virtual void log(std::u16string_view text) { (void)text; }
     // T3: the Line editor's selection in the text the tools edit (legacy

@@ -267,6 +267,16 @@ TEST(FontPickerFaces, ExternalFontsAreListedFromTheirBytes)
     EXPECT_TRUE(service.pickerFaces(env).empty());
 }
 
+// VT3: the names libass matches a leased font by (family, full and
+// PostScript), read from its bytes: every face of a collection.
+TEST(FontPickerFaces, ALeasesNamesAreReadFromItsBytes)
+{
+    const auto names = hikari::backends::fontNames(*load(fixture("collection.ttc")));
+    for (const char *want : {"HikariProbeCollectionA", "HikariProbeCollectionB"})
+        EXPECT_NE(std::ranges::find(names, std::string(want)), names.end()) << want;
+    EXPECT_TRUE(hikari::backends::fontNames(std::vector<std::byte>(16, std::byte{1})).empty());
+}
+
 // The font filter's check (FontEnumerator::CheckGlyphsExists): a face
 // covers the filter when it maps every character.
 TEST(FontPickerFaces, CoverageIsEveryCharacter)

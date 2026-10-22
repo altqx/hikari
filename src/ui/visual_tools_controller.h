@@ -27,6 +27,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <set>
 
 class QQuickItem;
 
@@ -115,6 +116,9 @@ public:
     // (legacy's "Warning" box): both a warning toast titled toolName().
     void setLog(std::function<void(const QString &)> log) { m_log = std::move(log); }
     void setIgnoreFiltered(std::function<bool()> ignore) { m_ignoreFiltered = std::move(ignore); }
+    // VT3: the names (family, full, PostScript) of the fonts the video's
+    // renderer is given: its Script's attachments and the external fonts.
+    void setLeasedFonts(const std::vector<std::string> &names);
     // T3: the Line editor's selection in the edited text (FindTag's mode 0).
     void setEditorSelection(std::function<std::pair<long, long>()> selection)
     {
@@ -235,6 +239,7 @@ public:
     application::LegacyTimebase timebase() const override;
     application::TextMeasurePort *textMeasure() const override { return &m_measure; }
     bool ignoreFiltered() const override { return m_ignoreFiltered && m_ignoreFiltered(); }
+    bool fontLeased(const std::string &name) const override;
     void log(std::u16string_view text) override;
     std::pair<long, long> editorSelection() const override;
     void setEditorSelection(long from, long to) override
@@ -301,6 +306,7 @@ private:
     std::function<void(const core::Document *)> m_preview;
     std::function<void(const QString &)> m_log;
     std::function<bool()> m_ignoreFiltered;
+    std::set<std::string> m_leasedFonts; // ASCII lower case
     std::function<std::pair<long, long>()> m_editorSelection;
     std::function<void(long, long)> m_placeSelection;
     mutable QtTextMeasurePort m_measure;

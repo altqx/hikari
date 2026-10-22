@@ -239,6 +239,37 @@ void VisualToolsController::resetTool()
     updatePreview();
 }
 
+namespace {
+
+// libass's ass_strcasecmp: ASCII letters only.
+std::string asciiLower(std::string s)
+{
+    for (char &c : s)
+        if (c >= 'A' && c <= 'Z')
+            c = static_cast<char>(c - 'A' + 'a');
+    return s;
+}
+
+} // namespace
+
+void VisualToolsController::setLeasedFonts(const std::vector<std::string> &names)
+{
+    std::set<std::string> lowered;
+    for (const std::string &name : names)
+        lowered.insert(asciiLower(name));
+    if (lowered == m_leasedFonts)
+        return;
+    m_leasedFonts = std::move(lowered);
+    // The Perspective tool measures only fonts it can see: it reads its Line again.
+    if (m_family == Family::Perspective && tool())
+        resetTool();
+}
+
+bool VisualToolsController::fontLeased(const std::string &name) const
+{
+    return m_leasedFonts.contains(asciiLower(name));
+}
+
 void VisualToolsController::viewChanged()
 {
     m_view.refreshToolTransform();

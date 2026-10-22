@@ -833,6 +833,44 @@ bool charsetCovers(const FcCharSet *set, const std::u32string &characters)
 
 } // namespace
 
+std::vector<std::string> fontNames(const std::vector<std::byte> &bytes)
+{
+    std::vector<std::string> out;
+    FT_Library ft = nullptr;
+    if (bytes.empty() || FT_Init_FreeType(&ft))
+        return out;
+    const auto *data = reinterpret_cast<const FT_Byte *>(bytes.data());
+    const auto size = FT_Long(bytes.size());
+    long count = 0;
+    if (FT_Face probe = nullptr; !FT_New_Memory_Face(ft, data, size, -1, &probe)) {
+        count = probe->num_faces;
+        FT_Done_Face(probe);
+    }
+    const auto add = [&out](std::string name) {
+        if (!name.empty() && std::find(out.begin(), out.end(), name) == out.end())
+            out.push_back(std::move(name));
+    };
+    for (long i = 0; i < count; ++i) {
+        FT_Face f = nullptr;
+        if (FT_New_Memory_Face(ft, data, size, i, &f))
+            continue;
+        for (FT_UInt n = 0, total = FT_Get_Sfnt_Name_Count(f); n < total; ++n) {
+            FT_SfntName name;
+            if (!FT_Get_Sfnt_Name(f, n, &name) &&
+                (name.name_id == TT_NAME_ID_FONT_FAMILY || name.name_id == TT_NAME_ID_TYPOGRAPHIC_FAMILY ||
+                 name.name_id == TT_NAME_ID_FULL_NAME || name.name_id == TT_NAME_ID_PS_NAME))
+                add(decodeName(name));
+        }
+        if (f->family_name)
+            add(f->family_name);
+        if (const char *ps = FT_Get_Postscript_Name(f))
+            add(ps);
+        FT_Done_Face(f);
+    }
+    FT_Done_FreeType(ft);
+    return out;
+}
+
 std::vector<SystemFace> LibassFontService::pickerFaces(const application::FontEnvironment &environment)
 {
     std::vector<SystemFace> out = environment.systemFonts ? systemFaces() : std::vector<SystemFace>();
