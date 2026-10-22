@@ -2716,7 +2716,8 @@ private slots:
                 return found;
         return nullptr;
     }
-    // PU6 (#308): a control of the Spellchecker panel.
+    // PU6 (#308): a control of the Spellchecker panel, which is in a
+    // window's tree only while its dock is open.
     QQuickItem *spellItem(const char *name) const
     {
         auto *panel = item<QQuickItem>("spellCheckerPanel");
@@ -7900,6 +7901,7 @@ private slots:
         QObject *dialog = nullptr;
         QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("fontCollectorDialog"))) &&
                     dialog->property("visible").toBool());
+        auto *collectorWindow = qobject_cast<QQuickWindow *>(dialog); // PU6: a window of its own
         // PU6: the action's hint and the empty log's line.
         QCOMPARE(dialogItem("fontCollectorDialog", "fontCollectorActionHint")->property("text").toString(),
                  QStringLiteral("Lists the fonts the subtitles use and whether this computer has each one."));
@@ -7944,11 +7946,11 @@ private slots:
             QCOMPARE(pointAt(offset).second, offset);
         }
         const auto lineNumber = pointAt(int(check.indexOf(QStringLiteral("In lines: 2")) + 10));
-        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, lineNumber.first);
+        QTest::mouseDClick(collectorWindow, Qt::LeftButton, Qt::NoModifier, lineNumber.first);
         QTRY_COMPARE(session->selection().active, std::optional(lines[1]->id));
         QSignalSpy styleRequested(&collector, &app::FontCollectorController::styleRequested);
         const auto styleTab = pointAt(int(check.indexOf(QStringLiteral(" - Sign tabs: 1")) + 14));
-        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, styleTab.first);
+        QTest::mouseDClick(collectorWindow, Qt::LeftButton, Qt::NoModifier, styleTab.first);
         QTRY_COMPARE(session->selection().active, std::optional(lines[2]->id));
         QCOMPARE(styleRequested.size(), 1);
         QCOMPARE(styleRequested.at(0).at(0).toString(), QStringLiteral("Sign"));
@@ -7970,7 +7972,7 @@ private slots:
         pathField->forceActiveFocus();
         QTRY_VERIFY(pathField->hasActiveFocus());
         for (const char key : {'a', '/', 'b', '*', 'c'})
-            QTest::keyClick(window, key);
+            QTest::keyClick(collectorWindow, key);
 #ifdef _WIN32
         QCOMPARE(pathField->property("text").toString(), QStringLiteral("abc"));
 #else
@@ -9128,7 +9130,6 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
         auto *dock = item<QObject>("spellDock");
-        auto *panel = item<QObject>("spellCheckerPanel");
         // Legacy order: Resample subtitles, then Check spelling.
         auto *check = root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem"));
         auto *subtitles = check->property("menu").value<QObject *>();
@@ -9144,6 +9145,7 @@ private slots:
 
         QVERIFY(QMetaObject::invokeMethod(check, "triggered"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *panel = item<QObject>("spellCheckerPanel");
         auto *misspell = spellItem("spellMisspell");
         auto *replacement = spellItem("spellReplacement");
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
@@ -9209,9 +9211,9 @@ private slots:
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
         auto *dock = item<QObject>("spellDock");
-        auto *panel = item<QObject>("spellCheckerPanel");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem")), "triggered"));
         QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *panel = item<QObject>("spellCheckerPanel");
         auto *misspell = spellItem("spellMisspell");
         auto *list = spellItem("spellSuggestions");
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
@@ -9273,11 +9275,12 @@ private slots:
                                        "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold good\n");
         QVERIFY(application->openFile(path));
         auto *root = engine->rootObjects().first();
-        auto *dock = item<QObject>("spellDock");
+        auto *dock = named("spellDock");
         QVERIFY(dock && !dock->property("isOpen").toBool());
-        QCOMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("Checks the spelling from the active line"));
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         QTRY_VERIFY(dock->property("isOpen").toBool());
+        QQuickItem *panel = item<QQuickItem>("spellCheckerPanel");
+        QVERIFY(panel);
         QCOMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
         QCOMPARE(spellItem("spellLine")->property("text").toString(), QStringLiteral("Line 1"));
         QQmlExpression context(qmlContext(spellItem("spellContext")), spellItem("spellContext"),
@@ -9308,7 +9311,7 @@ private slots:
         QTRY_VERIFY((word = dialogItem("spellAddedWords", "spellAdded_wrold")));
         QVERIFY(QMetaObject::invokeMethod(word, "click"));
         QTRY_VERIFY(remove->property("enabled").toBool());
-        QCOMPARE(remove->property("text").toString(), QStringLiteral("Remove 1 word"));
+        QCOMPARE(remove->property("text").toString(), QStringLiteral("Remove 1 word(s)")); // (English has no catalog)
         QVERIFY(QMetaObject::invokeMethod(remove, "click"));
         QTRY_VERIFY(!words->property("visible").toBool());
         QVERIFY(!application->addedDictionaryWords().contains(QStringLiteral("wrold")));
@@ -9317,14 +9320,18 @@ private slots:
         QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
         QTRY_VERIFY(!dock->property("isOpen").toBool());
-        QVERIFY(!item<QObject>("spellCheckerPanel")->property("checking").toBool());
+        QVERIFY(!panel->property("checking").toBool());
+        // The state a layout that shows the panel finds.
+        QCOMPARE(findItem(panel, QStringLiteral("spellEmptyText"))->property("text").toString(),
+                 QStringLiteral("Checks the spelling from the active line"));
+        QCOMPARE(findItem(panel, QStringLiteral("spellEmptyAction"))->property("text").toString(), QStringLiteral("Check spelling"));
         application->editor().discard();
 
         // No dictionary: said, with the settings.
         restartWithSpelling(home.path(), false);
         QVERIFY(application->openFile(path));
         root = engine->rootObjects().first();
-        dock = item<QObject>("spellDock");
+        dock = named("spellDock");
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
         QTRY_VERIFY(dock->property("isOpen").toBool());
         QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
@@ -10492,11 +10499,23 @@ private slots:
         QVariant propertiesOpened;
         QVERIFY(QMetaObject::invokeMethod(root, "openScriptProperties", Q_RETURN_ARG(QVariant, propertiesOpened)));
         QVERIFY(QMetaObject::invokeMethod(root, "openFontCollector"));
-        QVERIFY(QMetaObject::invokeMethod(item<QObject>("spellCheckerPanel"), "openAddedWords"));
+        QQmlExpression addedWords(qmlContext(root), root, QStringLiteral("panelOwnItems(spellDock)[2].run()"));
+        addedWords.evaluate();
+        QVERIFY(!addedWords.hasError());
         const char *pu6Windows[] = {"conversionDialog", "resampleDialog", "scriptPropertiesDialog", "fontCollectorDialog",
                                     "spellAddedWords"};
+        // The added words window belongs to the closed Spellchecker dock,
+        // outside the root's object tree.
+        const auto pu6Window = [&](const char *name) -> QWindow * {
+            if (auto *found = qobject_cast<QWindow *>(named(name)))
+                return found;
+            for (QWindow *w : QGuiApplication::allWindows())
+                if (w->objectName() == QLatin1String(name))
+                    return w;
+            return nullptr;
+        };
         for (const char *name : pu6Windows)
-            QVERIFY2(named(name), name);
+            QVERIFY2(pu6Window(name), name);
         for (const Buttons &buttons : footers) {
             const char *first = buttons.front().first;
             QObject *found = named(first);
@@ -10523,7 +10542,7 @@ private slots:
         clashes->close();
         QTRY_VERIFY(!clashes->isVisible());
         for (const char *name : pu6Windows) {
-            auto *pu6 = qobject_cast<QWindow *>(named(name));
+            auto *pu6 = pu6Window(name);
             pu6->close();
             QTRY_VERIFY(!pu6->isVisible());
         }
