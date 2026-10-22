@@ -417,9 +417,11 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                     auto &times = karaoke->times();
                     const int sizes = karaoke->count() - 1;
                     const int addtime = fieldTime(snapped) - fieldTime(selection.startMs);
+                    // by the committed difference alone: a start off the 10 ms
+                    // grid (a MicroDVD frame's) keeps the syllables' lengths
                     for (int i = 0; i < sizes; i++) {
                         auto &t = times[static_cast<std::size_t>(i)];
-                        t = legacyZeroIt(t + addtime);
+                        t += addtime;
                         if (t > times[static_cast<std::size_t>(i) + 1])
                             t = times[static_cast<std::size_t>(i) + 1];
                     }

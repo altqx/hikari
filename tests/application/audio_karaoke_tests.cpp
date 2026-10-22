@@ -894,6 +894,22 @@ TEST_F(KaraokeMouseTest, TheSyllablesMoveByTheCommittedStart)
     EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))), "{\\k60}ka{\\k90}ra{\\k140}oke");
 }
 
+// KA1 (Codex): a start off the 10 ms grid (a 24000/1001 frame's) carried by
+// the right button keeps the syllables' lengths: the boundaries move by the
+// committed difference and are not cut to whole centiseconds
+TEST_F(KaraokeMouseTest, TheRightButtonKeepsTheLengthsOffTheCentisecondGrid)
+{
+    fieldTime = [](int ms) { return ms / 42 * 42; };
+    karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3024, 6024);
+    selection.startMs = 3024;
+    timing.drawn(view, selection);
+    send(press(101, 50, AudioMouse::Button::Right));
+    send(drag(103, AudioMouse::Button::Right)); // 3090, committed as 3066
+    send(release(103, AudioMouse::Button::Right));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3666, 4566, 6024}));
+    EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))).substr(0, 19), "{\\k60}ka{\\k90}ra{\\k");
+}
+
 // KA1 (Codex): a start drag cut short (the capture lost) leaves the
 // syllables at their times, as its release does
 TEST_F(KaraokeMouseTest, ALostCaptureKeepsTheSyllablesAsAReleaseDoes)
