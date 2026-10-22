@@ -25,6 +25,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 include(CTest)
 # Sources are UTF-8; MSVC otherwise reads them in the system code page.
 add_compile_options("$<$<COMPILE_LANG_AND_ID:CXX,MSVC>:/utf-8>" "$<$<COMPILE_LANG_AND_ID:C,MSVC>:/utf-8>")
+# #320: the Linux CI job bounds-checks libstdc++ (operator[], front()/back(),
+# span, string_view); an out-of-bounds read aborts with its file and line.
+# Our targets only, not the vcpkg ports; presets and packages leave it off.
+option(HIKARI_GLIBCXX_ASSERTIONS "Build with -D_GLIBCXX_ASSERTIONS (CI)" OFF)
+if(HIKARI_GLIBCXX_ASSERTIONS)
+    add_compile_definitions("$<$<COMPILE_LANGUAGE:CXX>:_GLIBCXX_ASSERTIONS>")
+endif()
 include("${CMAKE_CURRENT_LIST_DIR}/cmake/HikariDependencies.cmake")
 find_package(Qt6 6.11.2 EXACT REQUIRED COMPONENTS QuickControls2)
 qt_standard_project_setup(REQUIRES 6.11)
