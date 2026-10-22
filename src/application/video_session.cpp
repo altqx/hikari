@@ -826,6 +826,8 @@ bool VideoSession::seekToMs(int ms)
         frame = at ? static_cast<int>(at->value()) : frameCount() - 1;
     }
     if (m_playing) {
+        if (looping())
+            m_playEndMs = 0; // KE2: a seek ends Loop the Line; playing goes on
         m_requested = frame;
         m_lastGeneralUs.reset();
         return startPlayback(frameStart(frame).value_or(core::DocumentTime(0)).microseconds());

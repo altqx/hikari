@@ -854,6 +854,15 @@ TEST_F(VideoTest, ALoopedLinePlaysAgainFromItsStart)
     player.delivered();
     video.generalFrame(playerFrame(), 285'000);
     EXPECT_FALSE(video.playing());
+    // a seek by time (a chapter) ends it, and playing goes on from there
+    ASSERT_TRUE(video.playLine(100, 300, true));
+    player.delivered();
+    ASSERT_TRUE(video.seekToMs(160));
+    EXPECT_FALSE(video.looping());
+    player.delivered();
+    video.generalFrame(playerFrame(), 285'000);
+    EXPECT_TRUE(video.playing());
+    EXPECT_FALSE(video.looping());
     // a stop ends it too
     ASSERT_TRUE(video.playLine(100, 300, true));
     ASSERT_TRUE(video.stop());
