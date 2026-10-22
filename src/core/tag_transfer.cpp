@@ -855,6 +855,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         return out;
     };
     bool drawingNow = false; // \p as the renderer is at each piece
+    std::set<std::u16string> looked; // each name looked up once, found or not
     for (const auto &piece : tokens.pieces) {
         if (!piece.block && drawingNow) {
             out.drawing = true;
@@ -862,15 +863,21 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         }
         for (const auto &tag : piece.tags) {
             if (effectOf(tag.name).kind == Kind::Reset) {
-                const auto name = std::u16string(trimmed(tag.args));
-                const auto u8name = toUtf8(name);
-                // The last Style of the name, as libass's lookup_style.
-                const auto named = std::ranges::find_if(std::views::reverse(styles),
-                                                        [&](const StyleValues &s) { return s.name == u8name; });
-                if (!name.empty() && named != std::views::reverse(styles).end() && !out.named.contains(name)) {
-                    out.named[name] = defaultsFor(&*named);
-                    if (!budget.spend(unitsOf(out.named[name])))
+                auto name = std::u16string(trimmed(tag.args));
+                if (!name.empty() && !looked.contains(name)) {
+                    // The last Style of the name, as libass's lookup_style:
+                    // charged, the names the text gives may be many.
+                    if (!budget.spend(styles.size() + 1))
                         return tooMuch();
+                    const auto u8name = toUtf8(name);
+                    const auto named = std::ranges::find_if(std::views::reverse(styles),
+                                                            [&](const StyleValues &s) { return s.name == u8name; });
+                    if (named != std::views::reverse(styles).end()) {
+                        out.named[name] = defaultsFor(&*named);
+                        if (!budget.spend(unitsOf(out.named[name])))
+                            return tooMuch();
+                    }
+                    looked.insert(std::move(name));
                 }
             }
             // libass reads \p as a whole number and clamps it to 0 and up;
@@ -1110,7 +1117,24 @@ std::u16string composeTranslation(const OriginalTags &tags, const TranslationDra
             placed->push_back({out.size(), out.size(), run});
         current = run;
     };
+    // Only the translator's own blocks from `from` to `to`: no text between.
+    const auto onlyBlocks = [&](std::size_t from, std::size_t to) {
+        while (from < to && draft.body[from] == u'{') {
+            const auto close = draft.body.find(u'}', from);
+            if (close == std::u16string::npos || close >= to)
+                return false;
+            from = close + 1;
+        }
+        return from == to;
+    };
     for (const auto &p : validPlacements(tags, draft)) {
+        // Runs side by side across the translator's tags change in one
+        // block before them, as the reader reads a transition.
+        if (current != 0 && currentEnd < p.start && onlyBlocks(currentEnd, p.start)) {
+            moveTo(currentEnd, p.run);
+            currentEnd = p.end;
+            continue;
+        }
         if (current != 0 && currentEnd < p.start)
             moveTo(currentEnd, 0);
         moveTo(p.start, p.run);

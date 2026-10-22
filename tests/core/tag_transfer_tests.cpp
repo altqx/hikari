@@ -661,6 +661,45 @@ TEST(TagTransfer, RunSettersCopiedAreBounded)
     EXPECT_EQ(readOriginalTags(original, &plain, styles).runs.size(), 2u);
 }
 
+TEST(TagTransfer, ResetStyleLookupsAreBounded)
+{
+    const auto numbered = [](std::u16string prefix, std::size_t i) {
+        for (const char c : std::to_string(i))
+            prefix += static_cast<char16_t>(c);
+        return prefix;
+    };
+    std::vector<StyleValues> styles(4096);
+    for (std::size_t i = 0; i < styles.size(); ++i)
+        styles[i].name = toUtf8(numbered(u"S", i));
+    // A bare \r and one name again and again: looked up once at most.
+    std::u16string same = u"a {\\i1}b{\\i0} c";
+    for (int i = 0; i < 1000; ++i)
+        same += i % 2 ? u"{\\r}x" : u"{\\rGone}x";
+    EXPECT_FALSE(readOriginalTags(same, &styles[0], styles).malformed);
+    // A name each, none found, in one block before the text: each lookup
+    // is charged.
+    std::u16string names = u"{";
+    for (std::size_t i = 0; i < 1000; ++i)
+        names += u"\\r" + numbered(u"Gone", i);
+    names += u"}a {\\i1}b{\\i0} c";
+    EXPECT_TRUE(readOriginalTags(names, &styles[0], styles).malformed);
+}
+
+TEST(TagTransfer, RunsSideBySideAcrossTheTranslatorsTagsReadBack)
+{
+    const auto tags = readOriginalTags(u"x {\\i1}a{\\i0} y {\\b1}b{\\b0} z");
+    ASSERT_EQ(tags.runs.size(), 2u);
+    // Run 1 on A, run 2 on B, the translator's own \u1 between them.
+    const auto d = draft(u"A{\\u1}BC{\\u0}DE", {{0, 1, 1}, {6, 7, 2}});
+    const auto saved = composeTranslation(tags, d);
+    EXPECT_EQ(u8(saved), "{\\i1}A{\\i0\\b1}{\\u1}B{\\b0}C{\\u0}DE");
+    // Read back, run 2 starts where run 1 ends (no text between).
+    const auto read = readTranslation(tags, saved);
+    EXPECT_EQ(u8(read.body), u8(d.body));
+    EXPECT_EQ(read.placements, (std::vector<RunPlacement>{{0, 1, 1}, {1, 7, 2}}));
+    EXPECT_EQ(u8(composeTranslation(tags, read)), u8(saved));
+}
+
 TEST(TagTransfer, EscapedBracesCarryNothing)
 {
     // libass shows "\{" as a brace: no tag is read, Paste all copies it all.
