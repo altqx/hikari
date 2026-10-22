@@ -1279,6 +1279,29 @@ TEST(HydraStrip, TheLastChangeIsDoneAgainInPlaceOfItsStep)
     EXPECT_EQ(textOf(*host.s, all[0]), "{\\blur1}One");
 }
 
+// HY1-time-keys-set: the Line editor's "Insert difference from the start"
+// key puts the video's time from the Line's start into \fad's first value,
+// as Set does, whatever the switch shows; one step.
+TEST(HydraStrip, TheTimeKeySetsTheValue)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\fad(100,200)}Hello"}, false)); // 1.0 s to 2.0 s, the video at 1.5 s
+    host.caret = {3, 3};
+    AllTagsTool tags;
+    tags.setToggled((PasteAdd << 20) + 10); // fading, under Add
+    tags.selected(host);
+    tags.reset(host);
+    ASSERT_EQ(tags.actualTag().tag, u"fad");
+    const std::size_t steps = host.s->historySize();
+    Key key;
+    key.key = ',';
+    key.control = true;
+    EXPECT_TRUE(tags.key(key, host));
+    EXPECT_EQ(host.bells, 0);
+    EXPECT_EQ(host.s->historySize(), steps + 1);
+    EXPECT_EQ(textOf(*host.s, host.targets.front()), "{\\fad(500,200)}Hello");
+}
+
 namespace {
 
 // Approved departures (docs/qt/compatibility-decisions.md): the states where
