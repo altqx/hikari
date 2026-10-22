@@ -70,19 +70,22 @@ DialogWindow {
     }
     readonly property bool catalogChosen: choice > 1
 
-    // Opens on the Line editor's field `role` with its selection (and the
-    // field's text, for the preview); false when the editor refuses.
-    function openFor(role, selectionStart, selectionEnd, text, selectedText) {
+    // Opens on the Line editor's field `role` with its selection; false
+    // when the editor refuses. The preview draws what the selection (else
+    // the line) draws, from the raw text.
+    function openFor(role, selectionStart, selectionEnd) {
         const f = editor.beginFont(role, selectionStart, selectionEnd)
         if (f.name === undefined)
             return false
         mode = "line"
         done = null
         openerWindow = null
-        const selected = selectedText || ""
-        sampleSource = selected.length > 0 ? "selection" : (text || "").length > 0 ? "line" : "sample"
-        sampleText = selected.length > 0 ? selected : text || ""
-        sampleAss = editor.assFields
+        const raw = f.sample || ""
+        const selected = f.sampleTo > f.sampleFrom ? catalogs.samplePlain(raw, editor.assFields, f.sampleFrom, f.sampleTo) : ""
+        const line = catalogs.samplePlain(raw, editor.assFields)
+        sampleSource = selected.length > 0 ? "selection" : line.length > 0 ? "line" : "sample"
+        sampleText = selected.length > 0 ? selected : line
+        sampleAss = false // plain already
         start(f)
         return true
     }
@@ -223,7 +226,15 @@ DialogWindow {
                 picker.resolution = result
         }
         function onCatalogsChanged() { if (picker.visible) picker.catalogsEdited() }
-        function onFontsChanged() { if (picker.visible) picker.relist() }
+        // A refresh can change which face the name gets: the note and the
+        // preview follow it.
+        function onFontsChanged() {
+            if (!picker.visible)
+                return
+            picker.relist()
+            picker.resolve()
+            renderTimer.restart()
+        }
         function onFilterChanged() { if (picker.visible) picker.relist() }
     }
     onAccepted: {

@@ -132,6 +132,9 @@ public:
     Q_INVOKABLE QStringList catalogsOf(const QString &font) const;
     Q_INVOKABLE int catalogSize(const QString &name) const;
     Q_INVOKABLE QString existingName(const QString &name) const;
+    // The index of `name` in `names` ignoring case as the catalogs do (-1:
+    // none); the load review's taken names.
+    Q_INVOKABLE int sameNameIndex(const QStringList &names, const QString &name) const;
 
     // The management window's Add (AddCatalog: autosave) and the "Add fonts
     // from subtitles" dialog's Add (no autosave). False when it existed.
@@ -184,7 +187,9 @@ public:
     // without override blocks and what \p drawing mode draws, \N and \n
     // as spaces, \h as a no-break space, \{ and \} as braces; otherwise
     // as written.
-    Q_INVOKABLE QString samplePlain(const QString &text, bool ass) const;
+    // With `to` at or past `from`, only what [from, to) of `text` draws
+    // (the Line editor's raw selection: drawing mode from the start).
+    Q_INVOKABLE QString samplePlain(const QString &text, bool ass, int from = 0, int to = -1) const;
 
     // F47-refresh: the installed and external fonts are read again now.
     Q_INVOKABLE void refreshFonts();

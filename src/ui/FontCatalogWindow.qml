@@ -242,11 +242,11 @@ DialogWindow {
             return
         }
         // Names a rename cannot take: yours and the file's, ignoring case.
-        const taken = catalogs.catalogNames.concat(r.names).map(n => n.toLowerCase())
+        const taken = catalogs.catalogNames.concat(r.names)
         const suggest = name => {
             for (let i = 2; ; ++i) {
                 const n = qsTr("%1 (%2)").arg(name).arg(i)
-                if (taken.indexOf(n.toLowerCase()) < 0)
+                if (catalogs.sameNameIndex(taken, n) < 0)
                     return n
             }
         }
@@ -269,10 +269,9 @@ DialogWindow {
             added: r.total - r.rows.length - r.same,
             namePattern: /.*/, // a catalog name may hold a comma
             nameTaken: (name, row) => {
-                const key = name.toLowerCase()
                 const review = reviewLoader.item
-                return taken.indexOf(key) >= 0
-                    || review.names.some((n, i) => i !== row && review.actions[i] === "rename" && n.trim().toLowerCase() === key)
+                const renames = review.names.filter((n, i) => i !== row && review.actions[i] === "rename").map(n => n.trim())
+                return catalogs.sameNameIndex(taken, name) >= 0 || catalogs.sameNameIndex(renames, name) >= 0
             },
             acceptText: count => count === 1 ? qsTr("Load 1 catalog") : qsTr("Load %n catalogs", "", count)
         }, results => {

@@ -3227,6 +3227,9 @@ private slots:
         QCOMPARE(fonts.samplePlain(QStringLiteral("{\\pos(1,2)}a{\\p2}m 0 0{\\p0}b"), true), QStringLiteral("ab"));
         QCOMPARE(fonts.samplePlain(QStringLiteral("{\\t(0,500,\\p1)}Hello"), true), QStringLiteral("Hello")); // \p inside \t: no drawing
         QCOMPARE(fonts.samplePlain(QStringLiteral("Use {name} \\N"), false), QStringLiteral("Use {name} \\N"));
+        // A range: what [from, to) draws, drawing mode read from the start.
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0{\\p0}ab\\Nc"), true, 7, 20), QStringLiteral("ab c"));
+        QCOMPARE(fonts.samplePlain(QStringLiteral("{\\p1}m 0 0{\\p0}ab"), true, 5, 10), QString());
         // The preview is drawn by the subtitle renderer.
         QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
         QVERIFY(!application->fontCatalogs().sample().isNull());
@@ -3267,6 +3270,54 @@ private slots:
         const QImage attached = catalogs.sample();
         catalogs.renderSample(font("HikariNoSuchFamily"), QStringLiteral("HH"), true, 300, 80);
         QVERIFY(attached != catalogs.sample()); // not the fallback face
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        catalogs.waitResolved();
+    }
+
+    // PU3 (#305): the preview draws what the Line draws, from its raw text
+    // (a drawing the hidden-tag field leaves out stays out, a selection's
+    // text after \\p0 shows); a font refresh looks the face up again and
+    // redraws.
+    void fontPickerPreviewFollowsTheRawLine()
+    {
+        usePickerFonts();
+        auto &catalogs = application->fontCatalogs();
+        application->editor().setShowTags(false);
+        auto *picker = openFontPicker(fontAss("drawing.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\p1}m 0 0 l 10 10{\\p0}abc\n"));
+        QVERIFY(picker);
+        QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        application->editor().setShowTags(true);
+        auto *text = item("lineText");
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\p1}m 0 0 l 10 10{\\p0}abc"));
+        const auto openOn = [&](int from, int to) {
+            text->forceActiveFocus();
+            QMetaObject::invokeMethod(text, "select", Q_ARG(int, from), Q_ARG(int, to));
+            QMetaObject::invokeMethod(visualItem("changeFont"), "click");
+            return QTest::qWaitFor([&] { return picker->property("visible").toBool(); });
+        };
+        // The selection's drawing commands are not text; "ab" is.
+        QVERIFY(openOn(5, 25));
+        QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("ab"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s selected text"));
+        // A refresh: a new lookup, and the preview drawn again.
+        QTRY_VERIFY(!picker->property("resolution").toMap().isEmpty());
+        const int request = picker->property("resolveRequest").toInt();
+        QSignalSpy drawn(&catalogs, &app::FontCatalogsController::sampleChanged);
+        catalogs.refreshFonts();
+        QVERIFY(picker->property("resolveRequest").toInt() != request);
+        QVERIFY(picker->property("resolution").toMap().isEmpty());
+        QTRY_VERIFY(!picker->property("resolution").toMap().isEmpty());
+        QTRY_VERIFY(!drawn.isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
+        QTRY_VERIFY(!picker->property("visible").toBool());
+        // Only the drawing selected: the line's text.
+        QVERIFY(openOn(5, 15));
+        QCOMPARE(picker->property("sampleText").toString(), QStringLiteral("abc"));
+        QCOMPARE(dialogItem("fontPicker", "fontPickerSampleSource")->property("text").toString(), QStringLiteral("The line’s text"));
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
         QTRY_VERIFY(!picker->property("visible").toBool());
         catalogs.waitResolved();
@@ -3336,6 +3387,16 @@ private slots:
         QTRY_VERIFY(window->isVisible());
         window->setProperty("chosen", markup);
         checkPlain(window->contentItem(), "catalog window");
+        // The delete question names it in PK1's message box.
+        QVERIFY(QMetaObject::invokeMethod(window, "askDelete"));
+        auto *box = qobject_cast<QQuickWindow *>(named("fontCatalogMessageBox"));
+        QTRY_VERIFY(box->isVisible());
+        checkPlain(box->contentItem(), "delete question");
+        QCOMPARE(findItem(box->contentItem(), QStringLiteral("messageBoxText"))->property("textFormat").toInt(), int(Qt::PlainText));
+        QCOMPARE(findItem(box->contentItem(), QStringLiteral("messageBoxDetail"))->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QVERIFY(catalogs.catalogExists(markup));
         QVERIFY(QMetaObject::invokeMethod(window, "reject"));
         QTRY_VERIFY(!window->isVisible());
         QVERIFY(QMetaObject::invokeMethod(picker, "reject"));
@@ -3643,6 +3704,10 @@ private slots:
                 f.write(text);
             return path;
         };
+        // "\u03B1\u03C3" is taken as "\u0391\u03A3" too: the catalogs' case
+        // folding (unit by unit), not JavaScript's (a final sigma there).
+        QVERIFY(catalogs.addCatalog(QStringLiteral("\u03B1\u03C3")));
+        QCOMPARE(catalogs.sameNameIndex({QStringLiteral("x"), QStringLiteral("\u03B1\u03C3")}, QStringLiteral("\u0391\u03A3")), 1);
         // The file's "a" is the catalog A (names are one ignoring case).
         const QString file = catalogFile("more-catalogs.txt", "a={\n\tTahoma\n}\nB={\n\tImpact\n}\nD={\n\tComic Sans MS\n}\n");
         QVERIFY(QMetaObject::invokeMethod(window, "load", Q_ARG(QVariant, QUrl::fromLocalFile(file))));
@@ -3662,7 +3727,7 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(review, "setAction", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("rename"))));
         QCOMPARE(review->property("names").toStringList(), QStringList{"a (2)"});
         // A rename onto a name that exists, in any case, is refused.
-        for (const QString &taken : {QStringLiteral("b"), QStringLiteral("D")}) {
+        for (const QString &taken : {QStringLiteral("b"), QStringLiteral("D"), QStringLiteral("\u0391\u03A3")}) {
             QVERIFY(QMetaObject::invokeMethod(review, "setName", Q_ARG(QVariant, 0), Q_ARG(QVariant, taken)));
             QVERIFY(!review->property("complete").toBool());
             auto *takenLabel = findItem(qobject_cast<QQuickWindow *>(review)->contentItem(), QStringLiteral("clashNameTaken0"));
@@ -3671,6 +3736,7 @@ private slots:
         }
         QVERIFY(QMetaObject::invokeMethod(review, "setName", Q_ARG(QVariant, 0), Q_ARG(QVariant, QStringLiteral("a (2)"))));
         QVERIFY(review->property("complete").toBool());
+        catalogs.removeCatalog(QStringLiteral("\u03B1\u03C3"));
         // A catalog name may hold a comma (a style name may not).
         auto *nameField = findItem(qobject_cast<QQuickWindow *>(review)->contentItem(), QStringLiteral("clashName0"));
         QVERIFY(nameField);

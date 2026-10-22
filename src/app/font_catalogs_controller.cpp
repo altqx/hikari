@@ -260,6 +260,15 @@ QString FontCatalogsController::existingName(const QString &name) const
     return c ? qs(c->name) : QString();
 }
 
+int FontCatalogsController::sameNameIndex(const QStringList &names, const QString &name) const
+{
+    const std::u16string key = u16(name);
+    for (int i = 0; i < names.size(); ++i)
+        if (application::sameNoCase(u16(names[i]), key, kLower))
+            return i;
+    return -1;
+}
+
 bool FontCatalogsController::catalogExists(const QString &name) const
 {
     const_cast<FontCatalogsController *>(this)->ensureLoaded();
@@ -470,20 +479,24 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
     emit previewChanged();
 }
 
-QString FontCatalogsController::samplePlain(const QString &text, bool ass) const
+QString FontCatalogsController::samplePlain(const QString &text, bool ass, int from, int to) const
 {
     QString out;
     out.reserve(text.size());
+    const auto put = [&](qsizetype at, QChar c) {
+        if (to < from || (at >= from && at < to))
+            out += c;
+    };
     bool drawing = false; // \p1 and up: vector drawing until \p0
     for (qsizetype i = 0; i < text.size(); ++i) {
         const QChar c = text[i];
         if (c == QLatin1Char('\n')) {
             if (!drawing)
-                out += QLatin1Char(' ');
+                put(i, QLatin1Char(' '));
             continue;
         }
         if (!ass) {
-            out += c;
+            put(i, c);
             continue;
         }
         if (c == QLatin1Char('{')) {
@@ -521,12 +534,12 @@ QString FontCatalogsController::samplePlain(const QString &text, bool ass) const
             const QChar next = text[i + 1];
             if (next == QLatin1Char('N') || next == QLatin1Char('n') || next == QLatin1Char('h')
                 || next == QLatin1Char('{') || next == QLatin1Char('}')) {
-                out += next == QLatin1Char('h') ? QChar(0x00A0) : next == QLatin1Char('N') || next == QLatin1Char('n') ? QChar(u' ') : next;
+                put(i, next == QLatin1Char('h') ? QChar(0x00A0) : next == QLatin1Char('N') || next == QLatin1Char('n') ? QChar(u' ') : next);
                 ++i;
                 continue;
             }
         }
-        out += c;
+        put(i, c);
     }
     return out.trimmed();
 }

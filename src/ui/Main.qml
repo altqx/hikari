@@ -4774,7 +4774,7 @@ ApplicationWindow {
                                     if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                         return
                                     const field = root.editedField()
-                                    fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd, field.text, field.selectedText)
+                                    fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd)
                                 }
                             }
                             Repeater {
@@ -7533,7 +7533,7 @@ ApplicationWindow {
             return true
         case "EDITBOX_FIND_NEXT_DOUBTFUL": root.editor.findNextUnconfirmed(); return true
         case "EDITBOX_FIND_NEXT_UNTRANSLATED": root.editor.findNextUntranslated(); return true
-        case "EDITBOX_CHANGE_FONT": fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd, field.text, field.selectedText); return true
+        case "EDITBOX_CHANGE_FONT": fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_PASTE_ALL_TO_TRANSLATION": root.editor.pasteAllToTranslation(); return true
         case "EDITBOX_PASTE_SELECTION_TO_TRANSLATION":
             root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd, translationText.cursorPosition)
