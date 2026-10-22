@@ -167,11 +167,12 @@ public:
     // The management window's preview: the "FontPreview" Style with `font`
     // (StylePreview::DrawPreview), as "image://fontcatalogpreview/<key>".
     Q_INVOKABLE void renderPreview(const QString &font, int width, int height);
-    // PU3: the font picker's preview: `text` (a Line's text; override
-    // blocks dropped, \N and \n as spaces) in the picker's font {name,
-    // size, bold, italic, underline, strikeOut} on the preview Style,
-    // drawn by the subtitle renderer at `width` x `height`.
-    Q_INVOKABLE void renderSample(const QVariantMap &font, const QString &text, int width, int height);
+    // PU3: the font picker's preview: `text` (a Line's text; when `ass`,
+    // override blocks dropped and \N and \n as spaces, otherwise every
+    // character as written) in the picker's font {name, size, bold,
+    // italic, underline, strikeOut} on the preview Style, drawn by the
+    // subtitle renderer at `width` x `height`.
+    Q_INVOKABLE void renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height);
 
     // F47-refresh: the installed and external fonts are read again now.
     Q_INVOKABLE void refreshFonts();

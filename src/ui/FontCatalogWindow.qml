@@ -86,7 +86,7 @@ DialogWindow {
             close()
         if (!created) {
             create(font)
-        } else if (!visible) {
+        } else {
             search.text = ""
             show = 0
             selectFont(font)
@@ -113,10 +113,15 @@ DialogWindow {
         refreshPreview()
     }
     function refreshPreview() {
-        if (currentFont.length === 0)
+        if (currentFont.length === 0) {
+            // No row (nothing matches): no preview and no resolution.
+            resolveRequest = -1
+            resolution = ({})
             return
+        }
         catalogs.renderPreview(currentFont, Math.max(1, preview.width), Math.max(1, preview.height))
-        resolveRequest = catalogs.resolveFamily(currentFont, false, false)
+        // The preview Style is bold: the bold face is the one drawn.
+        resolveRequest = catalogs.resolveFamily(currentFont, true, false)
     }
     // The selected fonts join or leave the chosen catalog (CatalogList's
     // menu over the marked rows).
@@ -598,6 +603,7 @@ DialogWindow {
                     anchors.margins: 1
                     cache: false
                     fillMode: Image.Pad
+                    visible: window.currentFont.length > 0
                     source: window.catalogs.previewKey > 0 ? "image://fontcatalogpreview/" + window.catalogs.previewKey : ""
                     onWidthChanged: window.refreshPreview()
                     onHeightChanged: window.refreshPreview()

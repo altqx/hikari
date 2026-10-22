@@ -450,7 +450,7 @@ void FontCatalogsController::renderPreview(const QString &font, int width, int h
     emit previewChanged();
 }
 
-void FontCatalogsController::renderSample(const QVariantMap &font, const QString &text, int width, int height)
+void FontCatalogsController::renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height)
 {
     if (width < 1 || height < 1)
         return;
@@ -463,11 +463,20 @@ void FontCatalogsController::renderSample(const QVariantMap &font, const QString
     style.italic = font.value(QStringLiteral("italic")).toBool();
     style.underline = font.value(QStringLiteral("underline")).toBool();
     style.strikeOut = font.value(QStringLiteral("strikeOut")).toBool();
-    // The Line's text without its override blocks, on one line.
+    // The Line's text on one line: an ASS Line without its override
+    // blocks; any other format's braces and backslashes kept as written
+    // (\{ and \}, and a word joiner after each backslash so that the
+    // renderer reads no escape).
     QString plain = text;
-    plain.remove(QRegularExpression(QStringLiteral("\\{[^}]*\\}")));
-    plain.replace(QStringLiteral("\\N"), QStringLiteral(" ")).replace(QStringLiteral("\\n"), QStringLiteral(" "));
-    plain.replace(QStringLiteral("\\h"), QStringLiteral("\u00A0")).replace(QLatin1Char('\n'), QLatin1Char(' '));
+    if (ass) {
+        plain.remove(QRegularExpression(QStringLiteral("\\{[^}]*\\}")));
+        plain.replace(QStringLiteral("\\N"), QStringLiteral(" ")).replace(QStringLiteral("\\n"), QStringLiteral(" "));
+        plain.replace(QStringLiteral("\\h"), QStringLiteral("\u00A0"));
+    } else {
+        plain.replace(QLatin1Char('\\'), QStringLiteral("\\\u2060"));
+        plain.replace(QLatin1Char('{'), QStringLiteral("\\{")).replace(QLatin1Char('}'), QStringLiteral("\\}"));
+    }
+    plain.replace(QLatin1Char('\n'), QLatin1Char(' '));
     m_sample = renderStylePreview(m_renderer, style, width, height, plain.trimmed(), externalFontLeases());
     ++m_sampleKey;
     emit sampleChanged();

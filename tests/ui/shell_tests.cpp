@@ -2946,6 +2946,12 @@ private slots:
         QCOMPARE(in("fontPickerList")->property("currentIndex").toInt(), -1);
         QCOMPARE(picker->property("family").toString(), QStringLiteral("Tahoma"));
         QCOMPARE(in("fontPickerCount")->property("text").toString(), QStringLiteral("2 of 5 fonts"));
+        // Renamed with only its case changed, it is the same catalog: the
+        // chip stays on it.
+        QVERIFY(application->fontCatalogs().renameCatalog(QStringLiteral("A"), QStringLiteral("a"), 2));
+        QCOMPARE(catalogChip->property("text").toString(), QStringLiteral("a"));
+        QCOMPARE(shown(), (QStringList{"Arial", "Verdana"}));
+        QVERIFY(application->fontCatalogs().renameCatalog(QStringLiteral("a"), QStringLiteral("A"), 2));
         // "Without catalog": the fonts no catalog holds (Y6-without-catalog).
         QVERIFY(QMetaObject::invokeMethod(picker, "chooseCatalog", Q_ARG(QVariant, 1)));
         QCOMPARE(shown(), (QStringList{"Comic Sans MS", "Tahoma"}));
@@ -3009,6 +3015,16 @@ private slots:
         QTRY_VERIFY(application->fontCatalogs().property("sampleKey").toInt() > 0);
         QVERIFY(!application->fontCatalogs().sample().isNull());
         QTRY_VERIFY(in("fontPickerPreview")->property("source").toString().startsWith(QStringLiteral("image://fontcatalogpreview/sample/")));
+        // An ASS Line's override block is not drawn; another format's
+        // braces are its text.
+        const QVariantMap arial{{QStringLiteral("name"), QStringLiteral("Arial")}, {QStringLiteral("size"), QStringLiteral("40")}};
+        auto &catalogs = application->fontCatalogs();
+        catalogs.renderSample(arial, QStringLiteral("{name}"), true, 300, 80);
+        const QImage asAss = catalogs.sample();
+        catalogs.renderSample(arial, QStringLiteral(" "), true, 300, 80);
+        QCOMPARE(asAss, catalogs.sample());
+        catalogs.renderSample(arial, QStringLiteral("{name}"), false, 300, 80);
+        QVERIFY(catalogs.sample() != asAss);
         QVERIFY(QMetaObject::invokeMethod(in("fontPickerCancel"), "click"));
         QTRY_VERIFY(!picker->property("visible").toBool());
         application->fontCatalogs().waitResolved();
@@ -3091,6 +3107,23 @@ private slots:
         QTRY_VERIFY(window->isVisible());
         QCOMPARE(window->property("shown").toStringList().size(), 5);
         QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Tahoma"));
+        QTRY_VERIFY(findItem(window->contentItem(), QStringLiteral("fontCatalogResolution"))->isVisible());
+        // Nothing matches: no preview and no renderer note for a font gone.
+        auto *find = findItem(window->contentItem(), QStringLiteral("fontCatalogFind"));
+        find->setProperty("text", QStringLiteral("zzz"));
+        QVERIFY(QMetaObject::invokeMethod(window, "select", Q_ARG(QVariant, 0))); // as textEdited does
+        QCOMPARE(window->property("shown").toStringList().size(), 0);
+        QVERIFY(!findItem(window->contentItem(), QStringLiteral("fontCatalogPreview"))->isVisible());
+        QVERIFY(!findItem(window->contentItem(), QStringLiteral("fontCatalogResolution"))->isVisible());
+        // Asked again by the same opener while shown, with another font:
+        // the whole list, that font selected.
+        QVERIFY(QMetaObject::invokeMethod(window, "openFor", Q_ARG(QVariant, QStringLiteral("Verdana")),
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(manager))));
+        QCOMPARE(find->property("text").toString(), QString());
+        QCOMPARE(window->property("shown").toStringList().size(), 5);
+        QCOMPARE(window->property("currentFont").toString(), QStringLiteral("Verdana"));
+        QVERIFY(findItem(window->contentItem(), QStringLiteral("fontCatalogPreview"))->isVisible());
+        QCOMPARE(window->transientParent(), manager);
         // Shown for the Style manager, then asked for by the modal picker:
         // it serves the picker (and closes with it).
         const QVariantMap arial{{QStringLiteral("name"), QStringLiteral("Arial")}};

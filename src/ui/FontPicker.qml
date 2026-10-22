@@ -48,6 +48,7 @@ DialogWindow {
     // The preview's text and where it comes from: "selection", "line" or "sample".
     property string sampleText: ""
     property string sampleSource: "sample"
+    property bool sampleAss: true // the sample is ASS text (override blocks are not drawn)
     // The catalog choice: "All fonts", "Without catalog", then the catalogs.
     property var choices: []
     property int choice: 0
@@ -79,6 +80,7 @@ DialogWindow {
         const selected = selectedText || ""
         sampleSource = selected.length > 0 ? "selection" : (text || "").length > 0 ? "line" : "sample"
         sampleText = selected.length > 0 ? selected : text || ""
+        sampleAss = editor.assFields
         start(f)
         return true
     }
@@ -89,6 +91,7 @@ DialogWindow {
         done = callback || null
         sampleSource = "sample"
         sampleText = sample || ""
+        sampleAss = true
         start(font)
     }
     function start(f) {
@@ -174,8 +177,9 @@ DialogWindow {
         resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked)
     }
     function render() {
-        const text = sampleText.trim().length > 0 ? sampleText : catalogs.previewText
-        catalogs.renderSample(current(), text, Math.max(1, preview.width), Math.max(1, preview.height))
+        const own = sampleText.trim().length > 0
+        catalogs.renderSample(current(), own ? sampleText : catalogs.previewText, !own || sampleAss,
+                              Math.max(1, preview.width), Math.max(1, preview.height))
     }
     function flush() {
         if (changeTimer.running) {
@@ -188,7 +192,8 @@ DialogWindow {
     function catalogsEdited() {
         const was = choice >= 0 && choice < choices.length ? choices[choice] : ""
         choices = catalogs.catalogChoices()
-        const at = choice > 1 ? choices.indexOf(was) : choice
+        const key = was.toLowerCase()
+        const at = choice > 1 ? choices.findIndex(c => c.toLowerCase() === key) : choice
         choice = at >= 0 ? at : 0
         relist()
     }
