@@ -9,6 +9,7 @@
 #include "hikari/app/settings_import_store.h"
 #include "hikari/app/hotkeys_controller.h"
 #include "hikari/app/update_checker.h"
+#include "hikari/app/whats_new.h"
 #include "hikari/app/style_manager_controller.h"
 #include "hikari/app/font_collector_controller.h"
 #include "hikari/app/font_catalogs_controller.h"
@@ -170,6 +171,9 @@ public:
         std::function<std::unique_ptr<application::AudioDevicesPort>()> makeAudioDevices;
         // P8: the release list the update check reads (tests: a file).
         UpdateFeed updateFeed = UpdateFeed::github();
+        // Tests: the version the update check and What's new take as this
+        // one's; empty: HIKARI_VERSION.
+        QString appVersion;
         // ADR 0019: the package kind, update cache and installers; the
         // default installs nothing (tests). The composition sets this process's.
         UpdateEnvironment updateEnvironment;
@@ -768,6 +772,7 @@ public:
     // O2: the shortcut editor and the bindings in effect.
     HotkeysController &hotkeys() { return *m_hotkeys; }
     UpdateChecker &updates() { return *m_updates; }
+    WhatsNew &whatsNew() { return *m_whatsNew; } // SH3
     StyleManagerController &styleManager() { return *m_styleManager; }
     // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
     FontCollectorController &fontCollector() { return *m_fontCollector; }
@@ -1087,6 +1092,7 @@ private:
     std::unique_ptr<AutomationHotkeysController> m_automationHotkeys;
     std::unique_ptr<HotkeysController> m_hotkeys; // O2: after the automation hotkeys it shares
     std::unique_ptr<UpdateChecker> m_updates;
+    std::unique_ptr<WhatsNew> m_whatsNew;
     std::unique_ptr<StyleManagerController> m_styleManager;
     std::unique_ptr<FontCollectorController> m_fontCollector; // Y8
     std::unique_ptr<QTemporaryDir> m_fontCatalogTemp;         // Y6: without a settings file

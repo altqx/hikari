@@ -256,6 +256,9 @@ FocusScope {
                             color: Theme.muted
                             text: home.rows.length === 0 ? qsTr("No recent files") : qsTr("No matching files")
                         }
+                        // Without the list, the room under the message (SH3's
+                        // card can make the row taller than the list's own).
+                        Item { visible: !recentList.visible; Layout.fillHeight: true }
                         ListView {
                             id: recentList
                             objectName: "homeRecentList"
