@@ -133,26 +133,48 @@ int AutomationRuns::begin(const QString &macro, const QString &script, const QSt
 void AutomationRuns::append(int id, const QString &text, int level)
 {
     Run *r = find(id);
-    if (!r || text.isEmpty())
+    if (!r || text.isEmpty() || r->full)
         return;
     level = level == kNoLevel ? kNoLevel : std::max(level, 0);
     const qint64 at = now() - r->startedAt;
-    const QStringList parts = text.split(QLatin1Char('\n'));
-    // The last piece is what follows the final newline: "" when it ended one.
-    const qsizetype pieces = parts.size() - (parts.back().isEmpty() ? 1 : 0);
     int changed = -1;
     const int first = static_cast<int>(r->lines.size());
-    for (qsizetype i = 0; i < pieces; ++i) {
-        if (i == 0 && r->open && !r->lines.empty()) {
-            r->lines.back().text += parts[0];
-            changed = static_cast<int>(r->lines.size()) - 1;
-            continue;
+    // Walked a line at a time, never split whole: a script's output is
+    // kept up to kMaxLines lines and kMaxChars characters, then one line
+    // says the rest was not kept.
+    qsizetype from = 0;
+    while (from < text.size()) {
+        if (r->lines.size() >= static_cast<std::size_t>(kMaxLines) || r->chars >= kMaxChars) {
+            r->full = true;
+            break;
         }
-        r->lines.push_back({level, at, parts[i]});
+        const qsizetype newline = text.indexOf(QLatin1Char('\n'), from);
+        const qsizetype end = newline < 0 ? text.size() : newline;
+        const qsizetype length = std::min<qsizetype>(end - from, kMaxChars - r->chars);
+        const QString piece = text.mid(from, length);
+        r->chars += length;
+        if (from == 0 && r->open && !r->lines.empty()) {
+            r->lines.back().text += piece;
+            changed = static_cast<int>(r->lines.size()) - 1;
+        } else {
+            r->lines.push_back({level, at, piece});
+        }
+        r->open = newline < 0;
+        if (newline < 0)
+            break;
+        from = newline + 1;
+        if (from == text.size())
+            r->open = false;
     }
-    r->open = !text.endsWith(QLatin1Char('\n'));
+    if (r->full) {
+        r->lines.push_back({kHostInfo, at,
+                            QCoreApplication::translate("HikariSub.Automation",
+                                                        "The script wrote more than this log keeps; the rest is not kept.")});
+        r->open = false;
+    }
     const int last = static_cast<int>(r->lines.size()) - 1;
-    emit linesAdded(id, first, last, changed);
+    if (last >= first || changed >= 0)
+        emit linesAdded(id, first, last, changed);
     changedRow(id, {LineCountRole});
 }
 
@@ -163,13 +185,20 @@ void AutomationRuns::note(int id, const QString &text, int kind)
         return;
     const qint64 at = now() - r->startedAt;
     const int first = static_cast<int>(r->lines.size());
-    QString body = text;
+    // An error's text is the script's too: bounded as its output is
+    // (kMaxNoteLines lines of the first kMaxChars characters).
+    QString body = text.left(kMaxChars);
     while (body.endsWith(QLatin1Char('\n')))
         body.chop(1);
     // Its first line carries the kind; a traceback's lines follow without one.
-    const QStringList parts = body.split(QLatin1Char('\n'));
-    for (qsizetype i = 0; i < parts.size(); ++i)
-        r->lines.push_back({i == 0 ? kind : kNoLevel, at, parts[i]});
+    qsizetype from = 0;
+    for (int i = 0; i < kMaxNoteLines; ++i) {
+        const qsizetype newline = body.indexOf(QLatin1Char('\n'), from);
+        r->lines.push_back({i == 0 ? kind : kNoLevel, at, body.mid(from, newline < 0 ? -1 : newline - from)});
+        if (newline < 0)
+            break;
+        from = newline + 1;
+    }
     r->open = false;
     emit linesAdded(id, first, static_cast<int>(r->lines.size()) - 1, -1);
     changedRow(id, {LineCountRole});

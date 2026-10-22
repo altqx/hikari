@@ -1032,6 +1032,10 @@ Output device: %2</source>
         </translation>
     </message>
     <message>
+        <source>The script wrote more than this log keeps; the rest is not kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>fatal</source>
         <translation type="unfinished"></translation>
     </message>

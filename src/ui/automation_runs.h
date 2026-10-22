@@ -34,6 +34,11 @@ class AutomationRuns : public QAbstractListModel {
     Q_PROPERTY(int count READ count NOTIFY countChanged)
 public:
     static constexpr int kKept = 20;
+    // A run's script output kept at most (a script can write without end).
+    static constexpr int kMaxLines = 10'000;
+    static constexpr qsizetype kMaxChars = 4'000'000;
+    // HikariSub's own line (a run's error and traceback) kept at most.
+    static constexpr int kMaxNoteLines = 200;
     static constexpr int kNoLevel = -1;
     static constexpr int kHostError = -2;
     static constexpr int kHostInfo = -3;
@@ -66,6 +71,8 @@ public:
         double progress = -1;
         std::vector<Line> lines;
         bool open = false; // the last line awaits the rest of its text
+        qsizetype chars = 0; // the script's output kept
+        bool full = false;   // over kMaxLines or kMaxChars: no more kept
     };
 
     explicit AutomationRuns(QObject *parent = nullptr);

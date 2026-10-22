@@ -284,7 +284,9 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
     connect(&m_manager, &backends::AutomationManager::logged, this,
             [this](const QString &, const QString &text, int level) {
-                m_log += text;
+                // Bounded as a run's log is (a script can write without end).
+                if (m_log.size() < ui::AutomationRuns::kMaxChars)
+                    m_log += text.left(ui::AutomationRuns::kMaxChars - m_log.size());
                 // An empty write adds nothing to read: the run has not logged.
                 if (m_run && !text.isEmpty()) {
                     m_runs.append(m_runId, text, level);
@@ -626,7 +628,8 @@ void AutomationShell::finishCard(const QString &ended, const QString &text, cons
         m_runs.note(m_runId, said, state == QLatin1String("failed") ? ui::AutomationRuns::kHostError
                                                                    : ui::AutomationRuns::kHostInfo);
     m_runs.finish(m_runId, state, said);
-    m_cardText = said;
+    // The card says the first lines; the run's log keeps the rest.
+    m_cardText = said.left(4000);
     // A run that applied and logged nothing, or whose script-resolution
     // question was declined, leaves no card.
     if (ended == QLatin1String("declined") || (state == QLatin1String("applied") && !m_logged))
@@ -928,8 +931,9 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                         message);
         break;
     }
-    if (!text.isEmpty())
-        m_log += (m_log.isEmpty() || m_log.endsWith(QLatin1Char('\n')) ? QString() : QStringLiteral("\n")) + text;
+    if (!text.isEmpty() && m_log.size() < ui::AutomationRuns::kMaxChars)
+        m_log += ((m_log.isEmpty() || m_log.endsWith(QLatin1Char('\n')) ? QString() : QStringLiteral("\n")) + text)
+                     .left(ui::AutomationRuns::kMaxChars - m_log.size());
     m_lastMessage = text;
     m_lastOutcome = ended;
     finishCard(ended, text, outcome == Outcome::NotValid ? message : QString());

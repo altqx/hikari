@@ -2,7 +2,8 @@
 // Output is kept as Aegisub shows it (text without a newline continues on
 // the same line); a run's lines show by a level threshold and a text filter,
 // HikariSub's own lines whatever the level; the session keeps 20 runs, never
-// dropping the one running; Copy and Save take the lines shown.
+// dropping the one running; Copy and Save take the lines shown; a run keeps
+// a bounded amount of output.
 
 #include "automation_runs.h"
 
@@ -112,6 +113,32 @@ private slots:
         QCOMPARE(QString::fromUtf8(f.readAll()),
                  QStringLiteral("Fix: overlaps? (timing.lua)\ne.ass\n2026-10-22T16:42:05, failed\nboom\n\n[error] kept\n"));
         QVERIFY(!lines.saveShown(QUrl::fromLocalFile(dir.filePath(QStringLiteral("missing/x.log")))).isEmpty());
+    }
+
+    // A script writing without end: kMaxLines lines kept, then one line
+    // saying the rest is not; a single endless line stops at kMaxChars.
+    void aFloodIsBounded()
+    {
+        AutomationRuns runs;
+        const int id = runs.begin(QStringLiteral("Flood"), QStringLiteral("a.lua"), {});
+        runs.append(id, QStringLiteral("x\n").repeated(AutomationRuns::kMaxLines + 5000), 0);
+        const auto *run = runs.run(id);
+        QCOMPARE(run->lines.size(), std::size_t(AutomationRuns::kMaxLines) + 1);
+        QCOMPARE(run->lines.back().level, AutomationRuns::kHostInfo);
+        runs.append(id, QStringLiteral("more\n"));
+        QCOMPARE(run->lines.size(), std::size_t(AutomationRuns::kMaxLines) + 1);
+        const int wide = runs.begin(QStringLiteral("Wide"), QStringLiteral("a.lua"), {});
+        runs.append(wide, QString(AutomationRuns::kMaxChars + 10, QLatin1Char('y')));
+        runs.append(wide, QStringLiteral("z\n"));
+        const auto *line = runs.run(wide);
+        QCOMPARE(line->lines.size(), std::size_t(2));
+        QCOMPARE(line->lines.front().text.size(), AutomationRuns::kMaxChars);
+        QCOMPARE(line->lines.back().level, AutomationRuns::kHostInfo);
+        // An endless error keeps its first kMaxNoteLines lines.
+        const int failed = runs.begin(QStringLiteral("Fail"), QStringLiteral("a.lua"), {});
+        runs.note(failed, QStringLiteral("boom\n").repeated(100'000), AutomationRuns::kHostError);
+        QCOMPARE(runs.run(failed)->lines.size(), std::size_t(AutomationRuns::kMaxNoteLines));
+        QCOMPARE(runs.run(failed)->lines.front().level, AutomationRuns::kHostError);
     }
 
     void theSessionKeepsTwentyRunsAndNeverTheRunningOne()
