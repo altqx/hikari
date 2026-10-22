@@ -1519,11 +1519,9 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
             return core::legacy::insertTagButtonText(std::move(t), text);
         });
     // Several Lines: the text goes into each selected Line's text (its
-    // translation when it has one) at the caret, as one step.
-    long from = selectionStart;
-    if (!m_showTags)
-        from = static_cast<long>(core::rawOffset(core::project(core::toUtf16(roleText(*r, role))),
-                                                 static_cast<std::size_t>(selectionStart), true));
+    // translation when it has one) at the caret, as one step. With the tags
+    // hidden the caret is a place in the visible text, found in each Line's.
+    const auto shown = static_cast<std::size_t>(std::max(selectionStart, 0));
     if (s->draftLine() && !s->commitDraft())
         return false;
     std::vector<core::LineId> lines;
@@ -1535,16 +1533,34 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
             for (const auto id : lines)
                 if (!d.editLine(id, [&](core::LineRecord &l) {
                         auto &field = l.translation.empty() ? l.text : l.translation;
-                        // TM1: the caret is in the Translated field's text, after
+                        auto units = core::toUtf16(field);
+                        const auto c = l.translation.empty() ? std::nullopt : carry(l);
+                        // TM1: placed runs stay placed: the text goes into the
+                        // draft's body and the runs' tags are written again
+                        // around the same text (editPlacedBody).
+                        if (c && !m_showTags) {
+                            auto draft = translationDraft(c->tags, l);
+                            if (draft.carried && !draft.placements.empty()) {
+                                const auto at = core::rawOffset(core::project(draft.body), shown, true);
+                                auto body = core::legacy::insertTagButtonTextAt(draft.body, static_cast<long>(at), text);
+                                core::shiftPlacements(draft.placements, at, at, body.size() - draft.body.size());
+                                draft.body = std::move(body);
+                                composedBody(c->tags, draft, l.id);
+                                field = core::toUtf8(core::composeTranslation(c->tags, draft));
+                                return;
+                            }
+                        }
+                        // Else the caret is in the Translated field's text, after
                         // each Line's own carried leading block and before its
                         // trailing one.
-                        long at = from;
-                        auto units = core::toUtf16(field);
-                        if (!l.translation.empty())
-                            if (const auto c = carry(l))
-                                at = std::min(at + static_cast<long>(c->tags.leading.size()),
-                                              static_cast<long>(units.size() - c->tags.trailing.size()));
-                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(std::move(units), at, text));
+                        const std::size_t lead = c ? std::min(c->tags.leading.size(), units.size()) : 0;
+                        const std::size_t trail = c ? std::min(c->tags.trailing.size(), units.size() - lead) : 0;
+                        std::size_t at = shown;
+                        if (!m_showTags)
+                            at = core::rawOffset(core::project(std::u16string_view(units).substr(lead, units.size() - lead - trail)),
+                                                 shown, true);
+                        at = std::min(at + lead, units.size() - trail);
+                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(std::move(units), static_cast<long>(at), text));
                     }))
                     return false;
             return true;
