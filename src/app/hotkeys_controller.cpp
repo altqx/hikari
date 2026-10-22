@@ -770,6 +770,9 @@ QVariantMap HotkeysController::importLegacyScripts(const QString &path)
     QVariantMap result = m_scripts.importLegacy(path);
     if (m_list && result.value(QStringLiteral("added")).toInt() > 0) {
         const int mode = m_list->filterMode();
+        // The staged copy an applied edit left is the bindings before the
+        // import: the next edit stages from the bindings now, import included.
+        m_copy.clear();
         m_list->clear();
         m_list->build(listed());
         m_list->filter(mode);

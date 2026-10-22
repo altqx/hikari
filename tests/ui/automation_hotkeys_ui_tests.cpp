@@ -453,7 +453,8 @@ private slots:
 
     // PU7 (#309): Settings → Hotkeys' Import legacy hotkeys…, refused while
     // the page holds an edit (OK would write the list over the import); in
-    // effect at once, the list shows the added binding and OK keeps it.
+    // effect at once, the list shows the added binding, and OK after a later
+    // edit keeps it (also after Apply).
     void settingsHotkeysPageImportsLegacyScripts()
     {
         app::Application::Options o = options();
@@ -489,8 +490,9 @@ private slots:
         QCOMPARE(h.importLegacyScripts(legacy).value(QStringLiteral("read")).toBool(), false);
         QCOMPARE(keysOf(macros, kWait), QString());
 
-        h.beginOptions(); // the page opened again, no edits
-        h.filter(7);
+        // An applied edit (Apply keeps the page open): no edits then.
+        h.commitOptions();
+        QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Alt+P"));
         QVERIFY(!h.optionsModified());
         QSignalSpy refreshed(&h, &app::HotkeysController::rowsChanged);
         const QVariantMap result = h.importLegacyScripts(legacy);
@@ -501,7 +503,12 @@ private slots:
         QCOMPARE(h.filterMode(), 7);
         QCOMPARE(accel(kWait), QStringLiteral("Alt-Ctrl-W")); // legacy's order
         QVERIFY(!h.optionsModified());
+        // A later edit and OK keep the import (the staged copy is the
+        // bindings after it, not those Apply left).
+        h.select(position(kPrefix));
+        h.optionsMap(QStringLiteral("Ctrl-Alt-Q"), 0, QStringLiteral("cancel"));
         h.commitOptions();
+        QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Alt+Q"));
         QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W"));
     }
 };
