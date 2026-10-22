@@ -16370,6 +16370,12 @@ private slots:
         store->setValue(QStringLiteral("audio.leadInValue"), 105);
         audio.leadIn();
         QCOMPARE(editor.text(), QStringLiteral("{\\k11}{\\k40}sakura{\\k120}hana"));
+        // the commands measure from that kept start (Codex): the lead
+        // syllable is 11 cs from 90 ms, not 10.5 from the panel's 95
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 11);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
+        QCOMPARE(editor.text(), QStringLiteral("{\\kf11}{\\kf40}sakura{\\kf120}hana"));
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
         store->setValue(QStringLiteral("audio.leadInValue"), 200);
         audio.setHorizontalZoom(50);
         press(Qt::Key_H);
@@ -16403,6 +16409,38 @@ private slots:
         QCOMPARE(after[0]->text, std::u8string(u8"{\\k30}sa{\\k30}ku"));
         QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
         QCOMPARE(after[0]->start.value.microseconds(), 200000);
+    }
+
+    // KA1 (Codex): K and Shift+K with several Lines selected write the
+    // active Line's syllables to it alone; the others keep their texts
+    void audioKaraokeCommandsSeveralLines()
+    {
+        restartWithoutSound();
+        const QString path = writeFile(dir, "karaoke-commands-several.ass",
+                                       "Dialogue: 0,0:00:00.40,0:00:01.00,Default,,0,0,0,,{\\k30}sa{\\k30}ku\n"
+                                       "Dialogue: 0,0:00:01.20,0:00:01.80,Default,,0,0,0,,{\\k60}hana\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto &audio = application->audio();
+        auto *store = application->settingsStore();
+        audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
+        QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(item("audioKaraoke"), "clicked"));
+        QVERIFY(audio.karaoke());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(audio.karaokeModel().count(), 2);
+        QTest::mouseMove(window, kOverNoPanel);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeSplitAtCursor"), "triggered"));
+        QCOMPARE(audio.karaokeModel().count(), 3);
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 15);
+        QVERIFY(QMetaObject::invokeMethod(named("audioKaraokeKf"), "triggered"));
+        store->setValue(QStringLiteral("audio.karaokeKfThreshold"), 100);
+        audio.commit();
+        const auto after = session->document().lines();
+        QCOMPARE(after[0]->text, std::u8string(u8"{\\kf15}s{\\kf15}a{\\kf30}ku"));
+        QCOMPARE(after[1]->text, std::u8string(u8"{\\k60}hana"));
     }
 
     // KA2 (#277, KA2-tap-to-time): tap-to-time in Karaoke mode with the real

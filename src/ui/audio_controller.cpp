@@ -360,11 +360,12 @@ void AudioController::splitKaraoke()
 
 // KA1: as legacy Commit(false) after a split on the letters:
 // CommitChanges(false, AUDIO_AUTO_COMMIT) with the syllables' text, the
-// view left where it is.
+// view left where it is; the active Line's alone, so other selected Lines
+// keep their texts (Codex)
 void AudioController::commitKaraoke()
 {
     commitChanges(false, timingOptions().autoCommit, false, application::AudioAdjacent::None,
-                  committedKaraokeText(), nullptr, false, false);
+                  committedKaraokeText(), nullptr, true, false);
 }
 
 // KA1: the start as the commit writes it; the \k text is written against it
@@ -390,13 +391,15 @@ void AudioController::splitSyllableAtCursor()
     if (!m_hasKara || !loaded() || !m_karaoke.count() || tapBusy()) // the taps hold the syllables (Codex)
         return;
     auto &k = m_karaoke;
+    // the syllables as the committed text reads them (Codex)
+    const int lineStart = committedStart();
     bool split = false;
     // the syllable under the waveform cursor
     int under = -1, ms = 0;
     if (m_cursor && m_view.hasSource()) {
         ms = m_view.msAtX(static_cast<std::int64_t>(*m_cursor));
         for (int i = 0; i < k.count() && under < 0; i++) {
-            const auto [start, end] = k.syllableTimes(i, m_startMs);
+            const auto [start, end] = k.syllableTimes(i, lineStart);
             if (ms > start && ms < end)
                 under = i;
         }
@@ -404,7 +407,7 @@ void AudioController::splitSyllableAtCursor()
     if (m_pointerOver && k.hover >= 0 && k.character >= 0 && k.hover < k.count()) {
         // the hovered letter, as a click on it (a letter the pointer has
         // left is no longer hovered, though its mark stays drawn)
-        split = k.splitSyllable(k.hover, k.character, m_startMs);
+        split = k.splitSyllable(k.hover, k.character, lineStart);
         if (split)
             k.current = k.hover;
         // the letters moved under the pointer: none is hovered until it
@@ -413,13 +416,13 @@ void AudioController::splitSyllableAtCursor()
         k.character = -1;
     } else if (under >= 0) {
         // that syllable, at the cursor's time
-        if ((split = k.splitAt(under, ms, m_startMs)))
+        if ((split = k.splitAt(under, ms, lineStart)))
             k.current = under + 1;
     } else {
         // no cursor, or none over a syllable
         const int i = std::clamp(k.current, 0, k.count() - 1);
-        const auto [start, end] = k.syllableTimes(i, m_startMs);
-        if ((split = k.splitAt(i, start + (end - start) / 2, m_startMs)))
+        const auto [start, end] = k.syllableTimes(i, lineStart);
+        if ((split = k.splitAt(i, start + (end - start) / 2, lineStart)))
             k.current = i + 1;
     }
     if (split)
@@ -431,7 +434,7 @@ void AudioController::switchLongSyllablesToKf()
     if (!m_hasKara || !loaded() || !m_karaoke.count() || tapBusy())
         return;
     const int threshold = m_store ? static_cast<int>(m_store->integer("audio.karaokeKfThreshold")) : 100;
-    if (m_karaoke.switchLongToKf(threshold * 10, m_startMs))
+    if (m_karaoke.switchLongToKf(threshold * 10, committedStart()))
         commitKaraoke();
 }
 
