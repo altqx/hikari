@@ -124,6 +124,9 @@ hikari_add_gtest(hikari_application_karaoke_split_tests SOURCES karaoke_split_te
     LIBRARIES hikari_application LABELS application)
 target_compile_definitions(hikari_application_karaoke_split_tests PRIVATE
     HIKARI_HYPHENATION_PATTERNS="${PROJECT_SOURCE_DIR}/src/ui/hyphenation/hyph_en_US.dic")
+# KA3 (#278): the Kanji timer's grouping and the kana readings.
+hikari_add_gtest(hikari_application_kanji_timer_tests SOURCES kanji_timer_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 # P6: legacy session files against fixtures in the legacy format.
 hikari_add_gtest(hikari_application_session_file_tests SOURCES session_file_tests.cpp
     LIBRARIES hikari_application LABELS application)
