@@ -212,6 +212,7 @@ Panels are flat, separated by boundaries. The menu popup has a `0 10 30` shadow 
 | Invalid value | Danger boundary and explanatory text; associate the explanation with the field and disable an action whose prerequisite is invalid. Do not communicate failure by color alone. |
 | Mixed value | Muted italic “Multiple values” in the gallery. Preserve mixed/indeterminate semantics; do not replace an actual value with this string in the model. |
 | Checkbox / slider | Accent indicates state; label, value and keyboard operation remain available. |
+| Filter chip | A rounded `raised` button with a `line` boundary, its icon, text and a chevron, opening the menu or popover that sets a filter (`src/ui/FilterChip.qml`, PU3's font picker). While the filter narrows a list it is filled in `select` with an accent boundary and bold text that says the filter ("Has “ą”"), so the state is not colour alone. |
 | Selected row | Selected background plus leading accent marker; selection remains distinguishable from keyboard focus. |
 | Row warning / confirmation | Warning emphasis and textual context; confirmation appears as text/check/state badge. These are presentation examples, not a decision to persist new document fields. |
 | Document tab | Explicit editing target, document name and dirty indication. Dirty dot is accompanied by an accessible textual state. Selection and focus are separate concepts. |

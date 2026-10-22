@@ -63,10 +63,8 @@ A legacy translation follows legacy's own use of its id, so a carried translatio
 | ko_KR | HikariSub.Fonts | Start | 시작 시간 | Means "start time", but it labels the Font collector's Start button. |
 | ko_KR | HikariSub.Tabs | Modified | 적용 가능 | Means "applicable", but it marks a modified tab. |
 | ko_KR | HikariSub.Fonts | Sample | 예) | Means "e.g.)", but it is the catalog window's sample heading. |
-| ko_KR | HikariSub.Fonts | Load | 파일에서 | Means "from file", but it labels the catalog window's Load button. |
 | ko_KR | HikariSub.VisualTools | Value: | 명도: | Means a colour's "value" (brightness), but it labels a tag's value. |
 | ko_KR | HikariSub.MainWindow | Redo | 되돌리기 | Reads as "revert" or "undo". |
-| pl | HikariSub.Fonts | Manages font catalogs | Umorzliwia zarządzanie katalogami stylów | Says style catalogs, and misspells "Umożliwia". |
 | ta | HikariSub.Video | Nothing | எதுவும் | Means "anything". |
 
 ### Plurals and placeholders
