@@ -832,12 +832,17 @@ QString TemplateEditorController::sourceText() const
 
 std::optional<core::LineRecord> TemplateEditorController::sourceRecord() const
 {
-    // The preview ran on the Line editor's draft (runDocument).
+    // The preview ran on the Line editor's draft (runDocument) and the
+    // panel's pending edit (a `template line karaoke` source's own).
+    std::optional<core::LineRecord> out;
     if (const auto *s = m_source ? session() : nullptr)
         if (const auto draft = s->draftRecord(); draft && draft->id == *m_source)
-            return draft;
-    const auto *l = m_source ? line(*m_source) : nullptr;
-    return l ? std::optional(*l) : std::nullopt;
+            out = draft;
+    if (const auto *l = !out && m_source ? line(*m_source) : nullptr)
+        out = *l;
+    if (out && m_pending && m_pending->line == out->id && m_pending->document == documentKey())
+        out = edited(*out, *m_pending);
+    return out;
 }
 
 int TemplateEditorController::sourceStartMs() const

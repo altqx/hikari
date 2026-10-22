@@ -2308,6 +2308,31 @@ private slots:
             20'000));
     }
 
+    // The heading of a `template line karaoke` source reads the text still
+    // pending in the panel, as its preview does.
+    void thePreviewsHeadingReadsAPendingTextOfATemplateThatIsAlsoAKaraokeLine()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        core::LineRecord both;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                both = *l;
+        both.comment = true;
+        both.effect = u8"template line karaoke";
+        both.text = u8"{\\k50}ka{\\k50}ze";
+        const auto id = doc.appendLine(both);
+        QVERIFY(id);
+        openDocument(std::move(doc), true);
+        activate(*id);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && editor->source() == id->value; }, 20'000));
+        editor->setCurrent(id->value);
+        editor->setDelays(10, 60'000);
+        editor->setText(QStringLiteral("{\\k50}ka{\\k50}ze{\\k50}ru"));
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QCOMPARE(editor->sourceText(), QStringLiteral("kazeru"));
+    }
+
     // A Line editor draft of the template that changes nothing goes away at
     // the commit, and the panel's edit goes in then, not after a pause.
     void aPanelEditGoesInOverADraftThatChangesNothing()
