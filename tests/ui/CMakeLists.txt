@@ -34,6 +34,7 @@ target_compile_definitions(hikari_ui_shell_tests PRIVATE
     HIKARI_UI_SOURCE_DIR="${PROJECT_SOURCE_DIR}/src/ui"
     HIKARI_NEXT_FILE_OBSERVATIONS="${PROJECT_SOURCE_DIR}/tests/fixtures/legacy-observations/local-v3-next-file-20261013"
     HIKARI_ATTACHMENT_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/attachments"
+    HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json"
     HIKARI_FAILING_MEDIA_HELPER="$<TARGET_FILE:hikari_failing_media_helper>"
     HIKARI_TEST_FONT="${HIKARI_QT_PREFIX}/../../Examples/Qt-6.11.2/quickcontrols/wearable/WearableStyle/fonts/TitilliumWeb-Regular.ttf")
 add_dependencies(hikari_ui_shell_tests hikari_media_fixtures hikari_media_helper hikari_failing_media_helper
@@ -177,6 +178,8 @@ hikari_add_qttest(hikari_ui_file_session_popups_tests SOURCES file_session_popup
 # K2 / W1: the popups take the theme's palette from the first engine's start.
 hikari_add_qttest(hikari_ui_theme_startup_tests SOURCES theme_startup_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_open_reload_tests SOURCES open_reload_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_open_reload_tests PRIVATE
+    HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
 hikari_add_qttest(hikari_ui_recovery_tests SOURCES recovery_tests.cpp LIBRARIES hikari_composition)
 # S2: automation hotkeys with real Lua scripts.
 hikari_add_qttest(hikari_ui_automation_hotkeys_tests SOURCES automation_hotkeys_ui_tests.cpp LIBRARIES hikari_composition)
@@ -281,6 +284,10 @@ add_dependencies(hikari_ui_saved_layouts_tests hikari_media_helper hikari_media_
 # Wave 6's Line editor cards (LE2-LE6) through the composition, with restarts.
 hikari_add_qttest(hikari_ui_line_editor_options_tests SOURCES line_editor_options_tests.cpp LIBRARIES hikari_composition)
 hikari_add_qttest(hikari_ui_update_checker_tests SOURCES update_checker_tests.cpp LIBRARIES hikari_composition)
+# SH3: What's new against a recorded answer of GitHub's release list.
+hikari_add_qttest(hikari_ui_whats_new_tests SOURCES whats_new_tests.cpp LIBRARIES hikari_composition)
+target_compile_definitions(hikari_ui_whats_new_tests PRIVATE
+    HIKARI_GITHUB_RELEASES="${PROJECT_SOURCE_DIR}/tests/fixtures/github-releases/releases.json")
 # ADR 0019: the download, its checks and the hand-off per package kind.
 hikari_add_qttest(hikari_ui_update_installer_tests SOURCES update_installer_tests.cpp LIBRARIES hikari_composition)
 # ADR 0019: the Windows installing side checks the installer against the release before it runs.

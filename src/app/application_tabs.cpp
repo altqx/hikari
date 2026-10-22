@@ -162,7 +162,8 @@ void Application::forgetTab(application::DocumentId document)
 {
     m_tabMedia.erase(document.value);
     m_workspaceLayout->forgetTab(document.value); // WS1
-    m_matroskaPaths.erase(document.value);
+    m_importPaths.erase(document.value);
+    m_lyricsImports.erase(document.value); // KA6
     m_originalColumns.erase(document.value); // E5: the tab's Grid goes with it
     m_translationDeclined.erase(document.value); // TM1
     m_offers.erase(document.value); // P9: its unanswered association question
