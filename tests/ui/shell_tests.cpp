@@ -14721,6 +14721,55 @@ private slots:
         QVERIFY(!store.contains("editor.tagButton1"));
     }
 
+    // Conversion's Reset page loads the default catalog and lists its
+    // Styles, so the default Style is chosen among them.
+    void conversionResetPageLoadsTheDefaultCatalog()
+    {
+        auto &settings = *application->settingsStore();
+        auto &styles = application->styleManager();
+        QVERIFY(styles.createCatalog(QStringLiteral("Conv")));
+        styles.saveCatalog();
+        QVERIFY(styles.chooseCatalog(QStringLiteral("Default")));
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("conversion");
+        const auto catalogs = dialog->property("catalogs").toStringList();
+        auto *catalog = dialogItem("settingsDialog", "setting_convert.styleCatalog");
+        QVERIFY(QMetaObject::invokeMethod(catalog, "activated", Q_ARG(int, int(catalogs.indexOf(QStringLiteral("Conv"))))));
+        QVERIFY(dialog->property("styles").toStringList().isEmpty());
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsResetPage"), "click"));
+        QCOMPARE(styles.catalog(), QStringLiteral("Default"));
+        QTRY_COMPARE(catalog->property("currentText").toString(), QStringLiteral("Default"));
+        QVERIFY(dialog->property("styles").toStringList().contains(QStringLiteral("Default")));
+        QTRY_COMPARE(dialogItem("settingsDialog", "setting_convert.style")->property("currentText").toString(),
+                     QStringLiteral("Default"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("convert.styleCatalog"), QStringLiteral("Default"));
+        QCOMPARE(settings.text("convert.style"), QStringLiteral("Default"));
+        QVERIFY(styles.deleteCatalog(QStringLiteral("Conv")));
+    }
+
+    // "Reset all settings…" keeps the page shown, where Settings opens next.
+    void resetAllKeepsThePageShown()
+    {
+        auto &settings = *application->settingsStore();
+        auto *dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("video");
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("video"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "resetAll"));
+        answerSettingsQuestion("reset");
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(settings.text("workspace.settingsPage"), QStringLiteral("video"));
+        dialog = openSettings();
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(dialog->property("currentPage").toString(), QStringLiteral("video"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     // Hotkeys::OnMapHkey: Shift+click on a menu item (with the window
     // choice) or a mapped button (its own window) maps at once.
     void hotkeyGestureOnMappedButtonAndMenu()

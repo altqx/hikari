@@ -5588,6 +5588,14 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
         return values;
     application::MemorySettingsStorage storage;
     const application::Settings defaults(storage);
+    // Conversion: the default catalog loaded and its Styles listed, as
+    // choosing it does, so the default Style is found among them.
+    if (*which == application::OptionsPage::Conversion)
+        if (const auto load = application::optionsCatalogToLoad(defaults, m_optionsLists)) {
+            m_styleManager->chooseCatalog(QString::fromStdString(*load));
+            m_optionsLists.currentCatalog = *load;
+            m_optionsLists.styles = stdList(m_styleManager->storeStyles());
+        }
     QVariantMap out = values;
     const auto refreshed =
         toVariant(application::refreshOptionsDialogAfterReset(defaults, m_optionsLists, fromVariant(values), which));
@@ -5615,7 +5623,9 @@ void Application::resetAllSettings()
     // The appearance is not an option: ResetDefault leaves it, as it left the theme.
     std::vector<std::string_view> keep{"recent.subtitles", "recent.subtitlesOpened", "recent.video", "recent.audio",
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
-                                       application::kAudioHotkeysSetting};
+                                       application::kAudioHotkeysSetting,
+                                       // PF1: the Settings window's page shown last, no option either
+                                       "workspace.settingsPage"};
     const auto appearance = appearanceSettings();
     keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)
@@ -5660,6 +5670,11 @@ void Application::resetAllSettings()
     // and the spell checker its dictionary (no SpellChecker::Destroy); the
     // Grid and the menus read the reset options.
     emit spellingChanged();
+}
+
+QStringList Application::settingsStyles() const
+{
+    return qList(m_optionsLists.styles);
 }
 
 QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int index)
