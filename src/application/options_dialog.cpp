@@ -133,9 +133,19 @@ constexpr OptionsBinding kBindings[] = {
     // and the Video page.
     {"video.moveToActiveLine", IndexChoice, Video, 0, 0, 6},
     {"video.playAfterSelection", IndexChoice, Video, 0, 0, 4},
+    // KA1: Auto split's double consonants and the \k and \kf switch's long
+    // syllable, on the Audio page after the karaoke options.
+    {"audio.karaokeDoubleConsonantApart", Check, Audio},
+    {"audio.karaokeKfThreshold", Number, Audio, 10, 10000},
     // PK1 (#301): notices as toasts, or in the Log only, on the General
     // page's Notices section.
     {"notices.toasts", Check, General},
+    // PU7 (#309): the update window's three options and the version "Skip
+    // this version" hid, on the Updates page.
+    {"updater.autoCheck", Check, Updates},
+    {"updater.checkForStable", Check, Updates},
+    {"updater.autoInstall", Check, Updates},
+    {"updater.skippedVersion", Text, Updates},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
@@ -149,6 +159,7 @@ constexpr std::pair<OptionsPage, std::string_view> kPageIds[] = {
     {General, "general"},   {Appearance, "appearance"}, {LineEditor, "lineEditor"},
     {Grid, "grid"},         {Video, "video"},           {Audio, "audio"},
     {Conversion, "conversion"}, {SubtitleProperties, "subtitleProperties"}, {Automation, "automation"},
+    {Updates, "updates"},
 };
 
 constexpr std::string_view kFps[] = {"23.976", "24", "25", "29.97", "30", "60"};

@@ -109,6 +109,40 @@ DialogWindow {
         open()
         go()
     }
+    // TP1 (#274): the Styles panel's rows are the Document's, a name
+    // possibly twice. The window on `row` (-1: the first the filter shows);
+    // an edit in progress keeps both lists' selections.
+    function showAt(row) {
+        if (!editing) {
+            refresh()
+            choose(false, row >= 0 && row < assRows.length ? [row] : shownOf(false, [0]))
+        }
+        open()
+    }
+    // The Styles panel's New, Edit, Duplicate and Copy to the catalog, as
+    // the window's own buttons do them on the file's list (an edit not
+    // applied is asked about first).
+    function onDocumentRow(row, then) {
+        if (!shown())
+            refresh()
+        open()
+        guard(() => {
+            manager.refresh()
+            if (row >= 0 && row < manager.assRows.length) {
+                manager.choose(false, [row])
+                then(row)
+            }
+        })
+    }
+    function newDocumentStyle() {
+        if (!shown())
+            refresh()
+        open()
+        startNew(false, false)
+    }
+    function editStyleAt(row) { onDocumentRow(row, r => manager.editDocumentStyle(r)) }
+    function duplicateDocumentStyle(row) { onDocumentRow(row, () => manager.startNew(false, true)) }
+    function copyStyleToCatalog(row) { onDocumentRow(row, () => manager.copyToCatalog()) }
     function editDocumentStyle(row) {
         choose(false, [row])
         requestActivate() // also after a question's own window

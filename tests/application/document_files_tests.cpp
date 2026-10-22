@@ -239,6 +239,27 @@ TEST_F(Files, ExternalChangesNeedAnExplicitOverwrite)
     EXPECT_TRUE(service.startSave(*service.prepareSave(doc)));
 }
 
+// PU1-disk-change-bar: Keep mine accepts the change it was shown; a later
+// change is refused again.
+TEST_F(Files, AnAcceptedExternalChangeIsWrittenOver)
+{
+    const auto doc = open("/a.ass");
+    ASSERT_TRUE(service.session(doc)->editDraftText(line(doc, 0), u8"mine"));
+    disk.files["/a.ass"] = bytesOf(kAss + "Comment: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,theirs\n");
+    EXPECT_EQ(service.startSave(*service.prepareSave(doc)).error(), SaveRefusal::ExternalChange);
+    ASSERT_TRUE(service.acceptExternalChange(doc));
+    disk.files["/a.ass"] = bytesOf(kAss + "Comment: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,again\n");
+    EXPECT_EQ(service.startSave(*service.prepareSave(doc)).error(), SaveRefusal::ExternalChange);
+    ASSERT_TRUE(service.acceptExternalChange(doc));
+    ASSERT_TRUE(service.startSave(*service.prepareSave(doc)));
+    finish(WriteOutcome::Written);
+    EXPECT_FALSE(service.session(doc)->isDirty());
+    // Untitled, or a file that is gone: nothing to accept.
+    EXPECT_FALSE(service.acceptExternalChange(service.createNew()));
+    disk.files.erase("/a.ass");
+    EXPECT_FALSE(service.acceptExternalChange(doc));
+}
+
 TEST_F(Files, EditsDuringAWriteStayUnsaved)
 {
     const auto doc = open("/a.ass");

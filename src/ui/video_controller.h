@@ -108,6 +108,8 @@ public:
     // Counts openVideo calls: each call is a new request, and a later one
     // drops what an earlier one had not yet opened.
     std::uint64_t openRequest() const { return m_openRequest; }
+    // The video the latest request asked for (still being opened, or open).
+    const QString &requestedVideo() const { return m_requestedVideo; }
     Q_INVOKABLE void openVideoUrl(const QUrl &url) { openVideo(url.toLocalFile()); }
     Q_INVOKABLE bool stepFrames(int frames);
     // V1: legacy Play / Pause (VIDEO_PLAY_PAUSE, Space) and Stop.
@@ -192,6 +194,7 @@ private:
     OpenFilter m_filter;
     std::function<void()> m_beforeOpen;
     std::uint64_t m_openRequest = 0;
+    QString m_requestedVideo;
     QString m_offer; // the question's text; empty: none
     QString m_offerAssociated;
     QString m_offerDirectory;

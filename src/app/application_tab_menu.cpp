@@ -19,6 +19,7 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QScopeGuard>
 #include <QTimer>
 
 #include <algorithm>
@@ -544,6 +545,14 @@ QVariantMap Application::openForwarded(const QStringList &paths)
     const QStringList files = sortedFiles(paths);
     if (files.isEmpty())
         return openResult(QString());
+    // PU1-startup-cards: files that opened end the startup offer; files that
+    // all failed to open leave it.
+    const auto before = m_workspace.documents();
+    bool accepted = false;
+    auto ended = qScopeGuard([&] {
+        if (accepted || m_workspace.documents() != before)
+            emit filesForwarded();
+    });
     const bool untouched = targetUntouched();
     if (files.size() == 1) {
         const QString &file = files.front();
@@ -560,6 +569,7 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             return openResult(QString());
         case application::OpenKind::Video:
             // Opened by the shell as OpenFile opens one video (openSingleVideo).
+            accepted = true;
             if (!untouched)
                 addPage();
             return openResult(QStringLiteral("video"), file);
@@ -567,7 +577,9 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             // The tab's own, as a video is: a tab's keyframes stay.
             if (!untouched)
                 addPage();
-            if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); !problem.isEmpty())
+            if (const QString problem = openKeyframes(QUrl::fromLocalFile(file)); problem.isEmpty())
+                accepted = true;
+            else
                 m_log->notice(ui::LogController::Error, QCoreApplication::translate("HikariSub.MainWindow", "Open keyframes"), problem);
             return openResult(QString());
         default: // a script (the Automation manager's, no tab's) or a refused file: as when dropped

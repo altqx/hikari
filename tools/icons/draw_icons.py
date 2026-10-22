@@ -1027,6 +1027,12 @@ icon("translation-mode", "Translation mode", [], [SUBS],
      stroke("M1.5 3.5h8M1.5 6h5") + accent(stroke("M1.5 10.5h8M1.5 13h5M12.5 3v9M11 10.5l1.5 1.5 1.5-1.5")),
      mirror=True)
 
+# TP1 (#274): the Styles panel's Apply to the selected lines: a Style's
+# swatch over two Lines, the arrow bringing it down to them.
+icon("style-apply", "Apply to the selected lines", [], ["styles-panel"],
+     rect(1.5, 1.5, 6, 6, 1) + stroke("M1.5 11.5h7M1.5 14h7")
+     + accent(stroke("M12 2.5v7M9.5 7.5l2.5 2.5 2.5-2.5M10.5 12.5h4M10.5 14.5h4")), mirror=True)
+
 # The legacy bitmaps the set does not replace, and why (the card's Excluded:
 # the application and file-type icons stay, and controls Qt draws itself).
 NOT_REPLACED = {

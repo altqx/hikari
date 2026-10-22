@@ -954,9 +954,12 @@ private slots:
             found << QStringLiteral("%1 (%2)").arg(context).arg(sources.size());
         qInfo().noquote() << shownTranslations << "shown translations; sources one context translates, by context:"
                           << found.join(QStringLiteral(", "));
+        // Not HikariSub.Session: PU1's session and autosave popups replaced
+        // the windows whose legacy texts were translated, and their own
+        // texts wait for the translators.
         for (const char *context : {"HikariSub.MainWindow", "HikariSub.Audio", "HikariSub.Video", "HikariSub.Editor",
                                     "HikariSub.Grid", "HikariSub.TimeShift", "HikariSub.Options", "HikariSub.Styles",
-                                    "HikariSub.Session", "HikariSub.Conversion", "HikariSub.Documents"})
+                                    "HikariSub.Conversion", "HikariSub.Documents"})
             QVERIFY2(seen.contains(QLatin1String(context)), context);
         // A surface string the application keeps: the Untitled tab's name.
         application->addPage();

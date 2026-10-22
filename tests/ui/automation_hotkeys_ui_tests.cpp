@@ -5,7 +5,8 @@
 // whose script is gone stays visible as missing (S44-macro-alias); a legacy
 // Hotkeys.txt adds only what has no binding yet; Settings → Hotkeys lists
 // every macro, by name, under the Automation filter; a binding left missing
-// by a changed script resolves again once its shortcut is recorded.
+// by a changed script resolves again once its shortcut is recorded; PU7:
+// Settings → Hotkeys imports a legacy Hotkeys.txt's script bindings.
 
 #include "hikari/app/application.h"
 #include "hikari/app/hotkeys_controller.h"
@@ -302,6 +303,26 @@ private slots:
         QCOMPARE(row().value(QStringLiteral("accel")).toString(), QStringLiteral("Alt-Ctrl-E")); // legacy's order
     }
 
+    // ...and a search by its macro's name finds the row once the script
+    // loads, without the search being typed again.
+    void aSearchFindsAMacroLoadedWhileSettingsIsOpen()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("searched.ini"));
+        app::Application a(o);
+        a.automationHotkeys().replaceCommitted({{kEdgeblur, "Ctrl+Alt+E"}});
+        auto &h = a.hotkeys();
+        h.beginOptions();
+        h.search(QStringLiteral("add edgeblur"));
+        QVERIFY(h.rows().isEmpty());
+        QSignalSpy refreshed(&h, &app::HotkeysController::rowsChanged);
+        a.automation().load(HIKARI_AUTOLOAD_DIR "/macro-1-edgeblur.lua");
+        QTRY_VERIFY_WITH_TIMEOUT(!refreshed.isEmpty() && h.rows().size() == 1, 30'000);
+        QCOMPARE(h.rows().first().toMap().value(QStringLiteral("text")).toString(),
+                 QStringLiteral("Global ") + QLatin1String(kEdgeblur));
+        QCOMPARE(h.rows().at(h.selected()).toMap().value(QStringLiteral("macro")).toString(), QStringLiteral("Add edgeblur"));
+    }
+
     // Macros unloaded while Settings → Hotkeys is open: an unbound one's row
     // goes (keys given it would bind nothing), one given keys there stays.
     void aMacroUnloadedWhileSettingsIsOpenLeavesTheList()
@@ -434,7 +455,13 @@ private slots:
                     "Script shell-fixture.lua-1=Alt-Ctrl-W\r\n");  // added, in Qt's order
         }
         QSignalSpy committed(&hotkeys, &app::AutomationHotkeysController::committed);
-        QCOMPARE(hotkeys.importLegacy(legacy), 1);
+        const QVariantMap result = hotkeys.importLegacy(legacy);
+        QCOMPARE(result.value(QStringLiteral("read")).toBool(), true);
+        QCOMPARE(result.value(QStringLiteral("added")).toInt(), 1);
+        QCOMPARE(result.value(QStringLiteral("kept")).toInt(), 1);
+        QCOMPARE(result.value(QStringLiteral("skipped")).toInt(), 1);
+        QCOMPARE(result.value(QStringLiteral("skippedNames")).toStringList(),
+                 QStringList{QStringLiteral("Script shell-fixture.lua-0 (Ctrl+Shift+E)")});
         QCOMPARE(committed.size(), 1); // saved and installed at once
         QCOMPARE(keysOf(hotkeys, kEdgeblur), QStringLiteral("Ctrl+Shift+E"));
         QCOMPARE(keysOf(hotkeys, kWait), QStringLiteral("Ctrl+Alt+W"));
@@ -442,6 +469,67 @@ private slots:
         QCOMPARE(hotkeys.shortcuts().size(), qsizetype(2));
         QCOMPARE(hotkeys.keysOf(Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl+Shift+K"));
         QCOMPARE(hotkeys.keysOf(Qt::Key_Shift, Qt::ShiftModifier), QString());
+    }
+
+    // PU7 (#309): Settings → Hotkeys' Import legacy hotkeys…, refused while
+    // the page holds an edit (OK would write the list over the import); in
+    // effect at once, the list shows the added binding, and OK after a later
+    // edit keeps it (also after Apply).
+    void settingsHotkeysPageImportsLegacyScripts()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("page-import.ini"));
+        app::Application a(o);
+        QVERIFY(loadScripts(a));
+        auto &macros = a.automationHotkeys();
+        const QString legacy = dir.filePath(QStringLiteral("PageHotkeys.txt"));
+        {
+            QFile f(legacy);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[HikariSub 0.8.0.1200]\r\nScript shell-fixture.lua-1=Alt-Ctrl-W\r\n");
+        }
+        auto &h = a.hotkeys();
+        const auto position = [&](const char *name) {
+            const QString text = QStringLiteral("Global ") + QLatin1String(name);
+            for (int i = 0; i < h.rows().size(); ++i)
+                if (h.rows().at(i).toMap().value(QStringLiteral("text")).toString() == text)
+                    return i;
+            return -1;
+        };
+        const auto accel = [&](const char *name) {
+            const int at = position(name);
+            return at < 0 ? QStringLiteral("?") : h.rows().at(at).toMap().value(QStringLiteral("accel")).toString();
+        };
+        h.beginOptions();
+        h.filter(7);
+        QVERIFY(position(kWait) >= 0);
+        QCOMPARE(accel(kWait), QString());
+        h.select(position(kPrefix));
+        h.optionsMap(QStringLiteral("Ctrl-Alt-P"), 0, QStringLiteral("cancel"));
+        QVERIFY(h.optionsModified());
+        QCOMPARE(h.importLegacyScripts(legacy).value(QStringLiteral("read")).toBool(), false);
+        QCOMPARE(keysOf(macros, kWait), QString());
+
+        // An applied edit (Apply keeps the page open): no edits then.
+        h.commitOptions();
+        QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Alt+P"));
+        QVERIFY(!h.optionsModified());
+        QSignalSpy refreshed(&h, &app::HotkeysController::rowsChanged);
+        const QVariantMap result = h.importLegacyScripts(legacy);
+        QCOMPARE(result.value(QStringLiteral("read")).toBool(), true);
+        QCOMPARE(result.value(QStringLiteral("added")).toInt(), 1);
+        QVERIFY(!refreshed.isEmpty());
+        QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W")); // in effect at once
+        QCOMPARE(h.filterMode(), 7);
+        QCOMPARE(accel(kWait), QStringLiteral("Alt-Ctrl-W")); // legacy's order
+        QVERIFY(!h.optionsModified());
+        // A later edit and OK keep the import (the staged copy is the
+        // bindings after it, not those Apply left).
+        h.select(position(kPrefix));
+        h.optionsMap(QStringLiteral("Ctrl-Alt-Q"), 0, QStringLiteral("cancel"));
+        h.commitOptions();
+        QCOMPARE(keysOf(macros, kPrefix), QStringLiteral("Ctrl+Alt+Q"));
+        QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W"));
     }
 };
 

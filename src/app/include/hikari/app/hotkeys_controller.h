@@ -60,6 +60,8 @@ class HotkeysController : public QObject {
     Q_PROPERTY(QVariantList rows READ rows NOTIFY rowsChanged)
     Q_PROPERTY(int selected READ selected NOTIFY rowsChanged)
     Q_PROPERTY(int filterMode READ filterMode NOTIFY rowsChanged)
+    // PU7 (#309): the page holds edits not yet kept with OK or Apply.
+    Q_PROPERTY(bool optionsModified READ optionsModified NOTIFY rowsChanged)
     // HikariListCtrl's gutter: the list is filtered (isFiltered), and the
     // block above the first shown row (CheckIfHasHiddenBlock(-1)); each row
     // carries its own ("block": 0, 1 "+", 2 "-"; "inBlock": shown from one).
@@ -145,6 +147,13 @@ public:
     Q_INVOKABLE void optionsRedo();
     // OK/Apply (SetOptions).
     Q_INVOKABLE void commitOptions();
+    // PU7 (#309): Import legacy hotkeys on the Hotkeys page: the script
+    // hotkeys of a legacy Hotkeys.txt, added at once as AM1's import adds
+    // them (AutomationHotkeysController::importLegacy's result), and the
+    // page's list made again with them. Only while the page holds no edits
+    // (the page offers it then): OK would write the list over them.
+    Q_INVOKABLE QVariantMap importLegacyScripts(const QString &path);
+    bool optionsModified() const;
     // "Set default" (ResetDefault): Hkeys.ResetDefaults() and the list again.
     void resetDefaults();
 

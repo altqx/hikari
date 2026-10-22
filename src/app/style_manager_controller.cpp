@@ -2,6 +2,7 @@
 
 #include "hikari/core/ass_load.h"
 
+#include <QColor>
 #include <QCoreApplication>
 #include <QCollator>
 #include <QColor>
@@ -284,10 +285,52 @@ QStringList StyleManagerController::documentStyles() const
     return out;
 }
 
+QVariantList StyleManagerController::panelRows() const
+{
+    QVariantList out;
+    auto *session = m_hooks.target ? m_hooks.target() : nullptr;
+    const auto styles = session ? application::documentStyles(*session) : std::nullopt;
+    if (!styles)
+        return out;
+    std::unordered_map<std::u8string, int> lines;
+    for (const auto *line : session->document().lines())
+        ++lines[line->style];
+    const auto colour = [](const core::Colour &c) {
+        return QColor(int(std::clamp<std::int64_t>(c.r, 0, 255)), int(std::clamp<std::int64_t>(c.g, 0, 255)),
+                      int(std::clamp<std::int64_t>(c.b, 0, 255)), 255 - int(std::clamp<std::int64_t>(c.a, 0, 255)));
+    };
+    for (const auto &s : *styles) {
+        const auto used = lines.find(s.name);
+        out << QVariantMap{{QStringLiteral("name"), qs(s.name)},
+                           {QStringLiteral("font"), qs(s.fontname)},
+                           {QStringLiteral("size"), qs(s.fontsize)},
+                           {QStringLiteral("bold"), s.bold},
+                           {QStringLiteral("italic"), s.italic},
+                           {QStringLiteral("primary"), colour(s.primary)},
+                           {QStringLiteral("outline"), colour(s.outline)},
+                           {QStringLiteral("lines"), used == lines.end() ? 0 : used->second}};
+    }
+    return out;
+}
+
 bool StyleManagerController::available() const
 {
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;
     return session && application::documentStyles(*session).has_value();
+}
+
+void StyleManagerController::documentEdited()
+{
+    if (const bool now = available(); now != m_available) {
+        m_available = now;
+        emit changed();
+    }
+    // By the Document's id, as targetRefreshed: a session loaded in place
+    // of the last may take its address.
+    const auto target = m_hooks.targetDocument ? m_hooks.targetDocument() : std::nullopt;
+    const bool retargeted = target != m_notifiedTarget;
+    m_notifiedTarget = target;
+    emit documentChanged(retargeted);
 }
 
 QString StyleManagerController::followedCatalog() const

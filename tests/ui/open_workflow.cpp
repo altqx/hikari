@@ -61,13 +61,13 @@ protected:
             enterKey("mainWindow/lineText", Qt::Key_Return, spix::KeyModifiers::Control);
             wait(300ms);
             invokeMethod("mainWindow", "openSubtitles", {g_second.toStdString()});
-            observed.push_back(waitForItem("closeReview/closeCancel", 5s) ? "review" : "no review"); // 0
-            mouseClick("closeReview/closeCancel");
+            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review"); // 0
+            mouseClick("closeQuestion/messageBoxChoice_cancel");
             wait(300ms);
             observed.push_back(targets()); // 1: unchanged
             invokeMethod("mainWindow", "openSubtitles", {g_second.toStdString()});
             wait(500ms);
-            mouseClick("closeReview/closeDiscardAll");
+            mouseClick("closeQuestion/messageBoxChoice_discard");
             wait(500ms);
             observed.push_back(targets()); // 2: the other file
             std::string recent;
@@ -81,8 +81,10 @@ protected:
             observed.push_back(recent); // 3
             write(g_second, "Changed");
             invokeMethod("mainWindow", "checkExternalChange", {});
-            observed.push_back(waitForItem("reloadPrompt/reloadYes", 5s) ? "prompt" : "no prompt"); // 4
-            mouseClick("reloadPrompt/reloadYes");
+            wait(300ms);
+            // PU1-disk-change-bar: a bar on the Document, not a question.
+            observed.push_back(existsAndVisible("mainWindow/diskChangeBar") ? "prompt" : "no prompt"); // 4
+            mouseClick("mainWindow/reloadYes");
             wait(500ms);
             observed.push_back(lineText()); // 5
         }

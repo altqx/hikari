@@ -10,14 +10,20 @@ import Hikari.Ui
 // saved layout's, so saving again replaces it; a name in use (in any case)
 // says so and the button reads Replace. A preset's name, an empty name or one
 // too long is refused with the reason under the field.
-Dialog {
+// PU7 (#309): opened from menus (the layout switcher's, View > Layout), so a
+// compact window on DG1's frame by the small forms rule, titled after the
+// command (PU7-layout-windows).
+DialogWindow {
     id: dialog
     objectName: "saveLayoutDialog"
     required property var layouts // WorkspaceLayoutController
-    title: qsTr("Save layout")
-    header: IconDialogHeader { iconRole: "layout-save"; text: dialog.title }
+    title: qsTr("Save layout as")
+    dialogId: "saveLayout"
+    // Modal to the main window, as the Dialog was: Save takes the arrangement
+    // shown, which must be the one the dialog opened for.
     modal: true
-    anchors.centerIn: parent
+    initialFocus: nameField
+    defaultButton: saveButton
     // Both read the saved layouts too: re-evaluated when they change, not
     // only when the name does (the dialog opens again on the same name).
     readonly property string problem: layouts.savedLayouts && layouts.layoutNameProblem(nameField.text)
@@ -31,48 +37,61 @@ Dialog {
     }
     onAccepted: layouts.saveLayoutAs(nameField.text)
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 6
+    RowLayout {
+        spacing: 8
         Label {
-            text: qsTr("Name:")
+            text: qsTr("Name")
+            Layout.preferredWidth: 56
         }
         TextField {
             id: nameField
             objectName: "saveLayoutName"
-            Layout.fillWidth: true
-            Layout.preferredWidth: 280
+            Layout.preferredWidth: 260
             maximumLength: 64 // WorkspaceLayoutController::kMaximumNameLength
-            Accessible.name: qsTr("Name:")
+            Accessible.name: qsTr("Name")
             Accessible.description: dialog.problem
-            onAccepted: if (dialog.problem.length === 0) dialog.accept()
+        }
+    }
+    RowLayout {
+        // Nothing to say while the field is empty: the button is off.
+        visible: note.text.length > 0
+        spacing: 6
+        Layout.leftMargin: 64
+        Layout.maximumWidth: 260
+        Icon {
+            iconRole: dialog.problem.length > 0 ? "notice-error" : "about"
+            size: 14
+            color: dialog.problem.length > 0 ? Theme.danger : Theme.text
+            accentColor: dialog.problem.length > 0 ? Theme.danger : IconTheme.accent
+            Layout.alignment: Qt.AlignTop
+            Layout.topMargin: 2
         }
         Label {
+            id: note
             objectName: "saveLayoutNote"
-            // Nothing to say while the field is empty: the button is off.
             text: nameField.text.trim().length === 0 ? ""
                 : dialog.problem.length > 0 ? dialog.problem
                 : dialog.existing.length > 0 ? qsTr("Saving replaces the layout %1.").arg(dialog.existing) : ""
-            color: dialog.problem.length > 0 ? Theme.danger : palette.windowText
-            visible: text.length > 0
+            color: dialog.problem.length > 0 ? Theme.danger : Theme.text
             wrapMode: Text.WordWrap
             Layout.fillWidth: true
-            Layout.maximumWidth: nameField.width
             Accessible.role: Accessible.AlertMessage
         }
     }
-    footer: DialogButtonBox {
-        Button {
+    buttons: [
+        PrimaryButton {
+            id: saveButton
             objectName: "saveLayoutSave"
             text: dialog.existing.length > 0 ? qsTr("Replace") : qsTr("Save")
             enabled: dialog.problem.length === 0
-            highlighted: true
             DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-        }
+            onClicked: dialog.accept()
+        },
         Button {
             objectName: "saveLayoutCancel"
             text: qsTr("Cancel")
             DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: dialog.reject()
         }
-    }
+    ]
 }
