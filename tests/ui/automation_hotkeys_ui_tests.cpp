@@ -5,7 +5,8 @@
 // whose script is gone stays visible as missing (S44-macro-alias); a legacy
 // Hotkeys.txt adds only what has no binding yet; Settings → Hotkeys lists
 // every macro, by name, under the Automation filter; a binding left missing
-// by a changed script resolves again once its shortcut is recorded.
+// by a changed script resolves again once its shortcut is recorded; PU7:
+// Settings → Hotkeys imports a legacy Hotkeys.txt's script bindings.
 
 #include "hikari/app/application.h"
 #include "hikari/app/hotkeys_controller.h"
@@ -434,7 +435,13 @@ private slots:
                     "Script shell-fixture.lua-1=Alt-Ctrl-W\r\n");  // added, in Qt's order
         }
         QSignalSpy committed(&hotkeys, &app::AutomationHotkeysController::committed);
-        QCOMPARE(hotkeys.importLegacy(legacy), 1);
+        const QVariantMap result = hotkeys.importLegacy(legacy);
+        QCOMPARE(result.value(QStringLiteral("read")).toBool(), true);
+        QCOMPARE(result.value(QStringLiteral("added")).toInt(), 1);
+        QCOMPARE(result.value(QStringLiteral("kept")).toInt(), 1);
+        QCOMPARE(result.value(QStringLiteral("skipped")).toInt(), 1);
+        QCOMPARE(result.value(QStringLiteral("skippedNames")).toStringList(),
+                 QStringList{QStringLiteral("Script shell-fixture.lua-0 (Ctrl+Shift+E)")});
         QCOMPARE(committed.size(), 1); // saved and installed at once
         QCOMPARE(keysOf(hotkeys, kEdgeblur), QStringLiteral("Ctrl+Shift+E"));
         QCOMPARE(keysOf(hotkeys, kWait), QStringLiteral("Ctrl+Alt+W"));
@@ -442,6 +449,60 @@ private slots:
         QCOMPARE(hotkeys.shortcuts().size(), qsizetype(2));
         QCOMPARE(hotkeys.keysOf(Qt::Key_K, Qt::ControlModifier | Qt::ShiftModifier), QStringLiteral("Ctrl+Shift+K"));
         QCOMPARE(hotkeys.keysOf(Qt::Key_Shift, Qt::ShiftModifier), QString());
+    }
+
+    // PU7 (#309): Settings → Hotkeys' Import legacy hotkeys…, refused while
+    // the page holds an edit (OK would write the list over the import); in
+    // effect at once, the list shows the added binding and OK keeps it.
+    void settingsHotkeysPageImportsLegacyScripts()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("page-import.ini"));
+        app::Application a(o);
+        QVERIFY(loadScripts(a));
+        auto &macros = a.automationHotkeys();
+        const QString legacy = dir.filePath(QStringLiteral("PageHotkeys.txt"));
+        {
+            QFile f(legacy);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[HikariSub 0.8.0.1200]\r\nScript shell-fixture.lua-1=Alt-Ctrl-W\r\n");
+        }
+        auto &h = a.hotkeys();
+        const auto position = [&](const char *name) {
+            const QString text = QStringLiteral("Global ") + QLatin1String(name);
+            for (int i = 0; i < h.rows().size(); ++i)
+                if (h.rows().at(i).toMap().value(QStringLiteral("text")).toString() == text)
+                    return i;
+            return -1;
+        };
+        const auto accel = [&](const char *name) {
+            const int at = position(name);
+            return at < 0 ? QStringLiteral("?") : h.rows().at(at).toMap().value(QStringLiteral("accel")).toString();
+        };
+        h.beginOptions();
+        h.filter(7);
+        QVERIFY(position(kWait) >= 0);
+        QCOMPARE(accel(kWait), QString());
+        h.select(position(kPrefix));
+        h.optionsMap(QStringLiteral("Ctrl-Alt-P"), 0, QStringLiteral("cancel"));
+        QVERIFY(h.optionsModified());
+        QCOMPARE(h.importLegacyScripts(legacy).value(QStringLiteral("read")).toBool(), false);
+        QCOMPARE(keysOf(macros, kWait), QString());
+
+        h.beginOptions(); // the page opened again, no edits
+        h.filter(7);
+        QVERIFY(!h.optionsModified());
+        QSignalSpy refreshed(&h, &app::HotkeysController::rowsChanged);
+        const QVariantMap result = h.importLegacyScripts(legacy);
+        QCOMPARE(result.value(QStringLiteral("read")).toBool(), true);
+        QCOMPARE(result.value(QStringLiteral("added")).toInt(), 1);
+        QVERIFY(!refreshed.isEmpty());
+        QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W")); // in effect at once
+        QCOMPARE(h.filterMode(), 7);
+        QCOMPARE(accel(kWait), QStringLiteral("Ctrl-Alt-W"));
+        QVERIFY(!h.optionsModified());
+        h.commitOptions();
+        QCOMPARE(keysOf(macros, kWait), QStringLiteral("Ctrl+Alt+W"));
     }
 };
 

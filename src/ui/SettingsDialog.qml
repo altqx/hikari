@@ -1247,6 +1247,17 @@ DialogWindow {
                                     anchors.verticalCenter: parent.verticalCenter
                                 }
                             }
+                            // PU7 (#309): AM1's import, moved here from the
+                            // Automation panel's menu (PU7-import-hotkeys).
+                            IconTextButton {
+                                objectName: "hotkeyImportLegacy"
+                                iconRole: "import"
+                                text: qsTr("Import legacy hotkeys…")
+                                enabled: dialog.hotkeys !== null && !dialog.hotkeys.optionsModified
+                                tip: enabled ? qsTr("The script hotkeys of a legacy Hotkeys.txt, added at once")
+                                             : qsTr("Press Apply or Cancel first: the import is added at once")
+                                onClicked: legacyHotkeysFile.open()
+                            }
                         }
                         ListView {
                             id: hotkeyList
@@ -1523,6 +1534,34 @@ DialogWindow {
             fontsFolder.text = path
             dialog.put("fonts.externalDirectory", path)
         }
+    }
+
+    // PU7 (#309): Import legacy hotkeys: what was added at once, as a toast
+    // (NT1's rule for an outcome); the skipped ones under Details.
+    FileDialog {
+        id: legacyHotkeysFile
+        objectName: "legacyHotkeysFile"
+        title: qsTr("Choose a legacy Hotkeys.txt")
+        nameFilters: [qsTr("Hotkeys (Hotkeys.txt)"), qsTr("All files (*)")]
+        onAccepted: dialog.importLegacyHotkeys(dialog.app.localPath(selectedFile))
+    }
+    function importLegacyHotkeys(path) {
+        const r = hotkeys.importLegacyScripts(path)
+        hotkeys.search(hotkeySearch.text)
+        if (!notices)
+            return r
+        const title = qsTr("Import legacy hotkeys")
+        if (r.read !== true) {
+            notices.post("error", title, qsTr("The file could not be read."), { details: path })
+            return r
+        }
+        const parts = [r.added > 0 ? qsTr("Added %n script hotkey(s).", "", r.added) : qsTr("No script hotkeys were added.")]
+        if (r.kept > 0)
+            parts.push(qsTr("%n kept the keys you gave them.", "", r.kept))
+        if (r.skipped > 0)
+            parts.push(qsTr("%n skipped: their keys are taken.", "", r.skipped))
+        notices.post("info", title, parts.join(" "), r.skipped > 0 ? { details: r.skippedNames.join("\n") } : {})
+        return r
     }
 
     QtObject {

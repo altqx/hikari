@@ -758,6 +758,26 @@ void HotkeysController::optionsRedo()
     emit rowsChanged();
 }
 
+bool HotkeysController::optionsModified() const
+{
+    return m_list && m_list->modified();
+}
+
+QVariantMap HotkeysController::importLegacyScripts(const QString &path)
+{
+    if (optionsModified())
+        return {{QStringLiteral("read"), false}};
+    QVariantMap result = m_scripts.importLegacy(path);
+    if (m_list && result.value(QStringLiteral("added")).toInt() > 0) {
+        const int mode = m_list->filterMode();
+        m_list->clear();
+        m_list->build(listed());
+        m_list->filter(mode);
+        emit rowsChanged();
+    }
+    return result;
+}
+
 void HotkeysController::commitOptions()
 {
     if (!m_list)
