@@ -49,7 +49,9 @@ Control {
         "Change": qsTr("Change"),
         "Start": qsTr("Start"),
         "End": qsTr("End"),
-        "Origin": qsTr("Origin")
+        "Origin": qsTr("Origin"),
+        "Plane": qsTr("Plane"),
+        "Rotation": qsTr("Rotation")
     })
     function groupName(group) {
         return bar.groupNames[group] ?? group
@@ -65,10 +67,21 @@ Control {
         }
         return out
     }
+    // The options' groups, then the values'. VT3: values that go on the
+    // last option's group (the Perspective tool's Origin mode, then its X
+    // and Y) continue it, without a rule or the label again.
+    function joined(options, values) {
+        if (options.length > 0 && values.length > 0 && options[options.length - 1].group.length > 0
+                && options[options.length - 1].group === values[0].group) {
+            values = values.slice()
+            values[0] = Object.assign({}, values[0], { continues: true })
+        }
+        return options.concat(values)
+    }
     // A family's groups for its unseen copy (its values carried whole).
     function measuredSegments(layout) {
         const values = (layout.values ?? []).map(v => ({ name: v.name, group: v.group, value: v }))
-        return groupsOf(layout.options ?? [], "options", true).concat(groupsOf(values, "values", true))
+        return joined(groupsOf(layout.options ?? [], "options", true), groupsOf(values, "values", true))
     }
     // The values' layout changes only with the tool (or a value coming or
     // going), not with every sample, so the fields are not rebuilt (and a
@@ -105,7 +118,7 @@ Control {
                 return o
         return fallback
     }
-    readonly property var segments: groupsOf(JSON.parse(optionShape), "options", false).concat(valueGroups)
+    readonly property var segments: joined(groupsOf(JSON.parse(optionShape), "options", false), valueGroups)
     // The picker's slot, which a batch tool's groups give up.
     readonly property real pickerWidth: pick.implicitWidth + 4
                                         + (tools.batchCount > 0 ? picked.implicitWidth + clear.implicitWidth + 8 : 0)
@@ -150,7 +163,7 @@ Control {
         Icon {
             Layout.alignment: Qt.AlignVCenter
             // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
-            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][family] ?? ""
+            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][family] ?? ""
         }
         Label {
             Layout.alignment: Qt.AlignVCenter
@@ -170,8 +183,10 @@ Control {
                         : modelData.kind === "options" ? "visualOptionGroup" + index : "visualValueGroup" + index
             height: 26
             spacing: 3
-            // The rule before a group; none at the start of a line.
+            // The rule before a group; none at the start of a line or
+            // within a group the values continue.
             Rectangle {
+                visible: !(segment.modelData.continues ?? false)
                 Layout.preferredWidth: 1
                 Layout.preferredHeight: 18
                 Layout.rightMargin: 3
@@ -180,7 +195,7 @@ Control {
                 opacity: segment.x > 0 ? 1 : 0
             }
             Label {
-                visible: segment.modelData.group.length > 0
+                visible: segment.modelData.group.length > 0 && !(segment.modelData.continues ?? false)
                 Layout.alignment: Qt.AlignVCenter
                 Layout.rightMargin: 3
                 text: bar.groupName(segment.modelData.group)

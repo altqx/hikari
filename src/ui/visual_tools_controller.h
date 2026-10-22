@@ -2,7 +2,7 @@
 
 // T1: the Video panel's visual tools (docs/qt/visual-tools.md). The tool
 // rail (accepted layout A on #55) lists legacy VideoToolbar's eleven
-// families; the active tool gets the pointer over the video and the panel's
+// families and VT3's Perspective; the active tool gets the pointer over the video and the panel's
 // keys, and draws through the overlay. This controller is the tools'
 // VisualHost: it keeps the shared view transform (visual::VideoView) in step
 // with the panel's size, the video's geometry and the script resolution,
@@ -40,6 +40,9 @@ class VisualToolsController : public QObject, public application::visual::Visual
     QML_UNCREATABLE("Provided by the application composition")
     // The rail: name, tooltip, icon and whether the family has its tool yet.
     Q_PROPERTY(QVariantList families READ families CONSTANT)
+    // VT3: the families' ids in the rail's order (the Perspective tool after
+    // Text X / Y rotation); `families` stays in the ids' order.
+    Q_PROPERTY(QVariantList railOrder READ railOrder CONSTANT)
     Q_PROPERTY(int activeFamily READ activeFamily NOTIFY changed)
     // Legacy VideoToolbar::DisableVisuals(form != ASS): the rail is disabled
     // for a Document that is not ASS.
@@ -136,6 +139,7 @@ public:
     application::visual::BatchPicker &batchPicker() { return m_picker; }
 
     QVariantList families() const;
+    QVariantList railOrder() const;
     int activeFamily() const { return static_cast<int>(m_family); }
     bool railEnabled() const { return m_railEnabled; }
     QVariantList overlay() const;

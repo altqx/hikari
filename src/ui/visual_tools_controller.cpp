@@ -123,6 +123,14 @@ QVariantList VisualToolsController::families() const
     return out;
 }
 
+QVariantList VisualToolsController::railOrder() const
+{
+    QVariantList out;
+    for (const Family f : application::visual::railOrder())
+        out.append(static_cast<int>(f));
+    return out;
+}
+
 void VisualToolsController::setViewport(qreal width, qreal height, qreal panelHeight, qreal devicePixelRatio)
 {
     m_logicalWidth = width;

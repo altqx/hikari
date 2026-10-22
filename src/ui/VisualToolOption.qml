@@ -45,7 +45,7 @@ Loader {
         IconToolButton {
             objectName: option.nameOf
             // The roles the families' options show (one line: icon_tests reads the roles from it).
-            iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit", "copy-position"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
+            iconRole: ["frame-to-scale", "scale-x", "link", "scale-y", "original-frame", "tool-scale-rotation", "resample", "two-points", "vector-drag", "vector-line", "vector-bezier", "vector-bspline", "vector-point", "vector-delete", "clip-invert", "shift-position", "shift-move-start", "shift-move-end", "shift-clips", "shift-drawings", "shift-origins", "tag-edit", "copy-position", "perspective-plane", "perspective-lock-outer", "perspective-grid"].includes(option.modelData.iconRole) ? option.modelData.iconRole : ""
             text: option.tooltip.split("\n")[0]
             tip: option.tooltip
             checkable: option.modelData.kind === "toggle"
