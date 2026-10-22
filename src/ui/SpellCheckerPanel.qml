@@ -38,6 +38,17 @@ FocusScope {
                                                           + actions.implicitWidth + 2 * columns.spacing) + 16,
                                                 Math.ceil(actions.implicitHeight) + 16)
 
+    // The body font at `size` against its 13, as DialogWindow.fontAt (a
+    // FocusScope has no font of its own).
+    function fontAt(size, weight) {
+        const base = fontSource.font
+        const f = Qt.font({family: base.family, weight: weight === undefined ? Font.Normal : weight})
+        if (base.pointSize > 0)
+            f.pointSize = base.pointSize * size / 13
+        else
+            f.pixelSize = Math.round(base.pixelSize * size / 13)
+        return f
+    }
     function options() {
         return {ignoreComments: ignoreComments, ignoreUpperCase: ignoreUpperCase}
     }
@@ -164,10 +175,14 @@ FocusScope {
                     id: misspell
                     objectName: "spellMisspell"
                     text: panel.current.word ?? ""
-                    font.pixelSize: Math.round(panel.font.pixelSize * 18 / 13)
-                    font.weight: Font.DemiBold
+                    font: panel.fontAt(18, Font.DemiBold)
                     elide: Text.ElideRight
-                    Layout.maximumWidth: wordColumn.width - lineLabel.implicitWidth - 10
+                    // Up to its own width, elided in what the Line's label
+                    // leaves; never wider than the column gives it, so the
+                    // columns cannot shift under a click.
+                    Layout.fillWidth: true
+                    Layout.preferredWidth: 0
+                    Layout.maximumWidth: implicitWidth
                     Accessible.name: qsTr("Misspelled word: %1").arg(text)
                 }
                 Label {
@@ -176,13 +191,14 @@ FocusScope {
                     visible: (panel.current.line ?? 0) > 0
                     text: qsTr("Line %1").arg(panel.current.line ?? 0)
                     color: Theme.muted
-                    font.pixelSize: Math.round(panel.font.pixelSize * 12 / 13)
+                    font: panel.fontAt(12)
                 }
             }
             // The text around the word, the word underlined as the editor marks it.
             Label {
                 objectName: "spellContext"
                 Layout.fillWidth: true
+                Layout.preferredWidth: 0
                 elide: Text.ElideRight
                 color: Theme.muted
                 textFormat: Text.StyledText
@@ -297,6 +313,7 @@ FocusScope {
         }
     }
 
+    Label { id: fontSource; visible: false }
     Loader {
         id: addedWordsLoader
         active: false
