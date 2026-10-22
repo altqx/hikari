@@ -249,6 +249,11 @@ private slots:
         request.buttons = {"OK"};
         std::optional<DialogResult> result;
         showDialog(request, result);
+        // At the screen's top: on xvfb-run's 640 x 480 screen a centred
+        // dialog leaves the popover room neither below nor above its anchor,
+        // so it would cover the anchor the presses below aim at.
+        window->setPosition(window->x(), window->screen()->availableGeometry().top());
+        QTRY_VERIFY(window->y() < window->screen()->availableGeometry().top() + 40); // (the frame may add its margin)
         auto *popover = window->findChild<QObject *>(QStringLiteral("automationColourPopover"));
         QVERIFY(popover);
         auto *content = popover->property("contentItem").value<QQuickItem *>();
