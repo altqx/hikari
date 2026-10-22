@@ -2,6 +2,7 @@
 
 #include "hikari/core/ass_load.h"
 
+#include <QColor>
 #include <QCoreApplication>
 #include <QCollator>
 #include <QQuickImageProvider>
@@ -253,6 +254,34 @@ QStringList StyleManagerController::documentStyles() const
         if (const auto styles = application::documentStyles(*session))
             for (const auto &s : *styles)
                 out << qs(s.name);
+    return out;
+}
+
+QVariantList StyleManagerController::panelRows() const
+{
+    QVariantList out;
+    auto *session = m_hooks.target ? m_hooks.target() : nullptr;
+    const auto styles = session ? application::documentStyles(*session) : std::nullopt;
+    if (!styles)
+        return out;
+    std::unordered_map<std::u8string, int> lines;
+    for (const auto *line : session->document().lines())
+        ++lines[line->style];
+    const auto colour = [](const core::Colour &c) {
+        return QColor(int(std::clamp<std::int64_t>(c.r, 0, 255)), int(std::clamp<std::int64_t>(c.g, 0, 255)),
+                      int(std::clamp<std::int64_t>(c.b, 0, 255)), 255 - int(std::clamp<std::int64_t>(c.a, 0, 255)));
+    };
+    for (const auto &s : *styles) {
+        const auto used = lines.find(s.name);
+        out << QVariantMap{{QStringLiteral("name"), qs(s.name)},
+                           {QStringLiteral("font"), qs(s.fontname)},
+                           {QStringLiteral("size"), qs(s.fontsize)},
+                           {QStringLiteral("bold"), s.bold},
+                           {QStringLiteral("italic"), s.italic},
+                           {QStringLiteral("primary"), colour(s.primary)},
+                           {QStringLiteral("outline"), colour(s.outline)},
+                           {QStringLiteral("lines"), used == lines.end() ? 0 : used->second}};
+    }
     return out;
 }
 

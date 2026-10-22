@@ -1601,6 +1601,8 @@ void Application::refreshViews()
         spellChecker();
     reportGroupBreak();
     scheduleAutosave();
+    if (m_styleManager)
+        m_styleManager->documentEdited(); // TP1: the Styles panel
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -2760,6 +2762,29 @@ QVariantMap Application::styleLineCounts() const
         }
     }
     return out;
+}
+
+bool Application::selectLinesWithStyle(const QString &style)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const QByteArray bytes = style.toUtf8();
+    const std::u8string name(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
+    // As Select lines on the Style field: the Grid's hidden Lines only with
+    // "Ignore filtering in some actions".
+    const application::LineVisible shown = m_gridFilter->ignoreInActions() ? application::LineVisible{} : shownLines();
+    std::vector<core::LineId> found;
+    for (const auto *line : session->document().lines())
+        if (line->style == name && (!shown || shown(line->id)))
+            found.push_back(line->id);
+    if (found.empty())
+        return false;
+    application::Selection next = session->selection();
+    next.selected = std::set<core::LineId>(found.begin(), found.end());
+    if (!next.active || !next.selected.contains(*next.active))
+        next.active = found.front();
+    return applySelection(std::move(next));
 }
 
 std::string Application::recoveryKey(application::DocumentId document) const

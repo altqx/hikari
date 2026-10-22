@@ -414,6 +414,10 @@ public:
     // PK1's Choose styles: the lines that use each style (by name), the
     // target's styles first at 0.
     Q_INVOKABLE QVariantMap styleLineCounts() const;
+    // TP1 (#274): the Styles panel's Select Lines with this Style: the
+    // editing target's shown Lines using `style` become the selection, the
+    // first of them active unless the active Line is one. False when none.
+    Q_INVOKABLE bool selectLinesWithStyle(const QString &style);
     // P3: autosave recovery. Bundles left by a session that ended without
     // closing cleanly: {key, title, original, written, generations:[{generation, written}]}.
     Q_INVOKABLE QVariantList recoveryBundles() const;
