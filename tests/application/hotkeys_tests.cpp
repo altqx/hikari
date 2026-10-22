@@ -98,8 +98,8 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     // Legacy's IDS, then the rewrite's own commands (LE3: GLOBAL_EDITOR_HIDE_TAGS;
     // KE1: GLOBAL_VIDEO_RENDER_COST; FS1: VIDEO_FULLSCREEN_BAR and VT2's
     // eleven tool commands, Video commands; TM1: GLOBAL_TRANSLATION_MODE; KA7: GLOBAL_CHECK_KARAOKE;
-    // KA2: AUDIO_TAP, AUDIO_SPEED_DOWN, AUDIO_SPEED_UP, Audio commands).
-    ASSERT_EQ(hotkeyActions().size(), 262u);
+    // AD2: GLOBAL_AUTOMATION_REPEAT_LAST_RUN; KA2: AUDIO_TAP, AUDIO_SPEED_DOWN, AUDIO_SPEED_UP, Audio commands).
+    ASSERT_EQ(hotkeyActions().size(), 263u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(ids().at(std::string(a.symbol)), a.id) << a.symbol;
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
@@ -123,6 +123,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     for (const auto &tool : kToolCommands)
         EXPECT_EQ(hotkeyIdOf(tool.symbol), tool.id) << tool.symbol;
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CHECK_KARAOKE"), 5172);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_AUTOMATION_REPEAT_LAST_RUN"), 5173);
     // docs/qt/proposals/settings-migration-map/actions.csv: symbol, numeric alias.
     std::istringstream csv(readFile(HIKARI_ACTIONS_CSV));
     std::string line;
@@ -172,7 +173,7 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     }
     EXPECT_EQ(legacy.at(ids().at("VIDEO_DELETE_FILE")), "Remove video");
     legacy[ids().at("VIDEO_DELETE_FILE")] = "Unload video";
-    // The rewrite's own commands are named too (LE3, KE1, FS1, TM1, KA2, KA7).
+    // The rewrite's own commands are named too (LE3, KE1, FS1, TM1, KA2, KA7, AD2).
     legacy[5169] = "Hide tags in the line editor";
     legacy[5170] = "Show / hide render cost";
     legacy[2021] = "Full screen bar: Auto / Always / Never";
@@ -183,6 +184,7 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     for (const auto &tool : kToolCommands) // VT2: the rail's names
         legacy[tool.id] = tool.name;
     legacy[5172] = "Check karaoke";
+    legacy[5173] = "Repeat last run";
     EXPECT_EQ(hotkeyNames(), legacy);
     EXPECT_EQ(hotkeyName(kSave), "Save");
     EXPECT_EQ(hotkeyName(kGlobalQuit), ""); // not named: never listed

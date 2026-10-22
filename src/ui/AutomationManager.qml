@@ -21,7 +21,7 @@ Pane {
     required property AutomationManagerController controller
     // AutomationShell: the run (running, runTitle, task, progress, log,
     // lastMessage, forceStopOffered, canRerun, cancelRun, forceStopRun,
-    // rerunLast, editScript, runCompleted).
+    // rerunLast, canRepeat, repeatText, repeatLast, editScript, runCompleted).
     property var automation: null
     // AutomationHotkeysController: the macros' bindings (keys, missing, clearKeys).
     property var macroHotkeys: null
@@ -265,6 +265,16 @@ Pane {
                 text: qsTr("Rerun last macro")
                 enabled: root.automation !== null && root.automation.canRerun
                 onClicked: root.automation.rerunLast()
+            }
+            // AD2-repeat-last-run: its tooltip names the macro and the
+            // button it presses again.
+            IconToolButton {
+                objectName: "automationRepeat"
+                iconRole: "repeat-run"
+                text: qsTr("Repeat last run")
+                tip: root.automation !== null ? root.automation.repeatText : text
+                enabled: root.automation !== null && root.automation.canRepeat
+                onClicked: root.automation.repeatLast()
             }
         }
 

@@ -5404,6 +5404,9 @@ QVariantMap Application::openSettingsDialog()
     // PK1 (#301): the questions hidden with "Don't ask again", which the
     // Editor page's Ask again empties.
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
+    // AD2 (#311): script dialogs' last answers, which the Editor page's
+    // Clear last answers empties.
+    values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
     // W2: the renderers as the choice shows them; VSFilterMod says what it
     // is for (user 2026-10-13: slow, only for its own tags).
     QStringList rendererLabels;
@@ -5499,6 +5502,10 @@ void Application::applySettings(const QVariantMap &values)
         if (list != m_settings->list("notices.hiddenQuestions"))
             m_settings->setValue(QStringLiteral("notices.hiddenQuestions"), list);
     }
+    // AD2: Clear last answers, saved by OK or Apply.
+    if (const auto answers = values.constFind(QStringLiteral("automation.dialogAnswers"));
+        answers != values.cend() && answers->toStringList().isEmpty() && !m_settings->list("automation.dialogAnswers").isEmpty())
+        m_settings->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));

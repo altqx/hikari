@@ -17,6 +17,7 @@
 #include <QJsonObject>
 #include <QMap>
 #include <QQmlApplicationEngine>
+#include <QQmlComponent>
 #include <QQmlExtensionPlugin>
 #include <QQuickItem>
 #include <QQuickWindow>
@@ -37,8 +38,10 @@ using hikari::application::DialogControl;
 using hikari::application::DialogRequest;
 using hikari::application::DialogResult;
 using hikari::backends::LuaScriptHost;
+using hikari::application::NamedDialogValues;
 using hikari::ui::AutomationDialogController;
 using hikari::ui::ColourPickerController;
+using hikari::ui::ScriptDialogMemory;
 
 namespace {
 
@@ -94,12 +97,14 @@ class AutomationDialogTests : public QObject {
         showDialogOn(request, result, QStringLiteral("dialogButton0"));
     }
     // Shows the dialog and waits for the Enter button, named, to have the keyboard.
-    void showDialogOn(const DialogRequest &request, std::optional<DialogResult> &result, const QString &enter)
+    void showDialogOn(const DialogRequest &request, std::optional<DialogResult> &result, const QString &enter,
+                      AutomationDialogController::Shown shown = {})
     {
         result.reset();
         // Off the controls, no hovered hint: on xcb the real pointer hovers too.
         QCursor::setPos(window->screen(), window->screen()->geometry().bottomRight() - QPoint(2, 2));
-        controller->present(QStringLiteral("Keys"), request, [&result](DialogResult r) { result = r; });
+        controller->present(QStringLiteral("Keys"), request, [&result](DialogResult r) { result = r; }, QString(),
+                            std::move(shown));
         QTRY_VERIFY(window->isVisible());
         QTest::mouseMove(window, QPoint(window->width() - 2, window->height() - 2));
         window->requestActivate();
@@ -947,6 +952,246 @@ private slots:
         QTRY_VERIFY(!window->isVisible());
     }
 
+    // AD2 (#311): last answers and presets are kept per script file and
+    // dialog (its controls' classes and names), shared by the script's
+    // macros, apart for another script or dialog, and survive a restart.
+    void presetsAreKeptPerScriptAndDialog()
+    {
+        QTemporaryDir dir;
+        const QString file = dir.filePath(QStringLiteral("hikari.ini"));
+        hikari::ui::SettingsStore store(file);
+        ScriptDialogMemory memory(&store);
+        const DialogRequest dialog = sampleRequest();
+        const QString key = ScriptDialogMemory::keyOf(QStringLiteral("/s/gradient.moon"), dialog);
+        DialogRequest moved = dialog; // other values and places, the same controls
+        moved.controls[1].text = "other";
+        moved.controls[1].x = 3;
+        QCOMPARE(ScriptDialogMemory::keyOf(QStringLiteral("/s/gradient.moon"), moved), key);
+        const QString otherScript = ScriptDialogMemory::keyOf(QStringLiteral("/s/blur.moon"), dialog);
+        DialogRequest renamed = dialog;
+        renamed.controls[1].name = "tags";
+        const QString otherDialog = ScriptDialogMemory::keyOf(QStringLiteral("/s/gradient.moon"), renamed);
+        QVERIFY(otherScript != key && otherDialog != key && otherScript != otherDialog);
+
+        memory.savePreset(key, QStringLiteral("Soft"), {{"text", std::string("soft")}, {"n", 3}});
+        memory.savePreset(key, QStringLiteral("Hard"), {{"text", std::string("hard")}});
+        memory.savePreset(otherScript, QStringLiteral("Blur"), {{"text", std::string("blur")}});
+        QCOMPARE(memory.presets(key), (QStringList{QStringLiteral("Soft"), QStringLiteral("Hard")}));
+        QCOMPARE(memory.presets(otherScript), QStringList{QStringLiteral("Blur")});
+        QVERIFY(memory.presets(otherDialog).isEmpty());
+        // Saving a name in use replaces it in place.
+        memory.savePreset(key, QStringLiteral("Soft"), {{"flag", false}});
+        QCOMPARE(memory.presets(key), (QStringList{QStringLiteral("Soft"), QStringLiteral("Hard")}));
+        QCOMPARE(memory.preset(key, QStringLiteral("Soft")), (NamedDialogValues{{"flag", false}}));
+        memory.deletePreset(key, QStringLiteral("Soft"));
+        QCOMPARE(memory.presets(key), QStringList{QStringLiteral("Hard")});
+        QVERIFY(!memory.preset(key, QStringLiteral("Soft")));
+
+        DialogResult answer = hikari::application::initialDialogResult(dialog);
+        answer.pressed = 0;
+        answer.values[2] = 33;
+        memory.remember(key, hikari::application::lastDialogAnswer(dialog, answer));
+        store.sync();
+
+        hikari::ui::SettingsStore reopened(file);
+        ScriptDialogMemory again(&reopened);
+        QCOMPARE(again.presets(key), QStringList{QStringLiteral("Hard")});
+        QCOMPARE(again.preset(key, QStringLiteral("Hard")), (NamedDialogValues{{"text", std::string("hard")}}));
+        const auto last = again.lastAnswer(key);
+        QVERIFY(last);
+        QCOMPARE(last->pressed, 0);
+        // Numbers come back as numbers; the control takes them as its type.
+        QCOMPARE(hikari::application::dialogValueOf(dialog.controls[2], last->answered.at("n")),
+                 std::optional<hikari::application::DialogValue>(33));
+        QCOMPARE(hikari::application::dialogValueOf(dialog.controls[3], last->sent.at("f")),
+                 std::optional<hikari::application::DialogValue>(1.5));
+        QVERIFY(!again.lastAnswer(otherScript));
+    }
+
+    // The 200 keys used longest ago are dropped first.
+    void lastAnswersKeepTheNewestTwoHundred()
+    {
+        QTemporaryDir dir;
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("hikari.ini")));
+        ScriptDialogMemory memory(&store);
+        const DialogRequest dialog = sampleRequest();
+        const auto key = [&](int i) { return ScriptDialogMemory::keyOf(QStringLiteral("/s/%1.lua").arg(i), dialog); };
+        const auto answer = hikari::application::lastDialogAnswer(dialog, hikari::application::initialDialogResult(dialog));
+        for (int i = 0; i < 205; ++i)
+            memory.remember(key(i), answer);
+        QCOMPARE(store.list("automation.dialogAnswers").size(), ScriptDialogMemory::kKeptAnswers);
+        for (int i = 0; i < 5; ++i)
+            QVERIFY(!memory.lastAnswer(key(i)));
+        QVERIFY(memory.lastAnswer(key(5)));
+        memory.remember(key(5), answer); // used again: the newest
+        memory.remember(key(300), answer);
+        QVERIFY(memory.lastAnswer(key(5)));
+        QVERIFY(!memory.lastAnswer(key(6)));
+    }
+
+    // The ⋯ menu: Last used and a preset fill the controls they name, Reset
+    // puts the script's values back; a changed control has its marker,
+    // which says the script's value and puts it back on a click. What the
+    // script gets is the values shown when a button is pressed.
+    void moreMenuFillsAndMarkersPutBack()
+    {
+        QTemporaryDir dir;
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("hikari.ini")));
+        ScriptDialogMemory memory(&store);
+        controller->setMemory(&memory);
+        auto unset = qScopeGuard([this] { controller->setMemory(nullptr); });
+        const DialogRequest dialog = sampleRequest();
+        const QString key = ScriptDialogMemory::keyOf(QStringLiteral("/s/x.lua"), dialog);
+
+        // Without a key (no script), no ⋯.
+        std::optional<DialogResult> result;
+        controller->present(QStringLiteral("Plain"), dialog, [&](DialogResult r) { result = r; });
+        QTRY_VERIFY(window->isVisible());
+        QVERIFY(!named(QStringLiteral("automationDialogMore"))->isVisible());
+        window->close();
+        QTRY_VERIFY(result);
+
+        DialogResult last = hikari::application::initialDialogResult(dialog);
+        last.pressed = 0;
+        last.values[1] = std::string("typed");
+        last.values[2] = 30;
+        last.values[4] = false;
+        last.values[5] = std::string("a");
+        memory.remember(key, hikari::application::lastDialogAnswer(dialog, last));
+        memory.savePreset(key, QStringLiteral("Twenty"), {{"n", 20}, {"pick", std::string("missing")}});
+
+        result.reset();
+        controller->present(QStringLiteral("Memory"), dialog, [&](DialogResult r) { result = r; }, QString(),
+                            {std::nullopt, key, QString()});
+        QTRY_VERIFY(window->isVisible());
+        QTRY_VERIFY(named(QStringLiteral("automationDialogMore"))->isVisible());
+        QVERIFY(controller->hasLastUsed());
+        QCOMPARE(controller->presets(), QStringList{QStringLiteral("Twenty")});
+        for (int i = 0; i < 6; ++i)
+            QVERIFY(!named(QStringLiteral("marker_%1").arg(i))->isVisible());
+
+        auto *lastUsed = window->findChild<QObject *>(QStringLiteral("dialogLastUsed"));
+        QVERIFY(lastUsed);
+        QVERIFY(lastUsed->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(lastUsed, "triggered"));
+        QCOMPARE(control(1)->property("text").toString(), QStringLiteral("typed"));
+        QCOMPARE(control(2)->property("text").toString(), QStringLiteral("30"));
+        QVERIFY(!control(4)->property("checked").toBool());
+        QCOMPARE(control(5)->property("currentText").toString(), QStringLiteral("a"));
+        for (int i : {1, 2, 4, 5})
+            QTRY_VERIFY(named(QStringLiteral("marker_%1").arg(i))->isVisible());
+        QVERIFY(!named(QStringLiteral("marker_3"))->isVisible()); // f: the script's 1.5
+        QVERIFY(accessible(controlItem(2), QAccessible::Description).contains(QStringLiteral("Changed from the script’s 12.")));
+
+        // A click on the bar puts that control back.
+        QQuickItem *bar = named(QStringLiteral("marker_2"));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centre(bar));
+        QTRY_COMPARE(control(2)->property("text").toString(), QStringLiteral("12"));
+        QTRY_VERIFY(!bar->isVisible());
+
+        // A preset fills what it names and the controls take (not "missing").
+        QVERIFY(QMetaObject::invokeMethod(window, "fill", Q_ARG(QVariant, controller->presetValues(QStringLiteral("Twenty")))));
+        QCOMPARE(control(2)->property("text").toString(), QStringLiteral("20"));
+        QCOMPARE(control(5)->property("currentText").toString(), QStringLiteral("a"));
+
+        // Save as preset… with a name in use offers Replace.
+        auto *popover = window->findChild<QObject *>(QStringLiteral("savePresetPopover"));
+        QVERIFY(popover);
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        auto *name = window->findChild<QObject *>(QStringLiteral("presetName"));
+        name->setProperty("text", QStringLiteral("Twenty"));
+        QTRY_VERIFY(popover->property("taken").toBool());
+        QCOMPARE(window->findChild<QObject *>(QStringLiteral("presetSave"))->property("text").toString(),
+                 QStringLiteral("Replace"));
+        name->setProperty("text", QStringLiteral("Mine"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "save"));
+        QTRY_COMPARE(controller->presets(), (QStringList{QStringLiteral("Twenty"), QStringLiteral("Mine")}));
+        QCOMPARE(memory.preset(key, QStringLiteral("Mine"))->at("n"), hikari::application::DialogValue(20.0)); // kept as a JSON number
+        // Esc closes it without saving.
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
+        name->setProperty("text", QStringLiteral("Dropped"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
+        QCOMPARE(controller->presets().size(), 2);
+        // Delete preset (no question without a message host here).
+        QVERIFY(QMetaObject::invokeMethod(window, "askDelete", Q_ARG(QVariant, QStringLiteral("Twenty"))));
+        QCOMPARE(controller->presets(), QStringList{QStringLiteral("Mine")});
+
+        auto *reset = window->findChild<QObject *>(QStringLiteral("dialogReset"));
+        QVERIFY(QMetaObject::invokeMethod(reset, "triggered"));
+        QCOMPARE(control(1)->property("text").toString(), QStringLiteral("t"));
+        QCOMPARE(control(2)->property("text").toString(), QStringLiteral("12"));
+        QVERIFY(control(4)->property("checked").toBool());
+        QCOMPARE(control(5)->property("currentText").toString(), QStringLiteral("b"));
+        for (int i = 0; i < 6; ++i)
+            QTRY_VERIFY(!named(QStringLiteral("marker_%1").arg(i))->isVisible());
+
+        control(1)->setProperty("text", QStringLiteral("sent"));
+        press(0);
+        QVERIFY(result);
+        QCOMPARE(std::get<std::string>(result->values[1]), std::string("sent"));
+    }
+
+    // A filled-in dialog (Repeat, or the setting) shows the filled values
+    // with their markers, and the inline bar says why.
+    void filledDialogShowsItsValuesAndNotice()
+    {
+        const DialogRequest dialog = sampleRequest();
+        DialogResult filled = hikari::application::initialDialogResult(dialog);
+        filled.values[1] = std::string("last");
+        filled.values[2] = 40;
+        std::optional<DialogResult> result;
+        controller->present(QStringLiteral("Filled"), dialog, [&](DialogResult r) { result = r; }, QString(),
+                            {filled, QString(), QStringLiteral("Shown because it changed.")});
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(control(1)->property("text").toString(), QStringLiteral("last"));
+        QCOMPARE(control(2)->property("text").toString(), QStringLiteral("40"));
+        QTRY_VERIFY(named(QStringLiteral("marker_1"))->isVisible());
+        QVERIFY(named(QStringLiteral("marker_2"))->isVisible());
+        QVERIFY(named(QStringLiteral("automationDialogNotice"))->isVisible());
+        QCOMPARE(named(QStringLiteral("automationDialogNotice"))->property("text").toString(),
+                 QStringLiteral("Shown because it changed."));
+        QCOMPARE(controller->scriptValueText(2), QStringLiteral("12"));
+        QCOMPARE(controller->scriptValueText(4), QStringLiteral("ticked"));
+        press(0);
+        QVERIFY(result);
+        QCOMPARE(std::get<int>(result->values[2]), 40);
+        // A dialog shown as usual has no bar.
+        controller->present(QStringLiteral("Plain"), dialog, [](DialogResult) {});
+        QTRY_VERIFY(window->isVisible());
+        QVERIFY(!named(QStringLiteral("automationDialogNotice"))->isVisible());
+        controller->withdraw();
+    }
+
+    // Shown again with the same three buttons and the ⋯, the buttons stay in
+    // the window (the footer's list kept a part-way width).
+    void buttonsStayInTheWindowShownAgain()
+    {
+        QTemporaryDir dir;
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("hikari.ini")));
+        ScriptDialogMemory memory(&store);
+        controller->setMemory(&memory);
+        auto unset = qScopeGuard([this] { controller->setMemory(nullptr); });
+        DialogRequest dialog = sampleRequest();
+        dialog.buttons = {"&Apply", "&Load preset", "Cancel"};
+        dialog.buttonIds = {"ok", "", "cancel"};
+        const QString key = ScriptDialogMemory::keyOf(QStringLiteral("/s/x.lua"), dialog);
+        for (int round = 0; round < 3; ++round) {
+            std::optional<DialogResult> result;
+            controller->present(QStringLiteral("Again"), dialog, [&](DialogResult r) { result = r; }, QString(),
+                                {std::nullopt, key, QString()});
+            QTRY_VERIFY(window->isVisible());
+            QQuickItem *last = nullptr;
+            QTRY_VERIFY((last = named(QStringLiteral("dialogButton2"))) && last->isVisible());
+            QTest::qWait(50);
+            const QPointF right = last->mapToScene(QPointF(last->width(), 0));
+            QVERIFY2(right.x() <= window->width() - 24 + 0.5,
+                     qPrintable(QStringLiteral("round %1: Cancel ends at %2 of %3").arg(round).arg(right.x()).arg(window->width())));
+            window->close();
+            QTRY_VERIFY(result);
+        }
+    }
+
     // The dialog in the four themes, for review: written to
     // HIKARI_SURFACE_SHOT_DIR when it is set (script-dialog-<part>-<theme>.png).
     void screenshots()
@@ -988,6 +1233,50 @@ private slots:
         };
         gradient.buttons = {"&Apply", "&Load preset", "Cancel"};
         gradient.buttonIds = {"ok", "", "cancel"};
+        // AD2: the dialog's kept answers and presets.
+        ScriptDialogMemory memory(&store);
+        controller->setMemory(&memory);
+        auto unset = qScopeGuard([this] { controller->setMemory(nullptr); });
+        const QString key = ScriptDialogMemory::keyOf(QStringLiteral("/s/lyger.GradientEverything.moon"), gradient);
+        for (const char *name : {"Soft pink fade", "Blue to clear", "Karaoke glow"})
+            memory.savePreset(key, QString::fromUtf8(name), {{"tags", std::string("\\1c\\3c\\blur2")}});
+        DialogResult lastAnswer = hikari::application::initialDialogResult(gradient);
+        lastAnswer.pressed = 0;
+        lastAnswer.values[1] = std::string("\\1c\\3c\\blur2");
+        lastAnswer.values[9] = 1.6;
+        lastAnswer.values[12] = true;
+        memory.remember(key, hikari::application::lastDialogAnswer(gradient, lastAnswer));
+        // A repeated run whose script added a control since.
+        DialogRequest grown = gradient;
+        grown.controls.push_back(DialogControl{.kind = "checkbox", .name = "clip", .hint = "Follow the line's clip.",
+                                               .x = 1, .y = 5, .width = 3, .label = "Follow the &clip"});
+        DialogResult grownShown = hikari::application::filledByName(
+            grown, hikari::application::initialDialogResult(grown),
+            hikari::application::namedDialogValues(gradient, lastAnswer));
+        QQmlComponent hostComponent(engine);
+        hostComponent.setData("import Hikari.Ui\nMessageHost {}", QUrl());
+        std::unique_ptr<QObject> messages(hostComponent.create());
+        QVERIFY2(messages, qPrintable(hostComponent.errorString()));
+        window->setProperty("messages", QVariant::fromValue(messages.get()));
+        // A menu or tooltip may be a window of its own: the screen round the
+        // dialog where the platform can grab it.
+        const auto saveAround = [&](const QString &part, const QString &theme) {
+            QTest::qWait(400);
+            QImage image;
+            if (QGuiApplication::platformName() == QLatin1String("xcb")) {
+                // The dialog and whatever it has open (menus, tooltips).
+                QRect area = window->frameGeometry();
+                for (QWindow *w : QGuiApplication::topLevelWindows())
+                    if (w->isVisible() && w->screen() == window->screen())
+                        area |= w->frameGeometry();
+                area = area.adjusted(-8, -8, 8, 8).intersected(window->screen()->geometry());
+                image = window->screen()->grabWindow(0, area.x(), area.y(), area.width(), area.height()).toImage();
+            } else {
+                image = window->grabWindow();
+            }
+            QVERIFY(image.save(out + QStringLiteral("/script-dialog-") + part + QLatin1Char('-') + theme +
+                               QStringLiteral(".png")));
+        };
 
         DialogRequest numbers;
         numbers.controls = {DialogControl{.kind = "label", .name = "l", .label = "Interval (seconds)"},
@@ -1066,6 +1355,64 @@ private slots:
             save(QStringLiteral("dropdown-filter"));
             QTest::keyClick(window, Qt::Key_Escape);
             QTRY_VERIFY(!list->property("visible").toBool());
+            window->close();
+            QTRY_VERIFY(result.has_value());
+
+            // AD2: the ⋯ menu with Presets open.
+            showDialogOn(gradient, result, QStringLiteral("dialogButton0"), {std::nullopt, key, QString()});
+            auto *more = named(QStringLiteral("automationDialogMore"));
+            QVERIFY(more && more->isVisible());
+            auto *menu = window->findChild<QObject *>(QStringLiteral("automationDialogMenu"));
+            QVERIFY(QMetaObject::invokeMethod(more, "clicked"));
+            QTRY_VERIFY(menu->property("opened").toBool());
+            QQuickItem *presetsEntry = nullptr;
+            QVERIFY(QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, presetsEntry), Q_ARG(int, 1)));
+            QVERIFY(presetsEntry);
+            QTest::mouseMove(presetsEntry->window(), presetsEntry->mapToScene(QPointF(presetsEntry->width() / 2,
+                                                                                         presetsEntry->height() / 2)).toPoint());
+            auto *presets = window->findChild<QObject *>(QStringLiteral("dialogPresetsMenu"));
+            QTRY_VERIFY(presets->property("opened").toBool());
+            saveAround(QStringLiteral("more-menu"), theme);
+            QVERIFY(QMetaObject::invokeMethod(presets, "close"));
+            QVERIFY(QMetaObject::invokeMethod(menu, "close"));
+            QTRY_VERIFY(!menu->property("visible").toBool());
+
+            // Last used: the markers, the Tags marker hovered.
+            QVERIFY(QMetaObject::invokeMethod(window->findChild<QObject *>(QStringLiteral("dialogLastUsed")), "triggered"));
+            auto *marker = named(QStringLiteral("marker_1"));
+            QTRY_VERIFY(marker->isVisible());
+            QTest::mouseMove(window, centre(marker));
+            saveAround(QStringLiteral("markers"), theme);
+
+            // Save as preset… with a name in use.
+            auto *popover = window->findChild<QObject *>(QStringLiteral("savePresetPopover"));
+            QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+            window->findChild<QObject *>(QStringLiteral("presetName"))->setProperty("text", QStringLiteral("Soft pink fade"));
+            QTRY_VERIFY(popover->property("taken").toBool());
+            saveAround(QStringLiteral("save-preset"), theme);
+            QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
+
+            // Delete preset asks first.
+            QVERIFY(QMetaObject::invokeMethod(window, "askDelete", Q_ARG(QVariant, QStringLiteral("Blue to clear"))));
+            QQuickWindow *box = nullptr;
+            QTRY_VERIFY((box = messages->property("box").value<QQuickWindow *>()) && box->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(box));
+            QTest::qWait(300);
+            QVERIFY(box->grabWindow().save(out + QStringLiteral("/script-dialog-delete-preset-") + theme +
+                                           QStringLiteral(".png")));
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!box->isVisible());
+            QCOMPARE(controller->presets().size(), 3);
+            window->close();
+            QTRY_VERIFY(result.has_value());
+
+            // A repeated run's changed dialog, filled in and saying why.
+            showDialogOn(grown, result, QStringLiteral("dialogButton0"),
+                         {grownShown, key,
+                          QStringLiteral("This dialog has changed since the last run, so it is shown with your last "
+                                         "answers filled in.")});
+            saveAround(QStringLiteral("repeat-changed"), theme);
             window->close();
             QTRY_VERIFY(result.has_value());
         }

@@ -25,5 +25,6 @@ Coverage of the legacy `EDITBOX_*` actions in the [UI inventory](https://github.
 | 5169 | `GLOBAL_EDITOR_HIDE_TAGS` Hide tags in the line editor (the rewrite's own command, LE3-tags-shown) | — | none: switches `editor.hideTags`; Subtitles > "Hide tags in the line editor" | `line_editor_options_tests`, `hotkeys_tests` |
 | 5171 | `GLOBAL_TRANSLATION_MODE` Translation mode (the rewrite's own command, TM1-translator-check-removed) | — | none: turns the editing target's Translation mode on, or asks and turns it off; Subtitles > "Translation mode" | `translation_preset_tests`, `shell_tests` translatorModeSwitchesWithOneStepEach, `hotkeys_tests` |
 | 5172 | `GLOBAL_CHECK_KARAOKE` Check karaoke (the rewrite's own command, KA7) | — | none: opens the Karaoke check window; Subtitles > "Check karaoke" | `shell_tests`, `hotkeys_tests` |
+| 5173 | `GLOBAL_AUTOMATION_REPEAT_LAST_RUN` Repeat last run (the rewrite's own command, AD2-repeat-last-run) | — | none: runs the last macro again with the answers given last time, without its dialogs when they are unchanged; Automation > "Repeat last run" and the Automation panel | `shell_tests`, `hotkeys_tests` |
 
 A "Not yet" row is unfinished, not dropped: each is assigned to the card or surface named.

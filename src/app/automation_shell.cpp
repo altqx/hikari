@@ -275,9 +275,9 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_manager.setServiceHandler([this](const application::HostServiceRequest &r, backends::LuaScriptHost::ServiceReply reply) {
         m_router.handle(r, std::move(reply));
     });
+    m_dialogs.setMemory(&m_dialogMemory);
     m_manager.setDialogHandler([this](const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply) {
-        const QString source = m_run ? QString::fromStdString(m_run->path + '\n' + m_run->macro) : QString();
-        m_dialogs.present(m_title, request, std::move(reply), source);
+        presentDialog(request, std::move(reply));
     });
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
@@ -567,6 +567,107 @@ bool AutomationShell::rerunLast()
     return m_last && run(m_last->first, m_last->second);
 }
 
+void AutomationShell::setSettings(ui::SettingsStore *settings)
+{
+    if (m_settings)
+        disconnect(m_settings, nullptr, this, nullptr);
+    m_settings = settings;
+    m_dialogMemory.setSettings(settings);
+    if (!settings)
+        return;
+    // Settings > Clear last answers: Repeat's record goes with them.
+    connect(settings, &ui::SettingsStore::changed, this, [this](const QString &id) {
+        if (id == QLatin1String("automation.dialogAnswers") && m_settings &&
+            m_settings->list("automation.dialogAnswers").isEmpty() && m_repeat) {
+            m_repeat.reset();
+            emit progressChanged();
+        }
+    });
+}
+
+bool AutomationShell::repeatLast()
+{
+    if (!m_repeat)
+        return false;
+    RepeatRecord record = *m_repeat;
+    if (!run(record.path, record.ordinal))
+        return false;
+    m_run->repeat = std::move(record.dialogs);
+    m_run->replaying = true;
+    m_log = QCoreApplication::translate("HikariSub.Automation", "Repeated with the last answers") + QLatin1Char('\n');
+    emit progressChanged();
+    return true;
+}
+
+QString AutomationShell::repeatText() const
+{
+    if (!m_repeat)
+        return QCoreApplication::translate("HikariSub.Automation", "Repeat last run");
+    const QString macro = QString::fromStdString(m_repeat->macro);
+    if (m_repeat->dialogs.empty())
+        return QCoreApplication::translate("HikariSub.Automation", "Repeat last run: %1").arg(macro);
+    // The button the last dialog was answered with.
+    const auto &last = m_repeat->dialogs.back();
+    const auto pressed = static_cast<std::size_t>(std::max(0, last.answer.pressed));
+    const QString button = last.request.buttons.empty()
+                               ? QCoreApplication::translate("HikariSub.Automation", "OK")
+                               : QString::fromStdString(pressed < last.request.buttons.size() ? last.request.buttons[pressed] : std::string());
+    return QCoreApplication::translate("HikariSub.Automation", "Repeat last run: %1, as %2 with the same answers")
+        .arg(macro, QString(button).remove(QLatin1Char('&')));
+}
+
+void AutomationShell::presentDialog(const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply)
+{
+    if (!m_run) {
+        m_dialogs.present(m_title, request, std::move(reply));
+        return;
+    }
+    const QString source = QString::fromStdString(m_run->path + '\n' + m_run->macro);
+    const QString key = ui::ScriptDialogMemory::keyOf(QString::fromStdString(m_run->active), request);
+    // Each answer is recorded for Repeat, and kept as the dialog's last
+    // answer unless it was the cancel one.
+    auto answered = [this, request, key, reply = std::move(reply)](application::DialogResult result) {
+        const bool cancelled = application::cancelAnswer(request, result.pressed);
+        if (m_run) {
+            m_run->dialogs.push_back({request, result});
+            m_run->cancelledAtDialog = m_run->cancelledAtDialog || cancelled;
+        }
+        if (!cancelled)
+            m_dialogMemory.remember(key, application::lastDialogAnswer(request, result));
+        reply(std::move(result));
+    };
+    ui::AutomationDialogController::Shown shown;
+    shown.memoryKey = key;
+    if (m_run->repeat) {
+        const std::size_t at = m_run->dialogs.size();
+        const auto &recorded = *m_run->repeat;
+        const bool inRecord = at < recorded.size();
+        if (m_run->replaying && inRecord && application::sameDialog(recorded[at].request, request))
+            return answered(application::replayedAnswer(request, recorded[at].answer));
+        // Shown, filled with the last answers where the names match: this
+        // dialog's own, else those of the dialog at this point last time.
+        shown.notice =
+            !m_run->replaying ? QCoreApplication::translate(
+                                    "HikariSub.Automation",
+                                    "An earlier dialog of this run has changed, so this one is shown with your last answers filled in.")
+            : inRecord ? QCoreApplication::translate("HikariSub.Automation",
+                                                     "This dialog has changed since the last run, so it is shown with your last answers filled in.")
+                       : QCoreApplication::translate("HikariSub.Automation",
+                                                     "The last run did not show this dialog, so it is shown with your last answers filled in.");
+        m_run->replaying = false;
+        application::NamedDialogValues last;
+        if (const auto own = m_dialogMemory.lastAnswer(key))
+            last = own->answered;
+        else if (inRecord)
+            last = application::namedDialogValues(recorded[at].request, recorded[at].answer);
+        shown.values = application::filledByName(request, application::initialDialogResult(request), last);
+    } else if (m_dialogMemory.fillLastAnswers()) {
+        if (const auto last = m_dialogMemory.lastAnswer(key))
+            shown.values = application::safePrefill(request, *last);
+    }
+    m_dialogs.present(m_title, request, std::move(answered), source, std::move(shown));
+}
+
 bool AutomationShell::forceStopOffered() const
 {
     const auto *host = m_run ? m_manager.host(m_run->active) : nullptr;
@@ -727,6 +828,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     }
     Run run = std::move(*m_run);
     m_run.reset();
+    // AD2-repeat-last-run: a run that got past its dialogs is the one
+    // Repeat repeats.
+    if (!run.cancelledAtDialog && (outcome == Outcome::Ok || outcome == Outcome::Failed))
+        m_repeat = RepeatRecord{run.path, run.macro, run.ordinal, std::move(run.dialogs)};
     auto *s = session(run.target);
     if (s)
         s->setReadOnly(false);

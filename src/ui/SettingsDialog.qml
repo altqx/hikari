@@ -39,6 +39,8 @@ Dialog {
     property var rendererLabels: [] // W2: as shown, VSFilterMod's with its note
     property var outputDevices: [] // H2: System default, the connected devices, a missing choice
     property ToastStack notices: null
+    // AD2: asks before Clear last answers (Main's MessageHost).
+    property var messages: null
     // LE5: the tag buttons as the Editor page holds them, {name, tag, type,
     // icon} each, written on OK or Apply where they differ.
     property var tagButtonList: []
@@ -80,6 +82,22 @@ Dialog {
     Connections {
         target: dialog.app
         function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
+    }
+    // AD2: asks first; OK or Apply forgets the answers (and Repeat's record).
+    function clearLastAnswers() {
+        const clear = () => put("automation.dialogAnswers", [])
+        if (!messages) {
+            clear()
+            return
+        }
+        messages.ask({
+            title: qsTr("Clear last answers"),
+            text: qsTr("Forget the answers given in every script dialog?"),
+            detail: qsTr("Repeat last run is off until a macro runs again. Presets are kept."),
+            severity: "warning",
+            choices: [{ id: "clear", text: qsTr("Clear"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, id => { if (id === "clear") clear() })
     }
     function put(setting, value) {
         const v = Object.assign({}, values)
@@ -421,6 +439,39 @@ Dialog {
                                 }
                                 Label {
                                     text: qsTr("Brings back the questions hidden with \"Don't ask again\".")
+                                    color: Theme.muted
+                                    wrapMode: Text.Wrap
+                                    Layout.fillWidth: true
+                                }
+                            }
+                        }
+                    }
+                    // AD2 (#311): script dialogs' last answers
+                    // (AD2-fill-last-answers), until PF1's Automation page.
+                    GroupBox {
+                        objectName: "settingsScriptDialogsGroup"
+                        title: qsTr("Script dialogs")
+                        Layout.fillWidth: true
+                        ColumnLayout {
+                            anchors.left: parent.left
+                            anchors.right: parent.right
+                            SettingCheck { setting: "automation.fillLastAnswers"; text: qsTr("Fill in my last answers") }
+                            Label {
+                                text: qsTr("Script dialogs open with the answers you gave last time. A value the script works out itself, from the selection say, still wins. Off: they open with the script's values, and ⋯ › Last used fills yours in.")
+                                color: Theme.muted
+                                wrapMode: Text.Wrap
+                                Layout.fillWidth: true
+                            }
+                            RowLayout {
+                                spacing: 8
+                                Button {
+                                    objectName: "settingsClearAnswers"
+                                    text: qsTr("Clear last answers…")
+                                    enabled: (dialog.values["automation.dialogAnswers"] || []).length > 0
+                                    onClicked: dialog.clearLastAnswers()
+                                }
+                                Label {
+                                    text: qsTr("Presets are kept; delete them from a dialog's ⋯ menu.")
                                     color: Theme.muted
                                     wrapMode: Text.Wrap
                                     Layout.fillWidth: true

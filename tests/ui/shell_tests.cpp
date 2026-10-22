@@ -11657,6 +11657,7 @@ private slots:
              {{"program.language", nullptr},
               {"editor.dictionaryLanguage", nullptr},
               {"notices.toasts", "Show notices as toasts (off: in the Log only)"}, // PK1
+              {"automation.fillLastAnswers", "Fill in my last answers"}, // AD2
               {"grid.loadSortedSubs", "Open sorted subtitles"},
               {"editor.spellchecker", "Turn spell checking"},
               {"grid.autoSelectLinesFromLastTab", "Select the line with the time line\nof the previous active tab"},
@@ -11807,6 +11808,8 @@ private slots:
                 bound.insert(std::string(s.id));
         // and PK1's questions hidden with "Don't ask again" (Ask again).
         bound.insert("notices.hiddenQuestions");
+        // and AD2's last answers (Clear last answers).
+        bound.insert("automation.dialogAnswers");
 #ifndef HIKARI_WITH_VSFILTERMOD
         // W2: "Subtitle display filter" holds a value only when it is offered
         // (a CSRI renderer besides libass); its control stays in the page.
