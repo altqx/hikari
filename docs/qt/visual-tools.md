@@ -43,9 +43,9 @@ Draw with `Overlay` (lines, circles, text, and filled polygons below or above th
 
 VT2 ([#270](https://github.com/altqx/hikari/issues/270), owner-approved audit [issuecomment-6307366142](https://github.com/altqx/hikari/issues/270#issuecomment-6307366142)) gives each tool a Video command and moves the nudge to the arrows. Legacy had no key to choose a tool (VideoToolbar::OnMouseEvent only).
 
-**The tool commands.** `FamilyInfo::hotkey` names each family's command (`familyOfHotkey` reads it back); `VisualToolsController::runHotkey` chooses the family as its rail button does, so the on tool's key goes back to the Position pointer. The commands are Video bindings (`hotkeys.cpp`, ids 2022-2032, named as the rail names the tools), listed, rebound and imported as the others; they act while the Video panel is focused or hovered (KB1's router) and in fullscreen, never while a text field has the focus. The rail's tooltip shows the key ("Text scaling (S)").
+**The tool commands.** `FamilyInfo::hotkey` names each family's command (`familyOfHotkey` reads it back); `VisualToolsController::runHotkey` chooses the family as its rail button does, so the on tool's key goes back to the Position pointer. The commands are Video bindings (`hotkeys.cpp`, ids 2022-2032 and VT3's 2033, named as the rail names the tools), listed, rebound and imported as the others; they act while the Video panel is focused or hovered (KB1's router) and in fullscreen, never while a text field has the focus. The rail's tooltip shows the key ("Text scaling (S)").
 
-**The audit.** Each key is checked against every default binding of the five contexts and the keys the Video panel takes in code (F full screen, B and Esc leaving it, Menu, Return in the zoom mode, Ctrl+Shift+Z). `shell_tests` everyDefaultBindingReachesItsCommand (KB3's audit) lists the ten that are legacy defaults elsewhere as the Video window's departures.
+**The audit.** Each key is checked against every default binding of the five contexts and the keys the Video panel takes in code (F full screen, B and Esc leaving it, Menu, Return in the zoom mode, Ctrl+Shift+Z). `shell_tests` everyDefaultBindingReachesItsCommand (KB3's audit) lists the ten that are legacy defaults elsewhere (and VT3's Q) as the Video window's departures.
 
 | Tool | Command (id) | Key | Video and Global | Other contexts |
 | --- | --- | --- | --- | --- |
@@ -60,6 +60,7 @@ VT2 ([#270](https://github.com/altqx/hikari/issues/270), owner-approved audit [i
 | Vector drawing | VIDEO_TOOL_DRAWING (2030) | D | free (the D nudge retired) | Audio Play last 500ms |
 | Position shifter | VIDEO_TOOL_POSITION_SHIFTER (2031) | A | free (the A nudge retired) | Audio Scroll left |
 | Hydra | VIDEO_TOOL_HYDRA (2032) | H | free | Audio Stop |
+| Perspective (VT3) | VIDEO_TOOL_PERSPECTIVE (2033) | Q | free | Audio Play 500ms before |
 
 The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPanel::SetAccels), not over the video, so they keep their keys.
 
@@ -73,6 +74,7 @@ The Audio bindings act over the Audio panel (and from the Grid, legacy's TabPane
 | Rectangle clipping | the second corner one unit | a tenth | A/D/W/S |
 | Vector clipping | the selected points one unit | one unit (the clip is written in whole units) | W/A/S/D |
 | Vector drawing | the selected points one unit | a tenth | W/A/S/D |
+| Perspective (VT3) | the corner grabbed last one unit, the whole quad before one is | a tenth | none (arch1t3cht's fork) |
 
 The legacy probes' presses replay as the rewrite's (`tests/application/legacy_visual_keys.h`): a press legacy nudged with becomes the arrow for the same nudge.
 
@@ -187,3 +189,26 @@ T6 ([#181](https://github.com/altqx/hikari/issues/181)) adds the last two famili
 The `legacy_visual_t6_capture` probe (`tools/legacy-capture/visual_t6_capture.cpp`) runs the legacy VisualMoveAll.cpp, VisualAllTags.cpp and VisualAllTagsControls.cpp unchanged on `inputs/visual-t6-cases.txt`, recording what they draw; `hikari_application_visual_shift_tests` replays its observations ([local-t6-visual-20261006](../../tests/fixtures/legacy-observations/local-t6-visual-20261006/README.md)).
 
 Six legacy defects are fixed as approved departures ([compatibility-decisions.md](compatibility-decisions.md), 2026-10-06): the text gradients keep a \h or a \N after a block whole (T6-gradient-hard-space, T6-gradient-line-break); a save in "Tag editing" puts a rename into its list (T6-dialog-list-stale); the shifter shows each Line's vector clip at its own scale (T6-clip-scale-carry); a drag keeps the pointer's exact offset from the handle, so the Lines move by the pointer's distance (T6-drag-offset); one wheel step over the sliders is one history step, however many values the definition has (T6-wheel-one-step).
+
+## The Perspective tool (VT3)
+
+VT3 ([#273](https://github.com/altqx/hikari/issues/273), mockup approved 2026-10-22, [issuecomment-6329153170](https://github.com/altqx/hikari/issues/273#issuecomment-6329153170)) adds a twelfth family that legacy never had: `PerspectiveTool` (`visual_perspective.h`), after arch1t3cht's Aegisub fork (visual_tool_perspective.cpp, ISC; its notice is kept in `visual_perspective.cpp`). `Family::Perspective` comes after Hydra, so the families' ids (and the `visualToolN` names) stay; `railOrder()` puts it after Text X / Y rotation on the rail and in fullscreen's Visual tools menu. Its command is VIDEO_TOOL_PERSPECTIVE (2033, Q).
+
+| Part | File | arch1t3cht |
+| --- | --- | --- |
+| The maths: the tags to the quad libass renders (`textToQuad`) and back (`quadToTransform`, three \org modes), the plane's projective map (`toUV`, `fromUV`, `subQuad`) | `perspective::` in `visual_perspective.h` | TextToPersp, InnerToText, the Mat3 helpers |
+| The Line read (the first block's tags, the first \pos / \move / \org / \an anywhere, the box at a scale of 100) and written (the tags put into the first block, a Style's value left out) | `readLine`, `readTags`, `writeTransform` | ParseLine, GetLineBaseExtents, SetSubTags |
+| The tool: the inner quad (the text) and the outer quad (the plane), the drags, the arrows, the options and values | `PerspectiveTool` | VisualToolPerspective |
+
+**The maths.** libass renders a Line's box (`Box`, measured at a scale of 100 through `TextMeasurePort`, or a drawing's points at its \p scale) sheared by \fax about its top, scaled about the alignment point at \pos, turned about \org (Z, then X, then Y) and projected from `screenZ` in front of the screen: 20000 / 64 layout pixels, which in script units is 312.5 × PlayResY / layout height (LayoutResY, else the video's frame height, else PlayResY). `quadToTransform` inverts it: the plane's normal gives \fry and \frx, the top edge \frz, the shear between the edges \fax and their lengths \fscx and \fscy; \xbord, \ybord, \xshad and \yshad scale with them, so the outline keeps its proportion. The \org mode chooses \org: Center (the quad's centre), No \fax (where the shear is zero, for Lines with line breaks) or Keep (where it is; its handle can be dragged and its fields typed). arch1t3cht's No \fax took the wrong root when the circle's radius was zero; the rewrite takes the circle's centre there.
+
+**Gestures** (owner-approved on the card). A corner drag moves that corner; Shift locks it to the nearer of the plane's two axes; Ctrl snaps it to another handle's x or y within 10 units (the vector editor's FindSnapPoint rule); Alt scales from the centre, the opposite corner mirroring it. A drag inside the inner quad moves it (within the plane while the plane is shown and unlocked); a drag inside the outer quad alone moves both. A double click puts the leading quad's nearest corner at the pointer. The arrows nudge the corner grabbed last, or the whole quad before one is, one unit (Shift a tenth), committing on the release. A drag that would fold a quad is not taken. Every drag, double click or nudge is one "Visual perspective tool" step over every picked Line: each gets the active Line's tags, its own outline and shadow scaled by the same ratio; a Line with \move keeps its motion, both points moved by the change in position. A click alone records nothing.
+
+**The plane.** Show surrounding plane adds the outer quad, a rectangle of the same plane twice the inner one's size at first: matched to a rectangle in the shot, it holds the perspective while the inner quad is placed in it (an inner corner moves within the plane, the tags following). Lock outer quad (greyed while the plane is hidden) swaps the roles: the outer quad is placed by itself and an inner corner sets the perspective. Show grid draws an 8 × 8 grid over the outer quad (4 × 4 over the inner one without it). The outer quad is kept per Line for the session, in memory: the Document has no Extradata, where arch1t3cht saved it.
+
+**The bar.** Plane (the three toggles, K1 roles perspective-plane, perspective-lock-outer and perspective-grid), Origin (the mode as a text dropdown, then X and Y, editable in Keep), Rotation (X, Y and Z, °) and Shear (\fax). A value continuing the group of the option before it (Origin) shares its label (`VisualToolBar.qml`'s `continues`).
+
+**Drawing.** The inner quad in red at two pixels, the outer quad dashed, the grid faint, the corners' squares (inner) and circles (outer), and \org's orange cross (with a circle in Keep), in device pixels as the other tools' handles.
+
+The render check is `hikari_backends_visual_perspective_render_tests`: libass renders the tool's tags and the ink's corners must lie within a pixel of the quad, at the script's size and at twice it.
+
