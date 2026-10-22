@@ -134,6 +134,11 @@ int runWithProperty(const OriginalTags &tags, std::span<const RunPlacement> plac
 // Placements for unplaced runs whose text appears once in the body, as a
 // whole word, outside every placement.
 std::vector<RunPlacement> suggestPlacements(const OriginalTags &tags, const TranslationDraft &draft);
+// Whether the draft's composed translation draws its text as the body's
+// own formatting does, with each placed run's on top: a run closed with a
+// reset (or opened under the translator's own \r) would otherwise change
+// the translator's formatting around it. A body with no tags keeps it.
+bool keepsOwnFormatting(const OriginalTags &tags, const TranslationDraft &draft);
 // Whether a saved translation leaves a run of the Original unplaced (the
 // Grid's "runs not placed" mark). An empty translation has none, and so has
 // one whose own leading or trailing tags differ (the translator's, shown whole).
@@ -142,7 +147,7 @@ bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation);
 // run of `before` became (index number - 1), or 0 where none did. A run is
 // the one with the same formatting and text; failing that, with the runs as
 // many as before, the one in its place when its formatting or its text is
-// unchanged. Run numbers alone are positions: a run put in before the others
+// unchanged. One in its own place with both unchanged comes first. Run numbers alone are positions: a run put in before the others
 // renumbers them.
 std::vector<int> matchRuns(const OriginalTags &before, const OriginalTags &now);
 // The run numbers of `placements` in text order, as composeTranslation wrote them.

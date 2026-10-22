@@ -1387,6 +1387,109 @@ TranslationDraft readTranslation(const OriginalTags &tags, std::u16string_view t
     return read(labels).value_or(plain);
 }
 
+namespace {
+
+// A text piece's formatting from the base, its place counted in text
+// units (the raw text pieces one after another).
+struct Drawn {
+    std::size_t rawStart = 0, textStart = 0, textEnd = 0;
+    TagState state;
+};
+
+std::optional<std::vector<Drawn>> drawnText(const OriginalTags &tags, std::u16string_view raw, Budget &budget)
+{
+    const auto tokens = tokenize(raw);
+    if (tokens.malformed)
+        return std::nullopt;
+    std::vector<Drawn> out;
+    TagState state = tags.base;
+    std::size_t text = 0;
+    for (const auto &piece : tokens.pieces) {
+        if (piece.block) {
+            for (const auto &tag : piece.tags)
+                if (!budget.spend(apply(state, tag, tags.defaults, tags.named, nullptr)))
+                    return std::nullopt;
+            continue;
+        }
+        if (!budget.spend(unitsOf(state) + 1))
+            return std::nullopt;
+        const auto units = piece.rawEnd - piece.rawStart;
+        out.push_back({piece.rawStart, text, text + units, state});
+        text += units;
+    }
+    return out;
+}
+
+} // namespace
+
+bool keepsOwnFormatting(const OriginalTags &tags, const TranslationDraft &draft)
+{
+    if (draft.body.find(u'{') == std::u16string::npos)
+        return true;
+    auto alone = draft;
+    alone.carried = false;
+    Budget budget;
+    const auto own = drawnText(tags, draft.body, budget);
+    const auto composed = drawnText(tags, composeTranslation(tags, alone), budget);
+    if (!own || !composed)
+        return false;
+    const std::size_t total = own->empty() ? 0 : own->back().textEnd;
+    if ((composed->empty() ? 0 : composed->back().textEnd) != total)
+        return false;
+    auto textAt = [&](std::size_t raw) {
+        for (const auto &d : *own) {
+            if (raw <= d.rawStart)
+                return d.textStart;
+            if (raw < d.rawStart + (d.textEnd - d.textStart))
+                return d.textStart + (raw - d.rawStart);
+        }
+        return total;
+    };
+    struct Placed {
+        std::size_t start, end;
+        const TagRun *run;
+    };
+    std::vector<Placed> placed;
+    std::set<std::size_t> cuts;
+    for (const auto &p : validPlacements(tags, draft)) {
+        placed.push_back({textAt(p.start), textAt(p.end), runAt(tags, p.run)});
+        cuts.insert(placed.back().start);
+        cuts.insert(placed.back().end);
+    }
+    for (const auto *drawn : {&*own, &*composed})
+        for (const auto &d : *drawn)
+            cuts.insert(d.textStart);
+    cuts.insert(total);
+    // Each stretch between two cuts: drawn as the body alone draws it, a
+    // placed run's formatting on top.
+    std::size_t o = 0, c = 0, r = 0, from = 0;
+    for (const auto to : cuts) {
+        if (to <= from)
+            continue;
+        while (o + 1 < own->size() && (*own)[o].textEnd <= from)
+            ++o;
+        while (c + 1 < composed->size() && (*composed)[c].textEnd <= from)
+            ++c;
+        while (r < placed.size() && placed[r].end <= from)
+            ++r;
+        TagState expected = (*own)[o].state;
+        if (r < placed.size() && placed[r].start <= from && placed[r].run)
+            for (const auto &[component, value] : placed[r].run->differs) {
+                if (value.empty())
+                    expected.erase(component);
+                else
+                    expected[component] = value;
+            }
+        const auto &drawnState = (*composed)[c].state;
+        if (!budget.spend(unitsOf(expected) + unitsOf(drawnState) + 1))
+            return false;
+        if (differences(expected, tags.base) != differences(drawnState, tags.base))
+            return false;
+        from = to;
+    }
+    return true;
+}
+
 void shiftPlacements(std::vector<RunPlacement> &placements, std::size_t start, std::size_t end,
                      std::size_t inserted)
 {
@@ -1518,7 +1621,16 @@ std::vector<int> matchRuns(const OriginalTags &before, const OriginalTags &now)
 {
     std::vector<int> out(before.runs.size(), 0);
     std::vector<bool> taken(now.runs.size(), false);
+    // One unchanged in its own place is that run, before another with the
+    // same text and formatting elsewhere can take it.
+    for (std::size_t i = 0; i < before.runs.size() && i < now.runs.size(); ++i)
+        if (now.runs[i].differs == before.runs[i].differs && now.runs[i].text == before.runs[i].text) {
+            taken[i] = true;
+            out[i] = now.runs[i].number;
+        }
     for (std::size_t i = 0; i < before.runs.size(); ++i) {
+        if (out[i] != 0)
+            continue;
         const auto &run = before.runs[i];
         for (std::size_t j = 0; j < now.runs.size(); ++j) {
             if (!taken[j] && now.runs[j].differs == run.differs && now.runs[j].text == run.text) {
@@ -1567,7 +1679,8 @@ void relabelRuns(const OriginalTags &tags, TranslationDraft &draft, std::span<co
 
 bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation)
 {
-    if (translation.empty() || tags.runs.empty())
+    // One longer than the reader takes has no runs to place (as tagRuns shows).
+    if (translation.empty() || tags.runs.empty() || translation.size() > kMaxTagTransferUnits)
         return false;
     const auto draft = readTranslation(tags, translation);
     return draft.carried && nextUnplacedRun(tags, draft.placements) != 0;

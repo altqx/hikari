@@ -322,6 +322,8 @@ TEST(TagTransfer, ATranslationLeavingARunUnplacedIsMarked)
     EXPECT_FALSE(hasUnplacedRuns(tags, u""));             // untranslated
     EXPECT_FALSE(hasUnplacedRuns(tags, u"{\\an2}Mur"));  // its own tags: the translator's
     EXPECT_FALSE(hasUnplacedRuns(readOriginalTags(u"{\\i1}Wall"), u"{\\i1}Mur")); // no runs
+    // Longer than the reader takes: no runs to place, as the editor shows none.
+    EXPECT_FALSE(hasUnplacedRuns(tags, u"{\\i1}" + std::u16string(kMaxTagTransferUnits, u'w')));
 }
 
 TEST(TagTransfer, OverlappingFormattingIsOneRunPerState)
@@ -918,6 +920,30 @@ TEST(TagTransfer, AnEditedOriginalsRunsAreMatchedByFormattingAndText)
     // Both changed, or gone: no run.
     EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say {\\b1}uno{\\b0} now")), std::vector<int>{0});
     EXPECT_EQ(matchRuns(before, readOriginalTags(u"Say one now")), std::vector<int>{0});
+    // The first of two alike now has the second's text: each is still the
+    // run in its place, the second not taken by the first.
+    const auto two = readOriginalTags(u"a{\\i1}one{\\i0}x{\\i1}two{\\i0}z");
+    EXPECT_EQ(matchRuns(two, readOriginalTags(u"a{\\i1}two{\\i0}x{\\i1}two{\\i0}z")), (std::vector<int>{1, 2}));
+}
+
+TEST(TagTransfer, APlacedRunKeepsTheTranslatorsOwnFormattingAroundIt)
+{
+    // The run closes with a reset: after it, the translator's own size would go.
+    const auto reset = readOriginalTags(u"a{\\fs20}b{\\r}c");
+    ASSERT_EQ(reset.runs.size(), 1u);
+    EXPECT_TRUE(keepsOwnFormatting(reset, draft(u"{\\fs20}XYZ")));
+    EXPECT_EQ(u8(composeTranslation(reset, draft(u"{\\fs20}XYZ", {{8, 9, 1}}))), "{\\fs20}X{\\fs20}Y{\\r}Z");
+    EXPECT_FALSE(keepsOwnFormatting(reset, draft(u"{\\fs20}XYZ", {{8, 9, 1}})));
+    // On the last text, with nothing drawn after it, the reset changes nothing.
+    EXPECT_TRUE(keepsOwnFormatting(reset, draft(u"X{\\u1}Y{\\u0}Z", {{12, 13, 1}})));
+    // A closing that sets only the run's own flag keeps the translator's bold.
+    const auto italic = readOriginalTags(u"a {\\i1}b{\\i0} c");
+    EXPECT_TRUE(keepsOwnFormatting(italic, draft(u"{\\b1}XYZ", {{6, 7, 1}})));
+    EXPECT_TRUE(keepsOwnFormatting(italic, draft(u"XYZ", {{1, 2, 1}})));
+    // The translator's own \r between two runs side by side undoes the second.
+    const auto two = readOriginalTags(u"a{\\fs20}c{\\i1}d{\\r}z");
+    ASSERT_EQ(two.runs.size(), 2u);
+    EXPECT_FALSE(keepsOwnFormatting(two, draft(u"C{\\r}D", {{0, 1, 1}, {5, 6, 2}})));
 }
 
 TEST(TagTransfer, AResetClosesTheWholeLineWrapper)
