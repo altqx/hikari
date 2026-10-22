@@ -20,7 +20,6 @@ FontCollectorDialog.qml:replaceQuestion
 FontDialog.qml:dialog
 FontsFromSubtitlesDialog.qml:dialog
 Main.qml:readOnlyWarning
-Main.qml:shiftConfirm
 Main.qml:conversionDialog
 Main.qml:resampleDialog
 Main.qml:mismatchDialog
@@ -62,5 +61,4 @@ TabCommands.qml:closeAllPrompt
 TabCommands.qml:subtitlesPrompt
 TranslationModeOffConfirm.qml:dialog
 TranslationModeQuestion.qml:dialog
-VideoFileQuestion.qml:dialog
 VisualToolDialogs.qml:noticeBox

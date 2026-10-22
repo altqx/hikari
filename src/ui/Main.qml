@@ -417,13 +417,30 @@ ApplicationWindow {
         searchTool.focusFind()
     }
 
-    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first (legacy).
+    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first
+    // (legacy; PU4-shift-question: PK1's message box, which can be hidden).
     function runShiftTimes() {
         const which = root.shiftTimes.settings.whichTimes
         const pp = root.shiftTimes.settings.postprocessor
         if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
-            shiftConfirm.which = which
-            shiftConfirm.open()
+            const start = which === 1
+            shiftQuestion.askWith({
+                title: qsTranslate("HikariSub.TimeShift", "Shift times"),
+                text: start ? qsTranslate("HikariSub.TimeShift", "Shift only the start times?")
+                            : qsTranslate("HikariSub.TimeShift", "Shift only the end times?"),
+                detail: start ? qsTranslate("HikariSub.TimeShift", "End times stay where they are, so a line shifted past its end ends before it starts.")
+                              : qsTranslate("HikariSub.TimeShift", "Start times stay where they are, so a line shifted before its start ends before it starts."),
+                severity: "warning",
+                choices: [
+                    { id: "shift", text: start ? qsTranslate("HikariSub.TimeShift", "Shift start times")
+                                               : qsTranslate("HikariSub.TimeShift", "Shift end times"),
+                      role: "accept", isDefault: true },
+                    { id: "cancel", text: qsTranslate("HikariSub.TimeShift", "Cancel"), role: "reject" }
+                ]
+            }, id => {
+                if (id === "shift")
+                    shiftTimesPanel.message = root.app.shiftTimes()
+            })
             return
         }
         shiftTimesPanel.message = root.app.shiftTimes()
@@ -6043,8 +6060,8 @@ ApplicationWindow {
         controller: root.videoFullscreen
         onOpenVideoRequested: videoDialog.show()
         onOpenSubtitlesRequested: openDialog.open()
-        onAspectRatioRequested: aspectRatioDialog.openAtCursor()
-        onFileQuestionRequested: next => videoFileQuestion.ask(next)
+        onAspectRatioRequested: aspectRatioDialog.openAtCursor(videoFullscreenWindow.contentItem)
+        onFileQuestionRequested: next => videoFileQuestion.ask(next, videoFullscreenWindow)
         // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
@@ -6054,14 +6071,6 @@ ApplicationWindow {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
         }
-    }
-    Binding {
-        when: root.videoFullscreen.active
-        target: aspectRatioDialog; property: "parent"; value: videoFullscreenWindow.contentItem
-    }
-    Binding {
-        when: root.videoFullscreen.active
-        target: videoFileQuestion; property: "parent"; value: videoFullscreenWindow.contentItem
     }
     Binding {
         when: root.videoFullscreen.active
@@ -6451,16 +6460,13 @@ ApplicationWindow {
             }
         }
     }
-    Dialog {
-        id: shiftConfirm
-        objectName: "shiftConfirm"
-        property int which: 1
-        title: qsTranslate("HikariSub.TimeShift", "Confirmation")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Yes | Dialog.No
-        Label { text: qsTranslate("HikariSub.TimeShift", "Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTranslate("HikariSub.TimeShift", "start") : qsTranslate("HikariSub.TimeShift", "end")) }
-        onAccepted: shiftTimesPanel.message = root.app.shiftTimes()
+    // GLOBAL_SHIFT_TIMES' question (runShiftTimes).
+    HidableQuestion {
+        id: shiftQuestion
+        objectName: "shiftQuestion"
+        settings: root.app.settings
+        questionId: "shiftOneTime"
+        boxName: "shiftConfirm"
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.

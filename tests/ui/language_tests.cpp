@@ -596,7 +596,7 @@ private slots:
         // One button (Ok) and two (Yes, No), in Main.qml and StyleManager.qml.
         const auto sizes = [this] {
             QList<QSizeF> out;
-            for (const char *name : {"aboutDialog", "creditsDialog", "shiftConfirm", "styleMultiQuestion"}) {
+            for (const char *name : {"aboutDialog", "creditsDialog", "styleMultiQuestion"}) {
                 QObject *dialog = root()->findChild<QObject *>(QLatin1String(name));
                 if (!dialog) {
                     out << QSizeF(-1, -1);
