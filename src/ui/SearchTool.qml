@@ -153,7 +153,14 @@ Item {
             search.showResults = false
         }
         function onFindResultsChanged() { search.refreshResults() }
-        function onFindQuestion(id, kind, text, title) { question.push(id, kind, text, title) }
+        // NT1 (#302): a message (an invalid search path) is PK1's message box.
+        function onFindQuestion(id, kind, text, title) {
+            if (kind === 0) {
+                search.skipActivation = true
+                messages.ask({ title: title, text: text, severity: "error" }, () => search.app.answerFindQuestion(id, 0))
+            } else
+                question.push(id, kind, text, title)
+        }
     }
 
     RowLayout {
@@ -562,8 +569,14 @@ Item {
         onChanged: (names, reverted) => styles.text = reverted ? before : names.join(",")
     }
 
-    // HikariMessageBox / HikariMessageDialog, one at a time: the search waits
-    // for a question's answer without blocking anything (no nested event loop).
+    MessageHost {
+        id: messages
+        objectName: "findMessages"
+        settings: search.app.settings
+    }
+    // HikariMessageDialog, one at a time: the search waits for a question's
+    // answer without blocking anything (no nested event loop). PU2 moves the
+    // questions onto PK1's message box.
     Dialog {
         id: question
         objectName: "findQuestion"

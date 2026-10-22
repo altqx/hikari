@@ -593,16 +593,16 @@ void VisualToolsController::bell()
 
 void VisualToolsController::notice(std::u16string_view text)
 {
-    m_notice = qs(text);
-    emit changed();
+    if (m_log)
+        m_log(qs(text));
 }
 
-void VisualToolsController::dismissNotice()
+QString VisualToolsController::toolName() const
 {
-    if (m_notice.isEmpty())
-        return;
-    m_notice.clear();
-    emit changed();
+    for (const FamilyInfo &f : application::visual::families())
+        if (f.family == m_family)
+            return QString::fromLatin1(f.tooltip.data(), f.tooltip.size());
+    return {};
 }
 
 void VisualToolsController::refreshOptions()
@@ -674,7 +674,6 @@ bool VisualToolsController::setOption(const QString &name, int value)
     auto *t = tool();
     if (!t || !m_railEnabled || m_gesture)
         return false;
-    m_notice.clear();
     if (m_family == Family::Drawing && name == QStringLiteral("shape") && shapePresets() &&
         value > static_cast<int>(m_shapes.size())) {
         // The shape list's "Edit" (VectorItem::ShowContols, VideoToolbar.cpp:

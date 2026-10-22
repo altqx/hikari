@@ -320,7 +320,7 @@ void AudioBox::opened(std::uint64_t request, const AudioInfo &info, bool newInde
     m_delay = std::llround(info.sampleRate * (settings.delayMs / 1000.0));
     if (std::llabs(m_delay) >= info.sampleCount) {
         if (m_delay != 0)
-            log("Delay failed, it's longer than audio duration time", LogLevel::Shown);
+            log("Delay failed, it's longer than audio duration time", LogLevel::Warning);
         m_delay = 0;
     }
     const std::int64_t sampleCount = info.sampleCount - std::max<std::int64_t>(0, -m_delay);
