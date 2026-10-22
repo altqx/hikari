@@ -860,19 +860,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Clear runs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Automation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

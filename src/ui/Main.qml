@@ -644,9 +644,9 @@ ApplicationWindow {
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
                       enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference(), iconRole: "compare" }]
-        // AM1: the Automation menu's commands for scripts, the Hotkeys page
-        // on the macros' shortcuts, and the import of a legacy Hotkeys.txt
-        // (from the retired window).
+        // AM1: the Automation menu's commands for scripts and the Hotkeys
+        // page on the macros' shortcuts (a legacy Hotkeys.txt is imported
+        // there since PU7, #309).
         if (dock === automationDock)
             return [{ name: "automationLoadScript", text: qsTranslate("HikariSub.Automation", "Load script…"), iconRole: "automation",
                       enabled: () => loadScriptAction.enabled, run: () => loadScriptAction.trigger() },
@@ -655,8 +655,6 @@ ApplicationWindow {
                       run: () => reloadAutoloadAction.trigger() },
                     { name: "automationShortcutsInSettings", text: qsTranslate("HikariSub.Automation", "Shortcuts in Settings…"),
                       iconRole: "hotkeys", run: () => root.openSettings("hotkeys", 7) },
-                    { name: "automationImportLegacy", text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…"),
-                      iconRole: "import", run: () => legacyHotkeysDialog.open() },
                     // AD3: the finished runs go from Runs.
                     { name: "automationClearRuns", text: qsTranslate("HikariSub.Automation", "Clear runs"),
                       iconRole: "remove", enabled: () => root.automation.runs.count > (root.automation.running ? 1 : 0),
@@ -8009,13 +8007,5 @@ ApplicationWindow {
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }
-    }
-
-    // AM1: a legacy Hotkeys.txt's script lines (the Automation panel's menu).
-    FileDialog {
-        id: legacyHotkeysDialog
-        objectName: "legacyHotkeysDialog"
-        nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
-        onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
     }
 }

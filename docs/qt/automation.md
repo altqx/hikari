@@ -75,7 +75,7 @@ The persistent tool is the **Automation** dock panel ([AM1](https://github.com/a
 - **Macros.** Under their script. Enter or a double click runs one; Run shows on the current row. The shortcut sits at the row's end and is recorded in place: Enter saves, Esc cancels, and a taken shortcut names its holders and asks "Reassign shortcut". A macro's shortcut that a Global command also uses says so ("Save also uses Ctrl+S and takes it.").
 - **Shortcuts for missing macros.** Bindings whose macro is not loaded or has changed, with why, and Remove.
 
-Shortcuts go through the shortcut editor's gesture path, so they are the same bindings Settings → Hotkeys edits under its "Automation shortcuts" filter, and the shortcut audit sees them with the rest. Shift+click on a macro in the Automation menu opens the panel recording that macro's shortcut. The separate hotkeys window and its command are retired (AM1-hotkeys-window-retired). The panel's "⋯" menu adds Load script…, Refresh autoload scripts, Shortcuts in Settings… and Import legacy hotkeys….
+Shortcuts go through the shortcut editor's gesture path, so they are the same bindings Settings → Hotkeys edits under its "Automation shortcuts" filter, and the shortcut audit sees them with the rest. Shift+click on a macro in the Automation menu opens the panel recording that macro's shortcut. The separate hotkeys window and its command are retired (AM1-hotkeys-window-retired). The panel's "⋯" menu adds Load script…, Refresh autoload scripts, Shortcuts in Settings… and Clear runs; a legacy Hotkeys.txt's script bindings are imported from Settings → Hotkeys (PU7-import-hotkeys).
 
 ## Accepted cancellation and transaction policy (2026-09-29)
 
