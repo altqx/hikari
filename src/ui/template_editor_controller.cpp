@@ -190,6 +190,16 @@ bool takesArgument(const QString &word)
            w == QLatin1String("fxgroup");
 }
 
+// One modifier by either of its words: the templater reads `repeat` as
+// `loop`.
+bool sameModifier(const QString &a, const QString &b)
+{
+    const auto word = [](const QString &w) {
+        return w.compare(QLatin1String("repeat"), Qt::CaseInsensitive) == 0 ? QStringLiteral("loop") : w.toLower();
+    };
+    return word(a) == word(b);
+}
+
 const QStringList &modifierWords()
 {
     static const QStringList list = {QStringLiteral("all"),     QStringLiteral("repeat"),   QStringLiteral("loop"),
@@ -1606,7 +1616,7 @@ QString TemplateEditorController::effectWithModifier(const QString &effect, cons
     QStringList kept;
     for (qsizetype k = 0; k < w.modifiers.size(); ++k) {
         const bool argument = takesArgument(w.modifiers[k]) && k + 1 < w.modifiers.size();
-        if (w.modifiers[k].compare(given.front(), Qt::CaseInsensitive) == 0) {
+        if (sameModifier(w.modifiers[k], given.front())) {
             k += argument;
             continue;
         }
@@ -1625,7 +1635,7 @@ bool TemplateEditorController::hasModifier(const QString &effect, const QString 
     const QStringList given = word.split(QLatin1Char(' '), Qt::SkipEmptyParts);
     const QStringList modifiers = splitEffect(effect).modifiers;
     for (qsizetype k = 0; !given.isEmpty() && k < modifiers.size(); ++k) {
-        if (modifiers[k].compare(given.front(), Qt::CaseInsensitive) == 0)
+        if (sameModifier(modifiers[k], given.front()))
             return true;
         if (takesArgument(modifiers[k]))
             ++k; // its argument, not a modifier

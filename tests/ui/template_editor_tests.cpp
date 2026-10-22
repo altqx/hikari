@@ -1736,6 +1736,19 @@ private slots:
                  QStringLiteral("template syl fx loop"));
     }
 
+    // `repeat` is the templater's other word for `loop`: the picker's Repeat
+    // reads and removes either.
+    void repeatIsTheLoopModifiersOtherWord()
+    {
+        TemplateEditorController e;
+        QVERIFY(e.hasModifier(QStringLiteral("template syl repeat 3"), QStringLiteral("loop 2")));
+        QCOMPARE(e.effectWithModifier(QStringLiteral("template syl repeat 3 noblank"), QStringLiteral("loop 2"), false),
+                 QStringLiteral("template syl noblank"));
+        QCOMPARE(e.effectWithModifier(QStringLiteral("template syl REPEAT 3"), QStringLiteral("loop 2"), true),
+                 QStringLiteral("template syl loop 2"));
+        QVERIFY(!e.hasModifier(QStringLiteral("template syl fx repeat"), QStringLiteral("loop 2")));
+    }
+
     // The panel's own edit that takes a Line out of the templates keeps the
     // user's choice for the others.
     void anEffectEditThatEndsATemplateKeepsTheChoice()
