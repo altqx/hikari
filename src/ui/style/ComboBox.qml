@@ -28,10 +28,11 @@ F.ComboBox {
     delegate: F.MenuItem {
         id: choice
         required property var model
+        required property var modelData
         required property int index
 
         width: ListView.view.width
-        text: model[control.textRole]
+        text: control.textRole ? model[control.textRole] : modelData
         font.weight: control.currentIndex === index ? Font.DemiBold : Font.Normal
         highlighted: control.highlightedIndex === index
         hoverEnabled: control.hoverEnabled

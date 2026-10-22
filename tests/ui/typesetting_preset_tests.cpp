@@ -320,6 +320,19 @@ private slots:
         // Select lines with this style.
         QVERIFY(application->selectLinesWithStyle(QStringLiteral("Sign")));
         QCOMPARE(selected(), (std::set<core::LineId>{lineId(1), lineId(3)}));
+        // A new range: Shift extends from the active Line, not an older anchor.
+        QCOMPARE(session()->selection().anchor, session()->selection().active);
+        QVERIFY(!session()->selection().extent);
+        // The active Line kept when it uses the Style, its old range dropped.
+        select({3, 4});
+        auto withRange = session()->selection();
+        withRange.anchor = lineId(4);
+        withRange.extent = lineId(4);
+        session()->setSelection(withRange);
+        QVERIFY(application->selectLinesWithStyle(QStringLiteral("Sign")));
+        QCOMPARE(session()->selection().active, std::optional<core::LineId>(lineId(3)));
+        QCOMPARE(session()->selection().anchor, std::optional<core::LineId>(lineId(3)));
+        QVERIFY(!session()->selection().extent);
         QVERIFY(!application->selectLinesWithStyle(QStringLiteral("Italic") + QStringLiteral("x")));
         stop();
     }
@@ -353,6 +366,20 @@ private slots:
         auto *choice = item<QObject>("styleChoice");
         QVERIFY(choice);
         QTRY_COMPARE(choice->property("currentText").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
+        // Its popup's items show the names (a list of strings, no textRole).
+        auto *popup = choice->property("popup").value<QObject *>();
+        QVERIFY(QMetaObject::invokeMethod(popup, "open"));
+        QTRY_VERIFY(popup->property("opened").toBool());
+        auto *list = qobject_cast<QQuickItem *>(popup->property("contentItem").value<QObject *>());
+        QVERIFY(list);
+        QQuickItem *first = nullptr;
+        QTRY_VERIFY(QMetaObject::invokeMethod(list, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, first), Q_ARG(int, 0)) && first);
+        QCOMPARE(first->property("text").toString(), QStringLiteral("<img src=\"http://127.0.0.1:9/n.png\">"));
+        auto *firstText = qobject_cast<QQuickItem *>(first->property("contentItem").value<QObject *>());
+        QVERIFY(plain(firstText));
+        QCOMPARE(firstText->property("text").toString(), first->property("text").toString());
+        QVERIFY(QMetaObject::invokeMethod(popup, "close"));
+        QTRY_VERIFY(!popup->property("visible").toBool());
         // The Grid's Hide lines with styles menu: its items plain too.
         auto *grid = item("editingGrid");
         auto *gridMenu = item<QObject>("gridMenu");

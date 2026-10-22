@@ -2780,11 +2780,11 @@ bool Application::selectLinesWithStyle(const QString &style)
             found.push_back(line->id);
     if (found.empty())
         return false;
-    application::Selection next = session->selection();
-    next.selected = std::set<core::LineId>(found.begin(), found.end());
-    if (!next.active || !next.selected.contains(*next.active))
-        next.active = found.front();
-    return applySelection(std::move(next));
+    std::set<core::LineId> selected(found.begin(), found.end());
+    const auto current = session->selection().active;
+    const core::LineId active = current && selected.contains(*current) ? *current : found.front();
+    // A new range: Shift extends from the active Line, as after Select lines.
+    return applySelection(application::Selection{active, std::move(selected), active, {}});
 }
 
 std::string Application::recoveryKey(application::DocumentId document) const
