@@ -38,8 +38,6 @@ SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
-SpellCheckerDialog.qml:dialog
-SpellCheckerDialog.qml:addedWords
 StyleManager.qml:createQuestion
 StyleManager.qml:multiQuestion
 StyleManager.qml:renameQuestion

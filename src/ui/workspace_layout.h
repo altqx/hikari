@@ -103,11 +103,13 @@ public:
     enum class TabStart { Copy, Translation };
 
     static constexpr int kSchema = 1;
-    static constexpr int kPanelRegistry = 6; // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Log (NT1)
+    // 2: Timing (F5), 3: Search (F1), 4: Automation (AM1), 5: Original (TM1), 6: Log (NT1), 7: Spellchecker (PU6)
+    static constexpr int kPanelRegistry = 7;
     static constexpr qsizetype kMaximumBytes = 4 * 1024 * 1024;
     static constexpr int kSavedLayoutsSchema = 1;
     static constexpr int kMaximumNameLength = 64;
-    static const QStringList &panelIds(); // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original, Log
+    // Video, Audio, Editor, Grid, Reference, Timing, Search, Automation, Original, Log, Spellchecker
+    static const QStringList &panelIds();
 
     // `layoutFile` empty: nothing is persisted (tests, a profile without
     // settings). The saved layouts are kept beside it, in layouts.json.

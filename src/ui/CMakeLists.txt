@@ -21,7 +21,7 @@ target_include_directories(hikari_ui PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 qt_add_qml_module(hikari_ui
     URI Hikari.Ui
     VERSION 1.0
-    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml MisspellReplacerDialog.qml SpellCheckerDialog.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
+    QML_FILES Main.qml ShellMenu.qml ShellMenuItem.qml AutomationDialog.qml AutomationManager.qml AutomationFilePicker.qml FontDialog.qml ScriptPropertiesDialog.qml SelectLinesDialog.qml StyleManager.qml MisspellReplacerDialog.qml SpellCheckerPanel.qml SettingsDialog.qml SearchTool.qml DockTitleBar.qml DockTabBar.qml
         DocumentTabBar.qml SessionWindows.qml)
 # TS1: the Shift times panel and the dock-form pieces it is built from.
 qt_target_qml_sources(hikari_ui QML_FILES ShiftTimesPanel.qml FormSection.qml SegmentedButtons.qml PrimaryButton.qml)
@@ -217,6 +217,8 @@ qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml Wh
 qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
     ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
     MessageHost.qml LogPanel.qml)
+# PU6 (#308): the Spellchecker panel's added words window.
+qt_target_qml_sources(hikari_ui QML_FILES SpellingAddedWords.qml)
 # The title bar's application icon: the packaged one (qrc:/hikari/ui/app-icon.png).
 set(hikari_app_icon "${CMAKE_CURRENT_SOURCE_DIR}/../../packaging/linux/icons/hicolor/64x64/apps/hikarisub.png")
 set_source_files_properties("${hikari_app_icon}" PROPERTIES QT_RESOURCE_ALIAS "app-icon.png")

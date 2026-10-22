@@ -316,6 +316,19 @@ ApplicationWindow {
     function addLog() {
         dockingArea.addDockWidget(logDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
     }
+    // PU6 (#308): the Spellchecker panel's place the same way, along the
+    // bottom, the whole width.
+    function addSpellChecker() {
+        dockingArea.addDockWidget(spellDock, KDDW.KDDockWidgets.Location_OnBottom, null, Qt.size(0, 180))
+    }
+    // Subtitles > Check spelling (GLOBAL_OPEN_SPELLCHECKER): the panel,
+    // checking from the active Line, again when it was already checking.
+    function openSpellChecker() {
+        const checking = spellTool.checking
+        root.showPanel(spellDock)
+        if (checking)
+            spellTool.start()
+    }
 
     // AM1: a macro started while the Automation panel is closed opens it
     // (its run status holds Cancel and the log), without taking the focus.
@@ -329,10 +342,10 @@ ApplicationWindow {
 
     // Major panels in F6 order; a hidden panel is skipped.
     readonly property list<Item> panels: [videoPanel, audioPanel, originalPanel, editorPanel, gridPanel, referencePanel,
-                                          timingPanel, searchPanel, automationPanel, logPanel]
+                                          timingPanel, searchPanel, automationPanel, spellPanel, logPanel]
     // D1: their docks, in the same order.
     readonly property var dockList: [videoDock, audioDock, originalDock, editorDock, gridDock, referenceDock, timingDock,
-                                     searchDock, automationDock, logDock]
+                                     searchDock, automationDock, spellDock, logDock]
     // KB2, KB1 (key_router.h): a panel's bindings act before the control
     // it has focused (a clicked button keeps no Space of its own), on the
     // hovered panel rather than the focused one, and the Video window's
@@ -500,10 +513,15 @@ ApplicationWindow {
             root.openOriginal()
         else if (dock === logDock && !Docking.hasPlace("Log"))
             root.addLog()
+        else if (dock === spellDock && !Docking.hasPlace("Spellchecker"))
+            root.addSpellChecker()
         else
             dock.open()
         root.workspaceLayout.keepFloatingPanelsOnScreen()
         dock.raise()
+        // PU6: showing the Spellchecker starts it at the active Line.
+        if (dock === spellDock && !spellTool.checking)
+            spellTool.start()
         root.focusPanel(panels[dockList.indexOf(dock)], Qt.OtherFocusReason)
     }
 
@@ -566,6 +584,16 @@ ApplicationWindow {
                       iconRole: "hotkeys", run: () => settingsDialog.openDialog(7, 7) },
                     { name: "automationImportLegacy", text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…"),
                       iconRole: "import", run: () => legacyHotkeysDialog.open() }]
+        // PU6: the Spellchecker's two options (legacy's check boxes) and
+        // the user dictionary's words (legacy's "Remove from dictionary").
+        if (dock === spellDock)
+            return [{ name: "spellIgnoreComments", text: qsTranslate("HikariSub.Spelling", "Ignore comments"), checkable: true,
+                      checked: () => spellTool.ignoreComments, run: () => spellTool.setIgnoreComments(!spellTool.ignoreComments) },
+                    { name: "spellIgnoreUpper", text: qsTranslate("HikariSub.Spelling", "Ignore words in capitals"), checkable: true,
+                      checked: () => spellTool.ignoreUpperCase,
+                      run: () => spellTool.setIgnoreUpperCase(!spellTool.ignoreUpperCase) },
+                    { name: "spellAddedWords", text: qsTranslate("HikariSub.Spelling", "Words added to dictionary…"),
+                      iconRole: "dictionary", run: () => spellTool.openAddedWords() }]
         return []
     }
     // VF1 (#288): a panel's own submenus, after its own items: an item's
@@ -1964,7 +1992,7 @@ ApplicationWindow {
                 objectName: "checkSpellingMenuItem"
                 text: qsTr("Check spelling")
                 enabled: root.shell.hasEditingTarget
-                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) spellCheckerDialog.openDialog()
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_SPELLCHECKER")) root.openSpellChecker()
             }
             // KA7: the Karaoke check window, after Check spelling.
             ShellMenuItem {
@@ -5535,6 +5563,34 @@ ApplicationWindow {
             }
         }
 
+        // PU6 (#308): the Spellchecker panel (legacy's Spellchecker window).
+        // Closing it ends the check.
+        KDDW.DockWidget {
+            id: spellDock
+            objectName: "spellDock"
+            uniqueName: "Spellchecker"
+            title: qsTranslate("HikariSub.Spelling", "Spellchecker")
+            onIsOpenChanged: if (!isOpen) spellTool.stop()
+            Panel {
+                id: spellPanel
+                objectName: "spellPanel"
+                dockName: "Spellchecker"
+                minimumBodySize: spellTool.minimumSize
+                anchors.fill: parent
+                title: qsTranslate("HikariSub.Spelling", "Spellchecker")
+                SpellCheckerPanel {
+                    id: spellTool
+                    objectName: "spellCheckerPanel"
+                    anchors.fill: parent
+                    focus: true
+                    app: root.app
+                    notices: root.notices
+                    documentName: root.shell.editingTitle
+                    onSettingsRequested: settingsDialog.openDialog(0) // the Editor page: the dictionary
+                }
+            }
+        }
+
         // NT1 (#302): the Log panel (legacy's Log window). A toast's Details
         // opens it at its entry; nothing else opens it by itself.
         KDDW.DockWidget {
@@ -5565,6 +5621,7 @@ ApplicationWindow {
             Docking.setPanelHeader("Reference", true, referenceTray.toolbar)
             Docking.setPanelHeader("Search", true, null)
             Docking.setPanelHeader("Log", true, null)
+            Docking.setPanelHeader("Spellchecker", true, null)
             Docking.setPanelHeader("Original", true, originalTools) // TM1
             root.defaultLayout()
         }
@@ -6860,14 +6917,8 @@ ApplicationWindow {
             function onMisspellReplacerDestroyed() { misspellDialog.destroyDialog() }
         }
     }
-    // F3: the Spellchecker window and the editor's "Fix suggestions" list
-    // (legacy's spelling message boxes are toasts, NT1).
-    SpellCheckerDialog {
-        id: spellCheckerDialog
-        app: root.app
-        notices: root.notices
-        anchors.centerIn: parent
-    }
+    // F3: the editor's "Fix suggestions" list (the Spellchecker is a panel,
+    // PU6; legacy's spelling message boxes are toasts, NT1).
     // KA7: the Karaoke check window, made at its first opening, as PK1's
     // windows are: every window made at the start costs it (on Windows a
     // native event filter apiece).

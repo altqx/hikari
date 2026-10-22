@@ -2712,6 +2712,12 @@ private slots:
                 return found;
         return nullptr;
     }
+    // PU6 (#308): a control of the Spellchecker panel.
+    QQuickItem *spellItem(const char *name) const
+    {
+        auto *panel = item<QQuickItem>("spellCheckerPanel");
+        return panel ? findItem(panel, QLatin1String(name)) : nullptr;
+    }
     // NT1 (#302): the message box of the MessageHost `host`, once asked.
     QQuickWindow *messageBox(const char *host) const
     {
@@ -8649,15 +8655,15 @@ private slots:
         QTRY_COMPARE(appliedMarks("lineTextHighlighter"), (QVariantList{6, 11}));
 
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("spellCheckerDialog"));
-        QVERIFY(dialog);
+        auto *dock = item<QObject>("spellDock");
+        QVERIFY(dock);
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem")), "triggered"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialogItem("spellCheckerDialog", "spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
-        QCOMPARE(dialogItem("spellCheckerDialog", "spellReplacement")->property("text").toString(), QStringLiteral("world"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QCOMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
+        QCOMPARE(spellItem("spellReplacement")->property("text").toString(), QStringLiteral("world"));
         QCOMPARE(application->editor().selectionStart(), 6);
         QCOMPARE(application->editor().selectionEnd(), 11);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellReplace"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(spellItem("spellReplace"), "click"));
         QCOMPARE(session->history().back().name, std::string("Correcting spelling errors"));
         auto text = [&](std::size_t row) {
             const auto &t = session->document().lines()[row]->text;
@@ -8665,15 +8671,18 @@ private slots:
         };
         QCOMPARE(text(0), QStringLiteral("Hello world"));
         // The next word is on the second Line, which becomes active and shows it selected.
-        QCOMPARE(dialogItem("spellCheckerDialog", "spellMisspell")->property("text").toString(), QStringLiteral("Teh"));
+        QCOMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("Teh"));
         QCOMPARE(session->selection().active, std::optional(session->document().lines()[1]->id));
         QCOMPARE(application->editor().text(), QStringLiteral("Teh text"));
         QCOMPARE(application->editor().selectionStart(), 0);
         QCOMPARE(application->editor().selectionEnd(), 3);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellIgnore"), "click"));
+        QVERIFY(QMetaObject::invokeMethod(spellItem("spellIgnore"), "click"));
         QTRY_VERIFY(toastWith(QStringLiteral("No spelling errors were found"))); // NT1: an info toast
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        // PU6: the panel shows it in its empty state, and closing it ends the check.
+        QCOMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No spelling errors in spelling.ass"));
+        QVERIFY(spellItem("spellEmpty")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
 
         // The editor (tags hidden): "Teh" marked in the shown text; a
         // suggestion replaces it as one step.
@@ -9012,7 +9021,8 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("spellCheckerDialog"));
+        auto *dock = item<QObject>("spellDock");
+        auto *panel = item<QObject>("spellCheckerPanel");
         // Legacy order: Resample subtitles, then Check spelling.
         auto *check = root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem"));
         auto *subtitles = check->property("menu").value<QObject *>();
@@ -9027,23 +9037,23 @@ private slots:
         QCOMPARE(at("checkSpellingMenuItem"), at("resampleMenuItem") + 1);
 
         QVERIFY(QMetaObject::invokeMethod(check, "triggered"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        auto *misspell = dialogItem("spellCheckerDialog", "spellMisspell");
-        auto *replacement = dialogItem("spellCheckerDialog", "spellReplacement");
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *misspell = spellItem("spellMisspell");
+        auto *replacement = spellItem("spellReplacement");
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
         const auto steps = session->historySize();
 
         // Back in the editor, typing in the found word's Line; then a press
-        // on Replace brings the window back. The press does not swap the
+        // on Replace brings the panel back. The press does not swap the
         // word; the click commits the draft and starts again from its Line.
         auto *field = item("lineText");
         field->forceActiveFocus();
         application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
-        auto *replace = dialogItem("spellCheckerDialog", "spellReplace");
+        auto *replace = spellItem("spellReplace");
         const QPoint centre = replace->mapToScene(QPointF(replace->width() / 2, replace->height() / 2)).toPoint();
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, centre);
         QCoreApplication::processEvents();
-        QTRY_VERIFY(dialog->property("activeFocus").toBool());
+        QTRY_VERIFY(panel->property("activeFocus").toBool());
         QTest::qWait(20);
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, centre);
@@ -9060,24 +9070,24 @@ private slots:
         QCOMPARE(state.value(QStringLiteral("word")).toString(), QStringLiteral("Helo"));
         QCOMPARE(session->history().back().name, std::string("Edit Line"));
 
-        // Replace with an empty field: nothing happens, the window keeps its word.
+        // Replace with an empty field: nothing happens, the panel keeps its word.
         replacement->setProperty("text", QString());
         QVERIFY(QMetaObject::invokeMethod(replace, "click"));
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("Helo"));
-        QVERIFY(!messageBox("spellMessages"));
+        QVERIFY(!toastWith(QStringLiteral("cannot")));
         QVERIFY(application->spellCheckerReplace(QString(), {}).value(QStringLiteral("unchanged")).toBool());
         replacement->setProperty("text", QStringLiteral("Hello"));
         QVERIFY(QMetaObject::invokeMethod(replace, "click"));
         QCOMPARE(session->history().back().name, std::string("Correcting spelling errors"));
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
         application->editor().discard();
     }
 
     // F3: legacy's other Replace path, a double click on a suggestion
     // (ID_SUGGESTIONS_LIST), after typing in the editor. The press that
-    // brings the window back does not swap the list under the pointer, so the
+    // brings the panel back does not swap the list under the pointer, so the
     // double click lands on the suggestion the user saw; that Replace finds
     // its word stale (the draft committed) and starts the walk again instead
     // of acting, as the Replace button does.
@@ -9092,11 +9102,12 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("spellCheckerDialog"));
+        auto *dock = item<QObject>("spellDock");
+        auto *panel = item<QObject>("spellCheckerPanel");
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("checkSpellingMenuItem")), "triggered"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        auto *misspell = dialogItem("spellCheckerDialog", "spellMisspell");
-        auto *list = dialogItem("spellCheckerDialog", "spellSuggestions");
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        auto *misspell = spellItem("spellMisspell");
+        auto *list = spellItem("spellSuggestions");
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
         const auto suggestion = [&](const QString &text) -> QQuickItem * {
             auto *content = list->property("contentItem").value<QQuickItem *>();
@@ -9112,16 +9123,16 @@ private slots:
         auto *field = item("lineText");
         field->forceActiveFocus();
         application->editor().textEdited(QStringLiteral("Helo wrold"), 4);
-        // The first press of the double click brings the window back.
+        // The first press of the double click brings the panel back.
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
         QCoreApplication::processEvents();
-        QTRY_VERIFY(dialog->property("activeFocus").toBool());
+        QTRY_VERIFY(panel->property("activeFocus").toBool());
         QTest::qWait(20);
         QCOMPARE(misspell->property("text").toString(), QStringLiteral("wrold"));
         QCOMPARE(suggestion(QStringLiteral("world")), world);
         QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, at);
         QCoreApplication::processEvents();
-        QCOMPARE(dialogItem("spellCheckerDialog", "spellReplacement")->property("text").toString(), QStringLiteral("world"));
+        QCOMPARE(spellItem("spellReplacement")->property("text").toString(), QStringLiteral("world"));
         // The second press and its double click (Qt sends both).
         QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, at);
         QMouseEvent doubleClick(QEvent::MouseButtonDblClick, QPointF(at), window->mapToGlobal(QPointF(at)), Qt::LeftButton,
@@ -9135,8 +9146,85 @@ private slots:
         };
         QCOMPARE(text(), QStringLiteral("Helo wrold"));
         QCOMPARE(session->history().back().name, std::string("Edit Line"));
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("spellCheckerDialog", "spellClose"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        application->editor().discard();
+    }
+
+    // PU6 (#308): the Spellchecker panel. Shown from View > Panels it starts
+    // at the active Line: the word, its Line and the text around it. Its
+    // "⋯" items are the two options and "Words added to dictionary…", whose
+    // window removes the checked words. Nothing left to check is its empty
+    // state and an info toast; closed, it ends the check; without a
+    // dictionary it says so and offers the settings.
+    void spellCheckerPanelStatesAndAddedWords()
+    {
+        QTemporaryDir home;
+        QVERIFY(home.isValid());
+        writeDictionary(home.path());
+        restartWithSpelling(home.path(), true);
+        const QString path = writeFile(dir, "spelling-panel.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello wrold good\n");
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        auto *dock = item<QObject>("spellDock");
+        QVERIFY(dock && !dock->property("isOpen").toBool());
+        QCOMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("Checks the spelling from the active line"));
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QCOMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
+        QCOMPARE(spellItem("spellLine")->property("text").toString(), QStringLiteral("Line 1"));
+        QQmlExpression context(qmlContext(spellItem("spellContext")), spellItem("spellContext"),
+                               QStringLiteral("Accessible.name"));
+        QCOMPARE(context.evaluate().toString(), QStringLiteral("Hello wrold good"));
+        QVERIFY(spellItem("spellColumns")->isVisible());
+        QVERIFY(!spellItem("spellEmpty")->isVisible());
+        // The panel's own "⋯" items.
+        QQmlExpression names(qmlContext(root), root, QStringLiteral("panelOwnItems(spellDock).map(i => i.name).join(',')"));
+        QCOMPARE(names.evaluate().toString(), QStringLiteral("spellIgnoreComments,spellIgnoreUpper,spellAddedWords"));
+        // Add to dictionary: nothing left, the empty state and the toast.
+        QVERIFY(QMetaObject::invokeMethod(spellItem("spellAddWord"), "click"));
+        QTRY_VERIFY(toastWith(QStringLiteral("No spelling errors were found")));
+        QTRY_VERIFY(spellItem("spellEmpty")->isVisible());
+        QCOMPARE(spellItem("spellEmptyText")->property("text").toString(),
+                 QStringLiteral("No spelling errors in %1").arg(application->shell().editingTitle()));
+        QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Check again"));
+        QVERIFY(application->addedDictionaryWords().contains(QStringLiteral("wrold")));
+        // ⋯ > Words added to dictionary…: check the word, Remove 1 word.
+        QQmlExpression added(qmlContext(root), root, QStringLiteral("panelOwnItems(spellDock)[2].run()"));
+        added.evaluate();
+        QVERIFY(!added.hasError());
+        QObject *words = nullptr;
+        QTRY_VERIFY((words = named("spellAddedWords")) && words->property("visible").toBool());
+        auto *remove = dialogItem("spellAddedWords", "spellAddedRemove");
+        QVERIFY(!remove->property("enabled").toBool());
+        QQuickItem *word = nullptr;
+        QTRY_VERIFY((word = dialogItem("spellAddedWords", "spellAdded_wrold")));
+        QVERIFY(QMetaObject::invokeMethod(word, "click"));
+        QTRY_VERIFY(remove->property("enabled").toBool());
+        QCOMPARE(remove->property("text").toString(), QStringLiteral("Remove 1 word"));
+        QVERIFY(QMetaObject::invokeMethod(remove, "click"));
+        QTRY_VERIFY(!words->property("visible").toBool());
+        QVERIFY(!application->addedDictionaryWords().contains(QStringLiteral("wrold")));
+        // Check again finds it once more; closing the panel ends the check.
+        QVERIFY(QMetaObject::invokeMethod(spellItem("spellEmptyAction"), "click"));
+        QTRY_COMPARE(spellItem("spellMisspell")->property("text").toString(), QStringLiteral("wrold"));
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        QVERIFY(!item<QObject>("spellCheckerPanel")->property("checking").toBool());
+        application->editor().discard();
+
+        // No dictionary: said, with the settings.
+        restartWithSpelling(home.path(), false);
+        QVERIFY(application->openFile(path));
+        root = engine->rootObjects().first();
+        dock = item<QObject>("spellDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QTRY_COMPARE(spellItem("spellEmptyText")->property("text").toString(), QStringLiteral("No dictionaries found"));
+        QCOMPARE(spellItem("spellEmptyAction")->property("text").toString(), QStringLiteral("Spelling settings…"));
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
         application->editor().discard();
     }
 
