@@ -557,6 +557,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     if (options.autoload)
         m_automation->autoload();
     m_settingsFile = options.settingsFile;
+    rememberStartSession(); // PU1: before anything writes the session
     // R6-dictionary-location: user dictionaries in the settings folder's
     // Dictionary, bundled ones in the program folder's (legacy's only one).
     if (!m_settingsFile.isEmpty())
@@ -810,11 +811,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     {
         // Y9: GRID_SUBS_FROM_MKV on the editing target's tab video.
         MatroskaController::Hooks hooks;
-        hooks.videoPath = [this] {
-            const auto target = m_workspace.editingTarget();
-            const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
-            return it == m_tabMedia.end() ? QString() : it->second.video;
-        };
+        hooks.videoPath = [this] { return targetVideoPath(); };
         hooks.modified = [this] {
             auto *session = targetSession();
             return session && session->isDirty();
@@ -828,6 +825,17 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         };
         hooks.apply = [this](application::MatroskaLoaded loaded, bool newTab) {
             applyMatroska(std::move(loaded), newTab);
+        };
+        hooks.started = [this] {
+            m_matroskaTarget = m_workspace.editingTarget();
+            auto *session = targetSession();
+            m_matroskaRevision = session ? session->revision() : 0;
+            m_matroskaDraftLine = session ? session->draftLine() : std::nullopt;
+            m_matroskaDraft = session ? session->draftText() : std::nullopt;
+            m_matroskaReloads = m_reloads;
+            m_matroskaVideo = targetVideoPath();
+            m_matroskaRequested = m_video->requestedVideo();
+            m_matroskaFromHome = !m_matroskaTarget;
         };
         hooks.log = [this](const QString &text) {
             m_log->notice(ui::LogController::Error,
@@ -1150,6 +1158,14 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.commit = [this](const application::AudioCommitRequest &request) { return commitAudioTimes(request); };
         hooks.setActive = [this](int key) { setAudioActive(key); };
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
+        hooks.fieldTime = [this](int ms) {
+            const auto *session = targetSession();
+            return session ? application::committedAudioTime(session->document(), ms) : ms;
+        };
+        hooks.severalSelected = [this] {
+            const auto *session = targetSession();
+            return session && session->selection().selected.size() > 1;
+        };
         m_audio->setTimingHooks(std::move(hooks));
     }
     // KA2-tap-to-time: the tap bar's next Line (keys as refreshAudio gives them)
@@ -1751,6 +1767,10 @@ void Application::refreshViews()
         if (m_find)
             m_find->reset();
     }
+    // TP1: the Styles panel, once the Line editor is on the target (the
+    // panel picks the active Line's Style when its own is gone).
+    if (m_styleManager)
+        m_styleManager->documentEdited();
     refreshVideo();
     refreshAudio();
     if (m_statusBar)
@@ -1938,6 +1958,7 @@ QVariantList Application::reviewClose(const QString &then)
     std::vector<application::DocumentId> scope;
     if (then != QLatin1String("tab"))
         m_closingTab.reset(); // P6
+    m_closeTarget = m_workspace.editingTarget();
     if (then != QLatin1String("session"))
         m_pendingSession.reset(); // P6
     if (then == QLatin1String("quit") || then == QLatin1String("session")) // P6: a session replaces every tab
@@ -1955,12 +1976,19 @@ QVariantList Application::reviewClose(const QString &then)
             continue;
         const std::string *title = m_workspace.title(id);
         const auto destination = m_files->destination(id);
+        const bool untitled = !destination || destination->value.empty();
         rows << QVariantMap{{QStringLiteral("id"), QVariant::fromValue<qulonglong>(id.value)},
                             {QStringLiteral("title"), title ? QString::fromStdString(*title) : QString()},
-                            {QStringLiteral("untitled"), !destination || destination->value.empty()}};
+                            {QStringLiteral("untitled"), untitled},
+                            {QStringLiteral("folder"), untitled ? QString()
+                                                                : QDir::toNativeSeparators(QFileInfo(QString::fromStdString(destination->value)).absolutePath())}};
     }
     return rows;
 }
+
+namespace {
+QString extensionFor(core::SubtitleFormat format); // with Save as's helpers below
+} // namespace
 
 void Application::resolveClose(const QVariantList &choices)
 {
@@ -1973,7 +2001,11 @@ void Application::resolveClose(const QVariantList &choices)
             continue;
         Closing c{id, row.value(QStringLiteral("save")).toBool(), 0, std::nullopt};
         if (c.save) {
-            const QString path = row.value(QStringLiteral("path")).toString();
+            QString path = row.value(QStringLiteral("path")).toString();
+            // A file picked for an Untitled row gets its format's extension,
+            // as Save as gives it (saveChosenFor).
+            if (const QString ext = extensionFor(session->document().format()); !path.isEmpty() && !path.endsWith(ext))
+                path += u'.' + ext;
             auto plan = m_files->prepareSave(
                 id, path.isEmpty() ? std::nullopt
                                    : std::optional(application::DestinationKey{QFileInfo(path).absoluteFilePath().toStdString()}));
@@ -2014,14 +2046,23 @@ void Application::writeFinished(const application::WriteResult &result)
          result.outcome == application::WriteOutcome::DurabilityUncertain) &&
         (m_workspace.editingTarget() == result.document || m_workspace.reference() == result.document))
         refreshViews();
+    // PU1-disk-change-bar: a published write, confirmed or not, moved the
+    // Document to its file.
+    if (result.outcome == application::WriteOutcome::Written ||
+        result.outcome == application::WriteOutcome::DurabilityUncertain) {
+        if (const auto destination = m_files->destination(result.document);
+            destination && destination->value == result.destination.value)
+            recordFileTime(result.document);
+        emit documentWritten(result.document.value);
+    } else if (result.outcome == application::WriteOutcome::Failed ||
+               result.outcome == application::WriteOutcome::Cancelled) {
+        emit documentWriteFailed(result.document.value);
+    }
     // Save As of an Untitled or renamed Document: the title follows the file.
     if (result.outcome == application::WriteOutcome::Written) {
         rememberRecent(result.destination.value, false); // legacy SetRecent after a save
         if (auto *session = m_files->session(result.document); session && !session->isDirty())
             discardRecovery(result.document); // the work is in the file
-        if (const auto destination = m_files->destination(result.document);
-            destination && destination->value == result.destination.value)
-            recordFileTime(result.document);
     }
     if (result.outcome == application::WriteOutcome::Written)
         if (const std::string *title = m_workspace.title(result.document);
@@ -2067,9 +2108,14 @@ void Application::finishClose()
         }
     }
     const QString then = m_closeThen;
+    const auto reviewed = std::exchange(m_closeTarget, std::nullopt);
     m_closing.clear();
     m_closeThen.clear();
     if (!kept.isEmpty()) {
+        // PU1-unsaved-window: the review shows again with the problem; a
+        // retry finishes the same command on the same tab (Cancel ends it).
+        m_closeThen = then;
+        m_closeTarget = reviewed;
         if (then == QLatin1String("quit"))
             emit quitCancelled(); // WS5
         refreshViews();
@@ -2077,6 +2123,20 @@ void Application::finishClose()
                                                               "Not closed, because saving failed or there is newer work: %1")
                                       .arg(kept.join(QStringLiteral(", "))));
         return;
+    }
+    // PU1-unsaved-window: one Document's question closes at its answer, so
+    // another tab may be the target once the save is written; a command on
+    // the target acts on the reviewed one's tab (gone: nothing is replaced).
+    const bool onTarget = then != QLatin1String("quit") && then != QLatin1String("session") && then != QLatin1String("tab")
+        && then != QLatin1String("all");
+    if (onTarget && reviewed && m_workspace.editingTarget() != reviewed) {
+        if (!m_workspace.setEditingTarget(*reviewed)) {
+            m_closeThen = then;
+            cancelClose();
+            emit closeFinished(true, QString());
+            return;
+        }
+        refreshViews();
     }
     if (then == QLatin1String("quit")) {
         for (const auto id : m_workspace.documents())
@@ -2489,6 +2549,15 @@ QString Application::externalChange()
     return known == m_fileTimes.end() ? QString() : QStringLiteral("modified");
 }
 
+bool Application::acceptFileOnDisk(qulonglong id)
+{
+    const auto document = documentOf(id);
+    if (!document || !m_files->acceptExternalChange(*document))
+        return false;
+    recordFileTime(*document); // the change accepted is the file as it is now
+    return true;
+}
+
 bool Application::reloadTarget()
 {
     const auto target = m_workspace.editingTarget();
@@ -2508,12 +2577,33 @@ bool Application::reloadTarget()
     if (auto *session = m_files->session(*target))
         selectLegacyActiveLine(*session);
     recordFileTime(*target);
+    ++m_reloads;
     m_videoRevision.reset();
     m_videoScript.clear();
     m_videoLine.reset();
+    // R1: a compared Document reloaded is compared again (the new session
+    // starts at the same revision as the one it replaced).
+    m_comparedRevisions.erase(target->value);
+    refreshComparison();
     m_editor->reloadFromSession();
     refreshViews();
     return true;
+}
+
+bool Application::compareWithFileOnDisk()
+{
+    const auto target = m_workspace.editingTarget();
+    const auto destination = target ? m_files->destination(*target) : std::nullopt;
+    if (!destination || destination->value.empty())
+        return false;
+    // Compared again (the bar stays): the earlier copy of the file goes, not
+    // to a tab of its own, and the file is read as it is now.
+    if (const auto reference = m_workspace.reference(); reference && !m_workspace.referenceIsTab())
+        if (const auto held = m_files->destination(*reference); held && held->value == destination->value)
+            closeDocument(*reference);
+    if (!openReference(QString::fromStdString(destination->value)))
+        return false;
+    return compareWithReference();
 }
 
 bool Application::saveAs(const QString &path)
@@ -2889,6 +2979,31 @@ QVariantMap Application::styleLineCounts() const
     return out;
 }
 
+bool Application::selectLinesWithStyle(const QString &style)
+{
+    auto *session = targetSession();
+    if (!session)
+        return false;
+    const QByteArray bytes = style.toUtf8();
+    const std::u8string name(reinterpret_cast<const char8_t *>(bytes.constData()), static_cast<std::size_t>(bytes.size()));
+    // As Select lines on the Style field: the Grid's hidden Lines only with
+    // "Ignore filtering in some actions".
+    const application::LineVisible shown = m_gridFilter->ignoreInActions() ? application::LineVisible{} : shownLines();
+    std::vector<core::LineId> found;
+    for (const auto *line : session->document().lines())
+        if (line->style == name && (!shown || shown(line->id)))
+            found.push_back(line->id);
+    const auto current = session->selection().active;
+    if (found.empty()) { // as Select mode: the old selection goes, the active Line stays
+        applySelection(application::Selection{current, {}, current, {}});
+        return false;
+    }
+    std::set<core::LineId> selected(found.begin(), found.end());
+    const core::LineId active = current && selected.contains(*current) ? *current : found.front();
+    // A new range: Shift extends from the active Line, as after Select lines.
+    return applySelection(application::Selection{active, std::move(selected), active, {}});
+}
+
 std::string Application::recoveryKey(application::DocumentId document) const
 {
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
@@ -3015,8 +3130,37 @@ QVariantList Application::recoveryBundles() const
     return out;
 }
 
+// The editing target's video, as its tab has it (the file an MKV read
+// takes, not the one the player may still be closing).
+QString Application::targetVideoPath() const
+{
+    const auto target = m_workspace.editingTarget();
+    const auto it = target ? m_tabMedia.find(target->value) : m_tabMedia.end();
+    return it == m_tabMedia.end() ? QString() : it->second.video;
+}
+
 void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
 {
+    // PU1-mkv-notices: the window stayed usable while the track was read. A
+    // tab that is no longer the editing target, or whose Document changed
+    // since, keeps what was typed: the subtitles open in a new tab. A draft
+    // being typed doesn't move the revision, so a pending one counts too; a
+    // tab that opened another video meanwhile keeps that video's subtitles.
+    // Started on Home, a Document opened meanwhile keeps its tab too.
+    if (!newTab && m_matroskaTarget) {
+        auto *session = m_files->session(*m_matroskaTarget);
+        newTab = m_workspace.editingTarget() != m_matroskaTarget || !session || session->revision() != m_matroskaRevision
+            || session->draftLine() != m_matroskaDraftLine || session->draftText() != m_matroskaDraft
+            || m_reloads != m_matroskaReloads // reloaded: a new session at the same revision
+            || targetVideoPath() != m_matroskaVideo
+            // another video asked for in the tab, still being opened (the
+            // tab's own, opened again on coming back to it, is not)
+            || m_video->requestedVideo() != m_matroskaRequested;
+    } else if (!newTab && m_matroskaFromHome) {
+        newTab = m_workspace.editingTarget().has_value();
+    }
+    m_matroskaTarget.reset();
+    m_matroskaFromHome = false;
     if (newTab) {
         // File > Open: InsertTab then OnMkvSubs in it (HikariSubFrame.cpp:
         // 1021-1028): a new tab after the last one, with no media, takes the
@@ -3134,8 +3278,14 @@ QVariantList Application::legacyAutosaves()
     for (const auto &file : files) {
         QVariantList versions;
         for (const auto &version : file.versions)
+        {
+            const QString path = QString::fromStdU16String(version.file.u16string());
+            // PU1-autosaves-window: the time as recoveryBundles() gives it,
+            // for the Autosaves window's date filter and order.
             versions << QVariantMap{{QStringLiteral("written"), QString::fromStdString(version.written)},
-                                    {QStringLiteral("file"), QString::fromStdU16String(version.file.u16string())}};
+                                    {QStringLiteral("time"), QFileInfo(path).lastModified().toString(Qt::ISODate)},
+                                    {QStringLiteral("file"), path}};
+        }
         rows << QVariantMap{{QStringLiteral("name"), QString::fromStdU16String(file.name)},
                             {QStringLiteral("versions"), versions}};
     }
@@ -5531,6 +5681,10 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
     // A changed program font runs HikariSubFrame::DestroyDialogs.
     if (wrote("program.font") || wrote("program.fontSize"))
         destroyDialogs();
+    // PU7 (#309): the Updates page's options, which the update checker holds
+    // (and writes back with its next check's time).
+    if (std::ranges::any_of(written, [](const std::string &id) { return id.starts_with("updater."); }))
+        m_updates->reload();
     // O2: the Hotkeys page's list, a bound control of SetOptions.
     m_hotkeys->commitOptions();
 }

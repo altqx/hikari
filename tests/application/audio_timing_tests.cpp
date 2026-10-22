@@ -8,6 +8,7 @@
 
 #include "hikari/application/audio_timing.h"
 #include "hikari/core/ass_load.h"
+#include "hikari/core/subtitle_load.h"
 
 #include <gtest/gtest.h>
 
@@ -129,6 +130,22 @@ TEST(AudioTiming, FieldTimesKeepTheFormatsPrecision)
     EXPECT_EQ(legacyFieldTime(core::SubtitleFormat::Srt, 1239), 1239);
     EXPECT_EQ(legacyFieldTime(core::SubtitleFormat::Ass, -50), 0);
     EXPECT_EQ(legacyZeroIt(-15), -10); // ZEROIT truncates towards zero
+}
+
+// KA1: the start the commit writes, which karaoke text is written against
+TEST(AudioTiming, TheCommittedTimeIsTheOneTheFieldKeeps)
+{
+    EXPECT_EQ(committedAudioTime(load("[Events]\n"), 999), 990);
+    const std::string_view sub = "{25}{50}text\n";
+    std::vector<std::byte> bytes(sub.size());
+    std::memcpy(bytes.data(), sub.data(), sub.size());
+    auto loaded = core::loadSubtitle(bytes, u8"sub");
+    ASSERT_TRUE(loaded);
+    auto &document = loaded->document;
+    ASSERT_EQ(document.format(), core::SubtitleFormat::MicroDvd);
+    document.setFrameRate(*core::FrameRate::make(25, 1));
+    EXPECT_EQ(committedAudioTime(document, 1001), 1040); // up to the next frame's start
+    EXPECT_EQ(committedAudioTime(document, 1000), 1000);
 }
 
 TEST_F(TimingTest, SnapIsOffByDefaultAndStillDropsTheMilliseconds)
@@ -533,6 +550,125 @@ TEST_F(CommitTest, AnActiveOnlyCommitLeavesTheOtherSelectedLinesAlone)
     EXPECT_EQ(ms(line(2).end.value), 8000);
     EXPECT_EQ(line(2).text, u8"c");
     EXPECT_EQ(lastStep(), "Tap timing");
+}
+
+// KA1: without AUDIO_AUTO_COMMIT the active Line's syllables wait in the
+// draft; a later Commit, from the panel or the editor, sends them to that
+// Line alone (Codex)
+TEST_F(CommitTest, AnActiveOnlyDraftStaysTheActiveLinesWhenCommitted)
+{
+    select({a, c}, a);
+    AudioCommitRequest draft{500, 900, false, false};
+    draft.karaokeText = u"{\\k20}ka{\\k20}ra";
+    draft.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, draft, shown));
+    ASSERT_TRUE(session.draftOwnFields());
+    EXPECT_TRUE(session.draftOwnFields()->text);
+    ASSERT_TRUE(commitAudioTimes(session, {500, 900, true, false}, shown));
+    EXPECT_EQ(line(0).text, u8"{\\k20}ka{\\k20}ra");
+    EXPECT_EQ(ms(line(0).start.value), 500);
+    EXPECT_EQ(line(2).text, u8"c");
+    EXPECT_EQ(ms(line(2).start.value), 6500);
+
+    // the editor's Commit (Send) the same
+    AudioCommitRequest again = draft;
+    again.karaokeText = u"{\\k20}ki{\\k20}ra";
+    ASSERT_TRUE(commitAudioTimes(session, again, shown));
+    ASSERT_TRUE(session.commitDraftToSelected());
+    EXPECT_EQ(line(0).text, u8"{\\k20}ki{\\k20}ra");
+    EXPECT_EQ(line(2).text, u8"c");
+
+    // a draft of the times alone still goes to every selected Line
+    ASSERT_TRUE(commitAudioTimes(session, {700, 900, false, false}, shown));
+    EXPECT_FALSE(session.draftOwnFields()->start);
+    ASSERT_TRUE(commitAudioTimes(session, {700, 900, true, false}, shown));
+    EXPECT_EQ(ms(line(2).start.value), 700);
+
+    // a pending edit for every selected Line keeps its scope when an
+    // active-only text joins the draft (Codex): the Start goes to both, the
+    // syllables to the active Line
+    ASSERT_TRUE(session.editDraft(a, DraftChange{.start = core::DocumentTime(300'000)}));
+    AudioCommitRequest joined{300, 900, false, false};
+    joined.karaokeText = u"{\\k30}ka{\\k30}ru";
+    joined.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, joined, shown));
+    EXPECT_FALSE(session.draftOwnFields()->start);
+    ASSERT_TRUE(commitAudioTimes(session, {300, 900, true, false}, shown));
+    EXPECT_EQ(ms(line(0).start.value), 300);
+    EXPECT_EQ(line(0).text, u8"{\\k30}ka{\\k30}ru");
+    EXPECT_EQ(ms(line(2).start.value), 300);
+    EXPECT_EQ(line(2).text, u8"c");
+
+    // and through the editor's Commit; an active-only time it changes is the
+    // active Line's too, and a later edit of the text shares it again
+    ASSERT_TRUE(session.editDraft(a, DraftChange{.actor = u8"Kara"}));
+    AudioCommitRequest moved{250, 900, false, false};
+    moved.karaokeText = u"{\\k35}ka{\\k30}ru";
+    moved.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, moved, shown));
+    EXPECT_TRUE(session.draftOwnFields()->start);
+    ASSERT_TRUE(session.commitDraftToSelected());
+    EXPECT_EQ(ms(line(0).start.value), 250);
+    EXPECT_EQ(line(0).actor, u8"Kara");
+    EXPECT_EQ(ms(line(2).start.value), 300);
+    EXPECT_EQ(line(2).actor, u8"Kara");
+    EXPECT_EQ(line(2).text, u8"c");
+    ASSERT_TRUE(commitAudioTimes(session, moved, shown));
+    ASSERT_TRUE(session.editDraftText(a, u8"shared"));
+    EXPECT_FALSE(session.draftOwnFields()->text);
+    ASSERT_TRUE(session.commitDraftToSelected());
+    EXPECT_EQ(line(2).text, u8"shared");
+}
+
+// KA1: with AUDIO_AUTO_COMMIT on, an active-only save keeps a pending edit
+// meant for every selected Line (Codex)
+TEST_F(CommitTest, AnActiveOnlySaveKeepsAPendingEditForEverySelectedLine)
+{
+    select({a, c}, a);
+    ASSERT_TRUE(session.editDraft(a, DraftChange{.actor = u8"Kara"}));
+    AudioCommitRequest request{1000, 2000, true, false};
+    request.karaokeText = u"{\\k50}ka{\\k50}ra";
+    request.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, request, shown));
+    EXPECT_EQ(line(0).text, u8"{\\k50}ka{\\k50}ra");
+    EXPECT_EQ(line(0).actor, u8"Kara");
+    EXPECT_EQ(line(2).text, u8"c");
+    EXPECT_EQ(line(2).actor, u8"Kara");
+    EXPECT_EQ(ms(line(2).start.value), 6500);
+}
+
+// KA1: in MicroDVD the authored frames are kept apart too: an End for every
+// selected Line, then an active-only Start (Codex)
+TEST(AudioTimingCommit, AKeptStartFrameLeavesTheSharedEndFrame)
+{
+    const std::string_view sub = "{25}{50}a\n{75}{100}c\n";
+    std::vector<std::byte> bytes(sub.size());
+    std::memcpy(bytes.data(), sub.data(), sub.size());
+    auto loaded = core::loadSubtitle(bytes, u8"sub");
+    ASSERT_TRUE(loaded);
+    loaded->document.setFrameRate(*core::FrameRate::make(25, 1));
+    EditSession session{std::move(loaded->document)};
+    const auto ids = [&] {
+        std::vector<core::LineId> out;
+        for (const auto *l : session.document().lines())
+            out.push_back(l->id);
+        return out;
+    }();
+    session.setSelection(Selection{ids[0], {ids[0], ids[1]}, ids[0], {}});
+    const LineVisible shown;
+    ASSERT_TRUE(commitAudioTimes(session, {1000, 5000, false, false}, shown));
+    AudioCommitRequest start{800, 5000, false, false};
+    start.activeOnly = true;
+    ASSERT_TRUE(commitAudioTimes(session, start, shown));
+    ASSERT_TRUE(commitAudioTimes(session, {800, 5000, true, false}, shown));
+    const auto &first = *session.document().lines()[0];
+    const auto &other = *session.document().lines()[1];
+    EXPECT_EQ(first.startFrame, std::optional<std::int64_t>(20));
+    EXPECT_EQ(first.endFrame, std::optional<std::int64_t>(125));
+    EXPECT_EQ(other.startFrame, std::optional<std::int64_t>(75));
+    EXPECT_EQ(other.endFrame, std::optional<std::int64_t>(125));
+    EXPECT_EQ(ms(other.end.value), 5000);
+    EXPECT_EQ(ms(other.start.value), 3000);
 }
 
 TEST_F(CommitTest, AnEndBeforeTheStartIsBlockedUnlessLegacyCommitsIt)

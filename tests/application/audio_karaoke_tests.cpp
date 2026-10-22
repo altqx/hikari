@@ -12,6 +12,8 @@
 
 #include <gtest/gtest.h>
 
+#include <functional>
+
 #include <QByteArray>
 #include <QFile>
 #include <QJsonArray>
@@ -65,7 +67,7 @@ std::vector<std::string> strings(const std::vector<std::u16string> &values)
 AudioKaraoke split(std::string_view text, int start, int end, bool autoSplit = false, bool everyN = false)
 {
     AudioKaraoke k;
-    k.split({u(text), start, end}, autoSplit, everyN);
+    k.split({u(text), start, end}, autoSplit, KaraokeSplitRules{.everyN = everyN});
     return k;
 }
 
@@ -189,36 +191,71 @@ QJsonArray strs(std::initializer_list<const char *> values)
         out.append(QString::fromUtf8(v));
     return out;
 }
+std::string json(const QJsonValue &value)
+{
+    return QJsonDocument(QJsonArray{value}).toJson(QJsonDocument::Compact).toStdString();
+}
 const std::map<std::pair<std::string, std::string>, Departure> &departures()
 {
     static const std::map<std::pair<std::string, std::string>, Departure> table{
         // legacy kept one time for two syllables and its GetText read past it
         {{"k-unclosed-end", "split"},
          {"A5-kara-unclosed", {{"times", QJsonArray{200, 1000}}, {"text", "{\\k20}ka{\\k80}{0"}}, {}}},
-        // legacy lost "b{c"
-        {{"auto-unclosed", "split"},
-         {"A5-auto-unclosed",
-          {{"syls", strs({"a", "b{c"})}, {"tags", strs({"k", "k"})}, {"times", QJsonArray{500, 1000}},
-           {"stripped", strs({"a", "bb{c"})}, {"text", "{\\k50}a{\\k50}b{c"}},
-          {}}},
         // legacy split "{}o" into "{" and "}o"
         {{"kf-ko-K", "splitsyl 1 1"},
          {"A5-split-last-letter",
           {{"syls", strs({"kara", "{}o", "", "{}ke"})}, {"stripped", strs({"kara", "o", "", "ke"})},
            {"text", "{\\kf50}kara{\\K25}o{\\k25}{\\k40}ke"}},
           {}}},
-        // legacy split "{}ka" into "{}" and "ka", and the next split followed it
-        {{"k-split-end", "splitsyl 0 2"},
-         {"A5-split-last-letter",
-          {{"syls", strs({"{}ka", ""})}, {"stripped", strs({"ka", ""})}, {"text", "{\\k10}ka{\\k10}"}},
-          {}}},
-        {{"k-split-end", "splitsyl 0 0"},
-         {"A5-split-last-letter",
-          {{"syls", strs({"", "{}ka", ""})}, {"stripped", strs({"", "ka", ""})},
-           {"text", "{\\k5}{\\k5}ka{\\k10}"}},
-          {}}},
         {{"letters-quirk", "letters 0 2"}, {"A5-split-last-letter", {}, strs({"{}ka", ""})}},
         {{"letters-quirk", "letters 1 2"}, {"A5-split-last-letter", {}, strs({"{}ra", ""})}},
+        // KA1 (#276): the syllables, times and text the card changes
+        {{"k-with-tags", "split"},
+         {"KA1-k-round-trip", {{"text", "{\\k20\\fs20}ka{\\fs30\\k30}ra{\\k10}{\\i1}o{\\k40}ke{\\i0}"}}, {}}},
+        {{"k-with-tags", "splitsyl 0 2"},
+         {"KA1-k-round-trip, KA1-time-by-character", {{"times", QJsonArray{240, 600, 1000}}, {"text", "{\\k24\\fs20}ka{\\k36\\fs30}ra{\\i1}o{\\k40}ke{\\i0}"}}, {}}},
+        {{"k-leading-text", "split"},
+         {"KA1-k-round-trip", {{"text", "ab{\\k20}cd{\\k30}ef"}}, {}}},
+        {{"k-leading-text", "splitsyl 0 1"},
+         {"KA1-k-round-trip, KA1-time-by-character", {{"times", QJsonArray{550, 700, 1000}}, {"text", "{\\k5}a{\\k15}b{}cd{\\k30}ef"}}, {}}},
+        {{"k-drawing", "split"},
+         {"KA1-k-round-trip", {{"text", "{\\k20\\p1}m 0 0 l 10 0 10 10{\\p0\\k30}ra"}}, {}}},
+        {{"k-drawing", "splitsyl 0 3"},
+         {"KA1-k-round-trip, KA1-time-by-character", {{"times", QJsonArray{30, 200, 500}}, {"text", "{\\k3\\p1}m 0{\\k17} 0 l 10 0 10 10{\\p0\\k30}ra"}}, {}}},
+        // legacy split "{}ka" into "{}" and "ka", and the next split followed it
+        {{"k-split-end", "splitsyl 0 2"},
+         {"A5-split-last-letter, KA1-time-by-character", {{"syls", strs({"{}ka", ""})}, {"times", QJsonArray{130, 200}}, {"stripped", strs({"ka", ""})}, {"text", "{\\k13}ka{\\k7}"}}, {}}},
+        {{"k-split-end", "splitsyl 0 0"},
+         {"A5-split-last-letter, KA1-time-by-character", {{"syls", strs({"", "{}ka", ""})}, {"times", QJsonArray{40, 130, 200}}, {"stripped", strs({"", "ka", ""})}, {"text", "{\\k4}{\\k9}ka{\\k7}"}}, {}}},
+        {{"auto-kara", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{280, 570, 710, 1000}}, {"text", "{\\k28}ka{\\k29}ra{\\k14}o{\\k29}ke"}}, {}}},
+        {{"auto-konnichiwa", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{220, 330, 550, 880, 1110, 1330, 1550, 1770, 2000}}, {"text", "{\\k22}ko{\\k11}n{\\k22}ni{\\k33}chi{\\k23}wa {\\k22}sa{\\k22}yo{\\k22}na{\\k23}ra"}}, {}}},
+        {{"auto-n-everyn-off", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{360, 540, 1090, 1270, 1630, 2000}}, {"text", "{\\k36}ka{\\k18}n{\\k55}tan {\\k18}a{\\k36}ni{\\k37}me"}}, {}}},
+        {{"auto-n-everyn-on", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{540, 1090, 1270, 1630, 2000}}, {"text", "{\\k54}kan{\\k55}tan {\\k18}a{\\k36}ni{\\k37}me"}}, {}}},
+        {{"auto-punct", "split"},
+         {"KA1-auto-split-language, KA1-time-by-character", {{"syls", strs({"hello, ", "world! ", "\"quoted\" ", "end."})}, {"tags", strs({"k", "k", "k", "k"})}, {"times", QJsonArray{780, 1570, 2520, 3000}}, {"stripped", strs({"hello, ", "world! ", "\"quoted\" ", "end."})}, {"text", "{\\k78}hello, {\\k79}world! {\\k95}\"quoted\" {\\k48}end."}}, {}}},
+        {{"auto-breaks", "split"},
+         {"KA1-auto-split-language, KA1-time-by-character", {{"syls", strs({"ka\\N", "ra\\h", "o", "ke\\n", "end"})}, {"tags", strs({"k", "k", "k", "k", "k"})}, {"times", QJsonArray{400, 800, 1000, 1400, 2000}}, {"stripped", strs({"ka\\N", "ra\\h", "o", "ke\\n", "end"})}, {"text", "{\\k40}ka\\N{\\k40}ra\\h{\\k20}o{\\k40}ke\\n{\\k60}end"}}, {}}},
+        {{"auto-tags", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{280, 570, 710, 1000}}, {"text", "{\\k28\\b1}ka{\\k29\\b0}ra {\\k14\\i1}o{\\k29}ke{\\i0}"}}, {}}},
+        // legacy lost "b{c"; KA1 reads "ab" as no romaji, one word
+        {{"auto-unclosed", "split"},
+         {"A5-auto-unclosed, KA1-auto-split-language", {{"syls", strs({"ab{c"})}, {"stripped", strs({"abab{c"})}, {"text", "{\\k100}ab{c"}}, {}}},
+        {{"auto-uppercase", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{180, 360, 450, 630, 810, 1000}}, {"text", "{\\k18}KA{\\k18}RA{\\k9}O{\\k18}KE {\\k18}Na{\\k19}ni"}}, {}}},
+        {{"manual-spaces", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{370, 750, 870, 1500}}, {"text", "{\\k37}one {\\k38}two {\\k12} {\\k63}three"}}, {}}},
+        {{"manual-breaks", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{400, 800, 1460, 2000}}, {"text", "{\\k40}one\\N{\\k40}two\\h{\\k66}three\\n{\\k54}four"}}, {}}},
+        {{"manual-tags", "split"},
+         {"KA1-time-by-character", {{"times", QJsonArray{240, 490, 900}}, {"text", "{\\k24\\b1}one {\\k25\\i1}two{\\i0} {\\k41}three"}}, {}}},
+        {{"manual-tags", "splitsyl 1 1"},
+         {"KA1-time-by-character", {{"times", QJsonArray{240, 320, 490, 900}}, {"text", "{\\k24\\b1}one {\\k8\\i1}t{\\k17}wo{\\i0} {\\k41}three"}}, {}}},
+        {{"manual-nonascii", "split"},
+         {"KA1-auto-split-language, KA1-time-by-character", {{"syls", strs({"\xC5\xBC\xC3\xB3\xC5\x82w ", "\xC3\xA9 ", "caf\xC3\xA9 ", "na\xC3\xAFve"})}, {"tags", strs({"k", "k", "k", "k"})}, {"times", QJsonArray{280, 350, 640, 1000}}, {"stripped", strs({"\xC5\xBC\xC3\xB3\xC5\x82w ", "\xC3\xA9 ", "caf\xC3\xA9 ", "na\xC3\xAFve"})}, {"text", "{\\k28}\xC5\xBC\xC3\xB3\xC5\x82w {\\k7}\xC3\xA9 {\\k29}caf\xC3\xA9 {\\k36}na\xC3\xAFve"}}, {}}},
     };
     return table;
 }
@@ -246,7 +283,7 @@ TEST(AudioKaraokeCapture, ReplaysTheLegacyObservations)
         SCOPED_TRACE(c.name);
         const auto ops = observed.at(c.name);
         AudioKaraoke k;
-        k.split({u(c.tl.empty() ? c.text : c.tl), c.start, c.end}, c.autoSplit, c.everyN);
+        k.split({u(c.tl.empty() ? c.text : c.tl), c.start, c.end}, c.autoSplit, KaraokeSplitRules{.everyN = c.everyN});
         int curStart = c.start;
         auto compare = [&](const QJsonObject &expected, const std::string &op, const QJsonValue &result) {
             SCOPED_TRACE(op);
@@ -258,7 +295,8 @@ TEST(AudioKaraokeCapture, ReplaysTheLegacyObservations)
                 SCOPED_TRACE(d.name);
                 ++departed;
                 for (auto it = d.state.begin(); it != d.state.end(); ++it) {
-                    EXPECT_EQ(actual[it.key()], it.value()) << it.key().toStdString();
+                    EXPECT_NE(legacy[it.key()], it.value()) << it.key().toStdString(); // the premise
+                    EXPECT_EQ(json(actual[it.key()]), json(it.value())) << it.key().toStdString();
                     actual.remove(it.key());
                     legacy.remove(it.key());
                 }
@@ -343,9 +381,9 @@ TEST(AudioKaraoke, TagsAndDrawingsStayWithTheirSyllables)
     auto k = split("{\\k20\\p1}m 0 0 l 10 0 10 10{\\p0\\k30}ra", 0, 1000);
     EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"{\\p1}m 0 0 l 10 0 10 10", "{\\p0}ra"}));
     EXPECT_EQ(s(k.stripped(0)), "m 0 0 l 10 0 10 10"); // a drawing is text to the splitter
-    EXPECT_EQ(s(k.text(0)), "{\\k20\\p1}m 0 0 l 10 0 10 10{\\k30\\p0}ra");
-    // a tag before the \k comes back after it
-    EXPECT_EQ(s(split("{\\fs30\\k30}ra", 0, 1000).text(0)), "{\\k30\\fs30}ra");
+    // KA1-k-round-trip (legacy put each \k first in its block)
+    EXPECT_EQ(s(k.text(0)), "{\\k20\\p1}m 0 0 l 10 0 10 10{\\p0\\k30}ra");
+    EXPECT_EQ(s(split("{\\fs30\\k30}ra", 0, 1000).text(0)), "{\\fs30\\k30}ra");
 }
 
 TEST(AudioKaraoke, JoinTakesTheNextSyllableAndDropsEmptyBlocks)
@@ -362,13 +400,43 @@ TEST(AudioKaraoke, JoinTakesTheNextSyllableAndDropsEmptyBlocks)
     EXPECT_EQ(k.count(), 2);
 }
 
-TEST(AudioKaraoke, SplittingASyllableHalvesItsTime)
+// KA2's taps replace the syllables: their tags go in their own places,
+// not where the Line's read ones were (KA1-k-round-trip)
+// Codex: a hovered letter is the reading's it was found in; another Line's
+// (or the same Line read again) has none until the pointer moves
+TEST(AudioKaraoke, ANewReadingHasNoHoveredLetter)
+{
+    auto k = split("{\\k30}hana{\\k20}ka", 1000, 2000);
+    k.hover = 0;
+    k.character = 1;
+    k.split({u"{\\k30}h{\\k20}ana", 1000, 2000}, false, {});
+    EXPECT_EQ(k.hover, -1);
+    EXPECT_EQ(k.character, -1);
+}
+
+TEST(AudioKaraoke, AssignedSyllablesTakeTheirOwnPlaces)
+{
+    AudioKaraoke k;
+    k.split({u"{\\b1}ki{\\k30}mi{\\k40}no", 0, 1000}, false, {});
+    k.assign({u"ki", u"mi", u"no"}, {u"k", u"k", u"kf"}, {150, 400, 1000});
+    EXPECT_EQ(s(k.text(0)), "{\\k15}ki{\\k25}mi{\\kf60}no");
+}
+
+TEST(AudioKaraoke, SplittingASyllableSharesItsTimeByCharacter)
 {
     auto k = split("{\\k25}kara", 0, 1000);
     ASSERT_TRUE(k.splitSyllable(0, 2, 0));
     EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"{}ka", "ra"}));
-    EXPECT_EQ(k.times(), (std::vector<int>{120, 250})); // ZEROIT(0 + 250 / 2)
+    EXPECT_EQ(k.times(), (std::vector<int>{120, 250})); // ZEROIT(0 + 250 * 2 / 4)
     EXPECT_EQ(s(k.text(0)), "{\\k12}ka{\\k13}ra");
+    // KA1-time-by-character (legacy: half way, 120)
+    auto by = split("{\\k30}sakura", 0, 1000);
+    ASSERT_TRUE(by.splitSyllable(0, 2, 0));
+    EXPECT_EQ(by.times(), (std::vector<int>{100, 300})); // "sa" of "sakura": 2 of 6
+    auto spaces = split("{\\k40}ka, ra", 0, 1000); // spaces and punctuation take none
+    ASSERT_TRUE(spaces.splitSyllable(0, 4, 0));
+    EXPECT_EQ(strings(spaces.syllables()), (std::vector<std::string>{"{}ka, ", "ra"}));
+    EXPECT_EQ(spaces.times(), (std::vector<int>{200, 400}));
     // the letter count skips blocks; nothing to split in an empty syllable
     ASSERT_TRUE(k.splitSyllable(0, 0, 0));
     EXPECT_EQ(s(k.syllables()[0]), "");
@@ -403,7 +471,8 @@ TEST(AudioKaraoke, AutomaticAndSpaceSplits)
     // spaces, and \N \h \n, end a syllable; the last ends at the Line's end
     const auto manual = split("one two\\Nthree", 0, 1000);
     EXPECT_EQ(strings(manual.syllables()), (std::vector<std::string>{"one ", "two\\N", "three"}));
-    EXPECT_EQ(manual.times(), (std::vector<int>{330, 660, 1000}));
+    // KA1-time-by-character (legacy: a third each, 330 660)
+    EXPECT_EQ(manual.times(), (std::vector<int>{270, 540, 1000}));
     // a Line without a split is one syllable
     EXPECT_EQ(strings(split("x", 0, 500).syllables()), std::vector<std::string>{"x"});
     // \k without a digit is not karaoke
@@ -418,7 +487,7 @@ TEST(AudioKaraoke, TheCharacterClassesComeFromTheCaller)
     AudioKaraoke k;
     auto classes = KaraokeCharClass::ascii();
     classes.punct = [](char16_t c) { return c == u'·' || KaraokeCharClass::ascii().punct(c); };
-    k.split({u("ka\xC2\xB7ra"), 0, 1000}, true, false, classes);
+    k.split({u("ka\xC2\xB7ra"), 0, 1000}, true, {}, classes);
     EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"ka\xC2\xB7", "ra"}));
 }
 
@@ -429,8 +498,9 @@ TEST(AudioKaraoke, DeparturesAndKeptLosses)
     EXPECT_EQ(unclosed.times(), (std::vector<int>{200, 1000}));
     EXPECT_EQ(unclosed.tags().size(), 2u);
     // A5-auto-unclosed (approved): an unclosed block stays in the last
-    // syllable (legacy lost it: "{\k100}a")
-    EXPECT_EQ(s(split("ab{c", 0, 1000, true).text(0)), "{\\k50}a{\\k50}b{c");
+    // syllable (legacy lost it: "ab{c" gave "{\k100}a"; KA1 reads "ab" as no
+    // romaji, one syllable)
+    EXPECT_EQ(s(split("ab{c", 0, 1000, true).text(0)), "{\\k100}ab{c");
     EXPECT_EQ(s(split("kara{c", 0, 1000, true).text(0)), "{\\k50}ka{\\k50}ra{c");
     EXPECT_EQ(s(split("ka{c", 0, 1000, true).text(0)), "{\\k100}ka{c"); // no split: the whole text, as legacy
     EXPECT_EQ(s(split("ab{c", 0, 1000, false).text(0)), "{\\k100}ab{c");
@@ -445,9 +515,9 @@ TEST(AudioKaraoke, TheSplitComparesTheCallersLowerCase)
     auto classes = KaraokeCharClass::ascii();
     classes.lower = [](char16_t c) { return c == u'\u0130' ? u'i' : KaraokeCharClass::ascii().lower(c); };
     AudioKaraoke k; // "İKİ": İ lowers to i, a vowel
-    k.split({u"\u0130K\u0130", 0, 900}, true, false, classes);
+    k.split({u"\u0130K\u0130", 0, 900}, true, {}, classes);
     EXPECT_EQ(strings(k.syllables()), (std::vector<std::string>{"\xC4\xB0", "K\xC4\xB0"}));
-    k.split({u"\u0130K\u0130", 0, 900}, true, false);
+    k.split({u"\u0130K\u0130", 0, 900}, true, {});
     EXPECT_EQ(k.count(), 1);
 }
 
@@ -598,6 +668,7 @@ struct KaraokeMouseTest : ::testing::Test {
     AudioKaraoke karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3000, 6000);
     bool on = true;
     bool moveOnClick = false;
+    std::function<int(int)> fieldTime;
     std::vector<int> onsets; // KA5: snapping on with these onsets
 
     void SetUp() override { timing.drawn(view, selection); }
@@ -605,7 +676,7 @@ struct KaraokeMouseTest : ::testing::Test {
     {
         AudioKaraokeMouse kara;
         if (on)
-            kara = {&karaoke, moveOnClick, sevenPixels(), onsets};
+            kara = {&karaoke, moveOnClick, sevenPixels(), fieldTime, onsets};
         auto result = timing.mouse(event, view, selection, snap, options, 16, kara);
         timing.drawn(view, selection);
         return result;
@@ -696,11 +767,33 @@ TEST_F(KaraokeMouseTest, AClickOnTheLettersSplitsTheSyllable)
     EXPECT_EQ(karaoke.times(), (std::vector<int>{3600, 4050, 4500, 6000}));
     EXPECT_EQ(karaoke.current, 1);
     EXPECT_EQ(r.commit, std::optional(false));
+    EXPECT_TRUE(r.keepView); // KA1-split-keeps-view: the view stays where it is
     // below the letters the cursor is drawn again
     r = send(drag(134, AudioMouse::Button::None, 50));
     EXPECT_FALSE(r.hideCursor);
     EXPECT_EQ(karaoke.hover, -1);
     EXPECT_EQ(karaoke.character, -1);
+}
+
+// KA1 (Codex): after a start the format moves (3010 committed as 3040), a
+// click on a letter divides the syllable's time from the committed start,
+// as the text is written
+TEST_F(KaraokeMouseTest, AClickSplitsFromTheCommittedStart)
+{
+    fieldTime = [](int ms) { return (ms + 39) / 40 * 40; };
+    karaoke = split("{\\k56}ka{\\k90}ra{\\k150}oke", 3040, 6000);
+    selection.startMs = 3010;
+    timing.drawn(view, selection);
+    int x = 100;
+    for (; x < 120; x++) {
+        send(drag(x, AudioMouse::Button::None, 10));
+        if (karaoke.hover == 0 && karaoke.character == 1)
+            break;
+    }
+    ASSERT_LT(x, 120);
+    send(press(x, 10));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3320, 3600, 4500, 6000})); // half of 3040-3600
+    EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))), "{\\k28}k{\\k28}a{\\k90}ra{\\k150}oke");
 }
 
 TEST_F(KaraokeMouseTest, AClickChoosesTheSyllableARightClickPlaysIt)
@@ -770,6 +863,98 @@ TEST_F(KaraokeMouseTest, TheStartIsGrabbedBeforeTheSyllables)
     send(drag(90));
     EXPECT_EQ(selection.startMs, 2700);
     EXPECT_EQ(karaoke.times()[0], 3600); // the left button leaves the syllables
+    // KA1-lead-in-keeps-syllables: on the release the time before them is a
+    // lead syllable (legacy: the first syllable took it)
+    auto r = send(release(90));
+    EXPECT_TRUE(r.commit);
+    EXPECT_EQ(strings(karaoke.syllables()), (std::vector<std::string>{"", "{}ka", "{}ra", "{}oke"}));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3000, 3600, 4500, 6000}));
+    EXPECT_EQ(s(karaoke.text(selection.startMs)), "{\\k30}{\\k60}ka{\\k90}ra{\\k150}oke");
+    // and later again: the lead syllable goes
+    send(press(90));
+    send(drag(100));
+    send(release(100));
+    EXPECT_EQ(s(karaoke.text(selection.startMs)), "{\\k60}ka{\\k90}ra{\\k150}oke");
+}
+
+TEST_F(KaraokeMouseTest, TheRightButtonCarriesTheSyllablesWithTheStart)
+{
+    send(press(100, 50, AudioMouse::Button::Right));
+    send(drag(90, AudioMouse::Button::Right));
+    send(release(90, AudioMouse::Button::Right));
+    EXPECT_EQ(selection.startMs, 2700);
+    EXPECT_EQ(karaoke.count(), 3); // no lead syllable: they moved with it
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3300, 4200, 6000}));
+}
+
+// KA1: the syllables move by the start the field commits, not by the
+// dragged one (here a field of whole seconds, and one of tenths).
+TEST_F(KaraokeMouseTest, TheSyllablesMoveByTheCommittedStart)
+{
+    fieldTime = [](int ms) { return ms / 1000 * 1000; };
+    send(press(100));
+    send(drag(132));
+    send(release(132));
+    EXPECT_EQ(selection.startMs, 3960); // committed as 3000: the syllables stay
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3600, 4500, 6000}));
+    EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))), "{\\k60}ka{\\k90}ra{\\k150}oke");
+    send(press(132));
+    send(drag(140));
+    send(release(140));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{4000, 4500, 6000})); // committed as 4000
+    fieldTime = [](int ms) { return ms / 100 * 100; };
+    karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3000, 6000);
+    selection.startMs = 3000;
+    timing.drawn(view, selection);
+    send(press(100, 50, AudioMouse::Button::Right));
+    send(drag(101, AudioMouse::Button::Right)); // 3030, committed as 3000
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3600, 4500, 6000}));
+    send(drag(104, AudioMouse::Button::Right)); // 3120, committed as 3100
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3700, 4600, 6000}));
+    send(release(104, AudioMouse::Button::Right));
+    EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))), "{\\k60}ka{\\k90}ra{\\k140}oke");
+}
+
+// KA1 (Codex): a start off the 10 ms grid (a 24000/1001 frame's) carried by
+// the right button keeps the syllables' lengths: the boundaries move by the
+// committed difference and are not cut to whole centiseconds
+TEST_F(KaraokeMouseTest, TheRightButtonKeepsTheLengthsOffTheCentisecondGrid)
+{
+    fieldTime = [](int ms) { return ms / 42 * 42; };
+    karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3024, 6024);
+    selection.startMs = 3024;
+    timing.drawn(view, selection);
+    send(press(101, 50, AudioMouse::Button::Right));
+    send(drag(103, AudioMouse::Button::Right)); // 3090, committed as 3066
+    send(release(103, AudioMouse::Button::Right));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3666, 4566, 6024}));
+    EXPECT_EQ(s(karaoke.text(fieldTime(selection.startMs))).substr(0, 19), "{\\k60}ka{\\k90}ra{\\k");
+}
+
+// KA1 (Codex): a start drag cut short (the capture lost) leaves the
+// syllables at their times, as its release does
+TEST_F(KaraokeMouseTest, ALostCaptureKeepsTheSyllablesAsAReleaseDoes)
+{
+    send(press(102));
+    send(drag(130));
+    EXPECT_EQ(selection.startMs, 3900);
+    EXPECT_EQ(karaoke.times()[0], 3600);
+    EXPECT_FALSE(timing.lostCapture(selection.startMs, {&karaoke, moveOnClick, sevenPixels(), fieldTime}));
+    EXPECT_EQ(timing.hold(), 0);
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3900, 4500, 6000}));
+    EXPECT_EQ(s(karaoke.text(selection.startMs)), "{\\k0}ka{\\k60}ra{\\k150}oke");
+    // the right button's: the syllables stay carried, and the caller is told
+    // to commit them as the release would
+    karaoke = split("{\\k60}ka{\\k90}ra{\\k150}oke", 3000, 6000);
+    selection.startMs = 3000;
+    timing.drawn(view, selection);
+    send(press(100, 50, AudioMouse::Button::Right));
+    send(drag(104, AudioMouse::Button::Right));
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3720, 4620, 6000}));
+    EXPECT_TRUE(timing.lostCapture(selection.startMs, {&karaoke, moveOnClick, sevenPixels(), fieldTime}));
+    EXPECT_EQ(timing.hold(), 0);
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3720, 4620, 6000}));
+    EXPECT_FALSE(timing.lostCapture(selection.startMs, {&karaoke, moveOnClick, sevenPixels(), fieldTime}));
 }
 
 TEST_F(KaraokeMouseTest, AStaleGrabKeepsTheSelectionAsItIs)
@@ -786,7 +971,8 @@ TEST_F(KaraokeMouseTest, AStaleGrabKeepsTheSelectionAsItIs)
     r = send(up);
     EXPECT_EQ(selection.startMs, -150); // legacy: no ZEROIT, no clamp, no Alt neighbour
     EXPECT_EQ(r.adjacent, AudioAdjacent::None);
-    EXPECT_EQ(karaoke.times(), std::vector<int>{6000});
+    // KA1-lead-in-keeps-syllables: the time before the old start is a lead syllable
+    EXPECT_EQ(karaoke.times(), (std::vector<int>{3000, 6000}));
     // and without karaoke too, until the karaoke rows see no boundary
     auto restart = [&] {
         selection.startMs = 3000;
@@ -932,6 +1118,33 @@ TEST_F(KaraokeCommitTest, SeveralSelectedLinesAllTakeTheText)
     ASSERT_TRUE(commitAudioTimes(session, request, shown));
     EXPECT_EQ(line(0).text, u8"{\\k300}karaoke");
     EXPECT_EQ(line(1).text, u8"{\\k300}karaoke"); // SubsGrid::ChangeLine over the selection
+}
+
+// KA1-lead-in-keeps-syllables in Line mode: a start moved on the audio keeps
+// the \k syllables of the one Line at their audio times.
+TEST(KaraokeCommit, AMovedStartKeepsTheLinesSyllables)
+{
+    EditSession session{load("[Events]\n"
+                             "Dialogue: 0,0:00:03.00,0:00:06.00,Default,,0,0,0,,{\\k100}ka{\\k200}ra\n"
+                             "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,{\\k100}ka\n")};
+    const auto a = session.document().lines()[0]->id, b = session.document().lines()[1]->id;
+    const LineVisible shown = [](core::LineId) { return true; };
+    session.setSelection(Selection{a, {a}, a, {}});
+    AudioCommitRequest request{2500, 6000, true, false};
+    ASSERT_TRUE(commitAudioTimes(session, request, shown));
+    EXPECT_EQ(session.document().lines()[0]->text, u8"{\\k50}{\\k100}ka{\\k200}ra");
+    request.startMs = 3500; // later: the lead syllable goes, ka shortens
+    ASSERT_TRUE(commitAudioTimes(session, request, shown));
+    EXPECT_EQ(session.document().lines()[0]->text, u8"{\\k50}ka{\\k200}ra");
+    request.endMs = 6500; // the end alone leaves the text
+    ASSERT_TRUE(commitAudioTimes(session, request, shown));
+    EXPECT_EQ(session.document().lines()[0]->text, u8"{\\k50}ka{\\k200}ra");
+    // with several Lines selected their texts stay as they are
+    session.setSelection(Selection{a, {a, b}, a, {}});
+    request.startMs = 3000;
+    ASSERT_TRUE(commitAudioTimes(session, request, shown));
+    EXPECT_EQ(session.document().lines()[0]->text, u8"{\\k50}ka{\\k200}ra");
+    EXPECT_EQ(session.document().lines()[1]->text, u8"{\\k100}ka");
 }
 
 TEST(KaraokeCommit, ATranslatedFileTakesItInTheTranslation)

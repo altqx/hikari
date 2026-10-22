@@ -12,6 +12,8 @@ target_sources(hikari_application PRIVATE audio_devices.cpp include/hikari/appli
 target_sources(hikari_application PRIVATE audio_playback.cpp)
 # A5: the audio box's karaoke mode.
 target_sources(hikari_application PRIVATE audio_karaoke.cpp)
+# KA1 (#276): Karaoke's language-aware Auto split.
+target_sources(hikari_application PRIVATE karaoke_split.cpp include/hikari/application/karaoke_split.h)
 # KA2 (#277): tap-to-time karaoke timing and the latency calibration.
 target_sources(hikari_application PRIVATE karaoke_tap.cpp include/hikari/application/karaoke_tap.h)
 # KA5 (#280): vocal onsets for snapping syllable boundaries.

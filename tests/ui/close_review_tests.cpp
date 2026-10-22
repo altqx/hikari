@@ -7,12 +7,15 @@
 #include "hikari/app/application.h"
 #include "docking.h"
 
+#include <QDir>
 #include <QFile>
+#include <QFileInfo>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTemporaryDir>
+#include <QUrl>
 #include <QtQml/qqmlextensionplugin.h>
 #include <QtTest>
 
@@ -77,6 +80,27 @@ class CloseReviewTests : public QObject {
         return !a.workspace().editingTarget() && a.workspace().documents().empty() && a.tabs().isEmpty();
     }
 
+    // An object by name: a QObject child, else an item (a view's rows).
+    static QQuickItem *itemNamed(QQuickItem *from, const QString &name)
+    {
+        if (from->objectName() == name)
+            return from;
+        for (QQuickItem *child : from->childItems())
+            if (QQuickItem *found = itemNamed(child, name))
+                return found;
+        return nullptr;
+    }
+    static QObject *find(QQuickWindow *window, const char *name)
+    {
+        if (QObject *found = window->findChild<QObject *>(QLatin1String(name)))
+            return found;
+        for (QWindow *w : QGuiApplication::allWindows())
+            if (auto *quick = qobject_cast<QQuickWindow *>(w))
+                if (QQuickItem *found = itemNamed(quick->contentItem(), QLatin1String(name)))
+                    return found;
+        return nullptr;
+    }
+
 private slots:
     void aCleanDocumentClosesWithoutReview()
     {
@@ -120,6 +144,30 @@ private slots:
         QVERIFY(readAll(path).contains(",,saved"));
     }
 
+    // PU1-unsaved-window: one Document's question closes at its answer, so
+    // another tab can be chosen while the save is written: the reviewed
+    // tab closes, the chosen one stays.
+    void theReviewedTabClosesThoughAnotherWasChosenMeanwhile()
+    {
+        app::Application a;
+        const QString path = writeFile(dir, "reviewed.ass", "x");
+        QVERIFY(a.openFile(path));
+        const auto reviewed = *a.workspace().editingTarget();
+        edit(a, u8"saved");
+        QSignalSpy finished(&a, &app::Application::closeFinished);
+        a.resolveClose(choose(a.reviewClose(QStringLiteral("close")), true));
+        a.addPage();
+        const auto other = *a.workspace().editingTarget();
+        QVERIFY(other != reviewed);
+        a.waitForWrites();
+        QTRY_COMPARE(finished.size(), 1);
+        QVERIFY(finished.first().at(0).toBool());
+        QVERIFY(!a.files().session(reviewed));
+        QVERIFY(a.files().session(other));
+        QCOMPARE(a.workspace().editingTarget(), std::optional(other));
+        QVERIFY(readAll(path).contains(",,saved"));
+    }
+
     void newerEditsAfterTheChoiceKeepTheDocumentOpen()
     {
         app::Application a;
@@ -150,6 +198,73 @@ private slots:
         QTRY_COMPARE(finished.size(), 1);
         QVERIFY(!finished.first().at(0).toBool());
         QVERIFY(a.workspace().editingTarget());
+    }
+
+    // A save that failed shows the review again: its retry closes the
+    // reviewed tab, not one chosen meanwhile.
+    void aRetryAfterAFailedSaveClosesTheReviewedTab()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "retry.ass", "x")));
+        a.closeEditingTarget();
+        a.reviewClose(QStringLiteral("new"));
+        a.finishClose(); // an Untitled Document
+        edit(a, u8"unsaved");
+        const auto reviewed = *a.workspace().editingTarget();
+        QSignalSpy finished(&a, &app::Application::closeFinished);
+        const QVariantList rows = a.reviewClose(QStringLiteral("close"));
+        a.resolveClose(choose(rows, true, dir.filePath(QStringLiteral("no-such-dir/retry.ass"))));
+        a.addPage();
+        const auto other = *a.workspace().editingTarget();
+        edit(a, u8"other work");
+        a.waitForWrites();
+        QTRY_COMPARE(finished.size(), 1);
+        QVERIFY(!finished.first().at(0).toBool());
+        const QString good = dir.filePath(QStringLiteral("retried.ass"));
+        a.resolveClose(choose(rows, true, good));
+        a.waitForWrites();
+        QTRY_COMPARE(finished.size(), 2);
+        QVERIFY(finished.at(1).at(0).toBool());
+        QVERIFY(!a.files().session(reviewed));
+        QVERIFY(a.files().session(other));
+        QVERIFY(target(a)->isDirty());
+        QVERIFY(readAll(good).contains(",,unsaved"));
+    }
+
+    // Two Untitled rows: the second's picker doesn't start on the file
+    // picked for the first (both would save to it).
+    void eachUntitledRowStartsWithoutTheFileBefore()
+    {
+        app::Application a;
+        a.addPage();
+        edit(a, u8"first work");
+        a.addPage();
+        edit(a, u8"second work");
+        QQmlApplicationEngine engine;
+        hikari::ui::attachDocking(engine);
+        engine.setInitialProperties(a.qmlProperties());
+        engine.loadFromModule("Hikari.Ui", "Main");
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        window->close();
+        QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeReview")));
+        const auto named = [window](const char *name) { return find(window, name); };
+        QTRY_VERIFY(named("closeSaveAndClose"));
+        QVERIFY(QMetaObject::invokeMethod(named("closeSaveAndClose"), "clicked"));
+        QObject *picker = named("closeSaveAs");
+        QTRY_VERIFY(picker->property("visible").toBool());
+        const QUrl first = QUrl::fromLocalFile(dir.filePath(QStringLiteral("first.ass")));
+        picker->setProperty("selectedFile", first);
+        QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
+        QTRY_VERIFY(picker->property("visible").toBool()); // the second row's turn
+        QVERIFY(picker->property("selectedFile").toUrl() != first);
+        picker->setProperty("selectedFile", QUrl::fromLocalFile(dir.filePath(QStringLiteral("second.ass"))));
+        QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
+        QMetaObject::invokeMethod(picker, "close");
+        QTRY_VERIFY(a.quitApproved());
+        a.waitForWrites();
+        QVERIFY(readAll(dir.filePath(QStringLiteral("first.ass"))).contains("first work"));
+        QVERIFY(readAll(dir.filePath(QStringLiteral("second.ass"))).contains("second work"));
     }
 
     void cancelKeepsEverything()
@@ -222,10 +337,11 @@ private slots:
         QVERIFY(QTest::qWaitForWindowExposed(window));
         window->close();
         QVERIFY(window->isVisible());
-        auto *review = window->findChild<QQuickWindow *>(QStringLiteral("closeReview"));
-        QVERIFY(review);
+        // PU1-unsaved-window: one Document is asked about in a message box.
+        QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeQuestion")));
+        auto *review = window->findChild<QQuickWindow *>(QStringLiteral("closeQuestion"));
         QTRY_VERIFY(review->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(review->findChild<QObject *>(QStringLiteral("closeDiscardAll")), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(review, "answer", Q_ARG(QVariant, QStringLiteral("discard"))));
         QTRY_VERIFY(a.quitApproved());
         QTRY_VERIFY(!window->isVisible());
     }
@@ -253,16 +369,97 @@ private slots:
         };
         QVERIFY(panelsOpen());
         window->close();
-        auto *review = window->findChild<QQuickWindow *>(QStringLiteral("closeReview"));
-        QVERIFY(review);
+        QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeQuestion")));
+        auto *review = window->findChild<QQuickWindow *>(QStringLiteral("closeQuestion"));
         QTRY_VERIFY(review->isVisible());
         QVERIFY(window->isVisible());
         QVERIFY(panelsOpen());
-        QVERIFY(QMetaObject::invokeMethod(review->findChild<QObject *>(QStringLiteral("closeCancel")), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(review, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!review->isVisible());
         QVERIFY(!a.quitApproved());
         QVERIFY(window->isVisible());
         QVERIFY(panelsOpen());
+    }
+
+    // PU1-unsaved-window: several Documents are reviewed in one window, a
+    // row each with its folder and a Save / Don't save switch; the count says
+    // what the button does, and the buttons are named for the command.
+    void severalDocumentsAreReviewedInTheWindow()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "first.ass", "x")));
+        edit(a, u8"one");
+        QVERIFY(a.openFile(writeFile(dir, "second.ass", "x")));
+        a.selectTab(1);
+        edit(a, u8"two");
+        QQmlApplicationEngine engine;
+        hikari::ui::attachDocking(engine);
+        engine.setInitialProperties(a.qmlProperties());
+        engine.loadFromModule("Hikari.Ui", "Main");
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        window->close();
+        QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeReview")));
+        auto *review = window->findChild<QQuickWindow *>(QStringLiteral("closeReview"));
+        QTRY_VERIFY(review->isVisible());
+        QCOMPARE(review->title(), QStringLiteral("Quit"));
+        const auto named = [review](const char *name) { return find(review, name); };
+        QCOMPARE(named("closeReviewText")->property("text").toString(),
+                 QStringLiteral("Save the changes to 2 documents before quitting?"));
+        QTRY_VERIFY(named("closeFolder1"));
+        QCOMPARE(named("closeFolder0")->property("text").toString(), QDir::toNativeSeparators(dir.path()));
+        QCOMPARE(named("closeReviewCount")->property("text").toString(), QStringLiteral("Saves 2 · Discards 0"));
+        QCOMPARE(named("closeSaveAndClose")->property("text").toString(), QStringLiteral("Save and quit"));
+        QCOMPARE(named("closeWithoutSaving")->property("text").toString(), QStringLiteral("Quit without saving"));
+        // The second row set to Don't save: only the first is written.
+        QVERIFY(QMetaObject::invokeMethod(named("closeDiscard1"), "clicked"));
+        QTRY_COMPARE(named("closeReviewCount")->property("text").toString(), QStringLiteral("Saves 1 · Discards 1"));
+        QVERIFY(QMetaObject::invokeMethod(named("closeSaveAndClose"), "clicked"));
+        QTRY_VERIFY(a.quitApproved());
+        a.waitForWrites();
+        QVERIFY(readAll(dir.filePath(QStringLiteral("first.ass"))).contains("one"));
+        QVERIFY(!readAll(dir.filePath(QStringLiteral("second.ass"))).contains("two"));
+    }
+
+    // An Untitled Document set to Save asks for its file with the picker,
+    // titled for it, when Save and quit is pressed; then everything is written.
+    void anUntitledRowAsksForItsFileInTurn()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "named.ass", "x")));
+        edit(a, u8"named work");
+        a.addPage();
+        edit(a, u8"new work");
+        QQmlApplicationEngine engine;
+        hikari::ui::attachDocking(engine);
+        engine.setInitialProperties(a.qmlProperties());
+        engine.loadFromModule("Hikari.Ui", "Main");
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+        QVERIFY(QTest::qWaitForWindowExposed(window));
+        window->close();
+        QTRY_VERIFY(window->findChild<QQuickWindow *>(QStringLiteral("closeReview")));
+        auto *review = window->findChild<QQuickWindow *>(QStringLiteral("closeReview"));
+        QTRY_VERIFY(review->isVisible());
+        const auto named = [window](const char *name) { return find(window, name); };
+        QTRY_VERIFY(named("closeFolder1"));
+        QCOMPARE(named("closeFolder1")->property("text").toString(), QStringLiteral("Not saved yet"));
+        QVERIFY(named("closeChooseFile1")->property("visible").toBool());
+        QVERIFY(!named("closeChooseFile0")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("closeSaveAndClose"), "clicked"));
+        QObject *picker = named("closeSaveAs");
+        QTRY_VERIFY(picker->property("visible").toBool());
+        QCOMPARE(picker->property("title").toString(), QStringLiteral("Save “Untitled” as"));
+        QVERIFY(!a.quitApproved()); // nothing written before the file is chosen
+        // A name without the extension gets the format's, as Save as gives it.
+        const QString chosen = dir.filePath(QStringLiteral("chosen.ass"));
+        picker->setProperty("selectedFile", QUrl::fromLocalFile(dir.filePath(QStringLiteral("chosen"))));
+        QVERIFY(QMetaObject::invokeMethod(picker, "accepted"));
+        QMetaObject::invokeMethod(picker, "close");
+        QTRY_VERIFY(a.quitApproved());
+        a.waitForWrites();
+        QVERIFY(readAll(chosen).contains("new work"));
+        QVERIFY(!QFileInfo::exists(dir.filePath(QStringLiteral("chosen"))));
+        QVERIFY(readAll(dir.filePath(QStringLiteral("named.ass"))).contains("named work"));
     }
 };
 

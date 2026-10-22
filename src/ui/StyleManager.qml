@@ -37,9 +37,15 @@ Window {
 
     function showFor(styleName) {
         styles.refreshLists()
-        const row = styles.documentStyles.indexOf(styleName)
-        assSelected = [Math.max(0, row)]
-        storeSelected = styles.storeStyles.length > 0 ? [0] : []
+        showAt(styles.documentStyles.indexOf(styleName))
+    }
+    // TP1: the Styles panel's rows are the Document's, a name possibly twice.
+    function showAt(row) {
+        styles.refreshLists()
+        if (!editing) { // an edit in progress keeps both lists' selections
+            assSelected = [Math.max(0, Math.min(row, styles.documentStyles.length - 1))]
+            storeSelected = styles.storeStyles.length > 0 ? [0] : []
+        }
         show()
         raise()
         requestActivate()
@@ -63,6 +69,30 @@ Window {
             createQuestion.name = styleName
             createQuestion.open()
         }
+    }
+    // TP1 (#274): the Styles panel's New, Duplicate and Copy to the catalog,
+    // as the window's own buttons do them on the Document's list.
+    function newDocumentStyle() {
+        showFor("")
+        beginEditing(styles.beginNew(false), false)
+    }
+    function editStyleAt(row) {
+        showAt(row)
+        if (row >= 0 && row < styles.documentStyles.length)
+            editDocumentStyle(row)
+    }
+    function duplicateDocumentStyle(row) {
+        showAt(row)
+        if (row >= 0 && row < styles.documentStyles.length)
+            beginEditing(styles.beginCopy(false, row), false)
+    }
+    function copyToCatalog(row) {
+        showAt(row)
+        if (row < 0 || row >= styles.documentStyles.length)
+            return
+        reviewClashes(styles.transferClashes(true, [row]), 1, qsTr("the storage"), function(choices) {
+            manager.storeSelected = manager.styles.addToStore([row], choices)
+        })
     }
     function editDocumentStyle(row) {
         assSelected = [row]

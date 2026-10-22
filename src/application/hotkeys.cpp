@@ -269,6 +269,11 @@ constexpr HotkeyAction kActions[] = {
         {"AUDIO_SPEED_UP", 1032},
         // TM1: Translation mode for the editing target (Subtitles menu).
         {"GLOBAL_TRANSLATION_MODE", 5171},
+        // KA1 (#276): Karaoke mode's split at the waveform cursor and the
+        // \k and \kf switch for long syllables, past AUDIO_LEAD_OUT (the
+        // unused 1005-1009 would run their id + 10, as the _ALT ids do).
+        {"AUDIO_KARAOKE_SPLIT", 1028},
+        {"AUDIO_KARAOKE_KF", 1029},
         // VT2 (#270): a Video command per visual tool, in the rail's order.
         {"VIDEO_TOOL_CROSSHAIR", 2022},
         {"VIDEO_TOOL_POSITION", 2023},
@@ -527,6 +532,9 @@ constexpr NameRow kNames[] = {
         {1031, "Slower"}, // AUDIO_SPEED_DOWN (KA2)
         {1032, "Faster"}, // AUDIO_SPEED_UP (KA2)
         {5171, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
+        // KA1 (#276)
+        {1028, "Split syllable at the cursor"}, // AUDIO_KARAOKE_SPLIT
+        {1029, "Switch long syllables between \\k and \\kf"}, // AUDIO_KARAOKE_KF
         {2022, "Position pointer"}, // VIDEO_TOOL_CROSSHAIR
         {2023, "Text positioning"}, // VIDEO_TOOL_POSITION
         {2024, "Text moving"}, // VIDEO_TOOL_MOVE
@@ -651,6 +659,9 @@ constexpr DefaultRow kAudioDefaults[] = {
         {1022, AudioHotkey, "Play to the end", "T"}, // AUDIO_PLAY_TO_END
         {1026, AudioHotkey, "Add lead-in", "C"}, // AUDIO_LEAD_IN
         {1027, AudioHotkey, "Add lead-out", "V"}, // AUDIO_LEAD_OUT
+        // KA1 (#276, owner 2026-10-21)
+        {1028, AudioHotkey, "Split syllable at the cursor", "K"}, // AUDIO_KARAOKE_SPLIT
+        {1029, AudioHotkey, "Switch long syllables between \\k and \\kf", "Shift-K"}, // AUDIO_KARAOKE_KF
         {1030, AudioHotkey, "Tap to time", "Y"}, // AUDIO_TAP (KA2)
         {1031, AudioHotkey, "Slower", "["}, // AUDIO_SPEED_DOWN (KA2)
         {1032, AudioHotkey, "Faster", "]"}, // AUDIO_SPEED_UP (KA2)
