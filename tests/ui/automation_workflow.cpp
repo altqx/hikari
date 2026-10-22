@@ -11,7 +11,9 @@
 #include <QDeadlineTimer>
 #include <QFile>
 #include <QGuiApplication>
+#include <QMouseEvent>
 #include <QQmlApplicationEngine>
+#include <QQuickItem>
 #include <QQuickWindow>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -40,6 +42,7 @@ using namespace std::chrono_literals;
 namespace {
 
 hikari::app::Application *g_app = nullptr;
+QQuickWindow *g_window = nullptr;
 std::mutex g_mutex;
 std::vector<std::pair<bool, std::string>> g_completed;
 
@@ -78,6 +81,21 @@ protected:
         }
         return completions() >= count;
     }
+    // The progress card's Cancel shows.
+    bool waitForCard()
+    {
+        for (int i = 0; i < 100; ++i) {
+            bool shown = false;
+            onGui([&] {
+                auto *cancel = g_window->findChild<QQuickItem *>(QStringLiteral("automationCancel"));
+                shown = cancel && cancel->isVisible() && g_app->automation().cardState() == QStringLiteral("running");
+            });
+            if (shown)
+                return true;
+            wait(100ms);
+        }
+        return false;
+    }
     void runMacro(const std::string &script, int ordinal)
     {
         bool started = false;
@@ -112,10 +130,24 @@ protected:
             }
             // 3. Cancel on the progress card, which opens after the macro's
             // first second (AD3).
+            // The card is in the window's overlay, where Spix's paths do not
+            // reach: a press and release at its Cancel's centre. It opens at
+            // once: offscreen, the one-second timer was seen not to fire
+            // while the notice showed (it does under X11, and in
+            // automation_progress_tests, which have no window).
+            onGui([] { g_app->automation().setCardDelay(0); });
             runMacro(fixture, 1);
-            if (waitForItem("mainWindow/automationCancel", 10s)) {
-                wait(1500ms);
-                mouseClick("mainWindow/automationCancel");
+            if (waitForCard()) {
+                wait(300ms);
+                onGui([] {
+                    auto *cancel = g_window->findChild<QQuickItem *>(QStringLiteral("automationCancel"));
+                    const QPointF at = cancel->mapToScene(QPointF(cancel->width() / 2, cancel->height() / 2));
+                    for (const auto type : {QEvent::MouseButtonPress, QEvent::MouseButtonRelease}) {
+                        QMouseEvent e(type, at, g_window->mapToGlobal(at), Qt::LeftButton,
+                                      type == QEvent::MouseButtonPress ? Qt::LeftButton : Qt::NoButton, Qt::NoModifier);
+                        QCoreApplication::sendEvent(g_window, &e);
+                    }
+                });
                 observed.push_back(waitForCompletion(3) ? "cancelled" : "cancel did not finish"); // 3
             }
             // 4. The helper is lost while the macro runs.
@@ -198,6 +230,7 @@ int main(int argc, char **argv)
     if (engine.rootObjects().isEmpty())
         return 2;
     auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+    g_window = window;
     window->requestActivate();
     QDeadlineTimer deadline(10'000);
     while (!(window->isExposed() && window->isActive()) && !deadline.hasExpired())
