@@ -2699,6 +2699,42 @@ private slots:
         QCOMPARE(editor->changedCount(), 0);
     }
 
+    // Two templates made one named template are reported under its first
+    // Line: the second no longer shows the counts it had on its own.
+    void aTemplateJoinedIntoANamedOneLosesItsCounts()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> first;
+        core::LineRecord second;
+        for (const auto *l : doc.lines())
+            if (!first && application::templateKindOf(*l) == application::TemplateKind::Template &&
+                l->effect == u8"template line") {
+                first = l->id;
+                second = *l;
+            }
+        QVERIFY(first);
+        second.text = u8"{\\bord2}";
+        const auto added = doc.insertLineBefore(*first, second);
+        QVERIFY(added);
+        openDocument(std::move(doc), true);
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        const auto generated = [&](core::LineId id) {
+            for (const QVariant &v : editor->templates())
+                if (v.toMap().value(QStringLiteral("id")).toULongLong() == id.value)
+                    return v.toMap().value(QStringLiteral("generated")).toInt();
+            return -2;
+        };
+        QVERIFY(QTest::qWaitFor([&] { return settled() && generated(*first) > 0 && generated(*added) > 0; }, 20'000));
+        for (const core::LineId id : {*added, *first}) {
+            editor->setCurrent(id.value);
+            editor->setEffect(QStringLiteral("template line joined"));
+            editor->commit();
+        }
+        QVERIFY(editor->trusted());
+        QVERIFY(QTest::qWaitFor([&] { return settled() && generated(*added) > 0 && generated(*first) < 0; }, 20'000));
+    }
+
     void applyFromThePanelIsOneStepAndSaysWhatItWrote()
     {
         open(QStringLiteral("stock-tutorials.ass"));

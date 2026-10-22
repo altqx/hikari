@@ -1419,6 +1419,9 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
                                                      "The templater stopped before it finished.");
     } else {
         const QJsonObject report = reportOf(p.result->report);
+        // Every template this run reports; one it doesn't (now a part of a
+        // named template) has no counts of its own.
+        m_stats.clear();
         for (const QJsonValue v : report.value(QLatin1String("templates")).toArray()) {
             const QJsonObject t = v.toObject();
             if (const auto id = application::templatePreviewLineOf(snapshot, t.value(QLatin1String("line")).toInt()))
