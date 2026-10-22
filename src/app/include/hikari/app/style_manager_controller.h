@@ -108,7 +108,9 @@ public:
 signals:
     void changed();
     void previewChanged();
-    void documentChanged(); // TP1: the Styles panel reads panelRows() again
+    // TP1: the Styles panel reads panelRows() again; `retargeted` when the
+    // editing target is another Document than last time.
+    void documentChanged(bool retargeted);
 
 private:
     struct Edit {
@@ -128,6 +130,7 @@ private:
     QImage m_preview;
     int m_previewKey = 0;
     bool m_available = false; // as last notified by documentEdited
+    const application::EditSession *m_notifiedTarget = nullptr; // ditto
 };
 
 // StylePreview: `style` at alignment 5 over the checkered background, the

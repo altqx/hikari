@@ -297,7 +297,10 @@ void StyleManagerController::documentEdited()
         m_available = now;
         emit changed();
     }
-    emit documentChanged();
+    const auto *target = m_hooks.target ? m_hooks.target() : nullptr;
+    const bool retargeted = target != m_notifiedTarget;
+    m_notifiedTarget = target;
+    emit documentChanged(retargeted);
 }
 
 void StyleManagerController::refreshLists()

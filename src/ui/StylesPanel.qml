@@ -40,7 +40,9 @@ Item {
         if (rows[chosenAt]?.name !== chosen)
             chosenAt = rows.findIndex(r => r.name === chosen)
     }
-    readonly property bool canApply: chosenRow !== null && editor.editable && editor.assFields
+    // A Style named "" is listed but not applied (the Line editor's Style
+    // choice refuses it too).
+    readonly property bool canApply: chosenRow !== null && chosen.length > 0 && editor.editable && editor.assFields
     // While the Style manager holds an edit not yet applied, nothing here
     // starts another or changes the list under it.
     readonly property bool canChange: !manager.editing
@@ -51,13 +53,18 @@ Item {
     // first row); the choice is made from the new rows before that, and the
     // move is not taken as one.
     property bool reloading: false
-    function reload() {
+    // `retargeted`: another Document's rows; in the same one a chosen row
+    // whose name went (renamed in the Style manager) stays chosen.
+    function reload(retargeted) {
         if (!live)
             return
         const next = styles.panelRows().map((r, i) => Object.assign({row: i}, r))
         let name = chosen
         let at = chosenAt
-        if (!next.some(r => r.name === name)) {
+        if (!retargeted && !next.some(r => r.name === name) && at >= 0 && at < next.length
+                && next.length === rows.length) {
+            name = next[at].name
+        } else if (!next.some(r => r.name === name)) {
             name = next.some(r => r.name === editor.style) ? editor.style : (next.length > 0 ? next[0].name : "")
             at = -1
         }
@@ -70,11 +77,11 @@ Item {
         reloading = false
         list.currentIndex = shownRows.findIndex(r => r.row === chosenAt)
     }
-    onLiveChanged: reload()
+    onLiveChanged: reload(true)
     Connections {
         target: panel.styles
-        function onDocumentChanged() { panel.reload() }
-        function onChanged() { panel.reload() }
+        function onDocumentChanged(retargeted) { panel.reload(retargeted) }
+        function onChanged() { panel.reload(false) }
     }
     onShownRowsChanged: list.currentIndex = shownRows.findIndex(r => r.row === chosenAt)
 
@@ -468,7 +475,7 @@ Item {
             objectName: "stylesMenuApply"
             iconRole: "style-apply"
             text: qsTr("Apply to the selected lines") + "\tEnter"
-            enabled: panel.editor.editable && panel.editor.assFields
+            enabled: rowMenu.name.length > 0 && panel.editor.editable && panel.editor.assFields
             onTriggered: panel.apply(rowMenu.name)
         }
         MenuSeparator {}
