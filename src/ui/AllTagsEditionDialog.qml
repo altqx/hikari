@@ -589,7 +589,7 @@ DialogWindow {
                                 currentIndex: dialog.variant
                                 Layout.preferredWidth: 280
                                 Accessible.name: dialog.change === 0 ? qsTr("Where the tag goes in the text")
-                                               : dialog.change === 2 ? qsTr("How each Line's number changes the value")
+                                               : dialog.change === 2 ? qsTr("How each line's number changes the value")
                                                : qsTr("What the gradient runs across")
                                 onActivated: index => dialog.setVariant(index)
                             }

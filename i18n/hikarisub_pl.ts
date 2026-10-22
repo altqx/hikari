@@ -9623,7 +9623,7 @@ bądź brakuje kodeków czy też splittera</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>How each Line&apos;s number changes the value</source>
+        <source>How each line&apos;s number changes the value</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
