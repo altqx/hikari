@@ -424,6 +424,14 @@ private slots:
         QVERIFY(application->video().looping());
         click(loop);
         QTRY_VERIFY(!application->video().looping());
+        // A seek by time (a chapter) ends the loop and plays on: the button
+        // unchecks without pausing.
+        click(loop);
+        QTRY_VERIFY(application->video().looping());
+        QVERIFY(application->video().session().seekToMs(static_cast<int>(editor().sourceEndMs()) + 500));
+        QTRY_VERIFY(!loop->property("checked").toBool());
+        QTest::qWait(300);
+        QVERIFY(application->video().playing());
     }
 
     // A reload from the file is new content: a trusted Document asks again,
