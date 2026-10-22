@@ -479,8 +479,13 @@ void TemplateEditorController::refresh()
 void TemplateEditorController::updateSource()
 {
     const auto *s = session();
+    // The active Line as Apply runs on it: with the Line editor's draft.
+    std::optional<core::Document> drafted;
+    if (s && s->draftRecord())
+        drafted = runDocument();
+    const core::Document *doc = drafted ? &*drafted : s ? &s->document() : nullptr;
     std::optional<core::LineId> source =
-        s ? application::templatePreviewSource(s->document(), s->selection().active, m_lastSource) : std::nullopt;
+        doc ? application::templatePreviewSource(*doc, s->selection().active, m_lastSource) : std::nullopt;
     // A generated Line of a file opened without marks: its karaoke Line is
     // found first; the preview stays until then.
     const auto active = s ? s->selection().active : std::nullopt;

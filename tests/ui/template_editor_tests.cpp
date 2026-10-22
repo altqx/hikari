@@ -1625,6 +1625,30 @@ private slots:
         QVERIFY(editor->problem().isEmpty());
     }
 
+    // Apply to the selected Lines runs on the active Line as the draft makes
+    // it: an Effect typed that makes it a karaoke Line makes it the Line
+    // previewed.
+    void aDraftThatMakesAKaraokeLineIsPreviewed()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::vector<core::LineId> karaoke;
+        for (const auto *l : doc.lines())
+            if (application::isKaraokeLine(*l) && !application::templateKindOf(*l))
+                karaoke.push_back(l->id);
+        QVERIFY(karaoke.size() >= 2);
+        QVERIFY(doc.editLine(karaoke[1], [](core::LineRecord &l) { l.effect = u8"foo"; }));
+        openDocument(std::move(doc), true);
+        activate(karaoke[1]);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QCOMPARE(editor->source(), karaoke[0].value);
+        application::DraftChange effect;
+        effect.effect = u8"karaoke";
+        QVERIFY(session->editDraft(karaoke[1], effect));
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return editor->source() == karaoke[1].value && settled(); }, 20'000));
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
