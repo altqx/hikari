@@ -275,10 +275,13 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // 24 with What's new's "And %n earlier versions" (SH3). 25 with the
         // karaoke check's problems not listed (KA7). 27 with the notices' "%n
         // value(s) could not be scaled." and "%n style(s) deleted: %1." (NT1).
-        // 37 with the font picker's counts, the catalog load's accept
-        // button, summary and its four parts, and the fonts added from
-        // subtitles and their open files (PU3).
-        ASSERT_EQ(numerus, 37) << language.toStdString();
+        // 28 with Hydra's "Changes %n lines" (HY1).
+        // 37 with the file and session popups' counts: the close review's
+        // three questions, the autosaves, the startup offer's four and Close
+        // all tabs (PU1). 47 with the font picker's counts, the catalog
+        // load's accept button, summary and its four parts, and the fonts
+        // added from subtitles and their open files (PU3).
+        ASSERT_EQ(numerus, 47) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

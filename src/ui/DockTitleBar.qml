@@ -47,6 +47,7 @@ KDDWViews.TitleBarBase {
         width: Math.max(0, (systemMoveArea.enabled ? systemMoveArea.x : menuButton.x) - x - 4)
         anchors.verticalCenter: parent.verticalCenter
         text: root.title
+        textFormat: Text.PlainText // the file's name in it, never markup
         color: Theme.text
         font.bold: true
         elide: Text.ElideRight
