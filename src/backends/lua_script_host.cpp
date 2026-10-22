@@ -246,11 +246,12 @@ void LuaScriptHost::onEvent(std::uint64_t request, std::expected<Event, HostErro
                 emit progressChanged(percent);
             return;
         }
+        const int level = type == lua::ProgressEvent::Log ? r.i32() : -1;
         const QString text = QString::fromStdString(r.str());
         if (!r.ok())
             return;
         if (type == lua::ProgressEvent::Log)
-            emit logged(text);
+            emit logged(text, level);
         else if (type == lua::ProgressEvent::Task)
             emit taskChanged(text);
         else if (type == lua::ProgressEvent::Title)

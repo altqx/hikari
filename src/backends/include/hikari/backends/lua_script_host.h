@@ -90,7 +90,9 @@ public:
 signals:
     void loaded();
     void loadFailed(const QString &message);
-    void logged(const QString &text);
+    // aegisub.debug.out / aegisub.log: the text and the level it was given
+    // (0 fatal … 5 trace; -1 none).
+    void logged(const QString &text, int level);
     void progressChanged(double percent);
     void taskChanged(const QString &task);
     void titleChanged(const QString &title);
