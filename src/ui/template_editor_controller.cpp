@@ -1233,18 +1233,23 @@ void TemplateEditorController::runChain(std::uint64_t generation)
             // Another tab or a newer chain since: its Line ids are not ours.
             if (!self || generation != self->m_generation)
                 return;
-            self->m_matched[source] = unmarked;
-            self->m_replaced.erase(source);
-            if (p.result) {
-                std::set<std::uint64_t> kept;
-                for (const auto &d : p.result->dialogues)
-                    kept.insert(d.id);
-                std::set<core::LineId> gone;
-                for (const auto &d : whole.dialogues)
-                    if (!kept.contains(d.id))
-                        gone.insert(core::LineId{d.id});
-                self->m_replaced[source] = std::move(gone);
+            if (!p.result) {
+                // The templates no longer give the file's Lines: Apply would
+                // refuse as this run did. Nothing is matched, so the next
+                // run asks again.
+                self->m_previewSnapshotKey.clear();
+                self->previewed(generation, std::move(p), *self->m_previewSnapshot);
+                return;
             }
+            self->m_matched[source] = unmarked;
+            std::set<std::uint64_t> kept;
+            for (const auto &d : p.result->dialogues)
+                kept.insert(d.id);
+            std::set<core::LineId> gone;
+            for (const auto &d : whole.dialogues)
+                if (!kept.contains(d.id))
+                    gone.insert(core::LineId{d.id});
+            self->m_replaced[source] = std::move(gone);
             self->runChain(generation);
         });
         return;

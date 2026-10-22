@@ -1570,6 +1570,37 @@ private slots:
         QVERIFY(number);
     }
 
+    // A file whose generated Lines its templates no longer give: the matching
+    // run's refusal is the preview's problem, as Apply's would be, and is
+    // not kept as a match: once the Lines match again, it previews.
+    void aFailedMatchIsNotKept()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        const auto source = firstKaraoke();
+        std::optional<core::LineId> generated;
+        std::u8string was;
+        // Another karaoke Line's (the last one's): those must match.
+        for (const auto *l : session->document().lines())
+            if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0) {
+                generated = l->id;
+                was = l->text;
+            }
+        QVERIFY(generated);
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*generated, [](core::LineRecord &l) { l.text += u8"{\\bord9}"; });
+        }));
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return !editor->previewPending() && !editor->problem().isEmpty(); }, 20'000));
+        QVERIFY(!editor->hasPreview());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*generated, [&](core::LineRecord &l) { l.text = was; });
+        }));
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(editor->problem().isEmpty());
+    }
+
     // `template line karaoke` is a template the stock templater also runs as
     // a karaoke Line: a new Actor on it asks first too.
     void aTemplateThatIsAlsoAKaraokeLineHasItsActorTrusted()
