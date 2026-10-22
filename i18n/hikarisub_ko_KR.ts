@@ -48,19 +48,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pitch is kept.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>and</source>
-        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>change the speed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Output device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -258,58 +245,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tap to time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap options</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stop tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each syllable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hold the key: releasing it leaves a gap</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Press the key: no gaps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap to vocal onsets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1%</source>
-        <extracomment>A playback speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Calibrate latency…</source>
-        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 ms</source>
-        <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -384,11 +319,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Speed: %1%</source>
-        <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Customise the audio panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -449,26 +379,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not applied: the Line cannot take these times as it is.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Every Line is tapped.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of %2 tapped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid the Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid “%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
         <translation type="unfinished"></translation>
@@ -477,101 +387,6 @@ Output device: %2</source>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stopped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ready</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This Line is one syllable. Split it first, then tap.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation type="unfinished">실행 취소</translation>
-    </message>
-    <message>
-        <source>Esc</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resume</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Space</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Revert Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start</source>
-        <translation type="unfinished">시작 시간</translation>
-    </message>
-    <message>
-        <source>Calibrate tap latency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Press</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>on each beep.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>16 beeps at 100 BPM; the first four are practice.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of 16 beeps</source>
-        <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Your presses, in ms after each beep</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Latency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
-        <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation type="unfinished">취소</translation>
-    </message>
-    <message>
-        <source>Apply</source>
-        <translation type="unfinished">적용</translation>
     </message>
 </context>
 <context>
@@ -1030,30 +845,6 @@ Output device: %2</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
-    </message>
-    <message>
-        <source>%1 to %2, in steps of %3</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 to %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>At least %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>At most %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 becomes %2 when you leave the field.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Type to filter</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5497,6 +5288,10 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Interface theme</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Follow system theme</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5513,7 +5308,15 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Accent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 (contrast %2:1)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Program font</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5542,7 +5345,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Options</source>
-        <translation>선택</translation>
+        <translation type="vanished">선택</translation>
     </message>
     <message>
         <source>Apply</source>
@@ -5554,7 +5357,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Set default</source>
-        <translation>기본값으로 설정</translation>
+        <translation type="vanished">기본값으로 설정</translation>
     </message>
     <message>
         <source>Settings</source>
@@ -5570,7 +5373,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Editor</source>
-        <translation>일반 설정</translation>
+        <translation type="vanished">일반 설정</translation>
     </message>
     <message>
         <source>Conversion</source>
@@ -5578,7 +5381,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Advanced</source>
-        <translation>고급</translation>
+        <translation type="vanished">고급</translation>
     </message>
     <message>
         <source>Video</source>
@@ -5614,7 +5417,7 @@ when find results window is open</source>
     </message>
     <message>
         <source>Spell checker language (&quot;Dictionary&quot; folder)</source>
-        <translation>맞춤법 검사 (&quot;Dictionary&quot; 폴더)</translation>
+        <translation type="vanished">맞춤법 검사 (&quot;Dictionary&quot; 폴더)</translation>
     </message>
     <message>
         <source>None chosen</source>
@@ -5629,15 +5432,7 @@ when find results window is open</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show notices as toasts (off: in the Log only)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Ask again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Brings back the questions hidden with &quot;Don&apos;t ask again&quot;.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5646,17 +5441,17 @@ when find results window is open</source>
     </message>
     <message>
         <source>Turn spell checking</source>
-        <translation>맞춤법 검사</translation>
+        <translation type="vanished">맞춤법 검사</translation>
     </message>
     <message>
         <source>Select the line with the time line
 of the previous active tab</source>
-        <translation>이전 활성 탭의 시간에 해당하는
+        <translation type="vanished">이전 활성 탭의 시간에 해당하는
 줄 선택</translation>
     </message>
     <message>
         <source>Show suggestions by double-clicking on misspell</source>
-        <translation>두 번 클릭하여 맞춤법 오류 제안을 표시</translation>
+        <translation type="vanished">두 번 클릭하여 맞춤법 오류 제안을 표시</translation>
     </message>
     <message>
         <source>Always open subtitles in a new tab</source>
@@ -5664,18 +5459,18 @@ of the previous active tab</source>
     </message>
     <message>
         <source>Stay on selected line when editing times</source>
-        <translation>시간 편집 시 다음 행으로 이동 안 함</translation>
+        <translation type="vanished">시간 편집 시 다음 행으로 이동 안 함</translation>
     </message>
     <message>
         <source>Turn off edits preview on video
 (re-opening tab is required)</source>
-        <translation>동영상의 편집 미리 보기를 해제-편집 후 엔터키로 적용
+        <translation type="vanished">동영상의 편집 미리 보기를 해제-편집 후 엔터키로 적용
 (새로 열어야 설정 적용)</translation>
     </message>
     <message>
         <source>Turn searching of visible line
 after switching from full screen</source>
-        <translation>전체 화면 종료 후
+        <translation type="vanished">전체 화면 종료 후
 영상지점으로 줄 이동</translation>
     </message>
     <message>
@@ -5684,27 +5479,23 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Change active line after add to selection</source>
-        <translation>여러 줄 선택시 마지막 선택을 활성 줄로</translation>
+        <translation type="vanished">여러 줄 선택시 마지막 선택을 활성 줄로</translation>
     </message>
     <message>
         <source>Show original in translator mode</source>
-        <translation>번역 모드에서 원본도 같이 보기</translation>
+        <translation type="vanished">번역 모드에서 원본도 같이 보기</translation>
     </message>
     <message>
         <source>Hide original on video in translator mode</source>
-        <translation>번역 모드에서 원본 글자 영상에 출력 안 함</translation>
+        <translation type="vanished">번역 모드에서 원본 글자 영상에 출력 안 함</translation>
     </message>
     <message>
         <source>Do not change selections when duplicating dialogue lines</source>
-        <translation>대화 줄 복제 시 선택 항목 변경 안 함</translation>
+        <translation type="vanished">대화 줄 복제 시 선택 항목 변경 안 함</translation>
     </message>
     <message>
         <source>Do not vertically center the active line in the subtitle grid</source>
-        <translation>자막보기의 중앙에 행을 배치하지 마십시오</translation>
-    </message>
-    <message>
-        <source>Hide empty columns in the subtitle grid</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">자막보기의 중앙에 행을 배치하지 마십시오</translation>
     </message>
     <message>
         <source>Use numpad shortcuts in text fields</source>
@@ -5712,11 +5503,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Turn off visual tools warning</source>
-        <translation>시각적도구 사용 시 경고문구 해제</translation>
+        <translation type="vanished">시각적도구 사용 시 경고문구 해제</translation>
     </message>
     <message>
         <source>Do not warn about resolution mismatch</source>
-        <translation>해상도 비호환성에 대해 알리지 않음</translation>
+        <translation type="vanished">해상도 비호환성에 대해 알리지 않음</translation>
     </message>
     <message>
         <source>Compatibility with older HikariSub scripts</source>
@@ -5724,14 +5515,6 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Set a missing script resolution from the video without asking</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show video frames instead of times in the line editor and the subtitle grid</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide tags in the line editor</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -5764,19 +5547,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Choose catalog</source>
-        <translation>글꼴 목록 선택</translation>
+        <translation type="vanished">글꼴 목록 선택</translation>
     </message>
     <message>
         <source>Choose style</source>
-        <translation>스타일 선택</translation>
+        <translation type="vanished">스타일 선택</translation>
     </message>
     <message>
         <source>Choose FPS</source>
-        <translation>프레임 선택</translation>
+        <translation type="vanished">프레임 선택</translation>
     </message>
     <message>
         <source>FPS from video</source>
-        <translation>영상에서 프레임 가져오기(FPS)</translation>
+        <translation type="vanished">영상에서 프레임 가져오기(FPS)</translation>
     </message>
     <message>
         <source>New end times</source>
@@ -5784,39 +5567,39 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Show window before conversion</source>
-        <translation>변환하기 전에 설정창 표시</translation>
+        <translation type="vanished">변환하기 전에 설정창 표시</translation>
     </message>
     <message>
         <source>Time for one letter in milliseconds</source>
-        <translation>한 글자의 시간 (ms)</translation>
+        <translation type="vanished">한 글자의 시간 (ms)</translation>
     </message>
     <message>
         <source>Resolution when converting to ASS</source>
-        <translation>ASS로 변환 시 자막 해상도</translation>
+        <translation type="vanished">ASS로 변환 시 자막 해상도</translation>
     </message>
     <message>
         <source>Tags to paste at the beginning of every ASS line</source>
-        <translation>ASS 자막 시작 부분에 붙여넣을 태그</translation>
+        <translation type="vanished">ASS 자막 시작 부분에 붙여넣을 태그</translation>
     </message>
     <message>
         <source>Calculate spaces and punctation characters for wraps</source>
-        <translation>글자 수 계산 시 공백 및 문장 부호 포함</translation>
+        <translation type="vanished">글자 수 계산 시 공백 및 문장 부호 포함</translation>
     </message>
     <message>
         <source>Calculate spaces and punctation characters for CPS</source>
-        <translation>초당 문자 수(CPS) 계산 시 공백 및 문장 부호 포함</translation>
+        <translation type="vanished">초당 문자 수(CPS) 계산 시 공백 및 문장 부호 포함</translation>
     </message>
     <message>
         <source>Number of edits to save</source>
-        <translation>저장할 수정 횟수</translation>
+        <translation type="vanished">저장할 수정 횟수</translation>
     </message>
     <message>
         <source>0 turns off saving while editing</source>
-        <translation>0으로 하면 저장하지 않음</translation>
+        <translation type="vanished">0으로 하면 저장하지 않음</translation>
     </message>
     <message>
         <source>Maximum number of autosave files</source>
-        <translation>자동 저장 파일 갯수</translation>
+        <translation type="vanished">자동 저장 파일 갯수</translation>
     </message>
     <message>
         <source>Number of autosaves can be set from 2 to 1000000</source>
@@ -5824,19 +5607,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Start frame offset in ms:</source>
-        <translation>시작 프레임 오프셋(ms):</translation>
+        <translation type="vanished">시작 프레임 오프셋(ms):</translation>
     </message>
     <message>
         <source>End frame offset in ms:</source>
-        <translation>마지막 프레임 오프셋(ms):</translation>
+        <translation type="vanished">마지막 프레임 오프셋(ms):</translation>
     </message>
     <message>
         <source>ASS tag replacement:</source>
-        <translation>태그숨김 대체 문자:</translation>
+        <translation type="vanished">태그숨김 대체 문자:</translation>
     </message>
     <message>
         <source>Number of tab name characters</source>
-        <translation>탭 이름 문자 수</translation>
+        <translation type="vanished">탭 이름 문자 수</translation>
     </message>
     <message>
         <source>Number of tab name characters. Range from 20 to 150</source>
@@ -5844,19 +5627,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>LUA scripts tracking level</source>
-        <translation>LUA 스크립트 로그 추적 수준</translation>
+        <translation type="vanished">LUA 스크립트 로그 추적 수준</translation>
     </message>
     <message>
         <source>Subtitle grid font:</source>
-        <translation>자막보기 글꼴:</translation>
+        <translation type="vanished">자막보기 글꼴:</translation>
     </message>
     <message>
         <source>Program font:</source>
-        <translation>프로그램 글꼴:</translation>
+        <translation type="vanished">프로그램 글꼴:</translation>
     </message>
     <message>
         <source>Autoload loading method</source>
-        <translation>스크립트 자동 불러오기 방법</translation>
+        <translation type="vanished">스크립트 자동 불러오기 방법</translation>
     </message>
     <message>
         <source>After program start asynchronously</source>
@@ -5876,15 +5659,15 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Folder with external fonts</source>
-        <translation>외부 글꼴 폴더</translation>
+        <translation type="vanished">외부 글꼴 폴더</translation>
     </message>
     <message>
         <source>Choose</source>
-        <translation>선택</translation>
+        <translation type="vanished">선택</translation>
     </message>
     <message>
         <source>Open video from context menu on full screen</source>
-        <translation>전체 화면의 컨텍스트 메뉴에서 영상 열기</translation>
+        <translation type="vanished">전체 화면의 컨텍스트 메뉴에서 영상 열기</translation>
     </message>
     <message>
         <source>Left mouse button pauses video</source>
@@ -5892,19 +5675,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Open video with time of active line</source>
-        <translation>파일 열 때 선택되어있는 줄로 영상도 이동</translation>
+        <translation type="vanished">파일 열 때 선택되어있는 줄로 영상도 이동</translation>
     </message>
     <message>
         <source>Convert video colours on the GPU (requires reloading)</source>
-        <translation>GPU에서 영상 색상 변환 (다시 불러오기 필요)</translation>
+        <translation type="vanished">GPU에서 영상 색상 변환 (다시 불러오기 필요)</translation>
     </message>
     <message>
         <source>Preferred audio (separated by semicolons)</source>
-        <translation>선호하는 소리 트랙 (세미콜론으로 구분)</translation>
+        <translation type="vanished">선호하는 소리 트랙 (세미콜론으로 구분)</translation>
     </message>
     <message>
         <source>FFMS2 video seeking method (requires reloading)</source>
-        <translation>FFMS2 영상 검색 (다시 불러오기 필요)</translation>
+        <translation type="vanished">FFMS2 영상 검색 (다시 불러오기 필요)</translation>
     </message>
     <message>
         <source>Linear</source>
@@ -5936,11 +5719,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Start video zoom in percent.</source>
-        <translation>영상 확대 시작 배율(퍼센트).</translation>
+        <translation type="vanished">영상 확대 시작 배율(퍼센트).</translation>
     </message>
     <message>
         <source>Show time next to cursor</source>
-        <translation>커서에 시간 표시</translation>
+        <translation type="vanished">커서에 시간 표시</translation>
     </message>
     <message>
         <source>Show seconds markers</source>
@@ -5948,11 +5731,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Show background selection</source>
-        <translation>선택 배경 표시</translation>
+        <translation type="vanished">선택 배경 표시</translation>
     </message>
     <message>
         <source>Show video position</source>
-        <translation>영상 위치 표시</translation>
+        <translation type="vanished">영상 위치 표시</translation>
     </message>
     <message>
         <source>Show keyframes</source>
@@ -5976,7 +5759,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Snap to keyframe</source>
-        <translation>키 프레임에 맞춤</translation>
+        <translation type="vanished">키 프레임에 맞춤</translation>
     </message>
     <message>
         <source>Snap to other lines</source>
@@ -5984,23 +5767,19 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Do not play audio after changing the line</source>
-        <translation>라인 변경 후 소리 재생 안 함</translation>
+        <translation type="vanished">라인 변경 후 소리 재생 안 함</translation>
     </message>
     <message>
         <source>Merge all the &quot;n&quot; with the previous syllable</source>
-        <translation>모든 &quot;n&quot;을 이전 음절과 병합</translation>
+        <translation type="vanished">모든 &quot;n&quot;을 이전 음절과 병합</translation>
     </message>
     <message>
         <source>Move syllable line after click</source>
-        <translation>클릭 후 음절 이동</translation>
+        <translation type="vanished">클릭 후 음절 이동</translation>
     </message>
     <message>
         <source>Load audio into RAM</source>
         <translation>램에 소리 불러오기</translation>
-    </message>
-    <message>
-        <source>Audio output</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Device</source>
@@ -6012,11 +5791,11 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Audio delay in milliseconds</source>
-        <translation>소리 지연 시간(ms)</translation>
+        <translation type="vanished">소리 지연 시간(ms)</translation>
     </message>
     <message>
         <source>Audio to play before and after the marker in milliseconds</source>
-        <translation>표시선 전/후의 소리 재생 시간 (ms)</translation>
+        <translation type="vanished">표시선 전/후의 소리 재생 시간 (ms)</translation>
     </message>
     <message>
         <source>Lead-in</source>
@@ -6032,7 +5811,7 @@ after switching from full screen</source>
     </message>
     <message>
         <source>Audio cache files limit</source>
-        <translation>소리 저장 파일 제한</translation>
+        <translation type="vanished">소리 저장 파일 제한</translation>
     </message>
     <message>
         <source>Range from 0 to 10000, where 0 turns off
@@ -6042,7 +5821,7 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>The way to display inactive lines</source>
-        <translation>비활성 라인을 표시하는 방법</translation>
+        <translation type="vanished">비활성 라인을 표시하는 방법</translation>
     </message>
     <message>
         <source>None</source>
@@ -6085,6 +5864,454 @@ removing audio cache files.</source>
         <translation>모두</translation>
     </message>
     <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>General</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line editor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitle grid</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Automation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all settings to their defaults?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every page goes back to its defaults when you press OK or Apply; Cancel keeps your settings. Hotkeys and the appearance stay as they are: reset them on their own pages.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The settings of the page shown back to their defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More resets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset this page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset all settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Interface language</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tab name length</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saving</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save while editing every</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 turns saving while editing off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>edits</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Autosave files kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show notices as toasts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Off: notices go to the Log only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Questions hidden with “Don’t ask again”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Folders</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Fonts folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spelling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation type="unfinished">철자 확인창</translation>
+    </message>
+    <message>
+        <source>Dictionary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show suggestions on double-click</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Display</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide tags</source>
+        <translation type="unfinished">태그 숨김</translation>
+    </message>
+    <message>
+        <source>Show video frames instead of times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the line editor and the subtitle grid.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stay on the line when editing times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Translation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the original</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the original on the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font</source>
+        <translation type="unfinished">글꼴</translation>
+    </message>
+    <message>
+        <source>Grid font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select the line at the previous tab&apos;s time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change the active line when adding to the selection</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep the selection when duplicating lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don&apos;t center the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find the visible line after leaving full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide empty columns</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Counting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Count spaces and punctuation for wraps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Count spaces and punctuation for CPS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start frame offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End frame offset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS tag replacement</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video from the context menu in full screen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video at the active line&apos;s time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Player</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles on video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off the edits preview</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies when the tab opens again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Decoding</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Seeking method</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies when the video opens again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Convert video colours on the GPU</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preferred audio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Separated by semicolons.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>View</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start zoom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Script resolution</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off the visual tools warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don&apos;t warn about a resolution mismatch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Output</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applies when the output opens again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Audio delay</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Play around the marker</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lead-in and lead-out</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Don&apos;t play after changing the line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the time beside the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the selection background</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the video position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Inactive lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to keyframes</source>
+        <translation type="unfinished">키 프레임에 맞춤</translation>
+    </message>
+    <message>
+        <source>Karaoke</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge every &quot;n&quot; with the previous syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move the syllable line after a click</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cache</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cache files kept</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>0 keeps them all.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">목록</translation>
+    </message>
+    <message>
+        <source>Timing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate from the video</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Time per letter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ASS</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation type="unfinished">해상도 변경</translation>
+    </message>
+    <message>
+        <source>Width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags at the start of each line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the conversion window first</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files</source>
+        <translation type="unfinished">파일</translation>
+    </message>
+    <message>
+        <source>Save the panel layout in subtitle files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Loading</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load scripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Debugging</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lua trace level</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Set shortcuts</source>
         <translation>설정된 것만</translation>
     </message>
@@ -6117,6 +6344,14 @@ removing audio cache files.</source>
         <translation>필터 유형 :</translation>
     </message>
     <message>
+        <source>Search hotkeys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Global</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show hidden rows</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6137,16 +6372,28 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Map hotkey…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default</source>
+        <translation type="unfinished">기본값으로 복원</translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
         <source>Map hotkey</source>
-        <translation>단축키 설정</translation>
+        <translation type="vanished">단축키 설정</translation>
     </message>
     <message>
         <source>Restore default hotkey</source>
-        <translation>기본 단축키로</translation>
+        <translation type="vanished">기본 단축키로</translation>
     </message>
     <message>
         <source>Delete hotkey</source>
-        <translation>단축키 삭제</translation>
+        <translation type="vanished">단축키 삭제</translation>
     </message>
     <message>
         <source>Subtitle information</source>
@@ -6187,10 +6434,6 @@ removing audio cache files.</source>
     <message>
         <source>Always ask before changing subtitle information</source>
         <translation>저장시 자막 정보 선택창 띄우기</translation>
-    </message>
-    <message>
-        <source>Save panel layout in subtitle files</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Choose choose external font folder</source>
@@ -8817,18 +9060,6 @@ after the end time in milliseconds</source>
         <translation>자막 파일 선택</translation>
     </message>
     <message>
-        <source>Translation mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original text</source>
-        <translation type="unfinished">원본</translation>
-    </message>
-    <message>
-        <source>Original text: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Subtitle files (*.ass *.srt *.sub *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8939,27 +9170,7 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected Lines for review</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on Translation mode for this file?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Not now</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
