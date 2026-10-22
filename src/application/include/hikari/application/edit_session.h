@@ -75,6 +75,9 @@ struct DraftChange {
     // Original's carried tags written again), it was not typed. Several
     // selected Lines then keep their own translations (commitDraftToSelected).
     bool translationCarried = false;
+    // Undo and Redo in the field put back a step's translation as it was,
+    // carried or typed: translationCarried then replaces the draft's.
+    bool restoresProvenance = false;
 };
 
 // A command declares the Lines it touches and mutates a working copy. Returning

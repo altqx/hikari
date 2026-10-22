@@ -11887,6 +11887,18 @@ private slots:
         QVERIFY(application->editor().commit());
         QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an9}Wieza"));
 
+        // Typing in the translation undone: the carried one again, so the
+        // other Line keeps its own rather than a copy of this one.
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().textEdited(QStringLiteral("{\\an1}Gate"), 10);
+        application->editor().translationEdited(QStringLiteral("Bramy"), 5);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an1}Bramy"));
+        QVERIFY(application->editor().undo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an1}Brama"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("{\\an1}Brama"));
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an1}Wieza"));
+
         // An Original that carries nothing now (a drawing): every selected
         // translation keeps only its own text.
         session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
@@ -12062,6 +12074,12 @@ private slots:
         QVERIFY(!application->editor().placeRun(1, 0, 3));
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}") + many);
         QCOMPARE(application->editor().tagRuns().size(), 1);
+        // Nor is the run's text offered there as a suggestion.
+        const QString offered = QStringLiteral("Mur high{") + QStringLiteral("\\u1").repeated(1100) + QStringLiteral("}");
+        application->editor().translationEdited(offered, offered.size());
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("suggestedStart").toInt(), -1);
+        QVERIFY(!application->editor().acceptSuggestedRuns());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}") + offered);
         const QString longer = QStringLiteral("Mur ").repeated(4200);
         application->editor().translationEdited(longer, 3);
         QVERIFY(application->editor().tagRuns().isEmpty());

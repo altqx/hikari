@@ -241,7 +241,11 @@ bool LineTableModel::unplacedRunsOf(const Row &row) const
         return *row.unplacedRuns;
     const core::LineRecord &line = row.line;
     bool unplaced = false;
-    if (m_runMarks && m_translationMode && !m_tooManyStyles && !line.comment && !line.translation.empty()) {
+    // A text past what Tags from original reads (a UTF-16 unit is three
+    // UTF-8 bytes at most) has no runs: not converted for nothing.
+    const auto readable = [](const std::u8string &text) { return text.size() <= 3 * core::kMaxTagTransferUnits; };
+    if (m_runMarks && m_translationMode && !m_tooManyStyles && !line.comment && !line.translation.empty()
+        && readable(line.text) && readable(line.translation)) {
         // Legacy GetStyle(0, name): the first Style of that name, else the
         // first Style.
         const auto style = std::ranges::find(m_styles, line.style, &core::StyleValues::name);

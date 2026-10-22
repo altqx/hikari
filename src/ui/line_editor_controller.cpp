@@ -18,6 +18,8 @@
 #include <utility>
 
 #include <algorithm>
+#include <span>
+#include <array>
 #include <tuple>
 #include <cstdlib>
 
@@ -430,6 +432,21 @@ bool pastTransferLimit(std::u8string_view translation)
            || core::toUtf16(translation).size() > core::kMaxTagTransferUnits;
 }
 
+// Whether a draft with `runs` just placed in it is saved as placed: each
+// is found again on reading the composed translation (one past the
+// reader's limits is not, its tags left as the translator's own), and the
+// translator's own formatting around them draws as it did.
+bool placementHolds(const core::OriginalTags &tags, const core::TranslationDraft &draft, std::span<const int> runs)
+{
+    const auto order = core::runOrder(draft.placements);
+    auto back = core::readTranslation(tags, core::composeTranslation(tags, draft), order);
+    core::relabelRuns(tags, back, order);
+    for (const int run : runs)
+        if (std::ranges::none_of(back.placements, [&](const core::RunPlacement &p) { return p.run == run; }))
+            return false;
+    return core::keepsOwnFormatting(tags, draft);
+}
+
 // "#rrggbb" for a run that changes the primary colour (stored as BBGGRR).
 QString runColour(const core::TagRun &run)
 {
@@ -540,17 +557,10 @@ bool LineEditorController::placeRun(int number, int selectionStart, int selectio
         return false;
     if (!core::placeRun(draft.placements, start, end, number))
         return false;
-    // A run the reader would not find again (its tags past the reader's
-    // limits) would be left as the translator's own tags. Taking one off
-    // (the same selection again) needs no reading.
+    // Taking one off (the same selection again) needs no check.
     const auto isRun = [&](const core::RunPlacement &p) { return p.run == number; };
-    if (std::ranges::any_of(draft.placements, isRun)) {
-        const auto order = core::runOrder(draft.placements);
-        auto back = core::readTranslation(*tags, core::composeTranslation(*tags, draft), order);
-        core::relabelRuns(*tags, back, order);
-        if (std::ranges::none_of(back.placements, isRun))
-            return false;
-    }
+    if (std::ranges::any_of(draft.placements, isRun) && !placementHolds(*tags, draft, std::array{number}))
+        return false;
     if (!saveTranslationDraft(*tags, std::move(draft)))
         return false;
     const auto after = core::project(core::toUtf16(record()->translation));
@@ -568,6 +578,17 @@ std::vector<core::RunPlacement> LineEditorController::suggestedRuns(const core::
     const auto real = sessionRecord();
     if (real && m_dismissedFor == std::tuple(real->id, real->text, real->style))
         std::erase_if(out, [&](const core::RunPlacement &p) { return m_dismissedRuns.contains(p.run); });
+    if (out.empty())
+        return out;
+    // Offered only where accepting them all is saved as placed (placeRun's check).
+    auto accepted = draft;
+    std::vector<int> runs;
+    for (const auto &p : out) {
+        core::placeRun(accepted.placements, p.start, p.end, p.run);
+        runs.push_back(p.run);
+    }
+    if (!placementHolds(tags, accepted, runs))
+        out.clear();
     return out;
 }
 
@@ -1402,7 +1423,8 @@ bool LineEditorController::undo()
         setRunOrder(r->id, previous.order);
         s->editDraft(r->id, application::DraftChange{.text = previous.text,
                                                      .translation = previous.translation,
-                                                     .translationCarried = !previous.translationTyped});
+                                                     .translationCarried = !previous.translationTyped,
+                                                     .restoresProvenance = true});
         dropUnchangedDraft(*s, r->id);
         m_attempted.clear();
         refresh();
@@ -1440,7 +1462,8 @@ bool LineEditorController::redo()
         setRunOrder(r->id, next.order);
         s->editDraft(r->id, application::DraftChange{.text = next.text,
                                                      .translation = next.translation,
-                                                     .translationCarried = !next.translationTyped});
+                                                     .translationCarried = !next.translationTyped,
+                                                     .restoresProvenance = true});
         dropUnchangedDraft(*s, r->id); // a step that changed only the run order
         refresh();
         placeCaretAfterChange(before);

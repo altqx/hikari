@@ -27,8 +27,10 @@ void merge(DraftChange &into, const DraftChange &change)
     if (change.text)
         into.text = change.text;
     if (change.translation) {
-        // A translation once typed stays the typed one.
-        into.translationCarried = change.translationCarried && (!into.translation || into.translationCarried);
+        // A translation once typed stays the typed one, but for a step's own put back.
+        into.translationCarried = change.restoresProvenance
+                                      ? change.translationCarried
+                                      : change.translationCarried && (!into.translation || into.translationCarried);
         into.translation = change.translation;
     }
     if (change.start)
