@@ -748,6 +748,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                  : QDir::temp().filePath(QStringLiteral("hikari-catalogs-%1").arg(QCoreApplication::applicationPid()));
         StyleManagerController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
+        hooks.targetDocument = [this] { return m_workspace.editingTarget(); };
+        hooks.session = [this](application::DocumentId id) -> application::EditSession * {
+            return id == m_workspace.reference() ? nullptr : m_files->session(id); // R2-reference-tray
+        };
         hooks.documents = [this] {
             // Every Document but the reference, which is never written (R2-reference-tray).
             std::vector<application::EditSession *> out;

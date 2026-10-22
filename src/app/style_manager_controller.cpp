@@ -545,17 +545,10 @@ QString StyleManagerController::editCatalog() const
     return m_edit && m_edit->store ? qs(m_edit->catalog) : QString();
 }
 
-void StyleManagerController::documentClosing(const application::EditSession *session)
-{
-    // A later Document may take its address.
-    if (m_edit && !m_edit->store && m_edit->session == session)
-        m_edit->session = nullptr;
-}
-
 void StyleManagerController::pin(Edit edit)
 {
-    if (!edit.store && m_hooks.target)
-        edit.session = m_hooks.target();
+    if (!edit.store && m_hooks.targetDocument)
+        edit.document = m_hooks.targetDocument();
     if (edit.store)
         edit.catalog = m_catalogs.current();
     m_edit = std::move(edit);
@@ -563,13 +556,11 @@ void StyleManagerController::pin(Edit edit)
 
 application::EditSession *StyleManagerController::editSession() const
 {
-    if (!m_edit || !m_edit->session)
+    // The Document may have closed since the editor opened (by any path:
+    // a tab, Close all, a session loaded).
+    if (!m_edit || !m_edit->document || !m_hooks.session)
         return nullptr;
-    // The Document may have closed since the editor opened.
-    if (!m_hooks.documents)
-        return m_hooks.target && m_hooks.target() == m_edit->session ? m_edit->session : nullptr;
-    const auto open = m_hooks.documents();
-    return std::find(open.begin(), open.end(), m_edit->session) != open.end() ? m_edit->session : nullptr;
+    return m_hooks.session(*m_edit->document);
 }
 
 QVariantList StyleManagerController::transferClashes(bool toStore, const QVariantList &rows) const

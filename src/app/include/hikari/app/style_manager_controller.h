@@ -6,6 +6,7 @@
 // the Style editor with its libass preview.
 
 #include "hikari/application/style_manager.h"
+#include "hikari/application/write_coordinator.h"
 #include "hikari/backends/libass_renderer.h"
 
 #include <QImage>
@@ -32,6 +33,11 @@ class StyleManagerController : public QObject {
 public:
     struct Hooks {
         std::function<application::EditSession *()> target;                  // the editing target
+        // SY1: the editing target's Document, and an open Document's session
+        // (null when closed, or the reference): an edit is pinned by the
+        // Document, whose id is never reused.
+        std::function<std::optional<application::DocumentId>()> targetDocument;
+        std::function<application::EditSession *(application::DocumentId)> session;
         std::function<std::vector<application::EditSession *>()> documents;  // every open Document
         std::function<void()> refresh;                                       // after a Document changed
         std::function<std::vector<application::FontLease>()> fonts;          // Y6: the external fonts
@@ -98,8 +104,6 @@ public:
     // SY1: the catalog a catalog Style's edit goes to, which Settings may
     // have replaced in the lists since ("" without one).
     Q_INVOKABLE QString editCatalog() const;
-    // SY1: a Document closing: an edit pinned to it can no longer be applied.
-    void documentClosing(const application::EditSession *session);
 
     // PK1's clash review: the clashes a transfer has, in order
     // ([{name, fields (the style_field flags that differ), same, suggestion}]).
@@ -138,8 +142,8 @@ private:
         std::optional<std::size_t> row;
         core::StyleValues opened;
         // SY1: the Document the editor opened on, so Apply after a tab
-        // switch still goes to it.
-        application::EditSession *session = nullptr;
+        // switch still goes to it (none once it closed).
+        std::optional<application::DocumentId> document;
         // SY1: a catalog Style's catalog, so Apply goes to it when Settings
         // loaded another since.
         std::u8string catalog;

@@ -149,8 +149,6 @@ void Application::closeDocument(application::DocumentId document)
     m_comparison.remove();
     m_comparison.forget(document);
     discardRecovery(document); // reviewed: saved or explicitly discarded
-    if (const auto *session = m_files->session(document))
-        m_styleManager->documentClosing(session); // SY1: its pinned edit goes
     m_files->close(document);
     m_workspace.remove(document); // the legacy DeletePage successor becomes active
     forgetTab(document);
