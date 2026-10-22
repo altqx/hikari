@@ -6290,20 +6290,21 @@ ApplicationWindow {
     }
 
     // D1: every drag placement from the keyboard, and numeric resizing.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
+    // PU7 (#309): a compact window on DG1's frame, the panel, then a Move
+    // section and a Resize section, each with its own button; it stays open
+    // to move or resize again.
+    DialogWindow {
         id: placementWindow
         objectName: "placementWindow"
         title: qsTranslate("HikariSub.Workspace", "Move panel")
-        width: 420
-        height: 260
-        transientParent: root
-        flags: Qt.Dialog
+        dialogId: "movePanel"
+        settings: root.app.settings
+        initialFocus: placementPanel
+        defaultButton: placementClose
         function openFor(dock) {
             placementPanel.currentIndex = Math.max(0, root.dockList.indexOf(dock))
             refreshSize()
-            show()
-            requestActivate()
+            open()
             placementPanel.forceActiveFocus()
         }
         function refreshSize() {
@@ -6311,11 +6312,10 @@ ApplicationWindow {
             placementWidth.value = size.width
             placementHeight.value = size.height
         }
-        GridLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            columns: 2
-            Label { text: qsTranslate("HikariSub.Workspace", "Panel:") }
+        RowLayout {
+            spacing: 8
+            Layout.preferredWidth: 356
+            Label { text: qsTranslate("HikariSub.Workspace", "Panel"); Layout.preferredWidth: 56 }
             ComboBox {
                 id: placementPanel
                 objectName: "placementPanel"
@@ -6330,15 +6330,24 @@ ApplicationWindow {
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Panel")
                 onActivated: placementWindow.refreshSize()
             }
-            Label { text: qsTranslate("HikariSub.Workspace", "Place:") }
+        }
+        Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true; Layout.topMargin: 4 }
+        Label { text: qsTranslate("HikariSub.Workspace", "Move"); font.weight: Font.DemiBold; Accessible.role: Accessible.Heading }
+        RowLayout {
+            spacing: 8
+            Label { text: qsTranslate("HikariSub.Workspace", "Place"); Layout.preferredWidth: 56 }
             ComboBox {
                 id: placementKind
                 objectName: "placementKind"
-                Layout.fillWidth: true
+                Layout.preferredWidth: 130
                 model: [qsTranslate("HikariSub.Workspace", "Tab with"), qsTranslate("HikariSub.Workspace", "Left of"), qsTranslate("HikariSub.Workspace", "Above"), qsTranslate("HikariSub.Workspace", "Right of"), qsTranslate("HikariSub.Workspace", "Below"), qsTranslate("HikariSub.Workspace", "Float")]
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Placement")
             }
-            Label { text: qsTranslate("HikariSub.Workspace", "Next to:") }
+            Label {
+                text: qsTranslate("HikariSub.Workspace", "next to")
+                color: placementTarget.enabled ? Theme.text : Theme.disabled
+                Layout.leftMargin: 4
+            }
             ComboBox {
                 id: placementTarget
                 objectName: "placementTarget"
@@ -6350,42 +6359,62 @@ ApplicationWindow {
                 currentIndex: root.dockList.indexOf(gridDock)
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Next to panel")
             }
-            Item { Layout.fillWidth: true }
-            Button {
-                objectName: "placementMove"
-                text: qsTranslate("HikariSub.Workspace", "Move")
-                enabled: root.panelAvailable(root.dockList[placementPanel.currentIndex])
-                onClicked: {
-                    root.placePanel(root.dockList[placementPanel.currentIndex], placementKind.currentIndex,
-                                    root.dockList[placementTarget.currentIndex])
-                    placementWindow.refreshSize()
-                }
+        }
+        Button {
+            objectName: "placementMove"
+            text: qsTranslate("HikariSub.Workspace", "Move")
+            enabled: root.panelAvailable(root.dockList[placementPanel.currentIndex])
+            Layout.alignment: Qt.AlignRight
+            onClicked: {
+                root.placePanel(root.dockList[placementPanel.currentIndex], placementKind.currentIndex,
+                                root.dockList[placementTarget.currentIndex])
+                placementWindow.refreshSize()
             }
-            Label { text: qsTranslate("HikariSub.Workspace", "Width:") }
+        }
+        Rectangle { color: Theme.line; implicitHeight: 1; Layout.fillWidth: true; Layout.topMargin: 4 }
+        Label { text: qsTranslate("HikariSub.Workspace", "Resize"); font.weight: Font.DemiBold; Accessible.role: Accessible.Heading }
+        RowLayout {
+            spacing: 8
+            Label { text: qsTranslate("HikariSub.Workspace", "Width"); Layout.preferredWidth: 56 }
             SpinBox {
                 id: placementWidth
                 objectName: "placementWidth"
                 from: 0; to: 10000; stepSize: 10; editable: true
+                Layout.preferredWidth: 110
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Width")
             }
-            Label { text: qsTranslate("HikariSub.Workspace", "Height:") }
+            Label {
+                text: qsTranslate("HikariSub.Workspace", "Height")
+                Layout.leftMargin: 10
+            }
             SpinBox {
                 id: placementHeight
                 objectName: "placementHeight"
                 from: 0; to: 10000; stepSize: 10; editable: true
+                Layout.preferredWidth: 110
                 Accessible.name: qsTranslate("HikariSub.Workspace", "Height")
             }
-            Item { Layout.fillWidth: true }
-            Button {
-                objectName: "placementResize"
-                text: qsTranslate("HikariSub.Workspace", "Resize")
-                onClicked: {
-                    root.workspaceLayout.resizePanel(root.dockList[placementPanel.currentIndex],
-                                                     placementWidth.value, placementHeight.value)
-                    placementWindow.refreshSize()
-                }
+            Label { text: qsTranslate("HikariSub.Workspace", "px"); color: Theme.muted }
+        }
+        Button {
+            objectName: "placementResize"
+            text: qsTranslate("HikariSub.Workspace", "Resize")
+            Layout.alignment: Qt.AlignRight
+            onClicked: {
+                root.workspaceLayout.resizePanel(root.dockList[placementPanel.currentIndex],
+                                                 placementWidth.value, placementHeight.value)
+                placementWindow.refreshSize()
             }
         }
+        buttons: [
+            PrimaryButton {
+                id: placementClose
+                objectName: "placementClose"
+                text: qsTranslate("HikariSub.Workspace", "Close")
+                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+                onClicked: placementWindow.close()
+            }
+        ]
     }
 
     // A1: legacy OpenAudioInTab's dialog and filter.
