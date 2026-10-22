@@ -1428,6 +1428,20 @@ TEST(HydraStrip, AMovingLineIsOutlinedWhereItIs)
     EXPECT_NEAR((o.polygons[0].points[0].x + o.polygons[0].points[1].x) / 2, 900.f / 3, 1.f);
 }
 
+// HY1 (Codex security review on #339): a drawing whose Bézier coordinates
+// overflow a float's range is measured and outlined in bounded time.
+TEST(HydraStrip, AnOverflowingDrawingIsOutlined)
+{
+    TestHost host;
+    setUp(host, hydraCase({"{\\p1}m 0 0 b 1e38 0 0 1 0 1", "{\\p1}m 0 0 b 1e30 0 0 1 0 1"}, true));
+    AllTagsTool tags;
+    tags.setToggled(PasteAdd << 20);
+    tags.selected(host);
+    tags.reset(host);
+    const Overlay o = tags.overlay(host); // returns
+    EXPECT_LE(o.polygons.size(), 2u);
+}
+
 // HY1-time-keys-set: the Line editor's "Insert difference from the start"
 // key puts the video's time from the Line's start into \fad's first value,
 // as Set does, whatever the switch shows; one step.

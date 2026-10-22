@@ -311,6 +311,10 @@ void curve(std::size_t pos, const std::vector<ClipPoint> &points, std::vector<Po
     float h = 1.0f;
     if (maxaccel > 4.0f)
         h = std::sqrt(4.0f / maxaccel);
+    // At most 1024 points a segment: coordinates near a float's limit made
+    // the step 0 (or close to it) and this loop endless.
+    if (!(h >= 1.0f / 1024))
+        h = 1.0f / 1024;
     float p_x, p_y;
     for (float t = 0; t < 1.0; t += h) {
         p_x = a[0] + t * (a[1] + t * (a[2] + t * a[3]));
