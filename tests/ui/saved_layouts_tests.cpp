@@ -462,6 +462,14 @@ private slots:
         QTRY_VERIFY(!isOpen("audioDock"));
         QVERIFY(video.playing());
         video.pause();
+        // Not now to TM1's question, a message box in its own window that
+        // has the keyboard (PU2-translation-mode-off).
+        auto *question = qobject_cast<QQuickWindow *>(named("translationModeQuestion"));
+        QVERIFY(question);
+        QTRY_VERIFY(question->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(question, "reject"));
+        QTRY_VERIFY(!question->isVisible());
+        QTRY_VERIFY(window()->isActive());
 
         trigger(QStringLiteral("viewLayoutPresetEditing"));
         QTRY_VERIFY(isOpen("audioDock"));

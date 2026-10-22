@@ -721,7 +721,9 @@ private slots:
             QJsonObject layout = splitter.value(QStringLiteral("layout")).toObject();
             QJsonArray children = layout.value(QStringLiteral("children")).toArray();
             QVERIFY(!children.isEmpty());
-            layout.insert(QStringLiteral("children"), many(children.first(), 2000));
+            // Far more items than the panels fill: empty places (copies of
+            // a child would repeat its panels' ids, or pass the 4 MiB cap).
+            layout.insert(QStringLiteral("children"), many(QJsonObject{{QStringLiteral("isContainer"), false}}, 2000));
             splitter.insert(QStringLiteral("layout"), layout);
         } else if (change == QStringLiteral("dock")) {
             docks.append(docks.first());
