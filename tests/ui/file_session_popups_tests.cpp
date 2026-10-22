@@ -324,6 +324,84 @@ private slots:
 
     // Started with files (On start: Ask): the offer is the startup bar over
     // the Document, and Restore replaces the tabs after the review.
+    // Closing a Document whose file another program changed, choosing Save:
+    // Save over it is asked first; Cancel cancels the close.
+    void closingAFileChangedOnDiskAsksToSaveOverIt()
+    {
+        start();
+        const QString path = writeAss(dir.filePath(QStringLiteral("disk/closing.ass")), "mine");
+        QVERIFY(application->openFile(path));
+        changeOnDisk(path, "theirs");
+        QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
+        QTRY_VERIFY(shown("diskChangeBar"));
+        application->duplicateLines();
+        const auto closeAndSave = [this] {
+            window->close();
+            QTRY_VERIFY(shown("closeQuestion"));
+            QVERIFY(QMetaObject::invokeMethod(named("closeQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("save"))));
+            QTRY_VERIFY(shown("diskSaveQuestion"));
+        };
+        closeAndSave();
+        QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!shown("diskSaveQuestion"));
+        QVERIFY(!application->quitApproved());
+        QVERIFY(window->isVisible());
+        QVERIFY(readAll(path).contains("theirs"));
+        QVERIFY(shown("diskChangeBar"));
+        closeAndSave();
+        QVERIFY(QMetaObject::invokeMethod(named("diskSaveQuestion"), "answer", Q_ARG(QVariant, QStringLiteral("saveOver"))));
+        QTRY_VERIFY(application->quitApproved());
+        application->waitForWrites();
+        QCOMPARE(readAll(path).count("mine"), qsizetype(2));
+    }
+
+    // Saved under another name, the bar about the file it came from goes.
+    void saveAsEndsTheDiskChangeBar()
+    {
+        start();
+        const QString path = writeAss(dir.filePath(QStringLiteral("disk/saveas.ass")), "mine");
+        QVERIFY(application->openFile(path));
+        changeOnDisk(path, "theirs");
+        QVERIFY(QMetaObject::invokeMethod(window, "checkExternalChange"));
+        QTRY_VERIFY(shown("diskChangeBar"));
+        QObject *dialog = named("saveAsDialog");
+        QVERIFY(dialog);
+        const QString other = dir.filePath(QStringLiteral("disk/saveas-mine.ass"));
+        dialog->setProperty("document", 0);
+        dialog->setProperty("selectedFile", QUrl::fromLocalFile(other));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "accepted"));
+        QTRY_VERIFY(!shown("diskChangeBar"));
+        application->waitForWrites();
+        QVERIFY(readAll(other).contains("mine"));
+        QVERIFY(readAll(path).contains("theirs"));
+    }
+
+    // A crash's autosaved work stays offered once the session is restored:
+    // the startup bar keeps Autosaves…, without Restore.
+    void aRestoredSessionKeepsTheAutosavesOffered()
+    {
+        start();
+        QObject *offer = named("startupBar")->property("offer").value<QObject *>();
+        QVERIFY(offer);
+        QTRY_VERIFY(application->home());
+        offer->setProperty("names", QStringList{QStringLiteral("kept.ass")});
+        offer->setProperty("autosaveCount", 1);
+        offer->setProperty("restorable", true);
+        offer->setProperty("kind", QStringLiteral("crash"));
+        offer->setProperty("restoring", true); // Restore chosen
+        QVERIFY(application->openFile(writeAss(dir.filePath(QStringLiteral("restored/kept.ass")), "kept")));
+        QVERIFY(QMetaObject::invokeMethod(application.get(), "sessionRestored", Q_ARG(int, 0)));
+        QTRY_VERIFY(shown("startupBar"));
+        QCOMPARE(offer->property("kind").toString(), QStringLiteral("crash"));
+        QVERIFY(!shown("startupRestore"));
+        QVERIFY(shown("startupAutosaves"));
+        // On start: Ask, restored: nothing more to offer.
+        offer->setProperty("restorable", true);
+        offer->setProperty("kind", QStringLiteral("ask"));
+        QVERIFY(QMetaObject::invokeMethod(application.get(), "sessionRestored", Q_ARG(int, 0)));
+        QTRY_VERIFY(!shown("startupBar"));
+    }
+
     void aStartWithFilesOffersTheSessionInABar()
     {
         {

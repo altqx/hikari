@@ -7286,6 +7286,27 @@ private slots:
         QCOMPARE(application->workspace().tabs().size(), tabs + 2);
         QVERIFY(application->files().session(drafted));
         QCOMPARE(application->files().session(drafted)->draftText(), std::optional<std::u8string>(u8"typed"));
+
+        // Another video opened in the tab meanwhile keeps the tab: the track
+        // is the old video's, so it opens in a new tab.
+        QVERIFY(draftSession->commitDraft());
+        const auto reopened = application->workspace().tabs();
+        application->selectTab(int(std::ranges::find(reopened, drafted) - reopened.begin()));
+        QTRY_VERIFY(target() == drafted);
+        QTRY_VERIFY_WITH_TIMEOUT(matroska.available(), 20000);
+        QTRY_VERIFY(item->property("enabled").toBool());
+        const auto lines = draftSession->document().lines().size();
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(mkvQuestionShown());
+        QVERIFY(mkvAnswer("load"));
+        QTRY_VERIFY_WITH_TIMEOUT(chooser->property("opened").toBool(), 20000);
+        application->video().openVideo(nativeFixture("cfr.mkv"));
+        QVERIFY(videoReady(nativeFixture("cfr.mkv")));
+        QVERIFY(QMetaObject::invokeMethod(chooser, "take", Q_ARG(QVariant, chooser->property("current"))));
+        QTRY_VERIFY_WITH_TIMEOUT(target() != drafted, 20000);
+        QTRY_COMPARE(matroska.state(), 0);
+        QCOMPARE(application->workspace().tabs().size(), tabs + 3);
+        QCOMPARE(application->files().session(drafted)->document().lines().size(), lines);
     }
 
     // File > Open (GLOBAL_OPEN_SUBS, HikariSubFrame.cpp:1008-1033 at
