@@ -742,10 +742,20 @@ bool animatesTheQuad(const Tag &tag)
     return false;
 }
 
+// What one read may measure through the font, on the UI thread: the Line
+// and every Line it stacks on draw from it. libass shows any number of
+// rows, but a box of more than these is no sign the tool places, and a
+// hostile script (a comment of \N, or many Lines shown at once) gets no
+// quad rather than unbounded work.
+struct MeasureBudget {
+    std::size_t rows = 64, shown = 4096;
+};
+
 // `edited`: the Line the tool writes, whose outline and shadow are scaled
 // in its leading blocks only, so a later change of them is not taken.
 std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
-                              u16v text, const core::StyleValues &style, const Leading &lead, bool edited)
+                              u16v text, const core::StyleValues &style, const Leading &lead, bool edited,
+                              MeasureBudget &budget)
 {
     for (const auto &[open, close] : blocksOf(text))
         for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1)))
@@ -874,11 +884,8 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         return n >= 0 && n <= 3 ? n : 0;
     };
     int wrap = wrapOf();
-    // libass shows any number of rows, but a box of more than these is no
-    // sign the tool places, and each row is measured through the font on
-    // the UI thread: a hostile Line (a comment of \N, say) gets no quad
-    // rather than unbounded work.
-    constexpr std::size_t kMaxRows = 64, kMaxShown = 4096;
+    if (budget.rows == 0)
+        return std::nullopt;
     std::size_t shown = 0;
     std::vector<u16> lines(1);
     const std::size_t lastClose = text.rfind(u'}'); // a { before it opens a block
@@ -910,7 +917,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         if (ch == u'\\' && i + 1 < text.size()) {
             const char16_t next = text[i + 1];
             if (next == u'N' || (next == u'n' && wrap == 2)) {
-                if (lines.size() == kMaxRows)
+                if (lines.size() == budget.rows)
                     return std::nullopt;
                 lines.emplace_back();
                 started = true;
@@ -921,7 +928,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
                 lines.back().push_back(next == u'n' ? u' ' : next == u'h' ? u'\u00A0' : next);
                 started = true;
                 i += 2;
-                if (++shown > kMaxShown)
+                if (++shown > budget.shown)
                     return std::nullopt;
                 continue;
             }
@@ -929,9 +936,11 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         lines.back().push_back(ch == u'\t' ? u' ' : ch);
         started = true;
         ++i;
-        if (++shown > kMaxShown)
+        if (++shown > budget.shown)
             return std::nullopt;
     }
+    budget.rows -= lines.size();
+    budget.shown -= shown;
     double width = 0, height = 0;
     for (const u16 &piece : lines) {
         const std::u8string utf8 = core::toUtf8(piece.empty() ? u16(u" ") : piece);
@@ -1000,7 +1009,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
 // outline (not its shadow); one with nothing shown is no obstacle. Nullopt
 // when one in its band cannot be measured: where it is placed is not known.
 std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line,
-                                  const Transform &t, const Box &box)
+                                  const Transform &t, const Box &box, MeasureBudget &budget)
 {
     const transform::Context &ctx = styles.ctx;
     const std::int64_t time = host.videoTimeMs();
@@ -1049,7 +1058,7 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             break;
         const u16 text = transform::lineText(*dial);
         const core::StyleValues style = styles.line(dial->style);
-        const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text), false);
+        const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text), false, budget);
         if (!otherBox)
             return std::nullopt;
         if (otherBox->width() <= 0)
@@ -1247,12 +1256,14 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
     const StyleIndex styles(ctx, *decoded);
     LineState out = readTagsIn(host, styles, line);
     const u16 text = transform::lineText(line);
-    const auto box = measureBox(host, styles, line, text, styles.line(line.style), leadingOf(text), true);
+    MeasureBudget budget;
+    const auto box =
+        measureBox(host, styles, line, text, styles.line(line.style), leadingOf(text), true, budget);
     if (!box)
         return std::nullopt;
     out.box = *box;
     if (out.stacks) {
-        const auto offset = stackOffset(host, styles, line, out.transform, *box);
+        const auto offset = stackOffset(host, styles, line, out.transform, *box, budget);
         if (!offset)
             return std::nullopt;
         out.transform.pos.y += static_cast<float>(*offset);

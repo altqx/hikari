@@ -682,6 +682,24 @@ TEST(PerspectiveTags, AHostileLineIsMeasuredBoundedly)
     EXPECT_TRUE(readLine(host, lineWith(host, 4)));
 }
 
+TEST(PerspectiveTags, AStackIsMeasuredInOneBudget)
+{
+    // The Lines a Line stacks on are measured with it, from the one budget:
+    // many Lines of rows each under the bound are still bounded together.
+    std::string rows = "a";
+    for (int i = 1; i < 8; ++i)
+        rows += "\\Na";
+    const auto read = [&rows](int lines) {
+        Host host(std::vector<std::string>(lines, rows), "WrapStyle: 2");
+        const bool ok = readLine(host, lineWith(host, lines - 1)).has_value();
+        return std::pair{ok, host.measure.calls};
+    };
+    EXPECT_EQ(read(8), (std::pair{true, 64}));
+    const auto [ok, calls] = read(9);
+    EXPECT_FALSE(ok);
+    EXPECT_LE(calls, 64);
+}
+
 TEST(PerspectiveTags, TheWrapTakesTheLinesOwnStyleMargins)
 {
     // libass keeps the Line's Style's margins after a \r: Default's leave
