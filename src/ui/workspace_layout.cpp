@@ -836,7 +836,9 @@ bool WorkspaceLayoutController::applyPresetArrangement(const QString &name)
 {
     if (!presets().contains(name) || m_default.isEmpty())
         return false;
-    const bool done = buildPreset(name, false);
+    // In place, as a saved layout or a tab's arrangement: the main window
+    // keeps its geometry, not the one the preset was captured or built at.
+    const bool done = buildPreset(name, true);
     dismissPanelNotice();
     setPreset(name);
     emit arrangementSwapped(); // WS3: the panels the preset leaves closed are closed now
