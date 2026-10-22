@@ -76,12 +76,13 @@ QString originOf(const QUrl &url)
 
 // ADR 0019: "Installing update..." while pkexec's helper runs, after the
 // main window has closed; the returned function hides it. PU7 (#309): it
-// names the version.
-std::function<void()> showInstalling(QQmlApplicationEngine &engine, const QString &version)
+// names the version and reads the settings' title bar choice.
+std::function<void()> showInstalling(QQmlApplicationEngine &engine, QObject *settings, const QString &version)
 {
     QQmlComponent component(&engine);
     component.loadFromModule("Hikari.Ui", "UpdateInstallingWindow");
-    QObject *window = component.createWithInitialProperties({{QStringLiteral("version"), version}});
+    QObject *window = component.createWithInitialProperties(
+        {{QStringLiteral("version"), version}, {QStringLiteral("settings"), QVariant::fromValue(settings)}});
     if (!window)
         return {};
     // The notice cannot end the wait: closing it is refused, and no window
@@ -298,7 +299,8 @@ int runWindow(int argc, char **argv, StartupMode mode, const application::Startu
         qputenv("XDG_ACTIVATION_TOKEN", token.toUtf8());
     if (install)
         exitAction = application.updates().installer().installAtExit(
-            [&engine, &application] { return showInstalling(engine, application.updates().installer().readyVersion()); });
+            [&engine, &application] { return showInstalling(engine, application.settingsStore(), application.updates().installer().readyVersion());
+            });
     exitAction.arguments += carried;
     if (!unopened.isEmpty() || forwarded.startAfterQuit())
         startForHandedOn(exitAction, updateStarts, carried);

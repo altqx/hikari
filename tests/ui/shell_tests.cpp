@@ -6843,12 +6843,15 @@ private slots:
 
     // PU7 (#309): the window shown while the installer runs is titled
     // "Install update", names the version and cannot be closed: no Close on
-    // its title bar, and Esc and the window system's close do nothing.
+    // its title bar, and Esc and the window system's close do nothing. It
+    // reads "Use system title bar" as every dialog does.
     QQuickWindow *installingWindow(const QString &version)
     {
         QQmlComponent component(engine);
         component.loadFromModule("Hikari.Ui", "UpdateInstallingWindow");
-        auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties({{QStringLiteral("version"), version}}));
+        auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties(
+            {{QStringLiteral("version"), version},
+             {QStringLiteral("settings"), QVariant::fromValue(static_cast<QObject *>(application->settingsStore()))}}));
         if (!window)
             qWarning() << component.errorString();
         return window;
@@ -6862,6 +6865,7 @@ private slots:
         QCOMPARE(findItem(window->contentItem(), QStringLiteral("updateInstallingText"))->property("text").toString(),
                  QStringLiteral("Installing HikariSub 1.4.0…"));
         QVERIFY(!window->property("closable").toBool());
+        QVERIFY(window->property("settings").value<QObject *>());
         QVERIFY(QTest::qWaitForWindowExposed(window.get()));
         window->requestActivate();
         QTRY_COMPARE(QGuiApplication::focusWindow(), window.get());
