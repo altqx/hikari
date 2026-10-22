@@ -718,6 +718,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.fonts = [this] { // Y6: the external fonts render in the preview; 38c: the script's attached fonts too
             return subtitleFonts(m_workspace.editingTarget());
         };
+        hooks.lastCatalog = [this] { return m_settings->text("styles.lastCatalog"); };
+        hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
@@ -1601,6 +1603,8 @@ void Application::refreshViews()
         spellChecker();
     reportGroupBreak();
     scheduleAutosave();
+    if (m_styleManager) // SY1: an open Style manager follows
+        m_styleManager->targetRefreshed();
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;

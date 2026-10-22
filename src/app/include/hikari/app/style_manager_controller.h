@@ -35,6 +35,10 @@ public:
         std::function<std::vector<application::EditSession *>()> documents;  // every open Document
         std::function<void()> refresh;                                       // after a Document changed
         std::function<std::vector<application::FontLease>()> fonts;          // Y6: the external fonts
+        // SY1: the catalog chosen last (styles.lastCatalog), read once at
+        // the start and written on each choice.
+        std::function<QString()> lastCatalog;
+        std::function<void(const QString &)> catalogChosen;
     };
     StyleManagerController(std::filesystem::path catalogDir, Hooks hooks, QObject *parent = nullptr);
 
@@ -54,6 +58,16 @@ public:
     Q_INVOKABLE bool createCatalog(const QString &name); // NewCatalog
     Q_INVOKABLE bool deleteCatalog(const QString &name);
     Q_INVOKABLE void saveCatalog();                       // OnClose saves the store
+    // SY1: after the views refreshed (an edit, an undo, another tab):
+    // targetEdited, `switched` when the target is another Document.
+    void targetRefreshed();
+
+    // SY1: a list's rows as the Style manager shows them: [{name, primary,
+    // outline (#rrggbb), lines (the Lines using it; -1 in the catalog)}].
+    Q_INVOKABLE QVariantList styleRows(bool store) const;
+    // SY1: the editor's value keys that differ between the Styles at `rows`
+    // ("Multiple values"); the name is left out.
+    Q_INVOKABLE QStringList mixedFields(bool store, const QVariantList &rows) const;
 
     // The editor. begin* return the values it opens with ({} when refused).
     Q_INVOKABLE QVariantMap beginEdit(bool store, int row);
@@ -92,6 +106,9 @@ public:
     Q_INVOKABLE QVariantList moveStyles(bool store, const QVariantList &rows, int kind);
     // OnCleanStyles: the legacy "Styles used:\n...\nStyles deleted:\n..." text.
     Q_INVOKABLE QString cleanStyles();
+    // SY1: the same, for the toast: {used, deleted (names), report (the
+    // legacy text, for the Log)}; {} without an ASS Document.
+    Q_INVOKABLE QVariantMap deleteUnusedStyles();
 
     // StylePreview: the editor's values over the checkered background.
     Q_INVOKABLE void renderPreview(const QVariantMap &values, int width, int height, const QString &text);
@@ -99,14 +116,21 @@ public:
 signals:
     void changed();
     void previewChanged();
+    void targetEdited(bool switched);
 
 private:
     struct Edit {
         bool store = false;
         std::optional<std::size_t> row;
         core::StyleValues opened;
+        // SY1: the Document the editor opened on, so Apply after a tab
+        // switch still goes to it.
+        application::EditSession *session = nullptr;
     };
     application::StyleList *list(bool store, std::optional<application::StyleList> &document) const;
+    void catalogChosen();
+    void pin(Edit edit);
+    application::EditSession *editSession() const;
     bool applyDocument(application::EditSession &session, const application::StyleList &styles,
                        const std::vector<std::optional<std::size_t>> &origin,
                        std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt);
@@ -114,6 +138,7 @@ private:
     application::StyleCatalogs m_catalogs;
     Hooks m_hooks;
     std::optional<Edit> m_edit;
+    application::EditSession *m_lastTarget = nullptr;
     backends::LibassRenderer m_renderer;
     QImage m_preview;
     int m_previewKey = 0;

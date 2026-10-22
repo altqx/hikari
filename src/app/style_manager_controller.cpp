@@ -4,6 +4,7 @@
 
 #include <QCoreApplication>
 #include <QCollator>
+#include <QColor>
 #include <QQuickImageProvider>
 #include <QSet>
 #include <QFile>
@@ -223,6 +224,10 @@ StyleList chosenInFile(const QUrl &url, const QStringList &names)
 StyleManagerController::StyleManagerController(std::filesystem::path catalogDir, Hooks hooks, QObject *parent)
     : QObject(parent), m_catalogs(std::move(catalogDir)), m_hooks(std::move(hooks))
 {
+    // SY1: the catalog chosen last, when it is still there.
+    if (m_hooks.lastCatalog)
+        if (const QString last = m_hooks.lastCatalog(); !last.isEmpty())
+            m_catalogs.choose(u8(last));
 }
 
 QStringList StyleManagerController::catalogs() const
@@ -265,9 +270,11 @@ bool StyleManagerController::available() const
 void StyleManagerController::refreshLists()
 {
     if (auto *session = m_hooks.target ? m_hooks.target() : nullptr) {
+        // SY1: "Default", which every new file names, leaves the catalog
+        // chosen last as it is.
         const auto last = session->document().scriptInfo(u8"Last Style Storage");
-        if (last && !last->empty() && *last != m_catalogs.current())
-            m_catalogs.choose(*last);
+        if (last && !last->empty() && *last != u8"Default" && *last != m_catalogs.current() && m_catalogs.choose(*last))
+            catalogChosen();
     }
     emit changed();
 }
@@ -275,6 +282,8 @@ void StyleManagerController::refreshLists()
 bool StyleManagerController::chooseCatalog(const QString &name)
 {
     const bool ok = m_catalogs.choose(u8(name));
+    if (ok)
+        catalogChosen();
     emit changed();
     return ok;
 }
@@ -282,6 +291,8 @@ bool StyleManagerController::chooseCatalog(const QString &name)
 bool StyleManagerController::createCatalog(const QString &name)
 {
     const bool ok = m_catalogs.create(u8(name));
+    if (ok)
+        catalogChosen();
     emit changed();
     return ok;
 }
@@ -289,13 +300,74 @@ bool StyleManagerController::createCatalog(const QString &name)
 bool StyleManagerController::deleteCatalog(const QString &name)
 {
     const bool ok = m_catalogs.remove(u8(name));
+    if (ok)
+        catalogChosen();
     emit changed();
     return ok;
+}
+
+void StyleManagerController::catalogChosen()
+{
+    if (m_hooks.catalogChosen)
+        m_hooks.catalogChosen(qs(m_catalogs.current()));
+}
+
+QVariantList StyleManagerController::styleRows(bool store) const
+{
+    std::optional<StyleList> doc;
+    const auto *styles = list(store, doc);
+    if (!styles)
+        return {};
+    std::unordered_map<std::u8string, int> lines;
+    if (!store)
+        for (const auto &line : m_hooks.target()->document().lines())
+            ++lines[line->style];
+    const auto hex = [](const core::Colour &c) { return QColor(c.r, c.g, c.b).name(); };
+    QVariantList out;
+    for (const auto &style : *styles) {
+        const auto used = lines.find(style.name);
+        out << QVariantMap{{QStringLiteral("name"), qs(style.name)},
+                           {QStringLiteral("primary"), hex(style.primary)},
+                           {QStringLiteral("outline"), hex(style.outline)},
+                           {QStringLiteral("lines"), store ? -1 : used == lines.end() ? 0 : used->second}};
+    }
+    return out;
+}
+
+QStringList StyleManagerController::mixedFields(bool store, const QVariantList &rows) const
+{
+    std::optional<StyleList> doc;
+    const auto *styles = list(store, doc);
+    if (!styles)
+        return {};
+    QStringList out;
+    std::optional<QVariantMap> first;
+    for (const auto r : rowsOf(rows)) {
+        if (r >= styles->size())
+            break;
+        const QVariantMap values = valuesOf((*styles)[r]);
+        if (!first) {
+            first = values;
+            continue;
+        }
+        for (auto it = values.cbegin(); it != values.cend(); ++it)
+            if (it.key() != QLatin1String("name") && !out.contains(it.key()) && first->value(it.key()) != it.value())
+                out << it.key();
+    }
+    return out;
 }
 
 void StyleManagerController::saveCatalog()
 {
     m_catalogs.save();
+}
+
+void StyleManagerController::targetRefreshed()
+{
+    auto *now = m_hooks.target ? m_hooks.target() : nullptr;
+    const bool switched = now != m_lastTarget;
+    m_lastTarget = now;
+    emit targetEdited(switched);
 }
 
 StyleList *StyleManagerController::list(bool store, std::optional<StyleList> &document) const
@@ -324,7 +396,7 @@ QVariantMap StyleManagerController::beginEdit(bool store, int row)
     const auto *styles = list(store, doc);
     if (!styles || row < 0 || static_cast<std::size_t>(row) >= styles->size())
         return {};
-    m_edit = Edit{store, static_cast<std::size_t>(row), (*styles)[static_cast<std::size_t>(row)]};
+    pin(Edit{store, static_cast<std::size_t>(row), (*styles)[static_cast<std::size_t>(row)]});
     return valuesOf(m_edit->opened);
 }
 
@@ -334,7 +406,7 @@ QVariantMap StyleManagerController::beginNew(bool store)
     const auto *styles = list(store, doc);
     if (!styles)
         return {};
-    m_edit = Edit{store, std::nullopt, application::defaultStyle(application::newStyleName(*styles))};
+    pin(Edit{store, std::nullopt, application::defaultStyle(application::newStyleName(*styles))});
     return valuesOf(m_edit->opened);
 }
 
@@ -347,7 +419,7 @@ QVariantMap StyleManagerController::beginNamed(const QString &name)
     const auto from = std::find_if(styles->begin(), styles->end(), [](const auto &s) { return s.name == u8"Default"; });
     auto style = from != styles->end() ? *from : application::defaultStyle();
     style.name = u8(name);
-    m_edit = Edit{false, std::nullopt, style};
+    pin(Edit{false, std::nullopt, style});
     return valuesOf(style);
 }
 
@@ -359,7 +431,7 @@ QVariantMap StyleManagerController::beginCopy(bool store, int row)
         return {};
     auto copy = (*styles)[static_cast<std::size_t>(row)];
     copy.name = u8(QCoreApplication::translate("HikariSub.Styles", "Copy of ")) + copy.name;
-    m_edit = Edit{store, std::nullopt, copy};
+    pin(Edit{store, std::nullopt, copy});
     return valuesOf(copy);
 }
 
@@ -377,8 +449,9 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
 {
     if (!m_edit)
         return {};
-    std::optional<StyleList> doc;
-    auto *styles = list(m_edit->store, doc);
+    auto *session = m_edit->store ? nullptr : editSession();
+    std::optional<StyleList> doc = session ? application::documentStyles(*session) : std::nullopt;
+    auto *styles = m_edit->store ? list(true, doc) : doc ? &*doc : nullptr;
     if (!styles)
         return QCoreApplication::translate("HikariSub.Styles", "The document has no styles to edit.");
     application::StyleEdit edit;
@@ -401,7 +474,7 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
         std::optional<std::pair<std::u8string, std::u8string>> rename;
         if (renameLines && m_edit->row && edit.oldName != edit.style.name)
             rename = std::pair(edit.oldName, edit.style.name);
-        applyDocument(*m_hooks.target(), *styles, origin, rename);
+        applyDocument(*session, *styles, origin, rename);
     }
     // The editor stays on the committed Style (Apply keeps it open).
     m_edit->row = *row;
@@ -412,6 +485,24 @@ QString StyleManagerController::commitEdit(const QVariantMap &values, const QVar
 void StyleManagerController::endEdit()
 {
     m_edit.reset();
+}
+
+void StyleManagerController::pin(Edit edit)
+{
+    if (!edit.store && m_hooks.target)
+        edit.session = m_hooks.target();
+    m_edit = std::move(edit);
+}
+
+application::EditSession *StyleManagerController::editSession() const
+{
+    if (!m_edit || !m_edit->session)
+        return nullptr;
+    // The Document may have closed since the editor opened.
+    if (!m_hooks.documents)
+        return m_hooks.target && m_hooks.target() == m_edit->session ? m_edit->session : nullptr;
+    const auto open = m_hooks.documents();
+    return std::find(open.begin(), open.end(), m_edit->session) != open.end() ? m_edit->session : nullptr;
 }
 
 QVariantList StyleManagerController::transferClashes(bool toStore, const QVariantList &rows) const
@@ -617,6 +708,11 @@ QVariantList StyleManagerController::moveStyles(bool store, const QVariantList &
 
 QString StyleManagerController::cleanStyles()
 {
+    return deleteUnusedStyles().value(QStringLiteral("report")).toString();
+}
+
+QVariantMap StyleManagerController::deleteUnusedStyles()
+{
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;
     if (!session)
         return {};
@@ -626,16 +722,24 @@ QString StyleManagerController::cleanStyles()
     emit changed();
     if (!result)
         return {};
+    QStringList usedNames, deletedNames;
     QString used, deleted;
-    for (const auto &n : result->used)
+    for (const auto &n : result->used) {
+        usedNames << qs(n);
         used += qs(n) + u'\n';
-    for (const auto &n : result->deleted)
+    }
+    for (const auto &n : result->deleted) {
+        deletedNames << qs(n);
         deleted += qs(n) + u'\n';
+    }
     if (used.isEmpty())
         used = QCoreApplication::translate("HikariSub.Styles", "None");
     if (deleted.isEmpty())
         deleted = QCoreApplication::translate("HikariSub.Styles", "None");
-    return QCoreApplication::translate("HikariSub.Styles", "Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted);
+    return {{QStringLiteral("used"), usedNames},
+            {QStringLiteral("deleted"), deletedNames},
+            {QStringLiteral("report"),
+             QCoreApplication::translate("HikariSub.Styles", "Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted)}};
 }
 
 void StyleManagerController::renderPreview(const QVariantMap &values, int width, int height, const QString &text)

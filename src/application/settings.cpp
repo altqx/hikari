@@ -262,6 +262,9 @@ const std::vector<SettingDefinition> &definitions()
         // setting of their own (Settings > General > Ask again clears them).
         {"notices.toasts", "", Bool, Profile, Mapped, false, true},
         {"notices.hiddenQuestions", "", StringList, Profile, Mapped, false, std::vector<std::string>()},
+        // SY1 (#247): the style catalog chosen last, the Style manager's at
+        // the next start (legacy started on "Default").
+        {"styles.lastCatalog", "", String, Profile, Mapped, false, std::string()},
         // The audio output's host API on Windows: 0 WASAPI (default; reports
         // an unplugged device as lost), 1 DirectSound (legacy's player). The
         // user's choice, 2026-10-04 (A4-wasapi-default).
