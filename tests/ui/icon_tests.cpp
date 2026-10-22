@@ -288,7 +288,9 @@ private slots:
                                  // T6's position shifter and all-tags roles
                                  "shift-position", "shift-origins", "tag-list", "tag-change-option", "tag-edit",
                                  // SH1's window buttons
-                                 "window-minimize", "window-maximize", "window-restore", "window-close"})
+                                 "window-minimize", "window-maximize", "window-restore", "window-close",
+                                 // PF1's Settings pages and primary options
+                                 "settings-grid", "notices", "language", "audio-device", "restore-default"})
             QVERIFY2(referenced.contains(QLatin1String(role)), role);
         static const QRegularExpression card(QStringLiteral(R"(^[A-Z]+\d+ #\d+(, [A-Z]+\d+ #\d+)*$)"));
         int pending = 0;
@@ -303,9 +305,9 @@ private slots:
                 QVERIFY2(referenced.contains(role), qPrintable(role + QStringLiteral(" has no surface and is not pending")));
             }
         }
-        // Every card that placed roles has landed but PF1 (#225), whose
-        // Settings pages take the Options icons IC1 drew.
-        QCOMPARE(pending, 10);
+        // Every card that placed roles has landed (PF1 #225 placed the
+        // Options icons IC1 drew, the last).
+        QCOMPARE(pending, 0);
     }
 
     // The glyphs that stood in for icons, alone or as a prefix before words.
@@ -944,8 +946,12 @@ Rectangle {
             QStringLiteral("layout-restore"), QStringLiteral("restore-default"),
             // TM1's text-line icon and its moving arrow
             QStringLiteral("translation-mode"), QStringLiteral("comment-original"), QStringLiteral("moving-tags"),
+            // TP1's text lines under a swatch
+            QStringLiteral("style-apply"),
             // PK1's arrows: the date picker's previous and next month, the Details disclosure
-            QStringLiteral("chevron-left"), QStringLiteral("chevron-right")};
+            QStringLiteral("chevron-left"), QStringLiteral("chevron-right"),
+            // PF1's grid and notice icons (a list's column, text lines)
+            QStringLiteral("settings-grid"), QStringLiteral("notices")};
         QSet<QString> mirrored;
         for (const auto &value : manifest.value(QLatin1String("icons")).toArray()) {
             const auto icon = value.toObject();

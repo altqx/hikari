@@ -215,6 +215,33 @@ private slots:
         QVERIFY(found.wait(5000));
         QCOMPARE(found.at(0).at(0).toString(), QStringLiteral("available"));
         QCOMPARE(found.at(0).at(2).toBool(), false);
+        // PU7 (#309): Skip this version, kept; the automatic check passes
+        // the skipped version over in silence (backing off a day as ever,
+        // nothing downloaded), Check for updates still shows it.
+        const QString version = found.at(0).at(1).toMap().value(QStringLiteral("version")).toString();
+        QVERIFY(!version.isEmpty());
+        due.skipVersion(version);
+        const QString skipCache = dir.filePath(QStringLiteral("cache-skip"));
+        UpdateChecker skipping(ini, feed(kFeed), QStringLiteral("0.1.0"), environment(PackageKind::Deb, skipCache));
+        QCOMPARE(skipping.skippedVersion(), version);
+        skipping.setNextCheck(0);
+        QSignalSpy quiet(&skipping, &UpdateChecker::finished);
+        const qint64 skippedAt = QDateTime::currentSecsSinceEpoch();
+        QVERIFY(skipping.checkOnStartup());
+        QTRY_VERIFY(!skipping.checking());
+        QCOMPARE(quiet.count(), 0);
+        QVERIFY(skipping.nextCheck() >= skippedAt + 24 * 60 * 60);
+        QCOMPARE(skipping.installer().state(), QStringLiteral("idle"));
+        QCOMPARE(checkedOffer(skipping).value(QStringLiteral("version")).toString(), version);
+        // Offer it again (Settings > Updates): the automatic check shows it.
+        skipping.skipVersion(QString());
+        UpdateChecker offered(ini, feed(kFeed), QStringLiteral("0.1.0"));
+        QVERIFY(offered.skippedVersion().isEmpty());
+        offered.setNextCheck(0);
+        QSignalSpy shown(&offered, &UpdateChecker::finished);
+        QVERIFY(offered.checkOnStartup());
+        QVERIFY(shown.wait(5000));
+        QCOMPARE(shown.at(0).at(1).toMap().value(QStringLiteral("version")).toString(), version);
     }
 
     // The highest version is chosen, not the first listed; a release not

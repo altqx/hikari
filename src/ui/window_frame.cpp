@@ -383,6 +383,16 @@ void MainWindowFrame::setResizable(bool resizable)
     emit resizableChanged();
 }
 
+void MainWindowFrame::setClosable(bool closable)
+{
+    if (m_closable == closable)
+        return;
+    m_closable = closable;
+    m_applied = false;
+    apply();
+    emit closableChanged();
+}
+
 void MainWindowFrame::setTitleBar(QQuickItem *item)
 {
     if (m_titleBar == item)
@@ -516,8 +526,13 @@ void MainWindowFrame::apply()
                                                       : Qt::WindowFlags();
         // The window system's frame too: a dialog's buttons whichever
         // frame it first opens with.
-        const Qt::WindowFlags hints = Qt::WindowTitleHint | Qt::WindowSystemMenuHint | buttons | Qt::WindowCloseButtonHint;
-        const Qt::WindowFlags dropped = m_dialog ? Qt::WindowMinMaxButtonsHint & ~buttons : Qt::WindowFlags();
+        // PU7: a dialog that cannot be closed asks for its hints alone
+        // (CustomizeWindowHint), Close not among them.
+        const Qt::WindowFlags close = m_closable ? Qt::WindowCloseButtonHint : Qt::CustomizeWindowHint;
+        const Qt::WindowFlags hints = Qt::WindowTitleHint | Qt::WindowSystemMenuHint | buttons | close;
+        const Qt::WindowFlags dropped = m_dialog ? (Qt::WindowMinMaxButtonsHint & ~buttons)
+                                                       | (m_closable ? Qt::CustomizeWindowHint : Qt::WindowCloseButtonHint)
+                                                 : Qt::WindowFlags();
         const Qt::WindowFlags flags = m_custom   ? (m_window->flags() & ~dropped) | Qt::FramelessWindowHint | hints
                                       : m_dialog ? (m_window->flags() & ~dropped & ~Qt::FramelessWindowHint) | hints
                                                  : m_window->flags() & ~Qt::FramelessWindowHint;

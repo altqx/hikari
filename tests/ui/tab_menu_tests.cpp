@@ -104,6 +104,11 @@ class TabMenuTests : public QObject {
         for (QObject *o : root->findChildren<QObject *>())
             if (o->objectName() == QLatin1String(name))
                 return o;
+        // A view's delegates are items only (the Autosaves rows).
+        for (QWindow *w : QGuiApplication::allWindows())
+            if (auto *quick = qobject_cast<QQuickWindow *>(w))
+                if (QQuickItem *found = findItem(quick->contentItem(), QLatin1String(name)))
+                    return found;
         return nullptr;
     }
     static QQuickItem *findItem(QQuickItem *from, const QString &name)
@@ -436,21 +441,22 @@ private slots:
         restoreThreeTabs();
         edit(2, "c changed");
         const QByteArray before = readAll(application->lastSessionPath());
-        QObject *prompt = named("closeAllPrompt");
-        QVERIFY(prompt);
         openTabMenu(1);
         trigger("tabMenuCloseAll");
+        // PU1-message-boxes: the kit's message box, made when first asked.
+        QTRY_VERIFY(named("closeAllPrompt"));
+        QObject *prompt = named("closeAllPrompt");
         QTRY_VERIFY(prompt->property("visible").toBool());
-        QCOMPARE(prompt->property("title").toString(), QStringLiteral("Prompt"));
-        QMetaObject::invokeMethod(prompt, "reject"); // No
+        QCOMPARE(prompt->property("title").toString(), QStringLiteral("Close all tabs"));
+        QVERIFY(QMetaObject::invokeMethod(prompt, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
         QTRY_VERIFY(!prompt->property("visible").toBool());
         QCOMPARE(titles().size(), 3);
         openTabMenu(1);
         trigger("tabMenuCloseAll");
         QTRY_VERIFY(prompt->property("visible").toBool());
-        QMetaObject::invokeMethod(prompt, "accept"); // Yes
-        QObject *review = named("closeReview");
-        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(prompt, "answer", Q_ARG(QVariant, QStringLiteral("close"))));
+        QObject *review = named("unsavedChanges");
+        QTRY_VERIFY(review->property("opened").toBool());
         const QVariantList rows = review->property("rows").toList();
         QCOMPARE(rows.size(), 1); // only c has unsaved work
         QCOMPARE(rows[0].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("c.ass"));
@@ -473,14 +479,15 @@ private slots:
         restoreThreeTabs();
         edit(0, "a changed");
         edit(2, "c changed");
-        QObject *prompt = named("closeAllPrompt");
-        QObject *review = named("closeReview");
-        QVERIFY(prompt && review);
+        QObject *review = named("unsavedChanges");
+        QVERIFY(review);
         openTabMenu(1);
         trigger("tabMenuCloseAll");
+        QTRY_VERIFY(named("closeAllPrompt"));
+        QObject *prompt = named("closeAllPrompt");
         QTRY_VERIFY(prompt->property("visible").toBool());
-        QMetaObject::invokeMethod(prompt, "accept");
-        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(prompt, "answer", Q_ARG(QVariant, QStringLiteral("close"))));
+        QTRY_VERIFY(review->property("opened").toBool());
         QVariantList rows = review->property("rows").toList();
         QCOMPARE(rows.size(), 2); // both, in one review
         QCOMPARE(rows[0].toMap().value(QStringLiteral("title")).toString(), QStringLiteral("a.ass"));
@@ -488,7 +495,7 @@ private slots:
         QObject *cancel = named("closeCancel");
         QVERIFY(cancel);
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!review->property("visible").toBool());
+        QTRY_VERIFY(!review->property("opened").toBool());
         QCOMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("b.ass"), QStringLiteral("c.ass")}));
         QVERIFY(session(0)->isDirty());
         QVERIFY(session(2)->isDirty());
@@ -498,11 +505,11 @@ private slots:
         openTabMenu(1);
         trigger("tabMenuCloseAll");
         QTRY_VERIFY(prompt->property("visible").toBool());
-        QMetaObject::invokeMethod(prompt, "accept");
-        QTRY_VERIFY(review->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(prompt, "answer", Q_ARG(QVariant, QStringLiteral("close"))));
+        QTRY_VERIFY(review->property("opened").toBool());
         QCOMPARE(review->property("rows").toList().size(), 2);
         QSignalSpy finished(application, &app::Application::closeFinished);
-        QVERIFY(QMetaObject::invokeMethod(named("closeDiscardAll"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(named("closeWithoutSaving"), "clicked"));
         QTRY_COMPARE(finished.size(), 1);
         QVERIFY(titles().isEmpty());
         QVERIFY(named("homePage")->property("visible").toBool());
@@ -554,7 +561,7 @@ private slots:
         QCOMPARE(titles(), (QStringList{QStringLiteral("one.ass"), QStringLiteral("two.ass")}));
         QCOMPARE(application->currentTab(), 1);
         QVERIFY(session(0)->isDirty()); // not reviewed, not touched
-        QVERIFY(!named("closeReview")->property("visible").toBool());
+        QVERIFY(!named("unsavedChanges")->property("opened").toBool());
         QVERIFY(lastSession().tabs.size() == 2);
         // Off: into the tab, after the review of its work.
         application->settingsStore()->set("subtitles.openInNewTab", false);
@@ -839,10 +846,12 @@ private slots:
         QObject *commands = named("tabCommands");
         QVERIFY(commands);
         QVERIFY(QMetaObject::invokeMethod(commands, "openVideoFile", Q_ARG(QVariant, folder + QStringLiteral("/show.mkv"))));
+        QTRY_VERIFY(named("subtitlesFromVideoPrompt"));
         QObject *prompt = named("subtitlesFromVideoPrompt");
         QTRY_VERIFY(prompt->property("visible").toBool());
-        QCOMPARE(named("subtitlesFromVideoText")->property("text").toString(), QStringLiteral("Load subtitles named \"show.ass\"?"));
-        QMetaObject::invokeMethod(prompt, "accept");
+        // PU1-message-boxes: the kit's message box, its verbs the command's.
+        QCOMPARE(prompt->property("text").toString(), QStringLiteral("Open “show.ass” with the video?"));
+        QVERIFY(QMetaObject::invokeMethod(prompt, "answer", Q_ARG(QVariant, QStringLiteral("both"))));
         QTRY_COMPARE(titles(), QStringList{QStringLiteral("show.ass")});
         QVERIFY(!application->video().offering());
         QTRY_VERIFY_WITH_TIMEOUT(application->video().hasVideo(), 20000);
@@ -888,17 +897,25 @@ private slots:
         QCOMPARE(application->filterLegacyAutosaves(files, QStringLiteral("epi zzz"), true).size(), 0);
         QCOMPARE(application->filterLegacyAutosaves(files, QStringLiteral("epi zzz"), false).size(), 1);
         QCOMPARE(application->filterLegacyAutosaves(files, QString(), true).size(), 2);
-        // Through Open auto save.
-        QObject *recovery = named("recoveryWindow");
-        QVERIFY(QMetaObject::invokeMethod(recovery, "showBundles"));
+        // Through Open auto save (PU1-autosaves-window): a row for the name,
+        // its versions newest first, read only.
+        QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "show", Q_ARG(QVariant, false)));
+        QTRY_VERIFY(named("autosavesWindow"));
+        QObject *recovery = named("autosavesWindow");
         QTRY_VERIFY(recovery->property("visible").toBool());
-        QObject *find = named("legacyAutosaveFind");
-        find->setProperty("text", QStringLiteral("episode"));
-        QVERIFY(QMetaObject::invokeMethod(named("legacyAutosaveFilter"), "clicked"));
-        QObject *versionList = named("legacyAutosaveVersions");
+        named("autosavesSearch")->setProperty("text", QStringLiteral("episode"));
+        QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 1);
+        // The search finds a previous version by its files' path too.
+        named("autosavesSearch")->setProperty("text", QStringLiteral("subs"));
+        QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 2);
+        named("autosavesSearch")->setProperty("text", QStringLiteral("subs episode"));
+        QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 1);
+        QTRY_VERIFY(named("autosaveVersion0"));
+        QObject *versionList = named("autosaveVersion0");
         QTRY_COMPARE(versionList->property("count").toInt(), 2);
+        QVERIFY(!named("autosaveDelete0")->property("enabled").toBool());
         versionList->setProperty("currentIndex", 1); // the older one
-        QVERIFY(QMetaObject::invokeMethod(named("legacyAutosaveOpen"), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(named("autosaveOpen0"), "clicked"));
         QTRY_VERIFY(!recovery->property("visible").toBool());
         QCOMPARE(titles().last(), QStringLiteral("episode_0_1.ass (recovered)"));
         QCOMPARE(application->currentTab(), titles().size() - 1);
@@ -924,12 +941,13 @@ private slots:
         QVERIFY(!QFileInfo::exists(subs));
         const QString before = application->log().history();
         QVERIFY(application->legacyAutosaves().isEmpty());
-        QObject *recovery = named("recoveryWindow");
-        QVERIFY(QMetaObject::invokeMethod(recovery, "showBundles"));
+        QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "show", Q_ARG(QVariant, false)));
+        QTRY_VERIFY(named("autosavesWindow"));
+        QObject *recovery = named("autosavesWindow");
         QTRY_VERIFY(recovery->property("visible").toBool());
         QCOMPARE(application->log().history(), before);
         QVERIFY(!application->log().history().contains(QStringLiteral("auto save folder")));
-        QMetaObject::invokeMethod(recovery, "close");
+        QMetaObject::invokeMethod(recovery, "reject");
         QDir().mkpath(subs);
         QVERIFY(application->legacyAutosaves().isEmpty());
 #ifdef _WIN32

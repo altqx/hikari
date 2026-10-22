@@ -18,6 +18,7 @@
 
 #include <cstdint>
 #include <expected>
+#include <functional>
 #include <optional>
 #include <span>
 
@@ -101,6 +102,9 @@ struct AudioMouseResult {
     std::optional<std::pair<int, int>> playMs;
     bool keepCursor = false;
     bool hideCursor = false;
+    // KA1: a split on the letters leaves the view where it is (the commit
+    // does not bring the current syllable into view).
+    bool keepView = false;
 };
 
 // A5: karaoke mode's part of the mouse (legacy hasKara with its Karaoke).
@@ -108,6 +112,9 @@ struct AudioKaraokeMouse {
     AudioKaraoke *karaoke = nullptr;
     bool moveOnClick = false; // AUDIO_KARAOKE_MOVE_ON_CLICK
     KaraokeMeasure measure;   // the label font (GetTextExtentPixel)
+    // KA1: a start as the field commits it (committedAudioTime); a dragged
+    // start moves the syllables by that, not by the dragged time
+    std::function<int(int)> fieldTime;
     // KA5-onset-snap: with snapping on, the vocal onsets found (ascending);
     // empty, nothing snaps. Only a boundary dragged snaps (to the nearest
     // within kOnsetSnapWindowMs and 16 columns, between its neighbours), not
@@ -135,8 +142,11 @@ public:
                            const AudioKaraokeMouse &karaoke = {});
     // Legacy SetMark; true when it is the first.
     bool setMark(int ms);
-    // Legacy OnLostCapture.
-    void lostCapture();
+    // Legacy OnLostCapture; KA1: a start the left button was dragging (now
+    // `startMs`) leaves the syllables at their times, as its release does.
+    // True for a start the right button carried the syllables with: the
+    // caller commits them, as the release would (Codex).
+    bool lostCapture(int startMs, const AudioKaraokeMouse &karaoke = {});
     // A new box (legacy Reset keeps the mark: AudioDisplay is made again with the box).
     void reset() { *this = AudioTiming{}; }
 
@@ -161,6 +171,10 @@ private:
     std::int64_t m_selStart = 0, m_selEnd = 0, m_selMark = 0;
     std::int64_t m_lastX = 0, m_lastDragX = 0;
     int m_grabbed = -1; // A5
+    // KA1-lead-in-keeps-syllables: where a start drag began, and whether it
+    // takes the syllables along (the right button)
+    int m_startOrigin = 0;
+    bool m_startCarries = false;
     // KA5-onset-snap: where the button went down, and whether the mouse has
     // moved from there since.
     std::int64_t m_pressX = 0;
@@ -195,7 +209,9 @@ struct AudioCommitRequest {
     // legacy's "Changing time on audio spectrum".
     const char *stepName = nullptr;
     // KA2-tap-to-time: the active Line alone takes the times and text, however
-    // many are selected (a tapped Line's syllables are its own).
+    // many are selected (a tapped Line's syllables are its own). KA1: the
+    // fields this request changes; a pending edit's other fields still go to
+    // every selected Line.
     bool activeOnly = false;
 };
 struct AudioCommitOutcome {
@@ -206,6 +222,9 @@ struct AudioCommitOutcome {
 // in seconds, SRT in milliseconds; never below 0 (SubsTime::NewTime, raw and
 // SetRaw).
 int legacyFieldTime(core::SubtitleFormat format, int ms);
+// KA1: the start or end time commitAudioTimes writes for `ms` in this
+// Document: legacyFieldTime, or a MicroDVD frame's start at its rate.
+int committedAudioTime(const core::Document &document, int ms);
 // `shown`: the Grid's shown Lines (legacy isVisible). Refused with
 // InvalidDraft when E63-invalid-commit blocks the draft (it stays).
 std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &session,

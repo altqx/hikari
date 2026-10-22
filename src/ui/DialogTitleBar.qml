@@ -24,6 +24,8 @@ Rectangle {
     readonly property bool maximized: window !== null
         && (window.visibility === Window.Maximized || window.visibility === Window.FullScreen)
     property string title: window ? window.title : ""
+    // PU7 (#309): false for a window the user cannot close (Install update).
+    property bool closable: true
     visible: frame.custom
     implicitHeight: visible ? 32 : 0
     implicitWidth: titleLabel.implicitWidth + 12 + 24 + buttons.implicitWidth
@@ -82,6 +84,7 @@ Rectangle {
         }
         TitleBarButton {
             objectName: "dialogTitleBarClose"
+            visible: bar.closable
             active: bar.active
             iconRole: "window-close"
             text: qsTr("Close")

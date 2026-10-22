@@ -13,6 +13,9 @@ import Hikari.Ui
 // handles go back), Esc while typing puts the value back. A read-only value
 // (the crosshair's position) is its number, shown while it has one; its
 // place stays in the bar without one, so the bar does not re-wrap.
+//
+// HY1: a colour's first value has its swatch before it, and the value a
+// drag on the video changes is marked (◆); a press on a value marks it.
 RowLayout {
     id: field
     required property VisualToolsController tools
@@ -42,6 +45,30 @@ RowLayout {
         text: "-00000"
     }
 
+    Rectangle {
+        objectName: field.measuring ? "" : "visualValueSwatch_" + field.name
+        visible: (field.value.swatch ?? "").length > 0
+        Layout.preferredWidth: 22
+        Layout.preferredHeight: 22
+        Layout.alignment: Qt.AlignVCenter
+        Layout.rightMargin: 3
+        radius: 2
+        color: visible ? field.value.swatch : "transparent"
+        border.color: Theme.control
+        Accessible.ignored: true
+    }
+    Label {
+        objectName: field.measuring ? "" : "visualValueMark_" + field.name
+        // Its place stays for every value of a tool that marks one, so the
+        // mark moving does not move the bar.
+        visible: field.value.marked !== undefined && field.editable
+        opacity: field.value.marked ? 1 : 0
+        text: "\u25C6"
+        color: Theme.accent
+        font.pixelSize: 9
+        Layout.alignment: Qt.AlignVCenter
+        Accessible.ignored: true
+    }
     Label {
         id: label
         objectName: field.measuring ? "" : "visualValueLabel_" + field.name
@@ -79,6 +106,7 @@ RowLayout {
             property real current: 0
             property string sent: ""
             onPressed: mouse => {
+                field.tools.markValue(field.name)
                 const v = Number(field.value.text)
                 current = isFinite(v) ? v : 0
                 lastX = mapToItem(null, mouse.x, mouse.y).x
@@ -184,7 +212,12 @@ RowLayout {
             // Nothing typed or scrubbed: the tool's Esc, as over the video.
             event.accepted = field.tools.escape()
         }
-        onActiveFocusChanged: if (!activeFocus) field.restore()
+        onActiveFocusChanged: {
+            if (!activeFocus)
+                field.restore()
+            else if (!field.measuring)
+                field.tools.markValue(field.name)
+        }
         Label {
             id: unit
             anchors.right: parent.right
