@@ -339,6 +339,11 @@ private slots:
         QObject *bar = named("startupBar");
         QVERIFY(bar);
         QTRY_VERIFY(bar->property("visible").toBool());
+        // A file that doesn't open leaves it.
+        take({dir.filePath(QStringLiteral("b/missing.ass"))});
+        QTRY_VERIFY(!forwarded->pending());
+        QTest::qWait(300);
+        QVERIFY(bar->property("visible").toBool());
         take({writeAss(dir.filePath(QStringLiteral("b/more.ass")), "m")});
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("given.ass"), QStringLiteral("more.ass")}));
         QTRY_VERIFY(!bar->property("visible").toBool());

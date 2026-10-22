@@ -200,6 +200,37 @@ private slots:
         QVERIFY(a.workspace().editingTarget());
     }
 
+    // A save that failed shows the review again: its retry closes the
+    // reviewed tab, not one chosen meanwhile.
+    void aRetryAfterAFailedSaveClosesTheReviewedTab()
+    {
+        app::Application a;
+        QVERIFY(a.openFile(writeFile(dir, "retry.ass", "x")));
+        a.closeEditingTarget();
+        a.reviewClose(QStringLiteral("new"));
+        a.finishClose(); // an Untitled Document
+        edit(a, u8"unsaved");
+        const auto reviewed = *a.workspace().editingTarget();
+        QSignalSpy finished(&a, &app::Application::closeFinished);
+        const QVariantList rows = a.reviewClose(QStringLiteral("close"));
+        a.resolveClose(choose(rows, true, dir.filePath(QStringLiteral("no-such-dir/retry.ass"))));
+        a.addPage();
+        const auto other = *a.workspace().editingTarget();
+        edit(a, u8"other work");
+        a.waitForWrites();
+        QTRY_COMPARE(finished.size(), 1);
+        QVERIFY(!finished.first().at(0).toBool());
+        const QString good = dir.filePath(QStringLiteral("retried.ass"));
+        a.resolveClose(choose(rows, true, good));
+        a.waitForWrites();
+        QTRY_COMPARE(finished.size(), 2);
+        QVERIFY(finished.at(1).at(0).toBool());
+        QVERIFY(!a.files().session(reviewed));
+        QVERIFY(a.files().session(other));
+        QVERIFY(target(a)->isDirty());
+        QVERIFY(readAll(good).contains(",,unsaved"));
+    }
+
     void cancelKeepsEverything()
     {
         app::Application a;
