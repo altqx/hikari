@@ -40,6 +40,8 @@ Window {
     default property alias content: body.data
     property alias leadingActions: leading.data
     property alias buttons: closing.contentData
+    // The footer's DialogButtonBox, for buttons made at run time (MessageBox).
+    readonly property alias buttonBox: closing
     // The content's natural size, the window's for a fixed-size dialog and
     // its smallest for a resizable one, up to the screen's room.
     readonly property int naturalWidth: Math.ceil(column.implicitWidth)
@@ -122,11 +124,11 @@ Window {
         return f
     }
 
-    // Enter: the focused button presses itself; anything else presses the
-    // default button.
+    // Enter: the focused button presses itself; anything else (a check box
+    // too, as on Windows: Space ticks it) presses the default button.
     function enter(event) {
         const item = activeFocusItem
-        if (item && typeof item.click === "function" && item.hasOwnProperty("autoExclusive")) {
+        if (item && typeof item.click === "function" && item.hasOwnProperty("autoExclusive") && !item.checkable) {
             item.click()
             event.accepted = true
         } else if (defaultButton && defaultButton.visible && defaultButton.enabled) {

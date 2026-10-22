@@ -59,6 +59,9 @@ hikari_add_gtest(hikari_application_select_lines_tests SOURCES select_lines_test
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_update_check_tests SOURCES update_check_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# SH3: which releases What's new shows.
+hikari_add_gtest(hikari_application_whats_new_tests SOURCES whats_new_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_resample_tests SOURCES resample_tests.cpp
     LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_style_manager_tests SOURCES style_manager_tests.cpp
@@ -103,6 +106,12 @@ target_compile_definitions(hikari_application_hotkeys_tests PRIVATE
     HIKARI_ACTIONS_CSV="${PROJECT_SOURCE_DIR}/docs/qt/proposals/settings-migration-map/actions.csv")
 # A3: the audio box's timing.
 hikari_add_gtest(hikari_application_audio_timing_tests SOURCES audio_timing_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+# KA2 (#277): the tap state machine and the latency calibration's maths.
+hikari_add_gtest(hikari_application_karaoke_tap_tests SOURCES karaoke_tap_tests.cpp
+    LIBRARIES hikari_application LABELS application)
+# KA5 (#280): vocal-onset detection and the snap.
+hikari_add_gtest(hikari_application_vocal_onsets_tests SOURCES vocal_onsets_tests.cpp
     LIBRARIES hikari_application LABELS application)
 # A5: the audio box's karaoke mode, with the legacy probe's observations.
 hikari_add_gtest(hikari_application_audio_karaoke_tests SOURCES audio_karaoke_tests.cpp

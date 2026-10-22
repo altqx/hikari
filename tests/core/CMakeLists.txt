@@ -53,6 +53,14 @@ hikari_add_gtest(hikari_core_spelling_tests SOURCES spelling_tests.cpp LIBRARIES
 hikari_add_gtest(hikari_core_editor_syntax_tests SOURCES editor_syntax_tests.cpp LIBRARIES hikari_core LABELS core)
 # Y9: subtitles read from a Matroska track (legacy Demux).
 hikari_add_gtest(hikari_core_matroska_tests SOURCES matroska_tests.cpp LIBRARIES hikari_core LABELS core)
+# KA6: word-timed LRC and TTML lyrics imported as karaoke Lines.
+hikari_add_gtest(hikari_core_lyrics_import_tests SOURCES lyrics_import_tests.cpp LIBRARIES hikari_core LABELS core)
+target_compile_definitions(hikari_core_lyrics_import_tests PRIVATE
+    HIKARI_LYRICS_FIXTURES="${PROJECT_SOURCE_DIR}/tests/fixtures/lyrics")
+# KA7: karaoke checks.
+hikari_add_gtest(hikari_core_karaoke_checks_tests SOURCES karaoke_checks_tests.cpp LIBRARIES hikari_core LABELS core)
+target_compile_definitions(hikari_core_karaoke_checks_tests PRIVATE
+    HIKARI_KARAOKE_FIXTURE="${PROJECT_SOURCE_DIR}/tests/fixtures/karaoke/checks.ass")
 
 # Y7: the colour picker's conversions against legacy colorspace.cpp itself,
 # copied unchanged into the build and compiled against the stubs in

@@ -598,18 +598,20 @@ void RectangleClipTool::pointer(const Pointer &event, VisualHost &host)
     host.toolChanged();
 }
 
+bool RectangleClipTool::takesKey(const Key &event) const
+{
+    return nudgeDirection(event).has_value();
+}
+
 bool RectangleClipTool::key(const Key &event, VisualHost &host)
 {
-    // ClipRect::OnKeyPress (VisualClipRect.cpp:347-379): A/D/W/S move the
-    // second corner a pixel (Shift: a tenth), unless Alt alone is held.
-    // The nudge commits on the key's release (the accepted transaction rule).
-    const bool left = event.key == keys::A;
-    const bool right = event.key == keys::D;
-    const bool up = event.key == keys::W;
-    const bool down = event.key == keys::S;
-    if (!(left || right || up || down))
-        return false;
+    // ClipRect::OnKeyPress (VisualClipRect.cpp:347-379): a nudge moves the
+    // second corner a pixel (Shift: a tenth); VT2-arrow-nudge: the arrows,
+    // for legacy's A/D/W/S. The nudge commits on the key's release (the
+    // accepted transaction rule).
     if (event.release) {
+        if (!isArrowKey(event.key))
+            return false;
         if (!m_keyCommit)
             return false;
         if (event.autoRepeat)
@@ -622,13 +624,13 @@ bool RectangleClipTool::key(const Key &event, VisualHost &host)
         host.toolChanged();
         return true;
     }
-    const bool altOnly = event.alt && !event.control && !event.shift;
-    if (altOnly || !m_showClip)
+    const auto direction = nudgeDirection(event);
+    if (!direction || !m_showClip)
         return false;
     if (!host.gesture())
         m_began = false;
-    float directionX = left ? -1 : right ? 1 : 0;
-    float directionY = up ? -1 : down ? 1 : 0;
+    float directionX = direction->x;
+    float directionY = direction->y;
     if (event.shift) {
         directionX /= 10.f;
         directionY /= 10.f;
@@ -871,10 +873,14 @@ void VectorClipTool::pointer(const Pointer &event, VisualHost &host)
     host.toolChanged();
 }
 
+bool VectorClipTool::takesKey(const Key &event) const
+{
+    return nudgeDirection(event).has_value();
+}
+
 bool VectorClipTool::key(const Key &event, VisualHost &host)
 {
-    const bool nudge = event.key == keys::W || event.key == keys::S || event.key == keys::A ||
-                       event.key == keys::D || event.key == keys::Delete;
+    const bool nudge = isArrowKey(event.key) || event.key == keys::Delete;
     if (event.release) {
         if (!nudge || !m_keyCommit)
             return false;
@@ -925,6 +931,7 @@ std::vector<ToolOption> VectorClipTool::options(const VisualHost &host) const
         mode.iconRole = modes[i].icon;
         mode.tooltip = modes[i].label;
         mode.checked = m_editor.mode == i;
+        mode.group = u"Points"; // VT1: the bar's group
         out.push_back(std::move(mode));
     }
     ToolOption invert;

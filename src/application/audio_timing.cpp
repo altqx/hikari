@@ -1,6 +1,7 @@
 #include "hikari/application/audio_timing.h"
 
 #include "hikari/application/editor_fields.h"
+#include "hikari/application/vocal_onsets.h"
 
 #include "hikari/core/checked.h"
 #include "hikari/core/text_projection.h"
@@ -200,6 +201,19 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
     }
     if (buttonDown && !m_holding)
         m_holding = true;
+    // KA5-onset-snap: a boundary snaps once it is dragged, not on a click
+    if (buttonDown) {
+        m_pressX = x;
+        m_dragged = false;
+    } else if (x != m_pressX) {
+        m_dragged = true;
+    }
+    auto onsetSnap = [&](int ms, int low, int high) {
+        if (kara.onsetsMs.empty() || !m_dragged || m_hold != 5)
+            return ms;
+        const int columns = std::abs(view.msAtX(x + 16) - view.msAtX(x));
+        return snapToOnset(kara.onsetsMs, ms, std::min(kOnsetSnapWindowMs, columns), low, high);
+    };
 
     // Scale dragging
     if ((m_hold == 0 && onScale) || m_draggingScale) {
@@ -348,9 +362,9 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
                 if (validGrab()) {
                     auto &times = karaoke->times();
                     const int last = karaoke->count() - 1;
-                    const int newpos = legacyZeroIt(view.msAtX(x));
                     const int prev = m_grabbed == 0 ? selection.startMs : times[static_cast<std::size_t>(m_grabbed) - 1];
                     const int next = m_grabbed == last ? selection.endMs : times[static_cast<std::size_t>(m_grabbed) + 1];
+                    const int newpos = onsetSnap(legacyZeroIt(view.msAtX(x)), prev, next);
                     times[static_cast<std::size_t>(m_grabbed)] = std::max(prev, std::min(newpos, next));
                     karaoke->current = m_grabbed;
                 }
@@ -412,11 +426,11 @@ AudioMouseResult AudioTiming::mouse(const AudioMouse &event, AudioView &view, Se
             // A5: a syllable boundary dragged
             if (m_hold == 5 && validGrab()) {
                 auto &times = karaoke->times();
-                const int newpos = legacyZeroIt(view.msAtX(x));
                 const int sizes = karaoke->count() - 1;
                 const auto g = static_cast<std::size_t>(m_grabbed);
                 const int prev = m_grabbed == 0 ? selection.startMs : times[g - 1];
                 const int next = m_grabbed == sizes ? 2147483646 : times[g + 1];
+                const int newpos = onsetSnap(legacyZeroIt(view.msAtX(x)), prev, next);
                 const int prevpos = times[g];
                 times[g] = std::max(prev, std::min(newpos, next));
                 if (m_grabbed == sizes && (leftDown || event.leftHeld)) {
@@ -621,7 +635,7 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
     // SubsGrid::ChangeLine: one Line, or every selected Line with several selected
     std::vector<core::LineId> targets;
     const auto &selected = session.selection().selected;
-    if (selected.size() < 2) {
+    if (selected.size() < 2 || request.activeOnly) {
         targets.push_back(*active);
     } else {
         for (const auto *l : lines)
@@ -655,7 +669,10 @@ std::expected<AudioCommitOutcome, CommandRefusal> commitAudioTimes(EditSession &
         session.discardDraft();
     std::optional<core::LineId> added;
     const auto ran = session.run(Command{
-        append ? "Adding a new line" : "Changing time on audio spectrum", session.revision(), touches,
+        append                ? "Adding a new line"
+        : request.stepName    ? request.stepName
+                              : "Changing time on audio spectrum",
+        session.revision(), touches,
         [&](core::Document &d) {
             moveAdjacent(d);
             for (const auto &target : targets)

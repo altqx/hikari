@@ -33,8 +33,7 @@ import Hikari.Ui
 // nothing holds the bar (FS1-cursor-hide). While a visual tool other than the
 // crosshair is on, the tool rail shows at the left edge and the bar's top
 // row is the tool's: VT1's inspector bar (#269) takes that row
-// (`inspectorSlot`), today's option row until it lands
-// (FS1-tool-rail-contextual). With VIDEO_PROGRESS_BAR on, a progress bar
+// (`inspectorSlot`, FS1-tool-rail-contextual). With VIDEO_PROGRESS_BAR on, a progress bar
 // with the times is drawn in the top right corner (RendererVideo::DrawProgressBar).
 //
 // Keys (Fullscreen::OnKeyPress and its accelerator table, SetAccels): the
@@ -144,11 +143,16 @@ Window {
             return (event.key === Qt.Key_Escape || event.key === Qt.Key_B)
                     && fs.shell.hotkeys.actionFor(0, event.key, event.modifiers) === ""
         }
-        Keys.onShortcutOverride: event => event.accepted = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
+        // VT2-arrow-nudge: a tool's nudge (the arrows) before the bindings.
+        Keys.onShortcutOverride: event => event.accepted = fs.shell.visualTools.takesKey(event.key, event.modifiers)
+                                                          || fs.shell.hotkeys.actionFor(3, event.key, event.modifiers) !== ""
                                                           || keys.leaves(event)
         Keys.onPressed: event => {
             const action = fs.shell.hotkeys.actionFor(3, event.key, event.modifiers)
-            if (action !== "") {
+            if (fs.shell.visualTools.takesKey(event.key, event.modifiers)) {
+                fs.shell.visualTools.key(event.key, event.modifiers, false, event.isAutoRepeat)
+                event.accepted = true
+            } else if (action !== "") {
                 fs.shell.runVideoHotkey(action)
                 event.accepted = true
             } else if (event.key === Qt.Key_Escape && fs.shell.visualTools.escape()) {
@@ -270,6 +274,7 @@ Window {
             id: rail
             objectName: "fullscreenToolRail"
             tools: fs.shell.visualTools
+            keyOf: symbol => fs.shell.boundKeys(symbol, 3)
             visible: fs.toolOn
             z: 3
             x: 8
@@ -352,20 +357,22 @@ Window {
                 anchors { left: parent.left; right: parent.right; top: parent.top
                           leftMargin: 8; rightMargin: 8; topMargin: 5 }
                 spacing: 2
-                // The active tool's row: VT1's inspector bar (#269) takes it;
-                // until then the tool's options (legacy vToolbar's right part).
+                // The active tool's row: VT1's inspector bar (#269), the
+                // Video panel's (the tool, its options and values, the batch
+                // picker), on the bar's own background.
                 RowLayout {
                     id: inspectorSlot
                     objectName: "fullscreenInspectorSlot"
                     Layout.fillWidth: true
                     visible: fs.toolOn
-                    VisualToolOptions {
-                        id: toolOptions
-                        objectName: "fullscreenToolOptions"
+                    VisualToolBar {
+                        id: toolBar
+                        objectName: "fullscreenToolBar"
                         Layout.fillWidth: true
                         Layout.minimumWidth: 0
-                        clip: true
                         tools: fs.shell.visualTools
+                        background: null
+                        dialogs: fs.visible // the Video panel's bar has them otherwise
                     }
                 }
                 Slider {

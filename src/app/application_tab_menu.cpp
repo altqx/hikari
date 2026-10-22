@@ -229,10 +229,16 @@ void Application::offerAssociations(application::DocumentId document)
     m_offers.erase(document.value);
     auto *session = m_files->session(document);
     const auto destination = m_files->destination(document);
-    if (!session || !destination || destination->value.empty())
+    std::string path = destination ? destination->value : std::string();
+    // KA6: imported lyrics have no destination yet; their ASS name beside
+    // the lyrics file finds the same-named video, as for any subtitles.
+    if (const auto import = m_importPaths.find(document.value);
+        path.empty() && import != m_importPaths.end() && m_lyricsImports.contains(document.value))
+        path = import->second.toStdString();
+    if (!session || path.empty())
         return;
     auto associations = application::resolveMediaAssociations(
-        session->document(), destination->value,
+        session->document(), path,
         [](const std::string &p) { return QFileInfo(QString::fromStdString(p)).isFile(); }, kWindows);
     // Paths are shown and compared in the platform's form (legacy wxString paths).
     for (auto *reference : {&associations.video, &associations.audio, &associations.keyframes})
@@ -240,7 +246,7 @@ void Application::offerAssociations(application::DocumentId document)
             (*reference)->resolved = QDir::toNativeSeparators(qs(*(*reference)->resolved)).toStdString();
     QString directoryVideo;
     if (const auto found =
-            application::findSameNamedFile(std::filesystem::path(qs(destination->value).toStdU16String()), true))
+            application::findSameNamedFile(std::filesystem::path(qs(path).toStdU16String()), true))
         directoryVideo = QDir::toNativeSeparators(QString::fromStdU16String(found->u16string()));
     const auto offer = application::associationOffer(associations, directoryVideo.toStdString(), tabMediaPaths(document));
     if (offer.asks())
@@ -500,8 +506,7 @@ Application::PendingFiles Application::stageFiles(const QStringList &files)
         const QString &path = pending.subtitlePaths[i];
         auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
         if (!staged) {
-            m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
-                           .arg(QFileInfo(path).fileName()));
+            m_log->log(openProblem(path, staged.error()));
             pending.count = i;
             break;
         }
@@ -548,8 +553,7 @@ QVariantMap Application::openForwarded(const QStringList &paths)
             } else if (auto staged = m_files->stageOpen({QFileInfo(file).absoluteFilePath().toStdString()})) {
                 openInNewTab(std::move(*staged), file);
             } else {
-                m_log->log(QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
-                               .arg(QFileInfo(file).fileName()));
+                m_log->log(openProblem(file, staged.error()));
             }
             return openResult(QString());
         case application::OpenKind::Video:

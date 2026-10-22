@@ -639,27 +639,11 @@ bool VectorEditor::key(const Key &event, const VectorFrame &frame, const Callbac
         removePoints(-1, cb, true);
         return true;
     }
-    if (keyCode == keys::W || keyCode == keys::S || keyCode == keys::A || keyCode == keys::D) {
-        float x = 0;
-        float y = 0;
+    // VT2-arrow-nudge: the arrows for legacy's W/A/S/D. Shift is a tenth in
+    // a drawing only (VECTORDRAW): a clip is written in whole units ("6.0f").
+    if (const auto direction = nudgeDirection(event)) {
         const float increase = (event.shift && drawing) ? 0.1f : 1.f;
-        switch (keyCode) {
-        case keys::A:
-            x = -increase;
-            break;
-        case keys::D:
-            x = increase;
-            break;
-        case keys::S:
-            y = increase;
-            break;
-        case keys::W:
-            y = -increase;
-            break;
-        default:
-            break;
-        }
-        moveSelected(x, y, cb);
+        moveSelected(direction->x * increase, direction->y * increase, cb);
         return true;
     }
     return false;

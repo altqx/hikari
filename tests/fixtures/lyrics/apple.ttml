@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<tt xmlns="http://www.w3.org/ns/ttml" xmlns:itunes="http://music.apple.com/lyric-ttml-internal" xmlns:ttm="http://www.w3.org/ns/ttml#metadata" itunes:timing="Word" xml:lang="en">
+  <head>
+    <metadata>
+      <ttm:title>Twinkle, Twinkle, Little Star</ttm:title>
+      <ttm:agent type="person" xml:id="v1">
+        <ttm:name type="full">Jane Taylor</ttm:name>
+      </ttm:agent>
+    </metadata>
+  </head>
+  <body dur="9.5">
+    <!-- Second verse -->
+    <div begin="1.2" end="9.5">
+      <p begin="1.2" end="4.6" itunes:key="L1" ttm:agent="v1"><span begin="1.2" end="1.75">When</span> <span begin="1.75" end="2.0">the</span> <span begin="2.0" end="2.6">blazing</span> <span begin="2.6" end="3.1">sun</span> <span begin="3.1" end="3.4">is</span> <span begin="3.4" end="4.6">gone</span></p>
+      <p begin="5.0" end="9.5" itunes:key="L2" ttm:agent="v1"><span begin="5.0" end="5.5">When</span> <span begin="5.5" end="5.9">he</span> <span begin="5.9" end="7.0">nothing</span> <span begin="7.0" end="7.6">shines</span> <span begin="7.6" end="8.1">up</span><span begin="8.1" end="9.5">on</span></p>
+    </div>
+  </body>
+</tt>

@@ -44,6 +44,8 @@ The check reads GitHub's release list, 50 releases to a page and four pages at m
 
 URLs are built from the tag and the asset name (`https://github.com/altqx/hikari/releases/download/v<V>/<asset>`), never taken from a reply. Downloads may be redirected only to `github.com`, `objects.githubusercontent.com` and `release-assets.githubusercontent.com` over https. The automatic check keeps legacy's schedule (a day after each check, "Remind me in a week").
 
+What's new (SH3, [#223](https://github.com/altqx/hikari/issues/223)) reads the same release list, and only while "Check for updates automatically" is on: once per installed version, at the start after an update (sharing the start's own check when one is due; that read is no check and moves no schedule) or from Help > What's new while nothing is cached. It keeps the notes after the version run before up to the installed one in `whats-new-<copy>.json` in the update cache (4 MiB at most), named for the copy as the pending record is, and shows them from there offline or with checks turned off later. Past 4 MiB the lowest versions lose their notes first (those neither channel shows among its ten before the rest; they still count in "And N earlier versions"), then the lowest versions go. The same file keeps the version that ran last and the one its notes start after, so copies sharing the settings (a package and an AppImage) each keep their own; without it a start is a first one. The notes' images and links are never fetched.
+
 What the first passing release offers depends on the package kind:
 
 - **NSIS, AppImage, deb, rpm** with a package for the kind: the download. A package that needs a newer Windows (`min_os`) or glibc (`min_glibc`) than the system has is only named, with the requirement.
@@ -73,11 +75,11 @@ A portable copy keeps the Automation folder beside the program, as legacy does. 
 
 Legacy stays at 0.0.x and the rewrite starts at 0.1.0; `HIKARI_VERSION_SUFFIX` adds a prerelease (`0.1.0-beta.2`). deb and rpm versions put `~` before the prerelease inside the package (`0.1.0~beta.2-1`), never in the file name. Moving from legacy to the rewrite is an ordinary upgrade of one package (`hikarisub`, or `hikarisub-stable-bin` and `hikarisub-beta-bin` on the AUR, whose `pkgver` is the version without its `-`: `0.1.0-beta.2` is `0.1.0beta.2`, which vercmp sorts above every legacy 0.0.x and below `0.1.0`) or one installation.
 
-A rewrite release names `"offer_to": ["qt"]` until the owner sets `HIKARISUB_OFFER_QT_TO_LEGACY`; then `["qt", "legacy"]`. Legacy 0.0.1 knows nothing of manifests and offers the highest stable SemVer release it finds, so no stable rewrite release is published before the rewrite is meant for every legacy user.
+A rewrite release always names `"offer_to": ["qt"]`. Legacy users are offered it only through its manifest's optional `offer` member, which legacy 0.0.2 and later read and which never downloads anything before the user accepts ([ADR-0021](../adr/0021-opt-in-offer-of-the-rewrite-to-legacy.md)). On the AUR, `hikarisub-beta-bin` follows the rewrite from 0.1.0-beta.1, and `hikarisub-stable-bin` follows it from the first stable rewrite release. Legacy 0.0.1 reads no manifest and reports the highest stable release, so the first stable rewrite release's notes open by saying that moving is optional.
 
 ## Payload and licences
 
-Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter, dictionaries, translations, helpers). Qt is linked dynamically and shipped with its licence notices; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs; deb and rpm declare their host dependencies.
+Packages are staged from CMake install rules and Qt's QML deployment support, and the staged tree is audited (Qt plugins and imports, FFMS2/FFmpeg, libass and font libraries, the audio adapter and SoundTouch (LGPL-2.1-or-later, static), dictionaries, translations, helpers). Qt is linked dynamically and shipped with its licence notices; the obligations of each module and dependency are checked before a release. The AppImage bundles every library the app needs; deb and rpm declare their host dependencies.
 
 ## Testing an update
 

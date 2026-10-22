@@ -9,7 +9,8 @@
 // rectangle for the current scale"); "Change all scale tags" multiplies
 // every \fscx/\fscy of the Line; "Preserve proportions" also moves the
 // several targets' positions and clips about the active Line's position.
-// W/A/S/D nudge the arrows (Shift: a tenth), each press its own step.
+// The arrow keys nudge the arrows (Shift: a tenth; VT2-arrow-nudge, legacy's
+// W/A/S/D), each press its own step.
 
 #include "hikari/application/visual_tools.h"
 #include "hikari/application/visual_transform.h"
@@ -26,9 +27,12 @@ public:
     bool keepsStateAfterCommit() const override { return true; }
     void selected(VisualHost &host) override;
     void pointer(const Pointer &event, VisualHost &host) override;
+    bool takesKey(const Key &event) const override;
     bool key(const Key &event, VisualHost &host) override;
     Overlay overlay(const VisualHost &host) const override;
     std::vector<ToolValue> values(const VisualHost &host) const override;
+    bool setValue(const std::string &name, const std::u16string &text, VisualHost &host,
+                  ValueEdit edit = ValueEdit::Commit) override;
     std::vector<ToolOption> options(const VisualHost &host) const override;
     bool setOption(const std::string &name, int value, VisualHost &host) override;
 
@@ -112,6 +116,8 @@ private:
     bool m_rightHolding = false;
     bool m_preserveProportions = false;
     bool m_changeAllTags = false;
+    bool m_valueEdit = false; // the open gesture is a scrubbed value's (VT1)
+    bool m_valueRatios = false; // a value is being written: each axis' own ratio (VT1)
 };
 
 } // namespace hikari::application::visual

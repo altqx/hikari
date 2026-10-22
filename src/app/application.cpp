@@ -695,8 +695,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     // O2: legacy LoadHkeys at startup, then SetAccels.
     m_hotkeys = std::make_unique<HotkeysController>(*m_automationHotkeys, *m_settings,
                                                     [this](const QString &message) { m_log->log(message); });
-    m_updates = std::make_unique<UpdateChecker>(*m_settings, options.updateFeed, QStringLiteral(HIKARI_VERSION),
-                                                options.updateEnvironment);
+    m_updates = std::make_unique<UpdateChecker>(
+        *m_settings, options.updateFeed,
+        options.appVersion.isEmpty() ? QStringLiteral(HIKARI_VERSION) : options.appVersion, options.updateEnvironment);
+    m_whatsNew = std::make_unique<WhatsNew>(*m_updates, WhatsNew::cacheFileIn(options.updateEnvironment));
     {
         const QString catalogDir = !options.catalogDir.isEmpty() ? options.catalogDir
                                    : !m_settingsFile.isEmpty()   ? QFileInfo(m_settingsFile).absolutePath() + QStringLiteral("/Catalog")
@@ -775,11 +777,11 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
             return session && session->isDirty();
         };
         // File > Open on an MKV file (HikariSubFrame.cpp:1021-1025): a tab
-        // with subtitles of a file, or loaded from an MKV (OnMkvSubs' SubsPath),
-        // gets a new tab.
+        // with subtitles of a file, or loaded from an MKV (OnMkvSubs' SubsPath)
+        // or from lyrics (KA6), gets a new tab.
         hooks.targetHasSubtitlesPath = [this] {
             const auto target = m_workspace.editingTarget();
-            return target && (!targetUntitled() || m_matroskaPaths.contains(target->value));
+            return target && (!targetUntitled() || m_importPaths.contains(target->value));
         };
         hooks.apply = [this](application::MatroskaLoaded loaded, bool newTab) {
             applyMatroska(std::move(loaded), newTab);
@@ -1092,11 +1094,23 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
     });
     {
         ui::AudioController::TimingHooks hooks;
-        hooks.commit = [this](const application::AudioCommitRequest &request) { commitAudioTimes(request); };
+        hooks.commit = [this](const application::AudioCommitRequest &request) { return commitAudioTimes(request); };
         hooks.setActive = [this](int key) { setAudioActive(key); };
         hooks.seekVideo = [this](int ms) { seekVideoFromAudio(ms); };
         m_audio->setTimingHooks(std::move(hooks));
     }
+    // KA2-tap-to-time: the tap bar's next Line (keys as refreshAudio gives them)
+    m_audio->setLineText([this](int key) -> QString {
+        const auto target = m_workspace.editingTarget();
+        auto *session = target ? m_files->session(*target) : nullptr;
+        if (!session)
+            return {};
+        const auto &lines = session->document().lines();
+        if (key < 0 || key >= static_cast<int>(lines.size()))
+            return {};
+        const auto *line = lines[static_cast<std::size_t>(key)];
+        return QString::fromStdU16String(core::toUtf16(line->translation.empty() ? line->text : line->translation));
+    });
     m_audio->setFollowAudio([this](int ms) { showVideoAtAudio(ms); }); // AV2
     // Legacy RendererFFMS2::OpenFile: a file with audio and no video goes to
     // the audio box (as audio from video: SetRecent, the box's own provider),
@@ -1275,11 +1289,11 @@ void Application::rememberRecentAudio(const QString &path)
 }
 
 // A3: legacy AudioDisplay::CommitChanges' edit-box part.
-void Application::commitAudioTimes(const application::AudioCommitRequest &request)
+bool Application::commitAudioTimes(const application::AudioCommitRequest &request)
 {
     auto *session = targetSession();
     if (!session || !m_editor->editable())
-        return;
+        return false;
     const bool before = std::exchange(m_audioCommitting, true);
     // E4: StartEdit/EndEdit/DurEdit->SetTime(time, true): the warning colour
     // on each field whose time changes; Send (with `save`) clears it again.
@@ -1298,6 +1312,7 @@ void Application::commitAudioTimes(const application::AudioCommitRequest &reques
         applySelection(gridSelection().plain(session->selection(), *outcome->next));
         m_lineChangeOrigin.reset();
     }
+    return outcome.has_value();
 }
 
 // A3: legacy SubsGrid::SetActive from the box (AUDIO_NEXT / AUDIO_PREVIOUS).
@@ -1455,14 +1470,76 @@ void selectLegacyActiveLine(application::EditSession &session)
 std::optional<application::DocumentId> Application::open(const QString &path, bool asReference)
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
-    if (!staged)
+    if (!staged) {
+        if (staged.error().lyrics)
+            m_log->log(openProblem(path, staged.error())); // KA6: say what is wrong with the lyrics
         return std::nullopt;
+    }
     return publish(std::move(*staged), path, asReference);
+}
+
+QString Application::openProblem(const QString &path, const application::StageFailure &failure)
+{
+    const QString name = QFileInfo(path).fileName();
+    if (!failure.lyrics)
+        return QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.").arg(name);
+    using Kind = core::LyricsProblem::Kind;
+    const core::LyricsProblem &problem = *failure.lyrics;
+    QString excerpt = QString::fromUtf8(reinterpret_cast<const char *>(problem.excerpt.data()),
+                                        static_cast<qsizetype>(problem.excerpt.size()));
+    if (excerpt.size() > 60) {
+        // A long lyrics line, cut short, never between a surrogate pair's halves.
+        const qsizetype cut = excerpt.at(58).isHighSurrogate() ? 58 : 59;
+        excerpt = excerpt.left(cut) + QChar(0x2026);
+    }
+
+    QString what;
+    switch (problem.kind) {
+    case Kind::NotUtf8: what = QCoreApplication::translate("HikariSub.Documents", "the text is not UTF-8"); break;
+    case Kind::UnreadableTime:
+        what = QCoreApplication::translate("HikariSub.Documents", "\"%1\" is not a time").arg(excerpt);
+        break;
+    case Kind::TimeGoesBack:
+        what = QCoreApplication::translate("HikariSub.Documents", "the word at %1 starts before the word before it").arg(excerpt);
+        break;
+    case Kind::EndBeforeBegin:
+        what = QCoreApplication::translate("HikariSub.Documents", "the end %1 is earlier than the begin").arg(excerpt);
+        break;
+    case Kind::OutsideParent:
+        what = QCoreApplication::translate("HikariSub.Documents", "the time %1 is outside the times of the element around it")
+                   .arg(excerpt);
+        break;
+    case Kind::MissingTime:
+        what = QCoreApplication::translate("HikariSub.Documents", "\"%1\" has no time").arg(excerpt);
+        break;
+    case Kind::RepeatedWordLine:
+        what = QCoreApplication::translate("HikariSub.Documents", "a line with word times can have only one line time");
+        break;
+    case Kind::NotWellFormed:
+        what = QCoreApplication::translate("HikariSub.Documents", "the XML is broken at \"%1\"").arg(excerpt);
+        break;
+    case Kind::NotTtml:
+        what = QCoreApplication::translate("HikariSub.Documents", "%1 is not a TTML document").arg(excerpt);
+        break;
+    case Kind::TooDeep:
+        what = QCoreApplication::translate("HikariSub.Documents", "the elements are nested more than %1 deep at \"%2\"")
+                   .arg(QString::number(core::kMaxTtmlDepth), excerpt);
+        break;
+    case Kind::TooLarge:
+        what = QCoreApplication::translate("HikariSub.Documents", "it is too large for a lyrics file");
+        break;
+    case Kind::NoLyrics: what = QCoreApplication::translate("HikariSub.Documents", "it has no timed lyrics"); break;
+    }
+    return problem.line > 0
+               ? QCoreApplication::translate("HikariSub.Documents", "Could not import %1: line %2: %3. Nothing was imported.")
+                     .arg(name, QString::number(problem.line), what)
+               : QCoreApplication::translate("HikariSub.Documents", "Could not import %1: %2. Nothing was imported.").arg(name, what);
 }
 
 std::optional<application::DocumentId> Application::publish(application::StagedOpen staged, const QString &path,
                                                             bool asReference)
 {
+    const bool imported = staged.imported;
     auto id = m_files->activate(std::move(staged));
     if (!id)
         return std::nullopt;
@@ -1478,7 +1555,14 @@ std::optional<application::DocumentId> Application::publish(application::StagedO
             settings.styles.push_back(toU8(style));
         (void)application::filterLines(*session, settings, {}, true);
     }
-    m_workspace.add(*id, QFileInfo(path).fileName().toStdString(), asReference);
+    // KA6: imported lyrics are named, and saved, as ASS beside their file.
+    const QFileInfo file(path);
+    const QString saveAs = QDir::toNativeSeparators(file.absolutePath() + u'/' + file.completeBaseName() + QStringLiteral(".ass"));
+    if (imported) {
+        m_importPaths[id->value] = saveAs;
+        m_lyricsImports.insert(id->value);
+    }
+    m_workspace.add(*id, (imported ? QFileInfo(saveAs).fileName() : file.fileName()).toStdString(), asReference);
     // WS2: the tab takes the arrangement its file keeps (a Session's, set
     // after this, takes precedence). A file opened as the reference keeps it
     // for when it becomes a tab (closeReference, promoteReference).
@@ -2093,12 +2177,13 @@ QVariantMap Application::saveDialogValuesFor(qulonglong id) const
         return {};
     const auto destination = m_files->destination(*document);
     const QString video = *document == m_workspace.editingTarget() ? readyVideo(m_video->session()) : tabVideo(*document);
-    // Y9: subtitles loaded from an MKV are named after it (OnMkvSubs' SubsPath).
-    const auto matroskaPath = m_matroskaPaths.find(document->value);
+    // Y9: subtitles loaded from an MKV are named after it (OnMkvSubs' SubsPath);
+    // KA6: imported lyrics after their file.
+    const auto importPath = m_importPaths.find(document->value);
     const QString path = !video.isEmpty() && saveWithVideoName() ? video
                          : destination && !destination->value.empty() ? QString::fromStdString(destination->value)
-                         : matroskaPath != m_matroskaPaths.end()      ? matroskaPath->second
-                                                                 : QString();
+                         : importPath != m_importPaths.end()            ? importPath->second
+                                                                       : QString();
     const QString ext = extensionFor(session->document().format());
     const QString filter = QCoreApplication::translate("HikariSub.Documents", "Subtitle file ") +
                            (ext == QStringLiteral("txt") ? QStringLiteral("(*.txt *.sub)") : QStringLiteral("(*.%1)").arg(ext));
@@ -2214,8 +2299,7 @@ QVariantMap Application::reviewOpen(const QString &path)
 {
     auto staged = m_files->stageOpen({QFileInfo(path).absoluteFilePath().toStdString()});
     if (!staged) {
-        const QString problem = QCoreApplication::translate("HikariSub.Documents", "Could not open %1; nothing was changed.")
-                                    .arg(QFileInfo(path).fileName());
+        const QString problem = openProblem(path, staged.error());
         m_log->log(problem);
         return {{QStringLiteral("ok"), false}, {QStringLiteral("problem"), problem}, {QStringLiteral("rows"), QVariantList()}};
     }
@@ -2735,6 +2819,20 @@ QStringList Application::styleNames() const
     return out;
 }
 
+QVariantMap Application::styleLineCounts() const
+{
+    QVariantMap out;
+    if (auto *session = targetSession()) {
+        for (const auto &style : core::decodeStyles(session->document()))
+            out.insert(QString::fromUtf8(reinterpret_cast<const char *>(style.name.data()), static_cast<qsizetype>(style.name.size())), 0);
+        for (const auto *line : session->document().lines()) {
+            const QString name = QString::fromUtf8(reinterpret_cast<const char *>(line->style.data()), static_cast<qsizetype>(line->style.size()));
+            out.insert(name, out.value(name).toInt() + 1);
+        }
+    }
+    return out;
+}
+
 std::string Application::recoveryKey(application::DocumentId document) const
 {
     return m_sessionId.toStdString() + "-" + std::to_string(document.value);
@@ -2875,7 +2973,7 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
             selectRow(id, 0); // InsertSelection(currentLine) of a new tab
         }
         m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
-        m_matroskaPaths[id.value] = subsPath;
+        m_importPaths[id.value] = subsPath;
         m_tabMedia[id.value]; // a new tab: no media of its own yet
         m_workspace.setEditingTarget(id);
         refreshViews();
@@ -2916,7 +3014,7 @@ void Application::applyMatroska(application::MatroskaLoaded loaded, bool newTab)
         m_tabMedia[id.value] = media;
     }
     m_workspace.add(id, QFileInfo(subsPath).fileName().toStdString());
-    m_matroskaPaths[id.value] = subsPath;
+    m_importPaths[id.value] = subsPath;
     replaceTarget(id, true);
     // Hikari->SetSubsResolution (SubsGrid.cpp:1189).
     QTimer::singleShot(0, this, [this] { checkResolution(); });
@@ -4946,6 +5044,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("settingsImport"), QVariant::fromValue(static_cast<QObject *>(m_settingsImport.get()))},
             {QStringLiteral("hotkeys"), QVariant::fromValue(static_cast<QObject *>(m_hotkeys.get()))},
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
+            {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
@@ -5198,6 +5297,9 @@ QVariantMap Application::openSettingsDialog()
         warnings << missing(QT_TRANSLATE_NOOP("HikariSub.Options", "style"));
     auto values = toVariant(open.state);
     addAppearance(values);
+    // PK1 (#301): the questions hidden with "Don't ask again", which the
+    // Editor page's Ask again empties.
+    values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
     // W2: the renderers as the choice shows them; VSFilterMod says what it
     // is for (user 2026-10-13: slow, only for its own tags).
     QStringList rendererLabels;
@@ -5286,6 +5388,12 @@ void Application::applySettings(const QVariantMap &values)
         if (found == values.cend() || !validAppearance(id, *found) || *found == m_settings->value(qs(id)))
             continue;
         m_settings->setValue(qs(id), *found);
+    }
+    // PK1 (#301): Ask again, saved by OK or Apply like the options.
+    if (const auto hidden = values.constFind(QStringLiteral("notices.hiddenQuestions")); hidden != values.cend()) {
+        const QStringList list = hidden->toStringList();
+        if (list != m_settings->list("notices.hiddenQuestions"))
+            m_settings->setValue(QStringLiteral("notices.hiddenQuestions"), list);
     }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).

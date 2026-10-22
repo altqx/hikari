@@ -5,6 +5,7 @@
 // position read back are exact; no sound is made.
 #include "hikari/backends/audio_box_player.h"
 #include "hikari/backends/audio_output_engine.h"
+#include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/simulated_output.h"
 
 #include <QCoreApplication>
@@ -13,7 +14,11 @@
 
 #include <chrono>
 #include <cmath>
+#include <cstdio>
+#include <cstdlib>
+#include <atomic>
 #include <memory>
+#include <mutex>
 #include <algorithm>
 #include <optional>
 #include <thread>
@@ -563,4 +568,279 @@ TEST_F(BoxPlayer, TheFillThreadRecoversALostDevice)
     EXPECT_GT(threaded.position(), 48000 * 0.2);
     threaded.stop();
     EXPECT_TRUE(threadedFailures.isEmpty());
+}
+
+// KA2-slowed-playback (#277): below speed 1 the frames go through SoundTouch.
+namespace {
+
+// Mono 16-bit frames of `samples`.
+DisplayAudio monoAudio(int rate, const std::vector<std::int16_t> &samples)
+{
+    DisplayAudio audio(rate, static_cast<std::int64_t>(samples.size()));
+    EXPECT_TRUE(audio.appendFrames(samples.data(), static_cast<std::int64_t>(samples.size()), 1));
+    audio.finish();
+    return audio;
+}
+
+// Decaying 700 Hz bursts, 25 ms long, at `onsets`.
+std::vector<std::int16_t> bursts(std::int64_t frames, const std::vector<std::int64_t> &onsets)
+{
+    std::vector<std::int16_t> s(static_cast<std::size_t>(frames), 0);
+    for (const auto x : onsets)
+        for (std::int64_t i = x; i < std::min(frames, x + 1200); i++)
+            s[static_cast<std::size_t>(i)] = static_cast<std::int16_t>(
+                16000 * std::sin(2 * 3.14159265358979 * 700 * double(i) / 48000) * std::exp(-double(i - x) / 600));
+    return s;
+}
+
+// The first rendered frame from `from` louder than 0.05.
+std::int64_t firstLoud(const std::vector<float> &rendered, std::int64_t from)
+{
+    for (auto i = static_cast<std::size_t>(std::max<std::int64_t>(0, from)); i < rendered.size(); i++)
+        if (std::fabs(rendered[i]) > 0.05f)
+            return static_cast<std::int64_t>(i);
+    return -1;
+}
+
+// The frequency of the rendered mono frames [from, from + count) by their
+// upward zero crossings.
+double crossingHz(const std::vector<float> &rendered, std::size_t from, std::size_t count, int rate)
+{
+    std::vector<double> ups;
+    for (std::size_t i = from + 1; i < from + count && i < rendered.size(); i++)
+        if (rendered[i - 1] < 0 && rendered[i] >= 0)
+            ups.push_back(double(i - 1) + rendered[i - 1] / (rendered[i - 1] - rendered[i]));
+    if (ups.size() < 2)
+        return 0;
+    return double(ups.size() - 1) * rate / (ups.back() - ups.front());
+}
+
+} // namespace
+
+TEST_F(BoxPlayer, SpeedIsClampedAndOneLeavesTheFramesAlone)
+{
+    EXPECT_EQ(player.speed(), 1.0);
+    player.setSpeed(0.1);
+    EXPECT_EQ(player.speed(), 0.25);
+    player.setSpeed(2);
+    EXPECT_EQ(player.speed(), 1.0);
+    player.play(1000, 4800);
+    run(4);
+    for (int i = 0; i < 1024; i++)
+        ASSERT_FLOAT_EQ(device.rendered[2 * i], (1000 + i) / 32768.0f) << i;
+}
+
+// The range lasts 1 / speed as long and a tone keeps its pitch.
+TEST_F(BoxPlayer, SlowedPlaybackKeepsThePitch)
+{
+    std::vector<std::int16_t> tone(48000 * 2);
+    for (std::size_t i = 0; i < tone.size(); i++)
+        tone[i] = static_cast<std::int16_t>(12000 * std::sin(2 * 3.14159265358979 * 440 * double(i) / 48000));
+    for (const double speed : {0.25, 1.0 / 3.0, 0.5, 0.75}) {
+        SCOPED_TRACE(speed);
+        audio = monoAudio(48000, tone);
+        device.rendered.clear();
+        player.setSpeed(speed);
+        player.play(0, 48000);
+        run(static_cast<int>(48000 / speed / 256) + 60);
+        // the second of audio sounds for 1 / speed seconds, then silence
+        const auto loud = static_cast<double>(std::ranges::count_if(device.rendered, [](float v) {
+            return std::fabs(v) > 0.01f;
+        }));
+        EXPECT_NEAR(loud / 48000, 1 / speed, 0.06 / speed);
+        EXPECT_NEAR(crossingHz(device.rendered, 9600, 24000, 48000), 440, 4.4);
+        player.stop();
+    }
+}
+
+// The position at the frame where a sound is first heard is that sound's
+// frame in the audio, within 5 ms, at every speed the panel offers.
+TEST_F(BoxPlayer, SlowedPositionFindsTheSoundsInTheAudio)
+{
+    std::vector<std::int64_t> onsets;
+    for (int k = 0; k < 8; k++)
+        onsets.push_back(24000 + k * 23000 + (k * 7919) % 5000);
+    const auto samples = bursts(48000 * 5, onsets);
+    for (const double speed : {0.25, 1.0 / 3.0, 0.5, 0.75}) {
+        SCOPED_TRACE(speed);
+        audio = monoAudio(48000, samples);
+        player.setSpeed(speed);
+        // where each burst is first heard
+        device.rendered.clear();
+        player.play(0, 48000 * 5);
+        run(static_cast<int>(onsets.back() / speed / 256) + 40);
+        player.stop();
+        std::vector<std::int64_t> heard;
+        for (const auto x : onsets)
+            heard.push_back(firstLoud(device.rendered, static_cast<std::int64_t>((x - 4800) / speed)));
+        // the same playback again, stopping the clock at each of them
+        device.rendered.clear();
+        const double start = device.stream;
+        player.play(0, 48000 * 5);
+        std::size_t k = 0;
+        while (k < onsets.size()) {
+            device.render();
+            player.pump();
+            const auto taken = static_cast<std::int64_t>(std::llround((device.stream - start) * 48000));
+            // nowOffset 0 hears the frame 50 ms (2400 frames) before the taken ones
+            while (k < onsets.size() && taken - 2400 >= heard[k]) {
+                device.nowOffset = double(heard[k] - (taken - 2400)) / 48000;
+                EXPECT_NEAR(player.position(), onsets[k], 240) << "burst " << k;
+                device.nowOffset = 0;
+                k++;
+            }
+        }
+        player.stop();
+    }
+}
+
+// A change while playing goes on from the frame being heard.
+TEST_F(BoxPlayer, ASpeedChangeGoesOnFromTheFrameBeingHeard)
+{
+    player.play(0, 48000 * 5);
+    run(40); // 10240 frames taken, 7840 heard
+    EXPECT_NEAR(player.position(), 7840, 1);
+    player.setSpeed(0.5);
+    EXPECT_TRUE(player.playing());
+    EXPECT_NEAR(player.position(), 7840, 1); // the start again until the output reports
+    run(80); // 20480 taken: 18080 output frames heard, half as many of the audio, plus the lead
+    EXPECT_NEAR(player.position(), 7840 + 9040 + AudioBoxPlayer::stretchLeadMs(0.5) * 48, 2);
+    player.setSpeed(1);
+    run(40);
+    EXPECT_GT(player.position(), 7840 + 9040);
+}
+
+// The calibration's beeps play instead of the box's audio, at speed 1 while
+// the box's plays slowed; the next play is the box's again.
+TEST_F(BoxPlayer, AClipPlaysAtSpeedOne)
+{
+    player.setSpeed(0.5);
+    auto clip = std::make_shared<DisplayAudio>(stereoRamp(48000, 4800));
+    ASSERT_TRUE(player.playClip(clip));
+    run(4);
+    for (int i = 0; i < 1024; i++)
+        ASSERT_FLOAT_EQ(device.rendered[2 * i], i / 32768.0f) << i;
+    EXPECT_EQ(player.endPosition(), 4800);
+    EXPECT_FALSE(player.playClip(nullptr));
+    device.rendered.clear();
+    player.play(1000, 48000);
+    run(40);
+    EXPECT_EQ(player.speed(), 0.5);
+    EXPECT_GT(std::ranges::count_if(device.rendered, [](float v) { return v != 0; }), 0);
+    // stretched: not the ramp's frames one for one
+    EXPECT_NE(device.rendered[2 * 5000], (1000 + 5000) / 32768.0f);
+}
+
+// Through a real stream: the CI null PCM, or a sound device on a desktop or
+// the Windows VM, named by HIKARI_TEST_AUDIO_DEVICE (the tone is quiet but
+// audible, so never the default speakers unasked). At half speed the stream
+// takes two seconds of tone for the second of audio, at its pitch. The time it
+// took is printed, not checked: the null PCM has no clock (it takes frames as
+// fast as they come, so the tap keeps the first three seconds only).
+namespace {
+
+class TappedOutput : public AudioOutputPort {
+public:
+    explicit TappedOutput(AudioOutputPort &inner) : m_inner(inner) {}
+    std::vector<OutputDevice> devices() override { return m_inner.devices(); }
+    std::expected<OutputFormat, OutputError> open(const std::string &id, OutputFormat format) override
+    {
+        auto opened = m_inner.open(id, format);
+        if (opened) {
+            std::lock_guard lock(m_mutex);
+            m_format = *opened;
+        }
+        return opened;
+    }
+    std::expected<void, OutputError> start() override { return m_inner.start(); }
+    void stop() override { m_inner.stop(); }
+    void close() override { m_inner.close(); }
+    OutputFormat format() const override { return m_inner.format(); }
+    std::size_t write(std::span<const float> interleaved) override
+    {
+        const std::size_t taken = m_inner.write(interleaved);
+        std::lock_guard lock(m_mutex);
+        const auto room = std::size_t(3 * m_format.sampleRate * m_format.channels) - m_taken.size();
+        const auto kept = static_cast<std::ptrdiff_t>(std::min(taken, room));
+        m_taken.insert(m_taken.end(), interleaved.begin(), interleaved.begin() + kept);
+        if (std::size_t(kept) == room)
+            m_full = true;
+        return taken;
+    }
+    bool full() const { return m_full; }
+    OutputFormat opened() const
+    {
+        std::lock_guard lock(m_mutex);
+        return m_format;
+    }
+    OutputStatus status() const override { return m_inner.status(); }
+    ClockEstimate clock() const override { return m_inner.clock(); }
+    // The first channel of what the stream took.
+    std::vector<float> taken(int channels) const
+    {
+        std::lock_guard lock(m_mutex);
+        std::vector<float> out;
+        for (std::size_t i = 0; i < m_taken.size(); i += static_cast<std::size_t>(channels))
+            out.push_back(m_taken[i]);
+        return out;
+    }
+
+private:
+    AudioOutputPort &m_inner;
+    mutable std::mutex m_mutex;
+    OutputFormat m_format{48000, 1};
+    std::vector<float> m_taken;
+    std::atomic<bool> m_full = false;
+};
+
+} // namespace
+
+TEST_F(BoxPlayer, SlowedPlaybackThroughADevice)
+{
+    const char *wanted = std::getenv("HIKARI_TEST_AUDIO_DEVICE");
+    if (!wanted || !*wanted)
+        GTEST_SKIP() << "set HIKARI_TEST_AUDIO_DEVICE to run against a real stream";
+    backends::PortAudioOutput output;
+    std::string name, hostApi;
+    for (const auto &d : output.devices())
+        if (d.name.find(wanted) != std::string::npos) {
+            name = d.name;
+            hostApi = d.hostApi;
+        }
+    ASSERT_FALSE(name.empty()) << "the requested test device is missing";
+    TappedOutput tapped(output);
+    std::vector<std::int16_t> tone(48000);
+    for (std::size_t i = 0; i < tone.size(); i++)
+        tone[i] = static_cast<std::int16_t>(3000 * std::sin(2 * 3.14159265358979 * 440 * double(i) / 48000));
+    const DisplayAudio audio = monoAudio(48000, tone);
+    AudioBoxPlayer real(tapped, [&]() -> const DisplayAudio * { return &audio; });
+    QStringList realFailures;
+    QObject::connect(&real, &AudioBoxPlayer::failed, [&](const QString &m) { realFailures << m; });
+    real.setOutputDevice(name);
+    real.setSpeed(0.5);
+    QElapsedTimer t;
+    t.start();
+    real.play(0, 48000);
+    ASSERT_TRUE(real.playing()) << realFailures.join(u'\n').toStdString();
+    while (real.playing() && !tapped.full() && t.elapsed() < 6000)
+        QCoreApplication::processEvents(QEventLoop::AllEvents, 5);
+    const double seconds = t.elapsed() / 1000.0;
+    real.stop();
+    const auto format = tapped.opened();
+    EXPECT_TRUE(realFailures.isEmpty()) << realFailures.join(u'\n').toStdString();
+    const auto taken = tapped.taken(format.channels);
+    // from the first loud frame to the last
+    const auto isLoud = [](float v) { return std::fabs(v) > 0.005f; };
+    const auto first = std::ranges::find_if(taken, isLoud);
+    const auto last = std::ranges::find_if(taken.rbegin(), taken.rend(), isLoud);
+    const double loud = first == taken.end() ? 0.0 : double(std::distance(first, last.base()));
+    const double hz = crossingHz(taken, static_cast<std::size_t>(format.sampleRate / 5),
+                                 static_cast<std::size_t>(format.sampleRate), format.sampleRate);
+    std::fprintf(stderr,
+                 "Slowed playback through %s (%s): %d Hz x %d, the tone %.3f s long at %.2f Hz, played %.3f s, "
+                 "underruns %llu\n",
+                 name.c_str(), hostApi.c_str(), format.sampleRate, format.channels, loud / format.sampleRate, hz,
+                 seconds, static_cast<unsigned long long>(output.status().underruns));
+    EXPECT_NEAR(loud / format.sampleRate, 2.0, 0.12);
+    EXPECT_NEAR(hz, 440, 4.4);
 }

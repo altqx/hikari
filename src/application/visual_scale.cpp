@@ -89,6 +89,7 @@ std::vector<ToolOption> ScaleTool::options(const VisualHost &host) const
         o.tooltip = info.tooltip;
         o.checked = t[static_cast<std::size_t>(elem)];
         o.enabled = !grayed;
+        o.group = elem < 5 ? u"Rectangle" : u"Tags"; // VT1: the bar's groups
         out.push_back(std::move(o));
     }
     return out;
@@ -304,11 +305,14 @@ void ScaleTool::setVisual(bool dummy, VisualHost &host)
 void ScaleTool::changeVisualLine(std::u16string &text, const core::LineRecord &dial, const Context &ctx)
 {
     // Scale::ChangeVisual(txt, dial, numOfSelections) (VisualScale.cpp:425-516).
+    // Legacy's drags take the larger ratio for both axes. A typed or
+    // scrubbed value (VT1) is written as given: each axis takes its own
+    // ratio, so a value below the press's applies (Codex on #293).
     float Scalex = m_scale.x / m_lastScale.x;
     float Scaley = m_scale.y / m_lastScale.y;
-    if (Scalex > Scaley)
+    if (!m_valueRatios && Scalex > Scaley)
         Scaley = Scalex;
-    else if (Scaley > Scalex)
+    else if (!m_valueRatios && Scaley > Scalex)
         Scalex = Scaley;
     if (m_changeAllTags && m_preserveProportions) {
         const LinePosition lp = linePosition(ctx, dial);
@@ -660,26 +664,27 @@ void ScaleTool::pointer(const Pointer &event, VisualHost &host)
     }
 }
 
+bool ScaleTool::takesKey(const Key &event) const
+{
+    return nudgeDirection(event).has_value();
+}
+
 bool ScaleTool::key(const Key &event, VisualHost &host)
 {
-    // Scale::OnKeyPress (VisualScale.cpp:564-607): W/A/S/D move the arrows'
-    // end by one percent (Shift: a tenth) unless Alt alone is held; each
-    // press is its own edit.
+    // Scale::OnKeyPress (VisualScale.cpp:564-607): a nudge moves the arrows'
+    // end by one percent (Shift: a tenth); VT2-arrow-nudge: the arrows, for
+    // legacy's W/A/S/D. Each press is its own edit.
     if (event.release)
         return false;
-    const bool left = event.key == 'A';
-    const bool right = event.key == 'D';
-    const bool up = event.key == 'W';
-    const bool down = event.key == 'S';
-    const bool altOnly = event.alt && !event.control && !event.shift;
-    if (!((left || right || up || down) && !altOnly))
+    const auto direction = nudgeDirection(event);
+    if (!direction)
         return false;
     if (!beginEdit(host))
         return true;
     const float unitx = std::abs(m_arrowLengths.x / 100);
     const float unity = std::abs(m_arrowLengths.y / 100);
-    float directionX = (left) ? -unitx : (right) ? unitx : 0;
-    float directionY = (up) ? -unity : (down) ? unity : 0;
+    float directionX = direction->x * unitx;
+    float directionY = direction->y * unity;
     m_type = (directionX) ? 0 : 1;
     if (event.shift) {
         directionX /= 10.f;
@@ -880,9 +885,67 @@ Overlay ScaleTool::overlay(const VisualHost &host) const
 
 std::vector<ToolValue> ScaleTool::values(const VisualHost &host) const
 {
+    // VT1: editable, in percent as the tags hold them.
     (void)host;
-    return {{"fscx", u"Scale X", getfloat(m_scale.x * 100), false},
-            {"fscy", u"Scale Y", getfloat(m_scale.y * 100), false}};
+    return {{"fscx", u"X", getfloat(m_scale.x * 100), true, {}, u"%"},
+            {"fscy", u"Y", getfloat(m_scale.y * 100), true, {}, u"%"}};
+}
+
+bool ScaleTool::setValue(const std::string &name, const std::u16string &text, VisualHost &host, ValueEdit edit)
+{
+    // VT1: a typed or scrubbed scale, written as a drag of that axis' arrow
+    // writes it (its end follows): both axes in proportion with "Preserve
+    // proportions", as its drags. The first sample is the press (the scale
+    // the tags are changed from).
+    double value = 0;
+    if (!host.gesture())
+        m_valueEdit = false;
+    if ((name != "fscx" && name != "fscy") || !parseValue(text, value) || value < 0 ||
+        (host.gesture() && !m_valueEdit))
+        return false;
+    takeView(host.view());
+    const bool first = !host.gesture();
+    const bool x = name == "fscx";
+    const PointF baseline = first ? m_scale : m_lastScale;
+    const float scale = static_cast<float>(value / 100);
+    PointF next = m_scale;
+    if (m_preserveProportions) {
+        // In proportion to the press's scale, not the last sample's: a scrub
+        // through zero comes back in proportion (Codex on #293).
+        const float pressed = x ? baseline.x : baseline.y;
+        const float ratio = pressed != 0 ? scale / pressed : 1.f;
+        next = x ? PointF{scale, baseline.y * ratio} : PointF{baseline.x * ratio, scale};
+    } else {
+        (x ? next.x : next.y) = scale;
+    }
+    // A scale that is no number is refused: "Change all scale tags"
+    // multiplies each tag by the new scale over the press's, and from a zero
+    // scale there is no ratio (legacy's would write nan), from a tiny one it
+    // overflows (Codex on #293: inf).
+    const bool changesX = m_preserveProportions || x, changesY = m_preserveProportions || !x;
+    if (!std::isfinite(next.x) || !std::isfinite(next.y) ||
+        (m_changeAllTags && ((changesX && !std::isfinite(next.x / baseline.x)) ||
+                             (changesY && !std::isfinite(next.y / baseline.y)))))
+        return false;
+    if (!beginEdit(host))
+        return false;
+    if (first)
+        m_lastScale = m_scale;
+    m_type = m_preserveProportions ? 2 : x ? 0 : 1;
+    m_scale = next;
+    m_to.x = m_from.x + (m_scale.x * m_arrowLengths.x);
+    m_to.y = m_from.y + (m_scale.y * m_arrowLengths.y);
+    m_valueRatios = true;
+    setVisual(true, host);
+    if (edit == ValueEdit::Sample) {
+        m_valueRatios = false;
+        return m_valueEdit = host.gesture() != nullptr;
+    }
+    m_valueEdit = false;
+    const std::uint64_t before = host.session() ? host.session()->revision() : 0;
+    setVisual(false, host);
+    m_valueRatios = false;
+    return host.session() && host.session()->revision() != before;
 }
 
 } // namespace hikari::application::visual
