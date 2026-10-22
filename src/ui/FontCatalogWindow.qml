@@ -42,11 +42,11 @@ DialogWindow {
     property var selected: ({})   // the selected rows' fonts
     property int resolveRequest: -1
     property var resolution: ({})
-    property bool extending: false
-    property string selectedFont: "" // the row select() chose, kept when the list changes under it // a Ctrl click moves the current row, keeping the selection
-    // CATALOG_CHANGED, sent when the window is shown and when it is hidden.
+    property bool extending: false // a Ctrl click moves the current row, keeping the selection
+    property string selectedFont: "" // the current row's font, kept when the list changes under it
     // Show "In …" lists the chosen catalog: another catalog, another list.
     onChosenChanged: if (created && show === 1) selectFont(selectedFont)
+    // CATALOG_CHANGED, sent when the window is shown and when it is hidden.
     signal catalogChanged()
 
     // The fonts the chosen catalog holds, by name.
@@ -85,7 +85,8 @@ DialogWindow {
     // another window already, it closes first, so that it serves (and is
     // not blocked by) the new opener.
     function openFor(font, opener) {
-        if (visible && opener && transientParent !== opener)
+        // (Not for a window opened from this one: it would close with it.)
+        if (visible && opener && transientParent !== opener && opener.transientParent !== window)
             close()
         if (!created) {
             create(font)
@@ -124,7 +125,9 @@ DialogWindow {
             return
         }
         catalogs.renderPreview(currentFont, Math.max(1, preview.width), Math.max(1, preview.height))
-        // The preview Style is bold: the bold face is the one drawn.
+        // The preview Style is bold: the bold face is the one drawn. Until
+        // this request's answer no other face is said.
+        resolution = ({})
         resolveRequest = catalogs.resolveFamily(currentFont, true, false)
     }
     // The selected fonts join or leave the chosen catalog (CatalogList's
@@ -147,6 +150,7 @@ DialogWindow {
             else
                 set[f] = true
             selected = set
+            selectedFont = f
             extending = true
             list.currentIndex = row
             extending = false
@@ -237,7 +241,8 @@ DialogWindow {
             loaded(catalogs.loadReviewed([]), r.file)
             return
         }
-        const taken = catalogs.catalogNames.map(n => n.toLowerCase())
+        // Names a rename cannot take: yours and the file's, ignoring case.
+        const taken = catalogs.catalogNames.concat(r.names).map(n => n.toLowerCase())
         const suggest = name => {
             for (let i = 2; ; ++i) {
                 const n = qsTr("%1 (%2)").arg(name).arg(i)
@@ -262,6 +267,12 @@ DialogWindow {
                                                                  : qsTr("%1 here, %2 in the file").arg(row.here).arg(row.there),
                                        suggestion: suggest(row.name) })),
             added: r.total - r.rows.length - r.same,
+            nameTaken: (name, row) => {
+                const key = name.toLowerCase()
+                const review = reviewLoader.item
+                return taken.indexOf(key) >= 0
+                    || review.names.some((n, i) => i !== row && review.actions[i] === "rename" && n.trim().toLowerCase() === key)
+            },
             acceptText: count => count === 1 ? qsTr("Load 1 catalog") : qsTr("Load %n catalogs", "", count)
         }, results => {
             if (results)
@@ -299,6 +310,10 @@ DialogWindow {
             // A catalog gone, or the first loaded into an empty list: the first.
             if (window.created && !window.catalogs.catalogExists(window.chosen))
                 window.chosen = window.catalogs.catalogNames.length > 0 ? window.catalogs.catalogNames[0] : ""
+            // Show "In …" or "Not in a catalog": a membership change takes rows
+            // out or in; the current font stays if it is still listed.
+            if (window.created && window.show !== 0)
+                window.selectFont(window.selectedFont)
         }
         // FontEnum's observers: a font change lists the fonts again.
         function onFontsChanged() {
@@ -372,6 +387,7 @@ DialogWindow {
                 Layout.fillHeight: true
                 Layout.minimumHeight: 120
                 Label {
+                    textFormat: Text.PlainText
                     visible: catalogList.count === 0
                     anchors.fill: parent
                     anchors.margins: 10
@@ -406,12 +422,14 @@ DialogWindow {
                         }
                         contentItem: RowLayout {
                             Label {
+                                textFormat: Text.PlainText
                                 text: catalogRow.modelData
                                 font.weight: catalogRow.highlighted ? Font.DemiBold : Font.Normal
                                 elide: Text.ElideRight
                                 Layout.fillWidth: true
                             }
                             Label {
+                                textFormat: Text.PlainText
                                 text: window.revision >= 0 ? window.catalogs.catalogSize(catalogRow.modelData) : ""
                                 color: Theme.muted
                                 font: window.fontAt(12)
@@ -502,6 +520,7 @@ DialogWindow {
                         Label { text: qsTr("Font"); color: Theme.muted; font: window.fontAt(12); Layout.preferredWidth: 170 }
                         Label { text: qsTr("Catalogs"); color: Theme.muted; font: window.fontAt(12); Layout.preferredWidth: 130 }
                         Label {
+                            textFormat: Text.PlainText
                             text: qsTr("Sample")
                             color: Theme.muted
                             font: window.fontAt(12)
@@ -514,6 +533,7 @@ DialogWindow {
                     }
                 }
                 Label {
+                    textFormat: Text.PlainText
                     visible: window.shown.length === 0
                     x: 12; y: header.height + 10
                     text: qsTr("No fonts match")
@@ -571,11 +591,13 @@ DialogWindow {
                                 onToggled: window.setMembership([row.modelData], checked)
                             }
                             Label {
+                                textFormat: Text.PlainText
                                 text: row.modelData
                                 elide: Text.ElideRight
                                 Layout.preferredWidth: 170
                             }
                             Label {
+                                textFormat: Text.PlainText
                                 readonly property var held: window.revision >= 0 ? window.catalogs.catalogsOf(row.modelData) : []
                                 text: held.length > 0 ? held.join(", ") : "—"
                                 color: Theme.muted
@@ -584,6 +606,7 @@ DialogWindow {
                                 Layout.preferredWidth: 130
                             }
                             Label {
+                                textFormat: Text.PlainText
                                 text: window.catalogs.previewText
                                 font.family: row.modelData
                                 font.pixelSize: 15
@@ -624,6 +647,7 @@ DialogWindow {
 
     leadingActions: [
         Label {
+            textFormat: Text.PlainText
             objectName: "fontCatalogStatus"
             visible: window.catalogs.autosaveFailed || window.catalogs.autosaveStatus.length > 0
             text: window.catalogs.autosaveFailed ? qsTr("Not saved: the safety copy could not be written") : qsTr("Saved")
@@ -672,6 +696,7 @@ DialogWindow {
             onAccepted: newPopover.create()
         }
         Label {
+            textFormat: Text.PlainText
             objectName: "fontCatalogNewProblem"
             visible: newPopover.problem !== ""
             text: newPopover.problem
@@ -720,6 +745,7 @@ DialogWindow {
             onAccepted: renamePopover.rename()
         }
         Label {
+            textFormat: Text.PlainText
             objectName: "fontCatalogRenameProblem"
             visible: renamePopover.problem !== ""
             text: renamePopover.problem

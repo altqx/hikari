@@ -103,7 +103,7 @@ FontCatalogsController::~FontCatalogsController()
     // ~FontCatalogList: FCManagement.SaveCatalogs() (FontCatalogList.cpp:
     // 218-221 at 20d647c4). A window that was made lived until the end, so
     // the catalogs as they are then are written to FontCatalogs.txt.
-    if (m_windowMade)
+    if (m_windowMade || m_unsaved) // PU3: and a save that failed is tried again
         save();
     stopResolver();
 }
@@ -330,8 +330,10 @@ QVariantMap FontCatalogsController::reviewCatalogFile(const QUrl &file)
     if (const auto text = application::readFontCatalogFile(std::filesystem::path(path.toStdU16String())))
         m_reviewed = application::FontCatalogs::parse(*text);
     QVariantList rows;
+    QStringList names;
     int same = 0;
     for (const auto &c : m_reviewed) {
+        names.append(qs(c.name));
         const auto *here = m_catalogs.findNoCase(c.name); // another case is that catalog
         if (!here)
             continue;
@@ -352,6 +354,7 @@ QVariantMap FontCatalogsController::reviewCatalogFile(const QUrl &file)
             {QStringLiteral("file"), QFileInfo(path).fileName()},
             {QStringLiteral("total"), int(m_reviewed.size())},
             {QStringLiteral("rows"), rows},
+            {QStringLiteral("names"), names},
             {QStringLiteral("same"), same}};
 }
 
@@ -395,7 +398,8 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
         switch (chosen[i].action) {
         case Action::Skip: ++skipped; break;
         case Action::Replace: ++replaced; break;
-        case Action::Rename: ++renamed; break;
+        // A name taken after all (the review refuses one) merges, as apply() does.
+        case Action::Rename: ++(isNew(chosen[i].newName) ? renamed : merged); break;
         case Action::Merge: ++(isNew(m_reviewed[i].name) ? added : merged); break;
         }
     }
@@ -407,13 +411,16 @@ QVariantMap FontCatalogsController::loadReviewed(const QVariantList &choices)
             {QStringLiteral("replaced"), replaced}, {QStringLiteral("renamed"), renamed}, {QStringLiteral("skipped"), skipped}};
 }
 
-void FontCatalogsController::save()
+bool FontCatalogsController::save()
 {
     ensureLoaded();
-    application::writeFontCatalogFile(catalogPath(m_dir, application::kFontCatalogsFile), m_catalogs.serialize());
+    const bool written =
+        application::writeFontCatalogFile(catalogPath(m_dir, application::kFontCatalogsFile), m_catalogs.serialize());
+    m_unsaved = !written;
+    return written;
 }
 
-bool FontCatalogsController::collectFromSubtitles(const QString &catalog, bool clear, bool allTabs)
+QVariantMap FontCatalogsController::collectFromSubtitles(const QString &catalog, bool clear, bool allTabs)
 {
     ensureLoaded();
     std::vector<std::shared_ptr<const core::Document>> documents;
@@ -423,10 +430,9 @@ bool FontCatalogsController::collectFromSubtitles(const QString &catalog, bool c
     for (const auto &d : documents)
         raw.push_back(d.get());
     const bool done = m_catalogs.collect(u16(catalog), clear, raw);
-    if (done) // the catalog's absence returned before SaveCatalogs
-        save();
+    const bool saved = done && save(); // the catalog's absence returned before SaveCatalogs
     emit catalogsChanged();
-    return done;
+    return {{QStringLiteral("done"), done}, {QStringLiteral("saved"), saved}};
 }
 
 void FontCatalogsController::startAutosave()

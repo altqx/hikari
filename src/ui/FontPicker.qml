@@ -43,6 +43,7 @@ DialogWindow {
     // What it opened for: "line" (the Line editor) or "style" (choose()).
     property string mode: "line"
     property var done: null
+    property var openerWindow: null // choose()'s opener
     property bool loading: false
     property string family: ""
     // The preview's text and where it comes from: "selection", "line" or "sample".
@@ -77,6 +78,7 @@ DialogWindow {
             return false
         mode = "line"
         done = null
+        openerWindow = null
         const selected = selectedText || ""
         sampleSource = selected.length > 0 ? "selection" : (text || "").length > 0 ? "line" : "sample"
         sampleText = selected.length > 0 ? selected : text || ""
@@ -85,10 +87,12 @@ DialogWindow {
         return true
     }
     // Opens with `font` ({name, size, bold, italic, underline, strikeOut})
-    // and the sample text; done(font) on OK.
-    function choose(font, sample, callback) {
+    // and the sample text, from `opener` (the Style editor's window; null:
+    // the one with the keyboard); done(font) on OK.
+    function choose(font, sample, callback, opener) {
         mode = "style"
         done = callback || null
+        openerWindow = opener || null
         sampleSource = "sample"
         sampleText = sample || ""
         sampleAss = true
@@ -108,7 +112,7 @@ DialogWindow {
         relist()
         loading = false
         resolve()
-        open()
+        openFrom(openerWindow)
         showFamily()
         renderTimer.restart()
     }
@@ -174,6 +178,7 @@ DialogWindow {
     // Y6: what the renderer selects for the name (requested and resolved
     // identities stay distinct, fonts.md).
     function resolve() {
+        resolution = ({}) // until this request's answer: no other face is said
         resolveRequest = catalogs.resolveFamily(family, bold.checked, italic.checked, true)
     }
     function render() {
@@ -312,6 +317,7 @@ DialogWindow {
                 spacing: 0
                 visible: picker.shown.length === 0
                 Label {
+                    textFormat: Text.PlainText
                     objectName: "fontPickerEmpty"
                     text: picker.unlisted.length > 0 ? qsTr("No installed font is called “%1”.").arg(picker.unlisted)
                         : picker.catalogChosen ? qsTr("No installed font is in “%1”.").arg(picker.choices[picker.choice])
@@ -384,6 +390,7 @@ DialogWindow {
         }
     }
     Label {
+        textFormat: Text.PlainText
         objectName: "fontPickerCount"
         text: picker.shown.length !== picker.total ? qsTr("%1 of %n fonts", "", picker.total).arg(picker.shown.length)
               : picker.total === 1 ? qsTr("1 font") : qsTr("%n fonts", "", picker.total)
@@ -416,6 +423,7 @@ DialogWindow {
         Layout.fillWidth: true
     }
     Label {
+        textFormat: Text.PlainText
         objectName: "fontPickerSampleSource"
         text: picker.sampleText.trim().length === 0 ? qsTr("Sample text")
             : picker.sampleSource === "selection" ? qsTr("The line’s selected text")

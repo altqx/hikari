@@ -149,7 +149,8 @@ public:
     // "Load" (PU3-load-review): the catalogs of `file`, kept until
     // loadReviewed(): {ok, file (its name), total, rows: [{name, here,
     // there, added}] for each catalog that exists here with other fonts,
-    // same: the count that exists with the same fonts}. ok is false when
+    // names: every catalog's name in the file, same: the count that exists
+    // with the same fonts}. ok is false when
     // the file cannot be read or holds no catalog.
     Q_INVOKABLE QVariantMap reviewCatalogFile(const QUrl &file);
     // The reviewed file loaded: `choices` [{name, action: "merge" |
@@ -158,14 +159,17 @@ public:
     // replaced, renamed, skipped}: catalogs written, of them new ones, and
     // so on.
     Q_INVOKABLE QVariantMap loadReviewed(const QVariantList &choices);
-    // SaveCatalogs (the windows' closing, CATALOG_CHANGED).
-    Q_INVOKABLE void save();
+    // SaveCatalogs (the windows' closing, CATALOG_CHANGED); false when
+    // FontCatalogs.txt could not be written (tried again at the end).
+    Q_INVOKABLE bool save();
     // A "Manage font catalogs" window was made (new FontCatalogList): from
     // then on ~FontCatalogList's SaveCatalogs runs when the controller goes
     // at the application's end, keeping edits made while a window is open.
     Q_INVOKABLE void windowMade() { m_windowMade = true; }
     // GetFontsFromASSDialog's OK: CollectFontsFromSubtitles then SaveCatalogs.
-    Q_INVOKABLE bool collectFromSubtitles(const QString &catalog, bool clear, bool allTabs);
+    // {done: the catalog existed and took the fonts, saved: FontCatalogs.txt
+    // was written}.
+    Q_INVOKABLE QVariantMap collectFromSubtitles(const QString &catalog, bool clear, bool allTabs);
 
     // The management window's preview: the "FontPreview" Style with `font`
     // (StylePreview::DrawPreview), as "image://fontcatalogpreview/<key>".
@@ -256,6 +260,7 @@ private:
     int m_resolveRequest = 0;  // the latest request made (GUI thread)
     int m_resolveAnswered = 0; // the latest request answered (GUI thread)
     bool m_windowMade = false; // a FontCatalogList exists
+    bool m_unsaved = false;    // the last save could not write FontCatalogs.txt
 };
 
 // "image://fontcatalogpreview/<key>": the management window's preview.

@@ -34,7 +34,7 @@ DialogWindow {
     // first); done(catalog) once fonts were added.
     function openFor(name, callback, opener) {
         // Shown for another window: closed first, so that it is modal to the new one.
-        if (visible && opener && transientParent !== opener)
+        if (visible && opener && transientParent !== opener && opener.transientParent !== dialog)
             close()
         const names = catalogs.catalogNames
         catalog.model = names
@@ -63,13 +63,18 @@ DialogWindow {
         if (made)
             catalogs.addCatalog(name, false) // the dialog's Add: no autosave
         const before = replace.checked ? 0 : catalogs.catalogSize(name)
-        if (!catalogs.collectFromSubtitles(name, replace.checked, from.currentIndex === 1))
+        const result = catalogs.collectFromSubtitles(name, replace.checked, from.currentIndex === 1)
+        if (!result.done)
             return
         const added = catalogs.catalogSize(name) - before
         const callback = done
         done = null
         accept()
-        if (notices)
+        if (notices && !result.saved)
+            notices.post("warning", qsTr("Add fonts from subtitles"),
+                         qsTr("The fonts were added to “%1” but could not be saved.").arg(name),
+                         { details: qsTr("FontCatalogs.txt in the \"Config\" folder could not be written. Saving is tried again on exit.") })
+        else if (notices)
             notices.post("info", qsTr("Add fonts from subtitles"),
                          (added === 1 ? qsTr("Added 1 font to “%1”") : qsTr("Added %n fonts to “%1”", "", added)).arg(name),
                          { details: from.currentIndex === 1 ? qsTr("From the styles and %1 tags of the open files.").arg("\\fn")
@@ -91,9 +96,28 @@ DialogWindow {
             editable: true
             Layout.preferredWidth: 260
             Accessible.name: qsTr("Catalog")
+            // The catalogs' names as plain text (Fusion's delegate would read
+            // markup in a name from a loaded file).
+            delegate: ItemDelegate {
+                id: catalogItem
+                required property string modelData
+                required property int index
+                width: ListView.view.width
+                text: modelData
+                highlighted: catalog.highlightedIndex === index
+                hoverEnabled: catalog.hoverEnabled
+                contentItem: Label {
+                    text: catalogItem.text
+                    textFormat: Text.PlainText
+                    elide: Text.ElideRight
+                    verticalAlignment: Text.AlignVCenter
+                    color: catalogItem.highlighted ? catalogItem.palette.highlightedText : catalogItem.palette.text
+                }
+            }
         }
         Item { width: 1; height: 1 }
         Label {
+            textFormat: Text.PlainText
             text: qsTr("Choose a catalog or type a new name.")
             color: Theme.muted
             font: dialog.fontAt(12)
@@ -115,6 +139,7 @@ DialogWindow {
         }
         Item { width: 1; height: 1 }
         Label {
+            textFormat: Text.PlainText
             objectName: "fontsFromSubtitlesHint"
             readonly property int size: dialog.visible ? dialog.catalogs.catalogSize(dialog.target) : 0
             text: (from.currentIndex === 1 && dialog.openFiles > 1

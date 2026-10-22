@@ -35,6 +35,7 @@ T.Button {
             visible: chip.iconRole.length > 0
         }
         Label {
+            textFormat: Text.PlainText
             text: chip.text
             font.bold: chip.on
             elide: Text.ElideRight

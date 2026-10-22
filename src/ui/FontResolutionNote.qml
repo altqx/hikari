@@ -28,6 +28,7 @@ RowLayout {
         color: Theme.warning
     }
     Label {
+        textFormat: Text.PlainText
         objectName: "fontResolutionText"
         text: note.text
         color: note.warning ? Theme.warning : Theme.muted

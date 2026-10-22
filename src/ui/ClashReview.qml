@@ -39,6 +39,9 @@ DialogWindow {
     property var names: []
     property int added: 0
     property var acceptText: null
+    // nameTaken(name, row): true when a rename's name is taken (the
+    // review's owner knows which names are); none: only an empty name stops it.
+    property var nameTaken: null
     property var done: null
     readonly property int written: added + actions.filter(a => a !== "skip").length
     // The actions offered, in order, with their buttons' names.
@@ -59,6 +62,7 @@ DialogWindow {
         differenceHeading = o.differenceHeading || qsTr("Difference")
         added = o.added || 0
         acceptText = o.acceptText || null
+        nameTaken = o.nameTaken || null
         const first = o.action || "replace"
         rows = o.rows || []
         actions = rows.map(() => first)
@@ -94,10 +98,15 @@ DialogWindow {
             callback(null)
         }
     }
-    // A rename needs a name that is not empty.
-    readonly property bool complete: actions.every((a, i) => a !== "rename" || names[i].trim().length > 0)
+    function taken(i) {
+        const name = (names[i] || "").trim()
+        return actions[i] === "rename" && name.length > 0 && nameTaken !== null && nameTaken(name, i) === true
+    }
+    // A rename needs a name that is not empty and not taken.
+    readonly property bool complete: actions.every((a, i) => a !== "rename" || (names[i].trim().length > 0 && !taken(i)))
 
     Label {
+        textFormat: Text.PlainText
         objectName: "clashReviewText"
         text: review.text
         font: review.fontAt(14, Font.DemiBold)
@@ -107,6 +116,7 @@ DialogWindow {
         Layout.topMargin: 6
     }
     Label {
+        textFormat: Text.PlainText
         objectName: "clashReviewDetail"
         visible: review.detail.length > 0
         text: review.detail
@@ -180,12 +190,14 @@ DialogWindow {
                     anchors.rightMargin: 10
                     spacing: 10
                     Label {
+                        textFormat: Text.PlainText
                         text: clash.modelData.name
                         font.weight: Font.DemiBold
                         elide: Text.ElideRight
                         Layout.preferredWidth: 120
                     }
                     Label {
+                        textFormat: Text.PlainText
                         text: clash.modelData.difference || ""
                         color: Theme.muted
                         elide: Text.ElideRight
@@ -211,6 +223,13 @@ DialogWindow {
                         onTextEdited: review.setName(clash.index, text)
                         // The field takes Enter itself: Enter writes, as the window's default.
                         onAccepted: if (review.complete) review.finish(true)
+                    }
+                    Label {
+                        objectName: "clashNameTaken" + clash.index
+                        textFormat: Text.PlainText
+                        visible: review.taken(clash.index)
+                        text: qsTr("Already exists")
+                        color: Theme.warning
                     }
                     Item { visible: review.actions[clash.index] !== "rename"; Layout.fillWidth: true }
                 }

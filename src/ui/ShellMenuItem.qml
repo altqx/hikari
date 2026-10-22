@@ -67,7 +67,12 @@ MenuItem {
     // bar's); a text with a tab carries its own.
     property string shortcutText
     readonly property int tabAt: text.indexOf("\t")
-    readonly property string labelText: tabAt >= 0 ? text.slice(0, tabAt) : text
+    // Always plain: IconLabel has no textFormat and reads text whose first
+    // "<" opens a known tag (or that has "&lt;" before it) as rich text
+    // (Qt::mightBeRichText). A word joiner after each "<" and "&" of "&lt;"
+    // keeps a name from a file (a font catalog's) from being markup.
+    readonly property string labelText: (tabAt >= 0 ? text.slice(0, tabAt) : text)
+        .replace(/</g, "<\u2060").replace(/&lt;/g, "&\u2060lt;")
     readonly property string keysText: (tabAt >= 0 ? text.slice(tabAt + 1) : shortcutText)
         .replace(/(Ctrl|Shift|Alt|Meta|Win|Cmd)-/g, "$1+")
     property string help

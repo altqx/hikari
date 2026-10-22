@@ -3187,6 +3187,14 @@ Nie udało się skopiować %2 czcionek.</translation>
         </translation>
     </message>
     <message>
+        <source>The fonts were added to “%1” but could not be saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>FontCatalogs.txt in the &quot;Config&quot; folder could not be written. Saving is tried again on exit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>From the styles and %1 tags of the open files.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5343,6 +5351,10 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>New name for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

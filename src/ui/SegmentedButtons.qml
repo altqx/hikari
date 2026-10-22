@@ -81,6 +81,7 @@ Rectangle {
                 }
                 contentItem: Label {
                     id: label
+                    textFormat: Text.PlainText // a choice may name a catalog from a file
                     text: choice.text
                     font.bold: choice.checked
                     color: choice.enabled ? Theme.text : Theme.disabled

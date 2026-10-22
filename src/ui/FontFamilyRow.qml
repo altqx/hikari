@@ -27,6 +27,7 @@ ItemDelegate {
             anchors.verticalCenter: parent.verticalCenter
             width: parent.width - (noteLabel.visible ? noteLabel.width + 12 : 0)
             Label {
+                textFormat: Text.PlainText
                 objectName: "fontFamilyName"
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, names.width - (sample.visible ? sample.width + 12 : 0))
@@ -37,6 +38,7 @@ ItemDelegate {
                 color: row.highlighted ? row.palette.highlightedText : row.palette.text
             }
             Label {
+                textFormat: Text.PlainText
                 id: sample
                 objectName: "fontFamilySample"
                 anchors.verticalCenter: parent.verticalCenter
@@ -49,6 +51,7 @@ ItemDelegate {
             }
         }
         Label {
+            textFormat: Text.PlainText
             id: noteLabel
             objectName: "fontFamilyNote"
             visible: row.note.length > 0
