@@ -6714,9 +6714,16 @@ private slots:
         QVERIFY(dialog->property("preview").toMap().value(QStringLiteral("fpsInvalid")).toBool());
         QVERIFY(!accept->property("enabled").toBool());
         QCOMPARE(dialogItem("conversionDialog", "convFpsHint")->property("text").toString(),
-                 QStringLiteral("Enter a frame rate of 1 or more."));
+                 QStringLiteral("Enter a frame rate from 1 to 1000."));
         QCOMPARE(dialogItem("conversionDialog", "conversionProblem")->property("text").toString(),
                  QStringLiteral("Nothing to show until the frame rate is valid."));
+        // Not a number, infinite or past any real rate: the same.
+        for (const char *rate : {"nan", "inf", "-inf", "1001", "1e300"}) {
+            fps->setProperty("text", QString::fromLatin1(rate));
+            QVERIFY(QMetaObject::invokeMethod(fps, "textEdited"));
+            QVERIFY2(dialog->property("preview").toMap().value(QStringLiteral("fpsInvalid")).toBool(), rate);
+            QVERIFY2(!accept->property("enabled").toBool(), rate);
+        }
         fps->setProperty("text", QStringLiteral("25"));
         QVERIFY(QMetaObject::invokeMethod(fps, "textEdited"));
         QVERIFY(accept->property("enabled").toBool());

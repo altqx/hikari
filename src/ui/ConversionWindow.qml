@@ -225,7 +225,7 @@ DialogWindow {
                         id: fpsHint
                         objectName: "convFpsHint"
                         color: dialog.preview.fpsInvalid === true ? Theme.danger : Theme.muted
-                        text: dialog.preview.fpsInvalid === true ? qsTr("Enter a frame rate of 1 or more.")
+                        text: dialog.preview.fpsInvalid === true ? qsTr("Enter a frame rate from 1 to 1000.")
                             : qsTr("MicroDVD counts frames: times become frames at this rate.")
                     }
                 }

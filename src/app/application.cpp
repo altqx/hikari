@@ -58,6 +58,7 @@
 #include <QVariantMap>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdlib>
 #include <QFileInfo>
 
@@ -4818,7 +4819,9 @@ QVariantMap Application::previewConversion(const QString &targetName)
     options.fps = o.value(QStringLiteral("fpsFromVideo")).toBool() && hasVideo && frameMs > 0.f
                       ? 1000.0 / frameMs
                       : o.value(QStringLiteral("fps")).toString().toDouble();
-    if (options.fps < 1)
+    // PU6: not a number ("nan", "inf") or past any real frame rate is
+    // invalid too (legacy refused only a rate under 1).
+    if (!std::isfinite(options.fps) || options.fps < 1 || options.fps > 1000)
         return {{QStringLiteral("ok"), false},
                 {QStringLiteral("fpsInvalid"), true},
                 {QStringLiteral("problem"),

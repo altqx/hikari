@@ -1248,7 +1248,7 @@ to the color selection location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Enter a frame rate of 1 or more.</source>
+        <source>Enter a frame rate from 1 to 1000.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
