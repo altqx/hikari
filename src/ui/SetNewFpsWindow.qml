@@ -12,7 +12,9 @@ import Hikari.Ui
 // frame titled with the command (legacy "Choose new FPS"), opening at
 // legacy's 23.976 and 25; a line under the fields says what the change does,
 // and a field that is no frame rate is said under it with Change FPS off
-// (legacy's "Incorrect FPS" box came after the press).
+// (legacy's "Incorrect FPS" box came after the press). It scales the
+// document it opened for: another editing target meanwhile (from the
+// fullscreen video window the main window stays in use) closes it.
 DialogWindow {
     id: dialog
     objectName: "fpsWindow"
@@ -24,6 +26,8 @@ DialogWindow {
     readonly property var presets: ["23.976", "24", "25", "29.97", "30", "60"]
     readonly property real oldValue: rate(oldFps.editText)
     readonly property real newValue: rate(newFps.editText)
+    // The editing target it opened for (App.editingTargetId).
+    property var openedFor: 0
 
     // A frame rate as App.setNewFps reads it (C locale, above 0), else NaN.
     function rate(text) {
@@ -38,11 +42,21 @@ DialogWindow {
         oldFps.editText = presets[0]
         newFps.currentIndex = 2
         newFps.editText = presets[2]
+        openedFor = app.editingTargetId()
         open()
     }
     function change() {
-        if (dialog.app.setNewFps(oldFps.editText, newFps.editText))
+        if (dialog.app.editingTargetId() !== openedFor)
+            dialog.reject()
+        else if (dialog.app.setNewFps(oldFps.editText, newFps.editText))
             dialog.accept()
+    }
+    Connections {
+        target: dialog.app
+        function onTabsChanged() {
+            if (dialog.visible && dialog.app.editingTargetId() !== dialog.openedFor)
+                dialog.reject()
+        }
     }
 
     GridLayout {

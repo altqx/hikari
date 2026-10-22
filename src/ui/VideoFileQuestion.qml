@@ -23,7 +23,7 @@ HidableQuestion {
     property Connections videoChanges: Connections {
         target: question.video
         function onChanged() {
-            if (question.pending && question.video.path() !== question.askedFor)
+            if (question.pending.length > 0 && question.video.path() !== question.askedFor)
                 question.withdraw()
         }
     }

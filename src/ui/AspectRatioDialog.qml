@@ -40,7 +40,11 @@ Item {
     readonly property DialogWindow compactWindow: windowLoader.item
     visible: false
 
+    // One editor at a time (from the fullscreen video window the main
+    // window stays in use): the open one ends, keeping its ratio, before
+    // the other starts from it.
     function start() {
+        close()
         editedVideo = video ? video.path() : ""
         before = view.aspectRatio()
         sliderValue = Math.max(100000, Math.min(1000000, view.aspectSliderValue()))

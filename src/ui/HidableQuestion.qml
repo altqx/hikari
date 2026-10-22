@@ -8,7 +8,7 @@
 //
 // askWith(options, done): MessageBox.ask's options (the default choice's
 // isDefault offers "Don't ask again"; `from`, the window it opens over) and
-// done(id). withdraw() takes back the question still waiting for its
+// done(id). withdraw() takes back every question still waiting for its
 // answer, as its reject choice: the caller's, when what it asks about
 // changed (a question over the fullscreen video window leaves the main
 // window in use).
@@ -19,8 +19,10 @@ QtObject {
     id: question
     property MessageHost messages: null
     property string questionId: ""
-    // The question waiting for its answer (MessageHost.ask's), or null.
-    property var pending: null
+    // The questions waiting for their answers (MessageHost.ask's): asked
+    // again from the main window while one shows over the fullscreen video
+    // window, there can be two.
+    property var pending: []
 
     function hidden() {
         const settings = messages ? messages.settings : null
@@ -36,18 +38,17 @@ QtObject {
             return
         }
         const asked = messages.ask(Object.assign({}, options, { dontAsk: chosen !== undefined }), (id, again) => {
-            if (question.pending === asked)
-                question.pending = null
+            question.pending = question.pending.filter(q => q !== asked)
             if (again && chosen && id === chosen.id)
                 hide()
             if (done)
                 done(id)
         })
-        pending = asked
+        pending = pending.concat([asked])
     }
     function withdraw() {
-        if (pending)
-            messages.withdraw(pending)
+        for (const asked of pending.slice())
+            messages.withdraw(asked)
     }
     function hide() {
         const settings = messages.settings

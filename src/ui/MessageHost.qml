@@ -51,7 +51,11 @@ QtObject {
         current = question
         if (!box)
             box = boxComponent.createObject(null, { settings: host.settings })
-        box.ask(question.options, (id, again) => {
+        // A window to open over that has closed while the question waited
+        // (the fullscreen video window left): the window with the keyboard.
+        const from = question.options.from
+        const options = from && !from.visible ? Object.assign({}, question.options, { from: null }) : question.options
+        box.ask(options, (id, again) => {
             asking = false
             current = null
             if (question.done)

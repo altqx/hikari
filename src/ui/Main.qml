@@ -6500,7 +6500,7 @@ ApplicationWindow {
         property Connections targetChanges: Connections {
             target: root.app
             function onTabsChanged() {
-                if (shiftQuestion.pending && root.app.editingTargetId() !== shiftQuestion.askedFor)
+                if (shiftQuestion.pending.length > 0 && root.app.editingTargetId() !== shiftQuestion.askedFor)
                     shiftQuestion.withdraw()
             }
         }

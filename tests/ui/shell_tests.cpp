@@ -2716,6 +2716,16 @@ private slots:
         QTest::keyClick(fps, Qt::Key_Escape);
         QTRY_VERIFY(!fps->isVisible());
         QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
+        // Another editing target while it shows (from the fullscreen video
+        // window the main window stays in use): it closes, scaling nothing,
+        // and Change FPS never scales a document it did not open for.
+        QVERIFY(QMetaObject::invokeMethod(root, "openSetNewFps"));
+        QTRY_VERIFY(fps->isVisible());
+        application->addPage();
+        QTRY_VERIFY(!fps->isVisible());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
+        application->selectTab(0);
+        QTRY_COMPARE(application->files().session(*application->workspace().editingTarget()), session);
     }
 
     // NT1 (#302): the toast of the notice whose text contains `text`.
@@ -9879,8 +9889,15 @@ private slots:
         // back and nothing is shifted, there or here.
         QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
         QTRY_VERIFY(confirm->property("visible").toBool());
+        // asked again meanwhile: every one waiting is taken back
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QCOMPARE(named("messages")->property("queue").toList().size(), 1);
         application->addPage();
         QTRY_VERIFY(!confirm->property("visible").toBool());
+        QCOMPARE(named("messages")->property("queue").toList().size(), 0);
+        QTest::qWait(50); // a queued question would show next
+        QVERIFY(!confirm->property("visible").toBool());
+        QCOMPARE(named("shiftQuestion")->property("pending").toList().size(), 0);
         QCOMPARE(session->historySize(), steps + 3);
         QCOMPARE(application->files().session(*application->workspace().editingTarget())->historySize(), 1); // its opening state
         application->selectTab(0);
@@ -25424,6 +25441,29 @@ private slots:
         }
     }
 
+    // PU4: a queued question whose window to open over closed while it
+    // waited (the fullscreen video window left) opens over the window with
+    // the keyboard.
+    void queuedQuestionOpensOverAShownWindow()
+    {
+        auto *messages = named("messages");
+        QQuickWindow gone; // never shown
+        const QVariantList ok{QVariantMap{{QStringLiteral("id"), QStringLiteral("ok")}, {QStringLiteral("text"), QStringLiteral("OK")},
+                                          {QStringLiteral("role"), QStringLiteral("accept")}, {QStringLiteral("isDefault"), true}}};
+        const QVariantMap first{{QStringLiteral("title"), QStringLiteral("First")}, {QStringLiteral("choices"), ok}};
+        const QVariantMap second{{QStringLiteral("title"), QStringLiteral("Second")}, {QStringLiteral("choices"), ok},
+                                 {QStringLiteral("from"), QVariant::fromValue<QObject *>(&gone)}};
+        QVERIFY(QMetaObject::invokeMethod(messages, "ask", Q_ARG(QVariant, first), Q_ARG(QVariant, QVariant())));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(messages, "ask", Q_ARG(QVariant, second), Q_ARG(QVariant, QVariant())));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("ok"))));
+        QTRY_VERIFY(box->isVisible() && box->property("title").toString() == QStringLiteral("Second"));
+        QCOMPARE(box->transientParent(), window);
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("ok"))));
+        QTRY_VERIFY(!box->isVisible());
+    }
+
     void nextFileWalksTheVideosFolder()
     {
         restartWithoutSound();
@@ -26403,6 +26443,23 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(findItem(own->contentItem(), QStringLiteral("aspectRatioWindowOk")), "click"));
         QTRY_VERIFY(!own->isVisible());
         QCOMPARE(tools.videoView().aspectRatio(), 0.5f); // until the next video opens
+        // One editor at a time: the popover opened while the window shows
+        // ends the window's edit, keeping its ratio, and starts from it.
+        QTest::qWait(60);
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(own->isVisible());
+        ownSlider->setProperty("value", 525000);
+        QVERIFY(QMetaObject::invokeMethod(ownSlider, "moved"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "openAtCursor",
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
+        QTRY_VERIFY(!own->isVisible());
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f);
+        slider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f); // the popover's own start
 
         // The volume (VIDEO_VOLUME): Num . / Num 0 step 2 below 1 and above -91.
         auto &player = application->generalPlayer();
