@@ -367,7 +367,7 @@ Dialog {
                 text: qsTr("OK")
                 onClicked: {
                     if (replacement.text.length === 0) {
-                        info.open() // "Enter a name for the new catalog"
+                        window.askForName() // "Enter a name for the new catalog"
                         return
                     }
                     edition.close()
@@ -390,14 +390,14 @@ Dialog {
             catalogField.editText = newName // catalog->SetValue
         }
     }
-    Dialog {
-        id: info
-        title: qsTr("Info")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Ok
-        Label { text: qsTr("Enter a name for the new catalog") }
-        onClosed: edition.open()
+    // NT1 (#302): on PK1's message box, titled with the window's command.
+    function askForName() {
+        messages.ask({ title: qsTr("Manage font catalogs"), text: qsTr("Enter a name for the new catalog"),
+                       severity: "warning" }, () => edition.open())
+    }
+    MessageHost {
+        id: messages
+        objectName: "fontCatalogMessages"
     }
     // ChangeCatalogName's question: Merge (Yes), Delete (No), Cancel.
     Dialog {

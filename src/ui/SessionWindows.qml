@@ -84,30 +84,31 @@ Item {
         onAccepted: {
             windows.rememberPickerFolder("sessions", selectedFile)
             if (windows.app.saveSessionTo(selectedFile) === "readonly")
-                readOnlyNotice.warn(selectedFile)
+                windows.warnReadOnly(selectedFile)
         }
     }
-    // PU1-message-boxes: Save session onto a read-only file (legacy's OK-only
-    // "Warning", whose OK opened the dialog again): Save as… opens it again.
-    LazyMessageBox {
-        id: readOnlyNotice
-        name: "sessionReadOnly"
+    // PU1-message-boxes on NT1's host: Save session onto a read-only file
+    // (legacy's OK-only "Warning", whose OK opened the dialog again): Save
+    // as… opens it again.
+    function warnReadOnly(file) {
+        readOnlyMessages.ask({
+            title: qsTr("Save session"),
+            text: qsTr("“%1” is read-only.").arg(windows.app.localPath(file).replace(/^.*[\\/]/, "")),
+            detail: qsTr("Save the session under another name, or make the file writable and save again."),
+            severity: "warning",
+            choices: [
+                { id: "saveAs", text: qsTr("Save as…"), role: "accept", isDefault: true },
+                { id: "cancel", text: qsTr("Cancel"), role: "reject" }
+            ]
+        }, id => {
+            if (id === "saveAs")
+                windows.openPicker(saveDialog)
+        })
+    }
+    MessageHost {
+        id: readOnlyMessages
+        objectName: "sessionMessages"
         settings: windows.app.settings
-        function warn(file) {
-            ask({
-                title: qsTr("Save session"),
-                text: qsTr("“%1” is read-only.").arg(windows.app.localPath(file).replace(/^.*[\\/]/, "")),
-                detail: qsTr("Save the session under another name, or make the file writable and save again."),
-                severity: "warning",
-                choices: [
-                    { id: "saveAs", text: qsTr("Save as…"), role: "accept", isDefault: true },
-                    { id: "cancel", text: qsTr("Cancel"), role: "reject" }
-                ]
-            }, id => {
-                if (id === "saveAs")
-                    windows.openPicker(saveDialog)
-            })
-        }
     }
 
     // PU1-session-entries-bar: the entries a restore could not resolve stay

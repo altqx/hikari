@@ -17,6 +17,9 @@ Dialog {
     header: IconDialogHeader { objectName: "selectLinesDialogTitle"; iconRole: "select-lines"; text: dialog.title }
     modal: false
     property var recent: []
+    // NT1 (#302): the result ("%1 lines selected.") is an info toast and the
+    // window stays open (legacy's box offered Close, which closed it too).
+    property ToastStack notices: null
 
     function openDialog() {
         const s = app.openSelectLines()
@@ -45,10 +48,11 @@ Dialog {
     }
     function run(allTabs) {
         const text = findText.editText
-        result.text = app.selectLines(settings(), allTabs)
+        const message = app.selectLines(settings(), allTabs)
         recent = app.selectLinesSettings().recent
         findText.editText = text
-        result.open()
+        if (notices && message.length > 0)
+            notices.post("info", qsTr("Select lines"), message)
     }
     onClosed: app.saveSelectLinesSettings(settings())
 
@@ -149,22 +153,6 @@ Dialog {
             Button { objectName: "selectRunAllTabs"; text: qsTr("Select in all tabs"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole; onClicked: dialog.run(true) }
             Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole; onClicked: dialog.close() }
         }
-    }
-
-    // The count after a run: "Close" also closes the Select dialog, "OK" (legacy's "Ok", its No button) keeps it.
-    Dialog {
-        id: result
-        objectName: "selectResult"
-        property alias text: resultLabel.text
-        title: qsTr("Select")
-        modal: true
-        anchors.centerIn: parent
-        Label { id: resultLabel; objectName: "selectResultText" }
-        footer: DialogButtonBox {
-            Button { text: qsTr("Close"); DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole }
-            Button { text: qsTr("OK"); DialogButtonBox.buttonRole: DialogButtonBox.RejectRole }
-        }
-        onAccepted: dialog.close()
     }
 
     // Legacy Stylelistbox "Choose styles", now PK1's Choose styles popover:

@@ -6,18 +6,14 @@
 # one comes in, and on a line that matches none, so the list shrinks as
 # the PU cards take them off.
 AllTagsEditionDialog.qml:dialog
-AllTagsEditionDialog.qml:messageBox
 AllTagsEditionDialog.qml:questionBox
 AspectRatioDialog.qml:dialog
-AutomationNotices.qml:notice
 DummyVideoDialog.qml:dialog
 FontCatalogWindow.qml:window
 FontCatalogWindow.qml:edition
-FontCatalogWindow.qml:info
 FontCatalogWindow.qml:clash
 FontCatalogWindow.qml:deleteQuestion
 FontCollectorDialog.qml:dialog
-FontCollectorDialog.qml:message
 FontCollectorDialog.qml:replaceQuestion
 FontDialog.qml:dialog
 FontsFromSubtitlesDialog.qml:dialog
@@ -25,9 +21,6 @@ Main.qml:shiftConfirm
 Main.qml:conversionDialog
 Main.qml:resampleDialog
 Main.qml:mismatchDialog
-Main.qml:spellingNotice
-Main.qml:playerNotice
-Main.qml:cleanStylesMessage
 ManageLayoutsDialog.qml:dialog
 MisspellReplacerDialog.qml:dialog
 MisspellReplacerDialog.qml:results
@@ -35,20 +28,15 @@ SaveLayoutDialog.qml:dialog
 ScriptPropertiesDialog.qml:dialog
 SearchTool.qml:question
 SelectLinesDialog.qml:dialog
-SelectLinesDialog.qml:result
 SettingsDialog.qml:dialog
-SettingsDialog.qml:warningDialog
 SettingsImportDialog.qml:dialog
 SettingsImportDialog.qml:rollbackQuestion
 ShapesEditionDialog.qml:dialog
-ShapesEditionDialog.qml:messageBox
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
 SpellCheckerDialog.qml:dialog
-SpellCheckerDialog.qml:message
 SpellCheckerDialog.qml:addedWords
 StyleManager.qml:createQuestion
-StyleManager.qml:message
 StyleManager.qml:multiQuestion
 StyleManager.qml:renameQuestion
 StyleManager.qml:newCatalog
@@ -56,4 +44,3 @@ StyleManager.qml:deleteCatalogQuestion
 TranslationModeOffConfirm.qml:dialog
 TranslationModeQuestion.qml:dialog
 VideoFileQuestion.qml:dialog
-VisualToolDialogs.qml:noticeBox

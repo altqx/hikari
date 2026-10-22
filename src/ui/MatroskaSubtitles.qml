@@ -122,8 +122,11 @@ Item {
 
     Connections {
         target: flow.matroska
-        // PU1-mkv-notices: an OK-only notice, a toast.
-        function onNoTracks() { flow.notify("info", qsTr("The file does not contain any subtitle tracks."), "") }
+        // PU1-mkv-notices, NT1: an info toast.
+        function onNoTracks() {
+            flow.notify("info", qsTr("Load subtitles from an MKV/OGM file"),
+                        qsTr("The file does not contain any subtitle tracks."))
+        }
         function onChooseTrack(labels) { trackChooser.ask(labels) }
     }
 }
