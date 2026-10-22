@@ -18,8 +18,6 @@ Item {
     id: search
     objectName: "searchTool"
     required property var app
-    // PU2: where an OK-only message goes (Main.qml's notify: a toast).
-    property var notify: null
     readonly property alias question: question
     property int tab: 0
     property var finds: []
@@ -156,14 +154,9 @@ Item {
             search.showResults = false
         }
         function onFindResultsChanged() { search.refreshResults() }
-        function onFindQuestion(id, kind, shown) {
-            if (kind === 0) {
-                if (search.notify)
-                    search.notify(shown.severity, shown.text, shown.detail)
-            } else {
-                question.push(id, kind, shown)
-            }
-        }
+        // A message is an NT1 notice (Application's ask); the questions
+        // are PK1 message boxes, one at a time.
+        function onFindQuestion(id, kind, shown) { question.push(id, kind, shown) }
     }
 
     RowLayout {

@@ -615,7 +615,7 @@ QVariantList StyleManagerController::moveStyles(bool store, const QVariantList &
     return listOf(moved);
 }
 
-QString StyleManagerController::cleanStyles()
+QVariantMap StyleManagerController::cleanStyles()
 {
     auto *session = m_hooks.target ? m_hooks.target() : nullptr;
     if (!session)
@@ -635,7 +635,18 @@ QString StyleManagerController::cleanStyles()
         used = QCoreApplication::translate("HikariSub.Styles", "None");
     if (deleted.isEmpty())
         deleted = QCoreApplication::translate("HikariSub.Styles", "None");
-    return QCoreApplication::translate("HikariSub.Styles", "Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted);
+    // NT1: a toast says how many went and which; legacy's two lists are its
+    // Details.
+    QStringList names;
+    for (const auto &n : result->deleted)
+        names << qs(n);
+    const QString text =
+        names.isEmpty() ? QCoreApplication::translate("HikariSub.Styles", "No unused styles.")
+                        : QCoreApplication::translate("HikariSub.Styles", "%n style(s) deleted: %1.", nullptr, int(names.size()))
+                              .arg(names.join(QStringLiteral(", ")));
+    return {{QStringLiteral("text"), text},
+            {QStringLiteral("details"),
+             QCoreApplication::translate("HikariSub.Styles", "Styles used:\n%1\nStyles deleted:\n%2").arg(used, deleted).trimmed()}};
 }
 
 void StyleManagerController::renderPreview(const QVariantMap &values, int width, int height, const QString &text)

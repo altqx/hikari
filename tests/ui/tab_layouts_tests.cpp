@@ -378,13 +378,13 @@ private slots:
         QVERIFY(application->openFile(writeSubtitles(dir.filePath(QStringLiteral("c.ass")))));
         float_("audioDock", true);
         // The arrangement shown: the panels it leaves closed (AM1's
-        // Automation, PU2's Fix minor errors and, outside Translation mode,
-        // TM1's Original text among them), not every panel.
+        // Automation, NT1's Log, PU2's Fix minor errors and, outside
+        // Translation mode, TM1's Original text among them), not every panel.
         int closedShown = 0;
         for (const char *dock : {"videoDock", "audioDock", "editorDock", "gridDock", "referenceDock", "timingDock",
-                                 "searchDock", "automationDock", "originalDock", "misspellDock"})
+                                 "searchDock", "automationDock", "originalDock", "logDock", "misspellDock"})
             closedShown += isOpen(dock) ? 0 : 1;
-        QVERIFY(closedShown < 10);
+        QVERIFY(closedShown < 11);
         window()->close();
         QTRY_VERIFY(!window()->isVisible());
         const auto session = readSession(application->lastSessionPath());

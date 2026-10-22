@@ -15,8 +15,9 @@ DialogWindow {
     id: dialog
     objectName: "selectLinesDialog"
     required property var app
-    // Where the count goes (Main.qml's notify: a toast).
-    property var notify: null
+    // NT1 (#302): where the count goes ("%1 lines selected.", an info
+    // toast titled with the command).
+    property ToastStack notices: null
     dialogId: "selectLines"
     title: qsTr("Select lines") // the menu command's name (legacy titled it "Select")
     defaultButton: runButton
@@ -48,11 +49,11 @@ DialogWindow {
     }
     function run(allTabs) {
         const text = findText.editText
-        const count = app.selectLines(settings(), allTabs)
+        const message = app.selectLines(settings(), allTabs)
         recent = app.selectLinesSettings().recent
         findText.editText = text
-        if (notify)
-            notify("info", count, "")
+        if (notices && message.length > 0)
+            notices.post("info", qsTr("Select lines"), message)
     }
     onVisibleChanged: if (!visible) app.saveSelectLinesSettings(settings())
 

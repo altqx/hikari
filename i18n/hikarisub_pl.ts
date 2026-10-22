@@ -701,7 +701,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Info</source>
-        <translation>Informacja</translation>
+        <translation type="vanished">Informacja</translation>
     </message>
     <message>
         <source>This subtitle file does not have any scripts added</source>
@@ -709,7 +709,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Error</source>
-        <translation>Błąd</translation>
+        <translation type="vanished">Błąd</translation>
     </message>
     <message>
         <source>Error loading Lua script: %1
@@ -719,7 +719,7 @@ Output device: %2</source>
     </message>
     <message>
         <source>Automation error</source>
-        <translation>Błąd automatyzacji</translation>
+        <translation type="vanished">Błąd automatyzacji</translation>
     </message>
     <message>
         <source>Cannot start editor.</source>
@@ -1308,6 +1308,14 @@ in tag &apos;%3&apos;</source>
         <translation type="unfinished">W linii %1 nie można przeskalować wartości &apos;%2&apos;
 w tagu &apos;%3&apos;</translation>
     </message>
+    <message numerus="yes">
+        <source>%n value(s) could not be scaled.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
     <message>
         <source>This document can&apos;t be converted to that format.</source>
         <translation type="unfinished"></translation>
@@ -1421,7 +1429,7 @@ w tagu &apos;%3&apos;</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Uwaga</translation>
+        <translation type="vanished">Uwaga</translation>
     </message>
     <message>
         <source>Chosen file is read only,
@@ -1591,6 +1599,10 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     </message>
     <message>
         <source>Could not open %1; nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reload subtitles</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1843,6 +1855,10 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     <message>
         <source>&amp;Add word &quot;%1&quot; to dictionary</source>
         <translation type="unfinished">&amp;Dodaj słowo &quot;%1&quot; do słownika</translation>
+    </message>
+    <message>
+        <source>Add word to dictionary</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Error. Word &quot;%1&quot; was not added.</source>
@@ -2321,7 +2337,7 @@ Nie powinny przekraczać 15 znaków na sekundę</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation>Informacja</translation>
+        <translation type="vanished">Informacja</translation>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
@@ -3811,7 +3827,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Show / Hide log window</source>
-        <translation>Pokaż / Ukryj okno logów</translation>
+        <translation type="vanished">Pokaż / Ukryj okno logów</translation>
     </message>
     <message>
         <source>Last session</source>
@@ -4426,6 +4442,10 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation>Otwiera audio z wideo</translation>
     </message>
     <message>
+        <source>Install update</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Opens blank audio 2 hour and 30 minutes long</source>
         <translation type="vanished">Otwiera puste audio na 2:30 godziny</translation>
     </message>
@@ -4487,7 +4507,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Log window</source>
-        <translation>Okno Logów</translation>
+        <translation type="vanished">Okno Logów</translation>
     </message>
     <message>
         <source>Log</source>
@@ -4507,7 +4527,7 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Update</source>
-        <translation>Aktualizacja</translation>
+        <translation type="vanished">Aktualizacja</translation>
     </message>
     <message>
         <source>A new version is available</source>
@@ -5037,6 +5057,42 @@ great help testing HikariSub on a slow computer)
         <source>Today</source>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Information</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Warnings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">Filtruj</translation>
+    </message>
+    <message>
+        <source>Filter the Log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
+    </message>
+    <message>
+        <source>Copy the entries shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No entries match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing logged yet</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.Matroska</name>
@@ -5337,6 +5393,10 @@ gdy okno wyników szukania jest otwarte</translation>
     <message>
         <source>Set default</source>
         <translation>Ustaw domyślne</translation>
+    </message>
+    <message>
+        <source>Settings</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>OK</source>
@@ -5976,7 +6036,7 @@ całkowicie usuwanie plików audio cache.</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Uwaga</translation>
+        <translation type="vanished">Uwaga</translation>
     </message>
     <message>
         <source>Red</source>
@@ -6494,6 +6554,10 @@ W razie pomyłki kopie zapasowe są w folderze &apos;ReplaceBackup&apos;</transl
         <translation>Ścieżka szukania jest nieprawidłowa</translation>
     </message>
     <message>
+        <source>Find in files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Confirmation</source>
         <translation>Potwierdzenie</translation>
     </message>
@@ -6669,10 +6733,6 @@ bo została zedytowana.</translation>
     <message>
         <source>Close</source>
         <translation>Zamknij</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -6861,13 +6921,25 @@ wczytać poprzednią sesję wraz z najnowszymi napisami z autozapisu?</translati
     </message>
     <message>
         <source>Warning</source>
-        <translation>Uwaga</translation>
+        <translation type="vanished">Uwaga</translation>
+    </message>
+    <message>
+        <source>Save session</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Chosen file is read only,
 please save with different name or change file attribute.</source>
         <translation>Wybrany plik jest tylko do odczytu,
 proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
+    </message>
+    <message>
+        <source>Save as…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Anuluj</translation>
     </message>
     <message>
         <source>Session entries not restored</source>
@@ -6936,6 +7008,10 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     <message>
         <source>Session file is corrupt</source>
         <translation>Nieprawidłowy plik sesji</translation>
+    </message>
+    <message>
+        <source>Restore session</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Could not find %1</source>
@@ -7193,7 +7269,7 @@ wielką literą</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Uwaga</translation>
+        <translation type="vanished">Uwaga</translation>
     </message>
     <message>
         <source>Words added to dictionary</source>
@@ -7272,7 +7348,7 @@ Spell checking will be disabled</source>
     <name>HikariSub.Styles</name>
     <message>
         <source>Status of deleted styles</source>
-        <translation>Status usuniętych stylów</translation>
+        <translation type="vanished">Status usuniętych stylów</translation>
     </message>
     <message>
         <source>Style manager</source>
@@ -7304,6 +7380,10 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Missing style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New style</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7385,6 +7465,10 @@ Spell checking will be disabled</source>
             <numerusform></numerusform>
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>Save style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Prompt</source>
@@ -7783,6 +7867,18 @@ Spell checking will be disabled</source>
         <translation>Brak</translation>
     </message>
     <message>
+        <source>No unused styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n style(s) deleted: %1.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
         <source>Styles used:
 %1
 Styles deleted:
@@ -7791,6 +7887,10 @@ Styles deleted:
 %1
 Usunięte style:
 %2</translation>
+    </message>
+    <message>
+        <source>Delete unused styles</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -8661,6 +8761,10 @@ Foreign language text will be deleted.</source>
 Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
+        <source>Paste translation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Could not open %1; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -8873,7 +8977,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Uwaga</translation>
+        <translation type="vanished">Uwaga</translation>
     </message>
     <message>
         <source>All files (*)</source>
@@ -9516,7 +9620,7 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Warning</source>
-        <translation>Uwaga</translation>
+        <translation type="vanished">Uwaga</translation>
     </message>
     <message>
         <source>%1 (not available yet)</source>

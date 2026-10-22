@@ -29,12 +29,12 @@ Dialog {
     property bool pendingOk: false
     property bool fromList: false
 
+    // NT1: an error is the application's message box, titled with this
+    // dialog (legacy's untranslated "Error").
     function show(message) {
         if (!message || !message.text)
             return false
-        messageBox.title = message.title
-        messageText.text = message.text
-        messageBox.open()
+        messages.ask({ title: dialog.title, text: message.text, severity: "error" })
         return true
     }
     function saved(result, ok) {
@@ -219,20 +219,10 @@ Dialog {
         }
     }
 
-    // HikariMessageBox with OK (the errors).
-    Dialog {
-        id: messageBox
-        objectName: "shapesMessage"
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        modal: true
-        standardButtons: Dialog.Ok
-        Label {
-            id: messageText
-            objectName: "shapesMessageText"
-            Accessible.role: Accessible.AlertMessage
-            Accessible.name: text
-        }
+    // HikariMessageBox with OK (the errors), NT1 on the kit's message box.
+    MessageHost {
+        id: messages
+        objectName: "shapesMessages"
     }
     // HikariMessageBox with Yes and No: a list change's "Save changes to
     // shape ...?" and Restore default's "Are you sure ...?".

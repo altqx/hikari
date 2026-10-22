@@ -728,13 +728,21 @@ private slots:
         } else if (change == QStringLiteral("dock")) {
             docks.append(docks.first());
         } else if (change == QStringLiteral("placeholders")) {
-            QJsonObject dock = docks.first().toObject();
+            // The first panel that has a place (NT1's Log has none until it
+            // first opens).
+            qsizetype at = 0;
+            const auto placesOf = [&](qsizetype i) {
+                return docks.at(i).toObject().value(QStringLiteral("lastPosition")).toObject().value(QStringLiteral("placeholders")).toArray();
+            };
+            while (at < docks.size() && placesOf(at).isEmpty())
+                ++at;
+            QVERIFY(at < docks.size());
+            QJsonObject dock = docks.at(at).toObject();
             QJsonObject last = dock.value(QStringLiteral("lastPosition")).toObject();
             const QJsonArray placeholders = last.value(QStringLiteral("placeholders")).toArray();
-            QVERIFY(!placeholders.isEmpty());
             last.insert(QStringLiteral("placeholders"), many(placeholders.first(), 2000));
             dock.insert(QStringLiteral("lastPosition"), last);
-            docks.replace(0, dock);
+            docks.replace(at, dock);
         } else {
             payload.insert(QStringLiteral("closedDockWidgets"), many(QStringLiteral("Video"), 2));
         }
