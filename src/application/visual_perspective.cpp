@@ -742,13 +742,14 @@ bool animatesTheQuad(const Tag &tag)
     return false;
 }
 
-// What one read may measure through the font, on the UI thread: the Line
-// and every Line it stacks on draw from it. libass shows any number of
-// rows, but a box of more than these is no sign the tool places, and a
-// hostile script (a comment of \N, or many Lines shown at once) gets no
-// quad rather than unbounded work.
+// What one read may measure on the UI thread: the Line and every Line it
+// stacks on draw from it, rows and characters through the font and the
+// code of drawings point by point. libass shows any number of rows and
+// points, but a box of more than these is no sign the tool places, and a
+// hostile script (a comment of \N, a drawing of megabytes, or many Lines
+// shown at once) gets no quad rather than unbounded work.
 struct MeasureBudget {
-    std::size_t rows = 64, shown = 4096;
+    std::size_t rows = 64, shown = 4096, drawn = 256 * 1024;
 };
 
 // `edited`: the Line the tool writes, whose outline and shadow are scaled
@@ -765,6 +766,9 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
         if (lead.more)
             return std::nullopt;
         // A drawing's points at its \p scale.
+        if (lead.drawing.size() > budget.drawn)
+            return std::nullopt;
+        budget.drawn -= lead.drawing.size();
         const double k = std::ldexp(1., 1 - lead.p);
         double minx = 0, miny = 0, maxx = 0, maxy = 0;
         bool any = false;
@@ -941,6 +945,14 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     }
     budget.rows -= lines.size();
     budget.shown -= shown;
+    // libass drops the spaces at either end of a row (trim_whitespace: a
+    // tab and a soft \n are spaces by then, \h is not one), so a row of
+    // them shows nothing and a Line of them no rectangle.
+    for (u16 &piece : lines) {
+        const std::size_t first = piece.find_first_not_of(u' ');
+        piece.erase(0, first == u16::npos ? piece.size() : first);
+        piece.erase(piece.find_last_not_of(u' ') + 1);
+    }
     double width = 0, height = 0;
     for (const u16 &piece : lines) {
         const std::u8string utf8 = core::toUtf8(piece.empty() ? u16(u" ") : piece);
@@ -1038,8 +1050,8 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
     };
     const int band = static_cast<int>(t.an / 3.1f);
     const auto mine = rect(line, styles.line(line.style), t, box);
-    // Past this many Lines in its band the stack is off the frame; the
-    // bound keeps a script of many simultaneous Lines from stalling a read.
+    // Past this many obstacles in its band the stack is off the frame (the
+    // work of reading them is the budget's).
     constexpr int kMaxMeasured = 256;
     int measured = 0;
     double offset = 0;
@@ -1054,8 +1066,6 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
         const LineState other = readTagsIn(host, styles, *dial);
         if (!other.stacks || static_cast<int>(other.transform.an / 3.1f) != band)
             continue;
-        if (++measured > kMaxMeasured)
-            break;
         const u16 text = transform::lineText(*dial);
         const core::StyleValues style = styles.line(dial->style);
         const auto otherBox = measureBox(host, styles, *dial, text, style, leadingOf(text), false, budget);
@@ -1066,6 +1076,8 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
         const auto r = rect(*dial, style, other.transform, *otherBox);
         if (r[2] <= r[0] || r[3] <= r[1])
             continue; // no area: libass does not move others for it
+        if (++measured > kMaxMeasured)
+            break;
         if (r[2] > mine[0] && r[0] < mine[2] && r[3] > mine[1] && r[1] < mine[3]) {
             const double h = r[3] - r[1];
             offset += band == 2 ? h : band == 1 ? h / 2 : -h;
@@ -1568,11 +1580,18 @@ void PerspectiveTool::follow(const VisualHost &host) const
     const auto state = readLine(host, *ctx.active, m_styles);
     const Quad inner = state ? textToQuad(state->transform, state->box, m_screenZ) : Quad{};
     if (!state || !convex(inner)) {
+        if (m_plane && m_valid)
+            m_planes[*m_line] = outer(); // where it was, for when it is read again
         m_valid = false;
         return;
     }
-    // A plane shown stays where it is matched to the shot.
-    const std::optional<Quad> plane = m_plane && m_valid ? std::optional<Quad>(outer()) : std::nullopt;
+    // A plane shown stays where it is matched to the shot, and one dropped
+    // with its quad comes back where it was.
+    std::optional<Quad> plane;
+    if (m_plane && m_valid)
+        plane = outer();
+    else if (const auto saved = m_planes.find(*m_line); m_plane && saved != m_planes.end())
+        plane = saved->second;
     m_state = *state;
     m_inner = inner;
     m_valid = true;
@@ -1727,6 +1746,11 @@ bool PerspectiveTool::scalesEveryOutline(const Transform &t, VisualHost &host) c
     return true;
 }
 
+bool PerspectiveTool::planeOnly(int corner) const
+{
+    return m_plane && m_lock && corner >= 4;
+}
+
 bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, VisualHost &host)
 {
     const bool isOuter = corner >= 4;
@@ -1773,7 +1797,13 @@ bool PerspectiveTool::applyCorner(int corner, PointF to, bool fromCentre, Visual
         }
         c1 = {-d1.x / (d2.x - d1.x), -d1.y / (d2.y - d1.y)};
         c2 = {(1 - d1.x) / (d2.x - d1.x), (1 - d1.y) / (d2.y - d1.y)};
-        inner = m_startInner;
+        // No Line changes (planeOnly): the transform is not rewritten.
+        if (!(c1.x < c2.x && c1.y < c2.y) || !std::isfinite(c1.x) || !std::isfinite(c1.y) ||
+            !std::isfinite(c2.x) || !std::isfinite(c2.y) || !planeHolds(m_inner, c1, c2))
+            return false;
+        m_c1 = c1;
+        m_c2 = c2;
+        return true;
     } else if (m_plane && isOuter) {
         // The outer quad is the plane: the inner one follows it.
         inner = subQuad(changed, c1, c2);
@@ -1942,7 +1972,7 @@ void PerspectiveTool::pointer(const Pointer &event, VisualHost &host)
         m_selected = m_corner;
         m_drag = useOuter ? Drag::Outer : Drag::Inner;
         m_press = q[static_cast<std::size_t>(best)];
-        if (applyCorner(m_corner, at, false, host))
+        if (applyCorner(m_corner, at, false, host) && !planeOnly(m_corner))
             stageAll(host);
         // Its release commits; no drag follows.
         m_drag = Drag::None;
@@ -1961,7 +1991,7 @@ void PerspectiveTool::pointer(const Pointer &event, VisualHost &host)
             PointF to = add(q[static_cast<std::size_t>(m_corner % 4)], delta);
             if (event.control)
                 to = snap(to, m_corner);
-            changed = applyCorner(m_corner, to, event.alt, host);
+            changed = applyCorner(m_corner, to, event.alt, host) && !planeOnly(m_corner);
             break;
         }
         case Drag::Org: {
@@ -2040,7 +2070,8 @@ bool PerspectiveTool::key(const Key &event, VisualHost &host)
     bool moved = false;
     if (m_selected >= 0) {
         const Quad q = startQuad(m_selected >= 4);
-        moved = applyCorner(m_selected, add(q[static_cast<std::size_t>(m_selected % 4)], delta), false, host);
+        moved = applyCorner(m_selected, add(q[static_cast<std::size_t>(m_selected % 4)], delta), false, host) &&
+                !planeOnly(m_selected);
     } else {
         m_drag = Drag::Plane;
         moved = move(delta, host);

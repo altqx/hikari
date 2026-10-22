@@ -700,6 +700,24 @@ TEST(PerspectiveTags, AStackIsMeasuredInOneBudget)
     EXPECT_LE(calls, 64);
 }
 
+TEST(PerspectiveTags, AHostileDrawingIsMeasuredBoundedly)
+{
+    // A drawing's points are read one by one: past 256 Ki code units of
+    // drawing in one read, no quad and no points read.
+    const auto drawing = [](int steps) {
+        std::string d = "{\\pos(320,200)\\p1}m 0 0 l 100 0 100 50 0 50";
+        for (int i = 0; i < steps; ++i)
+            d += " l 10 10";
+        return d;
+    };
+    Host host({drawing(30000), drawing(40000)});
+    EXPECT_TRUE(readLine(host, lineWith(host, 0)));
+    const auto started = std::chrono::steady_clock::now();
+    EXPECT_FALSE(readLine(host, lineWith(host, 1)));
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count(),
+              100);
+}
+
 TEST(PerspectiveTags, TheWrapTakesTheLinesOwnStyleMargins)
 {
     // libass keeps the Line's Style's margins after a \r: Default's leave
@@ -869,6 +887,20 @@ TEST(PerspectiveTags, ATabIsMeasuredAsASpace)
     Host host({"{\\pos(320,200)}A\tB"});
     ASSERT_TRUE(readLine(host, lineWith(host)));
     EXPECT_EQ(host.measure.lastText, "A B");
+}
+
+TEST(PerspectiveTags, ARowsEndSpacesAreDroppedAsLibassDropsThem)
+{
+    // trim_whitespace: the spaces (a tab, a soft \n) at either end of a row
+    // show nothing; \h is no space.
+    Host host(apart({"{\\pos(320,200)} \tA B\\n", "{\\pos(320,200)}\\hA ", "{\\pos(320,200)}A \\N B"}),
+              "WrapStyle: 0");
+    ASSERT_TRUE(readLine(host, lineWith(host, 0)));
+    EXPECT_EQ(host.measure.lastText, "A B");
+    ASSERT_TRUE(readLine(host, lineWith(host, 1)));
+    EXPECT_EQ(host.measure.lastText, " A");
+    ASSERT_TRUE(readLine(host, lineWith(host, 2)));
+    EXPECT_EQ(host.measure.lastText, "B");
 }
 
 TEST(PerspectiveTags, AWrittenPositionStaysAheadOfAMove)
@@ -1505,10 +1537,31 @@ TEST(PerspectiveTool, TheStackIsLibassCollisions)
     EXPECT_NEAR(second("First", "{\\t(\\c&HFF&)}Second").value_or(0), nominal, 0.05);
     // Nothing shown is no obstacle.
     EXPECT_NEAR(second("{\\c&HFF&}").value_or(0), nominal, 0.05);
+    // Nor are spaces (libass drops them), but \\h is shown.
+    EXPECT_NEAR(second(" \t ").value_or(0), nominal, 0.05);
+    EXPECT_NEAR(second("\\h").value_or(0), plain, 0.05);
     // An obstacle that cannot be measured: where the Line goes is not known.
     EXPECT_FALSE(second("A{\\fs80}B"));
     // A scrolling Line moves with the time: no quad.
     EXPECT_FALSE(second("First", at + "Banner;10,Second"));
+}
+
+TEST(PerspectiveTool, OnlyObstaclesCountTowardsTheStacksBound)
+{
+    // Lines with no area are skipped before the bound is counted: the
+    // obstacle after many of them still moves the Line.
+    const auto second = [](int empties) {
+        std::vector<std::string> texts(empties, "{\\p1\\bord0}m 0 0 l 0 10");
+        texts.push_back("First");
+        texts.push_back("Second");
+        Fixture f(texts);
+        const core::LineId mine = f.host.line(texts.size() - 1);
+        f.host.s->setSelection({mine, {mine}, mine, std::nullopt});
+        f.host.targets = {mine};
+        f.tool.reset(f.host);
+        return f.tool.inner()[2].y;
+    };
+    EXPECT_NEAR(second(300), second(0), 0.05);
 }
 
 TEST(PerspectiveTool, ACommentIsNoObstacle)
@@ -1544,6 +1597,47 @@ TEST(PerspectiveTool, AQuadTheTimeCannotReadIsDropped)
     (void)f.tool.overlay(f.host);
     EXPECT_TRUE(f.tool.hasQuad());
     expectQuadNear(f.tool.inner(), before, 0.05);
+}
+
+TEST(PerspectiveTool, ADroppedPlaneComesBackWhereItWas)
+{
+    // Unreadable from 2 s, then stacked on an obstacle shown since: the
+    // plane comes back matched to the shot, the inner quad moved in it.
+    Fixture f({"Dialogue: 0,0:00:02.00,0:00:02.50,Default,,0,0,0,,A{\\fs80}B",
+               "Dialogue: 0,0:00:02.00,0:00:03.00,Default,,0,0,0,,First", "Second"});
+    f.host.s->setSelection({f.host.line(2), {f.host.line(2)}, f.host.line(2), std::nullopt});
+    f.host.targets = {f.host.line(2)};
+    f.tool.reset(f.host);
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    ASSERT_TRUE(f.tool.setOption("lockOuter", 1, f.host));
+    const PointF corner = f.tool.outer()[0];
+    f.drag(corner, {corner.x - 20, corner.y - 100}); // room above the text
+    const Quad plane = f.tool.outer();
+    const float bottom = f.tool.inner()[2].y;
+    f.host.time = 2200;
+    (void)f.tool.overlay(f.host);
+    ASSERT_FALSE(f.tool.hasQuad());
+    f.host.time = 2700;
+    (void)f.tool.overlay(f.host);
+    ASSERT_TRUE(f.tool.hasQuad());
+    ASSERT_LT(f.tool.inner()[2].y, bottom - 1);
+    expectQuadNear(f.tool.outer(), plane, 0.1);
+}
+
+TEST(PerspectiveTool, ALockedResizeWritesNoTags)
+{
+    // The Line was never written by the tool: resizing the locked outer
+    // quad leaves its text as it was, and records nothing.
+    Fixture f;
+    ASSERT_TRUE(f.tool.setOption("plane", 1, f.host));
+    ASSERT_TRUE(f.tool.setOption("lockOuter", 1, f.host));
+    const std::string text = f.host.text();
+    const std::size_t steps = f.steps();
+    const PointF corner = f.tool.outer()[2];
+    f.drag(corner, {corner.x + 30, corner.y + 20});
+    EXPECT_LT(dist(f.tool.outer()[2], {corner.x + 30, corner.y + 20}), 0.1);
+    EXPECT_EQ(f.host.text(), text);
+    EXPECT_EQ(f.steps(), steps);
 }
 
 TEST(PerspectiveTool, ARescaleIsRefusedWhileATargetChangesItsOutlineAfterItsText)

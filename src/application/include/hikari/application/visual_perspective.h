@@ -183,6 +183,8 @@ private:
     bool applyCorner(int corner, PointF to, bool fromCentre, VisualHost &host);
     // `explicitOrg`: the \org was given (typed or dragged), so a \move
     // Line takes it as it is.
+    // A locked outer quad's corner: it resizes the plane and changes no Line.
+    bool planeOnly(int corner) const;
     bool applyInner(const perspective::Quad &inner, VisualHost &host, bool explicitOrg = false);
     // libass turns a \move Line without an \org about its moving position,
     // which a fixed \org cannot hold: whether `t` keeps that for the
@@ -221,7 +223,7 @@ private:
     std::uint64_t m_session = 0; // EditSession::serial of m_line and m_planes
     mutable perspective::StyleCache m_styles;
     // The outer quads of the session (VT3: kept per Line in memory, not saved).
-    std::map<core::LineId, perspective::Quad> m_planes;
+    mutable std::map<core::LineId, perspective::Quad> m_planes;
 
     // The drag (script coordinates).
     Drag m_drag = Drag::None;
