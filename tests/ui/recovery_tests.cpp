@@ -6,6 +6,7 @@
 // and a written save remove the work; a running session's work is not offered.
 
 #include "hikari/app/application.h"
+#include "docking.h"
 
 #include <QCoreApplication>
 #include <QDirIterator>
@@ -13,6 +14,9 @@
 #include <QFile>
 #include <QGuiApplication>
 #include <QProcess>
+#include <QQmlApplicationEngine>
+#include <QQuickItem>
+#include <QQuickWindow>
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QtQml/qqmlextensionplugin.h>
@@ -104,6 +108,51 @@ class RecoveryTests : public QObject {
         // Each test its own directory: a session that ends without quitting leaves work.
         o.recoveryDir = dir.filePath(QStringLiteral("Recovery-") + QLatin1String(QTest::currentTestFunction()));
         return o;
+    }
+    // A crashed session's autosave in this test's directory.
+    void crashLeavesWork(const QString &path)
+    {
+        QProcess child;
+        child.start(QCoreApplication::applicationFilePath(), {QStringLiteral("--crash-child"), options().recoveryDir, path});
+        QVERIFY(child.waitForFinished(60'000));
+        QCOMPARE(child.exitCode(), 0);
+    }
+    // The main window for `a`, its own settings file.
+    app::Application::Options uiOptions()
+    {
+        app::Application::Options o = options();
+        o.settingsFile = dir.filePath(QStringLiteral("ui-") + QLatin1String(QTest::currentTestFunction()) + QStringLiteral(".ini"));
+        o.playbackAudio = false;
+        o.spellingBackend = {};
+        return o;
+    }
+    // An object by name: a QObject child, else an item of a view's delegate.
+    static QQuickItem *itemNamed(QQuickItem *from, const QString &name)
+    {
+        if (from->objectName() == name)
+            return from;
+        for (QQuickItem *child : from->childItems())
+            if (QQuickItem *found = itemNamed(child, name))
+                return found;
+        return nullptr;
+    }
+    static QObject *find(QQuickWindow *window, const char *name)
+    {
+        if (QObject *found = window->findChild<QObject *>(QLatin1String(name)))
+            return found;
+        for (QWindow *w : QGuiApplication::allWindows())
+            if (auto *quick = qobject_cast<QQuickWindow *>(w))
+                if (QQuickItem *found = itemNamed(quick->contentItem(), QLatin1String(name)))
+                    return found;
+        return nullptr;
+    }
+    QQuickWindow *load(app::Application &a, QQmlApplicationEngine &engine)
+    {
+        hikari::ui::attachDocking(engine);
+        engine.setInitialProperties(a.qmlProperties());
+        engine.loadFromModule("Hikari.Ui", "Main");
+        auto *window = qobject_cast<QQuickWindow *>(engine.rootObjects().first());
+        return window && QTest::qWaitForWindowExposed(window) ? window : nullptr;
     }
 
 private slots:
@@ -252,6 +301,102 @@ private slots:
     }
 
     // P10: legacy SubsGrid::OnBackupTimer writes "Autosave" in the status
+    // PU1-startup-cards and PU1-autosaves-window: work left by a crash is
+    // offered on the Home page, not in a window that opens by itself; its
+    // Autosaves… opens the Autosaves window, whose search and date filter
+    // narrow the list, and Open copy opens the work and ends the card.
+    void aCrashIsOfferedOnHomeAndOpensFromAutosaves()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("card.ass")), "original");
+        crashLeavesWork(path);
+        app::Application a(uiOptions());
+        QQmlApplicationEngine engine;
+        QQuickWindow *window = load(a, engine);
+        QVERIFY(window);
+        const auto named = [window](const char *name) { return find(window, name); };
+        QObject *card = named("homeOffer");
+        QVERIFY(card);
+        QTRY_VERIFY(card->property("visible").toBool());
+        QCOMPARE(named("homeOfferTitle")->property("text").toString(), QStringLiteral("HikariSub did not close properly"));
+        QCOMPARE(named("homeOfferDetail")->property("text").toString(), QStringLiteral("Unsaved work in 1 document was autosaved."));
+        QVERIFY(!named("homeOfferRestore")->property("visible").toBool()); // no session to restore
+        QVERIFY(named("homeOfferAutosaves")->property("visible").toBool());
+        QVERIFY(!named("homeSession")->property("visible").toBool());
+        QVERIFY(!named("autosavesWindow")); // nothing opened by itself
+        QVERIFY(QMetaObject::invokeMethod(named("homeOfferAutosaves"), "clicked"));
+        QTRY_VERIFY(named("autosavesWindow"));
+        auto *autosaves = qobject_cast<QQuickWindow *>(named("autosavesWindow"));
+        QTRY_VERIFY(autosaves->isVisible());
+        QObject *list = named("autosavesList");
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        QTRY_VERIFY(named("autosaveName0"));
+        QCOMPARE(named("autosaveName0")->property("text").toString(), QStringLiteral("card.ass"));
+        // Every word of the search, in the name or the path.
+        named("autosavesSearch")->setProperty("text", QStringLiteral("card zzz"));
+        QTRY_COMPARE(list->property("count").toInt(), 0);
+        QVERIFY(named("autosavesEmpty")->property("visible").toBool());
+        named("autosavesSearch")->setProperty("text", QStringLiteral("CARD ass"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        // Saved today; none before today.
+        QObject *model = named("autosaves");
+        model->setProperty("range", QStringLiteral("today"));
+        QCOMPARE(list->property("count").toInt(), 1);
+        model->setProperty("before", QDateTime::currentDateTime());
+        model->setProperty("range", QStringLiteral("before"));
+        QCOMPARE(list->property("count").toInt(), 0);
+        model->setProperty("range", QStringLiteral("any"));
+        QTRY_COMPARE(list->property("count").toInt(), 1);
+        QTRY_VERIFY(named("autosaveOpen0"));
+        QVERIFY(QMetaObject::invokeMethod(named("autosaveOpen0"), "clicked"));
+        QTRY_VERIFY(!autosaves->isVisible());
+        QCOMPARE(QString::fromStdString(*a.workspace().title(*a.workspace().editingTarget())),
+                 QStringLiteral("card.ass (recovered)"));
+        // A Document opened from Home ends the offer; no startup bar either.
+        QTRY_VERIFY(!card->property("visible").toBool());
+        QVERIFY(!named("startupBar")->property("visible").toBool());
+    }
+
+    // PU1-autosaves-window: Remove temporary files opens the window with
+    // Delete older than…; its button counts what goes and deletes at once.
+    // Started with files, the crash is the startup bar.
+    void deleteOlderThanDeletesInOneStep()
+    {
+        const QString path = writeFile(dir.filePath(QStringLiteral("older.ass")), "original");
+        crashLeavesWork(path);
+        app::Application a(uiOptions());
+        a.setStartedWithPaths(true);
+        QVERIFY(a.openFile(writeFile(dir.filePath(QStringLiteral("other.ass")), "other")));
+        QQmlApplicationEngine engine;
+        QQuickWindow *window = load(a, engine);
+        QVERIFY(window);
+        const auto named = [window](const char *name) { return find(window, name); };
+        QObject *bar = named("startupBar");
+        QTRY_VERIFY(bar->property("visible").toBool());
+        QCOMPARE(bar->property("severity").toString(), QStringLiteral("warning"));
+        QCOMPARE(bar->property("text").toString(),
+                 QStringLiteral("HikariSub did not close properly. Unsaved work in 1 document was autosaved."));
+        QVERIFY(!named("startupRestore")->property("visible").toBool());
+        QVERIFY(named("startupAutosaves")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("autosaves"), "show", Q_ARG(QVariant, true)));
+        QTRY_VERIFY(named("autosavesWindow"));
+        auto *autosaves = qobject_cast<QQuickWindow *>(named("autosavesWindow"));
+        QTRY_VERIFY(autosaves->isVisible());
+        QObject *popover = named("autosavesDeleteOlderPopover");
+        QTRY_VERIFY(popover->property("visible").toBool());
+        QObject *now = named("autosavesDeleteOlderNow");
+        // A month back keeps today's work; tomorrow ("Everything") takes it.
+        QVERIFY(!now->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("olderDate"), "setDate",
+                                          Q_ARG(QVariant, QDateTime(QDate::currentDate().addDays(1), QTime(12, 0)))));
+        QTRY_COMPARE(now->property("text").toString(), QStringLiteral("Delete 1 autosave"));
+        QVERIFY(now->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(now, "clicked"));
+        QTRY_VERIFY(a.recoveryBundles().isEmpty());
+        QTRY_COMPARE(named("autosavesList")->property("count").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(bar, "closed"));
+        QTRY_VERIFY(!bar->property("visible").toBool());
+    }
+
     // bar's first field and its nullifyTimer empties the field 5 s later,
     // whatever it shows then (SubsGridBase.cpp:1636-1651, SubsGrid.cpp:54-57).
     void anAutosaveShowsInTheStatusBarForFiveSeconds()

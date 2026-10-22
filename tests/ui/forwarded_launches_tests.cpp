@@ -225,9 +225,9 @@ private slots:
         take({video});
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("a.ass"), QStringLiteral("Untitled")}));
         QCOMPARE(application->currentTab(), 1);
+        QTRY_VERIFY(named("subtitlesFromVideoPrompt"));
         QObject *prompt = named("subtitlesFromVideoPrompt");
-        QVERIFY(prompt);
-        QTRY_VERIFY(prompt->property("opened").toBool());
+        QTRY_VERIFY(prompt->property("visible").toBool());
         QMetaObject::invokeMethod(prompt, "reject");
     }
 
@@ -276,19 +276,20 @@ private slots:
         start();
         application->addPage();
         edit(0, "work");
+        QVERIFY(QMetaObject::invokeMethod(named("tabCommands"), "confirmCloseAll"));
         QObject *prompt = named("closeAllPrompt");
         QVERIFY(prompt);
-        QMetaObject::invokeMethod(prompt, "open");
-        QTRY_VERIFY(prompt->property("opened").toBool());
+        QTRY_VERIFY(prompt->property("visible").toBool());
         take({writeAss(dir.filePath(QStringLiteral("f.ass")), "f")});
         staysWaiting({QStringLiteral("Untitled")});
         QMetaObject::invokeMethod(prompt, "reject");
         QTRY_COMPARE(titles(), (QStringList{QStringLiteral("Untitled"), QStringLiteral("f.ass")}));
     }
 
-    // "Load last session?" (P6) is answered first: the session's tabs
-    // would replace the files' otherwise. A "No" lets them open.
-    void filesWaitForTheStartupQuestion()
+    // PU1-startup-cards: "Load last session?" (P6) no longer holds files
+    // back: it is an offer on Home, and a file another start hands over
+    // opens at once and ends it.
+    void filesDoNotWaitForTheStartupOffer()
     {
         {
             app::Application::Options o;
@@ -298,13 +299,13 @@ private slots:
             QVERIFY(before.openFile(writeAss(dir.filePath(QStringLiteral("s/last.ass")), "l")));
         }
         start(1);
-        QObject *prompt = named("loadSessionPrompt");
-        QVERIFY(prompt);
-        QTRY_VERIFY(prompt->property("visible").toBool());
+        QObject *offer = named("homeOffer");
+        QVERIFY(offer);
+        QTRY_VERIFY(offer->property("visible").toBool());
         take({writeAss(dir.filePath(QStringLiteral("s/g.ass")), "g")});
-        staysWaiting({});
-        QMetaObject::invokeMethod(prompt, "reject");
         QTRY_COMPARE(titles(), QStringList{QStringLiteral("g.ass")});
+        QVERIFY(!forwarded->pending());
+        QVERIFY(!named("startupBar")->property("visible").toBool());
     }
 
     // A session loaded at the start (P6, "Always") comes first, and the

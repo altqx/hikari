@@ -69,14 +69,14 @@ protected:
             observed.push_back(getStringProperty("mainWindow/documentTab1", "text")); // 5: "1*two.ass"
             // The active tab's close mark reviews it; Cancel keeps it.
             mouseClick("mainWindow/documentTabClose1");
-            observed.push_back(waitForItem("closeReview/closeCancel", 5s) ? "review" : "no review"); // 6
-            mouseClick("closeReview/closeCancel");
+            observed.push_back(waitForItem("closeQuestion/messageBoxChoice_cancel", 5s) ? "review" : "no review"); // 6
+            mouseClick("closeQuestion/messageBoxChoice_cancel");
             wait(300ms);
             observed.push_back(targets()); // 7: two.ass
             // Ctrl+W and Discard all: the tab after it shows.
             enterKey("mainWindow/lineText", Qt::Key_W, spix::KeyModifiers::Control);
             wait(500ms);
-            mouseClick("closeReview/closeDiscardAll");
+            mouseClick("closeQuestion/messageBoxChoice_discard");
             wait(500ms);
             observed.push_back(targets()); // 8: three.ass
             observed.push_back(existsAndVisible("mainWindow/documentTab2") ? "3 tabs" : "2 tabs"); // 9
