@@ -216,7 +216,6 @@ DialogWindow {
                     highlightMoveDuration: 0
                     Accessible.role: Accessible.List
                     Accessible.name: qsTr("Legacy installations")
-                    onActivated: index => dialog.chooseRoot(index)
                     Keys.onUpPressed: dialog.chooseRoot(Math.max(0, currentIndex - 1))
                     Keys.onDownPressed: dialog.chooseRoot(Math.min(count - 1, currentIndex + 1))
                     delegate: ItemDelegate {
@@ -512,11 +511,14 @@ DialogWindow {
                 }
             }
             // The current row's details: its file and key, where it goes, why.
+            // Three lines high whatever the row, so choosing one never moves
+            // the table above it.
             Rectangle {
                 color: Theme.raised
                 border.color: Theme.line
-                implicitHeight: details.implicitHeight + 16
+                implicitHeight: Math.ceil(detailsMetrics.lineSpacing * 3) + 16
                 Layout.fillWidth: true
+                FontMetrics { id: detailsMetrics; font: details.font }
                 Label {
                     id: details
                     objectName: "settingsImportDetails"
@@ -524,6 +526,8 @@ DialogWindow {
                     y: 8
                     width: parent.width - 20
                     wrapMode: Text.Wrap
+                    maximumLineCount: 3
+                    elide: Text.ElideRight
                     textFormat: Text.PlainText
                     readonly property var row: dialog.currentRow
                     text: !row ? qsTr("Choose a row to see where it comes from.")
