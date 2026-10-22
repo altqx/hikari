@@ -2119,10 +2119,54 @@ ApplicationWindow {
         // Where `inner` starts in `outer` past its carried tags: a match
         // after whole override blocks and the spaces among them ("\h" before
         // a leading tag), not one inside a tag ("an8" in "{\an8}an8").
+        // Where `inner` starts in `outer` past a prefix of override blocks
+        // and ASS spaces ending with a block, or -1. Linear in both: the
+        // prefix walked once for where its blocks end, `inner` found by
+        // KMP (a long Line's prefix is never scanned per candidate). The
+        // block ends kept by position: V4's Set.has is linear.
         function carriedPrefix(outer, inner) {
-            for (let at = outer.indexOf(inner); at > 0; at = outer.indexOf(inner, at + 1))
-                if (outer[at - 1] === "}" && /^(?:\{[^{}]*\}|\\[hNn]|[ \t])+$/.test(outer.substring(0, at)))
-                    return at
+            const ends = []
+            let any = false
+            let at = 0
+            for (let open = -1; at < outer.length; ++at) {
+                const c = outer[at]
+                if (open >= 0) {
+                    if (c === "{")
+                        break
+                    if (c === "}") {
+                        ends[at + 1] = true
+                        any = true
+                        open = -1
+                    }
+                } else if (c === "{") {
+                    open = at
+                } else if (c === "\\" && "hNn".includes(outer[at + 1] ?? "")) {
+                    ++at
+                } else if (c !== " " && c !== "\t") {
+                    break
+                }
+            }
+            if (!any || inner.length === 0)
+                return -1
+            const fail = [0]
+            for (let i = 1, k = 0; i < inner.length; ++i) {
+                while (k > 0 && inner[i] !== inner[k])
+                    k = fail[k - 1]
+                if (inner[i] === inner[k])
+                    ++k
+                fail.push(k)
+            }
+            for (let i = 0, k = 0; i < outer.length && i - k <= at; ++i) {
+                while (k > 0 && outer[i] !== inner[k])
+                    k = fail[k - 1]
+                if (outer[i] === inner[k])
+                    ++k
+                if (k === inner.length) {
+                    if (ends[i + 1 - k] === true)
+                        return i + 1 - k
+                    k = fail[k - 1]
+                }
+            }
             return -1
         }
         function sync() {

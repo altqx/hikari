@@ -11619,6 +11619,52 @@ private slots:
         QCOMPARE(translated->property("cursorPosition").toInt(), 1);
     }
 
+    // TM1: the field finds where the shown text starts past carried tags
+    // in one pass: a long Line with the previous Line's text again and
+    // again after a block shows about as fast as one without it.
+    void tagsFromOriginalCaretSearchIsLinear()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-caret-long.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        // The long Lines are Comments: the Grid's spelling marks, drawn
+        // slowly across a long Line, are not the point.
+        constexpr int kCandidates = 40000;
+        QByteArray candidates, plain;
+        for (int i = 0; i < kCandidates; ++i) {
+            candidates += "}1";
+            plain += "}2";
+        }
+        f.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,1\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{x}" + candidates + "\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,1\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{x}" + plain + "\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        application->editor().setShowTags(true);
+        auto *field = item("lineText");
+        const auto timedDown = [&] {
+            item("editingGrid")->forceActiveFocus();
+            QElapsedTimer clock;
+            clock.start();
+            press(Qt::Key_Down);
+            [&] { QTRY_COMPARE(field->property("text").toString().size(), 3 + 2 * kCandidates); }();
+            return clock.elapsed();
+        };
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("1"));
+        const auto withCandidates = timedDown();
+        press(Qt::Key_Down);
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("1"));
+        const auto without = timedDown();
+        qInfo() << "with candidates" << withCandidates << "ms, without" << without << "ms";
+        QVERIFY2(withCandidates < 2 * without + 1000,
+                 qPrintable(QStringLiteral("with %1 ms, without %2 ms").arg(withCandidates).arg(without)));
+    }
+
     // TM1: an Original that comes to carry nothing (a drawing) leaves the
     // translation its own text, the tags it carried gone.
     void tagsFromOriginalGoneTakesTheCarriedTags()
