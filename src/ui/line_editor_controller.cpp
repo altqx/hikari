@@ -1152,12 +1152,18 @@ bool LineEditorController::sendDraft(bool leaving, bool visual)
     // TM1: another selected Line's translation follows its own new text or
     // Style, as the edited Line's did (setRaw, chooseStyle).
     const auto companion = [this](const core::LineRecord &before, core::LineRecord &after) {
-        if (before.translation.empty() || !carry(before))
+        const auto c = before.translation.empty() ? std::nullopt : carry(before);
+        if (!c)
             return;
         auto bare = after;
         bare.translation.clear();
-        if (const auto next = carry(bare))
+        if (const auto next = carry(bare)) {
             after.translation = recarried(before, *next);
+        } else if (const auto was = translationDraft(c->tags, before); was.carried) {
+            // Its new Original carries nothing (a drawing): its own text and
+            // tags stay, the carried ones and the placed runs' go.
+            after.translation = core::toUtf8(was.body);
+        }
     };
     if (!s->commitDraftToSelected("Edit Line", leaving, companion)) {
         if (s->draftLine()) {
@@ -1280,6 +1286,22 @@ int shownAlignment(const core::LineRecord &line, const std::vector<core::StyleVa
     return application::legacyAlignment(line, styleAlignment);
 }
 
+// Back at the committed Line (Undo or Redo of the draft's steps): no draft
+// remains.
+void dropUnchangedDraft(application::EditSession &s, core::LineId id)
+{
+    const auto lines = s.document().lines();
+    const auto it = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == id; });
+    const auto d = s.draftRecord();
+    if (it != lines.end() && d && d->text == (*it)->text && d->translation == (*it)->translation &&
+        d->start.value == (*it)->start.value && d->end.value == (*it)->end.value &&
+        d->marginLeft.value == (*it)->marginLeft.value && d->marginRight.value == (*it)->marginRight.value &&
+        d->marginVertical.value == (*it)->marginVertical.value && d->comment == (*it)->comment &&
+        d->layer.value == (*it)->layer.value && d->style == (*it)->style && d->actor == (*it)->actor &&
+        d->effect == (*it)->effect && d->startFrame == (*it)->startFrame && d->endFrame == (*it)->endFrame)
+        s.discardDraft();
+}
+
 } // namespace
 
 void LineEditorController::discard()
@@ -1350,17 +1372,7 @@ bool LineEditorController::undo()
         s->editDraft(r->id, application::DraftChange{.text = previous.text,
                                                      .translation = previous.translation,
                                                      .translationCarried = !previous.translationTyped});
-        // Back at the committed Line: no draft remains.
-        const auto lines = s->document().lines();
-        const auto it = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == r->id; });
-        const auto d = s->draftRecord();
-        if (it != lines.end() && d && d->text == (*it)->text && d->translation == (*it)->translation &&
-            d->start.value == (*it)->start.value && d->end.value == (*it)->end.value &&
-            d->marginLeft.value == (*it)->marginLeft.value && d->marginRight.value == (*it)->marginRight.value &&
-            d->marginVertical.value == (*it)->marginVertical.value && d->comment == (*it)->comment &&
-            d->layer.value == (*it)->layer.value && d->style == (*it)->style && d->actor == (*it)->actor &&
-            d->effect == (*it)->effect && d->startFrame == (*it)->startFrame && d->endFrame == (*it)->endFrame)
-            s->discardDraft();
+        dropUnchangedDraft(*s, r->id);
         m_attempted.clear();
         refresh();
         placeCaretAfterChange(before);
@@ -1398,6 +1410,7 @@ bool LineEditorController::redo()
         s->editDraft(r->id, application::DraftChange{.text = next.text,
                                                      .translation = next.translation,
                                                      .translationCarried = !next.translationTyped});
+        dropUnchangedDraft(*s, r->id); // a step that changed only the run order
         refresh();
         placeCaretAfterChange(before);
         return true;

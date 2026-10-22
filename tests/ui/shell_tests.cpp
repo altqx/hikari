@@ -11482,6 +11482,14 @@ private slots:
         QVERIFY(application->editor().undo());
         QTRY_VERIFY(placed(1));
         QVERIFY(!placed(2));
+        QVERIFY(!session->draftLine());
+        // Redone, the text is the committed Line's again: no draft either.
+        QVERIFY(application->editor().redo());
+        QTRY_VERIFY(placed(2));
+        QVERIFY(!session->draftLine());
+        QVERIFY(application->editor().undo());
+        QTRY_VERIFY(placed(1));
+        QVERIFY(!session->draftLine());
         QVERIFY(application->editor().placeRun(2, 2, 3));
         QTRY_VERIFY(placed(2));
         application->editor().discard();
@@ -11821,6 +11829,16 @@ private slots:
         QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an9}Brama"));
         QVERIFY(application->editor().commit());
         QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an9}Wieza"));
+
+        // An Original that carries nothing now (a drawing): every selected
+        // translation keeps only its own text.
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        const QString drawing = QStringLiteral("{\\p1}m 0 0 l 10 10");
+        application->editor().textEdited(drawing, drawing.size());
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("Brama"));
+        QCOMPARE(q8(session->document().lines()[1]->text), drawing);
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("Wieza"));
     }
 
     // TM1: the font dialog on several Lines changes each translation's own
