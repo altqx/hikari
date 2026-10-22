@@ -932,7 +932,7 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Its Document was closed while the macro ran; nothing was changed.</source>
+        <source>Its document was closed while the macro ran; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

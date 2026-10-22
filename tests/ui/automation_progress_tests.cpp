@@ -381,11 +381,11 @@ private slots:
         QVERIFY(ended());
         QCOMPARE(automation().cardState(), QStringLiteral("failed"));
         QCOMPARE(automation().cardText(),
-                 QStringLiteral("Its Document was closed while the macro ran; nothing was changed."));
+                 QStringLiteral("Its document was closed while the macro ran; nothing was changed."));
         AutomationRunLines lines;
         lines.setRuns(automation().runs());
         lines.setRun(automation().runId());
-        QCOMPARE(lines.shownText(), QStringLiteral("Its Document was closed while the macro ran; nothing was changed.\n"));
+        QCOMPARE(lines.shownText(), QStringLiteral("Its document was closed while the macro ran; nothing was changed.\n"));
     }
 };
 

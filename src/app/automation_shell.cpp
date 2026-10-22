@@ -899,7 +899,7 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         } else if (!s) {
             // AD3: the card and the run's log say why nothing was applied.
             text = QCoreApplication::translate("HikariSub.Automation",
-                                               "Its Document was closed while the macro ran; nothing was changed.");
+                                               "Its document was closed while the macro ran; nothing was changed.");
         } else {
             text = QCoreApplication::translate("HikariSub.Automation",
                                                "The macro's changes could not be applied; nothing was changed.");
