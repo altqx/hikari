@@ -767,6 +767,16 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
+        // KA3: the Kanji timer window over the editing target.
+        KanjiTimerController::Hooks hooks;
+        hooks.target = [this] { return targetSession(); };
+        hooks.refresh = [this] {
+            m_editor->reloadFromSession();
+            refreshViews();
+        };
+        m_kanjiTimer = std::make_unique<KanjiTimerController>(*m_settings, std::move(hooks));
+    }
+    {
         // Y8: the font collector reads every tab's Document (a copy for the
         // run) and goes to a Line or Style from its log.
         FontCollectorController::Hooks hooks;
@@ -1771,6 +1781,8 @@ void Application::refreshViews()
     // panel picks the active Line's Style when its own is gone).
     if (m_styleManager)
         m_styleManager->documentEdited();
+    if (m_kanjiTimer) // KA3
+        m_kanjiTimer->documentEdited();
     refreshVideo();
     refreshAudio();
     if (m_statusBar)
@@ -5300,6 +5312,7 @@ QVariantMap Application::qmlProperties()
             {QStringLiteral("updates"), QVariant::fromValue(static_cast<QObject *>(m_updates.get()))},
             {QStringLiteral("whatsNew"), QVariant::fromValue(static_cast<QObject *>(m_whatsNew.get()))},
             {QStringLiteral("styleManager"), QVariant::fromValue(static_cast<QObject *>(m_styleManager.get()))},
+            {QStringLiteral("kanjiTimer"), QVariant::fromValue(static_cast<QObject *>(m_kanjiTimer.get()))},
             {QStringLiteral("fontCollector"), QVariant::fromValue(static_cast<QObject *>(m_fontCollector.get()))},
             {QStringLiteral("fontCatalogs"), QVariant::fromValue(static_cast<QObject *>(m_fontCatalogs.get()))},
             {QStringLiteral("matroska"), QVariant::fromValue(static_cast<QObject *>(m_matroska.get()))},
