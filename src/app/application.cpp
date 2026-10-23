@@ -749,6 +749,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                  : QDir::temp().filePath(QStringLiteral("hikari-catalogs-%1").arg(QCoreApplication::applicationPid()));
         StyleManagerController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
+        hooks.targetDocument = [this] { return m_workspace.editingTarget(); };
+        hooks.session = [this](application::DocumentId id) -> application::EditSession * {
+            return id == m_workspace.reference() ? nullptr : m_files->session(id); // R2-reference-tray
+        };
         hooks.documents = [this] {
             // Every Document but the reference, which is never written (R2-reference-tray).
             std::vector<application::EditSession *> out;
@@ -764,6 +768,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.fonts = [this] { // Y6: the external fonts render in the preview; 38c: the script's attached fonts too
             return subtitleFonts(m_workspace.editingTarget());
         };
+        hooks.lastCatalog = [this] { return m_settings->text("styles.lastCatalog"); };
+        hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
@@ -1741,6 +1747,8 @@ void Application::refreshViews()
         spellChecker();
     reportGroupBreak();
     scheduleAutosave();
+    if (m_styleManager) // SY1: an open Style manager follows
+        m_styleManager->targetRefreshed();
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -5521,7 +5529,7 @@ QVariantMap Application::openSettingsDialog()
     lists.catalogs = stdList(m_styleManager->catalogs());
     lists.currentCatalog = m_styleManager->catalog().toStdString();
     if (const auto load = application::optionsCatalogToLoad(m_settings->settings(), lists)) {
-        m_styleManager->chooseCatalog(QString::fromStdString(*load));
+        m_styleManager->loadCatalog(QString::fromStdString(*load)); // not the manager's choice (SY1)
         lists.currentCatalog = *load;
     }
     lists.styles = stdList(m_styleManager->storeStyles());
@@ -5752,7 +5760,7 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
     // choosing it does, so the default Style is found among them.
     if (*which == application::OptionsPage::Conversion)
         if (const auto load = application::optionsCatalogToLoad(defaults, m_optionsLists)) {
-            m_styleManager->chooseCatalog(QString::fromStdString(*load));
+            m_styleManager->loadCatalog(QString::fromStdString(*load)); // not the manager's choice (SY1)
             m_optionsLists.currentCatalog = *load;
             m_optionsLists.styles = stdList(m_styleManager->storeStyles());
         }
@@ -5842,7 +5850,7 @@ QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int in
     auto state = fromVariant(values);
     if (index >= 0 && index < qsizetype(m_optionsLists.catalogs.size())) {
         // Options.SaveOptions(false) then LoadStyles: the current catalog is saved first.
-        m_styleManager->chooseCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
+        m_styleManager->loadCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
         m_optionsLists.currentCatalog = m_optionsLists.catalogs[std::size_t(index)];
         m_optionsLists.styles = stdList(m_styleManager->storeStyles());
     }

@@ -31,11 +31,6 @@ ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
 SpellCheckerDialog.qml:dialog
 SpellCheckerDialog.qml:addedWords
-StyleManager.qml:createQuestion
-StyleManager.qml:multiQuestion
-StyleManager.qml:renameQuestion
-StyleManager.qml:newCatalog
-StyleManager.qml:deleteCatalogQuestion
 TranslationModeOffConfirm.qml:dialog
 TranslationModeQuestion.qml:dialog
 VideoFileQuestion.qml:dialog

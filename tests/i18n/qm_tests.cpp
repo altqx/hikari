@@ -273,15 +273,16 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // beside its picker, "%n lines" (VT1). 23 with the popup kit's "%n
         // more notice(s)" and the style copy's count and clash summary (PK1);
         // 24 with What's new's "And %n earlier versions" (SH3). 25 with the
-        // karaoke check's problems not listed (KA7). 27 with the notices' "%n
-        // value(s) could not be scaled." and "%n style(s) deleted: %1." (NT1).
-        // 28 with Hydra's "Changes %n lines" (HY1).
-        // 37 with the file and session popups' counts: the close review's
+        // karaoke check's problems not listed (KA7). 26 with the notices' "%n
+        // value(s) could not be scaled." (NT1; its "%n style(s) deleted"
+        // gave way to SY1's toast). 27 with Hydra's "Changes %n lines" (HY1).
+        // 36 with the file and session popups' counts: the close review's
         // three questions, the autosaves, the startup offer's four and Close
-        // all tabs (PU1). 42 with the import wizard's "Import %n setting(s)"
+        // all tabs (PU1). 41 with the import wizard's "Import %n setting(s)"
         // and "%n setting(s) imported." and the hotkeys import's three counts
-        // (PU7).
-        ASSERT_EQ(numerus, 42) << language.toStdString();
+        // (PU7). 47 with the Style manager's rows, multi-style preview,
+        // rename, apply and catalog questions and its clean-up toast (SY1).
+        ASSERT_EQ(numerus, 47) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);
