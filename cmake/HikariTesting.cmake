@@ -21,16 +21,18 @@ find_program(HIKARI_XVFB_RUN xvfb-run)
 
 # Register one command in the platform modes available on this host: always
 # offscreen, plus a real X server through xvfb-run when it is installed.
+# 120 s: several UI suites take 40-51 s on the shared Windows MSVC runners,
+# and a slow runner took them past 60 s.
 function(_hikari_add_qt_modes name label)
     cmake_parse_arguments(mode "OFFSCREEN_ONLY" "" "" ${ARGN})
     set(ARGN ${mode_UNPARSED_ARGUMENTS})
     add_test(NAME ${name}.offscreen COMMAND ${ARGN})
     set_tests_properties(${name}.offscreen PROPERTIES
-        ENVIRONMENT "QT_QPA_PLATFORM=offscreen" LABELS "${label};offscreen" TIMEOUT 60)
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen" LABELS "${label};offscreen" TIMEOUT 120)
     if(HIKARI_XVFB_RUN AND NOT mode_OFFSCREEN_ONLY)
         add_test(NAME ${name}.xvfb COMMAND "${HIKARI_XVFB_RUN}" -a ${ARGN})
         set_tests_properties(${name}.xvfb PROPERTIES
-            ENVIRONMENT "QT_QPA_PLATFORM=xcb" LABELS "${label};xvfb" TIMEOUT 60)
+            ENVIRONMENT "QT_QPA_PLATFORM=xcb" LABELS "${label};xvfb" TIMEOUT 120)
     endif()
 endfunction()
 
