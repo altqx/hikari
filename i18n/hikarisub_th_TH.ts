@@ -4685,20 +4685,48 @@ Failed to copy %2 fonts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The AUR package carries stable versions only. To try %1, use the AppImage from the release page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Update with your AUR helper</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You installed HikariSub from the AUR, so your package manager updates it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Command</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Downloading… %1 %</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Skip this version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the release page</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Remind me later</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Check for updates automatically</source>
-        <translation>ตรวจหาอัปเดตโดยอัตโนมัติ</translation>
+        <translation type="vanished">ตรวจหาอัปเดตโดยอัตโนมัติ</translation>
     </message>
     <message>
         <source>Stable versions only</source>
-        <translation>เฉพาะเวอร์ชันเสถียร</translation>
-    </message>
-    <message>
-        <source>Install updates automatically</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">เฉพาะเวอร์ชันเสถียร</translation>
     </message>
     <message>
         <source>Open the download page</source>
@@ -4710,7 +4738,7 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Remind me in a week</source>
-        <translation>เตือนอีกครั้งในหนึ่งสัปดาห์</translation>
+        <translation type="vanished">เตือนอีกครั้งในหนึ่งสัปดาห์</translation>
     </message>
     <message>
         <source>About HikariSub</source>
@@ -4965,18 +4993,6 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>HikariSub %1 is a prerelease. The AUR package carries stable versions only. To try it, use the AppImage from the release page.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>HikariSub %1 is available; you have %2. You installed HikariSub from the AUR, so update it with your package manager or AUR helper, for example yay -Syu or paru -Syu.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Installing update...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Menus</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5222,6 +5238,18 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Nothing logged yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing HikariSub %1…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing update…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter your password when the system asks for it. HikariSub starts again when the install is done.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -6082,10 +6110,6 @@ removing audio cache files.</source>
         <translation>ทั้งหมด</translation>
     </message>
     <message>
-        <source>Settings</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>General</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6099,6 +6123,10 @@ removing audio cache files.</source>
     </message>
     <message>
         <source>Automation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Updates</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -6566,6 +6594,18 @@ removing audio cache files.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Import legacy hotkeys…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script hotkeys of a legacy Hotkeys.txt, added at once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press Apply or Cancel first: the import is added at once</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Global</source>
         <translation type="unfinished"></translation>
     </message>
@@ -6600,6 +6640,100 @@ removing audio cache files.</source>
     <message>
         <source>Delete</source>
         <translation type="unfinished">ลบ</translation>
+    </message>
+    <message>
+        <source>Checking</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check for updates automatically</source>
+        <translation>ตรวจหาอัปเดตโดยอัตโนมัติ</translation>
+    </message>
+    <message>
+        <source>At most once a day, when HikariSub starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stable versions only</source>
+        <translation>เฉพาะเวอร์ชันเสถียร</translation>
+    </message>
+    <message>
+        <source>Off: prereleases (beta versions) are offered too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skipped version</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Offer it again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip this version hides one version; a newer one is offered again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Install updates automatically</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Downloads the update in the background and installs it when you quit HikariSub.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You installed HikariSub from the AUR, so your package manager installs updates.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This copy does not install updates itself: the update window opens the download page.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a legacy Hotkeys.txt</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hotkeys (Hotkeys.txt)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All files (*)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Import legacy hotkeys</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file could not be read.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n script hotkey(s).</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No script hotkeys were added.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n kept the keys you gave them.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n skipped: their keys are taken.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Map hotkey</source>
@@ -7870,6 +8004,42 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Conflict</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Same</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>File read</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not here</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll back import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go back to the settings you had before the last import?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>They take effect the next time HikariSub starts. The legacy installation is not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>These settings you changed since go back too: %1. The legacy installation is not changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">ยกเลิก</translation>
+    </message>
+    <message>
         <source>Choose the folder of a legacy installation</source>
         <translation type="unfinished"></translation>
     </message>
@@ -7878,28 +8048,7 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Go back to the settings before the last import?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Go back to the settings before the last import? These changes made since will be replaced:
-%1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Installation:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Choose folder…</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Read</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Files that are not UTF-8 are read as:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7915,43 +8064,11 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Show:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>All</source>
-        <translation>ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Changes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Missing</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Superseded</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ทั้งหมด</translation>
     </message>
     <message>
         <source>Unresolved</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Excluded</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Retired</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Files read</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7959,29 +8076,152 @@ please save with different name or change file attribute.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>All changes</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Legacy: %1    Now: %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unresolved paths, kept as they are: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>An import waits for the next start.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>An import waits for the next start. These settings changed since it was made keep your change:
-%1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Import</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Installation</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Step %1 of 3: %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the legacy installation to import from</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>HikariSub 0.0.x installations found on this computer. Nothing in them is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Legacy installations</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No legacy installation was found. Choose its folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Files that are not UTF-8 are read as</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>An import waits for the next start. These settings changed since it was made keep your change: %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The last import is in effect.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Roll back…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Review what to import</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A conflict is a setting the legacy installation sets differently from yours. The proposed choice is ticked; untick what you want to keep.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every record read, with its status. Only conflicts can be imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Conflicts %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search settings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 chosen</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Setting</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Legacy</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Status</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Settings to review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No conflicts: the legacy settings are the same as yours or need no choice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing matches.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a row to see where it comes from.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paths not found, kept as they are: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All conflicts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">ไม่มี</translation>
+    </message>
+    <message numerus="yes">
+        <source>%n setting(s) imported.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Nothing was imported.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Back</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Next</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Import %n setting(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <source>Close</source>
@@ -10727,6 +10967,10 @@ or codecs or a splitter may be missing</source>
         <translation>ปิด</translation>
     </message>
     <message>
+        <source>Place</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Float</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10763,15 +11007,15 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Panel:</source>
+        <source>next to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>px</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Panel</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Place:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10799,10 +11043,6 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Next to:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Next to panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -10811,15 +11051,7 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Width:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Width</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Height:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10991,12 +11223,16 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Save layout</source>
+        <source>Name:</source>
+        <translation type="obsolete">ชื่อ:</translation>
+    </message>
+    <message>
+        <source>Save layout as</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Name:</source>
-        <translation type="unfinished">ชื่อ:</translation>
+        <source>Name</source>
+        <translation type="unfinished">ชื่อ</translation>
     </message>
     <message>
         <source>Saving replaces the layout %1.</source>
@@ -11019,6 +11255,18 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Delete layout</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the layout “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tabs that use it keep their arrangement, under the preset it started from.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Saved layouts</source>
         <translation type="unfinished"></translation>
     </message>
@@ -11031,7 +11279,7 @@ or codecs or a splitter may be missing</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Rename</source>
+        <source>Rename (F2)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -341,6 +341,15 @@ bool aurCarries(bool prerelease, std::optional<AurChannel> channel)
     return !prerelease || channel == AurChannel::Beta;
 }
 
+std::string aurUpdateCommand(std::string_view helper, std::optional<AurChannel> channel)
+{
+    std::string command(helper.empty() ? std::string_view("yay") : helper);
+    command += " -Syu";
+    if (channel)
+        command += *channel == AurChannel::Beta ? " hikarisub-beta-bin" : " hikarisub-stable-bin";
+    return command;
+}
+
 bool isValidAssetName(std::string_view name)
 {
     if (name.empty() || !isAlphanumeric(name[0]))
