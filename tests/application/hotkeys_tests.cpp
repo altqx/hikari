@@ -98,9 +98,10 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     // Legacy's IDS, then the rewrite's own commands (LE3: GLOBAL_EDITOR_HIDE_TAGS;
     // KE1: GLOBAL_VIDEO_RENDER_COST; FS1: VIDEO_FULLSCREEN_BAR and VT2's
     // eleven tool commands, Video commands; TM1: GLOBAL_TRANSLATION_MODE; KA7: GLOBAL_CHECK_KARAOKE;
+    // KA3: GLOBAL_KANJI_TIMER;
     // KA2: AUDIO_TAP, AUDIO_SPEED_DOWN, AUDIO_SPEED_UP and KA1:
     // AUDIO_KARAOKE_SPLIT and AUDIO_KARAOKE_KF, Audio commands).
-    ASSERT_EQ(hotkeyActions().size(), 264u);
+    ASSERT_EQ(hotkeyActions().size(), 265u);
     for (const auto &a : hotkeyActions().first(kLegacyHotkeyActions)) {
         EXPECT_EQ(ids().at(std::string(a.symbol)), a.id) << a.symbol;
         EXPECT_EQ(hotkeyIdOf(a.symbol), a.id);
@@ -126,6 +127,7 @@ TEST(Hotkeys, ActionTableIsLegacyIdsAndTheMigrationMap)
     for (const auto &tool : kToolCommands)
         EXPECT_EQ(hotkeyIdOf(tool.symbol), tool.id) << tool.symbol;
     EXPECT_EQ(hotkeyIdOf("GLOBAL_CHECK_KARAOKE"), 5172);
+    EXPECT_EQ(hotkeyIdOf("GLOBAL_KANJI_TIMER"), 5174);
     // docs/qt/proposals/settings-migration-map/actions.csv: symbol, numeric alias.
     std::istringstream csv(readFile(HIKARI_ACTIONS_CSV));
     std::string line;
@@ -188,6 +190,7 @@ TEST(Hotkeys, NamesTableIsHotkeysNaming)
     for (const auto &tool : kToolCommands) // VT2: the rail's names
         legacy[tool.id] = tool.name;
     legacy[5172] = "Check karaoke";
+    legacy[5174] = "Kanji timer"; // KA3
     EXPECT_EQ(hotkeyNames(), legacy);
     EXPECT_EQ(hotkeyName(kSave), "Save");
     EXPECT_EQ(hotkeyName(kGlobalQuit), ""); // not named: never listed
@@ -406,8 +409,8 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     // The names table from the highest id down; no GLOBAL_QUIT.
     // V3, AM1: no "Open video with FFMS2" or "Open shortcut mapping window"
     // row; WS3: none for the five View arrangements and the editor switch;
-    // LE3's, KE1's, FS1's, TM1's and VT2's commands, KA2's three, KA7's and KA1's two have their own.
-    ASSERT_EQ(list.rowCount(), 239u);
+    // LE3's, KE1's, FS1's, TM1's and VT2's commands, KA2's three, KA7's, KA1's two and KA3's have their own.
+    ASSERT_EQ(list.rowCount(), 240u);
     EXPECT_EQ(list.row(0).text, "Global Close current tab");
     EXPECT_EQ(list.row(0).accel, "Ctrl-W");
     EXPECT_EQ(rowNamed(list, "Global Hide tags in the line editor").accel, "");
@@ -417,6 +420,7 @@ TEST(Hotkeys, ListOrderIsAddHotkeysOnList)
     for (const auto &tool : kToolCommands)
         EXPECT_EQ(rowNamed(list, std::string("Video ") + tool.name).accel, tool.accel);
     EXPECT_EQ(rowNamed(list, "Global Check karaoke").accel, "");
+    EXPECT_EQ(rowNamed(list, "Global Kanji timer").accel, "");
     EXPECT_EQ(list.row(int(list.rowCount()) - 1).text, "Audio Commit alt");
     EXPECT_EQ(list.find("Global Exit"), -1);
     EXPECT_EQ(list.selection(), 0);

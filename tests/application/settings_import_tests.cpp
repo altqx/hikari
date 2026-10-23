@@ -441,7 +441,7 @@ TEST(SettingsImport, EveryWorksheetActionReachesADestinationOrADisposition)
         ASSERT_NE(it, map.end()) << a.symbol;
         bound += it->second.accel == "Ctrl-Alt-Shift-F12";
     }
-    EXPECT_EQ(bound, 255); // 243 less V3's GLOBAL_VIDEO_INDEXING, AM1's GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AV3's GLOBAL_OPEN_DUMMY_AUDIO and WS3's five View arrangements and editor switch, plus LE3's GLOBAL_EDITOR_HIDE_TAGS, KE1's GLOBAL_VIDEO_RENDER_COST, FS1's VIDEO_FULLSCREEN_BAR, TM1's GLOBAL_TRANSLATION_MODE, VT2's eleven VIDEO_TOOL_* commands, KA2's three Audio commands, KA7's GLOBAL_CHECK_KARAOKE and KA1's AUDIO_KARAOKE_SPLIT and AUDIO_KARAOKE_KF
+    EXPECT_EQ(bound, 256); // 243 less V3's GLOBAL_VIDEO_INDEXING, AM1's GLOBAL_AUTOMATION_OPEN_HOTKEYS_WINDOW, AV3's GLOBAL_OPEN_DUMMY_AUDIO and WS3's five View arrangements and editor switch, plus LE3's GLOBAL_EDITOR_HIDE_TAGS, KE1's GLOBAL_VIDEO_RENDER_COST, FS1's VIDEO_FULLSCREEN_BAR, TM1's GLOBAL_TRANSLATION_MODE, VT2's eleven VIDEO_TOOL_* commands, KA2's three Audio commands, KA7's GLOBAL_CHECK_KARAOKE, KA1's AUDIO_KARAOKE_SPLIT and AUDIO_KARAOKE_KF and KA3's GLOBAL_KANJI_TIMER
 }
 
 // ---- Config.txt / AudioConfig.txt readings

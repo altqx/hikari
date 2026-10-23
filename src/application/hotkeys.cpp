@@ -288,6 +288,8 @@ constexpr HotkeyAction kActions[] = {
         {"VIDEO_TOOL_HYDRA", 2032},
         // KA7: the Karaoke check window.
         {"GLOBAL_CHECK_KARAOKE", 5172},
+        // KA3: the Kanji timer window.
+        {"GLOBAL_KANJI_TIMER", 5174},
 };
 
 struct NameRow {
@@ -545,6 +547,7 @@ constexpr NameRow kNames[] = {
         {2031, "Position shifter"}, // VIDEO_TOOL_POSITION_SHIFTER
         {2032, "Hydra"}, // VIDEO_TOOL_HYDRA
         {5172, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
+        {5174, "Kanji timer"}, // GLOBAL_KANJI_TIMER (KA3)
 };
 
 struct DefaultRow {
