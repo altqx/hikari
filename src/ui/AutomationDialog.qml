@@ -140,6 +140,7 @@ DialogWindow {
         messages.ask({
             title: qsTr("Delete preset"),
             text: qsTr("Delete the preset “%1”?").arg(name),
+            plainText: true,
             severity: "warning",
             choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
                       { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
@@ -386,6 +387,7 @@ DialogWindow {
             visible: savePopover.taken
             Layout.maximumWidth: 260
             text: qsTr("A preset named “%1” exists. Saving replaces it.").arg(savePopover.name)
+            textFormat: Text.PlainText
             wrapMode: Text.Wrap
             color: Theme.muted
         }

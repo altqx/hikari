@@ -1132,6 +1132,52 @@ private slots:
         QCOMPARE(std::get<std::string>(result->values[1]), std::string("sent"));
     }
 
+    // A preset name is the user's own text: the delete question and the
+    // name-in-use note show it as typed, never as markup.
+    void presetNamesShowAsTyped()
+    {
+        QTemporaryDir dir;
+        hikari::ui::SettingsStore store(dir.filePath(QStringLiteral("hikari.ini")));
+        ScriptDialogMemory memory(&store);
+        controller->setMemory(&memory);
+        auto unset = qScopeGuard([this] { controller->setMemory(nullptr); });
+        const DialogRequest dialog = sampleRequest();
+        const QString key = ScriptDialogMemory::keyOf(QStringLiteral("/s/x.lua"), dialog);
+        const QString name = QStringLiteral("<b>Mine</b>");
+        memory.savePreset(key, name, {{"n", 20}});
+        QQmlComponent hostComponent(engine);
+        hostComponent.setData("import Hikari.Ui\nMessageHost {}", QUrl());
+        std::unique_ptr<QObject> messages(hostComponent.create());
+        QVERIFY2(messages, qPrintable(hostComponent.errorString()));
+        window->setProperty("messages", QVariant::fromValue(messages.get()));
+        auto unhost = qScopeGuard([this] { window->setProperty("messages", QVariant::fromValue<QObject *>(nullptr)); });
+
+        std::optional<DialogResult> result;
+        controller->present(QStringLiteral("Memory"), dialog, [&](DialogResult r) { result = r; }, QString(),
+                            {std::nullopt, key, QString()});
+        QTRY_VERIFY(window->isVisible());
+
+        auto *popover = window->findChild<QObject *>(QStringLiteral("savePresetPopover"));
+        QVERIFY(QMetaObject::invokeMethod(popover, "openFor"));
+        window->findChild<QObject *>(QStringLiteral("presetName"))->setProperty("text", name);
+        QTRY_VERIFY(popover->property("taken").toBool());
+        auto *taken = window->findChild<QObject *>(QStringLiteral("presetTaken"));
+        QCOMPARE(taken->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(taken->property("text").toString().contains(name));
+        QVERIFY(QMetaObject::invokeMethod(popover, "revert"));
+
+        QVERIFY(QMetaObject::invokeMethod(window, "askDelete", Q_ARG(QVariant, name)));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messages->property("box").value<QQuickWindow *>()) && box->isVisible());
+        auto *text = box->findChild<QObject *>(QStringLiteral("messageBoxText"));
+        QCOMPARE(text->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(text->property("text").toString().contains(name));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("delete"))));
+        QTRY_VERIFY(controller->presets().isEmpty());
+        window->close();
+        QTRY_VERIFY(result);
+    }
+
     // A filled-in dialog (Repeat, or the setting) shows the filled values
     // with their markers, and the inline bar says why.
     void filledDialogShowsItsValuesAndNotice()

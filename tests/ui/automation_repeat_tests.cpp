@@ -372,9 +372,15 @@ private slots:
     // names the form's button.
     void repeatAsksQuestionsAgain()
     {
+        app->settingsStore()->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
         answers = {{1, {}}, {0, {{QStringLiteral("tags"), QStringLiteral("\\fs")}}}};
         QCOMPARE(ran([this] { return app->automation().run(kScript.toStdString(), 2); }),
                  QStringLiteral("trust=Trust this time\nform=Apply tags=\\fs\n"));
+        // Only the form is kept as a last answer: the question has nothing
+        // to fill in.
+        const QStringList kept = app->settingsStore()->list("automation.dialogAnswers");
+        QCOMPARE(kept.size(), 1);
+        QVERIFY(kept[0].contains(QStringLiteral("tags")));
         QCOMPARE(app->automation().repeatText(),
                  QStringLiteral("Repeat last run: Trust prompt, as Apply with the same answers"));
         shown.clear();

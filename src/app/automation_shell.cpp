@@ -641,15 +641,17 @@ void AutomationShell::presentDialog(const application::DialogRequest &request, b
     const QString source = QString::fromStdString(m_run->path + '\n' + m_run->macro);
     const QString key = ui::ScriptDialogMemory::keyOf(QString::fromStdString(m_run->active), request);
     // Each answer is recorded for Repeat, and kept as the dialog's last
-    // answer unless it was the cancel one.
+    // answer unless it was the cancel one or has no named value to fill in
+    // (a question), which would only take a place among the kept answers.
     auto answered = [this, request, key, reply = std::move(reply)](application::DialogResult result) {
         const bool cancelled = application::cancelAnswer(request, result.pressed);
         if (m_run) {
             m_run->dialogs.push_back({request, result});
             m_run->cancelledAtDialog = m_run->cancelledAtDialog || cancelled;
         }
-        if (!cancelled)
-            m_dialogMemory.remember(key, application::lastDialogAnswer(request, result));
+        auto last = application::lastDialogAnswer(request, result);
+        if (!cancelled && !last.answered.empty())
+            m_dialogMemory.remember(key, std::move(last));
         reply(std::move(result));
     };
     ui::AutomationDialogController::Shown shown;
