@@ -406,14 +406,14 @@ ApplicationWindow {
             dockingArea.addDockWidget(stylesDock, KDDW.KDDockWidgets.Location_OnRight, null, Qt.size(300, 0))
     }
 
-    // AM1: a macro started while the Automation panel is closed opens it
-    // (its run status holds Cancel and the log), without taking the focus.
-    readonly property bool automationRunning: root.automation.running
-    onAutomationRunningChanged: {
-        if (root.automationRunning && !automationDock.isOpen) {
-            automationDock.open()
-            root.workspaceLayout.keepFloatingPanelsOnScreen()
-        }
+    // AD3 (#312): a run shows on its progress card (AutomationProgress, in
+    // the toast stack); the Automation panel no longer opens for it. The
+    // card's "Open in panel" shows the run in the panel's Runs.
+    function openAutomationRun(runId) {
+        if (root.videoFullscreen.active)
+            root.videoFullscreen.leave()
+        root.showPanel(automationDock)
+        automationTool.showRun(runId)
     }
 
     // Major panels in F6 order; a hidden panel is skipped.
@@ -644,9 +644,9 @@ ApplicationWindow {
         if (dock === referenceDock)
             return [{ name: "compareWithReference", text: qsTranslate("HikariSub.Reference", "Compare with reference"),
                       enabled: () => root.shell.hasEditingTarget, run: () => root.app.compareWithReference(), iconRole: "compare" }]
-        // AM1: the Automation menu's commands for scripts, the Hotkeys page
-        // on the macros' shortcuts, and the import of a legacy Hotkeys.txt
-        // (from the retired window).
+        // AM1: the Automation menu's commands for scripts and the Hotkeys
+        // page on the macros' shortcuts (a legacy Hotkeys.txt is imported
+        // there since PU7, #309).
         if (dock === automationDock)
             return [{ name: "automationLoadScript", text: qsTranslate("HikariSub.Automation", "Load script…"), iconRole: "automation",
                       enabled: () => loadScriptAction.enabled, run: () => loadScriptAction.trigger() },
@@ -655,8 +655,10 @@ ApplicationWindow {
                       run: () => reloadAutoloadAction.trigger() },
                     { name: "automationShortcutsInSettings", text: qsTranslate("HikariSub.Automation", "Shortcuts in Settings…"),
                       iconRole: "hotkeys", run: () => root.openSettings("hotkeys", 7) },
-                    { name: "automationImportLegacy", text: qsTranslate("HikariSub.Automation", "Import legacy hotkeys…"),
-                      iconRole: "import", run: () => legacyHotkeysDialog.open() }]
+                    // AD3: the finished runs go from Runs.
+                    { name: "automationClearRuns", text: qsTranslate("HikariSub.Automation", "Clear runs"),
+                      iconRole: "remove", enabled: () => root.automation.runs.count > (root.automation.running ? 1 : 0),
+                      run: () => root.automation.runs.clear() }]
         return []
     }
     // VF1 (#288): a panel's own submenus, after its own items: an item's
@@ -821,6 +823,22 @@ ApplicationWindow {
         if (homePage.visible) // SH2: the Home page is the one region
             return homePage.takeFocus()
         const shown = panels.filter(p => p.visible)
+        // AD3: the progress card is a region after the panels while it
+        // shows its controls (F6 never starts on it: it takes no focus by
+        // itself).
+        const card = automationProgress.reachable ? automationProgress : null
+        if (card && card.activeFocus) {
+            card.leave()
+            if (shown.length > 0)
+                root.focusPanel(shown[step > 0 ? 0 : shown.length - 1], Qt.TabFocusReason)
+            return
+        }
+        // Every panel closed: the card is the one region, or there is none.
+        if (shown.length === 0) {
+            if (card)
+                root.enterCard(null)
+            return
+        }
         // The panel with focus in the focus window: the main one or a
         // floating panel group (D1). Window.active cannot tell them apart:
         // Qt reports a floating panel's window active whenever its transient
@@ -832,13 +850,33 @@ ApplicationWindow {
             current = shown.indexOf(panelOf(root.activeFocusItem))
         if (current < 0 && focusWindow)
             current = shown.indexOf(panelOf(focusWindow.activeFocusItem))
+        if (card && current >= 0 && current + step >= shown.length || card && current + step < 0 && current >= 0) {
+            root.enterCard(shown[current])
+            return
+        }
         const next = current < 0 ? (step > 0 ? 0 : shown.length - 1)
                                  : (current + step + shown.length) % shown.length
         root.focusPanel(shown[next], Qt.TabFocusReason)
     }
 
-    // The panel waiting for its window's activation (focusPanel).
+    // The panel waiting for its window's activation (focusPanel), or what
+    // takes the focus then ({window, focus}: enterCard).
     property var pendingFocus: null
+
+    // AD3: F6 into the progress card, whose window (the main one, or the
+    // fullscreen video's) is activated first when the keys are elsewhere,
+    // as focusPanel does for a panel.
+    function enterCard(from) {
+        const w = automationProgress.Window.window
+        const take = () => automationProgress.enter(from)
+        root.pendingFocus = null
+        if (w && root.workspaceLayout.focusWindow !== w) {
+            root.pendingFocus = { window: w, focus: take }
+            w.raise()
+            w.requestActivate()
+        }
+        take()
+    }
 
     // TM1: a question of the main window's (a dialog in its overlay) asked
     // from a floating panel's window, the Translation mode hotkey's say: the
@@ -882,10 +920,11 @@ ApplicationWindow {
                 return
             }
             root.pendingFocus = null
-            pending.panel.forceActiveFocus(pending.reason)
+            const take = pending.focus || (() => pending.panel.forceActiveFocus(pending.reason))
+            take()
             // Again after the other activation handlers (the docking layer
             // focuses its own frame when a floating window activates).
-            Qt.callLater(() => pending.panel.forceActiveFocus(pending.reason))
+            Qt.callLater(take)
         }
     }
 
@@ -1574,6 +1613,19 @@ ApplicationWindow {
                     onTriggered: root.automation.rerunLast()
                 }
             }
+            // AD3: the progress card's Cancel from the menu (it has no
+            // hotkey of its own).
+            ShellMenuItem {
+                iconRole: "run-cancelled"
+                objectName: "cancelMacroMenuItem"
+                visible: root.automation.running
+                height: visible ? implicitHeight : 0
+                action: Action {
+                    text: qsTr("Cancel macro")
+                    enabled: root.automation.running && !root.automation.cancelling
+                    onTriggered: root.automation.cancelRun()
+                }
+            }
             ShellMenuItem {
                 iconRole: "automation-manager"
                 objectName: "automationManagerMenuItem"
@@ -1582,7 +1634,11 @@ ApplicationWindow {
                     onTriggered: root.showPanel(automationDock)
                 }
             }
-            MenuSeparator {}
+            // The macros go after it, whatever static items come before.
+            MenuSeparator {
+                id: macrosSeparator
+                objectName: "macrosSeparator"
+            }
             Instantiator {
                 model: root.macroItems
                 delegate: ShellMenuItem {
@@ -1603,7 +1659,12 @@ ApplicationWindow {
                         }
                     }
                 }
-                onObjectAdded: (index, object) => automationMenu.insertItem(5 + index, object)
+                onObjectAdded: (index, object) => {
+                    let at = 0
+                    while (at < automationMenu.count && automationMenu.itemAt(at) !== macrosSeparator)
+                        ++at
+                    automationMenu.insertItem(at + 1 + index, object)
+                }
                 onObjectRemoved: (index, object) => automationMenu.removeItem(object)
             }
         }
@@ -5701,6 +5762,8 @@ ApplicationWindow {
                     refreshAction: reloadAutoloadAction
                     documentName: root.shell.editingTitle
                     documentTab: root.app.currentTab
+                    settings: root.app.settings
+                    notices: root.notices
                 }
             }
         }
@@ -6068,6 +6131,21 @@ ApplicationWindow {
         anchors.rightMargin: 12
         anchors.bottomMargin: 12 + (inFullscreen ? videoFullscreenWindow.pinnedPanelHeight : root.footer.height)
         z: 1000002
+        // AD3 (#312): a macro run's notice and progress card, under the toasts.
+        AutomationProgress {
+            id: automationProgress
+            width: parent ? parent.width : implicitWidth
+            automation: root.automation
+            onOpenRun: runId => root.openAutomationRun(runId)
+            // Back to the panel F6 came from; with none (every panel
+            // closed), to the window itself.
+            onFocusReturned: panel => {
+                if (panel)
+                    root.focusPanel(panel, Qt.OtherFocusReason)
+                else
+                    root.contentItem.forceActiveFocus(Qt.OtherFocusReason)
+            }
+        }
     }
     readonly property alias notices: notices
     // NT1: a toast's Details (and "N more notices") opens the Log panel,
@@ -7929,13 +8007,5 @@ ApplicationWindow {
                 onActivated: root.automationHotkeys.run(modelData.legacyName)
             }
         }
-    }
-
-    // AM1: a legacy Hotkeys.txt's script lines (the Automation panel's menu).
-    FileDialog {
-        id: legacyHotkeysDialog
-        objectName: "legacyHotkeysDialog"
-        nameFilters: [qsTranslate("HikariSub.Automation", "Hotkeys (Hotkeys.txt)"), qsTranslate("HikariSub.Automation", "All files (*)")]
-        onAccepted: root.automationHotkeys.importLegacy(root.app.localPath(selectedFile))
     }
 }
