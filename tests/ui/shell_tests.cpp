@@ -69,6 +69,7 @@
 #include <QGuiApplication>
 #include <QSignalSpy>
 #include <QQmlApplicationEngine>
+#include <QQmlComponent>
 #include <QQmlContext>
 #include <QQmlExpression>
 #include <QQmlProperty>
@@ -7645,11 +7646,49 @@ private slots:
         restartWith(app::Application::Options());
     }
 
+    // PU7 (#309): the window shown while the installer runs is titled
+    // "Install update", names the version and cannot be closed: no Close on
+    // its title bar, and Esc and the window system's close do nothing. It
+    // reads "Use system title bar" as every dialog does.
+    QQuickWindow *installingWindow(const QString &version)
+    {
+        QQmlComponent component(engine);
+        component.loadFromModule("Hikari.Ui", "UpdateInstallingWindow");
+        auto *window = qobject_cast<QQuickWindow *>(component.createWithInitialProperties(
+            {{QStringLiteral("version"), version},
+             {QStringLiteral("settings"), QVariant::fromValue(static_cast<QObject *>(application->settingsStore()))}}));
+        if (!window)
+            qWarning() << component.errorString();
+        return window;
+    }
+    void installingWindowCannotBeClosed()
+    {
+        std::unique_ptr<QQuickWindow> window(installingWindow(QStringLiteral("1.4.0")));
+        QVERIFY(window);
+        QTRY_VERIFY(window->isVisible());
+        QCOMPARE(window->title(), QStringLiteral("Install update"));
+        QCOMPARE(findItem(window->contentItem(), QStringLiteral("updateInstallingText"))->property("text").toString(),
+                 QStringLiteral("Installing HikariSub 1.4.0…"));
+        QVERIFY(!window->property("closable").toBool());
+        QVERIFY(window->property("settings").value<QObject *>());
+        // The window system's frame offers no Close either (its hints alone).
+        QVERIFY(!window->flags().testFlag(Qt::WindowCloseButtonHint));
+        QVERIFY(window->flags().testFlag(Qt::CustomizeWindowHint));
+        QVERIFY(QTest::qWaitForWindowExposed(window.get()));
+        window->requestActivate();
+        QTRY_COMPARE(QGuiApplication::focusWindow(), window.get());
+        QTest::keyClick(window.get(), Qt::Key_Escape);
+        QVERIFY(!window->close());
+        QCoreApplication::processEvents();
+        QVERIFY(window->isVisible());
+    }
+
     // P8, ADR 0019, DG1 (#222): the update check's results are toasts (NT1,
     // #302), titled "Check for updates" (a failure a warning), the
     // installer's errors "Download and install" or, at the start, "Install
     // update"; a newer release opens on the dialog frame, modeless, in the
-    // resizable notice with its notes, or in the AUR notice for an AUR copy.
+    // resizable notice with its notes; PU7 (#309): an AUR copy's in the same
+    // window, with its command; Skip this version and Remind me later.
     void updateNoticesOpenOnTheDialogFrame()
     {
         // Keys sent before a new window has taken its first show (its
@@ -7723,17 +7762,55 @@ private slots:
         QTest::keyClick(available, Qt::Key_Escape);
         QTRY_VERIFY(!available->isVisible());
 
-        auto *aur = root->findChild<QQuickWindow *>(QStringLiteral("updateAurNotice"));
+        // PU7 (#309): an AUR copy gets the same window: the command to copy,
+        // no offer, Close the default.
         QVariantMap fromAur = release;
         fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
+        fromAur.insert(QStringLiteral("aurCarries"), true);
         QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
                                           Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
-        QTRY_VERIFY(aur->isVisible());
-        QVERIFY(dialogItem("updateAurNotice", "updateAurText")->property("text").toString().contains(QStringLiteral("yay -Syu")));
-        QVERIFY(!available->isVisible());
-        settled(aur);
-        QTest::keyClick(aur, Qt::Key_Escape);
-        QTRY_VERIFY(!aur->isVisible());
+        QTRY_VERIFY(available->isVisible());
+        auto *command = dialogItem("updateAvailable", "updateAurCommand");
+        QTRY_VERIFY(command->isVisible());
+        QVERIFY(command->property("text").toString().contains(QStringLiteral(" -Syu")));
+        QVERIFY(!dialogItem("updateAvailable", "updateOffer")->isVisible());
+        QCOMPARE(available->property("defaultButton").value<QQuickItem *>(), dialogItem("updateAvailable", "updateClose"));
+        auto *copy = dialogItem("updateAvailable", "updateAurCopy");
+        QVERIFY(QMetaObject::invokeMethod(copy, "click"));
+        QCOMPARE(QGuiApplication::clipboard()->text(), command->property("text").toString());
+        QCOMPARE(copy->property("text").toString(), QStringLiteral("Copied"));
+        settled(available);
+        QTest::keyClick(available, Qt::Key_Escape);
+        QTRY_VERIFY(!available->isVisible());
+        // A prerelease the AUR package does not carry: the release page.
+        fromAur.insert(QStringLiteral("aurCarries"), false);
+        fromAur.insert(QStringLiteral("url"), QStringLiteral("https://example.invalid/v9.0.0"));
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QTRY_VERIFY(dialogItem("updateAvailable", "updateAurPrerelease")->isVisible());
+        QVERIFY(!dialogItem("updateAvailable", "updateAurCommand")->isVisible());
+        QCOMPARE(dialogItem("updateAvailable", "updateOffer")->property("text").toString(), QStringLiteral("Open the release page"));
+        QVERIFY(QMetaObject::invokeMethod(available, "close"));
+        QTRY_VERIFY(!available->isVisible());
+        // Skip this version: the version kept as skipped, the window closed;
+        // Settings > Updates offers it again.
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("updateAvailable", "updateSkip"), "click"));
+        QTRY_VERIFY(!available->isVisible());
+        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QCOMPARE(application->settingsStore()->text("updater.skippedVersion"), QStringLiteral("9.0.0"));
+        // Remind me later: the next automatic check a week away.
+        QVERIFY(QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")),
+                                          Q_ARG(QVariantMap, release), Q_ARG(bool, true)));
+        QTRY_VERIFY(available->isVisible());
+        const qint64 before = QDateTime::currentSecsSinceEpoch();
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("updateAvailable", "updateRemind"), "click"));
+        QTRY_VERIFY(!available->isVisible());
+        QVERIFY(updates.nextCheck() >= before + 7 * 24 * 60 * 60);
+        updates.skipVersion(QString());
     }
 
     // P7: the legacy Save routes: the video name, the extension, Save
@@ -11230,8 +11307,8 @@ private slots:
             {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
             {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
             {{"saveTag", Accept}, {"cancelTag", Reject}},
-            {{"updateOffer", Accept}, {"updateClose", Reject}}, // DG1: Remind me in a week at the leading edge
-            {{"updateAurRemind", No}, {"updateAurClose", Reject}},
+            {{"updateOffer", Accept}, {"updateClose", Reject}, {"updateRemind", No}}, // PU7: Skip this version at the leading edge
+            {{"saveLayoutSave", Accept}, {"saveLayoutCancel", Reject}}, // PU7
             {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
             {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
              {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
@@ -12534,6 +12611,38 @@ private slots:
     }
     QVariantMap settingsValues(QObject *dialog) const { return dialog->property("values").toMap(); }
 
+    // PU7 (#309): the update options on Settings > Updates, staged like
+    // every page's: OK writes them and the checker reads them at once; the
+    // skipped version is named there with Offer it again.
+    void settingsUpdatesPageKeepsTheUpdateOptions()
+    {
+        auto &updates = application->updates();
+        const bool autoCheck = updates.autoCheck();
+        updates.skipVersion(QStringLiteral("9.0.0"));
+        auto *dialog = openSettings();
+        QVERIFY(dialog);
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        showSettingsPage("updates");
+        QTRY_VERIFY(dialogItem("settingsDialog", "settingsPageUpdates")->isVisible());
+        auto *check = dialogItem("settingsDialog", "setting_updater.autoCheck");
+        QVERIFY(check);
+        QCOMPARE(check->property("checked").toBool(), autoCheck);
+        QCOMPARE(dialogItem("settingsDialog", "settingsSkippedVersion")->property("text").toString(), QStringLiteral("9.0.0"));
+        QVERIFY(dialogItem("settingsDialog", "settingsInstallNote"));
+        QVERIFY(QMetaObject::invokeMethod(check, "click"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsDialog", "settingsOfferAgain"), "click"));
+        QVERIFY(!dialogItem("settingsDialog", "settingsSkippedVersion")->isVisible());
+        // Staged until OK.
+        QCOMPARE(updates.autoCheck(), autoCheck);
+        QCOMPARE(updates.skippedVersion(), QStringLiteral("9.0.0"));
+        QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsOk"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(updates.autoCheck(), !autoCheck);
+        QVERIFY(updates.skippedVersion().isEmpty());
+        QCOMPARE(application->settingsStore()->boolean("updater.autoCheck"), !autoCheck);
+        updates.setAutoCheck(autoCheck);
+    }
+
     void settingsDialogAppliesChangedValuesLive()
     {
         auto &settings = *application->settingsStore();
@@ -12776,6 +12885,12 @@ private slots:
              {{"automation.loadingMethod", nullptr},
               {"automation.oldScriptsCompatibility", "Compatibility with older HikariSub scripts"},
               {"automation.traceLevel", nullptr}}},
+            // PU7 (#309): the options that left the update window (the
+            // skipped version is a row of its own, below).
+            {"settingsPageUpdates",
+             {{"updater.autoCheck", "Check for updates automatically"},
+              {"updater.checkForStable", "Stable versions only"},
+              {"updater.autoInstall", "Install updates automatically"}}},
         };
         std::set<std::string> shown;
         for (const auto &[pageName, controls] : pages) {
@@ -12804,6 +12919,9 @@ private slots:
             if (!b.sizeSetting.empty())
                 bound.insert(std::string(b.sizeSetting));
         }
+        // PU7: the skipped version's row, named with Offer it again.
+        QVERIFY(bound.erase("updater.skippedVersion"));
+        QVERIFY(dialogItem("settingsDialog", "settingsOfferAgain"));
         QCOMPARE(shown, bound);
         std::set<std::string> held;
         for (const auto &id : settingsValues(dialog).keys())
@@ -12814,6 +12932,7 @@ private slots:
                 bound.insert(std::string(s.id));
         // and PK1's questions hidden with "Don't ask again" (Ask again).
         bound.insert("notices.hiddenQuestions");
+        bound.insert("updater.skippedVersion"); // PU7: held, shown in its row
 #ifndef HIKARI_WITH_VSFILTERMOD
         // W2: "Subtitle display filter" holds a value only when it is offered
         // (a CSRI renderer besides libass); its control stays in the page.
@@ -12989,6 +13108,8 @@ private slots:
     // O3: File > Import legacy settings... (a ShellMenuItem) reviews a
     // legacy installation's files, imports the chosen changes for the next
     // start and rolls them back; the legacy files are never written.
+    // PU7 (#309): through the wizard's three steps (choose, review, result),
+    // the review's Conflicts and All, and Roll back… asked in the message box.
     void legacySettingsImportThroughTheWindow()
     {
         QTemporaryDir home, legacy;
@@ -13013,43 +13134,82 @@ private slots:
         auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
         QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("visible").toBool());
-        auto footerButton = [&](const char *name) {
-            auto *footer = dialog->property("footer").value<QQuickItem *>();
-            return footer ? findItem(footer, QLatin1String(name)) : nullptr;
+        auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
+        auto visibleNamed = [&](const char *name) {
+            auto *found = control(name);
+            return found && found->isVisible();
         };
-        QVERIFY(!footerButton("settingsImportImport")->property("enabled").toBool());
+        // Step 1: no installation found in this home, nothing to review yet.
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QVERIFY(visibleNamed("settingsImportNext"));
+        QVERIFY(!control("settingsImportNext")->property("enabled").toBool());
+        QVERIFY(!visibleNamed("settingsImportImport"));
 
+        // Choosing an installation reads it.
         auto &importer = application->settingsImport();
         QVERIFY(importer.addRoot(legacy.path()));
-        dialogItem("settingsImportDialog", "settingsImportRoots")->setProperty("currentIndex", importer.roots().size() - 1);
-        QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportRead"), "click"));
+        const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
+        QQuickItem *root = nullptr;
+        QTRY_VERIFY((root = control(last.constData())) != nullptr);
+        QVERIFY(QMetaObject::invokeMethod(root, "click"));
         QCOMPARE(importer.root(), QDir::cleanPath(legacy.path()));
-        auto *rows = dialogItem("settingsImportDialog", "settingsImportRows");
+        QTRY_VERIFY(control("settingsImportNext")->property("enabled").toBool());
+
+        // Step 2: the conflicts, the proposed ones ticked.
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QCOMPARE(dialog->property("step").toInt(), 2);
+        QVERIFY(visibleNamed("settingsImportBack") && visibleNamed("settingsImportImport"));
+        QVERIFY(!visibleNamed("settingsImportNext"));
+        auto *rows = control("settingsImportRows");
         QTRY_VERIFY(rows->property("count").toInt() > 0);
         QVERIFY(importer.chosen().contains("setting:grid.font"));
         QVERIFY(importer.chosen().contains("shortcut:GLOBAL_SAVE_SUBS:G"));
-        QVERIFY(dialogItem("settingsImportDialog", "settingsImportSummary")->property("text").toString().contains(
-            QStringLiteral("1 excluded")));
-        // The theme is shown, excluded, and cannot be chosen.
+        int selectable = 0;
         QVariantMap theme;
-        for (const auto &row : importer.rows())
+        for (const auto &row : importer.rows()) {
+            selectable += row.toMap().value(QStringLiteral("selectable")).toBool();
             if (row.toMap().value(QStringLiteral("key")) == QStringLiteral("PROGRAM_THEME"))
                 theme = row.toMap();
+        }
+        QCOMPARE(rows->property("count").toInt(), selectable);
+        QCOMPARE(control("settingsImportSummary")->property("text").toString(),
+                 QStringLiteral("%1 of %2 chosen").arg(importer.chosen().size()).arg(selectable));
+        QCOMPARE(control("settingsImportImport")->property("text").toString(),
+                 QStringLiteral("Import %1 setting(s)").arg(importer.chosen().size()));
+        // The theme is excluded: not a conflict, shown under All only, as
+        // "Not here" and without a tick box.
         QCOMPARE(theme.value(QStringLiteral("disposition")).toString(), QStringLiteral("excluded"));
         QVERIFY(!theme.value(QStringLiteral("selectable")).toBool());
+        const QString themeId = theme.value(QStringLiteral("id")).toString();
+        auto rowNamed = [&](const QString &name) { return findItem(rows, name); };
+        QVERIFY(!rowNamed(QStringLiteral("settingsImportRow_") + themeId));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportFilter"), "activated", Q_ARG(int, 1)));
+        QTRY_COMPARE(rows->property("count").toInt(), int(importer.rows().size()));
+        QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
+        QQuickItem *themeStatus = nullptr;
+        for (int i = 0; i < rows->property("count").toInt() && !themeStatus; ++i) {
+            QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtIndex", Q_ARG(int, i), Q_ARG(int, 0)));
+            themeStatus = rowNamed(QStringLiteral("settingsImportStatus_") + themeId);
+        }
+        QVERIFY(themeStatus);
+        QCOMPARE(themeStatus->property("text").toString(), QStringLiteral("Not here"));
+        auto *themeBox = rowNamed(QStringLiteral("settingsImportChoose_") + themeId);
+        QVERIFY(!themeBox || !themeBox->isVisible() || !themeBox->isEnabled());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportFilter"), "activated", Q_ARG(int, 0)));
+        QTRY_COMPARE(rows->property("count").toInt(), selectable);
         // Choosing a row far down the list keeps the list where it is
         // scrolled, and "Proposed choice" still reaches the clicked row.
         {
             const QVariantList all = importer.rows();
-            int last = int(all.size()) - 1;
-            while (last >= 0 && !all.at(last).toMap().value(QStringLiteral("selectable")).toBool())
-                --last;
-            QVERIFY(last > 0);
-            const QString id = all.at(last).toMap().value(QStringLiteral("id")).toString();
+            int lastRow = int(all.size()) - 1;
+            while (lastRow >= 0 && !all.at(lastRow).toMap().value(QStringLiteral("selectable")).toBool())
+                --lastRow;
+            QVERIFY(lastRow > 0);
+            const QString id = all.at(lastRow).toMap().value(QStringLiteral("id")).toString();
             const bool proposed = importer.chosen().contains(id.toStdString());
             QVERIFY(QMetaObject::invokeMethod(rows, "positionViewAtEnd"));
             QQuickItem *box = nullptr;
-            QTRY_VERIFY((box = findItem(rows, QStringLiteral("settingsImportChoose_") + id)) != nullptr);
+            QTRY_VERIFY((box = rowNamed(QStringLiteral("settingsImportChoose_") + id)) != nullptr);
             const QPointer<QQuickItem> sameBox(box);
             const qreal scrolled = rows->property("contentY").toReal();
             QVERIFY(scrolled > 0);
@@ -13059,16 +13219,32 @@ private slots:
             QVERIFY(sameBox);
             QCOMPARE(box->property("checked").toBool(), !proposed);
             QCOMPARE(rows->property("contentY").toReal(), scrolled);
-            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportProposed"), "click"));
+            QVERIFY(QMetaObject::invokeMethod(control("settingsImportProposed"), "click"));
             QVERIFY(sameBox);
             QCOMPARE(box->property("checked").toBool(), proposed);
             QCOMPARE(rows->property("contentY").toReal(), scrolled);
         }
-        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportImport"), "click"));
-        QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportStatus")->property("text").toString().contains(
-            QStringLiteral("starts again")));
+        // Back to step 1 and on again keeps the choice.
+        const auto chosen = importer.chosen();
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportBack"), "click"));
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QCOMPARE(importer.chosen(), chosen);
+
+        // Step 3: the result, in effect at the next start.
+        const int count = int(importer.chosen().size());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportImport"), "click"));
+        QTRY_COMPARE(dialog->property("step").toInt(), 3);
+        QCOMPARE(control("settingsImportResult")->property("text").toString(),
+                 QStringLiteral("%1 setting(s) imported.").arg(count));
+        QVERIFY(control("settingsImportStatus")->property("text").toString().contains(QStringLiteral("starts again")));
+        QVERIFY(visibleNamed("settingsImportClose"));
+        QVERIFY(!visibleNamed("settingsImportCancel") && !visibleNamed("settingsImportBack"));
+        QCOMPARE(visibleNamed("settingsImportRollback"), importer.canRollBack());
         // Not in effect in this session.
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
 
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Arial"));
@@ -13076,16 +13252,24 @@ private slots:
                     .contains(QStringLiteral("GLOBAL_SAVE_SUBS G=Ctrl-Alt-S")));
         QVERIFY(!application->settingsStore()->isSet(QStringLiteral("program.theme")));
 
-        // Roll back, asked first, in effect at the next start.
+        // Roll back from step 1's bar, asked first in PK1's message box:
+        // Cancel keeps the import, Roll back is in effect at the next start.
         QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
         dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
         QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(footerButton("settingsImportRollback")->property("enabled").toBool());
-        QVERIFY(QMetaObject::invokeMethod(footerButton("settingsImportRollback"), "click"));
-        auto *question = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportRollbackQuestion"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QCOMPARE(dialog->property("step").toInt(), 1);
+        QTRY_VERIFY(visibleNamed("settingsImportRollbackBar"));
+        QCOMPARE(control("settingsImportState")->property("text").toString(), QStringLiteral("The last import is in effect."));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("cancel"));
+        QVERIFY(!application->settingsImport().pending());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollbackBar"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("rollback"));
         QVERIFY(application->settingsImport().pending());
+        QTRY_COMPARE(control("settingsImportState")->property("text").toString(),
+                     QStringLiteral("An import waits for the next start."));
         restartWithSpelling(home.path(), false);
         QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
         QVERIFY(!application->settingsStore()->isSet(application::kHotkeysSetting.data()));
@@ -13093,6 +13277,56 @@ private slots:
         QFile f(legacy.filePath(QStringLiteral("Config/Config.txt")));
         QVERIFY(f.open(QIODevice::ReadOnly));
         QCOMPARE(f.readAll(), config);
+    }
+
+    // PU7 (#309): a folder that holds no legacy installation says why on the
+    // wizard's first step; Roll back… from the result says it rolled back,
+    // and the import it undid never takes effect.
+    void settingsImportWizardSaysWhyAndWhatItRolledBack()
+    {
+        QTemporaryDir home, legacy, empty;
+        QVERIFY(home.isValid() && legacy.isValid() && empty.isValid());
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\n";
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        {
+            QFile f(legacy.filePath(QStringLiteral("Config/Config.txt")));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(config);
+        }
+        restartWithSpelling(home.path(), false);
+        QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+        auto *dialog = engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("settingsImportDialog"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto control = [&](const char *name) { return dialogItem("settingsImportDialog", name); };
+        // The folder dialog's choice (a closed FolderDialog keeps no folder
+        // set from outside): an empty folder is refused, with why.
+        auto addFolder = [&](const QString &path) {
+            return QMetaObject::invokeMethod(dialog, "addFolder", Q_ARG(QVariant, QUrl::fromLocalFile(path).toString()));
+        };
+        QVERIFY(addFolder(empty.path()));
+        QTRY_VERIFY(control("settingsImportRootProblem")->isVisible());
+        QCOMPARE(control("settingsImportRootProblem")->property("text").toString(), application->settingsImport().status());
+        QVERIFY(!control("settingsImportRootProblem")->property("text").toString().isEmpty());
+        // A readable one: the problem goes.
+        QVERIFY(addFolder(legacy.path()));
+        QTRY_VERIFY(control("settingsImportNext")->isEnabled());
+        QVERIFY(!control("settingsImportRootProblem")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportNext"), "click"));
+        QVERIFY(application->settingsImport().chosen().contains("setting:grid.font"));
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportImport"), "click"));
+        QTRY_COMPARE(dialog->property("step").toInt(), 3);
+        QVERIFY(application->settingsImport().pending());
+        QVERIFY(control("settingsImportRollback")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(control("settingsImportRollback"), "click"));
+        answerMessage("settingsImportMessages", QStringLiteral("Roll back import"),
+                      QStringLiteral("Go back to the settings you had before the last import?"), QStringLiteral("rollback"));
+        QTRY_COMPARE(control("settingsImportResult")->property("text").toString(),
+                     QStringLiteral("Rolled back to the settings before the last import."));
+        restartWithSpelling(home.path(), false);
+        QCOMPARE(application->settingsStore()->text("grid.font"), QStringLiteral("Tahoma"));
     }
 
     // R6-dictionary-location: the Main page lists the settings folder's
@@ -15285,7 +15519,7 @@ private slots:
         // (legacy's Themes page is K2's Appearance page, #206; PF1-pages:
         // one flat list, legacy's sub-pages are sections)
         QCOMPARE(names, (QStringList{"General", "Appearance", "Line editor", "Subtitle grid", "Video", "Audio",
-                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys"}));
+                                     "Conversion", "Subtitle properties", "Automation", "Hotkeys", "Updates"}));
         QVERIFY(dialogItem("settingsDialog", "settingsPageHotkeys"));
         // V3: "Open video with FFMS2" and AM1: "Open shortcut mapping
         // window" retired, never listed; WS3: the five View arrangements and
@@ -26391,7 +26625,7 @@ private slots:
     }
 
     // DG1 (#222) screenshots for review (HIKARI_DIALOG_SHOT_DIR; skipped
-    // without it): About, Credits, a newer release and the AUR notice in the
+    // without it): About, Credits and a newer release in the
     // four themes on HikariSub's title bar (where the platform has one: X11,
     // Wayland, Windows), then About with "Use system title bar" (the update
     // check's warning is a toast since NT1).
@@ -26421,17 +26655,13 @@ private slots:
                                                                            "window.\n- About and Credits stay open beside the editor.\n\nFixed\n"
                                                                            "- The update notice remembers its size.")},
                                   {QStringLiteral("offer"), QStringLiteral("page")}};
-        QVariantMap fromAur = release;
-        fromAur.insert(QStringLiteral("offer"), QStringLiteral("aur"));
-        // Each opener leaves its dialog shown; the name is its window's.
+        // Each opener leaves its dialog shown; the name is its window's (the
+        // AUR variant is PU7's, pu7Screenshots).
         const std::vector<std::pair<QString, std::function<void()>>> dialogs{
             {QStringLiteral("aboutDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("aboutDialog")), "open"); }},
             {QStringLiteral("creditsDialog"), [&] { QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("creditsDialog")), "open"); }},
             {QStringLiteral("updateAvailable"), [&] {
                  QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, release), Q_ARG(bool, true));
-             }},
-            {QStringLiteral("updateAurNotice"), [&] {
-                 QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, fromAur), Q_ARG(bool, true));
              }},
         };
         const auto shoot = [&](const QString &name, const QString &file) {
@@ -26462,6 +26692,155 @@ private slots:
                 open();
                 shoot(name, QStringLiteral("dg1-%1-system-%2.png").arg(name, code));
             }
+        }
+    }
+
+    // PU7 (#309): every popup the card redesigned, in the four themes, for
+    // the card's evidence: the update window (an offer, an AUR install's
+    // command, a prerelease its package does not carry), Install update,
+    // Settings > Updates and > Hotkeys, the import wizard's three steps and
+    // its Roll back question, Save layout as, Manage layouts (renaming, the
+    // Delete question) and Move panel.
+    void pu7Screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_PU7_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_PU7_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        // A settings file of its own: the import needs one (as
+        // legacySettingsImportThroughTheWindow's).
+        QTemporaryDir home, legacy;
+        QVERIFY(home.isValid() && legacy.isValid());
+        QDir().mkpath(legacy.filePath(QStringLiteral("Config")));
+        QByteArray config = "[HikariSub v0.0.1-rc.1]\r\n";
+        for (int i = 1; i <= 11; ++i)
+            config += "EDITBOX_TAG_BUTTON_VALUE" + QByteArray::number(i) + "=\r\n";
+        config += "GRID_FONT=Arial\r\nPROGRAM_THEME=Mine\r\nAUTOSAVE_MAX_FILES=5\r\nGRID_LOAD_SORTED_SUBS=1\r\n";
+        for (const auto &[name, bytes] :
+             {std::pair{"Config/Config.txt", config},
+              std::pair{"Config/Hotkeys.txt", QByteArray("[Kainote v0.9.0.1500]\r\nGLOBAL_SAVE_SUBS G=Ctrl-Alt-S\r\n")}}) {
+            QFile f(legacy.filePath(QLatin1String(name)));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write(bytes);
+        }
+        restartWithSpelling(home.path(), false);
+        auto restart = qScopeGuard([&] { restartWith(app::Application::Options()); });
+        QVERIFY(application->openFile(episode));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("custom"));
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            settings.setValue(QStringLiteral("appearance.titleBar"), QStringLiteral("auto"));
+        });
+        const auto setTheme = [&](const QString &code) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+        };
+        const auto grab = [&](QQuickWindow *window, const QString &file) {
+            QVERIFY(window);
+            QTRY_VERIFY(window->isVisible());
+            QVERIFY(QTest::qWaitForWindowExposed(window));
+            QTest::qWait(300);
+            QVERIFY(window->grabWindow().save(out + QLatin1Char('/') + file));
+        };
+        const auto windowNamed = [&](const char *name) { return root->findChild<QQuickWindow *>(QLatin1String(name)); };
+        const auto closeWindow = [&](QQuickWindow *window) {
+            QVERIFY(window->close());
+            QTRY_VERIFY(!window->isVisible());
+        };
+        auto &updates = application->updates();
+        const QString notes = QStringLiteral("New\n- Dialogs are windows of their own.\n- The update options are on "
+                                             "Settings > Updates.\n\nFixed\n- Skip this version is kept.");
+        const auto release = [&](const char *offer, bool prerelease, bool carries) {
+            const QString version = prerelease ? QStringLiteral("1.4.0-beta.2") : QStringLiteral("1.4.0");
+            return QVariantMap{{QStringLiteral("name"), QStringLiteral("HikariSub ") + version},
+                               {QStringLiteral("tag"), QStringLiteral("v") + version},
+                               {QStringLiteral("version"), version},
+                               {QStringLiteral("notes"), notes},
+                               {QStringLiteral("prerelease"), prerelease},
+                               {QStringLiteral("aurCarries"), carries},
+                               {QStringLiteral("offer"), QLatin1String(offer)}};
+        };
+        auto &layouts = application->workspaceLayout();
+        QTRY_VERIFY(root->property("arrangementSettled").toBool()); // the saved layouts read
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Subtitles only")));
+        QVERIFY(layouts.saveLayoutAs(QStringLiteral("Review with video")));
+        auto &importer = application->settingsImport();
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            setTheme(code);
+            const auto file = [&](const char *name) { return QStringLiteral("pu7-%1-%2.png").arg(QLatin1String(name), code); };
+            // The update window.
+            for (const auto &[name, r] : {std::pair{"update-offer", release("notify", false, true)},
+                                          std::pair{"update-aur", release("aur", false, true)},
+                                          std::pair{"update-aur-prerelease", release("aur", true, false)}}) {
+                QMetaObject::invokeMethod(&updates, "finished", Q_ARG(QString, QStringLiteral("available")), Q_ARG(QVariantMap, r),
+                                          Q_ARG(bool, true));
+                grab(windowNamed("updateAvailable"), file(name));
+                closeWindow(windowNamed("updateAvailable"));
+            }
+            {
+                std::unique_ptr<QQuickWindow> installing(installingWindow(QStringLiteral("1.4.0")));
+                grab(installing.get(), file("install-update"));
+            }
+            // Settings > Updates and > Hotkeys.
+            auto *settingsDialog = qobject_cast<QQuickWindow *>(openSettings());
+            QVERIFY(settingsDialog);
+            QVERIFY(QMetaObject::invokeMethod(settingsDialog, "put", Q_ARG(QVariant, QStringLiteral("updater.skippedVersion")),
+                                              Q_ARG(QVariant, QStringLiteral("1.3.2"))));
+            showSettingsPage("updates");
+            grab(settingsDialog, file("settings-updates"));
+            showSettingsPage("hotkeys");
+            grab(settingsDialog, file("settings-hotkeys"));
+            QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+            QTRY_VERIFY(!settingsDialog->isVisible());
+            // The import wizard: its steps, then the Roll back question.
+            QVERIFY(QMetaObject::invokeMethod(named("importSettingsMenuItem"), "triggered"));
+            auto *wizard = windowNamed("settingsImportDialog");
+            QTRY_VERIFY(wizard && wizard->isVisible());
+            QVERIFY(importer.addRoot(legacy.path())); // (opening finds the installations anew)
+            QQuickItem *legacyRoot = nullptr;
+            const QByteArray last = "settingsImportRoot_" + QByteArray::number(importer.roots().size() - 1);
+            QTRY_VERIFY((legacyRoot = dialogItem("settingsImportDialog", last.constData())) != nullptr);
+            QVERIFY(QMetaObject::invokeMethod(legacyRoot, "click"));
+            QTRY_VERIFY(dialogItem("settingsImportDialog", "settingsImportNext")->isEnabled());
+            grab(wizard, file("import-1"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportNext"), "click"));
+            grab(wizard, file("import-2-conflicts"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportFilter"), "activated", Q_ARG(int, 1)));
+            grab(wizard, file("import-2-all"));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportFilter"), "activated", Q_ARG(int, 0)));
+            QVERIFY(QMetaObject::invokeMethod(dialogItem("settingsImportDialog", "settingsImportImport"), "click"));
+            QTRY_COMPARE(wizard->property("step").toInt(), 3);
+            grab(wizard, file("import-3"));
+            QVERIFY(QMetaObject::invokeMethod(wizard, "askRollBack"));
+            grab(messageBox("settingsImportMessages"), file("import-rollback"));
+            QVERIFY(QMetaObject::invokeMethod(messageBox("settingsImportMessages"), "answer", Q_ARG(QVariant, QStringLiteral("rollback"))));
+            closeWindow(wizard);
+            // The layout windows.
+            QVERIFY(QMetaObject::invokeMethod(named("viewLayoutSaveAs"), "triggered"));
+            findItem(windowNamed("saveLayoutDialog")->contentItem(), QStringLiteral("saveLayoutName"))
+                ->setProperty("text", QStringLiteral("Subtitles only"));
+            grab(windowNamed("saveLayoutDialog"), file("save-layout"));
+            closeWindow(windowNamed("saveLayoutDialog"));
+            auto *manage = windowNamed("manageLayoutsDialog");
+            QVERIFY(QMetaObject::invokeMethod(named("viewLayoutManage"), "triggered"));
+            grab(manage, file("manage-layouts"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "startRename"));
+            grab(manage, file("manage-layouts-rename"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "endRename"));
+            QVERIFY(QMetaObject::invokeMethod(manage, "askDelete"));
+            grab(messageBox("manageLayoutsMessages"), file("manage-layouts-delete"));
+            QVERIFY(QMetaObject::invokeMethod(messageBox("manageLayoutsMessages"), "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            closeWindow(manage);
+            // Move panel.
+            item("editingGrid")->forceActiveFocus();
+            QVERIFY(QMetaObject::invokeMethod(named("movePanel"), "triggered"));
+            grab(windowNamed("placementWindow"), file("move-panel"));
+            closeWindow(windowNamed("placementWindow"));
         }
     }
 

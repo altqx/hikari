@@ -295,28 +295,38 @@ bool AutomationHotkeysController::run(const QString &legacyName)
     return target && m_automation.run(target->first, target->second, AutomationShell::RunOrigin::Hotkey);
 }
 
-int AutomationHotkeysController::importLegacy(const QString &path)
+QVariantMap AutomationHotkeysController::importLegacy(const QString &path)
 {
     QFile f(path);
     if (!f.open(QIODevice::ReadOnly))
-        return 0;
+        return {{QStringLiteral("read"), false}};
     const QByteArray bytes = f.readAll();
     int added = 0;
+    int kept = 0;
+    QStringList skipped;
     for (auto &b : application::parseLegacyScriptHotkeys(std::string_view(bytes.constData(), static_cast<std::size_t>(bytes.size())))) {
-        if (m_committed.contains(b.legacyName))
-            continue; // the current binding is kept
+        if (m_committed.contains(b.legacyName)) {
+            ++kept; // the current binding is kept
+            continue;
+        }
         b.keys = canonicalKeys(b.keys);
         bool taken = false;
         for (const auto &[name, existing] : m_committed)
             taken = taken || existing.keys == b.keys;
-        if (taken)
-            continue; // the keys already belong to another macro
+        if (taken) { // the keys already belong to another macro
+            skipped << QStringLiteral("%1 (%2)").arg(QString::fromStdString(b.legacyName), QString::fromStdString(b.keys));
+            continue;
+        }
         m_committed[b.legacyName] = std::move(b);
         ++added;
     }
     if (added > 0)
         commitChange();
-    return added;
+    return {{QStringLiteral("read"), true},
+            {QStringLiteral("added"), added},
+            {QStringLiteral("kept"), kept},
+            {QStringLiteral("skipped"), int(skipped.size())},
+            {QStringLiteral("skippedNames"), skipped}};
 }
 
 QString AutomationHotkeysController::keysOf(int key, int modifiers) const

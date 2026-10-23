@@ -5672,6 +5672,10 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
     // A changed program font runs HikariSubFrame::DestroyDialogs.
     if (wrote("program.font") || wrote("program.fontSize"))
         destroyDialogs();
+    // PU7 (#309): the Updates page's options, which the update checker holds
+    // (and writes back with its next check's time).
+    if (std::ranges::any_of(written, [](const std::string &id) { return id.starts_with("updater."); }))
+        m_updates->reload();
     // O2: the Hotkeys page's list, a bound control of SetOptions.
     m_hotkeys->commitOptions();
 }
