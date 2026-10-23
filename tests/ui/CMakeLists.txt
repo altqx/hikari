@@ -280,7 +280,7 @@ target_compile_definitions(hikari_ui_tab_layouts_tests PRIVATE
     HIKARI_MEDIA_FIXTURES="${CMAKE_BINARY_DIR}/tests/backends/media-fixtures")
 add_dependencies(hikari_ui_tab_layouts_tests hikari_media_fixtures hikari_media_helper)
 # WS2: the tab's arrangement in an ASS file's [Hikari] section. Seven parts,
-# each its own process under the default 60 s (decision 38g): a refusal row
+# each its own process under the default timeout, 120 s (60 s in decision 38g): a refusal row
 # starts the application as the other functions do, and in one process the
 # suite took 55 s here and timed out in CI on both platforms.
 hikari_add_qttest(hikari_ui_file_layouts_tests SOURCES file_layouts_tests.cpp
@@ -299,7 +299,8 @@ hikari_add_qttest(hikari_ui_typesetting_preset_tests SOURCES typesetting_preset_
 # WS3 (#217): the layout presets and saved layouts (save, apply, rename,
 # delete, persistence) and the retired View arrangements and editor switch.
 # Every function starts the application and its QML, as D2's suite did, so
-# it runs in two parts under the default 60 s (decision 38g, 2026-10-14).
+# it runs in two parts under the default timeout, 120 s (60 s in decision
+# 38g, 2026-10-14).
 hikari_add_qttest(hikari_ui_saved_layouts_tests SOURCES saved_layouts_tests.cpp
     LIBRARIES hikari_composition hikari_translations KDAB::kddockwidgets # WS3: the presets' names in every catalog
     PARTS layouts kept=unusableLayoutsAreKept)
