@@ -1574,6 +1574,19 @@ ApplicationWindow {
                     onTriggered: root.automation.rerunLast()
                 }
             }
+            // AD2-repeat-last-run: the last run again with its answers,
+            // without its dialogs when they are unchanged.
+            ShellMenuItem {
+                help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
+                iconRole: "repeat-run"
+                objectName: "repeatRunMenuItem"
+                action: Action {
+                    id: repeatRunAction
+                    text: qsTr("Repeat last run")
+                    enabled: root.automation.canRepeat && !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_REPEAT_LAST_RUN")) root.automation.repeatLast()
+                }
+            }
             ShellMenuItem {
                 iconRole: "automation-manager"
                 objectName: "automationManagerMenuItem"
@@ -6387,6 +6400,7 @@ ApplicationWindow {
         controller: root.automationDialogs
         colourPicker: root.colourPicker
         settings: root.app.settings
+        messages: messages
     }
     AutomationFilePicker {
         picker: root.automationPicker
@@ -7539,6 +7553,7 @@ ApplicationWindow {
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
+        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, // AD2
         GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,

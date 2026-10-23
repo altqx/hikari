@@ -2803,6 +2803,18 @@
    ]
   },
   {
+   "role": "repeat-run",
+   "file": "repeat-run.svg",
+   "label": "Repeat last run",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation",
+    "automation-panel"
+   ]
+  },
+  {
    "role": "automation-manager",
    "file": "automation-manager.svg",
    "label": "Show panel",
