@@ -78,7 +78,8 @@ const std::vector<SettingDefinition> &definitions()
         {"automation.lastScript", "AUTOMATION_RECENT_FILES", String, Profile, Mapped, false, std::string()},
         {"automation.scriptEditor", "AUTOMATION_SCRIPT_EDITOR", String, Profile, Mapped, false, std::string()},
         {"automation.traceLevel", "AUTOMATION_TRACE_LEVEL", Int, Profile, Mapped, false, std::int64_t{3}},
-        {"translation.autoMoveTagsFromOriginal", "AUTO_MOVE_TAGS_FROM_ORIGINAL", Bool, Profile, Mapped, false, false},
+        // TM1 (#232): "Tags from original", on by default (TM1-original-keeps-tags).
+        {"translation.autoMoveTagsFromOriginal", "AUTO_MOVE_TAGS_FROM_ORIGINAL", Bool, Profile, Mapped, false, true},
         {"autosave.maxFiles", "AUTOSAVE_MAX_FILES", Int, Profile, Mapped, false, std::int64_t{3}},
         {"grid.autoSelectLinesFromLastTab", "AUTO_SELECT_LINES_FROM_LAST_TAB", Bool, Profile, Mapped, false, false},
         {"grid.calcSpacesAndPunctuationForWraps", "CALC_SPACES_AND_PUNCTATION_FOR_WRAPS", Bool, Profile, Mapped, false, false},

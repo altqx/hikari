@@ -486,6 +486,7 @@ private slots:
                 "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,{\\i1}Wall\n"
                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
         f.close();
+        application->setMoveTags(false); // TM1: Tags from original starts on
         QVERIFY(application->openFile(f.fileName()));
         QTRY_VERIFY(isOpen("originalDock"));
         QVERIFY(dock("originalDock")->setProperty("isFloating", true));
@@ -514,6 +515,7 @@ private slots:
                 "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,{\\i1}Wall\n"
                 "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
         f.close();
+        application->setMoveTags(false); // TM1: Tags from original starts on
         QVERIFY(application->openFile(f.fileName()));
         QTRY_VERIFY(isOpen("originalDock"));
         QVariant placed;
@@ -782,6 +784,48 @@ private slots:
         }
         settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("dark"));
         stop();
+    }
+
+    // TM1 tags from the original, for the card's evidence: a Line with two
+    // runs, one suggested, then both placed; the Grid marks the Lines with
+    // runs not placed. HIKARI_SURFACE_SHOT_DIR as above.
+    void tagsFromOriginalScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        for (const char *theme : {"dark", "light"}) {
+            start();
+            auto &settings = *application->settingsStore();
+            settings.setValue(QStringLiteral("appearance.followSystem"), false);
+            settings.setValue(QStringLiteral("appearance.theme"), QLatin1String(theme));
+            QFile f(dir.filePath(QStringLiteral("tags-%1.ass").arg(QLatin1String(theme))));
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: TLMode Original\n\n[Events]\n"
+                    "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Comment: 0,0:00:01.00,0:00:02.00,TLMode Original,,0,0,0,,{\\an8}I love {\\i1}Tokyo{\\i0} and {\\b1}you{\\b0}\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an8}J'adore Tokyo et toi\n"
+                    "Comment: 0,0:00:03.00,0:00:04.00,TLMode Original,,0,0,0,,{\\i1}Hello {\\b1}world{\\b0}{\\i0}\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\i1}Hola {\\b1}mundo{\\b0}{\\i0}\n"
+                    "Comment: 0,0:00:05.00,0:00:06.00,TLMode Original,,0,0,0,,text0{\\i1}text1{\\i0\\b1}text2{\\b0}text3\n"
+                    "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,texte0 texte1 texte2\n");
+            f.close();
+            QVERIFY(application->openFile(f.fileName()));
+            QTRY_VERIFY(isOpen("originalDock"));
+            applyPreset("Translation");
+            QTRY_VERIFY(!application->editor().tagRuns().isEmpty());
+            item("translationText")->forceActiveFocus();
+            QTest::qWait(400);
+            QVERIFY(window()->grabWindow().save(out + QStringLiteral("/tags-suggested-%1.png").arg(QLatin1String(theme))));
+            QVERIFY(application->editor().acceptSuggestedRuns());
+            const int toi = item("translationText")->property("text").toString().lastIndexOf(QStringLiteral("toi"));
+            QVERIFY(toi > 0);
+            QVERIFY(application->editor().placeRun(2, toi, toi + 3));
+            QTest::qWait(400);
+            QVERIFY(window()->grabWindow().save(out + QStringLiteral("/tags-placed-%1.png").arg(QLatin1String(theme))));
+            stop();
+        }
     }
 };
 

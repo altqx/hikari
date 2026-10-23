@@ -18,6 +18,8 @@
 #include <utility>
 
 #include <algorithm>
+#include <span>
+#include <array>
 #include <tuple>
 #include <cstdlib>
 
@@ -78,42 +80,577 @@ void LineEditorController::setDocument(std::optional<application::DocumentId> do
     m_draftRedo.clear();
     m_problem.clear();
     m_attempted.clear();
+    m_dismissedFor.reset(); // a Line id of the Document before
+    m_dismissedRuns.clear();
     rebuildLists(); // EditBox::SetGrid
     m_shownLine.reset();
-    m_splitEvaluated.reset();
+    m_carryEvaluated.reset();
     refresh();
 }
 
 std::optional<core::LineRecord> LineEditorController::record() const
 {
     auto r = sessionRecord();
-    if (r && m_split && m_split->line == r->id) {
-        r->text = m_split->original;
-        r->translation = m_split->translation;
+    if (r && !r->translation.empty()) {
+        if (const auto c = carry(*r)) {
+            const auto inner = r->translation.size() - c->leading.size() - c->trailing.size();
+            r->translation = r->translation.substr(c->leading.size(), inner);
+        }
     }
     return r;
 }
 
-void LineEditorController::evaluateSplit()
+std::optional<LineEditorController::Carry> LineEditorController::carry(const core::LineRecord &line) const
 {
-    m_split.reset();
+    if (!m_moveTags || !translationMode())
+        return std::nullopt;
+    // The runs are read against the Line's Style (legacy GetStyle(0, name):
+    // the first of that name, else the first Style), and named resets
+    // against the Document's.
+    const auto *styles = carryStyles();
+    // An Original past what Tags from original reads (a UTF-16 unit is three
+    // UTF-8 bytes at most) carries nothing: not converted for nothing.
+    if (!styles || line.text.size() > 3 * core::kMaxTagTransferUnits)
+        return std::nullopt;
+    const auto style = std::ranges::find(*styles, line.style, &core::StyleValues::name);
+    const auto *base = style != styles->end() ? &*style : styles->empty() ? nullptr : &styles->front();
+    Carry c{core::readOriginalTags(core::toUtf16(line.text), base, *styles), {}, {}};
+    if (c.tags.drawing || c.tags.malformed)
+        return std::nullopt;
+    c.leading = core::toUtf8(c.tags.leading);
+    c.trailing = core::toUtf8(c.tags.trailing);
+    const auto &t = line.translation;
+    if (!t.empty() && (t.size() < c.leading.size() + c.trailing.size() || !t.starts_with(c.leading) ||
+                       !t.ends_with(c.trailing)))
+        return std::nullopt; // the translation's own tags differ: shown whole
+    return c;
+}
+
+const std::vector<core::StyleValues> *LineEditorController::carryStyles() const
+{
+    static const std::vector<core::StyleValues> none;
+    auto *s = session();
+    if (!s)
+        return &none;
+    const CarryStyles::Key key{m_document->value, &s->document(), s->revision()};
+    if (!m_carryStyles || m_carryStyles->key != key) {
+        CarryStyles styles{key, {}, core::styleCount(s->document()) <= core::kMaxTagTransferStyles};
+        if (styles.within)
+            styles.styles = core::decodeStyles(s->document());
+        m_carryStyles = std::move(styles);
+    }
+    return m_carryStyles->within ? &m_carryStyles->styles : nullptr;
+}
+
+std::u8string LineEditorController::carried(const Carry &carry, std::u8string body)
+{
+    return body.empty() ? body : carry.leading + body + carry.trailing;
+}
+
+std::size_t LineEditorController::carriedLead() const
+{
     const auto r = sessionRecord();
-    m_splitEvaluated = r ? std::optional(r->id) : std::nullopt;
-    // EditBox.cpp:1811: grid->hasTLMode && line->TextTl == "" && Moving tags
-    // && Visual <= CROSS.
-    if (!r || !m_moveTags || !translationMode() || !r->translation.empty() ||
-        (m_visualToolActive && m_visualToolActive()))
-        return;
-    const auto moved = application::moveTagsFromOriginal(r->text);
-    if (!moved)
-        return;
-    m_split = Split{r->id, moved->original, moved->translation};
-    // TextEdit->SetSelection(pos, pos); TextEdit->SetFocus() (EditBox.cpp:1857-1858).
-    const auto caret = moved->caret;
-    m_selectionStart = m_selectionEnd =
-        static_cast<int>(m_showTags ? caret : core::displayOffset(core::project(core::toUtf16(moved->translation)), caret));
+    const auto c = r && !r->translation.empty() ? carry(*r) : std::nullopt;
+    return c ? c->tags.leading.size() : 0;
+}
+
+std::optional<core::OriginalTags> LineEditorController::runTags() const
+{
+    const auto r = sessionRecord();
+    auto c = r ? carry(*r) : std::nullopt;
+    return c ? std::optional(std::move(c->tags)) : std::nullopt;
+}
+
+namespace {
+
+// Whether two readings have the same runs: the same formatting on the same
+// text, in the same order.
+bool sameRuns(const core::OriginalTags &a, const core::OriginalTags &b)
+{
+    return std::ranges::equal(a.runs, b.runs, [](const core::TagRun &x, const core::TagRun &y) {
+        return x.differs == y.differs && x.text == y.text;
+    });
+}
+
+// What a reading keeps, in UTF-16 units, near enough to bound them.
+std::size_t runUnits(const core::OriginalTags &tags)
+{
+    const auto state = [](const core::TagState &s) {
+        std::size_t n = 0;
+        for (const auto &[k, v] : s)
+            n += k.size() + v.size();
+        return n;
+    };
+    const auto setters = [](const std::map<std::u16string, core::TagSetter> &m) {
+        std::size_t n = 0;
+        for (const auto &[k, v] : m)
+            n += k.size() + v.tag.size() + 4;
+        return n;
+    };
+    std::size_t n = tags.leading.size() + tags.trailing.size() + state(tags.defaults) + state(tags.base);
+    for (const auto &[name, s] : tags.named)
+        n += name.size() + state(s);
+    for (const auto &run : tags.runs)
+        n += run.text.size() + state(run.differs) + setters(run.opens) + setters(run.closes) + 8;
+    return n;
+}
+
+} // namespace
+
+core::TranslationDraft LineEditorController::translationDraft(const core::OriginalTags &tags,
+                                                              const core::LineRecord &line) const
+{
+    const auto translation = core::toUtf16(line.translation);
+    auto draft = core::readTranslation(tags, translation);
+    const auto it = m_runOrders.find(runOrderKey(line.id));
+    if (it == m_runOrders.end())
+        return draft;
+    const RunOrder *composed = nullptr;
+    for (const auto &entry : it->second) {
+        if (entry.translation != line.translation)
+            continue;
+        if (sameRuns(*entry.tags, tags)) {
+            auto hinted = core::readTranslation(tags, translation, entry.order);
+            core::relabelRuns(tags, hinted, entry.order);
+            return hinted;
+        }
+        if (!composed)
+            composed = &entry;
+    }
+    if (!composed)
+        return draft;
+    // The runs changed under the translation: its placements as composed,
+    // each given to the run it became (recarried), one gone dropped.
+    auto was = core::readTranslation(*composed->tags, translation, composed->order);
+    if (!was.carried)
+        return draft;
+    core::relabelRuns(*composed->tags, was, composed->order);
+    const auto became = core::matchRuns(*composed->tags, tags);
+    for (auto &p : was.placements)
+        p.run = p.run >= 1 && p.run <= static_cast<int>(became.size()) ? became[p.run - 1] : 0;
+    std::erase_if(was.placements, [](const core::RunPlacement &p) { return p.run == 0; });
+    return was;
+}
+
+std::u8string LineEditorController::composedBody(const core::OriginalTags &tags, core::TranslationDraft draft,
+                                                 core::LineId line)
+{
+    draft.carried = false; // carried() adds the carried tags
+    std::vector<core::RunPlacement> placed;
+    auto body = core::toUtf8(core::composeTranslation(tags, draft, &placed));
+    auto translation = body.empty() ? body : core::toUtf8(tags.leading) + body + core::toUtf8(tags.trailing);
+    noteRunOrder(line, RunOrder{std::move(translation), core::runOrder(placed),
+                                std::make_shared<const core::OriginalTags>(tags)});
+    return body;
+}
+
+bool LineEditorController::saveTranslationDraft(const core::OriginalTags &tags, core::TranslationDraft draft)
+{
+    const auto real = sessionRecord();
+    if (!real)
+        return false;
+    // The numbers the translator chose are kept before setRaw refreshes the
+    // fields, which read them back.
+    const auto previous = runOrderOf(real->id);
+    if (setRaw(1, composedBody(tags, std::move(draft), real->id), &previous))
+        return true;
+    setRunOrder(real->id, previous);
+    return false;
+}
+
+std::optional<LineEditorController::RunOrder> LineEditorController::runOrderOf(core::LineId line) const
+{
+    const auto it = m_runOrders.find(runOrderKey(line));
+    return it == m_runOrders.end() || it->second.empty() ? std::nullopt : std::optional(it->second.front());
+}
+
+// The latest entry (runOrderOf) becomes `order`; nullopt drops it.
+void LineEditorController::setRunOrder(core::LineId line, std::optional<RunOrder> order)
+{
+    if (const auto it = m_runOrders.find(runOrderKey(line)); it != m_runOrders.end()) {
+        uncountRunOrder(it->second.front());
+        it->second.erase(it->second.begin());
+        if (it->second.empty())
+            m_runOrders.erase(it);
+    }
+    if (order)
+        noteRunOrder(line, std::move(*order));
+}
+
+void LineEditorController::countRunOrder(RunOrderKey key, const RunOrder &entry)
+{
+    m_runOrderAges.emplace(entry.noted, key);
+    m_runOrderSize += entry.translation.size();
+    if (++m_runOrderReadings[entry.tags.get()] == 1)
+        m_runOrderSize += runUnits(*entry.tags);
+}
+
+void LineEditorController::uncountRunOrder(const RunOrder &entry)
+{
+    m_runOrderAges.erase(entry.noted);
+    m_runOrderSize -= entry.translation.size();
+    const auto it = m_runOrderReadings.find(entry.tags.get());
+    if (--it->second == 0) {
+        m_runOrderSize -= runUnits(*entry.tags);
+        m_runOrderReadings.erase(it);
+    }
+}
+
+// `order` the latest entry, in place of one of the same translation and runs.
+void LineEditorController::noteRunOrder(core::LineId line, RunOrder order)
+{
+    const auto key = runOrderKey(line);
+    auto &entries = m_runOrders[key];
+    // An Original read the same as before is kept once (each typed edit
+    // notes an entry).
+    for (const auto &e : entries)
+        if (e.tags != order.tags && *e.tags == *order.tags) {
+            order.tags = e.tags;
+            break;
+        }
+    std::erase_if(entries, [&](const RunOrder &e) {
+        const bool same = e.translation == order.translation && sameRuns(*e.tags, *order.tags);
+        if (same)
+            uncountRunOrder(e);
+        return same;
+    });
+    order.noted = ++m_runOrderClock;
+    countRunOrder(key, order);
+    entries.insert(entries.begin(), std::move(order));
+    while (entries.size() > kRunOrderHistory) {
+        uncountRunOrder(entries.back());
+        entries.pop_back();
+    }
+    // Every Line's together kept within kRunOrderUnits, the oldest going
+    // (never the entry just noted, the newest).
+    while (m_runOrderSize > kRunOrderUnits && m_runOrderAges.size() > 1) {
+        const auto [noted, oldestKey] = *m_runOrderAges.begin();
+        const auto list = m_runOrders.find(oldestKey);
+        const auto oldest = std::ranges::find(list->second, noted, &RunOrder::noted);
+        uncountRunOrder(*oldest);
+        list->second.erase(oldest);
+        if (list->second.empty())
+            m_runOrders.erase(list);
+    }
+}
+
+std::u8string LineEditorController::recarried(const core::LineRecord &before, const Carry &now)
+{
+    // The placements read with the old runs, each given to the run it became
+    // (a run put in before it renumbers it; one gone is dropped), composed
+    // with the new ones, so a run whose formatting changed takes its new tags.
+    const auto old = carry(before);
+    if (!old)
+        return carried(now, before.translation);
+    auto draft = translationDraft(old->tags, before);
+    const auto became = core::matchRuns(old->tags, now.tags);
+    for (auto &p : draft.placements)
+        p.run = p.run >= 1 && p.run <= static_cast<int>(became.size()) ? became[p.run - 1] : 0;
+    std::erase_if(draft.placements, [](const core::RunPlacement &p) { return p.run == 0; });
+    return carried(now, composedBody(now.tags, std::move(draft), before.id));
+}
+
+namespace {
+
+QString qs16(std::u16string_view s)
+{
+    return QString::fromUtf16(s.data(), static_cast<qsizetype>(s.size()));
+}
+
+// What a run changes, in the run strip's words.
+QString runKind(const core::TagRun &run)
+{
+    struct Kind {
+        std::u16string_view component;
+        const char *name;
+    };
+    static constexpr Kind kinds[] = {
+        {u"i", QT_TRANSLATE_NOOP("HikariSub.Translation", "Italic")},
+        {u"b", QT_TRANSLATE_NOOP("HikariSub.Translation", "Bold")},
+        {u"u", QT_TRANSLATE_NOOP("HikariSub.Translation", "Underline")},
+        {u"s", QT_TRANSLATE_NOOP("HikariSub.Translation", "Strikeout")},
+        {u"1c", QT_TRANSLATE_NOOP("HikariSub.Translation", "Colour")},
+        {u"2c", QT_TRANSLATE_NOOP("HikariSub.Translation", "Colour")},
+        {u"3c", QT_TRANSLATE_NOOP("HikariSub.Translation", "Colour")},
+        {u"4c", QT_TRANSLATE_NOOP("HikariSub.Translation", "Colour")},
+        {u"1a", QT_TRANSLATE_NOOP("HikariSub.Translation", "Transparency")},
+        {u"2a", QT_TRANSLATE_NOOP("HikariSub.Translation", "Transparency")},
+        {u"3a", QT_TRANSLATE_NOOP("HikariSub.Translation", "Transparency")},
+        {u"4a", QT_TRANSLATE_NOOP("HikariSub.Translation", "Transparency")},
+        {u"fn", QT_TRANSLATE_NOOP("HikariSub.Translation", "Font")},
+        {u"fs", QT_TRANSLATE_NOOP("HikariSub.Translation", "Size")},
+        {u"fscx", QT_TRANSLATE_NOOP("HikariSub.Translation", "Scale")},
+        {u"fscy", QT_TRANSLATE_NOOP("HikariSub.Translation", "Scale")},
+        {u"fsp", QT_TRANSLATE_NOOP("HikariSub.Translation", "Spacing")},
+        {u"frx", QT_TRANSLATE_NOOP("HikariSub.Translation", "Rotation")},
+        {u"fry", QT_TRANSLATE_NOOP("HikariSub.Translation", "Rotation")},
+        {u"frz", QT_TRANSLATE_NOOP("HikariSub.Translation", "Rotation")},
+        {u"fax", QT_TRANSLATE_NOOP("HikariSub.Translation", "Shear")},
+        {u"fay", QT_TRANSLATE_NOOP("HikariSub.Translation", "Shear")},
+        {u"xbord", QT_TRANSLATE_NOOP("HikariSub.Translation", "Border")},
+        {u"ybord", QT_TRANSLATE_NOOP("HikariSub.Translation", "Border")},
+        {u"xshad", QT_TRANSLATE_NOOP("HikariSub.Translation", "Shadow")},
+        {u"yshad", QT_TRANSLATE_NOOP("HikariSub.Translation", "Shadow")},
+        {u"be", QT_TRANSLATE_NOOP("HikariSub.Translation", "Blur")},
+        {u"blur", QT_TRANSLATE_NOOP("HikariSub.Translation", "Blur")},
+        {u"t", QT_TRANSLATE_NOOP("HikariSub.Translation", "Animation")},
+        {u"r", QT_TRANSLATE_NOOP("HikariSub.Translation", "Style")},
+    };
+    QStringList names;
+    for (const auto &kind : kinds) {
+        const QString name = QCoreApplication::translate("HikariSub.Translation", kind.name);
+        if (run.differs.contains(std::u16string(kind.component)) && !names.contains(name))
+            names << name;
+    }
+    if (names.isEmpty())
+        names << QCoreApplication::translate("HikariSub.Translation", "Formatting");
+    return names.join(QStringLiteral(", "));
+}
+
+// Whether a flag is on in a run, for its chip's preview: a \b0 or \i0
+// over a bold or italic base turns it off, and a flag the run leaves is
+// the base's. A \b weight is bold from 600.
+bool runTurnsOn(const core::OriginalTags &tags, const core::TagRun &run, const std::u16string &component)
+{
+    auto it = run.differs.find(component);
+    if (it == run.differs.end()) {
+        it = tags.base.find(component);
+        if (it == tags.base.end())
+            return false;
+    }
+    if (component != u"b")
+        return it->second != u"0";
+    bool ok = false;
+    const int weight = QString::fromStdU16String(it->second).toInt(&ok);
+    return ok && (weight == 1 || weight >= 600);
+}
+
+// A translation longer than Tags from original reads, which it takes as
+// plain text: no run is shown or placed in it. The UTF-8 size is checked
+// first, a UTF-16 unit being three bytes at most.
+bool pastTransferLimit(std::u8string_view translation)
+{
+    return translation.size() > 3 * core::kMaxTagTransferUnits
+           || core::toUtf16(translation).size() > core::kMaxTagTransferUnits;
+}
+
+// Whether a draft with `runs` just placed in it is saved as placed: each
+// is found again, over the same text, on reading the composed translation
+// (one past the reader's limits is not, its tags left as the translator's
+// own; one opened by the translator's own tags before it reads over more),
+// and the translator's own formatting around them draws as it did.
+bool placementHolds(const core::OriginalTags &tags, const core::TranslationDraft &draft, std::span<const int> runs)
+{
+    const auto order = core::runOrder(draft.placements);
+    auto back = core::readTranslation(tags, core::composeTranslation(tags, draft), order);
+    core::relabelRuns(tags, back, order);
+    if (back.body != draft.body)
+        return false;
+    for (const int run : runs) {
+        const auto of = [&](const core::RunPlacement &p) { return p.run == run; };
+        const auto placed = std::ranges::find_if(draft.placements, of);
+        const auto read = std::ranges::find_if(back.placements, of);
+        if (placed == draft.placements.end() || read == back.placements.end() || read->start != placed->start
+            || read->end != placed->end)
+            return false;
+    }
+    return core::keepsOwnFormatting(tags, draft);
+}
+
+// "#rrggbb" for a run that changes the primary colour (stored as BBGGRR).
+QString runColour(const core::TagRun &run)
+{
+    const auto it = run.differs.find(u"1c");
+    if (it == run.differs.end() || it->second.size() != 6)
+        return {};
+    const QString bgr = qs16(it->second);
+    return QLatin1Char('#') + (bgr.mid(4, 2) + bgr.mid(2, 2) + bgr.left(2)).toLower();
+}
+
+} // namespace
+
+QVariantList LineEditorController::tagRuns() const
+{
+    QVariantList out;
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!tags || !real || tags->runs.empty() || pastTransferLimit(real->translation)
+        || pastTransferLimit(record()->translation))
+        return out;
+    // Where each placed run's text is: in the whole translation, then in the field.
+    std::vector<core::RunPlacement> landed;
+    const auto full = core::toUtf16(real->translation);
+    if (!full.empty())
+        core::composeTranslation(*tags, translationDraft(*tags, *real), &landed);
+    const auto lead = tags->leading.size();
+    const auto inner = core::project(core::toUtf16(record()->translation));
+    const auto original = core::project(core::toUtf16(real->text));
+    // A suggestion is in the draft's body, which has the field's visible text.
+    std::vector<core::RunPlacement> suggested;
+    core::Projection body;
+    if (!full.empty()) {
+        const auto draft = translationDraft(*tags, *real);
+        suggested = suggestedRuns(*tags, draft);
+        body = core::project(draft.body);
+    }
+    auto inField = [&](std::size_t at, bool start) {
+        const auto shown = core::displayOffset(body, at);
+        return static_cast<int>(m_showTags ? core::rawOffset(inner, shown, start) : shown);
+    };
+    for (const auto &run : tags->runs) {
+        auto originalStart = run.displayStart, originalEnd = run.displayEnd;
+        if (m_showTags) {
+            originalStart = core::rawOffset(original, originalStart, true);
+            originalEnd = core::rawOffset(original, originalEnd, false);
+        }
+        int start = -1, end = -1;
+        for (const auto &p : landed) {
+            if (p.run != run.number)
+                continue;
+            start = static_cast<int>(m_showTags ? p.start - lead : core::displayOffset(inner, p.start - lead));
+            end = static_cast<int>(m_showTags ? p.end - lead : core::displayOffset(inner, p.end - lead));
+        }
+        int suggestedStart = -1, suggestedEnd = -1;
+        for (const auto &p : suggested) {
+            if (p.run == run.number) {
+                suggestedStart = inField(p.start, true);
+                suggestedEnd = inField(p.end, false);
+            }
+        }
+        out << QVariantMap{{QStringLiteral("number"), run.number},
+                           {QStringLiteral("text"), qs16(run.text)},
+                           {QStringLiteral("kind"), runKind(run)},
+                           {QStringLiteral("colour"), runColour(run)},
+                           {QStringLiteral("italic"), runTurnsOn(*tags, run, u"i")},
+                           {QStringLiteral("bold"), runTurnsOn(*tags, run, u"b")},
+                           {QStringLiteral("underline"), runTurnsOn(*tags, run, u"u")},
+                           {QStringLiteral("strikeout"), runTurnsOn(*tags, run, u"s")},
+                           {QStringLiteral("placed"), start >= 0},
+                           {QStringLiteral("originalStart"), static_cast<int>(originalStart)},
+                           {QStringLiteral("originalEnd"), static_cast<int>(originalEnd)},
+                           {QStringLiteral("start"), start},
+                           {QStringLiteral("end"), end},
+                           {QStringLiteral("suggestedStart"), suggestedStart},
+                           {QStringLiteral("suggestedEnd"), suggestedEnd}};
+    }
+    return out;
+}
+
+bool LineEditorController::placeRun(int number, int selectionStart, int selectionEnd)
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!editable() || !tags || !real || pastTransferLimit(real->translation))
+        return false;
+    // The field's selection as projection offsets: the same text in the
+    // field's raw text and in the draft's body, whose run tags are taken out.
+    const auto inner = core::toUtf16(record()->translation);
+    const auto shown = core::project(inner);
+    auto displayed = [&](int at) {
+        const auto x = static_cast<std::size_t>(std::max(at, 0));
+        return m_showTags ? core::displayOffset(shown, std::min(x, inner.size())) : std::min(x, shown.text.size());
+    };
+    const auto from = displayed(std::min(selectionStart, selectionEnd));
+    const auto to = displayed(std::max(selectionStart, selectionEnd));
+    if (from >= to)
+        return false;
+    auto draft = translationDraft(*tags, *real);
+    if (number == 0)
+        number = core::nextUnplacedRun(*tags, draft.placements);
+    if (number < 1 || number > static_cast<int>(tags->runs.size()))
+        return false;
+    const auto body = core::project(draft.body);
+    const auto start = core::rawOffset(body, from, true), end = core::rawOffset(body, to, false);
+    // Text across the translator's own tags is in more than one state, which
+    // no one run reads back over (as core::suggestPlacements).
+    if (draft.body.find(u'{', start) < end)
+        return false;
+    if (!core::placeRun(draft.placements, start, end, number))
+        return false;
+    // Taking one off (the same selection again) needs no check.
+    const auto isRun = [&](const core::RunPlacement &p) { return p.run == number; };
+    if (std::ranges::any_of(draft.placements, isRun) && !placementHolds(*tags, draft, std::array{number}))
+        return false;
+    if (!saveTranslationDraft(*tags, std::move(draft)))
+        return false;
+    const auto after = core::project(core::toUtf16(record()->translation));
+    m_selectionStart = static_cast<int>(m_showTags ? core::rawOffset(after, from, true) : from);
+    m_selectionEnd = static_cast<int>(m_showTags ? core::rawOffset(after, to, false) : to);
     m_selectionRole = 1;
-    m_splitFocus = true;
+    emit selectionRequested();
+    return true;
+}
+
+std::vector<core::RunPlacement> LineEditorController::suggestedRuns(const core::OriginalTags &tags,
+                                                                    const core::TranslationDraft &draft) const
+{
+    auto out = core::suggestPlacements(tags, draft);
+    const auto real = sessionRecord();
+    if (real && m_dismissedFor == std::tuple(real->id, real->text, real->style))
+        std::erase_if(out, [&](const core::RunPlacement &p) { return m_dismissedRuns.contains(p.run); });
+    if (out.empty())
+        return out;
+    // Offered only where accepting them all is saved as placed (placeRun's check).
+    auto accepted = draft;
+    std::vector<int> runs;
+    for (const auto &p : out) {
+        core::placeRun(accepted.placements, p.start, p.end, p.run);
+        runs.push_back(p.run);
+    }
+    if (!placementHolds(tags, accepted, runs))
+        out.clear();
+    return out;
+}
+
+bool LineEditorController::acceptSuggestedRuns()
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!editable() || !tags || !real || real->translation.empty())
+        return false;
+    auto draft = translationDraft(*tags, *real);
+    const auto suggested = suggestedRuns(*tags, draft);
+    if (suggested.empty())
+        return false;
+    for (const auto &p : suggested)
+        core::placeRun(draft.placements, p.start, p.end, p.run);
+    return saveTranslationDraft(*tags, std::move(draft));
+}
+
+bool LineEditorController::dismissSuggestedRuns()
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!tags || !real || real->translation.empty())
+        return false;
+    const auto suggested = suggestedRuns(*tags, translationDraft(*tags, *real));
+    if (suggested.empty())
+        return false;
+    if (const auto key = std::tuple(real->id, real->text, real->style); m_dismissedFor != key) {
+        m_dismissedFor = key;
+        m_dismissedRuns.clear();
+    }
+    for (const auto &p : suggested)
+        m_dismissedRuns.insert(p.run);
+    emit changed();
+    return true;
+}
+
+void LineEditorController::evaluateCarry()
+{
+    const auto r = sessionRecord();
+    m_carryEvaluated = r ? std::optional(r->id) : std::nullopt;
+    // Legacy SetTextWithTags (EditBox.cpp:1811-1858) gave an untranslated
+    // Line's Translated field the focus when it split tags off; here the tags
+    // stay with the Original, and the caret starts the translation.
+    if (!r || !r->translation.empty())
+        return;
+    const auto c = carry(*r);
+    if (!c || (c->leading.empty() && c->trailing.empty() && c->tags.runs.empty()))
+        return;
+    m_selectionStart = m_selectionEnd = 0;
+    m_selectionRole = 1;
+    m_carryFocus = true;
 }
 
 void LineEditorController::setMoveTags(bool on)
@@ -121,7 +658,7 @@ void LineEditorController::setMoveTags(bool on)
     if (on == m_moveTags)
         return;
     m_moveTags = on;
-    m_splitEvaluated.reset(); // OnAutoMoveTags: SetTextWithTags(true)
+    m_carryEvaluated.reset(); // OnAutoMoveTags: SetTextWithTags(true)
     refresh();
 }
 
@@ -274,8 +811,8 @@ std::pair<const core::LineRecord *, const application::DraftChange *> LineEditor
 {
     // The active Line as Application::showVideoSubtitles renders it: the
     // committed Line, with the pending draft's changes when live editing is
-    // on (not E5's split, which is shown only until an edit makes it the
-    // draft). Both in place, so a Line of megabytes is never copied for FS1.
+    // on (its raw text, not the Translated field's without the carried
+    // tags). Both in place, so a Line of megabytes is never copied for FS1.
     auto *s = session();
     if (!s || !s->selection().active)
         return {};
@@ -325,8 +862,8 @@ QString LineEditorController::videoText() const
 
 void LineEditorController::refresh()
 {
-    if (const auto real = sessionRecord(); (real ? std::optional(real->id) : std::nullopt) != m_splitEvaluated)
-        evaluateSplit(); // legacy SetLine runs SetTextWithTags
+    if (const auto real = sessionRecord(); (real ? std::optional(real->id) : std::nullopt) != m_carryEvaluated)
+        evaluateCarry(); // legacy SetLine runs SetTextWithTags
     const auto r = record();
     if ((r ? std::optional(r->id) : std::nullopt) != m_shownLine)
         lineShown();
@@ -343,7 +880,7 @@ void LineEditorController::refresh()
     if (m_attempted.isEmpty())
         m_problem = problemText();
     emit changed();
-    if (std::exchange(m_splitFocus, false)) {
+    if (std::exchange(m_carryFocus, false)) {
         emit selectionRequested();
         emit fieldFocusRequested(1);
     }
@@ -374,7 +911,7 @@ bool LineEditorController::showLine(qulonglong id)
     m_draftRedo.clear();
     m_attempted.clear();
     m_shownLine.reset(); // EditBox::SetLine shows the Line again
-    m_splitEvaluated.reset(); // E5: SetLine
+    m_carryEvaluated.reset(); // E5: SetLine
     if (s->historySize() != before || s->revision() != revision) {
         if (left && left->value != id)
             emit leftLineCommitted(left->value);
@@ -384,29 +921,70 @@ bool LineEditorController::showLine(qulonglong id)
     return true;
 }
 
-bool LineEditorController::setRaw(int role, std::u8string raw)
+bool LineEditorController::translationTyped()
+{
+    const auto *s = session();
+    const auto change = s ? s->draftChange() : std::nullopt;
+    return change && change->second.translation && !change->second.translationCarried;
+}
+
+bool LineEditorController::setRaw(int role, std::u8string raw, const std::optional<RunOrder> *orderBefore)
 {
     auto *s = session();
     const auto r = record();
     if (!s || !r || !m_editable)
         return false;
-    if (raw == roleText(*r, role))
+    if (raw == roleText(*r, role)) {
+        // TM1: another of two equal runs placed on the same text changes
+        // only the run order: a step of its own, for Escape and Undo.
+        const auto now = runOrderOf(r->id);
+        if (orderBefore && (orderBefore->has_value() != now.has_value() ||
+                            (now && ((*orderBefore)->order != now->order || (*orderBefore)->translation != now->translation)))) {
+            const auto real = sessionRecord();
+            m_draftUndo.push_back({real->text, real->translation, translationTyped(), *orderBefore});
+            m_draftRedo.clear();
+            m_attempted.clear();
+            refresh();
+        }
         return true;
-    application::DraftChange change;
-    (role == 0 ? change.text : change.translation) = std::move(raw);
+    }
+    auto order = orderBefore ? *orderBefore : runOrderOf(r->id);
     const auto real = sessionRecord();
-    if (m_split && m_split->line == r->id) {
-        // E5: a split field changed: legacy Send writes both fields
-        // (EditBox.cpp:612-629, splittedTags).
-        if (!change.text)
-            change.text = m_split->original;
-        if (!change.translation)
-            change.translation = m_split->translation;
+    const auto c = carry(*real);
+    const bool typed = translationTyped();
+    application::DraftChange change;
+    if (role == 1) {
+        change.translation = c ? carried(*c, std::move(raw)) : std::move(raw);
+    } else {
+        // TM1: the translation takes the Original's new carried tags, in the
+        // same step; with several Lines selected each keeps its own.
+        auto after = *real;
+        after.text = raw;
+        after.translation.clear();
+        if (const auto next = c && !r->translation.empty() ? carry(after) : std::nullopt) {
+            change.translation = recarried(*real, *next);
+            change.translationCarried = true;
+        } else if (c && !r->translation.empty()) {
+            // The new Original carries nothing (a drawing, unclosed braces):
+            // the translation keeps its own text and tags, the carried ones
+            // and the placed runs' gone.
+            const auto was = translationDraft(c->tags, *real);
+            if (was.carried) {
+                change.translation = core::toUtf8(was.body);
+                change.translationCarried = true;
+            }
+        }
+        change.text = std::move(raw);
     }
     if (!s->editDraft(r->id, change))
         return false;
-    m_split.reset();
-    m_draftUndo.push_back({real->text, real->translation});
+    // TM1: the runs placed keep their numbers through a raw edit of the
+    // translation (text typed inside a run with tags shown): equal runs read
+    // back as the ones the translator chose. (A caller giving the order
+    // before composed the new one already.)
+    if (role == 1 && !orderBefore && c && order && change.translation && sameRuns(*order->tags, c->tags))
+        noteRunOrder(r->id, RunOrder{*change.translation, order->order, order->tags});
+    m_draftUndo.push_back({real->text, real->translation, typed, std::move(order)});
     m_draftRedo.clear();
     m_attempted.clear();
     refresh();
@@ -447,14 +1025,64 @@ void LineEditorController::edit(int role, const QString &newText, int cursor)
     const auto start = static_cast<std::size_t>(prefix);
     const auto end = static_cast<std::size_t>(old.size() - suffix);
 
+    auto graphemes = [](const QString &text) {
+        std::vector<std::size_t> bounds{0};
+        QTextBoundaryFinder finder(QTextBoundaryFinder::Grapheme, text);
+        for (qsizetype b; (b = finder.toNextBoundary()) >= 0;)
+            bounds.push_back(static_cast<std::size_t>(b));
+        return bounds;
+    };
+    // TM1: with the Original's runs placed, the edit goes to the draft's body
+    // (the field's text without the runs' tags) and the placements move with
+    // it, so a run whose text is deleted takes its tags along. `from` and `to`
+    // are visible-text offsets, the same in the field and in the body.
+    const auto tags = role == 1 ? runTags() : std::nullopt;
+    auto editDraft = [&](std::size_t from, std::size_t to, const std::vector<std::size_t> &bounds) {
+        auto draft = translationDraft(*tags, *sessionRecord());
+        const auto result = core::mappedReplace(draft.body, from, to, u16(inserted), bounds);
+        if (!result) {
+            refresh();
+            fail(refusalText(result.error()), newText);
+            return false;
+        }
+        const auto body = core::project(draft.body);
+        const auto rawStart = core::rawOffset(body, from, true);
+        const auto rawEnd = std::max(rawStart, core::rawOffset(body, to, false));
+        core::shiftPlacements(draft.placements, rawStart, rawEnd, result->size() + (rawEnd - rawStart) - draft.body.size());
+        draft.body = *result;
+        return saveTranslationDraft(*tags, std::move(draft));
+    };
     if (m_showTags) {
+        // With the tags shown, an edit that removes visible text only (no
+        // tag in what it takes or types) goes to the draft as above, so a
+        // placed run's emptied wrapper goes too. Any other edit (one typing
+        // a \N among them), and typing on either side of a tag, is raw text.
+        const auto shown = core::project(u16(old));
+        const auto from = core::displayOffset(shown, start), to = core::displayOffset(shown, end);
+        const auto real = sessionRecord();
+        const bool placed = tags && real && !real->translation.empty() && [&] {
+            const auto draft = translationDraft(*tags, *real);
+            return draft.carried && !draft.placements.empty();
+        }();
+        if (placed && end > start && to - from == end - start && !inserted.contains(u'{') && !inserted.contains(u'}')
+            && !inserted.contains(u'\\')) {
+            if (editDraft(from, to, graphemes(QString::fromStdU16String(shown.text)))) {
+                const auto field = core::project(core::toUtf16(record()->translation));
+                m_selectionStart = m_selectionEnd =
+                    static_cast<int>(core::rawOffset(field, from + static_cast<std::size_t>(inserted.size()), false));
+                m_selectionRole = 1;
+                emit selectionRequested();
+            }
+            return;
+        }
         setRaw(role, u8(newText));
         return;
     }
-    std::vector<std::size_t> bounds{0};
-    QTextBoundaryFinder finder(QTextBoundaryFinder::Grapheme, old);
-    for (qsizetype b; (b = finder.toNextBoundary()) >= 0;)
-        bounds.push_back(static_cast<std::size_t>(b));
+    const auto bounds = graphemes(old);
+    if (tags && !tags->runs.empty()) {
+        editDraft(start, end, bounds);
+        return;
+    }
     const auto raw = core::toUtf16(roleText(*record(), role));
     const auto result = core::mappedReplace(raw, start, end, u16(inserted), bounds);
     if (!result) {
@@ -583,7 +1211,23 @@ bool LineEditorController::sendDraft(bool leaving, bool visual)
         return true;
     const auto change = s->draftChange();
     const bool lists = change && (change->second.actor || change->second.effect);
-    if (!s->commitDraftToSelected("Edit Line", leaving)) {
+    // TM1: another selected Line's translation follows its own new text or
+    // Style, as the edited Line's did (setRaw, chooseStyle).
+    const auto companion = [this](const core::LineRecord &before, core::LineRecord &after) {
+        const auto c = before.translation.empty() ? std::nullopt : carry(before);
+        if (!c)
+            return;
+        auto bare = after;
+        bare.translation.clear();
+        if (const auto next = carry(bare)) {
+            after.translation = recarried(before, *next);
+        } else if (const auto was = translationDraft(c->tags, before); was.carried) {
+            // Its new Original carries nothing (a drawing): its own text and
+            // tags stay, the carried ones and the placed runs' go.
+            after.translation = core::toUtf8(was.body);
+        }
+    };
+    if (!s->commitDraftToSelected("Edit Line", leaving, companion)) {
         if (s->draftLine()) {
             fail(problemText());
             return false;
@@ -704,11 +1348,33 @@ int shownAlignment(const core::LineRecord &line, const std::vector<core::StyleVa
     return application::legacyAlignment(line, styleAlignment);
 }
 
+// Back at the committed Line (Undo or Redo of the draft's steps): no draft
+// remains.
+void dropUnchangedDraft(application::EditSession &s, core::LineId id)
+{
+    const auto lines = s.document().lines();
+    const auto it = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == id; });
+    const auto d = s.draftRecord();
+    if (it != lines.end() && d && d->text == (*it)->text && d->translation == (*it)->translation &&
+        d->start.value == (*it)->start.value && d->end.value == (*it)->end.value &&
+        d->marginLeft.value == (*it)->marginLeft.value && d->marginRight.value == (*it)->marginRight.value &&
+        d->marginVertical.value == (*it)->marginVertical.value && d->comment == (*it)->comment &&
+        d->layer.value == (*it)->layer.value && d->style == (*it)->style && d->actor == (*it)->actor &&
+        d->effect == (*it)->effect && d->startFrame == (*it)->startFrame && d->endFrame == (*it)->endFrame)
+        s.discardDraft();
+}
+
 } // namespace
 
 void LineEditorController::discard()
 {
     auto *s = session();
+    // TM1: the run order goes back with the text, to the draft's first
+    // step's (a step that changed only the order leaves no draft).
+    const auto active = s ? record() : std::nullopt;
+    if (const auto line = s && s->draftLine() ? s->draftLine() : active ? std::optional(active->id) : std::nullopt;
+        line && !m_draftUndo.empty())
+        setRunOrder(*line, m_draftUndo.front().order);
     if (s)
         s->discardDraft();
     clearTimeWarnings(); // the shown times are the Line's again
@@ -759,21 +1425,17 @@ bool LineEditorController::undo()
     const QString before[2] = {m_shown[0], m_shown[1]};
     const auto line = s->selection().active;
     if (!m_draftUndo.empty() && r) {
-        m_draftRedo.push_back({r->text, r->translation});
+        // The whole translation, the carried tags too (record() strips them).
+        const auto whole = sessionRecord();
+        m_draftRedo.push_back({whole->text, whole->translation, translationTyped(), runOrderOf(r->id)});
         const Snapshot previous = std::move(m_draftUndo.back());
         m_draftUndo.pop_back();
-        s->editDraft(r->id, application::DraftChange{.text = previous.text, .translation = previous.translation});
-        // Back at the committed Line: no draft remains.
-        const auto lines = s->document().lines();
-        const auto it = std::ranges::find_if(lines, [&](const core::LineRecord *l) { return l->id == r->id; });
-        const auto d = s->draftRecord();
-        if (it != lines.end() && d && d->text == (*it)->text && d->translation == (*it)->translation &&
-            d->start.value == (*it)->start.value && d->end.value == (*it)->end.value &&
-            d->marginLeft.value == (*it)->marginLeft.value && d->marginRight.value == (*it)->marginRight.value &&
-            d->marginVertical.value == (*it)->marginVertical.value && d->comment == (*it)->comment &&
-            d->layer.value == (*it)->layer.value && d->style == (*it)->style && d->actor == (*it)->actor &&
-            d->effect == (*it)->effect && d->startFrame == (*it)->startFrame && d->endFrame == (*it)->endFrame)
-            s->discardDraft();
+        setRunOrder(r->id, previous.order);
+        s->editDraft(r->id, application::DraftChange{.text = previous.text,
+                                                     .translation = previous.translation,
+                                                     .translationCarried = !previous.translationTyped,
+                                                     .restoresProvenance = true});
+        dropUnchangedDraft(*s, r->id);
         m_attempted.clear();
         refresh();
         placeCaretAfterChange(before);
@@ -803,10 +1465,16 @@ bool LineEditorController::redo()
     const QString before[2] = {m_shown[0], m_shown[1]};
     const auto line = s->selection().active;
     if (!m_draftRedo.empty() && r) {
-        m_draftUndo.push_back({r->text, r->translation});
+        const auto whole = sessionRecord(); // as Undo's
+        m_draftUndo.push_back({whole->text, whole->translation, translationTyped(), runOrderOf(r->id)});
         const Snapshot next = std::move(m_draftRedo.back());
         m_draftRedo.pop_back();
-        s->editDraft(r->id, application::DraftChange{.text = next.text, .translation = next.translation});
+        setRunOrder(r->id, next.order);
+        s->editDraft(r->id, application::DraftChange{.text = next.text,
+                                                     .translation = next.translation,
+                                                     .translationCarried = !next.translationTyped,
+                                                     .restoresProvenance = true});
+        dropUnchangedDraft(*s, r->id); // a step that changed only the run order
         refresh();
         placeCaretAfterChange(before);
         return true;
@@ -864,6 +1532,15 @@ bool LineEditorController::toggleTagIn(int role, const QString &tag, int selecti
     const auto r = record();
     if (!editable() || !r || tag.size() != 1 || !QStringLiteral("bius").contains(tag))
         return false;
+    // TM1: over a selection in the Translated field, the Original's run of
+    // that style is placed, as a word processor's Ctrl+I would.
+    if (role == 1 && selectionStart != selectionEnd) {
+        if (const auto tags = runTags()) {
+            const auto draft = translationDraft(*tags, *sessionRecord());
+            if (const int run = core::runWithProperty(*tags, draft.placements, u16(tag)))
+                return placeRun(run, selectionStart, selectionEnd);
+        }
+    }
     // The Style's value; legacy GetStyle(0, name) takes the first Style of that name.
     bool styleValue = false;
     for (const auto &style : core::decodeStyles(session()->document()))
@@ -893,6 +1570,8 @@ bool LineEditorController::editRaw(int role, int selectionStart, int selectionEn
     const auto r = record();
     if (!r)
         return false;
+    if (role == 1 && editPlacedBody(selectionStart, selectionEnd, change))
+        return true;
     const std::u16string raw = core::toUtf16(roleText(*r, role));
     long from = selectionStart, to = selectionEnd;
     std::optional<core::Projection> projection;
@@ -916,6 +1595,56 @@ bool LineEditorController::editRaw(int role, int selectionStart, int selectionEn
         m_selectionEnd = static_cast<int>(core::displayOffset(after, static_cast<std::size_t>(result.selectionEnd)));
     }
     m_selectionRole = role;
+    emit selectionRequested();
+    return true;
+}
+
+// TM1: a tag edit in a Translated field with placed runs goes to the draft's
+// body, the translator's own text, and the placements stay where their text
+// is: the run tags around it are written again, not edited as raw text,
+// which would no longer read as the Original's runs.
+bool LineEditorController::editPlacedBody(int selectionStart, int selectionEnd,
+                                          const std::function<core::legacy::EditorText(core::legacy::EditorText)> &change)
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!tags || !real || real->translation.empty())
+        return false;
+    auto draft = translationDraft(*tags, *real);
+    if (!draft.carried || draft.placements.empty())
+        return false;
+    // The field's selection as visible-text offsets, the same in the field
+    // and in the body (placeRun).
+    const auto inner = core::toUtf16(record()->translation);
+    const auto shown = core::project(inner);
+    auto displayed = [&](int at) {
+        const auto x = static_cast<std::size_t>(std::max(at, 0));
+        return m_showTags ? core::displayOffset(shown, std::min(x, inner.size())) : std::min(x, shown.text.size());
+    };
+    const auto fromShown = displayed(selectionStart), toShown = displayed(selectionEnd);
+    const auto before = core::project(draft.body);
+    std::vector<std::pair<std::size_t, std::size_t>> placed;
+    for (const auto &p : draft.placements)
+        placed.emplace_back(core::displayOffset(before, p.start), core::displayOffset(before, p.end));
+    const long from = static_cast<long>(core::rawOffset(before, fromShown, true));
+    const long to = selectionStart == selectionEnd ? from : static_cast<long>(core::rawOffset(before, toShown, false));
+    const core::legacy::EditorText result = change({draft.body, from, to});
+    const auto after = core::project(result.text);
+    if (after.text != before.text)
+        return false; // the edit changed the text itself: as raw text
+    draft.body = result.text;
+    for (std::size_t i = 0; i < placed.size(); ++i) {
+        draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
+        draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
+    }
+    if (!saveTranslationDraft(*tags, std::move(draft)))
+        return false;
+    const auto selStart = core::displayOffset(after, static_cast<std::size_t>(result.selectionStart));
+    const auto selEnd = core::displayOffset(after, static_cast<std::size_t>(result.selectionEnd));
+    const auto field = core::project(core::toUtf16(record()->translation));
+    m_selectionStart = static_cast<int>(m_showTags ? core::rawOffset(field, selStart, true) : selStart);
+    m_selectionEnd = static_cast<int>(m_showTags ? core::rawOffset(field, selEnd, false) : selEnd);
+    m_selectionRole = 1;
     emit selectionRequested();
     return true;
 }
@@ -951,11 +1680,9 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
             return core::legacy::insertTagButtonText(std::move(t), text);
         });
     // Several Lines: the text goes into each selected Line's text (its
-    // translation when it has one) at the caret, as one step.
-    long from = selectionStart;
-    if (!m_showTags)
-        from = static_cast<long>(core::rawOffset(core::project(core::toUtf16(roleText(*r, role))),
-                                                 static_cast<std::size_t>(selectionStart), true));
+    // translation when it has one) at the caret, as one step. With the tags
+    // hidden the caret is a place in the visible text, found in each Line's.
+    const auto shown = static_cast<std::size_t>(std::max(selectionStart, 0));
     if (s->draftLine() && !s->commitDraft())
         return false;
     std::vector<core::LineId> lines;
@@ -967,7 +1694,37 @@ bool LineEditorController::applyTagButton(int role, const QString &tag, int type
             for (const auto id : lines)
                 if (!d.editLine(id, [&](core::LineRecord &l) {
                         auto &field = l.translation.empty() ? l.text : l.translation;
-                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(core::toUtf16(field), from, text));
+                        auto units = core::toUtf16(field);
+                        const auto c = l.translation.empty() ? std::nullopt : carry(l);
+                        // TM1: placed runs stay placed: the text goes into the
+                        // draft's body and the runs' tags are written again
+                        // around the same text (editPlacedBody).
+                        if (c && !m_showTags) {
+                            auto draft = translationDraft(c->tags, l);
+                            if (draft.carried && !draft.placements.empty()) {
+                                const auto body = core::project(draft.body);
+                                const auto at = core::rawOffset(body, std::min(shown, body.text.size()), true);
+                                auto inserted = core::legacy::insertTagButtonTextAt(draft.body, static_cast<long>(at), text);
+                                core::shiftPlacements(draft.placements, at, at, inserted.size() - draft.body.size());
+                                draft.body = std::move(inserted);
+                                composedBody(c->tags, draft, l.id);
+                                field = core::toUtf8(core::composeTranslation(c->tags, draft));
+                                return;
+                            }
+                        }
+                        // Else the caret is in the Translated field's text, after
+                        // each Line's own carried leading block and before its
+                        // trailing one.
+                        const std::size_t lead = c ? std::min(c->tags.leading.size(), units.size()) : 0;
+                        const std::size_t trail = c ? std::min(c->tags.trailing.size(), units.size() - lead) : 0;
+                        std::size_t at = shown;
+                        if (!m_showTags) {
+                            const auto visible =
+                                core::project(std::u16string_view(units).substr(lead, units.size() - lead - trail));
+                            at = core::rawOffset(visible, std::min(shown, visible.text.size()), true);
+                        }
+                        at = std::min(at + lead, units.size() - trail);
+                        field = core::toUtf8(core::legacy::insertTagButtonTextAt(std::move(units), static_cast<long>(at), text));
                     }))
                     return false;
             return true;
@@ -1042,6 +1799,57 @@ void LineEditorController::publishRawSelection(const core::legacy::EditorText &s
     emit selectionRequested();
 }
 
+// TM1: a dialog's change on one Line whose translation has placed runs goes
+// to the draft's body, the translator's own text, and the runs' tags are
+// written again around the same text (editPlacedBody): a tag put in over a
+// placed run is not merged into the run's own block. False when it does not
+// apply (nothing placed, or a change to the text itself).
+bool LineEditorController::applyDialogToPlacedBody(
+    DialogSession &d, const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one)
+{
+    const auto tags = runTags();
+    const auto real = sessionRecord();
+    if (!tags || !real || real->translation.empty())
+        return false;
+    auto draft = translationDraft(*tags, *real);
+    if (!draft.carried || draft.placements.empty())
+        return false;
+    // The field's raw offsets and the body's meet at the visible text.
+    const auto field = core::project(d.state.text);
+    const auto before = core::project(draft.body);
+    auto toBody = [&](long at, bool afterTags) {
+        const auto shown = core::displayOffset(field, static_cast<std::size_t>(std::max(at, 0L)));
+        return static_cast<long>(core::rawOffset(before, shown, afterTags));
+    };
+    std::vector<std::pair<std::size_t, std::size_t>> placed;
+    for (const auto &p : draft.placements)
+        placed.emplace_back(core::displayOffset(before, p.start), core::displayOffset(before, p.end));
+    const core::legacy::EditorText state{draft.body, toBody(d.state.selectionStart, true),
+                                         toBody(d.state.selectionEnd, d.state.selectionEnd == d.state.selectionStart)};
+    const auto result = one(state, toBody(d.position, false));
+    const auto after = core::project(result.state.text);
+    if (after.text != before.text)
+        return false;
+    draft.body = result.state.text;
+    for (std::size_t i = 0; i < placed.size(); ++i) {
+        draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
+        draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
+    }
+    if (result.state.text != state.text && !saveTranslationDraft(*tags, std::move(draft)))
+        return false;
+    const auto text = core::toUtf16(record()->translation);
+    const auto now = core::project(text);
+    auto toField = [&](long at, bool afterTags) {
+        const auto shown = core::displayOffset(after, static_cast<std::size_t>(std::max(at, 0L)));
+        return static_cast<long>(core::rawOffset(now, shown, afterTags));
+    };
+    d.state = core::legacy::EditorText{text, toField(result.state.selectionStart, true),
+                                       toField(result.state.selectionEnd, false)};
+    d.position = toField(result.position, false);
+    publishRawSelection(d.state);
+    return true;
+}
+
 bool LineEditorController::applyDialogChange(
     const std::function<core::legacy::StepResult(const core::legacy::EditorText &, long)> &one,
     const std::function<void(std::u16string &, std::u16string &)> &several)
@@ -1051,6 +1859,8 @@ bool LineEditorController::applyDialogChange(
     auto &d = *m_dialog;
     auto *s = session();
     if (!d.several) {
+        if (d.role == 1 && applyDialogToPlacedBody(d, one))
+            return true;
         auto result = one(d.state, d.position);
         if (result.state.text != d.state.text && !setRaw(d.role, core::toUtf8(result.state.text)))
             return false;
@@ -1073,7 +1883,38 @@ bool LineEditorController::applyDialogChange(
             for (const auto id : lines)
                 if (!doc.editLine(id, [&](core::LineRecord &l) {
                         std::u16string text = core::toUtf16(l.text), translation = core::toUtf16(l.translation);
-                        several(text, translation);
+                        // TM1: a translation with tags carried changes between
+                        // them, as the Translated field shows it.
+                        const auto c = translation.empty() ? std::nullopt : carry(l);
+                        const std::size_t lead = c ? c->tags.leading.size() : 0;
+                        const std::size_t trail = c ? c->tags.trailing.size() : 0;
+                        auto draft = c ? translationDraft(c->tags, l) : core::TranslationDraft{};
+                        if (c && draft.carried && !draft.placements.empty()) {
+                            // Placed runs stay placed: the change goes to the
+                            // draft's body and the runs' tags are written
+                            // again around the same text (editPlacedBody).
+                            const auto before = core::project(draft.body);
+                            std::vector<std::pair<std::size_t, std::size_t>> placed;
+                            for (const auto &p : draft.placements)
+                                placed.emplace_back(core::displayOffset(before, p.start),
+                                                    core::displayOffset(before, p.end));
+                            several(text, draft.body);
+                            const auto after = core::project(draft.body);
+                            if (after.text != before.text)
+                                draft.placements.clear();
+                            for (std::size_t i = 0; i < draft.placements.size(); ++i) {
+                                draft.placements[i].start = core::rawOffset(after, placed[i].first, true);
+                                draft.placements[i].end = core::rawOffset(after, placed[i].second, false);
+                            }
+                            composedBody(c->tags, draft, l.id);
+                            translation = core::composeTranslation(c->tags, draft);
+                        } else if (c && translation.size() > lead + trail) {
+                            auto body = translation.substr(lead, translation.size() - lead - trail);
+                            several(text, body);
+                            translation = c->tags.leading + body + c->tags.trailing;
+                        } else {
+                            several(text, translation);
+                        }
                         const auto t8 = core::toUtf8(text), tr8 = core::toUtf8(translation);
                         changedAny = changedAny || t8 != l.text || tr8 != l.translation;
                         l.text = t8;
@@ -1383,7 +2224,7 @@ void LineEditorController::committed()
 {
     m_draftUndo.clear();
     m_draftRedo.clear();
-    m_splitEvaluated.reset(); // DoUndo and the commands show the Line again (SetLine)
+    m_carryEvaluated.reset(); // DoUndo and the commands show the Line again (SetLine)
     if (m_onCommitted)
         m_onCommitted();
     refresh();
@@ -1394,6 +2235,10 @@ bool LineEditorController::pasteAllToTranslation()
     const auto r = record();
     if (!translationMode() || !editable() || !r)
         return false;
+    // TM1: with tags carried, the Translated field takes the Original's text
+    // with its runs placed; the carried tags are added as for typing.
+    if (const auto c = carry(*sessionRecord()))
+        return saveTranslationDraft(c->tags, core::draftOfOriginal(core::toUtf16(r->text), c->tags));
     return setRaw(1, r->text);
 }
 
@@ -1527,6 +2372,11 @@ std::pair<int, int> LineEditorController::displaySpan(int role, int start, int e
         return {start, end};
     const std::u16string raw = core::toUtf16(roleText(*r, role));
     const int size = static_cast<int>(raw.size());
+    if (role == 1) { // TM1: offsets in the whole translation
+        const int lead = static_cast<int>(carriedLead());
+        start -= lead;
+        end -= lead;
+    }
     start = std::clamp(start, 0, size);
     end = std::clamp(end, 0, size);
     if (!m_showTags) {
@@ -1549,6 +2399,11 @@ std::pair<long, long> LineEditorController::rawFieldSelection(int role) const
             to = end == start ? from : static_cast<long>(core::rawOffset(projection, static_cast<std::size_t>(end), false));
         }
     }
+    if (role == 1) { // TM1: offsets in the whole translation
+        const long lead = static_cast<long>(carriedLead());
+        from += lead;
+        to += lead;
+    }
     return {from, to};
 }
 
@@ -1568,7 +2423,7 @@ void LineEditorController::reloadFromSession()
 {
     m_draftUndo.clear();
     m_draftRedo.clear();
-    m_splitEvaluated.reset();
+    m_carryEvaluated.reset();
     refresh();
 }
 
@@ -1943,7 +2798,19 @@ bool LineEditorController::chooseStyle(const QString &name)
     const auto r = record();
     if (!editable() || !r || !assFields() || name.isEmpty())
         return false;
-    session()->editDraft(r->id, application::DraftChange{.style = u8(name)});
+    application::DraftChange change{.style = u8(name)};
+    // TM1: the runs are read against the Style: the placed ones are written
+    // again for the new one (core::matchRuns; one it no longer has is dropped).
+    if (const auto real = sessionRecord(); real && !real->translation.empty() && carry(*real)) {
+        auto after = *real;
+        after.style = *change.style;
+        after.translation.clear();
+        if (const auto next = carry(after)) {
+            change.translation = recarried(*real, *next);
+            change.translationCarried = true;
+        }
+    }
+    session()->editDraft(r->id, change);
     m_attempted.clear();
     const bool sent = sendDraft(false, visualToolOn()); // OnCommit
     refresh();
@@ -2236,8 +3103,10 @@ bool LineEditorController::chooseAlignment(int index)
     auto *s = session();
     if (s->selection().selected.size() < 2) {
         // GetEditor/PutTagInText: TextEdit (the translation in translation
-        // mode), or TextEditOrig while the translation is empty.
-        const int role = translationMode() && !r->translation.empty() ? 1 : 0;
+        // mode), or TextEditOrig while the translation is empty. TM1: with
+        // tags carried, \an is the Original's, and the translation follows.
+        const bool follows = r->translation.empty() || carry(*sessionRecord());
+        const int role = translationMode() && !follows ? 1 : 0;
         const auto [from, to] = m_fieldSelection[role];
         return editRaw(role, from, to, [&](core::legacy::EditorText t) {
             core::legacy::TagEditor editor(std::move(t));
@@ -2259,6 +3128,19 @@ bool LineEditorController::chooseAlignment(int index)
         "Editing multiple lines", s->revision(), {lines.begin(), lines.end()}, [&](core::Document &d) {
             for (const auto id : lines)
                 if (!d.editLine(id, [&](core::LineRecord &l) {
+                        // TM1: with tags carried, \an is the Original's and the
+                        // translation follows, as for one Line.
+                        if (carry(l)) {
+                            auto after = l;
+                            after.text = core::toUtf8(core::legacy::putTagInLine(core::toUtf16(l.text), u"an([0-9])", tag));
+                            after.translation.clear();
+                            if (const auto next = carry(after)) {
+                                if (!l.translation.empty())
+                                    l.translation = recarried(l, *next);
+                                l.text = std::move(after.text);
+                                return;
+                            }
+                        }
                         auto &field = l.translation.empty() ? l.text : l.translation;
                         field = core::toUtf8(core::legacy::putTagInLine(core::toUtf16(field), u"an([0-9])", tag));
                     }))

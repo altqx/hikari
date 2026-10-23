@@ -11,6 +11,7 @@
 #include "hikari/application/subtitle_comparison.h"
 #include "hikari/core/document.h"
 #include "hikari/core/spelling.h"
+#include "hikari/core/style.h"
 
 #include <QAbstractTableModel>
 #include <QColor>
@@ -91,6 +92,10 @@ public:
         LineStateRole,
         // GR2: the row shows the Line editor's uncommitted draft.
         DraftRole,
+        // TM1 (#232): with tags from the original carried, the Line's
+        // translation leaves a run of its Original unplaced
+        // (core::hasUnplacedRuns); apart from Unconfirmed.
+        UnplacedRunsRole,
     };
     // E6: the number cell's colour index in LabelColoursRole for a State
     // (SubsGridWindow.cpp:478-479): 0 normal, 1 modified, 2 saved, 3 doubtful
@@ -162,6 +167,9 @@ public:
             m_draft->shownText.reset();
     }
     bool showOriginal() const { return m_showOriginal; }
+    // TM1: AUTO_MOVE_TAGS_FROM_ORIGINAL ("Tags from original"): the
+    // UnplacedRunsRole marks, in translation mode only. Off until set.
+    void setRunMarks(bool on);
     // F3: legacy TextData::Init for the Grid: the marks of a Line's text in
     // the Document's format, misspellings only when `spell` (bracket errors
     // always). Unset: no marks. Applied from the next setDocument.
@@ -209,6 +217,7 @@ private:
         QVariantList comparisonMarks; // R1: ComparisonMarksRole
         int state = 0;               // E6: LineStateRole
         mutable std::optional<QString> shownText; // E6: the Text column, tags swapped when hidden
+        mutable std::optional<bool> unplacedRuns;  // TM1: UnplacedRunsRole, read when first shown
     };
     const QString &shownTextOf(const Row &row) const;
     // The row as shown: the draft's for the drafted row (GR2).
@@ -217,6 +226,7 @@ private:
     bool tagsSwapped() const { return m_hideTags && !m_translationMode; }
     const Measures &measuresOf(const Row &row) const;
     const QVariantList &spellMarksOf(const Row &row) const;
+    bool unplacedRunsOf(const Row &row) const;
     TagSpelling m_spelling;
     ChangeState m_changeState;
     bool m_hideTags = false;
@@ -232,6 +242,9 @@ private:
     core::SubtitleFormat m_format = core::SubtitleFormat::Ass;
     bool m_translationMode = false;
     bool m_showOriginal = false;
+    bool m_runMarks = false;
+    std::vector<core::StyleValues> m_styles; // TM1: the runs' base
+    bool m_tooManyStyles = false;            // past core::kMaxTagTransferStyles: no marks
     bool m_filtered = false;
     int m_headerBlock = 0;
     int m_hidden = 0;

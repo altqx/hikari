@@ -2205,6 +2205,20 @@ ApplicationWindow {
     // One text role of the Line editor (Original or Translated). The field
     // mirrors the editor's projection; user changes go to the controller,
     // which maps them onto the raw source. Programmatic updates are not edits.
+    // TM1: the dotted underline of a suggested run (RoleField).
+    component SuggestionDots: Row {
+        id: dots
+        spacing: 2
+        height: 2
+        Repeater {
+            model: Math.max(0, Math.floor((dots.width + 2) / 4))
+            Rectangle {
+                width: 2
+                height: 2
+                color: Theme.accent
+            }
+        }
+    }
     component RoleField: TextArea {
         id: field
         required property int role
@@ -2222,11 +2236,72 @@ ApplicationWindow {
         Layout.minimumHeight: topPadding + bottomPadding + cursorRectangle.height
 
         property bool syncing: false
+        // Where `inner` starts in `outer` past its carried tags: a match
+        // after whole override blocks and the spaces among them ("\h" before
+        // a leading tag), not one inside a tag ("an8" in "{\an8}an8").
+        // Where `inner` starts in `outer` past a prefix of override blocks
+        // and ASS spaces ending with a block, or -1. Linear in both: the
+        // prefix walked once for where its blocks end, `inner` found by
+        // KMP (a long Line's prefix is never scanned per candidate). The
+        // block ends kept by position: V4's Set.has is linear.
+        function carriedPrefix(outer, inner) {
+            const ends = []
+            let any = false
+            let at = 0
+            for (let open = -1; at < outer.length; ++at) {
+                const c = outer[at]
+                if (open >= 0) {
+                    if (c === "{")
+                        break
+                    if (c === "}") {
+                        ends[at + 1] = true
+                        any = true
+                        open = -1
+                    }
+                } else if (c === "{") {
+                    open = at
+                } else if (c === "\\" && "hNn".includes(outer[at + 1] ?? "")) {
+                    ++at
+                } else if (c !== " " && c !== "\t") {
+                    break
+                }
+            }
+            if (!any || inner.length === 0)
+                return -1
+            const fail = [0]
+            for (let i = 1, k = 0; i < inner.length; ++i) {
+                while (k > 0 && inner[i] !== inner[k])
+                    k = fail[k - 1]
+                if (inner[i] === inner[k])
+                    ++k
+                fail.push(k)
+            }
+            for (let i = 0, k = 0; i < outer.length && i - k <= at; ++i) {
+                while (k > 0 && outer[i] !== inner[k])
+                    k = fail[k - 1]
+                if (outer[i] === inner[k])
+                    ++k
+                if (k === inner.length) {
+                    if (ends[i + 1 - k] === true)
+                        return i + 1 - k
+                    k = fail[k - 1]
+                }
+            }
+            return -1
+        }
         function sync() {
             if (text === shown)
                 return
             syncing = true
-            const caret = cursorPosition
+            let caret = cursorPosition
+            // TM1: the carried tags shown or left out around the same text
+            // (Tags from original switched): the caret keeps its place in it.
+            const added = text.length > 0 ? carriedPrefix(shown, text) : -1
+            const removed = shown.length > 0 ? carriedPrefix(text, shown) : -1
+            if (added > 0)
+                caret += added
+            else if (removed > 0)
+                caret = Math.max(0, caret - removed)
             text = shown
             cursorPosition = Math.min(caret, length)
             syncing = false
@@ -2254,11 +2329,105 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
-            // E5: Moving tags gives the Translated field the focus, in its
+            // E5: an untranslated Line with tags gives the Translated field the
+            // focus (TM1's Tags from original; legacy's Moving tags), in its
             // window (the Original text panel may float in another).
             function onFieldFocusRequested(role) {
                 if (role === field.role)
                     root.focusPanel(field, Qt.OtherFocusReason)
+            }
+        }
+        // The rows of text from the rectangle of one position to another's,
+        // each {x, y, width} with y at its foot: an underline on each.
+        function underlineRows(first, last) {
+            const right = width - rightPadding
+            if (last.y <= first.y)
+                return [{x: first.x, y: first.y + first.height, width: last.x - first.x}]
+            const out = [{x: first.x, y: first.y + first.height, width: right - first.x}]
+            for (let y = first.y + first.height; out.length < 1000;) {
+                const row = positionToRectangle(positionAt(leftPadding, y + 1))
+                if (row.y >= last.y || row.y < y - 1 || row.height <= 0)
+                    break
+                out.push({x: leftPadding, y: row.y + row.height, width: right - leftPadding})
+                y = row.y + row.height
+            }
+            out.push({x: leftPadding, y: last.y + last.height, width: last.x - leftPadding})
+            return out
+        }
+        // TM1: the Original's runs (editor.tagRuns): a numbered badge where
+        // each starts in the Original text, and in the Translated text a
+        // badge and an underline under the text it is placed on, or a dotted
+        // underline under the same text found unplaced (a suggestion: Tab
+        // places it, Escape dismisses it).
+        Repeater {
+            model: root.editor.translationMode ? root.editor.tagRuns : []
+            delegate: Item {
+                id: run
+                required property var modelData
+                anchors.fill: parent
+                z: 2
+                // Every suggestion Tab would place is shown, a wrapped one
+                // on every row as a placed run's underline is.
+                Item {
+                    id: suggestion
+                    readonly property int from: field.role === 1 ? run.modelData.suggestedStart : -1
+                    readonly property int to: field.role === 1 ? run.modelData.suggestedEnd : -1
+                    readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                    readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    objectName: field.objectName + "Run" + run.modelData.number + "Suggestion"
+                    visible: from >= 0 && to > from && to <= field.length
+                    anchors.fill: parent
+                    Repeater {
+                        model: field.underlineRows(suggestion.first, suggestion.last)
+                        SuggestionDots {
+                            required property var modelData
+                            x: modelData.x
+                            y: modelData.y - 1
+                            width: modelData.width
+                        }
+                    }
+                }
+                Item {
+                    id: mark
+                    readonly property var modelData: run.modelData
+                    readonly property int from: field.role === 0 ? modelData.originalStart : modelData.start
+                    readonly property int to: field.role === 0 ? modelData.originalEnd : modelData.end
+                    readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                    readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    objectName: field.objectName + "Run" + modelData.number
+                    visible: from >= 0 && to > from && to <= field.length
+                    anchors.fill: parent
+                    Rectangle {
+                        objectName: mark.objectName + "Badge"
+                        x: mark.first.x - width / 2
+                        y: mark.first.y - height / 2
+                        width: Math.max(badgeText.implicitWidth + 4, height)
+                        height: badgeText.implicitHeight
+                        radius: height / 2
+                        color: Theme.accent
+                        Label {
+                            id: badgeText
+                            anchors.centerIn: parent
+                            text: mark.modelData.number
+                            font.pixelSize: Math.max(8, field.font.pixelSize * 0.6)
+                            color: Theme.onAccent
+                        }
+                    }
+                    // The underline, on every row a wrapped run takes.
+                    Repeater {
+                        model: field.role === 1 ? field.underlineRows(mark.first, mark.last) : []
+                        Rectangle {
+                            required property var modelData
+                            required property int index
+                            objectName: mark.objectName + "Underline" + index
+                            x: modelData.x
+                            y: modelData.y - 1
+                            width: modelData.width
+                            height: 2
+                            color: Theme.accent
+                        }
+                    }
+                }
             }
         }
         // F3: the spell-checked field (legacy TextEdit: the Translated one in
@@ -2512,8 +2681,15 @@ ApplicationWindow {
             }
             const ctrl = event.modifiers & Qt.ControlModifier
             const action = hotkeyAction(event)
+            // TM1: a plain Tab places the suggested runs and Escape dismisses
+            // them; without suggestions they move on and discard as usual.
+            const plain = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
             if (action !== "") {
                 root.runEditorHotkey(action, field) // an action not here yet still takes the key
+                event.accepted = true
+            } else if (plain && field.role === 1 && event.key === Qt.Key_Tab && root.editor.acceptSuggestedRuns()) {
+                event.accepted = true
+            } else if (plain && field.role === 1 && event.key === Qt.Key_Escape && root.editor.dismissSuggestedRuns()) {
                 event.accepted = true
             } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
                 field.tabOut(event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier))
@@ -5123,6 +5299,23 @@ ApplicationWindow {
                             tabPrevious: root.originalShown ? lineText : null
                             Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
                         }
+                        // TM1: the Original's runs, placed on the translation's words.
+                        RunStrip {
+                            editor: root.editor
+                            shellRoot: root
+                            translated: translationText
+                            Layout.fillWidth: true
+                        }
+                        // A karaoke Line carries its leading tags without the
+                        // timing, which differs with the translation's syllables.
+                        Label {
+                            objectName: "karaokeCarryNotice"
+                            visible: root.editor.translationMode && root.editor.karaokeCarried
+                            text: qsTranslate("HikariSub.Translation", "Karaoke line: the tags before its text are carried, the karaoke timing is not.")
+                            color: Theme.muted
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
                         // Legacy translation-mode buttons (EDITBOX_PASTE_*,
                         // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
                         // They wrap: a narrow editor, a larger font or longer
@@ -7721,6 +7914,13 @@ ApplicationWindow {
         const edited = root.editor.translationMode ? translationText : lineText
         if (tags[action] !== undefined) {
             root.editor.toggleTagIn(field.role, tags[action], field.selectionStart, field.selectionEnd)
+            return true
+        }
+        // TM1: the Original's runs go on the Translated text's selection.
+        if (action.startsWith("EDITBOX_PLACE_RUN_") || action === "EDITBOX_PLACE_NEXT_RUN") {
+            const number = action === "EDITBOX_PLACE_NEXT_RUN" ? 0 : Number(action.substring(18))
+            if (field.role === 1)
+                root.editor.placeRun(number, field.selectionStart, field.selectionEnd)
             return true
         }
         if (colours[action] !== undefined) {

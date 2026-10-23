@@ -269,6 +269,18 @@ constexpr HotkeyAction kActions[] = {
         {"AUDIO_SPEED_UP", 1032},
         // TM1: Translation mode for the editing target (Subtitles menu).
         {"GLOBAL_TRANSLATION_MODE", 5171},
+        // TM1 tags from the original: the Translated field places the
+        // Original's runs on its selection (core/tag_transfer.h).
+        {"EDITBOX_PLACE_RUN_1", 3020},
+        {"EDITBOX_PLACE_RUN_2", 3021},
+        {"EDITBOX_PLACE_RUN_3", 3022},
+        {"EDITBOX_PLACE_RUN_4", 3023},
+        {"EDITBOX_PLACE_RUN_5", 3024},
+        {"EDITBOX_PLACE_RUN_6", 3025},
+        {"EDITBOX_PLACE_RUN_7", 3026},
+        {"EDITBOX_PLACE_RUN_8", 3027},
+        {"EDITBOX_PLACE_RUN_9", 3028},
+        {"EDITBOX_PLACE_NEXT_RUN", 3029},
         // KA1 (#276): Karaoke mode's split at the waveform cursor and the
         // \k and \kf switch for long syllables, past AUDIO_LEAD_OUT (the
         // unused 1005-1009 would run their id + 10, as the _ALT ids do).
@@ -530,6 +542,16 @@ constexpr NameRow kNames[] = {
         {1031, "Slower"}, // AUDIO_SPEED_DOWN (KA2)
         {1032, "Faster"}, // AUDIO_SPEED_UP (KA2)
         {5171, "Translation mode"}, // GLOBAL_TRANSLATION_MODE (TM1)
+        {3020, "Place run 1"}, // EDITBOX_PLACE_RUN_1 (TM1)
+        {3021, "Place run 2"}, // EDITBOX_PLACE_RUN_2 (TM1)
+        {3022, "Place run 3"}, // EDITBOX_PLACE_RUN_3 (TM1)
+        {3023, "Place run 4"}, // EDITBOX_PLACE_RUN_4 (TM1)
+        {3024, "Place run 5"}, // EDITBOX_PLACE_RUN_5 (TM1)
+        {3025, "Place run 6"}, // EDITBOX_PLACE_RUN_6 (TM1)
+        {3026, "Place run 7"}, // EDITBOX_PLACE_RUN_7 (TM1)
+        {3027, "Place run 8"}, // EDITBOX_PLACE_RUN_8 (TM1)
+        {3028, "Place run 9"}, // EDITBOX_PLACE_RUN_9 (TM1)
+        {3029, "Place the next run"}, // EDITBOX_PLACE_NEXT_RUN (TM1)
         // KA1 (#276)
         {1028, "Split syllable at the cursor"}, // AUDIO_KARAOKE_SPLIT
         {1029, "Switch long syllables between \\k and \\kf"}, // AUDIO_KARAOKE_KF
@@ -629,6 +651,15 @@ constexpr DefaultRow kMainDefaults[] = {
         {3017, EditorHotkey, "Next unconfirmed line", "Ctrl-D"}, // EDITBOX_FIND_NEXT_DOUBTFUL
         {3018, EditorHotkey, "Next untranslated line", "Ctrl-R"}, // EDITBOX_FIND_NEXT_UNTRANSLATED
         {3019, EditorHotkey, "Mark as unconfirmed and go to the next line", "Alt-Down"}, // EDITBOX_SET_DOUBTFUL
+        {3020, EditorHotkey, "Place run 1", "Alt-1"}, // EDITBOX_PLACE_RUN_1 (TM1)
+        {3021, EditorHotkey, "Place run 2", "Alt-2"}, // EDITBOX_PLACE_RUN_2 (TM1)
+        {3022, EditorHotkey, "Place run 3", "Alt-3"}, // EDITBOX_PLACE_RUN_3 (TM1)
+        {3023, EditorHotkey, "Place run 4", "Alt-4"}, // EDITBOX_PLACE_RUN_4 (TM1)
+        {3024, EditorHotkey, "Place run 5", "Alt-5"}, // EDITBOX_PLACE_RUN_5 (TM1)
+        {3025, EditorHotkey, "Place run 6", "Alt-6"}, // EDITBOX_PLACE_RUN_6 (TM1)
+        {3026, EditorHotkey, "Place run 7", "Alt-7"}, // EDITBOX_PLACE_RUN_7 (TM1)
+        {3027, EditorHotkey, "Place run 8", "Alt-8"}, // EDITBOX_PLACE_RUN_8 (TM1)
+        {3028, EditorHotkey, "Place run 9", "Alt-9"}, // EDITBOX_PLACE_RUN_9 (TM1)
         {3010, EditorHotkey, "Apply changes", "Ctrl-Enter"}, // EDITBOX_COMMIT
         {3011, EditorHotkey, "Apply the changes and go to the next line", "Enter"}, // EDITBOX_COMMIT_GO_NEXT_LINE
 };
