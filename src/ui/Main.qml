@@ -40,6 +40,7 @@ ApplicationWindow {
     required property var updates
     required property var whatsNew // SH3: WhatsNew
     required property var styleManager
+    required property var kanjiTimer // KA3: KanjiTimerController
     required property var fontCollector // Y8: FontCollectorController
     required property var fontCatalogs // Y6: FontCatalogsController
     required property var matroska // Y9: MatroskaController (GRID_SUBS_FROM_MKV)
@@ -2078,6 +2079,16 @@ ApplicationWindow {
                 text: qsTr("Check karaoke")
                 enabled: root.shell.hasEditingTarget
                 onTriggered: if (!root.hotkeyGesture("GLOBAL_CHECK_KARAOKE")) root.openKaraokeCheck()
+            }
+            // KA3: the Kanji timer window, after Check karaoke.
+            ShellMenuItem {
+                help: qsTr("Copies the karaoke timing of romaji lines to their kanji lines")
+                id: kanjiTimerItem
+                iconRole: "karaoke-split"
+                objectName: "kanjiTimerMenuItem"
+                text: qsTr("Kanji timer…")
+                enabled: root.shell.hasEditingTarget
+                onTriggered: if (!root.hotkeyGesture("GLOBAL_KANJI_TIMER")) root.openKanjiTimer()
             }
             MenuSeparator {}
             // TM1 (#232): the editing target's Translation mode, which the
@@ -7272,6 +7283,19 @@ ApplicationWindow {
         karaokeCheckLoader.active = true
         karaokeCheckLoader.item.openDialog()
     }
+    // KA3: the Kanji timer window, made at its first opening too.
+    Loader {
+        id: kanjiTimerLoader
+        active: false
+        sourceComponent: KanjiTimerDialog {
+            timer: root.kanjiTimer
+            settings: root.app.settings
+        }
+    }
+    function openKanjiTimer() {
+        kanjiTimerLoader.active = true
+        kanjiTimerLoader.item.openDialog()
+    }
     // W1: DirectShow could not open the video: legacy VideoBox::LoadVideo's
     // HikariMessageBox is a warning toast (NT1, application_directshow.cpp).
     // EDITBOX_SUGGESTIONS_ON_DOUBLE_CLICK's "Fix suggestions", on PK1's list
@@ -7542,6 +7566,7 @@ ApplicationWindow {
         GLOBAL_LOAD_EXTERNAL_SESSION: loadSessionFileItem, GLOBAL_SAVE_EXTERNAL_SESSION: saveSessionFileItem,
         GLOBAL_LOAD_LAST_SESSION: loadLastSessionItem,
         GLOBAL_CHECK_KARAOKE: checkKaraokeItem, // KA7
+        GLOBAL_KANJI_TIMER: kanjiTimerItem, // KA3
     }
     }
     // The menu bar's items show their Global binding at the right (legacy

@@ -8812,6 +8812,150 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    // KA3 (#278): Subtitles > Kanji timer… and GLOBAL_KANJI_TIMER open the
+    // Kanji timer on the guessed styles; the strip's keys group and link,
+    // Ctrl+Z undoes in the window, and closing with done pairs asks: Cancel
+    // keeps the window, Apply puts the kanji timing in as one step.
+    void kanjiTimerWindowTimesTheKanjiLines()
+    {
+        const QString path = dir.filePath(QStringLiteral("kanji.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Song,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song,,0,0,0,,{\\k50}yu{\\k50}me\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Song,,0,0,0,,{\\k40}ki{\\k30}mi{\\k30}no\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song kanji,,0,0,0,,夢\n"
+                    "Dialogue: 0,0:00:03.00,0:00:04.00,Song kanji,,0,0,0,,{\\i1}君の\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+
+        auto *root = engine->rootObjects().first();
+        QVERIFY(!root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog")));
+        // Subtitles > Kanji timer…, right after Check karaoke.
+        auto *item = root->findChild<QObject *>(QStringLiteral("kanjiTimerMenuItem"));
+        const auto entries = menuItems(item->property("menu").value<QObject *>());
+        const auto at = [&](const char *name) {
+            for (qsizetype i = 0; i < entries.size(); ++i)
+                if (entries[i] && entries[i]->objectName() == QLatin1String(name))
+                    return i;
+            return qsizetype(-1);
+        };
+        QCOMPARE(at("kanjiTimerMenuItem"), at("checkKaraokeMenuItem") + 1);
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *kanji = qobject_cast<QQuickWindow *>(dialog);
+        QVERIFY(kanji);
+        QTRY_VERIFY(kanji->isActive());
+        auto *strip = dialogItem("kanjiTimerDialog", "kanjiStrip");
+        QVERIFY(strip);
+        QTRY_VERIFY(strip->hasActiveFocus());
+
+        // The styles guessed: the one with the \k Lines, the one named kanji.
+        auto *controller = dialog->property("timer").value<QObject *>();
+        QCOMPARE(controller->property("romajiStyle").toString(), QStringLiteral("Song"));
+        QCOMPARE(controller->property("kanjiStyle").toString(), QStringLiteral("Song kanji"));
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 2);
+        const auto statuses = [&] {
+            QStringList out;
+            for (const QVariant &row : controller->property("pairs").toList())
+                out << row.toMap().value(QStringLiteral("status")).toString();
+            return out;
+        };
+        QCOMPARE(statuses(), (QStringList{QStringLiteral("suggested"), QStringLiteral("suggested")}));
+        QCOMPARE(controller->property("current").toInt(), 0);
+
+        // Enter links 夢 ← yu me, the whole Line; Enter again accepts it and
+        // goes on to the next pair, as in Aegisub.
+        QTest::keyClick(kanji, Qt::Key_Return);
+        QTRY_VERIFY(controller->property("pair").toMap().value(QStringLiteral("canAccept")).toBool());
+        QCOMPARE(controller->property("current").toInt(), 0);
+        QTest::keyClick(kanji, Qt::Key_Return);
+        QTRY_COMPARE(controller->property("current").toInt(), 1);
+        QCOMPARE(statuses(), (QStringList{QStringLiteral("done"), QStringLiteral("suggested")}));
+        const auto currentSyllables = [&] {
+            for (const QVariant &g : controller->property("pair").toMap().value(QStringLiteral("groups")).toList())
+                if (g.toMap().value(QStringLiteral("kind")).toString() == QLatin1String("cur"))
+                    return g.toMap().value(QStringLiteral("syllables")).toList().size();
+            return qsizetype(-1);
+        };
+        // 君 takes ki mi; Down gives mi back, Ctrl+Z undoes that.
+        QCOMPARE(currentSyllables(), qsizetype(2));
+        QTest::keyClick(kanji, Qt::Key_Down);
+        QCOMPARE(currentSyllables(), qsizetype(1));
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiDetail")->property("text").toString(),
+                 QStringLiteral("君 ← ki (き) · 40 cs"));
+        QTest::keyClick(kanji, Qt::Key_Z, Qt::ControlModifier);
+        QCOMPARE(currentSyllables(), qsizetype(2));
+        // Ctrl+Enter accepts the Line with the rest of the suggestion; the
+        // kanji Line keeps its own tags.
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiResult")->property("plain").toString(),
+                 QStringLiteral("{\\i1\\k70}君{\\k30}の"));
+        QTest::keyClick(kanji, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(statuses(), (QStringList{QStringLiteral("done"), QStringLiteral("done")}));
+        QCOMPARE(controller->property("pending").toInt(), 2);
+        // Nothing is in the Document before Apply.
+        QVERIFY(session->document().lines()[2]->text == u8"夢");
+
+        // Esc with done pairs asks; Cancel keeps the window.
+        QTest::keyClick(kanji, Qt::Key_Escape);
+        answerMessage("kanjiTimerMessages", QStringLiteral("Kanji timer"),
+                      QStringLiteral("Apply the kanji timing of 2 lines?"), QStringLiteral("cancel"));
+        QVERIFY(dialog->property("visible").toBool());
+        QCOMPARE(controller->property("pending").toInt(), 2);
+        // Apply: both kanji Lines in one step, and the window closes.
+        const auto steps = session->history().size();
+        QTest::keyClick(kanji, Qt::Key_Escape);
+        answerMessage("kanjiTimerMessages", QStringLiteral("Kanji timer"),
+                      QStringLiteral("Apply the kanji timing of 2 lines?"), QStringLiteral("apply"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QCOMPARE(session->history().size(), steps + 1);
+        QCOMPARE(session->history().back().name, std::string("Kanji timing"));
+        QVERIFY(session->document().lines()[2]->text == u8"{\\k100}夢");
+        QVERIFY(session->document().lines()[3]->text == u8"{\\i1\\k70}君{\\k30}の");
+        QVERIFY(session->document().lines()[0]->text == lines[0]->text);
+
+        // The hotkey opens it again, the pairs Applied; Esc closes it at once.
+        QVariant ran;
+        QVERIFY(QMetaObject::invokeMethod(window, "runGlobalHotkey", Q_RETURN_ARG(QVariant, ran),
+                                          Q_ARG(QVariant, QStringLiteral("GLOBAL_KANJI_TIMER"))));
+        QVERIFY(ran.toBool());
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QCOMPARE(statuses(), (QStringList{QStringLiteral("applied"), QStringLiteral("applied")}));
+        QCOMPARE(controller->property("pending").toInt(), 0);
+        QVERIFY(!dialogItem("kanjiTimerDialog", "kanjiApply")->isEnabled());
+        QTRY_VERIFY(kanji->isActive());
+        QTest::keyClick(kanji, Qt::Key_Escape);
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(!messageBox("kanjiTimerMessages") || !messageBox("kanjiTimerMessages")->isVisible());
+
+        // The same style twice: nothing to pair, and the window says so.
+        QVERIFY(QMetaObject::invokeMethod(item, "triggered"));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(controller, "setStyles", Q_ARG(QString, QStringLiteral("Song")),
+                                          Q_ARG(QString, QStringLiteral("Song"))));
+        QCOMPARE(controller->property("problem").toString(), QStringLiteral("same"));
+        QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiSameStyle")->isVisible());
+        QCOMPARE(dialogItem("kanjiTimerDialog", "kanjiPairs")->property("count").toInt(), 0);
+        QVERIFY(dialogItem("kanjiTimerDialog", "kanjiNoPair")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     // F3: the Grid's and the editor's marks, Subtitles > Check spelling
     // (Replace as one step, then the next word on another Line, then "No
     // spelling errors were found"), a suggestion from the editor and Add word.
@@ -14498,8 +14642,8 @@ private slots:
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
         // "Translation mode" and VT2's eleven visual tools listed; KA2's Tap
-        // to time, Slower and Faster; KA7's "Check karaoke"; KA1's two syllable commands.
-        QCOMPARE(hotkeyRows().size(), 239);
+        // to time, Slower and Faster; KA7's "Check karaoke"; KA1's two syllable commands; KA3's "Kanji timer".
+        QCOMPARE(hotkeyRows().size(), 240);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
