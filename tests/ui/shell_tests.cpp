@@ -10116,8 +10116,8 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(named("styleManager"), "closeManager"));
         // SY1: the manager is a window of its own, which had the keyboard;
         // offscreen gives it back to no window when it closes.
-        window->requestActivate();
-        QVERIFY(QTest::qWaitForWindowActive(window));
+        collectorWindow->requestActivate();
+        QVERIFY(QTest::qWaitForWindowActive(collectorWindow));
 
         // Copy to selected folder without a folder: legacy's message.
         QVERIFY(QMetaObject::invokeMethod(dialogItem("fontCollectorDialog", "fontCollectorOption1"), "click"));
