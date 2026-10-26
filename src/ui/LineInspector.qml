@@ -351,9 +351,13 @@ ColumnLayout {
     }
     onWideChanged: arrange()
     Component.onCompleted: arrange()
-    // In the grid the halves are equal; Style takes the whole row.
+    // In the grid the halves are equal; Style takes the whole row. In a
+    // row the ones that do not grow give way down to their minimum, which
+    // the wide test counts (a layout keeps an item that does not fill at its
+    // preferred width).
     component Half: Slot {
-        Layout.fillWidth: !inspector.wide || grows
+        Layout.fillWidth: true
+        Layout.maximumWidth: inspector.wide && !grows ? implicitWidth : Number.POSITIVE_INFINITY
         Layout.minimumWidth: inspector.wide ? wideMinimum : inspector.narrowColumn
         Layout.preferredWidth: inspector.wide ? -1 : inspector.narrowColumn
         property bool grows: false
@@ -399,7 +403,8 @@ ColumnLayout {
                 enabled: inspector.editor.editable && inspector.editor.assFields
                 Layout.preferredWidth: 50
                 Layout.minimumWidth: 40
-                Layout.fillWidth: !inspector.wide
+                Layout.maximumWidth: inspector.wide ? 50 : Number.POSITIVE_INFINITY
+                Layout.fillWidth: true
                 maximumLength: 10 // NumCtrl::SetMaxLength
                 validator: RegularExpressionValidator { regularExpression: /[-0-9.,]*/ }
                 Accessible.name: qsTr("Layer")
@@ -554,7 +559,8 @@ ColumnLayout {
                 enabled: inspector.editor.editable && inspector.editor.assFields
                 Layout.preferredWidth: inspector.marginWidth
                 Layout.minimumWidth: inspector.marginMinimum
-                Layout.fillWidth: !inspector.wide
+                Layout.maximumWidth: inspector.wide ? inspector.marginWidth : Number.POSITIVE_INFINITY
+                Layout.fillWidth: true
                 iconRole: "margin-left"
                 hint: inspector.editor.styleMargins[0] ?? ""
                 Accessible.name: qsTr("Left margin")
@@ -571,7 +577,8 @@ ColumnLayout {
                 enabled: inspector.editor.editable && inspector.editor.assFields
                 Layout.preferredWidth: inspector.marginWidth
                 Layout.minimumWidth: inspector.marginMinimum
-                Layout.fillWidth: !inspector.wide
+                Layout.maximumWidth: inspector.wide ? inspector.marginWidth : Number.POSITIVE_INFINITY
+                Layout.fillWidth: true
                 iconRole: "margin-right"
                 hint: inspector.editor.styleMargins[1] ?? ""
                 Accessible.name: qsTr("Right margin")
@@ -588,7 +595,8 @@ ColumnLayout {
                 enabled: inspector.editor.editable && inspector.editor.assFields
                 Layout.preferredWidth: inspector.marginWidth
                 Layout.minimumWidth: inspector.marginMinimum
-                Layout.fillWidth: !inspector.wide
+                Layout.maximumWidth: inspector.wide ? inspector.marginWidth : Number.POSITIVE_INFINITY
+                Layout.fillWidth: true
                 iconRole: "margin-vertical"
                 hint: inspector.editor.styleMargins[2] ?? ""
                 Accessible.name: qsTr("Vertical margin")
