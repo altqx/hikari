@@ -146,6 +146,9 @@ constexpr OptionsBinding kBindings[] = {
     {"updater.checkForStable", Check, Updates},
     {"updater.autoInstall", Check, Updates},
     {"updater.skippedVersion", Text, Updates},
+    // AD2 (#311): "Fill in my last answers", the Automation page's Script
+    // dialogs section.
+    {"automation.fillLastAnswers", Check, Automation},
 #ifdef _WIN32
     // The Windows output's host API
     // (A4-wasapi-default: 0 WASAPI, 1 DirectSound), on the Audio page.
