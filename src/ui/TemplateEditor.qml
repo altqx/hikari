@@ -1023,6 +1023,7 @@ Pane {
                     required property var modelData
                     required property int index
                     objectName: "templatePreset_" + index
+                    iconRole: "template-editor"
                     text: modelData.title
                     help: modelData.description
                     ToolTip.visible: hovered
