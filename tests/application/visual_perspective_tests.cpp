@@ -77,6 +77,25 @@ TEST(PerspectiveMaths, ALevelBoxIsItsOwnQuad)
     EXPECT_NEAR(back->org.y, 280, 1e-3);
 }
 
+TEST(PerspectiveMaths, ABoxUnderAUnitKeepsItsScale)
+{
+    // A \p4 drawing's box can be a fraction of a unit: the scale is found
+    // from its own size, and a box of no size has none to find.
+    Transform t;
+    t.pos = {320, 200};
+    t.org = t.pos;
+    t.an = 7;
+    t.fscx = t.fscy = 10000;
+    const Box box{{0, 0}, {0.5f, 0.5f}};
+    const Quad q = textToQuad(t, box, kZ);
+    const auto back = quadToTransform(q, box, OrgMode::Keep, t, kZ);
+    ASSERT_TRUE(back);
+    EXPECT_NEAR(back->fscx, 10000, 1e-2);
+    EXPECT_NEAR(back->fscy, 10000, 1e-2);
+    expectQuadNear(textToQuad(*back, box, kZ), q, 1e-3);
+    EXPECT_FALSE(quadToTransform(q, Box{{0, 0}, {0, 0.5f}}, OrgMode::Keep, t, kZ));
+}
+
 // Any quad the tags make, the tags it gives back render onto it again, in
 // every \org mode and for every alignment.
 TEST(PerspectiveMaths, TheTagsAQuadGivesRenderOntoIt)
@@ -1463,6 +1482,18 @@ TEST(PerspectiveTool, KeepLetsTheOriginBeDragged)
     EXPECT_NEAR(f.tool.transform().org.x, org.x + 30, 0.05);
     EXPECT_NEAR(f.tool.transform().org.y, org.y - 20, 0.05);
     expectQuadNear(f.tool.inner(), quad, 0.1); // the quad stays
+}
+
+TEST(PerspectiveTool, AnEditedOriginIsWrittenOnAMovingLine)
+{
+    // Unturned, a \move Line's origin does nothing and none is written for
+    // a corner; typed in Keep it is the edit, and written.
+    Fixture f({"{\\move(100,100,300,200)}Text"});
+    ASSERT_TRUE(f.tool.setOption("orgMode", 2, f.host));
+    ASSERT_TRUE(f.tool.setValue("orgx", u"50", f.host));
+    f.tool.reset(f.host);
+    EXPECT_NE(f.host.text().find("\\org(50,"), std::string::npos) << f.host.text();
+    EXPECT_NEAR(f.tool.transform().org.x, 50, 0.05);
 }
 
 TEST(PerspectiveTool, TheValuesAreTheTags)

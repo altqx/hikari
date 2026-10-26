@@ -527,8 +527,12 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
     const double rawfax = ad.x / ad.y;
     const double quadwidth = std::sqrt(ab.x * ab.x + ab.y * ab.y);
     const double quadheight = std::abs(ad.y);
-    const double scalex = quadwidth / std::max(box.width(), 1.);
-    const double scaley = quadheight / std::max(box.height(), 1.);
+    // The box's own size, however small (a \p4 drawing's is a fraction of
+    // a unit): one with no width or height has no scale to recover.
+    if (!(box.width() > 0) || !(box.height() > 0))
+        return std::nullopt;
+    const double scalex = quadwidth / box.width();
+    const double scaley = quadheight / box.height();
 
     Transform t = from;
     t.org = pf(org);
@@ -1482,7 +1486,7 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
 }
 
 std::u16string writeTransform(std::u16string_view text, const Transform &t, const core::StyleValues &style,
-                              std::optional<PointF> movedFrom)
+                              std::optional<PointF> movedFrom, bool explicitOrg)
 {
     u16 out(text);
     if (out.empty() || out.front() != u'{' || out.find(u'}') == u16::npos)
@@ -1554,10 +1558,10 @@ std::u16string writeTransform(std::u16string_view text, const Transform &t, cons
         tags += u"\\pos(" + fmt(t.pos.x, 2) + u"," + fmt(t.pos.y, 2) + u")";
     // libass turns a \move Line without an \org about its moving position:
     // kept when `t` does not turn it (the origin then does nothing) or
-    // turns it about its position.
+    // turns it about its position, unless the origin is the one edited.
     const bool turns = fmt(t.frx, 4) != u"0" || fmt(t.fry, 4) != u"0" || fmt(t.frz, 4) != u"0";
     const bool aboutPosition = fmt(t.org.x, 2) == fmt(t.pos.x, 2) && fmt(t.org.y, 2) == fmt(t.pos.y, 2);
-    if (!(moved && !ownOrg && (!turns || aboutPosition)))
+    if (explicitOrg || !(moved && !ownOrg && (!turns || aboutPosition)))
         tags += u"\\org(" + fmt(t.org.x, 2) + u"," + fmt(t.org.y, 2) + u")";
     put(u"fax", t.fax, 6, 0);
     put(u"fscx", t.fscx, 2, std::max(0.0, transform::styleNumber(style.scaleX, 100)));
@@ -1826,6 +1830,7 @@ bool PerspectiveTool::beginEdit(VisualHost &host)
         return false;
     if (!host.beginGesture(targets, std::string(familyInfo(Family::Perspective).history)).has_value())
         return false;
+    m_orgEdited = false;
     // Each step parses every target again: their text is bounded as a
     // read's is.
     std::size_t parsed = 0;
@@ -1858,7 +1863,8 @@ void PerspectiveTool::stageAll(VisualHost &host)
         t.shad = {static_cast<float>(own.transform.shad.x * kx), static_cast<float>(own.transform.shad.y * ky)};
         const u16 text = transform::lineText(line);
         const core::StyleValues style = styles.line(line.style);
-        g->stage(id, u8(writeTransform(text, t, style, m_startTransform.pos)), transform::editsTranslation(line));
+        g->stage(id, u8(writeTransform(text, t, style, m_startTransform.pos, m_orgEdited)),
+                 transform::editsTranslation(line));
     }
     host.toolChanged();
 }
@@ -1924,6 +1930,7 @@ bool PerspectiveTool::applyInner(const Quad &inner, VisualHost &host, bool expli
         return false;
     m_inner = inner;
     m_state.transform = *t;
+    m_orgEdited = m_orgEdited || explicitOrg;
     return true;
 }
 

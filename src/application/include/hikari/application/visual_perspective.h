@@ -142,9 +142,10 @@ LineState readTags(const VisualHost &host, const core::LineRecord &line);
 // \pos is written) removed, a tag at its Style's value (\fax, \frx and \fry
 // at 0) left out. Tags inside \t(...) are not touched.
 // A \move Line without an \org keeps libass's origin, its moving position,
-// when `t` does not turn it or turns it about `t`.pos: no \org is written.
+// when `t` does not turn it or turns it about `t`.pos: no \org is written,
+// unless `explicitOrg` (the origin itself edited).
 std::u16string writeTransform(std::u16string_view text, const Transform &t, const core::StyleValues &style,
-                              std::optional<PointF> movedFrom = std::nullopt);
+                              std::optional<PointF> movedFrom = std::nullopt, bool explicitOrg = false);
 
 } // namespace perspective
 
@@ -239,6 +240,7 @@ private:
     PointF m_startC1{0, 0}, m_startC2{0, 0};
     PointF m_startOrg{0, 0};
     perspective::Transform m_startTransform;
+    bool m_orgEdited = false; // the open gesture moved \org itself
     bool m_valueEdit = false;
     bool m_keyEdit = false;
     perspective::Transform m_written; // what the open gesture writes
