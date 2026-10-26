@@ -113,7 +113,7 @@ signals:
     // "Reached end", 2 missing styles, 3 no style found, 4 replace in files);
     // a question (kinds 1-4) waits for answerFindQuestion(id, ...), a message
     // needs no answer. Nothing blocks meanwhile.
-    void findQuestion(int id, int kind, const QString &text, const QString &title);
+    void findQuestion(int id, int kind, const QVariantMap &question);
     void findResultsChanged();
     // An operation finished (also after its questions): the tab as it is now
     // (the styles question may have changed its styles) with the recent lists.
@@ -688,6 +688,9 @@ public:
     // checked}, checked as last chosen (COPY_COLLUMS_SELECTIONS /
     // PASTE_COLUMNS_SELECTION); copy and paste offer different lists.
     Q_INVOKABLE QVariantList columnChoices(bool paste);
+    // PU2: how many Lines the editing target has selected (Copy / Paste columns says it);
+    // shownOnly: those the filter shows, the ones Paste columns changes.
+    Q_INVOKABLE int selectedLineCount(bool shownOnly = false) const;
     // Copies or pastes the chosen columns (bits OR'ed) and remembers the choice.
     Q_INVOKABLE bool copyColumns(int columns);
     Q_INVOKABLE bool pasteColumns(int columns);

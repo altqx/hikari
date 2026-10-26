@@ -280,9 +280,11 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // three questions, the autosaves, the startup offer's four and Close
         // all tabs (PU1). 41 with the import wizard's "Import %n setting(s)"
         // and "%n setting(s) imported." and the hotkeys import's three counts
-        // (PU7). 47 with the Style manager's rows, multi-style preview,
-        // rename, apply and catalog questions and its clean-up toast (SY1).
-        ASSERT_EQ(numerus, 47) << language.toStdString();
+        // (PU7). 46 with a macro run's lines, its template problems, the
+        // card's log and a run's line count (AD3). 51 with the Style
+        // manager's rows, multi-style preview, rename, apply and catalog
+        // questions and its clean-up toast (SY1).
+        ASSERT_EQ(numerus, 51) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

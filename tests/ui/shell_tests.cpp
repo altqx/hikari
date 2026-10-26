@@ -2561,12 +2561,44 @@ private slots:
         auto *list = history->findChild<QQuickItem *>(QStringLiteral("historyList"));
         QVERIFY(list);
         QCOMPARE(list->property("currentIndex").toInt(), 2);
-        QCOMPARE(history->title(), QStringLiteral("History (3 elements)"));
+        // PU2: titled by its command, the count in the body; it blocks
+        // nothing (the grid stays usable).
+        QCOMPARE(history->title(), QStringLiteral("History"));
+        QCOMPARE(history->findChild<QObject *>(QStringLiteral("historyCount"))->property("text").toString(),
+                 QStringLiteral("3 steps. Steps after the current one can be redone."));
+        QCOMPARE(history->modality(), Qt::NonModal);
+        QVERIFY(history->property("resizable").toBool());
+        QTRY_VERIFY(list->hasActiveFocus());
+        // Go to step (Enter in the list) jumps and keeps the window open.
         list->setProperty("currentIndex", 0);
-        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historySet")), "clicked"));
+        QTest::keyClick(history, Qt::Key_Return);
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
-        QVERIFY(history->isVisible()); // Set keeps the window open
-        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historyCancel")), "clicked"));
+        QVERIFY(history->isVisible());
+        QCOMPARE(editor.historyCursor(), 0);
+        list->setProperty("currentIndex", 2);
+        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historyGo")), "click"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first12"));
+        list->setProperty("currentIndex", 0);
+        QVERIFY(QMetaObject::invokeMethod(history->findChild<QObject *>(QStringLiteral("historyGo")), "click"));
+        QTRY_COMPARE(text->property("text").toString(), QStringLiteral("first"));
+        QVERIFY(history->isVisible());
+        // It follows the editing target and names its Document (Codex review).
+        auto *documentLabel = history->findChild<QObject *>(QStringLiteral("historyDocument"));
+        QVERIFY(documentLabel);
+        QVERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history.ass")));
+        const int historyTab = application->currentTab();
+        list->setProperty("currentIndex", 2); // chosen, not gone to
+        QVERIFY(application->openFile(writeFile(dir, "history-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == historyTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QTRY_VERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history-other.ass")));
+        // The other tab's current step is selected, not the last tab's choice.
+        QCOMPARE(list->property("currentIndex").toInt(), editor.historyCursor());
+        application->selectTab(historyTab);
+        QTRY_VERIFY(documentLabel->property("text").toString().contains(QStringLiteral("history.ass")));
+        QCOMPARE(editor.historyCursor(), 0);
+        // Esc closes.
+        QTest::keyClick(history, Qt::Key_Escape);
         QTRY_VERIFY(!history->isVisible());
 
         // Undo to last save: forward to the saved step; redo steps stay.
@@ -2866,8 +2898,6 @@ private slots:
             {"fontCollectorMessages", QStringLiteral("font-collector"),
              box(QStringLiteral("Font collector"), QStringLiteral("Select the folder where you want to copy fonts"),
                  QStringLiteral("warning"))},
-            {"findMessages", QStringLiteral("find-in-files"),
-             box(QStringLiteral("Find in files"), QStringLiteral("Search path is invalid"), QStringLiteral("error"))},
         };
         for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
                                     QStringLiteral("highContrastBlack")}) {
@@ -2896,12 +2926,6 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(saveBox, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
             QTRY_VERIFY(!saveBox->isVisible());
             for (const auto &[host, part, options] : boxes) {
-                // The Search tool's message box comes with its panel.
-                const bool search = qstrcmp(host, "findMessages") == 0;
-                if (search) {
-                    QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "open"));
-                    QTRY_VERIFY(named(host));
-                }
                 QObject *found = named(host);
                 QVERIFY2(found, host);
                 QVERIFY(QMetaObject::invokeMethod(found, "ask", Q_ARG(QVariant, options), Q_ARG(QVariant, QVariant())));
@@ -2912,8 +2936,6 @@ private slots:
                 save(shown, QStringLiteral("box-") + part + QLatin1Char('-') + code);
                 QVERIFY(QMetaObject::invokeMethod(shown, "answer", Q_ARG(QVariant, shown->property("choices").toList().value(0).toMap().value(QStringLiteral("id")))));
                 QTRY_VERIFY(!shown->isVisible());
-                if (search)
-                    QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "close"));
             }
         }
     }
@@ -5058,7 +5080,8 @@ private slots:
         QTRY_COMPARE(session->selection().active, session->document().lines()[1]->id);
         auto *window = engine->rootObjects().first()->findChild<QQuickWindow *>(QStringLiteral("translationShiftWindow"));
         QVERIFY(window);
-        QVERIFY(QMetaObject::invokeMethod(window, "show"));
+        QVERIFY(QMetaObject::invokeMethod(window, "open"));
+        QCOMPARE(window->modality(), Qt::NonModal); // it stays open while working
         auto *button = findItem(window->contentItem(), QStringLiteral("translationMove0"));
         QVERIFY(button);
         const auto steps = session->historySize();
@@ -7939,8 +7962,8 @@ private slots:
 
     // F4: Edit > Fix minor errors: check rules, find, review the results and
     // replace the checked finds as one step; replace all errors in the tab.
-    // Driven with real mouse presses: the two modeless dialogs stay open while
-    // the other one, the grid or the editor is clicked.
+    // PU2-fix-minor-errors-panel: one dock panel, driven with real mouse
+    // presses; the menu shows and hides it.
     void misspellReplacerFindsReviewsAndReplaces()
     {
         const QString path = writeFile(dir, "misspell.ass",
@@ -7950,140 +7973,87 @@ private slots:
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
-        auto *dialog = root->findChild<QObject *>(QStringLiteral("misspellDialog"));
-        QVERIFY(dialog);
-        auto *results = root->findChild<QObject *>(QStringLiteral("misspellResults"));
-        QVERIFY(results);
+        auto *dock = item<QObject>("misspellDock");
+        QVERIFY(dock);
+        QCOMPARE(dock->property("uniqueName").toString(), QStringLiteral("FixMinorErrors"));
+        QVERIFY(!dock->property("isOpen").toBool()); // closed in the default layout
+        QQuickItem *tool = nullptr;
+        QObject *results = nullptr;
+        const auto named = [&](const char *name) { return findItem(tool, QLatin1String(name)); };
         const auto centre = [](QQuickItem *item) { return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint(); };
         const auto click = [&](QQuickItem *item) {
             QVERIFY(item && item->isVisible());
-            QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centre(item));
+            QTest::mouseClick(item->window(), Qt::LeftButton, Qt::NoModifier, centre(item));
         };
         auto *menuItem = root->findChild<QObject *>(QStringLiteral("misspellMenuItem"));
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QTRY_VERIFY(dialog->property("opened").toBool());
-        QCOMPARE(dialog->property("rules").toList().size(), 13);
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QTRY_VERIFY((tool = item<QQuickItem>("misspellTool")));
+        results = item<QObject>("misspellResults");
+        QVERIFY(results);
+        QTRY_VERIFY(tool->isVisible() && tool->width() > 0);
+        QTRY_COMPARE(tool->property("rules").toList().size(), 13); // read once it shows
+        // Docked at the right edge, full height, on its first opening.
+        const QRectF toolArea = tool->mapRectToScene(QRectF(0, 0, tool->width(), tool->height()));
+        QVERIFY2(toolArea.right() > window->width() - 40, qPrintable(QString::number(toolArea.right())));
+        QVERIFY(toolArea.left() > window->width() / 2.0);
+        QTRY_COMPARE(named("misspellRuleCount")->property("text").toString(), QStringLiteral("0 of 13 rules on"));
         // Check "Remove space before comma or dot" in the list.
         QQuickItem *check = nullptr;
-        QTRY_VERIFY((check = dialogItem("misspellDialog", "misspellRuleCheck0")));
+        QTRY_VERIFY((check = named("misspellRuleCheck0")));
         click(check);
         QTRY_VERIFY(application->misspellRules().at(0).toMap().value(QStringLiteral("checked")).toBool());
-        // Find errors in current tab: a header with the file, then two finds.
-        click(dialogItem("misspellDialog", "misspellFindTab"));
-        QTRY_VERIFY(results->property("opened").toBool());
+        QTRY_COMPARE(named("misspellRuleCount")->property("text").toString(), QStringLiteral("1 of 13 rules on"));
+        // Find in this tab: a header with the file, then two finds.
+        QCOMPARE(named("misspellTabs")->property("currentIndex").toInt(), 0);
+        click(named("misspellFindButton"));
+        QTRY_VERIFY(results->property("shown").toBool());
         const auto rows = results->property("rows").toList();
         QCOMPARE(rows.size(), 3);
         QCOMPARE(rows[0].toMap().value(QStringLiteral("text")).toString(), QDir::toNativeSeparators(QFileInfo(path).absoluteFilePath()));
         QCOMPARE(rows[1].toMap().value(QStringLiteral("line")).toInt(), 1);
         QCOMPARE(rows[2].toMap().value(QStringLiteral("position")).toInt(), 13);
-        // Legacy placement: the Multireplacer centred; the results at
-        // wxDefaultPosition (R5-per-platform): on Windows 34x22 dialog units
-        // (68x44 pixels) from the client origin below the menu bar, on Linux
-        // the window manager's choice, here the window's top left. At the top
-        // left the results leave the rules list and the Multireplacer's
-        // buttons uncovered, so rules can be checked while they are shown; on
-        // Windows they reach the rules list in this window, as legacy's did,
-        // and are moved aside first.
-        const auto sceneRect = [](QQuickItem *item) { return item->mapRectToScene(QRectF(0, 0, item->width(), item->height())); };
-        const auto popupRect = [&](QObject *popup) { return sceneRect(popup->property("background").value<QQuickItem *>()); };
-        auto *addRule = dialogItem("misspellDialog", "misspellAddRule");
-        auto *menuBar = root->property("menuBar").value<QQuickItem *>();
-        QVERIFY(menuBar && menuBar->height() > 0);
-        QCOMPARE(dialog->property("clientTop").toReal(), menuBar->height());
-        const QRectF rulesArea = sceneRect(dialogItem("misspellDialog", "misspellRules"));
-#ifdef _WIN32
-        QCOMPARE(popupRect(results).topLeft(), QPointF(68, menuBar->height() + 44));
-        QVERIFY(popupRect(results).intersects(rulesArea)); // as legacy's did here
-        // moved aside: as far left as their title drag goes (48 px stay on screen)
-        results->setProperty("x", 48 - results->property("width").toReal());
-        results->setProperty("y", 0);
-        const QRectF resultsArea = popupRect(results);
-#else
-        const QRectF resultsArea = popupRect(results);
-        QCOMPARE(resultsArea.topLeft(), QPointF(0, 0));
-#endif
-        QVERIFY2(!resultsArea.intersects(rulesArea),
-                 qPrintable(QStringLiteral("results %1,%2 %3x%4, rules %5,%6 %7x%8")
-                                .arg(resultsArea.x()).arg(resultsArea.y()).arg(resultsArea.width()).arg(resultsArea.height())
-                                .arg(rulesArea.x()).arg(rulesArea.y()).arg(rulesArea.width()).arg(rulesArea.height())));
-        for (const char *button : {"misspellAddRule", "misspellEditRule", "misspellRemoveRule", "misspellFindTab",
-                                   "misspellFindAllTabs", "misspellReplaceTab", "misspellReplaceAllTabs"})
-            QVERIFY2(!resultsArea.intersects(sceneRect(dialogItem("misspellDialog", button))), button);
-        QVERIFY2(qAbs(popupRect(dialog).center().x() - window->width() / 2.0) < 2,
-                 qPrintable(QStringLiteral("dialog %1,%2 %3x%4 (implicit %5x%6, x %7), window %8")
-                                .arg(popupRect(dialog).x()).arg(popupRect(dialog).y()).arg(popupRect(dialog).width())
-                                .arg(popupRect(dialog).height()).arg(dialog->property("implicitWidth").toReal())
-                                .arg(dialog->property("implicitHeight").toReal()).arg(dialog->property("x").toReal())
-                                .arg(window->width())));
-        click(dialogItem("misspellDialog", "misspellRuleCheck2"));
+        QCOMPARE(named("misspellResultCount")->property("text").toString(), QStringLiteral("2 errors in 1 file"));
+        QCOMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("2 checked"));
+        // Rules can still be checked while the results show, but not changed:
+        // the strip waits until the results are closed (legacy refused).
+        click(named("misspellRuleCheck2"));
         QTRY_VERIFY(application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
-        QVERIFY(results->property("visible").toBool());
-        click(dialogItem("misspellDialog", "misspellRuleCheck2"));
+        click(named("misspellRuleCheck2"));
         QTRY_VERIFY(!application->misspellRules().at(2).toMap().value(QStringLiteral("checked")).toBool());
-        // Dragging a title moves its window (legacy HTCAPTION), and it stays
-        // there when shown again.
-        results->setProperty("x", 0); // from the top left
-        results->setProperty("y", 0);
-        auto *resultsTitle = results->property("header").value<QQuickItem *>();
-        QVERIFY(resultsTitle);
-        const QPoint grab = centre(resultsTitle);
-        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, grab);
-        QTest::mouseMove(window, grab + QPoint(20, 10));
-        QTest::mouseMove(window, grab + QPoint(40, 30));
-        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, grab + QPoint(40, 30));
-        QTRY_COMPARE(popupRect(results).topLeft(), QPointF(40, 30));
-        QVERIFY(QMetaObject::invokeMethod(results, "close"));
-        QTRY_VERIFY(!results->property("visible").toBool());
-        click(dialogItem("misspellDialog", "misspellFindTab"));
-        QTRY_VERIFY(results->property("opened").toBool());
-        QCOMPARE(popupRect(results).topLeft(), QPointF(40, 30));
-        // The drag stops where the title would leave the window: its top
-        // stays inside, and 48 pixels of the window stay in view sideways.
-        const QPoint title = centre(resultsTitle);
-        QTest::mousePress(window, Qt::LeftButton, Qt::NoModifier, title);
-        QTest::mouseMove(window, title - QPoint(10, 10));
-        QTest::mouseMove(window, title - QPoint(5000, 5000));
-        QTest::mouseRelease(window, Qt::LeftButton, Qt::NoModifier, title - QPoint(5000, 5000));
-        QTRY_COMPARE(popupRect(results).topLeft(), QPointF(48 - popupRect(results).width(), 0));
-        QVERIFY(sceneRect(resultsTitle).right() > 0); // part of the title is still there to grab
-        results->setProperty("x", 0);
-        results->setProperty("y", 0);
-        // Rules cannot change while the results are shown: a press on Add rule
-        // keeps both windows open and is refused.
-        click(addRule);
-        QCOMPARE(application->log().lastMessage(), QStringLiteral("Cannot change rules\nwhen find results window is open"));
-        QVERIFY(results->property("visible").toBool());
-        QVERIFY(dialog->property("visible").toBool());
-        QCOMPARE(application->misspellRules().size(), 13);
-        auto *resultsContent = results->property("contentItem").value<QQuickItem *>();
-        // A click on the header's text folds its finds, another unfolds them.
-        QQuickItem *header = nullptr, *firstRow = nullptr, *second = nullptr;
-        QTRY_VERIFY((header = findItem(resultsContent, QStringLiteral("misspellResultHeader0"))));
-        QTRY_VERIFY((firstRow = findItem(resultsContent, QStringLiteral("misspellResultRow1"))));
-        click(header);
+        QVERIFY(results->property("shown").toBool());
+        for (const char *button : {"misspellAddRule", "misspellEditRule", "misspellRemoveRule"})
+            QVERIFY2(!named(button)->isEnabled(), button);
+        // An arrow folds the file's finds, another press unfolds them.
+        QQuickItem *fold = nullptr, *firstRow = nullptr, *second = nullptr, *header = nullptr;
+        QTRY_VERIFY((fold = named("misspellResultFold0")));
+        QTRY_VERIFY((firstRow = named("misspellResultRow1")));
+        click(fold);
         QTRY_VERIFY(!firstRow->isVisible());
-        click(header);
+        click(fold);
         QTRY_VERIFY(firstRow->isVisible());
-        // Uncheck the second find with its checkbox.
-        QTRY_VERIFY((second = findItem(resultsContent, QStringLiteral("misspellResultCheck2"))));
+        // The header's box checks all of its finds, then none, then all.
+        QTRY_VERIFY((header = named("misspellResultCheck0")));
+        QCOMPARE(header->property("checkState").toInt(), int(Qt::Checked));
+        click(header);
+        QTRY_COMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("0 checked"));
+        QVERIFY(!named("misspellReplaceChecked")->isEnabled());
+        click(header);
+        QTRY_COMPARE(named("misspellCheckedCount")->property("text").toString(), QStringLiteral("2 checked"));
+        // Uncheck the second find with its checkbox: the header is partly checked.
+        QTRY_VERIFY((second = named("misspellResultCheck2")));
         click(second);
         QTRY_VERIFY(!second->property("checked").toBool());
+        QCOMPARE(header->property("checkState").toInt(), int(Qt::PartiallyChecked));
         // A double click on a find shows its Line with the find selected.
-        QTest::mouseDClick(window, Qt::LeftButton, Qt::NoModifier, centre(findItem(resultsContent, QStringLiteral("misspellResultRow2"))));
+        auto *findRow = named("misspellResultRow2");
+        QTest::mouseDClick(findRow->window(), Qt::LeftButton, Qt::NoModifier, centre(findRow));
         QTRY_COMPARE(session->selection().active, std::optional(session->document().lines()[0]->id));
         QCOMPARE(application->editor().selectionStart(), 13);
         QCOMPARE(application->editor().selectionEnd(), 15);
-        // A click in the main window outside both dialogs closes neither.
-        const QPoint outside(window->width() - 12, window->height() / 2);
-        QVERIFY(!popupRect(results).contains(outside) && !popupRect(dialog).contains(outside));
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, outside);
-        QTest::qWait(50);
-        QVERIFY(results->property("visible").toBool());
-        QVERIFY(dialog->property("visible").toBool());
         // Replace: one "Fixing minor errors" step with the checked find.
         const auto steps = session->historySize();
-        auto *replace = findItem(resultsContent, QStringLiteral("misspellReplaceChecked"));
+        auto *replace = named("misspellReplaceChecked");
         click(replace);
         QTRY_COMPARE(session->historySize(), steps + 1);
         QCOMPARE(session->history().back().name, std::string("Fixing minor errors"));
@@ -8092,37 +8062,65 @@ private slots:
             return QString::fromUtf8(reinterpret_cast<const char *>(t.data()), qsizetype(t.size()));
         };
         QCOMPARE(text(0), QStringLiteral("Hello, world , again"));
-        QVERIFY(!replace->property("enabled").toBool()); // once per search
-        // Closing the results window leaves the Multireplacer open.
-        QVERIFY(QMetaObject::invokeMethod(results, "close"));
-        QTRY_VERIFY(!results->property("visible").toBool());
-        QVERIFY(dialog->property("visible").toBool());
-        // Replace all errors in current tab with "Remove doubled spaces" too.
-        click(dialogItem("misspellDialog", "misspellRuleCheck1"));
+        QVERIFY(!replace->isEnabled()); // once per search
+        // Closing the results gives the strip back; the panel stays.
+        click(named("misspellCloseResults"));
+        QTRY_VERIFY(!results->property("shown").toBool());
+        QVERIFY(named("misspellAddRule")->isEnabled());
+        QVERIFY(dock->property("isOpen").toBool());
+        // Replace all in this tab with "Remove doubled spaces" too.
+        click(named("misspellRuleCheck1"));
         QTRY_VERIFY(application->misspellRules().at(1).toMap().value(QStringLiteral("checked")).toBool());
-        click(dialogItem("misspellDialog", "misspellReplaceTab"));
+        click(named("misspellReplaceAll"));
         QTRY_COMPARE(session->historySize(), steps + 2);
         QCOMPARE(session->history().back().name, std::string("Fixing minor errors"));
         QCOMPARE(text(0), QStringLiteral("Hello, world, again"));
         QCOMPARE(text(1), QStringLiteral("a b"));
-        // The rule buttons: add (unchecked), edit the chosen one, delete it.
-        auto *find = dialogItem("misspellDialog", "misspellFind");
+        // The Rule section (folded by the Find): add (unchecked), update the
+        // chosen one, delete it. Case and In are one list each over the
+        // rules file's bits.
+        if (!tool->property("editorOpen").toBool())
+            click(named("misspellRuleSection"));
+        QTRY_VERIFY(tool->property("editorOpen").toBool());
+        auto *find = named("misspellFind");
+        QTRY_VERIFY(find->isVisible());
         find->setProperty("text", QStringLiteral("fine"));
-        dialogItem("misspellDialog", "misspellReplace")->setProperty("text", QStringLiteral("good"));
-        click(addRule);
+        named("misspellReplace")->setProperty("text", QStringLiteral("good"));
+        named("misspellCase")->setProperty("currentIndex", 2);  // Lower case: 2
+        named("misspellWhere")->setProperty("currentIndex", 2); // Text only: 32
+        named("misspellMatchCase")->setProperty("checked", true);
+        click(named("misspellAddRule"));
         auto added = application->misspellRules();
         QCOMPARE(added.size(), 14);
         QCOMPARE(added.last().toMap().value(QStringLiteral("find")).toString(), QStringLiteral("fine"));
+        QCOMPARE(added.last().toMap().value(QStringLiteral("options")).toInt(), 1 | 2 | 32);
         QVERIFY(!added.last().toMap().value(QStringLiteral("checked")).toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "chooseRule", Q_ARG(QVariant, 13)));
+        QVERIFY(QMetaObject::invokeMethod(tool, "chooseRule", Q_ARG(QVariant, 13)));
+        QCOMPARE(named("misspellCase")->property("currentIndex").toInt(), 2);
+        QCOMPARE(named("misspellWhere")->property("currentIndex").toInt(), 2);
         find->setProperty("text", QStringLiteral("fin"));
-        click(dialogItem("misspellDialog", "misspellEditRule"));
+        named("misspellCase")->setProperty("currentIndex", 1); // Unchanged: 8
+        click(named("misspellEditRule"));
         QCOMPARE(application->misspellRules().last().toMap().value(QStringLiteral("find")).toString(), QStringLiteral("fin"));
-        click(dialogItem("misspellDialog", "misspellRemoveRule"));
+        QCOMPARE(application->misspellRules().last().toMap().value(QStringLiteral("options")).toInt(), 1 | 8 | 32);
+        // A rule saved with several case bits opens as the one the engine
+        // applies: unchanged, then lower, then upper.
+        QVariant both;
+        QVERIFY(QMetaObject::invokeMethod(tool, "caseIndexOf", Q_RETURN_ARG(QVariant, both), Q_ARG(QVariant, 2 | 4 | 8)));
+        QCOMPARE(both.toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(tool, "caseIndexOf", Q_RETURN_ARG(QVariant, both), Q_ARG(QVariant, 2 | 4)));
+        QCOMPARE(both.toInt(), 2);
+        click(named("misspellRemoveRule"));
         QCOMPARE(application->misspellRules().size(), 13);
-        // The menu hides the dialog again.
+        // The Styles field and Choose styles show only for "According to
+        // the selected styles".
+        QVERIFY(!named("misspellChooseStyles")->isVisible());
+        named("misspellWhichLines")->setProperty("currentIndex", 3);
+        QTRY_VERIFY(named("misspellChooseStyles")->isVisible());
+        named("misspellWhichLines")->setProperty("currentIndex", 0);
+        // The menu hides the panel again.
         QVERIFY(QMetaObject::invokeMethod(menuItem->property("action").value<QObject *>(), "trigger"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
     }
 
     // F4: a find in an untranslated Line in translation mode is selected in
@@ -8175,6 +8173,31 @@ private slots:
         // The valid checked rule still ran.
         const auto &line = *session->document().lines()[1];
         QCOMPARE(std::string(line.text.begin(), line.text.end()), std::string("untranslated three"));
+    }
+
+    // PU2 (#304): starting and quitting leave Rules.txt alone: the default
+    // arrangement opens Fix minor errors only in passing, and the rules are
+    // read (and written back at exit) only once the panel shows (Codex
+    // review). A malformed file would come back rewritten otherwise.
+    void startingLeavesTheRulesFileAlone()
+    {
+        QTemporaryDir home;
+        const QByteArray bytes("#HikariSub rules file\r\n1\r\nnot a rule\r\nMine\fteh\fthe\f1\r\n");
+        QFile rules(home.filePath(QStringLiteral("Rules.txt")));
+        QVERIFY(rules.open(QIODevice::WriteOnly));
+        rules.write(bytes);
+        rules.close();
+        restartWithSpelling(home.path(), false);
+        QVERIFY(QMetaObject::invokeMethod(engine->rootObjects().first(), "defaultLayout"));
+        QTest::qWait(100);
+        QVERIFY(!item<QObject>("misspellDock")->property("isOpen").toBool());
+        QVERIFY(!application->log().history().contains(QStringLiteral("is invalid")));
+        delete engine;
+        delete application;
+        engine = nullptr;
+        application = nullptr;
+        QVERIFY(rules.open(QIODevice::ReadOnly));
+        QCOMPARE(rules.readAll(), bytes);
     }
 
     // F4: Rules.txt beside the INI file, written when the application ends
@@ -9383,12 +9406,22 @@ private slots:
         auto *find = dialogItem("selectLinesDialog", "selectFindText");
         QVERIFY(find);
         find->setProperty("editText", QStringLiteral("alpha"));
+        // PU2-select-lines: a modeless window on DG1's frame; Select keeps
+        // it open and the count is a toast.
+        auto *window = qobject_cast<QQuickWindow *>(dialog);
+        QVERIFY(window);
+        QCOMPARE(window->modality(), Qt::NonModal);
+        QCOMPARE(window->title(), QStringLiteral("Select lines"));
+        // DG1's settings: the title bar choice and the remembered place (Codex review).
+        QCOMPARE(dialog->property("settings").value<QObject *>(), static_cast<QObject *>(application->settingsStore()));
+        QCOMPARE(dialog->property("defaultButton").value<QObject *>()->objectName(), QStringLiteral("selectRun"));
+        auto *toasts = root->findChild<QObject *>(QStringLiteral("toastStack"));
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
         QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectRun"), "click"));
-        // NT1: the result is an info toast and Select lines stays open.
+        // NT1: the count is an info toast titled with the command.
         QQuickItem *result = nullptr;
         QTRY_VERIFY((result = toastWith(QStringLiteral("2 lines selected."))));
-        QCOMPARE(partNamed(result, "toastTitle")->property("text").toString(),
-                 QStringLiteral("Select lines"));
+        QCOMPARE(partNamed(result, "toastTitle")->property("text").toString(), QStringLiteral("Select lines"));
         QVERIFY(dialog->property("visible").toBool());
         const auto lines = session->document().lines();
         QCOMPARE(session->selection().selected, (std::set<core::LineId>{lines[0]->id, lines[2]->id}));
@@ -9411,7 +9444,23 @@ private slots:
         QTRY_VERIFY(!styles->property("visible").toBool());
         QCOMPARE(find->property("editText").toString(), QStringLiteral("alpha"));
         QVERIFY(!dialogItem("selectLinesDialog", "selectRegex")->property("checked").toBool());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
+        // The In row is a segmented choice; a styles tick picks Styles.
+        auto *fields = dialogItem("selectLinesDialog", "selectField");
+        QCOMPARE(fields->property("currentIndex").toInt(), 0);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("selectLinesDialog", "selectChooseStyles"), "click"));
+        QTRY_VERIFY(styles->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(styles, "toggle", Q_ARG(QVariant, names.first())));
+        QCOMPARE(fields->property("currentIndex").toInt(), 1);
+        QVERIFY(QMetaObject::invokeMethod(styles, "revert"));
+        QCOMPARE(fields->property("currentIndex").toInt(), 0);
+        // Enter in the find field selects too, and Close (Esc) closes.
+        window->requestActivate();
+        find->forceActiveFocus();
+        QTRY_VERIFY(find->hasActiveFocus());
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(toastWith(QStringLiteral("2 lines selected.")));
+        QTest::keyClick(window, Qt::Key_Escape);
         QTRY_VERIFY(!dialog->property("visible").toBool());
         // Delete by style, as one "Selecting lines" step; Without and Comments too.
         const auto steps = session->historySize();
@@ -10389,22 +10438,29 @@ private slots:
         QCOMPARE(session->selection().active, std::optional(lines[1]->id));
         press(Qt::Key_F3);
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
-        // The end asks "Reached end" in a box that does not block: F3 (and any
-        // other find) is refused while it waits.
+        // PU2: the end asks "Reached the end" in a message box that blocks
+        // nothing else: F3 (and any other find) is refused while it waits.
         application->setFindQuestionHandler({});
         auto *question = item<QObject>("findQuestion");
+        const auto box = [&] { return qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>()); };
+        const auto choice = [&](const char *id) {
+            return findItem(box()->contentItem(), QStringLiteral("messageBoxChoice_%1").arg(QLatin1String(id)));
+        };
         press(Qt::Key_F3);
-        QTRY_VERIFY(question->property("visible").toBool());
-        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached the end of the subtitles."));
+        QCOMPARE(box()->title(), QStringLiteral("Find and replace"));
+        QCOMPARE(box()->property("detail").toString(), QStringLiteral("Search again from the first line?"));
         QVERIFY(application->findBusy());
         press(Qt::Key_F3);
         application->findNext();
         application->runFindReplace(QStringLiteral("find"), {{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}});
         QCOMPARE(question->property("queue").toList().size(), 0);
         QCOMPARE(session->selection().active, std::optional(lines[2]->id));
-        // Yes: from the beginning.
-        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        // Search from the start (the default, Enter's): from the beginning.
+        QCOMPARE(box()->property("defaultButton").value<QObject *>(), choice("fromStart"));
+        QVERIFY(QMetaObject::invokeMethod(choice("fromStart"), "click"));
+        QTRY_VERIFY(!question->property("opened").toBool());
         QVERIFY(!application->findBusy());
         QCOMPARE(session->selection().active, std::optional(lines[0]->id));
         // Find all lists the matches on the right; a double click goes there.
@@ -10433,27 +10489,36 @@ private slots:
         QCOMPARE(session->history().back().name, std::string("Replace all"));
         QVERIFY(!application->canReplaceFindResults());
         QVERIFY(!item("replaceCheckedButton")->isEnabled());
-        // "Could not find" is an info toast titled "Find" (NT1), not a box;
-        // Yes to "Reached end" that finds nothing from the beginning either
-        // closes the question and gives the toast.
+        // An answer that asks again at once: "Search from the start" finds
+        // nothing from the beginning either, and "Could not find" is an info
+        // toast titled "Find" (PU2, NT1), which blocks nothing.
         application->setFindQuestionHandler({});
+        auto *toasts = item<QObject>("toastStack");
         const QVariantMap zzz{{QStringLiteral("tab"), 0}, {QStringLiteral("find"), QStringLiteral("zzz")}};
-        const QString notFound = QStringLiteral("Could not find the specified phrase \"zzz\".");
+        const QString notFound = QStringLiteral("Could not find “zzz”.");
         const int infos = application->log().infoCount();
         application->runFindReplace(QStringLiteral("find"), zzz); // from the beginning (the last search wrapped)
         QQuickItem *toast = nullptr;
         QTRY_VERIFY((toast = toastWith(notFound)));
         QCOMPARE(partNamed(toast, "toastTitle")->property("text").toString(), QStringLiteral("Find"));
         QCOMPARE(application->log().infoCount(), infos + 1);
-        QVERIFY(!question->property("visible").toBool());
+        QVERIFY(!question->property("opened").toBool());
         QVERIFY(!application->findBusy());
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
         application->runFindReplace(QStringLiteral("find"), zzz);
-        QTRY_VERIFY(question->property("visible").toBool());
-        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached end. Search from the beginning?"));
-        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerYes")), "click"));
+        QTRY_VERIFY(question->property("opened").toBool());
+        QCOMPARE(question->property("text").toString(), QStringLiteral("Reached the end of the subtitles."));
+        QVERIFY(QMetaObject::invokeMethod(choice("fromStart"), "click"));
         QTRY_COMPARE(application->log().infoCount(), infos + 2);
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(toastWith(notFound));
+        QTRY_VERIFY(!question->property("opened").toBool());
+        // Esc answers Stop: nothing more is found or asked.
+        application->runFindReplace(QStringLiteral("find"), zzz);
+        QTRY_VERIFY(question->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box(), "reject"));
+        QTRY_VERIFY(!question->property("opened").toBool());
         QVERIFY(!application->findBusy());
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
         // Ctrl+F again on the Find tab with the focus in the tool hides it.
         item("findText")->forceActiveFocus();
         press(Qt::Key_F, Qt::ControlModifier);
@@ -10715,7 +10780,8 @@ private slots:
                                     {{QStringLiteral("tab"), 2},
                                      {QStringLiteral("find"), QStringLiteral("cat")},
                                      {QStringLiteral("folder"), folder.filePath(QStringLiteral("missing"))}});
-        QCOMPARE(questions.back(), QStringLiteral("Search path is invalid"));
+        QCOMPARE(questions.back(), QStringLiteral("The search folder “%1” does not exist.")
+                                       .arg(folder.filePath(QStringLiteral("missing"))));
     }
 
     // F1 (R5-per-platform): legacy wxDir::GetAllFiles lists each folder's
@@ -11333,30 +11399,25 @@ private slots:
         // the first is named.
         using Buttons = std::vector<std::pair<const char *, Role>>;
         const std::vector<Buttons> footers{
-            {{"historySet", Apply}, {"historyOk", Accept}, {"historyCancel", Reject}},
+            {{"historyGo", Accept}, {"historyClose", Reject}}, // PU2
             {{"automationReassignOk", Accept}, {"automationReassignKeepBoth", Action}, {"automationReassignCancel", Reject}},
             {{"fpsOk", Accept}, {"fpsCancel", Reject}},
             {{"columnsOk", Accept}, {"columnsCancel", Reject}},
-            {{"groupBreakRemove", Destructive}, {"groupBreakCancel", Reject}},
             {{"styleEditorOk", Accept}, {"styleEditorApply", Apply}, {"styleEditorCancel", Reject}}, // SY1: one footer
             {{"conversionAccept", Accept}, {"Cancel", Reject}},
             {{"resampleOk", Accept}, {"Cancel", Reject}},
             {{"mismatchChange", Accept}, {"Do not change", Reject}, {"mismatchDisable", Action}},
-            {{"groupDescriptionOk", Accept}, {"groupDescriptionCancel", Reject}},
             {{"saveTag", Accept}, {"cancelTag", Reject}},
             {{"updateOffer", Accept}, {"updateClose", Reject}, {"updateRemind", No}}, // PU7: Skip this version at the leading edge
             {{"saveLayoutSave", Accept}, {"saveLayoutCancel", Reject}}, // PU7
-            {{"selectRun", Accept}, {"selectRunAllTabs", Accept}, {"Close", Reject}},
+            {{"selectRun", Accept}, {"selectClose", Reject}}, // PU2: Select in all tabs at the leading edge
+            {{"translationShiftClose", Reject}}, // PU2
             {{"fontCollectorStart", Accept}, {"fontCollectorStartOnTabs", Accept}, {"fontCollectorSaveFolder", Action},
              {"fontCollectorCancel", Reject}, {"fontCollectorClose", Reject}},
-            {{"findAnswerOk", Accept}, {"findAnswerYes", Yes}, {"findAnswerNo", No}, {"findAnswerCancel", Reject}},
             {{"clashReviewApply", Accept}, {"clashReviewCancel", Reject}}, // PK1
             {{"listChooserTake", Accept}, {"listChooserCancel", Reject}}, // PK1
         };
-        // The find question lives in the Search tool's dock: open it. The
-        // Automation panel's Reassign question has no items until it opens.
-        press(Qt::Key_F, Qt::ControlModifier);
-        QTRY_VERIFY(item<QObject>("searchDock")->property("isOpen").toBool());
+        // The Automation panel's Reassign question has no items until it opens.
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("automationDock")))));
         QTRY_VERIFY(item<QObject>("automationDock")->property("isOpen").toBool());
         QObject *reassign = item<QObject>("automationReassign");
@@ -11390,6 +11451,7 @@ private slots:
             for (int i = 0; i < count; ++i) {
                 QQuickItem *button = nullptr;
                 QVERIFY(QMetaObject::invokeMethod(box, "itemAt", Q_RETURN_ARG(QQuickItem *, button), Q_ARG(int, i)));
+                QVERIFY2(button, first);
                 const QString name = button->objectName().isEmpty() ? button->property("text").toString() : button->objectName();
                 const auto expected = std::find_if(buttons.begin(), buttons.end(),
                                                    [&](const auto &b) { return name == QLatin1String(b.first); });
@@ -11403,19 +11465,21 @@ private slots:
         clashes->close();
         QTRY_VERIFY(!clashes->isVisible());
 
-        // History: Set (apply), OK (accept), Cancel (reject), at the right edge.
-        auto *history = root->findChild<QQuickWindow *>(QStringLiteral("historyWindow"));
-        history->show();
+        // History: Go to step (accept, the default) and Close (reject), at
+        // the right edge.
+        auto *history = qobject_cast<QQuickWindow *>(item<QObject>("historyWindow"));
+        QVERIFY(history);
+        QVERIFY(QMetaObject::invokeMethod(history, "open"));
         QVERIFY(QTest::qWaitForWindowExposed(history));
-        auto *set = history->findChild<QQuickItem *>(QStringLiteral("historySet"));
-        auto *ok = history->findChild<QQuickItem *>(QStringLiteral("historyOk"));
-        auto *cancel = history->findChild<QQuickItem *>(QStringLiteral("historyCancel"));
-        auto *box = boxOf(ok);
+        auto *go = findItem(history->contentItem(), QStringLiteral("historyGo"));
+        auto *close = findItem(history->contentItem(), QStringLiteral("historyClose"));
+        QVERIFY(go && close);
+        auto *box = boxOf(go);
         const auto left = [&](QQuickItem *item) { return item->mapToItem(box, QPointF()).x(); };
         const auto order = [&](int layout) {
             box->setProperty("buttonLayout", layout); // laid out at the next polish: QTRY_COMPARE asks again
             std::vector<std::pair<qreal, QString>> xs;
-            for (QQuickItem *b : {set, ok, cancel})
+            for (QQuickItem *b : {go, close})
                 xs.emplace_back(left(b), b->property("text").toString());
             std::sort(xs.begin(), xs.end());
             QStringList names;
@@ -11426,61 +11490,56 @@ private slots:
         const QVariant platformLayout = box->property("buttonLayout");
         {
             auto restoreLayout = qScopeGuard([&] { box->setProperty("buttonLayout", platformLayout); });
-            QTRY_COMPARE(order(0), (QStringList{"OK", "Cancel", "Set"})); // WinLayout
-            QTRY_COMPARE(order(2), (QStringList{"OK", "Set", "Cancel"})); // KdeLayout
-            QTRY_COMPARE(order(3), (QStringList{"Set", "Cancel", "OK"})); // GnomeLayout
+            QTRY_COMPARE(order(0), (QStringList{"Go to step", "Close"})); // WinLayout
+            QTRY_COMPARE(order(2), (QStringList{"Go to step", "Close"})); // KdeLayout
+            QTRY_COMPARE(order(3), (QStringList{"Close", "Go to step"})); // GnomeLayout
         }
         qreal right = 0;
-        for (QQuickItem *b : {set, ok, cancel})
+        for (QQuickItem *b : {go, close})
             right = std::max(right, left(b) + b->width());
         QTRY_COMPARE(right, box->width());
         const QPointF boxRight = box->mapToItem(history->contentItem(), QPointF(box->width(), 0));
-        QVERIFY(boxRight.x() > history->width() - 20); // the window's margin, not centred
+        QVERIFY(boxRight.x() > history->width() - 30); // the window's margin, not centred
         history->close();
 
-        // The find question's answers in the platform's order: the styles
-        // question on Windows (Yes, OK, No, Cancel by their roles).
-        auto *question = item<QObject>("findQuestion");
-        emit application->findQuestion(0, 2, QStringLiteral("Styles named \"X\" do not exist."), QStringLiteral("Confirmation"));
-        QTRY_VERIFY(question->property("visible").toBool());
-        auto *answerBox = boxOf(question->findChild<QQuickItem *>(QStringLiteral("findAnswerOk")));
+        // PU2: the find question is a message box, its answers in the
+        // platform's order by their roles: the styles question on Windows.
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("searchDock")))));
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = item<QObject>("findQuestion")));
+        emit application->findQuestion(0, 2, {{QStringLiteral("title"), QStringLiteral("Find and replace")},
+                                              {QStringLiteral("text"), QStringLiteral("a.ass has no style named “X”.")},
+                                              {QStringLiteral("severity"), QStringLiteral("warning")}});
+        QTRY_VERIFY(question->property("opened").toBool());
+        auto *questionBox = qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>());
+        QVERIFY(questionBox);
+        auto *answerBox = boxOf(findItem(questionBox->contentItem(), QStringLiteral("messageBoxChoice_dropMissing")));
+        QVERIFY(answerBox);
         const QVariant answerLayout = answerBox->property("buttonLayout");
         {
             auto restoreLayout = qScopeGuard([&] { answerBox->setProperty("buttonLayout", answerLayout); });
             answerBox->setProperty("buttonLayout", 0); // WinLayout
             const auto answers = [&] {
                 std::vector<std::pair<qreal, QString>> xs;
-                for (QQuickItem *b : answerBox->findChildren<QQuickItem *>())
-                    if (b->inherits("QQuickAbstractButton") && b->isVisible())
-                        xs.emplace_back(b->mapToItem(answerBox, QPointF()).x(), b->property("text").toString());
+                std::function<void(QQuickItem *)> walk = [&](QQuickItem *from) {
+                    for (QQuickItem *b : from->childItems()) {
+                        if (b->inherits("QQuickAbstractButton") && b->isVisible())
+                            xs.emplace_back(b->mapToItem(answerBox, QPointF()).x(), b->property("text").toString());
+                        else
+                            walk(b);
+                    }
+                };
+                walk(answerBox);
                 std::sort(xs.begin(), xs.end());
                 QStringList names;
                 for (const auto &x : xs)
                     names << x.second;
                 return names;
             };
-            QTRY_COMPARE(answers(), (QStringList{"Remove styles", "Remove nonexistent styles", "Ignore", "Cancel"}));
+            QTRY_COMPARE(answers(), (QStringList{"Drop the missing styles", "Search every style", "Keep them", "Cancel"}));
         }
-        QVERIFY(QMetaObject::invokeMethod(question->findChild<QObject *>(QStringLiteral("findAnswerCancel")), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
-
-        // Line group: the Cancel alone when there is no group to remove.
-        auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
-        breakDialog->setProperty("description", 0);
-        breakDialog->show();
-        QVERIFY(QTest::qWaitForWindowExposed(breakDialog));
-        auto *remove = breakDialog->findChild<QQuickItem *>(QStringLiteral("groupBreakRemove"));
-        auto *breakCancel = breakDialog->findChild<QQuickItem *>(QStringLiteral("groupBreakCancel"));
-        auto *breakBox = boxOf(breakCancel);
-        QVERIFY(!remove->isVisible());
-        QTRY_COMPARE(breakBox->implicitWidth(), breakCancel->width());
-        QTRY_COMPARE(breakCancel->mapToItem(breakBox, QPointF(breakCancel->width(), 0)).x(), breakBox->width());
-        breakDialog->setProperty("description", 7);
-        QTRY_VERIFY(remove->isVisible());
-        QTRY_COMPARE(breakBox->implicitWidth(),
-                     remove->width() + breakBox->property("spacing").toReal() + breakCancel->width());
-        breakDialog->close();
-        breakDialog->setProperty("description", 0);
+        QVERIFY(QMetaObject::invokeMethod(questionBox, "reject"));
+        QTRY_VERIFY(!question->property("opened").toBool());
     }
 
     // R1-check-items-close: a check item keeps its menus open when switched,
@@ -11625,18 +11684,152 @@ private slots:
         QTRY_COMPARE(table->rowCount(), 2);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
         QTRY_COMPARE(table->rowCount(), 4);
-        // Sorting by Start would orphan the members: refused, with the offer.
         auto *root = engine->rootObjects().first();
-        auto *breakDialog = root->findChild<QQuickWindow *>(QStringLiteral("groupBreakDialog"));
-        QVERIFY(breakDialog);
+        // PU2: Change description is a popover under the group's row (the
+        // menu's place): Esc changes nothing, Enter renames.
+        qulonglong description = 0;
+        for (const auto &line : session->document().lines())
+            if (line->group == core::GroupMarker::Description)
+                description = line->id.value;
+        QVERIFY(description);
+        auto *groupMenu = root->findChild<QObject *>(QStringLiteral("groupMenu"));
+        auto *popover = root->findChild<QObject *>(QStringLiteral("groupDescriptionPopover"));
+        QVERIFY(popover);
+        const auto openRename = [&] {
+            emit grid->groupMenuRequested(description, 120, rh * 2.5);
+            QTRY_VERIFY(groupMenu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("groupRename")), "triggered"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+        };
+        openRename();
+        auto *field = qobject_cast<QQuickItem *>(root->findChild<QObject *>(QStringLiteral("groupDescription")));
+        QCOMPARE(field->property("text").toString(), QStringLiteral("Signs"));
+        QTRY_VERIFY(field->hasActiveFocus());
+        QCOMPARE(field->property("selectedText").toString(), QStringLiteral("Signs"));
+        // Under the description row (rows 0-1 are the header and "a").
+        const auto popupItem = popover->property("contentItem").value<QQuickItem *>();
+        QVERIFY(popupItem->mapToItem(grid, QPointF()).y() >= rh * 3 - 1);
+        QCOMPARE(root->findChild<QObject *>(QStringLiteral("groupDescriptionRename"))->property("text").toString(),
+                 QStringLiteral("Rename"));
+        field->setProperty("text", QStringLiteral("Typing"));
+        press(Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("opened").toBool());
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Signs"));
+        // Another editing target closes it as Esc does (Codex review): with
+        // the Grid floating the main window's tabs stay usable.
+        openRename();
+        field->setProperty("text", QStringLiteral("Elsewhere"));
+        const int renameTab = application->currentTab();
+        QVERIFY(application->openFile(writeFile(dir, "g9-rename.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,y\n")));
+        if (application->currentTab() == renameTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QTRY_VERIFY(!popover->property("opened").toBool());
+        application->selectTab(renameTab);
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Signs"));
+        openRename();
+        field->setProperty("text", QStringLiteral("Station signs"));
+        press(Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("opened").toBool());
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Station signs"));
+        // Sorting by Start would orphan the members: refused, with the offer
+        // in a message box (Cancel the default, Remove group in the danger
+        // colour).
+        auto *breakBox = qobject_cast<QQuickWindow *>(root->findChild<QObject *>(QStringLiteral("groupBreakBox")));
+        QVERIFY(breakBox);
         const auto steps = session->historySize();
         QVERIFY(!application->sortLines(QStringLiteral("start"), false));
-        QTRY_VERIFY(breakDialog->isVisible());
+        QTRY_VERIFY(breakBox->isVisible());
+        QCOMPARE(breakBox->title(), QStringLiteral("Line group"));
+        QCOMPARE(breakBox->property("text").toString(), QStringLiteral("This would break the line group “Station signs”."));
+        auto *cancel = findItem(breakBox->contentItem(), QStringLiteral("messageBoxChoice_cancel"));
+        auto *remove = findItem(breakBox->contentItem(), QStringLiteral("messageBoxChoice_remove"));
+        QCOMPARE(breakBox->property("defaultButton").value<QObject *>(), cancel);
+        QVERIFY(QString::fromLatin1(remove->metaObject()->className()).startsWith(QLatin1String("DangerButton")));
         QCOMPARE(session->historySize(), steps);
+        // The box is for the tab that refused (Codex review): with the Grid
+        // floating the main window's tabs stay usable, and another editing
+        // target closes it unanswered, nothing removed.
+        const int groupTab = application->currentTab();
+        QVERIFY(application->openFile(writeFile(dir, "g9-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == groupTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QVERIFY(application->currentTab() != groupTab);
+        QTRY_VERIFY(!breakBox->isVisible());
+        application->selectTab(groupTab);
+        QCOMPARE(application->groupTitle(description), QStringLiteral("Station signs"));
+        QCOMPARE(session->historySize(), steps);
+        QVERIFY(!application->sortLines(QStringLiteral("start"), false));
+        QTRY_VERIFY(breakBox->isVisible());
+        remove = findItem(breakBox->contentItem(), QStringLiteral("messageBoxChoice_remove"));
+        QVERIFY(remove);
         // Remove group deletes the description; the sort then works (a lands between m1 and m2).
-        QVERIFY(QMetaObject::invokeMethod(breakDialog->findChild<QObject *>(QStringLiteral("groupBreakRemove")), "clicked"));
+        QVERIFY(QMetaObject::invokeMethod(remove, "click"));
+        QTRY_VERIFY(!breakBox->isVisible());
         QTRY_COMPARE(table->rowCount(), 3);
         QVERIFY(application->sortLines(QStringLiteral("start"), false));
+        // Without a group to remove there is nothing to choose: a warning toast.
+        auto *toasts = item<QObject>("toastStack");
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+        emit application->groupBreakRefused(0, QString());
+        const auto entries = toasts->property("entries").toList();
+        QCOMPARE(entries.size(), 1);
+        QCOMPARE(entries.first().toMap().value(QStringLiteral("severity")).toString(), QStringLiteral("warning"));
+        QCOMPARE(entries.first().toMap().value(QStringLiteral("title")).toString(),
+                 QStringLiteral("This would leave lines outside their line group"));
+        QVERIFY(!breakBox->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+    }
+
+    // PU2 (#304): Copy / Paste columns names how many Lines it acts on;
+    // Paste columns skips the selected Lines the Grid hides (a folded
+    // group), as the paste does, and the window is for the tab it was
+    // opened in (Codex review).
+    void columnsWindowCountsItsLinesAndKeepsToItsTab()
+    {
+        const QString path = writeFile(dir, "c9.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,a\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Signs\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,m1\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,[tree_opened],0,0,0,,m2\n");
+        QVERIFY(application->openFile(path));
+        const int columnsTab = application->currentTab();
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        const auto lines = session->document().lines();
+        std::set<core::LineId> all;
+        for (const auto &line : lines)
+            all.insert(line->id);
+        session->setSelection(application::Selection{lines[0]->id, all, lines[0]->id, {}});
+        QCOMPARE(application->selectedLineCount(), 4);
+        QCOMPARE(application->selectedLineCount(true), 4);
+        // A click on the description row folds the group: m1 and m2 are hidden.
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        auto *table = QAccessible::queryAccessibleInterface(grid)->tableInterface();
+        const double rh = grid->property("rowHeight").toDouble();
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 2);
+        session->setSelection(application::Selection{lines[0]->id, all, lines[0]->id, {}});
+        QCOMPARE(application->selectedLineCount(), 4);
+        QCOMPARE(application->selectedLineCount(true), 2);
+        auto *columns = qobject_cast<QQuickWindow *>(engine->rootObjects().first()->findChild<QObject *>(QStringLiteral("columnsWindow")));
+        QVERIFY(columns);
+        QVERIFY(QMetaObject::invokeMethod(columns, "choose", Q_ARG(QVariant, true)));
+        QTRY_VERIFY(columns->isVisible());
+        QCOMPARE(columns->property("lineCount").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(columns, "close"));
+        QTRY_VERIFY(!columns->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(columns, "choose", Q_ARG(QVariant, false)));
+        QTRY_VERIFY(columns->isVisible());
+        QCOMPARE(columns->property("lineCount").toInt(), 4);
+        // Another editing target closes it unchosen.
+        QVERIFY(application->openFile(writeFile(dir, "c9-other.ass", "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x\n")));
+        if (application->currentTab() == columnsTab)
+            application->selectTab(int(application->tabs().size()) - 1);
+        QVERIFY(application->currentTab() != columnsTab);
+        QTRY_VERIFY(!columns->isVisible());
+        // Unfold the group again for the tests that follow.
+        application->selectTab(columnsTab);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, grid->mapToScene(QPointF(100, rh * 2.5)).toPoint());
+        QTRY_COMPARE(table->rowCount(), 4);
     }
 
     void enterOnTheLastLineAppendsOne()
@@ -11835,13 +12028,22 @@ private slots:
         QTRY_VERIFY(item("originalNotConfirmed") && item("originalNotConfirmed")->isVisible());
         QVERIFY(item("originalMovingTags")->isVisible());
 
-        // Turning it off asks; No, the focused default, keeps it on.
+        // Turning it off asks (PU2-translation-mode-off: PK1's message
+        // box); Keep it on, the focused default, keeps it on.
         auto *confirm = item<QObject>("translatorModeOffConfirm");
         QVERIFY(confirm);
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(confirm->property("opened").toBool());
+        QCOMPARE(confirm->property("text").toString(), QStringLiteral("Turn off Translation mode?"));
+        QCOMPARE(confirm->property("defaultButton").value<QObject *>()->objectName(), QStringLiteral("messageBoxChoice_keepOn"));
         QVERIFY(action->property("checked").toBool()); // still checked while it asks
-        press(Qt::Key_Space); // the focused No
+        auto *confirmWindow = qobject_cast<QQuickWindow *>(confirm);
+        const auto focused = [&] {
+            auto *item = confirmWindow->activeFocusItem();
+            return item ? item->objectName() : QString();
+        };
+        QTRY_COMPARE(focused(), QStringLiteral("messageBoxChoice_keepOn"));
+        QTest::keyClick(confirmWindow, Qt::Key_Space); // the focused Keep it on
         QTRY_VERIFY(!confirm->property("visible").toBool());
         QVERIFY(application->editor().translationMode());
         QCOMPARE(session->historySize(), steps + 1);
@@ -12224,6 +12426,192 @@ private slots:
             QTest::qWait(300);
             QVERIFY(window->grabWindow().save(out + QStringLiteral("/translation-mode-fields") + suffix));
         }
+    }
+
+    // PU2 (#304): every redesigned Lines and edit popup in the four themes,
+    // written to HIKARI_SURFACE_SHOT_DIR (pu2-<popup>-<theme>.png): the
+    // windows and message boxes on their own, the panel, the popover and the
+    // toasts over the 1280 x 800 main window.
+    void pu2Screenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QString path = writeFile(dir, "pu2-shots.ass",
+                                       "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Hello , station\n"
+                                       "Comment: 0,0:00:00.00,0:00:00.00,Default,[tree_description],0,0,0,,Station signs\n"
+                                       "Dialogue: 0,0:00:03.00,0:00:04.00,Default,[tree_opened],0,0,0,,Gate  four\n"
+                                       "Dialogue: 0,0:00:05.00,0:00:06.00,Default,[tree_opened],0,0,0,,Platform , two\n"
+                                       "Dialogue: 0,0:00:07.00,0:00:08.00,Default,,0,0,0,,The train leaves at noon\n");
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        auto *root = engine->rootObjects().first();
+        auto *grid = qobject_cast<ui::LineGrid *>(item("editingGrid"));
+        // Two steps for the History window.
+        application->selectLines({{QStringLiteral("find"), QStringLiteral("noon")}, {QStringLiteral("field"), 0},
+                                  {QStringLiteral("action"), 5}}, false);
+        application->selectLines({{QStringLiteral("find"), QStringLiteral("noon")}, {QStringLiteral("field"), 0},
+                                  {QStringLiteral("action"), 5}}, false);
+        grid->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto themed = [&](const std::function<void(const QString &)> &shoot) {
+            for (const auto code : ui::theme::kCodes) {
+                settings.setValue(QStringLiteral("appearance.theme"), ui::theme::codeName(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                shoot(ui::theme::codeName(code));
+            }
+        };
+        const auto save = [&](QQuickWindow *w, const QString &name, const QString &theme) {
+            QVERIFY2(w && w->isVisible(), qPrintable(name));
+            QTest::qWait(300);
+            QImage shot;
+            QTRY_VERIFY((shot = w->grabWindow(), !shot.isNull() && shot.width() > 0));
+            QVERIFY(shot.save(out + QStringLiteral("/pu2-") + name + QLatin1Char('-') + theme + QStringLiteral(".png")));
+        };
+        const auto windowNamed = [&](const char *name) { return qobject_cast<QQuickWindow *>(item<QObject>(name)); };
+        const auto showAndShoot = [&](const char *name, const char *method, const QVariantList &args, const QString &file) {
+            auto *w = windowNamed(name);
+            QVERIFY2(w, name);
+            themed([&](const QString &theme) {
+                if (args.isEmpty())
+                    QVERIFY(QMetaObject::invokeMethod(w, method));
+                else
+                    QVERIFY(QMetaObject::invokeMethod(w, method, Q_ARG(QVariant, args.first())));
+                QTRY_VERIFY(w->isVisible());
+                save(w, file, theme);
+                w->close();
+                QTRY_VERIFY(!w->isVisible());
+            });
+        };
+        showAndShoot("selectLinesDialog", "openDialog", {}, QStringLiteral("select-lines"));
+        showAndShoot("historyWindow", "open", {}, QStringLiteral("history"));
+        showAndShoot("columnsWindow", "choose", {false}, QStringLiteral("copy-columns"));
+        showAndShoot("translationShiftWindow", "open", {}, QStringLiteral("translation-matching"));
+
+        // The find/replace questions: the four-answer one and the destructive one.
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("searchDock")))));
+        QObject *question = nullptr;
+        QTRY_VERIFY((question = item<QObject>("findQuestion")));
+        const auto ask = [&](int kind, const QVariantMap &shown, const QString &file) {
+            themed([&](const QString &theme) {
+                emit application->findQuestion(0, kind, shown);
+                QTRY_VERIFY(question->property("opened").toBool());
+                auto *box = qobject_cast<QQuickWindow *>(question->property("box").value<QObject *>());
+                save(box, file, theme);
+                QVERIFY(QMetaObject::invokeMethod(box, "reject"));
+                QTRY_VERIFY(!question->property("opened").toBool());
+            });
+        };
+        ask(2, {{QStringLiteral("title"), QStringLiteral("Find and replace")},
+                {QStringLiteral("text"), QStringLiteral("pu2-shots.ass has no style named “Sign” or “Caption”.")},
+                {QStringLiteral("detail"), QStringLiteral("The other chosen styles are there. Searching with the missing ones finds fewer lines.")},
+                {QStringLiteral("severity"), QStringLiteral("warning")}},
+            QStringLiteral("find-missing-styles"));
+        ask(4, {{QStringLiteral("title"), QStringLiteral("Replace in subtitles")},
+                {QStringLiteral("text"), QStringLiteral("Replace in every matching file in “Episodes”?")},
+                {QStringLiteral("detail"), QStringLiteral("The files are changed on disk; Undo cannot bring them back. "
+                                                          "A copy of each file goes to the ReplaceBackup folder first.")},
+                {QStringLiteral("severity"), QStringLiteral("warning")}},
+            QStringLiteral("replace-in-files"));
+
+        QVERIFY(QMetaObject::invokeMethod(item<QObject>("searchDock"), "close"));
+
+        // The line group refusal (a sort would orphan the members) and the
+        // description popover at the group's row.
+        auto *breakBox = windowNamed("groupBreakBox");
+        QVERIFY(breakBox);
+        themed([&](const QString &theme) {
+            QVERIFY(!application->sortLines(QStringLiteral("start"), false));
+            QTRY_VERIFY(breakBox->isVisible());
+            save(breakBox, QStringLiteral("group-break"), theme);
+            QVERIFY(QMetaObject::invokeMethod(breakBox, "reject"));
+            QTRY_VERIFY(!breakBox->isVisible());
+        });
+        qulonglong description = 0;
+        for (const auto &line : session->document().lines())
+            if (line->group == core::GroupMarker::Description)
+                description = line->id.value;
+        QVERIFY(description);
+        auto *groupMenu = item<QObject>("groupMenu");
+        auto *popover = item<QObject>("groupDescriptionPopover");
+        QVERIFY(groupMenu && popover);
+        const double rh = grid->property("rowHeight").toDouble();
+        themed([&](const QString &theme) {
+            emit grid->groupMenuRequested(description, 120, rh * 2.5);
+            QTRY_VERIFY(groupMenu->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(item<QObject>("groupRename"), "triggered"));
+            QTRY_VERIFY(popover->property("opened").toBool());
+            save(window, QStringLiteral("group-description"), theme);
+            press(Qt::Key_Escape);
+            QTRY_VERIFY(!popover->property("opened").toBool());
+        });
+
+        // The Fix minor errors panel, editing rules and with the results open.
+        auto *dock = item<QObject>("misspellDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock))));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QQuickItem *tool = nullptr;
+        QTRY_VERIFY((tool = item<QQuickItem>("misspellTool")));
+        auto *results = item<QObject>("misspellResults");
+        application->checkMisspellRule(0, true);
+        application->checkMisspellRule(1, true);
+        QVERIFY(QMetaObject::invokeMethod(tool, "reloadRules"));
+        QVERIFY(QMetaObject::invokeMethod(tool, "chooseRule", Q_ARG(QVariant, 0)));
+        themed([&](const QString &theme) { save(window, QStringLiteral("fix-minor-errors"), theme); });
+        QVERIFY(QMetaObject::invokeMethod(tool, "find"));
+        QTRY_VERIFY(results->property("shown").toBool());
+        themed([&](const QString &theme) { save(window, QStringLiteral("fix-minor-errors-results"), theme); });
+        QVERIFY(QMetaObject::invokeMethod(results, "close"));
+        application->checkMisspellRule(0, false);
+        application->checkMisspellRule(1, false);
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+
+        // The toasts that replace the OK-only messages.
+        auto *toasts = item<QObject>("toastStack");
+        themed([&](const QString &theme) {
+            QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+            auto &log = application->log();
+            log.notice(ui::LogController::Warning, QStringLiteral("Find in files"),
+                       QStringLiteral("The search folder “/home/user/Episodes” does not exist."));
+            log.notice(ui::LogController::Info, QStringLiteral("Find"), QStringLiteral("Could not find “platfrom”."));
+            log.notice(ui::LogController::Info, QStringLiteral("Select lines"), QStringLiteral("2 lines selected."));
+            save(window, QStringLiteral("toasts"), theme);
+        });
+        QVERIFY(QMetaObject::invokeMethod(toasts, "clear"));
+
+        // The two Translation mode prompts: the preset's question (shown
+        // here without the preset, and closed unanswered), then the
+        // turn-off question on a Document in the mode.
+        auto *modeQuestion = windowNamed("translationModeQuestion");
+        QVERIFY(modeQuestion);
+        themed([&](const QString &theme) {
+            QVERIFY(QMetaObject::invokeMethod(modeQuestion, "open"));
+            QTRY_VERIFY(modeQuestion->isVisible());
+            save(modeQuestion, QStringLiteral("translation-mode-on"), theme);
+            modeQuestion->setProperty("dropping", true);
+            modeQuestion->close();
+            modeQuestion->setProperty("dropping", false);
+            QTRY_VERIFY(!modeQuestion->isVisible());
+        });
+        application->editor().discard();
+        QVERIFY(application->openFile(writeTranslationFile("pu2-tl.ass")));
+        press(Qt::Key_Home);
+        showAndShoot("columnsWindow", "choose", {true}, QStringLiteral("paste-columns"));
+        auto *confirm = windowNamed("translatorModeOffConfirm");
+        QVERIFY(confirm);
+        themed([&](const QString &theme) {
+            QVERIFY(QMetaObject::invokeMethod(confirm, "open"));
+            QTRY_VERIFY(confirm->isVisible());
+            save(confirm, QStringLiteral("translation-mode-off"), theme);
+            QVERIFY(QMetaObject::invokeMethod(confirm, "reject"));
+            QTRY_VERIFY(!confirm->isVisible());
+        });
+        application->editor().discard();
     }
 
     // E5: "Not confirmed" (EditBox::OnDoubtfulTl) flips every selected Line
@@ -13597,11 +13985,15 @@ private slots:
         QCOMPARE(settings.list("find.recentFinds"), (QStringList{QStringLiteral("beta"), QStringLiteral("alpha")}));
         QVERIFY(!settings.contains("find.recentReplacements"));
 
-        // The Multireplacer, once shown, holds its rules.
+        // The Fix minor errors panel, once shown, holds its rules.
         auto *root = engine->rootObjects().first();
-        auto *misspell = root->findChild<QObject *>(QStringLiteral("misspellDialog"));
-        QVERIFY(QMetaObject::invokeMethod(misspell, "openDialog"));
-        QTRY_VERIFY(misspell->property("opened").toBool());
+        auto *misspellDock = item<QObject>("misspellDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(misspellDock))));
+        QTRY_VERIFY(misspellDock->property("isOpen").toBool());
+        QObject *misspell = nullptr;
+        QTRY_VERIFY((misspell = item<QObject>("misspellTool")));
+        QTRY_COMPARE(misspell->property("rules").toList().size(), 13);
+        item<QObject>("misspellFind")->setProperty("text", QStringLiteral("typed"));
         QVERIFY(application->addMisspellRule({{QStringLiteral("description"), QStringLiteral("Owner rule")},
                                               {QStringLiteral("find"), QStringLiteral("zz")},
                                               {QStringLiteral("replace"), QStringLiteral("z")},
@@ -13622,10 +14014,12 @@ private slots:
         QCOMPARE(settings.integer("find.options") & 1, 0);
         QTRY_VERIFY(!dock->property("isOpen").toBool());
         QVERIFY(!tool->property("opened").toBool());
-        // ~MisspellReplacer wrote the rules; the window is closed and built
-        // again (empty fields, centred) from Rules.txt at the next opening.
-        QTRY_VERIFY(!misspell->property("visible").toBool());
-        QVERIFY(!misspell->property("placed").toBool());
+        // ~MisspellReplacer wrote the rules; the panel stays where it is
+        // and starts again (empty fields) from Rules.txt
+        // (PU2-fix-minor-errors-panel; legacy's window closed).
+        QVERIFY(misspellDock->property("isOpen").toBool());
+        QTRY_COMPARE(item<QObject>("misspellFind")->property("text").toString(), QString());
+        QCOMPARE(misspell->property("rules").toList().size(), 14);
         QVERIFY(QFile::exists(rules));
         QVERIFY(application->misspellRules().last().toMap().value(QStringLiteral("description")).toString()
                 == QStringLiteral("Owner rule"));
@@ -16791,40 +17185,70 @@ private slots:
         macros.install();
         QTRY_COMPARE(visualItem(name("keysNote", 0).constData())->property("text").toString(),
                      QStringLiteral("Save also uses Ctrl+S and takes it."));
-        // A run opens the closed panel on its run status; Cancel ends it.
+        // AD3: a run leaves the closed panel closed; the progress card
+        // (under the toasts) shows it and its Cancel ends it.
+        auto &automation = application->automation();
+        automation.setCardDelay(0);
         QVERIFY(QMetaObject::invokeMethod(dock, "close"));
         QTRY_VERIFY(!dock->property("isOpen").toBool());
-        QVERIFY(application->automation().run(QDir::toNativeSeparators(fixture).toStdString(), 1));
-        QTRY_VERIFY(dock->property("isOpen").toBool());
-        auto *run = visualItem("automationRun");
-        QTRY_VERIFY(run && run->isVisible());
-        auto *cancel = visualItem("automationCancel");
+        QVERIFY(automation.run(QDir::toNativeSeparators(fixture).toStdString(), 1));
+        auto *card = item("automationCard");
+        QTRY_COMPARE(automation.cardState(), QStringLiteral("running"));
+        QTRY_VERIFY(card->isVisible());
+        QVERIFY(!dock->property("isOpen").toBool());
+        auto *cancel = item("automationCancel");
+        QTRY_VERIFY(cancel->isVisible());
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        // What the run said stays until Close (S1's window kept it too).
-        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        // What the run said stays until × (S1's window kept it too).
+        QCOMPARE(item("automationCardTask")->property("text").toString(),
                  QStringLiteral("The macro was cancelled; nothing was changed."));
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Wait for cancel cancelled"));
-        QCOMPARE(cancel->property("text").toString(), QStringLiteral("Close"));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Wait for cancel cancelled"));
+        QVERIFY(!cancel->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
+        // The run stays in the panel's Runs.
+        QCOMPARE(automation.runs()->count(), 1);
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(automation.running(), 30000);
+        QTRY_VERIFY(cancel->isVisible());
         // Enter on a macro row leaves the key alone while a macro runs, as
         // Run and a double click are off then.
+        QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
         auto *list = visualItem("scripts");
         QVERIFY(QMetaObject::invokeMethod(list, "step", Q_ARG(QVariant, 1)));
         QVERIFY(list->property("currentIndex").toInt() >= 0);
         QKeyEvent enter(QEvent::KeyPress, Qt::Key_Return, Qt::NoModifier);
         QCoreApplication::sendEvent(list, &enter);
         QVERIFY(!enter.isAccepted());
+        // The running macro's row carries the busy mark.
+        QTRY_VERIFY(visualItem(name("macroBusy", 1).constData()) && visualItem(name("macroBusy", 1).constData())->isVisible());
+        QVERIFY(!visualItem(name("macroBusy", 0).constData())->isVisible());
+        // The Automation menu keeps its commands, Cancel macro among them,
+        // above the separator and the macros below it.
+        {
+            auto *menu = named("automationMenu");
+            const auto at = [&](const char *objectName) {
+                for (int i = 0; i < menu->property("count").toInt(); ++i) {
+                    QQuickItem *entry = nullptr;
+                    QMetaObject::invokeMethod(menu, "itemAt", Q_RETURN_ARG(QQuickItem *, entry), Q_ARG(int, i));
+                    if (entry && entry->objectName() == QLatin1String(objectName))
+                        return i;
+                }
+                return -1;
+            };
+            QVERIFY(at("cancelMacroMenuItem") >= 0);
+            QVERIFY(at("cancelMacroMenuItem") < at("automationManagerMenuItem"));
+            QCOMPARE(at("macrosSeparator"), at("automationManagerMenuItem") + 1);
+            QVERIFY(at("macro_Wait for cancel") > at("macrosSeparator"));
+        }
         QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
-        // Off under a modal dialog (Settings), which keeps the run status
-        // out of reach.
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
+        QTRY_VERIFY(!card->isVisible());
+        // Off under a modal dialog (Settings), which keeps the card out of
+        // reach.
         QVERIFY(!application->workspaceLayout().modalOpen());
         auto *runLast = named("loadLastScriptMenuItem")->property("action").value<QObject *>();
         QVERIFY(runLast->property("enabled").toBool());
@@ -16832,23 +17256,25 @@ private slots:
         QTRY_VERIFY(application->workspaceLayout().modalOpen());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTest::qWait(200);
-        QVERIFY(!application->automation().running());
+        QVERIFY(!automation.running());
         // The Global command running the last loaded script too.
         QVERIFY(!runLast->property("enabled").toBool());
         QVERIFY(QMetaObject::invokeMethod(runLast, "trigger"));
         QTest::qWait(200);
-        QVERIFY(!application->automation().running());
+        QVERIFY(!automation.running());
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
         QTRY_VERIFY(!application->workspaceLayout().modalOpen());
         QTest::keyClick(window, Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY_WITH_TIMEOUT(application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(automation.running(), 30000);
+        // Automation → Cancel macro ends it too.
+        auto *cancelMacro = named("cancelMacroMenuItem")->property("action").value<QObject *>();
+        QTRY_VERIFY(cancelMacro->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(cancelMacro, "trigger"));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("cancelled"));
+        automation.dismissCard();
         // A macro whose validation does not let it run (from the panel or
-        // the menu, which say nothing else): the run status says so.
+        // the menu, which say nothing else): the card says so.
         QTemporaryDir scripts;
         const QString invalid = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("invalid.lua")));
         {
@@ -16856,16 +17282,16 @@ private slots:
             QVERIFY(f.open(QIODevice::WriteOnly));
             f.write("aegisub.register_macro(\"Guarded\", \"\", function() end, function() return false end)\n");
         }
-        application->automation().load(invalid.toStdString());
+        automation.load(invalid.toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Guarded"), 30000);
-        QVERIFY(application->automation().run(invalid.toStdString(), 0));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QTRY_VERIFY(run->isVisible());
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
-        QCOMPARE(visualItem("automationTask")->property("text").toString(),
+        QVERIFY(automation.run(invalid.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Guarded failed"));
+        QCOMPARE(item("automationCardTask")->property("text").toString(),
                  QStringLiteral("Its validation did not let it run; nothing was changed."));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
         // KE1-template-problems: a run that applied but whose karaoke report
         // names template problems stays, its log open to be read.
         const QString templated = QDir::toNativeSeparators(scripts.filePath(QStringLiteral("templated.lua")));
@@ -16882,18 +17308,34 @@ private slots:
                     "    .. '{\"line\":2,\"effect\":\"template syl\",\"style\":\"Default\",\"seconds\":0.4,\"generated\":2}]}')\n"
                     "end)\n");
         }
-        application->automation().load(templated.toStdString());
+        automation.load(templated.toStdString());
         QTRY_VERIFY_WITH_TIMEOUT(named("macro_Templated"), 30000);
-        QVERIFY(application->automation().run(templated.toStdString(), 0));
-        QTRY_VERIFY_WITH_TIMEOUT(!application->automation().running(), 30000);
-        QVERIFY2(application->automation().lastOutcome() == QStringLiteral("applied"),
-                 qPrintable(application->automation().lastMessage()));
-        QVERIFY(application->automation().keepLog());
-        QTRY_VERIFY(run->isVisible());
-        QCOMPARE(visualItem("automationRunTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
-        QCOMPARE(visualItem("automationShowLog")->property("text").toString(), QStringLiteral("Hide log"));
-        QVERIFY(QMetaObject::invokeMethod(cancel, "clicked"));
-        QTRY_VERIFY(!run->isVisible());
+        QVERIFY(automation.run(templated.toStdString(), 0));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QVERIFY2(automation.lastOutcome() == QStringLiteral("applied"), qPrintable(automation.lastMessage()));
+        QVERIFY(automation.keepLog());
+        QTRY_VERIFY(card->isVisible());
+        QCOMPARE(automation.cardState(), QStringLiteral("problems"));
+        QCOMPARE(item("automationCardTitle")->property("text").toString(), QStringLiteral("Templated named problems"));
+        QVERIFY(card->property("logOpen").toBool());
+        // The report is in the run's log, which the card shows.
+        QTRY_VERIFY(item("automationCardLogToggle")->isVisible());
+        QVERIFY(item<QObject>("automationCardLog")->property("count").toInt() > 0);
+        // Open in panel: the panel's Runs at that run.
+        QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+        QTRY_VERIFY(!dock->property("isOpen").toBool());
+        QVERIFY(QMetaObject::invokeMethod(item("automationOpenRun"), "clicked"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        QCOMPARE(tool->property("view").toString(), QStringLiteral("runs"));
+        QCOMPARE(item<QObject>("runLines")->property("run").toInt(), automation.runId());
+        // The row names the macro's script too.
+        QQuickItem *row = nullptr;
+        QTRY_VERIFY((row = findItem(item("automationPanel"), QStringLiteral("run_%1").arg(automation.runId()))));
+        QCOMPARE(findItem(row, QStringLiteral("runScript"))->property("text").toString(), QStringLiteral("templated.lua"));
+        QVERIFY(QMetaObject::invokeMethod(item("automationCardClose"), "clicked"));
+        QTRY_VERIFY(!card->isVisible());
+        tool->setProperty("view", QStringLiteral("scripts"));
+        automation.setCardDelay(1000);
     }
 
     // AM1: the Automation panel in the four themes, written to
@@ -16901,7 +17343,7 @@ private slots:
     // visual review): a Document script and two autoload ones, one failed;
     // a shortcut, one a Global command takes, one recording on a taken
     // shortcut, one whose macro is missing (automation-panel-<theme>.png);
-    // a macro running (automation-run-<theme>.png); Settings → Hotkeys
+    // a macro running, its row marked (automation-run-<theme>.png); Settings → Hotkeys
     // under "Automation shortcuts" (automation-settings-<theme>.png).
     void automationPanelScreenshots()
     {
@@ -16955,13 +17397,15 @@ private slots:
         };
         shoot(floating, QStringLiteral("panel"));
         keyTo(recorder, Qt::Key_Escape);
-        // A macro running: the run status at the top.
+        // A macro running: its row's busy mark (the card is in the main
+        // window, shot by automationProgressScreenshots).
         QVERIFY(automation.run(QDir::toNativeSeparators(fixture).toStdString(), 1));
-        QTRY_VERIFY(item("automationRun")->isVisible());
+        QTRY_VERIFY(automation.running());
         QTest::qWait(500);
         shoot(floating, QStringLiteral("run"));
-        QVERIFY(QMetaObject::invokeMethod(item("automationCancel"), "clicked"));
+        automation.cancelRun();
         QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
         // Settings → Hotkeys, Automation shortcuts: what the panel's menu opens.
         auto *settingsDialog = settingsWindow();
         QVERIFY(QMetaObject::invokeMethod(settingsDialog, "openDialog", Q_ARG(QVariant, QStringLiteral("hotkeys")),
@@ -16970,6 +17414,182 @@ private slots:
         QCOMPARE(application->hotkeys().filterMode(), 7);
         shoot(window, QStringLiteral("settings"));
         QVERIFY(QMetaObject::invokeMethod(settingsButton("settingsCancel"), "click"));
+        dock->setProperty("isFloating", false);
+    }
+
+    // AD3: F6 reaches the progress card as the region after the panels, and
+    // Esc gives the keyboard back; with every panel closed it is the one
+    // region.
+    void f6ReachesTheProgressCard()
+    {
+        QVERIFY(application->openFile(episode));
+        auto &automation = application->automation();
+        const std::string fixture = HIKARI_LUA_FIXTURES "/progress-fixture.lua";
+        automation.load(fixture);
+        int fail = -1;
+        QTRY_VERIFY_WITH_TIMEOUT([&] {
+            for (const auto &s : automation.scripts())
+                if (s.path == fixture && s.state == application::ScriptStatus::State::Ready)
+                    for (std::size_t i = 0; i < s.info.macros.size(); ++i)
+                        if (s.info.macros[i].name == "Fail")
+                            fail = static_cast<int>(i);
+            return fail >= 0;
+        }(), 30000);
+        QVERIFY(automation.run(fixture, fail));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        auto *card = item("automationCard");
+        QTRY_VERIFY(card->isVisible());
+        QVERIFY(card->property("reachable").toBool());
+        QVERIFY(!card->hasActiveFocus());
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "focusPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("gridPanel"))),
+                                          Q_ARG(QVariant, int(Qt::OtherFocusReason))));
+        // F6 past the last panel shown.
+        for (int i = 0; i < 12 && !card->hasActiveFocus(); ++i)
+            QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+        QVERIFY(card->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        QVERIFY(card->isVisible());
+        // Every panel closed.
+        QList<QObject *> reopen;
+        const auto docks = root->property("dockList").toList();
+        for (const QVariant &d : docks) {
+            auto *dock = d.value<QObject *>();
+            if (dock->property("isOpen").toBool()) {
+                reopen << dock;
+                QVERIFY(QMetaObject::invokeMethod(dock, "close"));
+            }
+        }
+        QTRY_VERIFY(std::ranges::none_of(docks, [](const QVariant &d) { return d.value<QObject *>()->property("isOpen").toBool(); }));
+        QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+        QTRY_VERIFY(card->hasActiveFocus());
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        for (QObject *dock : reopen)
+            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        // From a floating panel's window: the main window is activated, then
+        // the card takes the keys.
+        auto *dock = item<QObject>("automationDock");
+        if (!dock->property("isOpen").toBool())
+            QVERIFY(QMetaObject::invokeMethod(dock, "open"));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        dock->setProperty("isFloating", true);
+        auto *panel = item("automationPanel");
+        QTRY_VERIFY(panel->window() != window);
+        QVERIFY(QMetaObject::invokeMethod(root, "focusPanel", Q_ARG(QVariant, QVariant::fromValue<QObject *>(panel)),
+                                          Q_ARG(QVariant, int(Qt::OtherFocusReason))));
+        QTRY_COMPARE(QGuiApplication::focusWindow(), panel->window());
+        for (int i = 0; i < 12 && !card->hasActiveFocus(); ++i) {
+            QVERIFY(QMetaObject::invokeMethod(root, "cyclePanels", Q_ARG(QVariant, 1)));
+            QTest::qWait(50);
+        }
+        QTRY_VERIFY(card->hasActiveFocus());
+        QTRY_COMPARE(QGuiApplication::focusWindow(), static_cast<QWindow *>(window));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!card->hasActiveFocus());
+        dock->setProperty("isFloating", false);
+        QTRY_COMPARE(panel->window(), static_cast<QQuickWindow *>(window));
+        automation.dismissCard();
+        QTRY_VERIFY(!card->isVisible());
+    }
+
+    // AD3: the progress card and the Runs view in the four themes, written
+    // to HIKARI_AUTOMATION_SHOT_DIR when it is set (tools/review): the notice
+    // (automation-notice-<theme>.png), the card running with its log
+    // (automation-card-<theme>.png), after an error (automation-failed-…),
+    // applied with a log (automation-applied-…), and the panel's Runs at
+    // that run, the level threshold at warning (automation-runs-…).
+    void automationProgressScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_AUTOMATION_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_AUTOMATION_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        auto &settings = *application->settingsStore();
+        auto &automation = application->automation();
+        QVERIFY(application->openFile(episode));
+        const std::string fixture = HIKARI_LUA_FIXTURES "/progress-fixture.lua";
+        automation.load(fixture);
+        QTRY_VERIFY_WITH_TIMEOUT(std::ranges::any_of(automation.scripts(), [&](const auto &s) {
+                                     return s.path == fixture && s.state == application::ScriptStatus::State::Ready;
+                                 }),
+                                 30000);
+        const auto ordinal = [&](const char *macro) {
+            for (const auto &s : automation.scripts())
+                if (s.path == fixture)
+                    for (std::size_t i = 0; i < s.info.macros.size(); ++i)
+                        if (s.info.macros[i].name == macro)
+                            return static_cast<int>(i);
+            return -1;
+        };
+        auto *root = engine->rootObjects().first();
+        auto *card = item("automationCard");
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        // The card's corner of the main window, or a whole window.
+        const auto shoot = [&](QQuickWindow *w, QQuickItem *area, const QString &name) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QImage shot;
+                QTRY_VERIFY((shot = w->grabWindow(), !shot.isNull() && shot.width() > 0));
+                if (area) {
+                    const qreal dpr = shot.devicePixelRatio();
+                    const QRectF r = area->mapRectToScene(QRectF(0, 0, area->width(), area->height())).adjusted(-24, -24, 24, 24);
+                    shot = shot.copy(QRectF(r.x() * dpr, r.y() * dpr, r.width() * dpr, r.height() * dpr).toRect());
+                }
+                QVERIFY(shot.save(out + QStringLiteral("/automation-") + name + QLatin1Char('-') + QLatin1String(code) +
+                                  QStringLiteral(".png")));
+            }
+        };
+        // The notice: a run under its second.
+        automation.setCardDelay(600000);
+        QVERIFY(automation.run(fixture, ordinal("Busy")));
+        QTRY_VERIFY(item("automationNotice")->isVisible());
+        shoot(window, card, QStringLiteral("notice"));
+        automation.cancelRun();
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        automation.dismissCard();
+        // The card, running, its log open.
+        automation.setCardDelay(1000);
+        QVERIFY(automation.run(fixture, ordinal("Retime karaoke")));
+        QTRY_COMPARE(automation.cardState(), QStringLiteral("running"));
+        QTRY_VERIFY(automation.progressKnown());
+        QTRY_COMPARE(item<QObject>("automationCardLog")->property("count").toInt(), 4);
+        shoot(window, card, QStringLiteral("card"));
+        automation.cancelRun();
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        // After an error, and applied with a log.
+        QVERIFY(automation.run(fixture, ordinal("Fail")));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("failed"));
+        shoot(window, card, QStringLiteral("failed"));
+        QVERIFY(automation.run(fixture, ordinal("Levels")));
+        QTRY_VERIFY_WITH_TIMEOUT(!automation.running(), 30000);
+        QCOMPARE(automation.cardState(), QStringLiteral("applied"));
+        shoot(window, card, QStringLiteral("applied"));
+        // Runs, at the karaoke run, up to warning, times on.
+        const int retimed = automation.runs()->idAt(2);
+        auto *dock = item<QObject>("automationDock");
+        QVERIFY(QMetaObject::invokeMethod(root, "openAutomationRun", Q_ARG(QVariant, retimed)));
+        QTRY_VERIFY(dock->property("isOpen").toBool());
+        dock->setProperty("isFloating", true);
+        auto *panel = item("automationPanel");
+        QTRY_VERIFY(panel && panel->window() != window);
+        QQuickWindow *floating = panel->window();
+        floating->resize(460, 760);
+        auto *lines = item<QObject>("runLines");
+        QTRY_COMPARE(lines->property("run").toInt(), retimed);
+        lines->setProperty("levelLimit", 2);
+        QTRY_COMPARE(item<QObject>("runLogLevel")->property("currentIndex").toInt(), 2);
+        settings.setValue(QStringLiteral("automation.runLogTimes"), true);
+        QTRY_VERIFY(lines->property("times").toBool());
+        shoot(floating, nullptr, QStringLiteral("runs"));
+        settings.setValue(QStringLiteral("automation.runLogTimes"), false);
+        automation.dismissCard();
         dock->setProperty("isFloating", false);
     }
 
@@ -17121,8 +17741,9 @@ private slots:
         QVERIFY(doc.scriptInfo(u8"PlayResX") == std::u8string(u8"640"));
         QVERIFY(doc.scriptInfo(u8"PlayResY") == std::u8string(u8"480"));
         QVERIFY(!application->settingsStore()->boolean("automation.scriptResolutionFromVideo"));
-        // The Automation panel's run status goes: nothing to say (AM1).
-        QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
+        // It applied and wrote to its log: the progress card stays (AD3).
+        QTRY_COMPARE(application->automation().cardState(), QStringLiteral("applied"));
+        application->automation().dismissCard();
 
         // Return on Cancel, and Escape, stop the macro, quietly.
         application->editor().undo();
@@ -17143,7 +17764,8 @@ private slots:
             const auto &after = application->files().session(*application->workspace().editingTarget())->document();
             QVERIFY(!after.scriptInfo(u8"PlayResX"));
             QVERIFY(after.lines().front()->text == std::u8string(u8"first"));
-            QTRY_VERIFY(!qobject_cast<QQuickItem *>(named("automationRun"))->isVisible());
+            // Declined: nothing to say, the card goes (AD3).
+            QTRY_COMPARE(application->automation().cardState(), QString());
         }
     }
 
