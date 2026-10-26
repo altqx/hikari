@@ -1369,6 +1369,32 @@ private slots:
         QVERIFY(!session->isDirty());
     }
 
+    // A Line editor draft that gives the template a translation, or takes
+    // it away, decides which text the panel shows, as the preview runs it.
+    void theDraftsTranslationChoosesTheTextShown()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+        std::optional<core::LineId> tl;
+        for (const auto *l : doc.lines())
+            if (!tl && application::templateKindOf(*l))
+                tl = l->id;
+        QVERIFY(tl);
+        openDocument(std::move(doc), true);
+        editor->setCurrent(tl->value);
+        const auto rowText = [&] {
+            for (const QVariant &v : editor->templates())
+                if (v.toMap().value(QStringLiteral("id")).toULongLong() == tl->value)
+                    return v.toMap().value(QStringLiteral("text")).toString();
+            return QString();
+        };
+        application::DraftChange translated;
+        translated.translation = u8"{\\bord6}";
+        QVERIFY(session->editDraft(*tl, translated));
+        editor->refresh();
+        QCOMPARE(editor->text(), QStringLiteral("{\\bord6}"));
+        QCOMPARE(rowText(), QStringLiteral("{\\bord6}"));
+    }
+
     // In TLMode the templater reads a Line's translation: the panel shows
     // and edits that, and the preview runs it.
     void aTranslatedTemplateEditsItsTranslation()

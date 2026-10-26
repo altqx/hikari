@@ -706,7 +706,7 @@ QVariantList TemplateEditorController::templates() const
                                                                                : QStringLiteral("template")},
             {QStringLiteral("effect"), qs(r.effect)},
             {QStringLiteral("style"), qs(r.style)},
-            {QStringLiteral("text"), qs(l->translation.empty() ? r.text : r.translation)},
+            {QStringLiteral("text"), qs(r.translation.empty() ? r.text : r.translation)},
             {QStringLiteral("generated"), stats == m_stats.end() ? -1 : stats->second.generated},
             {QStringLiteral("seconds"), stats == m_stats.end() ? -1.0 : stats->second.seconds},
             {QStringLiteral("changed"), base == baseline.end() || base->second != keyOf(r)},
@@ -769,7 +769,7 @@ QString TemplateEditorController::text() const
 {
     // The text the templater reads: the translation in TLMode.
     const auto r = currentRecord();
-    return r ? qs(line(r->id)->translation.empty() ? r->text : r->translation) : QString();
+    return r ? qs(r->translation.empty() ? r->text : r->translation) : QString();
 }
 
 QStringList TemplateEditorController::styles() const
