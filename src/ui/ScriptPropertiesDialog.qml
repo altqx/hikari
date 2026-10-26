@@ -71,7 +71,18 @@ DialogWindow {
         edits = e
     }
     // From video: the video open now (the main window can open another
-    // while this is open beside a floating panel).
+    // while this is open beside a floating panel); the buttons follow it.
+    property var video: null
+    Connections {
+        target: dialog.video
+        function onChanged() { if (dialog.visible) dialog.refreshVideo() }
+    }
+    function refreshVideo() {
+        const p = app.scriptProperties()
+        if (p.title === undefined || (p.videoWidth === initial.videoWidth && p.videoHeight === initial.videoHeight))
+            return
+        initial = Object.assign({}, initial, { videoWidth: p.videoWidth, videoHeight: p.videoHeight })
+    }
     function fromVideo(widthBox, heightBox, widthName, heightName) {
         const p = app.scriptProperties()
         if (!(p.videoWidth > 0))

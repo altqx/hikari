@@ -7046,6 +7046,7 @@ ApplicationWindow {
         sourceComponent: ScriptPropertiesDialog {
             app: root.app
             settings: root.app.settings
+            video: root.video
         }
     }
     // Y4, PU6: legacy SubsMismatchResolutionDialog ("Incompatible

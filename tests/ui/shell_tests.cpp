@@ -7737,8 +7737,22 @@ private slots:
             QVERIFY2(QString::fromUtf8(reinterpret_cast<const char *>(now.data()), qsizetype(now.size())) != was, qPrintable(was));
         }
         // PU6: ASS file properties' From video takes the video open now, not
-        // the one open when the window opened.
+        // the one open when the window opened; opened with no video, it turns
+        // on once one opens.
         application->setAskForBadResolution(false);
+        QVERIFY(application->video().unloadVideo());
+        QTRY_COMPARE(application->resampleValues().value(QStringLiteral("hasVideo")).toBool(), false);
+        {
+            QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
+            QObject *properties = nullptr;
+            QTRY_VERIFY((properties = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
+                        properties->property("visible").toBool());
+            QVERIFY(!dialogItem("scriptPropertiesDialog", "propFromVideo")->property("enabled").toBool());
+            application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
+            QTRY_VERIFY_WITH_TIMEOUT(dialogItem("scriptPropertiesDialog", "propFromVideo")->property("enabled").toBool(), 20000);
+            QVERIFY(QMetaObject::invokeMethod(properties, "reject"));
+            QTRY_VERIFY(!properties->property("visible").toBool());
+        }
         QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("assProperties")), "triggered"));
         QObject *properties = nullptr;
         QTRY_VERIFY((properties = root->findChild<QObject *>(QStringLiteral("scriptPropertiesDialog"))) &&
