@@ -8994,6 +8994,9 @@ private slots:
                       QStringLiteral("Apply the kanji timing of 2 lines?"), QStringLiteral("cancel"));
         QVERIFY(dialog->property("visible").toBool());
         QCOMPARE(controller->property("pending").toInt(), 2);
+        // The keyboard is back on the strip.
+        QTRY_VERIFY(kanji->isActive());
+        QTRY_VERIFY(strip->hasActiveFocus());
         // Apply: both kanji Lines in one step, and the window closes.
         const auto steps = session->history().size();
         QTest::keyClick(kanji, Qt::Key_Escape);
