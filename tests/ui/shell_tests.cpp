@@ -28978,7 +28978,7 @@ private slots:
         // under the held pointer.
         QCOMPARE(item<QObject>("editorProblem")->property("text").toString(), QStringLiteral("End is before Start."));
         auto *problem = item("editorProblem");
-        QTRY_VERIFY(problem->height() > 0
+        QTRY_VERIFY(problem->isVisible() && problem->height() > 0
                     && problem->mapToScene(QPointF(0, problem->height())).y() <= fieldOrigin.y());
         QCOMPARE(start->mapToScene(QPointF()), fieldOrigin);
         QTest::mouseMove(window, at + QPoint(-2, -8));
@@ -30159,6 +30159,42 @@ private slots:
         QMetaObject::invokeMethod(text, "select", Q_ARG(int, 0), Q_ARG(int, 3));
         QVERIFY(QMetaObject::invokeMethod(blur, "triggered"));
         QTRY_COMPARE(text->property("text").toString(), QStringLiteral("{\\blur3}abc{\\blur0}"));
+        application->editor().discard();
+        QMetaObject::invokeMethod(menu, "close");
+        application->workspaceLayout().resetLayout();
+        buttons.setCount(0);
+    }
+
+    // LE1: More takes the focus as it opens; its items still act on the
+    // text field edited before, the Translated text here.
+    void foldedTagButtonsActOnTheEditedField()
+    {
+        auto &buttons = application->tagButtons();
+        buttons.setCount(1);
+        buttons.edit(0, QStringLiteral("Blur"), QStringLiteral("\\blur3"), 0);
+        QVERIFY(application->openFile(writeTranslationFile("more-field.ass")));
+        QTRY_VERIFY(application->editor().translationMode());
+        QVERIFY(QMetaObject::invokeMethod(window, "applyPreset", Q_ARG(QVariant, QStringLiteral("Editing"))));
+        closeTheOriginalTextPanel();
+        auto *original = item("lineText");
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->isVisible() && !translated->property("text").toString().isEmpty());
+        const QString originalText = original->property("text").toString();
+        const QString translatedText = translated->property("text").toString();
+        squeezeTheLineEditor();
+        QTRY_VERIFY(item("tagStripMore")->isVisible());
+        QVERIFY(!item("customGroup")->isVisible());
+        translated->forceActiveFocus();
+        QMetaObject::invokeMethod(translated, "selectAll");
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(item("tagStripMore")));
+        auto *menu = item<QObject>("tagStripMoreMenu");
+        QTRY_VERIFY(menu->property("opened").toBool());
+        QQuickItem *blur = nullptr;
+        QTRY_VERIFY((blur = visualItem("foldedTagButton0")) && blur->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(blur, "triggered"));
+        QTRY_VERIFY(translated->property("text").toString().startsWith(QStringLiteral("{\\blur3}")));
+        QCOMPARE(original->property("text").toString(), originalText);
+        QVERIFY(translated->property("text").toString() != translatedText);
         application->editor().discard();
         QMetaObject::invokeMethod(menu, "close");
         application->workspaceLayout().resetLayout();

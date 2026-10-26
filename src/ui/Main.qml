@@ -90,12 +90,14 @@ ApplicationWindow {
     // E2: a custom tag button. Types 0 and 1 work in the focused field like
     // Bold; plain text (type 2) goes, as in legacy, into the main field (the
     // translation in translation mode, unless it is empty).
-    function applyTagButton(index) {
+    // `edited`: the text field edited before a menu took the focus (LE1's
+    // More), else the one edited now.
+    function applyTagButton(index, edited) {
         // EditBox::OnButtonTag reads the button's option as stored now.
         const b = root.tagButtons.pressed(index)
         if (b.tag === undefined || b.tag.length === 0)
             return false
-        let field = root.editedField()
+        let field = edited ?? root.editedField()
         if (b.type === 2)
             field = root.editor.translationMode && translationText.text.length > 0 ? translationText : lineText
         return root.editor.applyTagButton(field.role, b.tag, b.type, field.selectionStart, field.selectionEnd)
@@ -5297,7 +5299,7 @@ ApplicationWindow {
                         // right under the text they concern.
                         RowLayout {
                             objectName: "editorMessages"
-                            visible: editorProblem.visible || editorAttempted.visible
+                            visible: root.editor.problem.length > 0 || root.editor.attempted.length > 0
                             spacing: 6
                             Layout.fillWidth: true
                             Icon {

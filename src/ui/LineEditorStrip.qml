@@ -165,8 +165,8 @@ RowLayout {
             }
         }
     }
-    function chooseFont() {
-        const field = shellRoot.editedField()
+    function chooseFont(edited) {
+        const field = edited ?? shellRoot.editedField()
         fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd)
     }
 
@@ -372,11 +372,11 @@ RowLayout {
     }
     // A custom button's click (or its item in More): its tag, or the
     // popover that gives it one.
-    function runTagButton(anchor, index, b) {
+    function runTagButton(anchor, index, b, edited) {
         if (b.tag.length === 0)
             tagButtonEditor.openFor(anchor, index, b)
         else
-            shellRoot.applyTagButton(index)
+            shellRoot.applyTagButton(index, edited)
     }
 
     IconToolButton {
@@ -386,7 +386,11 @@ RowLayout {
         text: qsTranslate("HikariSub.Translation", "More")
         focusPolicy: Qt.NoFocus
         visible: strip.foldable.some(g => strip.isFolded(g))
-        onClicked: moreMenu.popup(more, 0, more.height)
+        onClicked: {
+            // The menu takes the focus: its items act on the field edited now.
+            moreMenu.field = strip.shellRoot.editedField()
+            moreMenu.popup(more, 0, more.height)
+        }
     }
     Item {
         Layout.fillWidth: true
@@ -401,6 +405,7 @@ RowLayout {
     ShellMenu {
         id: moreMenu
         objectName: "tagStripMoreMenu"
+        property Item field
         readonly property bool look: strip.isFolded(lookGroup)
         readonly property bool translation: strip.isFolded(translationGroup)
         readonly property bool align: strip.isFolded(alignGroup)
@@ -413,7 +418,7 @@ RowLayout {
             text: qsTr("Font selection")
             shortcutText: strip.shellRoot.boundKeys("EDITBOX_CHANGE_FONT", 2)
             enabled: strip.editor.editable
-            onTriggered: strip.chooseFont()
+            onTriggered: strip.chooseFont(moreMenu.field)
         }
         Instantiator {
             model: moreMenu.look ? colourButtons.model : []
@@ -425,7 +430,7 @@ RowLayout {
                 text: modelData.name
                 shortcutText: strip.shellRoot.boundKeys(modelData.symbol, 2)
                 enabled: strip.editor.editable
-                onTriggered: strip.shellRoot.colourClick(modelData.number, true, strip.shellRoot.editedField())
+                onTriggered: strip.shellRoot.colourClick(modelData.number, true, moreMenu.field ?? strip.shellRoot.editedField())
             }
             onObjectAdded: (index, object) => moreMenu.insertItem(1 + index, object)
             onObjectRemoved: (index, object) => moreMenu.removeItem(object)
@@ -505,7 +510,7 @@ RowLayout {
                 text: modelData.name.length > 0 ? modelData.name : modelData.tag
                 shortcutText: strip.shellRoot.boundKeys("EDITBOX_TAG_BUTTON" + (index + 1), 2)
                 enabled: strip.editor.editable
-                onTriggered: strip.runTagButton(more, index, modelData)
+                onTriggered: strip.runTagButton(more, index, modelData, moreMenu.field)
             }
             onObjectAdded: (index, object) => moreMenu.insertItem(moreMenu.customStart() + index, object)
             onObjectRemoved: (index, object) => moreMenu.removeItem(object)
