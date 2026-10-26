@@ -1,7 +1,7 @@
 #pragma once
 
 // T1: the visual tools' shared parts (docs/qt/visual-tools.md): the eleven
-// families of legacy VideoToolbar's rail, the interface each tool implements,
+// families of legacy VideoToolbar's rail (and VT3's Perspective), the interface each tool implements,
 // the gesture transaction every tool's edit goes through and the batch
 // picker. A tool sees the Video panel through a VisualHost, which owns the
 // view's transform, the editing target and the one open gesture.
@@ -31,7 +31,8 @@ class TextMeasurePort; // automation_services.h
 
 namespace hikari::application::visual {
 
-// Legacy Visuals.h:56-68, in the rail's order.
+// Legacy Visuals.h:56-68, then VT3's Perspective (no legacy family; the rail
+// shows it after RotationXY, railOrder).
 enum class Family : int {
     Crosshair = 0, // CROSS
     Position,      // CHANGEPOS
@@ -44,8 +45,10 @@ enum class Family : int {
     Drawing,       // VECTORDRAW
     PositionShifter, // MOVEALL
     Hydra,         // ALL_TAGS
+    Perspective,   // VT3 (#273)
 };
-inline constexpr int kFamilyCount = 11; // VideoToolbar::toolsSize
+inline constexpr int kLegacyFamilyCount = 11; // VideoToolbar::toolsSize
+inline constexpr int kFamilyCount = 12;
 
 struct FamilyInfo {
     Family family;
@@ -56,6 +59,9 @@ struct FamilyInfo {
 };
 const std::array<FamilyInfo, kFamilyCount> &families();
 const FamilyInfo &familyInfo(Family family);
+// The rail's order: legacy's, with the Perspective tool after Text X / Y
+// rotation among the transforms (owner, #273).
+const std::array<Family, kFamilyCount> &railOrder();
 // VT2: the family a VIDEO_TOOL_* command chooses, if `symbol` is one.
 std::optional<Family> familyOfHotkey(std::string_view symbol);
 
@@ -347,6 +353,25 @@ public:
     virtual std::int64_t videoTimeMs() const { return 0; }
     virtual LegacyTimebase timebase() const { return {}; }
     virtual TextMeasurePort *textMeasure() const { return nullptr; }
+    // VT3: whether the renderer is given a font of this name (family, full
+    // or PostScript, ignoring ASCII case, as libass matches it) from the
+    // Script's attachments or the external fonts, which the text measure
+    // does not see.
+    virtual bool fontLeased(const std::string &name) const
+    {
+        (void)name;
+        return false;
+    }
+    // VT3: whether fonts are leased and `font` lacks a character of `text`,
+    // which libass may then take from a leased font the measure does not see.
+    virtual bool fallsBackToLeased(const std::string &font, bool bold, bool italic, std::u16string_view text) const
+    {
+        (void)font;
+        (void)bold;
+        (void)italic;
+        (void)text;
+        return false;
+    }
     virtual bool ignoreFiltered() const { return false; }
     virtual void log(std::u16string_view text) { (void)text; }
     // T3: the Line editor's selection in the text the tools edit (legacy

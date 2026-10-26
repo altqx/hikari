@@ -13,9 +13,4 @@ Main.qml:shiftConfirm
 ShapesEditionDialog.qml:dialog
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
-StyleManager.qml:createQuestion
-StyleManager.qml:multiQuestion
-StyleManager.qml:renameQuestion
-StyleManager.qml:newCatalog
-StyleManager.qml:deleteCatalogQuestion
 VideoFileQuestion.qml:dialog
