@@ -273,3 +273,17 @@ TEST(KaraokeChecks, TranslatedLinesAreCheckedOnTheirTranslation)
     ASSERT_FALSE(document.lines()[0]->translation.empty());
     EXPECT_EQ(found(document), (std::vector<Found>{{0, Kind::TotalNotDuration, 900, 1000, {}}}));
 }
+
+// KA8 (#354): the Kanji timer's multi-highlight Lines. A # syllable is a
+// syllable with its own time, so a kanji Line written with them has nothing
+// to flag, the audio editor reads it, and a full-width ＃ is the same.
+TEST(KaraokeChecks, MultiHighlightHashSyllablesAreSyllables)
+{
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:01.15",
+                                     "{\\k15}外{\\k16}道{\\k13}攻{\\k9}撃、{\\k7}#{\\k6}腐{\\k9}#{\\k9}#{\\k12}蝕{\\k12}攻{\\k7}撃"))
+                    .problems.empty());
+    EXPECT_TRUE(checkKaraoke(oneLine("0:00:00.00,0:00:00.30", "{\\i1\\kf20}撃{\\K10}＃")).problems.empty());
+    // its time counts like any other's
+    EXPECT_EQ(found(oneLine("0:00:00.00,0:00:00.30", "{\\k20}撃{\\k0}#")),
+              (std::vector<Found>{{0, Kind::TotalNotDuration, 200, 300, {}}, {0, Kind::ZeroLength, 0, 0, {2}}}));
+}
