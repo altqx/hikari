@@ -1917,6 +1917,21 @@ TEST(PerspectiveTool, ARescaleIsRefusedWhileATargetChangesItsOutlineAfterItsText
     EXPECT_EQ(f.steps(), steps + 1);
 }
 
+TEST(PerspectiveTool, ARescaleIsRefusedWhileATargetResetsOrRescalesAfterItsText)
+{
+    // A later \r or scale sets the rest back, which the rescale of the
+    // leading blocks does not reach.
+    for (const std::string other : {"{\\pos(320,200)}A{\\r}B", "{\\pos(320,200)}A{\\fscx50}B",
+                                    "{\\pos(320,200)}A{\\fsc}B"}) {
+        Fixture f({"{\\pos(320,200)}Perspective", other});
+        f.host.targets = {f.host.line(0), f.host.line(1)};
+        const std::size_t steps = f.steps();
+        f.drag({430, 200}, {450, 230});
+        EXPECT_EQ(f.steps(), steps) << other;
+        EXPECT_EQ(f.host.text(1), other);
+    }
+}
+
 TEST(PerspectiveTool, IsTheTwelfthFamily)
 {
     EXPECT_EQ(familyInfo(Family::Perspective).tooltip, "Perspective");

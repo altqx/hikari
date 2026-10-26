@@ -2014,9 +2014,14 @@ bool PerspectiveTool::scalesEveryOutline(const Transform &t, VisualHost &host) c
     const Gesture *g = host.gesture();
     if (!g)
         return true;
-    for (const core::LineId &id : g->targets())
-        if (outlineAfterText(transform::lineText(g->before(id))))
+    // A later scale or \r sets the rest of the text back to its own size
+    // and outline, which the leading blocks' rescale does not reach.
+    static constexpr u16v kRescaled[] = {u"fscx", u"fscy", u"fsc", u"r"};
+    for (const core::LineId &id : g->targets()) {
+        const u16 text = transform::lineText(g->before(id));
+        if (outlineAfterText(text) || afterText(text, kRescaled))
             return false;
+    }
     return true;
 }
 
