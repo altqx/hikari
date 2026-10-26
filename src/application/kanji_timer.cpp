@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <limits>
 
 namespace hikari::application {
 
@@ -413,10 +414,31 @@ void KanjiTimer::derive()
         else
             kanji.emplace_back(m_kanji[i], i * 2 + 1);
     }
+    // Whether any romaji Line overlaps any kanji Line: the romaji Lines by
+    // start with the latest end so far, each kanji Line looked up in them
+    // (n log n; a file of many Lines must not take n² here).
     bool byTime = false;
-    for (const auto &r : romaji)
-        for (const auto &k : kanji)
-            byTime = byTime || overlap(r.first, k.first) > 0;
+    {
+        std::vector<std::pair<int, int>> spans; // (start, end) of the romaji Lines
+        for (const auto &r : romaji)
+            if (r.first.endMs > r.first.startMs) // (a Line of no length overlaps nothing)
+                spans.emplace_back(r.first.startMs, r.first.endMs);
+        std::ranges::sort(spans);
+        std::vector<int> latestEnd(spans.size());
+        for (std::size_t s = 0; s < spans.size(); ++s)
+            latestEnd[s] = s ? std::max(latestEnd[s - 1], spans[s].second) : spans[s].second;
+        for (const auto &k : kanji) {
+            if (k.first.endMs <= k.first.startMs)
+                continue;
+            // the romaji Lines starting before this one ends
+            const auto before = std::ranges::lower_bound(spans, std::pair(k.first.endMs, std::numeric_limits<int>::min()));
+            const auto count = static_cast<std::size_t>(before - spans.begin());
+            if (count > 0 && latestEnd[count - 1] > k.first.startMs) {
+                byTime = true;
+                break;
+            }
+        }
+    }
     if (byTime) {
         auto earlier = [](const auto &a, const auto &b) {
             return std::pair(a.first.startMs, a.second) < std::pair(b.first.startMs, b.second);

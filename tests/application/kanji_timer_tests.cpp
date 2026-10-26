@@ -7,6 +7,8 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
+
 #include <string>
 #include <string_view>
 #include <vector>
@@ -256,6 +258,23 @@ TEST(KanjiTimer, AFirstGroupThatRanOutIsACheck)
     EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Check);
     EXPECT_EQ(timer.acceptAllSuggestions(), 0);
     EXPECT_TRUE(timer.pending().empty());
+}
+
+TEST(KanjiTimer, ManyLinesPairQuickly)
+{
+    // whether the styles overlap at all is found without trying every pair
+    // of Lines (Codex security review on #352): 20,000 of each, apart
+    std::vector<KanjiTimer::Line> romaji, kanji;
+    for (int i = 0; i < 20000; ++i) {
+        romaji.push_back(line(2 * i + 1, "{\\k10}a", i * 100, i * 100 + 50));
+        kanji.push_back(line(2 * i + 2, "あ", i * 100 + 50, i * 100 + 100));
+    }
+    KanjiTimer timer(classes());
+    const auto start = std::chrono::steady_clock::now();
+    timer.setLines(std::move(romaji), std::move(kanji));
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(10));
+    ASSERT_EQ(timer.pairs().size(), 20000u); // none overlaps: paired by order
+    EXPECT_EQ(timer.pairs()[1].kanji->id.value, 4u);
 }
 
 TEST(KanjiTimer, PairsByOrderWithoutAnyOverlap)
