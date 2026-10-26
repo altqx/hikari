@@ -605,10 +605,11 @@ private slots:
     // font.
     void dialogsSizeAfterASwitchAsAtStart()
     {
-        // One button (Ok) and two (Yes, No), in Main.qml.
+        // The Fusion Dialogs whose size is all text and buttons (PU4 put the
+        // Yes / No questions on the message box, a window of its own).
         const auto sizes = [this] {
             QList<QSizeF> out;
-            for (const char *name : {"aboutDialog", "creditsDialog", "shiftConfirm", "videoFileQuestion"}) {
+            for (const char *name : {"aboutDialog", "creditsDialog"}) {
                 QObject *dialog = root()->findChild<QObject *>(QLatin1String(name));
                 if (!dialog) {
                     out << QSizeF(-1, -1);
@@ -956,10 +957,12 @@ private slots:
                           << found.join(QStringLiteral(", "));
         // Not HikariSub.Session: PU1's session and autosave popups replaced
         // the windows whose legacy texts were translated, and their own
-        // texts wait for the translators.
+        // texts wait for the translators. Nor HikariSub.Conversion: PU4's Set
+        // new FPS and PU6's conversion windows are made at their first
+        // opening, and the resolution question is a message box.
         for (const char *context : {"HikariSub.MainWindow", "HikariSub.Audio", "HikariSub.Video", "HikariSub.Editor",
                                     "HikariSub.Grid", "HikariSub.TimeShift", "HikariSub.Options", "HikariSub.Styles",
-                                    "HikariSub.Conversion", "HikariSub.Documents"})
+                                    "HikariSub.Documents"})
             QVERIFY2(seen.contains(QLatin1String(context)), context);
         // A surface string the application keeps: the Untitled tab's name.
         application->addPage();

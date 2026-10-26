@@ -181,7 +181,10 @@ TEST(SettingsRegistry, DefaultsAreLegacyDefaults)
             continue;
         const auto it = kExplicitDefaults.find(std::string(s.legacyKey));
         // Options without an assignment start as "": false, 0, "" or no entries.
-        const SettingValue expected = it != kExplicitDefaults.end() ? it->second : emptyOf(s.type);
+        SettingValue expected = it != kExplicitDefaults.end() ? it->second : emptyOf(s.type);
+        // Approved departures from legacy's default.
+        if (s.legacyKey == "AUTO_MOVE_TAGS_FROM_ORIGINAL")
+            expected = true; // TM1-original-keeps-tags: Tags from original starts on
         EXPECT_EQ(s.defaultValue, expected) << s.legacyKey;
     }
     EXPECT_EQ(findSetting("autosave.maxFiles")->legacyKey, "AUTOSAVE_MAX_FILES");

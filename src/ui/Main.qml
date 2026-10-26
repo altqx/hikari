@@ -2,6 +2,7 @@ pragma Translator: "HikariSub.MainWindow"
 import QtQuick
 import QtQuick.Controls
 import QtQuick.Layouts
+import QtQuick.Shapes
 import QtQuick.Dialogs
 import Hikari.Ui
 import com.kdab.dockwidgets 2.0 as KDDW
@@ -545,13 +546,35 @@ ApplicationWindow {
         searchTool.focusFind()
     }
 
-    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first (legacy).
+    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first
+    // (legacy; PU4-shift-question: PK1's message box, which can be hidden).
+    // The answer shifts the document it was asked for: another editing
+    // target meanwhile (the main window stays in use under the fullscreen
+    // video window's question) takes the question back.
     function runShiftTimes() {
         const which = root.shiftTimes.settings.whichTimes
         const pp = root.shiftTimes.settings.postprocessor
         if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
-            shiftConfirm.which = which
-            shiftConfirm.open()
+            const start = which === 1
+            const target = root.app.editingTargetId()
+            shiftQuestion.askedFor = target
+            shiftQuestion.askWith({
+                title: qsTranslate("HikariSub.TimeShift", "Shift times"),
+                text: start ? qsTranslate("HikariSub.TimeShift", "Shift only the start times?")
+                            : qsTranslate("HikariSub.TimeShift", "Shift only the end times?"),
+                detail: start ? qsTranslate("HikariSub.TimeShift", "End times stay where they are, so a line shifted past its end ends before it starts.")
+                              : qsTranslate("HikariSub.TimeShift", "Start times stay where they are, so a line shifted before its start ends before it starts."),
+                severity: "warning",
+                choices: [
+                    { id: "shift", text: start ? qsTranslate("HikariSub.TimeShift", "Shift start times")
+                                               : qsTranslate("HikariSub.TimeShift", "Shift end times"),
+                      role: "accept", isDefault: true },
+                    { id: "cancel", text: qsTranslate("HikariSub.TimeShift", "Cancel"), role: "reject" }
+                ]
+            }, id => {
+                if (id === "shift" && root.app.editingTargetId() === target)
+                    shiftTimesPanel.message = root.app.shiftTimes()
+            })
             return
         }
         shiftTimesPanel.message = root.app.shiftTimes()
@@ -1797,7 +1820,7 @@ ApplicationWindow {
                 action: Action {
                     id: dummyVideoAction
                     text: qsTr("Open dummy video")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) dummyVideoDialog.show()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) root.openDummyVideo()
                 }
             }
             // V6: GLOBAL_SET_START_TIME / GLOBAL_SET_END_TIME (HikariSubFrame.cpp:259-262;
@@ -2356,11 +2379,76 @@ ApplicationWindow {
         Layout.minimumHeight: topPadding + bottomPadding + cursorRectangle.height
 
         property bool syncing: false
+        // Where `inner` starts in `outer` past its carried tags: a match
+        // after whole override blocks and the spaces among them ("\h" before
+        // a leading tag), not one inside a tag ("an8" in "{\an8}an8").
+        // Where `inner` starts in `outer` past a prefix of override blocks
+        // and ASS spaces ending with a block, or -1. Linear in both: the
+        // prefix walked once for where its blocks end, `inner` found by
+        // KMP (a long Line's prefix is never scanned per candidate). The
+        // block ends kept by position: V4's Set.has is linear. Past what
+        // Tags from original carries (an Original and a translation of 3 *
+        // 16384 units each) no tags were carried: nothing is walked.
+        function carriedPrefix(outer, inner) {
+            if (outer.length > 6 * 16384 || inner.length > 6 * 16384)
+                return -1
+            const ends = []
+            let any = false
+            let at = 0
+            for (let open = -1; at < outer.length; ++at) {
+                const c = outer[at]
+                if (open >= 0) {
+                    if (c === "{")
+                        break
+                    if (c === "}") {
+                        ends[at + 1] = true
+                        any = true
+                        open = -1
+                    }
+                } else if (c === "{") {
+                    open = at
+                } else if (c === "\\" && "hNn".includes(outer[at + 1] ?? "")) {
+                    ++at
+                } else if (c !== " " && c !== "\t") {
+                    break
+                }
+            }
+            if (!any || inner.length === 0)
+                return -1
+            const fail = [0]
+            for (let i = 1, k = 0; i < inner.length; ++i) {
+                while (k > 0 && inner[i] !== inner[k])
+                    k = fail[k - 1]
+                if (inner[i] === inner[k])
+                    ++k
+                fail.push(k)
+            }
+            for (let i = 0, k = 0; i < outer.length && i - k <= at; ++i) {
+                while (k > 0 && outer[i] !== inner[k])
+                    k = fail[k - 1]
+                if (outer[i] === inner[k])
+                    ++k
+                if (k === inner.length) {
+                    if (ends[i + 1 - k] === true)
+                        return i + 1 - k
+                    k = fail[k - 1]
+                }
+            }
+            return -1
+        }
         function sync() {
             if (text === shown)
                 return
             syncing = true
-            const caret = cursorPosition
+            let caret = cursorPosition
+            // TM1: the carried tags shown or left out around the same text
+            // (Tags from original switched): the caret keeps its place in it.
+            const added = text.length > 0 ? carriedPrefix(shown, text) : -1
+            const removed = shown.length > 0 ? carriedPrefix(text, shown) : -1
+            if (added > 0)
+                caret += added
+            else if (removed > 0)
+                caret = Math.max(0, caret - removed)
             text = shown
             cursorPosition = Math.min(caret, length)
             syncing = false
@@ -2388,11 +2476,115 @@ ApplicationWindow {
                 if (root.editor.selectionRole === field.role)
                     field.select(root.editor.selectionStart, root.editor.selectionEnd)
             }
-            // E5: Moving tags gives the Translated field the focus, in its
+            // E5: an untranslated Line with tags gives the Translated field the
+            // focus (TM1's Tags from original; legacy's Moving tags), in its
             // window (the Original text panel may float in another).
             function onFieldFocusRequested(role) {
                 if (role === field.role)
                     root.focusPanel(field, Qt.OtherFocusReason)
+            }
+        }
+        // The rows of text from the rectangle of one position to another's,
+        // each {x, y, width} with y at its foot: an underline on each.
+        function underlineRows(first, last) {
+            const right = width - rightPadding
+            if (last.y <= first.y)
+                return [{x: first.x, y: first.y + first.height, width: last.x - first.x}]
+            const out = [{x: first.x, y: first.y + first.height, width: right - first.x}]
+            for (let y = first.y + first.height; out.length < 1000;) {
+                const row = positionToRectangle(positionAt(leftPadding, y + 1))
+                if (row.y >= last.y || row.y < y - 1 || row.height <= 0)
+                    break
+                out.push({x: leftPadding, y: row.y + row.height, width: right - leftPadding})
+                y = row.y + row.height
+            }
+            out.push({x: leftPadding, y: last.y + last.height, width: last.x - leftPadding})
+            return out
+        }
+        // TM1: the Original's runs (editor.tagRuns): a numbered badge where
+        // each starts in the Original text, and in the Translated text a
+        // badge and an underline under the text it is placed on, or a dotted
+        // underline under the same text found unplaced (a suggestion: Tab
+        // places it, Escape dismisses it).
+        Repeater {
+            model: root.editor.translationMode ? root.editor.tagRuns : []
+            delegate: Item {
+                id: run
+                required property var modelData
+                anchors.fill: parent
+                z: 2
+                // Every suggestion Tab would place is shown, a wrapped one
+                // on every row as a placed run's underline is.
+                Item {
+                    id: suggestion
+                    readonly property int from: field.role === 1 ? run.modelData.suggestedStart : -1
+                    readonly property int to: field.role === 1 ? run.modelData.suggestedEnd : -1
+                    readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                    readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    objectName: field.objectName + "Run" + run.modelData.number + "Suggestion"
+                    visible: from >= 0 && to > from && to <= field.length
+                    anchors.fill: parent
+                    // The dotted underline, 2 px dots 2 px apart on every
+                    // row, in one Shape: no item per dot or row.
+                    Shape {
+                        anchors.fill: parent
+                        ShapePath {
+                            strokeColor: Theme.accent
+                            strokeWidth: 2
+                            strokeStyle: ShapePath.DashLine
+                            dashPattern: [1, 1]
+                            capStyle: ShapePath.FlatCap
+                            fillColor: "transparent"
+                            PathMultiline {
+                                paths: suggestion.visible
+                                       ? field.underlineRows(suggestion.first, suggestion.last).map(
+                                             r => [Qt.point(r.x, r.y), Qt.point(r.x + r.width, r.y)])
+                                       : []
+                            }
+                        }
+                    }
+                }
+                Item {
+                    id: mark
+                    readonly property var modelData: run.modelData
+                    readonly property int from: field.role === 0 ? modelData.originalStart : modelData.start
+                    readonly property int to: field.role === 0 ? modelData.originalEnd : modelData.end
+                    readonly property rect first: { field.text; field.width; return field.positionToRectangle(from) }
+                    readonly property rect last: { field.text; field.width; return field.positionToRectangle(to) }
+                    objectName: field.objectName + "Run" + modelData.number
+                    visible: from >= 0 && to > from && to <= field.length
+                    anchors.fill: parent
+                    Rectangle {
+                        objectName: mark.objectName + "Badge"
+                        x: mark.first.x - width / 2
+                        y: mark.first.y - height / 2
+                        width: Math.max(badgeText.implicitWidth + 4, height)
+                        height: badgeText.implicitHeight
+                        radius: height / 2
+                        color: Theme.accent
+                        Label {
+                            id: badgeText
+                            anchors.centerIn: parent
+                            text: mark.modelData.number
+                            font.pixelSize: Math.max(8, field.font.pixelSize * 0.6)
+                            color: Theme.onAccent
+                        }
+                    }
+                    // The underline, on every row a wrapped run takes.
+                    Repeater {
+                        model: field.role === 1 ? field.underlineRows(mark.first, mark.last) : []
+                        Rectangle {
+                            required property var modelData
+                            required property int index
+                            objectName: mark.objectName + "Underline" + index
+                            x: modelData.x
+                            y: modelData.y - 1
+                            width: modelData.width
+                            height: 2
+                            color: Theme.accent
+                        }
+                    }
+                }
             }
         }
         // F3: the spell-checked field (legacy TextEdit: the Translated one in
@@ -2646,8 +2838,15 @@ ApplicationWindow {
             }
             const ctrl = event.modifiers & Qt.ControlModifier
             const action = hotkeyAction(event)
+            // TM1: a plain Tab places the suggested runs and Escape dismisses
+            // them; without suggestions they move on and discard as usual.
+            const plain = (event.modifiers & (Qt.ShiftModifier | Qt.ControlModifier | Qt.AltModifier | Qt.MetaModifier)) === 0
             if (action !== "") {
                 root.runEditorHotkey(action, field) // an action not here yet still takes the key
+                event.accepted = true
+            } else if (plain && field.role === 1 && event.key === Qt.Key_Tab && root.editor.acceptSuggestedRuns()) {
+                event.accepted = true
+            } else if (plain && field.role === 1 && event.key === Qt.Key_Escape && root.editor.dismissSuggestedRuns()) {
                 event.accepted = true
             } else if (event.key === Qt.Key_Tab || event.key === Qt.Key_Backtab) {
                 field.tabOut(event.key === Qt.Key_Tab && !(event.modifiers & Qt.ShiftModifier))
@@ -3025,7 +3224,7 @@ ApplicationWindow {
                     }
                     onOpenVideoRequested: videoDialog.show()
                     onOpenSubtitlesRequested: openDialog.show()
-                    onAspectRatioRequested: aspectRatioDialog.openAtCursor()
+                    onAspectRatioRequested: aspectRatioDialog.openAtCursor(visualOverlay)
                 }
                 Label {
                     anchors.centerIn: videoStageDock
@@ -3046,6 +3245,7 @@ ApplicationWindow {
                     id: videoToolBar
                     Layout.fillWidth: true
                     dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
+                    settings: root.app.settings
                     room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not
@@ -5267,6 +5467,23 @@ ApplicationWindow {
                             tabPrevious: root.originalShown ? lineText : null
                             Accessible.name: qsTranslate("HikariSub.Editor", "Translated text")
                         }
+                        // TM1: the Original's runs, placed on the translation's words.
+                        RunStrip {
+                            editor: root.editor
+                            shellRoot: root
+                            translated: translationText
+                            Layout.fillWidth: true
+                        }
+                        // A karaoke Line carries its leading tags without the
+                        // timing, which differs with the translation's syllables.
+                        Label {
+                            objectName: "karaokeCarryNotice"
+                            visible: root.editor.translationMode && root.editor.karaokeCarried
+                            text: qsTranslate("HikariSub.Translation", "Karaoke line: the tags before its text are carried, the karaoke timing is not.")
+                            color: Theme.muted
+                            wrapMode: Text.Wrap
+                            Layout.fillWidth: true
+                        }
                         // Legacy translation-mode buttons (EDITBOX_PASTE_*,
                         // EDITBOX_HIDE_ORIGINAL renamed Comment out original).
                         // They wrap: a narrow editor, a larger font or longer
@@ -5697,7 +5914,7 @@ ApplicationWindow {
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
+                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps() }
                         ShellMenuItem {
                             iconRole: "fps-from-video"
                             objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
@@ -6634,18 +6851,28 @@ ApplicationWindow {
             open()
         }
     }
-    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question.
-    DummyVideoDialog {
-        id: dummyVideoDialog
-        app: root.app
-        colourPicker: root.colourPicker
-        anchors.centerIn: parent
-        onRefused: message => root.notices.post("error", qsTr("Open dummy video"), message)
+    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question. PU4: the
+    // window made at its first opening (PK1: every window made at the start
+    // costs the program).
+    Loader {
+        id: dummyVideoLoader
+        active: false
+        sourceComponent: DummyVideoDialog {
+            app: root.app
+            settings: root.app.settings
+            colourPicker: root.colourPicker
+            onRefused: message => root.notices.post("error", qsTr("Open dummy video"), message)
+        }
+    }
+    function openDummyVideo() {
+        dummyVideoLoader.active = true
+        dummyVideoLoader.item.show()
     }
     VideoFileQuestion {
         id: videoFileQuestion
         app: root.app
-        anchors.centerIn: parent
+        video: root.video
+        messages: root.messages
     }
     // TM1: the Translation preset's question and Translation mode's turn-off
     // confirmation (Subtitles > Translation mode).
@@ -6658,10 +6885,13 @@ ApplicationWindow {
         app: root.app
     }
 
-    // V4: VIDEO_ASPECT_RATIO.
+    // V4: VIDEO_ASPECT_RATIO (PU4: a popover from the context menus, a
+    // compact window from the hotkey).
     AspectRatioDialog {
         id: aspectRatioDialog
         view: root.videoView
+        video: root.video
+        settings: root.app.settings
     }
 
     // V5: the fullscreen video window (legacy Fullscreen). What it asks
@@ -6673,8 +6903,8 @@ ApplicationWindow {
         controller: root.videoFullscreen
         onOpenVideoRequested: videoDialog.show()
         onOpenSubtitlesRequested: openDialog.show()
-        onAspectRatioRequested: aspectRatioDialog.openAtCursor()
-        onFileQuestionRequested: next => videoFileQuestion.ask(next)
+        onAspectRatioRequested: aspectRatioDialog.openAtCursor(videoFullscreenWindow.contentItem)
+        onFileQuestionRequested: next => videoFileQuestion.ask(next, videoFullscreenWindow)
         // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
@@ -6684,14 +6914,6 @@ ApplicationWindow {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
         }
-    }
-    Binding {
-        when: root.videoFullscreen.active
-        target: aspectRatioDialog; property: "parent"; value: videoFullscreenWindow.contentItem
-    }
-    Binding {
-        when: root.videoFullscreen.active
-        target: videoFileQuestion; property: "parent"; value: videoFullscreenWindow.contentItem
     }
     Binding {
         when: root.videoFullscreen.active
@@ -6751,58 +6973,19 @@ ApplicationWindow {
         }
     }
 
-    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: fpsWindow
-        objectName: "fpsWindow"
-        title: qsTranslate("HikariSub.Conversion", "Choose new FPS")
-        width: 360
-        height: 140
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        readonly property var presets: ["23.976", "24", "25", "29.97", "30", "60"]
-        GridLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            columns: 2
-            Label { text: qsTranslate("HikariSub.Conversion", "Subtitles FPS") }
-            ComboBox {
-                id: oldFps
-                objectName: "oldFps"
-                editable: true
-                model: fpsWindow.presets
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTranslate("HikariSub.Conversion", "Subtitles FPS")
-            }
-            Label { text: qsTranslate("HikariSub.Conversion", "New FPS") }
-            ComboBox {
-                id: newFps
-                objectName: "newFps"
-                editable: true
-                model: fpsWindow.presets
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTranslate("HikariSub.Conversion", "New FPS")
-            }
-            WindowFooter {
-                Layout.columnSpan: 2
-                Button {
-                    objectName: "fpsOk"
-                    text: qsTranslate("HikariSub.Conversion", "OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        if (root.app.setNewFps(oldFps.editText, newFps.editText))
-                            fpsWindow.close()
-                    }
-                }
-                Button {
-                    objectName: "fpsCancel"
-                    text: qsTranslate("HikariSub.Conversion", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: fpsWindow.close()
-                }
-            }
+    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new
+    // one (PU4: a compact window, made at its first opening).
+    Loader {
+        id: setNewFpsLoader
+        active: false
+        sourceComponent: SetNewFpsWindow {
+            app: root.app
+            settings: root.app.settings
         }
+    }
+    function openSetNewFps() {
+        setNewFpsLoader.active = true
+        setNewFpsLoader.item.show()
     }
 
     // The column choice for Copy columns / Paste columns (PU2: ColumnsWindow.qml).
@@ -7012,16 +7195,21 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    Dialog {
-        id: shiftConfirm
-        objectName: "shiftConfirm"
-        property int which: 1
-        title: qsTranslate("HikariSub.TimeShift", "Confirmation")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Yes | Dialog.No
-        Label { text: qsTranslate("HikariSub.TimeShift", "Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTranslate("HikariSub.TimeShift", "start") : qsTranslate("HikariSub.TimeShift", "end")) }
-        onAccepted: shiftTimesPanel.message = root.app.shiftTimes()
+    // GLOBAL_SHIFT_TIMES' question (runShiftTimes).
+    HidableQuestion {
+        id: shiftQuestion
+        objectName: "shiftQuestion"
+        messages: root.messages
+        questionId: "shiftOneTime"
+        // The editing target it was asked for (App.editingTargetId).
+        property var askedFor: 0
+        property Connections targetChanges: Connections {
+            target: root.app
+            function onTabsChanged() {
+                if (shiftQuestion.pending.length > 0 && root.app.editingTargetId() !== shiftQuestion.askedFor)
+                    shiftQuestion.withdraw()
+            }
+        }
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.
@@ -7693,6 +7881,13 @@ ApplicationWindow {
             root.editor.toggleTagIn(field.role, tags[action], field.selectionStart, field.selectionEnd)
             return true
         }
+        // TM1: the Original's runs go on the Translated text's selection.
+        if (action.startsWith("EDITBOX_PLACE_RUN_") || action === "EDITBOX_PLACE_NEXT_RUN") {
+            const number = action === "EDITBOX_PLACE_NEXT_RUN" ? 0 : Number(action.substring(18))
+            if (field.role === 1)
+                root.editor.placeRun(number, field.selectionStart, field.selectionEnd)
+            return true
+        }
         if (colours[action] !== undefined) {
             root.colourClick(colours[action], true, field)
             return true
@@ -7757,7 +7952,7 @@ ApplicationWindow {
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
         // FS1-bar-mode: Auto, Always, Never.
         case "VIDEO_FULLSCREEN_BAR": root.videoFullscreen.cycleBarMode(); return true
-        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
+        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openWindow(root.videoFullscreen.active ? videoFullscreenWindow : null); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
         case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":
@@ -7836,7 +8031,7 @@ ApplicationWindow {
         // (SubsGrid::OnAccelerator, SubsGrid.cpp:839-881, 938).
         case "GRID_COPY_COLUMNS": columnsWindow.choose(false); return true
         case "GRID_PASTE_COLUMNS": columnsWindow.choose(true); return true
-        case "GRID_SET_NEW_FPS": fpsWindow.show(); return true
+        case "GRID_SET_NEW_FPS": root.openSetNewFps(); return true
         case "GRID_SET_FPS_FROM_VIDEO": if (video) root.app.setFpsFromVideo(); return true
         case "GRID_PASTE_TRANSLATION":
             if (root.app.canPasteTranslation()) {

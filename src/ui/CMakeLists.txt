@@ -88,9 +88,10 @@ qt_target_qml_sources(hikari_ui QML_FILES VisualToolRail.qml VisualOverlay.qml V
 # T2-T6: the families' options in the bar (Position, Move, Scale, the rotations,
 # the clips' point modes and Invert clip, ...) and the tools' dialogs.
 qt_target_qml_sources(hikari_ui QML_FILES VisualToolOption.qml VisualToolDialogs.qml)
-# T5: the drawing's "Vector shape editing" dialog.
-qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml)
-# T6: the all-tags tool's "Tag editing" dialog.
+# T5: the drawing's "Edit shapes" window (PU5: a drawing's preview, a
+# refused value's error under its field).
+qt_target_qml_sources(hikari_ui QML_FILES ShapesEditionDialog.qml ShapeDrawing.qml FieldError.qml)
+# T6: the all-tags tool's "Edit tags" window.
 qt_target_qml_sources(hikari_ui QML_FILES AllTagsEditionDialog.qml)
 # V3: video sources, tracks and chapters: the recent lists, the stream and
 # chapter menus, the indexing progress, the next-file question and the dummy
@@ -156,7 +157,7 @@ qt_target_qml_sources(hikari_ui QML_FILES AudioTapBar.qml TapCalibrationWindow.q
 # E5: the Line editor's Not confirmed and Moving tags buttons. TM1: the
 # Original text panel's toolbar, the Translation preset's question and the
 # turn-off confirmation (the Translator mode check box is gone).
-qt_target_qml_sources(hikari_ui QML_FILES TranslationToggles.qml OriginalTextTools.qml TranslationModeQuestion.qml
+qt_target_qml_sources(hikari_ui QML_FILES TranslationToggles.qml OriginalTextTools.qml RunStrip.qml TranslationModeQuestion.qml
     TranslationModeOffConfirm.qml)
 # Y7: the colour picker's screen dropper (QScreen grabs on Windows and X11,
 # the desktop's Screenshot portal over D-Bus on Wayland).
@@ -226,6 +227,10 @@ qt_target_qml_sources(hikari_ui QML_FILES LinkButton.qml ReleaseNotesView.qml Wh
 qt_target_qml_sources(hikari_ui QML_FILES MessageBox.qml DangerButton.qml Popover.qml PopoverBackground.qml
     ToastStack.qml InlineBar.qml ClashReview.qml ChooseStyles.qml HotkeyCapture.qml ListChooser.qml DatePicker.qml
     MessageHost.qml LogPanel.qml)
+# PU4: a question "Don't ask again" can hide.
+qt_target_qml_sources(hikari_ui QML_FILES HidableQuestion.qml)
+# PU4: Set new FPS on DG1's frame.
+qt_target_qml_sources(hikari_ui QML_FILES SetNewFpsWindow.qml)
 # PU1: the file and session popups on the kit: the lazily made message box, Unsaved changes, Autosaves and the
 # startup offer.
 qt_target_qml_sources(hikari_ui QML_FILES LazyMessageBox.qml UnsavedChanges.qml Autosaves.qml StartupOffer.qml)

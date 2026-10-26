@@ -1380,15 +1380,31 @@ to the color selection location</source>
     </message>
     <message>
         <source>Choose new FPS</source>
-        <translation>새로운 프레임 선택</translation>
+        <translation type="vanished">새로운 프레임 선택</translation>
+    </message>
+    <message>
+        <source>Set new FPS</source>
+        <translation type="unfinished">새 프레임</translation>
     </message>
     <message>
         <source>Subtitles FPS</source>
         <translation>자막 프레임(FPS)</translation>
     </message>
     <message>
+        <source>Type a frame rate, such as 25.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New FPS</source>
         <translation>새 프레임(FPS)</translation>
+    </message>
+    <message>
+        <source>Every start and end time × %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change FPS</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep as is</source>
@@ -10980,19 +10996,19 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>확인해주세요</translation>
+        <translation type="vanished">확인해주세요</translation>
     </message>
     <message>
         <source>Do you really want to shift only %1 times?</source>
-        <translation type="unfinished">정말 %1만 이동 하시겠습니까?</translation>
+        <translation type="obsolete">정말 %1만 이동 하시겠습니까?</translation>
     </message>
     <message>
         <source>start</source>
-        <translation>시작 시간</translation>
+        <translation type="vanished">시작 시간</translation>
     </message>
     <message>
         <source>end</source>
-        <translation>종료 시간</translation>
+        <translation type="vanished">종료 시간</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -11013,6 +11029,34 @@ after the end time in milliseconds</source>
     <message>
         <source>The times could not be shifted.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift only the start times?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift only the end times?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift start times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift end times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">취소</translation>
     </message>
 </context>
 <context>
@@ -11143,7 +11187,23 @@ Foreign language text will be deleted.</source>
 <context>
     <name>HikariSub.Video</name>
     <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wider</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11240,7 +11300,7 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Dummy video options</source>
-        <translation>더미 영상 설정</translation>
+        <translation type="vanished">더미 영상 설정</translation>
     </message>
     <message>
         <source>This gives %1 frames</source>
@@ -11248,7 +11308,19 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Video resolution:</source>
-        <translation>영상 해상도:</translation>
+        <translation type="vanished">영상 해상도:</translation>
+    </message>
+    <message>
+        <source>Open dummy video</source>
+        <translation type="unfinished">더미 영상 열기</translation>
+    </message>
+    <message>
+        <source>Video resolution</source>
+        <translation type="unfinished">영상 해상도</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Width</source>
@@ -11259,8 +11331,28 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">초당 프레임</translation>
+    </message>
+    <message>
+        <source>Must be from 15 to 120.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a time such as 0:25:00.00.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Color:</source>
-        <translation>색상:</translation>
+        <translation type="vanished">색상:</translation>
     </message>
     <message>
         <source>Choose the colour</source>
@@ -11272,11 +11364,11 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Frames per second:</source>
-        <translation>초당 프레임:</translation>
+        <translation type="vanished">초당 프레임:</translation>
     </message>
     <message>
         <source>Duration:</source>
-        <translation>영상 길이:</translation>
+        <translation type="vanished">영상 길이:</translation>
     </message>
     <message>
         <source>Previous frame</source>
@@ -11464,15 +11556,15 @@ Foreign language text will be deleted.</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>확인해주세요</translation>
+        <translation type="vanished">확인해주세요</translation>
     </message>
     <message>
         <source>Are you sure you want to index the next video?</source>
-        <translation>다음 영상의 색인을 생성 하시겠습니까?</translation>
+        <translation type="vanished">다음 영상의 색인을 생성 하시겠습니까?</translation>
     </message>
     <message>
         <source>Are you sure you want to index the previous video?</source>
-        <translation>이전 영상의 색인을 생성 하시겠습니까?</translation>
+        <translation type="vanished">이전 영상의 색인을 생성 하시겠습니까?</translation>
     </message>
     <message>
         <source>Seek on</source>
@@ -11690,16 +11782,28 @@ or codecs or a splitter may be missing</source>
         <extracomment>Over the video: of the shown events, %1 use <byte value="x8"/>lur or <byte value="x8"/>e and %2 a drawing clip or iclip</extracomment>
         <translation type="unfinished"></translation>
     </message>
+    <message>
+        <source>Open the next video in this folder?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the previous video in this folder?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">열기</translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.VisualTools</name>
     <message>
         <source>Tag editing</source>
-        <translation>태그 편집</translation>
+        <translation type="vanished">태그 편집</translation>
     </message>
     <message>
         <source>Edited tag</source>
-        <translation>태그 수정</translation>
+        <translation type="vanished">태그 수정</translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -11810,28 +11914,382 @@ or codecs or a splitter may be missing</source>
         </translation>
     </message>
     <message>
-        <source>New tag name</source>
+        <source>Add tag</source>
+        <translation type="vanished">태그 추가</translation>
+    </message>
+    <message>
+        <source>Edit tags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add tag</source>
-        <translation>태그 추가</translation>
+        <source>Rename tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit decimal places</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit starting value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change change option</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change placing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate tag</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete tag</source>
         <translation>태그 삭제</translation>
     </message>
     <message>
+        <source>Replace tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the tag, without the backslash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another tag is named “%1”. Press Enter to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag can&apos;t contain “,”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can&apos;t contain “,”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a whole number from 0 to 6.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a number from -10000 to 10000.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum must be greater than the minimum (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The minimum must be less than the maximum (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The step must be greater than zero.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The step must be at most half the range (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the tag “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the default tags?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Your %n tag(s) are removed and the 22 default tags come back, with their ranges and steps.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The 22 default tags come back with their ranges and steps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The list keeps at least one tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished">고급</translation>
+    </message>
+    <message>
+        <source>Range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The tag takes %n value(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Starts on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the tag goes in the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How each line&apos;s number changes the value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the gradient runs across</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the inspector bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set writes, on the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default tags…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name:</source>
-        <translation>이름:</translation>
+        <translation type="vanished">이름:</translation>
+    </message>
+    <message>
+        <source>Edit shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change scaling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take drawing from line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can&apos;t contain “;”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another shape is named “%1”. Press Enter to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the shape “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” takes its name and its place in the list; the other is removed. Undo brings it back while this window is open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the default shapes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Your %n shape(s) are removed and the five default shapes come back.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The five default shapes come back as they were.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo brings yours back while this window is open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">삭제</translation>
+    </message>
+    <message>
+        <source>The list keeps at least one shape</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
         <translation>이름</translation>
     </message>
     <message>
+        <source>Scale from the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width and height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A drawing can&apos;t contain “;”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A shape needs a drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take from the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put the active line&apos;s drawing in this shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The active line has no drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">미리보기</translation>
+    </message>
+    <message>
+        <source>The shape keeps its last drawing until this one can be used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 × %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">실행 취소</translation>
+    </message>
+    <message>
+        <source>Undo “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">되돌리기</translation>
+    </message>
+    <message>
+        <source>Redo “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default shapes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tag:</source>
-        <translation>태그:</translation>
+        <translation type="vanished">태그:</translation>
     </message>
     <message>
         <source>Tag</source>
@@ -11839,23 +12297,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Minimal value:</source>
-        <translation>최소 값:</translation>
-    </message>
-    <message>
-        <source>Minimal value</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">최소 값:</translation>
     </message>
     <message>
         <source>Maximal value:</source>
-        <translation>최대 값:</translation>
-    </message>
-    <message>
-        <source>Maximal value</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">최대 값:</translation>
     </message>
     <message>
         <source>Value:</source>
-        <translation>명도:</translation>
+        <translation type="vanished">명도:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -11863,19 +12313,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Step:</source>
-        <translation>단계:</translation>
+        <translation type="vanished">단계:</translation>
     </message>
     <message>
         <source>Step</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Where Insert puts the tag</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Decimal places:</source>
-        <translation>점 이후 숫자:</translation>
+        <translation type="vanished">점 이후 숫자:</translation>
     </message>
     <message>
         <source>Decimal places</source>
@@ -11883,27 +12329,23 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Used only when tag have 2 values or more</source>
-        <translation>태그 값이 2개 이상인 경우에만 사용</translation>
+        <translation type="vanished">태그 값이 2개 이상인 경우에만 사용</translation>
     </message>
     <message>
         <source>Tag change options</source>
-        <translation>태그 옵션 변경</translation>
+        <translation type="vanished">태그 옵션 변경</translation>
     </message>
     <message>
         <source>Additional values:</source>
-        <translation>추가 값:</translation>
+        <translation type="vanished">추가 값:</translation>
     </message>
     <message>
         <source>Value %1</source>
-        <translation type="unfinished">%1 값</translation>
+        <translation type="obsolete">%1 값</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation>적용</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">적용</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -11911,31 +12353,23 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Restore default</source>
-        <translation>기본값으로 복원</translation>
+        <translation type="vanished">기본값으로 복원</translation>
     </message>
     <message>
         <source>Vector shape editing</source>
-        <translation>벡터 모양의 편집</translation>
-    </message>
-    <message>
-        <source>A shape named &quot;%1&quot; already exists.</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">벡터 모양의 편집</translation>
     </message>
     <message>
         <source>Edited shape</source>
-        <translation>편집된 모양</translation>
+        <translation type="vanished">편집된 모양</translation>
     </message>
     <message>
         <source>Shapes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>New shape name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Add shape</source>
-        <translation>모양 추가</translation>
+        <translation type="vanished">모양 추가</translation>
     </message>
     <message>
         <source>Delete shape</source>
@@ -11943,51 +12377,43 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation>갱신 정보</translation>
+        <translation type="vanished">갱신 정보</translation>
     </message>
     <message>
         <source>Scaling relative to cursor:</source>
-        <translation>커서를 통한 크기 조정:</translation>
+        <translation type="vanished">커서를 통한 크기 조정:</translation>
     </message>
     <message>
         <source>Changed width and height</source>
-        <translation>넓이와 높이 변경</translation>
+        <translation type="vanished">넓이와 높이 변경</translation>
     </message>
     <message>
         <source>Preserve aspect ratio</source>
-        <translation>비율을 유지</translation>
+        <translation type="vanished">비율을 유지</translation>
     </message>
     <message>
         <source>Changed is only width</source>
-        <translation>넓이만 변경됨</translation>
-    </message>
-    <message>
-        <source>Scaling relative to cursor</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">넓이만 변경됨</translation>
     </message>
     <message>
         <source>Scaling mode:</source>
-        <translation>크기 조절:</translation>
+        <translation type="vanished">크기 조절:</translation>
     </message>
     <message>
         <source>Changing only drawing coordinates</source>
-        <translation>도면 좌표 변경</translation>
+        <translation type="vanished">도면 좌표 변경</translation>
     </message>
     <message>
         <source>Changing scale</source>
-        <translation>크기 변경</translation>
-    </message>
-    <message>
-        <source>Scaling mode</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">크기 변경</translation>
     </message>
     <message>
         <source>Shape:</source>
-        <translation>모양:</translation>
+        <translation type="vanished">모양:</translation>
     </message>
     <message>
         <source>Get shape from active line</source>
-        <translation>활성 라인에서 모양 가져오기</translation>
+        <translation type="vanished">활성 라인에서 모양 가져오기</translation>
     </message>
     <message>
         <source>Shape</source>
@@ -11995,15 +12421,11 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>확인해주세요</translation>
+        <translation type="vanished">확인해주세요</translation>
     </message>
     <message>
         <source>Replace</source>
         <translation>교체</translation>
-    </message>
-    <message>
-        <source>Rename</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy video position</source>

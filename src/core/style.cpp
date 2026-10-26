@@ -240,6 +240,15 @@ std::optional<std::u8string> styleTagValue(const StyleValues &style, std::u8stri
 
 } // namespace legacy
 
+std::size_t styleCount(const Document &document)
+{
+    std::size_t n = 0;
+    for (const auto &section : document.sections())
+        for (const auto &record : section.records)
+            n += std::holds_alternative<StyleRecord>(record);
+    return n;
+}
+
 std::vector<StyleValues> decodeStyles(const Document &document)
 {
     std::vector<StyleValues> out;

@@ -42,6 +42,16 @@
 
 namespace hikari::application::visual {
 
+// PU5 (#307): what Set writes on a Line at the definition's starting
+// values, split around the tag for the "Edit tags" preview: the Line's
+// own tag replaced where it has one, else the tag placed where Set places
+// it (the definition's placing, the caret at the start), as
+// AllTagsTool::changeVisualEditor does.
+struct AllTagsSetPreview {
+    std::u16string before, tag, after;
+};
+AllTagsSetPreview allTagsSetPreview(const AllTagsSetting &tag, std::u16string_view line);
+
 class AllTagsTool : public VisualTool {
 public:
     // AllTagsSlider (VisualAllTagsControls.h:21-57).
@@ -94,8 +104,10 @@ public:
     void setToggled(int tool, VisualHost *host = nullptr);
     // After the definitions changed (the "Tag editing" dialog's OK): the
     // list's names again, its selection kept by name where it can be
-    // (HikariChoice::PutArray), and the tool told.
-    void definitionsChanged(const std::vector<std::u16string> &oldNames, VisualHost &host);
+    // (HikariChoice::PutArray), and the tool told. A hidden tool (another
+    // family shown) keeps the selection only: it starts over when it comes
+    // back (selected, reset).
+    void definitionsChanged(const std::vector<std::u16string> &oldNames, VisualHost &host, bool shown = true);
 
     // Legacy state, as the probe records it.
     const AllTagsSetting &actualTag() const { return m_actualTag; }

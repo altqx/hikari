@@ -2354,6 +2354,12 @@ void Application::cancelClose()
         applyFiles(std::move(*files), true);
 }
 
+qulonglong Application::editingTargetId() const
+{
+    const auto target = m_workspace.editingTarget();
+    return target ? target->value : 0;
+}
+
 bool Application::targetUntitled() const
 {
     const auto target = m_workspace.editingTarget();

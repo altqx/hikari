@@ -481,6 +481,9 @@ public:
     // means shifted, otherwise the legacy message. Frames need an exact
     // (indexed) timebase.
     Q_INVOKABLE QString shiftTimes();
+    // PU4: the editing target's document id (0: none). Ids are never reused,
+    // so a question can tell the target it asked about from a later one.
+    Q_INVOKABLE qulonglong editingTargetId() const;
     Q_INVOKABLE bool exactTimebase() const;
     // F6: GLOBAL_OPEN_KEYFRAMES. Empty result: loaded (or kept until a video
     // opens, as legacy does); otherwise the legacy message.
@@ -768,6 +771,16 @@ public:
     Q_INVOKABLE QVariantMap dummyVideoDefaults() const;
     Q_INVOKABLE QString openDummyVideo(const QVariantMap &values);
     Q_INVOKABLE bool nextVideoFile(bool next);
+    // PU4 (#306): the dummy video's frames for a typed rate and duration
+    // (-1: a rate it refuses), and the file name the previous / next file
+    // would open, asked before the walk ("" when it would open none).
+    Q_INVOKABLE int dummyVideoFrames(const QString &fps, int durationMs) const;
+    Q_INVOKABLE QString nextVideoFileName(bool next) const;
+    // The file itself ("" when the walk would open none), and the walk made
+    // only while it still leads to `expected` (the question's answer, when
+    // another video opened while it was asked: false, nothing done).
+    Q_INVOKABLE QString nextVideoFilePath(bool next) const;
+    Q_INVOKABLE bool nextVideoFileIfStill(bool next, const QString &expected);
     // A3: GLOBAL_SET_AUDIO_FROM_VIDEO and GLOBAL_SET_AUDIO_MARK_FROM_VIDEO (the
     // Video menu, enabled while the audio box exists): the box centred on the
     // video's time (VideoBox::Tell, 0 without video), with the mark there too.
@@ -1455,6 +1468,9 @@ private:
     // the previous / next file in natural name order, letters lowered as
     // Unicode does (V3-next-file-natural-order)
     application::NextFileWalker m_nextFile{[](char32_t c) { return QChar::toLower(c); }};
+    // VideoBox::NextFile's step from the current video with `walker`
+    // (nullopt: no video and no recent one).
+    std::optional<application::NextFileStep> nextVideoStep(application::NextFileWalker &walker, bool next) const;
     QString m_recentVideoSeen; // the ready video last added to the list
     void rememberRecentAudio(const QString &path);
     void trimAudioCache();

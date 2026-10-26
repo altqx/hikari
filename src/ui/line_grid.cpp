@@ -238,6 +238,8 @@ QString LineGrid::rowStateText(int row) const
         words << QCoreApplication::translate("HikariSub.Grid", "bookmarked");
     if (m_model->index(row, 0).data(LineTableModel::DraftRole).toBool())
         words << QCoreApplication::translate("HikariSub.Grid", "uncommitted");
+    if (m_model->index(row, 0).data(LineTableModel::UnplacedRunsRole).toBool())
+        words << QCoreApplication::translate("HikariSub.Grid", "runs not placed");
     return words.join(QStringLiteral(", "));
 }
 
@@ -882,6 +884,18 @@ void LineGrid::paint(QPainter *painter)
                               QFontMetricsF(painter->font()).elidedText(text, Qt::ElideRight, widths[c] - 8));
             if (onLabel)
                 painter->restore();
+            // TM1: a run of the Original not placed in the translation, a
+            // corner mark on the text apart from the Unconfirmed label.
+            if (mc == LineTableModel::TextColumn && idx.data(LineTableModel::UnplacedRunsRole).toBool()) {
+                const double right = x + widths[c] - 1;
+                const QPointF corner[] = {{right - 7, top + 1}, {right, top + 1}, {right, top + 8}};
+                painter->save();
+                painter->setRenderHint(QPainter::Antialiasing);
+                painter->setPen(Qt::NoPen);
+                painter->setBrush(roles.accent);
+                painter->drawPolygon(corner, 3);
+                painter->restore();
+            }
             x += widths[c];
         }
         if (active && hasActiveFocus()) {
