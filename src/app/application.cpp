@@ -787,6 +787,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         // KA3: the Kanji timer window over the editing target.
         KanjiTimerController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
+        hooks.targetId = [this] { return m_workspace.editingTarget() ? m_workspace.editingTarget()->value : 0; };
         hooks.refresh = [this] {
             m_editor->reloadFromSession();
             refreshViews();

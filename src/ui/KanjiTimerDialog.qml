@@ -155,6 +155,7 @@ DialogWindow {
                     horizontalAlignment: Text.AlignHCenter
                     wrapMode: Text.Wrap
                     color: Theme.muted
+                    textFormat: Text.PlainText // (the Document's text: no markup, no <img> fetched)
                     text: dialog.timer.problem === "noKaraoke"
                           ? qsTr("No karaoke lines in “%1”").arg(dialog.timer.romajiStyle)
                           : dialog.timer.problem === "noStyles" ? qsTr("The subtitles have no styles")
@@ -218,6 +219,7 @@ DialogWindow {
                             Label {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
+                                textFormat: Text.PlainText
                                 text: row.modelData.kanji || "—"
                                 color: row.modelData.kanji ? Theme.text : Theme.muted
                                 font: dialog.fontAt(14)
@@ -225,6 +227,7 @@ DialogWindow {
                             Label {
                                 Layout.fillWidth: true
                                 elide: Text.ElideRight
+                                textFormat: Text.PlainText
                                 text: row.modelData.romaji || "—"
                                 color: Theme.muted
                                 font: dialog.fontAt(12)
@@ -379,6 +382,7 @@ DialogWindow {
                                                 Label {
                                                     id: syllableText
                                                     anchors.horizontalCenter: parent.horizontalCenter
+                                                    textFormat: Text.PlainText
                                                     text: modelData.text
                                                 }
                                                 Label {
@@ -406,6 +410,7 @@ DialogWindow {
                                     height: 44
                                     Label {
                                         anchors.centerIn: parent
+                                        textFormat: Text.PlainText
                                         text: group.modelData.kanji
                                         font: dialog.fontAt(22)
                                     }
@@ -440,6 +445,7 @@ DialogWindow {
                                         leftPadding: 6
                                         rightPadding: 6
                                         color: Theme.muted
+                                        textFormat: Text.PlainText
                                         text: modelData.text
                                         TapHandler {
                                             onTapped: {
@@ -468,6 +474,7 @@ DialogWindow {
                                         Label {
                                             id: restChar
                                             anchors.centerIn: parent
+                                            textFormat: Text.PlainText
                                             text: restCell.modelData.text
                                             color: restHover.hovered ? Theme.text : Theme.muted
                                             font: dialog.fontAt(22)
@@ -529,6 +536,7 @@ DialogWindow {
                 Label {
                     Layout.fillWidth: true
                     wrapMode: Text.Wrap
+                    textFormat: Text.PlainText
                     text: qsTr("“%1” has no kanji left. Enter links it on its own (a blank group); Backspace reopens the group before, where ↑ takes it in.")
                           .arg(dialog.pair.noKanjiLeft || "")
                 }

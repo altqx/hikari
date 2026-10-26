@@ -3,6 +3,7 @@
 #include "hikari/application/kana.h"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 
 namespace hikari::application {
@@ -77,10 +78,14 @@ bool allSpace(u16v text, const KaraokeCharClass &classes)
 }
 
 // The characters' text from `at` on, for the kana readings.
+// The characters from `at` that a kana reading can take (kanaReadings reads
+// a small っ, the kana after it and a small ゃ at most), not the rest of the
+// Line: a long Line would make each syllable copy all of it.
+constexpr std::size_t kReadingWindow = 3;
 u16 charactersFrom(const KanjiText &kanji, std::size_t at)
 {
     u16 out;
-    for (std::size_t i = at; i < kanji.units.size(); ++i)
+    for (std::size_t i = at; i < kanji.units.size() && i < at + kReadingWindow; ++i)
         out += kanji.units[i].text;
     return out;
 }
@@ -432,11 +437,15 @@ void KanjiTimer::derive()
                 alone(std::pair(r.startMs, r.endMs) <= std::pair(k.startMs, k.endMs));
                 continue;
             }
-            if (i + 1 < romaji.size() && overlap(romaji[i + 1].first, k) > o) {
+            // A Line goes alone for the next one only when most of it lies
+            // outside its partner (a stray Line just touching it), never
+            // when it lies within it.
+            const auto mostlyOutside = [o](const Line &line) { return 2 * o < line.endMs - line.startMs; };
+            if (i + 1 < romaji.size() && overlap(romaji[i + 1].first, k) > o && mostlyOutside(r)) {
                 alone(true);
                 continue;
             }
-            if (j + 1 < kanji.size() && overlap(r, kanji[j + 1].first) > o) {
+            if (j + 1 < kanji.size() && overlap(r, kanji[j + 1].first) > o && mostlyOutside(k)) {
                 alone(false);
                 continue;
             }
@@ -509,7 +518,7 @@ KanjiTimer::Status KanjiTimer::statusOf(const Pair &pair)
 }
 
 KanjiGroup KanjiTimer::selectionOf(const Work &work, const std::vector<KanjiSyllable> &syllables,
-                                   const KanjiText &kanji) const
+                                   const KanjiText &kanji, bool *ranOut) const
 {
     const std::size_t from = syllablesIn(work.linked), at = charactersIn(work.linked);
     const std::size_t syllablesLeft = syllables.size() - std::min(from, syllables.size());
@@ -518,7 +527,7 @@ KanjiGroup KanjiTimer::selectionOf(const Work &work, const std::vector<KanjiSyll
     if (work.selection)
         g = *work.selection;
     else if (m_suggest)
-        g = suggestGroup(syllables, from, kanji, at, m_classes);
+        g = suggestGroup(syllables, from, kanji, at, m_classes, ranOut);
     else
         g = {1, 1};
     return {std::min(g.syllables, syllablesLeft), std::min(g.characters, charactersLeft)};
@@ -531,11 +540,12 @@ std::vector<KanjiGroup> KanjiTimer::proposal(const Work &work, const std::vector
                                              const KanjiText &kanji, bool *clean) const
 {
     std::vector<KanjiGroup> out = work.linked;
-    const KanjiGroup selection = selectionOf(work, syllables, kanji);
-    bool ok = true;
+    bool ranOut = false; // the suggested selection took the syllables the kanji ran out for
+    const KanjiGroup selection = selectionOf(work, syllables, kanji, &ranOut);
+    bool ok = !ranOut;
     if (selection.syllables || selection.characters) {
         out.push_back(selection);
-        ok = selection.characters > 0 && selection.syllables > 0;
+        ok = ok && selection.characters > 0 && selection.syllables > 0;
     }
     if (m_suggest) {
         const auto rest = suggestGroups(syllables, syllablesIn(out), kanji, charactersIn(out), m_classes);

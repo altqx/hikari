@@ -13,7 +13,9 @@
 #include <QVariantList>
 #include <QVariantMap>
 
+#include <cstdint>
 #include <functional>
+#include <map>
 #include <memory>
 
 namespace hikari::ui {
@@ -49,6 +51,7 @@ class KanjiTimerController : public QObject {
 public:
     struct Hooks {
         std::function<application::EditSession *()> target; // the editing target
+        std::function<std::uint64_t()> targetId;             // its DocumentId (never reused)
         std::function<void()> refresh;                       // after the Document changed
     };
     KanjiTimerController(ui::SettingsStore &settings, Hooks hooks, QObject *parent = nullptr);
@@ -111,7 +114,14 @@ private:
     ui::SettingsStore &m_settings;
     Hooks m_hooks;
     std::unique_ptr<application::KanjiTimer> m_timer;
-    const application::EditSession *m_session = nullptr; // the Document the timer is for
+    // The DocumentId the timer is for (0: none), and the timers of the other
+    // Documents it was used on, kept while they are not the target.
+    std::uint64_t m_document = 0;
+    struct Kept {
+        std::unique_ptr<application::KanjiTimer> timer;
+        QString romajiStyle, kanjiStyle;
+    };
+    std::map<std::uint64_t, Kept> m_kept;
     bool m_open = false;
     QStringList m_styles;
     QString m_romajiStyle, m_kanjiStyle, m_problem;

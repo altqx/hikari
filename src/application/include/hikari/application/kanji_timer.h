@@ -184,7 +184,8 @@ private:
     void record();
     Work *currentWork();
     Work &workFor(const Pair &pair);
-    KanjiGroup selectionOf(const Work &work, const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji) const;
+    KanjiGroup selectionOf(const Work &work, const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
+                           bool *ranOut = nullptr) const;
     std::vector<KanjiGroup> proposal(const Work &work, const std::vector<KanjiSyllable> &syllables,
                                      const KanjiText &kanji, bool *clean = nullptr) const;
     Status statusOf(const Pair &pair);

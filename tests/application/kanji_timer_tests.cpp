@@ -225,6 +225,39 @@ TEST(KanjiTimer, PairsByTimeWithLinesLeftAlone)
     EXPECT_EQ(pairs[3].status, KanjiTimer::Status::NoRomaji);
 }
 
+TEST(KanjiTimer, ALineWithinItsPartnerStaysPaired)
+{
+    // a romaji Line wholly inside the kanji Line keeps it, though the next
+    // romaji Line overlaps it more (Codex on #352)
+    KanjiTimer timer(classes());
+    timer.setLines({line(1, "{\\k50}yu{\\k50}me", 0, 1000), line(3, "{\\k100}ho{\\k100}shi", 1000, 3000)},
+                   {line(2, "夢", 0, 3000), line(4, "星", 1000, 3000)});
+    const auto &pairs = timer.pairs();
+    ASSERT_EQ(pairs.size(), 2u);
+    EXPECT_EQ(pairs[0].romaji->id.value, 1u);
+    EXPECT_EQ(pairs[0].kanji->id.value, 2u);
+    EXPECT_EQ(pairs[1].romaji->id.value, 3u);
+    EXPECT_EQ(pairs[1].kanji->id.value, 4u);
+    // a stray romaji Line just touching the kanji Line is still left alone
+    timer.setLines({line(1, "{\\k50}la{\\k50}la", 0, 1000), line(3, "{\\k100}ho{\\k100}shi", 1000, 3000)},
+                   {line(2, "星", 900, 3000)});
+    ASSERT_EQ(timer.pairs().size(), 2u);
+    EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::NoKanji);
+    EXPECT_EQ(timer.pairs()[1].romaji->id.value, 3u);
+}
+
+TEST(KanjiTimer, AFirstGroupThatRanOutIsACheck)
+{
+    // two syllables over one character: the first suggested group takes both
+    // because the kanji ran out, so the pair is Check and Accept all leaves it
+    KanjiTimer timer(classes());
+    timer.setLines({line(1, "{\\k10}a{\\k20}b", 0, 300)}, {line(2, "a", 0, 300)});
+    ASSERT_EQ(timer.pairs().size(), 1u);
+    EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Check);
+    EXPECT_EQ(timer.acceptAllSuggestions(), 0);
+    EXPECT_TRUE(timer.pending().empty());
+}
+
 TEST(KanjiTimer, PairsByOrderWithoutAnyOverlap)
 {
     // an untimed kanji style: Aegisub's pairing, the nth with the nth

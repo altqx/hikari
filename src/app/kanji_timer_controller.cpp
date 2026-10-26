@@ -187,14 +187,33 @@ void KanjiTimerController::guessStyles()
 void KanjiTimerController::readLines()
 {
     auto *session = target();
-    if (session != m_session) { // another Document: start over
-        m_session = session;
+    const std::uint64_t document = session && m_hooks.targetId ? m_hooks.targetId() : 0;
+    if (document != m_document) {
+        // Another Document: this one's timer is kept for when it is the
+        // target again (its done pairs, groupings and undo), the other's
+        // taken back or started.
+        if (m_document != 0)
+            m_kept[m_document] = Kept{std::move(m_timer), m_romajiStyle, m_kanjiStyle};
+        m_document = document;
         m_timer.reset();
-        m_styles.clear();
-        if (session)
-            if (const auto styles = application::documentStyles(*session))
-                for (const auto &s : *styles)
-                    m_styles << qs8(s.name);
+        m_romajiStyle.clear();
+        m_kanjiStyle.clear();
+        if (auto kept = m_kept.find(document); kept != m_kept.end()) {
+            m_timer = std::move(kept->second.timer);
+            m_romajiStyle = kept->second.romajiStyle;
+            m_kanjiStyle = kept->second.kanjiStyle;
+            m_kept.erase(kept);
+        }
+    }
+    // The styles as the Document has them now (one added or renamed since);
+    // a chosen style it no longer has is guessed again.
+    m_styles.clear();
+    if (session)
+        if (const auto styles = application::documentStyles(*session))
+            for (const auto &s : *styles)
+                m_styles << qs8(s.name);
+    if (!m_styles.contains(m_romajiStyle) || !m_styles.contains(m_kanjiStyle)) {
+        m_timer.reset();
         guessStyles();
     }
     m_problem.clear();
@@ -426,15 +445,13 @@ int KanjiTimerController::acceptAll()
 bool KanjiTimerController::apply()
 {
     auto *session = target();
-    if (!m_timer || !session || session != m_session)
+    if (!m_timer || !session || !m_hooks.targetId || m_hooks.targetId() != m_document)
         return false;
-    const auto pending = m_timer->pending();
-    if (pending.empty())
-        return true;
-    std::set<core::LineId> touches;
-    for (const auto &[id, text] : pending)
-        touches.insert(id);
     auto run = [&] {
+        const auto pending = m_timer->pending();
+        std::set<core::LineId> touches;
+        for (const auto &[id, text] : pending)
+            touches.insert(id);
         return session->run(application::Command{"Kanji timing", session->revision(), touches, [&](core::Document &d) {
                                                      for (const auto &[id, text] : pending)
                                                          if (!d.editLine(id, [&](core::LineRecord &l) { l.text = core::toUtf8(text); }))
@@ -442,10 +459,22 @@ bool KanjiTimerController::apply()
                                                      return true;
                                                  }});
     };
+    if (m_timer->pending().empty())
+        return true;
     auto ran = run();
-    // a pending Line editor draft on one of the Lines is committed first, a step of its own
-    if (!ran && ran.error() == application::CommandRefusal::StaleRevision)
+    // A Line editor draft on one of the Lines was committed first, a step of
+    // its own: the Lines are read again, so a pair whose kanji Line the
+    // draft changed is Changed and left out rather than written over it.
+    if (!ran && ran.error() == application::CommandRefusal::StaleRevision) {
+        readLines();
+        if (!m_timer)
+            return false;
+        if (m_timer->pending().empty()) {
+            emit changed();
+            return true;
+        }
         ran = run();
+    }
     if (!ran)
         return false;
     m_timer->applied();
