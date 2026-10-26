@@ -40,6 +40,7 @@ extern "C" {
 #include <cstring>
 #include <new>
 #include <filesystem>
+#include <limits>
 #include <regex>
 #include <system_error>
 #include <type_traits>
@@ -74,7 +75,9 @@ Script g_script;
 bool g_topLevel = false; // the script's top level runs (Load)
 Responder *g_responder = nullptr; // the running request
 Responder *g_services = nullptr;  // host services: the running request, or the Load while the top level runs
-int g_lastProgress = 0;
+// Below any progress: a run's first set is always sent (set(0) included).
+constexpr int kNoProgress = std::numeric_limits<int>::min();
+int g_lastProgress = kNoProgress;
 char g_cancelTag; // its address identifies aegisub.cancel()
 
 std::string toUtf8(const std::filesystem::path &p)
@@ -375,9 +378,13 @@ int progressCancelled(lua_State *L)
 
 int debugOut(lua_State *L)
 {
+    // AD3: the level goes with the text, for the run log's filter.
+    std::int32_t level = -1;
     if (lua_isnumber(L, 1)) {
-        if (lua_tointeger(L, 1) > g_script.traceLevel)
+        const lua_Integer given = lua_tointeger(L, 1);
+        if (given > g_script.traceLevel)
             return 0;
+        level = static_cast<std::int32_t>(std::max<lua_Integer>(given, 0));
         lua_remove(L, 1);
     }
     if (lua_gettop(L) > 1) {
@@ -387,7 +394,11 @@ int debugOut(lua_State *L)
         lua_insert(L, 1);
         lua_call(L, lua_gettop(L) - 1, 1);
     }
-    send(lua::ProgressEvent::Log, stringOrEmpty(L, 1));
+    if (g_responder) {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(lua::ProgressEvent::Log)).i32(level).str(stringOrEmpty(L, 1));
+        g_responder->progress(w.take());
+    }
     return 0;
 }
 
@@ -2358,7 +2369,7 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
     g_subs = &staged;
     g_responder = &r;
     g_services = &r;
-    g_lastProgress = 0;
+    g_lastProgress = kNoProgress;
     installSink(L);
     lua_getglobal(L, "aegisub");
     // Legacy AutoToFile's constructor, made for each run: these three stay
@@ -2403,6 +2414,12 @@ void run(Reader &in, Responder &r, std::size_t payloadSize, RunMode mode)
             row += shift;
         if (staged.lists.active)
             staged.lists.active += shift;
+    }
+    // AD3: the macro itself begins (its validation, if any, has answered).
+    {
+        Writer w;
+        w.i32(static_cast<std::int32_t>(lua::ProgressEvent::Started));
+        r.progress(w.take());
     }
     lua_pushcfunction(L, addStackTrace);
     lua_rawgeti(L, LUA_REGISTRYINDEX, g_script.features[static_cast<std::size_t>(index)]);

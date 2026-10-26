@@ -19,11 +19,7 @@ Main.qml:shiftConfirm
 Main.qml:conversionDialog
 Main.qml:resampleDialog
 Main.qml:mismatchDialog
-MisspellReplacerDialog.qml:dialog
-MisspellReplacerDialog.qml:results
 ScriptPropertiesDialog.qml:dialog
-SearchTool.qml:question
-SelectLinesDialog.qml:dialog
 SpellCheckerDialog.qml:dialog
 SpellCheckerDialog.qml:addedWords
 StyleManager.qml:createQuestion
@@ -31,6 +27,4 @@ StyleManager.qml:multiQuestion
 StyleManager.qml:renameQuestion
 StyleManager.qml:newCatalog
 StyleManager.qml:deleteCatalogQuestion
-TranslationModeOffConfirm.qml:dialog
-TranslationModeQuestion.qml:dialog
 VideoFileQuestion.qml:dialog

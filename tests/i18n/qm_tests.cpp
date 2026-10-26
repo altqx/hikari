@@ -280,9 +280,11 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // three questions, the autosaves, the startup offer's four and Close
         // all tabs (PU1). 42 with the import wizard's "Import %n setting(s)"
         // and "%n setting(s) imported." and the hotkeys import's three counts
-        // (PU7). 45 with Edit shapes' and Edit tags' restore questions and
-        // the tags' count, "The tag takes %n value(s)" (PU5).
-        ASSERT_EQ(numerus, 45) << language.toStdString();
+        // (PU7). 46 with a macro run's lines, its template problems, the
+        // card's log and a run's line count (AD3). 49 with Edit shapes' and
+        // Edit tags' restore questions and the tags' count, "The tag takes %n
+        // value(s)" (PU5).
+        ASSERT_EQ(numerus, 49) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);
