@@ -1,7 +1,5 @@
 #include "all_tags_editor.h"
 
-#include "hikari/application/shape_presets.h"
-
 #include <QHash>
 #include <QSet>
 
@@ -118,11 +116,11 @@ int AllTagsEditor::ownCount() const
     }));
 }
 
-void AllTagsEditor::kept(const Renamed &renamed)
+void AllTagsEditor::kept()
 {
     emit changed();
     if (m_hooks.changed)
-        m_hooks.changed(m_edition.usable(), renamed);
+        m_hooks.changed(m_edition.usable(), m_edition.renamed());
 }
 
 int AllTagsEditor::checked(AllTagsEdition::Check check)
@@ -161,14 +159,9 @@ int AllTagsEditor::setName(const QString &name)
     if (name == this->name())
         return CheckOk;
     std::u16string taken;
-    Renamed renamed{m_edition.current().name, {}};
     const auto check = m_edition.setName(name.toStdU16String(), &taken);
     m_taken = qs(taken);
-    if (check == AllTagsEdition::Check::Ok) {
-        renamed.to = m_edition.current().name;
-        kept(renamed);
-    }
-    return static_cast<int>(check);
+    return checked(check);
 }
 
 int AllTagsEditor::setTag(const QString &tag)
@@ -194,12 +187,11 @@ int AllTagsEditor::setNumber(const QString &field, const QString &text)
         return CheckNotANumber;
     if (text == numbers().value(field).toString())
         return CheckOk;
-    // What a range check names: the other end, or half the range.
-    const AllTagsSetting &t = m_edition.current();
-    m_limit = *it == Number::Min ? number(t.rangeMax)
-            : *it == Number::Max ? number(t.rangeMin)
-                                 : number((t.rangeMax - t.rangeMin) / 2);
-    return checked(m_edition.setNumber(*it, text.toStdU16String()));
+    // What a range check names: the other end, or half the range as typed.
+    float limit = 0;
+    const auto check = m_edition.setNumber(*it, text.toStdU16String(), &limit);
+    m_limit = number(limit);
+    return checked(check);
 }
 
 void AllTagsEditor::addTag()
@@ -224,10 +216,8 @@ bool AllTagsEditor::remove()
 
 void AllTagsEditor::replaceNamed(const QString &name)
 {
-    Renamed renamed{m_edition.current().name, {}};
     m_edition.replaceNamed(name.toStdU16String());
-    renamed.to = m_edition.current().name;
-    kept(renamed);
+    kept();
 }
 
 void AllTagsEditor::restoreDefaults()
@@ -238,25 +228,22 @@ void AllTagsEditor::restoreDefaults()
 
 bool AllTagsEditor::undoAll()
 {
-    const auto before = m_edition.usable();
     if (!m_edition.undoAll())
         return false;
-    kept(application::visual::renamedBetween(before, m_edition.usable(), application::visual::sameNameIgnoringCase));
+    kept();
     return true;
 }
 
 void AllTagsEditor::undo()
 {
-    const auto before = m_edition.usable();
     if (m_edition.undo())
-        kept(application::visual::renamedBetween(before, m_edition.usable(), application::visual::sameNameIgnoringCase));
+        kept();
 }
 
 void AllTagsEditor::redo()
 {
-    const auto before = m_edition.usable();
     if (m_edition.redo())
-        kept(application::visual::renamedBetween(before, m_edition.usable(), application::visual::sameNameIgnoringCase));
+        kept();
 }
 
 void AllTagsEditor::setPlacingOf(const QString &name, int placing)

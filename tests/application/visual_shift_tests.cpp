@@ -692,9 +692,38 @@ TEST(AllTagsEdition, NewDuplicateDeleteReplaceAndRestore)
     draft.select(0);
     EXPECT_FALSE(draft.canRemove());
     EXPECT_FALSE(draft.remove());
+    // Nor replaced by it: its name taken says to fill in Tag first, and
+    // Replace does nothing (Codex on #349).
     draft.select(1);
+    std::u16string takenName;
+    EXPECT_EQ(draft.setName(u"Glow", &takenName), AllTagsEdition::Check::TakenLastUsable);
+    EXPECT_EQ(takenName, u"glow");
+    draft.replaceNamed(u"Glow");
+    EXPECT_EQ(draft.tags().size(), 2u);
+    EXPECT_EQ(draft.usable(), std::vector<AllTagsSetting>{glow});
+    ASSERT_EQ(draft.setTag(u"blur"), AllTagsEdition::Check::Ok);
+    EXPECT_EQ(draft.setName(u"Glow"), AllTagsEdition::Check::Taken);
+    draft.replaceNamed(u"Glow");
+    ASSERT_EQ(draft.tags().size(), 1u);
+    EXPECT_EQ(draft.current().tag, u"blur");
+    ASSERT_TRUE(draft.undo());
+    ASSERT_TRUE(draft.undo());
     EXPECT_TRUE(draft.remove());
     EXPECT_EQ(draft.tags(), std::vector<AllTagsSetting>{glow});
+    // A range refused for its step names half the range as typed.
+    AllTagsSetting wide = AllTagsSetting::named(u"wide");
+    wide.tag = u"fscx";
+    wide.rangeMin = 0;
+    wide.rangeMax = 100;
+    wide.step = 50;
+    AllTagsEdition ranged({wide}, 0);
+    float limit = -1;
+    EXPECT_EQ(ranged.setNumber(AllTagsEdition::Number::Max, u"80", &limit), AllTagsEdition::Check::StepTooLarge);
+    EXPECT_EQ(limit, 40.f);
+    EXPECT_EQ(ranged.setNumber(AllTagsEdition::Number::Max, u"-5", &limit), AllTagsEdition::Check::MaxNotAboveMin);
+    EXPECT_EQ(limit, 0.f);
+    EXPECT_EQ(ranged.setNumber(AllTagsEdition::Number::Min, u"100", &limit), AllTagsEdition::Check::MinNotBelowMax);
+    EXPECT_EQ(limit, 100.f);
 }
 
 TEST(AllTagsEdition, TheStripsNamesSectionsAndSetText)

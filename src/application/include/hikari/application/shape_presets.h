@@ -133,9 +133,12 @@ public:
     int redoStep() const { return m_history.redoStep(); }
     bool undo() { return m_history.undo(); }
     bool redo() { return m_history.redo(); }
+    // What the last change, Undo, Redo or Undo all renamed (Name, Replace):
+    // the toolbar's choice follows it.
+    const Renames &renamed() const { return m_history.renamed(); }
 
 private:
-    void edit(ShapePreset preset, Step step, std::string mergeKey = {});
+    void edit(ShapePreset preset, Step step, std::string mergeKey = {}, Renames renamed = {});
     std::u16string freeName(std::u16string base, bool copy) const;
     EditHistory<ShapePreset> m_history;
 };

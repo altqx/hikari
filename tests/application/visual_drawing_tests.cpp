@@ -760,39 +760,59 @@ TEST(ShapesEdition, ATakenNameIsReplacedInOneStep)
     EXPECT_EQ(e.selection(), 3);
 }
 
-TEST(ShapesEdition, RenamesAreFoundThroughUndoAndRedo)
+TEST(ShapesEdition, RenamesFollowUndoRedoAndUndoAll)
 {
-    // The toolbar's chosen preset follows a rename (Codex on #349): a
-    // rename, a replace and their Undo and Redo name the preset renamed;
-    // other steps none.
-    const auto same = [](std::u16string_view a, std::u16string_view b) { return sameNameIgnoringCase(a, b); };
+    // The toolbar's chosen preset follows the history's renames (Codex on
+    // #349): a name goes through each in turn.
+    const auto through = [](std::u16string name, const Renames &renames) {
+        for (const Renamed &r : renames)
+            if (name == r.from)
+                name = r.to;
+        return name;
+    };
     const auto opened = defaultShapePresets();
     ShapesEdition e(opened, 3);
     e.replaceNamed(u"Circle");
-    const std::vector<ShapePreset> replaced = e.presets();
-    Renamed r = renamedBetween(opened, replaced, same);
-    EXPECT_EQ(r.from, opened[3].name);
-    EXPECT_EQ(r.to, u"Circle");
+    EXPECT_EQ(through(opened[3].name, e.renamed()), u"Circle");
     ASSERT_TRUE(e.undo());
-    r = renamedBetween(replaced, e.presets(), same);
-    EXPECT_EQ(r.from, u"Circle");
-    EXPECT_EQ(r.to, opened[3].name);
+    EXPECT_EQ(through(u"Circle", e.renamed()), opened[3].name);
     ASSERT_TRUE(e.redo());
-    r = renamedBetween(opened, e.presets(), same);
-    EXPECT_EQ(r.from, opened[3].name);
-    EXPECT_EQ(r.to, u"Circle");
+    EXPECT_EQ(through(opened[3].name, e.renamed()), u"Circle");
+    // Undo all after the Replace and another change to the same preset.
+    ASSERT_TRUE(e.setShape(u"m 0 0 l 9 9"));
+    EXPECT_TRUE(e.renamed().empty());
+    ASSERT_TRUE(e.undoAll());
+    EXPECT_EQ(through(u"Circle", e.renamed()), opened[3].name);
+    // Typing a name is one step: its Undo goes back through every key.
     ASSERT_TRUE(e.undo());
     e.select(1);
+    ASSERT_EQ(e.setName(u"r"), ShapesEdition::NameCheck::Ok);
     ASSERT_EQ(e.setName(u"ring"), ShapesEdition::NameCheck::Ok);
-    const std::vector<ShapePreset> renamed = e.presets();
+    EXPECT_EQ(through(u"r", e.renamed()), u"ring");
     ASSERT_TRUE(e.undo());
-    r = renamedBetween(renamed, e.presets(), same);
-    EXPECT_EQ(r.from, u"ring");
-    EXPECT_EQ(r.to, u"circle");
+    EXPECT_EQ(through(u"ring", e.renamed()), u"circle");
+    // Other steps rename nothing.
     ASSERT_TRUE(e.remove());
-    EXPECT_TRUE(renamedBetween(opened, e.presets(), same).from.empty());
+    EXPECT_TRUE(e.renamed().empty());
+}
+
+TEST(ShapesEdition, RedoBringsBackTheStepsOwnSelection)
+{
+    // Another preset chosen after a step does not change what Redo selects
+    // (Codex on #349).
+    ShapesEdition e(defaultShapePresets(), 2);
     e.duplicate();
-    EXPECT_TRUE(renamedBetween(opened, e.presets(), same).from.empty());
+    ASSERT_EQ(e.selection(), 3);
+    e.select(0);
+    ASSERT_TRUE(e.undo());
+    EXPECT_EQ(e.selection(), 2);
+    e.select(4);
+    ASSERT_TRUE(e.redo());
+    EXPECT_EQ(e.selection(), 3);
+    EXPECT_EQ(e.current().name, u"rounded square copy");
+    e.select(1);
+    ASSERT_TRUE(e.undo());
+    EXPECT_EQ(e.selection(), 2);
 }
 
 TEST(ShapesEdition, TakeFromTheActiveLineReplacesTheDrawing)

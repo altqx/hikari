@@ -71,6 +71,8 @@ DialogWindow {
             return field === "tag" ? qsTr("Type the tag, without the backslash.") : qsTr("Type a name.")
         case AllTagsEditor.CheckTaken:
             return qsTr("Another tag is named “%1”. Press Enter to replace it.").arg(editor.takenName())
+        case AllTagsEditor.CheckTakenLastUsable:
+            return qsTr("Another tag is named “%1”. Fill in Tag first to replace it.").arg(editor.takenName())
         case AllTagsEditor.CheckSeparator:
             return field === "tag" ? qsTr("A tag can't contain “,”.") : qsTr("A name can't contain “,”.")
         case AllTagsEditor.CheckNotANumber:

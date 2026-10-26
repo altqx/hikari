@@ -172,11 +172,11 @@ int ShapeEditor::ownCount() const
     }));
 }
 
-void ShapeEditor::kept(const Renamed &renamed)
+void ShapeEditor::kept()
 {
     emit changed();
     if (m_hooks.changed)
-        m_hooks.changed(m_edition.presets(), renamed);
+        m_hooks.changed(m_edition.presets(), m_edition.renamed());
 }
 
 void ShapeEditor::setMode(int mode)
@@ -192,13 +192,11 @@ int ShapeEditor::setName(const QString &name)
     if (name == this->name())
         return NameOk;
     std::u16string taken;
-    Renamed renamed{m_edition.current().name, {}};
     const auto check = m_edition.setName(name.toStdU16String(), &taken);
     m_taken = qs(taken);
     if (check != ShapesEdition::NameCheck::Ok)
         return static_cast<int>(check);
-    renamed.to = m_edition.current().name;
-    kept(renamed);
+    kept();
     return NameOk;
 }
 
@@ -242,10 +240,8 @@ bool ShapeEditor::takeFromLine()
 
 void ShapeEditor::replaceNamed(const QString &name)
 {
-    Renamed renamed{m_edition.current().name, {}};
     m_edition.replaceNamed(name.toStdU16String());
-    renamed.to = m_edition.current().name;
-    kept(renamed);
+    kept();
 }
 
 void ShapeEditor::restoreDefaults()
@@ -256,25 +252,22 @@ void ShapeEditor::restoreDefaults()
 
 bool ShapeEditor::undoAll()
 {
-    const auto before = m_edition.presets();
     if (!m_edition.undoAll())
         return false;
-    kept(application::visual::renamedBetween(before, m_edition.presets(), application::visual::sameNameIgnoringCase));
+    kept();
     return true;
 }
 
 void ShapeEditor::undo()
 {
-    const auto before = m_edition.presets();
     if (m_edition.undo())
-        kept(application::visual::renamedBetween(before, m_edition.presets(), application::visual::sameNameIgnoringCase));
+        kept();
 }
 
 void ShapeEditor::redo()
 {
-    const auto before = m_edition.presets();
     if (m_edition.redo())
-        kept(application::visual::renamedBetween(before, m_edition.presets(), application::visual::sameNameIgnoringCase));
+        kept();
 }
 
 void ShapeEditor::close()

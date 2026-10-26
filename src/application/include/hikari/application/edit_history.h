@@ -13,52 +13,14 @@
 
 namespace hikari::application::visual {
 
-// A step's rename: an item's name before and after it (empty for any other
-// step), so a choice held outside the window follows the item.
+// A rename: an item's name before and after a step, so a choice held
+// outside the window (the toolbar's) follows the item.
 struct Renamed {
     std::u16string from, to;
 };
-
-// A rename or a replace undone or done again, from the two lists: the one
-// item whose name alone differs at the same place (Rename), or, with one
-// item more on one side, the item that took the extra one's name (`same`:
-// names equal ignoring case, as Replace compares them), the rest of it as
-// it was (else it is a Delete). Else empty.
-template <class T, class Same>
-Renamed renamedBetween(const std::vector<T> &before, const std::vector<T> &after, Same same)
-{
-    const bool undoneReplace = after.size() == before.size() + 1;
-    const std::vector<T> &longer = undoneReplace ? after : before;
-    const std::vector<T> &shorter = undoneReplace ? before : after;
-    if (longer.size() != shorter.size() && longer.size() != shorter.size() + 1)
-        return {};
-    const bool replace = longer.size() != shorter.size();
-    for (std::size_t gone = 0; gone < (replace ? longer.size() : 1); ++gone) {
-        // `longer` without `gone` (a Replace's removed item) against `shorter`.
-        std::size_t differs = longer.size(), at = 0;
-        bool one = true;
-        for (std::size_t i = 0, j = 0; i < longer.size() && one; ++i) {
-            if (replace && i == gone)
-                continue;
-            if (longer[i].name != shorter[j].name) {
-                one = differs == longer.size();
-                differs = i;
-                at = j;
-            }
-            ++j;
-        }
-        if (!one || differs == longer.size() || (replace && !same(shorter[at].name, longer[gone].name)))
-            continue;
-        T renamed = longer[differs];
-        renamed.name = shorter[at].name;
-        if (!(renamed == shorter[at]))
-            continue;
-        if (undoneReplace)
-            return {shorter[at].name, longer[differs].name};
-        return {longer[differs].name, shorter[at].name};
-    }
-    return {};
-}
+// What a move through the history renamed, in order: a name the caller
+// holds goes through each in turn.
+using Renames = std::vector<Renamed>;
 
 template <class T>
 class EditHistory {
@@ -80,27 +42,37 @@ public:
     }
 
     // A change to `items` and `selection` named `step` (the window's word
-    // for it). A non-empty `mergeKey` equal to the last step's folds it in.
-    void change(std::vector<T> items, int selection, int step, std::string mergeKey = {})
+    // for it), renaming as `renamed` says. A non-empty `mergeKey` equal to
+    // the last step's folds it in.
+    void change(std::vector<T> items, int selection, int step, std::string mergeKey = {}, Renames renamed = {})
     {
+        m_moved = renamed;
         if (!mergeKey.empty() && mergeKey == m_mergeKey && !m_undo.empty()) {
             m_state = {std::move(items), selection};
+            Entry &last = m_undo.back();
+            last.other = selection;
+            last.renamed.insert(last.renamed.end(), renamed.begin(), renamed.end());
             return;
         }
-        m_undo.push_back({m_state, step});
+        m_undo.push_back({m_state, step, selection, std::move(renamed)});
         m_redo.clear();
         m_state = {std::move(items), selection};
         m_mergeKey = std::move(mergeKey);
     }
     // The state the window opened with, as one step (its ⋯ menu's "Undo all
-    // changes"); false when nothing differs.
+    // changes"); false when nothing differs. Its renames undo every step's.
     bool undoAll(int step)
     {
         if (m_state.items == m_opened.items)
             return false;
-        change(m_opened.items, m_opened.selection, step);
+        Renames back;
+        for (auto e = m_undo.rbegin(); e != m_undo.rend(); ++e)
+            appendUndone(back, e->renamed);
+        change(m_opened.items, m_opened.selection, step, {}, std::move(back));
         return true;
     }
+    // What the last change, Undo, Redo or Undo all renamed.
+    const Renames &renamed() const { return m_moved; }
 
     bool canUndo() const { return !m_undo.empty(); }
     bool canRedo() const { return !m_redo.empty(); }
@@ -113,7 +85,10 @@ public:
             return false;
         Entry e = std::move(m_undo.back());
         m_undo.pop_back();
-        m_redo.push_back({m_state, e.step});
+        m_moved.clear();
+        appendUndone(m_moved, e.renamed);
+        // Redo brings back the step's own selection, not one chosen since.
+        m_redo.push_back({{std::move(m_state.items), e.other}, e.step, e.state.selection, std::move(e.renamed)});
         m_state = std::move(e.state);
         m_mergeKey.clear();
         return true;
@@ -124,7 +99,8 @@ public:
             return false;
         Entry e = std::move(m_redo.back());
         m_redo.pop_back();
-        m_undo.push_back({m_state, e.step});
+        m_moved = e.renamed;
+        m_undo.push_back({{std::move(m_state.items), e.other}, e.step, e.state.selection, std::move(e.renamed)});
         m_state = std::move(e.state);
         m_mergeKey.clear();
         return true;
@@ -136,12 +112,20 @@ private:
     struct Entry {
         State state; // before the step (undo) or after it (redo)
         int step = 0;
+        int other = 0; // the selection on the step's other side
+        Renames renamed; // the step's, in order
     };
+    static void appendUndone(Renames &out, const Renames &renamed)
+    {
+        for (auto r = renamed.rbegin(); r != renamed.rend(); ++r)
+            out.push_back({r->to, r->from});
+    }
     State m_state;
     State m_opened;
     std::vector<Entry> m_undo;
     std::vector<Entry> m_redo;
     std::string m_mergeKey;
+    Renames m_moved;
 };
 
 } // namespace hikari::application::visual

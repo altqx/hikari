@@ -50,13 +50,13 @@ public:
     enum NameCheck { NameOk, NameEmpty, NameTaken, NameSeparator };
     Q_ENUM(NameCheck)
 
-    // A step's rename (Name, Replace, their Undo and Redo): the toolbar's
-    // chosen preset follows it.
-    using Renamed = application::visual::Renamed;
+    // A step's renames (Name, Replace, their Undo and Redo, Undo all): the
+    // toolbar's chosen preset follows them.
+    using Renames = application::visual::Renames;
     struct Hooks {
         std::function<std::u16string()> activeLineText; // New shape's and Take from the active line's Line
         std::function<std::vector<application::visual::ShapePreset>()> defaults;
-        std::function<void(const std::vector<application::visual::ShapePreset> &, const Renamed &)> changed;
+        std::function<void(const std::vector<application::visual::ShapePreset> &, const Renames &)> changed;
         std::function<void()> finished;
     };
     ShapeEditor(std::vector<application::visual::ShapePreset> presets, int curShape, Hooks hooks,
@@ -110,7 +110,7 @@ signals:
     void closed();
 
 private:
-    void kept(const Renamed &renamed = {}); // a step: tell QML and hand the presets back
+    void kept(); // a step: tell QML and hand the presets back
     application::visual::ShapesEdition m_edition;
     Hooks m_hooks;
     QString m_taken;

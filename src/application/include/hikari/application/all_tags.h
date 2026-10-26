@@ -163,7 +163,8 @@ public:
         MaxNotAboveMin,
         MinNotBelowMax,
         StepNotPositive,
-        StepTooLarge
+        StepTooLarge,
+        TakenLastUsable // taken by the last definition with a tag, this one without its tag yet
     };
     // The number fields: the range, the step, the decimal places and the
     // starting values.
@@ -186,8 +187,10 @@ public:
     Check setName(std::u16string_view name, std::u16string *taken = nullptr);
     // The tag, the blanks around it and its leading backslashes dropped.
     Check setTag(std::u16string_view tag);
-    // A number field's text (a comma reads as the decimal point).
-    Check setNumber(Number field, std::u16string_view text);
+    // A number field's text (a comma reads as the decimal point). A range
+    // refused sets `limit` to the value its reason names: the other end, or
+    // half the range as typed.
+    Check setNumber(Number field, std::u16string_view text, float *limit = nullptr);
     // How many values the tag takes, 1 to 4; the values past it are kept.
     void setCount(int count);
     // The change option the tag brings to the strip (AllTagsPasteMode).
@@ -209,7 +212,8 @@ public:
     bool remove();
     bool canRemove() const;
     // The answer Replace to a taken name: the definition that has it goes
-    // and the selected one takes `name`, one step.
+    // and the selected one takes `name`, one step. Never the last one with
+    // a tag for one without its tag yet (setName's TakenLastUsable).
     void replaceNamed(std::u16string_view name);
     // Restore default tags, after its question: legacy's 22, the selected
     // name's place kept when it is there (else the first), one step.
@@ -223,9 +227,13 @@ public:
     int redoStep() const { return m_history.redoStep(); }
     bool undo() { return m_history.undo(); }
     bool redo() { return m_history.redo(); }
+    // What the last change, Undo, Redo or Undo all renamed (Name, Replace):
+    // the toolbar's choice follows it.
+    const Renames &renamed() const { return m_history.renamed(); }
 
 private:
-    void edit(AllTagsSetting tag, Step step, std::string mergeKey = {});
+    bool replacesLastUsable(std::size_t other) const;
+    void edit(AllTagsSetting tag, Step step, std::string mergeKey = {}, Renames renamed = {});
     std::u16string freeName(std::u16string base, bool copy) const;
     EditHistory<AllTagsSetting> m_history;
 };

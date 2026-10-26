@@ -449,7 +449,7 @@ void AllTagsEdition::select(int index)
         m_history.select(index);
 }
 
-void AllTagsEdition::edit(AllTagsSetting tag, Step step, std::string mergeKey)
+void AllTagsEdition::edit(AllTagsSetting tag, Step step, std::string mergeKey, Renames renamed)
 {
     const int i = selection();
     if (i < 0 || i >= static_cast<int>(tags().size()) || tags()[static_cast<std::size_t>(i)] == tag)
@@ -458,7 +458,7 @@ void AllTagsEdition::edit(AllTagsSetting tag, Step step, std::string mergeKey)
     items[static_cast<std::size_t>(i)] = std::move(tag);
     if (!mergeKey.empty())
         mergeKey += ':' + std::to_string(i);
-    m_history.change(std::move(items), i, step, std::move(mergeKey));
+    m_history.change(std::move(items), i, step, std::move(mergeKey), std::move(renamed));
 }
 
 AllTagsEdition::Check AllTagsEdition::setName(u16v name, u16 *taken)
@@ -471,12 +471,13 @@ AllTagsEdition::Check AllTagsEdition::setName(u16v name, u16 *taken)
         if (static_cast<int>(i) != selection() && sameNameIgnoringCase(tags()[i].name, name)) {
             if (taken)
                 *taken = tags()[i].name;
-            return Check::Taken;
+            return replacesLastUsable(i) ? Check::TakenLastUsable : Check::Taken;
         }
     }
     AllTagsSetting t = current();
+    Renames renamed{{t.name, u16(name)}};
     t.name = u16(name);
-    edit(std::move(t), Rename, "name");
+    edit(std::move(t), Rename, "name", std::move(renamed));
     return Check::Ok;
 }
 
@@ -498,7 +499,7 @@ AllTagsEdition::Check AllTagsEdition::setTag(u16v tag)
     return Check::Ok;
 }
 
-AllTagsEdition::Check AllTagsEdition::setNumber(Number field, u16v text)
+AllTagsEdition::Check AllTagsEdition::setNumber(Number field, u16v text, float *limit)
 {
     const auto value = readNumber(text);
     if (!value)
@@ -519,8 +520,13 @@ AllTagsEdition::Check AllTagsEdition::setNumber(Number field, u16v text)
     case Number::Max:
     case Number::Step: {
         (field == Number::Min ? t.rangeMin : field == Number::Max ? t.rangeMax : t.step) = v;
-        if (const Check c = checkRange(t, field); c != Check::Ok)
+        if (const Check c = checkRange(t, field); c != Check::Ok) {
+            if (limit)
+                *limit = c == Check::MaxNotAboveMin ? t.rangeMin
+                       : c == Check::MinNotBelowMax ? t.rangeMax
+                                                    : (t.rangeMax - t.rangeMin) / 2;
             return c;
+        }
         const char *key = field == Number::Min ? "min" : field == Number::Max ? "max" : "step";
         edit(std::move(t), field == Number::Step ? EditStep : EditRange, key);
         return Check::Ok;
@@ -615,6 +621,13 @@ bool AllTagsEdition::remove()
     return true;
 }
 
+bool AllTagsEdition::replacesLastUsable(std::size_t other) const
+{
+    // The definition replaced is the last with a tag and the selected one
+    // has none yet: the tool and the file would have none (as remove()).
+    return !tags()[other].tag.empty() && current().tag.empty() && usable().size() <= 1;
+}
+
 void AllTagsEdition::replaceNamed(u16v name)
 {
     std::vector<AllTagsSetting> items = tags();
@@ -623,14 +636,17 @@ void AllTagsEdition::replaceNamed(u16v name)
         return;
     for (std::size_t i = 0; i < items.size(); ++i) {
         if (static_cast<int>(i) != at && sameNameIgnoringCase(items[i].name, name)) {
+            if (replacesLastUsable(i))
+                return;
             items.erase(items.begin() + static_cast<std::ptrdiff_t>(i));
             if (static_cast<int>(i) < at)
                 --at;
             break;
         }
     }
+    Renames renamed{{items[static_cast<std::size_t>(at)].name, u16(name)}};
     items[static_cast<std::size_t>(at)].name = u16(name);
-    m_history.change(std::move(items), at, ReplaceTag);
+    m_history.change(std::move(items), at, ReplaceTag, {}, std::move(renamed));
 }
 
 void AllTagsEdition::restoreDefaults()

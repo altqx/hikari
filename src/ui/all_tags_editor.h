@@ -65,16 +65,17 @@ public:
         CheckMaxNotAboveMin,
         CheckMinNotBelowMax,
         CheckStepNotPositive,
-        CheckStepTooLarge
+        CheckStepTooLarge,
+        CheckTakenLastUsable
     };
     Q_ENUM(Check)
 
-    // A step's rename (Name, Replace, their Undo and Redo): the toolbar's
-    // chosen definition follows it.
-    using Renamed = application::visual::Renamed;
+    // A step's renames (Name, Replace, their Undo and Redo, Undo all): the
+    // toolbar's chosen definition follows them.
+    using Renames = application::visual::Renames;
     struct Hooks {
         std::function<std::u16string()> activeLineText; // the preview's Line
-        std::function<void(const std::vector<application::visual::AllTagsSetting> &, const Renamed &)> changed;
+        std::function<void(const std::vector<application::visual::AllTagsSetting> &, const Renames &)> changed;
         std::function<void()> finished;
     };
     AllTagsEditor(std::vector<application::visual::AllTagsSetting> tags, int curTag, Hooks hooks,
@@ -135,7 +136,7 @@ signals:
     void closed();
 
 private:
-    void kept(const Renamed &renamed = {}); // a step: tell QML and hand the definitions back
+    void kept(); // a step: tell QML and hand the definitions back
     int checked(application::visual::AllTagsEdition::Check check);
     application::visual::AllTagsEdition m_edition;
     Hooks m_hooks;

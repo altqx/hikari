@@ -530,15 +530,15 @@ void VisualToolsController::openTagsEditor()
         return activeLineText();
     };
     hooks.changed = [this](const std::vector<application::visual::AllTagsSetting> &tags,
-                           const AllTagsEditor::Renamed &renamed) {
+                           const AllTagsEditor::Renames &renamed) {
         // PU5: each change in "Edit tags" is kept at once (legacy's OK:
         // VideoToolbar::SetTagsSettings, the list's names again, its
         // selection kept by name, and the tool told, ChangeTool). The chosen
         // definition follows a rename, and Hydra takes the change while
         // another family is shown too (the window stays open).
         auto oldNames = application::visual::allTagsNames(*allTagsSettings());
-        if (!renamed.from.empty())
-            std::ranges::replace(oldNames, renamed.from, renamed.to);
+        for (const auto &r : renamed)
+            std::ranges::replace(oldNames, r.from, r.to);
         m_allTags = tags;
         if (m_allTags.empty())
             m_allTags = application::visual::defaultAllTags();
@@ -578,7 +578,7 @@ void VisualToolsController::openShapeEditor()
     ShapeEditor::Hooks hooks;
     hooks.activeLineText = [this] { return activeLineText(); };
     hooks.defaults = [] { return defaultShapePresets(); };
-    hooks.changed = [this](const std::vector<ShapePreset> &presets, const ShapeEditor::Renamed &renamed) {
+    hooks.changed = [this](const std::vector<ShapePreset> &presets, const ShapeEditor::Renames &renamed) {
         // PU5: each change in "Edit shapes" is kept at once (legacy's OK:
         // VideoToolbar::SetShapesSettings, the list's names again, its
         // selection kept (or the last preset's), and the tool told,
@@ -591,8 +591,9 @@ void VisualToolsController::openShapeEditor()
         int selection = drawing ? drawing->shapeSelection() : 0;
         if (selection > 0 && selection <= static_cast<int>(m_shapes.size())) {
             std::u16string chosen = m_shapes[static_cast<std::size_t>(selection - 1)].name;
-            if (!renamed.from.empty() && chosen == renamed.from)
-                chosen = renamed.to;
+            for (const auto &r : renamed)
+                if (chosen == r.from)
+                    chosen = r.to;
             const auto at = std::ranges::find(presets, chosen, &ShapePreset::name);
             if (at != presets.end())
                 selection = static_cast<int>(at - presets.begin()) + 1;

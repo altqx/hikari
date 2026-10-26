@@ -216,7 +216,7 @@ void ShapesEdition::select(int index)
         m_history.select(index);
 }
 
-void ShapesEdition::edit(ShapePreset preset, Step step, std::string mergeKey)
+void ShapesEdition::edit(ShapePreset preset, Step step, std::string mergeKey, Renames renamed)
 {
     const int i = selection();
     if (i < 0 || i >= static_cast<int>(presets().size()) || presets()[static_cast<std::size_t>(i)] == preset)
@@ -225,7 +225,7 @@ void ShapesEdition::edit(ShapePreset preset, Step step, std::string mergeKey)
     items[static_cast<std::size_t>(i)] = std::move(preset);
     if (!mergeKey.empty())
         mergeKey += ':' + std::to_string(i);
-    m_history.change(std::move(items), i, step, std::move(mergeKey));
+    m_history.change(std::move(items), i, step, std::move(mergeKey), std::move(renamed));
 }
 
 ShapesEdition::NameCheck ShapesEdition::setName(u16v name, u16 *taken)
@@ -242,8 +242,9 @@ ShapesEdition::NameCheck ShapesEdition::setName(u16v name, u16 *taken)
         }
     }
     ShapePreset p = current();
+    Renames renamed{{p.name, u16(name)}};
     p.name = u16(name);
-    edit(std::move(p), Rename, "name");
+    edit(std::move(p), Rename, "name", std::move(renamed));
     return NameCheck::Ok;
 }
 
@@ -350,8 +351,9 @@ void ShapesEdition::replaceNamed(u16v name)
             break;
         }
     }
+    Renames renamed{{items[static_cast<std::size_t>(at)].name, u16(name)}};
     items[static_cast<std::size_t>(at)].name = u16(name);
-    m_history.change(std::move(items), at, ReplaceShape);
+    m_history.change(std::move(items), at, ReplaceShape, {}, std::move(renamed));
 }
 
 void ShapesEdition::restoreDefaults(std::vector<ShapePreset> defaults)
