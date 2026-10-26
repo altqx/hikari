@@ -200,7 +200,7 @@ private slots:
         auto *buttons = item("originalTextButtons");
         QTRY_VERIFY(buttons->isVisible());
         QCOMPARE(buttons->parentItem()->parentItem()->objectName(), QStringLiteral("dockToolbarSlot"));
-        QVERIFY(!item("translationButtons")->isVisible());
+        QVERIFY(!item("translationButtons")->property("active").toBool());
         for (const char *name : {"originalPasteAll", "originalPasteSelection", "originalCommentOut", "originalNotConfirmed",
                                  "originalMovingTags"})
             QVERIFY2(item(name)->isVisible() && !item(name)->property("text").toString().isEmpty(), name);
@@ -325,12 +325,13 @@ private slots:
         QTRY_VERIFY(!isOpen("originalDock"));
         QVERIFY(!originalInPanel());
         QTRY_VERIFY(item("lineText")->isVisible());
-        QVERIFY(item("translationButtons")->isVisible());
+        // LE1: on the tag strip, as icons or folded into its More menu.
+        QVERIFY(item("translationButtons")->property("active").toBool());
         QVERIFY(QMetaObject::invokeMethod(window(), "showPanel", Q_ARG(QVariant, QVariant::fromValue(dock("originalDock")))));
         QTRY_VERIFY(isOpen("originalDock"));
         QVERIFY(!isFloating("originalDock"));
         QVERIFY(originalInPanel());
-        QVERIFY(!item("translationButtons")->isVisible());
+        QVERIFY(!item("translationButtons")->property("active").toBool());
         stop();
     }
 
