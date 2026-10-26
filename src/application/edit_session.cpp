@@ -27,8 +27,13 @@ void merge(DraftChange &into, const DraftChange &change)
 {
     if (change.text)
         into.text = change.text;
-    if (change.translation)
+    if (change.translation) {
+        // A translation once typed stays the typed one, but for a step's own put back.
+        into.translationCarried = change.restoresProvenance
+                                      ? change.translationCarried
+                                      : change.translationCarried && (!into.translation || into.translationCarried);
         into.translation = change.translation;
+    }
     if (change.start)
         into.start = change.start;
     if (change.end)
@@ -289,7 +294,7 @@ bool EditSession::commit(bool leaving, std::string name)
     return true;
 }
 
-bool EditSession::commitDraftToSelected(std::string name, bool leaving)
+bool EditSession::commitDraftToSelected(std::string name, bool leaving, const Companion &companion)
 {
     if (!m_draft)
         return false;
@@ -324,7 +329,7 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
         const bool other = line->id != edited;
         if (cells.text && !(other && own.text))
             updated.text = record->text;
-        if (cells.translation && !(other && own.translation))
+        if (cells.translation && !(other && (own.translation || cells.translationCarried)))
             updated.translation = record->translation;
         if (cells.start && !(other && own.start))
             updated.start.value = record->start.value;
@@ -350,6 +355,12 @@ bool EditSession::commitDraftToSelected(std::string name, bool leaving)
             updated.startFrame = record->startFrame;
         if (cells.endFrame && !(other && own.endFrame))
             updated.endFrame = record->endFrame;
+        // TM1: another Line's own translation follows its new text or Style,
+        // the edited Line's carried or untranslated (a translation typed goes
+        // to every Line, as above).
+        if (line->id != edited && companion &&
+            (cells.translationCarried || (!cells.translation && (cells.text || cells.style))))
+            companion(*line, updated);
         // Leaving under the legacy preference: SetLine sets the edited Line's
         // End before its Start to the Start.
         if (leaving && line->id == edited && m_policy == InvalidCommitPolicy::Legacy &&
