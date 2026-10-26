@@ -605,10 +605,11 @@ private slots:
     // font.
     void dialogsSizeAfterASwitchAsAtStart()
     {
-        // One button (OK) and two (Change, Do not change).
+        // The Fusion Dialogs whose size is all text and buttons (PU4 put the
+        // Yes / No questions on the message box, a window of its own).
         const auto sizes = [this] {
             QList<QSizeF> out;
-            for (const char *name : {"aboutDialog", "creditsDialog", "mismatchDialog"}) {
+            for (const char *name : {"aboutDialog", "creditsDialog"}) {
                 QObject *dialog = root()->findChild<QObject *>(QLatin1String(name));
                 if (!dialog) {
                     out << QSizeF(-1, -1);
