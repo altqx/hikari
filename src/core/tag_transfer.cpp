@@ -87,6 +87,14 @@ std::u16string tagName(std::u16string_view s)
     return std::u16string(s.substr(0, i));
 }
 
+// The name of a tag as written, past the spaces libass skips after the
+// backslash: "\ t(\fs20)" is a \t.
+std::u16string nameOf(std::u16string_view tag)
+{
+    const auto at = tag.find_first_not_of(u" \t", 1);
+    return at == std::u16string_view::npos ? std::u16string() : tagName(tag.substr(at));
+}
+
 // The tags of one block's content. Text outside tags is a comment.
 std::vector<Tag> parseBlock(std::u16string_view content, std::size_t &order)
 {
@@ -252,17 +260,6 @@ std::u16string ascii(const std::string &s)
     return {s.begin(), s.end()};
 }
 
-bool narrow(std::u16string_view s, std::string &out)
-{
-    out.clear();
-    for (const char16_t c : s) {
-        if (c > 0x7F)
-            return false;
-        out.push_back(static_cast<char>(c));
-    }
-    return true;
-}
-
 std::u16string hex(unsigned long value, int digits)
 {
     char buf[16];
@@ -270,27 +267,109 @@ std::u16string hex(unsigned long value, int digits)
     return ascii(buf);
 }
 
-// Where a number's digits start, past a '+' (strtol and strtod, which libass
-// reads numbers with, take one; from_chars does not).
-const char *digitsFrom(const char *first, const char *last)
+// A tag's first argument as libass splits it (ass_parse_tags): within
+// parentheses up to the first comma, spaces skipped at both ends, else all
+// that follows the name, spaces skipped at the end only ("\r Alt" names
+// " Alt"). Empty when it has none.
+std::u16string_view argumentOf(std::u16string_view args)
 {
-    return last - first > 1 && *first == '+' && first[1] != '-' && first[1] != '+' ? first + 1 : first;
+    if (args.starts_with(u'(')) {
+        args.remove_prefix(std::min(args.find_first_not_of(u" \t", 1), args.size()));
+        auto end = args.find_first_of(u",\\)");
+        if (end != std::u16string_view::npos && args[end] == u'\\') // the rest, to the parenthesis
+            end = args.find(u')', end);
+        args = args.substr(0, end);
+    }
+    const auto last = args.find_last_not_of(u" \t");
+    return last == std::u16string_view::npos ? std::u16string_view() : args.substr(0, last + 1);
+}
+
+bool isAssSpace(char16_t c)
+{
+    return c == u' ' || c == u'\t' || c == u'\n' || c == u'\v' || c == u'\f' || c == u'\r';
+}
+
+bool isDigit(char16_t c)
+{
+    return c >= u'0' && c <= u'9';
+}
+
+// Past the spaces and the one sign strtoll and ass_strtod take: whether it
+// was a '-'.
+bool skipSign(std::u16string_view text, std::size_t &i)
+{
+    while (i < text.size() && isAssSpace(text[i]))
+        ++i;
+    const bool negative = i < text.size() && text[i] == u'-';
+    if (i < text.size() && (text[i] == u'-' || text[i] == u'+'))
+        ++i;
+    return negative;
+}
+
+// A whole number as libass reads one (argtoi32: strtoll's decimal prefix,
+// clamped to 32 bits). No digits is 0: "\p1e-3" is \p1.
+std::int32_t integerOf(std::u16string_view text)
+{
+    std::size_t i = 0;
+    const bool negative = skipSign(text, i);
+    long long n = 0;
+    for (; i < text.size() && isDigit(text[i]); ++i)
+        n = std::min<long long>(n * 10 + (text[i] - u'0'), std::int64_t(1) << 32);
+    return static_cast<std::int32_t>(std::clamp<long long>(negative ? -n : n, INT32_MIN, INT32_MAX));
+}
+
+// A number as libass reads one (argtod, ass_strtod): the longest decimal
+// prefix, digits with one point, then an exponent where digits follow its
+// 'e'. No digits is 0 ("\fspabc" is \fsp0), and neither "inf", "nan" nor
+// hexadecimal are read.
+double decimalOf(std::u16string_view text)
+{
+    std::size_t i = 0;
+    const bool negative = skipSign(text, i);
+    std::string s;
+    bool point = false;
+    long magnitude = 0; // the power of ten of the first digit other than 0, roughly
+    bool significant = false;
+    for (; i < text.size() && (isDigit(text[i]) || (text[i] == u'.' && !point)); ++i) {
+        point = point || text[i] == u'.';
+        significant = significant || (text[i] != u'0' && text[i] != u'.');
+        if (isDigit(text[i]) && (point ? !significant : significant))
+            magnitude += point ? -1 : 1;
+        s.push_back(static_cast<char>(text[i]));
+    }
+    if (s.find_first_of("0123456789") == std::string::npos)
+        return 0;
+    if (i + 1 < text.size() && (text[i] == u'e' || text[i] == u'E')) {
+        std::size_t e = i + 1;
+        const bool minus = text[e] == u'-';
+        if (text[e] == u'-' || text[e] == u'+')
+            ++e;
+        if (e < text.size() && isDigit(text[e])) {
+            long exponent = 0;
+            s += minus ? "e-" : "e";
+            for (; e < text.size() && isDigit(text[e]); ++e) {
+                exponent = std::min<long>(exponent * 10 + (text[e] - u'0'), 100000);
+                s.push_back(static_cast<char>(text[e]));
+            }
+            magnitude += minus ? -exponent : exponent;
+        }
+    }
+    double n = 0;
+    if (std::from_chars(s.data(), s.data() + s.size(), n).ec == std::errc::result_out_of_range)
+        n = magnitude > 0 ? std::numeric_limits<double>::infinity() : 0; // past a double either way
+    if (n == 0)
+        return 0; // -0 is 0
+    return negative ? -n : n;
 }
 
 // Equal values compare equal however they are spelled.
-std::u16string normalised(Kind kind, std::u16string_view arg)
+std::u16string normalised(Kind kind, std::u16string_view args)
 {
-    const auto value = trimmed(arg);
-    std::string s;
-    if (kind == Kind::Text || !narrow(value, s))
-        return value;
-    const char *first = s.data(), *last = s.data() + s.size();
+    const auto arg = argumentOf(args);
     switch (kind) {
     case Kind::Flag:
     case Kind::Bold: {
-        long n = 0;
-        if (std::from_chars(digitsFrom(first, last), last, n).ec != std::errc{})
-            return value;
+        const auto n = integerOf(arg);
         if (kind == Kind::Flag || n == 0 || n == 1)
             return n != 0 ? u"1" : u"0";
         return ascii(std::to_string(n));
@@ -300,56 +379,50 @@ std::u16string normalised(Kind kind, std::u16string_view arg)
         // As libass's parse_color_tag: past '&' and an uppercase 'H' only,
         // then strtoll's signed hexadecimal clamped to 32 bits (-1 is
         // 0xFFFFFFFF); no digits is 0 (black, opaque).
-        while (first != last && (*first == '&' || *first == 'H'))
-            ++first;
-        const bool negative = first != last && *first == '-';
-        if (first != last && (*first == '-' || *first == '+'))
-            ++first;
-        if (last - first > 2 && first[0] == '0' && (first[1] == 'x' || first[1] == 'X'))
-            first += 2;
-        unsigned long long magnitude = 0;
-        if (std::from_chars(first, last, magnitude, 16).ec == std::errc::result_out_of_range)
-            magnitude = std::numeric_limits<unsigned long long>::max();
-        const long long limit = negative ? -static_cast<long long>(INT32_MIN) : INT32_MAX;
-        const long long signedValue = negative ? -static_cast<long long>(std::min<unsigned long long>(magnitude, limit))
-                                               : static_cast<long long>(std::min<unsigned long long>(magnitude, limit));
+        std::size_t i = 0;
+        while (i < arg.size() && (arg[i] == u'&' || arg[i] == u'H'))
+            ++i;
+        const bool negative = skipSign(arg, i);
+        if (i + 2 < arg.size() && arg[i] == u'0' && (arg[i + 1] == u'x' || arg[i + 1] == u'X'))
+            i += 2;
+        long long magnitude = 0;
+        for (; i < arg.size(); ++i) {
+            const char16_t c = arg[i];
+            const int digit = isDigit(c) ? c - u'0'
+                              : c >= u'a' && c <= u'f' ? c - u'a' + 10
+                              : c >= u'A' && c <= u'F' ? c - u'A' + 10
+                                                       : -1;
+            if (digit < 0)
+                break;
+            magnitude = std::min<long long>(magnitude * 16 + digit, std::int64_t(1) << 32);
+        }
+        const auto signedValue = std::clamp<long long>(negative ? -magnitude : magnitude, INT32_MIN, INT32_MAX);
         const auto n = static_cast<std::uint32_t>(static_cast<std::int32_t>(signedValue));
         return kind == Kind::Colour ? hex(n & 0xFFFFFF, 6) : hex(n & 0xFF, 2);
     }
-    case Kind::Integer: {
-        long n = 0;
-        if (std::from_chars(digitsFrom(first, last), last, n).ec != std::errc{})
-            return value;
-        return ascii(std::to_string(n));
-    }
+    case Kind::Integer:
+        return ascii(std::to_string(integerOf(arg)));
     case Kind::Number: {
-        double n = 0;
-        if (std::from_chars(digitsFrom(first, last), last, n).ec != std::errc{})
-            return value;
-        if (n == 0)
-            n = 0; // -0 is 0
         char buf[32];
-        const auto r = std::to_chars(buf, buf + sizeof buf, n);
+        const auto r = std::to_chars(buf, buf + sizeof buf, decimalOf(arg));
         return ascii(std::string(buf, r.ptr));
     }
     default:
-        return value;
+        return trimmed(arg);
     }
 }
 
 // Whether an override's value is the active Style's: none at all, or (as
 // libass's ass_parse.c reads them) \i, \u and \s other than 0 or 1 and \b
 // other than 0, 1 or a weight of 100 and up.
-bool isStyleValue(Kind kind, std::u16string_view arg)
+bool isStyleValue(Kind kind, std::u16string_view args)
 {
-    const auto value = trimmed(arg);
-    if (value.empty())
+    const auto arg = argumentOf(args);
+    if (arg.empty())
         return true;
-    std::string s;
-    long n = 0;
-    if ((kind != Kind::Flag && kind != Kind::Bold) || !narrow(value, s)
-        || std::from_chars(digitsFrom(s.data(), s.data() + s.size()), s.data() + s.size(), n).ec != std::errc{})
+    if (kind != Kind::Flag && kind != Kind::Bold)
         return false;
+    const auto n = integerOf(arg);
     return n != 0 && n != 1 && (kind == Kind::Flag || n < 100);
 }
 
@@ -359,27 +432,13 @@ std::u16string valueIn(const TagState &state, const std::u16string &component)
     return it == state.end() ? std::u16string() : it->second;
 }
 
-std::optional<double> numberIn(std::u16string_view text)
-{
-    std::string s;
-    if (!narrow(trimmed(text), s))
-        return std::nullopt;
-    const char *last = s.data() + s.size();
-    double n = 0;
-    if (std::from_chars(digitsFrom(s.data(), last), last, n).ec != std::errc{})
-        return std::nullopt;
-    return n;
-}
-
 // A number as libass keeps it (ass_parse.c): no border, \shad, scale or
 // blur below 0, \blur at most 100, \be a whole number from 0 to 127 (+0.5
 // and truncated, as VSFilter rounds it). Other values are kept.
 std::u16string clamped(std::u16string_view name, std::u16string value)
 {
-    const auto n = numberIn(value);
-    if (!n)
-        return value;
-    double v = *n;
+    const auto n = decimalOf(value);
+    double v = n;
     if (name == u"bord" || name == u"xbord" || name == u"ybord" || name == u"shad" || name == u"fscx" ||
         name == u"fscy")
         v = std::max(v, 0.0);
@@ -389,7 +448,7 @@ std::u16string clamped(std::u16string_view name, std::u16string value)
         v = std::clamp(std::trunc(v + 0.5), 0.0, 127.0);
     else
         return value;
-    if (v == *n)
+    if (v == n)
         return value;
     char buf[32];
     const auto r = std::to_chars(buf, buf + sizeof buf, v);
@@ -401,19 +460,16 @@ std::u16string clamped(std::u16string_view name, std::u16string value)
 // Style's. Without a current size the spelling is kept.
 std::optional<std::u16string> fontSizeAfter(const TagState &state, const TagState &defaults, std::u16string_view args)
 {
-    const auto arg = trimmed(args);
+    const auto arg = argumentOf(args);
     const auto styleSize = valueIn(defaults, u"fs");
-    const auto n = numberIn(arg);
-    if (arg.empty() || !n)
-        return styleSize.empty() ? std::nullopt : std::optional(styleSize);
-    double size = *n;
-    if (arg.front() == u'+' || arg.front() == u'-') {
-        const auto current = numberIn(valueIn(state, u"fs"));
-        if (!current)
+    double size = decimalOf(arg);
+    if (!arg.empty() && (arg.front() == u'+' || arg.front() == u'-')) {
+        const auto current = valueIn(state, u"fs");
+        if (current.empty())
             return std::nullopt;
-        size = *current * (1 + *n / 10);
+        size = decimalOf(current) * (1 + size / 10);
     }
-    if (size <= 0)
+    if (arg.empty() || size <= 0)
         return styleSize.empty() ? std::nullopt : std::optional(styleSize);
     char buf[32];
     const auto r = std::to_chars(buf, buf + sizeof buf, size);
@@ -521,6 +577,29 @@ bool isClipTransform(const Tag &tag)
     return clip;
 }
 
+// A \t animating the clip among other tags: its clip part, line-wide like
+// \clip, and the rest, which is the glyphs' ("\t(0,500,\clip(1,2,3,4)\fs20)"
+// is "\t(0,500,\clip(1,2,3,4))" and "\t(0,500,\fs20)").
+std::optional<std::pair<std::u16string, Tag>> splitClipTransform(const Tag &tag)
+{
+    if (tag.name != u"t" || isEmptyTransform(tag) || isClipTransform(tag) || !tag.args.starts_with(u'('))
+        return std::nullopt;
+    auto inner = std::u16string_view(tag.args).substr(1);
+    if (inner.ends_with(u')'))
+        inner.remove_suffix(1);
+    const auto times = std::u16string(inner.substr(0, inner.find(u'\\')));
+    std::u16string clip, rest;
+    std::size_t order = 0;
+    for (const auto &nested : parseBlock(inner, order))
+        (isClip(nested.name) ? clip : rest) += nested.text;
+    if (clip.empty())
+        return std::nullopt;
+    Tag glyphs = tag;
+    glyphs.args = u"(" + times + rest + u")";
+    glyphs.text = u"\\t" + glyphs.args;
+    return std::pair(u"\\t(" + times + clip + u")", std::move(glyphs));
+}
+
 // Whether applying `tag` may change the formatting state.
 bool changesState(const Tag &tag)
 {
@@ -541,10 +620,12 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
     case Kind::Reset: {
         for (const auto &[component, value] : state)
             touched.push_back(component);
-        const auto style = std::u16string(trimmed(tag.args));
+        // A Style the Document lacks is the Line's (lookup_style_strict
+        // finds none, and the reset takes the event's).
+        const auto style = std::u16string(argumentOf(tag.args));
         const auto it = style.empty() ? named.end() : named.find(style);
         state = it != named.end() ? it->second : defaults;
-        if (!style.empty())
+        if (it != named.end())
             state[u"r"] = style;
         copied += unitsOf(state);
         for (const auto &[component, value] : state)
@@ -578,11 +659,11 @@ std::size_t apply(TagState &state, const Tag &tag, const TagState &defaults,
             if (const auto size = fontSizeAfter(state, base, tag.args))
                 state[u"fs"] = *size;
             else
-                state[u"fs"] = trimmed(tag.args);
+                state[u"fs"] = argumentOf(tag.args);
             break;
         }
         // \fsc, and \fn0, are the Style's whatever follows (ass_parse.c).
-        const bool styles = tag.name == u"fsc" || (tag.name == u"fn" && trimmed(tag.args) == u"0");
+        const bool styles = tag.name == u"fsc" || (tag.name == u"fn" && argumentOf(tag.args) == u"0");
         for (const auto &component : effect.components) {
             if (styles || isStyleValue(effect.kind, tag.args)) {
                 if (const auto it = base.find(component); it != base.end())
@@ -683,7 +764,7 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
         TagSetter setter;
     };
     std::vector<Part> parts;
-    const auto isReset = [](const TagSetter &s) { return s.tag.size() > 1 && tagName(s.tag.substr(1)) == u"r"; };
+    const auto isReset = [](const TagSetter &s) { return nameOf(s.tag) == u"r"; };
     // An opening reset goes after the closings: before them they would undo it.
     auto add = [&](const TagSetter &s, bool opening) {
         if (!s.tag.empty())
@@ -693,6 +774,25 @@ std::u16string transition(const OriginalTags &tags, int from, int to, bool atEnd
         if (valueOf(f, component) == valueOf(t, component))
             continue;
         const bool opening = t && t->differs.contains(component);
+        // Transforms add up and only a reset ends them: to a run whose
+        // transforms go on from the source's, only those it adds; to any
+        // other, after the source's closing reset.
+        if (component == u"t" && opening && f && f->differs.contains(component)) {
+            const auto from = f->opens.find(component), to = t->opens.find(component);
+            if (from != f->opens.end() && to != t->opens.end() && to->second.tag.starts_with(from->second.tag)) {
+                const TagSetter added{to->second.order, to->second.tag.substr(from->second.tag.size())};
+                TagState state{{component, valueOf(f, component)}};
+                std::size_t order = 0;
+                for (const auto &tag : parseBlock(added.tag, order))
+                    apply(state, tag, tags.defaults, tags.named, nullptr);
+                if (valueIn(state, component) == valueOf(t, component)) {
+                    add(added, true);
+                    continue;
+                }
+            }
+            if (const auto close = f->closes.find(component); close != f->closes.end())
+                add(close->second, false);
+        }
         const auto &setters = opening ? t->opens : f->closes;
         if (const auto it = setters.find(component); it != setters.end() && (it->second.written || !atEnd))
             add(it->second, opening);
@@ -822,7 +922,7 @@ TagSetter transformsTo(const History &history, const TagSetter &last, std::size_
     const auto &assignments = it->second;
     const auto end = std::ranges::upper_bound(assignments, last.order, {}, &Assignment::order);
     auto begin = end;
-    while (begin != assignments.begin() && std::prev(begin)->order >= from && std::prev(begin)->tag.starts_with(u"\\t")) {
+    while (begin != assignments.begin() && std::prev(begin)->order >= from && nameOf(std::prev(begin)->tag) == u"t") {
         ++work;
         --begin;
     }
@@ -857,11 +957,7 @@ TagSetter firstSetter(const History &history, const std::u16string &component, s
 TagSetter alone(TagSetter setter, const std::u16string &component, const std::u16string &value,
                 const std::function<std::u16string(const std::u16string &)> &expected)
 {
-    const std::u16string_view tag = setter.tag;
-    const auto nameAt = tag.find_first_not_of(u" \t", 1);
-    if (nameAt == std::u16string_view::npos)
-        return setter;
-    const auto name = tagName(tag.substr(nameAt));
+    const auto name = nameOf(setter.tag);
     const auto effect = effectOf(name);
     if (effect.components.size() < 2)
         return setter;
@@ -913,7 +1009,7 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
         }
         for (const auto &tag : piece.tags) {
             if (effectOf(tag.name).kind == Kind::Reset) {
-                auto name = std::u16string(trimmed(tag.args));
+                auto name = std::u16string(argumentOf(tag.args));
                 if (!name.empty() && !looked.contains(name)) {
                     // The last Style of the name, as libass's lookup_style:
                     // charged, the names the text gives may be many.
@@ -930,12 +1026,10 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                     looked.insert(std::move(name));
                 }
             }
-            // libass reads \p as a whole number and clamps it to 0 and up;
-            // a later \p0 is text again.
-            if (tag.name == u"p") {
-                const auto scale = numberIn(tag.args);
-                drawingNow = scale && *scale >= 1;
-            }
+            // libass reads \p as a whole number (argtoi32: \p1e-3 is \p1)
+            // and clamps it to 0 and up; a later \p0 is text again.
+            if (tag.name == u"p")
+                drawingNow = integerOf(argumentOf(tag.args)) >= 1;
             out.karaoke = out.karaoke || isKaraoke(tag.name);
         }
     }
@@ -995,16 +1089,22 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
             continue;
         }
         tagsSeen += piece.tags.size();
-        for (const auto &tag : piece.tags) {
-            if (isKaraoke(tag.name) || isEmptyTransform(tag))
+        for (const auto &written : piece.tags) {
+            if (isKaraoke(written.name) || isEmptyTransform(written))
                 continue;
-            if (isLineWide(tag.name) || isClipTransform(tag)) {
+            if (isLineWide(written.name) || isClipTransform(written)) {
                 if (isLeading)
-                    lead(tag.text);
+                    lead(written.text);
                 else
-                    hoisted += tag.text;
+                    hoisted += written.text;
                 continue;
             }
+            // After the leading block, a clip a \t animates goes to the front
+            // and its other tags are read where they stand.
+            const auto split = isLeading ? std::nullopt : splitClipTransform(written);
+            if (split)
+                hoisted += split->first;
+            const Tag &tag = split ? split->second : written;
             const auto effect = effectOf(tag.name);
             if (isLeading) {
                 lead(tag.text);
@@ -1080,11 +1180,12 @@ OriginalTags readOriginalTags(std::u16string_view original, const StyleValues *s
                 open = transformsTo(history, open, leadingT != leadingSetters.end() ? leadingT->second.order + 1 : 0,
                                     work);
                 closable = closable && open.tag.size() <= kMaxTransformOpening;
-            } else if (component == u"fs" && open.tag.starts_with(u"\\fs")) {
+            } else if (component == u"fs" && nameOf(open.tag) == u"fs") {
                 // A relative size scales the current one: from the base it
                 // would be another.
-                const auto args = trimmed(std::u16string_view(open.tag).substr(3));
-                if (!args.empty() && (args.front() == u'+' || args.front() == u'-'))
+                std::size_t order = 0;
+                const auto arg = argumentOf(parseBlock(open.tag, order).front().args);
+                if (!arg.empty() && (arg.front() == u'+' || arg.front() == u'-'))
                     open.tag = u"\\fs" + value;
             }
             run.opens[component] = alone(std::move(open), component, value, [&](const std::u16string &other) {
@@ -1675,6 +1776,43 @@ void relabelRuns(const OriginalTags &tags, TranslationDraft &draft, std::span<co
     for (std::size_t i = 0; i < sorted.size(); ++i)
         sorted[i].run = order[i];
     draft.placements = std::move(sorted);
+}
+
+bool placementHolds(const OriginalTags &tags, const TranslationDraft &draft, std::span<const int> runs)
+{
+    const auto order = runOrder(draft.placements);
+    auto back = readTranslation(tags, composeTranslation(tags, draft), order);
+    relabelRuns(tags, back, order);
+    if (back.body != draft.body)
+        return false;
+    for (const int run : runs) {
+        const auto of = [&](const RunPlacement &p) { return p.run == run; };
+        const auto placed = std::ranges::find_if(draft.placements, of);
+        const auto read = std::ranges::find_if(back.placements, of);
+        if (placed == draft.placements.end() || read == back.placements.end() || read->start != placed->start
+            || read->end != placed->end)
+            return false;
+    }
+    return keepsOwnFormatting(tags, draft);
+}
+
+void keepHeldPlacements(const OriginalTags &tags, TranslationDraft &draft)
+{
+    if (placementHolds(tags, draft, runOrder(draft.placements)))
+        return;
+    // In text order, each kept where it holds with those kept before it.
+    auto placements = std::move(draft.placements);
+    std::ranges::sort(placements, {}, &RunPlacement::start);
+    draft.placements.clear();
+    std::vector<int> runs;
+    for (const auto &p : placements) {
+        draft.placements.push_back(p);
+        runs.push_back(p.run);
+        if (!placementHolds(tags, draft, runs)) {
+            draft.placements.pop_back();
+            runs.pop_back();
+        }
+    }
 }
 
 bool hasUnplacedRuns(const OriginalTags &tags, std::u16string_view translation)
