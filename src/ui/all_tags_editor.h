@@ -140,6 +140,7 @@ private:
     int checked(application::visual::AllTagsEdition::Check check);
     application::visual::AllTagsEdition m_edition;
     Hooks m_hooks;
+    std::uint64_t m_published = 0; // the history's revision last handed on
     QString m_taken;
     QString m_limit;
     bool m_done = false;

@@ -1,5 +1,7 @@
 #include "all_tags_editor.h"
 
+#include "hikari/application/visual_all_tags.h"
+
 #include <QHash>
 #include <QSet>
 
@@ -95,18 +97,18 @@ QStringList AllTagsEditor::valueNames() const
 
 QVariantMap AllTagsEditor::preview() const
 {
-    // Set at the start of the Line's text: in its first override block, or
-    // a block of its own.
+    // What Set writes on the Line (allTagsSetPreview: its own tag replaced,
+    // else placed as Set places it).
     const AllTagsSetting &t = m_edition.current();
-    const QString tag = t.tag.empty() ? QString() : qs(application::visual::allTagsSetText(t));
-    const QString line = m_hooks.activeLineText ? qs(m_hooks.activeLineText()) : QString();
-    if (line.startsWith(QLatin1Char('{')))
+    const std::u16string line = m_hooks.activeLineText ? m_hooks.activeLineText() : std::u16string();
+    if (t.tag.empty())
         return {{QStringLiteral("before"), QStringLiteral("{")},
-                {QStringLiteral("tag"), tag},
-                {QStringLiteral("after"), line.mid(1)}};
-    return {{QStringLiteral("before"), QStringLiteral("{")},
-            {QStringLiteral("tag"), tag},
-            {QStringLiteral("after"), QStringLiteral("}") + line}};
+                {QStringLiteral("tag"), QString()},
+                {QStringLiteral("after"), QStringLiteral("}") + qs(line)}};
+    const auto p = application::visual::allTagsSetPreview(t, line);
+    return {{QStringLiteral("before"), qs(p.before)},
+            {QStringLiteral("tag"), qs(p.tag)},
+            {QStringLiteral("after"), qs(p.after)}};
 }
 
 int AllTagsEditor::ownCount() const
@@ -119,6 +121,11 @@ int AllTagsEditor::ownCount() const
 void AllTagsEditor::kept()
 {
     emit changed();
+    // An action that changed nothing (Restore with the defaults already
+    // there) hands nothing on, not the last step's renames again.
+    if (m_edition.revision() == m_published)
+        return;
+    m_published = m_edition.revision();
     if (m_hooks.changed)
         m_hooks.changed(m_edition.usable(), m_edition.renamed());
 }

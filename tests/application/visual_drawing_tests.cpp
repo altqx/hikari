@@ -795,6 +795,19 @@ TEST(ShapesEdition, RenamesFollowUndoRedoAndUndoAll)
     // Other steps rename nothing.
     ASSERT_TRUE(e.remove());
     EXPECT_TRUE(e.renamed().empty());
+    // An action that changes nothing is no step: the revision the editor
+    // hands changes on stays, so the last renames are not handed on again.
+    ShapesEdition same(opened, 3);
+    same.replaceNamed(u"Circle");
+    ASSERT_TRUE(same.undo());
+    const auto revision = same.revision();
+    same.restoreDefaults(opened);
+    EXPECT_EQ(same.revision(), revision);
+    // Delete selects the next one, the last when it was the last (Codex on
+    // #349: worked out before the list moves).
+    same.select(static_cast<int>(opened.size()) - 1);
+    ASSERT_TRUE(same.remove());
+    EXPECT_EQ(same.selection(), static_cast<int>(opened.size()) - 2);
 }
 
 TEST(ShapesEdition, RedoBringsBackTheStepsOwnSelection)

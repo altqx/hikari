@@ -175,6 +175,11 @@ int ShapeEditor::ownCount() const
 void ShapeEditor::kept()
 {
     emit changed();
+    // An action that changed nothing (Restore with the defaults already
+    // there) hands nothing on, not the last step's renames again.
+    if (m_edition.revision() == m_published)
+        return;
+    m_published = m_edition.revision();
     if (m_hooks.changed)
         m_hooks.changed(m_edition.presets(), m_edition.renamed());
 }

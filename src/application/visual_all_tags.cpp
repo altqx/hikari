@@ -1979,4 +1979,23 @@ Overlay AllTagsTool::overlay(const VisualHost &host) const
     return out;
 }
 
+AllTagsSetPreview allTagsSetPreview(const AllTagsSetting &tag, std::u16string_view line)
+{
+    AllTagsSetPreview out{{}, allTagsSetText(tag), {}};
+    transform::TagFind find;
+    find.findTag(tag.tag + kValuePattern, line, tag.mode);
+    const FindData &found = find.result();
+    const auto x = static_cast<std::size_t>(std::clamp<long>(found.x, 0, static_cast<long>(line.size())));
+    if (line.empty() || !found.inBracket) {
+        // TagFind::replace: a block of its own at the place.
+        out.before = u16(line.substr(0, x)) + u"{";
+        out.after = u"}" + u16(line.substr(x));
+        return out;
+    }
+    const auto end = found.x < found.y ? std::min(static_cast<std::size_t>(found.y) + 1, line.size()) : x;
+    out.before = u16(line.substr(0, x));
+    out.after = u16(line.substr(end));
+    return out;
+}
+
 } // namespace hikari::application::visual

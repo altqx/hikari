@@ -136,6 +136,7 @@ public:
     // What the last change, Undo, Redo or Undo all renamed (Name, Replace):
     // the toolbar's choice follows it.
     const Renames &renamed() const { return m_history.renamed(); }
+    std::uint64_t revision() const { return m_history.revision(); }
 
 private:
     void edit(ShapePreset preset, Step step, std::string mergeKey = {}, Renames renamed = {});

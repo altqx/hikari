@@ -113,6 +113,7 @@ private:
     void kept(); // a step: tell QML and hand the presets back
     application::visual::ShapesEdition m_edition;
     Hooks m_hooks;
+    std::uint64_t m_published = 0; // the history's revision last handed on
     QString m_taken;
     bool m_done = false;
 };

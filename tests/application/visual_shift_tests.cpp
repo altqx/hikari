@@ -710,6 +710,17 @@ TEST(AllTagsEdition, NewDuplicateDeleteReplaceAndRestore)
     ASSERT_TRUE(draft.undo());
     EXPECT_TRUE(draft.remove());
     EXPECT_EQ(draft.tags(), std::vector<AllTagsSetting>{glow});
+    // The preview is what Set writes: the Line's own tag replaced in place,
+    // else a block of its own at the start (Codex on #349).
+    AllTagsSetting border = AllTagsSetting::named(u"border");
+    border.tag = u"bord";
+    const auto replaced = allTagsSetPreview(border, u"{\\bord5\\i1}text");
+    EXPECT_EQ(replaced.before + replaced.tag + replaced.after, u"{\\bord0\\i1}text");
+    EXPECT_EQ(replaced.tag, u"\\bord0");
+    const auto placed = allTagsSetPreview(border, u"text");
+    EXPECT_EQ(placed.before + placed.tag + placed.after, u"{\\bord0}text");
+    const auto empty = allTagsSetPreview(border, u"");
+    EXPECT_EQ(empty.before + empty.tag + empty.after, u"{\\bord0}");
     // A range refused for its step names half the range as typed.
     AllTagsSetting wide = AllTagsSetting::named(u"wide");
     wide.tag = u"fscx";

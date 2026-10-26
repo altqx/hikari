@@ -322,7 +322,10 @@ bool ShapesEdition::remove()
     std::vector<ShapePreset> items = presets();
     const int at = selection();
     items.erase(items.begin() + at);
-    m_history.change(std::move(items), std::min(at, static_cast<int>(items.size()) - 1), DeleteShape);
+    // The next one selected, worked out before the list moves (the
+    // arguments' order is unspecified).
+    const int next = std::min(at, static_cast<int>(items.size()) - 1);
+    m_history.change(std::move(items), next, DeleteShape);
     return true;
 }
 

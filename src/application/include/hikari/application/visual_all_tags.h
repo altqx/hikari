@@ -42,6 +42,16 @@
 
 namespace hikari::application::visual {
 
+// PU5 (#307): what Set writes on a Line at the definition's starting
+// values, split around the tag for the "Edit tags" preview: the Line's
+// own tag replaced where it has one, else the tag placed where Set places
+// it (the definition's placing, the caret at the start), as
+// AllTagsTool::changeVisualEditor does.
+struct AllTagsSetPreview {
+    std::u16string before, tag, after;
+};
+AllTagsSetPreview allTagsSetPreview(const AllTagsSetting &tag, std::u16string_view line);
+
 class AllTagsTool : public VisualTool {
 public:
     // AllTagsSlider (VisualAllTagsControls.h:21-57).

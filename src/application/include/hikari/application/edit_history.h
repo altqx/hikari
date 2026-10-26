@@ -7,6 +7,7 @@
 // (the steps merge while their key is the same), until another item is
 // chosen or another change, Undo or Redo comes between.
 
+#include <cstdint>
 #include <string>
 #include <utility>
 #include <vector>
@@ -47,6 +48,7 @@ public:
     void change(std::vector<T> items, int selection, int step, std::string mergeKey = {}, Renames renamed = {})
     {
         m_moved = renamed;
+        ++m_revision;
         if (!mergeKey.empty() && mergeKey == m_mergeKey && !m_undo.empty()) {
             m_state = {std::move(items), selection};
             Entry &last = m_undo.back();
@@ -73,6 +75,9 @@ public:
     }
     // What the last change, Undo, Redo or Undo all renamed.
     const Renames &renamed() const { return m_moved; }
+    // Counts the changes, Undos and Redos: a caller tells a step from an
+    // action that changed nothing (and must not hand on renamed() again).
+    std::uint64_t revision() const { return m_revision; }
 
     bool canUndo() const { return !m_undo.empty(); }
     bool canRedo() const { return !m_redo.empty(); }
@@ -87,6 +92,7 @@ public:
         m_undo.pop_back();
         m_moved.clear();
         appendUndone(m_moved, e.renamed);
+        ++m_revision;
         // Redo brings back the step's own selection, not one chosen since.
         m_redo.push_back({{std::move(m_state.items), e.other}, e.step, e.state.selection, std::move(e.renamed)});
         m_state = std::move(e.state);
@@ -100,6 +106,7 @@ public:
         Entry e = std::move(m_redo.back());
         m_redo.pop_back();
         m_moved = e.renamed;
+        ++m_revision;
         m_undo.push_back({{std::move(m_state.items), e.other}, e.step, e.state.selection, std::move(e.renamed)});
         m_state = std::move(e.state);
         m_mergeKey.clear();
@@ -126,6 +133,7 @@ private:
     std::vector<Entry> m_redo;
     std::string m_mergeKey;
     Renames m_moved;
+    std::uint64_t m_revision = 0;
 };
 
 } // namespace hikari::application::visual

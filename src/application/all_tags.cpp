@@ -617,7 +617,10 @@ bool AllTagsEdition::remove()
     std::vector<AllTagsSetting> items = tags();
     const int at = selection();
     items.erase(items.begin() + at);
-    m_history.change(std::move(items), std::min(at, static_cast<int>(items.size()) - 1), DeleteTag);
+    // The next one selected, worked out before the list moves (the
+    // arguments' order is unspecified).
+    const int next = std::min(at, static_cast<int>(items.size()) - 1);
+    m_history.change(std::move(items), next, DeleteTag);
     return true;
 }
 
