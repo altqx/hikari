@@ -114,7 +114,6 @@ DialogWindow {
             Label {
                 objectName: "messageBoxText"
                 text: box.text
-                textFormat: box.plainText ? Text.PlainText : Text.AutoText
                 font: box.fontAt(14, Font.DemiBold)
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap
@@ -125,7 +124,6 @@ DialogWindow {
                 objectName: "messageBoxDetail"
                 visible: box.detail.length > 0
                 text: box.detail
-                textFormat: box.plainText ? Text.PlainText : Text.AutoText
                 color: Theme.muted
                 textFormat: Text.PlainText
                 wrapMode: Text.Wrap
