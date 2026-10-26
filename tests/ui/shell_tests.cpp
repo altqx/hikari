@@ -9895,6 +9895,50 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    // KA3: a Line of thousands of syllables shows a window of 60 groups
+    // around the current one, not an item per syllable (Codex security
+    // review on #352).
+    void kanjiTimerShowsAWindowOfALongLine()
+    {
+        QByteArray romaji, kanjiLine;
+        for (int i = 0; i < 3000; ++i) {
+            romaji += "{\\k1}a";
+            kanjiLine += "\xE3\x81\x82"; // あ
+        }
+        const QString path = dir.filePath(QStringLiteral("long.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Song romaji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "2,8,10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+            f.write("Dialogue: 0,0:00:00.00,0:00:30.00,Song romaji,,0,0,0,," + romaji + "\n");
+            f.write("Dialogue: 0,0:00:00.00,0:00:30.00,Song kanji,,0,0,0,," + kanjiLine + "\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root, "openKanjiTimer"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *controller = dialog->property("timer").value<QObject *>();
+        QTRY_VERIFY(controller->property("pair").toMap().contains(QStringLiteral("groups")));
+        const QVariantMap pair = controller->property("pair").toMap();
+        QCOMPARE(pair.value(QStringLiteral("groups")).toList().size(), 60);
+        QCOMPARE(pair.value(QStringLiteral("earlier")).toInt(), 0);
+        QVERIFY(pair.value(QStringLiteral("later")).toInt() > 2000);
+        QVERIFY(pair.value(QStringLiteral("result")).toList().size() <= 241);
+        QVERIFY(dialogItem("kanjiTimerDialog", "kanjiLaterGroups")->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!dialog->property("visible").toBool());
+    }
+
     // KA3 (#278): the Kanji timer in the four themes, written to
     // HIKARI_SURFACE_SHOT_DIR when it is set (ka3-<part>-<theme>.png): a pair
     // half linked after two applied ones, and a romaji syllable with no

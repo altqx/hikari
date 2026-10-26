@@ -43,7 +43,10 @@ class KanjiTimerController : public QObject {
     // syllables [{text, cs, index}], kanji, first, characters, blank}],
     // restSyllables, restKanji [{text, index}], detail {kanji, romaji,
     // reading, cs, blank}, noKanjiLeft, canAccept, canUnlink, canPrevious,
-    // result [{tag, text}], total}; {} when there is none.
+    // result [{tag, text}], total, earlier, later}; {} when there is none.
+    // Only the 60 groups around the current one are in `groups` (`earlier`
+    // and `later` count the others), and as many syllables, kanji and
+    // result parts after them.
     Q_PROPERTY(QVariantMap pair READ pair NOTIFY changed)
     Q_PROPERTY(int pending READ pending NOTIFY changed)
     Q_PROPERTY(bool canUndo READ canUndo NOTIFY changed)

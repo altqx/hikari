@@ -15,6 +15,10 @@ namespace hikari::app {
 
 namespace {
 
+// KA3: the groups the strip shows at once, and the syllables and kanji
+// after them.
+constexpr std::size_t kShownGroups = 60;
+
 constexpr const char *kSuggest = "audio.kanjiTimerSuggest";
 
 QString qs(std::u16string_view s)
@@ -288,11 +292,17 @@ QVariantMap KanjiTimerController::pair() const
     if (!v)
         return {};
     const auto &p = m_timer->pairs()[static_cast<std::size_t>(m_timer->current())];
+    // A window of groups around the current one, and of what follows them:
+    // a Line of thousands of syllables must not make thousands of items.
+    const std::size_t groupCount = v->linked.size() + (v->selection.syllables || v->selection.characters ? 1 : 0) + v->rest.size();
+    const std::size_t shownFrom = v->linked.size() > kShownGroups / 2 ? v->linked.size() - kShownGroups / 2 : 0;
+    const std::size_t shownTo = std::min(groupCount, shownFrom + kShownGroups);
+    std::size_t index = 0;
     QVariantList groups;
     std::size_t syllable = 0, character = 0;
     auto syllablesOf = [&](std::size_t from, std::size_t count) {
         QVariantList out;
-        for (std::size_t k = from; k < from + count && k < v->syllables.size(); ++k)
+        for (std::size_t k = from; k < from + std::min(count, kShownGroups) && k < v->syllables.size(); ++k)
             out << QVariantMap{{QStringLiteral("text"), qs(v->syllables[k].text).trimmed()},
                                {QStringLiteral("cs"), v->syllables[k].cs},
                                {QStringLiteral("index"), static_cast<int>(k)}};
@@ -306,13 +316,16 @@ QVariantMap KanjiTimerController::pair() const
     };
     QVariantMap detail;
     auto add = [&](const application::KanjiGroup &g, const QString &kind) {
-        const QString kanji = charactersOf(character, g.characters);
-        groups << QVariantMap{{QStringLiteral("kind"), kind},
-                              {QStringLiteral("syllables"), syllablesOf(syllable, g.syllables)},
-                              {QStringLiteral("kanji"), kanji},
-                              {QStringLiteral("first"), static_cast<int>(character)},
-                              {QStringLiteral("characters"), static_cast<int>(g.characters)},
-                              {QStringLiteral("blank"), g.characters == 0}};
+        const bool shown = index >= shownFrom && index < shownTo;
+        ++index;
+        const QString kanji = shown || kind == QLatin1String("cur") ? charactersOf(character, g.characters) : QString();
+        if (shown)
+            groups << QVariantMap{{QStringLiteral("kind"), kind},
+                                  {QStringLiteral("syllables"), syllablesOf(syllable, g.syllables)},
+                                  {QStringLiteral("kanji"), kanji},
+                                  {QStringLiteral("first"), static_cast<int>(character)},
+                                  {QStringLiteral("characters"), static_cast<int>(g.characters)},
+                                  {QStringLiteral("blank"), g.characters == 0}};
         if (kind == QLatin1String("cur")) {
             std::u16string romaji;
             int cs = 0;
@@ -338,7 +351,7 @@ QVariantMap KanjiTimerController::pair() const
     for (const auto &g : v->rest)
         add(g, QStringLiteral("sug"));
     QVariantList restKanji;
-    for (std::size_t c = character; c < v->kanji.units.size(); ++c)
+    for (std::size_t c = character; c < v->kanji.units.size() && c < character + kShownGroups; ++c)
         restKanji << QVariantMap{{QStringLiteral("text"), qs(v->kanji.units[c].text)},
                                  {QStringLiteral("index"), static_cast<int>(c)}};
     // the current group has syllables and no character left for them
@@ -367,6 +380,10 @@ QVariantMap KanjiTimerController::pair() const
             const bool tag = text[i] == QLatin1Char('{');
             const qsizetype end = tag ? (text.indexOf(QLatin1Char('}'), i) < 0 ? text.size() : text.indexOf(QLatin1Char('}'), i) + 1)
                                       : (text.indexOf(QLatin1Char('{'), i) < 0 ? text.size() : text.indexOf(QLatin1Char('{'), i));
+            if (result.size() >= qsizetype(4 * kShownGroups)) { // (the field shows the start)
+                result << QVariantMap{{QStringLiteral("tag"), false}, {QStringLiteral("text"), QStringLiteral("…")}};
+                break;
+            }
             result << QVariantMap{{QStringLiteral("tag"), tag}, {QStringLiteral("text"), text.mid(i, end - i)}};
             i = end;
         }
@@ -377,6 +394,8 @@ QVariantMap KanjiTimerController::pair() const
     return {{QStringLiteral("times"), assTime(p.romaji->startMs) + QStringLiteral(" – ") + assTime(p.romaji->endMs)},
             {QStringLiteral("duration"), (p.romaji->endMs - p.romaji->startMs) / 10},
             {QStringLiteral("groups"), groups},
+            {QStringLiteral("earlier"), static_cast<int>(shownFrom)},
+            {QStringLiteral("later"), static_cast<int>(groupCount - shownTo)},
             {QStringLiteral("restSyllables"), syllablesOf(syllable, v->syllables.size() - std::min(syllable, v->syllables.size()))},
             {QStringLiteral("restKanji"), restKanji},
             {QStringLiteral("detail"), detail},

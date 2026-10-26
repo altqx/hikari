@@ -428,7 +428,8 @@ DialogWindow {
                         // What no group has yet.
                         Column {
                             readonly property string kind: "rest"
-                            visible: restSyllables.count > 0 || restKanji.count > 0
+                            // (after the last group: not while later ones are left out)
+                            visible: (dialog.pair.later || 0) === 0 && (restSyllables.count > 0 || restKanji.count > 0)
                             spacing: 4
                             HoverHandler { onHoveredChanged: dialog.overRest = hovered }
                             Row {
@@ -492,13 +493,25 @@ DialogWindow {
                         }
                     }
                 }
-                // Earlier groups scrolled out of sight.
+                // Earlier groups left out, or scrolled out of sight.
                 Icon {
-                    visible: flick.contentX > 0
+                    objectName: "kanjiEarlierGroups"
+                    visible: flick.contentX > 0 || (dialog.pair.earlier || 0) > 0
                     anchors.left: parent.left
                     anchors.leftMargin: 1
                     anchors.verticalCenter: parent.verticalCenter
                     iconRole: "chevron-left"
+                    size: 14
+                    color: Theme.muted
+                }
+                // Later groups left out, or scrolled out of sight.
+                Icon {
+                    objectName: "kanjiLaterGroups"
+                    visible: (dialog.pair.later || 0) > 0 || flick.contentX + flick.width < flick.contentWidth - 1
+                    anchors.right: parent.right
+                    anchors.rightMargin: 1
+                    anchors.verticalCenter: parent.verticalCenter
+                    iconRole: "chevron-right"
                     size: 14
                     color: Theme.muted
                 }
