@@ -9036,6 +9036,104 @@ private slots:
         QTRY_VERIFY(!dialog->property("visible").toBool());
     }
 
+    // KA3 (#278): the Kanji timer in the four themes, written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (ka3-<part>-<theme>.png): a pair
+    // half linked after two applied ones, and a romaji syllable with no
+    // kanji left.
+    void kanjiTimerScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        const QString path = dir.filePath(QStringLiteral("kanji-shots.ass"));
+        {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Song romaji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,"
+                    "2,8,10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:05.00,0:00:07.00,Song romaji,,0,0,0,,{\\k30}yu{\\k30}me {\\k20}wo {\\k30}mi{\\k20}te "
+                    "{\\k30}i{\\k40}ta\n"
+                    "Dialogue: 0,0:00:08.00,0:00:10.00,Song romaji,,0,0,0,,{\\k20}ne{\\k20}mu{\\k20}re{\\k20}na{\\k20}i "
+                    "{\\k30}yo{\\k20}ru {\\k50}ni\n"
+                    "Dialogue: 0,0:00:14.10,0:00:16.80,Song romaji,,0,0,0,,{\\k18}ki{\\k22}mi {\\k30}no {\\k20}ko{\\k25}e "
+                    "{\\k35}ga {\\k22}ki{\\k18}ko{\\k20}e{\\k60}ru\n"
+                    "Dialogue: 0,0:00:18.00,0:00:21.00,Song romaji,,0,0,0,,{\\k30}to{\\k30}o{\\k20}i {\\k25}so{\\k25}ra "
+                    "{\\k20}no {\\k20}mu{\\k20}ko{\\k20}u {\\k90}e\n"
+                    "Dialogue: 0,0:00:22.30,0:00:24.70,Song romaji,,0,0,0,,{\\kf30}ho{\\kf25}shi {\\kf30}wo {\\kf20}ka"
+                    "{\\kf22}zo{\\kf18}e{\\kf40}te {\\kf55}yo\n"
+                    "Dialogue: 0,0:00:26.00,0:00:28.00,Song romaji,,0,0,0,,{\\k60}la {\\k60}la {\\k80}la\n"
+                    "Dialogue: 0,0:00:05.00,0:00:07.00,Song kanji,,0,0,0,,夢を見ていた\n"
+                    "Dialogue: 0,0:00:08.00,0:00:10.00,Song kanji,,0,0,0,,眠れない夜に\n"
+                    "Dialogue: 0,0:00:14.10,0:00:16.80,Song kanji,,0,0,0,,君の声が聞こえる\n"
+                    "Dialogue: 0,0:00:18.00,0:00:21.00,Song kanji,,0,0,0,,遠い空の向こうへ\n"
+                    "Dialogue: 0,0:00:22.30,0:00:24.70,Song kanji,,0,0,0,,{\\i1}星を数えて\n");
+        }
+        QVERIFY(application->openFile(path));
+        auto *root = engine->rootObjects().first();
+        QVERIFY(QMetaObject::invokeMethod(root->findChild<QObject *>(QStringLiteral("kanjiTimerMenuItem")), "triggered"));
+        QObject *dialog = nullptr;
+        QTRY_VERIFY((dialog = root->findChild<QObject *>(QStringLiteral("kanjiTimerDialog"))));
+        auto *kanji = qobject_cast<QQuickWindow *>(dialog);
+        QTRY_VERIFY(kanji->isVisible() && kanji->isActive());
+        auto *controller = dialog->property("timer").value<QObject *>();
+        auto *strip = dialogItem("kanjiTimerDialog", "kanjiStrip");
+        QTRY_VERIFY(strip->hasActiveFocus());
+        const auto currentKanji = [&] {
+            for (const QVariant &g : controller->property("pair").toMap().value(QStringLiteral("groups")).toList())
+                if (g.toMap().value(QStringLiteral("kind")).toString() == QLatin1String("cur"))
+                    return g.toMap().value(QStringLiteral("kanji")).toString();
+            return QStringLiteral("-");
+        };
+        // The first two pairs accepted and applied; four groups of the third linked.
+        QTest::keyClick(kanji, Qt::Key_Return, Qt::ControlModifier);
+        QTest::keyClick(kanji, Qt::Key_Return, Qt::ControlModifier);
+        QTRY_COMPARE(controller->property("current").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiApply"), "click"));
+        QTRY_COMPARE(controller->property("pending").toInt(), 0);
+        strip->forceActiveFocus();
+        for (int i = 0; i < 4; ++i)
+            QTest::keyClick(kanji, Qt::Key_Return);
+        QCOMPARE(currentKanji(), QStringLiteral("聞"));
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        const auto shoot = [&](const char *part) {
+            for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
+                settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
+                auto *controls = root->property("palette").value<QObject *>();
+                QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+                QTest::qWait(300);
+                QImage shot;
+                QTRY_VERIFY((shot = kanji->grabWindow(), !shot.isNull() && shot.width() > 0));
+                QVERIFY(shot.save(out + QStringLiteral("/ka3-") + QLatin1String(part) + QLatin1Char('-')
+                                  + QLatin1String(code) + QStringLiteral(".png")));
+            }
+        };
+        shoot("window");
+        // Pair 5: "yo" has no kanji left once て takes "te" alone.
+        QVERIFY(QMetaObject::invokeMethod(controller, "choose", Q_ARG(int, 4)));
+        strip->forceActiveFocus();
+        for (int i = 0; i < 8 && currentKanji() != QStringLiteral("て"); ++i)
+            QTest::keyClick(kanji, Qt::Key_Return);
+        QCOMPARE(currentKanji(), QStringLiteral("て"));
+        // (the suggestion gives て both "te" and "yo": Down leaves it "te")
+        QTest::keyClick(kanji, Qt::Key_Down);
+        QTest::keyClick(kanji, Qt::Key_Return);
+        QTRY_VERIFY(dialogItem("kanjiTimerDialog", "kanjiNoKanjiLeft")->isVisible());
+        shoot("no-kanji-left");
+        settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+        QVERIFY(QMetaObject::invokeMethod(controller, "discard"));
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("kanjiTimerDialog", "kanjiClose"), "click"));
+        QTRY_VERIFY(!kanji->isVisible());
+    }
+
     // F3: the Grid's and the editor's marks, Subtitles > Check spelling
     // (Replace as one step, then the next word on another Line, then "No
     // spelling errors were found"), a suggestion from the editor and Add word.
