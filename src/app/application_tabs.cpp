@@ -95,6 +95,12 @@ int Application::currentTab() const
     return it == tabs.end() ? -1 : static_cast<int>(it - tabs.begin());
 }
 
+qulonglong Application::editingDocument() const
+{
+    const auto target = m_workspace.editingTarget();
+    return target ? target->value : 0;
+}
+
 void Application::addPage(bool fromTabBar)
 {
     // Notebook::AddPage: a new tab after the last one becomes active. The

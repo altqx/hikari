@@ -1,10 +1,14 @@
 // Y8: legacy FontCollectorDialog "Font collector" (GLOBAL_OPEN_FONT_COLLECTOR,
-// FontCollector.cpp:134-239 at 20d647c4), a modeless resizable window: the
-// path with "Select a folder", the "Options" radio box (Check availability
-// of fonts, Copy to selected folder, Zip), "Save to video / subtitles
-// folder.", the log, then Start, "Start on tabs", "Save folder" and Close.
-// The copy modes stage their output (routing #60): Start shows what Apply
-// would write; an incomplete collection is written only after the
+// FontCollector.cpp:134-239 at 20d647c4). PU6 (#308): a window on DG1's
+// frame, modeless and resizable (Subtitles > Font collector raises it while
+// it is open; it reopens where and as big as it was left): the action
+// (legacy's "Options" radio box: Check availability of fonts, Copy to
+// selected folder, Zip) as one choice with a hint, where to save with
+// "Select a folder", writing beside the subtitles, taking the fonts from the
+// loaded MKV file, the log, then Show folder (legacy "Save folder"), Start
+// on all tabs ("Start on tabs"), Start and Close (Stop while it runs).
+// The copy modes stage their output (routing #60): Start shows what the
+// review would write; an incomplete collection is written only after the
 // acknowledgment and is labelled incomplete (routing #54). A double click in
 // the log goes to a Style or Line as legacy's OnConsoleDoubleClick did.
 pragma Translator: "HikariSub.Fonts"
@@ -14,7 +18,7 @@ import QtQuick.Layouts
 import QtQuick.Dialogs as Dialogs
 import Hikari.Ui
 
-Dialog {
+DialogWindow {
     id: dialog
     objectName: "fontCollectorDialog"
     required property var collector
@@ -24,34 +28,32 @@ Dialog {
     readonly property color warningColour: Theme.warning
     readonly property color successColour: Theme.success
     readonly property bool working: collector.stage === 1
+    readonly property var hints: [qsTr("Lists the fonts the subtitles use and whether this computer has each one."),
+                                  qsTr("Copies each font file the subtitles use into the folder."),
+                                  qsTr("Puts each font file the subtitles use into a zip archive.")]
     title: qsTr("Font collector")
-    // K1: the title with the set's font-collector icon (the Subtitles menu's FontCollector bitmap).
-    header: IconDialogHeader { objectName: "fontCollectorDialogTitle"; iconRole: "font-collector"; text: dialog.title }
-    modal: false
-    closePolicy: working ? Popup.NoAutoClose : Popup.CloseOnEscape
+    dialogId: "fontCollector"
+    resizable: true
+    defaultButton: startButton
 
     function openDialog() {
         collector.open()
         path.text = collector.directory
-        options.itemAt(collector.action).checked = true
+        actions.currentIndex = collector.action
         subsDirectory.checked = collector.useSubsDirectory
         fromMkv.checked = collector.fromMkv
         acknowledge.checked = false
         open()
         startButton.forceActiveFocus()
     }
-    // ShowDialog: nothing when the window is already there.
+    // ShowDialog: raised when the window is already there.
     function showOnce() {
-        if (!visible)
+        if (visible)
+            open()
+        else
             openDialog()
     }
-    function selectedAction() {
-        for (let i = 0; i < options.count; ++i)
-            if (options.itemAt(i).checked)
-                return i
-        return 0
-    }
-    function changeOptions() { collector.changeOptions(selectedAction(), subsDirectory.checked) }
+    function changeOptions() { collector.changeOptions(actions.currentIndex, subsDirectory.checked) }
     function start(allTabs) {
         acknowledge.checked = false
         const r = collector.start(path.text, allTabs)
@@ -65,9 +67,21 @@ Dialog {
                     path.forceActiveFocus()
             })
         } else if (r.question !== undefined) {
-            replaceQuestion.text = r.question
-            replaceQuestion.title = r.title
-            replaceQuestion.open()
+            // PU6: legacy "Confirmation", "The zip file already exists,
+            // delete it?" Yes / No, where No replaced it all the same once
+            // written: Replace, or Cancel and nothing runs.
+            const name = r.archive.replace(/^.*[\\/]/, "")
+            messages.ask({
+                title: dialog.title,
+                text: qsTr("“%1” already exists.").arg(name),
+                detail: qsTr("Writing the new archive replaces it."),
+                severity: "warning",
+                choices: [{ id: "replace", text: qsTr("Replace"), role: "destructive" },
+                          { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+            }, id => {
+                if (id === "replace")
+                    dialog.collector.confirmReplace(true)
+            })
         }
     }
     function choosePath() {
@@ -94,88 +108,115 @@ Dialog {
     function html() {
         let out = ""
         for (const s of collector.log) {
-            const colour = s.kind === 1 ? warningColour : s.kind === 2 ? successColour : palette.text
+            const colour = s.kind === 1 ? warningColour : s.kind === 2 ? successColour : Theme.text
             out += "<span style=\"color:" + colour + "\">" + escaped(s.text) + "</span>"
         }
         return "<div style=\"white-space: pre-wrap\">" + out + "</div>"
     }
-    onClosed: collector.close()
+    // Nothing closes it while it runs (Stop first).
+    onClosing: close => {
+        if (working)
+            close.accepted = false
+    }
+    // Closed, not hidden while its frame is made again (a title bar change):
+    // a run or a review waiting goes on then.
+    onVisibleChanged: if (!visible && !WindowFrame.remaking(dialog)) collector.close()
 
-    ColumnLayout {
-        anchors.fill: parent
-        spacing: 4
-        // SetEnterId(9879): Enter starts.
-        Keys.onReturnPressed: if (!dialog.working) dialog.start(false)
-        Keys.onEnterPressed: if (!dialog.working) dialog.start(false)
-        RowLayout {
+    GridLayout {
+        columns: 2
+        columnSpacing: 12
+        rowSpacing: 10
+        Layout.fillWidth: true
+        // SetEnterId(9879): Enter starts (DialogWindow: the default button).
+        Label { text: qsTr("Action"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
+        ColumnLayout {
+            spacing: 6
+            enabled: !dialog.working
             Layout.fillWidth: true
-            TextField {
-                id: path
-                objectName: "fontCollectorPath"
-                Layout.fillWidth: true
-                Layout.minimumWidth: 150
-                enabled: !dialog.working && dialog.collector.action !== 0
-                onAccepted: dialog.start(false)
-                Accessible.name: qsTr("Save folder")
-                placeholderText: qsTr("Destination folder")
-                // HikariTextValidator with wxFILTER_EXCLUDE_CHAR_LIST: / * ? " < > |
-                // on Windows; elsewhere '/' separates the folders, so it is
-                // accepted (FC-slash-linux).
-                validator: RegularExpressionValidator {
-                    regularExpression: Qt.platform.os === "windows" ? /[^\/*?"<>|]*/ : /[^*?"<>|]*/
+            SegmentedButtons {
+                id: actions
+                objectName: "fontCollectorAction"
+                Accessible.name: qsTr("Action")
+                choices: [{ text: qsTr("Check fonts"), name: "fontCollectorOption0" },
+                          { text: qsTr("Copy to a folder"), name: "fontCollectorOption1" },
+                          { text: qsTr("Zip archive"), name: "fontCollectorOption2" }]
+                onActivated: index => {
+                    currentIndex = index
+                    dialog.changeOptions()
                 }
             }
-            IconToolButton {
-                objectName: "fontCollectorChoosePath"
-                iconRole: "folder-open"
-                text: qsTr("Select a folder")
-                enabled: path.enabled
-                onClicked: dialog.choosePath()
+            Label {
+                objectName: "fontCollectorActionHint"
+                text: dialog.hints[actions.currentIndex] ?? ""
+                color: Theme.muted
+                wrapMode: Text.Wrap
+                Layout.fillWidth: true
             }
         }
-        GroupBox {
-            title: qsTr("Options")
+        Label { text: qsTr("Save to"); Layout.alignment: Qt.AlignTop; Layout.topMargin: 6 }
+        ColumnLayout {
+            spacing: 4
             Layout.fillWidth: true
-            enabled: !dialog.working
-            ColumnLayout {
-                ButtonGroup { id: optionsGroup }
-                Repeater {
-                    id: options
-                    model: [qsTr("Check availability of fonts"), qsTr("Copy to selected folder"), qsTr("Zip")]
-                    RadioButton {
-                        required property string modelData
-                        required property int index
-                        objectName: "fontCollectorOption" + index
-                        text: modelData
-                        ButtonGroup.group: optionsGroup
-                        onToggled: if (checked) dialog.changeOptions()
+            RowLayout {
+                Layout.fillWidth: true
+                TextField {
+                    id: path
+                    objectName: "fontCollectorPath"
+                    Layout.fillWidth: true
+                    Layout.minimumWidth: 150
+                    Layout.preferredWidth: 420
+                    enabled: !dialog.working && dialog.collector.action !== 0
+                    onAccepted: dialog.start(false)
+                    Accessible.name: qsTr("Save to")
+                    placeholderText: dialog.collector.action === 2 ? qsTr("Choose an archive") : qsTr("Choose a folder")
+                    // HikariTextValidator with wxFILTER_EXCLUDE_CHAR_LIST: / * ? " < > |
+                    // on Windows; elsewhere '/' separates the folders, so it is
+                    // accepted (FC-slash-linux).
+                    validator: RegularExpressionValidator {
+                        regularExpression: Qt.platform.os === "windows" ? /[^\/*?"<>|]*/ : /[^*?"<>|]*/
                     }
                 }
+                IconToolButton {
+                    objectName: "fontCollectorChoosePath"
+                    iconRole: "folder-open"
+                    text: qsTr("Select a folder")
+                    enabled: path.enabled
+                    onClicked: dialog.choosePath()
+                }
+            }
+            CheckBox {
+                id: subsDirectory
+                objectName: "fontCollectorSubsDirectory"
+                text: qsTr("Write beside the subtitles, in a “Fonts” folder")
+                enabled: path.enabled
+                ToolTip.text: qsTr("Beside the video when the fonts come from the MKV file.")
+                ToolTip.visible: hovered
+                onToggled: dialog.changeOptions()
+            }
+            // Y9: FontCollector.cpp:181-183, enabled for an MKV video (and,
+            // after an Options change, only for the copy modes).
+            CheckBox {
+                id: fromMkv
+                objectName: "fontCollectorFromMkv"
+                text: qsTr("Take the fonts from the loaded MKV file")
+                enabled: !dialog.working && dialog.collector.fromMkvEnabled
+                onToggled: dialog.collector.setFromMkv(checked)
             }
         }
-        CheckBox {
-            id: subsDirectory
-            objectName: "fontCollectorSubsDirectory"
-            text: qsTr("Save to video / subtitles folder.")
-            enabled: path.enabled
-            ToolTip.text: qsTr("Saves to the video folder\nwhen demuxing fonts from an MKV file.")
-            ToolTip.visible: hovered
-            onToggled: dialog.changeOptions()
-        }
-        // Y9: FontCollector.cpp:181-183, enabled for an MKV video (and,
-        // after an Options change, only for the copy modes).
-        CheckBox {
-            id: fromMkv
-            objectName: "fontCollectorFromMkv"
-            text: qsTr("Demux fonts from loaded MKV file")
-            enabled: !dialog.working && dialog.collector.fromMkvEnabled
-            onToggled: dialog.collector.setFromMkv(checked)
-        }
+    }
+    // The log, on the field colour, with one muted line before the first Start.
+    Rectangle {
+        Layout.fillWidth: true
+        Layout.fillHeight: true
+        Layout.topMargin: 6
+        Layout.preferredWidth: 560
+        Layout.preferredHeight: 260
+        Layout.minimumHeight: 120
+        color: Theme.field
+        border.color: Theme.line
         ScrollView {
-            Layout.fillWidth: true
-            Layout.fillHeight: true
-            Layout.preferredWidth: 500
-            Layout.preferredHeight: 400
+            anchors.fill: parent
+            anchors.margins: 1
             TextArea {
                 id: console_
                 objectName: "fontCollectorLog"
@@ -183,86 +224,107 @@ Dialog {
                 wrapMode: TextEdit.Wrap
                 textFormat: TextEdit.RichText
                 text: dialog.html()
+                background: null
                 Accessible.name: qsTr("Font collector log")
                 TapHandler {
                     onDoubleTapped: (point) => dialog.collector.logDoubleClicked(console_.positionAt(point.position.x, point.position.y))
                 }
             }
         }
-        // The staged review: Apply writes what the log lists.
+        Label {
+            objectName: "fontCollectorLogEmpty"
+            anchors.centerIn: parent
+            visible: dialog.collector.log.length === 0
+            color: Theme.muted
+            text: qsTr("Start lists the fonts the subtitles use.")
+        }
+    }
+    // The staged review: Copy fonts / Write archive writes what the log lists.
+    Rectangle {
+        objectName: "fontCollectorReview"
+        visible: dialog.collector.stage === 2
+        color: Theme.raised
+        border.color: Theme.line
+        Layout.fillWidth: true
+        implicitHeight: reviewRow.implicitHeight + 12
         RowLayout {
-            objectName: "fontCollectorReview"
-            visible: dialog.collector.stage === 2
-            Layout.fillWidth: true
+            id: reviewRow
+            anchors.fill: parent
+            anchors.leftMargin: 10
+            anchors.rightMargin: 6
+            spacing: 10
+            Icon {
+                iconRole: dialog.collector.reviewIncomplete ? "notice-warning" : "about"
+                color: dialog.collector.reviewIncomplete ? Theme.warning : IconTheme.normal
+                accentColor: dialog.collector.reviewIncomplete ? Theme.warning : IconTheme.accent
+            }
+            Label {
+                objectName: "fontCollectorReviewText"
+                Layout.fillWidth: true
+                wrapMode: Text.Wrap
+                text: dialog.collector.reviewIncomplete ? qsTr("Some fonts were not found, so the collection is incomplete.")
+                    : dialog.collector.action === 2 ? qsTr("Ready to write %1").arg(dialog.collector.copyPath)
+                    : qsTr("Ready to copy to %1").arg(dialog.collector.copyPath)
+            }
             CheckBox {
                 id: acknowledge
                 objectName: "fontCollectorAcknowledge"
                 visible: dialog.collector.reviewIncomplete
-                text: qsTr("Write this incomplete collection, labelled incomplete")
-                Layout.fillWidth: true
+                text: dialog.collector.action === 2 ? qsTr("Write it, labelled incomplete") : qsTr("Copy it, labelled incomplete")
             }
-            Button {
+            PrimaryButton {
                 objectName: "fontCollectorApply"
                 text: dialog.collector.action === 2 ? qsTr("Write archive") : qsTr("Copy fonts")
                 enabled: !dialog.collector.reviewIncomplete || acknowledge.checked
                 onClicked: dialog.collector.apply(acknowledge.checked)
             }
         }
-        WindowFooter {
-            Button {
-                id: startButton
-                objectName: "fontCollectorStart"
-                text: qsTr("Start")
-                enabled: !dialog.working
-                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                onClicked: dialog.start(false)
-            }
-            Button {
-                objectName: "fontCollectorStartOnTabs"
-                text: qsTr("Start on tabs")
-                enabled: !dialog.working
-                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                onClicked: dialog.start(true)
-            }
-            Button {
-                objectName: "fontCollectorSaveFolder"
-                text: qsTr("Save folder")
-                enabled: dialog.collector.canSaveFolder && !dialog.working
-                DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
-                onClicked: dialog.collector.saveFolder()
-            }
-            FooterButton {
-                objectName: "fontCollectorCancel"
-                text: qsTr("Cancel")
-                visible: dialog.working
-                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                onClicked: dialog.collector.cancel()
-            }
-            Button {
-                objectName: "fontCollectorClose"
-                text: qsTr("Close")
-                enabled: !dialog.working
-                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                onClicked: dialog.close()
-            }
-        }
     }
+
+    leadingActions: Button {
+        objectName: "fontCollectorSaveFolder"
+        // Legacy "Save folder": opens the folder written to.
+        text: qsTr("Show folder")
+        visible: dialog.collector.action !== 0
+        enabled: dialog.collector.canSaveFolder && !dialog.working
+        onClicked: dialog.collector.saveFolder()
+    }
+    buttons: [
+        Button {
+            objectName: "fontCollectorStartOnTabs"
+            text: qsTr("Start on all tabs")
+            enabled: !dialog.working
+            DialogButtonBox.buttonRole: DialogButtonBox.ActionRole
+            onClicked: dialog.start(true)
+        },
+        PrimaryButton {
+            id: startButton
+            objectName: "fontCollectorStart"
+            text: qsTr("Start")
+            enabled: !dialog.working
+            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
+            onClicked: dialog.start(false)
+        },
+        FooterButton {
+            objectName: "fontCollectorCancel"
+            text: qsTr("Stop")
+            visible: dialog.working
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: dialog.collector.cancel()
+        },
+        FooterButton {
+            objectName: "fontCollectorClose"
+            text: qsTr("Close")
+            visible: !dialog.working
+            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
+            onClicked: dialog.close()
+        }
+    ]
 
     MessageHost {
         id: messages
         objectName: "fontCollectorMessages"
-    }
-    Dialog {
-        id: replaceQuestion
-        objectName: "fontCollectorReplaceQuestion"
-        property alias text: questionLabel.text
-        modal: true
-        parent: Overlay.overlay
-        anchors.centerIn: parent
-        standardButtons: Dialog.Yes | Dialog.No
-        Label { id: questionLabel }
-        onAccepted: dialog.collector.confirmReplace(true)
-        onRejected: dialog.collector.confirmReplace(false)
+        settings: dialog.settings
     }
     Dialogs.FolderDialog {
         id: folderDialog

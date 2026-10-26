@@ -577,44 +577,70 @@ private slots:
         styles->close();
     }
 
-    // LE6: a Style the Document lacks: the question; Cancel does nothing,
-    // Create adds it from Default and opens it.
+    // SY1: the catalog chosen last is the Style manager's at the next start.
+    // Settings loading the conversion catalog is not a choice, nor its Reset.
+    void styleManagerKeepsTheLastCatalog()
+    {
+        QVERIFY(application->styleManager().createCatalog(QStringLiteral("Kept")));
+        QCOMPARE(application->styleManager().catalog(), QStringLiteral("Kept"));
+        application->styleManager().saveCatalog(); // the manager's close writes the new catalog
+        application->settingsStore()->set("convert.styleCatalog", QStringLiteral("Default"));
+        application->openSettingsDialog();
+        QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
+        QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("Kept"));
+        // Nor is the Conversion page's Reset, which loads its default catalog.
+        application->resetSettingsPage(QVariantMap{}, QStringLiteral("conversion"));
+        QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
+        QCOMPARE(application->settingsStore()->text("styles.lastCatalog"), QStringLiteral("Kept"));
+        restart();
+        QCOMPARE(application->styleManager().catalog(), QStringLiteral("Kept"));
+        QVERIFY(application->styleManager().deleteCatalog(QStringLiteral("Kept")));
+        restart();
+        QCOMPARE(application->styleManager().catalog(), QStringLiteral("Default"));
+    }
+
+    // LE6: a Style the Document lacks: the question (SY1: PK1's message
+    // box, "Edit style"); Cancel does nothing, Create adds it from Default
+    // and opens it.
     void editStyleOffersToCreateAMissingStyle()
     {
         QVERIFY(showLine(missingStyle));
         auto &controller = application->styleManager();
         QCOMPARE(controller.documentStyles(), (QStringList{QStringLiteral("Default"), QStringLiteral("Sign")}));
         auto *styles = styleWindow();
-        auto *question = styles->findChild<QObject *>(QStringLiteral("styleCreateQuestion"));
-        QVERIFY(question);
+        const auto question = [styles] { return qvariant_cast<QQuickWindow *>(styles->findChild<QObject *>(QStringLiteral("styleMessages"))->property("box")); };
+        const auto answer = [&](const char *id) {
+            QQuickItem *button = findItem(question()->contentItem(), QStringLiteral("messageBoxChoice_") + QLatin1String(id));
+            QVERIFY(button);
+            QVERIFY(QMetaObject::invokeMethod(button, "click"));
+            QTRY_VERIFY(!question()->isVisible());
+        };
         QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
-        QTRY_VERIFY(question->property("opened").toBool());
-        QVERIFY(!styles->property("editing").toBool());
-        auto *footer = question->property("footer").value<QQuickItem *>();
-        QVERIFY(QMetaObject::invokeMethod(findItem(footer, QStringLiteral("styleCreateCancel")), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
-        QVERIFY(!styles->property("editing").toBool());
+        QTRY_VERIFY(question() && question()->isVisible());
+        QCOMPARE(question()->property("text").toString(), QStringLiteral("This file has no style named \u201cKaraoke\u201d."));
+        // Opened from closed: on the file's first Style.
+        QVERIFY(styles->property("editing").toBool());
+        answer("cancel");
         QCOMPARE(controller.documentStyles().size(), 2);
         // Open on Sign: Cancel leaves its selection and its editor alone.
         QVERIFY(QMetaObject::invokeMethod(styles, "editStyle", Q_ARG(QVariant, QStringLiteral("Sign"))));
         QTRY_VERIFY(styles->property("editing").toBool());
         QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
-        QTRY_VERIFY(question->property("opened").toBool());
-        QVERIFY(QMetaObject::invokeMethod(findItem(footer, QStringLiteral("styleCreateCancel")), "click"));
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QTRY_VERIFY(question()->isVisible());
+        answer("cancel");
         QCOMPARE(styles->property("assSelected").toList().value(0).toInt(), 1);
         QCOMPARE(findItem(styles->contentItem(), QStringLiteral("styleName"))->property("text").toString(),
                  QStringLiteral("Sign"));
-        QVERIFY(QMetaObject::invokeMethod(styles, "endEditing")); // nothing changed
         auto *session = application->files().session(*application->workspace().editingTarget());
         const auto steps = session->historySize();
         QVERIFY(QMetaObject::invokeMethod(item("styleEditButton"), "click"));
-        QTRY_VERIFY(question->property("opened").toBool());
-        QVERIFY(QMetaObject::invokeMethod(findItem(footer, QStringLiteral("styleCreateYes")), "click"));
+        QTRY_VERIFY(question()->isVisible());
+        answer("create");
         QTRY_COMPARE(controller.documentStyles(),
                      (QStringList{QStringLiteral("Default"), QStringLiteral("Sign"), QStringLiteral("Karaoke")}));
         QCOMPARE(session->historySize(), steps + 1);
         QVERIFY(styles->property("editing").toBool());
+        QCOMPARE(styles->property("assSelected").toList(), QVariantList{2});
         auto *nameField = findItem(styles->contentItem(), QStringLiteral("styleName"));
         QCOMPARE(nameField->property("text").toString(), QStringLiteral("Karaoke"));
         QTRY_VERIFY(nameField->hasActiveFocus());

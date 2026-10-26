@@ -55,6 +55,8 @@ Control {
         "Start": qsTr("Start"),
         "End": qsTr("End"),
         "Origin": qsTr("Origin"),
+        "Plane": qsTr("Plane"),
+        "Rotation": qsTr("Rotation"),
         "By": qsTr("By"),
         "Per line": qsTr("Per line"),
         "From": qsTr("From"),
@@ -86,10 +88,23 @@ Control {
         }
         return out
     }
+    // The options' groups, then the values'. VT3: values that go on the
+    // last option's group (the Perspective tool's Origin mode, then its X
+    // and Y) join that group, one item of the Flow, so a wrap cannot part
+    // them.
+    function joined(options, values) {
+        if (options.length > 0 && values.length > 0 && options[options.length - 1].group.length > 0
+                && options[options.length - 1].group === values[0].group) {
+            options = options.slice()
+            options[options.length - 1] = Object.assign({}, options[options.length - 1], { values: values[0].items })
+            values = values.slice(1)
+        }
+        return options.concat(values)
+    }
     // The options, the values, then the options shown after them (HY1).
     function ordered(options, values, measuring) {
-        return groupsOf(options.filter(o => !o.afterValues), "options", measuring)
-            .concat(groupsOf(values, "values", measuring))
+        return joined(groupsOf(options.filter(o => !o.afterValues), "options", measuring),
+                      groupsOf(values, "values", measuring))
             .concat(groupsOf(options.filter(o => o.afterValues), "options", measuring))
     }
     // A family's groups for its unseen copy (its values carried whole).
@@ -193,7 +208,7 @@ Control {
         Icon {
             Layout.alignment: Qt.AlignVCenter
             // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
-            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][family] ?? ""
+            iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][family] ?? ""
         }
         Label {
             Layout.alignment: Qt.AlignVCenter
@@ -238,7 +253,7 @@ Control {
                 }
             }
             Repeater {
-                model: segment.modelData.kind === "values" ? segment.modelData.items : []
+                model: segment.modelData.kind === "values" ? segment.modelData.items : (segment.modelData.values ?? [])
                 delegate: VisualValueField {
                     required property var modelData
                     Layout.alignment: Qt.AlignVCenter

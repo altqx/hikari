@@ -7,24 +7,5 @@
 # the PU cards take them off.
 AspectRatioDialog.qml:dialog
 DummyVideoDialog.qml:dialog
-FontCatalogWindow.qml:window
-FontCatalogWindow.qml:edition
-FontCatalogWindow.qml:clash
-FontCatalogWindow.qml:deleteQuestion
-FontCollectorDialog.qml:dialog
-FontCollectorDialog.qml:replaceQuestion
-FontDialog.qml:dialog
-FontsFromSubtitlesDialog.qml:dialog
 Main.qml:shiftConfirm
-Main.qml:conversionDialog
-Main.qml:resampleDialog
-Main.qml:mismatchDialog
-ScriptPropertiesDialog.qml:dialog
-SpellCheckerDialog.qml:dialog
-SpellCheckerDialog.qml:addedWords
-StyleManager.qml:createQuestion
-StyleManager.qml:multiQuestion
-StyleManager.qml:renameQuestion
-StyleManager.qml:newCatalog
-StyleManager.qml:deleteCatalogQuestion
 VideoFileQuestion.qml:dialog

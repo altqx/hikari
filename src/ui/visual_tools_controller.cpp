@@ -21,6 +21,7 @@
 #include <QFontMetricsF>
 #include <QGuiApplication>
 #include <QQuickItem>
+#include <QRawFont>
 #include <QStringList>
 #include <QVariantMap>
 
@@ -123,6 +124,14 @@ QVariantList VisualToolsController::families() const
                                {QStringLiteral("hotkey"), QString::fromLatin1(f.hotkey.data(), f.hotkey.size())},
                                {QStringLiteral("available"),
                                 m_tools[static_cast<std::size_t>(f.family)] != nullptr}});
+    return out;
+}
+
+QVariantList VisualToolsController::railOrder() const
+{
+    QVariantList out;
+    for (const Family f : application::visual::railOrder())
+        out.append(static_cast<int>(f));
     return out;
 }
 
@@ -234,6 +243,57 @@ void VisualToolsController::resetTool()
     emit overlayChanged();
     refreshOptions();
     updatePreview();
+}
+
+namespace {
+
+// libass's ass_strcasecmp: ASCII letters only.
+std::string asciiLower(std::string s)
+{
+    for (char &c : s)
+        if (c >= 'A' && c <= 'Z')
+            c = static_cast<char>(c - 'A' + 'a');
+    return s;
+}
+
+} // namespace
+
+void VisualToolsController::setLeasedFonts(const std::vector<std::string> &names)
+{
+    std::set<std::string> lowered;
+    for (const std::string &name : names)
+        lowered.insert(asciiLower(name));
+    if (lowered == m_leasedFonts)
+        return;
+    m_leasedFonts = std::move(lowered);
+    // The Perspective tool measures only fonts it can see: it reads its Line again.
+    if (m_family == Family::Perspective && tool())
+        resetTool();
+}
+
+bool VisualToolsController::fontLeased(const std::string &name) const
+{
+    return m_leasedFonts.contains(asciiLower(name));
+}
+
+bool VisualToolsController::fallsBackToLeased(const std::string &font, bool bold, bool italic,
+                                              std::u16string_view text) const
+{
+    if (m_leasedFonts.empty() || text.empty())
+        return false;
+    // The face the measure resolves the name to, alone: QFontMetrics would
+    // answer for Qt's fallbacks too.
+    QFont f(QString::fromStdString(font));
+    f.setBold(bold);
+    f.setItalic(italic);
+    const QRawFont raw = QRawFont::fromFont(f);
+    if (!raw.isValid())
+        return true;
+    const QString string = QString::fromUtf16(text.data(), static_cast<qsizetype>(text.size()));
+    for (const char32_t c : string.toUcs4())
+        if (!raw.supportsCharacter(c))
+            return true;
+    return false;
 }
 
 void VisualToolsController::viewChanged()

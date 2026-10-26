@@ -680,6 +680,94 @@ private slots:
         QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-changed-lines.png")));
     }
 
+    // TM1 (#232): with tags from the original carried, a translation that
+    // leaves a run of its Original unplaced gets a corner mark on its text
+    // and "runs not placed" for assistive technology; off, neither.
+    void paintsTheUnplacedRunsMark()
+    {
+        const char *script =
+            "[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[V4+ Styles]\n"
+            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+            "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+            "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+            "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n"
+            "Style: O,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,10,10,10,1\n\n"
+            "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+            "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\i1}Wall {\\b1}high\n"
+            "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}Mur wysoki\n"
+            "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,{\\i1}Wall {\\b1}high\n"
+            "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\i1}Mur {\\b1}wysoki\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setRunMarks(true);
+        model.setDocument(core::loadAss(bytes).document);
+        QCOMPARE(model.rowCount(), 2);
+        QVERIFY(model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
+        QVERIFY(!model.index(1, 0).data(LineTableModel::UnplacedRunsRole).toBool());
+        LineGrid grid;
+        grid.setSize(QSizeF(1280, 100)); // the Text column whole, whatever the fonts make the others
+        grid.setModel(&model);
+        QCOMPARE(grid.rowStateText(0), QStringLiteral("runs not placed"));
+        QCOMPARE(grid.rowStateText(1), QString());
+        int text = -1;
+        for (int c = 0; c < grid.columnCount(); ++c)
+            if (grid.columnTitle(c) == QStringLiteral("Text"))
+                text = c;
+        QVERIFY(text >= 0);
+        const auto paint = [&] {
+            QImage image(1280, 100, QImage::Format_ARGB32);
+            image.fill(Qt::transparent);
+            QPainter painter(&image);
+            grid.paint(&painter);
+            return image;
+        };
+        // The cell's top right corner, against its bottom right one.
+        const QRectF marked = grid.cellRect(0, text);
+        QVERIFY2(marked.right() <= 1280, qPrintable(QString::number(marked.right())));
+        const QPoint corner(int(marked.right()) - 2, int(marked.top()) + 2);
+        const QPoint below(int(marked.right()) - 2, int(marked.bottom()) - 3);
+        QImage image = paint();
+        QVERIFY(image.pixelColor(corner) != image.pixelColor(below));
+        QDir().mkpath(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR));
+        QVERIFY(image.save(QStringLiteral(HIKARI_TEST_ARTIFACT_DIR "/grid-unplaced-runs.png")));
+        // The Line editor's draft placing the run takes the mark off its row.
+        auto draft = *model.recordAt(0);
+        draft.translation = u8"{\\i1}Mur {\\b1}wysoki";
+        model.setDraft(draft);
+        QVERIFY(!model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
+        model.setDraft(std::nullopt);
+        QVERIFY(model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
+        model.setRunMarks(false);
+        QCOMPARE(grid.rowStateText(0), QString());
+        image = paint();
+        QCOMPARE(image.pixelColor(corner), image.pixelColor(below));
+    }
+
+    // TM1: a Line naming a Style the Document lacks reads its runs against
+    // the first Style (legacy GetStyle(0, name)), as the Line editor does.
+    void unplacedRunsOfAMissingStyleUseTheFirstStyle()
+    {
+        const char *script =
+            "[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: Gone\n\n[V4+ Styles]\n"
+            "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+            "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+            "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+            "Style: Heavy,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,2,2,10,10,10,1\n\n"
+            "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+            "Dialogue: 0,0:00:01.00,0:00:02.00,Gone,,0,0,0,,A {\\b0}B{\\b1} C\n"
+            "Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,X Y {\\b1}Z\n";
+        std::vector<std::byte> bytes(std::strlen(script));
+        std::memcpy(bytes.data(), script, bytes.size());
+        LineTableModel model;
+        model.setRunMarks(true);
+        model.setDocument(core::loadAss(bytes).document);
+        QCOMPARE(model.rowCount(), 1);
+        // Under the bold first Style the run is the unbold "B", not placed;
+        // read against no Style it would be the bold "C", placed on "Z".
+        QVERIFY(model.index(0, 0).data(LineTableModel::UnplacedRunsRole).toBool());
+    }
+
     // GR2: a row showing the Line editor's uncommitted draft paints its text
     // live and a triangle in place of the changed-Line circle, on the
     // committed Line's label colour; reverting brings the circle back.

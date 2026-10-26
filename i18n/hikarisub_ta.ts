@@ -1400,6 +1400,54 @@ to the color selection location</source>
         <translation>புதிய FPS</translation>
     </message>
     <message>
+        <source>Keep as is</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change resolution only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample and stretch</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open video</source>
+        <translation type="unfinished">வீடியோவைத் திற</translation>
+    </message>
+    <message>
+        <source>The video is %1 × %2 and the subtitles are %3 × %4.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resample the subtitles to the video? Subtitles › Resample subtitles does it later too.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">பட்டியல்</translation>
+    </message>
+    <message>
+        <source>Every line gets this style.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags at start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Written at the start of every line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resolution</source>
+        <translation type="unfinished">பகுத்தல்</translation>
+    </message>
+    <message>
         <source>Width</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1408,16 +1456,56 @@ to the color selection location</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>FPS</source>
+        <source>The new file’s script resolution.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frame rate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames</source>
+        <translation type="unfinished">சட்டங்கள்</translation>
+    </message>
+    <message>
+        <source>fps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter a frame rate from 1 to 1000.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>MicroDVD counts frames: times become frames at this rate.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Per character</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>ms</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A line lasts its length × this, at least 1 s, and ends where the next one starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing to show until the frame rate is valid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>FPS from video</source>
-        <translation>வீடியோவிலிருந்து FPS</translation>
-    </message>
-    <message>
-        <source>Catalog for style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">வீடியோவிலிருந்து FPS</translation>
     </message>
     <message>
         <source>Style</source>
@@ -1425,7 +1513,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>Time for one letter in milliseconds</source>
-        <translation>மில்லி விநாடிகளில் ஒரு எழுத்துக்கான நேரம்</translation>
+        <translation type="vanished">மில்லி விநாடிகளில் ஒரு எழுத்துக்கான நேரம்</translation>
     </message>
     <message>
         <source>New end times</source>
@@ -1433,19 +1521,11 @@ to the color selection location</source>
     </message>
     <message>
         <source>Tags to paste at the beginning of every ASS line</source>
-        <translation>ஒவ்வொரு ASS வரியின் தொடக்கத்திலும் ஒட்ட வேண்டிய குறிச்சொற்கள்</translation>
+        <translation type="vanished">ஒவ்வொரு ASS வரியின் தொடக்கத்திலும் ஒட்ட வேண்டிய குறிச்சொற்கள்</translation>
     </message>
     <message>
         <source>Resolution when converting to ASS</source>
-        <translation>ASS ஆக மாற்றும்போது தீர்மானம்</translation>
-    </message>
-    <message>
-        <source>The conversion will:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>What the conversion changes</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ASS ஆக மாற்றும்போது தீர்மானம்</translation>
     </message>
     <message>
         <source>Convert</source>
@@ -1453,23 +1533,79 @@ to the color selection location</source>
     </message>
     <message>
         <source>Subtitles resolution</source>
-        <translation>வசனத் தீர்மானம்</translation>
+        <translation type="vanished">வசனத் தீர்மானம்</translation>
+    </message>
+    <message>
+        <source>Subtitles</source>
+        <translation type="unfinished">வசன வரிகள்</translation>
+    </message>
+    <message>
+        <source>Subtitles width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Subtitles height</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>From subtitles</source>
         <translation>வசனங்களிலிருந்து</translation>
     </message>
     <message>
+        <source>No video is open</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The resolution the lines are written for now.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Target height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The same as the subtitles: nothing to resample.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Positions, sizes and margins are scaled by %1.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scaled by %1 across and %2 down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The aspect ratio changes from %1 to %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Target resolution</source>
-        <translation>இலக்கு தீர்மானம்</translation>
+        <translation type="vanished">இலக்கு தீர்மானம்</translation>
     </message>
     <message>
         <source>Resample options</source>
-        <translation>மறுமாதிரியாக்க விருப்பங்கள்</translation>
+        <translation type="vanished">மறுமாதிரியாக்க விருப்பங்கள்</translation>
     </message>
     <message>
         <source>No stretch</source>
-        <translation>நீட்டிக்க இல்லை</translation>
+        <translation type="vanished">நீட்டிக்க இல்லை</translation>
     </message>
     <message>
         <source>Stretch</source>
@@ -1477,7 +1613,7 @@ to the color selection location</source>
     </message>
     <message>
         <source>Incompatible resolution</source>
-        <translation>பொருந்தாத தீர்மானம்</translation>
+        <translation type="vanished">பொருந்தாத தீர்மானம்</translation>
     </message>
     <message>
         <source>The video and subtitle resolutions are different.
@@ -1488,7 +1624,7 @@ Subtitle resolution: %3 x %4
 
 Match the resolution to the video?
 </source>
-        <translation type="unfinished">வீடியோ மற்றும் வசன வரிகளின் தீர்மானங்கள் வேறுபடுகின்றன.
+        <translation type="obsolete">வீடியோ மற்றும் வசன வரிகளின் தீர்மானங்கள் வேறுபடுகின்றன.
 அவற்றை இப்போது மாற்றலாம் அல்லது &apos;வசனத் தீர்மானத்தை மாற்று&apos; என்பதைப் பயன்படுத்தலாம்.
 
 வீடியோ தீர்மானம்: %1 x %2
@@ -1499,27 +1635,27 @@ Match the resolution to the video?
     </message>
     <message>
         <source>Change only the subtitle resolution</source>
-        <translation>வசனத் தீர்மானத்தை மட்டுமே மாற்றவும்</translation>
+        <translation type="vanished">வசனத் தீர்மானத்தை மட்டுமே மாற்றவும்</translation>
     </message>
     <message>
         <source>Resample subtitles (no stretch)</source>
-        <translation>வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி இல்லை)</translation>
+        <translation type="vanished">வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி இல்லை)</translation>
     </message>
     <message>
         <source>Resample subtitles (stretch)</source>
-        <translation>வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி)</translation>
+        <translation type="vanished">வசன வரிகளை மறுமாதிரியாக்கு (நீட்சி)</translation>
     </message>
     <message>
         <source>Change</source>
-        <translation>மாற்று</translation>
+        <translation type="vanished">மாற்று</translation>
     </message>
     <message>
         <source>Do not change</source>
-        <translation>மாற்ற வேண்டாம்</translation>
+        <translation type="vanished">மாற்ற வேண்டாம்</translation>
     </message>
     <message>
         <source>Disable warning</source>
-        <translation>எச்சரிக்கை முடக்கு</translation>
+        <translation type="vanished">எச்சரிக்கை முடக்கு</translation>
     </message>
     <message>
         <source>In line %1, value &apos;%2&apos; cannot be scaled
@@ -2563,7 +2699,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Manages font catalogs</source>
-        <translation>எழுத்துரு பட்டியல்களை நிர்வகிக்கிறது</translation>
+        <translation type="vanished">எழுத்துரு பட்டியல்களை நிர்வகிக்கிறது</translation>
     </message>
     <message>
         <source>Allows managing font catalogs</source>
@@ -2587,39 +2723,19 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Catalogs:</source>
-        <translation>பட்டியல்கள்:</translation>
-    </message>
-    <message>
-        <source>Choose or type a catalog name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add a catalog with this name</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">பட்டியல்கள்:</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>தொகு</translation>
-    </message>
-    <message>
-        <source>Edit the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">தொகு</translation>
     </message>
     <message>
         <source>Delete</source>
         <translation>நீக்கு</translation>
     </message>
     <message>
-        <source>Delete the catalog</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Load</source>
-        <translation>ஏற்று</translation>
-    </message>
-    <message>
-        <source>Load a catalog from a file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ஏற்று</translation>
     </message>
     <message>
         <source>Refresh fonts</source>
@@ -2631,19 +2747,177 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Find:</source>
-        <translation>கண்டுபிடி:</translation>
+        <translation type="vanished">கண்டுபிடி:</translation>
     </message>
     <message>
         <source>Save filter</source>
-        <translation>வடிகட்டியை சேமிக்கவும்</translation>
+        <translation type="vanished">வடிகட்டியை சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Font name</source>
-        <translation>எழுத்துரு பெயர்</translation>
+        <translation type="vanished">எழுத்துரு பெயர்</translation>
+    </message>
+    <message>
+        <source>Enter a name for the catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A catalog named “%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">மாற்று</translation>
+    </message>
+    <message>
+        <source>Delete font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the catalog “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It holds no fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its fonts stay installed and in their other catalogs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file holds no font catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 catalogs in “%3” already exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file’s new catalogs are added.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Those with the same fonts as yours are left as they are.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Catalog</source>
         <translation>பட்டியல்</translation>
+    </message>
+    <message>
+        <source>%1 here, +%2 new</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 here, %2 in the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load 1 catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Load %n catalogs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n new</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n merged</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n replaced</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n renamed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Loaded 1 font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Loaded %n font catalogs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>From %1: %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load from a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not in a catalog</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sample</source>
@@ -2654,20 +2928,40 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” in “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not saved: the safety copy could not be written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalogs are saved automatically to FontCatalogs.txt in the &quot;Config&quot; folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fonts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mark %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalog of %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
-        <translation>பட்டியல்களுக்குத் தானியங்கு சேமிப்பு உள்ளது; கோப்புகள் &quot;Config&quot; கோப்புறையில் சேமிக்கப்படும்.</translation>
+        <translation type="vanished">பட்டியல்களுக்குத் தானியங்கு சேமிப்பு உள்ளது; கோப்புகள் &quot;Config&quot; கோப்புறையில் சேமிக்கப்படும்.</translation>
     </message>
     <message>
         <source>Close</source>
@@ -2675,15 +2969,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Select the name of the profile</source>
-        <translation>சுயவிவரத்தின் பெயரைத் தேர்ந்தெடுக்கவும்</translation>
+        <translation type="vanished">சுயவிவரத்தின் பெயரைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
         <source>Choose new catalog name</source>
-        <translation>புதிய அட்டவணை பெயரைத் தேர்வுசெய்க</translation>
+        <translation type="vanished">புதிய அட்டவணை பெயரைத் தேர்வுசெய்க</translation>
     </message>
     <message>
         <source>Replace with:</source>
-        <translation>இதனுடன் மாற்றவும்:</translation>
+        <translation type="vanished">இதனுடன் மாற்றவும்:</translation>
     </message>
     <message>
         <source>OK</source>
@@ -2699,15 +2993,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
-        <translation>புதிய பட்டியலுக்கு ஒரு பெயரை உள்ளிடவும்</translation>
+        <translation type="vanished">புதிய பட்டியலுக்கு ஒரு பெயரை உள்ளிடவும்</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>கேள்வி</translation>
+        <translation type="vanished">கேள்வி</translation>
     </message>
     <message>
         <source>Catalog named &quot;%1&quot; already exists. What to do?</source>
-        <translation type="unfinished">&quot;%1&quot; என்று பெயரிடப்பட்ட பட்டியல் ஏற்கனவே உள்ளது. என்ன செய்வது?</translation>
+        <translation type="obsolete">&quot;%1&quot; என்று பெயரிடப்பட்ட பட்டியல் ஏற்கனவே உள்ளது. என்ன செய்வது?</translation>
     </message>
     <message>
         <source>Merge</source>
@@ -2715,7 +3009,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Are you sure you want to delete this catalog?</source>
-        <translation>இந்த பட்டியலை நீக்க விரும்புகிறீர்களா?</translation>
+        <translation type="vanished">இந்த பட்டியலை நீக்க விரும்புகிறீர்களா?</translation>
     </message>
     <message>
         <source>Choose font catalog file</source>
@@ -2739,11 +3033,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Save folder</source>
-        <translation>கோப்புறையை சேமிக்கவும்</translation>
-    </message>
-    <message>
-        <source>Destination folder</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">கோப்புறையை சேமிக்கவும்</translation>
     </message>
     <message>
         <source>Select a folder</source>
@@ -2751,40 +3041,124 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Options</source>
-        <translation>விருப்பங்கள்</translation>
+        <translation type="vanished">விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Check availability of fonts</source>
-        <translation>எழுத்துருக்களின் கிடைக்கும் தன்மையை சரிபார்க்கவும்</translation>
+        <translation type="vanished">எழுத்துருக்களின் கிடைக்கும் தன்மையை சரிபார்க்கவும்</translation>
     </message>
     <message>
         <source>Copy to selected folder</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட கோப்புறையில் நகலெடுக்கவும்</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட கோப்புறையில் நகலெடுக்கவும்</translation>
     </message>
     <message>
         <source>Zip</source>
-        <translation>சிப்</translation>
+        <translation type="vanished">சிப்</translation>
     </message>
     <message>
         <source>Save to video / subtitles folder.</source>
-        <translation>வீடியோ / வசன வரிகள் கோப்புறையில் சேமிக்கவும்.</translation>
+        <translation type="vanished">வீடியோ / வசன வரிகள் கோப்புறையில் சேமிக்கவும்.</translation>
     </message>
     <message>
         <source>Saves to the video folder
 when demuxing fonts from an MKV file.</source>
-        <translation>வீடியோ கோப்புறையில் சேமிக்கவும்
+        <translation type="vanished">வீடியோ கோப்புறையில் சேமிக்கவும்
  MKV இலிருந்து டெமக்ச் எழுத்துருக்கள்.</translation>
     </message>
     <message>
         <source>Demux fonts from loaded MKV file</source>
-        <translation>ஏற்றப்பட்ட எம்.கே.வி கோப்பிலிருந்து டெமக்ச் எழுத்துருக்கள்</translation>
+        <translation type="vanished">ஏற்றப்பட்ட எம்.கே.வி கோப்பிலிருந்து டெமக்ச் எழுத்துருக்கள்</translation>
     </message>
     <message>
         <source>Font collector log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Write this incomplete collection, labelled incomplete</source>
+        <source>Lists the fonts the subtitles use and whether this computer has each one.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copies each font file the subtitles use into the folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Puts each font file the subtitles use into a zip archive.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Writing the new archive replaces it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">மாற்று</translation>
+    </message>
+    <message>
+        <source>Action</source>
+        <translation type="unfinished">செயல்</translation>
+    </message>
+    <message>
+        <source>Check fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy to a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Zip archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose an archive</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write beside the subtitles, in a “Fonts” folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Beside the video when the fonts come from the MKV file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take the fonts from the loaded MKV file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start lists the fonts the subtitles use.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Some fonts were not found, so the collection is incomplete.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to write %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready to copy to %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Write it, labelled incomplete</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy it, labelled incomplete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2796,12 +3170,24 @@ when demuxing fonts from an MKV file.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Show folder</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start on all tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Start</source>
         <translation>தொடங்கு</translation>
     </message>
     <message>
+        <source>Stop</source>
+        <translation type="unfinished">நிறுத்து</translation>
+    </message>
+    <message>
         <source>Start on tabs</source>
-        <translation>தாவல்களில் தொடங்கவும்</translation>
+        <translation type="vanished">தாவல்களில் தொடங்கவும்</translation>
     </message>
     <message>
         <source>Choose save folder</source>
@@ -2817,11 +3203,67 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Select a font</source>
-        <translation>எழுத்துருவைத் தேர்ந்தெடுக்கவும்</translation>
+        <translation type="vanished">எழுத்துருவைத் தேர்ந்தெடுக்கவும்</translation>
     </message>
     <message>
         <source>Font</source>
         <translation>எழுத்துரு</translation>
+    </message>
+    <message>
+        <source>Font selection</source>
+        <translation type="unfinished">எழுத்துரு தேர்வு</translation>
+    </message>
+    <message>
+        <source>Search fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font catalog: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only fonts that have “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to a catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add “%1” to a catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font is called “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is installed but not in this list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font is in “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No fonts match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use “%1” anyway</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Size</source>
@@ -2830,6 +3272,10 @@ when demuxing fonts from an MKV file.</source>
     <message>
         <source>Font size</source>
         <translation>எழுத்துரு அளவு</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Bold</source>
@@ -2847,20 +3293,78 @@ when demuxing fonts from an MKV file.</source>
         <source>Strikethrough</source>
         <translation>ச்ட்ரைகெத்ரோ</translation>
     </message>
-    <message>
-        <source>Filtering and font catalogs</source>
-        <translation>வடிகட்டுதல் மற்றும் எழுத்துரு பட்டியல்கள்</translation>
+    <message numerus="yes">
+        <source>%1 of %n fonts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>Preview</source>
-        <translation>முன்னோட்டம்</translation>
+        <source>1 font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n fonts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>AaBbCcDdEeFfGg 0123456789</source>
+        <source>Sample text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The subtitle renderer uses %1 (%2).</source>
+        <source>The line’s selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Style editor’s sample text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage catalogs…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No catalogs yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalog…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts from subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only fonts that have these characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">இடு</translation>
+    </message>
+    <message>
+        <source>Filtering and font catalogs</source>
+        <translation type="vanished">வடிகட்டுதல் மற்றும் எழுத்துரு பட்டியல்கள்</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="vanished">முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>Drawn by the subtitle renderer with %1 (%2).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2877,11 +3381,11 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Remove all contents of catalog</source>
-        <translation>பட்டியலின் அனைத்து உள்ளடக்கங்களையும் அகற்று</translation>
+        <translation type="vanished">பட்டியலின் அனைத்து உள்ளடக்கங்களையும் அகற்று</translation>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
-        <translation>திறந்துள்ள அனைத்து வசன வரிகளிலிருந்தும் எழுத்துருக்களைச் சேர்க்கவும்</translation>
+        <translation type="vanished">திறந்துள்ள அனைத்து வசன வரிகளிலிருந்தும் எழுத்துருக்களைச் சேர்க்கவும்</translation>
     </message>
     <message>
         <source>All fonts</source>
@@ -2895,7 +3399,7 @@ when demuxing fonts from an MKV file.</source>
         <source>For adding fonts to catalog,
 click &quot;Manage&quot; button first,
 to create new catalog.</source>
-        <translation>பட்டியலில் எழுத்துருக்களைச் சேர்ப்பதற்கு, 
+        <translation type="vanished">பட்டியலில் எழுத்துருக்களைச் சேர்ப்பதற்கு, 
 முதலில் &quot;நிர்வகி&quot; பொத்தானைக் சொடுக்கு செய்க, 
 புதிய பட்டியலை உருவாக்க.</translation>
     </message>
@@ -3251,6 +3755,72 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Completed successfully and copied %1 fonts.</source>
         <translation type="unfinished">வெற்றிகரமாக நிறைவு செய்யப்பட்டு %1 எழுத்துருக்களை நகலெடுத்தது.</translation>
+    </message>
+    <message>
+        <source>Added 1 font to “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n fonts to “%1”</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The fonts were added to “%1” but could not be saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>FontCatalogs.txt in the &quot;Config&quot; folder could not be written. Saving is tried again on exit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the styles and %1 tags of the open files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the styles and %1 tags of %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a catalog or type a new name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All open files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the catalog’s fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The fonts of every style and every %1 tag in all %n open files.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The fonts of every style and every %1 tag in %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fonts “%1” holds now are removed first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -5378,6 +5948,10 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Merge</source>
+        <translation type="unfinished">ஒன்றிணைக்கவும்</translation>
+    </message>
+    <message>
         <source>Action</source>
         <translation type="unfinished">செயல்</translation>
     </message>
@@ -5387,6 +5961,10 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>New name for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -7193,6 +7771,18 @@ and will be changed to the default</source>
         <translation>ASS கோப்பு பண்புகள்</translation>
     </message>
     <message>
+        <source>Credits</source>
+        <translation type="unfinished">நன்றியுரை</translation>
+    </message>
+    <message>
+        <source>Same as the subtitles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rendering</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Save</source>
         <translation>சேமி</translation>
     </message>
@@ -7202,7 +7792,7 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Subtitle information</source>
-        <translation>வசன வரிகள் செய்தி</translation>
+        <translation type="vanished">வசன வரிகள் செய்தி</translation>
     </message>
     <message>
         <source>Title</source>
@@ -7261,16 +7851,12 @@ and will be changed to the default</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Link the layout resolution to the subtitle resolution</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>YCbCr matrix</source>
         <translation>YCBCR மேட்ரிக்ச்</translation>
     </message>
     <message>
         <source>Options</source>
-        <translation>விருப்பங்கள்</translation>
+        <translation type="vanished">விருப்பங்கள்</translation>
     </message>
     <message>
         <source>Wrap style</source>
@@ -8521,6 +9107,14 @@ please save with different name or change file attribute.</source>
 <context>
     <name>HikariSub.Spelling</name>
     <message>
+        <source>Ignore words in capitals</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Words added to dictionary…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fix suggestions</source>
         <translation>பரிந்துரைகளை சரிசெய்யவும்</translation>
     </message>
@@ -8534,11 +9128,11 @@ please save with different name or change file attribute.</source>
     </message>
     <message>
         <source>Misspell word:</source>
-        <translation>எழுத்துப்பிழை:</translation>
+        <translation type="vanished">எழுத்துப்பிழை:</translation>
     </message>
     <message>
         <source>Replace to:</source>
-        <translation>இதற்கு பதிலாக:</translation>
+        <translation type="vanished">இதற்கு பதிலாக:</translation>
     </message>
     <message>
         <source>No suggestions</source>
@@ -8555,7 +9149,7 @@ please save with different name or change file attribute.</source>
     <message>
         <source>Ignore words written entirely
 in uppercase</source>
-        <translation>முழுவதும் பெரிய எழுத்துகளில் எழுதப்பட்ட
+        <translation type="vanished">முழுவதும் பெரிய எழுத்துகளில் எழுதப்பட்ட
 சொற்களைப் புறக்கணிக்கவும்</translation>
     </message>
     <message>
@@ -8565,6 +9159,42 @@ in uppercase</source>
     <message>
         <source>Replace all</source>
         <translation>அனைத்தையும் மாற்றவும்</translation>
+    </message>
+    <message>
+        <source>Checks the spelling from the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No dictionaries found</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No spelling errors in %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spelling settings…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Check spelling</source>
+        <translation type="unfinished">எழுத்துப்பிழை சரிபார்ப்பு</translation>
+    </message>
+    <message>
+        <source>Misspelled word: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace with</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Ignore</source>
@@ -8580,11 +9210,34 @@ in uppercase</source>
     </message>
     <message>
         <source>Remove from dictionary</source>
-        <translation>அகராதியிலிருந்து அகற்று</translation>
+        <translation type="vanished">அகராதியிலிருந்து அகற்று</translation>
     </message>
     <message>
         <source>Remove from dictionary words added by user.</source>
-        <translation>பயனரால் சேர்க்கப்பட்ட அகராதி சொற்களிலிருந்து அகற்று.</translation>
+        <translation type="vanished">பயனரால் சேர்க்கப்பட்ட அகராதி சொற்களிலிருந்து அகற்று.</translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">வடிப்பி</translation>
+    </message>
+    <message>
+        <source>No words added</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No matching words</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Remove %n word(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Remove</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
@@ -8679,7 +9332,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>உறுதிப்படுத்தல்</translation>
+        <translation type="vanished">உறுதிப்படுத்தல்</translation>
     </message>
     <message>
         <source>Style named &quot;%1&quot; already exists. Replace?</source>
@@ -8702,15 +9355,7 @@ Spell checking will be disabled</source>
         <translation>ரத்துசெய்</translation>
     </message>
     <message>
-        <source>Missing style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>New style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8731,10 +9376,6 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>colours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>outline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -8793,27 +9434,27 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>கேள்வி</translation>
+        <translation type="vanished">கேள்வி</translation>
     </message>
     <message>
         <source>Change all selected styles?</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட அனைத்து பாணிகளையும் மாற்றவா?</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட அனைத்து பாணிகளையும் மாற்றவா?</translation>
     </message>
     <message>
         <source>Style name modified. Do you want to change all instances to the new name?</source>
-        <translation>பாணி பெயர் மாற்றியமைக்கப்பட்டது. எல்லா நிகழ்வுகளையும் புதிய பெயருக்கு மாற்ற விரும்புகிறீர்களா?</translation>
+        <translation type="vanished">பாணி பெயர் மாற்றியமைக்கப்பட்டது. எல்லா நிகழ்வுகளையும் புதிய பெயருக்கு மாற்ற விரும்புகிறீர்களா?</translation>
     </message>
     <message>
         <source>Styles stored:</source>
-        <translation>ச்டைல்கள் சேமிக்கப்பட்டன:</translation>
+        <translation type="vanished">ச்டைல்கள் சேமிக்கப்பட்டன:</translation>
     </message>
     <message>
         <source>Styles in ASS file:</source>
-        <translation>ASS கோப்பில் உள்ள பாணிகள்:</translation>
+        <translation type="vanished">ASS கோப்பில் உள்ள பாணிகள்:</translation>
     </message>
     <message>
         <source>Catalog:</source>
-        <translation>பட்டியல்:</translation>
+        <translation type="vanished">பட்டியல்:</translation>
     </message>
     <message>
         <source>Style catalog</source>
@@ -8821,11 +9462,11 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>New</source>
-        <translation>புதிய</translation>
+        <translation type="vanished">புதிய</translation>
     </message>
     <message>
         <source>New style catalog</source>
-        <translation>புதிய பாணிகள் பட்டியல்</translation>
+        <translation type="vanished">புதிய பாணிகள் பட்டியல்</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -8833,27 +9474,19 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Delete selected style catalog</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட ச்டைல்கள் பட்டியலை நீக்கு</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட ச்டைல்கள் பட்டியலை நீக்கு</translation>
     </message>
     <message>
         <source>Create new style in storage</source>
-        <translation>சேமிப்பகத்தில் புதிய பாணியை உருவாக்கவும்</translation>
+        <translation type="vanished">சேமிப்பகத்தில் புதிய பாணியை உருவாக்கவும்</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation>நகலெடு</translation>
-    </message>
-    <message>
-        <source>Copy the selected style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">நகலெடு</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>தொகு</translation>
-    </message>
-    <message>
-        <source>Edit the selected style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">தொகு</translation>
     </message>
     <message>
         <source>Load</source>
@@ -8861,83 +9494,63 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Load style from external ASS file to storage</source>
-        <translation>வெளிப்புற ASS கோப்பிலிருந்து சேமிப்பகத்திற்கு பாணியை ஏற்றவும்</translation>
-    </message>
-    <message>
-        <source>Delete the selected styles</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">வெளிப்புற ASS கோப்பிலிருந்து சேமிப்பகத்திற்கு பாணியை ஏற்றவும்</translation>
     </message>
     <message>
         <source>Sort</source>
-        <translation>வரிசைப்படுத்து</translation>
-    </message>
-    <message>
-        <source>Sort the styles by name</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">வரிசைப்படுத்து</translation>
     </message>
     <message>
         <source>Move selected styles to beginning</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளை தொடக்கத்திற்கு நகர்த்தவும்</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட பாணிகளை தொடக்கத்திற்கு நகர்த்தவும்</translation>
     </message>
     <message>
         <source>Move selected styles up</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளை நகர்த்தவும்</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட பாணிகளை நகர்த்தவும்</translation>
     </message>
     <message>
         <source>Move selected styles down</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளை கீழே நகர்த்தவும்</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட பாணிகளை கீழே நகர்த்தவும்</translation>
     </message>
     <message>
         <source>Move selected styles to end</source>
-        <translation>தேர்ந்தெடுக்கப்பட்ட பாணிகளை முடிவுக்கு நகர்த்தவும்</translation>
+        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட பாணிகளை முடிவுக்கு நகர்த்தவும்</translation>
     </message>
     <message>
         <source>Add to storage</source>
-        <translation>சேமிப்பகத்தில் சேர்க்கவும்</translation>
+        <translation type="vanished">சேமிப்பகத்தில் சேர்க்கவும்</translation>
     </message>
     <message>
         <source>Copy style from ASS to storage</source>
-        <translation>ASS இலிருந்து சேமிப்பகத்திற்கு பாணியை நகலெடுக்கவும்</translation>
-    </message>
-    <message>
-        <source>the storage</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">ASS இலிருந்து சேமிப்பகத்திற்கு பாணியை நகலெடுக்கவும்</translation>
     </message>
     <message>
         <source>Add to ASS</source>
-        <translation>ASS இல் சேர்க்கவும்</translation>
+        <translation type="vanished">ASS இல் சேர்க்கவும்</translation>
     </message>
     <message>
         <source>Copy style from storage to ASS</source>
-        <translation>சேமிப்பகத்திலிருந்து ASS க்கு பாணியை நகலெடுக்கவும்</translation>
-    </message>
-    <message>
-        <source>the ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">சேமிப்பகத்திலிருந்து ASS க்கு பாணியை நகலெடுக்கவும்</translation>
     </message>
     <message>
         <source>Add to all open ASS files</source>
-        <translation>திறந்துள்ள அனைத்து ASS கோப்புகளிலும் சேர்க்கவும்</translation>
-    </message>
-    <message>
-        <source>Copy style from storage to every open ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">திறந்துள்ள அனைத்து ASS கோப்புகளிலும் சேர்க்கவும்</translation>
     </message>
     <message>
         <source>Create new ASS style</source>
-        <translation>புதிய ASS பாணியை உருவாக்கவும்</translation>
+        <translation type="vanished">புதிய ASS பாணியை உருவாக்கவும்</translation>
     </message>
     <message>
         <source>Load style from external ASS file</source>
-        <translation>வெளிப்புற ASS கோப்பிலிருந்து பாணியை ஏற்றவும்</translation>
+        <translation type="vanished">வெளிப்புற ASS கோப்பிலிருந்து பாணியை ஏற்றவும்</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation>சுத்தம் செய்</translation>
+        <translation type="vanished">சுத்தம் செய்</translation>
     </message>
     <message>
         <source>Delete unused ASS styles</source>
-        <translation>பயன்படுத்தப்படாத ASS பாணிகளை நீக்கு</translation>
+        <translation type="vanished">பயன்படுத்தப்படாத ASS பாணிகளை நீக்கு</translation>
     </message>
     <message>
         <source>OK</source>
@@ -8945,15 +9558,15 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Close</source>
-        <translation>மூடு</translation>
+        <translation type="vanished">மூடு</translation>
     </message>
     <message>
         <source>Style name:</source>
-        <translation>பாணி பெயர்:</translation>
+        <translation type="vanished">பாணி பெயர்:</translation>
     </message>
     <message>
         <source>Font and size:</source>
-        <translation>எழுத்துரு மற்றும் அளவு:</translation>
+        <translation type="vanished">எழுத்துரு மற்றும் அளவு:</translation>
     </message>
     <message>
         <source>Font</source>
@@ -8981,15 +9594,15 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Colors and transparency:</source>
-        <translation>வண்ணங்கள் மற்றும் வெளிப்படைத்தன்மை:</translation>
+        <translation type="vanished">வண்ணங்கள் மற்றும் வெளிப்படைத்தன்மை:</translation>
     </message>
     <message>
         <source>First</source>
-        <translation>முதல்</translation>
+        <translation type="vanished">முதல்</translation>
     </message>
     <message>
         <source>Second</source>
-        <translation>இரண்டாவது</translation>
+        <translation type="vanished">இரண்டாவது</translation>
     </message>
     <message>
         <source>Border</source>
@@ -9000,36 +9613,32 @@ Spell checking will be disabled</source>
         <translation>நிழல்</translation>
     </message>
     <message>
-        <source>transparency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Border:</source>
-        <translation>எல்லை:</translation>
+        <translation type="vanished">எல்லை:</translation>
     </message>
     <message>
         <source>Shadow:</source>
-        <translation>நிழல்:</translation>
+        <translation type="vanished">நிழல்:</translation>
     </message>
     <message>
         <source>Scale X:</source>
-        <translation>அளவு X:</translation>
+        <translation type="vanished">அளவு X:</translation>
     </message>
     <message>
         <source>Scale Y:</source>
-        <translation>அளவு Y:</translation>
+        <translation type="vanished">அளவு Y:</translation>
     </message>
     <message>
         <source>Angle:</source>
-        <translation>கோணம்:</translation>
+        <translation type="vanished">கோணம்:</translation>
     </message>
     <message>
         <source>Spacing:</source>
-        <translation>இடைவெளி:</translation>
+        <translation type="vanished">இடைவெளி:</translation>
     </message>
     <message>
         <source>Border type:</source>
-        <translation>எல்லை வகை:</translation>
+        <translation type="vanished">எல்லை வகை:</translation>
     </message>
     <message>
         <source>Opaque box</source>
@@ -9037,23 +9646,317 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Left margin:</source>
-        <translation>இடது விளிம்பு:</translation>
+        <translation type="vanished">இடது விளிம்பு:</translation>
     </message>
     <message>
         <source>Right:</source>
-        <translation>வலது:</translation>
+        <translation type="vanished">வலது:</translation>
     </message>
     <message>
         <source>Vertical:</source>
-        <translation>செங்குத்து:</translation>
+        <translation type="vanished">செங்குத்து:</translation>
     </message>
     <message>
         <source>Alignment:</source>
-        <translation>சீரமைப்பு:</translation>
+        <translation type="vanished">சீரமைப்பு:</translation>
     </message>
     <message>
         <source>Text encoding:</source>
-        <translation>உரை குறியாக்கம்:</translation>
+        <translation type="vanished">உரை குறியாக்கம்:</translation>
+    </message>
+    <message>
+        <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file has no style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create it from Default and edit it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The style is gone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply the changes to “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog “%1” is shown now; the changes go to “%2”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply the changes to the %n selected styles?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No unused styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted 1 unused style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Deleted %n unused styles</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Every style is used by a line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ctrl+Z puts them back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>border</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The styles changed while this was open. Nothing was copied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the catalog “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It has no styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its one style goes with it. This can’t be undone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Its %n styles go with it. This can’t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A style needs a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog already has a style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file already has a style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its file was closed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style not renamed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” keeps its name; the other changes were applied. %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes to “%1” not applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file shown now uses the catalog “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited it in the file shown before.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put back the value it had</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multiple values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: multiple values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 transparency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency, 0 (opaque) to 255</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styles in this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1, %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changes not applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up (Alt+Up)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down (Alt+Down)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load from a file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">பட்டியல்</translation>
+    </message>
+    <message>
+        <source>Add to file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected catalog styles into this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected file styles into the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to all open files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected catalog styles into every open file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tab has no ASS styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles: the preview shows %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">பெயர்</translation>
+    </message>
+    <message>
+        <source>Rename it in the line that uses it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Rename it in the %n lines that use it</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Family</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Emphasis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text encoding</source>
+        <translation type="unfinished">உரை குறியாக்கம்</translation>
     </message>
     <message>
         <source>0 - ANSI</source>
@@ -9133,7 +10036,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Style preview:</source>
-        <translation>பாணி முன்னோட்டம்:</translation>
+        <translation type="vanished">பாணி முன்னோட்டம்:</translation>
     </message>
     <message>
         <source>Preview text</source>
@@ -9152,11 +10055,115 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Colours and transparency</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Do you really want to delete the catalog named &quot;%1&quot;?</source>
+        <source>Primary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Secondary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape and position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow distance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alignment %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished">இடது</translation>
+    </message>
+    <message>
+        <source>Middle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished">வலது</translation>
+    </message>
+    <message>
+        <source>Bottom left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left margin</source>
+        <translation type="unfinished">இடது விளிம்பு</translation>
+    </message>
+    <message>
+        <source>Right margin</source>
+        <translation type="unfinished">வலது விளிம்பு</translation>
+    </message>
+    <message>
+        <source>Vertical margin</source>
+        <translation type="unfinished">செங்குத்து விளிம்பு</translation>
+    </message>
+    <message>
+        <source>Revert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A catalog named “%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9180,23 +10187,16 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The catalog “%1” no longer exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Style named &quot;%1&quot; already exists.</source>
         <translation type="unfinished">&quot;%1&quot; என்று பெயரிடப்பட்ட பாணி ஏற்கனவே உள்ளது.</translation>
     </message>
     <message>
         <source>None</source>
         <translation>எதுவுமில்லை</translation>
-    </message>
-    <message>
-        <source>No unused styles.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n style(s) deleted: %1.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message>
         <source>Styles used:
@@ -9223,10 +10223,6 @@ Styles deleted:
     <message>
         <source>Filter</source>
         <translation type="unfinished">வடிப்பி</translation>
-    </message>
-    <message>
-        <source>Filter styles</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Style</source>
@@ -9266,18 +10262,6 @@ Styles deleted:
     </message>
     <message>
         <source>Apply to the selected lines: sets their style (Enter, or double-click a style)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Duplicate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -10811,6 +11795,14 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Origin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

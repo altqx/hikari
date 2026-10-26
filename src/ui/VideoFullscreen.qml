@@ -515,12 +515,12 @@ Window {
                         onClicked: fs.shell.openEditorFromFullScreen() // Main's: the Line editor shown too (WS3)
                     }
                     Item { Layout.fillWidth: !currentLine.visible }
-                    // FS1-tool-rail-contextual: the eleven tools, by name.
+                    // FS1-tool-rail-contextual: the twelve tools, by name.
                     IconButton {
                         id: toolsButton
                         objectName: "fullscreenToolsButton"
                         // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
-                        iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][Math.max(0, fs.shell.visualTools.activeFamily)] ?? ""
+                        iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][Math.max(0, fs.shell.visualTools.activeFamily)] ?? ""
                         text: qsTr("Visual tools")
                         enabled: fs.shell.visualTools.railEnabled
                         down: toolsMenu.visible
@@ -636,19 +636,20 @@ Window {
             objectName: "fullscreenToolsMenu"
             onClosed: keys.forceActiveFocus()
             Instantiator {
-                model: fs.shell.visualTools.families
+                // VT3: in the rail's order; each item names its family's id.
+                model: fs.shell.visualTools.railOrder
                 delegate: ShellMenuItem {
-                    required property var modelData
-                    required property int index
-                    objectName: "fullscreenTool" + index
+                    required property int modelData
+                    readonly property int family: modelData
+                    objectName: "fullscreenTool" + family
                     // In application::visual::Family's order (on one line: icon_tests reads the roles from it).
-                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags"][index] ?? ""
-                    text: modelData.name
+                    iconRole: ["tool-crosshair", "tool-position", "tool-move", "tool-scale", "tool-rotate-z", "tool-rotate-xy", "tool-clip-rect", "tool-clip-vector", "tool-drawing", "tool-move-all", "tool-all-tags", "tool-perspective"][family] ?? ""
+                    text: fs.shell.visualTools.families[family]?.name ?? ""
                     checkable: true
-                    checked: fs.shell.visualTools.activeFamily === index
+                    checked: fs.shell.visualTools.activeFamily === family
                     keepsMenuOpen: false
                     // Choosing the on tool again would go back to the crosshair.
-                    onTriggered: if (fs.shell.visualTools.activeFamily !== index) fs.shell.visualTools.selectFamily(index)
+                    onTriggered: if (fs.shell.visualTools.activeFamily !== family) fs.shell.visualTools.selectFamily(family)
                 }
                 onObjectAdded: (index, object) => toolsMenu.insertItem(index, object)
                 onObjectRemoved: (index, object) => toolsMenu.removeItem(object)

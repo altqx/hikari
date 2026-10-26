@@ -432,6 +432,35 @@ TEST_F(SessionTest, CommitToSelectedCopiesTheModifiedCellsToEverySelectedLine)
     EXPECT_EQ(session.document().lines()[2]->layer.value, 0);
 }
 
+// TM1: a translation cell that only follows the text (the Original's
+// carried tags) is the edited Line's own: the other selected Lines keep
+// theirs, which the companion may write again. One typed stays typed.
+TEST_F(SessionTest, CommitToSelectedKeepsTheOthersTranslationsWhenCarried)
+{
+    Selection selection;
+    selection.active = l1;
+    selection.selected = {l1, l3};
+    session.setSelection(selection);
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.text = u8"new", .translation = u8"nowy", .translationCarried = true}));
+    std::vector<core::LineId> companions;
+    ASSERT_TRUE(session.commitDraftToSelected("Edit Line", false, [&](const core::LineRecord &before, core::LineRecord &after) {
+        companions.push_back(before.id);
+        after.translation = before.translation + u8"!";
+    }));
+    auto lines = session.document().lines();
+    EXPECT_EQ(lines[0]->translation, u8"nowy");
+    EXPECT_EQ(lines[2]->text, u8"new");
+    EXPECT_EQ(lines[2]->translation, u8"!");
+    EXPECT_EQ(companions, std::vector<core::LineId>{l3});
+
+    session.setSelection(selection);
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.translation = u8"typed"}));
+    ASSERT_TRUE(session.editDraft(l1, DraftChange{.text = u8"newer", .translation = u8"typed2", .translationCarried = true}));
+    ASSERT_TRUE(session.commitDraftToSelected());
+    lines = session.document().lines();
+    EXPECT_EQ(lines[2]->translation, u8"typed2"); // typed: Send's cell, copied
+}
+
 TEST_F(SessionTest, CommitToSelectedWithOneLineIsAnOrdinaryCommit)
 {
     ASSERT_TRUE(session.editDraft(l2, DraftChange{.comment = true}));

@@ -856,7 +856,8 @@ std::optional<ConversionResult> convertDocument(const Document &source, Subtitle
 {
     const int type = static_cast<int>(target);
     const int from = static_cast<int>(source.format());
-    if (target == source.format() || target == SubtitleFormat::PlainText || options.fps < 1)
+    if (target == source.format() || target == SubtitleFormat::PlainText || !std::isfinite(options.fps) ||
+        options.fps < 1)
         return std::nullopt;
     ConversionReport report;
     PasteConversion conversion;

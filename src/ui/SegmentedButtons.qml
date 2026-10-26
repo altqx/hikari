@@ -46,14 +46,16 @@ Rectangle {
                 focusPolicy: Qt.StrongFocus
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                implicitWidth: label.implicitWidth + 20
+                // Wide enough for the text in bold, as when chosen.
+                implicitWidth: Math.ceil(Math.max(label.implicitWidth, boldText.implicitWidth)) + 20
                 implicitHeight: label.implicitHeight + 10
                 Accessible.role: Accessible.RadioButton
                 Accessible.name: text
                 Accessible.checkable: true
                 Accessible.checked: checked
                 ToolTip.visible: hovered && (modelData.tip || "").length > 0
-                ToolTip.text: modelData.tip || ""
+                // Plain, as IconToolButton's tip.
+                ToolTip.text: (modelData.tip || "").replace(/</g, "<\u2060").replace(/&lt;/g, "&\u2060lt;")
                 onClicked: {
                     if (index !== group.currentIndex)
                         group.activated(index)
@@ -79,8 +81,16 @@ Rectangle {
                     }
                     FocusRing { control: choice }
                 }
+                Label {
+                    id: boldText
+                    visible: false
+                    textFormat: Text.PlainText // measured as the label shows it
+                    text: choice.text
+                    font.bold: true
+                }
                 contentItem: Label {
                     id: label
+                    textFormat: Text.PlainText // a choice may name a catalog from a file
                     text: choice.text
                     font.bold: choice.checked
                     color: choice.enabled ? Theme.text : Theme.disabled

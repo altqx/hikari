@@ -16,7 +16,7 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 | A1 | ui/Main.qml spellingNotice | Spellchecker | No dictionary files were found… / Failed to initialize spell checker. | warning / error | yes | toast | Spellchecker |
 | A2 | same | Spellchecker | Error. Word "%1" was not added. | error | yes | toast | Add word to dictionary |
 | A3 | ui/SpellCheckerDialog.qml message | Warning | No spelling errors were found | info | yes | toast | Spellchecker |
-| A4 | same | Warning | The edited line cannot be committed. (and Replace refusals) | error | yes | message box | Replace |
+| A4 | same | Warning | The edited line cannot be committed. (and Replace refusals) | error | yes | message box; a toast since PU6 (the Spellchecker a panel) | Replace / Replace all |
 | A5 | ui/Main.qml cleanStylesMessage | Status of deleted styles | Styles used / Styles deleted lists | info | yes | toast + Details | Delete unused styles |
 | A6 | ui/StyleManager.qml message (Clear) | Status of deleted styles | same | info | yes | toast + Details | Delete unused styles |
 | A7 | same (createStyle, commit) | none (stale) | The document has no styles to edit. / Style named "%1" already exists. | error | yes | message box | New style / Save style |
@@ -36,7 +36,7 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 | A21 | ui/MatroskaSubtitles.qml noTracksMessage | Load subtitles from an MKV/OGM file | The file does not contain any subtitle tracks. | info | yes | toast | same |
 | A22 | ui/AllTagsEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | inline error under the field (PU5-inline-errors) | Edit tags |
 | A23 | ui/ShapesEditionDialog.qml messageBox | Error | Add/Remove/Save refusals | error | yes | inline error under the field (PU5-inline-errors) | Edit shapes |
-| A24 | ui/FontCatalogWindow.qml info | Info | Enter a name for the new catalog | warning | yes | message box | Manage font catalogs |
+| A24 | ui/FontCatalogWindow.qml info | Info | Enter a name for the new catalog | warning | yes | message box | Manage font catalogs (PU3: gone; New and Rename say an empty name inline in their popovers) |
 | A25 | ui/FontCollectorDialog.qml message | none | Start refusals | warning / error | yes | message box | Font collector |
 | A26 | ui/SettingsDialog.qml warningDialog | Warning | The selected %1 for conversion does not exist… | warning | yes | toast | Settings |
 | A27 | ui/SelectLinesDialog.qml result | Select (Close + OK) | %1 lines selected. … | info | yes | toast | Select lines |
@@ -46,6 +46,12 @@ ce0c6740e. The PU cards follow the same rule for the popups they move.
 16 objects leave the allow-list; SearchTool:question stays on it for its Yes/No questions (PU2). The update
 notices were already windows of their own (DG1); UpdateMessage.qml is gone. A11 and A14 put the script's
 error text under Details.
+
+PU6 ([#308](https://github.com/altqx/hikari/issues/308)) moved the questions of its popups the same way: the
+Font collector's "The zip file already exists, delete it?" (Yes / No, titled "Confirmation") is a message box
+titled "Font collector" with Replace / Cancel (PU6-font-collector-replace), and "Incompatible resolution"
+(Change / Do not change / Disable warning) a message box titled "Open video" with its choices as buttons and
+"Don't ask again" (PU6-resolution-question). A3 and A4 come from the Spellchecker panel (PU6-spellchecker-panel).
 
 PU7 ([#309](https://github.com/altqx/hikari/issues/309)): Settings > Hotkeys' Import legacy hotkeys… tells
 its result in a toast titled "Import legacy hotkeys": info with how many bindings were added, kept and

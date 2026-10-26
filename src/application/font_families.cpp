@@ -155,6 +155,15 @@ const std::vector<u16> &FontFamilies::filteredFonts(u16v filter)
     return *m_filtered;
 }
 
+void FontFamilies::refilter(u16v filter)
+{
+    // m_filter may already hold it (filteredFonts remembers the last text
+    // without listing): the list is made again all the same.
+    m_filter = u16(filter);
+    if (m_filtered)
+        enumerate();
+}
+
 std::vector<std::string> FontFamilies::unreadableExternalFonts()
 {
     std::vector<std::string> out;

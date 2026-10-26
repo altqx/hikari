@@ -57,9 +57,13 @@ class FontCatalogsController : public QObject {
     // The management window's status bar field 0: "Autosave" for 10 s after
     // each safety copy.
     Q_PROPERTY(QString autosaveStatus READ autosaveStatus NOTIFY autosaveStatusChanged)
+    // The last safety copy could not be written (PU3: the footer says so).
+    Q_PROPERTY(bool autosaveFailed READ autosaveFailed NOTIFY autosaveStatusChanged)
     // The font environment generation: each re-listing makes a new one.
     Q_PROPERTY(int generation READ generation NOTIFY fontsChanged)
     Q_PROPERTY(int previewKey READ previewKey NOTIFY previewChanged)
+    // PU3: the font picker's preview, "image://fontcatalogpreview/sample/<key>".
+    Q_PROPERTY(int sampleKey READ sampleKey NOTIFY sampleChanged)
 public:
     struct Hooks {
         // CollectFontsFromSubtitles' Documents: every tab's from the first
@@ -68,6 +72,9 @@ public:
         std::function<void(const QString &)> log; // HikariLog
         // The external fonts changed (renderers take them on their next context).
         std::function<void()> fontsChanged;
+        // The editing target's attached fonts, which its renderer takes
+        // before the external ones (the picker's preview and its note).
+        std::function<std::vector<application::FontLease>()> documentFonts;
     };
 
     FontCatalogsController(ui::SettingsStore &settings, std::filesystem::path catalogDir, Hooks hooks,
@@ -79,9 +86,12 @@ public:
     bool filterOn() const;
     QString previewText() const;
     QString autosaveStatus() const { return m_autosaveStatus; }
+    bool autosaveFailed() const { return m_autosaveFailed; }
     int generation() const { return int(m_generation); }
     int previewKey() const { return m_previewKey; }
     QImage preview() const { return m_preview; }
+    int sampleKey() const { return m_sampleKey; }
+    QImage sample() const { return m_sample; }
 
     // The catalog choice of the font dialog and the Style editor: "All
     // fonts" and "Without catalog" inserted at 0 and 1 (HikariChoice::Insert).
@@ -100,6 +110,9 @@ public:
     Q_INVOKABLE void setPreviewText(const QString &text);
     // "Save filter": STYLE_EDIT_FILTER_TEXT.
     Q_INVOKABLE void saveFilterText(const QString &text);
+    // The picker's characters chip: saved, and the filtered list made with
+    // it now (legacy's keeps the first until the fonts are read again).
+    Q_INVOKABLE void applyFilterText(const QString &text);
     // Every installed font, sorted (FontEnum.GetFonts).
     Q_INVOKABLE QStringList allFonts();
 
@@ -116,6 +129,15 @@ public:
     Q_INVOKABLE QString catalogOf(const QString &font) const;
     Q_INVOKABLE bool isFontInCatalog(const QString &catalog, const QString &font) const;
     Q_INVOKABLE bool catalogExists(const QString &name) const;
+    // PU3: every catalog holding `font` (map order); a catalog's size; the
+    // name of the catalog called `name` ignoring case ("" for none), which
+    // the windows treat as taken.
+    Q_INVOKABLE QStringList catalogsOf(const QString &font) const;
+    Q_INVOKABLE int catalogSize(const QString &name) const;
+    Q_INVOKABLE QString existingName(const QString &name) const;
+    // The index of `name` in `names` ignoring case as the catalogs do (-1:
+    // none); the load review's taken names.
+    Q_INVOKABLE int sameNameIndex(const QStringList &names, const QString &name) const;
 
     // The management window's Add (AddCatalog: autosave) and the "Add fonts
     // from subtitles" dialog's Add (no autosave). False when it existed.
@@ -130,22 +152,47 @@ public:
     // AddToCatalog's menu: one catalog's check changed for the font, then
     // SaveCatalogs.
     Q_INVOKABLE void toggleFontInCatalog(const QString &catalog, const QString &font, bool add);
-    // "Load": LoadCatalogs(path), merged into the catalogs.
-    Q_INVOKABLE void loadCatalogsFrom(const QUrl &file);
-    // SaveCatalogs (the windows' closing, CATALOG_CHANGED).
-    Q_INVOKABLE void save();
+    // "Load" (PU3-load-review): the catalogs of `file`, kept until
+    // loadReviewed(): {ok, file (its name), total, rows: [{name, here,
+    // there, added}] for each catalog that exists here with other fonts,
+    // names: every catalog's name in the file, same: the count that exists
+    // with the same fonts}. ok is false when
+    // the file cannot be read or holds no catalog.
+    Q_INVOKABLE QVariantMap reviewCatalogFile(const QUrl &file);
+    // The reviewed file loaded: `choices` [{name, action: "merge" |
+    // "replace" | "rename" | "skip", newName}] for the rows, every other
+    // catalog merged (legacy LoadCatalogs). {loaded, added, merged,
+    // replaced, renamed, skipped}: catalogs written, of them new ones, and
+    // so on.
+    Q_INVOKABLE QVariantMap loadReviewed(const QVariantList &choices);
+    // SaveCatalogs (the windows' closing, CATALOG_CHANGED); false when
+    // FontCatalogs.txt could not be written (tried again at the end).
+    Q_INVOKABLE bool save();
     // A "Manage font catalogs" window was made (new FontCatalogList): from
     // then on ~FontCatalogList's SaveCatalogs runs when the controller goes
     // at the application's end, keeping edits made while a window is open.
     Q_INVOKABLE void windowMade() { m_windowMade = true; }
     // GetFontsFromASSDialog's OK: CollectFontsFromSubtitles then SaveCatalogs.
-    Q_INVOKABLE bool collectFromSubtitles(const QString &catalog, bool clear, bool allTabs);
-    // AddToCatalog with no catalog: legacy logged where to create one.
-    Q_INVOKABLE void noCatalogToAddTo();
+    // {done: the catalog existed and took the fonts, saved: FontCatalogs.txt
+    // was written}.
+    Q_INVOKABLE QVariantMap collectFromSubtitles(const QString &catalog, bool clear, bool allTabs);
 
     // The management window's preview: the "FontPreview" Style with `font`
     // (StylePreview::DrawPreview), as "image://fontcatalogpreview/<key>".
     Q_INVOKABLE void renderPreview(const QString &font, int width, int height);
+    // PU3: the font picker's preview: `text` (a Line's text; when `ass`,
+    // override blocks dropped and \N and \n as spaces, otherwise every
+    // character as written) in the picker's font {name, size, bold,
+    // italic, underline, strikeOut} on the preview Style, drawn by the
+    // subtitle renderer at `width` x `height`.
+    Q_INVOKABLE void renderSample(const QVariantMap &font, const QString &text, bool ass, int width, int height);
+    // The characters renderSample draws for `text`, on one line: when `ass`,
+    // without override blocks and what \p drawing mode draws, \N and \n
+    // as spaces, \h as a no-break space, \{ and \} as braces; otherwise
+    // as written.
+    // With `to` at or past `from`, only what [from, to) of `text` draws
+    // (the Line editor's raw selection: drawing mode from the start).
+    Q_INVOKABLE QString samplePlain(const QString &text, bool ass, int from = 0, int to = -1) const;
 
     // F47-refresh: the installed and external fonts are read again now.
     Q_INVOKABLE void refreshFonts();
@@ -153,8 +200,13 @@ public:
     // {kind: "requested"|"substituted"|"fallback"|"missing", family, file,
     // emboldened, italicized}; resolutionReady(requestId, result) answers.
     // One worker thread resolves the latest request; a request still waiting
-    // when a newer one comes is replaced and never answered.
-    Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic);
+    // when a newer one comes is replaced and never answered. With
+    // `documentFonts`, the editing target's attached fonts come first, as
+    // its renderer has them.
+    // `text`: the characters that need glyphs (the preview's); empty for
+    // the sample "AaBbCcDdEeFfGg 0123456789".
+    Q_INVOKABLE int resolveFamily(const QString &family, bool bold, bool italic, bool documentFonts = false,
+                                  const QString &text = QString());
 
     // The external fonts' bytes, for renderer contexts.
     std::vector<application::FontLease> externalFontLeases() const;
@@ -176,6 +228,7 @@ signals:
     // The font lists changed (RefreshClientsFonts): windows take their lists again.
     void fontsChanged();
     void previewChanged();
+    void sampleChanged();
     void resolutionReady(int requestId, const QVariantMap &result);
 
 private:
@@ -207,10 +260,14 @@ private:
     QTimer m_autosave, m_autosaveLabel, m_watchDelay;
     int m_autosaveIndex = 0;
     QString m_autosaveStatus;
+    bool m_autosaveFailed = false;
     QFileSystemWatcher m_watcher;
     backends::LibassRenderer m_renderer;
     QImage m_preview;
     int m_previewKey = 0;
+    QImage m_sample;
+    int m_sampleKey = 0;
+    std::vector<application::FontCatalogs::Catalog> m_reviewed; // reviewCatalogFile's catalogs
     std::thread m_resolver; // started with the first request
     std::mutex m_resolveMutex;
     std::condition_variable m_resolveWake;
@@ -219,6 +276,7 @@ private:
     int m_resolveRequest = 0;  // the latest request made (GUI thread)
     int m_resolveAnswered = 0; // the latest request answered (GUI thread)
     bool m_windowMade = false; // a FontCatalogList exists
+    bool m_unsaved = false;    // the last save could not write FontCatalogs.txt
 };
 
 // "image://fontcatalogpreview/<key>": the management window's preview.
