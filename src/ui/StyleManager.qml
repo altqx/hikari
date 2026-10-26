@@ -2064,13 +2064,19 @@ DialogWindow {
 
     // The lists' rows: the filter's, and a New or Duplicate not yet made at
     // the end of its list.
-    readonly property var storeShown: shownRows(true, storeRows, filterText, pendingNew && editingStore, nameField.text)
-    readonly property var assShown: shownRows(false, assRows, filterText, pendingNew && !editingStore, nameField.text)
-    function shownRows(store, rows, filter, pending, pendingName) {
+    readonly property var storeShown: shownRows(true, storeRows, filterText, pendingNew && editingStore, nameField.text, heldRows(true))
+    readonly property var assShown: shownRows(false, assRows, filterText, pendingNew && !editingStore, nameField.text, heldRows(false))
+    // The Styles the editor is on stay listed whatever the filter: an edit
+    // keeps its targets, and no Style it acts on is hidden.
+    function heldRows(store) { return editing && !pendingNew && editingStore === store ? editedRows : [] }
+    function shownRows(store, rows, filter, pending, pendingName, held) {
+        const keep = Object.create(null)
+        for (const r of held)
+            keep[r] = true
         const out = []
         for (let i = 0; i < rows.length; ++i) {
             const r = rows[i]
-            if (filter.length === 0 || r.name.toLowerCase().indexOf(filter) >= 0)
+            if (filter.length === 0 || r.name.toLowerCase().indexOf(filter) >= 0 || keep[i])
                 out.push({ row: i, name: r.name, primary: r.primary, outline: r.outline, lines: r.lines, pending: false })
         }
         if (pending) {
@@ -2086,24 +2092,22 @@ DialogWindow {
     // A row the filter hides leaves the selection, so no command acts on a
     // Style that is not shown; the editor follows, and an edit not applied
     // stays open on its Style.
-    onFilterTextChanged: {
+    // Any other selection loses the rows the filter hides, so no command
+    // acts on a Style not shown (also when the editor closes).
+    onFilterTextChanged: dropHidden()
+    onEditingChanged: if (!editing) dropHidden()
+    function dropHidden() {
         // (The rows are read, not storeShown: its binding may not have
         // followed the filter yet.)
         for (const store of [true, false]) {
+            if (heldRows(store).length > 0)
+                continue
             const rows = store ? storeSelected : assSelected
             const list = store ? storeRows : assRows
             const kept = rows.filter(r => r < list.length
                                           && (filterText.length === 0 || list[r].name.toLowerCase().indexOf(filterText) >= 0))
-            if (kept.length === rows.length)
-                continue
-            if (kept.length === 0 && dirty && !pendingNew && editingStore === store) {
-                if (store)
-                    storeSelected = []
-                else
-                    assSelected = []
-            } else {
+            if (kept.length !== rows.length)
                 followRows(store, kept)
-            }
         }
     }
 

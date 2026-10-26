@@ -6892,6 +6892,7 @@ private slots:
 
         // Deleting under a filter selects only what it shows: Alpha gone,
         // "alp" shows nothing, so nothing is selected.
+        QVERIFY(QMetaObject::invokeMethod(manager, "endEditing"));
         field("styleFilter")->setProperty("text", QStringLiteral("alp"));
         QTRY_COMPARE(assList->property("count").toInt(), 1);
         pick(false, {2});
@@ -7363,22 +7364,34 @@ private slots:
         QCOMPARE(count(second), std::size_t(3));
         QCOMPARE(size(first, u8"Sign"), std::u8string(u8"44"));
 
-        // A filter that hides the selected Style takes it out of the
-        // selection: nothing to delete or copy. An edit not applied stays.
+        // The Styles the editor is on stay listed whatever the filter, a
+        // multiple edit not applied too: its targets and Apply stay.
+        const auto shownOfFile = [&] {
+            QVariantList rows;
+            for (const auto &r : manager->property("assShown").toList())
+                rows << r.toMap().value(QStringLiteral("row"));
+            return rows;
+        };
         pick(false, {0}); // Default
-        QVERIFY(field("addToStore")->isEnabled());
         field("styleFilter")->setProperty("text", QStringLiteral("sign"));
-        QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{});
-        QVERIFY(!field("addToStore")->isEnabled());
-        QVERIFY(!manager->property("editing").toBool());
+        QTRY_COMPARE(shownOfFile(), (QVariantList{0, 1}));
+        QCOMPARE(manager->property("assSelected").toList(), QVariantList{0});
         field("styleFilter")->setProperty("text", QString());
-        pick(false, {1}); // Sign
+        pick(false, {0, 1}); // Default, Sign
         edit("styleSize", QStringLiteral("33"));
         field("styleFilter")->setProperty("text", QStringLiteral("alpha"));
-        QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{});
-        QVERIFY(manager->property("editing").toBool() && manager->property("dirty").toBool());
+        QTRY_COMPARE(shownOfFile(), (QVariantList{0, 1, 2}));
+        QCOMPARE(manager->property("assSelected").toList(), (QVariantList{0, 1}));
+        QVERIFY(manager->property("multi").toBool() && manager->property("dirty").toBool());
+        QVERIFY(field("styleEditorApply")->isEnabled());
         QVERIFY(QMetaObject::invokeMethod(field("styleEditorApply"), "click"));
-        QCOMPARE(size(second, u8"Sign"), std::u8string(u8"33")); // the tab shown since the review
+        QCOMPARE(size(second, u8"Default"), std::u8string(u8"33")); // the tab shown since the review
+        QCOMPARE(size(second, u8"Sign"), std::u8string(u8"33"));
+        // The editor closed, a selection the filter hides goes.
+        QVERIFY(QMetaObject::invokeMethod(manager, "endEditing"));
+        QTRY_COMPARE(manager->property("assSelected").toList(), QVariantList{});
+        QTRY_COMPARE(shownOfFile(), QVariantList{2});
+        QVERIFY(!field("addToStore")->isEnabled());
         field("styleFilter")->setProperty("text", QString());
 
         QVERIFY(styles.deleteCatalog(QStringLiteral("SY1 where")));
