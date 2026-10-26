@@ -7,7 +7,7 @@
 // is some syllables and the kanji characters they sing, its time their sum.
 // Owner-approved departures (compatibility-decisions.md): KA3-whole-song,
 // KA3-pair-by-time, KA3-suggest-whole-line, KA3-apply, KA3-keep-tags,
-// KA3-leftover-kanji, KA3-go-back.
+// KA3-leftover-kanji, KA3-go-back, KA8-multi-highlight.
 
 #include "hikari/application/audio_karaoke.h"
 #include "hikari/core/document.h"
@@ -40,9 +40,21 @@ bool hasKaraokeTags(std::u16string_view text);
 // The romaji Line's syllables as KA1's model reads a tagged Line.
 std::vector<KanjiSyllable> kanjiSyllables(std::u16string_view text, int startMs, int endMs);
 
+// A group: how many syllables and characters it takes, from where the
+// previous one stopped. A blank group has syllables and no characters.
+struct KanjiGroup {
+    std::size_t syllables = 0, characters = 0;
+    bool operator==(const KanjiGroup &) const = default;
+};
+
 // The kanji Line: its text without its \k tags (an override block they
 // leave empty goes too) and its characters, graphemes outside override
 // blocks (\N \n \h one each), where they start and end in that text.
+// KA8-multi-highlight: a # syllable (a tag after the first whose text up to
+// the next tag is "#" or "＃", karaskel's one more highlight of the syllable
+// before it) goes with its tag. `tagged`: when the Line has one and no
+// character before its first tag, the groups its tags make, each tag's
+// characters and its syllables (itself and the # ones after it).
 struct KanjiText {
     struct Unit {
         std::size_t begin = 0, end = 0;
@@ -50,15 +62,9 @@ struct KanjiText {
     };
     std::u16string text;
     std::vector<Unit> units;
+    std::vector<KanjiGroup> tagged;
 };
 KanjiText kanjiText(std::u16string_view text);
-
-// A group: how many syllables and characters it takes, from where the
-// previous one stopped. A blank group has syllables and no characters.
-struct KanjiGroup {
-    std::size_t syllables = 0, characters = 0;
-    bool operator==(const KanjiGroup &) const = default;
-};
 
 // Aegisub's AutoMatchKaraoke: the group starting at syllable `from` and
 // character `at`. The first syllable against the characters (equal letters,
@@ -84,9 +90,12 @@ KanjiSuggestion suggestGroups(const std::vector<KanjiSyllable> &syllables, std::
 // syllable's tag and the sum of its syllables' times; a blank group's before
 // the next group's. KA3-leftover-kanji: characters after the last group are
 // in it. KA3-keep-tags: the Line's other tags stay; a tag goes into the
-// Line's own block just before it.
+// Line's own block just before it. KA8-multi-highlight (`multi`): a group of
+// more syllables and some characters takes its first syllable's time, and
+// each further syllable is a # syllable after its characters with its own
+// time and letters.
 std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
-                           const std::vector<KanjiGroup> &groups);
+                           const std::vector<KanjiGroup> &groups, bool multi = false);
 
 // The Kanji timer window's state over a Document: the Line pairs of the two
 // styles, each pair's grouping, the current pair and the timer's own undo.
@@ -108,11 +117,16 @@ public:
     // The Lines of the romaji and the kanji style in Document order (Lines
     // with text; a romaji Line with \k tags; no fx Line of the templater).
     // Read again after every Document change: a pair whose Lines changed
-    // after it was done loses its grouping and shows Changed.
+    // after it was done loses its grouping and shows Changed. A kanji Line
+    // with # syllables (KanjiText::tagged) starts with its groups linked.
     void setLines(std::vector<Line> romaji, std::vector<Line> kanji);
     // Suggest groupings (on by default); not an undo step.
     void setSuggest(bool on);
     bool suggest() const { return m_suggest; }
+    // KA8-multi-highlight: the kanji Lines written with # syllables (off:
+    // each group folded into one tag, as Aegisub writes them).
+    void setMulti(bool on) { m_multi = on; }
+    bool multi() const { return m_multi; }
 
     const std::vector<Pair> &pairs() const { return m_pairs; }
     // The current pair (-1: none with both Lines).
@@ -209,6 +223,7 @@ private:
 
     KaraokeCharClass m_classes;
     bool m_suggest = true;
+    bool m_multi = false;
     std::vector<Line> m_romaji, m_kanji;
     State m_state;
     std::vector<Pair> m_pairs;
