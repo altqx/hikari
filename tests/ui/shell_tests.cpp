@@ -6959,8 +6959,19 @@ private slots:
         QCOMPARE(dialogItem("scriptPropertiesDialog", "propHeight")->property("value").toInt(), 720);
         QVERIFY(QMetaObject::invokeMethod(properties, "reject"));
         QTRY_VERIFY(!properties->property("visible").toBool());
+        // So does Resample subtitles' From video.
+        QVERIFY(QMetaObject::invokeMethod(root, "openResample"));
+        QTRY_VERIFY(resample->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleTargetFromVideoButton"), "click"));
+        QCOMPARE(dialogItem("resampleDialog", "resampleWidth")->property("value").toInt(), 1280);
         application->video().openVideo(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"));
         QTRY_COMPARE_WITH_TIMEOUT(application->resampleValues().value(QStringLiteral("videoWidth")).toInt(), width, 20000);
+        QTRY_VERIFY(dialogItem("resampleDialog", "resampleTargetFromVideoButton")->property("enabled").toBool());
+        QVERIFY(QMetaObject::invokeMethod(dialogItem("resampleDialog", "resampleTargetFromVideoButton"), "click"));
+        QCOMPARE(dialogItem("resampleDialog", "resampleWidth")->property("value").toInt(), width);
+        QCOMPARE(dialogItem("resampleDialog", "resampleHeight")->property("value").toInt(), height);
+        QVERIFY(QMetaObject::invokeMethod(resample, "close"));
+        QTRY_VERIFY(!resample->property("visible").toBool());
         application->setAskForBadResolution(true);
         // An answer about sizes that are no longer the shown ones (another
         // video opened for the Document meanwhile) changes nothing.

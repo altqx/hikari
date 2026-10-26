@@ -35,6 +35,20 @@ DialogWindow {
                 dialog.reject()
         }
     }
+    // The open video; From video follows another one opened while this is
+    // open (the main window stays usable beside a floating panel).
+    property var video: null
+    Connections {
+        target: dialog.video
+        function onChanged() { if (dialog.visible) dialog.refreshVideo() }
+    }
+    function refreshVideo() {
+        const v = app.resampleValues()
+        if (v.subsWidth === undefined || (v.hasVideo === initial.hasVideo && v.videoWidth === initial.videoWidth
+                                          && v.videoHeight === initial.videoHeight))
+            return
+        initial = Object.assign({}, initial, { hasVideo: v.hasVideo, videoWidth: v.videoWidth, videoHeight: v.videoHeight })
+    }
 
     function openDialog() {
         const v = app.resampleValues()
@@ -106,6 +120,7 @@ DialogWindow {
             enabled: from.why.length === 0 && (from.widthBox.value !== from.w || from.heightBox.value !== from.h)
             Accessible.description: from.why
             onClicked: {
+                dialog.refreshVideo()
                 from.widthBox.value = from.w
                 from.heightBox.value = from.h
             }

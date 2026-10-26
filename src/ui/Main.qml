@@ -7032,6 +7032,7 @@ ApplicationWindow {
         sourceComponent: ResampleWindow {
             app: root.app
             settings: root.app.settings
+            video: root.video
         }
     }
     // False for a Document that is not ASS.
