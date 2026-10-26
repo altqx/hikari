@@ -81,6 +81,8 @@ target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
 # T4: the rectangle and vector clips and the vector point editor T5 shares,
 # with legacy's float steps (no contraction either).
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
+# VT3: the Perspective tool (arch1t3cht's quad maths, in doubles).
+target_sources(hikari_application PRIVATE visual_perspective.cpp)
 set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 # T5: the drawing tool and its shape presets (no contraction either).

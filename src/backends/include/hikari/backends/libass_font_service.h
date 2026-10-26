@@ -37,4 +37,9 @@ public:
     std::vector<std::string> fontDirectories() override;
 };
 
+// VT3: the names libass matches a font's faces by (family, typographic
+// family, full and PostScript names, of every face of a collection), read
+// from its bytes.
+std::vector<std::string> fontNames(const std::vector<std::byte> &bytes);
+
 } // namespace hikari::backends

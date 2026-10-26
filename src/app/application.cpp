@@ -3,6 +3,7 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/qt_audio_devices.h"
 #include "hikari/backends/simulated_output.h"
@@ -1868,6 +1869,22 @@ bool Application::setVideoFonts(std::optional<application::DocumentId> document)
     if (std::ranges::equal(fonts, m_videoFonts, same))
         return false;
     m_videoFonts = fonts;
+    if (m_visualTools) {
+        // VT3: the Perspective tool does not measure a font only the renderer
+        // sees. Each lease's names are read from its bytes once.
+        decltype(m_leasedFontNames) read;
+        std::vector<std::string> names;
+        for (const auto &font : m_videoFonts) {
+            if (!font.bytes)
+                continue;
+            const auto known = std::ranges::find(m_leasedFontNames, font.bytes, &decltype(read)::value_type::first);
+            auto own = known != m_leasedFontNames.end() ? known->second : backends::fontNames(*font.bytes);
+            names.insert(names.end(), own.begin(), own.end());
+            read.emplace_back(font.bytes, std::move(own));
+        }
+        m_leasedFontNames = std::move(read);
+        m_visualTools->setLeasedFonts(names);
+    }
     m_video->session().setFonts(std::move(fonts));
     return true;
 }

@@ -94,6 +94,9 @@ public:
     const core::Document &document() const { return m_states[m_cursor].document; }
     const Selection &selection() const { return m_selection; }
     std::uint64_t revision() const { return m_revision; }
+    // Unique among the process's sessions: what scopes a cache keyed by
+    // LineId, which is unique only within one Document.
+    std::uint64_t serial() const { return m_serial; }
     ContentId contentId() const { return m_states[m_cursor].content; }
 
     // While a macro runs on this Document it is read-only: drafts, commands,
@@ -238,6 +241,7 @@ private:
     // write is reported (its step may leave history meanwhile).
     std::map<std::uint64_t, std::vector<std::uint64_t>> m_preparedVersions;
     std::uint64_t m_revision = 0;
+    std::uint64_t m_serial = 0;
     std::uint64_t m_nextContent = 1;
     bool m_protected = false;
     bool m_readOnly = false;
