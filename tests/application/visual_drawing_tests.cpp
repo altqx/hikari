@@ -786,11 +786,12 @@ TEST(ShapesEdition, RenamesFollowUndoRedoAndUndoAll)
     // Typing a name is one step: its Undo goes back through every key.
     ASSERT_TRUE(e.undo());
     e.select(1);
+    const std::u16string before = e.current().name;
     ASSERT_EQ(e.setName(u"r"), ShapesEdition::NameCheck::Ok);
     ASSERT_EQ(e.setName(u"ring"), ShapesEdition::NameCheck::Ok);
     EXPECT_EQ(through(u"r", e.renamed()), u"ring");
     ASSERT_TRUE(e.undo());
-    EXPECT_EQ(through(u"ring", e.renamed()), u"circle");
+    EXPECT_EQ(through(u"ring", e.renamed()), before);
     // Other steps rename nothing.
     ASSERT_TRUE(e.remove());
     EXPECT_TRUE(e.renamed().empty());

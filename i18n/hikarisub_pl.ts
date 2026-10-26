@@ -48,6 +48,19 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Pitch is kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>and</source>
+        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>change the speed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Output device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -257,6 +270,58 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Tap to time</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tap options</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each syllable</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hold the key: releasing it leaves a gap</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press the key: no gaps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Snap to vocal onsets</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Speed</source>
+        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1%</source>
+        <extracomment>A playback speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Calibrate latency…</source>
+        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ms</source>
+        <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -331,6 +396,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Speed: %1%</source>
+        <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Customise the audio panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -391,6 +461,26 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not applied: the Line cannot take these times as it is.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Every Line is tapped.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 tapped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid the Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undid “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
         <translation type="unfinished"></translation>
@@ -399,6 +489,101 @@ Output device: %2</source>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tapping</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stopped</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ready</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This Line is one syllable. Split it first, then tap.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">Cofnij</translation>
+    </message>
+    <message>
+        <source>Esc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Resume</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Space</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Revert Line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start</source>
+        <translation type="unfinished">Start</translation>
+    </message>
+    <message>
+        <source>Calibrate tap latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Press</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>on each beep.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>16 beeps at 100 BPM; the first four are practice.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of 16 beeps</source>
+        <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Your presses, in ms after each beep</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Latency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
+        <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start again</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Anuluj</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Zastosuj</translation>
     </message>
 </context>
 <context>
@@ -1082,6 +1267,30 @@ Output device: %2</source>
     </message>
     <message>
         <source>The run is no longer kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 to %2, in steps of %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 to %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At least %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>At most %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 becomes %2 when you leave the field.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type to filter</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3554,7 +3763,31 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation>Wczytaj napisy z pliku MKV / OGM</translation>
     </message>
     <message>
-        <source>OK</source>
+        <source>Line group description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add description</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This would leave lines outside their line group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing was changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This would break the line group “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3563,26 +3796,18 @@ Nie udało się skopiować %2 czcionek.</translation>
     </message>
     <message>
         <source>Tree description</source>
-        <translation>Opis drzewka</translation>
+        <translation type="vanished">Opis drzewka</translation>
     </message>
     <message>
         <source>Set tree name</source>
-        <translation>Ustaw nazwę drzewka</translation>
+        <translation type="vanished">Ustaw nazwę drzewka</translation>
     </message>
     <message>
         <source>Change tree name</source>
-        <translation>Zmień nazwę drzewka</translation>
+        <translation type="vanished">Zmień nazwę drzewka</translation>
     </message>
     <message>
         <source>Line group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This would leave group members outside a line group. Nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3732,6 +3957,38 @@ Nie udało się skopiować %2 czcionek.</translation>
     <message>
         <source>Line wraps</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste the clipboard into these columns of the selected line:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Paste the clipboard into these columns of the %1 selected lines:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy these columns of the selected line:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy these columns of the %1 selected lines:</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Select all</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Brak</translation>
+    </message>
+    <message>
+        <source>Paste</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">Kopiuj</translation>
     </message>
 </context>
 <context>
@@ -4594,16 +4851,8 @@ Nie udało się skopiować %2 czcionek.</translation>
         <translation type="vanished">Zmodyfikowano</translation>
     </message>
     <message>
-        <source>History (1 element)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>History (%1 elements)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Set</source>
-        <translation>Ustaw</translation>
+        <translation type="vanished">Ustaw</translation>
     </message>
     <message>
         <source>OK</source>
@@ -4612,6 +4861,26 @@ Nie udało się skopiować %2 czcionek.</translation>
     <message>
         <source>Cancel</source>
         <translation>Anuluj</translation>
+    </message>
+    <message>
+        <source>1 step. Steps after the current one can be redone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 steps. Steps after the current one can be redone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1, current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Current</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Go to step</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
@@ -5613,7 +5882,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Rule editing</source>
-        <translation>Edycja reguły</translation>
+        <translation type="vanished">Edycja reguły</translation>
     </message>
     <message>
         <source>Rule description</source>
@@ -5621,11 +5890,35 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Search phrase (regular expresions)</source>
-        <translation>Szukana fraza (wyrażenia regularne)</translation>
+        <translation type="vanished">Szukana fraza (wyrażenia regularne)</translation>
     </message>
     <message>
         <source>Replace phrase</source>
         <translation>Zmieniana fraza</translation>
+    </message>
+    <message>
+        <source>Case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Like the found text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unchanged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lower case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Upper case</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Case of the replacement</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5633,23 +5926,23 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Change to lower case</source>
-        <translation>Zmieniaj na tekst pisany małą literą</translation>
+        <translation type="vanished">Zmieniaj na tekst pisany małą literą</translation>
     </message>
     <message>
         <source>Change to upper case</source>
-        <translation>Zmieniaj na tekst pisany wielką literą</translation>
+        <translation type="vanished">Zmieniaj na tekst pisany wielką literą</translation>
     </message>
     <message>
         <source>Dont change case</source>
-        <translation>Nie zmieniaj wielkości liter</translation>
+        <translation type="vanished">Nie zmieniaj wielkości liter</translation>
     </message>
     <message>
         <source>Replace only in tags</source>
-        <translation>Zmieniaj tylko w tagach</translation>
+        <translation type="vanished">Zmieniaj tylko w tagach</translation>
     </message>
     <message>
         <source>Replace only in text</source>
-        <translation>Zmieniaj tylko w tekście</translation>
+        <translation type="vanished">Zmieniaj tylko w tekście</translation>
     </message>
     <message>
         <source>Rules</source>
@@ -5657,15 +5950,15 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Description</source>
-        <translation>Opis</translation>
+        <translation type="vanished">Opis</translation>
     </message>
     <message>
         <source>Rule find</source>
-        <translation>Reguła znajdź</translation>
+        <translation type="vanished">Reguła znajdź</translation>
     </message>
     <message>
         <source>Rule replace</source>
-        <translation>Reguła zamień</translation>
+        <translation type="vanished">Reguła zamień</translation>
     </message>
     <message>
         <source>Which lines</source>
@@ -5674,6 +5967,10 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>All lines</source>
         <translation>Wszystkie linijki</translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">Linijki</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -5692,6 +5989,138 @@ great help testing HikariSub on a slow computer)
         <translation>Wybierz style</translation>
     </message>
     <message>
+        <source>Update rule</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 rules on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rule</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Find → replace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>(nothing)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Expanded</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Collapsed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">Nazwa</translation>
+    </message>
+    <message>
+        <source>Find</source>
+        <translation type="unfinished">Znajdź</translation>
+    </message>
+    <message>
+        <source>A regular expression</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search phrase (regular expressions)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text and tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tags only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace in</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tab</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All tabs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Tabs to search</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace all</source>
+        <translation type="unfinished">Zamień wszystko</translation>
+    </message>
+    <message>
+        <source>Results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 errors</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>in 1 file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>in %1 files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All</source>
+        <translation type="unfinished">Wszystko</translation>
+    </message>
+    <message>
+        <source>None</source>
+        <translation type="unfinished">Brak</translation>
+    </message>
+    <message>
+        <source>Close the results</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the finds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Hide the finds</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 checked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace checked</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Styles</source>
         <translation>Style</translation>
     </message>
@@ -5701,7 +6130,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Edit rule</source>
-        <translation>Edytuj regułę</translation>
+        <translation type="vanished">Edytuj regułę</translation>
     </message>
     <message>
         <source>Delete rule</source>
@@ -5709,34 +6138,34 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Find error</source>
-        <translation>Znajdź błąd</translation>
+        <translation type="vanished">Znajdź błąd</translation>
     </message>
     <message>
         <source>Find errors
 in current tab</source>
-        <translation>Znajdź błędy
+        <translation type="vanished">Znajdź błędy
 w bieżącej zakładce</translation>
     </message>
     <message>
         <source>Find errors
 in all tabs</source>
-        <translation>Znajdź błędy
+        <translation type="vanished">Znajdź błędy
 we wszystkich zakładkach</translation>
     </message>
     <message>
         <source>Replace error</source>
-        <translation>Zmień błąd</translation>
+        <translation type="vanished">Zmień błąd</translation>
     </message>
     <message>
         <source>Replace all errors
 in current tab</source>
-        <translation>Zamień wszystkie błędy
+        <translation type="vanished">Zamień wszystkie błędy
 w bieżącej zakładce</translation>
     </message>
     <message>
         <source>Replace all errors
 in all tabs</source>
-        <translation>Zamień wszystkie błędy
+        <translation type="vanished">Zamień wszystkie błędy
 we wszystkich zakładkach</translation>
     </message>
     <message>
@@ -5749,11 +6178,11 @@ we wszystkich zakładkach</translation>
     </message>
     <message>
         <source>Check all</source>
-        <translation>Zahacz wszystko</translation>
+        <translation type="vanished">Zahacz wszystko</translation>
     </message>
     <message>
         <source>Uncheck all</source>
-        <translation>Odhacz wszystko</translation>
+        <translation type="vanished">Odhacz wszystko</translation>
     </message>
     <message>
         <source>Replace</source>
@@ -7352,8 +7781,60 @@ zostanie zmieniony na domyślny</translation>
         <translation>Znajdź i zamień</translation>
     </message>
     <message>
+        <source>Reached the end of the subtitles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search again from the first line?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 or %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>, </source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has no style named %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The other chosen styles are there. Searching with the missing ones finds fewer lines.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 has none of the chosen styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Searching only these styles would find nothing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace in every matching file in “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The files are changed on disk; Undo cannot bring them back. A copy of each file goes to the ReplaceBackup folder first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Find</source>
         <translation>Znajdź</translation>
+    </message>
+    <message>
+        <source>Could not find “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The search folder “%1” does not exist.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>In files</source>
@@ -7480,6 +7961,30 @@ zostanie zmieniony na domyślny</translation>
         <translation>Zamień następne</translation>
     </message>
     <message>
+        <source>Search from the start</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Stop</source>
+        <translation type="unfinished">Zatrzymaj</translation>
+    </message>
+    <message>
+        <source>Drop the missing styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Search every style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep them</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace in the files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Replace all</source>
         <translation>Zamień wszystko</translation>
     </message>
@@ -7521,27 +8026,23 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
-        <translation>Usuń nieistniejące style</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Usuń nieistniejące style</translation>
     </message>
     <message>
         <source>Remove styles</source>
-        <translation>Wyczyść style</translation>
+        <translation type="vanished">Wyczyść style</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation>Tak</translation>
+        <translation type="vanished">Tak</translation>
     </message>
     <message>
         <source>Ignore</source>
-        <translation>Ignoruj</translation>
+        <translation type="vanished">Ignoruj</translation>
     </message>
     <message>
         <source>No</source>
-        <translation>Nie</translation>
+        <translation type="vanished">Nie</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -7549,13 +8050,13 @@ zostanie zmieniony na domyślny</translation>
     </message>
     <message>
         <source>Reached end. Search from the beginning?</source>
-        <translation>Wyszukiwanie zakończone, rozpocząć od początku?</translation>
+        <translation type="vanished">Wyszukiwanie zakończone, rozpocząć od początku?</translation>
     </message>
     <message>
         <source>Styles named &quot;%1&quot; do not exist in the subtitles being searched,
 which may significantly reduce the number of search results.
 What would you like to do?</source>
-        <translation type="unfinished">Stylów o nazwach &quot;%1&quot; nie ma w przeszukiwanych napisach,
+        <translation type="obsolete">Stylów o nazwach &quot;%1&quot; nie ma w przeszukiwanych napisach,
 co może znacząco zmniejszyć ilość wyników szukania.
 Co zrobić?</translation>
     </message>
@@ -7563,19 +8064,15 @@ Co zrobić?</translation>
         <source>None of the selected styles exist in the subtitles being searched,
 so nothing will be found.
 What would you like to do?</source>
-        <translation>Wszystkich wybranych stylów nie ma w przeszukiwanych napisach,
+        <translation type="vanished">Wszystkich wybranych stylów nie ma w przeszukiwanych napisach,
 przez co nic nie zostanie znalezione.
 Co zrobić?</translation>
     </message>
     <message>
         <source>Are you sure you want to make changes in all subtitle files?
 If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</source>
-        <translation>Czy na pewno dokonać zmian we wszystkich napisach?
+        <translation type="vanished">Czy na pewno dokonać zmian we wszystkich napisach?
 W razie pomyłki kopie zapasowe są w folderze &apos;ReplaceBackup&apos;</translation>
-    </message>
-    <message>
-        <source>Could not find the specified phrase &quot;%1&quot;.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Replaced %1 times.</source>
@@ -7583,7 +8080,7 @@ W razie pomyłki kopie zapasowe są w folderze &apos;ReplaceBackup&apos;</transl
     </message>
     <message>
         <source>Search path is invalid</source>
-        <translation>Ścieżka szukania jest nieprawidłowa</translation>
+        <translation type="vanished">Ścieżka szukania jest nieprawidłowa</translation>
     </message>
     <message>
         <source>Find in files</source>
@@ -7591,15 +8088,15 @@ W razie pomyłki kopie zapasowe są w folderze &apos;ReplaceBackup&apos;</transl
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>Potwierdzenie</translation>
+        <translation type="vanished">Potwierdzenie</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation>Informacja</translation>
+        <translation type="vanished">Informacja</translation>
     </message>
     <message>
         <source>Find and Replace</source>
-        <translation>Szukaj Zamień</translation>
+        <translation type="vanished">Szukaj Zamień</translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -7704,7 +8201,7 @@ bo została zedytowana.</translation>
     </message>
     <message>
         <source>Dialogue / comments</source>
-        <translation>Dialogi / komentarze</translation>
+        <translation type="vanished">Dialogi / komentarze</translation>
     </message>
     <message>
         <source>Dialogue</source>
@@ -7733,6 +8230,22 @@ bo została zedytowana.</translation>
     <message>
         <source>Do nothing</source>
         <translation>Nie rób nic</translation>
+    </message>
+    <message>
+        <source>Lines with or without the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines</source>
+        <translation type="unfinished">Linijki</translation>
+    </message>
+    <message>
+        <source>Then</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy</source>
@@ -8483,6 +8996,10 @@ proszę zapisać pod inną nazwą lub zmienić atrybuty pliku.</translation>
     <message>
         <source>None</source>
         <translation type="unfinished">Brak</translation>
+    </message>
+    <message>
+        <source>Rolled back to the settings before the last import.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>%n setting(s) imported.</source>
@@ -10145,6 +10662,18 @@ after the end time in milliseconds</source>
         <translation>Tekst tłumaczenia</translation>
     </message>
     <message>
+        <source>Translation mode</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Original text</source>
+        <translation type="unfinished">Tekst oryginalny</translation>
+    </message>
+    <message>
+        <source>Original text: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Choose subtitle file</source>
         <translation>Wybierz plik napisów</translation>
     </message>
@@ -10157,6 +10686,14 @@ after the end time in milliseconds</source>
         <translation>Opcje dopasowywania tłumaczenia</translation>
     </message>
     <message>
+        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>&lt;b&gt;Translation&lt;/b&gt;: the text pasted in, moved line by line until each one sits beside its original.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Original</source>
         <translation>Tekst oryginału</translation>
     </message>
@@ -10165,17 +10702,45 @@ after the end time in milliseconds</source>
         <translation>Dodaj linię</translation>
     </message>
     <message>
+        <source>A blank line before the selected one; the original moves down. Time the new line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A blank line before the selected one; the translation moves down.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Joins the selected line with the next one; the original moves up.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Joins the selected line with the next one; the translation moves up.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deletes the selected line; the original moves up.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deletes the selected line; the translation moves up.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation type="unfinished">Zamknij</translation>
+    </message>
+    <message>
         <source>Adds a blank line before the selected line.
 Moves the original one line down.
 The added line must be timed.</source>
-        <translation>Dodaje pustą linijkę przed zaznaczoną.
+        <translation type="vanished">Dodaje pustą linijkę przed zaznaczoną.
 Oryginał idzie w dół.
 Dodanej linii należy ustawić czasy.</translation>
     </message>
     <message>
         <source>Adds a blank line before the selected line.
 Moves the translation one line down.</source>
-        <translation>Dodaje pustą linijkę przed zaznaczoną.
+        <translation type="vanished">Dodaje pustą linijkę przed zaznaczoną.
 Tłumaczenie idzie w dół.</translation>
     </message>
     <message>
@@ -10185,13 +10750,13 @@ Tłumaczenie idzie w dół.</translation>
     <message>
         <source>Joins the selected line with the next line.
 Moves the original one line up.</source>
-        <translation>Złącza następną linijkę z zaznaczoną.
+        <translation type="vanished">Złącza następną linijkę z zaznaczoną.
 Oryginał idzie w górę.</translation>
     </message>
     <message>
         <source>Joins the selected line with the next line.
 Moves the translation one line up.</source>
-        <translation>Złącza następną linijkę z zaznaczoną.
+        <translation type="vanished">Złącza następną linijkę z zaznaczoną.
 Tłumaczenie idzie do góry.</translation>
     </message>
     <message>
@@ -10201,24 +10766,18 @@ Tłumaczenie idzie do góry.</translation>
     <message>
         <source>Deletes the selected line.
 Moves the original one line up.</source>
-        <translation>Usuwa zaznaczoną linijkę.
+        <translation type="vanished">Usuwa zaznaczoną linijkę.
 Oryginał idzie do góry.</translation>
     </message>
     <message>
         <source>Deletes the selected line.
 Moves the translation one line up.</source>
-        <translation>Usuwa zaznaczoną linijkę.
+        <translation type="vanished">Usuwa zaznaczoną linijkę.
 Tłumaczenie idzie do góry.</translation>
     </message>
     <message>
         <source>Description</source>
-        <translation>Opis</translation>
-    </message>
-    <message>
-        <source>Description:
-Original - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.
-Translation - text pasted into subtitles with correct timing.</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">Opis</translation>
     </message>
     <message>
         <source>Not confirmed</source>
@@ -10238,12 +10797,12 @@ Translation - text pasted into subtitles with correct timing.</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>Potwierdzenie</translation>
+        <translation type="vanished">Potwierdzenie</translation>
     </message>
     <message>
         <source>Are you sure you want to turn off translation mode?
 Foreign language text will be deleted.</source>
-        <translation>Czy na pewno chcesz wyłączyć tryb tłumacza?
+        <translation type="vanished">Czy na pewno chcesz wyłączyć tryb tłumacza?
 Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
@@ -10259,7 +10818,43 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Not confirmed: marks the selected Lines for review</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on Translation mode for this file?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not now</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off Translation mode?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Each translated line keeps its Translated text; its Original text is deleted.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Turn off</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep it on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -11002,6 +11597,10 @@ bądź brakuje kodeków czy też splittera</translation>
     </message>
     <message>
         <source>Another tag is named “%1”. Press Enter to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another tag is named “%1”. Fill in Tag first to replace it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
