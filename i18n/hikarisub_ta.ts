@@ -48,19 +48,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Pitch is kept.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>and</source>
-        <extracomment>Between the two keys of &quot;[ and ] change the speed.&quot;</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>change the speed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Output device</source>
         <translation type="unfinished"></translation>
     </message>
@@ -270,58 +257,6 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Tap to time</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tap options</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stop tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each syllable</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hold the key: releasing it leaves a gap</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Press the key: no gaps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Snap to vocal onsets</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Speed</source>
-        <extracomment>The Tap menu&apos;s Speed submenu; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1%</source>
-        <extracomment>A playback speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Calibrate latency…</source>
-        <extracomment>The Tap menu&apos;s item; %1 is the tap latency in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 ms</source>
-        <extracomment>The latency spin box&apos;s value; %1 is in milliseconds</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Waveform</source>
         <translation type="unfinished"></translation>
     </message>
@@ -396,11 +331,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Speed: %1%</source>
-        <extracomment>The speaker button&apos;s tooltip, while the audio plays slowed; %1 is the speed in percent</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Customise the audio panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -461,26 +391,6 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not applied: the Line cannot take these times as it is.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Every Line is tapped.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of %2 tapped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid the Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undid “%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>%1 is not connected. No output device is available.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged and no other is connected; %1 is its name</extracomment>
         <translation type="unfinished"></translation>
@@ -489,101 +399,6 @@ Output device: %2</source>
         <source>%1 is not connected. Audio plays through %2.</source>
         <extracomment>The output device chosen on the audio panel or in Settings &gt; Audio was unplugged; %1 is its name, %2 the system default that plays instead</extracomment>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tapping</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stopped</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ready</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <extracomment>The tap bar; %1 is the Line&apos;s row number</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This Line is one syllable. Split it first, then tap.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Undo</source>
-        <translation type="unfinished">செயல்தவிர்</translation>
-    </message>
-    <message>
-        <source>Esc</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Resume</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Space</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Revert Line</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start</source>
-        <translation type="unfinished">தொடங்கு</translation>
-    </message>
-    <message>
-        <source>Calibrate tap latency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Press</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>on each beep.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>16 beeps at 100 BPM; the first four are practice.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of 16 beeps</source>
-        <extracomment>The latency calibration&apos;s progress; %1 the beeps heard</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Your presses, in ms after each beep</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Latency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spread ±%1 ms · %2 of 12 counted beeps so far</source>
-        <extracomment>The latency calibration&apos;s result; %1 the spread in ms, %2 the presses counted (of 12)</extracomment>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Spread ±%1 ms · %2 of 12 counted beeps</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Start again</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cancel</source>
-        <translation type="unfinished">ரத்துசெய்</translation>
-    </message>
-    <message>
-        <source>Apply</source>
-        <translation type="unfinished">இடு</translation>
     </message>
 </context>
 <context>
@@ -1258,30 +1073,6 @@ Output device: %2</source>
     </message>
     <message>
         <source>The run is no longer kept.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 to %2, in steps of %3</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 to %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>At least %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>At most %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 becomes %2 when you leave the field.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Type to filter</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -3741,31 +3532,7 @@ Failed to copy %2 fonts.</source>
         <translation>MKV / OGM கோப்பின் வசன வரிகள் ஏற்றவும்</translation>
     </message>
     <message>
-        <source>Line group description</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rename</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add description</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This would leave lines outside their line group</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing was changed.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This would break the line group “%1”.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
+        <source>OK</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3774,18 +3541,26 @@ Failed to copy %2 fonts.</source>
     </message>
     <message>
         <source>Tree description</source>
-        <translation type="vanished">மர விளக்கம்</translation>
+        <translation>மர விளக்கம்</translation>
     </message>
     <message>
         <source>Set tree name</source>
-        <translation type="vanished">மரத்தின் பெயரை அமைக்கவும்</translation>
+        <translation>மரத்தின் பெயரை அமைக்கவும்</translation>
     </message>
     <message>
         <source>Change tree name</source>
-        <translation type="vanished">மரத்தின் பெயரை மாற்றவும்</translation>
+        <translation>மரத்தின் பெயரை மாற்றவும்</translation>
     </message>
     <message>
         <source>Line group</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This would break the line group “%1”. Nothing was changed. Remove the group (its description line is deleted) and try again, or cancel.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This would leave group members outside a line group. Nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -3933,38 +3708,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Line wraps</source>
         <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paste the clipboard into these columns of the selected line:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Paste the clipboard into these columns of the %1 selected lines:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy these columns of the selected line:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy these columns of the %1 selected lines:</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Select all</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation type="unfinished">எதுவுமில்லை</translation>
-    </message>
-    <message>
-        <source>Paste</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Copy</source>
-        <translation type="unfinished">நகலெடு</translation>
     </message>
 </context>
 <context>
@@ -4825,8 +4568,16 @@ Failed to copy %2 fonts.</source>
         <translation type="vanished">மாற்றியமைக்கப்பட்ட</translation>
     </message>
     <message>
+        <source>History (1 element)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>History (%1 elements)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Set</source>
-        <translation type="vanished">அமை</translation>
+        <translation>அமை</translation>
     </message>
     <message>
         <source>OK</source>
@@ -4835,26 +4586,6 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Cancel</source>
         <translation>ரத்துசெய்</translation>
-    </message>
-    <message>
-        <source>1 step. Steps after the current one can be redone.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 steps. Steps after the current one can be redone.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1, current</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Current</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Go to step</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Close</source>
@@ -5854,7 +5585,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Rule editing</source>
-        <translation type="vanished">விதி திருத்து</translation>
+        <translation>விதி திருத்து</translation>
     </message>
     <message>
         <source>Rule description</source>
@@ -5862,35 +5593,11 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Search phrase (regular expresions)</source>
-        <translation type="vanished">தேடல் சொற்றொடர் (வழக்கமான வெளிப்பாடுகள்)</translation>
+        <translation>தேடல் சொற்றொடர் (வழக்கமான வெளிப்பாடுகள்)</translation>
     </message>
     <message>
         <source>Replace phrase</source>
         <translation>சொற்றொடரை மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Case</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Like the found text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Unchanged</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lower case</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Upper case</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Case of the replacement</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Match case</source>
@@ -5898,23 +5605,23 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Change to lower case</source>
-        <translation type="vanished">சிறிய எழுத்துகளுக்கு மாற்றவும்</translation>
+        <translation>சிறிய எழுத்துகளுக்கு மாற்றவும்</translation>
     </message>
     <message>
         <source>Change to upper case</source>
-        <translation type="vanished">பெரிய எழுத்துகளுக்கு மாற்றவும்</translation>
+        <translation>பெரிய எழுத்துகளுக்கு மாற்றவும்</translation>
     </message>
     <message>
         <source>Dont change case</source>
-        <translation type="vanished">பெரிய/சிறிய எழுத்தை மாற்ற வேண்டாம்</translation>
+        <translation>பெரிய/சிறிய எழுத்தை மாற்ற வேண்டாம்</translation>
     </message>
     <message>
         <source>Replace only in tags</source>
-        <translation type="vanished">குறிச்சொற்களில் மட்டுமே மாற்றவும்</translation>
+        <translation>குறிச்சொற்களில் மட்டுமே மாற்றவும்</translation>
     </message>
     <message>
         <source>Replace only in text</source>
-        <translation type="vanished">உரையில் மட்டுமே மாற்றவும்</translation>
+        <translation>உரையில் மட்டுமே மாற்றவும்</translation>
     </message>
     <message>
         <source>Rules</source>
@@ -5922,15 +5629,15 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Description</source>
-        <translation type="vanished">விவரம்</translation>
+        <translation>விவரம்</translation>
     </message>
     <message>
         <source>Rule find</source>
-        <translation type="vanished">விதி கண்டுபிடி</translation>
+        <translation>விதி கண்டுபிடி</translation>
     </message>
     <message>
         <source>Rule replace</source>
-        <translation type="vanished">விதி மாற்றவும்</translation>
+        <translation>விதி மாற்றவும்</translation>
     </message>
     <message>
         <source>Which lines</source>
@@ -5939,10 +5646,6 @@ great help testing HikariSub on a slow computer)
     <message>
         <source>All lines</source>
         <translation>அனைத்து வரிகளும்</translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation type="unfinished">வரிகள்</translation>
     </message>
     <message>
         <source>Selected lines</source>
@@ -5961,138 +5664,6 @@ great help testing HikariSub on a slow computer)
         <translation>பாணிகளைத் தேர்வுசெய்க</translation>
     </message>
     <message>
-        <source>Update rule</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 of %2 rules on</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Rule</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Find → replace</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>(nothing)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Expanded</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Collapsed</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Name</source>
-        <translation type="unfinished">பெயர்</translation>
-    </message>
-    <message>
-        <source>Find</source>
-        <translation type="unfinished">கண்டுபிடி</translation>
-    </message>
-    <message>
-        <source>A regular expression</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Search phrase (regular expressions)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text and tags</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tags only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Text only</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace in</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>This tab</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All tabs</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Tabs to search</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace all</source>
-        <translation type="unfinished">அனைத்தையும் மாற்றவும்</translation>
-    </message>
-    <message>
-        <source>Results</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>1 error</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 errors</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>in 1 file</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>in %1 files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>All</source>
-        <translation type="unfinished">அனைத்தும்</translation>
-    </message>
-    <message>
-        <source>None</source>
-        <translation type="unfinished">எதுவுமில்லை</translation>
-    </message>
-    <message>
-        <source>Close the results</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Line %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show the finds</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hide the finds</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 checked</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace checked</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Styles</source>
         <translation>பாணிகள்</translation>
     </message>
@@ -6102,7 +5673,7 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Edit rule</source>
-        <translation type="vanished">விதியைத் திருத்து</translation>
+        <translation>விதியைத் திருத்து</translation>
     </message>
     <message>
         <source>Delete rule</source>
@@ -6110,34 +5681,34 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>Find error</source>
-        <translation type="vanished">பிழையைக் கண்டுபிடி</translation>
+        <translation>பிழையைக் கண்டுபிடி</translation>
     </message>
     <message>
         <source>Find errors
 in current tab</source>
-        <translation type="vanished">தற்போதைய தாவலில்
+        <translation>தற்போதைய தாவலில்
 பிழைகளைக் கண்டுபிடி</translation>
     </message>
     <message>
         <source>Find errors
 in all tabs</source>
-        <translation type="vanished">எல்லா தாவல்களிலும்
+        <translation>எல்லா தாவல்களிலும்
 பிழைகளைக் கண்டுபிடி</translation>
     </message>
     <message>
         <source>Replace error</source>
-        <translation type="vanished">பிழையை மாற்று</translation>
+        <translation>பிழையை மாற்று</translation>
     </message>
     <message>
         <source>Replace all errors
 in current tab</source>
-        <translation type="vanished">தற்போதைய தாவலில்
+        <translation>தற்போதைய தாவலில்
 அனைத்துப் பிழைகளையும் மாற்று</translation>
     </message>
     <message>
         <source>Replace all errors
 in all tabs</source>
-        <translation type="vanished">எல்லா தாவல்களிலும்
+        <translation>எல்லா தாவல்களிலும்
 அனைத்துப் பிழைகளையும் மாற்று</translation>
     </message>
     <message>
@@ -6150,11 +5721,11 @@ in all tabs</source>
     </message>
     <message>
         <source>Check all</source>
-        <translation type="vanished">அனைத்தையும் சரிபார்க்கவும்</translation>
+        <translation>அனைத்தையும் சரிபார்க்கவும்</translation>
     </message>
     <message>
         <source>Uncheck all</source>
-        <translation type="vanished">அனைத்தையும் தேர்வுநீக்கு</translation>
+        <translation>அனைத்தையும் தேர்வுநீக்கு</translation>
     </message>
     <message>
         <source>Replace</source>
@@ -7750,60 +7321,8 @@ and will be changed to the default</source>
         <translation>கண்டுபிடித்து மாற்றவும்</translation>
     </message>
     <message>
-        <source>Reached the end of the subtitles.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Search again from the first line?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>“%1”</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 or %2</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>, </source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 has no style named %2.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The other chosen styles are there. Searching with the missing ones finds fewer lines.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>%1 has none of the chosen styles.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Searching only these styles would find nothing.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace in every matching file in “%1”?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The files are changed on disk; Undo cannot bring them back. A copy of each file goes to the ReplaceBackup folder first.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Find</source>
         <translation>கண்டுபிடி</translation>
-    </message>
-    <message>
-        <source>Could not find “%1”.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The search folder “%1” does not exist.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>In files</source>
@@ -7930,30 +7449,6 @@ and will be changed to the default</source>
         <translation>அடுத்து இடமாற்றம் செய்யுங்கள்</translation>
     </message>
     <message>
-        <source>Search from the start</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Stop</source>
-        <translation type="unfinished">நிறுத்து</translation>
-    </message>
-    <message>
-        <source>Drop the missing styles</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Search every style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep them</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Replace in the files</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Replace all</source>
         <translation>அனைத்தையும் மாற்றவும்</translation>
     </message>
@@ -7995,23 +7490,27 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Remove nonexistent styles</source>
-        <translation type="vanished">இல்லாத பாணிகளை அகற்று</translation>
+        <translation>இல்லாத பாணிகளை அகற்று</translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Remove styles</source>
-        <translation type="vanished">பாணிகளை அகற்று</translation>
+        <translation>பாணிகளை அகற்று</translation>
     </message>
     <message>
         <source>Yes</source>
-        <translation type="vanished">ஆம்</translation>
+        <translation>ஆம்</translation>
     </message>
     <message>
         <source>Ignore</source>
-        <translation type="vanished">புறக்கணிக்கவும்</translation>
+        <translation>புறக்கணிக்கவும்</translation>
     </message>
     <message>
         <source>No</source>
-        <translation type="vanished">இல்லை</translation>
+        <translation>இல்லை</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -8019,13 +7518,13 @@ and will be changed to the default</source>
     </message>
     <message>
         <source>Reached end. Search from the beginning?</source>
-        <translation type="vanished">முடிவடைந்தது. ஆரம்பத்தில் இருந்தே தேடவா?</translation>
+        <translation>முடிவடைந்தது. ஆரம்பத்தில் இருந்தே தேடவா?</translation>
     </message>
     <message>
         <source>Styles named &quot;%1&quot; do not exist in the subtitles being searched,
 which may significantly reduce the number of search results.
 What would you like to do?</source>
-        <translation type="obsolete">தற்போதைய வசன வரிகள் இல்லை &quot;%1&quot; என்று பெயரிடப்பட்ட பாணிகள், 
+        <translation type="unfinished">தற்போதைய வசன வரிகள் இல்லை &quot;%1&quot; என்று பெயரிடப்பட்ட பாணிகள், 
 மேலும் இது முடிவுகளைத் தேடுவதைக் குறைக்கலாம். 
 என்ன செய்வது?</translation>
     </message>
@@ -8033,14 +7532,18 @@ What would you like to do?</source>
         <source>None of the selected styles exist in the subtitles being searched,
 so nothing will be found.
 What would you like to do?</source>
-        <translation type="vanished">தேர்வு பாணிகள் அனைத்தும் இல்லை, எதுவும் காணப்படாது. 
+        <translation>தேர்வு பாணிகள் அனைத்தும் இல்லை, எதுவும் காணப்படாது. 
 என்ன செய்வது?</translation>
     </message>
     <message>
         <source>Are you sure you want to make changes in all subtitle files?
 If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</source>
-        <translation type="vanished">அனைத்து வசனக் கோப்புகளிலும் மாற்றங்களைச் செய்ய விரும்புகிறீர்களா?
+        <translation>அனைத்து வசனக் கோப்புகளிலும் மாற்றங்களைச் செய்ய விரும்புகிறீர்களா?
 தவறு நேர்ந்தால், காப்புப்பிரதிகள் &apos;ReplaceBackup&apos; கோப்புறையில் உள்ளன.</translation>
+    </message>
+    <message>
+        <source>Could not find the specified phrase &quot;%1&quot;.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Replaced %1 times.</source>
@@ -8048,7 +7551,7 @@ If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</sou
     </message>
     <message>
         <source>Search path is invalid</source>
-        <translation type="vanished">பாதை தேடுவது தவறானது</translation>
+        <translation>பாதை தேடுவது தவறானது</translation>
     </message>
     <message>
         <source>Find in files</source>
@@ -8056,15 +7559,15 @@ If you make a mistake, backups are in the &apos;ReplaceBackup&apos; folder.</sou
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="vanished">உறுதிப்படுத்தல்</translation>
+        <translation>உறுதிப்படுத்தல்</translation>
     </message>
     <message>
         <source>Info</source>
-        <translation type="vanished">தகவல்</translation>
+        <translation>தகவல்</translation>
     </message>
     <message>
         <source>Find and Replace</source>
-        <translation type="vanished">கண்டுபிடித்து மாற்று</translation>
+        <translation>கண்டுபிடித்து மாற்று</translation>
     </message>
     <message>
         <source>Invalid regular expression &apos;%1&apos;: %2</source>
@@ -8169,7 +7672,7 @@ cause it was edited.</source>
     </message>
     <message>
         <source>Dialogue / comments</source>
-        <translation type="vanished">உரையாடல் / கருத்துகள்</translation>
+        <translation>உரையாடல் / கருத்துகள்</translation>
     </message>
     <message>
         <source>Dialogue</source>
@@ -8198,22 +7701,6 @@ cause it was edited.</source>
     <message>
         <source>Do nothing</source>
         <translation>எதுவும் செய்ய வேண்டாம்</translation>
-    </message>
-    <message>
-        <source>Lines with or without the text</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>In</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Lines</source>
-        <translation type="unfinished">வரிகள்</translation>
-    </message>
-    <message>
-        <source>Then</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy</source>
@@ -8959,10 +8446,6 @@ please save with different name or change file attribute.</source>
     <message>
         <source>None</source>
         <translation type="unfinished">எதுவுமில்லை</translation>
-    </message>
-    <message>
-        <source>Rolled back to the settings before the last import.</source>
-        <translation type="unfinished"></translation>
     </message>
     <message numerus="yes">
         <source>%n setting(s) imported.</source>
@@ -10619,18 +10102,6 @@ after the end time in milliseconds</source>
         <translation>மொழிபெயர்ப்பு</translation>
     </message>
     <message>
-        <source>Translation mode</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Original text</source>
-        <translation type="unfinished">அசல் உரை</translation>
-    </message>
-    <message>
-        <source>Original text: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Choose subtitle file</source>
         <translation>வசன வரிகளைத் தேர்வுசெய்க</translation>
     </message>
@@ -10643,14 +10114,6 @@ after the end time in milliseconds</source>
         <translation>பொருந்தும் கோடுகள் விருப்பங்கள்</translation>
     </message>
     <message>
-        <source>&lt;b&gt;Original&lt;/b&gt;: the text with the right timing. The pasted dialogue is matched to it, and it is deleted later.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>&lt;b&gt;Translation&lt;/b&gt;: the text pasted in, moved line by line until each one sits beside its original.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Original</source>
         <translation>அசல்</translation>
     </message>
@@ -10659,45 +10122,17 @@ after the end time in milliseconds</source>
         <translation>வரி சேர்க்கவும்</translation>
     </message>
     <message>
-        <source>A blank line before the selected one; the original moves down. Time the new line.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>A blank line before the selected one; the translation moves down.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Joins the selected line with the next one; the original moves up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Joins the selected line with the next one; the translation moves up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Deletes the selected line; the original moves up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Deletes the selected line; the translation moves up.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation type="unfinished">மூடு</translation>
-    </message>
-    <message>
         <source>Adds a blank line before the selected line.
 Moves the original one line down.
 The added line must be timed.</source>
-        <translation type="vanished">ஒரு வெற்று வரியை சேர்க்கிறது.
+        <translation>ஒரு வெற்று வரியை சேர்க்கிறது.
  அசல் ஒரு வரியை கீழே நகர்த்துகிறது.
  சேர்க்கப்பட்ட வரி நேரம் ஒதுக்கப்பட வேண்டும்.</translation>
     </message>
     <message>
         <source>Adds a blank line before the selected line.
 Moves the translation one line down.</source>
-        <translation type="vanished">ஒரு வெற்று வரியை சேர்க்கிறது.
+        <translation>ஒரு வெற்று வரியை சேர்க்கிறது.
  மொழிபெயர்ப்பை ஒரு வரி கீழே நகர்த்துகிறது.</translation>
     </message>
     <message>
@@ -10707,13 +10142,13 @@ Moves the translation one line down.</source>
     <message>
         <source>Joins the selected line with the next line.
 Moves the original one line up.</source>
-        <translation type="vanished">அடுத்த வரியுடன் தேர்ந்தெடுக்கப்பட்ட வரியில் சேரவும்.
+        <translation>அடுத்த வரியுடன் தேர்ந்தெடுக்கப்பட்ட வரியில் சேரவும்.
  அசல் ஒரு வரியை நகர்த்துகிறது.</translation>
     </message>
     <message>
         <source>Joins the selected line with the next line.
 Moves the translation one line up.</source>
-        <translation type="vanished">அடுத்த வரியுடன் தேர்ந்தெடுக்கப்பட்ட வரியில் சேரவும்.
+        <translation>அடுத்த வரியுடன் தேர்ந்தெடுக்கப்பட்ட வரியில் சேரவும்.
  மொழிபெயர்ப்பு ஒரு வரிசையை நகர்த்துகிறது.</translation>
     </message>
     <message>
@@ -10723,18 +10158,24 @@ Moves the translation one line up.</source>
     <message>
         <source>Deletes the selected line.
 Moves the original one line up.</source>
-        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட வரியை நீக்குகிறது. 
+        <translation>தேர்ந்தெடுக்கப்பட்ட வரியை நீக்குகிறது. 
 அசல் ஒரு வரியை நகர்த்துகிறது.</translation>
     </message>
     <message>
         <source>Deletes the selected line.
 Moves the translation one line up.</source>
-        <translation type="vanished">தேர்ந்தெடுக்கப்பட்ட வரியை நீக்குகிறது.
+        <translation>தேர்ந்தெடுக்கப்பட்ட வரியை நீக்குகிறது.
  மொழிபெயர்ப்பு ஒரு வரிசையை நகர்த்துகிறது.</translation>
     </message>
     <message>
         <source>Description</source>
-        <translation type="vanished">விவரம்</translation>
+        <translation>விவரம்</translation>
+    </message>
+    <message>
+        <source>Description:
+Original - subtitle text with correct timing, used to compare pasted dialogue lines; it is deleted later.
+Translation - text pasted into subtitles with correct timing.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Not confirmed</source>
@@ -10754,12 +10195,12 @@ Moves the translation one line up.</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation type="vanished">உறுதிப்படுத்தல்</translation>
+        <translation>உறுதிப்படுத்தல்</translation>
     </message>
     <message>
         <source>Are you sure you want to turn off translation mode?
 Foreign language text will be deleted.</source>
-        <translation type="vanished">மொழிபெயர்ப்பு பயன்முறையை அணைக்க விரும்புகிறீர்களா?
+        <translation>மொழிபெயர்ப்பு பயன்முறையை அணைக்க விரும்புகிறீர்களா?
  வெளிநாட்டு மொழி உரை நீக்கப்படும்.</translation>
     </message>
     <message>
@@ -10775,43 +10216,7 @@ Foreign language text will be deleted.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Not confirmed: marks the selected Lines for review</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>More</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on Translation mode for this file?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn on</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Not now</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn off Translation mode?</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Each translated line keeps its Translated text; its Original text is deleted.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Turn off</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Keep it on</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -11550,10 +10955,6 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Another tag is named “%1”. Press Enter to replace it.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Another tag is named “%1”. Fill in Tag first to replace it.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
