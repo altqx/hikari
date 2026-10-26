@@ -156,6 +156,15 @@ target_compile_definitions(hikari_backends_karaoke_templater_tests PRIVATE
     HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
     HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus")
 add_dependencies(hikari_backends_karaoke_templater_tests hikari_lua_helper hikari_automation_stage)
+# KE2: the template editor's preview runs, against what Apply writes.
+hikari_add_gtest(hikari_backends_karaoke_preview_tests SOURCES karaoke_preview_runner_tests.cpp
+    LIBRARIES hikari_backends Qt6::Core LABELS backends)
+target_compile_definitions(hikari_backends_karaoke_preview_tests PRIVATE
+    HIKARI_LUA_HELPER="$<TARGET_FILE:hikari_lua_helper>"
+    HIKARI_LUA_INCLUDE="${HIKARI_AUTOMATION_STAGE}/Include"
+    HIKARI_KARAOKE_TEMPLATER="${HIKARI_AUTOMATION_STAGE}/Autoload/kara-templater.lua"
+    HIKARI_KARAOKE_CORPUS="${CMAKE_CURRENT_SOURCE_DIR}/karaoke-corpus")
+add_dependencies(hikari_backends_karaoke_preview_tests hikari_lua_helper hikari_automation_stage)
 
 # KE3: the built-in karaoke effect presets through the bundled templater, byte
 # for byte against the unchanged script Aegisub 3.2.2 shipped.

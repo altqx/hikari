@@ -43,6 +43,8 @@ class VideoController : public QObject {
     Q_PROPERTY(QString offerDirectoryLabel READ offerDirectoryLabel NOTIFY changed)
     Q_PROPERTY(bool offerApplyToAll READ offerApplyToAll WRITE setOfferApplyToAll NOTIFY changed)
     Q_PROPERTY(bool playing READ playing NOTIFY changed)
+    // KE2: playing a span again and again (loopRange).
+    Q_PROPERTY(bool looping READ looping NOTIFY changed)
     // V2: the legacy times field ("00:00:01,001;  24;  0;  1 ms, -999 ms":
     // time, frame, frames from the active Line's start, then ms from its
     // start and end) and whether the shown frame is a keyframe; while
@@ -105,6 +107,10 @@ public:
     Q_INVOKABLE void loadFromDirectory();
     Q_INVOKABLE void dismissOffer();
     Q_INVOKABLE void openVideo(const QString &path);
+    // PU4: openRequest() for QML. Each openVideo call, the same file again
+    // too, is a new opening: an edit or question about the video shown
+    // ends with it.
+    Q_INVOKABLE qulonglong opening() const { return m_openRequest; }
     // Counts openVideo calls: each call is a new request, and a later one
     // drops what an earlier one had not yet opened.
     std::uint64_t openRequest() const { return m_openRequest; }
@@ -121,6 +127,10 @@ public:
     // A4: GLOBAL_PLAY_ACTUAL_LINE (legacy VideoBox's "Play the current
     // line"): the active Line from its start to the frame before its end.
     Q_INVOKABLE bool playActualLine();
+    // KE2: the Template editor's Loop the Line: [startMs, endMs) as
+    // playActualLine plays a Line, from its start again at each end.
+    Q_INVOKABLE bool loopRange(int startMs, int endMs);
+    bool looping() const { return m_session.looping(); }
     // V2 navigation.
     QString times() const;
     bool keyframeShown() const;

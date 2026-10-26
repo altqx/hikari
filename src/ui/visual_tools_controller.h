@@ -299,6 +299,7 @@ private:
     void saveShapes() const;
     void openTagsEditor();
     void saveAllTags() const;
+    std::u16string activeLineText() const; // the editors' active Line
 
     VideoController &m_video;
     SettingsStore &m_settings;

@@ -98,7 +98,7 @@ public:
     QString cellText(int row, int column) const;
     // E6: the row's legacy State in words for assistive technology ("changed",
     // "changed, saved", "unconfirmed", "bookmarked"; GR2: "uncommitted" while
-    // it shows the Line editor's draft), empty for none.
+    // it shows the Line editor's draft; TM1: "runs not placed"), empty for none.
     QString rowStateText(int row) const;
     QString columnTitle(int column) const;
     int columnCount() const;

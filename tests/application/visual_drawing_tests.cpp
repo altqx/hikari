@@ -641,7 +641,7 @@ TEST(ShapePresets, ReadAndWriteLikeLegacy)
     EXPECT_TRUE(parseShapePresets(u"").empty());
 }
 
-// --- The "Vector shape editing" dialog ---------------------------------------
+// --- The "Edit shapes" window (PU5) -----------------------------------------
 
 TEST(ShapesEdition, OpensOnThePresetsIndex)
 {
@@ -650,142 +650,227 @@ TEST(ShapesEdition, OpensOnThePresetsIndex)
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), 2).current().name, u"rounded square 1");
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), 5).current().name, u"rectangle");
     EXPECT_EQ(ShapesEdition(defaultShapePresets(), -1).selection(), 0);
-    // Legacy indexed an empty list (a crash); here the fields stay empty.
     const ShapesEdition empty({}, 0);
-    EXPECT_EQ(empty.selection(), -1);
-    EXPECT_TRUE(empty.name.empty());
+    EXPECT_TRUE(empty.current().name.empty());
+    EXPECT_FALSE(empty.canUndo());
 }
 
-TEST(ShapesEdition, AddAndDelete)
+TEST(ShapesEdition, EachChangeIsKeptAndUndoneInSteps)
+{
+    ShapesEdition e(defaultShapePresets(), 2);
+    // Typing a name is one step however many keys it takes.
+    EXPECT_EQ(e.setName(u"r"), ShapesEdition::NameCheck::Ok);
+    EXPECT_EQ(e.setName(u"ro"), ShapesEdition::NameCheck::Ok);
+    EXPECT_EQ(e.setName(u"round"), ShapesEdition::NameCheck::Ok);
+    EXPECT_EQ(e.presets()[2].name, u"round"); // kept at once
+    EXPECT_EQ(e.undoStep(), ShapesEdition::Rename);
+    e.endTyping();
+    EXPECT_TRUE(e.setShape(u"m 0 0 l 10 0\n10 10"));
+    EXPECT_EQ(e.current().shape, u"m 0 0 l 10 0 10 10"); // a line break is a space in the file's one line
+    e.setMode(ShapePreset::OnlyScaleX);
+    EXPECT_EQ(e.current().mode, ShapePreset::OnlyScaleX);
+    EXPECT_EQ(e.undoStep(), ShapesEdition::ChangeScaling);
+
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.current().mode, ShapePreset::BothScaleX);
+    EXPECT_EQ(e.redoStep(), ShapesEdition::ChangeScaling);
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.current().shape, defaultShapePresets()[2].shape);
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.current().name, u"rounded square 1");
+    EXPECT_FALSE(e.canUndo());
+    EXPECT_TRUE(e.redo());
+    EXPECT_EQ(e.current().name, u"round");
+    // A change after an undo drops what Redo had.
+    e.setMode(ShapePreset::SeparateScaleXY);
+    EXPECT_FALSE(e.canRedo());
+    // Another preset chosen ends the typing: its name is a step of its own.
+    e.select(0);
+    EXPECT_EQ(e.setName(u"square"), ShapesEdition::NameCheck::Ok);
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.presets()[0].name, u"rectangle");
+    EXPECT_EQ(e.presets()[2].name, u"round");
+}
+
+TEST(ShapesEdition, AValueTheToolCannotUseIsRefusedAndTheLastKept)
+{
+    ShapesEdition e(defaultShapePresets(), 1);
+    std::u16string taken;
+    EXPECT_EQ(e.setName(u""), ShapesEdition::NameCheck::Empty);
+    EXPECT_EQ(e.setName(u"  "), ShapesEdition::NameCheck::Empty);
+    EXPECT_EQ(e.setName(u"a;b"), ShapesEdition::NameCheck::Separator); // the file's separator
+    EXPECT_EQ(e.setName(u"RECTANGLE", &taken), ShapesEdition::NameCheck::Taken); // ignoring case
+    EXPECT_EQ(taken, u"rectangle");
+    EXPECT_EQ(e.setName(u"Circle"), ShapesEdition::NameCheck::Ok); // its own name, another case
+    EXPECT_FALSE(e.setShape(u""));
+    EXPECT_FALSE(e.setShape(u" \n "));
+    EXPECT_FALSE(e.setShape(u"m 0 0; l 1 1"));
+    EXPECT_EQ(e.current().shape, defaultShapePresets()[1].shape);
+    e.setMode(7);
+    EXPECT_EQ(e.current().mode, ShapePreset::BothScaleX);
+    EXPECT_EQ(e.undoStep(), ShapesEdition::Rename); // only the rename was a step
+}
+
+TEST(ShapesEdition, NewDuplicateAndDelete)
 {
     ShapesEdition e(defaultShapePresets(), 0);
-    EXPECT_EQ(e.addShape(u"")->text, u"Enter a name for the new shape.");
-    EXPECT_EQ(e.addShape(u"CIRCLE")->text, u"New shape name already exists, enter another name."); // ignoring case
-    EXPECT_FALSE(e.addShape(u"star"));
-    EXPECT_EQ(e.presets().size(), 6u);
+    // New shape: from the active Line's drawing, else a square.
+    e.addShape(u"{\\p1}m 0 0 l 5 5{\\p0}");
     EXPECT_EQ(e.selection(), 5);
-    EXPECT_EQ(e.name, u"star");
-    EXPECT_TRUE(e.shape.empty());
-    EXPECT_EQ(e.mode, 0);
-    // Delete: the selection stays at its place, or the new last one.
-    EXPECT_FALSE(e.removeShape());
-    EXPECT_EQ(e.presets().size(), 5u);
-    EXPECT_EQ(e.selection(), 4);
-    EXPECT_EQ(e.name, u"rounded square 3");
-    e.select(1);
-    EXPECT_FALSE(e.removeShape());
-    EXPECT_EQ(e.selection(), 1);
-    EXPECT_EQ(e.name, u"rounded square 1");
+    EXPECT_EQ(e.current().name, u"New shape");
+    EXPECT_EQ(e.current().shape, u"m 0 0 l 5 5");
+    e.addShape(u"no drawing");
+    EXPECT_EQ(e.current().name, u"New shape 2");
+    EXPECT_EQ(e.current().shape, u"m 0 0 l 100 0 100 100 0 100");
+    EXPECT_EQ(e.undoStep(), ShapesEdition::NewShape);
+    // Duplicate: after it, "copy", cut to the 20 characters.
+    e.select(2);
+    e.duplicate();
+    EXPECT_EQ(e.selection(), 3);
+    EXPECT_EQ(e.current().name, u"rounded square copy"); // its blank end dropped
+    EXPECT_EQ(e.current().shape, e.presets()[2].shape);
+    e.select(2);
+    e.duplicate();
+    EXPECT_EQ(e.current().name, u"rounded squar copy 2");
+    // Delete: no question, the next one selected; never the last one.
+    EXPECT_TRUE(e.remove());
+    EXPECT_EQ(e.current().name, u"rounded square copy");
+    EXPECT_EQ(e.undoStep(), ShapesEdition::DeleteShape);
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.current().name, u"rounded squar copy 2");
     ShapesEdition one({{u"only", u"m 0 0", 0, 0}}, 0);
-    EXPECT_EQ(one.removeShape()->text, u"Cannot remove all shapes from the list");
+    EXPECT_FALSE(one.canRemove());
+    EXPECT_FALSE(one.remove());
+    EXPECT_EQ(one.presets().size(), 1u);
 }
 
-TEST(ShapesEdition, ApplyKeepsAndOkGivesBack)
+TEST(ShapesEdition, ATakenNameIsReplacedInOneStep)
 {
-    ShapesEdition e(defaultShapePresets(), 0);
-    e.shape = u"m 0 0 l 50 0 50 50";
-    e.name = u"square";
-    EXPECT_TRUE(e.modified());
-    EXPECT_TRUE(e.save().saved());
-    EXPECT_FALSE(e.modified());
-    EXPECT_EQ(e.presets()[0], (ShapePreset{u"square", u"m 0 0 l 50 0 50 50", 0, 0}));
-    // An empty shape is refused; an empty name becomes "Untitled".
-    e.shape.clear();
-    EXPECT_EQ(e.save().error->text, u"Field \"shape\" cannot be empty.");
-    e.shape = u"m 0 0 l 1 1";
-    e.name.clear();
-    EXPECT_TRUE(e.save().saved());
-    EXPECT_EQ(e.name, u"Untitled");
-    EXPECT_EQ(e.presets()[0].name, u"Untitled");
-}
-
-TEST(ShapesEdition, ARenameByApplyReachesTheList)
-{
-    // T5-dialog-list-stale (compatibility-decisions.md): legacy's list never
-    // took a rename (only Add, Delete and Restore default changed it).
-    ShapesEdition e(defaultShapePresets(), 0);
-    e.name = u"square";
-    EXPECT_TRUE(e.save().saved());
-    EXPECT_EQ(e.list()[0], u"square");
-    EXPECT_EQ(e.list().size(), 5u);
-}
-
-TEST(ShapesEdition, TheSaveChangesQuestionNamesTheShape)
-{
-    // T5-save-question-text (compatibility-decisions.md): legacy's question
-    // showed the shape's drawing text.
-    ShapesEdition e(defaultShapePresets(), 0);
-    e.shape = u"m 0 0 l 50 0 50 50";
-    EXPECT_TRUE(e.modified());
-    EXPECT_EQ(e.saveChangesQuestion().text, u"Save changes to shape \"rectangle\"?");
-    EXPECT_EQ(e.saveChangesQuestion().title, u"Confirmation");
-}
-
-TEST(ShapesEdition, SavingUnderAnExistingNameAsksReplaceOrRename)
-{
-    // Accepted on #55 (surface-decision-routing.md): legacy kept both.
-    ShapesEdition e(defaultShapePresets(), 0);
-    e.name = u"Circle";
-    e.shape = u"m 0 0 l 9 9";
-    const auto clash = e.save();
-    ASSERT_TRUE(clash.clash);
-    EXPECT_EQ(*clash.clash, u"circle");
-    EXPECT_EQ(e.presets()[0].name, u"rectangle"); // nothing kept yet
-    EXPECT_TRUE(e.modified());                    // the edit is still unsaved
-    // Rename: the user changes the name and saves again.
-    e.name = u"ring";
-    EXPECT_TRUE(e.save().saved());
-    EXPECT_EQ(e.presets()[0].name, u"ring");
-    EXPECT_EQ(e.presets().size(), 5u);
-    // Replace: the other preset goes, the edit takes its name.
-    e.select(4);
-    e.name = u"RING";
-    ASSERT_TRUE(e.save().clash);
-    int pending = 2;
-    EXPECT_EQ(e.replaceClash(&pending), 3);
-    EXPECT_EQ(pending, 1);
+    ShapesEdition e(defaultShapePresets(), 3);
+    std::u16string taken;
+    EXPECT_EQ(e.setName(u"Circle", &taken), ShapesEdition::NameCheck::Taken);
+    e.replaceNamed(u"Circle");
     ASSERT_EQ(e.presets().size(), 4u);
-    EXPECT_EQ(e.presets()[3].name, u"RING");
-    EXPECT_EQ(e.list()[3], u"RING");
-    EXPECT_EQ(e.presets()[0].name, u"circle");
+    EXPECT_EQ(e.selection(), 2); // the removed one was before it
+    EXPECT_EQ(e.current().name, u"Circle");
+    EXPECT_EQ(e.current().shape, defaultShapePresets()[3].shape);
+    EXPECT_EQ(e.undoStep(), ShapesEdition::ReplaceShape);
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.presets(), defaultShapePresets());
+    EXPECT_EQ(e.selection(), 3);
 }
 
-TEST(ShapesEdition, GetShapeFromActiveLine)
+TEST(ShapesEdition, RenamesFollowUndoRedoAndUndoAll)
 {
-    // OnGetShapeFromLine: an empty shape takes the drawing; otherwise each
-    // drawing is a new preset "Untitled" (the mode fields as they were).
+    // The toolbar's chosen preset follows the history's renames (Codex on
+    // #349): a name goes through each in turn.
+    const auto through = [](std::u16string name, const Renames &renames) {
+        for (const Renamed &r : renames)
+            if (name == r.from)
+                name = r.to;
+        return name;
+    };
+    const auto opened = defaultShapePresets();
+    ShapesEdition e(opened, 3);
+    e.replaceNamed(u"Circle");
+    EXPECT_EQ(through(opened[3].name, e.renamed()), u"Circle");
+    ASSERT_TRUE(e.undo());
+    EXPECT_EQ(through(u"Circle", e.renamed()), opened[3].name);
+    ASSERT_TRUE(e.redo());
+    EXPECT_EQ(through(opened[3].name, e.renamed()), u"Circle");
+    // Undo all after the Replace and another change to the same preset.
+    ASSERT_TRUE(e.setShape(u"m 0 0 l 9 9"));
+    EXPECT_TRUE(e.renamed().empty());
+    ASSERT_TRUE(e.undoAll());
+    EXPECT_EQ(through(u"Circle", e.renamed()), opened[3].name);
+    // Typing a name is one step: its Undo goes back through every key.
+    ASSERT_TRUE(e.undo());
+    e.select(1);
+    const std::u16string before = e.current().name;
+    ASSERT_EQ(e.setName(u"r"), ShapesEdition::NameCheck::Ok);
+    ASSERT_EQ(e.setName(u"ring"), ShapesEdition::NameCheck::Ok);
+    EXPECT_EQ(through(u"r", e.renamed()), u"ring");
+    ASSERT_TRUE(e.undo());
+    EXPECT_EQ(through(u"ring", e.renamed()), before);
+    // Other steps rename nothing.
+    ASSERT_TRUE(e.remove());
+    EXPECT_TRUE(e.renamed().empty());
+    // An action that changes nothing is no step: the revision the editor
+    // hands changes on stays, so the last renames are not handed on again.
+    ShapesEdition same(opened, 3);
+    same.replaceNamed(u"Circle");
+    ASSERT_TRUE(same.undo());
+    const auto revision = same.revision();
+    same.restoreDefaults(opened);
+    EXPECT_EQ(same.revision(), revision);
+    // Delete selects the next one, the last when it was the last (Codex on
+    // #349: worked out before the list moves).
+    same.select(static_cast<int>(opened.size()) - 1);
+    ASSERT_TRUE(same.remove());
+    EXPECT_EQ(same.selection(), static_cast<int>(opened.size()) - 2);
+}
+
+TEST(ShapesEdition, RedoBringsBackTheStepsOwnSelection)
+{
+    // Another preset chosen after a step does not change what Redo selects
+    // (Codex on #349).
+    ShapesEdition e(defaultShapePresets(), 2);
+    e.duplicate();
+    ASSERT_EQ(e.selection(), 3);
+    e.select(0);
+    ASSERT_TRUE(e.undo());
+    EXPECT_EQ(e.selection(), 2);
+    e.select(4);
+    ASSERT_TRUE(e.redo());
+    EXPECT_EQ(e.selection(), 3);
+    EXPECT_EQ(e.current().name, u"rounded square copy");
+    e.select(1);
+    ASSERT_TRUE(e.undo());
+    EXPECT_EQ(e.selection(), 2);
+}
+
+TEST(ShapesEdition, TakeFromTheActiveLineReplacesTheDrawing)
+{
     ShapesEdition e(defaultShapePresets(), 0);
-    e.mode = 2;
-    EXPECT_FALSE(e.getShapeFromLine(u"{\\pos(1,1)}Text"));
-    EXPECT_TRUE(e.getShapeFromLine(u"{\\p1}m 0 0 l 5 5{\\p0}text{\\p2}m 1 1 l 2 2"));
-    ASSERT_EQ(e.presets().size(), 7u);
-    EXPECT_EQ(e.presets()[5], (ShapePreset{u"Untitled", u"m 0 0 l 5 5", 0, 0}));
-    EXPECT_EQ(e.presets()[6], (ShapePreset{u"Untitled", u"m 1 1 l 2 2", 0, 0}));
-    EXPECT_EQ(e.selection(), 6);
-    EXPECT_EQ(e.name, u"Untitled");
-    EXPECT_EQ(e.shape, u"m 1 1 l 2 2");
-    EXPECT_EQ(e.mode, 2);
-    ShapesEdition blank(defaultShapePresets(), 0);
-    EXPECT_FALSE(blank.addShape(u"new"));
-    EXPECT_TRUE(blank.getShapeFromLine(u"{\\p1}m 0 0 l 3 3"));
-    EXPECT_EQ(blank.presets().size(), 6u);
-    EXPECT_EQ(blank.shape, u"m 0 0 l 3 3");
-    EXPECT_FALSE(blank.modified()); // legacy set currentShape too: unsaved, yet not "modified"
-    EXPECT_TRUE(blank.presets()[5].shape.empty());
+    EXPECT_FALSE(e.takeFromLine(u"no drawing"));
+    EXPECT_FALSE(e.canUndo());
+    // The last drawing in the Line (legacy's loop left the field with it).
+    EXPECT_TRUE(e.takeFromLine(u"{\\p1}m 0 0 l 1 1{\\p0}x{\\p2}m 5 5 l 6 6"));
+    EXPECT_EQ(e.presets().size(), 5u);
+    EXPECT_EQ(e.current().name, u"rectangle");
+    EXPECT_EQ(e.current().shape, u"m 5 5 l 6 6");
+    EXPECT_EQ(e.undoStep(), ShapesEdition::TakeFromLine);
 }
 
-TEST(ShapesEdition, RestoreDefaultKeepsTheSelectedNamesPlace)
+TEST(ShapesEdition, RestoreDefaultsAndUndoAllAreOneStep)
 {
-    std::vector<ShapePreset> mine = {{u"star", u"m 0 0", 0, 0}, {u"circle", u"m 1 1", 1, 0}};
-    ShapesEdition e(mine, 1);
+    std::vector<ShapePreset> mine = defaultShapePresets();
+    mine.insert(mine.begin(), {u"star", u"m 0 0 l 1 1", 1, 0});
+    ShapesEdition e(mine, 2); // circle
+    e.setName(u"ring");
+    e.endTyping();
+    e.select(0);
+    e.setMode(ShapePreset::OnlyScaleX);
+    e.select(3); // rounded square 1
+    // Restore: legacy's five, the selected name's place where the list has
+    // it, else where it is, else the first.
     e.restoreDefaults(defaultShapePresets());
-    EXPECT_EQ(e.presets().size(), 5u);
-    EXPECT_EQ(e.selection(), 1); // "circle" is listed: its place
-    EXPECT_EQ(e.name, u"circle");
-    ShapesEdition f(mine, 0);
-    f.restoreDefaults(defaultShapePresets());
-    EXPECT_EQ(f.selection(), 0); // "star" is not: the first
-    EXPECT_EQ(ShapesEdition::restoreQuestion().text, u"Are you sure you want to reset to default?");
+    EXPECT_EQ(e.presets(), defaultShapePresets());
+    EXPECT_EQ(e.current().name, u"rounded square 1");
+    EXPECT_EQ(e.undoStep(), ShapesEdition::RestoreDefaults);
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.presets()[0].name, u"star");
+    // Undo all changes: the presets the window opened with, one step.
+    EXPECT_TRUE(e.undoAll());
+    EXPECT_EQ(e.presets(), mine);
+    EXPECT_EQ(e.undoStep(), ShapesEdition::UndoAll);
+    EXPECT_FALSE(e.undoAll()); // nothing differs
+    EXPECT_TRUE(e.undo());
+    EXPECT_EQ(e.presets()[2].name, u"ring");
+    // Defaults the same as the presets: no step.
+    ShapesEdition same(defaultShapePresets(), 0);
+    same.restoreDefaults(defaultShapePresets());
+    EXPECT_FALSE(same.canUndo());
 }
 
 // --- The tool: gestures, options, the overlay --------------------------------
@@ -936,6 +1021,41 @@ TEST(DrawingOptions, SixModesAndTheShapeList)
     wheel.wheelSteps = 1;
     tool.pointer(wheel, host);
     EXPECT_EQ(tool.editor().mode, 5);
+}
+
+// PU5: "Edit shapes" keeps each change at once, so the tool reads the
+// chosen preset again even at the place chosen before (legacy's SetShape
+// kept the one it had; its edits came only at OK).
+TEST(DrawingOptions, ChangedPresetsAreReadAgain)
+{
+    TestHost host;
+    setUp(host);
+    DrawingTool tool;
+    tool.reset(host);
+    ASSERT_TRUE(tool.setOption("shape", 1, host)); // rectangle
+    const std::size_t rectangle = tool.shapePoints().size();
+    ASSERT_NE(rectangle, 3u);
+    host.presets[0].shape = u"m 0 0 l 100 0 0 100";
+    tool.setOption("shape", 1, host); // legacy's SetShape: the same place, nothing read
+    EXPECT_EQ(tool.shapePoints().size(), rectangle);
+    const int changes = host.changes;
+    tool.presetsChanged(1, host);
+    EXPECT_EQ(tool.shape(), 0);
+    EXPECT_EQ(tool.shapeSelection(), 1);
+    EXPECT_EQ(tool.shapePoints().size(), 3u);
+    EXPECT_EQ(host.changes, changes + 1);
+    // Free drawing stays so.
+    tool.setOption("shape", 0, host);
+    tool.presetsChanged(0, host);
+    EXPECT_EQ(tool.shape(), -1);
+    // A hidden tool (another family shown) takes them too, quietly; it
+    // reads its Line when it comes back (Codex on #349).
+    ASSERT_TRUE(tool.setOption("shape", 1, host));
+    host.presets[0].shape = u"m 0 0 l 100 0 100 100 0 100 0 50";
+    const int hidden = host.changes;
+    tool.presetsChanged(1, host, false);
+    EXPECT_EQ(tool.shapePoints().size(), 5u);
+    EXPECT_EQ(host.changes, hidden);
 }
 
 TEST(DrawingTool, MoveFollowsTheVideosTime)

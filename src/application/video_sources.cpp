@@ -318,21 +318,23 @@ std::expected<std::string, DummyVideoError> dummyVideoText(std::string_view fpsT
                                                            int height, std::uint8_t red, std::uint8_t green,
                                                            std::uint8_t blue, bool pattern)
 {
+    const auto frames = dummyVideoFrames(fpsText, durationMs);
+    if (!frames)
+        return std::unexpected(frames.error());
+    const auto fps = toCDouble(fpsText);
+    char buffer[256];
+    std::snprintf(buffer, sizeof buffer, "?dummy:%f:%i:%i:%i:%i:%i:%i:%s", static_cast<double>(static_cast<float>(*fps)),
+                  *frames, width, height, red, green, blue, pattern ? "c" : "");
+    return std::string(buffer);
+}
+
+std::expected<int, DummyVideoError> dummyVideoFrames(std::string_view fpsText, int durationMs)
+{
     const auto fps = toCDouble(fpsText);
     if (!fps || *fps < 15 || *fps > 120)
         return std::unexpected(DummyVideoError::InvalidFps);
     const float frametime = static_cast<float>(1000.f / *fps);
-    const int frames = static_cast<int>(durationMs / frametime);
-    char buffer[256];
-    std::snprintf(buffer, sizeof buffer, "?dummy:%f:%i:%i:%i:%i:%i:%i:%s", static_cast<double>(static_cast<float>(*fps)),
-                  frames, width, height, red, green, blue, pattern ? "c" : "");
-    return std::string(buffer);
-}
-
-int dummyVideoDialogFrames()
-{
-    const float frametime = 1000.f / 23.976f;
-    return static_cast<int>(1500000.f / frametime);
+    return static_cast<int>(durationMs / frametime);
 }
 
 std::optional<DummyVideo> parseDummyVideo(std::string_view text)

@@ -7,6 +7,7 @@
 
 #include <gtest/gtest.h>
 
+#include <chrono>
 #include <cstring>
 #include <fstream>
 #include <sstream>
@@ -103,6 +104,30 @@ TEST(StyleLists, NewNamesTransferMoveAndSort)
     EXPECT_EQ(names(m), (std::vector<std::u8string>{u8"d", u8"b", u8"c", u8"a"}));
     sortStyles(m);
     EXPECT_EQ(names(m), (std::vector<std::u8string>{u8"a", u8"b", u8"c", u8"d"}));
+    // Rows clamped at an end stack in order behind each other.
+    StyleList e{named(u8"a"), named(u8"b"), named(u8"c"), named(u8"d"), named(u8"e")};
+    EXPECT_EQ(moveStyles(e, {0, 2, 3}, StyleMove::Up), (std::vector<std::size_t>{0, 1, 2}));
+    EXPECT_EQ(names(e), (std::vector<std::u8string>{u8"a", u8"c", u8"d", u8"b", u8"e"}));
+    EXPECT_EQ(moveStyles(e, {1, 4}, StyleMove::ToEnd), (std::vector<std::size_t>{3, 4}));
+    EXPECT_EQ(names(e), (std::vector<std::u8string>{u8"a", u8"d", u8"b", u8"c", u8"e"}));
+}
+
+// SY1 (#247): every Style of a large file selected and moved is one pass,
+// not an erase and an insert per row (Codex security review).
+TEST(StyleLists, MovingAllOfALargeListIsLinear)
+{
+    StyleList big(200000);
+    std::vector<std::size_t> all(big.size());
+    for (std::size_t i = 0; i < big.size(); ++i) {
+        big[i].name = u8"s" + std::u8string(reinterpret_cast<const char8_t *>(std::to_string(i).c_str()));
+        all[i] = i;
+    }
+    const auto start = std::chrono::steady_clock::now();
+    for (const auto move : {StyleMove::Up, StyleMove::Down, StyleMove::ToStart, StyleMove::ToEnd})
+        EXPECT_EQ(moveStyles(big, all, move), all);
+    EXPECT_LT(std::chrono::steady_clock::now() - start, std::chrono::seconds(2));
+    EXPECT_EQ(big.front().name, u8"s0");
+    EXPECT_EQ(big.back().name, u8"s199999");
 }
 
 // PK1 (#301): the clash review's answers, one per clashing name.
@@ -202,6 +227,18 @@ TEST(StyleLists, CommitRefusesTakenNamesAndAppliesMultiEdit)
     EXPECT_TRUE(l[2].bold);
     EXPECT_EQ(l[2].fontname, u8"Arial");
     EXPECT_EQ(l[1].fontname, u8"Times");
+}
+
+TEST(StyleLists, CommitEditsTheOpenedCopyOfARepeatedName)
+{
+    StyleList l{named(u8"Dup", u8"First"), named(u8"Mid"), named(u8"Dup", u8"Last")};
+    EXPECT_EQ(*commitStyle(l, {0, named(u8"Dup", u8"Edited"), u8"Dup"}), 0u);
+    EXPECT_EQ(l[0].fontname, u8"Edited");
+    EXPECT_EQ(l[2].fontname, u8"Last");
+    // A row that no longer holds the opened name falls back to the name.
+    EXPECT_EQ(*commitStyle(l, {1, named(u8"Dup", u8"Again"), u8"Dup"}), 2u);
+    EXPECT_EQ(l[1].name, u8"Mid");
+    EXPECT_EQ(l[2].fontname, u8"Again");
 }
 
 TEST(DocumentStyles, EditsKeepUntouchedStylesAndRenameLines)

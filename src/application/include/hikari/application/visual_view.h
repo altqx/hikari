@@ -93,6 +93,8 @@ public:
     // UpdateRects (UpdateVideoWindow).
     void setAspectRatio(float ratio);
     float aspectRatio() const { return m_aspect; }
+    // The opened source's own ratio (PU4: Change aspect ratio's Reset).
+    float ownAspectRatio() const { return m_sourceAspect; }
 
     // The script resolution (SubsGrid::GetASSRes) the tools convert to.
     void setScript(int width, int height);
@@ -170,6 +172,7 @@ private:
     int m_clientWidth = 0, m_clientHeight = 0, m_panelHeight = 0;
     int m_width = 0, m_height = 0;
     float m_aspect = 0;
+    float m_sourceAspect = 0;
     int m_scriptWidth = 0, m_scriptHeight = 0;
     IntRect m_windowRect, m_videoRect, m_sourceRect;
     EdgeRect m_zoomRect;

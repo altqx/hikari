@@ -6,6 +6,7 @@
 // the Style editor with its libass preview.
 
 #include "hikari/application/style_manager.h"
+#include "hikari/application/write_coordinator.h"
 #include "hikari/backends/libass_renderer.h"
 
 #include <QImage>
@@ -32,9 +33,18 @@ class StyleManagerController : public QObject {
 public:
     struct Hooks {
         std::function<application::EditSession *()> target;                  // the editing target
+        // SY1: the editing target's Document, and an open Document's session
+        // (null when closed, or the reference): an edit is pinned by the
+        // Document, whose id is never reused.
+        std::function<std::optional<application::DocumentId>()> targetDocument;
+        std::function<application::EditSession *(application::DocumentId)> session;
         std::function<std::vector<application::EditSession *>()> documents;  // every open Document
         std::function<void()> refresh;                                       // after a Document changed
         std::function<std::vector<application::FontLease>()> fonts;          // Y6: the external fonts
+        // SY1: the catalog chosen last (styles.lastCatalog), read once at
+        // the start and written on each choice.
+        std::function<QString()> lastCatalog;
+        std::function<void(const QString &)> catalogChosen;
     };
     StyleManagerController(std::filesystem::path catalogDir, Hooks hooks, QObject *parent = nullptr);
 
@@ -57,10 +67,25 @@ public:
     // The editing target or one of its Lines changed (Application::refreshViews);
     // `available` is notified when the target now has ASS Styles or no longer has.
     void documentEdited();
+    // SY1: the catalog refreshLists would make current for the target now.
+    Q_INVOKABLE QString followedCatalog() const;
+    // The Style manager's choice, kept as styles.lastCatalog.
     Q_INVOKABLE bool chooseCatalog(const QString &name);
+    // Another user's load (Settings' conversion catalog): not kept.
+    bool loadCatalog(const QString &name);
     Q_INVOKABLE bool createCatalog(const QString &name); // NewCatalog
     Q_INVOKABLE bool deleteCatalog(const QString &name);
     Q_INVOKABLE void saveCatalog();                       // OnClose saves the store
+    // SY1: after the views refreshed (an edit, an undo, another tab):
+    // targetEdited, `switched` when the target is another Document.
+    void targetRefreshed();
+
+    // SY1: a list's rows as the Style manager shows them: [{name, primary,
+    // outline (#rrggbb), lines (the Lines using it; -1 in the catalog)}].
+    Q_INVOKABLE QVariantList styleRows(bool store) const;
+    // SY1: the editor's value keys that differ between the Styles at `rows`
+    // ("Multiple values"); the name is left out.
+    Q_INVOKABLE QStringList mixedFields(bool store, const QVariantList &rows) const;
 
     // The editor. begin* return the values it opens with ({} when refused).
     Q_INVOKABLE QVariantMap beginEdit(bool store, int row);
@@ -74,10 +99,23 @@ public:
     // opened), rename (an existing Document Style renamed)}.
     Q_INVOKABLE QVariantMap commitQuestions(const QVariantMap &values) const;
     // ChangeStyle: "" when committed, else the legacy message. `selected`
-    // are the list's selected rows, used with `applyToSelected`.
+    // are the list's selected rows, used with `applyToSelected`. SY1:
+    // `resolved` are the value keys a multiple selection set by hand, written
+    // to each Style even where the value equals the first one's.
     Q_INVOKABLE QString commitEdit(const QVariantMap &values, const QVariantList &selected, bool applyToSelected,
-                                   bool renameLines);
+                                   bool renameLines, const QStringList &resolved = {});
     Q_INVOKABLE void endEdit();
+    // SY1: the edit can still be applied (its file is open; a catalog edit
+    // always can).
+    Q_INVOKABLE bool editOpen() const;
+    // SY1: the catalog a catalog Style's edit goes to, which Settings may
+    // have replaced in the lists since ("" without one).
+    Q_INVOKABLE QString editCatalog() const;
+    // SY1: what the lists are of: the target Document, the catalog and the
+    // names in both lists. A question or a review opened over them acts on
+    // its answer only while the key is the same (the main window may
+    // switch the tab or change the Styles meanwhile).
+    Q_INVOKABLE QString listsKey() const;
 
     // PK1's clash review: the clashes a transfer has, in order
     // ([{name, fields (the style_field flags that differ), same, suggestion}]).
@@ -97,10 +135,10 @@ public:
     Q_INVOKABLE void sortStyles(bool store);
     // kind: 0 to start, 1 up, 2 down, 3 to end. Returns the new rows.
     Q_INVOKABLE QVariantList moveStyles(bool store, const QVariantList &rows, int kind);
-    // OnCleanStyles: {text, details}, the notice's (NT1): how many styles
-    // went and which, and legacy's "Styles used:\n...\nStyles deleted:\n..."
-    // (empty without a Document).
-    Q_INVOKABLE QVariantMap cleanStyles();
+    // OnCleanStyles, for SY1's toast (NT1's notice): {used, deleted (names),
+    // report (legacy's "Styles used:\n...\nStyles deleted:\n...", the
+    // toast's Details)}; {} without an ASS Document.
+    Q_INVOKABLE QVariantMap deleteUnusedStyles();
 
     // StylePreview: the editor's values over the checkered background.
     Q_INVOKABLE void renderPreview(const QVariantMap &values, int width, int height, const QString &text);
@@ -108,6 +146,7 @@ public:
 signals:
     void changed();
     void previewChanged();
+    void targetEdited(bool switched);
     // TP1: the Styles panel reads panelRows() again; `retargeted` when the
     // editing target is another Document than last time.
     void documentChanged(bool retargeted);
@@ -117,8 +156,17 @@ private:
         bool store = false;
         std::optional<std::size_t> row;
         core::StyleValues opened;
+        // SY1: the Document the editor opened on, so Apply after a tab
+        // switch still goes to it (none once it closed).
+        std::optional<application::DocumentId> document;
+        // SY1: a catalog Style's catalog, so Apply goes to it when Settings
+        // loaded another since.
+        std::u8string catalog;
     };
     application::StyleList *list(bool store, std::optional<application::StyleList> &document) const;
+    void catalogChosen();
+    void pin(Edit edit);
+    application::EditSession *editSession() const;
     bool applyDocument(application::EditSession &session, const application::StyleList &styles,
                        const std::vector<std::optional<std::size_t>> &origin,
                        std::optional<std::pair<std::u8string, std::u8string>> rename = std::nullopt);
@@ -126,11 +174,12 @@ private:
     application::StyleCatalogs m_catalogs;
     Hooks m_hooks;
     std::optional<Edit> m_edit;
+    std::optional<application::DocumentId> m_lastTarget;
     backends::LibassRenderer m_renderer;
     QImage m_preview;
     int m_previewKey = 0;
     bool m_available = false; // as last notified by documentEdited
-    const application::EditSession *m_notifiedTarget = nullptr; // ditto
+    std::optional<application::DocumentId> m_notifiedTarget; // ditto
 };
 
 // StylePreview: `style` at alignment 5 over the checkered background, the

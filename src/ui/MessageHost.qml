@@ -6,7 +6,10 @@
 // another child of its content and change its size.
 //
 // ask(options, done): MessageBox.ask's options (title, text, detail,
-// details, severity, choices, dontAsk) and done(id, dontAskAgain).
+// details, severity, choices, dontAsk, and PU4's `from`, the window it opens
+// over instead) and done(id, dontAskAgain); it gives the question back,
+// for withdraw(question) when what it asks about changes (PU4): out of the
+// queue, or answered with its reject choice if shown.
 import QtQuick
 import Hikari.Ui
 
@@ -17,11 +20,27 @@ QtObject {
     property MessageBox box: null
     property var queue: []
     property bool asking: false
+    // The question shown.
+    property var current: null
 
     function ask(options, done) {
-        queue = queue.concat([{ options: options, done: done }])
+        const question = { options: options, done: done }
+        queue = queue.concat([question])
         if (!asking)
             next()
+        return question
+    }
+    function withdraw(question) {
+        if (!question)
+            return
+        if (queue.indexOf(question) >= 0) {
+            queue = queue.filter(q => q !== question)
+            const reject = (question.options.choices || []).find(c => c.role === "reject")
+            if (question.done)
+                question.done(reject ? reject.id : "", false)
+        } else if (question === current && box) {
+            box.answer(box.rejectId())
+        }
     }
     function next() {
         if (asking || queue.length === 0)
@@ -29,10 +48,16 @@ QtObject {
         const question = queue[0]
         queue = queue.slice(1)
         asking = true
+        current = question
         if (!box)
             box = boxComponent.createObject(null, { settings: host.settings })
-        box.ask(question.options, (id, again) => {
+        // A window to open over that has closed while the question waited
+        // (the fullscreen video window left): the window with the keyboard.
+        const from = question.options.from
+        const options = from && !from.visible ? Object.assign({}, question.options, { from: null }) : question.options
+        box.ask(options, (id, again) => {
             asking = false
+            current = null
             if (question.done)
                 question.done(id, again)
             Qt.callLater(host.next)

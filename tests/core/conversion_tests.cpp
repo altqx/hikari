@@ -10,6 +10,7 @@
 #include <gtest/gtest.h>
 
 #include <cstring>
+#include <limits>
 #include <string>
 #include <string_view>
 
@@ -150,4 +151,9 @@ TEST(Conversion, RefusedForTheSameFormatPlainTextOrAnInvalidFps)
     auto o = options();
     o.fps = 0.5;
     EXPECT_FALSE(convertDocument(ass, SubtitleFormat::Srt, o));
+    // PU6: not a number, which every comparison lets through.
+    o.fps = std::numeric_limits<double>::quiet_NaN();
+    EXPECT_FALSE(convertDocument(ass, SubtitleFormat::MicroDvd, o));
+    o.fps = std::numeric_limits<double>::infinity();
+    EXPECT_FALSE(convertDocument(ass, SubtitleFormat::MicroDvd, o));
 }
