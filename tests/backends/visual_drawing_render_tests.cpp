@@ -348,13 +348,12 @@ TEST(DrawingRender, ShapesFillTheRectangleTheToolShows)
 
 TEST(DrawingRender, AShapeTakenFromALineIsPaintedInTheRectangle)
 {
-    // "Get shape from active line": a Line's drawing becomes a preset, and a
+    // "Take from the active line": a Line's drawing becomes a preset, and a
     // drag draws it scaled into the rectangle.
     const std::u16string line = u"{\\an7\\pos(0,0)\\p1}m 0 0 l 30 0 30 10 10 10 10 30 0 30";
     ShapesEdition edition(defaultShapePresets(), 0);
-    ASSERT_FALSE(edition.addShape(u"corner"));
-    ASSERT_TRUE(edition.getShapeFromLine(line));
-    ASSERT_TRUE(edition.save().saved());
+    edition.addShape({});
+    ASSERT_TRUE(edition.takeFromLine(line));
     Host host(u"{\\an7\\pos(0,0)\\bord0\\shad0}");
     host.presets = edition.presets();
     DrawingTool tool;

@@ -3,6 +3,7 @@
 #include "hikari/application/visual_drawing.h"
 
 #include <algorithm>
+#include <optional>
 #include <cerrno>
 #include <climits>
 #include <cwctype>
@@ -170,226 +171,212 @@ std::vector<u16> shapeListChoices(const std::vector<ShapePreset> &presets)
 }
 
 // ---------------------------------------------------------------------------
-// ShapesEdition (VisualDrawingShapes.cpp:43-288).
+// ShapesEdition: PU5's "Edit shapes" (legacy VisualDrawingShapes.cpp:43-288).
 
-ShapesEdition::ShapesEdition(std::vector<ShapePreset> presets, int curShape) : m_presets(std::move(presets))
+namespace {
+
+int clampedSelection(int selection, std::size_t size)
 {
-    if (curShape < 0 || curShape >= static_cast<int>(m_presets.size()))
-        curShape = 0;
-    m_selection = curShape;
-    for (const ShapePreset &p : m_presets)
-        m_list.push_back(p.name);
-    // Legacy indexed the empty list here (a crash); the fields stay empty.
-    if (!m_presets.empty())
-        m_current = m_presets[static_cast<std::size_t>(m_selection)];
-    else
-        m_selection = -1;
-    showCurrent();
+    return selection < 0 || selection >= static_cast<int>(size) ? 0 : selection;
 }
 
-void ShapesEdition::showCurrent()
+// The last drawing in a Line's text (OnGetShapeFromLine's loop left the
+// field with the last), or none.
+std::optional<u16> lastDrawing(u16v lineText)
 {
-    // SetShapeFromSettings through HikariTextCtrl::SetValue (HikariTextCtrl.
-    // cpp:160-168): "\r" dropped, and "\n" in the one-line name field. The
-    // name's 20-character limit applies to typing only.
-    const auto shown = [](u16 text, bool multiline) {
-        std::erase(text, u'\r');
-        if (!multiline)
-            std::erase(text, u'\n');
-        return text;
-    };
-    name = shown(m_current.name, false);
-    shape = shown(m_current.shape, true);
-    mode = m_current.mode;
-    scalingMode = m_current.scalingMode;
+    std::optional<u16> out;
+    for (const drawing::Tag &tag : drawing::parseTags(lineText, {u"p"}))
+        if (tag.name == u"pvector")
+            out = tag.value;
+    return out;
 }
 
-std::optional<ShapesEdition::Message> ShapesEdition::addShape(u16v newName)
+bool blank(u16v text)
 {
-    if (newName.empty())
-        return Message{u"Enter a name for the new shape.", u"Error"};
-    for (const u16 &listed : m_list)
-        if (sameNameIgnoringCase(listed, newName)) // HikariChoice::FindString
-            return Message{u"New shape name already exists, enter another name.", u"Error"};
-    m_current = ShapePreset{};
-    m_current.name = u16(newName);
-    m_presets.push_back(m_current);
-    m_list.push_back(m_current.name);
-    m_selection = static_cast<int>(m_presets.size()) - 1;
-    showCurrent();
-    return std::nullopt;
+    return std::ranges::all_of(text, isBlank);
 }
 
-std::optional<ShapesEdition::Message> ShapesEdition::removeShape()
+} // namespace
+
+ShapesEdition::ShapesEdition(std::vector<ShapePreset> presets, int selection)
+    : m_history(presets, clampedSelection(selection, presets.size()))
 {
-    if (m_selection < 0 || m_selection >= static_cast<int>(m_presets.size()))
-        return Message{u"Selected shape is out of range of shapeList.", u"Error"};
-    if (m_presets.size() <= 1)
-        return Message{u"Cannot remove all shapes from the list", u"Error"};
-    m_presets.erase(m_presets.begin() + m_selection);
-    m_list.erase(m_list.begin() + m_selection);
-    if (m_selection >= static_cast<int>(m_list.size()))
-        m_selection = static_cast<int>(m_list.size()) - 1;
-    if (m_selection < 0)
-        m_current = ShapePreset{};
-    else
-        m_current = m_presets[static_cast<std::size_t>(m_selection)];
-    showCurrent();
-    return std::nullopt;
 }
 
-bool ShapesEdition::modified() const
+const ShapePreset &ShapesEdition::current() const
 {
-    return m_current.name != name || m_current.shape != shape || m_current.mode != mode ||
-           m_current.scalingMode != scalingMode;
+    static const ShapePreset none;
+    const int i = selection();
+    return i >= 0 && i < static_cast<int>(presets().size()) ? presets()[static_cast<std::size_t>(i)] : none;
 }
 
-ShapesEdition::Message ShapesEdition::saveChangesQuestion() const
+void ShapesEdition::select(int index)
 {
-    // OnListChanged formatted the current preset's shape into the question;
-    // its name says which (T5-save-question-text).
-    return {u"Save changes to shape \"" + m_current.name + u"\"?", u"Confirmation"};
+    if (index >= 0 && index < static_cast<int>(presets().size()))
+        m_history.select(index);
 }
 
-void ShapesEdition::select(int num)
+void ShapesEdition::edit(ShapePreset preset, Step step, std::string mergeKey, Renames renamed)
 {
-    if (num < 0 || num >= static_cast<int>(m_presets.size()))
-        num = 0;
-    if (m_presets.empty())
+    const int i = selection();
+    if (i < 0 || i >= static_cast<int>(presets().size()) || presets()[static_cast<std::size_t>(i)] == preset)
         return;
-    m_current = m_presets[static_cast<std::size_t>(num)];
-    m_selection = num;
-    showCurrent();
+    std::vector<ShapePreset> items = presets();
+    items[static_cast<std::size_t>(i)] = std::move(preset);
+    if (!mergeKey.empty())
+        mergeKey += ':' + std::to_string(i);
+    m_history.change(std::move(items), i, step, std::move(mergeKey), std::move(renamed));
 }
 
-bool ShapesEdition::getShapeFromLine(u16v lineText)
+ShapesEdition::NameCheck ShapesEdition::setName(u16v name, u16 *taken)
 {
-    bool found = false;
-    for (const drawing::Tag &tag : drawing::parseTags(lineText, {u"p"})) {
-        if (tag.name != u"pvector")
-            continue;
-        found = true;
-        // If a shape exists then create a new one.
-        if (!m_current.shape.empty()) {
-            m_current = ShapePreset{};
-            m_current.name = u"Untitled";
-            m_current.shape = tag.value;
-            name = m_current.name;
-            m_presets.push_back(m_current);
-            m_list.push_back(m_current.name);
-            m_selection = static_cast<int>(m_presets.size()) - 1;
-        } else {
-            m_current.shape = tag.value;
+    if (name.empty() || blank(name))
+        return NameCheck::Empty;
+    if (name.find_first_of(u";\r\n") != u16v::npos)
+        return NameCheck::Separator;
+    for (std::size_t i = 0; i < presets().size(); ++i) {
+        if (static_cast<int>(i) != selection() && sameNameIgnoringCase(presets()[i].name, name)) {
+            if (taken)
+                *taken = presets()[i].name;
+            return NameCheck::Taken;
         }
-        shape = tag.value;
     }
-    return found;
+    ShapePreset p = current();
+    Renames renamed{{p.name, u16(name)}};
+    p.name = u16(name);
+    edit(std::move(p), Rename, "name", std::move(renamed));
+    return NameCheck::Ok;
 }
 
-ShapesEdition::SaveResult ShapesEdition::save()
+bool ShapesEdition::setShape(u16v shape)
 {
-    SaveResult result;
-    // UpdateShape: `current` takes the fields.
-    const ShapePreset previous = m_current;
-    m_current.name = name;
-    m_current.shape = shape;
-    m_current.mode = mode;
-    m_current.scalingMode = scalingMode;
-    if (m_current.shape.empty()) {
-        result.error = Message{u"Field \"shape\" cannot be empty.", u"Error"};
-        return result;
-    }
-    if (m_current.name.empty()) {
-        m_current.name = u"Untitled";
-        name = m_current.name;
-    }
-    if (m_selection < 0 || m_selection >= static_cast<int>(m_presets.size())) {
-        result.error = Message{u"Selected shape is out of range of shapeList.", u"Error"};
-        return result;
-    }
-    // Accepted on #55: another preset of that name is replaced or this one
-    // renamed (legacy kept both).
-    for (std::size_t i = 0; i < m_presets.size(); ++i) {
-        if (static_cast<int>(i) != m_selection && sameNameIgnoringCase(m_presets[i].name, m_current.name)) {
-            // Nothing is kept until the answer: the edit stays unsaved.
-            m_pending = m_current;
-            m_current = previous;
-            result.clash = m_presets[i].name;
-            return result;
-        }
-    }
-    m_presets[static_cast<std::size_t>(m_selection)] = m_current;
-    // The list takes a rename (T5-dialog-list-stale: legacy's kept the old
-    // name).
-    m_list[static_cast<std::size_t>(m_selection)] = m_current.name;
-    return result;
+    u16 text(shape);
+    std::erase(text, u'\r');
+    std::ranges::replace(text, u'\n', u' ');
+    if (blank(text) || text.find(u';') != u16::npos)
+        return false;
+    ShapePreset p = current();
+    p.shape = std::move(text);
+    edit(std::move(p), EditDrawing, "shape");
+    return true;
 }
 
-int ShapesEdition::replaceClash(int *pending)
+void ShapesEdition::setMode(int mode)
 {
-    if (!m_pending)
-        return m_selection;
-    m_current = *m_pending;
-    m_pending.reset();
-    for (std::size_t i = 0; i < m_presets.size(); ++i) {
-        if (static_cast<int>(i) == m_selection || !sameNameIgnoringCase(m_presets[i].name, m_current.name))
-            continue;
-        const int removed = static_cast<int>(i);
-        m_presets.erase(m_presets.begin() + removed);
-        m_list.erase(m_list.begin() + removed);
-        if (removed < m_selection)
-            --m_selection;
-        if (pending) {
-            if (*pending == removed)
-                *pending = -1;
-            else if (*pending > removed)
-                --*pending;
+    if (mode < ShapePreset::SeparateScaleXY || mode > ShapePreset::OnlyScaleX)
+        return;
+    ShapePreset p = current();
+    p.mode = mode;
+    edit(std::move(p), ChangeScaling);
+}
+
+u16 ShapesEdition::freeName(u16 base, bool copy) const
+{
+    const auto taken = [this](u16v name) {
+        return std::ranges::any_of(presets(), [&](const ShapePreset &p) { return sameNameIgnoringCase(p.name, name); });
+    };
+    for (int n = 1;; ++n) {
+        u16 suffix = copy ? u16(u" copy") : u16();
+        if (n > 1)
+            suffix += u" " + number(n);
+        // A copy's name is cut to fit the 20 characters the field types.
+        u16 stem = base;
+        if (copy && stem.size() + suffix.size() > static_cast<std::size_t>(kNameMaxLength)) {
+            stem.resize(static_cast<std::size_t>(std::max<int>(1, kNameMaxLength - static_cast<int>(suffix.size()))));
+            while (stem.size() > 1 && isBlank(stem.back()))
+                stem.pop_back();
         }
-        break;
+        const u16 name = stem + suffix;
+        if (!taken(name))
+            return name;
     }
-    if (m_selection >= 0 && m_selection < static_cast<int>(m_presets.size())) {
-        m_presets[static_cast<std::size_t>(m_selection)] = m_current;
-        // The replaced name is the one listed now.
-        m_list[static_cast<std::size_t>(m_selection)] = m_current.name;
+}
+
+void ShapesEdition::addShape(u16v lineText)
+{
+    ShapePreset p;
+    p.name = freeName(u"New shape", false);
+    p.shape = lastDrawing(lineText).value_or(u"m 0 0 l 100 0 100 100 0 100");
+    std::vector<ShapePreset> items = presets();
+    items.push_back(std::move(p));
+    const int at = static_cast<int>(items.size()) - 1;
+    m_history.change(std::move(items), at, NewShape);
+}
+
+void ShapesEdition::duplicate()
+{
+    if (presets().empty())
+        return;
+    ShapePreset p = current();
+    p.name = freeName(p.name, true);
+    std::vector<ShapePreset> items = presets();
+    const int at = selection() + 1;
+    items.insert(items.begin() + at, std::move(p));
+    m_history.change(std::move(items), at, DuplicateShape);
+}
+
+bool ShapesEdition::remove()
+{
+    if (!canRemove())
+        return false;
+    std::vector<ShapePreset> items = presets();
+    const int at = selection();
+    items.erase(items.begin() + at);
+    // The next one selected, worked out before the list moves (the
+    // arguments' order is unspecified).
+    const int next = std::min(at, static_cast<int>(items.size()) - 1);
+    m_history.change(std::move(items), next, DeleteShape);
+    return true;
+}
+
+bool ShapesEdition::takeFromLine(u16v lineText)
+{
+    const auto shape = lastDrawing(lineText);
+    if (!shape)
+        return false;
+    ShapePreset p = current();
+    p.shape = *shape;
+    edit(std::move(p), TakeFromLine);
+    return true;
+}
+
+void ShapesEdition::replaceNamed(u16v name)
+{
+    std::vector<ShapePreset> items = presets();
+    int at = selection();
+    if (at < 0 || at >= static_cast<int>(items.size()) || name.empty())
+        return;
+    for (std::size_t i = 0; i < items.size(); ++i) {
+        if (static_cast<int>(i) != at && sameNameIgnoringCase(items[i].name, name)) {
+            items.erase(items.begin() + static_cast<std::ptrdiff_t>(i));
+            if (static_cast<int>(i) < at)
+                --at;
+            break;
+        }
     }
-    return m_selection;
+    Renames renamed{{items[static_cast<std::size_t>(at)].name, u16(name)}};
+    items[static_cast<std::size_t>(at)].name = u16(name);
+    m_history.change(std::move(items), at, ReplaceShape, {}, std::move(renamed));
 }
 
 void ShapesEdition::restoreDefaults(std::vector<ShapePreset> defaults)
 {
-    // OnResetDefault (VisualDrawingShapes.cpp:126-139) after the question
-    // and the file's removal: LoadSettings, then HikariChoice::PutArray
-    // (ListControls.cpp:498-520) keeps the selected name's place when it
-    // is listed, else the first; SetShape shows it.
-    const u16 ce = (m_selection >= 0 && m_selection < static_cast<int>(m_list.size()))
-                       ? m_list[static_cast<std::size_t>(m_selection)]
-                       : u16();
-    m_presets = std::move(defaults);
-    m_list.clear();
-    for (const ShapePreset &p : m_presets)
-        m_list.push_back(p.name);
-    int choice = m_selection;
-    if (m_list.empty()) {
-        choice = -1;
-    } else if (!ce.empty()) {
-        if (choice >= static_cast<int>(m_list.size()))
-            choice = 0;
-        if (ce != m_list[static_cast<std::size_t>(choice)]) {
-            int ichoice = -1;
-            for (std::size_t i = 0; i < m_list.size(); ++i)
-                if (m_list[i] == ce) { // wxArrayString::Index, case-sensitive
-                    ichoice = static_cast<int>(i);
-                    break;
-                }
-            choice = ichoice == -1 ? 0 : ichoice;
-        }
+    // HikariChoice::PutArray (ListControls.cpp:498-520): the selected name's
+    // place when the new list has it there, else where the list has it
+    // (case-sensitive), else the first.
+    const u16 name = current().name;
+    int choice = selection() < static_cast<int>(defaults.size()) ? selection() : 0;
+    if (!defaults.empty() && defaults[static_cast<std::size_t>(choice)].name != name) {
+        choice = 0;
+        for (std::size_t i = 0; i < defaults.size(); ++i)
+            if (defaults[i].name == name) {
+                choice = static_cast<int>(i);
+                break;
+            }
     }
-    select(choice);
-}
-
-ShapesEdition::Message ShapesEdition::restoreQuestion()
-{
-    return {u"Are you sure you want to reset to default?", u"Confirmation"};
+    if (defaults == presets())
+        return;
+    m_history.change(std::move(defaults), choice, RestoreDefaults);
 }
 
 } // namespace hikari::application::visual

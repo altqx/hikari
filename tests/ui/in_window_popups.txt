@@ -5,8 +5,3 @@
 # shell_tests popupsAreOnTheKit fails on one not listed here, so no new
 # one comes in, and on a line that matches none, so the list shrinks as
 # the PU cards take them off.
-AllTagsEditionDialog.qml:dialog
-AllTagsEditionDialog.qml:questionBox
-ShapesEditionDialog.qml:dialog
-ShapesEditionDialog.qml:questionBox
-ShapesEditionDialog.qml:clashBox

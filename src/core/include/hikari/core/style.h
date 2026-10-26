@@ -41,6 +41,8 @@ struct StyleValues {
 // Every Style line in document order. As in the legacy loader, a "[V4"
 // header that is not "[V4+" switches to the SSA layout for all later Styles.
 std::vector<StyleValues> decodeStyles(const Document &document);
+// The Style records decodeStyles would decode, without decoding them.
+std::size_t styleCount(const Document &document);
 
 namespace legacy {
 // Styles::parseStyle on one line from "Style:" on (left-trimmed).

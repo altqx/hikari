@@ -306,7 +306,8 @@ private slots:
             }
         }
         // Every card that placed roles has landed (PF1 #225 placed the
-        // Options icons IC1 drew, the last).
+        // Options icons IC1 drew, the last; PU5 #307 placed restore-default
+        // in Edit shapes' and Edit tags' menus too).
         QCOMPARE(pending, 0);
     }
 

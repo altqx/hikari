@@ -11863,11 +11863,11 @@ or codecs or a splitter may be missing</source>
     <name>HikariSub.VisualTools</name>
     <message>
         <source>Tag editing</source>
-        <translation>குறிச்சொல் பதிப்பு</translation>
+        <translation type="vanished">குறிச்சொல் பதிப்பு</translation>
     </message>
     <message>
         <source>Edited tag</source>
-        <translation>திருத்தப்பட்ட குறிச்சொல்</translation>
+        <translation type="vanished">திருத்தப்பட்ட குறிச்சொல்</translation>
     </message>
     <message>
         <source>Rectangle</source>
@@ -11982,28 +11982,385 @@ or codecs or a splitter may be missing</source>
         </translation>
     </message>
     <message>
-        <source>New tag name</source>
+        <source>Add tag</source>
+        <translation type="vanished">குறிச்சொல்லைச் சேர்க்கவும்</translation>
+    </message>
+    <message>
+        <source>Edit tags</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Add tag</source>
-        <translation>குறிச்சொல்லைச் சேர்க்கவும்</translation>
+        <source>Rename tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit step</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit decimal places</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit starting value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change change option</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change placing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate tag</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Delete tag</source>
         <translation>குறிச்சொல்லை நீக்கு</translation>
     </message>
     <message>
+        <source>Replace tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default tags</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type the tag, without the backslash.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another tag is named “%1”. Press Enter to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A tag can&apos;t contain “,”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can&apos;t contain “,”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a number.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a whole number from 0 to 6.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a number from -10000 to 10000.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The maximum must be greater than the minimum (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The minimum must be less than the maximum (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The step must be greater than zero.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The step must be at most half the range (%1).</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the tag “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the default tags?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Your %n tag(s) are removed and the 22 default tags come back, with their ranges and steps.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The 22 default tags come back with their ranges and steps.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The list keeps at least one tag</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Default</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Advanced</source>
+        <translation type="unfinished">மேம்பட்ட</translation>
+    </message>
+    <message>
+        <source>Range</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Minimum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>to</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Maximum</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Count</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The tag takes %n value(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Starts on</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Where the tag goes in the text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>How each line&apos;s number changes the value</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>What the gradient runs across</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the inspector bar</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Set writes, on the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default tags…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Name:</source>
-        <translation>பெயர்:</translation>
+        <translation type="vanished">பெயர்:</translation>
+    </message>
+    <message>
+        <source>Edit shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Edit drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change scaling</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take drawing from line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default shapes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo all changes</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A name can&apos;t contain “;”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Another shape is named “%1”. Press Enter to replace it.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the shape “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” takes its name and its place in the list; the other is removed. Undo brings it back while this window is open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep editing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore the default shapes?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Your %n shape(s) are removed and the five default shapes come back.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The five default shapes come back as they were.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo brings yours back while this window is open.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore defaults</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>yours</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete</source>
+        <translation type="unfinished">நீக்கு</translation>
+    </message>
+    <message>
+        <source>The list keeps at least one shape</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Name</source>
         <translation>பெயர்</translation>
     </message>
     <message>
+        <source>Scale from the cursor</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width and height</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Keep aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Width only</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Drawing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A drawing can&apos;t contain “;”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A shape needs a drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Take from the active line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put the active line&apos;s drawing in this shape</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The active line has no drawing.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="unfinished">முன்னோட்டம்</translation>
+    </message>
+    <message>
+        <source>The shape keeps its last drawing until this one can be used</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 × %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Undo</source>
+        <translation type="unfinished">செயல்தவிர்</translation>
+    </message>
+    <message>
+        <source>Undo “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Redo</source>
+        <translation type="unfinished">மீண்டும்செய்</translation>
+    </message>
+    <message>
+        <source>Redo “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Restore default shapes…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Tag:</source>
-        <translation>குறிச்சொல்:</translation>
+        <translation type="vanished">குறிச்சொல்:</translation>
     </message>
     <message>
         <source>Tag</source>
@@ -12011,23 +12368,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Minimal value:</source>
-        <translation>குறைந்தபட்ச மதிப்பு:</translation>
-    </message>
-    <message>
-        <source>Minimal value</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">குறைந்தபட்ச மதிப்பு:</translation>
     </message>
     <message>
         <source>Maximal value:</source>
-        <translation>அதிகபட்ச மதிப்பு:</translation>
-    </message>
-    <message>
-        <source>Maximal value</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">அதிகபட்ச மதிப்பு:</translation>
     </message>
     <message>
         <source>Value:</source>
-        <translation>மதிப்பு:</translation>
+        <translation type="vanished">மதிப்பு:</translation>
     </message>
     <message>
         <source>Value</source>
@@ -12035,19 +12384,15 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Step:</source>
-        <translation>படி:</translation>
+        <translation type="vanished">படி:</translation>
     </message>
     <message>
         <source>Step</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Where Insert puts the tag</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Decimal places:</source>
-        <translation>புள்ளிக்குப் பிறகு எண்:</translation>
+        <translation type="vanished">புள்ளிக்குப் பிறகு எண்:</translation>
     </message>
     <message>
         <source>Decimal places</source>
@@ -12055,27 +12400,23 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Used only when tag have 2 values or more</source>
-        <translation>குறிச்சொல்லில் 2 மதிப்புகள் அல்லது அதற்கு மேற்பட்டவை இருக்கும்போது மட்டுமே பயன்படுத்தப்படுகிறது</translation>
+        <translation type="vanished">குறிச்சொல்லில் 2 மதிப்புகள் அல்லது அதற்கு மேற்பட்டவை இருக்கும்போது மட்டுமே பயன்படுத்தப்படுகிறது</translation>
     </message>
     <message>
         <source>Tag change options</source>
-        <translation>குறிச்சொற்களின் விருப்பங்களை மாற்றவும்</translation>
+        <translation type="vanished">குறிச்சொற்களின் விருப்பங்களை மாற்றவும்</translation>
     </message>
     <message>
         <source>Additional values:</source>
-        <translation>கூடுதல் மதிப்புகள்:</translation>
+        <translation type="vanished">கூடுதல் மதிப்புகள்:</translation>
     </message>
     <message>
         <source>Value %1</source>
-        <translation type="unfinished">மதிப்பு %1</translation>
+        <translation type="obsolete">மதிப்பு %1</translation>
     </message>
     <message>
         <source>Apply</source>
-        <translation>இடு</translation>
-    </message>
-    <message>
-        <source>OK</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">இடு</translation>
     </message>
     <message>
         <source>Cancel</source>
@@ -12083,31 +12424,23 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Restore default</source>
-        <translation>இயல்புநிலையை மீட்டெடுங்கள்</translation>
+        <translation type="vanished">இயல்புநிலையை மீட்டெடுங்கள்</translation>
     </message>
     <message>
         <source>Vector shape editing</source>
-        <translation>திசையன் வடிவங்களின் பதிப்பு</translation>
-    </message>
-    <message>
-        <source>A shape named &quot;%1&quot; already exists.</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">திசையன் வடிவங்களின் பதிப்பு</translation>
     </message>
     <message>
         <source>Edited shape</source>
-        <translation>திருத்தப்பட்ட வடிவம்</translation>
+        <translation type="vanished">திருத்தப்பட்ட வடிவம்</translation>
     </message>
     <message>
         <source>Shapes</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>New shape name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Add shape</source>
-        <translation>வடிவத்தைச் சேர்க்கவும்</translation>
+        <translation type="vanished">வடிவத்தைச் சேர்க்கவும்</translation>
     </message>
     <message>
         <source>Delete shape</source>
@@ -12115,51 +12448,43 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Editing</source>
-        <translation>புதுப்பித்தார்</translation>
+        <translation type="vanished">புதுப்பித்தார்</translation>
     </message>
     <message>
         <source>Scaling relative to cursor:</source>
-        <translation>கர்சர் வழியாக அளவிடுதல்:</translation>
+        <translation type="vanished">கர்சர் வழியாக அளவிடுதல்:</translation>
     </message>
     <message>
         <source>Changed width and height</source>
-        <translation>அகலம் மற்றும் உயரத்தை மாற்றியது</translation>
+        <translation type="vanished">அகலம் மற்றும் உயரத்தை மாற்றியது</translation>
     </message>
     <message>
         <source>Preserve aspect ratio</source>
-        <translation>விகித விகிதத்தைப் பாதுகாக்கவும்</translation>
+        <translation type="vanished">விகித விகிதத்தைப் பாதுகாக்கவும்</translation>
     </message>
     <message>
         <source>Changed is only width</source>
-        <translation>மாற்றப்பட்டது அகலம் மட்டுமே</translation>
-    </message>
-    <message>
-        <source>Scaling relative to cursor</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">மாற்றப்பட்டது அகலம் மட்டுமே</translation>
     </message>
     <message>
         <source>Scaling mode:</source>
-        <translation>அளவிடுதல் முறை:</translation>
+        <translation type="vanished">அளவிடுதல் முறை:</translation>
     </message>
     <message>
         <source>Changing only drawing coordinates</source>
-        <translation>வரைதல் ஆயங்களை மட்டுமே மாற்றுகிறது</translation>
+        <translation type="vanished">வரைதல் ஆயங்களை மட்டுமே மாற்றுகிறது</translation>
     </message>
     <message>
         <source>Changing scale</source>
-        <translation>அளவிலான மாறும்</translation>
-    </message>
-    <message>
-        <source>Scaling mode</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">அளவிலான மாறும்</translation>
     </message>
     <message>
         <source>Shape:</source>
-        <translation>வடிவம்:</translation>
+        <translation type="vanished">வடிவம்:</translation>
     </message>
     <message>
         <source>Get shape from active line</source>
-        <translation>செயலில் உள்ள வரியிலிருந்து வடிவத்தைப் பெறுங்கள்</translation>
+        <translation type="vanished">செயலில் உள்ள வரியிலிருந்து வடிவத்தைப் பெறுங்கள்</translation>
     </message>
     <message>
         <source>Shape</source>
@@ -12167,15 +12492,11 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>உறுதிப்படுத்தல்</translation>
+        <translation type="vanished">உறுதிப்படுத்தல்</translation>
     </message>
     <message>
         <source>Replace</source>
         <translation>மாற்று</translation>
-    </message>
-    <message>
-        <source>Rename</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Copy video position</source>

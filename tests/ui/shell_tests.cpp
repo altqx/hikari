@@ -24,6 +24,7 @@
 #include "hikari/application/video_sources.h"
 #include "hikari/application/visual_all_tags.h"
 #include "hikari/application/visual_crosshair.h"
+#include "hikari/application/visual_drawing.h"
 #include "hikari/application/grid_split.h"
 #include "hikari/application/visual_perspective.h"
 #include "hikari/application/visual_position.h"
@@ -6233,9 +6234,11 @@ private slots:
         }
         QStringList found;
         QStringList problems;
+        int scanned = 0;
         QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files);
         while (it.hasNext()) {
             const QString path = it.next();
+            ++scanned;
             const QString name = QFileInfo(path).fileName();
             QFile file(path);
             QVERIFY(file.open(QIODevice::ReadOnly));
@@ -6255,7 +6258,9 @@ private slots:
         for (const QString &entry : std::as_const(listed))
             if (!found.contains(entry))
                 problems << QStringLiteral("%1: listed in in_window_popups.txt but gone; take it off the list").arg(entry);
-        QVERIFY(found.size() > 1);
+        // PU4 and PU5 took the last popups off the list, so none may be
+        // found; the scan must still have read the UI's QML.
+        QVERIFY(scanned > 100);
         if (!problems.isEmpty())
             QFAIL(qPrintable(problems.join(QLatin1Char('\n'))));
     }
@@ -14271,10 +14276,12 @@ private slots:
         QCOMPARE(session->document().lines()[1]->text, std::u8string(u8"Towers"));
     }
 
-    // E5: "Moving tags" (EditBox::SetTextWithTags): an untranslated Line is
-    // shown split, the Translated field takes the focus, and the first change
-    // makes both fields the draft.
-    void movingTagsSplitsAnUntranslatedLine()
+    // TM1 (#232) "Tags from original" (legacy "Moving tags", now on by
+    // default; departure TM1-original-keeps-tags): the Original text keeps
+    // its tags, an untranslated Line gives the Translated field the focus,
+    // and what is typed there is saved with the Original's carried tags
+    // around it, which the field leaves out.
+    void tagsFromOriginalAreCarriedToTheTranslation()
     {
         QVERIFY(application->openFile(writeTranslationFile("e5-moving.ass")));
         auto *session = application->files().session(*application->workspace().editingTarget());
@@ -14283,9 +14290,6 @@ private slots:
         // panel opens.
         QTRY_VERIFY(item("originalMovingTags") && item("originalMovingTags")->isVisible());
         auto *moving = item("originalMovingTags");
-        QVERIFY(!moving->property("checked").toBool());
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
-        QTRY_VERIFY(application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
         QVERIFY(moving->property("checked").toBool());
         QVERIFY(application->editor().moveTags());
 
@@ -14293,10 +14297,10 @@ private slots:
         press(Qt::Key_End); // the untranslated "{\i1}Wall {\b1}high"
         auto *original = item("lineText");
         auto *translated = item("translationText");
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
-        QCOMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}{\\b1}"));
+        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(translated->property("text").toString(), QString());
         QTRY_VERIFY(translated->hasActiveFocus());
-        QCOMPARE(translated->property("cursorPosition").toInt(), 5);
+        QCOMPARE(translated->property("cursorPosition").toInt(), 0);
         // Shown only: the Document and the draft are untouched, and the video
         // (FS1's Line label) still shows the stored text.
         QVERIFY(!session->draftLine());
@@ -14309,55 +14313,1228 @@ private slots:
         QCOMPARE(translated->property("text").toString(), QStringLiteral("Wieza"));
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_End);
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
         QTRY_VERIFY(translated->hasActiveFocus());
-        // Typing in the Translated field: both fields become the draft.
+        // Typing: the leading \i1 goes with it; the Original is unchanged.
         QTest::keyClick(window, 'X');
-        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}X{\\b1}"));
-        QVERIFY(session->draftRecord());
-        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("Wall high"));
-        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}X{\\b1}"));
-        QCOMPARE(application->editor().videoText(), QStringLiteral("{\\i1}X{\\b1}")); // the draft's translation now
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("X"));
+        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}X"));
+        QCOMPARE(application->editor().videoText(), QStringLiteral("{\\i1}X")); // the draft's translation now
         QVERIFY(application->editor().commit());
-        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("Wall high"));
-        QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\i1}X{\\b1}"));
-        // Undo takes the edit back; turning Moving tags off shows the Line whole.
-        QVERIFY(application->editor().undo());
-        QTRY_COMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\i1}X"));
+        // A line-wide tag goes to the Original, and the translation follows
+        // in the same step.
+        const auto steps = session->historySize();
+        QVERIFY(application->editor().chooseAlignment(7)); // \an8
+        QVERIFY(application->editor().commit());
+        QCOMPARE(session->historySize(), steps + 1);
+        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\an8\\i1}Wall {\\b1}high"));
+        QCOMPARE(q8(session->document().lines()[2]->translation), QStringLiteral("{\\an8\\i1}X"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("X"));
+        // Off, the Translated field holds the whole translation; the caret
+        // keeps its place in the text either way.
+        translated->setProperty("cursorPosition", 1);
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
         QTRY_VERIFY(!application->settingsStore()->boolean("translation.autoMoveTagsFromOriginal"));
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
-        QCOMPARE(translated->property("text").toString(), QString());
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\an8\\i1}X"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 10);
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(moving));
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("X"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 1);
+        // Ctrl+I in it toggles the italic the carried \i1 gives, not the
+        // Style's: the selected letter alone loses it.
+        translated->forceActiveFocus();
+        QTest::keyClick(window, 'Y');
+        QTest::keyClick(window, 'Z');
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("XYZ"));
+        QVERIFY(application->editor().toggleTagIn(1, QStringLiteral("i"), 1, 2));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8\\i1}X{\\i0}Y{\\i1}Z"));
     }
 
-    // E5: Moving tags splits only with the crosshair (Visual <= CROSS,
-    // EditBox.cpp:1811); another visual tool shows the Line whole.
-    void movingTagsWaitsForTheCrosshair()
+    // TM1: the Original's runs are placed on the translation's words: Alt+1
+    // over a selection (again over the same one takes it off), a click on
+    // its chip, or Ctrl+B for a bold run. The chip fills when placed, the
+    // Original text shows the run's badge, and only the run's tags are added.
+    void tagsFromOriginalRunsArePlacedOnTheTranslation()
     {
-        QVERIFY(application->openFile(writeTranslationFile("e5-moving-visual.ass")));
-        application->editor().setShowTags(true);
-        application->settingsStore()->set("translation.autoMoveTagsFromOriginal", true);
+        QVERIFY(application->openFile(writeTranslationFile("tm1-runs.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
         QTRY_VERIFY(application->editor().moveTags());
-        auto &tools = application->visualTools();
-        QTRY_VERIFY(tools.railEnabled());
-        tools.selectFamily(3);
-        QCOMPARE(tools.activeFamily(), 3);
-        auto *original = item("lineText");
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high": run 1 is the bold "high"
         auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        const auto runs = application->editor().tagRuns();
+        QCOMPARE(runs.size(), 1);
+        QCOMPARE(runs[0].toMap().value("text").toString(), QStringLiteral("high"));
+        QCOMPARE(runs[0].toMap().value("kind").toString(), QStringLiteral("Bold"));
+        QVERIFY(!runs[0].toMap().value("placed").toBool());
+        QTRY_VERIFY(visualItem("runChip1") && visualItem("runChip1")->isVisible());
+        QTRY_VERIFY(visualItem("lineTextRun1") && visualItem("lineTextRun1")->isVisible());
+        QVERIFY(!visualItem("translationTextRun1")->isVisible());
+
+        application->editor().translationEdited(QStringLiteral("Mur wysoki"), 10);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur wysoki"));
+        translated->setProperty("cursorPosition", 4);
+        QVERIFY(QMetaObject::invokeMethod(translated, "select", Q_ARG(int, 4), Q_ARG(int, 10)));
+        press(Qt::Key_1, Qt::AltModifier);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wysoki"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("Mur wysoki"));
+        QCOMPARE(translated->property("selectedText").toString(), QStringLiteral("wysoki"));
+        QTRY_VERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("start").toInt(), 4);
+        QTRY_VERIFY(visualItem("translationTextRun1")->isVisible());
+        // The same selection again takes it off.
+        press(Qt::Key_1, Qt::AltModifier);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur wysoki"));
+        // Ctrl+B over "Mur" places the bold run there.
+        QVERIFY(QMetaObject::invokeMethod(translated, "select", Q_ARG(int, 0), Q_ARG(int, 3)));
+        press(Qt::Key_B, Qt::ControlModifier);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}{\\b1}Mur{\\b} wysoki"));
+        // The chip moves it to the selection.
+        QVERIFY(QMetaObject::invokeMethod(translated, "select", Q_ARG(int, 4), Q_ARG(int, 10)));
+        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(visualItem("runChip1")));
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wysoki"));
+        QVERIFY(translated->hasActiveFocus());
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[2]->text), QStringLiteral("{\\i1}Wall {\\b1}high"));
+    }
+
+    // TM1: a placed run wrapped over several rows is underlined on each.
+    void tagsFromOriginalUnderlineEveryRowOfAWrappedRun()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-wrapped.ass")));
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_End); // the untranslated "{\i1}Wall {\b1}high"
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
-        QCOMPARE(translated->property("text").toString(), QString());
-        // Back to the crosshair, the next SetTextWithTags splits it.
-        tools.selectFamily(3);
-        QCOMPARE(tools.activeFamily(), 0);
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        const QString words = QStringLiteral("wysoki ").repeated(60).trimmed();
+        application->editor().translationEdited(words, words.size());
+        QVERIFY(application->editor().placeRun(1, 0, words.size()));
+        QTRY_VERIFY(visualItem("translationTextRun1") && visualItem("translationTextRun1")->isVisible());
+        QRectF first, last;
+        QMetaObject::invokeMethod(translated, "positionToRectangle", Q_RETURN_ARG(QRectF, first), Q_ARG(int, 0));
+        QMetaObject::invokeMethod(translated, "positionToRectangle", Q_RETURN_ARG(QRectF, last), Q_ARG(int, words.size()));
+        const int rows = qRound((last.y() - first.y()) / first.height()) + 1;
+        QVERIFY2(rows >= 3, qPrintable(QString::number(rows)));
+        for (int i = 0; i < rows; ++i) {
+            const QByteArray name = "translationTextRun1Underline" + QByteArray::number(i);
+            QTRY_VERIFY2(visualItem(name.constData()), name.constData());
+            QVERIFY(qAbs(visualItem(name.constData())->y() + 1 - (first.y() + first.height() * (i + 1))) < 1);
+        }
+        QVERIFY(!visualItem(("translationTextRun1Underline" + QByteArray::number(rows)).constData()));
+        application->editor().discard();
+    }
+
+    // TM1: a run's chip shows its text as placing it gives it: a \b0 run
+    // over a bold base is regular.
+    void tagsFromOriginalChipShowsWhatTheRunGives()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-chip.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\b1\\i1}a {\\b0}plain{\\b1} c {\\i0}upright{\\i1} d\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
         item("editingGrid")->forceActiveFocus();
-        press(Qt::Key_Up);
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Tower"));
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        const auto font = [&](const char *name) { return visualItem(name)->property("font").value<QFont>(); };
+        QTRY_VERIFY(visualItem("runChipText1") && visualItem("runChipText2"));
+        QCOMPARE(visualItem("runChipText1")->property("text").toString(), QStringLiteral("plain"));
+        QVERIFY(!font("runChipText1").bold());
+        QVERIFY(!font("runChipText2").italic());
+        // What a run leaves is the base's: plain stays italic, upright bold.
+        QVERIFY(font("runChipText1").italic());
+        QVERIFY(font("runChipText2").bold());
+        application->editor().discard();
+    }
+
+    // TM1: a run whose text comes back unchanged is suggested (a dotted
+    // underline): Tab places it, Escape dismisses it, and without
+    // suggestions both keys do what they always do.
+    void tagsFromOriginalSuggestsUnchangedRunText()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-suggest.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        const auto run = [&] { return application->editor().tagRuns()[0].toMap(); };
+        application->editor().translationEdited(QStringLiteral("Mur high"), 8);
+        QTRY_COMPARE(run().value("suggestedStart").toInt(), 4);
+        QCOMPARE(run().value("suggestedEnd").toInt(), 8);
+        QTRY_VERIFY(visualItem("translationTextRun1Suggestion") && visualItem("translationTextRun1Suggestion")->isVisible());
+        press(Qt::Key_Tab);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}high"));
+        QVERIFY(translated->hasActiveFocus());
+        QVERIFY(run().value("placed").toBool());
+        QCOMPARE(run().value("suggestedStart").toInt(), -1);
+        // Taken off again, it is suggested again; Escape dismisses it and
+        // keeps the draft.
+        QVERIFY(QMetaObject::invokeMethod(translated, "select", Q_ARG(int, 4), Q_ARG(int, 8)));
+        press(Qt::Key_1, Qt::AltModifier);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
+        QTRY_COMPARE(run().value("suggestedStart").toInt(), 4);
+        press(Qt::Key_Escape);
+        QTRY_COMPARE(run().value("suggestedStart").toInt(), -1);
+        QVERIFY(!visualItem("translationTextRun1Suggestion")->isVisible());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
+        // Nothing suggested: Tab moves on.
+        press(Qt::Key_Tab);
+        QTRY_VERIFY(!translated->hasActiveFocus());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur high"));
+        // The Original edited, its runs are read again: what was dismissed
+        // was another reading's, and the run is suggested again.
+        application->editor().textEdited(QStringLiteral("Walls high"), 5);
+        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("{\\i1}Walls {\\b1}high"));
+        QTRY_COMPARE(run().value("suggestedStart").toInt(), 4);
+    }
+
+    // TM1: the placed runs follow the edits. With tags hidden, deleting a
+    // run's text takes its tags along; a run of the Original whose formatting
+    // changes writes its new tags, and one put in before it does not take
+    // its place; several Lines' alignment goes to each Original, and each
+    // translation follows; their font changes after the carried tags.
+    void tagsFromOriginalFollowEdits()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-edits.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        application->editor().translationEdited(QStringLiteral("Mur wysoki"), 10);
+        QVERIFY(application->editor().placeRun(1, 4, 10));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wysoki"));
+        QCOMPARE(translated->property("text").toString(), QStringLiteral("Mur wysoki"));
+        // Typing inside the run keeps it; deleting its text takes its tags.
+        application->editor().translationEdited(QStringLiteral("Mur wyysoki"), 7);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wyysoki"));
+        application->editor().translationEdited(QStringLiteral("Mur "), 4);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur "));
+        QVERIFY(!application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        // The Original's run turns underlined: the placed run follows.
+        application->editor().translationEdited(QStringLiteral("Mur wysoki"), 10);
+        QVERIFY(application->editor().placeRun(1, 4, 10));
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        application->editor().textEdited(QStringLiteral("{\\i1}Wall {\\u1}high"), 13);
+        QCOMPARE(q8(session->draftRecord()->text), QStringLiteral("{\\i1}Wall {\\u1}high"));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\u1}wysoki"));
+        // A run put in before it: the placed run is the underlined one still,
+        // run 2 now, and run 1 again once that is taken out.
+        application->editor().textEdited(QStringLiteral("{\\i1}Wall {\\b1}so{\\b0} {\\u1}high"), 20);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\u1}wysoki"));
+        QCOMPARE(application->editor().tagRuns().size(), 2);
+        QVERIFY(application->editor().tagRuns()[1].toMap().value("placed").toBool());
+        application->editor().textEdited(QStringLiteral("{\\i1}Wall {\\u1}high"), 13);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\u1}wysoki"));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QVERIFY(application->editor().commit());
+        // Two Lines' alignment: each Original takes \an8, each translation follows.
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[1]->id, {lines[1]->id, lines[2]->id}, lines[1]->id, {}});
+        application->editor().reloadFromSession();
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Tower"));
+        QVERIFY(application->editor().chooseAlignment(7));
+        const auto after = session->document().lines();
+        QCOMPARE(q8(after[1]->text), QStringLiteral("{\\an8}Tower"));
+        QCOMPARE(q8(after[1]->translation), QStringLiteral("{\\an8}Wieza"));
+        QCOMPARE(q8(after[2]->text), QStringLiteral("{\\an8\\i1}Wall {\\u1}high")); // first in the block (putTagInLine)
+        QCOMPARE(q8(after[2]->translation), QStringLiteral("{\\an8\\i1}Mur {\\u1}wysoki"));
+        // Two Lines in bold: each translation changes after its carried
+        // tags, which stay carried.
+        auto font = application->editor().beginFont(1, 0, 0);
+        QVERIFY(!font.isEmpty());
+        font.insert(QStringLiteral("bold"), true);
+        QVERIFY(application->editor().changeFont(font));
+        application->editor().endDialog(true);
+        const auto bold = session->document().lines();
+        QCOMPARE(q8(bold[1]->translation), QStringLiteral("{\\an8}{\\b1}Wieza"));
+        QVERIFY2(q8(bold[2]->translation).startsWith(QStringLiteral("{\\an8\\i1}{\\b1}")), qPrintable(q8(bold[2]->translation)));
+        QTRY_COMPARE(item("translationText")->property("text").toString(), QStringLiteral("{\\b1}Wieza"));
+    }
+
+    // TM1: the runs are read against the Line's Style, so choosing another
+    // writes the placed ones again for it: in a bold Style the Original's
+    // bold word is no run, and its placement goes.
+    void tagsFromOriginalFollowTheStyle()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-style.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n"
+                "Style: Heavy,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n"
+                "Style: O,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,"
+                "10,10,10,1\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\b1}B{\\b0} C\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("text").toString(), QStringLiteral("B"));
+        application->editor().translationEdited(QStringLiteral("x y z"), 5);
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x {\\b1}y{\\b0} z"));
+        QVERIFY(application->editor().chooseStyle(QStringLiteral("Heavy")));
+        const auto *line = session->document().lines()[0];
+        QCOMPARE(q8(line->style), QStringLiteral("Heavy"));
+        QCOMPARE(q8(line->translation), QStringLiteral("x y z"));
+        // Under the bold Style "A" and "B" are as the Style is: the one run
+        // is "C", not bold (its leading space is no visible change).
+        const auto runText = [&] {
+            const auto runs = application->editor().tagRuns();
+            return runs.size() == 1 ? runs[0].toMap().value("text").toString() : QString();
+        };
+        QTRY_COMPARE(runText(), QStringLiteral("C"));
+    }
+
+    // TM1: with the tags shown, deleting a placed run's text takes its tags
+    // along as with them hidden, closed or not: no empty wrapper is left,
+    // and no open one for the next text typed to take.
+    void tagsFromOriginalShownDeletingARunTakesItsTags()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-shown.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\b1}B{\\b0} C\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("x y z"), 5);
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        application->editor().setShowTags(true);
+        auto *translated = item("translationText");
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("x {\\b1}y{\\b0} z"));
+        application->editor().translationEdited(QStringLiteral("x {\\b1}{\\b0} z"), 7);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x  z"));
+        QVERIFY(!application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("x  z"));
+        // Typing next to a shown tag is raw text, on the side it was typed.
+        application->editor().translationEdited(QStringLiteral("x y z"), 3);
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        application->editor().translationEdited(QStringLiteral("x {\\b1}yy{\\b0} z"), 9);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x {\\b1}yy{\\b0} z"));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        // So is typing a line break over visible text.
+        application->editor().translationEdited(QStringLiteral("x {\\b1}yy{\\b0} \\N"), 17);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("x {\\b1}yy{\\b0} \\N"));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+    }
+
+    // TM1: as above for a run left open: deleting its text leaves no open
+    // tag for the next text typed to take.
+    void tagsFromOriginalShownDeletingAnOpenRunTakesItsTags()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-shown-open.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        auto *translated = item("translationText");
+        QTRY_VERIFY(translated->hasActiveFocus());
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("Wall high"));
+        application->editor().translationEdited(QStringLiteral("Mur wysoki"), 10);
+        QVERIFY(application->editor().placeRun(1, 4, 10));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur {\\b1}wysoki"));
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(item("translationText")->property("text").toString(), QStringLiteral("Mur {\\b1}wysoki"));
+        application->editor().translationEdited(QStringLiteral("Mur {\\b1}"), 9);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Mur "));
+        QVERIFY(!application->editor().tagRuns()[0].toMap().value("placed").toBool());
+    }
+
+    // TM1: formatting of the translator's own over a placed run (Ctrl+B
+    // where the Original has no bold run) goes into the translation's text;
+    // the run stays placed, its tags written around it again.
+    void tagsFromOriginalOwnFormattingKeepsThePlacedRun()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-own.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,Wall {\\i1}high\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,Mur wysoki\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QVERIFY(application->editor().placeRun(1, 4, 10));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("Mur {\\i1}wysoki"));
+        QVERIFY(application->editor().toggleTagIn(1, QStringLiteral("b"), 4, 10));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("Mur {\\b1}{\\i1}wysoki{\\i}{\\b0}"));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("start").toInt(), 4);
+        // The Original's run turns underlined: the placed run follows, the
+        // bold stays.
+        application->editor().setShowTags(true);
+        application->editor().textEdited(QStringLiteral("Wall {\\u1}high"), 14);
+        const auto followed = q8(session->draftRecord()->translation);
+        QVERIFY2(followed.contains(QStringLiteral("\\u1")) && !followed.contains(QStringLiteral("\\i1")) &&
+                     followed.contains(QStringLiteral("\\b1")),
+                 qPrintable(followed));
+    }
+
+    // TM1: two runs of the same formatting are told apart by where the
+    // translator placed them; Escape puts back the committed placements'
+    // numbers with their text, even where the text reads the same.
+    void tagsFromOriginalEscapeKeepsTheRunNumbers()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-equal.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,o {\\i1}a{\\i0} b {\\i1}c{\\i0} d\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,w x y z\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        const auto start = [&](int run) { return application->editor().tagRuns()[run - 1].toMap().value("start").toInt(); };
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QVERIFY(application->editor().placeRun(2, 6, 7));
+        const auto committed = q8(session->draftRecord()->translation);
+        QCOMPARE(committed, QStringLiteral("w {\\i1}x{\\i0} y {\\i1}z{\\i0}"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(start(1), 2);
+        QCOMPARE(start(2), 6);
+        // Swapped in a draft: the same text, the other numbers.
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        QVERIFY(application->editor().placeRun(1, 6, 7));
+        QCOMPARE(q8(session->draftRecord()->translation), committed);
+        QCOMPARE(start(2), 2);
+        application->editor().discard();
+        QTRY_COMPARE(start(1), 2);
+        QCOMPARE(start(2), 6);
+        // The same through the draft's undo.
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        QVERIFY(application->editor().placeRun(1, 6, 7));
+        QVERIFY(application->editor().undo());
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(start(1), 2);
+        QCOMPARE(start(2), 6);
+    }
+
+    // TM1: the run numbers of equal runs follow the translator where the
+    // text stays the same: the other equal run placed on the same text is a
+    // step of its own, and an undone Original edit gives the placed run its
+    // number back.
+    void tagsFromOriginalEqualRunNumbersOnTheSameText()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-same.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,o {\\i1}a{\\i0} b {\\i1}c{\\i0} d\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,w x y z\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        const auto placed = [&](int run) { return application->editor().tagRuns()[run - 1].toMap().value("placed").toBool(); };
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QVERIFY(application->editor().commit());
+        const auto text = q8(session->document().lines()[0]->translation);
+        QCOMPARE(text, QStringLiteral("w {\\i1}x{\\i0} y z"));
+        // Run 2 over run 1's text: the same text, the other number.
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        QTRY_VERIFY(placed(2));
+        QVERIFY(!placed(1));
+        QVERIFY(application->editor().undo());
+        QTRY_VERIFY(placed(1));
+        QVERIFY(!placed(2));
+        QVERIFY(!session->draftLine());
+        // Redone, the text is the committed Line's again: no draft either.
+        QVERIFY(application->editor().redo());
+        QTRY_VERIFY(placed(2));
+        QVERIFY(!session->draftLine());
+        QVERIFY(application->editor().undo());
+        QTRY_VERIFY(placed(1));
+        QVERIFY(!session->draftLine());
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        QTRY_VERIFY(placed(2));
+        // Text typed inside the run with tags shown: still run 2.
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(item("translationText")->property("text").toString(), QStringLiteral("w {\\i1}x{\\i0} y z"));
+        application->editor().translationEdited(QStringLiteral("w {\\i1}x!{\\i0} y z"), 9);
+        QTRY_COMPARE(q8(session->draftRecord()->translation), QStringLiteral("w {\\i1}x!{\\i0} y z"));
+        QVERIFY(placed(2));
+        QVERIFY(!placed(1));
+        application->editor().setShowTags(false);
+        application->editor().discard();
+        QTRY_VERIFY(placed(1));
+        QVERIFY(!placed(2));
+
+        // Run 2 placed, then a run put in before it in the Original (run 3
+        // now); the Original edit undone, the placed run is run 2 again.
+        QVERIFY(application->editor().placeRun(2, 2, 3));
+        application->editor().commit(); // the same text: no draft to commit
+        QVERIFY(placed(2));
+        application->editor().setShowTags(true);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("o {\\i1}a{\\i0} b {\\i1}c{\\i0} d"));
+        application->editor().textEdited(QStringLiteral("o {\\u1}n{\\u0} {\\i1}a{\\i0} b {\\i1}c{\\i0} d"), 13);
+        QVERIFY(application->editor().commit());
+        QTRY_COMPARE(application->editor().tagRuns().size(), 3);
+        QVERIFY(application->editor().tagRuns()[2].toMap().value("placed").toBool());
+        QCOMPARE(q8(session->document().lines()[0]->translation), text);
+        QVERIFY(application->editor().undo());
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        QVERIFY(placed(2));
+        QVERIFY(!placed(1));
+    }
+
+    // TM1: a Style edited in the Style manager reads its Lines' runs again:
+    // a placed run is read as it was composed, and one the Style no longer
+    // has is not placed, not taken for another run on other text.
+    void tagsFromOriginalFollowAStyleEdit()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-restyle.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Default,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n"
+                "Style: O,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,8,"
+                "10,10,10,1\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a {\\b1}b{\\b0} c\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,x y z\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QVERIFY(application->editor().placeRun(1, 2, 3));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("x {\\b1}y{\\b0} z"));
+        // The Line's Style turns bold: the Original's one run is "c", not
+        // bold, and the translation's "z" is not taken for it.
+        QCOMPARE(q8(session->document().lines()[0]->style), QStringLiteral("Default"));
+        auto &styles = application->styleManager();
+        auto values = styles.beginEdit(false, 0);
+        QCOMPARE(values.value(QStringLiteral("name")).toString(), QStringLiteral("Default"));
+        values.insert(QStringLiteral("bold"), true);
+        QCOMPARE(styles.commitEdit(values, {0}, false, false), QString());
+        styles.endEdit();
+        const auto run = [&] {
+            const auto runs = application->editor().tagRuns();
+            return runs.size() == 1 ? runs[0].toMap() : QVariantMap();
+        };
+        QTRY_COMPARE(run().value("text").toString(), QStringLiteral("c"));
+        QVERIFY(!run().value("placed").toBool());
+    }
+
+    // TM1: the caret keeps its place when the carried tags show or hide,
+    // even where the text could be read inside them ("an8" in "{\an8}").
+    void tagsFromOriginalCaretPastTheCarriedBlock()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-caret.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}Wall\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an8}an8\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *translated = item("translationText");
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("an8"));
+        translated->setProperty("cursorPosition", 3);
+        application->editor().setMoveTags(false);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\an8}an8"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 9);
+        application->editor().setMoveTags(true);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("an8"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 3);
+    }
+
+    // TM1: as above past a carried \h before the leading block.
+    void tagsFromOriginalCaretPastCarriedLeadingSpaces()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-caret-space.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,\\h{\\fs40}Wall\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\\h{\\fs40}Mur\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        auto *translated = item("translationText");
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("Mur"));
+        translated->setProperty("cursorPosition", 1);
+        application->editor().setMoveTags(false);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("\\h{\\fs40}Mur"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 10);
+        application->editor().setMoveTags(true);
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("Mur"));
+        QCOMPARE(translated->property("cursorPosition").toInt(), 1);
+    }
+
+    // TM1: the field finds where the shown text starts past carried tags
+    // in one pass: a long Line with the previous Line's text again and
+    // again after a block shows about as fast as one without it.
+    void tagsFromOriginalCaretSearchIsLinear()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-caret-long.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        // The long Lines are Comments: the Grid's spelling marks, drawn
+        // slowly across a long Line, are not the point.
+        constexpr int kCandidates = 40000;
+        QByteArray candidates, plain;
+        for (int i = 0; i < kCandidates; ++i) {
+            candidates += "}1";
+            plain += "}2";
+        }
+        f.write("[Script Info]\nScriptType: v4.00+\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,1\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{x}" + candidates + "\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,1\n"
+                "Comment: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{x}" + plain + "\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        application->editor().setShowTags(true);
+        auto *field = item("lineText");
+        const auto timedDown = [&] {
+            item("editingGrid")->forceActiveFocus();
+            QElapsedTimer clock;
+            clock.start();
+            press(Qt::Key_Down);
+            [&] { QTRY_COMPARE(field->property("text").toString().size(), 3 + 2 * kCandidates); }();
+            return clock.elapsed();
+        };
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("1"));
+        const auto withCandidates = timedDown();
+        press(Qt::Key_Down);
+        QTRY_COMPARE(field->property("text").toString(), QStringLiteral("1"));
+        const auto without = timedDown();
+        qInfo() << "with candidates" << withCandidates << "ms, without" << without << "ms";
+        QVERIFY2(withCandidates < 2 * without + 1000,
+                 qPrintable(QStringLiteral("with %1 ms, without %2 ms").arg(withCandidates).arg(without)));
+    }
+
+    // TM1: an Original that comes to carry nothing (a drawing) leaves the
+    // translation its own text, the tags it carried gone.
+    void tagsFromOriginalGoneTakesTheCarriedTags()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-drawing.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("y x"), 3);
+        QVERIFY(application->editor().placeRun(1, 0, 1));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}{\\i1}y{\\i0} x"));
+        const QString drawing = QStringLiteral("{\\p1}m 0 0 l 10 10");
+        application->editor().setShowTags(true); // the Original's tags typed raw
+        application->editor().textEdited(drawing, drawing.size());
+        QCOMPARE(q8(session->draftRecord()->text), drawing);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("y x"));
+    }
+
+    // TM1: Undo and Redo in the draft give back the whole translation, the
+    // carried tags with it, and carrying goes on.
+    void tagsFromOriginalRedoKeepsTheCarriedTags()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-redo.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("Hola"), 4);
+        application->editor().translationEdited(QStringLiteral("Holax"), 5);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Holax"));
+        QVERIFY(application->editor().undo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Hola"));
+        QVERIFY(application->editor().redo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Holax"));
+        // Redo's own snapshot for the next Undo is whole too.
+        QVERIFY(application->editor().undo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Hola"));
+        application->editor().translationEdited(QStringLiteral("Hola!"), 5);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Hola!"));
+    }
+
+    // TM1: a position for many translated Lines recarries each one, and
+    // noting each one's run order costs about the same however many came
+    // before (no walk of every Line's entries per note): about as long as
+    // the same step with Tags from original off.
+    void tagsFromOriginalManyLinesRecarryInLinearTime()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-many.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n");
+        constexpr int kLines = 6000;
+        for (int i = 0; i < kLines; ++i)
+            f.write(QStringLiteral("Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a{\\i1}b%1{\\i0}c\n"
+                                   "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\i1}x{\\i0}\n")
+                        .arg(i)
+                        .toUtf8());
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        const auto timed = [&] {
+            item("editingGrid")->forceActiveFocus();
+            press(Qt::Key_A, Qt::ControlModifier);
+            [&] { QTRY_COMPARE(session->selection().selected.size(), std::size_t(kLines)); }();
+            QElapsedTimer clock;
+            clock.start();
+            [&] { QVERIFY(application->editor().chooseAlignment(7)); }(); // \an8
+            return clock.elapsed();
+        };
+        application->editor().setMoveTags(false);
+        const auto off = timed();
+        if (QTest::currentTestFailed())
+            return;
+        QCOMPARE(q8(session->document().lines().back()->translation), QStringLiteral("{\\an8\\i1}x{\\i0}"));
+        QVERIFY(application->editor().undo());
+        application->editor().setMoveTags(true);
+        const auto on = timed();
+        if (QTest::currentTestFailed())
+            return;
+        const auto lines = session->document().lines();
+        QCOMPARE(q8(lines.back()->text), QStringLiteral("{\\an8}a{\\i1}b%1{\\i0}c").arg(kLines - 1));
+        QCOMPARE(q8(lines.back()->translation), QStringLiteral("{\\an8}{\\i1}x{\\i0}"));
+        QVERIFY2(on < 2 * off + 2000, qPrintable(QStringLiteral("on %1 ms, off %2 ms").arg(on).arg(off)));
+    }
+
+    // TM1: the font dialog on one Line with a placed run changes the
+    // translation's own text; the run stays placed, its tags written again
+    // around it, not merged into the new tag.
+    void tagsFromOriginalDialogKeepsThePlacedRun()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-dialog.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("y x"), 3);
+        QVERIFY(application->editor().placeRun(1, 0, 1));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}y{\\i0} x"));
+        // Bold over the placed run's text, the whole of it selected.
+        auto font = application->editor().beginFont(1, 0, 1);
+        QVERIFY(!font.isEmpty());
+        font.insert(QStringLiteral("bold"), true);
+        QVERIFY(application->editor().changeFont(font));
+        application->editor().endDialog(true);
+        const auto saved = q8(session->draftRecord()->translation);
+        QVERIFY2(saved.contains(QStringLiteral("\\b1")), qPrintable(saved));
+        QVERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("start").toInt(), 0);
+    }
+
+    // TM1: a run is not placed over text across the translator's own tags,
+    // which no one run reads back over.
+    void tagsFromOriginalNoRunAcrossOwnTags()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-across.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,I {\\i1}Tokyo{\\i0} x\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,To{\\b1}ky{\\b0}o\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QVERIFY(!application->editor().placeRun(1, 0, 5));
+        QCOMPARE(q8(session->draftRecord() ? session->draftRecord()->translation
+                                           : session->document().lines()[0]->translation),
+                 QStringLiteral("To{\\b1}ky{\\b0}o"));
+        QVERIFY(application->editor().placeRun(1, 2, 4)); // inside the bold: one state
+    }
+
+    // TM1: with several Lines selected, an Original edit goes to each
+    // selected Line's text (SubsGrid::ChangeLine) and each translation
+    // follows its own Original: the edited Line's is not copied over the
+    // others'. The same for a draft step undone.
+    void tagsFromOriginalKeepEachSelectedTranslation()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-selected.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}Gate\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,{\\an8}Brama\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,{\\an8}Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\an8}Wieza\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\an8}Gate"));
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().textEdited(QStringLiteral("{\\an7}Gate"), 10);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an7}Brama"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("{\\an7}Brama"));
+        QCOMPARE(q8(session->document().lines()[1]->text), QStringLiteral("{\\an7}Gate"));
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an7}Wieza"));
+
+        // A draft step undone gives the edited Line its translation back,
+        // and only it.
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().textEdited(QStringLiteral("{\\an9}Gate"), 10);
+        application->editor().textEdited(QStringLiteral("{\\an9}Gates"), 11);
+        QVERIFY(application->editor().undo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an9}Brama"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an9}Wieza"));
+
+        // Typing in the translation undone: the carried one again, so the
+        // other Line keeps its own rather than a copy of this one.
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().textEdited(QStringLiteral("{\\an1}Gate"), 10);
+        application->editor().translationEdited(QStringLiteral("Bramy"), 5);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an1}Bramy"));
+        QVERIFY(application->editor().undo());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an1}Brama"));
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("{\\an1}Brama"));
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an1}Wieza"));
+
+        // An Original that carries nothing now (a drawing): every selected
+        // translation keeps only its own text.
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        const QString drawing = QStringLiteral("{\\p1}m 0 0 l 10 10");
+        application->editor().textEdited(drawing, drawing.size());
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QStringLiteral("Brama"));
+        QCOMPARE(q8(session->document().lines()[1]->text), drawing);
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("Wieza"));
+    }
+
+    // TM1: with an untranslated Line active, an Original edit to several
+    // selected Lines still carries each translated one's new tags.
+    void tagsFromOriginalUntranslatedActiveLineCarriesTheOthers()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-untranslated.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,{\\an8}Gate\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,{\\an8}Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,{\\an8}Wieza\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\an8}Gate"));
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().textEdited(QStringLiteral("{\\an7}Gate"), 10);
+        QVERIFY(application->editor().commit());
+        QCOMPARE(q8(session->document().lines()[0]->translation), QString());
+        QCOMPARE(q8(session->document().lines()[1]->text), QStringLiteral("{\\an7}Gate"));
+        QCOMPARE(q8(session->document().lines()[1]->translation), QStringLiteral("{\\an7}Wieza"));
+    }
+
+    // TM1: the font dialog on several Lines changes each translation's own
+    // text; a placed run stays placed, its tags written again around it, not
+    // merged into the new tag.
+    void tagsFromOriginalSeveralLinesKeepThePlacedRun()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-several.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,Wieza\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("y x"), 3);
+        QVERIFY(application->editor().placeRun(1, 0, 1));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}y{\\i0} x"));
+        QVERIFY(application->editor().commit());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[0]->id, {lines[0]->id, lines[1]->id}, lines[0]->id, {}});
+        application->editor().reloadFromSession();
+        auto font = application->editor().beginFont(1, 0, 0);
+        QVERIFY(!font.isEmpty());
+        font.insert(QStringLiteral("bold"), true);
+        QVERIFY(application->editor().changeFont(font));
+        application->editor().endDialog(true);
+        const auto bold = session->document().lines();
+        QCOMPARE(q8(bold[0]->translation), QStringLiteral("{\\b1}{\\i1}y{\\i0} x"));
+        QCOMPARE(q8(bold[1]->translation), QStringLiteral("{\\b1}Wieza"));
+        QTRY_VERIFY(application->editor().tagRuns()[0].toMap().value("placed").toBool());
+    }
+
+    // TM1: a tag button's text on several Lines goes where the caret is in
+    // each Line's visible text, a placed run staying placed.
+    void tagsFromOriginalSeveralLinesInsertAtTheVisibleCaret()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-several-insert.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,abcd\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("abcd"), 4);
+        QVERIFY(application->editor().placeRun(1, 1, 2));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("a{\\i1}b{\\i0}cd"));
+        QVERIFY(application->editor().commit());
+        const auto lines = session->document().lines();
+        session->setSelection(application::Selection{lines[1]->id, {lines[0]->id, lines[1]->id}, lines[1]->id, {}});
+        application->editor().reloadFromSession();
+        // After "abc" in the active Line: after "abc" in the other's too.
+        QVERIFY(application->editor().applyTagButton(1, QStringLiteral("{\\be1}"), 2, 3, 3));
+        const auto after = session->document().lines();
+        QCOMPARE(q8(after[1]->translation), QStringLiteral("abc{\\be1}d"));
+        QCOMPARE(q8(after[0]->translation), QStringLiteral("a{\\i1}b{\\i0}c{\\be1}d"));
+    }
+
+    // TM1: a caret past the end of another selected Line's shorter text
+    // inserts at its end, with or without runs placed in it.
+    void tagsFromOriginalSeveralLinesInsertPastAShorterText()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-several-short.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}B{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,O,,0,0,0,,Tower\n"
+                "Dialogue: 0,0:00:03.00,0:00:04.00,Default,,0,0,0,,y\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,O,,0,0,0,,Gate\n"
+                "Dialogue: 0,0:00:05.00,0:00:06.00,Default,,0,0,0,,abcd\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(false);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        application->editor().translationEdited(QStringLiteral("x"), 1);
+        QVERIFY(application->editor().placeRun(1, 0, 1));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}x{\\i0}"));
+        QVERIFY(application->editor().commit());
+        const auto lines = session->document().lines();
+        session->setSelection(
+            application::Selection{lines[2]->id, {lines[0]->id, lines[1]->id, lines[2]->id}, lines[2]->id, {}});
+        application->editor().reloadFromSession();
+        // After "abc" in the active Line: at the end of "x" and of "y".
+        QVERIFY(application->editor().applyTagButton(1, QStringLiteral("{\\be1}"), 2, 3, 3));
+        const auto after = session->document().lines();
+        QCOMPARE(q8(after[2]->translation), QStringLiteral("abc{\\be1}d"));
+        QCOMPARE(q8(after[1]->translation), QStringLiteral("y{\\be1}"));
+        QCOMPARE(q8(after[0]->translation), QStringLiteral("{\\i1}x{\\i0}{\\be1}"));
+    }
+
+    // TM1: a translation past what Tags from original reads takes no run:
+    // more tags than it reads keep a run from being placed, a longer text
+    // shows no runs at all.
+    void tagsFromOriginalPastTheReadersLimits()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-limits.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End); // "{\i1}Wall {\b1}high"
+        QTRY_VERIFY(item("translationText")->hasActiveFocus());
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        // The field shows the text after the carried {\i1}.
+        const QString many = QStringLiteral("Mur wysoki{") + QStringLiteral("\\u1").repeated(1100) + QStringLiteral("}");
+        application->editor().translationEdited(many, many.size());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}") + many);
+        QVERIFY(!application->editor().placeRun(1, 0, 3));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}") + many);
+        QCOMPARE(application->editor().tagRuns().size(), 1);
+        // Nor is the run's text offered there as a suggestion.
+        const QString offered = QStringLiteral("Mur high{") + QStringLiteral("\\u1").repeated(1100) + QStringLiteral("}");
+        application->editor().translationEdited(offered, offered.size());
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("suggestedStart").toInt(), -1);
+        QVERIFY(!application->editor().acceptSuggestedRuns());
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}") + offered);
+        const QString longer = QStringLiteral("Mur ").repeated(4200);
+        application->editor().translationEdited(longer, 3);
+        QVERIFY(application->editor().tagRuns().isEmpty());
+        QVERIFY(!application->editor().placeRun(1, 0, 3));
+        // Past three bytes a unit it is not even read: Tab takes nothing.
+        const QString huge = QStringLiteral("Mur ").repeated(12300);
+        application->editor().translationEdited(huge, 3);
+        QVERIFY(application->editor().tagRuns().isEmpty());
+        QVERIFY(!application->editor().acceptSuggestedRuns());
+        QVERIFY(q8(session->draftRecord()->translation).endsWith(huge));
+    }
+
+    // TM1: a run moved next to the translator's own formatting of the same
+    // kind would read back over that text too: refused, nothing changed.
+    void tagsFromOriginalPlacementReadsBackOverItsOwnText()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-span.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,a{\\u1}b{\\u0}x{\\u1}c{\\u0}z\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,"
+                "{\\u1}X{\\u0} {\\u1}Y{\\u0} A{\\u1}BC{\\u0}D\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_COMPARE(application->editor().tagRuns().size(), 2);
+        const QString saved = QStringLiteral("{\\u1}X{\\u0} {\\u1}Y{\\u0} A{\\u1}BC{\\u0}D");
+        QCOMPARE(q8(session->document().lines()[0]->translation), saved);
+        QVERIFY(application->editor().tagRuns()[1].toMap().value("placed").toBool());
+        // Run 2 onto C alone: read back, it would take B as well.
+        const int c = saved.indexOf(QLatin1Char('C'));
+        QVERIFY(!application->editor().placeRun(2, c, c + 1));
+        QVERIFY(!session->draftRecord() || q8(session->draftRecord()->translation) == saved);
+    }
+
+    // TM1: a karaoke Line carries its leading tags without its \k timing,
+    // and says so under the Translated text.
+    void tagsFromOriginalOnAKaraokeLine()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("tm1-karaoke.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
         item("editingGrid")->forceActiveFocus();
         press(Qt::Key_End);
-        QTRY_COMPARE(original->property("text").toString(), QStringLiteral("Wall high"));
-        QCOMPARE(translated->property("text").toString(), QStringLiteral("{\\i1}{\\b1}"));
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        auto *notice = visualItem("karaokeCarryNotice");
+        QVERIFY(notice);
+        QVERIFY(!notice->isVisible());
+        application->editor().textEdited(QStringLiteral("{\\an8\\k20}Wall {\\k30}high"), 0);
+        QTRY_VERIFY(application->editor().karaokeCarried());
+        QTRY_VERIFY(notice->isVisible());
+        QVERIFY(application->editor().tagRuns().isEmpty());
+        application->editor().translationEdited(QStringLiteral("Mur"), 3);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an8}Mur"));
+    }
+
+    // TM1: Paste all puts the Original's text in the Translated field with
+    // its runs; a translation whose own tags differ from the Original's is
+    // shown whole and left alone.
+    void tagsFromOriginalPasteAllAndOwnTags()
+    {
+        QVERIFY(application->openFile(writeTranslationFile("e5-moving-paste.ass")));
+        auto *session = application->files().session(*application->workspace().editingTarget());
+        application->editor().setShowTags(true);
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_End);
+        auto *translated = item("translationText");
+        QTRY_COMPARE(item("lineText")->property("text").toString(), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        QVERIFY(application->editor().pasteAllToTranslation());
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("Wall {\\b1}high"));
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\i1}Wall {\\b1}high"));
+        // A translation with its own leading tags is shown whole, and a
+        // change keeps them as they are.
+        QVERIFY(application->editor().commit());
+        application->settingsStore()->set("translation.autoMoveTagsFromOriginal", false);
+        QTRY_VERIFY(!application->editor().moveTags());
+        application->editor().translationEdited(QStringLiteral("{\\an2}Mur"), 10);
+        QVERIFY(application->editor().commit());
+        application->settingsStore()->set("translation.autoMoveTagsFromOriginal", true);
+        QTRY_VERIFY(application->editor().moveTags());
+        QTRY_COMPARE(translated->property("text").toString(), QStringLiteral("{\\an2}Mur"));
+        application->editor().translationEdited(QStringLiteral("{\\an2}MurX"), 11);
+        QCOMPARE(q8(session->draftRecord()->translation), QStringLiteral("{\\an2}MurX"));
+    }
+
+    // TM1: a Line naming a Style the Document lacks reads its runs against
+    // the first Style (legacy GetStyle(0, name): else the first Style).
+    void tagsFromOriginalMissingStyleUsesTheFirstStyle()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-gone.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: Gone\n\n[V4+ Styles]\n"
+                "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                "Style: Heavy,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,-1,0,0,0,100,100,0,0,1,2,2,2,"
+                "10,10,10,1\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Gone,,0,0,0,,A {\\b0}B{\\b1} C\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Missing,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        // Under the bold first Style the run is "B", unbold; " C" is as the Style is.
+        QTRY_COMPARE(application->editor().tagRuns().size(), 1);
+        QCOMPARE(application->editor().tagRuns()[0].toMap().value("text").toString(), QStringLiteral("B"));
+    }
+
+    // TM1: a run's text is the subtitle's own, shown as written in its chip
+    // and the chip's hover text: never read as markup, so an <img> in a
+    // subtitle is not fetched when its Line becomes active.
+    void tagsFromOriginalRunTextIsPlainText()
+    {
+        const QString path = dir.filePath(QStringLiteral("tm1-markup.ass"));
+        QFile f(path);
+        QVERIFY(f.open(QIODevice::WriteOnly));
+        f.write("[Script Info]\nScriptType: v4.00+\nTLMode: Yes\nTLMode Style: O\n\n[Events]\n"
+                "Format: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,O,,0,0,0,,A {\\i1}<img src=\"http://127.0.0.1:9/x\">{\\i0}\n"
+                "Dialogue: 0,0:00:01.00,0:00:02.00,Default,,0,0,0,,\n");
+        f.close();
+        QVERIFY(application->openFile(path));
+        QTRY_VERIFY(application->editor().moveTags());
+        item("editingGrid")->forceActiveFocus();
+        press(Qt::Key_Home);
+        QTRY_VERIFY(visualItem("runChipText1") && visualItem("runChipText1")->isVisible());
+        const QString markup = QStringLiteral("<img src=\"http://127.0.0.1:9/x\">");
+        auto *label = visualItem("runChipText1");
+        QCOMPARE(label->property("text").toString(), markup);
+        QCOMPARE(label->property("textFormat").toInt(), int(Qt::PlainText));
+        auto *tip = visualItem("runChip1")->findChild<QObject *>(QStringLiteral("runChipToolTip1"));
+        QVERIFY(tip);
+        QVERIFY(tip->property("text").toString().contains(markup));
+        auto *tipText = tip->property("contentItem").value<QQuickItem *>();
+        QVERIFY(tipText);
+        QCOMPARE(tipText->property("textFormat").toInt(), int(Qt::PlainText));
     }
 
     // E5: the Grid's "Original text" and "Translation" columns (legacy
@@ -17554,10 +18731,10 @@ private slots:
         // window" retired, never listed; WS3: the five View arrangements and
         // "Enable / Disable editor" too; LE3's "Hide tags in the line editor",
         // KE1's "Show / hide render cost", FS1's VIDEO_FULLSCREEN_BAR, TM1's
-        // "Translation mode" and VT2's eleven visual tools listed; KA2's Tap
-        // to time, Slower and Faster; VT3's Perspective; KA7's "Check karaoke"; KA1's two syllable commands; AD2's
-        // "Repeat last run".
-        QCOMPARE(hotkeyRows().size(), 241);
+        // "Translation mode" and its run keys and VT2's eleven visual tools listed; KA2's Tap
+        // to time, Slower and Faster; VT3's Perspective; KA7's "Check karaoke"; KA1's two syllable
+        // commands; AD2's "Repeat last run".
+        QCOMPARE(hotkeyRows().size(), 251);
         QCOMPARE(hotkeyRows().first().toMap().value(QStringLiteral("text")).toString(), QStringLiteral("Global Close current tab"));
         QCOMPARE(application->hotkeys().selected(), 0);
         // Choose filtering: Video shortcuts.
@@ -17975,10 +19152,10 @@ private slots:
         h.select(hotkeyPosition(QStringLiteral("Subtitles Swap lines")));
         h.optionsMap(QStringLiteral("Ctrl-Shift-W"), 2, QStringLiteral("cancel"));
         h.select(hotkeyPosition(QStringLiteral("Editor First tag button")));
-        h.optionsMap(QStringLiteral("Alt-1"), 2, QStringLiteral("cancel"));
+        h.optionsMap(QStringLiteral("Ctrl-Alt-1"), 2, QStringLiteral("cancel")); // TM1: Alt-1 places run 1
         h.commitOptions();
         QCOMPARE(h.actionFor(2, Qt::Key_W, Qt::ControlModifier | Qt::ShiftModifier), QString());
-        QCOMPARE(h.actionFor(2, Qt::Key_1, Qt::AltModifier), QString()); // EDITBOX_TAG_BUTTONS is 0
+        QCOMPARE(h.actionFor(2, Qt::Key_1, Qt::ControlModifier | Qt::AltModifier), QString()); // EDITBOX_TAG_BUTTONS is 0
         // Duplicate lines bound for the Video window does nothing in the Grid.
         QVERIFY(application->openFile(episode));
         item<QQuickItem>("editingGrid")->forceActiveFocus();
@@ -24747,78 +25924,216 @@ private slots:
             QTRY_COMPARE(pointerArea->property("cursorShape").toInt(), int(Qt::SizeBDiagCursor));
         }
 
-        // "Edit": the dialog, on the preset chosen (T5-editor-opens-next:
-        // legacy opened on the one after it, "circle").
+        // PU5 (Codex on #349): the list and the preview draw a B-spline as
+        // the renderer does (flattenCurve's), not its control points: one
+        // Bézier for each four points from the pen, c closing it with its
+        // first three again, p adding points.
+        QRectF splineBox;
+        QCOMPARE(ui::ShapeEditor::svgPath(u"m 0 0 s 60 0 60 60 0 60", &splineBox),
+                 QStringLiteral("M 0 0 L 50 10 C 60 20 60 40 50 50"));
+        QCOMPARE(splineBox, QRectF(0, 0, 60, 50));
+        QCOMPARE(ui::ShapeEditor::svgPath(u"m 0 0 s 60 0 60 60 0 60 p 0 0").count(QStringLiteral(" C ")), 2);
+        const QString closed = ui::ShapeEditor::svgPath(u"m 0 0 s 60 0 60 60 0 60 c");
+        QCOMPARE(closed.count(QStringLiteral(" C ")), 4);
+        QVERIFY2(closed.endsWith(QStringLiteral(" 50 10 Z")), qPrintable(closed)); // back at its start
+        QCOMPARE(ui::ShapeEditor::svgPath(u"m 0 0 l 10 0 b 20 0 20 10 10 10"),
+                 QStringLiteral("M 0 0 L 10 0 C 20 0 20 10 10 10"));
+
+        // PU5 (#307): "Edit shapes", on the preset chosen
+        // (T5-editor-opens-next: legacy opened on the one after it, "circle").
         QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
         QTRY_VERIFY(menu()->property("opened").toBool());
         checkMenu(list()->property("model").toStringList(), 1);
         QVERIFY(QMetaObject::invokeMethod(menuItem(7), "click"));
         QTRY_VERIFY(!menu()->property("visible").toBool());
-        QObject *dialog = named("shapesEditionDialog");
+        auto *dialog = qobject_cast<QQuickWindow *>(named("shapesEditionDialog"));
         QVERIFY(dialog);
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Vector shape editing"));
+        QTRY_VERIFY(dialog->isVisible());
+        QCOMPARE(dialog->title(), QStringLiteral("Edit shapes"));
+        QCOMPARE(dialog->modality(), Qt::NonModal);
         QTRY_COMPARE(list()->property("currentIndex").toInt(), 1); // the list keeps the chosen preset
         ui::ShapeEditor *editor = tools.shapeEditor();
         QVERIFY(editor);
-        QCOMPARE(editor->list().size(), 5);
+        QCOMPARE(editor->items().size(), 5);
         QCOMPARE(editor->name(), QStringLiteral("rectangle"));
-        QCOMPARE(named("shapeName")->property("text").toString(), QStringLiteral("rectangle"));
-        QVERIFY(!named("shapeScalingMode")->property("enabled").toBool());
-        // The name of another preset: Replace or Rename.
-        named("shapeName")->setProperty("text", QStringLiteral("Circle"));
-        QVERIFY(QMetaObject::invokeMethod(named("shapeName"), "textEdited"));
-        QCOMPARE(editor->name(), QStringLiteral("Circle"));
-        QVERIFY(QMetaObject::invokeMethod(named("shapesApply"), "click"));
-        QObject *clash = named("shapesClash");
-        QTRY_VERIFY(clash->property("visible").toBool());
-        QCOMPARE(named("shapesClashText")->property("text").toString(),
-                 QStringLiteral("A shape named \"circle\" already exists."));
-        QVERIFY(QMetaObject::invokeMethod(named("shapesClashReplace"), "click"));
-        QTRY_VERIFY(!clash->property("visible").toBool());
+        QObject *shapeName = named("shapeName");
+        QCOMPARE(shapeName->property("text").toString(), QStringLiteral("rectangle"));
+        QTRY_COMPARE(named("shapeList")->property("currentIndex").toInt(), 0);
+        QVERIFY(!named("shapesUndo")->property("enabled").toBool());
+        const auto file = [&] {
+            QFile saved(shapesFile);
+            if (!saved.open(QIODevice::ReadOnly))
+                return QByteArray();
+            return saved.readAll();
+        };
+        // Each change is kept as it is made: the tool's list and the file.
+        shapeName->setProperty("text", QStringLiteral("box"));
+        QVERIFY(QMetaObject::invokeMethod(shapeName, "textEdited"));
+        QCOMPARE(editor->name(), QStringLiteral("box"));
+        QTRY_COMPARE(list()->property("model").toStringList().value(1), QStringLiteral("box"));
+        QByteArray bytes = file();
+        QVERIFY(bytes.startsWith("\xEF\xBB\xBF"));
+        QVERIFY2(bytes.mid(3).startsWith("Shape: box; m 0 0 l 100 0 100 100 0 100; 0; 0\n"), bytes.constData());
+        QCOMPARE(bytes.count('\n'), 5);
+        QVERIFY(named("shapesUndo")->property("enabled").toBool());
+        QCOMPARE(named("shapesUndo")->property("tip").toString(), QStringLiteral("Undo “Rename shape”"));
+        // A name another preset has: said under the field, the preset keeps
+        // its last good name; Enter asks to replace the other.
+        shapeName->setProperty("text", QStringLiteral("Circle"));
+        QVERIFY(QMetaObject::invokeMethod(shapeName, "textEdited"));
+        QCOMPARE(editor->name(), QStringLiteral("box"));
+        QCOMPARE(named("shapeNameErrorText")->property("text").toString(),
+                 QStringLiteral("Another shape is named “circle”. Press Enter to replace it."));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "nameLeft"));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("shapesMessages")) && box->isVisible());
+        QCOMPARE(box->property("severity").toString(), QStringLiteral("warning"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Replace the shape “circle”?"));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("replace"))));
+        QTRY_VERIFY(!box->isVisible());
         QCOMPARE(editor->edition().presets().size(), 4u);
         QCOMPARE(editor->edition().presets()[0].name, std::u16string(u"Circle"));
-        QVERIFY(!QFile::exists(shapesFile)); // Apply keeps it in the dialog only
-        QVERIFY(QMetaObject::invokeMethod(named("shapesOk"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QVERIFY(!tools.shapeEditor());
-        QFile saved(shapesFile);
-        QVERIFY(saved.open(QIODevice::ReadOnly));
-        const QByteArray bytes = saved.readAll();
-        saved.close(); // Windows removes no file a handle holds (Restore default below)
-        QVERIFY(bytes.startsWith("\xEF\xBB\xBF"));
-        QVERIFY2(bytes.mid(3).startsWith("Shape: Circle; m 0 0 l 100 0 100 100 0 100; 0; 0\n"), bytes.constData());
-        QCOMPARE(bytes.count('\n'), 4);
+        QCOMPARE(shapeName->property("text").toString(), QStringLiteral("Circle"));
+        QCOMPARE(named("shapeNameErrorText")->property("text").toString(), QString());
         QTRY_COMPARE(list()->property("model").toStringList().size(), 6);
         QCOMPARE(list()->property("model").toStringList()[1], QStringLiteral("Circle"));
-        QCOMPARE(list()->property("currentIndex").toInt(), 1);
+        QCOMPARE(file().count('\n'), 4);
+        // Undo: one step back, the list and the file with it.
+        QCOMPARE(named("shapesUndo")->property("tip").toString(), QStringLiteral("Undo “Replace shape”"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        QCOMPARE(editor->edition().presets().size(), 5u);
+        QCOMPARE(editor->name(), QStringLiteral("box"));
+        QCOMPARE(shapeName->property("text").toString(), QStringLiteral("box"));
+        QTRY_COMPARE(list()->property("model").toStringList().size(), 7);
+        QCOMPARE(file().count('\n'), 5);
+        QVERIFY(named("shapesRedo")->property("enabled").toBool());
+        // A drawing the tool cannot use is said; the preset keeps its last.
+        QObject *shapeText = named("shapeText");
+        shapeText->setProperty("text", QStringLiteral("m 0 0; l 5 5"));
+        QCOMPARE(named("shapeTextErrorText")->property("text").toString(),
+                 QStringLiteral("A drawing can't contain “;”."));
+        QCOMPARE(editor->property("shape").toString(), QStringLiteral("m 0 0 l 100 0 100 100 0 100"));
+        shapeText->setProperty("text", QStringLiteral("m 0 0 l 50 0 0 50"));
+        QCOMPARE(named("shapeTextErrorText")->property("text").toString(), QString());
+        QCOMPARE(editor->property("shape").toString(), QStringLiteral("m 0 0 l 50 0 0 50"));
+        QTRY_VERIFY(file().contains("Shape: box; m 0 0 l 50 0 0 50; 0; 0\n"));
+        QCOMPARE(editor->property("box").toRectF(), QRectF(0, 0, 50, 50));
+        // Scale from the cursor: three choices (legacy's scaling mode hidden).
+        QVERIFY(QMetaObject::invokeMethod(named("shapeMode"), "activated", Q_ARG(int, 2)));
+        QCOMPARE(editor->property("mode").toInt(), 2);
+        QTRY_VERIFY(file().contains("Shape: box; m 0 0 l 50 0 0 50; 2; 0\n"));
 
-        // Restore default: asked, then the file goes at once; Cancel keeps
-        // the presets the list has (legacy: only OK hands them back). The
-        // menu took the new names.
-        QTest::mouseClick(window, Qt::LeftButton, Qt::NoModifier, centreOf(list()));
-        QTRY_VERIFY(menu()->property("opened").toBool());
-        checkMenu({QStringLiteral("Choose"), QStringLiteral("Circle"), QStringLiteral("rounded square 1"),
-                   QStringLiteral("rounded square 2"), QStringLiteral("rounded square 3"), QStringLiteral("Edit")},
-                  1);
-        QVERIFY(QMetaObject::invokeMethod(menuItem(6), "click"));
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(named("shapesRestoreDefault"), "click"));
-        QObject *question = named("shapesQuestion");
-        QTRY_VERIFY(question->property("visible").toBool());
-        QCOMPARE(named("shapesQuestionText")->property("text").toString(),
-                 QStringLiteral("Are you sure you want to reset to default?"));
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
-        QTRY_VERIFY(!QFile::exists(shapesFile));
-        QCOMPARE(tools.shapeEditor()->list().size(), 5);
-        QVERIFY(QMetaObject::invokeMethod(named("shapesCancel"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(list()->property("model").toStringList().size(), 6);
+        // Restore default shapes (⋯): asked, Cancel the default; one step.
+        QVERIFY(QMetaObject::invokeMethod(named("shapesRestoreDefault"), "triggered"));
+        QTRY_VERIFY((box = messageBox("shapesMessages")) && box->isVisible());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Restore the default shapes?"));
+        {
+            const QVariantList choices = box->property("choices").toList();
+            QCOMPARE(choices.size(), 2);
+            QCOMPARE(choices.at(0).toMap().value(QStringLiteral("role")).toString(), QStringLiteral("destructive"));
+            QVERIFY(choices.at(1).toMap().value(QStringLiteral("isDefault")).toBool());
+        }
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("restore"))));
+        QTRY_VERIFY(!box->isVisible());
+        QCOMPARE(editor->items().size(), 5);
+        QCOMPARE(editor->edition().presets()[0].name, std::u16string(u"rectangle"));
+        QTRY_COMPARE(list()->property("model").toStringList()[1], QStringLiteral("rectangle"));
+        QCOMPARE(named("shapesUndo")->property("tip").toString(), QStringLiteral("Undo “Restore default shapes”"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        QTRY_COMPARE(list()->property("model").toStringList()[1], QStringLiteral("box"));
+        // The tool reads the chosen preset again after each change, and the
+        // bar's choice follows its name when one before it goes or comes
+        // back (Codex on #349).
+        auto *drawingTool = dynamic_cast<application::visual::DrawingTool *>(tools.tool());
+        QVERIFY(drawingTool);
+        QCOMPARE(drawingTool->shapePoints().size(), 3u); // box's drawing as edited
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 2)); // circle
+        QTRY_COMPARE(shown(), QStringLiteral("circle"));
+        QCOMPARE(drawingTool->shape(), 1);
+        editor->select(0);
+        QVERIFY(editor->remove()); // box
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 1);
+        QCOMPARE(shown(), QStringLiteral("circle"));
+        QCOMPARE(drawingTool->shape(), 0);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 2);
+        QCOMPARE(shown(), QStringLiteral("circle"));
+        QCOMPARE(drawingTool->shape(), 1);
+        // It follows a rename, Replace's and its Undo included: the third
+        // preset named as the first replaces it (Codex on #349).
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 3));
+        const QString thirdName = QString::fromStdU16String(editor->edition().presets()[2].name);
+        QTRY_COMPARE(shown(), thirdName);
+        editor->select(2);
+        QCOMPARE(editor->setName(QStringLiteral("box")), int(ui::ShapeEditor::NameTaken));
+        editor->replaceNamed(QStringLiteral("box"));
+        QCOMPARE(editor->edition().presets()[1].name, std::u16string(u"box"));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 2);
+        QCOMPARE(shown(), QStringLiteral("box"));
+        QCOMPARE(drawingTool->shape(), 1);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 3);
+        QCOMPARE(shown(), thirdName);
+        QCOMPARE(drawingTool->shape(), 2);
+        // A change made while another family is shown reaches the tool: it
+        // comes back on the same preset, read again.
+        tools.selectFamily(int(application::visual::Family::Position));
+        QTRY_VERIFY(tools.tool() != drawingTool);
+        QCOMPARE(tools.shapeEditor(), editor);
+        editor->select(0);
+        QVERIFY(editor->remove()); // box, before the chosen one
+        editor->select(1);
+        QCOMPARE(editor->name(), thirdName);
+        QVERIFY(editor->setShape(QStringLiteral("m 0 0 l 10 0 10 10 0 10 0 5")));
+        tools.selectFamily(int(application::visual::Family::Drawing));
+        QTRY_VERIFY(tools.tool() == drawingTool);
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 2);
+        QCOMPARE(shown(), thirdName);
+        QCOMPARE(drawingTool->shape(), 1);
+        QCOMPARE(drawingTool->shapePoints().size(), 5u);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked")); // the drawing
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked")); // box back
+        QTRY_COMPARE(list()->property("currentIndex").toInt(), 3);
+        // Take from the active line reads the Line editor's pending text, as
+        // the video shows it.
+        QVERIFY(session->editDraftText(third, u8"{\\p1}m 0 0 l 7 0 7 7{\\p0}"));
+        QVERIFY(editor->takeFromLine());
+        QCOMPARE(editor->property("shape").toString(), QStringLiteral("m 0 0 l 7 0 7 7"));
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        session->discardDraft();
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 1)); // box again
+        // The window's list follows the editor's selection after a click
+        // too: Duplicate selects the copy; a key moves through the editor.
+        auto *shapeList = qobject_cast<QQuickItem *>(named("shapeList"));
+        QQuickItem *row = nullptr; // the list's row now (each change makes them again)
+        QVERIFY(QMetaObject::invokeMethod(shapeList, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, row), Q_ARG(int, 1)));
+        QVERIFY(row);
+        QVERIFY(QMetaObject::invokeMethod(row, "clicked"));
+        QCOMPARE(editor->selection(), 1);
+        QVERIFY(QMetaObject::invokeMethod(named("duplicateShape"), "clicked"));
+        QCOMPARE(editor->selection(), 2);
+        QTRY_COMPARE(shapeList->property("currentIndex").toInt(), 2);
+        QVERIFY(QMetaObject::invokeMethod(named("shapesUndo"), "clicked"));
+        QTRY_COMPARE(shapeList->property("currentIndex").toInt(), 1);
+        {
+            QKeyEvent down(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
+            QCoreApplication::sendEvent(shapeList, &down);
+        }
+        QCOMPARE(editor->selection(), 2);
+        QTRY_COMPARE(shapeList->property("currentIndex").toInt(), 2);
+        editor->select(1);
+        // Close keeps every change; the editor goes with the window.
+        QVERIFY(QMetaObject::invokeMethod(named("shapesClose"), "clicked"));
+        QTRY_VERIFY(!dialog->isVisible());
+        QTRY_VERIFY(!tools.shapeEditor());
+        QCOMPARE(list()->property("model").toStringList().size(), 7);
+        QCOMPARE(list()->property("model").toStringList()[1], QStringLiteral("box"));
+        QVERIFY(file().contains("Shape: box; m 0 0 l 50 0 0 50; 2; 0\n"));
     }
 
-    // T5: the drawing's surfaces in the light and dark palettes (with
+    // T5: the drawing's surfaces in the four themes (with
     // HIKARI_SURFACE_SHOT_DIR): the Video panel with the drawing's row and a
-    // shape drawn, the shape list's menu, and the "Vector shape editing" dialog.
+    // shape drawn, the shape list's menu, and the "Edit shapes" window (PU5).
     void visualDrawingScreenshots()
     {
         const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
@@ -24859,7 +26174,7 @@ private slots:
             return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
         };
         auto *root = engine->rootObjects().first();
-        for (const char *code : {"light", "dark"}) {
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
             // K2: the theme layer's Light and Dark themes.
             settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
             auto *controls = root->property("palette").value<QObject *>();
@@ -24886,15 +26201,14 @@ private slots:
             QVERIFY(QMetaObject::invokeMethod(menu, "close"));
             QTRY_VERIFY(!menu->property("visible").toBool());
             QVERIFY(QMetaObject::invokeMethod(visualItem("visualOption_shape"), "activated", Q_ARG(int, 6)));
-            QObject *dialog = named("shapesEditionDialog");
-            QTRY_VERIFY(dialog->property("opened").toBool());
+            // PU5: the "Edit shapes" window.
+            auto *dialog = qobject_cast<QQuickWindow *>(named("shapesEditionDialog"));
+            QTRY_VERIFY(dialog->isVisible());
             QTest::qWait(300);
-            shot = window->grabWindow();
-            auto *frame = dialog->property("background").value<QQuickItem *>(); // the whole box
-            const QRect r = crop(frame).adjusted(-8, -8, 8, 8).intersected(shot.rect());
-            QVERIFY(shot.copy(r).save(out + QStringLiteral("/shapes-edition-dialog") + suffix));
-            QVERIFY(QMetaObject::invokeMethod(named("shapesCancel"), "click"));
-            QTRY_VERIFY(!dialog->property("visible").toBool());
+            QTRY_VERIFY((shot = dialog->grabWindow(), !shot.isNull() && shot.width() > 0));
+            QVERIFY(shot.save(out + QStringLiteral("/shapes-edition-dialog") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(named("shapesClose"), "clicked"));
+            QTRY_VERIFY(!dialog->isVisible());
         }
     }
 
@@ -25440,7 +26754,8 @@ private slots:
         }
         QVERIFY(tools.setOption(QStringLiteral("variant"), 0));
         QVERIFY(QFile::remove(tagsFile));
-        // Edit tags… at the list's end: "Tag editing", a new definition, OK.
+        // PU5 (#307): Edit tags… at the list's end opens "Edit tags" on the
+        // definition the tool has.
         const auto openEditTags = [&] {
             // A change of the bar's options makes its items again: the old
             // picker goes with the deferred deletes, so the lookup finds the
@@ -25460,56 +26775,188 @@ private slots:
             return true;
         };
         QVERIFY(openEditTags());
-        QObject *dialog = named("tagsEditionDialog");
+        auto *dialog = qobject_cast<QQuickWindow *>(named("tagsEditionDialog"));
         QVERIFY(dialog);
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QCOMPARE(dialog->property("title").toString(), QStringLiteral("Tag editing"));
+        QTRY_VERIFY(dialog->isVisible());
+        QCOMPARE(dialog->title(), QStringLiteral("Edit tags"));
+        QCOMPARE(dialog->modality(), Qt::NonModal);
         ui::AllTagsEditor *editor = tools.tagsEditor();
         QVERIFY(editor);
         QCOMPARE(editor->selection(), 1); // the list's selection
         QCOMPARE(editor->tag(), QStringLiteral("bord"));
-        QCOMPARE(named("tagsField_max")->property("text").toString(), QStringLiteral("50"));
-        QVERIFY(named("tagsField_value2"));
-        QVERIFY(!named("tagsField_value2")->property("enabled").toBool());
-        // An empty new name is refused.
-        QVERIFY(QMetaObject::invokeMethod(named("addTag"), "click"));
-        answerMessage("tagsMessages", QStringLiteral("Tag editing"), QStringLiteral("Enter a name for the new tag.")); // NT1
-        named("newTagName")->setProperty("text", QStringLiteral("wide"));
-        QVERIFY(QMetaObject::invokeMethod(named("addTag"), "click"));
-        QTRY_COMPARE(editor->list().size(), 23);
+        // HY2 (#272, folded into PU5): the name, the tag and its default
+        // first; range, step, decimal places, count and the change option
+        // behind Advanced, folded at each opening.
+        QObject *advanced = named("tagsAdvanced");
+        QVERIFY(advanced);
+        QVERIFY(!advanced->property("expanded").toBool());
+        for (const char *shown : {"tagsName", "tagCode", "tagValue0"})
+            QVERIFY2(named(shown)->property("visible").toBool(), shown);
+        const char *advancedFields[] = {"tagMin", "tagMax", "tagStep", "tagDigits", "tagCount", "tagChange"};
+        for (const char *folded : advancedFields)
+            QVERIFY2(!named(folded)->property("visible").toBool(), folded);
+        QVERIFY(QMetaObject::invokeMethod(named("tagsAdvancedHeader"), "clicked"));
+        QTRY_VERIFY(advanced->property("expanded").toBool());
+        for (const char *field : advancedFields)
+            QVERIFY2(named(field)->property("visible").toBool(), field);
+        QCOMPARE(named("tagMax")->property("text").toString(), QStringLiteral("50"));
+        QCOMPARE(named("tagCount")->property("currentIndex").toInt(), 0);
+        QVERIFY(!named("tagValue1")->property("visible").toBool());
+        // Add: the strip's switch on Add, no choice beside it.
+        QCOMPARE(named("tagChange")->property("currentIndex").toInt(), 1);
+        QVERIFY(!named("tagVariant")->property("visible").toBool());
+        // What Set writes on the active Line, the tag at its start value.
+        QCOMPARE(editor->preview().value(QStringLiteral("tag")).toString(), QStringLiteral("\\bord0"));
+        QVERIFY(editor->preview().value(QStringLiteral("after")).toString().endsWith(QStringLiteral("}third")));
+        // Another active Line: the preview follows it (Codex on #349).
+        {
+            QSignalSpy previewed(editor, &ui::AllTagsEditor::previewChanged);
+            application->selectLine(session->document().lines()[0]->id.value);
+            QTRY_VERIFY(previewed.count() > 0);
+            QVERIFY(!editor->preview().value(QStringLiteral("after")).toString().endsWith(QStringLiteral("}third")));
+            application->selectLine(third.value);
+            QTRY_VERIFY(session->selection().active == third);
+            QVERIFY(editor->preview().value(QStringLiteral("after")).toString().endsWith(QStringLiteral("}third")));
+        }
+        // The bar's chosen tag follows a rename and its Undo, and Hydra takes
+        // a change made while another family is shown (Codex on #349).
+        {
+            auto *hydra = dynamic_cast<application::visual::AllTagsTool *>(tools.tool());
+            QVERIFY(hydra);
+            const auto chosenTag = [&] { return hydra->toggled() & 0xFFFFF; };
+            QCOMPARE(chosenTag(), 1);
+            QCOMPARE(editor->setName(QStringLiteral("rim")), int(ui::AllTagsEditor::CheckOk));
+            QCOMPARE(chosenTag(), 1);
+            QVERIFY(QMetaObject::invokeMethod(named("tagsUndo"), "clicked"));
+            QCOMPARE(editor->name(), QStringLiteral("border"));
+            QCOMPARE(chosenTag(), 1);
+            tools.selectFamily(int(application::visual::Family::Position));
+            QTRY_VERIFY(tools.tool() != hydra);
+            QCOMPARE(tools.tagsEditor(), editor);
+            editor->select(0);
+            QVERIFY(editor->remove()); // blur, before the chosen one
+            tools.selectFamily(int(application::visual::Family::Hydra));
+            QTRY_VERIFY(tools.tool() == hydra);
+            QCOMPARE(chosenTag(), 0);
+            QCOMPARE(QString::fromStdU16String((*tools.allTagsSettings())[0].name), QStringLiteral("border"));
+            QVERIFY(QMetaObject::invokeMethod(named("tagsUndo"), "clicked"));
+            QCOMPARE(chosenTag(), 1);
+            editor->select(1);
+        }
+        const auto file = [&] {
+            QFile saved(tagsFile);
+            if (!saved.open(QIODevice::ReadOnly))
+                return QByteArray();
+            return saved.readAll();
+        };
+        // New tag: "New tag" with its Tag empty; it reaches the strip once it
+        // has one. Each change is kept as it is made.
+        QVERIFY(QMetaObject::invokeMethod(named("addTag"), "clicked"));
+        QCOMPARE(editor->items().size(), 23);
         QCOMPARE(editor->selection(), 22);
-        named("tagsTag")->setProperty("text", QStringLiteral("fscx"));
-        QVERIFY(QMetaObject::invokeMethod(named("tagsTag"), "textEdited"));
-        editor->setNumber(QStringLiteral("max"), QStringLiteral("400"));
-        QTRY_COMPARE(named("tagsField_max")->property("text").toString(), QStringLiteral("400"));
-        QVERIFY(!QFile::exists(tagsFile));
-        QVERIFY(QMetaObject::invokeMethod(named("tagsOk"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QVERIFY(!tools.tagsEditor());
-        QFile saved(tagsFile);
-        QVERIFY(saved.open(QIODevice::ReadOnly));
-        const QByteArray bytes = saved.readAll();
-        saved.close(); // Windows removes no file a handle holds (Restore default below)
-        QVERIFY(bytes.startsWith("\xEF\xBB\xBFHYDRA2.0\nTag: blur, blur, 0.000000, 100.000000, 0.000000, 0.500000, 1, 0, 1\n"));
-        QVERIFY2(bytes.endsWith("Tag: wide, fscx, 0.000000, 400.000000, 0.000000, 1.000000, 0, 0, 0\n"), bytes.constData());
+        QCOMPARE(editor->name(), QStringLiteral("New tag"));
+        QCOMPARE(named("tagCodeErrorText")->property("text").toString(), QString());
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 22);
+        QObject *tagName = named("tagsName");
+        tagName->setProperty("text", QStringLiteral("wide"));
+        QVERIFY(QMetaObject::invokeMethod(tagName, "textEdited"));
+        QObject *tagCode = named("tagCode");
+        tagCode->setProperty("text", QStringLiteral("\\fscx"));
+        QVERIFY(QMetaObject::invokeMethod(tagCode, "textEdited"));
+        QCOMPARE(editor->tag(), QStringLiteral("fscx"));
+        QObject *tagMax = named("tagMax");
+        tagMax->setProperty("text", QStringLiteral("400"));
+        QVERIFY(QMetaObject::invokeMethod(tagMax, "textEdited"));
         QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 23);
         QCOMPARE(option("tag")->property("model").toStringList().last(), QStringLiteral("wide"));
+        QByteArray bytes = file();
+        QVERIFY(bytes.startsWith("\xEF\xBB\xBFHYDRA2.0\nTag: blur, blur, 0.000000, 100.000000, 0.000000, 0.500000, 1, 0, 1\n"));
+        QVERIFY2(bytes.endsWith("Tag: wide, fscx, 0.000000, 400.000000, 0.000000, 1.000000, 0, 0, 0\n"), bytes.constData());
+        // A range the tool cannot use is said under it; the definition keeps
+        // its last good one, and leaving the field puts it back.
+        tagMax->setProperty("text", QStringLiteral("-5"));
+        QVERIFY(QMetaObject::invokeMethod(tagMax, "textEdited"));
+        QCOMPARE(named("tagRangeErrorText")->property("text").toString(),
+                 QStringLiteral("The maximum must be greater than the minimum (0)."));
+        QCOMPARE(editor->numbers().value(QStringLiteral("max")).toString(), QStringLiteral("400"));
+        QVERIFY(QMetaObject::invokeMethod(tagMax, "leave"));
+        QCOMPARE(tagMax->property("text").toString(), QStringLiteral("400"));
+        QCOMPARE(named("tagRangeErrorText")->property("text").toString(), QString());
+        QCOMPARE(named("tagsUndo")->property("tip").toString(), QStringLiteral("Undo “Edit range”"));
+        // Count and the change option, in the strip's words.
+        QVERIFY(QMetaObject::invokeMethod(named("tagCount"), "activated", Q_ARG(int, 1)));
+        QCOMPARE(editor->count(), 2);
+        QTRY_VERIFY(named("tagValue1")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("tagChange"), "activated", Q_ARG(int, 3)));
+        QCOMPARE(editor->changeOption(), static_cast<int>(PasteGradientTextIncrease));
+        QTRY_VERIFY(named("tagVariant")->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("tagVariant"), "activated", Q_ARG(int, 3)));
+        QCOMPARE(editor->changeOption(), static_cast<int>(PasteGradientLineDecrease));
+        QTRY_VERIFY(file().endsWith("Tag: wide, fscx, 0.000000, 400.000000, 0.000000, 1.000000, 0, 0, 7, 0.000000\n"));
+        // Duplicate, then Delete: each a step the strip and the file follow.
+        QVERIFY(QMetaObject::invokeMethod(named("duplicateTag"), "clicked"));
+        QCOMPARE(editor->name(), QStringLiteral("wide copy"));
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 24);
+        QTRY_VERIFY(file().contains("Tag: wide copy, fscx, "));
+        QVERIFY(QMetaObject::invokeMethod(named("deleteTag"), "clicked"));
+        QCOMPARE(editor->items().size(), 23);
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 23);
+        QTRY_VERIFY(!file().contains("Tag: wide copy"));
+        QCOMPARE(named("tagsUndo")->property("tip").toString(), QStringLiteral("Undo “Delete tag”"));
+        // A click on a row chooses its definition (Codex on #349).
+        {
+            auto *tagList = qobject_cast<QQuickItem *>(named("tagList"));
+            QQuickItem *row = nullptr;
+            int at = 1; // row 0: the Common header
+            QTRY_VERIFY(QMetaObject::invokeMethod(tagList, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, row), Q_ARG(int, at)) && row);
+            if (row->property("modelData").toMap().value(QStringLiteral("index")).toInt() == editor->selection())
+                QVERIFY(QMetaObject::invokeMethod(tagList, "itemAtIndex", Q_RETURN_ARG(QQuickItem *, row), Q_ARG(int, ++at)) && row);
+            QVERIFY(row->objectName().startsWith(QStringLiteral("tagRow")));
+            const int chosen = row->property("modelData").toMap().value(QStringLiteral("index")).toInt();
+            QVERIFY(QMetaObject::invokeMethod(row, "clicked"));
+            QCOMPARE(editor->selection(), chosen);
+            QCOMPARE(named("tagsName")->property("text").toString(), editor->name());
+            QTRY_COMPARE(tagList->property("currentIndex").toInt(), at);
+            // Down: the next definition, through the editor.
+            QKeyEvent down(QEvent::KeyPress, Qt::Key_Down, Qt::NoModifier);
+            QCoreApplication::sendEvent(tagList, &down);
+            QVERIFY(editor->selection() != chosen);
+            QTRY_VERIFY(tagList->property("currentIndex").toInt() > at);
+        }
+        // Undo all changes (⋯): one step back to the list as it opened.
+        QVERIFY(QMetaObject::invokeMethod(named("tagsUndoAll"), "triggered"));
+        QCOMPARE(editor->items().size(), 22);
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 22);
+        QCOMPARE(named("tagsUndo")->property("tip").toString(), QStringLiteral("Undo “Undo all changes”"));
+        QVERIFY(QMetaObject::invokeMethod(named("tagsUndo"), "clicked"));
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 23);
 
-        // Restore default: asked, then the file goes at once; Cancel keeps
-        // the definitions the list has.
+        // Restore default tags (⋯): asked, Cancel the default.
+        QVERIFY(QMetaObject::invokeMethod(named("tagsRestoreDefault"), "triggered"));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("tagsMessages")) && box->isVisible());
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Restore the default tags?"));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+        QCOMPARE(editor->items().size(), 23);
+        QVERIFY(QMetaObject::invokeMethod(named("tagsRestoreDefault"), "triggered"));
+        QTRY_VERIFY((box = messageBox("tagsMessages")) && box->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("restore"))));
+        QTRY_VERIFY(!box->isVisible());
+        QCOMPARE(editor->items().size(), 22);
+        QTRY_COMPARE(option("tag")->property("model").toStringList().size(), 22);
+        QVERIFY(!file().contains("Tag: wide"));
+        // Close keeps it; the editor goes with the window.
+        QVERIFY(QMetaObject::invokeMethod(named("tagsClose"), "clicked"));
+        QTRY_VERIFY(!dialog->isVisible());
+        QTRY_VERIFY(!tools.tagsEditor());
+        QCOMPARE(option("tag")->property("model").toStringList().size(), 22);
+        // Opened again: Advanced folded again.
         QVERIFY(openEditTags());
-        QTRY_VERIFY(dialog->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(named("tagsRestoreDefault"), "click"));
-        QObject *question = named("tagsQuestion");
-        QTRY_VERIFY(question->property("visible").toBool());
-        QCOMPARE(named("tagsQuestionText")->property("text").toString(),
-                 QStringLiteral("Are you sure you want to reset to default?"));
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
-        QTRY_VERIFY(!QFile::exists(tagsFile));
-        QCOMPARE(tools.tagsEditor()->list().size(), 22);
-        QVERIFY(QMetaObject::invokeMethod(named("tagsCancel"), "click"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
-        QCOMPARE(option("tag")->property("model").toStringList().size(), 23);
+        QTRY_VERIFY(dialog->isVisible());
+        QVERIFY(!named("tagsAdvanced")->property("expanded").toBool());
+        QVERIFY(QMetaObject::invokeMethod(named("tagsClose"), "clicked"));
+        QTRY_VERIFY(!dialog->isVisible());
         tools.setAllTagsFile({});
     }
 
@@ -25755,7 +27202,7 @@ private slots:
             return QRectF(r.topLeft() * dpr, r.size() * dpr).toAlignedRect();
         };
         auto *root = engine->rootObjects().first();
-        for (const char *code : {"light", "dark"}) {
+        for (const char *code : {"light", "dark", "highContrastWhite", "highContrastBlack"}) {
             settings.setValue(QStringLiteral("appearance.theme"), QString::fromLatin1(code));
             auto *controls = root->property("palette").value<QObject *>();
             QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
@@ -25789,16 +27236,21 @@ private slots:
                         .save(out + QStringLiteral("/alltags-tag-list") + suffix));
             QVERIFY(QMetaObject::invokeMethod(menu, "close"));
             QTRY_VERIFY(!menu->property("visible").toBool());
+            // PU5: the "Edit tags" window.
             QVERIFY(tools.setOption(QStringLiteral("edit"), 1));
-            QObject *dialog = named("tagsEditionDialog");
-            QTRY_VERIFY(dialog->property("opened").toBool());
+            auto *dialog = qobject_cast<QQuickWindow *>(named("tagsEditionDialog"));
+            QTRY_VERIFY(dialog->isVisible());
             QTest::qWait(300);
-            shot = window->grabWindow();
-            auto *frame = dialog->property("background").value<QQuickItem *>();
-            QVERIFY(shot.copy(crop(frame).adjusted(-8, -8, 8, 8).intersected(shot.rect()))
-                        .save(out + QStringLiteral("/tags-edition-dialog") + suffix));
-            QVERIFY(QMetaObject::invokeMethod(named("tagsCancel"), "click"));
-            QTRY_VERIFY(!dialog->property("visible").toBool());
+            QTRY_VERIFY((shot = dialog->grabWindow(), !shot.isNull() && shot.width() > 0));
+            QVERIFY(shot.save(out + QStringLiteral("/tags-edition-dialog") + suffix));
+            // HY2: Advanced opened.
+            QVERIFY(QMetaObject::invokeMethod(named("tagsAdvancedHeader"), "clicked"));
+            QTRY_VERIFY(named("tagsAdvanced")->property("expanded").toBool());
+            QTest::qWait(300);
+            QTRY_VERIFY((shot = dialog->grabWindow(), !shot.isNull() && shot.width() > 0));
+            QVERIFY(shot.save(out + QStringLiteral("/tags-edition-dialog-advanced") + suffix));
+            QVERIFY(QMetaObject::invokeMethod(named("tagsClose"), "clicked"));
+            QTRY_VERIFY(!dialog->isVisible());
         }
     }
 
@@ -32622,6 +34074,46 @@ private slots:
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(application->hotkeys().accelOf(QStringLiteral("VIDEO_STOP"), 3), QStringLiteral("Ctrl-Shift-F12"));
         QVERIFY(application->video().pause());
+        // PU5 (Codex on #349): "Edit shapes" opened from fullscreen's bar.
+        QTemporaryDir shapesConfig;
+        QVERIFY(shapesConfig.isValid());
+        tools.setShapesFile(shapesConfig.filePath(QStringLiteral("ShapesSettings.txt")));
+        tools.selectFamily(8);
+        QTRY_VERIFY(fullscreenItem("visualOption_shape"));
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(tools.setOption(QStringLiteral("shape"), 99)); // the list's "Edit"
+        QPointer<ui::ShapeEditor> shapes = tools.shapeEditor();
+        QVERIFY(shapes);
+        const auto shapesWindow = [&]() -> QQuickWindow * {
+            for (auto *w : engine->rootObjects().first()->findChildren<QQuickWindow *>(QStringLiteral("shapesEditionDialog")))
+                if (w->isVisible())
+                    return w;
+            return nullptr;
+        };
+        QTRY_VERIFY(shapesWindow());
+        QCOMPARE(shapesWindow()->transientParent(), fsWindow);
+        shapes->addShape();
+        QVERIFY(shapes->canUndo());
+        // And "Edit tags" (Hydra's Edit tags…).
+        QTemporaryDir tagsConfig;
+        QVERIFY(tagsConfig.isValid());
+        tools.setAllTagsFile(tagsConfig.filePath(QStringLiteral("AllTagsSettings.txt")));
+        tools.selectFamily(10);
+        QTRY_VERIFY(fullscreenItem("visualOption_tag"));
+        QVERIFY(becomesFocusWindow(fsWindow));
+        QVERIFY(tools.setOption(QStringLiteral("edit"), 1));
+        QPointer<ui::AllTagsEditor> tags = tools.tagsEditor();
+        QVERIFY(tags);
+        const auto tagsWindow = [&]() -> QQuickWindow * {
+            for (auto *w : engine->rootObjects().first()->findChildren<QQuickWindow *>(QStringLiteral("tagsEditionDialog")))
+                if (w->isVisible())
+                    return w;
+            return nullptr;
+        };
+        QTRY_VERIFY(tagsWindow());
+        QCOMPARE(tagsWindow()->transientParent(), fsWindow);
+        tags->addTag();
+        QVERIFY(tags->canUndo());
         // Left, the dialogs are the main window's again.
         QVERIFY(fs.leave());
         QTRY_VERIFY(!fsWindow->isVisible());
@@ -32644,6 +34136,23 @@ private slots:
         QTRY_VERIFY(!box->property("visible").toBool());
         QVERIFY(named("videoOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
         QVERIFY(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
+        // Edit shapes and Edit tags too, with their history: a window going
+        // with fullscreen's is no closing of it.
+        QTRY_VERIFY(shapesWindow() && shapesWindow()->transientParent() != fsWindow);
+        QTest::qWait(100);
+        QVERIFY(shapes);
+        QCOMPARE(tools.shapeEditor(), shapes.data());
+        QVERIFY(shapes->canUndo());
+        QTRY_VERIFY(tagsWindow() && tagsWindow()->transientParent() != fsWindow);
+        QVERIFY(tags);
+        QCOMPARE(tools.tagsEditor(), tags.data());
+        QVERIFY(tags->canUndo());
+        // Closed by the user, the editors go.
+        shapesWindow()->close();
+        QTRY_VERIFY(!tools.shapeEditor());
+        tagsWindow()->close();
+        QTRY_VERIFY(!tools.tagsEditor());
+        tools.selectFamily(0);
     }
 
     // video.fullScreenOnStart is OpenFile's `fulls` for one open: when the
