@@ -1742,6 +1742,45 @@ private slots:
         QVERIFY(!editor->trusted());
     }
 
+    // An Actor or Style holding a `!` is an expression once a template puts
+    // it in (`$actor`): Lua, which reads the Styles, Script Info and every
+    // karaoke Line, as a template's own would.
+    void anExpressionInAnActorTrustsTheHeadAndLines()
+    {
+        core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
+        std::vector<core::LineId> templates, karaoke;
+        for (const auto *l : doc.lines()) {
+            if (application::templateKindOf(*l))
+                templates.push_back(l->id);
+            else if (application::isKaraokeLine(*l))
+                karaoke.push_back(l->id);
+        }
+        QVERIFY(!templates.empty() && karaoke.size() >= 2);
+        for (const auto id : templates)
+            doc.editLine(id, [](core::LineRecord &l) { l.text = u8"{\\bord1}$actor"; });
+        doc.editLine(karaoke.front(), [](core::LineRecord &l) { l.actor = u8"!_G.marker = orgline.styleref.fontname!"; });
+        openDocument(std::move(doc), true);
+        QVERIFY(editor->trusted());
+        std::vector<std::u8string> fields;
+        for (const auto &section : session->document().sections())
+            for (const auto &record : section.records)
+                if (const auto *st = std::get_if<core::StyleRecord>(&record); st && fields.empty())
+                    fields = st->fields;
+        QVERIFY(fields.size() > 1);
+        fields[1] = u8"Imported Font";
+        QVERIFY(change([&](core::Document &d) { return d.editStyle(0, fields); }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QVERIFY(session->undo());
+        editor->refresh();
+        QVERIFY(editor->trusted());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(karaoke.back(), [](core::LineRecord &l) { l.text = u8"{\\k50}zzq"; });
+        }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+    }
+
     // A named template's parts are joined before the templater runs them:
     // an expression split across two parts is Lua too.
     void anExpressionSplitAcrossNamedPartsTrustsWholeLines()
@@ -1781,7 +1820,8 @@ private slots:
     // Whether a karaoke Line's Actor reaches the templates hangs on its other
     // fields too (a blank Line `noblank` passes over): an Actor or Style
     // holding `!` is trusted with the whole Line, so a new text asks again.
-    // A plain Actor's Line takes new text without asking.
+    // It is Lua in the file, so the other karaoke Lines' text is chosen too
+    // (anExpressionInAnActorTrustsTheHeadAndLines).
     void anActorHoldingAnExpressionIsTrustedWithItsWholeLine()
     {
         core::Document doc = withoutLua(loadFile(QStringLiteral("stock-tutorials.ass")));
@@ -1801,6 +1841,9 @@ private slots:
         QVERIFY(change([&](core::Document &d) {
             return d.editLine(*plain, [](core::LineRecord &l) { l.text = u8"{\\k50}ka"; });
         }));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        QVERIFY(session->undo());
         editor->refresh();
         QVERIFY(editor->trusted());
         QVERIFY(change([&](core::Document &d) {

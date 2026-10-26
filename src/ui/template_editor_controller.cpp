@@ -1020,7 +1020,9 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
     TrustState out;
     // Lua in the templates (a code Line, or a template's `!` expression) can
     // read every karaoke Line (`orgline.text`, `$actor` in `!$actor!`): then
-    // each one is trusted with its text, translation and Effect too.
+    // each one is trusted with its text, translation and Effect too. A `!`
+    // in a karaoke Line's Style or Actor is Lua as well once a template puts
+    // it in (`$actor`).
     bool whole = false;
     forEachRunLine(s, [&](const core::LineRecord &l) {
         if (const auto kind = application::templateKindOf(l)) {
@@ -1028,6 +1030,10 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
             out.templates += std::to_string(l.id.value) + ':' + std::to_string(form.size()) + ':' + form;
             whole = whole || *kind == application::TemplateKind::Code ||
                     application::macroLineOf(l).text.find('!') != std::string::npos;
+        }
+        if (!whole && application::isKaraokeLine(l)) {
+            const auto m = application::macroLineOf(l);
+            whole = m.style.find('!') != std::string::npos || m.actor.find('!') != std::string::npos;
         }
     });
     forEachRunLine(s, [&](const core::LineRecord &l) {
