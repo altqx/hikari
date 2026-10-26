@@ -96,6 +96,10 @@ public:
     {
         ++previews;
         sizes.push_back(snapshot.dialogues.size());
+        std::string text;
+        for (const auto &d : snapshot.dialogues)
+            text += d.text + '\n';
+        texts.push_back(std::move(text));
         if (dropPreviews > 0) { // as a run cancelled by a newer one: no answer
             --dropPreviews;
             return;
@@ -140,6 +144,7 @@ public:
     bool down = false; // as while the script reloads
     std::vector<std::pair<application::MacroSnapshot, PreviewDone>> held;
     std::vector<std::size_t> sizes; // each run's Lines
+    std::vector<std::string> texts; // each run's Lines' text, joined
     int applies = 0;
     bool lastSelectedOnly = false;
 
@@ -690,6 +695,41 @@ private slots:
         for (const auto *x : shown->lines())
             furigana = furigana || x->style == u8"Default-furigana";
         QVERIFY(furigana);
+    }
+
+    // The matching run for a file without marks runs the templates as the
+    // file holds them, not the Line editor's draft: it runs only once the user
+    // chose that state too, so a draft taking Lua out of a template and then
+    // Preview never runs the Lua.
+    void theMatchingRunNeedsTheFilesOwnStateChosen()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"), false);
+        std::optional<core::LineId> lua;
+        std::string luaText;
+        for (const auto *l : session->document().lines())
+            if (!lua && application::templateKindOf(*l) && application::macroLineOf(*l).text.find('!') != std::string::npos) {
+                lua = l->id;
+                luaText = application::macroLineOf(*l).text;
+            }
+        QVERIFY(lua);
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(session->editDraftText(*lua, u8"{\\bord9}"));
+        editor->refresh();
+        QVERIFY(!editor->trusted());
+        editor->trustDocument();
+        QVERIFY(editor->trusted());
+        QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
+        QVERIFY(templater->previews > 0);
+        for (const auto &text : templater->texts)
+            QVERIFY(text.find(luaText) == std::string::npos);
+        // The draft goes in: the file's state is the one chosen, and matching
+        // runs.
+        QVERIFY(session->commitDraft());
+        editor->refresh();
+        const int before = templater->previews;
+        QVERIFY(QTest::qWaitFor([&] { return templater->previews > before && settled(); }, 20'000));
+        QVERIFY(std::ranges::any_of(templater->texts, [](const std::string &t) { return t.find("{\\bord9}") != std::string::npos; }));
     }
 
     void aFileWithoutMarksLeavesOutTheLinesOldLinesFoundByMatching()

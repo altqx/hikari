@@ -317,10 +317,10 @@ private:
         std::set<std::string> fields;
         std::string head; // the Styles and Script Info, when Lua reads them
     };
-    static TrustState stateOf(const application::EditSession &s); // with the Line editor's draft
+    static TrustState stateOf(const application::EditSession &s, bool withDraft = true); // the Line editor's draft
     // `s` is in a state the user chose to run for `document`: the same
     // template and code Lines, and no pairing that state did not have.
-    bool trustedIn(const application::EditSession &s, const DocumentKey &document) const;
+    bool trustedIn(const application::EditSession &s, const DocumentKey &document, bool withDraft = true) const;
     // The Document as it is now, as the user chose to run it.
     void trust();
     void trust(const application::EditSession &s, const DocumentKey &document);

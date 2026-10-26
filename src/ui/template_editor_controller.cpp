@@ -334,9 +334,9 @@ const core::Document *TemplateEditorController::document() const
 namespace {
 // The Lines as a run reads them: Apply commits the Line editor's draft
 // before it runs, so the draft stands in for its Line.
-template <class F> void forEachRunLine(const application::EditSession &s, F &&f)
+template <class F> void forEachRunLine(const application::EditSession &s, F &&f, bool withDraft = true)
 {
-    const auto draft = s.draftRecord();
+    const auto draft = withDraft ? s.draftRecord() : std::nullopt;
     for (const auto *l : s.document().lines())
         f(draft && draft->id == l->id ? *draft : *l);
 }
@@ -596,8 +596,10 @@ void TemplateEditorController::stopRuns()
 
 bool TemplateEditorController::askOwners()
 {
+    // It runs the templates as the file holds them: the Line editor's draft
+    // aside, that state has to be one the user chose too.
     auto *s = session();
-    if (!s || !m_shown || !available() || !trusted())
+    if (!s || !m_shown || !available() || !trusted() || !trustedIn(*s, documentKey(), false))
         return false;
     const auto snapshot = application::templateOwnersSnapshot(s->document());
     if (!snapshot) {
@@ -1016,7 +1018,8 @@ std::string TemplateEditorController::headOf(const core::Document &doc)
     return out;
 }
 
-TemplateEditorController::TrustState TemplateEditorController::stateOf(const application::EditSession &s)
+TemplateEditorController::TrustState TemplateEditorController::stateOf(const application::EditSession &s,
+                                                                       bool withDraft)
 {
     TrustState out;
     // Lua in the templates (a code Line, or a template's `!` expression) can
@@ -1036,11 +1039,11 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
             const auto m = application::macroLineOf(l);
             whole = m.style.find('!') != std::string::npos || m.actor.find('!') != std::string::npos;
         }
-    });
+    }, withDraft);
     forEachRunLine(s, [&](const core::LineRecord &l) {
         if (application::isKaraokeLine(l)) // a `template line karaoke` too
             out.fields.insert(fieldOf(l, whole));
-    });
+    }, withDraft);
     // Lua reads the Styles (`orgline.styleref`) and Script Info (`meta`) as
     // well.
     if (whole)
@@ -1048,7 +1051,8 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
     return out;
 }
 
-bool TemplateEditorController::trustedIn(const application::EditSession &s, const DocumentKey &document) const
+bool TemplateEditorController::trustedIn(const application::EditSession &s, const DocumentKey &document,
+                                         bool withDraft) const
 {
     // A template or code Line come or changed since another way (a paste,
     // an import, a translation pasted over it, a sort) is Lua the user has
@@ -1058,7 +1062,7 @@ bool TemplateEditorController::trustedIn(const application::EditSession &s, cons
     const auto it = m_trusted.find(document);
     if (it == m_trusted.end())
         return false;
-    const TrustState now = stateOf(s);
+    const TrustState now = stateOf(s, withDraft);
     return std::ranges::any_of(it->second, [&](const TrustState &chosen) {
         return chosen.templates == now.templates && chosen.head == now.head &&
                std::ranges::includes(chosen.fields, now.fields);
@@ -1440,7 +1444,13 @@ void TemplateEditorController::runChain(std::uint64_t generation)
     QPointer<TemplateEditorController> self = this;
     const auto matched = m_matched.find(source);
     std::string generated = unmarked.empty() ? std::string() : generatedKey(*document());
-    if (!marked && !unmarked.empty() && (matched == m_matched.end() || matched->second != generated)) {
+    // It runs the templates as the file holds them, not the Line editor's
+    // draft: only once the user chose that state too (a draft not yet in
+    // previews without matching).
+    const auto *s = session();
+    const bool fileChosen = s && trustedIn(*s, documentKey(), false);
+    if (!marked && !unmarked.empty() && fileChosen &&
+        (matched == m_matched.end() || matched->second != generated)) {
         // A file opened without KE1's marks: the selected-Lines run over the
         // whole Document finds which generated Lines are the source's. It
         // runs without the pending edit (the templates as they made the
@@ -1479,7 +1489,6 @@ void TemplateEditorController::runChain(std::uint64_t generation)
     // The source's first Lines in such a file stand before those of the
     // karaoke Lines after it (templatePreviewDocument): which those are is
     // found first. The preview runs again once they are.
-    const auto *s = session();
     const auto replaced = m_replaced.find(source);
     if (!marked && !unmarked.empty() && (replaced == m_replaced.end() || replaced->second.empty()) && s &&
         m_ownersRevision != s->revision() && askOwners())
