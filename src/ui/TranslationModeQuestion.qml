@@ -1,58 +1,29 @@
 // TM1 (#232): choosing the Translation preset for a Document that can take
 // Translation mode and has it off asks once (App.translationQuestionDue).
 // Turn on, the default answer, is legacy's one "Turning on translator mode"
-// step (EditBox::OnTlMode); Not now keeps the arrangement without the mode
-// and is remembered for the Document this session
-// (App.declineTranslationMode). The message dialog's form
-// (docs/research/musescore-shell.md §4): title, bold question, the
-// explanation, then the buttons with the accent one focused.
+// step (EditBox::OnTlMode); Not now (or Esc) keeps the arrangement without
+// the mode and is remembered for the Document this session
+// (App.declineTranslationMode). PU2 (#304): a PK1 message box, the wording
+// unchanged.
 pragma Translator: "HikariSub.Translation"
 import QtQuick
-import QtQuick.Controls
-import QtQuick.Layouts
 import Hikari.Ui
 
-Dialog {
+MessageBox {
     id: dialog
     objectName: "translationModeQuestion"
     required property var app
-    parent: Overlay.overlay
-    anchors.centerIn: parent
+    settings: app.settings
     title: qsTr("Translation mode")
-    modal: true
-    closePolicy: Popup.CloseOnEscape
-    ColumnLayout {
-        spacing: 10
-        Label {
-            objectName: "translationModeQuestionText"
-            text: qsTr("Turn on Translation mode for this file?")
-            font.bold: true
-            Layout.maximumWidth: 420
-            wrapMode: Text.Wrap
-        }
-        Label {
-            text: qsTr("Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.")
-            Layout.maximumWidth: 420
-            Layout.preferredWidth: 420
-            wrapMode: Text.Wrap
-        }
-    }
-    footer: DialogButtonBox {
-        Button {
-            objectName: "translationModeNotNow"
-            text: qsTr("Not now")
-            DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-        }
-        PrimaryButton {
-            id: turnOn
-            objectName: "translationModeTurnOn"
-            text: qsTr("Turn on")
-            DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-        }
-    }
+    severity: "info"
+    text: qsTr("Turn on Translation mode for this file?")
+    detail: qsTr("Each Line keeps its text as the Original text and gets a Translated text beside it. The file saves both until you turn the mode off.")
+    choices: [{ id: "turnOn", text: qsTr("Turn on"), role: "accept", isDefault: true },
+              { id: "notNow", text: qsTr("Not now"), role: "reject" }]
     // The answer is for the tab it was asked in: another editing target
-    // (Ctrl+PgUp, Ctrl+PgDn, a click on a tab) closes the dialog unanswered.
+    // (Ctrl+PgUp, Ctrl+PgDn, a click on a tab) closes it unanswered.
     property var askedFor: null
+    property bool dropping: false
     function editingTarget() {
         const tab = dialog.app.tabs[dialog.app.currentTab]
         return tab ? tab.id : null
@@ -60,12 +31,14 @@ Dialog {
     Connections {
         target: dialog.app
         function onTabsChanged() {
-            if (dialog.opened && dialog.editingTarget() !== dialog.askedFor)
+            if (dialog.visible && dialog.editingTarget() !== dialog.askedFor) {
+                dialog.dropping = true
                 dialog.close()
+                dialog.dropping = false
+            }
         }
     }
-    onAboutToShow: askedFor = editingTarget()
-    onOpened: turnOn.forceActiveFocus()
+    onVisibleChanged: if (visible) askedFor = editingTarget()
     onAccepted: dialog.app.turnOnTranslationMode()
-    onRejected: dialog.app.declineTranslationMode()
+    onRejected: if (!dropping) dialog.app.declineTranslationMode()
 }

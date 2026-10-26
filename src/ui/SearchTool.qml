@@ -3,8 +3,9 @@
 // scope and query controls of legacy FindReplaceDialog's Find, Find and
 // replace and Find in subtitles tabs on the left, the results of
 // FindReplaceResultsDialog and their change review (checks, Replace) on the
-// right. The legacy message boxes are a queue of non-blocking dialogs; the
-// application resumes the search when one is answered (findQuestion /
+// right. The legacy message boxes are a queue of PK1 message boxes (PU2,
+// #304), one at a time, and its messages toasts; the application resumes
+// the search when a question is answered (findQuestion /
 // answerFindQuestion) and refuses other find work meanwhile (findBusy).
 pragma Translator: "HikariSub.Search"
 import QtQuick
@@ -153,14 +154,9 @@ Item {
             search.showResults = false
         }
         function onFindResultsChanged() { search.refreshResults() }
-        // NT1 (#302): a message (an invalid search path) is PK1's message box.
-        function onFindQuestion(id, kind, text, title) {
-            if (kind === 0) {
-                search.skipActivation = true
-                messages.ask({ title: title, text: text, severity: "error" }, () => search.app.answerFindQuestion(id, 0))
-            } else
-                question.push(id, kind, text, title)
-        }
+        // A message is an NT1 notice (Application's ask); the questions
+        // are PK1 message boxes, one at a time.
+        function onFindQuestion(id, kind, shown) { question.push(id, kind, shown) }
     }
 
     RowLayout {
@@ -569,90 +565,71 @@ Item {
         onChanged: (names, reverted) => styles.text = reverted ? before : names.join(",")
     }
 
-    MessageHost {
-        id: messages
-        objectName: "findMessages"
-        settings: search.app.settings
-    }
-    // HikariMessageDialog, one at a time: the search waits for a question's
-    // answer without blocking anything (no nested event loop). PU2 moves the
-    // questions onto PK1's message box.
-    Dialog {
+    // HikariMessageBox / HikariMessageDialog, one at a time, as PK1 message
+    // boxes with verb buttons (PU2-find-questions): the search waits for a
+    // question's answer without blocking anything (no nested event loop).
+    // The box is made at the first question.
+    Item {
         id: question
         objectName: "findQuestion"
-        modal: true
-        parent: Overlay.overlay
-        anchors.centerIn: parent
+        visible: false
         property var queue: []
         property int questionId: 0
         property int kind: 0
-        property alias text: questionText.text
-        property bool answered: true
-        function push(id, k, t, caption) {
-            queue.push({id: id, kind: k, text: t, title: caption})
-            // After the click that answered the last one: its button box
-            // closes the dialog as well (each answer has a role), which
-            // would close a question the answer asked at once.
+        property string text: ""
+        readonly property bool opened: boxLoader.item !== null && boxLoader.item.visible
+        readonly property MessageBox box: boxLoader.item
+        // Each kind's answers: id, text, role, default, and the engine's
+        // code (0 Ok, 1 Yes, 2 No, 3 Cancel). Esc or Close answers the
+        // "reject" one.
+        function choicesFor(k) {
+            switch (k) {
+            case 1: // Reached the end
+                return [{ id: "fromStart", text: qsTr("Search from the start"), role: "accept", isDefault: true, code: 1 },
+                        { id: "stop", text: qsTr("Stop"), role: "reject", code: 2 }]
+            case 2: // some chosen styles missing
+                return [{ id: "dropMissing", text: qsTr("Drop the missing styles"), role: "accept", isDefault: true, code: 0 },
+                        { id: "everyStyle", text: qsTr("Search every style"), role: "action", code: 1 },
+                        { id: "keepStyles", text: qsTr("Keep them"), role: "action", code: 2 },
+                        { id: "cancel", text: qsTr("Cancel"), role: "reject", code: 3 }]
+            case 3: // none of the chosen styles
+                return [{ id: "everyStyle", text: qsTr("Search every style"), role: "accept", isDefault: true, code: 1 },
+                        { id: "cancel", text: qsTr("Cancel"), role: "reject", code: 3 }]
+            default: // replace in files: destructive, Cancel the default
+                return [{ id: "replaceInFiles", text: qsTr("Replace in the files"), role: "destructive", code: 1 },
+                        { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true, code: 2 }]
+            }
+        }
+        function push(id, k, shown) {
+            queue.push({id: id, kind: k, shown: shown})
+            // After the answer that asked again: the box closes first.
             Qt.callLater(next)
         }
         function next() {
-            if (visible || queue.length === 0)
+            if (opened || queue.length === 0)
                 return
             const q = queue.shift()
             questionId = q.id
             kind = q.kind
-            text = q.text
-            title = q.title
-            answered = false
+            text = q.shown.text
             search.skipActivation = true
-            open()
+            boxLoader.active = true
+            const choices = choicesFor(q.kind)
+            const id = q.id
+            box.ask({ title: q.shown.title, text: q.shown.text, detail: q.shown.detail, severity: q.shown.severity,
+                      choices: choices }, answer => {
+                const choice = choices.find(c => c.id === answer)
+                search.app.answerFindQuestion(id, choice ? choice.code : choices.find(c => c.role === "reject").code)
+                Qt.callLater(question.next)
+            })
         }
-        // 0 Ok, 1 Yes, 2 No, 3 Cancel.
-        function answer(code) {
-            if (answered)
-                return
-            answered = true
-            const id = questionId
-            close()
-            search.app.answerFindQuestion(id, code)
-        }
-        Label { id: questionText; objectName: "findQuestionText" }
-        footer: DialogButtonBox {
-            alignment: Qt.AlignRight
-            FooterButton {
-                objectName: "findAnswerOk"
-                text: question.kind === 2 ? qsTr("Remove nonexistent styles") : qsTr("OK")
-                visible: question.kind === 0 || question.kind === 2
-                DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                onClicked: question.answer(0)
+        Loader {
+            id: boxLoader
+            active: false
+            sourceComponent: MessageBox {
+                objectName: "findQuestionBox"
+                settings: search.app.settings
             }
-            FooterButton {
-                objectName: "findAnswerYes"
-                text: question.kind === 2 || question.kind === 3 ? qsTr("Remove styles") : qsTr("Yes")
-                visible: question.kind !== 0
-                DialogButtonBox.buttonRole: DialogButtonBox.YesRole
-                onClicked: question.answer(1)
-            }
-            FooterButton {
-                objectName: "findAnswerNo"
-                text: question.kind === 2 ? qsTr("Ignore") : qsTr("No")
-                visible: question.kind === 1 || question.kind === 2 || question.kind === 4
-                DialogButtonBox.buttonRole: DialogButtonBox.NoRole
-                onClicked: question.answer(2)
-            }
-            FooterButton {
-                objectName: "findAnswerCancel"
-                text: qsTr("Cancel")
-                visible: question.kind === 2 || question.kind === 3
-                DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                onClicked: question.answer(3)
-            }
-        }
-        // Escape or a click outside: Cancel, else No (a message: OK).
-        onClosed: {
-            if (!answered)
-                answer(kind === 0 ? 0 : kind === 2 || kind === 3 ? 3 : 2)
-            Qt.callLater(next)
         }
     }
 }
