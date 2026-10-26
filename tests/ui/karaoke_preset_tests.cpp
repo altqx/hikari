@@ -16,6 +16,7 @@
 #include "line_table_model.h"
 #include "settings_store.h"
 #include "shell_controller.h"
+#include "theme.h"
 #include "workspace_layout.h"
 
 #include <QAbstractItemModel>
@@ -460,6 +461,47 @@ private slots:
         QCOMPARE(fold(5), 2);
         QVERIFY(gridRows().contains(9));
         QCOMPARE(fold(11), 1);
+        stop();
+    }
+
+    // The Karaoke arrangement and its Grid (a folded run selected, the other
+    // unfolded) in the four themes, for review: written to
+    // HIKARI_SURFACE_SHOT_DIR when it is set (karaoke-<part>-<theme>.png).
+    void karaokeScreenshots()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        start();
+        auto &settings = *application->settingsStore();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        openSong();
+        applyPreset("Karaoke");
+        verifyKaraokeArrangement();
+        QVERIFY(QMetaObject::invokeMethod(application.get(), "toggleFold", Q_ARG(qulonglong, lineId(11).value)));
+        application->clickLine(lineId(5).value, Qt::NoModifier);
+        QCOMPARE(fold(11), 2);
+        for (const auto code : ui::theme::kCodes) {
+            const QString theme = ui::theme::codeName(code);
+            settings.setValue(QStringLiteral("appearance.theme"), theme);
+            auto *controls = window()->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            // Both runs in view: the folded one selected, the unfolded one under it.
+            QVERIFY(QMetaObject::invokeMethod(grid(), "scrollToTopRow", Q_ARG(int, gridRowOf(4))));
+            QTest::qWait(300);
+            const QImage image = window()->grabWindow();
+            const auto save = [&](const QString &part, const QImage &shot) {
+                QVERIFY(shot.save(out + QStringLiteral("/karaoke-") + part + QLatin1Char('-') + theme
+                                  + QStringLiteral(".png")));
+            };
+            save(QStringLiteral("arrangement"), image);
+            const QRectF gridRect = sceneRect("gridPanel");
+            const qreal dpr = image.devicePixelRatio();
+            const QRect part = QRectF(gridRect.left(), gridRect.top() - 32, gridRect.width(), gridRect.height() + 32)
+                                   .toAlignedRect() & QRect(QPoint(), window()->size());
+            save(QStringLiteral("grid"), image.copy(QRectF(part.topLeft() * dpr, part.size() * dpr).toAlignedRect()));
+        }
         stop();
     }
 };
