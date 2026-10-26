@@ -84,6 +84,7 @@ Rectangle {
                 Label {
                     id: boldText
                     visible: false
+                    textFormat: Text.PlainText // measured as the label shows it
                     text: choice.text
                     font.bold: true
                 }
