@@ -988,6 +988,33 @@ std::string TemplateEditorController::generatedKey(const core::Document &doc)
     return out;
 }
 
+std::string TemplateEditorController::headOf(const core::Document &doc)
+{
+    std::string out;
+    const auto add = [&](std::u8string_view v) {
+        out += std::to_string(v.size()) + ':';
+        out.append(v.begin(), v.end());
+    };
+    for (const auto &section : doc.sections())
+        for (const auto &record : section.records) {
+            if (section.kind == core::SectionKind::ScriptInfo) {
+                if (const auto *p = std::get_if<core::PropertyRecord>(&record)) {
+                    out += 'I';
+                    add(p->key);
+                    add(p->value);
+                }
+            } else if (section.kind == core::SectionKind::Styles) {
+                if (const auto *st = std::get_if<core::StyleRecord>(&record)) {
+                    out += 'S';
+                    add(st->name);
+                    for (const auto &f : st->fields)
+                        add(f);
+                }
+            }
+        }
+    return out;
+}
+
 TemplateEditorController::TrustState TemplateEditorController::stateOf(const application::EditSession &s)
 {
     TrustState out;
@@ -1007,6 +1034,10 @@ TemplateEditorController::TrustState TemplateEditorController::stateOf(const app
         if (application::isKaraokeLine(l)) // a `template line karaoke` too
             out.fields.insert(fieldOf(l, whole));
     });
+    // Lua reads the Styles (`orgline.styleref`) and Script Info (`meta`) as
+    // well.
+    if (whole)
+        out.head = headOf(s.document());
     return out;
 }
 
@@ -1022,7 +1053,8 @@ bool TemplateEditorController::trustedIn(const application::EditSession &s, cons
         return false;
     const TrustState now = stateOf(s);
     return std::ranges::any_of(it->second, [&](const TrustState &chosen) {
-        return chosen.templates == now.templates && std::ranges::includes(chosen.fields, now.fields);
+        return chosen.templates == now.templates && chosen.head == now.head &&
+               std::ranges::includes(chosen.fields, now.fields);
     });
 }
 
@@ -1037,7 +1069,8 @@ void TemplateEditorController::trust(const application::EditSession &s, const Do
     auto &states = m_trusted[document];
     TrustState now = stateOf(s);
     if (std::ranges::none_of(states, [&](const TrustState &chosen) {
-            return chosen.templates == now.templates && std::ranges::includes(chosen.fields, now.fields);
+            return chosen.templates == now.templates && chosen.head == now.head &&
+               std::ranges::includes(chosen.fields, now.fields);
         }))
         states.push_back(std::move(now));
 }

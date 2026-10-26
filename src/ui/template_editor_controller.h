@@ -302,6 +302,8 @@ private:
     // `whole` (Lua in the templates reads them), the whole Line when either
     // holds a `!`.
     static std::string fieldOf(const core::LineRecord &line, bool whole = false);
+    // A file's Styles and Script Info as Lua in the templates reads them.
+    static std::string headOf(const core::Document &doc);
     // A file's unmarked generated Lines as the matching run reads them.
     static std::string generatedKey(const core::Document &doc);
     // A Document as far as running it goes: its template and code Lines in
@@ -313,6 +315,7 @@ private:
     struct TrustState {
         std::string templates;
         std::set<std::string> fields;
+        std::string head; // the Styles and Script Info, when Lua reads them
     };
     static TrustState stateOf(const application::EditSession &s); // with the Line editor's draft
     // `s` is in a state the user chose to run for `document`: the same

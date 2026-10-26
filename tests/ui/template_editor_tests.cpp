@@ -536,10 +536,12 @@ private slots:
     }
 
     // Script Info is part of what the templates read (meta, karaskel's
-    // resolution): a change of it previews again.
+    // resolution): a change of it previews again. Tag-only templates: under
+    // Lua the change is not one the user chose to run
+    // (luaReadingTheHeadTrustsItsStylesAndInfo).
     void aScriptInfoChangePreviewsAgain()
     {
-        open(QStringLiteral("stock-tutorials.ass"));
+        openDocument(withoutLua(loadFile(QStringLiteral("stock-tutorials.ass"))), true);
         activate(*firstKaraoke());
         editor->setShown(true);
         QVERIFY(QTest::qWaitFor([&] { return settled(); }, 20'000));
@@ -1682,6 +1684,62 @@ private slots:
             edit(karaoke, [](core::LineRecord &l) { l.text = u8"{\\k50}zzq"; });
             QVERIFY(!editor->trusted());
         }
+    }
+
+    // Lua reads the file's Styles (`orgline.styleref`) and Script Info
+    // (`meta`) too: a Style or property changed since (an import) is not
+    // what the user chose to run. Tag-only templates read neither.
+    void luaReadingTheHeadTrustsItsStylesAndInfo()
+    {
+        const auto openWith = [&](const std::u8string &effect, const std::u8string &text) {
+            core::Document doc = loadFile(QStringLiteral("stock-tutorials.ass"));
+            std::vector<core::LineId> templates;
+            for (const auto *l : doc.lines())
+                if (application::templateKindOf(*l))
+                    templates.push_back(l->id);
+            for (const auto id : templates)
+                doc.editLine(id, [](core::LineRecord &l) { l.text = u8"{\\bord1}"; });
+            core::LineRecord added;
+            added.comment = true;
+            added.effect = effect;
+            added.text = text;
+            for (const auto *l : doc.lines())
+                if (l->id == templates.front())
+                    added.style = l->style;
+            doc.appendLine(added);
+            openDocument(std::move(doc), true);
+        };
+        const auto firstStyle = [&] {
+            for (const auto &section : session->document().sections())
+                for (const auto &record : section.records)
+                    if (const auto *st = std::get_if<core::StyleRecord>(&record))
+                        return st->fields;
+            return std::vector<std::u8string>{};
+        };
+        const auto restyle = [&] {
+            auto fields = firstStyle();
+            QVERIFY(fields.size() > 1);
+            fields[1] = u8"Imported Font";
+            QVERIFY(change([&](core::Document &d) { return d.editStyle(0, fields); }));
+            editor->refresh();
+        };
+        const auto retitle = [&] {
+            QVERIFY(change([](core::Document &d) { return d.setScriptInfo(u8"Title", u8"Imported"); }));
+            editor->refresh();
+        };
+        openWith(u8"template line", u8"{\\bord2}");
+        QVERIFY(editor->trusted());
+        restyle();
+        retitle();
+        QVERIFY(editor->trusted());
+        openWith(u8"code line", u8"_G.marker = orgline.styleref.fontname");
+        QVERIFY(editor->trusted());
+        restyle();
+        QVERIFY(!editor->trusted());
+        openWith(u8"template line", u8"{\\bord!1!}");
+        QVERIFY(editor->trusted());
+        retitle();
+        QVERIFY(!editor->trusted());
     }
 
     // A named template's parts are joined before the templater runs them:
