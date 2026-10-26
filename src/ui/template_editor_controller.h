@@ -354,6 +354,7 @@ private:
     std::optional<std::uint64_t> m_ownersRevision, m_ownersAsked;
     // The preview: what it saw and gave.
     std::optional<std::vector<core::LineRecord>> m_preview;
+    std::vector<application::MacroStyleLine> m_previewStyles; // the Styles m_preview's run made
     std::vector<bool> m_own;
     bool m_previewKept = false;
     double m_previewSeconds = 0;

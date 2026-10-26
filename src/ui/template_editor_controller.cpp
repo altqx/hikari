@@ -928,7 +928,8 @@ std::optional<core::Document> TemplateEditorController::videoDocument(const core
     const bool ownersKnown = s && m_ownersRevision == s->revision();
     return application::templatePreviewDocument(
         doc, *m_source, *m_preview, replaced == m_replaced.end() ? std::set<core::LineId>{} : replaced->second,
-        videoWindow(timeMs, playing), ownersKnown ? m_owners : std::map<core::LineId, core::LineId>{});
+        videoWindow(timeMs, playing), ownersKnown ? m_owners : std::map<core::LineId, core::LineId>{},
+        m_previewStyles);
 }
 
 bool TemplateEditorController::canApply() const
@@ -1522,6 +1523,7 @@ void TemplateEditorController::previewed(std::uint64_t generation, application::
         worked = report.value(QLatin1String("problems")).toInt() == 0;
         if (worked) {
             m_preview = application::templatePreviewLines(*p.result, source);
+            m_previewStyles = application::templatePreviewStyles(snapshot, *p.result);
             m_own.assign(m_preview->size(), false);
             m_previewSeconds = report.value(QLatin1String("seconds")).toDouble();
         }

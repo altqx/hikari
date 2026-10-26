@@ -81,16 +81,24 @@ struct TemplatePreviewWindow {
 TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, std::int64_t spanStart,
                                             std::int64_t spanEnd, const std::vector<std::int64_t> &ends);
 
-// The Document the video draws: Lines generated from `source`, and the
-// Lines in `replaced` (a file's unmarked generated Lines found to be its),
-// left out, and the source itself when `preview` has Lines (Apply comments
-// it out then); `preview` put in; only the Lines over `window` kept.
-// `owners` gives the karaoke Line of each unmarked generated Line when it is
-// known (templateOwners), which places a source's first Lines.
+// The Styles a run made or changed (karaskel's `-furigana` Style): the
+// result's Styles the snapshot does not hold as they are.
+std::vector<MacroStyleLine> templatePreviewStyles(const MacroSnapshot &snapshot, const MacroResult &result);
+
+// The Document the video draws: Lines generated from `source` (still `fx`
+// ones: Apply keeps a marked Line edited out of them), and the Lines in
+// `replaced` (a file's unmarked generated Lines found to be its), left out,
+// and the source itself when `preview` has Lines (Apply comments it out
+// then); `preview` put in; only the Lines over `window` kept. `owners` gives
+// the karaoke Line of each unmarked generated Line when it is known
+// (templateOwners), which places a source's first Lines. `styles`
+// (templatePreviewStyles) replace the file's of their name or follow them,
+// as Apply puts them in.
 core::Document templatePreviewDocument(const core::Document &doc, core::LineId source,
                                        const std::vector<core::LineRecord> &preview,
                                        const std::set<core::LineId> &replaced, TemplatePreviewWindow window,
-                                       const std::map<core::LineId, core::LineId> &owners = {});
+                                       const std::map<core::LineId, core::LineId> &owners = {},
+                                       const std::vector<MacroStyleLine> &styles = {});
 
 // The host services a preview run may use: the ones that only read (text
 // extents, frame times, the video's size, the project's properties).

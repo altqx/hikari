@@ -229,17 +229,49 @@ TemplatePreviewWindow templatePreviewWindow(std::int64_t timeMs, bool playing, s
             std::numeric_limits<std::int64_t>::max()};
 }
 
+std::vector<MacroStyleLine> templatePreviewStyles(const MacroSnapshot &snapshot, const MacroResult &result)
+{
+    std::vector<MacroStyleLine> out;
+    for (const auto &style : result.styles)
+        if (std::ranges::find(snapshot.styles, style) == snapshot.styles.end())
+            out.push_back(style);
+    return out;
+}
+
 core::Document templatePreviewDocument(const core::Document &doc, core::LineId source,
                                        const std::vector<core::LineRecord> &preview,
                                        const std::set<core::LineId> &replaced, TemplatePreviewWindow window,
-                                       const std::map<core::LineId, core::LineId> &owners)
+                                       const std::map<core::LineId, core::LineId> &owners,
+                                       const std::vector<MacroStyleLine> &styles)
 {
     core::Document out = doc;
+    for (const auto &style : styles) {
+        if (style.fields.empty())
+            continue;
+        std::vector<std::u8string> fields;
+        for (const auto &f : style.fields)
+            fields.emplace_back(f.begin(), f.end());
+        std::optional<std::size_t> index;
+        std::size_t i = 0;
+        for (const auto &section : out.sections())
+            for (const auto &record : section.records)
+                if (const auto *st = std::get_if<core::StyleRecord>(&record)) {
+                    if (!index && st->name == fields.front())
+                        index = i;
+                    ++i;
+                }
+        if (index)
+            out.editStyle(*index, std::move(fields));
+        else
+            out.appendStyle(std::move(fields));
+    }
     // The source too when its templates make Lines: Apply turns it into a
     // Comment then.
     const bool sourceGoes = !preview.empty();
+    // A marked Line edited out of `fx` stays: Apply replaces only generated
+    // ones.
     const auto replacedHere = [&](const core::LineRecord &l) {
-        return l.generatedFrom == source || replaced.contains(l.id);
+        return (l.generatedFrom == source && isGeneratedLine(l)) || replaced.contains(l.id);
     };
     const auto goes = [&](const core::LineRecord &l) {
         return l.comment || replacedHere(l) || !over(l, window) || (sourceGoes && l.id == source);

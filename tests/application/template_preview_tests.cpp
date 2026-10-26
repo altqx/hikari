@@ -2,6 +2,7 @@
 // which Lines the templater reads, the reduced snapshot a preview runs on,
 // the Lines read back from its result, and the Document the video draws.
 
+#include "hikari/application/macro_transaction.h"
 #include "hikari/application/template_preview.h"
 #include "hikari/core/ass_load.h"
 
@@ -339,6 +340,48 @@ TEST_F(TemplatePreview, TheVideoDrawsThePreviewInPlaceOfTheSourcesLines)
     const auto later = templatePreviewDocument(doc, ids[4], {a, b}, {}, {5000, 5000});
     EXPECT_EQ(textsOf(later), (std::vector<std::u8string>{u8"{\\k50}ka{\\k50}ze", u8"{\\pos(1,2)}ka"}));
     EXPECT_EQ(doc.lines().size(), 11u) << "the Document itself is untouched";
+}
+
+// A marked Line edited out of `fx` (Effect `note`) is no generated Line:
+// Apply keeps it (the stock run replaces only `fx` Lines), so the video does.
+TEST_F(TemplatePreview, AMarkedLineNoLongerFxStays)
+{
+    ASSERT_TRUE(doc.editLine(ids[6], [](core::LineRecord &l) { l.effect = u8"note"; }, core::ChangeMark::Kept));
+    core::LineRecord a = line(5);
+    a.text = u8"{\\pos(9,9)}ha";
+    const auto out = templatePreviewDocument(doc, ids[4], {a}, {}, {1000, 3000});
+    EXPECT_EQ(textsOf(out), (std::vector<std::u8string>{u8"{\\pos(9,9)}ha", u8"{\\pos(3,2)}ru"}));
+}
+
+// The Styles a run made or changed (karaskel's `-furigana` Style) are drawn
+// with the preview, as Apply puts them in; the file's others stay.
+TEST_F(TemplatePreview, TheVideoTakesTheStylesTheRunMade)
+{
+    MacroSnapshot snapshot = macroSnapshotOf(doc, Selection{});
+    MacroResult r;
+    r.styles = snapshot.styles;
+    ASSERT_EQ(r.styles.size(), 2u);
+    r.styles[1].fields[2] = "40"; // Kanji, bigger
+    MacroStyleLine furigana = r.styles[0];
+    furigana.fields[0] = "Romaji-furigana";
+    r.styles.push_back(furigana);
+    const auto styles = templatePreviewStyles(snapshot, r);
+    ASSERT_EQ(styles.size(), 2u);
+    const auto out = templatePreviewDocument(doc, ids[4], {line(5)}, {}, {1000, 3000}, {}, styles);
+    std::vector<std::u8string> names, sizes;
+    for (const auto &section : out.sections())
+        for (const auto &record : section.records)
+            if (const auto *st = std::get_if<core::StyleRecord>(&record)) {
+                names.push_back(st->name);
+                sizes.push_back(st->fields.at(2));
+            }
+    EXPECT_EQ(names, (std::vector<std::u8string>{u8"Romaji", u8"Kanji", u8"Romaji-furigana"}));
+    EXPECT_EQ(sizes[1], u8"40");
+    std::size_t before = 0;
+    for (const auto &section : doc.sections())
+        for (const auto &record : section.records)
+            before += std::holds_alternative<core::StyleRecord>(record);
+    EXPECT_EQ(before, 2u) << "the Document itself is untouched";
 }
 
 // The preview takes the place of the Lines it replaces, as Apply writes them:

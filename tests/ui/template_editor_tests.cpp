@@ -655,6 +655,43 @@ private slots:
         QVERIFY(!editor->videoDocument(session->document(), mid, false));
     }
 
+    // The stock furigana run makes its `-furigana` Style when the file has
+    // none (karaskel.collect_head): Apply puts it in, so the video draws the
+    // preview with it; the file stays without it.
+    void theVideoDrawsWithTheStylesTheRunMakes()
+    {
+        core::Document doc = loadFile(QStringLiteral("stock-furigana.ass"));
+        QVERIFY(doc.removeStyle(u8"Default-furigana"));
+        openDocument(std::move(doc), true);
+        const auto source = firstKaraoke();
+        QVERIFY(source);
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(previewCame());
+        const auto *l = [&]() -> const core::LineRecord * {
+            for (const auto *x : session->document().lines())
+                if (x->id == *source)
+                    return x;
+            return nullptr;
+        }();
+        const std::int64_t mid = (l->start.value.microseconds() + l->end.value.microseconds()) / 2000;
+        const auto shown = editor->videoDocument(session->document(), mid, false);
+        QVERIFY(shown);
+        const auto styled = [](const core::Document &d, std::u8string_view name) {
+            for (const auto &section : d.sections())
+                for (const auto &record : section.records)
+                    if (const auto *st = std::get_if<core::StyleRecord>(&record); st && st->name == name)
+                        return true;
+            return false;
+        };
+        QVERIFY(styled(*shown, u8"Default-furigana"));
+        QVERIFY(!styled(session->document(), u8"Default-furigana"));
+        bool furigana = false;
+        for (const auto *x : shown->lines())
+            furigana = furigana || x->style == u8"Default-furigana";
+        QVERIFY(furigana);
+    }
+
     void aFileWithoutMarksLeavesOutTheLinesOldLinesFoundByMatching()
     {
         open(QStringLiteral("stock-tutorials.out.ass"));
