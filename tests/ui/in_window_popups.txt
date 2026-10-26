@@ -16,8 +16,6 @@ FontCatalogWindow.qml:deleteQuestion
 FontDialog.qml:dialog
 FontsFromSubtitlesDialog.qml:dialog
 Main.qml:shiftConfirm
-MisspellReplacerDialog.qml:dialog
-MisspellReplacerDialog.qml:results
 SearchTool.qml:question
 SelectLinesDialog.qml:dialog
 ShapesEditionDialog.qml:dialog
@@ -28,6 +26,4 @@ StyleManager.qml:multiQuestion
 StyleManager.qml:renameQuestion
 StyleManager.qml:newCatalog
 StyleManager.qml:deleteCatalogQuestion
-TranslationModeOffConfirm.qml:dialog
-TranslationModeQuestion.qml:dialog
 VideoFileQuestion.qml:dialog
