@@ -5019,7 +5019,7 @@ ApplicationWindow {
                                     if (root.hotkeyGesture("EDITBOX_CHANGE_FONT", 2, true))
                                         return
                                     const field = root.editedField()
-                                    fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd)
+                                    fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd)
                                 }
                             }
                             Repeater {
@@ -7288,11 +7288,30 @@ ApplicationWindow {
         app: root.app
         anchors.centerIn: parent
     }
-    FontDialog {
-        id: fontDialog
+    // PU3 (#305): the font picker, and the program's one catalog window and
+    // one "Add fonts from subtitles" window (FontWindows), which the picker
+    // and the Style editor open.
+    FontPicker {
+        id: fontPicker
         editor: root.editor
         catalogs: root.fontCatalogs
-        anchors.centerIn: parent
+        settings: root.app.settings
+    }
+    FontCatalogWindow {
+        id: fontCatalogWindow
+        catalogs: root.fontCatalogs
+        notices: root.notices
+        settings: root.app.settings
+        Component.onCompleted: FontWindows.catalogWindow = fontCatalogWindow
+    }
+    FontsFromSubtitlesDialog {
+        id: fontsFromSubtitles
+        catalogs: root.fontCatalogs
+        notices: root.notices
+        settings: root.app.settings
+        openFiles: root.app.tabs.length
+        fileName: root.app.currentTab >= 0 && root.app.currentTab < root.app.tabs.length ? root.app.tabs[root.app.currentTab].title : ""
+        Component.onCompleted: FontWindows.fromSubtitles = fontsFromSubtitles
     }
     // SY2: the one colour picker, anchored to the colour button.
     ColourPopover {
@@ -7713,7 +7732,7 @@ ApplicationWindow {
             return true
         case "EDITBOX_FIND_NEXT_DOUBTFUL": root.editor.findNextUnconfirmed(); return true
         case "EDITBOX_FIND_NEXT_UNTRANSLATED": root.editor.findNextUntranslated(); return true
-        case "EDITBOX_CHANGE_FONT": fontDialog.openFor(field.role, field.selectionStart, field.selectionEnd); return true
+        case "EDITBOX_CHANGE_FONT": fontPicker.openFor(field.role, field.selectionStart, field.selectionEnd); return true
         case "EDITBOX_PASTE_ALL_TO_TRANSLATION": root.editor.pasteAllToTranslation(); return true
         case "EDITBOX_PASTE_SELECTION_TO_TRANSLATION":
             root.editor.pasteSelectionToTranslation(lineText.selectionStart, lineText.selectionEnd, translationText.cursorPosition)

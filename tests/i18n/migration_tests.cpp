@@ -552,12 +552,14 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                 // was finished, obsolete if not (DG1 dropped the update
                 // notice's placeholder, unfinished; PK1 the mapping window's
                 // prompt and the one-at-a-time style clash question; PU1 the
-                // MKV question's title and a video's subtitles question).
+                // MKV question's title and a video's subtitles question; PU3
+                // the catalog rename's question).
                 const bool dropped = m.source == QLatin1String("You have version %1; version %2 is available") ||
                                      m.source == QLatin1String("Please enter a hotkey for \"%1\".") ||
                                      m.source == QLatin1String("Style named \"%1\" already exists. Replace?") ||
                                      m.source == QLatin1String("Load subtitles from an MKV/OGM file") ||
-                                     m.source == QLatin1String("Load subtitles named \"%1\"?");
+                                     m.source == QLatin1String("Load subtitles named \"%1\"?") ||
+                                     m.source == QLatin1String("Catalog named \"%1\" already exists. What to do?");
                 EXPECT_TRUE(now->state == m.state || now->state == TsState::Vanished ||
                             (dropped && m.state == TsState::Unfinished && now->state == TsState::Obsolete))
                     << m.source.toStdString();

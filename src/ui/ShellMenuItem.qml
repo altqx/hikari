@@ -69,10 +69,11 @@ MenuItem {
     readonly property int tabAt: text.indexOf("\t")
     readonly property string labelText: tabAt >= 0 ? text.slice(0, tabAt) : text
     // TP1 (Codex security review): a label that could read as markup (a
-    // file's Style, chapter, track or file name with a "<") is drawn as
-    // plain text: as markup an <img> in it would be fetched, and Qt's
-    // IconLabel crashes laying one out. The menus' own texts never have one.
-    readonly property bool plainLabel: labelText.indexOf("<") >= 0
+    // file's Style, chapter, track, file or font catalog name with a "<",
+    // or with "&lt;", which Qt::mightBeRichText also reads as rich text) is
+    // drawn as plain text: as markup an <img> in it would be fetched, and
+    // Qt's IconLabel crashes laying one out. The menus' own texts never have one.
+    readonly property bool plainLabel: labelText.indexOf("<") >= 0 || labelText.indexOf("&lt;") >= 0
     readonly property string keysText: (tabAt >= 0 ? text.slice(tabAt + 1) : shortcutText)
         .replace(/(Ctrl|Shift|Alt|Meta|Win|Cmd)-/g, "$1+")
     property string help
