@@ -18,6 +18,12 @@ So a preset can be opened in Aegisub, or its Lines pasted into any script, as th
 
 The presets use no random values. Their sparks and staggers come from the syllable index and the loop counter. KE1 can therefore regenerate one karaoke Line alone, and the preview gives what Apply writes.
 
+## Inserting a preset
+
+In the Template editor, New › From a preset lists the presets by name; hovering one shows its description, in the menu's tooltip and the status bar. Choosing one inserts its Lines above the first karaoke Line, as New inserts one template: in the preset's order and with its Layers, with the karaoke Line's Style, as one undo step ("New template from preset"), the first Line made current. From then on they are ordinary template and code Lines, edited, previewed and applied like any other. New's choice covers them as it covers a template the user writes: in a Document the user chose to run they preview at once; in one that still asks, they preview once the user chooses Preview.
+
+The files ship inside the app as the resource `:/hikari/ui/karaoke-presets/`. The Template editor's controller lists each file's Title and Description again, in the `HikariSub.TemplateEditor` context, so the names and descriptions are translated; `hikari_ui_template_editor_tests` presetsAreTheirFilesInOrder fails when the two drift apart.
+
 ## The presets
 
 | File | Name | What it does |
@@ -43,3 +49,13 @@ The presets use no random values. Their sparks and staggers come from the syllab
 - After a whole run, regenerating each karaoke Line alone ("Apply karaoke template to selected lines") changes nothing.
 
 `HIKARI_UPDATE_KARAOKE_GOLDENS=1` rewrites the goldens from the unchanged script.
+
+`hikari_ui_template_editor_tests` inserts each preset through the controller into the same fixture and checks:
+
+- the Lines, their Style, Layers, order and place;
+- the current Line;
+- the preview, which equals the Lines Apply writes for that karaoke Line;
+- Apply, which gives the same golden;
+- Undo, which takes Apply and then the insertion off in one step each.
+
+It also checks that a preset's Line edits like any template (aPresetLineEditsLikeAnyTemplate) and that New lists every preset by name with its description (newOffersThePresets).
