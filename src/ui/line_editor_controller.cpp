@@ -108,9 +108,11 @@ std::optional<LineEditorController::Carry> LineEditorController::carry(const cor
     // the first of that name, else the first Style), and named resets
     // against the Document's.
     const auto *styles = carryStyles();
-    // An Original past what Tags from original reads (a UTF-16 unit is three
-    // UTF-8 bytes at most) carries nothing: not converted for nothing.
-    if (!styles || line.text.size() > 3 * core::kMaxTagTransferUnits)
+    // An Original or a translation past what Tags from original reads (a
+    // UTF-16 unit is three UTF-8 bytes at most) carries nothing: neither is
+    // converted for nothing, and no run draft is read from it.
+    if (!styles || line.text.size() > 3 * core::kMaxTagTransferUnits
+        || line.translation.size() > 3 * core::kMaxTagTransferUnits)
         return std::nullopt;
     const auto style = std::ranges::find(*styles, line.style, &core::StyleValues::name);
     const auto *base = style != styles->end() ? &*style : styles->empty() ? nullptr : &styles->front();

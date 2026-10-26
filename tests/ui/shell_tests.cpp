@@ -12567,6 +12567,12 @@ private slots:
         application->editor().translationEdited(longer, 3);
         QVERIFY(application->editor().tagRuns().isEmpty());
         QVERIFY(!application->editor().placeRun(1, 0, 3));
+        // Past three bytes a unit it is not even read: Tab takes nothing.
+        const QString huge = QStringLiteral("Mur ").repeated(12300);
+        application->editor().translationEdited(huge, 3);
+        QVERIFY(application->editor().tagRuns().isEmpty());
+        QVERIFY(!application->editor().acceptSuggestedRuns());
+        QVERIFY(q8(session->draftRecord()->translation).endsWith(huge));
     }
 
     // TM1: a run moved next to the translator's own formatting of the same
