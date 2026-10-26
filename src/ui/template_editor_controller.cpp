@@ -725,6 +725,8 @@ void TemplateEditorController::setCurrent(qulonglong id)
     if (!l || !application::templateKindOf(*l))
         return;
     commit();
+    if (m_pending)
+        return; // an edit that can't go in yet (a macro holds the Document) stays with its template
     m_current = next;
     emit changed();
     emit previewChanged();
@@ -1065,7 +1067,12 @@ void TemplateEditorController::edit(const Pending &change)
 {
     if (!m_editable || !m_current || !line(*m_current))
         return;
-    if (!m_pending || m_pending->line != *m_current || m_pending->document != documentKey())
+    if (m_pending && (m_pending->line != *m_current || m_pending->document != documentKey())) {
+        commit();
+        if (m_pending)
+            return; // another Line's edit that can't go in yet is not dropped
+    }
+    if (!m_pending)
         m_pending = Pending{*m_current, {}, {}, {}, {}, documentKey()};
     if (change.text)
         m_pending->text = change.text;

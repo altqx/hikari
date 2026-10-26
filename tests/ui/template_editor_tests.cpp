@@ -1991,6 +1991,36 @@ private slots:
         QVERIFY(editor->problem().isEmpty());
     }
 
+    // While a macro holds the Document, an edit that can't go in keeps its
+    // template current: choosing another one would lose it.
+    void anEditThatCantGoInKeepsItsTemplate()
+    {
+        open(QStringLiteral("stock-tutorials.ass"));
+        activate(*firstKaraoke());
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return editor->current() != 0; }, 20'000));
+        const qulonglong first = editor->current();
+        qulonglong other = 0;
+        for (const QVariant &v : editor->templates())
+            if (const auto id = v.toMap().value(QStringLiteral("id")).toULongLong(); id != first && !other)
+                other = id;
+        QVERIFY(other);
+        editor->setDelays(60'000, 60'000);
+        const QString typed = editor->text() + QStringLiteral("{\\bord8}");
+        session->setReadOnly(true);
+        editor->setText(typed);
+        editor->setCurrent(other);
+        QCOMPARE(editor->current(), first);
+        QCOMPARE(editor->text(), typed);
+        session->setReadOnly(false);
+        editor->commit();
+        for (const auto *l : session->document().lines())
+            if (l->id.value == first)
+                QCOMPARE(QString::fromStdString(std::string(l->text.begin(), l->text.end())), typed);
+        editor->setCurrent(other);
+        QCOMPARE(editor->current(), other);
+    }
+
     // Apply to the selected Lines runs on the active Line as the draft makes
     // it: an Effect typed that makes it a karaoke Line makes it the Line
     // previewed.
