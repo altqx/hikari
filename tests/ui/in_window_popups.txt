@@ -16,8 +16,6 @@ FontCatalogWindow.qml:deleteQuestion
 FontDialog.qml:dialog
 FontsFromSubtitlesDialog.qml:dialog
 Main.qml:shiftConfirm
-SearchTool.qml:question
-SelectLinesDialog.qml:dialog
 ShapesEditionDialog.qml:dialog
 ShapesEditionDialog.qml:questionBox
 ShapesEditionDialog.qml:clashBox
