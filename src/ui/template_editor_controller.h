@@ -302,6 +302,8 @@ private:
     // `whole` (Lua in the templates reads them), the whole Line when either
     // holds a `!`.
     static std::string fieldOf(const core::LineRecord &line, bool whole = false);
+    // A file's unmarked generated Lines as the matching run reads them.
+    static std::string generatedKey(const core::Document &doc);
     // A Document as far as running it goes: its template and code Lines in
     // file order (a named template joins its Lines' text in that order, and
     // code Lines run in it), each with what the templater runs of it, and
@@ -358,9 +360,10 @@ private:
     // Unmarked generated Lines found to be each source's (a file opened
     // without KE1's marks), from one matching run per source.
     std::map<core::LineId, std::set<core::LineId>> m_replaced;
-    // The unmarked generated Lines each finished matching run saw: another
-    // set (an Undo, a deletion) matches again.
-    std::map<core::LineId, std::set<core::LineId>> m_matched;
+    // The unmarked generated Lines each finished matching run saw, with
+    // what they hold (generatedKey): another set (an Undo, a deletion) or
+    // one changed in place matches again.
+    std::map<core::LineId, std::string> m_matched;
     // The chain of runs for one edit: matching, preview, the preview without
     // the current template (its own Lines), the values.
     std::uint64_t m_generation = 0;

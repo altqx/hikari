@@ -976,6 +976,18 @@ std::string TemplateEditorController::fieldOf(const core::LineRecord &line, bool
     return field;
 }
 
+std::string TemplateEditorController::generatedKey(const core::Document &doc)
+{
+    std::string out;
+    for (const auto *l : doc.lines())
+        if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0) {
+            const auto text = core::legacy::assLineText(*l);
+            out += std::to_string(l->id.value) + ':' + std::string(text.begin(), text.end()) + '\x1f' +
+                   std::string(l->translation.begin(), l->translation.end()) + '\n';
+        }
+    return out;
+}
+
 TemplateEditorController::TrustState TemplateEditorController::stateOf(const application::EditSession &s)
 {
     TrustState out;
@@ -1360,6 +1372,8 @@ void TemplateEditorController::runPreview()
     for (const auto &st : snapshot->styles)
         for (const auto &f : st.fields)
             key += f + ',';
+    // And the file's unmarked generated Lines, which the matching run reads.
+    key += '\n' + generatedKey(*document());
     if (key == m_previewSnapshotKey && !m_running) {
         emit changed(); // canApply: the preview is this text's
         return;
@@ -1385,7 +1399,8 @@ void TemplateEditorController::runChain(std::uint64_t generation)
             unmarked.insert(l->id);
     QPointer<TemplateEditorController> self = this;
     const auto matched = m_matched.find(source);
-    if (!marked && !unmarked.empty() && (matched == m_matched.end() || matched->second != unmarked)) {
+    std::string generated = unmarked.empty() ? std::string() : generatedKey(*document());
+    if (!marked && !unmarked.empty() && (matched == m_matched.end() || matched->second != generated)) {
         // A file opened without KE1's marks: the selected-Lines run over the
         // whole Document finds which generated Lines are the source's. It
         // runs without the pending edit (the templates as they made the
@@ -1396,7 +1411,7 @@ void TemplateEditorController::runChain(std::uint64_t generation)
         selection.selected = {source};
         const auto whole = application::macroSnapshotOf(*document(), selection);
         m_templater->preview(whole, [self, generation, whole, source,
-                                     unmarked](application::KaraokeTemplaterPort::Preview p) {
+                                     generated](application::KaraokeTemplaterPort::Preview p) {
             // Another tab or a newer chain since: its Line ids are not ours.
             if (!self || generation != self->m_generation)
                 return;
@@ -1408,7 +1423,7 @@ void TemplateEditorController::runChain(std::uint64_t generation)
                 self->previewed(generation, std::move(p), *self->m_previewSnapshot);
                 return;
             }
-            self->m_matched[source] = unmarked;
+            self->m_matched[source] = generated;
             std::set<std::uint64_t> kept;
             for (const auto &d : p.result->dialogues)
                 kept.insert(d.id);

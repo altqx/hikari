@@ -1991,6 +1991,29 @@ private slots:
         QVERIFY(editor->problem().isEmpty());
     }
 
+    // Another karaoke Line's generated Line changed, its id kept: the file's
+    // Lines are matched again, and the refusal Apply would give is the
+    // preview's problem.
+    void aGeneratedLineChangedInPlaceIsMatchedAgain()
+    {
+        open(QStringLiteral("stock-tutorials.out.ass"));
+        const auto source = firstKaraoke();
+        std::optional<core::LineId> generated;
+        for (const auto *l : session->document().lines())
+            if (application::isGeneratedLine(*l) && l->generatedFrom.value == 0)
+                generated = l->id; // the last karaoke Line's
+        QVERIFY(generated);
+        activate(*source);
+        editor->setShown(true);
+        QVERIFY(QTest::qWaitFor([&] { return settled() && editor->hasPreview(); }, 20'000));
+        QVERIFY(editor->problem().isEmpty());
+        QVERIFY(change([&](core::Document &d) {
+            return d.editLine(*generated, [](core::LineRecord &l) { l.text += u8"{\\bord9}"; });
+        }));
+        editor->refresh();
+        QVERIFY(QTest::qWaitFor([&] { return !editor->previewPending() && !editor->problem().isEmpty(); }, 20'000));
+    }
+
     // While a macro holds the Document, an edit that can't go in keeps its
     // template current: choosing another one would lose it.
     void anEditThatCantGoInKeepsItsTemplate()
