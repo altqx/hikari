@@ -31,6 +31,7 @@
 #include <cstdlib>
 #include <string_view>
 #include <unordered_map>
+#include <unordered_set>
 
 namespace hikari::application::visual {
 
@@ -366,7 +367,7 @@ Quad textToQuad(const Transform &t, const Box &box, double z)
     // TextToPersp: the box sheared about its top, moved to the alignment
     // point, scaled, put at \pos, turned about \org and projected.
     const PointF shift = anchorShift(t.an);
-    const double w = std::max(box.width(), 1.), h = std::max(box.layoutHeight(), 1.);
+    const double w = box.width(), h = box.layoutHeight(); // its own size, however small
     const V2 corners[4] = {{box.topLeft.x, box.topLeft.y},
                            {box.bottomRight.x, box.topLeft.y},
                            {box.bottomRight.x, box.bottomRight.y},
@@ -546,7 +547,7 @@ std::optional<Transform> quadToTransform(const Quad &quad, const Box &box, OrgMo
     const PointF shift = anchorShift(from.an);
     const V2 start{box.topLeft.x + box.topLeft.y * t.fax, box.topLeft.y};
     t.pos = pf(org + V2{r[0].x, r[0].y} - V2{scalex * start.x, scaley * start.y} +
-               V2{quadwidth * shift.x, scaley * std::max(box.layoutHeight(), 1.) * shift.y});
+               V2{quadwidth * shift.x, scaley * box.layoutHeight() * shift.y});
     // The outline and shadow keep their proportion to the text.
     const double kx = from.fscx != 0 ? t.fscx / from.fscx : 1, ky = from.fscy != 0 ? t.fscy / from.fscy : 1;
     t.bord = pf(V2{from.bord.x * kx, from.bord.y * ky});
@@ -610,8 +611,23 @@ Leading leadingOf(u16v text)
 
 } // namespace
 
+// Past this many bytes of its fields a Style is not read: each read takes
+// its values, and a Script's Style can be anything.
+constexpr std::size_t kMaxStyleBytes = 64 * 1024;
+
+std::size_t styleBytes(const core::StyleValues &s)
+{
+    std::size_t n = 0;
+    for (const std::u8string *f : {&s.name, &s.fontname, &s.fontsize, &s.scaleX, &s.scaleY, &s.spacing, &s.angle,
+                                   &s.outlineWidth, &s.shadow, &s.alignment, &s.marginLeft, &s.marginRight,
+                                   &s.marginVertical, &s.encoding})
+        n += f->size();
+    return n;
+}
+
 struct StyleCache::Decoded {
     std::vector<core::StyleValues> all;
+    std::unordered_set<const core::StyleValues *> oversized; // past kMaxStyleBytes
     // The last Style of each name, as libass looks a Line's and a \r's up
     // (a Style without a name is Default to libass).
     std::unordered_map<std::u8string_view, const core::StyleValues *> last;
@@ -627,9 +643,12 @@ std::shared_ptr<const StyleCache::Decoded> StyleCache::get(const VisualHost &hos
         return m_decoded;
     auto decoded = std::make_shared<Decoded>();
     decoded->all = core::decodeStyles(*document);
-    for (const core::StyleValues &s : decoded->all)
+    for (const core::StyleValues &s : decoded->all) {
+        if (styleBytes(s) > kMaxStyleBytes)
+            decoded->oversized.insert(&s);
         decoded->last.insert_or_assign(s.name.empty() ? std::u8string_view(u8"Default") : std::u8string_view(s.name),
                                        &s);
+    }
     m_session = session->serial();
     m_revision = session->revision();
     m_document = document;
@@ -642,7 +661,7 @@ namespace {
 // The context (read without its Styles) with the Styles of a cache.
 struct StyleIndex {
     StyleIndex(const transform::Context &context, const StyleCache::Decoded &decoded)
-        : ctx(context), last(decoded.last)
+        : ctx(context), last(decoded.last), oversized(decoded.oversized)
     {
     }
     // A Line's Style as libass's ass_lookup_style finds it: without its
@@ -670,11 +689,12 @@ struct StyleIndex {
             return it->second;
         return nullptr;
     }
-    core::StyleValues line(std::u8string_view name) const
+    const core::StyleValues &line(std::u8string_view name) const
     {
         const core::StyleValues *s = find(name);
         return s ? *s : builtin();
     }
+    bool tooLarge(const core::StyleValues &s) const { return oversized.contains(&s); }
     // libass's own Default (set_default_style): Arial 18 at weight 200,
     // outline 2, shadow 3, margins 20.
     static const core::StyleValues &builtin()
@@ -697,6 +717,7 @@ struct StyleIndex {
     }
     const transform::Context &ctx;
     const std::unordered_map<std::u8string_view, const core::StyleValues *> &last;
+    const std::unordered_set<const core::StyleValues *> &oversized;
 };
 
 // The Style a \r resets to: the one it names (without the spaces after
@@ -713,7 +734,7 @@ const core::StyleValues *resetTarget(const StyleIndex &styles, u16v name)
     return wanted == u8"Default" ? &StyleIndex::builtin() : nullptr;
 }
 
-core::StyleValues resetStyle(const StyleIndex &styles, const core::StyleValues &lineStyle, u16v name)
+const core::StyleValues &resetStyle(const StyleIndex &styles, const core::StyleValues &lineStyle, u16v name)
 {
     const core::StyleValues *s = resetTarget(styles, name);
     return s ? *s : lineStyle;
@@ -971,7 +992,7 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
     if (from > 0)
         if (const core::StyleValues *reset = resetTarget(styles, lead.tags[from - 1].value))
             builtin = reset == &StyleIndex::builtin();
-    const core::StyleValues current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
+    const core::StyleValues &current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
     const auto styleSpacing = [&current] {
         return core::toUtf8(fmt(std::max(0.0, transform::styleNumber(current.spacing, 0)), 4));
     };
@@ -1191,6 +1212,18 @@ bool scrolls(const core::LineRecord &line)
 
 LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const core::LineRecord &line);
 
+// Whether `line`'s Style, or the one its leading \r resets to, is past the
+// bytes a read takes.
+bool stylesTooLarge(const StyleIndex &styles, const core::LineRecord &line)
+{
+    const core::StyleValues &style = styles.line(line.style);
+    if (styles.tooLarge(style))
+        return true;
+    const Leading lead = leadingOf(transform::lineText(line));
+    const std::size_t from = afterLastReset(lead.tags);
+    return from > 0 && styles.tooLarge(resetStyle(styles, style, lead.tags[from - 1].value));
+}
+
 // How far an unpositioned Line is moved clear of the Lines before it shown
 // with it: legacy's GetDialogueAdditionalPosition (Visuals.cpp:143-215),
 // the rule the other tools place such a Line by, over this tool's own
@@ -1258,8 +1291,8 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
     };
     // Past this many obstacles the stack is off the frame, but where is not
     // known (the work of reading them is the budget's).
-    constexpr int kMaxMeasured = 256;
-    int measured = 0;
+    constexpr int kMaxMeasured = 256, kMaxCandidates = 4096;
+    int measured = 0, candidates = 0;
     for (const core::LineRecord *dial : ctx.document->lines()) {
         if ((!ctx.ignoreFiltered && dial->visibility == core::LineVisibility::Hidden) || dial->unparsed)
             continue;
@@ -1267,13 +1300,14 @@ std::optional<double> stackOffset(const VisualHost &host, const StyleIndex &styl
             break;
         if (dial->comment || !shown(*dial) || dial->layer.value != line.layer.value)
             continue; // libass renders no Comment
-        if (!budget.parse(*dial))
+        // Every Line shown with it is looked at, however little it shows.
+        if (++candidates > kMaxCandidates || !budget.parse(*dial) || stylesTooLarge(styles, *dial))
             return std::nullopt;
         const LineState other = readTagsIn(host, styles, *dial);
         if (!other.stacks)
             continue;
         const u16 text = transform::lineText(*dial);
-        const core::StyleValues style = styles.line(dial->style);
+        const core::StyleValues &style = styles.line(dial->style);
         // libass's rectangle takes the largest border of its glyphs, which
         // one box at one border does not hold.
         static constexpr u16v kBorderTags[] = {u"bord", u"xbord", u"ybord"};
@@ -1296,7 +1330,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
 {
     const transform::Context &ctx = styles.ctx;
     const u16 text = transform::lineText(line);
-    const core::StyleValues style = styles.line(line.style);
+    const core::StyleValues &style = styles.line(line.style);
     LineState out;
     Transform &t = out.transform;
     t.an = static_cast<int>(transform::styleNumber(style.alignment, 2));
@@ -1371,7 +1405,7 @@ LineState readTagsIn(const VisualHost &host, const StyleIndex &styles, const cor
     // ones before it.
     const Leading lead = leadingOf(text);
     const std::size_t from = afterLastReset(lead.tags);
-    const core::StyleValues current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
+    const core::StyleValues &current = from > 0 ? resetStyle(styles, style, lead.tags[from - 1].value) : style;
     if (from > 0)
         styleValues(current);
     for (std::size_t k = from; k < lead.tags.size(); ++k) {
@@ -1468,6 +1502,8 @@ std::optional<LineState> readLine(const VisualHost &host, const core::LineRecord
     const auto decoded = cache.get(host);
     const transform::Context ctx = transform::context(host, false);
     const StyleIndex styles(ctx, *decoded);
+    if (stylesTooLarge(styles, line))
+        return std::nullopt;
     LineState out = readTagsIn(host, styles, line);
     const u16 text = transform::lineText(line);
     const auto box =
@@ -1840,6 +1876,15 @@ bool PerspectiveTool::beginEdit(VisualHost &host)
         host.cancelGesture();
         return false;
     }
+    // ... and their Styles as a read's are.
+    const transform::Context ctx = transform::context(host, false);
+    const auto decoded = m_styles.get(host);
+    const perspective::StyleIndex styles(ctx, *decoded);
+    for (const core::LineId &id : host.gesture()->targets())
+        if (perspective::stylesTooLarge(styles, host.gesture()->before(id))) {
+            host.cancelGesture();
+            return false;
+        }
     return true;
 }
 
@@ -1862,7 +1907,7 @@ void PerspectiveTool::stageAll(VisualHost &host)
         t.bord = {static_cast<float>(own.transform.bord.x * kx), static_cast<float>(own.transform.bord.y * ky)};
         t.shad = {static_cast<float>(own.transform.shad.x * kx), static_cast<float>(own.transform.shad.y * ky)};
         const u16 text = transform::lineText(line);
-        const core::StyleValues style = styles.line(line.style);
+        const core::StyleValues &style = styles.line(line.style);
         g->stage(id, u8(writeTransform(text, t, style, m_startTransform.pos, m_orgEdited)),
                  transform::editsTranslation(line));
     }

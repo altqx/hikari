@@ -96,6 +96,26 @@ TEST(PerspectiveMaths, ABoxUnderAUnitKeepsItsScale)
     EXPECT_FALSE(quadToTransform(q, Box{{0, 0}, {0, 0.5f}}, OrgMode::Keep, t, kZ));
 }
 
+TEST(PerspectiveMaths, ABoxUnderAUnitIsAnchoredByItsOwnSize)
+{
+    // Centred or right-aligned, the box's own width places it both ways: a
+    // moved quad's tags put it where it was moved.
+    for (const int an : {2, 3, 5, 9}) {
+        Transform t;
+        t.pos = {300, 200};
+        t.org = t.pos;
+        t.an = an;
+        t.fscx = t.fscy = 10000;
+        const Box box{{0, 0}, {0.5f, 0.5f}};
+        Quad moved = textToQuad(t, box, kZ);
+        for (PointF &p : moved)
+            p.x += 10;
+        const auto back = quadToTransform(moved, box, OrgMode::Keep, t, kZ);
+        ASSERT_TRUE(back) << an;
+        expectQuadNear(textToQuad(*back, box, kZ), moved, 1e-2);
+    }
+}
+
 // Any quad the tags make, the tags it gives back render onto it again, in
 // every \org mode and for every alignment.
 TEST(PerspectiveMaths, TheTagsAQuadGivesRenderOntoIt)
@@ -1058,6 +1078,36 @@ TEST(PerspectiveTags, TheStackIsFittedAsLibassFitsIt)
     const auto second = readLine(middle, lineWith(middle, 1));
     ASSERT_TRUE(first && second);
     EXPECT_NEAR(second->transform.pos.y, first->transform.pos.y + 20, 0.05);
+}
+
+TEST(PerspectiveTags, AStyleOfTooManyBytesIsNotRead)
+{
+    // A Script's Style can be anything: past 64 KiB of fields, a Line on it,
+    // or reset to it, gets no quad (and no copy of it is made each frame).
+    const std::string big = "Style: Big," + std::string(70 * 1024, 'F') +
+                            ",40,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,1,2,10,10,10,1\n";
+    Host host(apart({"{\\pos(320,200)}A", "{\\pos(320,200)\\rBig}A"}), {}, big);
+    EXPECT_TRUE(readLine(host, lineWith(host, 0)));
+    EXPECT_FALSE(readLine(host, lineWith(host, 1)));
+    Host on({"Dialogue: 0,0:00:01.00,0:00:03.00,Big,,0,0,0,,{\\pos(320,200)}A"}, {}, big);
+    EXPECT_FALSE(readLine(on, lineWith(on, 0)));
+}
+
+TEST(PerspectiveTags, EveryLineShownWithItIsCounted)
+{
+    // Lines that take no part in collisions (an empty Banner, say) cost
+    // nothing to measure, but each is looked at: past 4096 of them, no quad.
+    const auto read = [](int banners) {
+        std::vector<std::string> texts(banners, "Dialogue: 0,0:00:01.00,0:00:03.00,Default,,0,0,0,Banner;10,");
+        texts.push_back("Second");
+        Host host(texts);
+        return readLine(host, lineWith(host, texts.size() - 1)).has_value();
+    };
+    EXPECT_TRUE(read(4000));
+    const auto started = std::chrono::steady_clock::now();
+    EXPECT_FALSE(read(5000));
+    EXPECT_LT(std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - started).count(),
+              2000);
 }
 
 TEST(PerspectiveTags, AWrittenPositionStaysAheadOfAMove)
