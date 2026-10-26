@@ -32,7 +32,7 @@ constexpr std::string_view kSong =
     "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,,{\\k50}ka{\\k50}ze\n"        // 5
     "Dialogue: 0,0:00:04.00,0:00:06.00,Romaji,,0,0,0,Effector [fx],ka\n"           // 6
     "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,FX,not the templater's\n"     // 7
-    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx ,nor this\n"               // 8
+    "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx2,nor this\n"               // 8
     "Dialogue: 0,0:00:07.00,0:00:09.00,Romaji,,0,0,0,fx,last\n";                   // 9
 
 } // namespace
