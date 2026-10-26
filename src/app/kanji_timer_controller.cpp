@@ -20,6 +20,7 @@ namespace {
 constexpr std::size_t kShownGroups = 60;
 
 constexpr const char *kSuggest = "audio.kanjiTimerSuggest";
+constexpr const char *kMulti = "audio.kanjiTimerMulti";
 
 QString qs(std::u16string_view s)
 {
@@ -108,6 +109,21 @@ void KanjiTimerController::setSuggest(bool on)
     m_settings.set(kSuggest, on);
     if (m_timer)
         m_timer->setSuggest(on);
+    emit changed();
+}
+
+bool KanjiTimerController::multi() const
+{
+    return m_settings.boolean(kMulti);
+}
+
+void KanjiTimerController::setMulti(bool on)
+{
+    if (on == multi())
+        return;
+    m_settings.set(kMulti, on);
+    if (m_timer)
+        m_timer->setMulti(on);
     emit changed();
 }
 
@@ -255,6 +271,7 @@ void KanjiTimerController::readLines()
         m_timer = std::make_unique<application::KanjiTimer>(charClasses());
         m_timer->setSuggest(suggest());
     }
+    m_timer->setMulti(multi());
     m_timer->setLines(std::move(romaji), std::move(kanji));
 }
 
