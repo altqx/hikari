@@ -112,6 +112,7 @@ DialogWindow {
                 objectName: "messageBoxText"
                 text: box.text
                 font: box.fontAt(14, Font.DemiBold)
+                textFormat: Text.PlainText
                 wrapMode: Text.Wrap
                 Accessible.role: Accessible.StaticText
                 Layout.fillWidth: true
@@ -121,6 +122,7 @@ DialogWindow {
                 visible: box.detail.length > 0
                 text: box.detail
                 color: Theme.muted
+                textFormat: Text.PlainText
                 wrapMode: Text.Wrap
                 Layout.fillWidth: true
             }

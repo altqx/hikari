@@ -18,5 +18,8 @@ ToolButton {
     }
     Accessible.name: text
     ToolTip.visible: hovered && tip.length > 0
-    ToolTip.text: tip
+    // Always plain (a tip may name a font from a file): the shared tooltip
+    // reads text whose "<" opens a tag as rich text; a word joiner after
+    // each "<" and "&" of "&lt;" keeps it plain.
+    ToolTip.text: tip.replace(/</g, "<\u2060").replace(/&lt;/g, "&\u2060lt;")
 }

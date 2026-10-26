@@ -951,6 +951,7 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.log = [this](const QString &text) {
             m_log->notice(ui::LogController::Warning, QCoreApplication::translate("HikariSub.Fonts", "Font catalogs"), text);
         };
+        hooks.documentFonts = [this] { return attachedFontLeases(m_workspace.editingTarget()); };
         // FontEnumerator's RefreshVideo(true): libass's fonts are loaded
         // again (ReloadLibraries, so a font installed meanwhile is found), and
         // the video's subtitles render again with the external fonts.

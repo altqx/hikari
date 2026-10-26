@@ -53,6 +53,9 @@ public:
     // EnumerateFonts(true) after a font change: both lists again (the
     // filtered one only once it exists), with the last filter given.
     void enumerate();
+    // PU3's characters chip: `filter` applies now (the filtered list made
+    // again when it exists; else at its first use).
+    void refilter(std::u16string_view filter);
     // The external font files no face was read from (legacy
     // AddFontResourceExW failed: "Cannot add external font file %s.").
     std::vector<std::string> unreadableExternalFonts();
