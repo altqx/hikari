@@ -3902,6 +3902,246 @@ Nie udało się skopiować %2 czcionek.</translation>
         <source>Close</source>
         <translation type="unfinished">Zamknij</translation>
     </message>
+    <message>
+        <source>Kanji timer</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The kanji timing could not be applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The subtitles are read-only.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply the kanji timing of %n lines?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>They are done but not in the subtitles yet.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">Zastosuj</translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Anuluj</translation>
+    </message>
+    <message>
+        <source>Suggested</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Done</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No kanji line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No romaji line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>To do</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Romaji</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Romaji style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kanji</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kanji style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Suggest groupings</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose two different styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No karaoke lines in “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The subtitles have no styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No lines to pair</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line pairs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Line pair %1: %2, %3. %4</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no kanji line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>no romaji line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 groups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose the romaji and kanji styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No pair with both lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Groups</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up and Down: syllables. Right and Left: kanji. Enter links, Backspace unlinks.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” has no kanji left. Enter links it on its own (a blank group); Backspace reopens the group before, where ↑ takes it in.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Click a kanji: the current group ends there. Click a syllable: its romaji does.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>blank ← %1 · %2 cs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ← %2 (%3) · %4 cs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 ← %2 · %3 cs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Unlink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip romaji line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Skip kanji line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Previous</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Result</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Result: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 cs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>romaji</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>kanji</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Enter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>link</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Backspace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>unlink</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ctrl+Enter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>accept line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ctrl+Z</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>undo</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Accept all suggestions</source>
+        <translation type="unfinished"></translation>
+    </message>
 </context>
 <context>
     <name>HikariSub.MainWindow</name>
@@ -4620,6 +4860,14 @@ Nie udało się skopiować %2 czcionek.</translation>
     <message>
         <source>Opens audio from video</source>
         <translation>Otwiera audio z wideo</translation>
+    </message>
+    <message>
+        <source>Copies the karaoke timing of romaji lines to their kanji lines</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Kanji timer…</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Install update</source>
