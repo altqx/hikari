@@ -1932,6 +1932,32 @@ TEST(PerspectiveTool, ARescaleIsRefusedWhileATargetResetsOrRescalesAfterItsText)
     }
 }
 
+TEST(PerspectiveTool, ARescaleIsRefusedWhileATargetAnimatesItsBox)
+{
+    // Its \t ends at its own outline, which the rescale does not reach.
+    const std::string other = "{\\pos(320,200)\\bord2\\t(0,1000,\\bord10)}Other";
+    Fixture f({"{\\pos(320,200)}Perspective", other});
+    f.host.targets = {f.host.line(0), f.host.line(1)};
+    const std::size_t steps = f.steps();
+    f.drag({430, 200}, {450, 230});
+    EXPECT_EQ(f.steps(), steps);
+    EXPECT_EQ(f.host.text(1), other);
+}
+
+TEST(PerspectiveTool, APlaneFarOffTheViewIsDashedOnlyAcrossIt)
+{
+    // Corners millions of pixels or 1e20 off: the dashes are the view's.
+    for (const std::string line :
+         {"{\\q2\\pos(320,200)\\fscx10000000}Perspective", "{\\pos(100000000,200)}Perspective",
+          "{\\pos(320,200)\\p1}m 0 0 l 100000000 0 100000000 100 0 100",
+          "{\\an7\\pos(0,0)\\p1}m 0 0 l 1e20 0 1e20 100 0 100"}) {
+        Fixture f({line});
+        ASSERT_TRUE(f.tool.hasQuad()) << line;
+        ASSERT_TRUE(f.tool.setOption("plane", 1, f.host)) << line;
+        EXPECT_LT(f.tool.overlay(f.host).lines.size(), 2000u) << line;
+    }
+}
+
 TEST(PerspectiveTool, IsTheTwelfthFamily)
 {
     EXPECT_EQ(familyInfo(Family::Perspective).tooltip, "Perspective");

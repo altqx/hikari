@@ -775,6 +775,16 @@ bool animatesTheQuad(const Tag &tag)
     return false;
 }
 
+// Whether a \t anywhere in the text animates the box (see animatesTheQuad).
+bool animatesTheBox(u16v text)
+{
+    for (const auto &[open, close] : blocksOf(text))
+        for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1)))
+            if (animatesTheQuad(tag))
+                return true;
+    return false;
+}
+
 // What one read may do on the UI thread: the Line and every Line it
 // stacks on draw from it, their text parsed, rows and characters measured
 // through the font and the code of drawings read point by point. libass
@@ -948,10 +958,8 @@ std::optional<Box> measureBox(const VisualHost &host, const StyleIndex &styles, 
                               u16v text, const core::StyleValues &style, const Leading &lead, bool edited,
                               MeasureBudget &budget)
 {
-    for (const auto &[open, close] : blocksOf(text))
-        for (const Tag &tag : tagsOf(text.substr(open + 1, close - open - 1)))
-            if (animatesTheQuad(tag))
-                return std::nullopt;
+    if (animatesTheBox(text))
+        return std::nullopt;
     if (lead.p > 0) {
         if (lead.more)
             return std::nullopt;
@@ -1703,6 +1711,37 @@ std::u8string u8(const std::u16string &text)
     return core::toUtf8(text);
 }
 
+// The part of a to b the view shows (Liang–Barsky), so a dashed edge is
+// dashed only across the view however far off it its corners are.
+std::optional<std::array<PointF, 2>> inView(PointF a, PointF b, const VideoView &view)
+{
+    if (!std::isfinite(a.x) || !std::isfinite(a.y) || !std::isfinite(b.x) || !std::isfinite(b.y))
+        return std::nullopt;
+    constexpr double kMargin = 16;
+    const double x0 = -kMargin, y0 = -kMargin;
+    const double x1 = view.clientWidth() + kMargin, y1 = view.clientHeight() + kMargin;
+    const double dx = double(b.x) - a.x, dy = double(b.y) - a.y;
+    double from = 0, to = 1;
+    const double p[4] = {-dx, dx, -dy, dy};
+    const double q[4] = {a.x - x0, x1 - a.x, a.y - y0, y1 - a.y};
+    for (int i = 0; i < 4; ++i) {
+        if (p[i] == 0) {
+            if (q[i] < 0)
+                return std::nullopt;
+            continue;
+        }
+        const double r = q[i] / p[i];
+        if (p[i] < 0)
+            from = std::max(from, r);
+        else
+            to = std::min(to, r);
+        if (from >= to)
+            return std::nullopt;
+    }
+    return std::array<PointF, 2>{PointF{float(a.x + from * dx), float(a.y + from * dy)},
+                                 PointF{float(a.x + to * dx), float(a.y + to * dy)}};
+}
+
 } // namespace
 
 Quad PerspectiveTool::outer() const
@@ -2015,11 +2054,12 @@ bool PerspectiveTool::scalesEveryOutline(const Transform &t, VisualHost &host) c
     if (!g)
         return true;
     // A later scale or \r sets the rest of the text back to its own size
-    // and outline, which the leading blocks' rescale does not reach.
+    // and outline, which the leading blocks' rescale does not reach; a \t
+    // of the box ends at its own, unscaled.
     static constexpr u16v kRescaled[] = {u"fscx", u"fscy", u"fsc", u"r"};
     for (const core::LineId &id : g->targets()) {
         const u16 text = transform::lineText(g->before(id));
-        if (outlineAfterText(text) || afterText(text, kRescaled))
+        if (outlineAfterText(text) || afterText(text, kRescaled) || animatesTheBox(text))
             return false;
     }
     return true;
@@ -2391,10 +2431,10 @@ Overlay PerspectiveTool::overlay(const VisualHost &host) const
                                  kGridColour});
         }
     }
-    if (m_plane) {
-        const PointF loop[5] = {o[0], o[1], o[2], o[3], o[0]};
-        drawDashedLine(out, loop, 5, 6, kOuterColour);
-    }
+    if (m_plane)
+        for (std::size_t i = 0; i < 4; ++i)
+            if (const auto edge = inView(o[i], o[(i + 1) % 4], view))
+                drawDashedLine(out, edge->data(), 2, 6, kOuterColour);
     for (int i = 0; i < 4; ++i)
         out.lines.push_back({inner[static_cast<std::size_t>(i)], inner[static_cast<std::size_t>((i + 1) % 4)], 2.f,
                              kInnerColour});
