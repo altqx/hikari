@@ -1,6 +1,7 @@
 # Application services: Documents, commands, history, settings and ports.
 add_library(hikari_application STATIC module.cpp write_coordinator.cpp edit_session.cpp workspace.cpp document_files.cpp
-    automation_registry.cpp macro_transaction.cpp template_preview.cpp automation_services.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp editor_fields.cpp grid_split.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp misspell_replacer.cpp spell_checker.cpp settings.cpp options_dialog.cpp audio_display.cpp audio_box.cpp)
+    automation_registry.cpp macro_transaction.cpp template_preview.cpp automation_services.cpp media_association.cpp video_session.cpp seek_throttle.cpp grid_selection.cpp grid_commands.cpp recent_files.cpp grid_clipboard.cpp grid_filtering.cpp grid_groups.cpp recovery_store.cpp automation_hotkeys.cpp legacy_timebase.cpp editor_fields.cpp grid_split.cpp grid_translation.cpp script_properties.cpp shift_times.cpp keyframe_files.cpp select_lines.cpp update_check.cpp resample.cpp script_resolution.cpp style_manager.cpp misspell_replacer.cpp spell_checker.cpp settings.cpp options_dialog.cpp audio_display.cpp audio_box.cpp
+    dialog_memory.cpp)
 # O2: hotkeys and the shortcut editor.
 target_sources(hikari_application PRIVATE hotkeys.cpp)
 # A3: the audio box's timing.
@@ -80,6 +81,8 @@ target_sources(hikari_application PRIVATE font_catalogs.cpp font_families.cpp)
 # T4: the rectangle and vector clips and the vector point editor T5 shares,
 # with legacy's float steps (no contraction either).
 target_sources(hikari_application PRIVATE visual_vector.cpp visual_clip.cpp)
+# VT3: the Perspective tool (arch1t3cht's quad maths, in doubles).
+target_sources(hikari_application PRIVATE visual_perspective.cpp)
 set_source_files_properties(visual_vector.cpp visual_clip.cpp PROPERTIES COMPILE_OPTIONS
     "$<$<CXX_COMPILER_ID:GNU,Clang>:-ffp-contract=off>;$<$<CXX_COMPILER_ID:MSVC>:/fp:precise>")
 # T5: the drawing tool and its shape presets (no contraction either).

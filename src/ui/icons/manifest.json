@@ -1731,6 +1731,17 @@
    ]
   },
   {
+   "role": "tool-perspective",
+   "file": "tool-perspective.svg",
+   "label": "Perspective",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
    "role": "tool-clip-rect",
    "file": "tool-clip-rect.svg",
    "label": "Rectangle clipping",
@@ -2030,6 +2041,39 @@
    "legacy": [
     "TwoPoints.png"
    ],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "perspective-plane",
+   "file": "perspective-plane.svg",
+   "label": "Show surrounding plane",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "perspective-lock-outer",
+   "file": "perspective-lock-outer.svg",
+   "label": "Lock outer quad",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "visual-tools"
+   ]
+  },
+  {
+   "role": "perspective-grid",
+   "file": "perspective-grid.svg",
+   "label": "Show grid",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
    "surfaces": [
     "visual-tools"
    ]
@@ -2837,6 +2881,18 @@
    "legacy": [],
    "surfaces": [
     "menu:automation"
+   ]
+  },
+  {
+   "role": "repeat-run",
+   "file": "repeat-run.svg",
+   "label": "Repeat last run",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation",
+    "automation-panel"
    ]
   },
   {

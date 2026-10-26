@@ -119,6 +119,17 @@ DialogWindow {
         target: dialog.app
         function onSettingsListsChanged(dictionaries) { dialog.dictionaries = dictionaries }
     }
+    // AD2: asks first; OK or Apply forgets the answers (and Repeat's record).
+    function clearLastAnswers() {
+        ask({
+            title: qsTr("Clear last answers"),
+            text: qsTr("Forget the answers given in every script dialog?"),
+            detail: qsTr("Repeat last run is off until a macro runs again. Presets are kept."),
+            severity: "warning",
+            choices: [{ id: "clear", text: qsTr("Clear"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, id => { if (id === "clear") put("automation.dialogAnswers", []) })
+    }
     // PK1's message box, made at its first question.
     readonly property var question: questionLoader.item
     function ask(options, done) {
@@ -1210,6 +1221,26 @@ DialogWindow {
                         SettingsRow {
                             text: qsTr("Lua trace level")
                             SettingNumber { setting: "automation.traceLevel"; from: 0; to: 5; name: qsTr("Lua trace level") }
+                        }
+                    }
+                    // AD2 (#311): script dialogs' last answers (AD2-fill-last-answers).
+                    SettingsSection {
+                        objectName: "settingsScriptDialogsGroup"
+                        title: qsTr("Script dialogs")
+                        SettingCheck { setting: "automation.fillLastAnswers"; text: qsTr("Fill in my last answers") }
+                        SettingNote { text: qsTr("Script dialogs open with the answers you gave last time. A value the script works out itself, from the selection say, still wins. Off: they open with the script’s values, and ⋯ › Last used fills yours in.") }
+                    }
+                    SettingsSection {
+                        title: qsTr("Kept answers and presets")
+                        SettingsRow {
+                            text: qsTr("Last answers")
+                            note: qsTr("Presets are kept; delete them from a dialog’s ⋯ menu.")
+                            Button {
+                                objectName: "settingsClearAnswers"
+                                text: qsTr("Clear last answers…")
+                                enabled: (dialog.values["automation.dialogAnswers"] || []).length > 0
+                                onClicked: dialog.clearLastAnswers()
+                            }
                         }
                     }
                 }

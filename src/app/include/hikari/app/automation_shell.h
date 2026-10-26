@@ -12,6 +12,7 @@
 #include "hikari/application/audio_box.h"
 #include "hikari/application/automation.h"
 #include "hikari/application/automation_services.h"
+#include "hikari/application/dialog_memory.h"
 #include "hikari/application/document_scripts.h"
 #include "hikari/application/document_files.h"
 #include "hikari/application/macro_validation.h"
@@ -26,6 +27,7 @@
 #include "automation_services_qt.h"
 #include "karaoke_report.h"
 #include "line_editor_controller.h"
+#include "script_dialog_memory.h"
 #include "script_resolution_prompt.h"
 #include "settings_store.h"
 #include "shell_controller.h"
@@ -57,6 +59,10 @@ class AutomationShell : public QObject, public application::AutomationServicePor
     Q_PROPERTY(QString lastOutcome READ lastOutcome NOTIFY progressChanged)
     Q_PROPERTY(bool forceStopOffered READ forceStopOffered NOTIFY progressChanged)
     Q_PROPERTY(bool canRerun READ canRerun NOTIFY progressChanged)
+    // AD2-repeat-last-run: Repeat last run is offered, and what it repeats
+    // (its tooltip).
+    Q_PROPERTY(bool canRepeat READ canRepeat NOTIFY progressChanged)
+    Q_PROPERTY(QString repeatText READ repeatText NOTIFY progressChanged)
     // KE1-template-problems: the run ended well but its log names template
     // problems, so the progress window stays for it to be read.
     Q_PROPERTY(bool keepLog READ keepLog NOTIFY progressChanged)
@@ -113,7 +119,11 @@ public:
     // quiet error (a message box says it).
     enum class LogLine { Notice, Quiet, QuietError };
     void setLog(std::function<void(const QString &, LogLine)> log) { m_logLine = std::move(log); }
-    void setSettings(ui::SettingsStore *settings) { m_settings = settings; }
+    void setSettings(ui::SettingsStore *settings)
+    {
+        m_settings = settings;
+        m_dialogMemory.setSettings(settings);
+    }
 
     // How a run was asked for: legacy validates every run first
     // (LuaCommand::RunScript, OnRunScript, GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT)
@@ -166,6 +176,17 @@ public:
     Q_INVOKABLE void editWith(const QUrl &editor, const QString &script);
     const application::DocumentScripts &documentScripts() const { return m_documentScripts; }
     Q_INVOKABLE bool rerunLast();
+    // AD2-repeat-last-run (GLOBAL_AUTOMATION_REPEAT_LAST_RUN): the last
+    // recorded run's macro again, on the Lines selected now. At each dialog
+    // the script shows, the same dialog as at that point of the recorded run
+    // (application::sameDialog) gets its recorded answer without being
+    // shown; another is shown filled with the last answers and says why,
+    // and the run goes on as a normal one. A run is recorded when it ends
+    // (applied, refused or failed) with no dialog answered by its cancel
+    // button or Esc; the record lasts for the session.
+    Q_INVOKABLE bool repeatLast();
+    // Settings > Clear last answers: the record goes with the answers.
+    void forgetRepeat();
     Q_INVOKABLE void cancelRun();
     // The card's ×: the ended run's card goes (its log stays in `runs`).
     Q_INVOKABLE void dismissCard();
@@ -180,6 +201,8 @@ public:
     QString lastOutcome() const { return m_lastOutcome; }
     bool forceStopOffered() const;
     bool canRerun() const { return m_last.has_value() && !m_run; }
+    bool canRepeat() const { return m_repeat.has_value() && !m_run; }
+    QString repeatText() const;
     bool keepLog() const { return m_keepLog; }
     QString cardState() const { return m_cardState; }
     QString cardText() const { return m_cardText; }
@@ -224,6 +247,11 @@ signals:
 
 private:
     class Templater;
+    // AD2: a dialog of a run and its answer.
+    struct AnsweredDialog {
+        application::DialogRequest request;
+        application::DialogResult answer;
+    };
     struct Run {
         application::DocumentId target;
         application::MacroSnapshot snapshot;
@@ -244,7 +272,20 @@ private:
         // declined: the user cancelled the question, so the run ends quietly.
         std::optional<application::Resolution> resolution;
         bool declined = false;
+        // AD2: the dialogs answered so far, and whether one was cancelled;
+        // for Repeat last run, the recorded run's dialogs and whether they
+        // are still being replayed.
+        std::vector<AnsweredDialog> dialogs;
+        bool cancelledAtDialog = false;
+        std::optional<std::vector<AnsweredDialog>> repeat;
+        bool replaying = false;
     };
+    struct RepeatRecord {
+        std::string path, macro;
+        int ordinal = 0;
+        std::vector<AnsweredDialog> dialogs;
+    };
+    void presentDialog(const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply);
     bool startStep(Run &run);
     void resolveScriptResolution(const application::ScriptResolutionRequest &request,
                                  std::function<void(std::optional<application::Resolution>)> reply);
@@ -270,6 +311,7 @@ private:
     ui::ShellController &m_shell;
     backends::AutomationManager m_manager;
     application::AutomationServiceRouter m_router;
+    ui::ScriptDialogMemory m_dialogMemory;
     ui::AutomationDialogController m_dialogs;
     ui::AutomationFilePickerController m_picker;
     ui::ScriptResolutionPromptController m_resolutionPrompt;
@@ -283,6 +325,7 @@ private:
     std::function<void()> m_beforeRun;
     std::optional<Run> m_run;
     std::optional<std::pair<std::string, int>> m_last;
+    std::optional<RepeatRecord> m_repeat;
     application::DocumentScripts m_documentScripts;
     std::set<std::string> m_readScriptInfo; // the values addFromDocument read
     std::optional<std::string> m_pendingLast; // waiting for this script to load

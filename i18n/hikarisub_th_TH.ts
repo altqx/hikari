@@ -8981,7 +8981,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>การยืนยัน</translation>
+        <translation type="vanished">การยืนยัน</translation>
     </message>
     <message>
         <source>Style named &quot;%1&quot; already exists. Replace?</source>
@@ -9004,15 +9004,7 @@ Spell checking will be disabled</source>
         <translation>ยกเลิก</translation>
     </message>
     <message>
-        <source>Missing style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>New style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>The document has no style named &quot;%1&quot;. Create it from Default?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9033,10 +9025,6 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>colours</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>outline</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9093,27 +9081,27 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>คำถาม</translation>
+        <translation type="vanished">คำถาม</translation>
     </message>
     <message>
         <source>Change all selected styles?</source>
-        <translation>ต้องการเปลี่ยนสไตล์ที่เลือกทั้งหมดหรือไม่?</translation>
+        <translation type="vanished">ต้องการเปลี่ยนสไตล์ที่เลือกทั้งหมดหรือไม่?</translation>
     </message>
     <message>
         <source>Style name modified. Do you want to change all instances to the new name?</source>
-        <translation>เปลี่ยนชื่อสไตล์แล้ว ต้องการเปลี่ยนชื่อดังกล่าวทุกแห่งด้วยหรือไม่?</translation>
+        <translation type="vanished">เปลี่ยนชื่อสไตล์แล้ว ต้องการเปลี่ยนชื่อดังกล่าวทุกแห่งด้วยหรือไม่?</translation>
     </message>
     <message>
         <source>Styles stored:</source>
-        <translation>สไตล์ที่จัดเก็บ:</translation>
+        <translation type="vanished">สไตล์ที่จัดเก็บ:</translation>
     </message>
     <message>
         <source>Styles in ASS file:</source>
-        <translation>สไตล์ในแฟ้ม ASS:</translation>
+        <translation type="vanished">สไตล์ในแฟ้ม ASS:</translation>
     </message>
     <message>
         <source>Catalog:</source>
-        <translation>แคตตาล็อก:</translation>
+        <translation type="vanished">แคตตาล็อก:</translation>
     </message>
     <message>
         <source>Style catalog</source>
@@ -9121,11 +9109,11 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>New</source>
-        <translation>ใหม่</translation>
+        <translation type="vanished">ใหม่</translation>
     </message>
     <message>
         <source>New style catalog</source>
-        <translation>แคตตาล็อกใหม่</translation>
+        <translation type="vanished">แคตตาล็อกใหม่</translation>
     </message>
     <message>
         <source>Delete</source>
@@ -9133,27 +9121,19 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Delete selected style catalog</source>
-        <translation>ลบแคตตาล็อกสไตล์ที่เลือก</translation>
+        <translation type="vanished">ลบแคตตาล็อกสไตล์ที่เลือก</translation>
     </message>
     <message>
         <source>Create new style in storage</source>
-        <translation>สร้างสไตล์ใหม่ในที่เก็บข้อมูล</translation>
+        <translation type="vanished">สร้างสไตล์ใหม่ในที่เก็บข้อมูล</translation>
     </message>
     <message>
         <source>Copy</source>
-        <translation>คัดลอก</translation>
-    </message>
-    <message>
-        <source>Copy the selected style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">คัดลอก</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>แก้ไข</translation>
-    </message>
-    <message>
-        <source>Edit the selected style</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">แก้ไข</translation>
     </message>
     <message>
         <source>Load</source>
@@ -9161,83 +9141,63 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Load style from external ASS file to storage</source>
-        <translation>โหลดสไตล์จากแฟ้ม ASS ภายนอกไปยังที่เก็บข้อมูล</translation>
-    </message>
-    <message>
-        <source>Delete the selected styles</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">โหลดสไตล์จากแฟ้ม ASS ภายนอกไปยังที่เก็บข้อมูล</translation>
     </message>
     <message>
         <source>Sort</source>
-        <translation>จัดเรียง</translation>
-    </message>
-    <message>
-        <source>Sort the styles by name</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">จัดเรียง</translation>
     </message>
     <message>
         <source>Move selected styles to beginning</source>
-        <translation>เลื่อนสไตล์ที่เลือกไปบนสุด</translation>
+        <translation type="vanished">เลื่อนสไตล์ที่เลือกไปบนสุด</translation>
     </message>
     <message>
         <source>Move selected styles up</source>
-        <translation>เลื่อนสไตล์ที่เลือกขึ้น</translation>
+        <translation type="vanished">เลื่อนสไตล์ที่เลือกขึ้น</translation>
     </message>
     <message>
         <source>Move selected styles down</source>
-        <translation>เลื่อนสไตล์ที่เลือกลง</translation>
+        <translation type="vanished">เลื่อนสไตล์ที่เลือกลง</translation>
     </message>
     <message>
         <source>Move selected styles to end</source>
-        <translation>เลื่อนสไตล์ที่เลือกไปท้ายสุด</translation>
+        <translation type="vanished">เลื่อนสไตล์ที่เลือกไปท้ายสุด</translation>
     </message>
     <message>
         <source>Add to storage</source>
-        <translation>เพิ่มไปยังที่เก็บข้อมูล</translation>
+        <translation type="vanished">เพิ่มไปยังที่เก็บข้อมูล</translation>
     </message>
     <message>
         <source>Copy style from ASS to storage</source>
-        <translation>คัดลอกสไตล์จากแฟ้ม ASS ไปยังที่เก็บข้อมูล</translation>
-    </message>
-    <message>
-        <source>the storage</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">คัดลอกสไตล์จากแฟ้ม ASS ไปยังที่เก็บข้อมูล</translation>
     </message>
     <message>
         <source>Add to ASS</source>
-        <translation>เพิ่มไปยังแฟ้ม ASS</translation>
+        <translation type="vanished">เพิ่มไปยังแฟ้ม ASS</translation>
     </message>
     <message>
         <source>Copy style from storage to ASS</source>
-        <translation>คัดลอกสไตล์จากที่เก็บข้อมูลไปยังแฟ้ม ASS</translation>
-    </message>
-    <message>
-        <source>the ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">คัดลอกสไตล์จากที่เก็บข้อมูลไปยังแฟ้ม ASS</translation>
     </message>
     <message>
         <source>Add to all open ASS files</source>
-        <translation>เพิ่มไปยังแฟ้ม ASS ที่เปิดอยู่ทั้งหมด</translation>
-    </message>
-    <message>
-        <source>Copy style from storage to every open ASS file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">เพิ่มไปยังแฟ้ม ASS ที่เปิดอยู่ทั้งหมด</translation>
     </message>
     <message>
         <source>Create new ASS style</source>
-        <translation>สร้างสไตล์ใหม่ในคำบรรยาย</translation>
+        <translation type="vanished">สร้างสไตล์ใหม่ในคำบรรยาย</translation>
     </message>
     <message>
         <source>Load style from external ASS file</source>
-        <translation>โหลดสไตล์จากแฟ้ม ASS ภายนอก</translation>
+        <translation type="vanished">โหลดสไตล์จากแฟ้ม ASS ภายนอก</translation>
     </message>
     <message>
         <source>Clear</source>
-        <translation>ล้าง</translation>
+        <translation type="vanished">ล้าง</translation>
     </message>
     <message>
         <source>Delete unused ASS styles</source>
-        <translation>ลบสไตล์ ASS ที่ไม่ได้ใช้</translation>
+        <translation type="vanished">ลบสไตล์ ASS ที่ไม่ได้ใช้</translation>
     </message>
     <message>
         <source>OK</source>
@@ -9245,15 +9205,15 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Close</source>
-        <translation>ปิด</translation>
+        <translation type="vanished">ปิด</translation>
     </message>
     <message>
         <source>Style name:</source>
-        <translation>ชื่อสไตล์:</translation>
+        <translation type="vanished">ชื่อสไตล์:</translation>
     </message>
     <message>
         <source>Font and size:</source>
-        <translation>แบบอักษรและขนาด:</translation>
+        <translation type="vanished">แบบอักษรและขนาด:</translation>
     </message>
     <message>
         <source>Font</source>
@@ -9281,15 +9241,15 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Colors and transparency:</source>
-        <translation>สีและความโปร่งใส:</translation>
+        <translation type="vanished">สีและความโปร่งใส:</translation>
     </message>
     <message>
         <source>First</source>
-        <translation>สีหลัก</translation>
+        <translation type="vanished">สีหลัก</translation>
     </message>
     <message>
         <source>Second</source>
-        <translation>สีรอง</translation>
+        <translation type="vanished">สีรอง</translation>
     </message>
     <message>
         <source>Border</source>
@@ -9300,36 +9260,32 @@ Spell checking will be disabled</source>
         <translation>เงา</translation>
     </message>
     <message>
-        <source>transparency</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Border:</source>
-        <translation>ขอบ:</translation>
+        <translation type="vanished">ขอบ:</translation>
     </message>
     <message>
         <source>Shadow:</source>
-        <translation>เงา:</translation>
+        <translation type="vanished">เงา:</translation>
     </message>
     <message>
         <source>Scale X:</source>
-        <translation>อัตราขยายแกน X:</translation>
+        <translation type="vanished">อัตราขยายแกน X:</translation>
     </message>
     <message>
         <source>Scale Y:</source>
-        <translation>อัตราขยายแกน Y:</translation>
+        <translation type="vanished">อัตราขยายแกน Y:</translation>
     </message>
     <message>
         <source>Angle:</source>
-        <translation>มุม:</translation>
+        <translation type="vanished">มุม:</translation>
     </message>
     <message>
         <source>Spacing:</source>
-        <translation>ระยะห่าง:</translation>
+        <translation type="vanished">ระยะห่าง:</translation>
     </message>
     <message>
         <source>Border type:</source>
-        <translation>ประเภทขอบ:</translation>
+        <translation type="vanished">ประเภทขอบ:</translation>
     </message>
     <message>
         <source>Opaque box</source>
@@ -9337,23 +9293,311 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Left margin:</source>
-        <translation>ระยะขอบซ้าย:</translation>
+        <translation type="vanished">ระยะขอบซ้าย:</translation>
     </message>
     <message>
         <source>Right:</source>
-        <translation>ระยะขอบขวา:</translation>
+        <translation type="vanished">ระยะขอบขวา:</translation>
     </message>
     <message>
         <source>Vertical:</source>
-        <translation>ระยะขอบแนวตั้ง:</translation>
+        <translation type="vanished">ระยะขอบแนวตั้ง:</translation>
     </message>
     <message>
         <source>Alignment:</source>
-        <translation>การจัดวาง:</translation>
+        <translation type="vanished">การจัดวาง:</translation>
     </message>
     <message>
         <source>Text encoding:</source>
-        <translation>การเข้ารหัสข้อความ:</translation>
+        <translation type="vanished">การเข้ารหัสข้อความ:</translation>
+    </message>
+    <message>
+        <source>Edit style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file has no style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create it from Default and edit it?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The style is gone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Apply the changes to “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog “%1” is shown now; the changes go to “%2”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Discard</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Apply the changes to the %n selected styles?</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>No unused styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Deleted 1 unused style</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Deleted %n unused styles</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Every style is used by a line.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Ctrl+Z puts them back.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>border</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The styles changed while this was open. Nothing was copied.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the catalog “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It has no styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its one style goes with it. This can’t be undone.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Its %n styles go with it. This can’t be undone.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>A style needs a name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalog already has a style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file already has a style named “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its file was closed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Style not renamed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” keeps its name; the other changes were applied. %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Changes to “%1” not applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file shown now uses the catalog “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>You edited it in the file shown before.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Reset %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Put back the value it had</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Multiple values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1: multiple values</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 transparency</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Transparency, 0 (opaque) to 255</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Styles in this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%1, %n line(s)</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Changes not applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duplicate</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move up (Alt+Up)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move down (Alt+Down)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load from a file…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>More</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Move to bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Sort by name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter styles</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog</source>
+        <translation type="unfinished">แคตตาล็อก</translation>
+    </message>
+    <message>
+        <source>Add to file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected catalog styles into this file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected file styles into the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to all open files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy the selected catalog styles into every open file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This tab has no ASS styles.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n styles: the preview shows %1</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Name</source>
+        <translation type="unfinished">ชื่อ</translation>
+    </message>
+    <message>
+        <source>Rename it in the line that uses it</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Rename it in the %n lines that use it</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Family</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Emphasis</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Text encoding</source>
+        <translation type="unfinished">การเข้ารหัสข้อความ</translation>
     </message>
     <message>
         <source>0 - ANSI</source>
@@ -9433,7 +9677,7 @@ Spell checking will be disabled</source>
     </message>
     <message>
         <source>Style preview:</source>
-        <translation>ตัวอย่างสไตล์:</translation>
+        <translation type="vanished">ตัวอย่างสไตล์:</translation>
     </message>
     <message>
         <source>Preview text</source>
@@ -9452,11 +9696,115 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Catalog name</source>
+        <source>Colours and transparency</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Do you really want to delete the catalog named &quot;%1&quot;?</source>
+        <source>Primary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Secondary</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shape and position</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale X</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scale Y</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border width</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shadow distance</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Angle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Spacing</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Border type</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alignment</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Alignment %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Top right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left</source>
+        <translation type="unfinished">ซ้าย</translation>
+    </message>
+    <message>
+        <source>Middle</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Right</source>
+        <translation type="unfinished">ขวา</translation>
+    </message>
+    <message>
+        <source>Bottom left</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Bottom right</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Left margin</source>
+        <translation type="unfinished">ขอบซ้าย</translation>
+    </message>
+    <message>
+        <source>Right margin</source>
+        <translation type="unfinished">ระยะขอบขวา</translation>
+    </message>
+    <message>
+        <source>Vertical margin</source>
+        <translation type="unfinished">ระยะขอบแนวตั้ง</translation>
+    </message>
+    <message>
+        <source>Revert</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A catalog named “%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog name</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -9480,22 +9828,16 @@ Spell checking will be disabled</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>The catalog “%1” no longer exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Style named &quot;%1&quot; already exists.</source>
         <translation type="unfinished">มีสไตล์ชื่อ &quot;%1&quot; อยู่แล้ว</translation>
     </message>
     <message>
         <source>None</source>
         <translation>ไม่มี</translation>
-    </message>
-    <message>
-        <source>No unused styles.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message numerus="yes">
-        <source>%n style(s) deleted: %1.</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
     </message>
     <message>
         <source>Styles used:
@@ -9522,10 +9864,6 @@ Styles deleted:
     <message>
         <source>Filter</source>
         <translation type="unfinished">ตัวกรอง</translation>
-    </message>
-    <message>
-        <source>Filter styles</source>
-        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Style</source>
@@ -9565,18 +9903,6 @@ Styles deleted:
     </message>
     <message>
         <source>Apply to the selected lines: sets their style (Enter, or double-click a style)</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit style</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Duplicate</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>More</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11109,6 +11435,14 @@ or codecs or a splitter may be missing</source>
     </message>
     <message>
         <source>Origin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Plane</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rotation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

@@ -1062,17 +1062,18 @@ ApplicationWindow {
         }
     }
     // Application-wide, so F6 also leaves a floating panel group (D1); a
-    // Global binding of the same keys comes first.
+    // Global binding of the same keys comes first. Off in a dialog's window
+    // (the Style manager's F6 goes from list to list, SY1).
     Shortcut {
         sequences: ["F6"]
         context: Qt.ApplicationShortcut
-        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("F6")
+        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("F6")
         onActivated: root.cyclePanels(1)
     }
     Shortcut {
         sequences: ["Shift+F6"]
         context: Qt.ApplicationShortcut
-        enabled: !root.menuHasKeys && !root.hotkeys.globalSequences.includes("Shift+F6")
+        enabled: root.shellActive && !root.hotkeys.globalSequences.includes("Shift+F6")
         onActivated: root.cyclePanels(-1)
     }
     // Windows hands Shift+F10 to the system when no shortcut wants it; the
@@ -1640,6 +1641,19 @@ ApplicationWindow {
                     text: qsTr("Rerun last macro")
                     enabled: root.automation.canRerun && !root.workspaceLayout.modalOpen
                     onTriggered: root.automation.rerunLast()
+                }
+            }
+            // AD2-repeat-last-run: the last run again with its answers,
+            // without its dialogs when they are unchanged.
+            ShellMenuItem {
+                help: qsTr("Run the last macro again with the same answers, without its dialogs when they are unchanged")
+                iconRole: "repeat-run"
+                objectName: "repeatRunMenuItem"
+                action: Action {
+                    id: repeatRunAction
+                    text: qsTr("Repeat last run")
+                    enabled: root.automation.canRepeat && !root.workspaceLayout.modalOpen
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_AUTOMATION_REPEAT_LAST_RUN")) root.automation.repeatLast()
                 }
             }
             // AD3: the progress card's Cancel from the menu (it has no
@@ -6523,6 +6537,7 @@ ApplicationWindow {
         controller: root.automationDialogs
         colourPicker: root.colourPicker
         settings: root.app.settings
+        messages: messages
     }
     AutomationFilePicker {
         picker: root.automationPicker
@@ -7233,7 +7248,7 @@ ApplicationWindow {
         catalogs: root.fontCatalogs
         colourPicker: root.colourPicker
         app: root.app
-        postCleanStyles: root.postCleanStyles
+        notices: root.notices
     }
     SettingsImportDialog {
         id: settingsImportDialog
@@ -7273,10 +7288,7 @@ ApplicationWindow {
         Connections {
             target: root.fontCollector
             function onStyleRequested(style) {
-                styleManagerWindow.showFor(style)
-                const row = styleManagerWindow.styles.documentStyles.indexOf(style)
-                if (row >= 0)
-                    styleManagerWindow.beginEditing(styleManagerWindow.styles.beginEdit(false, row), false)
+                styleManagerWindow.showFor(style) // SY1: the editor is on it
             }
         }
     }
@@ -7582,6 +7594,7 @@ ApplicationWindow {
         GLOBAL_AUDIO_FROM_VIDEO: audioFromVideoAction, GLOBAL_CLOSE_AUDIO: closeAudioAction,
         GLOBAL_AUTOMATION_LOAD_SCRIPT: loadScriptAction, GLOBAL_AUTOMATION_RELOAD_AUTOLOAD: reloadAutoloadAction,
         GLOBAL_AUTOMATION_LOAD_LAST_SCRIPT: loadLastScriptAction,
+        GLOBAL_AUTOMATION_REPEAT_LAST_RUN: repeatRunAction, // AD2
         GLOBAL_PLAY_PAUSE: playPauseAction,
         GLOBAL_PREVIOUS_FRAME: previousFrameAction, GLOBAL_NEXT_FRAME: nextFrameAction,
         GLOBAL_SET_VIDEO_AT_START_TIME: goToStartAction, GLOBAL_SET_VIDEO_AT_END_TIME: goToEndAction,
@@ -7718,10 +7731,9 @@ ApplicationWindow {
                 root.video.playActualLine()
             }
             return true
-        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles
-            if (editing) {
-                root.postCleanStyles(root.styleManager.cleanStyles())
-            }
+        case "GLOBAL_STYLE_MANAGER_CLEAN_STYLE": // StyleStore::OnCleanStyles; SY1-clean-toast
+            if (editing)
+                styleManagerWindow.deleteUnused()
             return true
         case "GLOBAL_JOIN_WITH_PREVIOUS": if (editing) root.app.joinLines("previous"); return true
         case "GLOBAL_JOIN_WITH_NEXT": if (editing) root.app.joinLines("next"); return true
@@ -7944,15 +7956,6 @@ ApplicationWindow {
         hotkeys: root.hotkeys
         settings: root.app.settings
     }
-    // GLOBAL_STYLE_MANAGER_CLEAN_STYLE and the Style manager's Clear:
-    // StyleStore::OnCleanStyles's message (stylestore.cpp:738-775), a toast
-    // with the lists as its Details (NT1).
-    function postCleanStyles(result) {
-        if (result && result.text)
-            root.notices.post("info", qsTranslate("HikariSub.Styles", "Delete unused styles"), result.text,
-                              { details: result.details })
-    }
-
     // S2: committed automation shortcuts, application-wide.
     Repeater {
         model: root.automationHotkeys.shortcuts

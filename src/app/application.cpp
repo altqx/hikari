@@ -3,6 +3,7 @@
 #include "hikari/backends/desktop_handoff.h"
 #include "hikari/backends/ffms_matroska.h"
 #include "hikari/backends/legacy_text_file.h"
+#include "hikari/backends/libass_font_service.h"
 #include "hikari/backends/portaudio_output.h"
 #include "hikari/backends/qt_audio_devices.h"
 #include "hikari/backends/simulated_output.h"
@@ -830,6 +831,10 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
                                                                  : QDir::temp().filePath(QStringLiteral("hikari-catalogs-%1").arg(QCoreApplication::applicationPid()));
         StyleManagerController::Hooks hooks;
         hooks.target = [this] { return targetSession(); };
+        hooks.targetDocument = [this] { return m_workspace.editingTarget(); };
+        hooks.session = [this](application::DocumentId id) -> application::EditSession * {
+            return id == m_workspace.reference() ? nullptr : m_files->session(id); // R2-reference-tray
+        };
         hooks.documents = [this] {
             // Every Document but the reference, which is never written (R2-reference-tray).
             std::vector<application::EditSession *> out;
@@ -845,6 +850,8 @@ Application::Application(Options options, QObject *parent) : QObject(parent)
         hooks.fonts = [this] { // Y6: the external fonts render in the preview; 38c: the script's attached fonts too
             return subtitleFonts(m_workspace.editingTarget());
         };
+        hooks.lastCatalog = [this] { return m_settings->text("styles.lastCatalog"); };
+        hooks.catalogChosen = [this](const QString &name) { m_settings->set("styles.lastCatalog", name); };
         m_styleManager = std::make_unique<StyleManagerController>(std::filesystem::path(catalogDir.toStdU16String()), std::move(hooks));
     }
     {
@@ -1831,6 +1838,8 @@ void Application::refreshViews()
         spellChecker();
     reportGroupBreak();
     scheduleAutosave();
+    if (m_styleManager) // SY1: an open Style manager follows
+        m_styleManager->targetRefreshed();
     const auto target = m_workspace.editingTarget();
     const auto reference = m_workspace.reference();
     auto *targetSession = target ? m_files->session(*target) : nullptr;
@@ -1957,6 +1966,22 @@ bool Application::setVideoFonts(std::optional<application::DocumentId> document)
     if (std::ranges::equal(fonts, m_videoFonts, same))
         return false;
     m_videoFonts = fonts;
+    if (m_visualTools) {
+        // VT3: the Perspective tool does not measure a font only the renderer
+        // sees. Each lease's names are read from its bytes once.
+        decltype(m_leasedFontNames) read;
+        std::vector<std::string> names;
+        for (const auto &font : m_videoFonts) {
+            if (!font.bytes)
+                continue;
+            const auto known = std::ranges::find(m_leasedFontNames, font.bytes, &decltype(read)::value_type::first);
+            auto own = known != m_leasedFontNames.end() ? known->second : backends::fontNames(*font.bytes);
+            names.insert(names.end(), own.begin(), own.end());
+            read.emplace_back(font.bytes, std::move(own));
+        }
+        m_leasedFontNames = std::move(read);
+        m_visualTools->setLeasedFonts(names);
+    }
     m_video->session().setFonts(std::move(fonts));
     return true;
 }
@@ -5653,7 +5678,7 @@ QVariantMap Application::openSettingsDialog()
     lists.catalogs = stdList(m_styleManager->catalogs());
     lists.currentCatalog = m_styleManager->catalog().toStdString();
     if (const auto load = application::optionsCatalogToLoad(m_settings->settings(), lists)) {
-        m_styleManager->chooseCatalog(QString::fromStdString(*load));
+        m_styleManager->loadCatalog(QString::fromStdString(*load)); // not the manager's choice (SY1)
         lists.currentCatalog = *load;
     }
     lists.styles = stdList(m_styleManager->storeStyles());
@@ -5686,6 +5711,9 @@ QVariantMap Application::openSettingsDialog()
     // PK1 (#301): the questions hidden with "Don't ask again", which the
     // Editor page's Ask again empties.
     values.insert(QStringLiteral("notices.hiddenQuestions"), m_settings->list("notices.hiddenQuestions"));
+    // AD2 (#311): script dialogs' last answers, which the Automation page's
+    // Clear last answers empties.
+    values.insert(QStringLiteral("automation.dialogAnswers"), m_settings->list("automation.dialogAnswers"));
     // W2: the renderers as the choice shows them; VSFilterMod says what it
     // is for (user 2026-10-13: slow, only for its own tags).
     QStringList rendererLabels;
@@ -5785,6 +5813,13 @@ void Application::applySettings(const QVariantMap &values, bool resetAll)
         if (list != m_settings->list("notices.hiddenQuestions"))
             m_settings->setValue(QStringLiteral("notices.hiddenQuestions"), list);
     }
+    // AD2: Clear last answers, saved by OK or Apply; Repeat's record goes
+    // with them.
+    if (const auto answers = values.constFind(QStringLiteral("automation.dialogAnswers"));
+        answers != values.cend() && answers->toStringList().isEmpty() && !m_settings->list("automation.dialogAnswers").isEmpty()) {
+        m_settings->setValue(QStringLiteral("automation.dialogAnswers"), QStringList());
+        m_automation->forgetRepeat();
+    }
     // Live effects follow from settingChanged, and from OptionsDialog::SetOptions
     // for the options it acts on itself (below).
     const auto written = application::commitOptionsDialog(m_settings->settings(), m_optionsLists, fromVariant(values));
@@ -5866,6 +5901,9 @@ QVariantMap Application::resetSettings(const QVariantMap &values)
                 keep(b.sizeSetting);
         }
     refreshed.insert(QStringLiteral("notices.hiddenQuestions"), QStringList());
+    // AD2: script dialogs' answers are no option either; a Clear last
+    // answers staged before stays staged.
+    keep("automation.dialogAnswers");
     return refreshed;
 }
 
@@ -5884,7 +5922,7 @@ QVariantMap Application::resetSettingsPage(const QVariantMap &values, const QStr
     // choosing it does, so the default Style is found among them.
     if (*which == application::OptionsPage::Conversion)
         if (const auto load = application::optionsCatalogToLoad(defaults, m_optionsLists)) {
-            m_styleManager->chooseCatalog(QString::fromStdString(*load));
+            m_styleManager->loadCatalog(QString::fromStdString(*load)); // not the manager's choice (SY1)
             m_optionsLists.currentCatalog = *load;
             m_optionsLists.styles = stdList(m_styleManager->storeStyles());
         }
@@ -5917,7 +5955,11 @@ void Application::resetAllSettings()
                                        application::kAutomationHotkeysSetting, application::kHotkeysSetting,
                                        application::kAudioHotkeysSetting,
                                        // PF1: the Settings window's page shown last, no option either
-                                       "workspace.settingsPage"};
+                                       "workspace.settingsPage",
+                                       // AD2: script dialogs' answers and presets, no options
+                                       // either (Clear last answers… and ⋯ › Delete preset
+                                       // forget them)
+                                       "automation.dialogAnswers", "automation.dialogPresets"};
     const auto appearance = appearanceSettings();
     keep.insert(keep.end(), appearance.begin(), appearance.end());
     for (const std::string_view id : keep)
@@ -5974,7 +6016,7 @@ QVariantMap Application::chooseSettingsCatalog(const QVariantMap &values, int in
     auto state = fromVariant(values);
     if (index >= 0 && index < qsizetype(m_optionsLists.catalogs.size())) {
         // Options.SaveOptions(false) then LoadStyles: the current catalog is saved first.
-        m_styleManager->chooseCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
+        m_styleManager->loadCatalog(QString::fromStdString(m_optionsLists.catalogs[std::size_t(index)]));
         m_optionsLists.currentCatalog = m_optionsLists.catalogs[std::size_t(index)];
         m_optionsLists.styles = stdList(m_styleManager->storeStyles());
     }
