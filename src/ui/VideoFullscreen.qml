@@ -373,6 +373,7 @@ Window {
                         tools: fs.shell.visualTools
                         background: null
                         dialogs: fs.visible // the Video panel's bar has them otherwise
+                        settings: fs.shell.app.settings
                     }
                 }
                 Slider {

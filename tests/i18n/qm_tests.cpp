@@ -286,8 +286,10 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // parts, and the fonts added from subtitles and their open files (PU3).
         // 61 with the Style manager's rows, multi-style preview, rename, apply
         // and catalog questions and its clean-up toast (SY1).
-        // 62 with the added words window's "Remove %n word(s)" (PU6).
-        ASSERT_EQ(numerus, 62) << language.toStdString();
+        // 62 with the added words window's "Remove %n word(s)" (PU6). 65 with
+        // Edit shapes' and Edit tags' restore questions and the tags' count,
+        // "The tag takes %n value(s)" (PU5).
+        ASSERT_EQ(numerus, 65) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

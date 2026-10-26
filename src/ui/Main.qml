@@ -3199,6 +3199,7 @@ ApplicationWindow {
                     id: videoToolBar
                     Layout.fillWidth: true
                     dialogs: !videoFullscreenWindow.visible // fullscreen's bar has them then
+                    settings: root.app.settings
                     room: Math.max(0, videoPanel.bodyHeight - videoPanel.minimumBodySize.height)
                     // It wraps rather than widen the column: wider text (a
                     // translation, a larger font) or a narrow panel must not

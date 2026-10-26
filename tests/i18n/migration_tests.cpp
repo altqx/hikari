@@ -552,14 +552,16 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                 // was finished, obsolete if not (DG1 dropped the update
                 // notice's placeholder, unfinished; PK1 the mapping window's
                 // prompt and the one-at-a-time style clash question; PU1 the
-                // MKV question's title and a video's subtitles question; PU3
-                // the catalog rename's question; PU6 the incompatible
-                // resolution prompt).
+                // MKV question's title and a video's subtitles question; PU5
+                // the tag dialog's "Value %1", the values now named as the
+                // strip names them; PU3 the catalog rename's question; PU6 the
+                // incompatible resolution prompt).
                 const bool dropped = m.source == QLatin1String("You have version %1; version %2 is available") ||
                                      m.source == QLatin1String("Please enter a hotkey for \"%1\".") ||
                                      m.source == QLatin1String("Style named \"%1\" already exists. Replace?") ||
                                      m.source == QLatin1String("Load subtitles from an MKV/OGM file") ||
                                      m.source == QLatin1String("Load subtitles named \"%1\"?") ||
+                                     m.source == QLatin1String("Value %1") ||
                                      m.source == QLatin1String("Catalog named \"%1\" already exists. What to do?") ||
                                      m.source.startsWith(QLatin1String("The video and subtitle resolutions are different."));
                 EXPECT_TRUE(now->state == m.state || now->state == TsState::Vanished ||
