@@ -288,6 +288,8 @@ constexpr HotkeyAction kActions[] = {
         {"VIDEO_TOOL_HYDRA", 2032},
         // KA7: the Karaoke check window.
         {"GLOBAL_CHECK_KARAOKE", 5172},
+        // AD2: Repeat last run (AD2-repeat-last-run).
+        {"GLOBAL_AUTOMATION_REPEAT_LAST_RUN", 5173},
         // KA3: the Kanji timer window.
         {"GLOBAL_KANJI_TIMER", 5174},
 };
@@ -547,6 +549,7 @@ constexpr NameRow kNames[] = {
         {2031, "Position shifter"}, // VIDEO_TOOL_POSITION_SHIFTER
         {2032, "Hydra"}, // VIDEO_TOOL_HYDRA
         {5172, "Check karaoke"}, // GLOBAL_CHECK_KARAOKE (KA7)
+        {5173, "Repeat last run"}, // GLOBAL_AUTOMATION_REPEAT_LAST_RUN (AD2)
         {5174, "Kanji timer"}, // GLOBAL_KANJI_TIMER (KA3)
 };
 

@@ -16,6 +16,9 @@ hikari_add_gtest(hikari_application_document_scripts_tests SOURCES document_scri
 # S4-run-validation: the dependencies' validations before a macro runs.
 hikari_add_gtest(hikari_application_macro_validation_tests SOURCES macro_validation_tests.cpp
     LIBRARIES hikari_application LABELS application)
+# AD2: Repeat last run's matching, filling by name and the safe-prefill rule.
+hikari_add_gtest(hikari_application_dialog_memory_tests SOURCES dialog_memory_tests.cpp
+    LIBRARIES hikari_application LABELS application)
 hikari_add_gtest(hikari_application_automation_services_tests SOURCES automation_services_tests.cpp
     LIBRARIES hikari_application LABELS application)
 # V1: playback frames off the GUI thread

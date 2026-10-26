@@ -53,7 +53,8 @@ Rectangle {
                 Accessible.checkable: true
                 Accessible.checked: checked
                 ToolTip.visible: hovered && (modelData.tip || "").length > 0
-                ToolTip.text: modelData.tip || ""
+                // Plain, as IconToolButton's tip.
+                ToolTip.text: (modelData.tip || "").replace(/</g, "<\u2060").replace(/&lt;/g, "&\u2060lt;")
                 onClicked: {
                     if (index !== group.currentIndex)
                         group.activated(index)
@@ -81,6 +82,7 @@ Rectangle {
                 }
                 contentItem: Label {
                     id: label
+                    textFormat: Text.PlainText // a choice may name a catalog from a file
                     text: choice.text
                     font.bold: choice.checked
                     color: choice.enabled ? Theme.text : Theme.disabled

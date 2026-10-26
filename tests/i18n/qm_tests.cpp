@@ -280,9 +280,12 @@ TEST(Qm, RewriteNumerusKeysRenderTheLegacyPluralForm)
         // three questions, the autosaves, the startup offer's four and Close
         // all tabs (PU1). 42 with the import wizard's "Import %n setting(s)"
         // and "%n setting(s) imported." and the hotkeys import's three counts
-        // (PU7). 43 with the Kanji timer's "Apply the kanji timing of %n
-        // lines?" (KA3).
-        ASSERT_EQ(numerus, 43) << language.toStdString();
+        // (PU7). 46 with a macro run's lines, its template problems, the
+        // card's log and a run's line count (AD3). 56 with the font picker's
+        // counts, the catalog load's accept button, summary and its four
+        // parts, and the fonts added from subtitles and their open files (PU3).
+        // 57 with the Kanji timer's "Apply the kanji timing of %n lines?" (KA3).
+        ASSERT_EQ(numerus, 57) << language.toStdString();
         const QString ts = dir.filePath(QStringLiteral("numerus_%1.ts").arg(language));
         const QString qm = dir.filePath(QStringLiteral("numerus_%1.qm").arg(language));
         QFile file(ts);

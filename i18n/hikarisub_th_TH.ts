@@ -488,6 +488,56 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Applied. The script wrote 1 line to its log.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied. The script wrote %n lines to its log.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Applied. 1 template line has problems.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Applied. %n template lines have problems.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Cancelling…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The script has not stopped yet. Force stop ends its helper; nothing is changed.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log · 1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Log · %n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Fold the log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show the log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open in panel</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Its validation did not let it run; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -500,19 +550,23 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Hide log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Show log</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Log</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Loading a script runs its code.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Scripts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Runs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -529,6 +583,124 @@ Output device: %2</source>
     </message>
     <message>
         <source>Macros</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No macro has run yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applied</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Applied, problems named</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancelled</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Failed</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>1 line</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n lines</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>nothing logged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to fatal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Up to debug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All levels</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Levels shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Lines without a level always show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Filter</source>
+        <translation type="unfinished">ตัวกรอง</translation>
+    </message>
+    <message>
+        <source>Filter the run&apos;s log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Copy</source>
+        <translation type="unfinished">คัดลอก</translation>
+    </message>
+    <message>
+        <source>Copy the lines shown</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the lines shown…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No lines match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Nothing logged</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 min %2 s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Save the run&apos;s log</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Log files (*.log *.txt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -688,15 +860,11 @@ Output device: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Import legacy hotkeys…</source>
+        <source>Clear runs</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Automation</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Hotkeys (Hotkeys.txt)</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -759,6 +927,10 @@ Output device: %2</source>
     </message>
     <message>
         <source>The line being edited can&apos;t be committed, so the macro can&apos;t start.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its document was closed while the macro ran; nothing was changed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -857,6 +1029,42 @@ Output device: %2</source>
         <translation type="unfinished">
             <numerusform></numerusform>
         </translation>
+    </message>
+    <message>
+        <source>The script wrote more than this log keeps; the rest is not kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The rest of this message is not kept.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>fatal</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>error</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>warning</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>hint</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>debug</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>trace</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The run is no longer kept.</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -2332,7 +2540,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Manages font catalogs</source>
-        <translation>จัดการแคตตาล็อกแบบอักษร</translation>
+        <translation type="vanished">จัดการแคตตาล็อกแบบอักษร</translation>
     </message>
     <message>
         <source>Allows managing font catalogs</source>
@@ -2356,39 +2564,19 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Catalogs:</source>
-        <translation>แคตตาล็อก:</translation>
-    </message>
-    <message>
-        <source>Choose or type a catalog name</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Add a catalog with this name</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">แคตตาล็อก:</translation>
     </message>
     <message>
         <source>Edit</source>
-        <translation>แก้ไข</translation>
-    </message>
-    <message>
-        <source>Edit the catalog</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">แก้ไข</translation>
     </message>
     <message>
         <source>Delete</source>
         <translation>ลบ</translation>
     </message>
     <message>
-        <source>Delete the catalog</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>Load</source>
-        <translation>โหลด</translation>
-    </message>
-    <message>
-        <source>Load a catalog from a file</source>
-        <translation type="unfinished"></translation>
+        <translation type="vanished">โหลด</translation>
     </message>
     <message>
         <source>Refresh fonts</source>
@@ -2400,19 +2588,171 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Find:</source>
-        <translation>ค้นหา:</translation>
+        <translation type="vanished">ค้นหา:</translation>
     </message>
     <message>
         <source>Save filter</source>
-        <translation>บันทึกตัวกรอง</translation>
+        <translation type="vanished">บันทึกตัวกรอง</translation>
     </message>
     <message>
         <source>Font name</source>
-        <translation>ชื่อแบบอักษร</translation>
+        <translation type="vanished">ชื่อแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Enter a name for the catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>A catalog named “%1” already exists.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Merge adds the fonts of “%1” to it. Replace deletes the old “%2” first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace</source>
+        <translation type="unfinished">แทนที่</translation>
+    </message>
+    <message>
+        <source>Delete font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Delete the catalog “%1”?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>It holds no fonts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Its fonts stay installed and in their other catalogs.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file holds no font catalog.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 (%2)</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load font catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 of %2 catalogs in “%3” already exist.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The file’s new catalogs are added.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Those with the same fonts as yours are left as they are.</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Catalog</source>
         <translation>แคตตาล็อก</translation>
+    </message>
+    <message>
+        <source>%1 here, +%2 new</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>%1 here, %2 in the file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load 1 catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Load %n catalogs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n new</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n merged</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n replaced</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message numerus="yes">
+        <source>%n renamed</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>Loaded 1 font catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Loaded %n font catalogs</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>From %1: %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalogs</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Load from a file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Show</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>In the catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not in a catalog</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Sample</source>
@@ -2423,20 +2763,40 @@ Should not exceed 15 characters per second</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>“%1” in “%2”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Saved</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Not saved: the safety copy could not be written</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The catalogs are saved automatically to FontCatalogs.txt in the &quot;Config&quot; folder.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Catalog name</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Create</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Rename “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Fonts</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>Mark %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Catalog of %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
         <source>The catalog list has autosave; files are stored in the &quot;Config&quot; folder.</source>
-        <translation>รายการของแคตตาล็อกจะถูกบันทึกอัตโนมัติไว้ในโฟลเดอร์ &quot;Config&quot;</translation>
+        <translation type="vanished">รายการของแคตตาล็อกจะถูกบันทึกอัตโนมัติไว้ในโฟลเดอร์ &quot;Config&quot;</translation>
     </message>
     <message>
         <source>Close</source>
@@ -2444,15 +2804,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Select the name of the profile</source>
-        <translation>เลือกชื่อของโปรไฟล์</translation>
+        <translation type="vanished">เลือกชื่อของโปรไฟล์</translation>
     </message>
     <message>
         <source>Choose new catalog name</source>
-        <translation>ป้อนชื่อแคตตาล็อกใหม่</translation>
+        <translation type="vanished">ป้อนชื่อแคตตาล็อกใหม่</translation>
     </message>
     <message>
         <source>Replace with:</source>
-        <translation>แทนที่ด้วย:</translation>
+        <translation type="vanished">แทนที่ด้วย:</translation>
     </message>
     <message>
         <source>OK</source>
@@ -2468,15 +2828,15 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Enter a name for the new catalog</source>
-        <translation>โปรดป้อนชื่อของแคตตาล็อกใหม่</translation>
+        <translation type="vanished">โปรดป้อนชื่อของแคตตาล็อกใหม่</translation>
     </message>
     <message>
         <source>Prompt</source>
-        <translation>คำถาม</translation>
+        <translation type="vanished">คำถาม</translation>
     </message>
     <message>
         <source>Catalog named &quot;%1&quot; already exists. What to do?</source>
-        <translation type="unfinished">มีแคตตาล็อกชื่อ &quot;%1&quot; อยู่แล้ว ต้องการทำอย่างไร?</translation>
+        <translation type="obsolete">มีแคตตาล็อกชื่อ &quot;%1&quot; อยู่แล้ว ต้องการทำอย่างไร?</translation>
     </message>
     <message>
         <source>Merge</source>
@@ -2484,7 +2844,7 @@ Should not exceed 15 characters per second</source>
     </message>
     <message>
         <source>Are you sure you want to delete this catalog?</source>
-        <translation>แน่ใจหรือไม่ว่าต้องการลบแคตตาล็อกนี้?</translation>
+        <translation type="vanished">แน่ใจหรือไม่ว่าต้องการลบแคตตาล็อกนี้?</translation>
     </message>
     <message>
         <source>Choose font catalog file</source>
@@ -2586,11 +2946,67 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Select a font</source>
-        <translation>เลือกแบบอักษร</translation>
+        <translation type="vanished">เลือกแบบอักษร</translation>
     </message>
     <message>
         <source>Font</source>
         <translation>แบบอักษร</translation>
+    </message>
+    <message>
+        <source>Font selection</source>
+        <translation type="unfinished">เลือกแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Search fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Font catalog: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Has “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only fonts that have “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Characters filter</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add to a catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add “%1” to a catalog</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font is called “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>“%1” is installed but not in this list.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No installed font is in “%1”.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No fonts match</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Use “%1” anyway</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Size</source>
@@ -2599,6 +3015,10 @@ when demuxing fonts from an MKV file.</source>
     <message>
         <source>Font size</source>
         <translation>ขนาดอักษร</translation>
+    </message>
+    <message>
+        <source>Style</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Bold</source>
@@ -2616,20 +3036,76 @@ when demuxing fonts from an MKV file.</source>
         <source>Strikethrough</source>
         <translation>ขีดฆ่า</translation>
     </message>
-    <message>
-        <source>Filtering and font catalogs</source>
-        <translation>การกรองและแคตตาล็อกแบบอักษร</translation>
+    <message numerus="yes">
+        <source>%1 of %n fonts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>Preview</source>
-        <translation>ตัวอย่าง</translation>
+        <source>1 font</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>%n fonts</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
-        <source>AaBbCcDdEeFfGg 0123456789</source>
+        <source>Sample text</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <source>The subtitle renderer uses %1 (%2).</source>
+        <source>The line’s selected text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The line’s text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The Style editor’s sample text</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Manage catalogs…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>No catalogs yet</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>New catalog…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts from subtitles…</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Only fonts that have these characters</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Clear</source>
+        <translation type="unfinished">ล้าง</translation>
+    </message>
+    <message>
+        <source>Apply</source>
+        <translation type="unfinished">นำไปใช้</translation>
+    </message>
+    <message>
+        <source>Filtering and font catalogs</source>
+        <translation type="vanished">การกรองและแคตตาล็อกแบบอักษร</translation>
+    </message>
+    <message>
+        <source>Preview</source>
+        <translation type="vanished">ตัวอย่าง</translation>
+    </message>
+    <message>
+        <source>Drawn by the subtitle renderer with %1 (%2).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -2646,11 +3122,11 @@ when demuxing fonts from an MKV file.</source>
     </message>
     <message>
         <source>Remove all contents of catalog</source>
-        <translation>ลบเนื้อหาทั้งหมดของแคตตาล็อก</translation>
+        <translation type="vanished">ลบเนื้อหาทั้งหมดของแคตตาล็อก</translation>
     </message>
     <message>
         <source>Add fonts from all open subtitles</source>
-        <translation>เพิ่มแบบอักษรจากคำบรรยายทั้งหมดที่เปิดอยู่</translation>
+        <translation type="vanished">เพิ่มแบบอักษรจากคำบรรยายทั้งหมดที่เปิดอยู่</translation>
     </message>
     <message>
         <source>All fonts</source>
@@ -2664,7 +3140,7 @@ when demuxing fonts from an MKV file.</source>
         <source>For adding fonts to catalog,
 click &quot;Manage&quot; button first,
 to create new catalog.</source>
-        <translation>การจะเพิ่มแบบอักษรลงในแคตตาล็อก
+        <translation type="vanished">การจะเพิ่มแบบอักษรลงในแคตตาล็อก
 จะต้องคลิกปุ่ม &quot;จัดการ&quot; ก่อน
 เพื่อสร้างแคตตาล็อกใหม่</translation>
     </message>
@@ -3020,6 +3496,70 @@ Failed to copy %2 fonts.</source>
     <message>
         <source>Completed successfully and copied %1 fonts.</source>
         <translation type="unfinished">คัดลอกแบบอักษรเสร็จสิ้น %1</translation>
+    </message>
+    <message>
+        <source>Added 1 font to “%1”</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>Added %n fonts to “%1”</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The fonts were added to “%1” but could not be saved.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>FontCatalogs.txt in the &quot;Config&quot; folder could not be written. Saving is tried again on exit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the styles and %1 tags of the open files.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From the styles and %1 tags of %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Choose a catalog or type a new name.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>From</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>This file</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>All open files</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Replace the catalog’s fonts</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message numerus="yes">
+        <source>The fonts of every style and every %1 tag in all %n open files.</source>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+        </translation>
+    </message>
+    <message>
+        <source>The fonts of every style and every %1 tag in %2.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>The fonts “%1” holds now are removed first.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Add fonts</source>
+        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -4779,6 +5319,10 @@ Failed to copy %2 fonts.</source>
         <translation>โหลดสคริปต์</translation>
     </message>
     <message>
+        <source>Cancel macro</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Show &amp;panel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -5383,6 +5927,10 @@ great help testing HikariSub on a slow computer)
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Merge</source>
+        <translation type="unfinished">รวม</translation>
+    </message>
+    <message>
         <source>Action</source>
         <translation type="unfinished">การดำเนินการ</translation>
     </message>
@@ -5392,6 +5940,10 @@ great help testing HikariSub on a slow computer)
     </message>
     <message>
         <source>New name for %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Already exists</source>
         <translation type="unfinished"></translation>
     </message>
     <message>

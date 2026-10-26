@@ -534,6 +534,16 @@ icon("chevron-left", "Previous", [], ["date-picker"], stroke("M9.5 4.5L6 8l3.5 3
 icon("chevron-right", "Next", [], ["date-picker", "dialogs"], stroke("M6.5 4.5L10 8l-3.5 3.5"), mirror=True)
 icon("chevron-down", "Expanded", [], ["dialogs"], stroke("M4.5 6.5L8 10l3.5-3.5"))
 
+# AD3 (#312): a macro run, on the progress card and in the Automation panel's
+# Runs: running (the ring turns; its accent quarter leads), applied,
+# cancelled. A failed run takes notice-error, problems notice-warning.
+icon("run-busy", "Running", [], ["automation", "notices"],
+     stroke("M8 1.5a6.5 6.5 0 1 0 6.5 6.5") + accent(stroke("M8 1.5a6.5 6.5 0 0 1 6.5 6.5")))
+icon("run-applied", "Applied", [], ["automation", "notices"],
+     circle(8, 8, 6.5) + accent(stroke("M5 8.25l2 2 4-4.5")))
+icon("run-cancelled", "Cancelled", [], ["automation", "notices", AUTO],
+     circle(8, 8, 6.5) + accent(stroke("M4.5 11.5L11.5 4.5")))
+
 # Layouts (WS3 #217: the layout switcher and View > Layout, which replace
 # legacy's View arrangements; their icons were retired with them). The cut
 # window and the refresh badge are IC1's (#226) for the same commands.
@@ -856,6 +866,10 @@ icon("session-save", "Save session to file", [], [FILE],
 # Automation menu
 icon("rerun-macro", "Rerun last macro", [], [AUTO],
      SCRIPT_CUT + REFRESH_BADGE)
+# AD2: Repeat last run, the script page with a repeat loop.
+icon("repeat-run", "Repeat last run", [], [AUTO, AUTOPANEL],
+     SCRIPT_CUT + accent(stroke("M9.5 11.5v-.5A1.5 1.5 0 0 1 11 9.5h3.5"), stroke("M13.5 8.5l1 1-1 1"),
+                         stroke("M14.5 12.5v.5A1.5 1.5 0 0 1 13 14.5H9.5"), stroke("M10.5 13.5l-1 1 1 1")))
 icon("automation-manager", "Show panel", [], [AUTO],
      stroke("M4.5 3.5v-2h6l3 3v8h-2") + stroke("M10.5 14.5h-9v-10h6l3 3z")
      + accent(stroke("M5 9L3.75 10.25 5 11.5M7 9l1.25 1.25L7 11.5")))
