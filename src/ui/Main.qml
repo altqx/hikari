@@ -351,10 +351,11 @@ ApplicationWindow {
                                   Qt.size(0, root.workspaceLayout.panelSize(audioDock).height))
         templateDock.open()
         templateDock.raise()
-        // The Grid keeps its heading and six rows, the rest goes to the upper row.
+        // The Grid gets its heading and seven rows; Audio, above it, gives or
+        // takes the difference.
         const lower = root.workspaceLayout.panelSize(gridDock).height
-        const short = Math.ceil(lower - grid.height + grid.rowHeight * 7)
-        if (lower > short)
+        const short = Math.ceil(lower - grid.height + grid.rowHeight * 8)
+        if (short !== lower)
             Docking.resizeInLayout("Grid", 0, short - lower, 0, 0)
     }
     Connections {

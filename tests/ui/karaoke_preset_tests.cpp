@@ -184,11 +184,11 @@ class KaraokePresetTest : public QObject {
         QVERIFY2(qAbs(audio.left() - grid.left()) < 2 && qAbs(audio.right() - grid.right()) < 2, where());
         QVERIFY2(audio.left() < video.left() + 2 && audio.right() > templates.right() - 2, where());
         QVERIFY2(grid.top() > audio.bottom() - 1, where());
-        // The upper row the tallest; the Grid short: its heading and six rows.
+        // The upper row the tallest; the Grid short: its heading and seven rows.
         const double rowHeight = this->grid()->property("rowHeight").toDouble();
         QVERIFY2(video.height() > audio.height() && video.height() > grid.height(), where());
-        QVERIFY2(this->grid()->height() < rowHeight * 8 + 1, where());
-        QVERIFY2(this->grid()->height() > rowHeight * 4, where());
+        QVERIFY2(this->grid()->height() < rowHeight * 9 + 1, where());
+        QVERIFY2(this->grid()->height() > rowHeight * 6, where());
     }
     static QString rectText(const QRectF &r)
     {
