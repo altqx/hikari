@@ -554,7 +554,8 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                 // prompt and the one-at-a-time style clash question; PU1 the
                 // MKV question's title and a video's subtitles question; PU5
                 // the tag dialog's "Value %1", the values now named as the
-                // strip names them; PU3 the catalog rename's question; PU6 the
+                // strip names them; PU3 the catalog rename's question; PU4 the
+                // start-only or end-only Shift times question; PU6 the
                 // incompatible resolution prompt).
                 const bool dropped = m.source == QLatin1String("You have version %1; version %2 is available") ||
                                      m.source == QLatin1String("Please enter a hotkey for \"%1\".") ||
@@ -563,6 +564,7 @@ TEST(CheckedIn, ConversionReproducesTheCatalogs)
                                      m.source == QLatin1String("Load subtitles named \"%1\"?") ||
                                      m.source == QLatin1String("Value %1") ||
                                      m.source == QLatin1String("Catalog named \"%1\" already exists. What to do?") ||
+                                     m.source == QLatin1String("Do you really want to shift only %1 times?") ||
                                      m.source.startsWith(QLatin1String("The video and subtitle resolutions are different."));
                 EXPECT_TRUE(now->state == m.state || now->state == TsState::Vanished ||
                             (dropped && m.state == TsState::Unfinished && now->state == TsState::Obsolete))

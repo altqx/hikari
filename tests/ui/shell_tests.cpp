@@ -2700,31 +2700,74 @@ private slots:
         QTRY_COMPARE(texts(), (QStringList{"middle", "early", "late"}));
     }
 
+    // GRID_SET_NEW_FPS (legacy FPSDialog). PU4-set-new-fps: a compact
+    // window on DG1's frame made at its first opening, titled with the
+    // command, at legacy's 23.976 and 25, saying what the change does; a
+    // field that is no frame rate is said under it with Change FPS off.
     void fpsWindowScalesEveryTime()
     {
         const QString path = writeFile(dir, "g11.ass", "Dialogue: 0,0:00:10.00,0:00:20.00,Default,,0,0,0,,x\n");
         QVERIFY(application->openFile(path));
         auto *session = application->files().session(*application->workspace().editingTarget());
         auto *root = engine->rootObjects().first();
+        QVERIFY(!root->findChild<QQuickWindow *>(QStringLiteral("fpsWindow")));
+        QVERIFY(QMetaObject::invokeMethod(root, "openSetNewFps"));
         auto *fps = root->findChild<QQuickWindow *>(QStringLiteral("fpsWindow"));
         QVERIFY(fps);
-        fps->show();
-        auto *oldFps = fps->findChild<QObject *>(QStringLiteral("oldFps"));
-        auto *newFps = fps->findChild<QObject *>(QStringLiteral("newFps"));
-        QVERIFY(oldFps && newFps);
+        QTRY_VERIFY(fps->isVisible());
+        QCOMPARE(fps->title(), QStringLiteral("Set new FPS"));
+        QCOMPARE(fps->transientParent(), window);
+        auto *oldFps = dialogItem("fpsWindow", "oldFps");
+        auto *newFps = dialogItem("fpsWindow", "newFps");
+        auto *ok = dialogItem("fpsWindow", "fpsOk");
+        QVERIFY(oldFps && newFps && ok);
+        QCOMPARE(oldFps->property("editText").toString(), QStringLiteral("23.976"));
+        QCOMPARE(newFps->property("editText").toString(), QStringLiteral("25"));
+        QCOMPARE(ok->property("text").toString(), QStringLiteral("Change FPS"));
+        QCOMPARE(dialogItem("fpsWindow", "fpsScale")->property("text").toString(),
+                 QStringLiteral("Every start and end time × 0.959"));
         oldFps->setProperty("editText", QStringLiteral("25"));
         newFps->setProperty("editText", QStringLiteral("50"));
-        QVERIFY(QMetaObject::invokeMethod(fps->findChild<QObject *>(QStringLiteral("fpsOk")), "clicked"));
+        QCOMPARE(dialogItem("fpsWindow", "fpsScale")->property("text").toString(),
+                 QStringLiteral("Every start and end time × 0.500"));
+        QVERIFY(QMetaObject::invokeMethod(ok, "click"));
         QTRY_COMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
         QCOMPARE(session->document().lines()[0]->end.value.microseconds(), 10'000'000);
-        QVERIFY(!fps->isVisible());
-        // Text that is not a number keeps the window open and changes nothing.
-        fps->show();
-        newFps->setProperty("editText", QStringLiteral("."));
-        QVERIFY(QMetaObject::invokeMethod(fps->findChild<QObject *>(QStringLiteral("fpsOk")), "clicked"));
+        QTRY_VERIFY(!fps->isVisible());
+        // Text that is not a frame rate: said under its field, Change FPS
+        // off, Enter changes nothing; it opens again at legacy's values.
+        QVERIFY(QMetaObject::invokeMethod(root, "openSetNewFps"));
+        QTRY_VERIFY(fps->isVisible());
+        QCOMPARE(newFps->property("editText").toString(), QStringLiteral("25"));
+        for (const char *text : {".", "", "0", "0.0"}) {
+            newFps->setProperty("editText", QLatin1String(text));
+            QVERIFY2(dialogItem("fpsWindow", "newFpsProblem")->isVisible(), text);
+            QVERIFY2(!dialogItem("fpsWindow", "fpsScale")->isVisible(), text);
+            QVERIFY2(!ok->isEnabled(), text);
+        }
+        QCOMPARE(dialogItem("fpsWindow", "newFpsProblem")->property("text").toString(),
+                 QStringLiteral("Type a frame rate, such as 25."));
+        QTest::keyClick(fps, Qt::Key_Return);
         QVERIFY(fps->isVisible());
         QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
-        fps->close();
+        newFps->setProperty("editText", QStringLiteral(".5"));
+        QVERIFY(ok->isEnabled());
+        oldFps->setProperty("editText", QStringLiteral("."));
+        QVERIFY(dialogItem("fpsWindow", "oldFpsProblem")->isVisible());
+        QVERIFY(!ok->isEnabled());
+        QTest::keyClick(fps, Qt::Key_Escape);
+        QTRY_VERIFY(!fps->isVisible());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
+        // Another editing target while it shows (from the fullscreen video
+        // window the main window stays in use): it closes, scaling nothing,
+        // and Change FPS never scales a document it did not open for.
+        QVERIFY(QMetaObject::invokeMethod(root, "openSetNewFps"));
+        QTRY_VERIFY(fps->isVisible());
+        application->addPage();
+        QTRY_VERIFY(!fps->isVisible());
+        QCOMPARE(session->document().lines()[0]->start.value.microseconds(), 5'000'000);
+        application->selectTab(0);
+        QTRY_COMPARE(application->files().session(*application->workspace().editingTarget()), session);
     }
 
     // NT1 (#302): the toast of the notice whose text contains `text`.
@@ -2766,6 +2809,12 @@ private slots:
     {
         QObject *found = named(host);
         return found ? qvariant_cast<QQuickWindow *>(found->property("box")) : nullptr;
+    }
+    // PU4: an item of the application's message box (NT1's "messages").
+    QQuickItem *messageBoxItem(const char *name) const
+    {
+        QQuickWindow *box = messageBox("messages");
+        return box ? findItem(box->contentItem(), QLatin1String(name)) : nullptr;
     }
     // NT1: the message box of `host` shows `text` under `title`; OK closes it.
     void answerMessage(const char *host, const QString &title, const QString &text, const QString &choice = QStringLiteral("ok"))
@@ -6185,9 +6234,11 @@ private slots:
         }
         QStringList found;
         QStringList problems;
+        int scanned = 0;
         QDirIterator it(QStringLiteral(HIKARI_UI_SOURCE_DIR), {QStringLiteral("*.qml")}, QDir::Files);
         while (it.hasNext()) {
             const QString path = it.next();
+            ++scanned;
             const QString name = QFileInfo(path).fileName();
             QFile file(path);
             QVERIFY(file.open(QIODevice::ReadOnly));
@@ -6207,7 +6258,9 @@ private slots:
         for (const QString &entry : std::as_const(listed))
             if (!found.contains(entry))
                 problems << QStringLiteral("%1: listed in in_window_popups.txt but gone; take it off the list").arg(entry);
-        QVERIFY(found.size() > 1);
+        // PU4 and PU5 took the last popups off the list, so none may be
+        // found; the scan must still have read the UI's QML.
+        QVERIFY(scanned > 100);
         if (!problems.isEmpty())
             QFAIL(qPrintable(problems.join(QLatin1Char('\n'))));
     }
@@ -11165,7 +11218,7 @@ private slots:
             {"keyframesDialog", QStringLiteral("Choose keyframes file")},
             {"fontsFolderDialog", QStringLiteral("Choose external font folder")},
             {"findFolderDialog", QStringLiteral("Choose subtitle search folder")},
-            {"aspectRatioDialog", QStringLiteral("Change aspect ratio")},
+            {"aspectRatioPopover", QStringLiteral("Change aspect ratio")},
         };
         for (const auto &[name, title] : titles) {
             QObject *popup = find(name);
@@ -11246,7 +11299,11 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(settings, "close"));
         for (const char *name : {"mkvProgress", "aspectRatioDialog"}) {
             QObject *popup = find(name);
-            QVERIFY(QMetaObject::invokeMethod(popup, qstrcmp(name, "aspectRatioDialog") == 0 ? "openAtCursor" : "open"));
+            if (qstrcmp(name, "aspectRatioDialog") == 0)
+                QVERIFY(QMetaObject::invokeMethod(popup, "openAtCursor",
+                                                  Q_ARG(QVariant, QVariant::fromValue<QObject *>(window->contentItem()))));
+            else
+                QVERIFY(QMetaObject::invokeMethod(popup, "open"));
             QTRY_VERIFY2(popup->property("opened").toBool(), name);
             save(name, windowOf(popup), false);
             QVERIFY(QMetaObject::invokeMethod(popup, "close"));
@@ -12391,18 +12448,68 @@ private slots:
         };
         QCOMPARE(ms(0, true), 2500);
         QCOMPARE(ms(1, false), 5500);
-        // Start times only: confirmed first.
+        // Start times only: confirmed first, in PK1's message box
+        // (PU4-shift-question): titled with the command, a warning, Shift
+        // start times the default; Cancel shifts nothing.
         auto settings = application->shiftTimesSettings().settingsMap();
         settings.insert(QStringLiteral("whichTimes"), 1);
         application->shiftTimesSettings().setSettingsMap(settings);
         const auto steps = session->historySize();
         QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
-        auto *confirm = root->findChild<QObject *>(QStringLiteral("shiftConfirm"));
+        QObject *confirm = nullptr;
+        QTRY_VERIFY((confirm = messageBox("messages")) && confirm->property("visible").toBool());
+        QCOMPARE(confirm->property("title").toString(), QStringLiteral("Shift times"));
+        QCOMPARE(confirm->property("text").toString(), QStringLiteral("Shift only the start times?"));
+        QCOMPARE(confirm->property("severity").toString(), QStringLiteral("warning"));
+        QCOMPARE(confirm->property("defaultButton").value<QObject *>()->property("text").toString(),
+                 QStringLiteral("Shift start times"));
+        QVERIFY(confirm->property("offerDontAsk").toBool());
+        QVERIFY(QMetaObject::invokeMethod(confirm, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!confirm->property("visible").toBool());
+        QCOMPARE(session->historySize(), steps);
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
         QTRY_VERIFY(confirm->property("visible").toBool());
-        QVERIFY(QMetaObject::invokeMethod(confirm, "accept"));
+        QVERIFY(QMetaObject::invokeMethod(confirm, "answer", Q_ARG(QVariant, QStringLiteral("shift"))));
         QTRY_COMPARE(session->historySize(), steps + 1);
         QCOMPARE(ms(0, true), 4000);
         QCOMPARE(ms(0, false), 3500); // the end stayed
+        // End times only says so; "Don't ask again" with the shift hides the
+        // question (notices.hiddenQuestions), and the next shift asks nothing.
+        settings.insert(QStringLiteral("whichTimes"), 2);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_VERIFY(confirm->property("visible").toBool());
+        QCOMPARE(confirm->property("text").toString(), QStringLiteral("Shift only the end times?"));
+        QCOMPARE(confirm->property("defaultButton").value<QObject *>()->property("text").toString(),
+                 QStringLiteral("Shift end times"));
+        messageBoxItem("messageBoxDontAsk")->setProperty("checked", true);
+        QVERIFY(QMetaObject::invokeMethod(confirm, "answer", Q_ARG(QVariant, QStringLiteral("shift"))));
+        QTRY_COMPARE(session->historySize(), steps + 2);
+        QCOMPARE(application->settingsStore()->list("notices.hiddenQuestions"), QStringList{QStringLiteral("shiftOneTime")});
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_COMPARE(session->historySize(), steps + 3);
+        QVERIFY(!confirm->property("visible").toBool());
+        application->settingsStore()->set("notices.hiddenQuestions", QStringList());
+        settings.insert(QStringLiteral("whichTimes"), 1);
+        application->shiftTimesSettings().setSettingsMap(settings);
+        // Another editing target while the question shows (the main window
+        // stays in use under the fullscreen window's): the question is taken
+        // back and nothing is shifted, there or here.
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QTRY_VERIFY(confirm->property("visible").toBool());
+        // asked again meanwhile: every one waiting is taken back
+        QVERIFY(QMetaObject::invokeMethod(item("shiftApply"), "click"));
+        QCOMPARE(named("messages")->property("queue").toList().size(), 1);
+        application->addPage();
+        QTRY_VERIFY(!confirm->property("visible").toBool());
+        QCOMPARE(named("messages")->property("queue").toList().size(), 0);
+        QTest::qWait(50); // a queued question would show next
+        QVERIFY(!confirm->property("visible").toBool());
+        QCOMPARE(named("shiftQuestion")->property("pending").toList().size(), 0);
+        QCOMPARE(session->historySize(), steps + 3);
+        QCOMPARE(application->files().session(*application->workspace().editingTarget())->historySize(), 1); // its opening state
+        application->selectTab(0);
+        QTRY_COMPARE(application->files().session(*application->workspace().editingTarget()), session);
         // A profile keeps the settings by name.
         application->shiftTimesSettings().saveProfile(QStringLiteral("Start only"));
         settings.insert(QStringLiteral("whichTimes"), 0);
@@ -12867,6 +12974,8 @@ private slots:
             {{"fontPickerOk", Accept}, {"fontPickerCancel", Reject}}, // PU3
             {{"fontCatalogClose", Reject}},
             {{"fontsFromSubtitlesOk", Accept}, {"fontsFromSubtitlesCancel", Reject}},
+            {{"dummyVideoOpen", Accept}, {"dummyVideoCancel", Reject}}, // PU4
+            {{"aspectRatioWindowOk", Accept}, {"aspectRatioWindowCancel", Reject}}, // PU4: Reset at the leading edge
         };
         // The Automation panel's Reassign question has no items until it opens.
         QVERIFY(QMetaObject::invokeMethod(root, "showPanel", Q_ARG(QVariant, QVariant::fromValue(item<QObject>("automationDock")))));
@@ -12889,6 +12998,14 @@ private slots:
                                           Q_ARG(QVariant, QVariant())));
         auto *clashes = qobject_cast<QWindow *>(named("styleClashReview"));
         QVERIFY(clashes);
+        // PU4's windows are made at their first opening too.
+        QVERIFY(QMetaObject::invokeMethod(root, "openSetNewFps"));
+        QVERIFY(QMetaObject::invokeMethod(root, "openDummyVideo"));
+        QVERIFY(QMetaObject::invokeMethod(named("aspectRatioDialog"), "openWindow", Q_ARG(QVariant, QVariant())));
+        auto *fpsWindow = qobject_cast<QWindow *>(named("fpsWindow"));
+        auto *dummyWindow = qobject_cast<QWindow *>(named("dummyVideoDialog"));
+        auto *aspectWindow = named("aspectRatioDialog")->property("compactWindow").value<QWindow *>();
+        QVERIFY(fpsWindow && dummyWindow && aspectWindow);
         // PU6's windows too.
         QVERIFY(QMetaObject::invokeMethod(root, "openConversion", Q_ARG(QVariant, QStringLiteral("srt")),
                                           Q_ARG(QVariant, QStringLiteral("Convert to SRT"))));
@@ -12939,6 +13056,10 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(chooser, "none", Q_ARG(QVariant, QVariant())));
         clashes->close();
         QTRY_VERIFY(!clashes->isVisible());
+        for (QWindow *pu4 : {fpsWindow, dummyWindow, aspectWindow}) {
+            pu4->close();
+            QTRY_VERIFY(!pu4->isVisible());
+        }
         for (const char *name : pu6Windows) {
             auto *pu6 = pu6Window(name);
             pu6->close();
@@ -31014,14 +31135,21 @@ private slots:
         auto &audio = application->audio();
         audio.openAudio(QStringLiteral(HIKARI_MEDIA_FIXTURES "/audioonly.mkv"));
         QTRY_VERIFY_WITH_TIMEOUT(audio.ready(), 20000);
-        auto *dialog = named("dummyVideoDialog");
-        QVERIFY(dialog);
+        // PU4-dummy-video: a window on DG1's frame, made at its first opening.
+        QVERIFY(!named("dummyVideoDialog"));
         auto *action = named("dummyVideoMenuItem")->property("action").value<QObject *>();
         QVERIFY(action);
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
+        auto *dialog = qobject_cast<QQuickWindow *>(named("dummyVideoDialog"));
+        QVERIFY(dialog);
         QTRY_VERIFY(dialog->property("opened").toBool());
+        QCOMPARE(dialog->title(), QStringLiteral("Open dummy video"));
+        QCOMPARE(dialog->transientParent(), window);
+        QCOMPARE(dialog->property("defaultButton").value<QObject *>()->property("text").toString(), QStringLiteral("Open"));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
                  QStringLiteral("This gives 35964 frames"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("displayText").toString(),
+                 QStringLiteral("1920x1080 (HD 1080p)"));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyFps")->property("editText").toString(), QStringLiteral("23.976"));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 1920);
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyHeight")->property("value").toInt(), 1080);
@@ -31045,9 +31173,13 @@ private slots:
         QVERIFY(!dialogItem("dummyColourPopover", "alpha")->isVisible());
         QVERIFY(QMetaObject::invokeMethod(dummyPopover, "setRgb", Q_ARG(QVariant, 255), Q_ARG(QVariant, 0), Q_ARG(QVariant, 0)));
         QTRY_COMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&H0000FF&"));
-        QTest::keyClick(window, Qt::Key_Escape);
+        QTest::keyClick(dialog, Qt::Key_Escape); // the popover's, not the window's
         QTRY_VERIFY(!dummyPopover->property("visible").toBool());
         QVERIFY(dialog->property("visible").toBool());
+        // The offscreen platform leaves the popover's window active once it
+        // hides; a window system gives the dialog the keyboard back.
+        dialog->requestActivate();
+        QTRY_VERIFY(dialog->isActive());
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyColour")->property("text").toString(), QStringLiteral("&HFEA32F&"));
         // a preset fills the size (OnResolutionChoose)
         auto *resolution = dialogItem("dummyVideoDialog", "dummyResolution");
@@ -31055,13 +31187,47 @@ private slots:
         QVERIFY(QMetaObject::invokeMethod(resolution, "activated", Q_ARG(int, 0)));
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyWidth")->property("value").toInt(), 640);
         QCOMPARE(dialogItem("dummyVideoDialog", "dummyHeight")->property("value").toInt(), 480);
-        // a refused rate: logged, nothing opens
+        // a size that is no preset: Custom (PU4-dummy-video)
+        dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 1000);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("currentIndex").toInt(), -1);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("displayText").toString(), QStringLiteral("Custom"));
+        dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 640);
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyResolution")->property("currentIndex").toInt(), 0);
+        // the frame count follows the rate and the duration as they are typed
+        // (legacy: the defaults' once)
+        dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("25"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
+                 QStringLiteral("This gives 37500 frames"));
+        dialogItem("dummyVideoDialog", "dummyDuration")->setProperty("text", QStringLiteral("0:01:00.00"));
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
+                 QStringLiteral("This gives 1500 frames"));
+        // a refused rate or an unreadable duration: said under the field, the
+        // count hidden and Open off (legacy's "Invalid FPS value." after OK)
+        auto *openButton = dialogItem("dummyVideoDialog", "dummyVideoOpen");
+        QVERIFY(openButton->isEnabled());
+        // typed in its field (Enter there presses the default button)
+        dialogItem("dummyVideoDialog", "dummyFps")->forceActiveFocus(Qt::TabFocusReason);
         dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("10"));
-        QVERIFY(QMetaObject::invokeMethod(dialog, "accept"));
-        QCOMPARE(application->log().lastMessage(), QStringLiteral("Invalid FPS value."));
+        QVERIFY(dialogItem("dummyVideoDialog", "dummyFpsProblem")->isVisible());
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFpsProblem")->property("text").toString(),
+                 QStringLiteral("Must be from 15 to 120."));
+        QVERIFY(!dialogItem("dummyVideoDialog", "dummyFrames")->isVisible());
+        QVERIFY(!openButton->isEnabled());
+        QTest::keyClick(dialog, Qt::Key_Return); // Enter presses no button that is off
+        QVERIFY(dialog->isVisible());
         QVERIFY(!application->video().loaded());
+        dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("120"));
+        QVERIFY(openButton->isEnabled());
+        dialogItem("dummyVideoDialog", "dummyDuration")->setProperty("text", QStringLiteral("25 minutes"));
+        QVERIFY(dialogItem("dummyVideoDialog", "dummyDurationProblem")->isVisible());
+        QVERIFY(!openButton->isEnabled());
+        // Esc closes it; it opens again at the defaults
+        QTest::keyClick(dialog, Qt::Key_Escape);
+        QTRY_VERIFY(!dialog->isVisible());
         QVERIFY(QMetaObject::invokeMethod(action, "trigger"));
         QTRY_VERIFY(dialog->property("opened").toBool());
+        QCOMPARE(dialogItem("dummyVideoDialog", "dummyFrames")->property("text").toString(),
+                 QStringLiteral("This gives 35964 frames"));
         dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("25"));
         dialogItem("dummyVideoDialog", "dummyDuration")->setProperty("text", QStringLiteral("0:00:02.00"));
         dialogItem("dummyVideoDialog", "dummyWidth")->setProperty("value", 320);
@@ -31120,6 +31286,171 @@ private slots:
     // next video in natural name order opens (V3-next-file-natural-order;
     // other files skipped); past the last one the video goes back to its
     // start and play toggles.
+    // PU4 (#306) screenshots for review (HIKARI_SURFACE_SHOT_DIR; skipped
+    // without it), in the four themes (pu4-<popup>-<theme>.png): Open dummy
+    // video and Set new FPS, each also with a value refused under its field,
+    // Change aspect ratio as the popover over the main window and as the
+    // hotkey's window, and the next file and Shift times questions.
+    void popupScreenshotsPu4()
+    {
+        const QString out = qEnvironmentVariable("HIKARI_SURFACE_SHOT_DIR");
+        if (out.isEmpty())
+            QSKIP("HIKARI_SURFACE_SHOT_DIR is not set");
+        QVERIFY(QDir().mkpath(out));
+        restartWithoutSound();
+        QTemporaryDir &own = testFolder();
+        QVERIFY(own.isValid());
+        for (const char *name : {"Frieren - 26 [1080p].mkv", "Frieren - 27 [1080p].mkv"})
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(QLatin1String(name))));
+        auto &settings = *application->settingsStore();
+        auto *root = engine->rootObjects().first();
+        settings.setValue(QStringLiteral("appearance.followSystem"), false);
+        auto restore = qScopeGuard([&] {
+            settings.setValue(QStringLiteral("appearance.theme"), QStringLiteral("light"));
+            auto map = application->shiftTimesSettings().settingsMap();
+            map.insert(QStringLiteral("whichTimes"), 0);
+            application->shiftTimesSettings().setSettingsMap(map);
+        });
+        const auto save = [&](QQuickWindow *w, const QString &name) {
+            QVERIFY(QTest::qWaitForWindowExposed(w));
+            QTest::qWait(300);
+            QVERIFY(w->grabWindow().save(out + QStringLiteral("/pu4-") + name + QStringLiteral(".png")));
+        };
+        window->resize(1280, 800);
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        video.openVideo(own.filePath(QStringLiteral("Frieren - 26 [1080p].mkv")));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        // The fixture's 320 × 240 against the script's 1280 × 720: not this card's.
+        auto *mismatch = named("mismatchDialog");
+        QTRY_VERIFY(mismatch->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(mismatch, "reject"));
+        QTRY_VERIFY(!mismatch->property("visible").toBool());
+        auto map = application->shiftTimesSettings().settingsMap();
+        map.insert(QStringLiteral("whichTimes"), 1);
+        application->shiftTimesSettings().setSettingsMap(map);
+        auto *aspect = named("aspectRatioDialog");
+        auto *overlay = item("visualOverlay");
+        QVERIFY(aspect && overlay);
+        for (const QString &code : {QStringLiteral("light"), QStringLiteral("dark"), QStringLiteral("highContrastWhite"),
+                                    QStringLiteral("highContrastBlack")}) {
+            settings.setValue(QStringLiteral("appearance.theme"), code);
+            auto *controls = root->property("palette").value<QObject *>();
+            QTRY_COMPARE(controls->property("window").value<QColor>(), ui::theme::current().roles.panel);
+            // Open dummy video, then a rate it refuses.
+            QVERIFY(QMetaObject::invokeMethod(root, "openDummyVideo"));
+            QQuickWindow *dummy = nullptr;
+            QTRY_VERIFY((dummy = qobject_cast<QQuickWindow *>(named("dummyVideoDialog"))) && dummy->isVisible());
+            save(dummy, QStringLiteral("dummy-video-") + code);
+            dialogItem("dummyVideoDialog", "dummyFps")->setProperty("editText", QStringLiteral("12"));
+            save(dummy, QStringLiteral("dummy-video-refused-") + code);
+            QVERIFY(QMetaObject::invokeMethod(dummy, "reject"));
+            QTRY_VERIFY(!dummy->isVisible());
+            // Set new FPS, then a field that is no frame rate.
+            QVERIFY(QMetaObject::invokeMethod(root, "openSetNewFps"));
+            QQuickWindow *fps = nullptr;
+            QTRY_VERIFY((fps = root->findChild<QQuickWindow *>(QStringLiteral("fpsWindow"))) && fps->isVisible());
+            save(fps, QStringLiteral("set-new-fps-") + code);
+            dialogItem("fpsWindow", "newFps")->setProperty("editText", QStringLiteral("."));
+            save(fps, QStringLiteral("set-new-fps-refused-") + code);
+            QVERIFY(QMetaObject::invokeMethod(fps, "reject"));
+            QTRY_VERIFY(!fps->isVisible());
+            // Change aspect ratio: the context menu's popover at the
+            // pointer, then the hotkey's window.
+            const QPoint at = overlay->mapToScene(QPointF(overlay->width() / 3, overlay->height() / 3)).toPoint();
+            QTest::mouseMove(window, at);
+            QCursor::setPos(window->screen(), window->mapToGlobal(at));
+            QVERIFY(QMetaObject::invokeMethod(aspect, "openAtCursor", Q_ARG(QVariant, QVariant::fromValue<QObject *>(overlay))));
+            QTRY_VERIFY(named("aspectRatioPopover")->property("opened").toBool());
+            save(window, QStringLiteral("aspect-popover-") + code);
+            QTest::keyClick(window, Qt::Key_Escape);
+            QTRY_VERIFY(!named("aspectRatioPopover")->property("visible").toBool());
+            QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+            QQuickWindow *compact = nullptr;
+            QTRY_VERIFY((compact = aspect->property("compactWindow").value<QQuickWindow *>()) && compact->isVisible());
+            save(compact, QStringLiteral("aspect-window-") + code);
+            QVERIFY(QMetaObject::invokeMethod(compact, "reject"));
+            QTRY_VERIFY(!compact->isVisible());
+            // The next file question, naming the file it opens.
+            QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+            QQuickWindow *box = nullptr;
+            QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+            save(box, QStringLiteral("next-file-") + code);
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!box->isVisible());
+            // Shift times with the start times only.
+            QVERIFY(QMetaObject::invokeMethod(root, "runShiftTimes"));
+            QTRY_VERIFY(box->isVisible());
+            save(box, QStringLiteral("shift-times-") + code);
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+            QTRY_VERIFY(!box->isVisible());
+        }
+    }
+
+    // PU4: a queued question whose window to open over closed while it
+    // waited (the fullscreen video window left) opens over the window with
+    // the keyboard.
+    void queuedQuestionOpensOverAShownWindow()
+    {
+        auto *messages = named("messages");
+        QQuickWindow gone; // never shown
+        const QVariantList ok{QVariantMap{{QStringLiteral("id"), QStringLiteral("ok")}, {QStringLiteral("text"), QStringLiteral("OK")},
+                                          {QStringLiteral("role"), QStringLiteral("accept")}, {QStringLiteral("isDefault"), true}}};
+        const QVariantMap first{{QStringLiteral("title"), QStringLiteral("First")}, {QStringLiteral("choices"), ok}};
+        const QVariantMap second{{QStringLiteral("title"), QStringLiteral("Second")}, {QStringLiteral("choices"), ok},
+                                 {QStringLiteral("from"), QVariant::fromValue<QObject *>(&gone)}};
+        QVERIFY(QMetaObject::invokeMethod(messages, "ask", Q_ARG(QVariant, first), Q_ARG(QVariant, QVariant())));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(messages, "ask", Q_ARG(QVariant, second), Q_ARG(QVariant, QVariant())));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("ok"))));
+        QTRY_VERIFY(box->isVisible() && box->property("title").toString() == QStringLiteral("Second"));
+        QCOMPARE(box->transientParent(), window);
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("ok"))));
+        QTRY_VERIFY(!box->isVisible());
+    }
+
+    // PU4: a file's name in the message box is text, never markup (Codex
+    // security review: an <img> name would fetch its URL as the box opens).
+    void fileQuestionShowsAMarkupNameAsText()
+    {
+        for (const char *name : {"messageBoxText", "messageBoxDetail"}) {
+            auto *messages = named("messages");
+            const QVariantMap any{{QStringLiteral("title"), QStringLiteral("t")}, {QStringLiteral("text"), QStringLiteral("x")},
+                                  {QStringLiteral("detail"), QStringLiteral("y")}};
+            QVERIFY(QMetaObject::invokeMethod(messages, "ask", Q_ARG(QVariant, any), Q_ARG(QVariant, QVariant())));
+            QQuickWindow *box = nullptr;
+            QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+            QCOMPARE(messageBoxItem(name)->property("textFormat").toInt(), int(Qt::PlainText));
+            QCOMPARE(findItem(box->contentItem(), QStringLiteral("dialogTitleBarTitle"))->property("textFormat").toInt(), int(Qt::PlainText));
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("ok"))));
+            QTRY_VERIFY(!box->isVisible());
+        }
+#ifdef Q_OS_WIN
+        QSKIP("Windows file names cannot hold < or >");
+#else
+        restartWithoutSound();
+        QTemporaryDir &own = testFolder();
+        QVERIFY(own.isValid());
+        // (no "/" in a file name: the URL's are entities, as an attacker's would be)
+        const QString markup = QStringLiteral("<img src=\"http:&#47;&#47;127.0.0.1:9&#47;x\">.mkv");
+        for (const QString &name : {QStringLiteral("0.mkv"), markup}) // "0" before "<"
+            QVERIFY(QFile::copy(QStringLiteral(HIKARI_MEDIA_FIXTURES "/cfr.mkv"), own.filePath(name)));
+        QVERIFY(application->openFile(episode));
+        auto &video = application->video();
+        video.openVideo(own.filePath(QStringLiteral("0.mkv")));
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QQuickWindow *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->isVisible());
+        auto *detail = messageBoxItem("messageBoxDetail");
+        QCOMPARE(detail->property("text").toString(), markup);
+        QCOMPARE(detail->property("textFormat").toInt(), int(Qt::PlainText));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->isVisible());
+#endif
+    }
+
     void nextFileWalksTheVideosFolder()
     {
         restartWithoutSound();
@@ -31136,29 +31467,42 @@ private slots:
         for (const char *name : {"a.mkv", "b.MKV", "c.mkv"})
             videos << QDir::toNativeSeparators(own.filePath(QLatin1String(name)));
         QVERIFY(application->openFile(episode));
+        // PU6's resolution question shares the message box: off, so the file
+        // question is the one shown.
+        application->setAskForBadResolution(false);
         auto &video = application->video();
         video.openVideo(videos[0]);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        // PU4-file-question: the application's message box (NT1), titled
+        // with the command and naming the file it opens.
         auto *question = named("videoFileQuestion");
         QVERIFY(question);
-        // No: nothing happens
+        // Cancel: nothing happens
         QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
-        QTRY_VERIFY(question->property("opened").toBool());
-        QCOMPARE(dialogItem("videoFileQuestion", "videoFileQuestionText")->property("text").toString(),
-                 QStringLiteral("Are you sure you want to index the next video?"));
-        QVERIFY(QMetaObject::invokeMethod(question, "reject"));
-        QTRY_VERIFY(!question->property("opened").toBool());
+        QObject *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Next file"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Open the next video in this folder?"));
+        QCOMPARE(box->property("detail").toString(), QStringLiteral("b.MKV"));
+        QCOMPARE(box->property("defaultButton").value<QObject *>()->property("text").toString(), QStringLiteral("Open"));
+        QCOMPARE(qobject_cast<QWindow *>(box)->transientParent(), window);
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->property("visible").toBool());
         QCOMPARE(QString::fromStdString(video.session().path()), videos[0]);
-        // Yes: the next video by name
+        // the look-ahead leaves the walk where it is
+        QCOMPARE(application->nextVideoFileName(true), QStringLiteral("b.MKV"));
+        QCOMPARE(application->nextVideoFileName(false), QString());
+        // Open: the next video by name
         QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
-        QTRY_VERIFY(question->property("opened").toBool());
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("open"))));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
         QVERIFY(application->nextVideoFile(true));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[2], 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
-        // past the last: Seek(0) and Pause(false) plays from the start
+        // past the last: no file to name; Seek(0) and Pause(false) plays from the start
+        QCOMPARE(application->nextVideoFileName(true), QString());
         video.showFrameAt(10);
         QTRY_COMPARE(video.session().shownFrame(), std::optional<int>(10));
         QVERIFY(application->nextVideoFile(true));
@@ -31167,12 +31511,77 @@ private slots:
         QVERIFY(video.playing());
         QVERIFY(application->nextVideoFile(true)); // again: pauses at the start
         QVERIFY(!video.playing());
-        // the previous button asks about the previous video
+        // the previous button asks about the previous video; "Don't ask
+        // again" with Open hides the question for both directions
         QVERIFY(QMetaObject::invokeMethod(visualItem("previousFile"), "click"));
-        QTRY_VERIFY(question->property("opened").toBool());
-        QCOMPARE(dialogItem("videoFileQuestion", "videoFileQuestionText")->property("text").toString(),
-                 QStringLiteral("Are you sure you want to index the previous video?"));
-        QVERIFY(QMetaObject::invokeMethod(question, "accept"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Previous file"));
+        QCOMPARE(box->property("text").toString(), QStringLiteral("Open the previous video in this folder?"));
+        QCOMPARE(box->property("detail").toString(), QStringLiteral("b.MKV"));
+        messageBoxItem("messageBoxDontAsk")->setProperty("checked", true);
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("open"))));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QCOMPARE(application->settingsStore()->list("notices.hiddenQuestions"), QStringList{QStringLiteral("videoFileWalk")});
+        QVERIFY(QMetaObject::invokeMethod(visualItem("previousFile"), "click"));
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[0], 20000);
+        QVERIFY(!box->property("visible").toBool());
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        application->settingsStore()->set("notices.hiddenQuestions", QStringList());
+        // Another video opened while the question shows (the main window
+        // stays in use under the fullscreen window's): the question is taken
+        // back, and an answer for the file it named opens nothing else.
+        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(box->property("detail").toString(), QStringLiteral("b.MKV"));
+        video.openVideo(videos[2]);
+        QTRY_VERIFY(!box->property("visible").toBool());
+        // (the open is asynchronous: the old video stays until the new one)
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[2], 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        // The same for Change aspect ratio's window: another video ends the
+        // edit, and the new video keeps its own ratio (nothing put back).
+        auto *root = engine->rootObjects().first();
+        auto *aspect = named("aspectRatioDialog");
+        QTest::qWait(60); // past the video hotkeys' 50 ms repeat guard
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QWindow *aspectWindow = nullptr;
+        QTRY_VERIFY((aspectWindow = aspect->property("compactWindow").value<QWindow *>()) && aspectWindow->isVisible());
+        auto *aspectSlider = findItem(qobject_cast<QQuickWindow *>(aspectWindow)->contentItem(), QStringLiteral("aspectRatioWindowSlider"));
+        aspectSlider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(aspectSlider, "moved"));
+        QCOMPARE(application->visualTools().videoView().aspectRatio(), 0.5f);
+        video.openVideo(videos[0]);
+        QTRY_VERIFY(!aspectWindow->isVisible());
+        QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[0], 20000);
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QTRY_COMPARE(application->visualTools().videoView().aspectRatio(), 0.75f);
+        // the same file opened again too: the reopened video's own ratio
+        // stays, Cancel's start is the other opening's
+        QTest::qWait(60);
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(aspectWindow->isVisible());
+        aspectSlider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(aspectSlider, "moved"));
+        QVERIFY(QMetaObject::invokeMethod(findItem(qobject_cast<QQuickWindow *>(aspectWindow)->contentItem(),
+                                                   QStringLiteral("aspectRatioWindowOk")), "click"));
+        QTRY_VERIFY(!aspectWindow->isVisible());
+        QCOMPARE(application->visualTools().videoView().aspectRatio(), 0.5f);
+        QTest::qWait(60);
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(aspectWindow->isVisible());
+        video.openVideo(videos[0]);
+        QTRY_VERIFY(!aspectWindow->isVisible());
+        QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
+        QTRY_COMPARE(application->visualTools().videoView().aspectRatio(), 0.75f);
+        video.openVideo(videos[2]);
+        QTRY_VERIFY_WITH_TIMEOUT(QString::fromStdString(video.session().path()) == videos[2] && video.hasVideo(), 20000);
+        // the walk is made only while it leads to the file the answer names
+        const QString previous = application->nextVideoFilePath(false);
+        QCOMPARE(QFileInfo(previous).fileName(), QStringLiteral("b.MKV"));
+        QVERIFY(!application->nextVideoFileIfStill(false, videos[0]));
+        QCOMPARE(QString::fromStdString(video.session().path()), videos[2]);
+        QVERIFY(application->nextVideoFileIfStill(false, previous));
         QTRY_COMPARE_WITH_TIMEOUT(QString::fromStdString(video.session().path()), videos[1], 20000);
         QTRY_VERIFY_WITH_TIMEOUT(video.hasVideo(), 20000);
     }
@@ -31446,14 +31855,16 @@ private slots:
         QVERIFY(!video.loaded());
         QVERIFY(!application->nextVideoFile(true));
         QVERIFY(!application->nextVideoFile(false));
-        // the transport's buttons ask, and Yes changes nothing
+        // the transport's buttons ask (naming no file), and Open changes nothing
         auto *question = named("videoFileQuestion");
         QVERIFY(question);
         for (const char *button : {"nextFile", "previousFile"}) {
             QVERIFY(QMetaObject::invokeMethod(visualItem(button), "click"));
-            QTRY_VERIFY(question->property("opened").toBool());
-            QVERIFY(QMetaObject::invokeMethod(question, "accept"));
-            QTRY_VERIFY(!question->property("opened").toBool());
+            QObject *box = nullptr;
+            QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
+            QCOMPARE(box->property("detail").toString(), QString());
+            QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("open"))));
+            QTRY_VERIFY(!box->property("visible").toBool());
         }
         QTest::qWait(100);
         QVERIFY(!video.loaded());
@@ -31966,29 +32377,99 @@ private slots:
         press(Qt::Key_Z, Qt::ControlModifier | Qt::ShiftModifier);
         QCOMPARE(view.zoomPercent(), 100);
 
-        // VIDEO_ASPECT_RATIO (no default key): the dialog at the pointer,
-        // "Aspect ratio: 1.333" for 320x240; a slider at 350000 is 0.5.
+        // Change aspect ratio (PU4-aspect-ratio). From the context menu: a
+        // popover at the pointer, "Aspect ratio: 1.333" for 320x240, set at
+        // once as the slider moves; Esc puts back the ratio it opened with,
+        // Reset gives the video's own, Enter keeps it.
         auto *root = engine->rootObjects().first();
-        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
         auto *dialog = named("aspectRatioDialog");
-        QTRY_VERIFY(dialog->property("visible").toBool());
+        auto *popover = named("aspectRatioPopover");
+        QVERIFY(dialog && popover);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "openAtCursor",
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QCOMPARE(popover->property("title").toString(), QStringLiteral("Change aspect ratio"));
+        QCOMPARE(qobject_cast<QQuickItem *>(popover->property("parent").value<QObject *>())->window(), window);
         auto *label = named("aspectRatioLabel");
         QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 1.333"));
         auto *slider = named("aspectRatioSlider");
+        QTRY_VERIFY(slider->property("activeFocus").toBool());
         QCOMPARE(slider->property("value").toInt(), 525000); // 0.75 * 700000
         slider->setProperty("value", 350000);
         QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
         QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 2.000"));
         QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f);
+        QVERIFY(QMetaObject::invokeMethod(dialog, "openAtCursor",
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
+        QTRY_VERIFY(popover->property("opened").toBool());
+        slider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
+        QVERIFY(QMetaObject::invokeMethod(named("aspectRatioReset"), "click"));
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f);
+        QCOMPARE(label->property("text").toString(), QStringLiteral("Aspect ratio: 1.333"));
+        QCOMPARE(slider->property("value").toInt(), 525000);
+        slider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
+        QTest::keyClick(window, Qt::Key_Return);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
+        // VIDEO_ASPECT_RATIO (no default key): the same form in a compact
+        // window on DG1's frame, made at its first opening; Cancel puts the
+        // ratio back, OK keeps it.
+        QVERIFY(!dialog->property("compactWindow").value<QObject *>());
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(dialog->property("opened").toBool());
+        auto *own = dialog->property("compactWindow").value<QQuickWindow *>();
+        QVERIFY(own && own->isVisible());
+        QCOMPARE(own->title(), QStringLiteral("Change aspect ratio"));
+        QCOMPARE(own->transientParent(), window);
+        QVERIFY(!popover->property("visible").toBool());
+        auto *ownLabel = findItem(own->contentItem(), QStringLiteral("aspectRatioWindowLabel"));
+        auto *ownSlider = findItem(own->contentItem(), QStringLiteral("aspectRatioWindowSlider"));
+        QCOMPARE(ownLabel->property("text").toString(), QStringLiteral("Aspect ratio: 2.000"));
+        QCOMPARE(ownSlider->property("value").toInt(), 350000);
+        ownSlider->setProperty("value", 525000);
+        QVERIFY(QMetaObject::invokeMethod(ownSlider, "moved"));
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f);
+        QVERIFY(QMetaObject::invokeMethod(findItem(own->contentItem(), QStringLiteral("aspectRatioWindowCancel")), "click"));
+        QTRY_VERIFY(!own->isVisible());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.5f);
+        QTest::qWait(60); // past legacy's 50 ms repeat guard (VideoBox.cpp:1137)
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(own->isVisible());
+        ownSlider->setProperty("value", 525000);
+        QVERIFY(QMetaObject::invokeMethod(ownSlider, "moved"));
+        ownSlider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(ownSlider, "moved"));
         const auto r = tools.videoView().videoRect();
         // Letterboxed at 2:1, to the pixel: an odd video width (the visual
         // tool rail widens by its scroll bar in a short panel) has no exact
         // half.
         QVERIFY2(std::abs(r.height() * 2 - r.width()) <= 1, qPrintable(QStringLiteral("%1x%2").arg(r.width()).arg(r.height())));
         QCOMPARE(presenter->property("videoRect").toRectF(), tools.videoRect());
-        QVERIFY(QMetaObject::invokeMethod(dialog, "close"));
-        QTRY_VERIFY(!dialog->property("visible").toBool());
+        QVERIFY(QMetaObject::invokeMethod(findItem(own->contentItem(), QStringLiteral("aspectRatioWindowOk")), "click"));
+        QTRY_VERIFY(!own->isVisible());
         QCOMPARE(tools.videoView().aspectRatio(), 0.5f); // until the next video opens
+        // One editor at a time: the popover opened while the window shows
+        // ends the window's edit, keeping its ratio, and starts from it.
+        QTest::qWait(60);
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(own->isVisible());
+        ownSlider->setProperty("value", 525000);
+        QVERIFY(QMetaObject::invokeMethod(ownSlider, "moved"));
+        QVERIFY(QMetaObject::invokeMethod(dialog, "openAtCursor",
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
+        QTRY_VERIFY(!own->isVisible());
+        QTRY_VERIFY(popover->property("opened").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f);
+        slider->setProperty("value", 350000);
+        QVERIFY(QMetaObject::invokeMethod(slider, "moved"));
+        QTest::keyClick(window, Qt::Key_Escape);
+        QTRY_VERIFY(!popover->property("visible").toBool());
+        QCOMPARE(tools.videoView().aspectRatio(), 0.75f); // the popover's own start
 
         // The volume (VIDEO_VOLUME): Num . / Num 0 step 2 below 1 and above -91.
         auto &player = application->generalPlayer();
@@ -32294,7 +32775,7 @@ private slots:
         QCOMPARE(mapping->title(), QStringLiteral("Keys for \"Change aspect ratio\""));
         QVERIFY(in(mapping, "hotkeyWindowChoice")->isVisible());
         QCOMPARE(in(mapping, "hotkeyWindowChoice")->property("currentIndex").toInt(), 3);
-        QVERIFY(!named("aspectRatioDialog")->property("visible").toBool());
+        QVERIFY(!named("aspectRatioDialog")->property("opened").toBool());
         keyTo(in(mapping, "hotkeyMappingKeys"), Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
         QTRY_VERIFY(!mapping->isVisible());
         QCOMPARE(h.accelOf(QStringLiteral("VIDEO_ASPECT_RATIO"), 3), QStringLiteral("Alt-Ctrl-J"));
@@ -32302,13 +32783,15 @@ private slots:
         h.beginOptions();
         QCOMPARE(hotkeyRow(QStringLiteral("Video Change aspect ratio")).value(QStringLiteral("accel")).toString(),
                  QStringLiteral("Alt-Ctrl-J"));
-        // The new binding opens the dialog from the Video panel.
+        // The new binding opens the compact window from the Video panel.
         QTRY_VERIFY(window->isActive());
         item("videoPanel")->forceActiveFocus();
         press(Qt::Key_J, Qt::ControlModifier | Qt::AltModifier);
-        QTRY_VERIFY(named("aspectRatioDialog")->property("visible").toBool());
+        QTRY_VERIFY(named("aspectRatioDialog")->property("opened").toBool());
+        QVERIFY(named("aspectRatioDialog")->property("compactWindow").value<QQuickWindow *>()->isVisible());
         QVERIFY(QMetaObject::invokeMethod(named("aspectRatioDialog"), "close"));
-        QTRY_VERIFY(!named("aspectRatioDialog")->property("visible").toBool());
+        QTRY_VERIFY(!named("aspectRatioDialog")->property("opened").toBool());
+        QTRY_VERIFY(window->isActive());
         // The menu key opens the menu at the pointer.
         item("videoPanel")->forceActiveFocus();
         press(Qt::Key_Menu);
@@ -33473,22 +33956,59 @@ private slots:
         QQuickWindow *fsWindow = fullscreenWindow();
         QTRY_VERIFY(fsWindow->isExposed());
         QVERIFY(becomesFocusWindow(fsWindow));
-        // The aspect ratio (the context menu's Change aspect ratio).
-        auto *aspect = qobject_cast<QQuickItem *>(named("aspectRatioDialog")->property("parent").value<QObject *>());
-        QCOMPARE(aspect, fsWindow->contentItem());
+        // PU4: the aspect ratio: the context menu's popover in the
+        // fullscreen window, the hotkey's compact window transient for it.
+        auto *root = engine->rootObjects().first();
+        auto *aspect = named("aspectRatioDialog");
+        auto *aspectPopover = named("aspectRatioPopover");
+        const auto popoverWindow = [&] {
+            return qobject_cast<QQuickItem *>(aspectPopover->property("parent").value<QObject *>())->window();
+        };
         QVERIFY(QMetaObject::invokeMethod(fsWindow, "aspectRatioRequested"));
-        QTRY_VERIFY(named("aspectRatioDialog")->property("opened").toBool());
-        QMetaObject::invokeMethod(named("aspectRatioDialog"), "close");
-        QTRY_VERIFY(!named("aspectRatioDialog")->property("visible").toBool());
-        // Previous / next file (the panel's buttons).
+        QTRY_VERIFY(aspectPopover->property("opened").toBool());
+        QCOMPARE(popoverWindow(), fsWindow);
+        QVERIFY(QMetaObject::invokeMethod(aspect, "close"));
+        QTRY_VERIFY(!aspect->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(aspect->property("opened").toBool());
+        auto *aspectWindow = aspect->property("compactWindow").value<QQuickWindow *>();
+        QCOMPARE(aspectWindow->transientParent(), fsWindow);
+        QVERIFY(QMetaObject::invokeMethod(aspect, "close"));
+        QTRY_VERIFY(!aspectWindow->isVisible());
+        // Previous / next file (the panel's buttons): the message box over
+        // the fullscreen window, modal to it alone.
         QVERIFY(QMetaObject::invokeMethod(fullscreenItem("fullscreenNextFile"), "clicked"));
         auto *question = named("videoFileQuestion");
-        QTRY_VERIFY(question->property("opened").toBool());
-        QCOMPARE(question->property("parent").value<QQuickItem *>(), fsWindow->contentItem());
-        QCOMPARE(dialogItem("videoFileQuestion", "videoFileQuestionText")->property("text").toString(),
-                 QStringLiteral("Are you sure you want to index the next video?"));
-        QMetaObject::invokeMethod(question, "close");
-        QTRY_VERIFY(!question->property("visible").toBool());
+        QObject *box = nullptr;
+        QTRY_VERIFY((box = messageBox("messages")) && box->property("visible").toBool());
+        QCOMPARE(qobject_cast<QWindow *>(box)->transientParent(), fsWindow);
+        QCOMPARE(qobject_cast<QWindow *>(box)->modality(), Qt::WindowModal);
+        QCOMPARE(box->property("title").toString(), QStringLiteral("Next file"));
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->property("visible").toBool());
+        QTRY_VERIFY(becomesFocusWindow(fsWindow));
+        // Open dummy video and the Shift times question (Global commands,
+        // which the fullscreen window takes) open over it too.
+        QVERIFY(QMetaObject::invokeMethod(root, "openDummyVideo"));
+        auto *dummy = qobject_cast<QQuickWindow *>(named("dummyVideoDialog"));
+        QTRY_VERIFY(dummy && dummy->isVisible());
+        QCOMPARE(dummy->transientParent(), fsWindow);
+        QVERIFY(QMetaObject::invokeMethod(dummy, "reject"));
+        QTRY_VERIFY(!dummy->isVisible());
+        QTRY_VERIFY(becomesFocusWindow(fsWindow));
+        auto shiftSettings = application->shiftTimesSettings().settingsMap();
+        const auto shiftBefore = shiftSettings;
+        shiftSettings.insert(QStringLiteral("whichTimes"), 1);
+        shiftSettings.insert(QStringLiteral("postprocessor"), 0);
+        application->shiftTimesSettings().setSettingsMap(shiftSettings);
+        QVERIFY(QMetaObject::invokeMethod(root, "runShiftTimes"));
+        QObject *shift = nullptr;
+        QTRY_VERIFY((shift = messageBox("messages")) && shift->property("visible").toBool());
+        QCOMPARE(qobject_cast<QWindow *>(shift)->transientParent(), fsWindow);
+        QVERIFY(QMetaObject::invokeMethod(shift, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!shift->property("visible").toBool());
+        application->shiftTimesSettings().setSettingsMap(shiftBefore);
+        QTRY_VERIFY(becomesFocusWindow(fsWindow));
         // Open video and Open subtitles take the fullscreen window as parent.
         QCOMPARE(named("videoOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
         QCOMPARE(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>(), fsWindow);
@@ -33597,8 +34117,23 @@ private slots:
         // Left, the dialogs are the main window's again.
         QVERIFY(fs.leave());
         QTRY_VERIFY(!fsWindow->isVisible());
-        QVERIFY(named("aspectRatioDialog")->property("parent").value<QObject *>() != fsWindow->contentItem());
-        QVERIFY(question->property("parent").value<QQuickItem *>() != fsWindow->contentItem());
+        QTRY_VERIFY(becomesFocusWindow(window));
+        QVERIFY(QMetaObject::invokeMethod(aspect, "openAtCursor",
+                                          Q_ARG(QVariant, QVariant::fromValue<QObject *>(item("visualOverlay")))));
+        QTRY_VERIFY(aspectPopover->property("opened").toBool());
+        QCOMPARE(popoverWindow(), window);
+        QVERIFY(QMetaObject::invokeMethod(aspect, "close"));
+        QTRY_VERIFY(!aspect->property("opened").toBool());
+        QVERIFY(QMetaObject::invokeMethod(root, "runVideoHotkey", Q_ARG(QVariant, QStringLiteral("VIDEO_ASPECT_RATIO"))));
+        QTRY_VERIFY(aspectWindow->isVisible());
+        QCOMPARE(aspectWindow->transientParent(), window);
+        QVERIFY(QMetaObject::invokeMethod(aspect, "close"));
+        QTRY_VERIFY(!aspectWindow->isVisible());
+        QVERIFY(QMetaObject::invokeMethod(visualItem("nextFile"), "click"));
+        QTRY_VERIFY(box->property("visible").toBool());
+        QCOMPARE(qobject_cast<QWindow *>(box)->transientParent(), window);
+        QVERIFY(QMetaObject::invokeMethod(box, "answer", Q_ARG(QVariant, QStringLiteral("cancel"))));
+        QTRY_VERIFY(!box->property("visible").toBool());
         QVERIFY(named("videoOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
         QVERIFY(named("subtitlesOpenDialog")->property("parentWindow").value<QWindow *>() != fsWindow);
         // Edit shapes and Edit tags too, with their history: a window going

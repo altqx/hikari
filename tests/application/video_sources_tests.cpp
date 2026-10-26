@@ -234,7 +234,14 @@ TEST(DummyVideo, DialogTextAsLegacyWritesIt)
     text = dummyVideoText("29.97", 60000, 640, 480, 0, 0, 0, true);
     ASSERT_TRUE(text);
     EXPECT_EQ(*text, "?dummy:29.969999:1798:640:480:0:0:0:c"); // (float)29.97 printed with %f
-    EXPECT_EQ(dummyVideoDialogFrames(), 35964); // "This gives %i frames", never updated
+    // PU4-dummy-video: "This gives %i frames" follows the rate and the
+    // duration, with the text's own arithmetic (legacy: the defaults' once)
+    EXPECT_EQ(dummyVideoFrames("23.976", 1500000), 35964);
+    EXPECT_EQ(dummyVideoFrames("25", 1500000), 37500);
+    EXPECT_EQ(dummyVideoFrames("29.97", 60000), 1798);
+    EXPECT_EQ(dummyVideoFrames("25", 30), 0);
+    for (const char *fps : {"14.99", "120.5", "1.2.3", "", "."})
+        EXPECT_EQ(dummyVideoFrames(fps, 60000).error(), DummyVideoError::InvalidFps) << fps;
     // "Invalid FPS value.": below 15, above 120, or not one number
     for (const char *fps : {"14.99", "120.5", "1.2.3", "", "."})
         EXPECT_EQ(dummyVideoText(fps, 60000, 640, 480, 0, 0, 0, false).error(), DummyVideoError::InvalidFps) << fps;

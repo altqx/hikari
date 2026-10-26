@@ -1398,15 +1398,31 @@ w miejsce wyboru koloru</translation>
     </message>
     <message>
         <source>Choose new FPS</source>
-        <translation>Wybierz nowy FPS</translation>
+        <translation type="vanished">Wybierz nowy FPS</translation>
+    </message>
+    <message>
+        <source>Set new FPS</source>
+        <translation type="unfinished">Ustaw nowy FPS</translation>
     </message>
     <message>
         <source>Subtitles FPS</source>
         <translation>FPS napisów</translation>
     </message>
     <message>
+        <source>Type a frame rate, such as 25.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>New FPS</source>
         <translation>Nowy FPS napisów</translation>
+    </message>
+    <message>
+        <source>Every start and end time × %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Change FPS</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Keep as is</source>
@@ -11103,19 +11119,19 @@ after the end time in milliseconds</source>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>Potwierdzenie</translation>
+        <translation type="vanished">Potwierdzenie</translation>
     </message>
     <message>
         <source>Do you really want to shift only %1 times?</source>
-        <translation type="unfinished">Czy naprawdę chcesz przesuwać tylko czasy %1?</translation>
+        <translation type="obsolete">Czy naprawdę chcesz przesuwać tylko czasy %1?</translation>
     </message>
     <message>
         <source>start</source>
-        <translation>początkowe</translation>
+        <translation type="vanished">początkowe</translation>
     </message>
     <message>
         <source>end</source>
-        <translation>końcowe</translation>
+        <translation type="vanished">końcowe</translation>
     </message>
     <message>
         <source>No document open</source>
@@ -11136,6 +11152,34 @@ after the end time in milliseconds</source>
     <message>
         <source>The times could not be shifted.</source>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift only the start times?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift only the end times?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>End times stay where they are, so a line shifted past its end ends before it starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Start times stay where they are, so a line shifted before its start ends before it starts.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift start times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Shift end times</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Cancel</source>
+        <translation type="unfinished">Anuluj</translation>
     </message>
 </context>
 <context>
@@ -11266,7 +11310,23 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
 <context>
     <name>HikariSub.Video</name>
     <message>
+        <source>Reset</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>OK</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Aspect ratio</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Taller</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Wider</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -11363,7 +11423,7 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Dummy video options</source>
-        <translation>Opcje dummy wideo</translation>
+        <translation type="vanished">Opcje dummy wideo</translation>
     </message>
     <message>
         <source>This gives %1 frames</source>
@@ -11371,7 +11431,19 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Video resolution:</source>
-        <translation>Rozdzielczość wideo:</translation>
+        <translation type="vanished">Rozdzielczość wideo:</translation>
+    </message>
+    <message>
+        <source>Open dummy video</source>
+        <translation type="unfinished">Otwórz dummy wideo</translation>
+    </message>
+    <message>
+        <source>Video resolution</source>
+        <translation type="unfinished">Rozdzielczość wideo</translation>
+    </message>
+    <message>
+        <source>Custom</source>
+        <translation type="unfinished"></translation>
     </message>
     <message>
         <source>Width</source>
@@ -11382,8 +11454,28 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
         <translation type="unfinished"></translation>
     </message>
     <message>
+        <source>Colour</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Frames per second</source>
+        <translation type="unfinished">Klatki na Sekundę</translation>
+    </message>
+    <message>
+        <source>Must be from 15 to 120.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Duration</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Type a time such as 0:25:00.00.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <source>Color:</source>
-        <translation>Kolor:</translation>
+        <translation type="vanished">Kolor:</translation>
     </message>
     <message>
         <source>Choose the colour</source>
@@ -11395,11 +11487,11 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Frames per second:</source>
-        <translation>Klatki na sekundę:</translation>
+        <translation type="vanished">Klatki na sekundę:</translation>
     </message>
     <message>
         <source>Duration:</source>
-        <translation>Czas trwania:</translation>
+        <translation type="vanished">Czas trwania:</translation>
     </message>
     <message>
         <source>Previous frame</source>
@@ -11587,15 +11679,15 @@ Obcojęzyczny tekst przetłumaczonych linijek zostanie usunięty.</translation>
     </message>
     <message>
         <source>Confirmation</source>
-        <translation>Potwierdzenie</translation>
+        <translation type="vanished">Potwierdzenie</translation>
     </message>
     <message>
         <source>Are you sure you want to index the next video?</source>
-        <translation>Czy na pewno chcesz zindeksować następne wideo?</translation>
+        <translation type="vanished">Czy na pewno chcesz zindeksować następne wideo?</translation>
     </message>
     <message>
         <source>Are you sure you want to index the previous video?</source>
-        <translation>Czy na pewno chcesz zindeksować poprzednie wideo?</translation>
+        <translation type="vanished">Czy na pewno chcesz zindeksować poprzednie wideo?</translation>
     </message>
     <message>
         <source>Seek on</source>
@@ -11812,6 +11904,18 @@ bądź brakuje kodeków czy też splittera</translation>
         <source>%1 with blur, %2 with a vector clip</source>
         <extracomment>Over the video: of the shown events, %1 use <byte value="x8"/>lur or <byte value="x8"/>e and %2 a drawing clip or iclip</extracomment>
         <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the next video in this folder?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open the previous video in this folder?</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <source>Open</source>
+        <translation type="unfinished">Otwórz</translation>
     </message>
 </context>
 <context>

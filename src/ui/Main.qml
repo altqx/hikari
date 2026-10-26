@@ -534,13 +534,35 @@ ApplicationWindow {
         searchTool.focusFind()
     }
 
-    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first (legacy).
+    // GLOBAL_SHIFT_TIMES: shifting only start or end times asks first
+    // (legacy; PU4-shift-question: PK1's message box, which can be hidden).
+    // The answer shifts the document it was asked for: another editing
+    // target meanwhile (the main window stays in use under the fullscreen
+    // video window's question) takes the question back.
     function runShiftTimes() {
         const which = root.shiftTimes.settings.whichTimes
         const pp = root.shiftTimes.settings.postprocessor
         if (which !== 0 && !(pp >= 16 && (pp & 15) !== 0)) {
-            shiftConfirm.which = which
-            shiftConfirm.open()
+            const start = which === 1
+            const target = root.app.editingTargetId()
+            shiftQuestion.askedFor = target
+            shiftQuestion.askWith({
+                title: qsTranslate("HikariSub.TimeShift", "Shift times"),
+                text: start ? qsTranslate("HikariSub.TimeShift", "Shift only the start times?")
+                            : qsTranslate("HikariSub.TimeShift", "Shift only the end times?"),
+                detail: start ? qsTranslate("HikariSub.TimeShift", "End times stay where they are, so a line shifted past its end ends before it starts.")
+                              : qsTranslate("HikariSub.TimeShift", "Start times stay where they are, so a line shifted before its start ends before it starts."),
+                severity: "warning",
+                choices: [
+                    { id: "shift", text: start ? qsTranslate("HikariSub.TimeShift", "Shift start times")
+                                               : qsTranslate("HikariSub.TimeShift", "Shift end times"),
+                      role: "accept", isDefault: true },
+                    { id: "cancel", text: qsTranslate("HikariSub.TimeShift", "Cancel"), role: "reject" }
+                ]
+            }, id => {
+                if (id === "shift" && root.app.editingTargetId() === target)
+                    shiftTimesPanel.message = root.app.shiftTimes()
+            })
             return
         }
         shiftTimesPanel.message = root.app.shiftTimes()
@@ -1784,7 +1806,7 @@ ApplicationWindow {
                 action: Action {
                     id: dummyVideoAction
                     text: qsTr("Open dummy video")
-                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) dummyVideoDialog.show()
+                    onTriggered: if (!root.hotkeyGesture("GLOBAL_OPEN_DUMMY_VIDEO")) root.openDummyVideo()
                 }
             }
             // V6: GLOBAL_SET_START_TIME / GLOBAL_SET_END_TIME (HikariSubFrame.cpp:259-262;
@@ -3178,7 +3200,7 @@ ApplicationWindow {
                     }
                     onOpenVideoRequested: videoDialog.show()
                     onOpenSubtitlesRequested: openDialog.show()
-                    onAspectRatioRequested: aspectRatioDialog.openAtCursor()
+                    onAspectRatioRequested: aspectRatioDialog.openAtCursor(visualOverlay)
                 }
                 Label {
                     anchors.centerIn: videoStageDock
@@ -5868,7 +5890,7 @@ ApplicationWindow {
                                 onObjectRemoved: (index, object) => hideColumnsMenu.removeItem(object)
                             }
                         }
-                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) fpsWindow.show() }
+                        ShellMenuItem { iconRole: "fps"; objectName: "setNewFps"; text: qsTranslate("HikariSub.Grid", "Set new FPS"); onTriggered: if (!root.gridGesture(this, "GRID_SET_NEW_FPS")) root.openSetNewFps() }
                         ShellMenuItem {
                             iconRole: "fps-from-video"
                             objectName: "setFpsFromVideo"; text: qsTranslate("HikariSub.Grid", "Set FPS from video")
@@ -6774,18 +6796,28 @@ ApplicationWindow {
             open()
         }
     }
-    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question.
-    DummyVideoDialog {
-        id: dummyVideoDialog
-        app: root.app
-        colourPicker: root.colourPicker
-        anchors.centerIn: parent
-        onRefused: message => root.notices.post("error", qsTr("Open dummy video"), message)
+    // V3: GLOBAL_OPEN_DUMMY_VIDEO and the folder walk's question. PU4: the
+    // window made at its first opening (PK1: every window made at the start
+    // costs the program).
+    Loader {
+        id: dummyVideoLoader
+        active: false
+        sourceComponent: DummyVideoDialog {
+            app: root.app
+            settings: root.app.settings
+            colourPicker: root.colourPicker
+            onRefused: message => root.notices.post("error", qsTr("Open dummy video"), message)
+        }
+    }
+    function openDummyVideo() {
+        dummyVideoLoader.active = true
+        dummyVideoLoader.item.show()
     }
     VideoFileQuestion {
         id: videoFileQuestion
         app: root.app
-        anchors.centerIn: parent
+        video: root.video
+        messages: root.messages
     }
     // TM1: the Translation preset's question and Translation mode's turn-off
     // confirmation (Subtitles > Translation mode).
@@ -6798,10 +6830,13 @@ ApplicationWindow {
         app: root.app
     }
 
-    // V4: VIDEO_ASPECT_RATIO.
+    // V4: VIDEO_ASPECT_RATIO (PU4: a popover from the context menus, a
+    // compact window from the hotkey).
     AspectRatioDialog {
         id: aspectRatioDialog
         view: root.videoView
+        video: root.video
+        settings: root.app.settings
     }
 
     // V5: the fullscreen video window (legacy Fullscreen). What it asks
@@ -6813,8 +6848,8 @@ ApplicationWindow {
         controller: root.videoFullscreen
         onOpenVideoRequested: videoDialog.show()
         onOpenSubtitlesRequested: openDialog.show()
-        onAspectRatioRequested: aspectRatioDialog.openAtCursor()
-        onFileQuestionRequested: next => videoFileQuestion.ask(next)
+        onAspectRatioRequested: aspectRatioDialog.openAtCursor(videoFullscreenWindow.contentItem)
+        onFileQuestionRequested: next => videoFileQuestion.ask(next, videoFullscreenWindow)
         // FS1: the output menu's "Audio settings…" opens the dialog in the main window.
         onAudioSettingsRequested: {
             root.videoFullscreen.leave()
@@ -6824,14 +6859,6 @@ ApplicationWindow {
             root.videoFullscreen.setWindows(videoFullscreenWindow, root)
             root.videoFullscreen.setFocusFallback(videoPanel)
         }
-    }
-    Binding {
-        when: root.videoFullscreen.active
-        target: aspectRatioDialog; property: "parent"; value: videoFullscreenWindow.contentItem
-    }
-    Binding {
-        when: root.videoFullscreen.active
-        target: videoFileQuestion; property: "parent"; value: videoFullscreenWindow.contentItem
     }
     Binding {
         when: root.videoFullscreen.active
@@ -6891,58 +6918,19 @@ ApplicationWindow {
         }
     }
 
-    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new one.
-    Window {
-        color: Theme.panel // K2: a Window draws white unless told
-        id: fpsWindow
-        objectName: "fpsWindow"
-        title: qsTranslate("HikariSub.Conversion", "Choose new FPS")
-        width: 360
-        height: 140
-        modality: Qt.ApplicationModal
-        flags: Qt.Dialog
-        readonly property var presets: ["23.976", "24", "25", "29.97", "30", "60"]
-        GridLayout {
-            anchors.fill: parent
-            anchors.margins: 8
-            columns: 2
-            Label { text: qsTranslate("HikariSub.Conversion", "Subtitles FPS") }
-            ComboBox {
-                id: oldFps
-                objectName: "oldFps"
-                editable: true
-                model: fpsWindow.presets
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTranslate("HikariSub.Conversion", "Subtitles FPS")
-            }
-            Label { text: qsTranslate("HikariSub.Conversion", "New FPS") }
-            ComboBox {
-                id: newFps
-                objectName: "newFps"
-                editable: true
-                model: fpsWindow.presets
-                validator: RegularExpressionValidator { regularExpression: /[0-9.]*/ }
-                Accessible.name: qsTranslate("HikariSub.Conversion", "New FPS")
-            }
-            WindowFooter {
-                Layout.columnSpan: 2
-                Button {
-                    objectName: "fpsOk"
-                    text: qsTranslate("HikariSub.Conversion", "OK")
-                    DialogButtonBox.buttonRole: DialogButtonBox.AcceptRole
-                    onClicked: {
-                        if (root.app.setNewFps(oldFps.editText, newFps.editText))
-                            fpsWindow.close()
-                    }
-                }
-                Button {
-                    objectName: "fpsCancel"
-                    text: qsTranslate("HikariSub.Conversion", "Cancel")
-                    DialogButtonBox.buttonRole: DialogButtonBox.RejectRole
-                    onClicked: fpsWindow.close()
-                }
-            }
+    // GRID_SET_NEW_FPS (legacy FPSDialog): the subtitles' FPS and the new
+    // one (PU4: a compact window, made at its first opening).
+    Loader {
+        id: setNewFpsLoader
+        active: false
+        sourceComponent: SetNewFpsWindow {
+            app: root.app
+            settings: root.app.settings
         }
+    }
+    function openSetNewFps() {
+        setNewFpsLoader.active = true
+        setNewFpsLoader.item.show()
     }
 
     // The column choice for Copy columns / Paste columns (PU2: ColumnsWindow.qml).
@@ -7152,16 +7140,21 @@ ApplicationWindow {
         app: root.app
         settings: root.app.settings
     }
-    Dialog {
-        id: shiftConfirm
-        objectName: "shiftConfirm"
-        property int which: 1
-        title: qsTranslate("HikariSub.TimeShift", "Confirmation")
-        modal: true
-        anchors.centerIn: parent
-        standardButtons: Dialog.Yes | Dialog.No
-        Label { text: qsTranslate("HikariSub.TimeShift", "Do you really want to shift only %1 times?").arg(shiftConfirm.which === 1 ? qsTranslate("HikariSub.TimeShift", "start") : qsTranslate("HikariSub.TimeShift", "end")) }
-        onAccepted: shiftTimesPanel.message = root.app.shiftTimes()
+    // GLOBAL_SHIFT_TIMES' question (runShiftTimes).
+    HidableQuestion {
+        id: shiftQuestion
+        objectName: "shiftQuestion"
+        messages: root.messages
+        questionId: "shiftOneTime"
+        // The editing target it was asked for (App.editingTargetId).
+        property var askedFor: 0
+        property Connections targetChanges: Connections {
+            target: root.app
+            function onTabsChanged() {
+                if (shiftQuestion.pending.length > 0 && root.app.editingTargetId() !== shiftQuestion.askedFor)
+                    shiftQuestion.withdraw()
+            }
+        }
     }
     // P8: legacy UpdateChecker. Only the menu's check reports "up to date"
     // and failures; the automatic one speaks only for a newer release.
@@ -7904,7 +7897,7 @@ ApplicationWindow {
         case "VIDEO_FULL_SCREEN": root.videoFullscreen.toggle(0); return true
         // FS1-bar-mode: Auto, Always, Never.
         case "VIDEO_FULLSCREEN_BAR": root.videoFullscreen.cycleBarMode(); return true
-        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openAtCursor(); return true
+        case "VIDEO_ASPECT_RATIO": aspectRatioDialog.openWindow(root.videoFullscreen.active ? videoFullscreenWindow : null); return true
         case "VIDEO_SAVE_FRAME_TO_PNG":
         case "VIDEO_COPY_FRAME_TO_CLIPBOARD":
         case "VIDEO_SAVE_SUBBED_FRAME_TO_PNG":
@@ -7983,7 +7976,7 @@ ApplicationWindow {
         // (SubsGrid::OnAccelerator, SubsGrid.cpp:839-881, 938).
         case "GRID_COPY_COLUMNS": columnsWindow.choose(false); return true
         case "GRID_PASTE_COLUMNS": columnsWindow.choose(true); return true
-        case "GRID_SET_NEW_FPS": fpsWindow.show(); return true
+        case "GRID_SET_NEW_FPS": root.openSetNewFps(); return true
         case "GRID_SET_FPS_FROM_VIDEO": if (video) root.app.setFpsFromVideo(); return true
         case "GRID_PASTE_TRANSLATION":
             if (root.app.canPasteTranslation()) {
