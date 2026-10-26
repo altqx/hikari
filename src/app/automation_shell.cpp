@@ -7,11 +7,13 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QGuiApplication>
+#include <QRegularExpression>
 #include <QTimer>
 #include <QUrl>
 
 #include <algorithm>
 #include <numeric>
+#include <ranges>
 #include <string_view>
 #include <unordered_set>
 
@@ -275,27 +277,65 @@ AutomationShell::AutomationShell(Paths paths, application::DocumentFiles &files,
     m_manager.setServiceHandler([this](const application::HostServiceRequest &r, backends::LuaScriptHost::ServiceReply reply) {
         m_router.handle(r, std::move(reply));
     });
+    m_dialogs.setMemory(&m_dialogMemory);
     m_manager.setDialogHandler([this](const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply) {
-        const QString source = m_run ? QString::fromStdString(m_run->path + '\n' + m_run->macro) : QString();
-        m_dialogs.present(m_title, request, std::move(reply), source);
+        presentDialog(request, std::move(reply));
     });
     connect(&m_manager, &backends::AutomationManager::runFinished, this, &AutomationShell::finished);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::progressChanged);
     connect(&m_manager, &backends::AutomationManager::changed, this, &AutomationShell::continueLastScript);
-    connect(&m_manager, &backends::AutomationManager::logged, this, [this](const QString &, const QString &text) {
-        m_log += text;
-        emit progressChanged();
-    });
+    connect(&m_manager, &backends::AutomationManager::logged, this,
+            [this](const QString &, const QString &text, int level) {
+                // Bounded as a run's log is (a script can write without end).
+                if (m_log.size() < ui::AutomationRuns::kMaxChars)
+                    m_log += text.left(ui::AutomationRuns::kMaxChars - m_log.size());
+                // An empty write adds nothing to read: the run has not logged.
+                if (m_run && !text.isEmpty()) {
+                    m_runs.append(m_runId, text, level);
+                    m_logged = true;
+                    // AD3: output opens the card at once.
+                    showCard();
+                }
+                emit progressChanged();
+            });
     connect(&m_manager, &backends::AutomationManager::progressChanged, this, [this](const QString &, double p) {
         m_progress = p;
+        m_progressKnown = true;
+        if (m_run)
+            m_runs.setProgress(m_runId, p);
         emit progressChanged();
     });
     connect(&m_manager, &backends::AutomationManager::taskChanged, this, [this](const QString &, const QString &t) {
-        m_task = t;
+        m_task = t.left(ui::AutomationRuns::kMaxText);
+        if (m_run)
+            m_runs.setTask(m_runId, m_task);
         emit progressChanged();
     });
+    m_cardTimer.setSingleShot(true);
+    connect(&m_manager, &backends::AutomationManager::macroStarted, this, [this](const QString &path) {
+        if (!m_run || m_run->active != m_run->path || path.toStdString() != m_run->path)
+            return;
+        m_macroStarted = true;
+        m_cardTimer.stop();
+        updateCardTimer();
+    });
+    // AD3: an ended run's card goes with its run (Clear runs).
+    connect(&m_runs, &ui::AutomationRuns::removed, this, [this](int id) {
+        if (id == m_runId && !m_run && !m_cardState.isEmpty()) {
+            m_cardState.clear();
+            emit progressChanged();
+        }
+    });
+    connect(&m_cardTimer, &QTimer::timeout, this, [this] {
+        if (m_run && !waitingForUser())
+            showCard();
+    });
+    connect(&m_dialogs, &ui::AutomationDialogController::changed, this, &AutomationShell::updateCardTimer);
+    connect(&m_picker, &ui::AutomationFilePickerController::changed, this, &AutomationShell::updateCardTimer);
+    connect(&m_resolutionPrompt, &ui::ScriptResolutionPromptController::changed, this,
+            &AutomationShell::updateCardTimer);
     connect(&m_manager, &backends::AutomationManager::titleChanged, this, [this](const QString &, const QString &t) {
-        m_title = t;
+        m_title = t.left(ui::AutomationRuns::kMaxText);
         emit progressChanged();
     });
     connect(&m_manager, &backends::AutomationManager::dialogWithdrawn, this, [this] { m_dialogs.withdraw(); });
@@ -567,10 +607,216 @@ bool AutomationShell::rerunLast()
     return m_last && run(m_last->first, m_last->second);
 }
 
+void AutomationShell::forgetRepeat()
+{
+    if (!m_repeat)
+        return;
+    m_repeat.reset();
+    emit progressChanged();
+}
+
+bool AutomationShell::repeatLast()
+{
+    if (!m_repeat)
+        return false;
+    RepeatRecord record = *m_repeat;
+    // The script may have been reloaded since: the recorded macro by name,
+    // at its old place first; gone, the record goes too.
+    std::optional<int> ordinal;
+    for (const auto &script : m_manager.scripts()) {
+        if (script.path != record.path)
+            continue;
+        const auto &macros = script.info.macros;
+        if (record.ordinal >= 0 && static_cast<std::size_t>(record.ordinal) < macros.size() &&
+            macros[static_cast<std::size_t>(record.ordinal)].name == record.macro)
+            ordinal = record.ordinal;
+        for (std::size_t i = 0; !ordinal && i < macros.size(); ++i)
+            if (macros[i].name == record.macro)
+                ordinal = static_cast<int>(i);
+    }
+    if (!ordinal) {
+        m_repeat.reset();
+        m_lastMessage = QCoreApplication::translate("HikariSub.Automation",
+                                                    "The last run's macro is no longer loaded, so it can't be repeated.");
+        emit progressChanged();
+        return false;
+    }
+    if (!run(record.path, *ordinal))
+        return false;
+    m_run->repeat = std::move(record.dialogs);
+    m_run->replaying = true;
+    m_log = QCoreApplication::translate("HikariSub.Automation", "Repeated with the last answers") + QLatin1Char('\n');
+    emit progressChanged();
+    return true;
+}
+
+QString AutomationShell::repeatText() const
+{
+    if (!m_repeat)
+        return QCoreApplication::translate("HikariSub.Automation", "Repeat last run");
+    const QString macro = QString::fromStdString(m_repeat->macro);
+    // The button the last dialog Repeat answers was answered with (questions
+    // are asked again).
+    const auto answers = std::ranges::find_if(m_repeat->dialogs | std::views::reverse,
+                                              [](const AnsweredDialog &d) { return !application::isQuestion(d.request); });
+    if (answers == (m_repeat->dialogs | std::views::reverse).end())
+        return QCoreApplication::translate("HikariSub.Automation", "Repeat last run: %1").arg(macro);
+    const auto &last = *answers;
+    const auto pressed = static_cast<std::size_t>(std::max(0, last.answer.pressed));
+    const QString button = last.request.buttons.empty()
+                               ? QCoreApplication::translate("HikariSub.Automation", "OK")
+                               : QString::fromStdString(pressed < last.request.buttons.size() ? last.request.buttons[pressed] : std::string());
+    return QCoreApplication::translate("HikariSub.Automation", "Repeat last run: %1, as %2 with the same answers")
+        .arg(macro, QString(button).replace(QRegularExpression(QStringLiteral("&(.)")), QStringLiteral("\\1")));
+}
+
+void AutomationShell::presentDialog(const application::DialogRequest &request, backends::LuaScriptHost::DialogReply reply)
+{
+    if (!m_run) {
+        m_dialogs.present(m_title, request, std::move(reply));
+        return;
+    }
+    const QString source = QString::fromStdString(m_run->path + '\n' + m_run->macro);
+    const QString key = ui::ScriptDialogMemory::keyOf(QString::fromStdString(m_run->active), request);
+    // Each answer is recorded for Repeat, and kept as the dialog's last
+    // answer unless it was the cancel one or has no named value to fill in
+    // (a question), which would only take a place among the kept answers.
+    auto answered = [this, request, key, reply = std::move(reply)](application::DialogResult result) {
+        const bool cancelled = application::cancelAnswer(request, result.pressed);
+        if (m_run) {
+            m_run->dialogs.push_back({request, result});
+            m_run->cancelledAtDialog = m_run->cancelledAtDialog || cancelled;
+        }
+        auto last = application::lastDialogAnswer(request, result);
+        if (!cancelled && !last.answered.empty())
+            m_dialogMemory.remember(key, std::move(last));
+        reply(std::move(result));
+    };
+    ui::AutomationDialogController::Shown shown;
+    shown.memoryKey = key;
+    if (m_run->repeat) {
+        const std::size_t at = m_run->dialogs.size();
+        const auto &recorded = *m_run->repeat;
+        const bool inRecord = at < recorded.size();
+        const bool same = m_run->replaying && inRecord && application::sameDialog(recorded[at].request, request);
+        if (same && !application::isQuestion(request))
+            return answered(application::replayedAnswer(request, recorded[at].answer));
+        if (same) {
+            // A question is asked again; the dialogs after it still replay.
+            shown.notice = QCoreApplication::translate("HikariSub.Automation",
+                                                       "Repeat last run asks questions again rather than answering them for you.");
+            m_dialogs.present(m_title, request, std::move(answered), source, std::move(shown));
+            return;
+        }
+        // Shown, filled with the last answers where the names match: this
+        // dialog's own, else those of the dialog at this point last time.
+        shown.notice =
+            !m_run->replaying ? QCoreApplication::translate(
+                                    "HikariSub.Automation",
+                                    "An earlier dialog of this run has changed, so this one is shown with your last answers filled in.")
+            : inRecord ? QCoreApplication::translate("HikariSub.Automation",
+                                                     "This dialog has changed since the last run, so it is shown with your last answers filled in.")
+                       : QCoreApplication::translate("HikariSub.Automation",
+                                                     "The last run did not show this dialog, so it is shown with your last answers filled in.");
+        m_run->replaying = false;
+        application::NamedDialogValues last;
+        if (const auto own = m_dialogMemory.lastAnswer(key))
+            last = own->answered;
+        else if (inRecord)
+            last = application::namedDialogValues(recorded[at].request, recorded[at].answer);
+        shown.values = application::filledByName(request, application::initialDialogResult(request), last);
+    } else if (m_dialogMemory.fillLastAnswers()) {
+        if (const auto last = m_dialogMemory.lastAnswer(key))
+            shown.values = application::safePrefill(request, *last);
+    }
+    m_dialogs.present(m_title, request, std::move(answered), source, std::move(shown));
+}
+
 bool AutomationShell::forceStopOffered() const
 {
     const auto *host = m_run ? m_manager.host(m_run->active) : nullptr;
     return host && host->forceStopAvailable();
+}
+
+void AutomationShell::cancelRun()
+{
+    if (m_run && !m_cancelling) {
+        m_cancelling = true;
+        // Cancelling…, and Force stop if it does not stop, are in the card:
+        // a cancel before the card's second (in a validation) opens it.
+        showCard();
+        emit progressChanged();
+    }
+    m_manager.cancel();
+}
+
+void AutomationShell::finishCard(const QString &ended, const QString &text, const QString &validationError)
+{
+    m_cardTimer.stop();
+    m_macroStarted = false;
+    m_cancelling = false;
+    QString state;
+    QString said = text;
+    if (ended == QLatin1String("applied"))
+        state = m_keepLog ? QStringLiteral("problems") : QStringLiteral("applied");
+    else if (ended == QLatin1String("cancelled") || ended == QLatin1String("declined"))
+        state = QStringLiteral("cancelled");
+    else
+        state = QStringLiteral("failed");
+    if (ended == QLatin1String("invalid"))
+        said = QCoreApplication::translate("HikariSub.Automation", "Its validation did not let it run; nothing was changed.");
+    // The error and how it ended are the run log's last lines.
+    if (!validationError.isEmpty())
+        m_runs.note(m_runId, validationError, ui::AutomationRuns::kHostError);
+    if (!said.isEmpty())
+        m_runs.note(m_runId, said, state == QLatin1String("failed") ? ui::AutomationRuns::kHostError
+                                                                   : ui::AutomationRuns::kHostInfo);
+    m_runs.finish(m_runId, state, said);
+    // The card says the first lines; the run's log keeps the rest.
+    m_cardText = said.left(ui::AutomationRuns::kMaxText);
+    // A run that applied and logged nothing, or whose script-resolution
+    // question was declined, leaves no card.
+    if (ended == QLatin1String("declined") || (state == QLatin1String("applied") && !m_logged))
+        m_cardState.clear();
+    else
+        m_cardState = state;
+}
+
+void AutomationShell::dismissCard()
+{
+    if (m_run || m_cardState.isEmpty())
+        return;
+    m_cardState.clear();
+    emit progressChanged();
+}
+
+bool AutomationShell::waitingForUser() const
+{
+    return m_dialogs.isOpen() || m_picker.isOpen() || m_resolutionPrompt.isOpen();
+}
+
+void AutomationShell::updateCardTimer()
+{
+    if (!m_run || !m_macroStarted || m_cardState != QLatin1String("notice"))
+        return;
+    // Paused while the user is asked: what was left of the second resumes.
+    if (waitingForUser()) {
+        if (m_cardTimer.isActive()) {
+            m_cardLeft = std::max(0, m_cardTimer.remainingTime());
+            m_cardTimer.stop();
+        }
+    } else if (!m_cardTimer.isActive()) {
+        m_cardTimer.start(m_cardLeft);
+    }
+}
+
+void AutomationShell::showCard()
+{
+    m_cardTimer.stop();
+    if (m_run && m_cardState != QLatin1String("running")) {
+        m_cardState = QStringLiteral("running");
+        emit progressChanged();
+    }
 }
 
 bool AutomationShell::forceStopRun()
@@ -610,6 +856,9 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     // before it, on the same snapshot, and no other macro does.
     Run started{*target, std::move(*snapshot), path, macro, ordinal, origin};
     started.validations = application::dependencyValidations(m_manager.scripts(), path);
+    m_macroStarted = false;
+    m_cardTimer.stop();
+    m_cardLeft = m_cardDelay;
     if (!startStep(started)) {
         s->setReadOnly(false);
         return false;
@@ -623,6 +872,14 @@ bool AutomationShell::run(const std::string &path, int ordinal, RunOrigin origin
     m_lastOutcome.clear();
     m_progress = 0;
     m_keepLog = false;
+    m_problems = 0;
+    m_logged = false;
+    m_cancelling = false;
+    m_progressKnown = false;
+    m_cardState = QStringLiteral("notice");
+    m_cardText.clear();
+    m_runId = m_runs.begin(m_title, prettyName(path), m_shell.editingTitle());
+    updateCardTimer();
     if (m_documentChanged)
         m_documentChanged();
     emit progressChanged();
@@ -644,6 +901,8 @@ bool AutomationShell::startStep(Run &run)
         return m_manager.validate(v.path, v.ordinal, run.snapshot);
     }
     run.active = run.path;
+    // The card's second starts when the helper says the macro itself has
+    // (macroStarted), after its validation function.
     return m_manager.run(run.path, run.ordinal, run.snapshot, true);
 }
 
@@ -702,9 +961,14 @@ void AutomationShell::karaokeReport(const ui::KaraokeReport &report)
         if (serial == m_statusSerial && m_shell.statusText() == summary)
             m_shell.setStatusText(QString());
     });
+    const QString details = ui::karaokeReportDetails(report);
     if (m_logLine)
-        m_logLine(ui::karaokeReportDetails(report), LogLine::Quiet);
+        m_logLine(details, LogLine::Quiet);
+    // AD3: the run's log has it too, so a run naming problems shows them
+    // (the run has ended: its id is still the card's).
+    m_runs.note(m_runId, details, ui::AutomationRuns::kHostInfo);
     m_keepLog = report.problems > 0;
+    m_problems = report.problems;
 }
 
 void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutcome outcome, const QString &message)
@@ -727,6 +991,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
     }
     Run run = std::move(*m_run);
     m_run.reset();
+    // AD2-repeat-last-run: a run that got past its dialogs is the one
+    // Repeat repeats.
+    if (!run.cancelledAtDialog && (outcome == Outcome::Ok || outcome == Outcome::Failed))
+        m_repeat = RepeatRecord{run.path, run.macro, run.ordinal, std::move(run.dialogs)};
     auto *s = session(run.target);
     if (s)
         s->setReadOnly(false);
@@ -759,6 +1027,13 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                 text = refusalText(applied.error());
             else if (const auto report = ui::readKaraokeReport(host->lastResult()->report))
                 karaokeReport(*report);
+        } else if (!s) {
+            // AD3: the card and the run's log say why nothing was applied.
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "Its document was closed while the macro ran; nothing was changed.");
+        } else {
+            text = QCoreApplication::translate("HikariSub.Automation",
+                                               "The macro's changes could not be applied; nothing was changed.");
         }
         ended = ok ? QStringLiteral("applied") : QStringLiteral("refused");
         break;
@@ -794,9 +1069,10 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
         // A dependency's failed validation is said the same way, naming
         // the dependency (S4-run-validation).
         // NT1: the runtime error is the box's Details, and an error of the
-        // Log; the menu's run only logged it, now an error toast.
+        // Log; the menu's run only logged it. AD3: the progress card says
+        // it failed, so the Log takes it without a toast.
         if (!message.isEmpty() && m_logLine)
-            m_logLine(message, run.origin == RunOrigin::Menu ? LogLine::Notice : LogLine::QuietError);
+            m_logLine(message, LogLine::QuietError);
         if (run.origin != RunOrigin::Menu)
             emit notice(QStringLiteral("error"),
                         run.origin == RunOrigin::LastScript
@@ -807,10 +1083,12 @@ void AutomationShell::finished(const QString &, backends::LuaScriptHost::RunOutc
                         message);
         break;
     }
-    if (!text.isEmpty())
-        m_log += (m_log.isEmpty() || m_log.endsWith(QLatin1Char('\n')) ? QString() : QStringLiteral("\n")) + text;
+    if (!text.isEmpty() && m_log.size() < ui::AutomationRuns::kMaxChars)
+        m_log += ((m_log.isEmpty() || m_log.endsWith(QLatin1Char('\n')) ? QString() : QStringLiteral("\n")) + text)
+                     .left(ui::AutomationRuns::kMaxChars - m_log.size());
     m_lastMessage = text;
     m_lastOutcome = ended;
+    finishCard(ended, text, outcome == Outcome::NotValid ? message : QString());
     m_editor.reloadFromSession();
     if (m_documentChanged)
         m_documentChanged();

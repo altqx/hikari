@@ -566,7 +566,8 @@ private slots:
     }
 
     // Translation mode turned off from a floating Original text panel (its
-    // hotkey there) asks in the main window, which it activates.
+    // hotkey there) asks in PK1's message box, which takes the keyboard
+    // (PU2-translation-mode-off).
     void theOffQuestionActivatesTheMainWindow()
     {
         start();
@@ -581,8 +582,10 @@ private slots:
         auto *confirm = item<QObject>("translatorModeOffConfirm");
         QVERIFY(QMetaObject::invokeMethod(modeAction(), "trigger"));
         QTRY_VERIFY(confirm->property("visible").toBool());
-        QTRY_COMPARE(QGuiApplication::focusWindow(), window());
-        QTest::keyClick(window(), Qt::Key_Escape);
+        auto *box = qobject_cast<QQuickWindow *>(confirm);
+        QVERIFY(box);
+        QTRY_COMPARE(QGuiApplication::focusWindow(), box);
+        QTest::keyClick(box, Qt::Key_Escape);
         QTRY_VERIFY(!confirm->property("visible").toBool());
         QVERIFY(translationMode());
         stop();

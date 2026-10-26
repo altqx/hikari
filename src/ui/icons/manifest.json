@@ -1522,6 +1522,43 @@
    ]
   },
   {
+   "role": "run-busy",
+   "file": "run-busy.svg",
+   "label": "Running",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation",
+    "notices"
+   ]
+  },
+  {
+   "role": "run-applied",
+   "file": "run-applied.svg",
+   "label": "Applied",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation",
+    "notices"
+   ]
+  },
+  {
+   "role": "run-cancelled",
+   "file": "run-cancelled.svg",
+   "label": "Cancelled",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "automation",
+    "notices",
+    "menu:automation"
+   ]
+  },
+  {
    "role": "layout",
    "file": "layout.svg",
    "label": "Layout",
@@ -2800,6 +2837,18 @@
    "legacy": [],
    "surfaces": [
     "menu:automation"
+   ]
+  },
+  {
+   "role": "repeat-run",
+   "file": "repeat-run.svg",
+   "label": "Repeat last run",
+   "accent": true,
+   "mirror": false,
+   "legacy": [],
+   "surfaces": [
+    "menu:automation",
+    "automation-panel"
    ]
   },
   {

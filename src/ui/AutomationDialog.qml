@@ -26,6 +26,14 @@
 //   check box and presses a button; Alt with a label's `&` letter presses
 //   the button, ticks the check box or (a label) moves to the control after
 //   it, the letters underlined while Alt is held.
+//
+// AD2 (owner, 2026-10-22, the mockup on #311): the ⋯ button at the leading
+// end of the footer (its menu: Last used, Presets with Save as preset… and
+// Delete preset, Reset to the script's values) only changes the values shown
+// before a button is pressed. A control that differs from the script's value
+// has a 2 px accent bar at its leading edge: hovering it says the script's
+// value, clicking it puts that one back. A repeated run's dialog that is
+// shown says why in an inline bar (controller.notice).
 pragma ComponentBehavior: Bound
 pragma Translator: "HikariSub.Automation"
 import QtQuick
@@ -38,6 +46,8 @@ DialogWindow {
     required property AutomationDialogController controller
     // SY2: the colour controls' popover.
     required property ColourPickerController colourPicker
+    // AD2: asks before a preset is deleted (Main's MessageHost).
+    property var messages: null
 
     title: controller.title
     dialogId: controller.dialogId
@@ -98,6 +108,47 @@ DialogWindow {
         return out
     }
     function press(index) { controller.finish(index, values()) }
+
+    // AD2: the controls `list` holds a value for (one per control, as the
+    // controls show it; undefined leaves one as it is) take it.
+    function fill(list) {
+        for (let i = 0; i < cells.count; ++i) {
+            const cell = cells.itemAt(i)
+            const v = list[cell.controlIndex]
+            if (v !== undefined && v !== null && cell.item)
+                cell.item.writeValue(v)
+        }
+    }
+    function resetControl(cell) {
+        const v = controller.scriptValues()[cell.controlIndex]
+        if (v !== undefined && v !== null && cell.item)
+            cell.item.writeValue(v)
+    }
+    // A control's hint, and that it was changed (the marker).
+    function descriptionOf(cell) {
+        const hint = cell && cell.spec ? cell.spec.hint : ""
+        if (!cell || !cell.differs)
+            return hint
+        const changed = qsTr("Changed from the script’s %1.").arg(controller.scriptValueText(cell.controlIndex))
+        return hint !== "" ? hint + " " + changed : changed
+    }
+    function askDelete(name) {
+        if (!messages) {
+            controller.deletePreset(name)
+            return
+        }
+        messages.ask({
+            title: qsTr("Delete preset"),
+            text: qsTr("Delete the preset “%1”?").arg(name),
+            plainText: true,
+            severity: "warning",
+            choices: [{ id: "delete", text: qsTr("Delete"), role: "destructive" },
+                      { id: "cancel", text: qsTr("Cancel"), role: "reject", isDefault: true }]
+        }, id => {
+            if (id === "delete" && controller.open)
+                controller.deletePreset(name)
+        })
+    }
     function pressEnterButton() {
         const b = madeButtons[controller.enterButton]
         if (b)
@@ -186,6 +237,12 @@ DialogWindow {
         // so the Enter button is in the window when open() gives it the keys.
         if (buttonBox.contentItem && typeof buttonBox.contentItem.forceLayout === "function")
             buttonBox.contentItem.forceLayout()
+        // The box keeps its list at the width of the buttons it had partway
+        // through (Qt 6.11) when its own width does not change, so a dialog
+        // with the same buttons as the last one had them past the window's
+        // edge: setting the alignment fits the list to them again.
+        buttonBox.alignment = 0
+        buttonBox.alignment = Qt.AlignRight
         if (visible) {
             raise()
             if (defaultButton)
@@ -204,6 +261,152 @@ DialogWindow {
         }
     }
     onRejected: if (controller.open) controller.finish(-1, values())
+
+    // AD2: the ⋯ button and its menu, for a script's dialog.
+    leadingActions: Button {
+        id: moreButton
+        objectName: "automationDialogMore"
+        visible: window.controller.remembers
+        text: qsTr("Answers and presets")
+        display: AbstractButton.IconOnly
+        implicitWidth: implicitHeight
+        down: pressed || moreMenu.visible
+        contentItem: Item {
+            implicitWidth: 16
+            implicitHeight: 16
+            Icon {
+                anchors.centerIn: parent
+                iconRole: "panel-menu"
+            }
+        }
+        Accessible.name: text
+        ToolTip.visible: hovered && !moreMenu.visible
+        ToolTip.text: text
+        ToolTip.delay: 600
+        onClicked: moreMenu.popup(moreButton, 0, -moreMenu.implicitHeight - 4)
+        Keys.onPressed: event => window.trackAlt(event, true)
+        Keys.onReleased: event => window.trackAlt(event, false)
+    }
+    ShellMenu {
+        id: moreMenu
+        objectName: "automationDialogMenu"
+        ShellMenuItem {
+            objectName: "dialogLastUsed"
+            iconRole: "undo"
+            text: qsTr("Last used")
+            enabled: window.controller.hasLastUsed
+            onTriggered: window.fill(window.controller.lastUsedValues())
+        }
+        ShellMenu {
+            id: presetsMenu
+            objectName: "dialogPresetsMenu"
+            title: qsTr("Presets")
+            iconRole: "save-as"
+            Instantiator {
+                model: window.controller.presets
+                delegate: ShellMenuItem {
+                    required property string modelData
+                    objectName: "dialogPreset_" + modelData
+                    text: modelData
+                    onTriggered: window.fill(window.controller.presetValues(modelData))
+                }
+                onObjectAdded: (index, object) => presetsMenu.insertItem(index, object)
+                onObjectRemoved: (index, object) => presetsMenu.removeItem(object)
+            }
+            MenuSeparator {
+                visible: window.controller.presets.length > 0
+                height: visible ? implicitHeight : 0
+            }
+            ShellMenuItem {
+                objectName: "dialogSavePreset"
+                iconRole: "save-as"
+                text: qsTr("Save as preset…")
+                onTriggered: savePopover.openFor()
+            }
+            ShellMenu {
+                id: deleteMenu
+                objectName: "dialogDeletePresetMenu"
+                title: qsTr("Delete preset")
+                iconRole: "delete"
+                enabled: window.controller.presets.length > 0
+                Instantiator {
+                    model: window.controller.presets
+                    delegate: ShellMenuItem {
+                        required property string modelData
+                        objectName: "dialogDeletePreset_" + modelData
+                        text: modelData
+                        onTriggered: window.askDelete(modelData)
+                    }
+                    onObjectAdded: (index, object) => deleteMenu.insertItem(index, object)
+                    onObjectRemoved: (index, object) => deleteMenu.removeItem(object)
+                }
+            }
+        }
+        MenuSeparator {}
+        ShellMenuItem {
+            objectName: "dialogReset"
+            iconRole: "refresh"
+            text: qsTr("Reset to the script’s values")
+            onTriggered: window.fill(window.controller.scriptValues())
+        }
+    }
+    // Save as preset…: a name over ⋯; Enter or Save saves (Replace for a
+    // name in use), Esc, Cancel or a press outside closes it only.
+    Popover {
+        id: savePopover
+        objectName: "savePresetPopover"
+        title: qsTr("Save as preset")
+        showTitle: true
+        initialFocus: presetName
+        property bool saving: false
+        readonly property string name: presetName.text.trim()
+        readonly property bool taken: window.controller.presets.indexOf(name) >= 0
+        function openFor() {
+            presetName.text = ""
+            saving = false
+            openAt(moreButton, window.contentItem)
+        }
+        function save() {
+            if (name === "")
+                return
+            saving = true
+            keep()
+        }
+        onKept: if (saving && name !== "") window.controller.savePreset(name, window.values())
+        TextField {
+            id: presetName
+            objectName: "presetName"
+            Layout.preferredWidth: 260
+            placeholderText: qsTr("Preset name")
+            Accessible.name: qsTr("Preset name")
+            selectByMouse: true
+            onAccepted: savePopover.save()
+        }
+        Label {
+            objectName: "presetTaken"
+            visible: savePopover.taken
+            Layout.maximumWidth: 260
+            text: qsTr("A preset named “%1” exists. Saving replaces it.").arg(savePopover.name)
+            textFormat: Text.PlainText
+            wrapMode: Text.Wrap
+            color: Theme.muted
+        }
+        RowLayout {
+            spacing: 8
+            Layout.alignment: Qt.AlignRight
+            PrimaryButton {
+                objectName: "presetSave"
+                text: savePopover.taken ? qsTr("Replace") : qsTr("Save")
+                enabled: savePopover.name !== ""
+                onClicked: savePopover.save()
+            }
+            Button {
+                objectName: "presetCancel"
+                text: qsTr("Cancel")
+                onClicked: savePopover.revert()
+            }
+        }
+    }
 
     // The script's buttons in its order at the trailing edge (all one role,
     // so the footer keeps the order), the Enter button in the accent.
@@ -272,6 +475,7 @@ DialogWindow {
         Layout.fillHeight: true
         implicitWidth: scroll.implicitWidth
         implicitHeight: scroll.implicitHeight + (strip.visible ? strip.implicitHeight + 12 : 0)
+                        + (noticeBar.visible ? noticeBar.implicitHeight + 12 : 0)
         // Alt held: the letters show (no control takes Alt; the buttons,
         // outside this item, track it too). Tab needs no help: the cells are
         // made in Tab order, then come the buttons.
@@ -297,21 +501,36 @@ DialogWindow {
             }
         }
 
+        // AD2-repeat-last-run: why a repeated run shows this dialog.
+        InlineBar {
+            id: noticeBar
+            objectName: "automationDialogNotice"
+            visible: window.controller.notice !== ""
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
+            text: window.controller.notice
+            closable: false
+        }
+
         Flickable {
             id: scroll
             objectName: "automationDialogScroll"
             anchors.left: parent.left
             anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.top: noticeBar.visible ? noticeBar.bottom : parent.top
+            anchors.topMargin: noticeBar.visible ? 12 : 0
             anchors.bottom: strip.visible ? strip.top : parent.bottom
             anchors.bottomMargin: strip.visible ? 12 : 0
             clip: true
             boundsBehavior: Flickable.StopAtBounds
             readonly property bool overflows: contentHeight > height + 0.5
             readonly property int barWidth: 6
-            implicitWidth: grid.implicitWidth + barWidth + 4
+            // AD2: room for the first column's markers.
+            readonly property int markerRoom: 6
+            implicitWidth: markerRoom + grid.implicitWidth + barWidth + 4
             implicitHeight: grid.implicitHeight
-            contentWidth: Math.max(grid.implicitWidth, width - barWidth - 4)
+            contentWidth: Math.max(markerRoom + grid.implicitWidth, width - barWidth - 4)
             contentHeight: window.hasTextbox ? Math.max(grid.implicitHeight, height) : grid.implicitHeight
             ScrollBar.vertical: ScrollBar {
                 objectName: "automationDialogScrollBar"
@@ -345,7 +564,8 @@ DialogWindow {
             GridLayout {
                 id: grid
                 objectName: "automationDialogGrid"
-                width: scroll.contentWidth
+                x: scroll.markerRoom
+                width: scroll.contentWidth - scroll.markerRoom
                 height: scroll.contentHeight
                 columns: Math.max(1, window.controller.columns)
                 rowSpacing: 6
@@ -353,7 +573,7 @@ DialogWindow {
 
                 // Brings the focused control into view.
                 function reveal(item) {
-                    const p = item.mapToItem(grid, 0, 0)
+                    const p = item.mapToItem(scroll.contentItem, 0, 0)
                     const across = scroll.width - scroll.barWidth - 4
                     if (p.x < scroll.contentX)
                         scroll.contentX = Math.max(0, p.x - 4)
@@ -397,6 +617,9 @@ DialogWindow {
                                 parts.push(item.overflowLongest)
                             return parts.join(" ")
                         }
+                        // AD2: the value shown differs from the script's.
+                        readonly property bool differs: item !== null && item.current !== undefined
+                                                        && window.controller.differs(controlIndex, item.current)
                         objectName: "control_" + controlIndex
                         Layout.row: spec.y
                         Layout.column: spec.x
@@ -433,6 +656,33 @@ DialogWindow {
                                 else if (window.hoveredCell === cell)
                                     window.hoveredCell = null
                             }
+                        }
+                        // The marker in the column gap at the leading edge:
+                        // 2 px of accent; hovering says the script's value
+                        // and a click puts it back.
+                        Item {
+                            id: marker
+                            objectName: "marker_" + cell.controlIndex
+                            visible: cell.differs
+                            x: -6
+                            width: 6
+                            height: cell.height
+                            Rectangle {
+                                x: 2
+                                width: 2
+                                height: parent.height
+                                color: Theme.accent
+                            }
+                            HoverHandler {
+                                id: markerHover
+                                cursorShape: Qt.PointingHandCursor
+                            }
+                            TapHandler {
+                                onTapped: window.resetControl(cell)
+                            }
+                            ToolTip.visible: markerHover.hovered
+                            ToolTip.text: qsTr("Changed from the script’s %1. Click the bar to put it back.")
+                                .arg(window.controller.scriptValueText(cell.controlIndex))
                         }
                     }
                 }
@@ -497,11 +747,13 @@ DialogWindow {
             readonly property var focusTargets: []
             text: window.shownLabel(spec.label)
             textFormat: Text.StyledText
-            Accessible.description: spec.hint
+            Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint
             ToolTip.visible: labelHover.hovered && spec.hint !== ""
             HoverHandler { id: labelHover }
             function readValue() { return undefined }
+            readonly property var current: undefined
+            function writeValue(v) {}
             Shortcut {
                 sequence: window.mnemonic(label.spec.label) !== "" ? "Alt+" + window.mnemonic(label.spec.label) : ""
                 enabled: sequence !== "" && window.visible
@@ -519,10 +771,12 @@ DialogWindow {
             selectByMouse: true
             font.family: spec.kind === "alpha" ? "monospace" : font.family
             Accessible.name: window.nameFor(spec)
-            Accessible.description: spec.hint
+            Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
             function readValue() { return text }
+            readonly property var current: text
+            function writeValue(v) { text = v }
         }
     }
     Component {
@@ -538,7 +792,7 @@ DialogWindow {
             implicitHeight: Math.max(2 * font.pixelSize * 1.5 + topPadding + bottomPadding,
                                      contentHeight + topPadding + bottomPadding)
             Accessible.name: window.nameFor(spec)
-            Accessible.description: spec.hint
+            Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
             // Enter is a new line here; Ctrl+Enter presses the Enter button.
@@ -556,6 +810,8 @@ DialogWindow {
                 }
             }
             function readValue() { return text }
+            readonly property var current: text
+            function writeValue(v) { text = v }
         }
     }
     Component {
@@ -649,6 +905,11 @@ DialogWindow {
                 const n = parse(text)
                 return shown(isNaN(n) ? value : clamp(n))
             }
+            readonly property var current: readValue()
+            function writeValue(v) {
+                value = clamp(Number(v))
+                text = shown(value)
+            }
 
             Component.onCompleted: text = shown(value)
             selectByMouse: true
@@ -657,7 +918,7 @@ DialogWindow {
             placeholderTextColor: Theme.muted
             color: bad ? Theme.danger : palette.text
             Accessible.name: window.nameFor(spec)
-            Accessible.description: spec.hint
+            Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
             onEditingFinished: commit()
@@ -800,10 +1061,17 @@ DialogWindow {
             model: spec.items
             currentIndex: spec.items.indexOf(spec.text)
             Accessible.name: window.nameFor(spec)
-            Accessible.description: spec.hint
+            Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== "" && !popup.visible
-            function readValue() { return currentIndex >= 0 ? currentText : spec.text }
+            // The script's value when it is none of the items (kept as it is).
+            property string unlisted: spec.text
+            function readValue() { return currentIndex >= 0 ? currentText : unlisted }
+            readonly property var current: currentIndex >= 0 ? spec.items[currentIndex] : unlisted
+            function writeValue(v) {
+                unlisted = v
+                currentIndex = spec.items.indexOf(v)
+            }
             // The list opens below the dropdown, or above it when there is
             // more room there, at most as tall as that room (it scrolls) and
             // no wider than the dialog.
@@ -973,7 +1241,7 @@ DialogWindow {
             text: window.plain(spec.label)
             checked: spec.checked
             Accessible.name: window.plain(spec.label)
-            Accessible.description: spec.hint
+            Accessible.description: window.descriptionOf(parent)
             ToolTip.text: spec.hint
             ToolTip.visible: hovered && spec.hint !== ""
             contentItem: Label {
@@ -984,6 +1252,8 @@ DialogWindow {
                 color: check.enabled ? check.palette.windowText : Theme.disabled
             }
             function readValue() { return checked }
+            readonly property var current: checked
+            function writeValue(v) { checked = v }
             Shortcut {
                 sequence: window.mnemonic(check.spec.label) !== "" ? "Alt+" + window.mnemonic(check.spec.label) : ""
                 enabled: sequence !== "" && window.visible
@@ -1009,6 +1279,11 @@ DialogWindow {
             property bool editing: false
             spacing: 6
             function readValue() { return value }
+            readonly property var current: value
+            function writeValue(v) {
+                editing = false
+                value = v
+            }
             function hex2(n) { return ("0" + Math.round(n).toString(16).toUpperCase()).slice(-2) }
             function shownText(c) {
                 return "#" + hex2(c.r * 255) + hex2(c.g * 255) + hex2(c.b * 255)
@@ -1054,7 +1329,7 @@ DialogWindow {
                 objectName: "colorPick"
                 implicitWidth: 40
                 Accessible.name: window.nameFor(colourRow.spec)
-                Accessible.description: colourRow.spec.hint
+                Accessible.description: window.descriptionOf(colourRow.parent)
                 ToolTip.text: colourRow.spec.hint
                 ToolTip.visible: hovered && colourRow.spec.hint !== ""
                 onClicked: colourRow.pick()
@@ -1096,7 +1371,7 @@ DialogWindow {
                 readonly property bool bad: colourRow.editing && colourRow.parsed(text) === null
                 color: bad ? Theme.danger : palette.text
                 Accessible.name: window.nameFor(colourRow.spec)
-                Accessible.description: colourRow.spec.hint
+                Accessible.description: window.descriptionOf(colourRow.parent)
                 ToolTip.text: colourRow.spec.hint
                 ToolTip.visible: hovered && colourRow.spec.hint !== ""
                 onTextEdited: {

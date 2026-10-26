@@ -2002,7 +2002,13 @@ QVariantMap LineEditorController::beginFont(int role, int selectionStart, int se
         font = core::legacy::fontInEffect(d.state, font, &d.position);
     }
     d.actualFont = d.editedFont = font;
-    return fontMap(font);
+    // The preview's text: the field's raw text and selection (a drawing
+    // the field hides stays one).
+    QVariantMap result = fontMap(font);
+    result.insert(QStringLiteral("sample"), QString::fromStdU16String(d.opened.text));
+    result.insert(QStringLiteral("sampleFrom"), int(d.opened.selectionStart));
+    result.insert(QStringLiteral("sampleTo"), int(d.opened.selectionEnd));
+    return result;
 }
 
 bool LineEditorController::changeFont(const QVariantMap &font)
