@@ -105,12 +105,20 @@ public:
     // Close without applying: the done pairs are dropped.
     Q_INVOKABLE void discard();
 
+    // KA3-close-review: a Document's done pairs not applied yet are unsaved
+    // work its close review asks about; Save writes them first (applyTo),
+    // and a closed Document's timer goes (forget).
+    int pendingFor(std::uint64_t document) const;
+    bool applyTo(std::uint64_t document, application::EditSession &session);
+    void forget(std::uint64_t document);
+
 signals:
     void changed();
 
 private:
     bool done(bool ok);
     void readLines();
+    application::KanjiTimer *timerFor(std::uint64_t document) const;
     void guessStyles();
     application::EditSession *target() const;
 

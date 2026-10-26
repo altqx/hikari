@@ -186,6 +186,34 @@ TEST(KanjiTimer, RunningOutOfKanjiIsACheck)
     EXPECT_TRUE(suggestGroups(kanjiSyllables(u("{\\k50}yu{\\k50}me"), 0, 0), 0, kanjiText(u("夢")), 0, classes()).clean);
 }
 
+TEST(KanjiTimer, ALineBreakInASyllableIsASpace)
+{
+    // \N, \n and \h in a romaji syllable part its letters as a space would
+    // (Codex review on #352): a over a, b over b, the break between them
+    for (const char *esc : {"\\N", "\\n", "\\h"}) {
+        const auto syls = kanjiSyllables(u(std::string("{\\k10}a") + esc + "{\\k20}b"), 0, 0);
+        const auto kanji = kanjiText(u(std::string("a") + esc + "b"));
+        const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
+        EXPECT_EQ(groups(sug.groups), "1:2 1:1 ") << esc;
+        EXPECT_TRUE(sug.clean) << esc;
+        EXPECT_EQ(s(kanjiOutput(syls, kanji, sug.groups)), std::string("{\\k10}a") + esc + "{\\k20}b") << esc;
+    }
+}
+
+TEST(KanjiTimer, ABlankSyllableWithinAReadingIsInItsGroup)
+{
+    // ki, a blank, mi under 君: the blank counts for the reading's share but
+    // is in the group (Codex review on #352)
+    const auto syls = kanjiSyllables(u("{\\k10}ki{\\k5}{\\k20}mi{\\k30}no"), 0, 0);
+    const auto kanji = kanjiText(u("君の"));
+    const auto sug = suggestGroups(syls, 0, kanji, 0, classes());
+    EXPECT_EQ(groups(sug.groups), "3:1 1:1 ");
+    EXPECT_EQ(s(kanjiOutput(syls, kanji, sug.groups)), "{\\k35}君{\\k30}の");
+    // a blank before the next syllable's kana: the group before takes it
+    const auto next = kanjiSyllables(u("{\\k10}ki{\\k5}{\\k30}no"), 0, 0);
+    EXPECT_EQ(groups(suggestGroups(next, 0, kanji, 0, classes()).groups), "2:1 1:1 ");
+}
+
 // ---- the output -------------------------------------------------------------------
 
 TEST(KanjiTimer, OutputKeepsTheTagLettersAndTheLinesOwnTags)
@@ -347,6 +375,43 @@ TEST(KanjiTimer, AcceptLineTakesTheSuggestionAndUndoRedo)
     EXPECT_EQ(timer.view()->linked.size(), 8u);
     EXPECT_TRUE(timer.unlink());
     EXPECT_EQ(timer.pairs()[0].status, KanjiTimer::Status::Suggested);
+}
+
+TEST(KanjiTimer, UndoKeepsWhatEachStepChanged)
+{
+    // a step holds the pairs it changed, not every pair's work again
+    // (Codex security review on #352); undo goes back to the pair it changes
+    std::vector<KanjiTimer::Line> romaji, kanji;
+    for (int i = 0; i < 2000; ++i) {
+        romaji.push_back(line(2 * i + 1, "{\\k10}ka{\\k10}na", i * 100, i * 100 + 50));
+        kanji.push_back(line(2 * i + 2, "かな", i * 100 + 50, i * 100 + 100));
+    }
+    KanjiTimer timer(classes());
+    timer.setLines(std::move(romaji), std::move(kanji));
+    for (int i = 0; i < 300; ++i) {
+        ASSERT_TRUE(timer.growSyllables());
+        ASSERT_TRUE(timer.shrinkSyllables());
+    }
+    int undone = 0;
+    while (timer.undo())
+        ++undone;
+    EXPECT_EQ(undone, 500); // the oldest went
+    EXPECT_EQ(groups({timer.view()->selection}), "1:1 "); // after the 100th, a shrink
+    while (timer.redo()) {
+    }
+    EXPECT_EQ(groups({timer.view()->selection}), "1:1 ");
+    // pair 1 linked after pair 0's edits: undo returns to pair 1, then to 0
+    ASSERT_TRUE(timer.choose(1));
+    ASSERT_TRUE(timer.link());
+    ASSERT_TRUE(timer.undo());
+    EXPECT_EQ(timer.current(), 1);
+    EXPECT_TRUE(timer.view()->linked.empty());
+    ASSERT_TRUE(timer.undo());
+    EXPECT_EQ(timer.current(), 0);
+    EXPECT_TRUE(timer.redo());
+    EXPECT_TRUE(timer.redo());
+    EXPECT_EQ(timer.current(), 1);
+    EXPECT_EQ(timer.view()->linked.size(), 1u);
 }
 
 TEST(KanjiTimer, ClicksEndTheGroupOrReopenALinkedOne)

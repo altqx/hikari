@@ -168,6 +168,60 @@ private slots:
         QVERIFY(readAll(path).contains(",,saved"));
     }
 
+    // KA3-close-review: the Kanji timer's done pairs not applied are unsaved
+    // work of their Document (Codex review on #352): its close asks though
+    // the Document is unchanged; Don't save drops them, Save writes them
+    // into the file first.
+    void kanjiTimerPairsNotAppliedAreReviewed()
+    {
+        const QString path = dir.filePath(QStringLiteral("kanji.ass"));
+        const auto write = [&] {
+            QFile f(path);
+            QVERIFY(f.open(QIODevice::WriteOnly));
+            f.write("[V4+ Styles]\n"
+                    "Format: Name, Fontname, Fontsize, PrimaryColour, SecondaryColour, OutlineColour, BackColour, Bold, "
+                    "Italic, Underline, StrikeOut, ScaleX, ScaleY, Spacing, Angle, BorderStyle, Outline, Shadow, "
+                    "Alignment, MarginL, MarginR, MarginV, Encoding\n"
+                    "Style: Song,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,2,"
+                    "10,10,10,1\n"
+                    "Style: Song kanji,Arial,20,&H00FFFFFF,&H000000FF,&H00000000,&H00000000,0,0,0,0,100,100,0,0,1,2,2,"
+                    "2,10,10,10,1\n\n"
+                    "[Events]\nFormat: Layer, Start, End, Style, Name, MarginL, MarginR, MarginV, Effect, Text\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song,,0,0,0,,{\\k50}yu{\\k50}me\n"
+                    "Dialogue: 0,0:00:01.00,0:00:02.00,Song kanji,,0,0,0,,\xE5\xA4\xA2\n"); // 夢
+        };
+        write();
+        const QByteArray before = readAll(path);
+        app::Application a;
+        auto &timer = a.kanjiTimer();
+        QVERIFY(a.openFile(path));
+        timer.open();
+        QCOMPARE(timer.acceptAll(), 1);
+        timer.close(); // (the window asks itself; another Document's pairs wait unasked)
+        QVERIFY(!target(a)->isDirty());
+        auto rows = a.reviewClose(QStringLiteral("close"));
+        QCOMPARE(rows.size(), qsizetype(1));
+        QSignalSpy finished(&a, &app::Application::closeFinished);
+        a.resolveClose(choose(rows, false));
+        QCOMPARE(finished.size(), 1);
+        QVERIFY(closedToHome(a));
+        QCOMPARE(readAll(path), before);
+        QCOMPARE(timer.pending(), 0);
+
+        // Save: the kanji Line written, then the file.
+        QVERIFY(a.openFile(path));
+        timer.open();
+        QCOMPARE(timer.acceptAll(), 1);
+        timer.close();
+        rows = a.reviewClose(QStringLiteral("quit"));
+        QCOMPARE(rows.size(), qsizetype(1));
+        a.resolveClose(choose(rows, true));
+        a.waitForWrites();
+        QTRY_COMPARE(finished.size(), 2);
+        QVERIFY(finished.last().at(0).toBool());
+        QVERIFY(readAll(path).contains(",,{\\k100}\xE5\xA4\xA2"));
+    }
+
     void newerEditsAfterTheChoiceKeepTheDocumentOpen()
     {
         app::Application a;

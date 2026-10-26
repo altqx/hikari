@@ -813,6 +813,7 @@ public:
     UpdateChecker &updates() { return *m_updates; }
     WhatsNew &whatsNew() { return *m_whatsNew; } // SH3
     StyleManagerController &styleManager() { return *m_styleManager; }
+    KanjiTimerController &kanjiTimer() { return *m_kanjiTimer; } // KA3
     // Y8: the font collector (GLOBAL_OPEN_FONT_COLLECTOR).
     FontCollectorController &fontCollector() { return *m_fontCollector; }
     FontCatalogsController &fontCatalogs() { return *m_fontCatalogs; } // Y6

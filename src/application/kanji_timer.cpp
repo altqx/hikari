@@ -15,6 +15,8 @@ using u16 = std::u16string;
 using u16v = std::u16string_view;
 
 constexpr std::size_t kHistory = 500;
+// and their size at most (the oldest go first; the last always stays)
+constexpr std::size_t kHistoryBytes = std::size_t{64} << 20;
 
 // Aegisub's: a kanji is read as five kana at most (uketamawa.ru), and a kana
 // is looked for at most three characters ahead.
@@ -73,9 +75,26 @@ bool spaceUnit(u16v unit, const KaraokeCharClass &classes)
     return !unit.empty() && std::ranges::all_of(unit, [&](char16_t c) { return classes.space(c); });
 }
 
+// The length of the space at `at`: a space character, or \N, \n or \h
+// (the line breaks and hard space a syllable keeps); 0 for none.
+std::size_t spaceAt(u16v text, std::size_t at, const KaraokeCharClass &classes)
+{
+    if (at < text.size() && classes.space(text[at]))
+        return 1;
+    if (at + 1 < text.size() && text[at] == u'\\' && (text[at + 1] == u'N' || text[at + 1] == u'n' || text[at + 1] == u'h'))
+        return 2;
+    return 0;
+}
+
 bool allSpace(u16v text, const KaraokeCharClass &classes)
 {
-    return std::ranges::all_of(text, [&](char16_t c) { return classes.space(c); });
+    for (std::size_t i = 0; i < text.size();) {
+        const std::size_t n = spaceAt(text, i, classes);
+        if (!n)
+            return false;
+        i += n;
+    }
+    return true;
 }
 
 // The characters' text from `at` on, for the kana readings.
@@ -209,8 +228,8 @@ KanjiGroup suggestGroup(const std::vector<KanjiSyllable> &syllables, std::size_t
     std::size_t si = 0, di = at;
     // past the spaces of both; true when this group is over
     auto eatSpace = [&] {
-        while (si < src.size() && classes.space(src[si]))
-            ++si;
+        while (const std::size_t space = spaceAt(src, si, classes))
+            si += space;
         while (di < n && spaceUnit(kanji.units[di].text, classes)) {
             ++di;
             ++g.characters;
@@ -284,11 +303,17 @@ KanjiGroup suggestGroup(const std::vector<KanjiSyllable> &syllables, std::size_t
                 continue;
             if (position == 2) { // the next syllable: everything before it is this one's
                 g.characters += ahead + 1;
+                g.syllables = k - from;
                 return g;
             }
-            // further on: the characters shared evenly by the syllables
+            // further on: the characters shared evenly by the syllables (as
+            // many with text, with the blank ones among them)
             g.characters += 1;
-            g.syllables = static_cast<std::size_t>((static_cast<double>(position) - 1.0) / (static_cast<double>(ahead) + 1.0) + 0.5);
+            const auto shared = static_cast<std::size_t>((static_cast<double>(position) - 1.0) / (static_cast<double>(ahead) + 1.0) + 0.5);
+            g.syllables = 0;
+            for (std::size_t counted = 0; counted < shared; ++g.syllables)
+                if (!allSpace(syllables[from + g.syllables].text, classes))
+                    ++counted;
             return g;
         }
     }
@@ -358,10 +383,7 @@ std::u16string kanjiOutput(const std::vector<KanjiSyllable> &syllables, const Ka
 
 // ---- the window's state -------------------------------------------------------
 
-KanjiTimer::KanjiTimer(KaraokeCharClass classes) : m_classes(std::move(classes))
-{
-    m_history.push_back(m_state);
-}
+KanjiTimer::KanjiTimer(KaraokeCharClass classes) : m_classes(std::move(classes)) {}
 
 KanjiTimer::Key KanjiTimer::keyOf(const Pair &pair)
 {
@@ -616,20 +638,76 @@ std::optional<KanjiTimer::View> KanjiTimer::view() const
     return v;
 }
 
-void KanjiTimer::record()
+void KanjiTimer::begin()
 {
-    m_history.resize(m_undo + 1);
-    m_history.push_back(m_state);
-    if (m_history.size() > kHistory)
-        m_history.erase(m_history.begin());
-    m_undo = m_history.size() - 1;
+    m_open = Step{};
+    m_open->currentBefore = m_state.current;
 }
 
-KanjiTimer::Work *KanjiTimer::currentWork()
+KanjiTimer::Work &KanjiTimer::touch(const Pair &pair)
 {
-    if (m_current < 0)
-        return nullptr;
-    return &workFor(m_pairs[static_cast<std::size_t>(m_current)]);
+    const Key key = keyOf(pair);
+    if (m_open && !m_open->works.contains(key)) {
+        const auto found = m_state.works.find(key);
+        m_open->works[key].first = found != m_state.works.end() ? std::optional(found->second) : std::nullopt;
+    }
+    return workFor(pair);
+}
+
+void KanjiTimer::commit()
+{
+    Step step = std::move(*m_open);
+    m_open.reset();
+    step.currentAfter = m_state.current;
+    step.bytes = sizeof(Step);
+    for (auto it = step.works.begin(); it != step.works.end();) {
+        auto &[before, after] = it->second;
+        const auto found = m_state.works.find(it->first);
+        after = found != m_state.works.end() ? std::optional(found->second) : std::nullopt;
+        if (before == after) {
+            it = step.works.erase(it);
+            continue;
+        }
+        for (const auto *w : {&before, &after})
+            if (*w)
+                step.bytes += sizeof(Work) + ((*w)->romajiText.size() + (*w)->kanjiText.size()) * sizeof(char16_t) +
+                              (*w)->linked.size() * sizeof(KanjiGroup);
+        ++it;
+    }
+    // the steps undone are gone; the oldest go past kHistory or kHistoryBytes
+    for (; m_steps.size() > m_undo; m_steps.pop_back())
+        m_stepBytes -= m_steps.back().bytes;
+    m_stepBytes += step.bytes;
+    m_steps.push_back(std::move(step));
+    std::size_t oldest = 0;
+    while (m_steps.size() - oldest > 1 && (m_steps.size() - oldest > kHistory || m_stepBytes > kHistoryBytes))
+        m_stepBytes -= m_steps[oldest++].bytes;
+    m_steps.erase(m_steps.begin(), m_steps.begin() + static_cast<std::ptrdiff_t>(oldest));
+    m_undo = m_steps.size();
+}
+
+void KanjiTimer::rollback()
+{
+    const Step step = std::move(*m_open);
+    m_open.reset();
+    replay(step, false);
+}
+
+void KanjiTimer::replay(const Step &step, bool forward)
+{
+    for (const auto &[key, change] : step.works) {
+        const auto &work = forward ? change.second : change.first;
+        if (work)
+            m_state.works[key] = *work;
+        else
+            m_state.works.erase(key);
+    }
+    if (step.skippedRomaji)
+        forward ? (void)m_state.skippedRomaji.insert(*step.skippedRomaji) : (void)m_state.skippedRomaji.erase(*step.skippedRomaji);
+    if (step.skippedKanji)
+        forward ? (void)m_state.skippedKanji.insert(*step.skippedKanji) : (void)m_state.skippedKanji.erase(*step.skippedKanji);
+    m_state.current = forward ? step.currentAfter : step.currentBefore;
+    derive();
 }
 
 bool KanjiTimer::editCurrent(
@@ -638,15 +716,15 @@ bool KanjiTimer::editCurrent(
     if (m_current < 0)
         return false;
     const Pair &pair = m_pairs[static_cast<std::size_t>(m_current)];
-    const State before = m_state;
-    Work &work = workFor(pair);
+    begin();
+    Work &work = touch(pair);
     const auto syllables = kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs);
     const auto kanji = kanjiText(pair.kanji->text);
     if (!edit(work, syllables, kanji)) {
-        m_state = before;
+        rollback();
         return false;
     }
-    record();
+    commit();
     derive();
     return true;
 }
@@ -776,16 +854,16 @@ bool KanjiTimer::acceptLine()
 {
     if (m_current < 0)
         return false;
-    const State before = m_state;
+    begin();
     const int at = m_current;
     const Pair pair = m_pairs[static_cast<std::size_t>(at)];
-    if (!acceptWork(pair, workFor(pair), true)) {
-        m_state = before;
+    if (!acceptWork(pair, touch(pair), true)) {
+        rollback();
         return false;
     }
     derive();
     moveOnFrom(at);
-    record();
+    commit();
     derive();
     return true;
 }
@@ -798,15 +876,15 @@ bool KanjiTimer::enter()
     const Work &work = workFor(pair);
     const auto syllables = kanjiSyllables(pair.romaji->text, pair.romaji->startMs, pair.romaji->endMs);
     if (!syllables.empty() && syllablesIn(work.linked) >= syllables.size()) {
-        const State before = m_state;
+        begin();
         const int at = m_current;
-        if (!acceptWork(pair, workFor(pair), false)) {
-            m_state = before;
+        if (!acceptWork(pair, touch(pair), false)) {
+            rollback();
             return false;
         }
         derive();
         moveOnFrom(at);
-        record();
+        commit();
         derive();
         return true;
     }
@@ -888,13 +966,15 @@ bool KanjiTimer::skipRomaji()
     if (m_current < 0)
         return false;
     const Pair pair = m_pairs[static_cast<std::size_t>(m_current)];
+    begin();
     m_state.skippedRomaji.insert(pair.romaji->id);
+    m_open->skippedRomaji = pair.romaji->id;
     derive();
     // the kanji Line's new pair, if it has one
     for (const Pair &p : m_pairs)
         if (p.kanji && p.kanji->id == pair.kanji->id && p.romaji)
             m_state.current = keyOf(p);
-    record();
+    commit();
     derive();
     return true;
 }
@@ -904,12 +984,14 @@ bool KanjiTimer::skipKanji()
     if (m_current < 0)
         return false;
     const Pair pair = m_pairs[static_cast<std::size_t>(m_current)];
+    begin();
     m_state.skippedKanji.insert(pair.kanji->id);
+    m_open->skippedKanji = pair.kanji->id;
     derive();
     for (const Pair &p : m_pairs)
         if (p.romaji && p.romaji->id == pair.romaji->id && p.kanji)
             m_state.current = keyOf(p);
-    record();
+    commit();
     derive();
     return true;
 }
@@ -919,23 +1001,26 @@ int KanjiTimer::acceptAllSuggestions()
     if (!m_suggest)
         return 0;
     int accepted = 0;
+    begin();
     for (const Pair &pair : std::vector<Pair>(m_pairs)) {
         if (pair.status != Status::Suggested)
             continue;
-        Work &work = workFor(pair);
+        Work &work = touch(pair);
         const Work before = work;
         if (acceptWork(pair, work, true))
             ++accepted;
         else
             work = before;
     }
-    if (!accepted)
+    if (!accepted) {
+        rollback();
         return 0;
+    }
     const int at = m_current;
     derive();
     if (at >= 0 && m_pairs[static_cast<std::size_t>(at)].status == Status::Done)
         moveOnFrom(at);
-    record();
+    commit();
     derive();
     return accepted;
 }
@@ -944,8 +1029,7 @@ bool KanjiTimer::undo()
 {
     if (!canUndo())
         return false;
-    m_state = m_history[--m_undo];
-    derive();
+    replay(m_steps[--m_undo], false);
     return true;
 }
 
@@ -953,8 +1037,7 @@ bool KanjiTimer::redo()
 {
     if (!canRedo())
         return false;
-    m_state = m_history[++m_undo];
-    derive();
+    replay(m_steps[m_undo++], true);
     return true;
 }
 
@@ -985,7 +1068,8 @@ void KanjiTimer::applied()
         work.applied = true;
     }
     // what came before can no longer be undone: the Document has it
-    m_history.assign(1, m_state);
+    m_steps.clear();
+    m_stepBytes = 0;
     m_undo = 0;
 }
 

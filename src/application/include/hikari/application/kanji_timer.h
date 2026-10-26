@@ -156,7 +156,7 @@ public:
     int acceptAllSuggestions();
 
     bool canUndo() const { return m_undo > 0; }
-    bool canRedo() const { return m_undo + 1 < m_history.size(); }
+    bool canRedo() const { return m_undo < m_steps.size(); }
     bool undo();
     bool redo();
 
@@ -171,18 +171,32 @@ private:
         std::optional<KanjiGroup> selection; // none: the suggestion's first group
         bool done = false, applied = false, changed = false;
         std::u16string romajiText, kanjiText; // the texts it was made on
-    };
-    struct State {
-        std::set<core::LineId> skippedRomaji, skippedKanji;
-        std::map<std::pair<std::uint64_t, std::uint64_t>, Work> works;
-        std::optional<std::pair<std::uint64_t, std::uint64_t>> current;
+        bool operator==(const Work &) const = default;
     };
     using Key = std::pair<std::uint64_t, std::uint64_t>;
+    struct State {
+        std::set<core::LineId> skippedRomaji, skippedKanji;
+        std::map<Key, Work> works;
+        std::optional<Key> current;
+    };
+    // An undo step: only what it changed, before and after (a whole State
+    // for each step would be the texts of every pair again and again).
+    struct Step {
+        std::map<Key, std::pair<std::optional<Work>, std::optional<Work>>> works;
+        std::optional<core::LineId> skippedRomaji, skippedKanji;
+        std::optional<Key> currentBefore, currentAfter;
+        std::size_t bytes = 0;
+    };
 
     static Key keyOf(const Pair &pair);
     void derive();
-    void record();
-    Work *currentWork();
+    // An edit: begin() opens its step, touch() is workFor with the Work as
+    // it was kept for the step, commit() records it, rollback() undoes it.
+    void begin();
+    Work &touch(const Pair &pair);
+    void commit();
+    void rollback();
+    void replay(const Step &step, bool forward);
     Work &workFor(const Pair &pair);
     KanjiGroup selectionOf(const Work &work, const std::vector<KanjiSyllable> &syllables, const KanjiText &kanji,
                            bool *ranOut = nullptr) const;
@@ -199,8 +213,10 @@ private:
     State m_state;
     std::vector<Pair> m_pairs;
     int m_current = -1;
-    std::vector<State> m_history;
-    std::size_t m_undo = 0;
+    std::optional<Step> m_open;
+    std::vector<Step> m_steps;
+    std::size_t m_undo = 0; // the steps done
+    std::size_t m_stepBytes = 0;
 };
 
 } // namespace hikari::application

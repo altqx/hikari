@@ -2003,7 +2003,8 @@ QVariantList Application::reviewClose(const QString &then)
     QVariantList rows;
     for (const auto id : scope) {
         auto *session = m_files->session(id);
-        if (!session || !session->isDirty())
+        // KA3-close-review: the Kanji timer's pairs not applied are unsaved work too
+        if (!session || (!session->isDirty() && !(m_kanjiTimer && m_kanjiTimer->pendingFor(id.value) > 0)))
             continue;
         const std::string *title = m_workspace.title(id);
         const auto destination = m_files->destination(id);
@@ -2031,6 +2032,13 @@ void Application::resolveClose(const QVariantList &choices)
         if (!session)
             continue;
         Closing c{id, row.value(QStringLiteral("save")).toBool(), 0, std::nullopt};
+        // KA3-close-review: Save writes the Kanji timer's pairs not applied first
+        if (c.save && m_kanjiTimer && !m_kanjiTimer->applyTo(id.value, *session)) {
+            m_closing.clear();
+            emit closeFinished(false, QCoreApplication::translate("HikariSub.Documents",
+                                                                  "A document could not be saved; nothing was closed."));
+            return;
+        }
         if (c.save) {
             QString path = row.value(QStringLiteral("path")).toString();
             // A file picked for an Untitled row gets its format's extension,

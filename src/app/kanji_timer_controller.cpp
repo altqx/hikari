@@ -461,23 +461,31 @@ int KanjiTimerController::acceptAll()
     return accepted;
 }
 
+namespace {
+
+// The done pairs' kanji Lines written as one undo step.
+auto writePending(const application::KanjiTimer &timer, application::EditSession &session)
+{
+    const auto pending = timer.pending();
+    std::set<core::LineId> touches;
+    for (const auto &[id, text] : pending)
+        touches.insert(id);
+    return session.run(application::Command{"Kanji timing", session.revision(), touches, [&](core::Document &d) {
+                                                for (const auto &[id, text] : pending)
+                                                    if (!d.editLine(id, [&](core::LineRecord &l) { l.text = core::toUtf8(text); }))
+                                                        return false;
+                                                return true;
+                                            }});
+}
+
+} // namespace
+
 bool KanjiTimerController::apply()
 {
     auto *session = target();
     if (!m_timer || !session || !m_hooks.targetId || m_hooks.targetId() != m_document)
         return false;
-    auto run = [&] {
-        const auto pending = m_timer->pending();
-        std::set<core::LineId> touches;
-        for (const auto &[id, text] : pending)
-            touches.insert(id);
-        return session->run(application::Command{"Kanji timing", session->revision(), touches, [&](core::Document &d) {
-                                                     for (const auto &[id, text] : pending)
-                                                         if (!d.editLine(id, [&](core::LineRecord &l) { l.text = core::toUtf8(text); }))
-                                                             return false;
-                                                     return true;
-                                                 }});
-    };
+    auto run = [&] { return writePending(*m_timer, *session); };
     if (m_timer->pending().empty())
         return true;
     auto ran = run();
@@ -506,6 +514,47 @@ bool KanjiTimerController::apply()
 void KanjiTimerController::discard()
 {
     m_timer.reset();
+    if (m_open)
+        readLines();
+    emit changed();
+}
+
+application::KanjiTimer *KanjiTimerController::timerFor(std::uint64_t document) const
+{
+    if (document == m_document)
+        return m_timer.get();
+    const auto kept = m_kept.find(document);
+    return kept != m_kept.end() ? kept->second.timer.get() : nullptr;
+}
+
+int KanjiTimerController::pendingFor(std::uint64_t document) const
+{
+    const auto *timer = timerFor(document);
+    return timer ? static_cast<int>(timer->pending().size()) : 0;
+}
+
+bool KanjiTimerController::applyTo(std::uint64_t document, application::EditSession &session)
+{
+    // the window's Document: as its Apply (a Line editor draft first)
+    if (document == m_document && target() == &session && m_hooks.targetId && m_hooks.targetId() == document)
+        return apply();
+    auto *timer = timerFor(document);
+    if (!timer || timer->pending().empty())
+        return true;
+    if (!writePending(*timer, session))
+        return false;
+    timer->applied();
+    emit changed();
+    return true;
+}
+
+void KanjiTimerController::forget(std::uint64_t document)
+{
+    m_kept.erase(document);
+    if (document != m_document)
+        return;
+    m_timer.reset();
+    m_document = 0;
     if (m_open)
         readLines();
     emit changed();
